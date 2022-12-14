@@ -1,12 +1,39 @@
 import { React } from 'react';
 
-import Container from '@mui/material/Container';
-import Box from '@mui/material/Box';
+import { 
+  Chart as ChartJS, 
+  Title,
+  CategoryScale,
+  LinearScale,
+  LineElement, 
+  PointElement, 
+  Tooltip, 
+  Legend 
+} from 'chart.js';
 
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(
+  Title,
+  CategoryScale,
+  LinearScale,
+  LineElement, 
+  PointElement, 
+  Tooltip, 
+  Legend 
+);
+
+const Visualizer = () => {
+  return (
+    <div>
+      <h2>Strength Visualizer</h2>
+      <Line data={data} options={options}/>
+    </div>
+  );
+
+}
+
+export default Visualizer;
 
 export const data = {
   labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
@@ -35,14 +62,49 @@ export const data = {
   ],
 };
 
-const Visualizer = () => {
-  return (
-    <div>
-      <h2>Strength Visualizer</h2>
-      <Doughnut data={data} />
-    </div>
-  );
 
-}
+// Line Chart Options
+export const options = {
+  responsive: true,
 
-export default Visualizer;
+  font: {
+    family: "Catamaran",
+  },
+
+  plugins: {
+
+    title: {
+      display: true,
+      text: 'Chart.js Line Chart',
+    },
+
+    legend: {
+      position: 'top',
+      labels: {
+        font: {
+          size: 18,
+        },
+      },
+    },
+
+    scales: {
+      xAxis: {
+        type: "time",
+        // suggestedMin: padDateMin,
+        // suggestedMax: padDateMax,
+        time: {
+          minUnit: "day",
+        },
+      },
+      yAxis: {
+        suggestedMin: 0,
+        ticks: {
+          font: { size: 15 },
+          callback: (value) => {
+            // return `${value}${unitType}`;
+          },
+        },
+      },
+    },
+  },
+};

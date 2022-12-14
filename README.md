@@ -1,4 +1,4 @@
-# Strength Journey
+# Strength Journeys
 Highly usable React based strength analysis suite for powerlifters. 
 
 Unites features from my previous projects:

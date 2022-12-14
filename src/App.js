@@ -89,7 +89,7 @@ function Home() {
        <Container maxWidth="lg" sx={{ borderRadius: '6px', border: '1px solid grey', boxShadow: '13', backgroundColor: 'palette.secondary.light' }}>
       <h1>Welcome to Strength Journeys</h1>
       <h3>Visualise your lifting history - lift consistently for a long time.</h3>
-      {/* <Doughnut data={data} /> */}
+      <Doughnut data={data} />
 
 
        </Container>

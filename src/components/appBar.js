@@ -56,6 +56,9 @@ function ResponsiveAppBar() {
 
     console.log(sheetData);
     setDataSourceStatus("Data Source Connected");
+
+    // FIXME: set the file name here (needed for chip tooltip)
+    //setDataSourceName(data.docs[0].name);
   }
 
   const handleOpenNavMenu = (event) => {

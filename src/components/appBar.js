@@ -47,6 +47,9 @@ function ResponsiveAppBar() {
   }, [ssid]) 
 
   const loadGSheetData = async () => {
+
+    // FIXME: Firstly do a metadata check api request for modified time.
+
     // Attempt to load gsheet data
     const sheetData = await axios
       .get(`https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
@@ -58,7 +61,7 @@ function ResponsiveAppBar() {
     setDataSourceStatus("Data Source Connected");
 
     // FIXME: set the file name here (needed for chip tooltip)
-    //setDataSourceName(data.docs[0].name);
+    //setDataSourceName();
   }
 
   const handleOpenNavMenu = (event) => {

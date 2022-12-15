@@ -23,6 +23,8 @@ ChartJS.register(
   Legend 
 );
 
+
+
 const Visualizer = () => {
   return (
     <div>

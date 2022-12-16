@@ -13,6 +13,20 @@ import {
 
 import { Line } from 'react-chartjs-2';
 
+import { 
+  processedData,
+  chartClickHandler, 
+  chartTitle, 
+  liftAnnotations, 
+  padDateMin, padDateMax, 
+  unitType, 
+  processData
+} from "../components/visualizerDataProcessing";
+
+const basicColors = ["#ae2012", "#ee9b00", "#03045e", "#0a9396"];
+export var minChartLines = 3; // How many lifts to show by default
+export var maxChartLines = 8; // Maximum number to graph - we will order by most popular lifts.
+
 ChartJS.register(
   Title,
   CategoryScale,
@@ -23,17 +37,6 @@ ChartJS.register(
   Legend 
 );
 
-import { 
-  processedData,
-  createDataSets, 
-  minChartLines, 
-  maxChartLines, 
-  chartClickHandler, 
-  chartTitle, 
-  liftAnnotations, 
-  padDateMin, padDateMax, 
-  unitType 
-} from "./visualizerDataProcessing";
 
 const Visualizer = () => {
   return (
@@ -42,36 +45,12 @@ const Visualizer = () => {
       <Line data={data} options={options}/>
     </div>
   );
-
 }
 
 export default Visualizer;
 
 export const data = {
-  labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-  datasets: [
-    {
-      label: '# of Votes',
-      data: [12, 19, 3, 5, 2, 3],
-      backgroundColor: [
-        'rgba(255, 99, 132, 0.2)',
-        'rgba(54, 162, 235, 0.2)',
-        'rgba(255, 206, 86, 0.2)',
-        'rgba(75, 192, 192, 0.2)',
-        'rgba(153, 102, 255, 0.2)',
-        'rgba(255, 159, 64, 0.2)',
-      ],
-      borderColor: [
-        'rgba(255, 99, 132, 1)',
-        'rgba(54, 162, 235, 1)',
-        'rgba(255, 206, 86, 1)',
-        'rgba(75, 192, 192, 1)',
-        'rgba(153, 102, 255, 1)',
-        'rgba(255, 159, 64, 1)',
-      ],
-      borderWidth: 1,
-    },
-  ],
+  datasets: createDataSets(3, 8),
 };
 
 
@@ -127,16 +106,16 @@ export const options = {
 // We expect array format of grid data[][]
 // ----------------------------------------------------------------------
 function createChart(data) {
-  parseData(data); // get our source data into rawLiftData
+  // parseData(data); // get our source data into rawLiftData
 
   // Process rawLiftData into our processedData structure
-  processRawLiftData();
+  // processRawLiftData();
 
   // If we already have a chart, just update it.
-  if (myChart !== null) {
-    myChart.update();
-    return;
-  }
+  // if (myChart !== null) {
+    // myChart.update();
+    // return;
+  // }
 
   // Use the most popular lift to set some aesthetic x-axis padding at start and end
   // Right now only do this once on first csv load.
@@ -147,8 +126,8 @@ function createChart(data) {
   padDateMax = padDateMax.setDate(padDateMax.getDate() + 14);
 
   // Create the chart.js chart
-  let canvas = document.getElementById("myChartCanvas");
-  myChart = new Chart(canvas, getChartConfig());
+  // let canvas = document.getElementById("myChartCanvas");
+  // myChart = new Chart(canvas, getChartConfig());
 
   // Now we have the chart, show the html chart controls box.
   let controlsBox = document.getElementById("chartControlsBox");
@@ -162,15 +141,15 @@ function createChart(data) {
   let xAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
   if (xAxisMin < padDateMin) xAxisMin = padDateMin;
   let xAxisMax = new Date(padDateMax);
-  myChart.zoomScale("xAxis", { min: xAxisMin, max: xAxisMax }, "default");
+  // myChart.zoomScale("xAxis", { min: xAxisMin, max: xAxisMax }, "default");
 }
 
 
 // Setup a charts.js chart.
 export function getChartConfig() {
-  const data = {
-    datasets: createDataSets(minChartLines, maxChartLines),
-  };
+  // const data = {
+    // datasets: createDataSets(minChartLines, maxChartLines),
+  // };
 
   const zoomMinTimeRange = 1000 * 60 * 60 * 24 * 60; // 60 days limit to zoom in
   const zoomOptions = {
@@ -192,11 +171,11 @@ export function getChartConfig() {
     },
   };
 
-  Chart.defaults.font.family = "Catamaran";
+  // Chart.defaults.font.family = "Catamaran";
 
   const config = {
     type: "line",
-    plugins: [ChartDataLabels],
+    // plugins: [ChartDataLabels],
     data: data,
     options: {
       onClick: chartClickHandler,
@@ -279,11 +258,16 @@ export function getChartConfig() {
   return config;
 }
 
+
+// createDataSets
 // Push our first num processedData into chart.js datasets
 // max = number of data sets to create
 // min = the default number that display (the rest will begin hidden)
-export function createDataSets(min, max) {
+function createDataSets(min, max) {
   const dataSets = [];
+
+  // FIXME: check if we have parsed data?
+  processData();   // This is our first chance to process our parsed Data
 
   let hidden = false;
 
@@ -348,18 +332,18 @@ function toggleAchievements() {
   const toggleInput = document.getElementById("toggleAchievements");
   if (toggleInput.value == "Hide") {
     // The user wants to hide achievements overlay
-    myChart.config.options.plugins.annotation.annotations = null;
+    // myChart.config.options.plugins.annotation.annotations = null;
 
     // Change the toggle button
     toggleInput.value = "Show";
     toggleInput.innerHTML = "Show Achievements";
   } else {
     // The user wants to show achievements overlay
-    myChart.config.options.plugins.annotation.annotations = liftAnnotations;
+    // myChart.config.options.plugins.annotation.annotations = liftAnnotations;
 
     // Change the toggle button
     toggleInput.value = "Hide";
     toggleInput.innerHTML = "Hide Achievements";
   }
-  myChart.update();
+  // myChart.update();
 }

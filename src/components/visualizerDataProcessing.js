@@ -4,18 +4,20 @@
 //
 // Process our parsedData into chart.js ready format for the Strength Visualizer
 
-import { createChart } from "./createChart";
+import { 
+  minChartLines,
+  maxChartLines
+} from "../pages/visualizer";
+
+import { parsedData } from "./parseData";
 
 // Global variables
 export const processedData = []; // Array with one element per lift type of charts.js graph friendly data and special achievements
 export const liftAnnotations = {}; // chart.js annotations plugin config for special achivements such as 1RM, 3RM, 5RM.
 export let myChart = null;
 export let chartTitle = "Strength History";
-export let minChartLines = 3; // How many lifts to show by default
-export let maxChartLines = 8; // Maximum number to graph - we will order by most popular lifts.
 export let padDateMin, padDateMax;
 export let unitType = "lb"; // Default to freedom units
-const basicColors = ["#ae2012", "#ee9b00", "#03045e", "#0a9396"];
 let equation = "Brzycki"; // Our favourite preferred equation - it does not over promise
 
 // Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
@@ -178,14 +180,14 @@ function findPRs(rawLifts, reps, prName, datasetIndex) {
     );
 
     // Actual top PR gets a special annotation marker on the chart
-    if (i == 0)
-      liftAnnotations[`${name}_best_${reps}RM`] = createAchievementAnnotation(
-        repLifts[i].date,
-        estimateE1RM(reps, repLifts[i].weight),
-        `${reps}RM`,
-        "rgba(255, 99, 132, 0.25)",
-        datasetIndex
-      );
+    // if (i == 0)
+      // liftAnnotations[`${name}_best_${reps}RM`] = createAchievementAnnotation(
+        // repLifts[i].date,
+        // estimateE1RM(reps, repLifts[i].weight),
+        // `${reps}RM`,
+        // "rgba(255, 99, 132, 0.25)",
+        // datasetIndex
+      // );
   }
 }
 
@@ -285,10 +287,10 @@ function changeEquation(event, newEquation) {
   if (equation === newEquation) return; // nothing to do
 
   // Clear class "equations"
-   links = document.getElementsByClassName("equations");
-   for (i = 0; i < links.length; i++) {
-     links[i].className = links[i].className.replace(" active", "");
-   }
+  //  links = document.getElementsByClassName("equations");
+  //  for (i = 0; i < links.length; i++) {
+    //  links[i].className = links[i].className.replace(" active", "");
+  //  }
  
    // Add an "active" class to the button that opened the tab
    // This will trigger the css rule to set the color

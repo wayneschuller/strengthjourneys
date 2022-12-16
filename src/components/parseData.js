@@ -6,7 +6,7 @@
 // and parse into our common parsedData[] format.
 
 // Globals 
-const parsedData = []; // Every unique lift from our source
+export var parsedData = []; // Every unique lift from our source
 
 let workout_date_COL, workout_id_COL, completed_COL, exercise_name_COL, assigned_reps_COL, assigned_weight_COL;
 let assigned_sets_COL, actual_reps_COL, actual_weight_COL, actual_sets_COL, missed_COL, description_COL, units_COL, notes_COL, url_COL;
@@ -18,8 +18,11 @@ let lastLiftType = "Tik Tok Dancing";
 // parseData
 // Discern the raw data format, parse into the parsedData global
 // Assumes raw lifting data[][] 2d grid (from CSV or Google Sheets or similar)
+//
+// FIXME: We should return false if it is bad data
+//
 // ------------------------------------------------------------------------------
-function parseData(data) {
+export function parseData(data) {
 
   const columnNames = data[0];
 
@@ -64,6 +67,7 @@ function parseData(data) {
   notes_COL = columnNames.indexOf("Notes");
   url_COL = columnNames.indexOf("URL");
 
+  console.log(`parseBespokeRow`);
   data.forEach(parseBespokeRow, parsedData);
   return;
 }
@@ -101,10 +105,11 @@ function parseBespokeRow(row, index) {
   let weight = row[actual_weight_COL];
 
   // Look for units inside the weight string 
-  if (row[actual_weight_COL].indexOf("kg") != -1) {
+  let unitType;
+  if (row[actual_weight_COL].indexOf("kg") !== -1) {
     unitType = "kg";
     weight = parseFloat(weight.slice(0, weight.length-2)); // Remove the units from the end
-  } else if (row[actual_weight_COL].indexOf("lb") != -1) {
+  } else if (row[actual_weight_COL].indexOf("lb") !== -1) {
     unitType = "lb";
     weight = parseFloat(weight.slice(0, weight.length-2)); // Remove the units from the end
   } 
@@ -124,6 +129,8 @@ function parseBespokeRow(row, index) {
     notes: notes,
     url: url,
   });
+
+  console.log(`Pushed: ${date}, ${liftType}, ${reps}, ${weight}`);
 }
 
 // --------------------------------------------------------------------------------
@@ -154,13 +161,14 @@ function parseBtwbRow(row) {
     let result = regex.exec(lift);
     if (!result) continue;
     let curReps = parseFloat(result[0]);
-    if (curReps == 0) continue; // FIXME: check why this would happen
+    if (curReps === 0) continue; // FIXME: check why this would happen
 
     // Get units then weight
-    if (lift.indexOf("kg") != -1) {
+  let unitType;
+    if (lift.indexOf("kg") !== -1) {
       unitType = "kg";
       regex = /[0-9|\.]+\skg$/gm; 
-    } else if (lift.indexOf("lb") != -1) {
+    } else if (lift.indexOf("lb") !== -1) {
       unitType = "lb";
       regex = /[0-9|\.]+\slb$/gm; 
     } else continue; // We can't find units so it's probably not a lift 
@@ -168,7 +176,7 @@ function parseBtwbRow(row) {
     result = regex.exec(lift);
     if (!result) continue;
     const curWeight = parseFloat(result[0].slice(0, result[0].length-2)); // Remove the units (kg or lb) from the end
-    if (curWeight == 0) continue;
+    if (curWeight === 0) continue;
 
     let notes = row[notes_COL]; if (!notes) notes = '';
 
@@ -221,7 +229,7 @@ function parseBlocRow(row) {
    
   if (lifted_reps === 0 || lifted_weight === 0) return;
 
-  unitType = row[units_COL]; // Record the units type global for later. (we assume it won't change in the CSV)
+  let unitType = row[units_COL]; // Record the units type global for later. (we assume it won't change in the CSV)
 
   const liftUrl = `https://www.barbelllogic.app/workout/${row[workout_id_COL]}`;
 

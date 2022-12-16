@@ -43,7 +43,6 @@ function ResponsiveAppBar() {
   // These next four could be grouped into one dataSource object?
   const [tokenResponse, setTokenResponse] = useState(null);
   const [dataSourceStatus, setDataSourceStatus] = useState("Choose Data Source");
-  const [ssid, setSsid] = useState(null);
   const [dataSourceName, setDataSourceName] = useState(null);
 
   const handleOpenNavMenu = (event) => {
@@ -96,8 +95,6 @@ function ResponsiveAppBar() {
 
       // Now we are google authenticated, we are ready to check cookie for previous GSheet ssid
       if (cookies.ssid !== undefined) {
-        setSsid(cookies.ssid);
-
         if (loadGSheetData(tokenResponse, cookies.ssid)) setDataSourceStatus("Data Source Connected");
         // FIXME: set the file name here (needed for chip tooltip)
         //setDataSourceName();
@@ -126,8 +123,8 @@ function ResponsiveAppBar() {
 
         setDataSourceName(data.docs[0].name);
 
-        // setSsid state which will trigger useEffect data (re)load
-        setSsid(data.docs[0].id);
+        // Load the gsheet data
+        if (loadGSheetData(tokenResponse, data.docs[0].id)) setDataSourceStatus("Data Source Connected");
 
         // park the ssid in the browser cookie for next session
         let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now

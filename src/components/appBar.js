@@ -17,9 +17,11 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import Chip from '@mui/material/Chip';
 
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
-import axios from 'axios';
 import useDrivePicker from 'react-google-drive-picker'
 import { useCookies } from 'react-cookie';
+import axios from 'axios';
+
+import { loadGSheetData } from './readData';
 
 // Array of main menu items
 const pages = [
@@ -43,29 +45,6 @@ function ResponsiveAppBar() {
   const [dataSourceStatus, setDataSourceStatus] = useState("Choose Data Source");
   const [ssid, setSsid] = useState(null);
   const [dataSourceName, setDataSourceName] = useState(null);
-
-  // When ssid changes (re)load the gsheet chart data 
-  useEffect(() => {
-    if (isAuthenticated) loadGSheetData();
-  }, [ssid]) 
-
-  const loadGSheetData = async () => {
-
-    // FIXME: Firstly do a metadata check api request for modified time.
-
-    // Attempt to load gsheet data
-    const sheetData = await axios
-      .get(`https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
-        headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-      })
-      .then(res => res.data);
-
-    console.log(sheetData);
-    setDataSourceStatus("Data Source Connected");
-
-    // FIXME: set the file name here (needed for chip tooltip)
-    //setDataSourceName();
-  }
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -116,7 +95,13 @@ function ResponsiveAppBar() {
       console.log(userInfo);
 
       // Now we are google authenticated, we are ready to check cookie for previous GSheet ssid
-      if (cookies.ssid != undefined) setSsid(cookies.ssid);
+      if (cookies.ssid !== undefined) {
+        setSsid(cookies.ssid);
+
+        if (loadGSheetData(tokenResponse, cookies.ssid)) setDataSourceStatus("Data Source Connected");
+        // FIXME: set the file name here (needed for chip tooltip)
+        //setDataSourceName();
+      }
     },
     onError: errorResponse => console.log(errorResponse),
   });  

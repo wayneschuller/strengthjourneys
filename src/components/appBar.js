@@ -33,13 +33,16 @@ const settings = ['Profile', 'Settings'];
 function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
+  const [cookies, setCookie] = useCookies(['ssid']);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
+
+  const [userInfo, setUserInfo] = useState(null);  // .name .picture 
+
+  // These next four could be grouped into one dataSource object?
   const [tokenResponse, setTokenResponse] = useState(null);
   const [dataSourceStatus, setDataSourceStatus] = useState("Choose Data Source");
   const [ssid, setSsid] = useState(null);
   const [dataSourceName, setDataSourceName] = useState(null);
-  const [cookies, setCookie] = useCookies(['ssid']);
 
   // When ssid changes (re)load the gsheet chart data 
   useEffect(() => {

@@ -111,7 +111,8 @@ export function processData() {
   });
 
   // We now know how many lift types we have. So reduce the number of expected chart lines if needed.
-  if (processedData.length < minChartLines) minChartLines = processedData.length;
+  // 202212 FIXME: logic not right and js dumbness
+  // if (processedData.length < minChartLines) minChartLines = processedData.length;
 
   // Every element of processedData now has a e1rmLineData array
   // Let's sort each e1rmLineData array by date (x entry) so it draws lines correctly

@@ -23,9 +23,10 @@ import {
   processData
 } from "../components/visualizerDataProcessing";
 
+export let minChartLines = 3; // How many lifts to show by default
+export let maxChartLines = 8; // Maximum number to graph - we will order by most popular lifts.
+
 const basicColors = ["#ae2012", "#ee9b00", "#03045e", "#0a9396"];
-export var minChartLines = 3; // How many lifts to show by default
-export var maxChartLines = 8; // Maximum number to graph - we will order by most popular lifts.
 
 ChartJS.register(
   Title,
@@ -38,7 +39,7 @@ ChartJS.register(
 );
 
 
-const Visualizer = () => {
+const Visualizer = (props) => {
   return (
     <div>
       <h2>Strength Visualizer</h2>
@@ -50,7 +51,7 @@ const Visualizer = () => {
 export default Visualizer;
 
 export const data = {
-  datasets: createDataSets(3, 8),
+  datasets: createDataSets(minChartLines, maxChartLines),
 };
 
 
@@ -128,14 +129,6 @@ function createChart(data) {
   // Create the chart.js chart
   // let canvas = document.getElementById("myChartCanvas");
   // myChart = new Chart(canvas, getChartConfig());
-
-  // Now we have the chart, show the html chart controls box.
-  let controlsBox = document.getElementById("chartControlsBox");
-  controlsBox.style.visibility = "visible";
-
-  // Hide the file upload button now. We could support later extra uploads in the future.
-  let uploadBox = document.getElementById("uploadBox");
-  uploadBox.style.display = "none";
 
   // Set the zoom/pan to the last 6 months of data if we have that much
   let xAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
@@ -330,7 +323,7 @@ function createAchievementAnnotation(date, weight, text, background, datasetInde
 // Show/hide the chart.js achievement annotations on the chart
 function toggleAchievements() {
   const toggleInput = document.getElementById("toggleAchievements");
-  if (toggleInput.value == "Hide") {
+  if (toggleInput.value === "Hide") {
     // The user wants to hide achievements overlay
     // myChart.config.options.plugins.annotation.annotations = null;
 

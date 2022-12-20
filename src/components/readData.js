@@ -37,11 +37,7 @@ export const loadGSheetData = async (tokenResponse, ssid, setVisualizerData) => 
   // Now we have good rawData we should parse it.
   parseData(rawData.values);
 
-  processData();   // FIXME: Check return value
-
-  // Set the useState variable to updated chart component here?
-  console.log(`Everything processed for sure. Calling setVisualizerData()...`);
-  setVisualizerData(processedData);
+  //processData();   // FIXME: Check return value
 
   return true;
 }

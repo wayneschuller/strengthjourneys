@@ -127,7 +127,7 @@ export function processData() {
 
     // Do we already have any processed data on this date?
     let dateIndex = processedData[liftIndex].e1rmLineData.findIndex(
-      (processedLift) => processedLift.x == lift.date
+      (processedLift) => processedLift.x === lift.date
     );
 
     if (dateIndex === -1) {
@@ -151,7 +151,7 @@ export function processData() {
     // Handle a number of cases where the parsed lift date has a date match in the processed graph data.
 
     // If we are changing equation method, then update the y value
-    if (processedData[liftIndex].e1rmLineData[dateIndex].method != equation) {
+    if (processedData[liftIndex].e1rmLineData[dateIndex].method !== equation) {
       processedData[liftIndex].e1rmLineData[dateIndex].y = oneRepMax;
       processedData[liftIndex].e1rmLineData[dateIndex].method = equation;
       continue; // Continue iterating through parsedData
@@ -210,7 +210,7 @@ export function processData() {
   // Also sort our processedData so the most popular lift types get charts first
   processedData.sort((a, b) => b.e1rmLineData.length - a.e1rmLineData.length);
 
-
+  return(processedData);
 
   // Find achievements and put on chart
   // processAchievements();
@@ -285,12 +285,12 @@ function findPRs(rawLifts, reps, prName, datasetIndex) {
 // Return a rounded 1 rep max
 // For theory see: https://en.wikipedia.org/wiki/One-repetition_maximum
 function estimateE1RM(reps, weight) {
-  if (reps == 0) {
+  if (reps === 0) {
     console.error("Somebody passed 0 reps... naughty.");
     return 0;
   }
 
-  if (reps == 1) return weight; // Heavy single requires no estimate!
+  if (reps === 1) return weight; // Heavy single requires no estimate!
 
   switch (equation) {
     case "Epley":
@@ -350,7 +350,7 @@ export function chartClickHandler(event, item) {
 // Callback handler for button to easy zoom in and out
 function toggleZoom() {
   const toggleInput = document.getElementById("toggleZoom");
-  if (toggleInput.value == "Show All Time") {
+  if (toggleInput.value === "Show All Time") {
     // The user wants to zoom out to show all data
     myChart.resetZoom();
 

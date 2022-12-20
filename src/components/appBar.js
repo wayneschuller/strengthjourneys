@@ -80,6 +80,13 @@ function ResponsiveAppBar(props) {
     setIsAuthenticated(false);
   };
 
+  useEffect(() => {
+    console.log(`useEffect isAuthenticated: ${isAuthenticated}`);
+    if (isAuthenticated) {
+      console.log(`useEffect: Attempting to load gsheet data...`);
+    }
+  }, [isAuthenticated])
+
   // Google API scopes required to read one google sheet
   const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
@@ -104,7 +111,7 @@ function ResponsiveAppBar(props) {
 
       // Now we are google authenticated, we are ready to check cookie for previous GSheet ssid
       if (cookies.ssid !== undefined) {
-        if (loadGSheetData(tokenResponse, cookies.ssid, setVisualizerData())) {
+        if (loadGSheetData(tokenResponse, cookies.ssid)) {
           setDataSourceStatus("Data Source Connected");
 
           // FIXME: loadGSheetData is async cannot assume the data is processed here yet

@@ -13,11 +13,9 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isVisualizerDataProcessed, setIsVisualizerDataProcessed] = useState(false);
 
-  // const [visualizerData, setVisualizerData] = useState (null);
-
   const [visualizerData, setVisualizerData] = useState ({
     datasets: [{
-      label: "Back Squat",
+      label: "Back Squat Sample Data",
       data: [
         {
           x: '2015-10-11', 

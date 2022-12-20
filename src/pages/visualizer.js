@@ -15,7 +15,6 @@ import {
 import { Line } from 'react-chartjs-2';
 
 import { 
-  dummyProcessedData,
   processedData,
   chartClickHandler, 
   chartTitle, 
@@ -46,11 +45,9 @@ const Visualizer = (props) => {
      isVisualizerDataProcessed, setIsVisualizerDataProcessed,
      visualizerData, setVisualizerData ] = useOutletContext();
 
-  var data = null;
-
   // When isAuthenticated state changes, load our data
   useEffect(() => {
-    console.log(`useEffect from change in visualizerData...`);
+    console.log(`useEffect visualizerData changed...`);
   }, [visualizerData]);
 
   return (
@@ -60,7 +57,7 @@ const Visualizer = (props) => {
         <>
         Logged in...
         </> : <>
-        Please click the google-login button to configure data access.
+        Please click the google-login button (top right) to configure data access.
         </>
         }
       <Line data={visualizerData} options={options}/> 
@@ -69,8 +66,6 @@ const Visualizer = (props) => {
 }
 
 export default Visualizer;
-
-
 
 // Line Chart Options
 export const options = {

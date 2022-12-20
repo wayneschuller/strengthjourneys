@@ -12,6 +12,91 @@ import {
 import { parsedData } from "./parseData";
 
 // Global variables
+export const dummyProcessedData = {
+  datasets: [
+  {
+    label: "Back Squat",
+    data: [
+    {
+    "x": "2015-10-11",
+    "y": 106,
+    "label": "Potential 1@106kg from 3@100kg.",
+    "method": "Brzycki",
+    "notes": "",
+    "afterLabel": [],
+    "isUpdated": true,
+    "url": "",
+    "reps": 3,
+    "weight": 100
+    },
+    {
+    "x": "2015-11-02",
+    "y": 106,
+    "label": "Potential 1@106kg from 3@100kg.",
+    "method": "Brzycki",
+    "notes": "",
+    "afterLabel": [],
+    "isUpdated": true,
+    "url": "",
+    "reps": 3,
+    "weight": 100
+    },
+    {
+    "x": "2015-11-03",
+    "y": 109,
+    "label": "Potential 1@109kg from 4@100kg.",
+    "method": "Brzycki",
+    "notes": "",
+    "afterLabel": [],
+    "isUpdated": true,
+    "url": "",
+    "reps": 4,
+    "weight": 100
+    },
+  ]
+  },
+  {
+    label: "Deadlift",
+    data: [
+    {
+    "x": "2015-10-01",
+    "y": 170,
+    "label": "Lifted 1@170kg.",
+    "method": "Brzycki",
+    "notes": "",
+    "afterLabel": [],
+    "isUpdated": true,
+    "url": "",
+    "reps": 1,
+    "weight": 170
+    },
+    {
+    "x": "2015-11-08",
+    "y": 144,
+    "label": "Potential 1@144kg from 2@140kg.",
+    "method": "Brzycki",
+    "notes": "",
+    "afterLabel": [],
+    "isUpdated": true,
+    "url": "",
+    "reps": 2,
+    "weight": 140
+  },
+  {
+    "x": "2015-11-23",
+    "y": 155,
+    "label": "Potential 1@155kg from 3@146kg.",
+    "method": "Brzycki",
+    "notes": "",
+    "afterLabel": [],
+    "isUpdated": true,
+    "url": "",
+    "reps": 3,
+    "weight": 146
+  }],
+  }]
+};
+
 export const processedData = []; // Array with one element per lift type of charts.js graph friendly data and special achievements
 export const liftAnnotations = {}; // chart.js annotations plugin config for special achivements such as 1RM, 3RM, 5RM.
 export let myChart = null;

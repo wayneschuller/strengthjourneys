@@ -38,8 +38,11 @@ function ResponsiveAppBar(props) {
 
   const [cookies, setCookie] = useCookies(['ssid']);
 
+  // We inherit this state from <App /> which then shares with subpages
   let isAuthenticated = props.isAuthenticated;
   let setIsAuthenticated = props.setIsAuthenticated;
+  let isVisualizerDataProcessed = props.isVisualizerDataProcessed;
+  let setIsVisualizerDataProcessed = props.setIsVisualizerDataProcessed;
 
   const [userInfo, setUserInfo] = useState(null);  // .name .picture 
 
@@ -98,9 +101,12 @@ function ResponsiveAppBar(props) {
 
       // Now we are google authenticated, we are ready to check cookie for previous GSheet ssid
       if (cookies.ssid !== undefined) {
-        if (loadGSheetData(tokenResponse, cookies.ssid)) setDataSourceStatus("Data Source Connected");
+        if (loadGSheetData(tokenResponse, cookies.ssid)) {
+          setDataSourceStatus("Data Source Connected");
+          setIsVisualizerDataProcessed(true);
         // FIXME: set the file name here (needed for chip tooltip)
         //setDataSourceName();
+        }
       }
     },
     onError: errorResponse => console.log(errorResponse),
@@ -127,7 +133,10 @@ function ResponsiveAppBar(props) {
         setDataSourceName(data.docs[0].name);
 
         // Load the gsheet data
-        if (loadGSheetData(tokenResponse, data.docs[0].id)) setDataSourceStatus("Data Source Connected");
+        if (loadGSheetData(tokenResponse, data.docs[0].id)) {
+          setDataSourceStatus("Data Source Connected");
+          setIsVisualizerDataProcessed(true);
+        }
 
         // park the ssid in the browser cookie for next session
         let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now

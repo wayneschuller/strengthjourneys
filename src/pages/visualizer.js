@@ -15,6 +15,7 @@ import {
 import { Line } from 'react-chartjs-2';
 
 import { 
+  dummyProcessedData,
   processedData,
   chartClickHandler, 
   chartTitle, 
@@ -39,27 +40,57 @@ ChartJS.register(
   Legend 
 );
 
+const dumbestData = {
+    datasets: [{
+      label: "Back Squat",
+      data: [
+        {
+          x: '2015-10-11', 
+          y: 106,
+          label: "Potential blah da blah",
+        }, 
+        {
+          x: '2015-11-02', 
+          y: 110,
+          label: "potential doop de doop",
+        },
+        {
+          x: '2015-11-05', 
+          y: 100,
+          label: "potential nope",
+        },
+      ]
+    }]
+}
 
 const Visualizer = (props) => {
 
   const [isAuthenticated, setIsAuthenticated] = useOutletContext();
+  const [isVisualizerDataProcessed, setIsVisualizerDataProcessed] = useOutletContext();
 
   var data;
 
   // When isAuthenticated state changes, load our data
   useEffect(() => {
-    if (isAuthenticated) data = { datasets: createDataSets(minChartLines, maxChartLines), };
-  }, [isAuthenticated])
+    console.log(`useEffect isVisualizerDataProcessed = ${isVisualizerDataProcessed}`);
+    if (isVisualizerDataProcessed) { 
+      // data = { datasets: createDataSets(dummyProcessedData, minChartLines, maxChartLines), }
+      data = dummyProcessedData;
+    } else {
+      data = dumbestData;
+    }
+  }, [isVisualizerDataProcessed]);
 
   return (
     <div>
       <h2>Strength Visualizer</h2>
       { isAuthenticated ? 
         <>
-        Logged in - dataprocessing time?
-        <Line data={data} options={options}/> 
+        Logged in...
+        <Line data={dummyProcessedData} options={options}/> 
         </> : <>
         Please click the google-login button to configure data access.
+        <Line data={dumbestData} options={options}/> 
         </>
         }
     </div>
@@ -268,10 +299,10 @@ export function getChartConfig() {
 
 
 // createDataSets
-// Push our first num processedData into chart.js datasets
+// Push our first num visualizer processedData into chart.js datasets
 // max = number of data sets to create
 // min = the default number that display (the rest will begin hidden)
-function createDataSets(min, max) {
+function createDataSets(processedData, min, max) {
   const dataSets = [];
 
   console.log("createDataSets()...");

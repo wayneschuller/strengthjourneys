@@ -11,6 +11,7 @@ import ResponsiveAppBar from './components/appBar';
 export default function App() {
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isVisualizerDataProcessed, setIsVisualizerDataProcessed] = useState(false);
 
   return (
     <div>
@@ -18,6 +19,8 @@ export default function App() {
      <ResponsiveAppBar 
       isAuthenticated={isAuthenticated} 
       setIsAuthenticated={setIsAuthenticated} 
+      isVisualizerDataProcessed={isVisualizerDataProcessed} 
+      setIsVisualizerDataProcessed={setIsVisualizerDataProcessed} 
      />
 
       {/* An <Outlet> renders whatever child route is currently active,
@@ -26,7 +29,7 @@ export default function App() {
      <Box sx={{ m: 1 }} md={{ m: 3}} >
        <Container maxWidth="lg" sx={{ borderRadius: '6px', border: '1px solid grey', boxShadow: '13', backgroundColor: 'palette.secondary.light' }}>
         <Outlet 
-          context={[isAuthenticated, setIsAuthenticated]} 
+          context={[isAuthenticated, setIsAuthenticated], [isVisualizerDataProcessed, setIsVisualizerDataProcessed]} 
         />
        </Container>
      </Box>

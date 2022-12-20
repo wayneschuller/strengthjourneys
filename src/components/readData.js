@@ -42,7 +42,7 @@ export const loadGSheetData = async (tokenResponse, ssid) => {
   // Now we have good rawData we should parse it.
   parseData(rawData.values);
 
-  // processData();   // FIXME: I'd prefer to do this in the visualiser component?
+  processData();   // FIXME: I'd prefer to do this in the visualiser component?
 
   return true;
 }

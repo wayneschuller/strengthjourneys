@@ -32,11 +32,14 @@ const pages = [
 
 const settings = ['Profile', 'Settings'];
 
-function ResponsiveAppBar() {
+function ResponsiveAppBar(props) {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
+
   const [cookies, setCookie] = useCookies(['ssid']);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  let isAuthenticated = props.isAuthenticated;
+  let setIsAuthenticated = props.setIsAuthenticated;
 
   const [userInfo, setUserInfo] = useState(null);  // .name .picture 
 
@@ -284,7 +287,7 @@ function ResponsiveAppBar() {
                 </Menu>
               </Box>
             </> : <>
-              <Button onClick={() => niceGoogleLogin()} sx={{ my: 2, color: 'white', display: 'block', mx: 1 }} variant="outlined">Google Sign-In</Button>
+              <Button onClick={niceGoogleLogin} sx={{ my: 2, color: 'white', display: 'block', mx: 1 }} variant="outlined">Google Sign-In</Button>
             </>
           }
                 

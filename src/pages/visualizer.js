@@ -1,4 +1,5 @@
-import { React } from 'react';
+import { React, useEffect } from 'react';
+import { useOutletContext } from "react-router-dom";
 
 import { 
   Chart as ChartJS, 
@@ -40,19 +41,33 @@ ChartJS.register(
 
 
 const Visualizer = (props) => {
+
+  const [isAuthenticated, setIsAuthenticated] = useOutletContext();
+
+  var data;
+
+  // When isAuthenticated state changes, load our data
+  useEffect(() => {
+    if (isAuthenticated) data = { datasets: createDataSets(minChartLines, maxChartLines), };
+  }, [isAuthenticated])
+
   return (
     <div>
       <h2>Strength Visualizer</h2>
-      <Line data={data} options={options}/>
+      { isAuthenticated ? 
+        <>
+        Logged in - dataprocessing time?
+        <Line data={data} options={options}/> 
+        </> : <>
+        Please click the google-login button to configure data access.
+        </>
+        }
     </div>
   );
 }
 
 export default Visualizer;
 
-export const data = {
-  datasets: createDataSets(minChartLines, maxChartLines),
-};
 
 
 // Line Chart Options
@@ -169,7 +184,7 @@ export function getChartConfig() {
   const config = {
     type: "line",
     // plugins: [ChartDataLabels],
-    data: data,
+    // data: data,
     options: {
       onClick: chartClickHandler,
       plugins: {
@@ -259,8 +274,10 @@ export function getChartConfig() {
 function createDataSets(min, max) {
   const dataSets = [];
 
+  console.log("createDataSets()...");
+
   // FIXME: check if we have parsed data?
-  processData();   // This is our first chance to process our parsed Data
+  // processData();   // This is our first chance to process our parsed Data
 
   let hidden = false;
 

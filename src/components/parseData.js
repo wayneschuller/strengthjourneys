@@ -24,6 +24,8 @@ let lastLiftType = "Tik Tok Dancing";
 // ------------------------------------------------------------------------------
 export function parseData(data) {
 
+  console.log("parseData()...");
+
   const columnNames = data[0];
 
   // Look for distinctive BTWB data columns - no one else will have a Pukie column
@@ -67,7 +69,7 @@ export function parseData(data) {
   notes_COL = columnNames.indexOf("Notes");
   url_COL = columnNames.indexOf("URL");
 
-  console.log(`parseBespokeRow`);
+  console.log(`Bespoke format detected. Processing each row...`);
   data.forEach(parseBespokeRow, parsedData);
   return;
 }
@@ -130,7 +132,7 @@ function parseBespokeRow(row, index) {
     url: url,
   });
 
-  console.log(`Pushed: ${date}, ${liftType}, ${reps}, ${weight}`);
+  // console.log(`Pushed: ${date}, ${liftType}, ${reps}, ${weight}`);
 }
 
 // --------------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 import './App.css';
 
-import * as React from "react";
-import { Routes, Route, Outlet, Link } from "react-router-dom";
+import { React, useState } from "react";
+import { Outlet } from "react-router-dom";
 
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
@@ -9,17 +9,25 @@ import Box from '@mui/material/Box';
 import ResponsiveAppBar from './components/appBar';
 
 export default function App() {
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   return (
     <div>
 
-     <ResponsiveAppBar />
+     <ResponsiveAppBar 
+      isAuthenticated={isAuthenticated} 
+      setIsAuthenticated={setIsAuthenticated} 
+     />
 
       {/* An <Outlet> renders whatever child route is currently active,
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
      <Box sx={{ m: 1 }} md={{ m: 3}} >
        <Container maxWidth="lg" sx={{ borderRadius: '6px', border: '1px solid grey', boxShadow: '13', backgroundColor: 'palette.secondary.light' }}>
-        <Outlet />
+        <Outlet 
+          context={[isAuthenticated, setIsAuthenticated]} 
+        />
        </Container>
      </Box>
     </div>

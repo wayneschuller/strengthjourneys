@@ -22,6 +22,7 @@ import { useCookies } from 'react-cookie';
 import axios from 'axios';
 
 import { loadGSheetData } from './readData';
+import { dummyProcessedData } from './visualizerDataProcessing';
 
 // Array of main menu items
 const pages = [
@@ -43,6 +44,8 @@ function ResponsiveAppBar(props) {
   let setIsAuthenticated = props.setIsAuthenticated;
   let isVisualizerDataProcessed = props.isVisualizerDataProcessed;
   let setIsVisualizerDataProcessed = props.setIsVisualizerDataProcessed;
+  let visualizerData = props.visualizerData;
+  let setVisualizerData = props.setVisualizerData;
 
   const [userInfo, setUserInfo] = useState(null);  // .name .picture 
 
@@ -101,9 +104,12 @@ function ResponsiveAppBar(props) {
 
       // Now we are google authenticated, we are ready to check cookie for previous GSheet ssid
       if (cookies.ssid !== undefined) {
-        if (loadGSheetData(tokenResponse, cookies.ssid)) {
+        if (loadGSheetData(tokenResponse, cookies.ssid, setVisualizerData())) {
           setDataSourceStatus("Data Source Connected");
-          setIsVisualizerDataProcessed(true);
+
+          // FIXME: loadGSheetData is async cannot assume the data is processed here yet
+          // setIsVisualizerDataProcessed(true);
+          // setVisualizerData(dummyProcessedData);
         // FIXME: set the file name here (needed for chip tooltip)
         //setDataSourceName();
         }

@@ -40,46 +40,18 @@ ChartJS.register(
   Legend 
 );
 
-const dumbestData = {
-    datasets: [{
-      label: "Back Squat",
-      data: [
-        {
-          x: '2015-10-11', 
-          y: 106,
-          label: "Potential blah da blah",
-        }, 
-        {
-          x: '2015-11-02', 
-          y: 110,
-          label: "potential doop de doop",
-        },
-        {
-          x: '2015-11-05', 
-          y: 100,
-          label: "potential nope",
-        },
-      ]
-    }]
-}
-
 const Visualizer = (props) => {
 
-  const [isAuthenticated, setIsAuthenticated] = useOutletContext();
-  const [isVisualizerDataProcessed, setIsVisualizerDataProcessed] = useOutletContext();
+  const [isAuthenticated, setIsAuthenticated, 
+     isVisualizerDataProcessed, setIsVisualizerDataProcessed,
+     visualizerData, setVisualizerData ] = useOutletContext();
 
-  var data;
+  var data = null;
 
   // When isAuthenticated state changes, load our data
   useEffect(() => {
-    console.log(`useEffect isVisualizerDataProcessed = ${isVisualizerDataProcessed}`);
-    if (isVisualizerDataProcessed) { 
-      // data = { datasets: createDataSets(dummyProcessedData, minChartLines, maxChartLines), }
-      data = dummyProcessedData;
-    } else {
-      data = dumbestData;
-    }
-  }, [isVisualizerDataProcessed]);
+    console.log(`useEffect from change in visualizerData...`);
+  }, [visualizerData]);
 
   return (
     <div>
@@ -87,12 +59,11 @@ const Visualizer = (props) => {
       { isAuthenticated ? 
         <>
         Logged in...
-        <Line data={dummyProcessedData} options={options}/> 
         </> : <>
         Please click the google-login button to configure data access.
-        <Line data={dumbestData} options={options}/> 
         </>
         }
+      <Line data={visualizerData} options={options}/> 
     </div>
   );
 }

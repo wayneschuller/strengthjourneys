@@ -14,16 +14,11 @@ import axios from 'axios';
 import { parseData } from './parseData';
 
 import { 
+  processData,
   processedData,
-  chartClickHandler, 
-  chartTitle, 
-  liftAnnotations, 
-  padDateMin, padDateMax, 
-  unitType, 
-  processData
 } from "../components/visualizerDataProcessing";
 
-export const loadGSheetData = async (tokenResponse, ssid) => {
+export const loadGSheetData = async (tokenResponse, ssid, setVisualizerData) => {
 
   console.log("loadGSheetData()...");
   // FIXME: Firstly do a metadata check api request for modified time.
@@ -42,7 +37,11 @@ export const loadGSheetData = async (tokenResponse, ssid) => {
   // Now we have good rawData we should parse it.
   parseData(rawData.values);
 
-  processData();   // FIXME: I'd prefer to do this in the visualiser component?
+  processData();   // FIXME: Check return value
+
+  // Set the useState variable to updated chart component here?
+  console.log(`Everything processed for sure. Calling setVisualizerData()...`);
+  setVisualizerData(processedData);
 
   return true;
 }

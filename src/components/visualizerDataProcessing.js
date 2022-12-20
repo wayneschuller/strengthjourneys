@@ -210,6 +210,8 @@ export function processData() {
   // Also sort our processedData so the most popular lift types get charts first
   processedData.sort((a, b) => b.e1rmLineData.length - a.e1rmLineData.length);
 
+
+
   // Find achievements and put on chart
   // processAchievements();
 }

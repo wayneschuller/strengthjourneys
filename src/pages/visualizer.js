@@ -47,24 +47,14 @@ const Visualizer = (props) => {
   // When parsedData changes, let's process it for our visualizer
   useEffect(() => {
     console.log(`useEffect parsedData changed...`);
-
     if (!parsedData) return; // nothing further to do
-
     console.log(`useEffect: Attempting to process visualizer data...: ${JSON.stringify(parsedData[0])}`);
-    let processed = processVisualizerData(parsedData);  
+    let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
     var wrapper = {
-      datasets: processed,
+      datasets: createDataSets(processed, minChartLines, maxChartLines)
     }
-    console.log(JSON.stringify(wrapper));
     setVisualizerData(wrapper);
-    // setVisualizerData(dummyProcessedData);
-  }, [parsedData])
-
-  // When isAuthenticated state changes, load our data
-  // Not really needed - the React line chart component auto updates
-  useEffect(() => {
-    console.log(`useEffect visualizerData changed...`);
-  }, [visualizerData]);
+  }, [parsedData, setVisualizerData])
 
   return (
     <div>
@@ -76,7 +66,7 @@ const Visualizer = (props) => {
         Please click the google-login button (top right) to configure data access.
         </>
         }
-      <Line data={visualizerData} options={options}/> 
+      <Line data={visualizerData} options={chartOptions}/> 
     </div>
   );
 }
@@ -84,7 +74,7 @@ const Visualizer = (props) => {
 export default Visualizer;
 
 // Line Chart Options
-export const options = {
+export const chartOptions = {
   responsive: true,
 
   font: {
@@ -96,6 +86,7 @@ export const options = {
     title: {
       display: true,
       text: 'Chart.js Line Chart',
+      font: { size: 20 },
     },
 
     legend: {
@@ -135,16 +126,6 @@ export const options = {
 // We expect array format of grid data[][]
 // ----------------------------------------------------------------------
 function createChart(data) {
-  // parseData(data); // get our source data into rawLiftData
-
-  // Process rawLiftData into our processedData structure
-  // processRawLiftData();
-
-  // If we already have a chart, just update it.
-  // if (myChart !== null) {
-    // myChart.update();
-    // return;
-  // }
 
   // Use the most popular lift to set some aesthetic x-axis padding at start and end
   // Right now only do this once on first csv load.
@@ -285,12 +266,9 @@ export function getChartConfig() {
 // max = number of data sets to create
 // min = the default number that display (the rest will begin hidden)
 function createDataSets(processedData, min, max) {
-  const dataSets = [];
+  var dataSets = [];
 
   console.log("createDataSets()...");
-
-  // FIXME: check if we have parsed data?
-  // processData();   // This is our first chance to process our parsed Data
 
   let hidden = false;
 
@@ -304,9 +282,9 @@ function createDataSets(processedData, min, max) {
     if (i >= min) hidden = true; // Initially hide the lines above the minimum
 
     // Check if we have this data to chart, then push it on
-    if (processedData[i] && processedData[i].name && processedData[i].e1rmLineData)
+    if (processedData[i] && processedData[i].label && processedData[i].data)
       dataSets.push({
-        label: processedData[i].name,
+        label: processedData[i].label,
         backgroundColor: color,
         borderColor: "rgb(50, 50, 50)",
         borderWidth: 2,
@@ -316,7 +294,7 @@ function createDataSets(processedData, min, max) {
         hoverRadius: 10,
         cubicInterpolationMode: "monotone",
         hidden: hidden,
-        data: processedData[i].e1rmLineData,
+        data: processedData[i].data,
       });
   }
   return dataSets;

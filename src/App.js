@@ -51,7 +51,7 @@ export default function App() {
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
      <Box sx={{ m: 1 }} md={{ m: 3}} >
-       <Container maxWidth="lg" sx={{ borderRadius: '6px', border: '1px solid grey', boxShadow: '13', backgroundColor: 'palette.secondary.light' }}>
+       <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', boxShadow: '13', backgroundColor: 'palette.secondary.light' }}>
         <Outlet 
           context={[isAuthenticated, parsedData, visualizerData, setVisualizerData]} 
         />

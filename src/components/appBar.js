@@ -91,7 +91,7 @@ function ResponsiveAppBar(props) {
       // FIXME: Firstly do a metadata check api request for modified time.
     
       // Attempt to load gsheet values 
-      const result = await axios
+      await axios
         .get(`https://sheets.googleapis.com/v4/spreadsheets/${cookies.ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         })
@@ -101,12 +101,12 @@ function ResponsiveAppBar(props) {
           let parsedData = parseData(response.data.values);
           console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
           setParsedData(parsedData);
-          setDataSourceStatus("Data Source Connected and Parsed");
+          setDataSourceStatus("Data Source Connected");
         })
       }
 
     loadGSheetValues();
-  }, [tokenResponse])
+  }, [tokenResponse, cookies.ssid, setParsedData])
 
 
   // Google API scopes required to read one google sheet

@@ -1,7 +1,6 @@
 import { React, useEffect } from 'react';
 import { useOutletContext } from "react-router-dom";
 
-import 'chartjs-adapter-date-fns';
 
 // import { 
   // Chart as ChartJS, 
@@ -16,6 +15,8 @@ import 'chartjs-adapter-date-fns';
 
 import 'chart.js/auto';
 import { Line } from 'react-chartjs-2';
+import 'chartjs-adapter-date-fns';
+import {enGB} from 'date-fns/locale';
 
 import { 
   chartClickHandler, 
@@ -59,35 +60,31 @@ const Visualizer = (props) => {
     setVisualizerData(wrapper);
   }, [parsedData, setVisualizerData])
 
-  return (
-    <div>
-      <h2>Strength Visualizer</h2>
-      { parsedData ? 
-        <>
-        Logged in...
-        </> : <>
-        Please click the google-login button (top right) to configure data access.
-        </>
-        }
-      <Line data={visualizerData} options={chartOptions}/> 
-    </div>
-  );
-}
-
-export default Visualizer;
-
-// Line Chart Options for react-chartjs-2 Visualizer 
-export const chartOptions = {
-  responsive: true,
-
-  font: {
-    family: "Catamaran",
-  },
-
+  // Line Chart Options for react-chartjs-2 Visualizer 
+  const chartOptions = {
+    responsive: true,
+    scales: {
+      x: {
+        adapters: {
+          date: {locale: enGB},
+        },
+          type: "time",
+          distribution: "linear",
+          time: {
+            parser: "yyyy-MM-dd",
+            unit: "month"
+          },
+      },
+      y: {
+        suggestedMin: 0,
+        ticks: {
+          font: { size: 15 },
+        },
+      },
+    },
   plugins: {
-
     title: {
-      display: true,
+      display: false,
       text: 'Chart.js Line Chart',
       font: { size: 20 },
     },
@@ -100,28 +97,19 @@ export const chartOptions = {
         },
       },
     },
-
-    scales: {
-      xAxis: {
-        type: "time",
-        // suggestedMin: padDateMin,
-        // suggestedMax: padDateMax,
-        time: {
-          minUnit: "day",
-        },
-      },
-      yAxis: {
-        suggestedMin: 0,
-        ticks: {
-          font: { size: 15 },
-          callback: (value) => {
-            // return `${value}${unitType}`;
-          },
-        },
-      },
-    },
-  },
+  }
 };
+
+
+  return (
+    <div>
+      <h2>Strength Visualizer</h2>
+      <Line data={visualizerData} options={chartOptions}/> 
+    </div>
+  );
+}
+
+export default Visualizer;
 
 // FIXME: some old functionality remaining here that needs to be ported
 function createChart(data) {

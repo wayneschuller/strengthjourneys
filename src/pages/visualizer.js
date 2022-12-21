@@ -1,4 +1,4 @@
-import { React, useEffect } from 'react';
+import { React, useState, useEffect } from 'react';
 import { useOutletContext } from "react-router-dom";
 
 
@@ -29,9 +29,6 @@ import {
 
 import { dummyProcessedData } from '../components/visualizerDataProcessing';
 
-// FIXME: make this configurable via UI
-export let minChartLines = 3; // How many lifts to show by default
-export let maxChartLines = 8; // Maximum number to graph - we will order by most popular lifts.
 
 const basicColors = ["#ae2012", "#ee9b00", "#03045e", "#0a9396"];
 
@@ -48,6 +45,8 @@ const basicColors = ["#ae2012", "#ee9b00", "#03045e", "#0a9396"];
 const Visualizer = (props) => {
 
   const [parsedData, visualizerData, setVisualizerData ] = useOutletContext();
+  const [minChartLines, setMinChartLines] = useState(3);
+  const [maxChartLines, saxMinChartLines] = useState(8);
 
   // When parsedData changes, let's process it for our visualizer
   useEffect(() => {
@@ -56,7 +55,7 @@ const Visualizer = (props) => {
     console.log(`useEffect: Attempting to process visualizer data...: ${JSON.stringify(parsedData[0])}`);
     let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
     var wrapper = {
-      datasets: createDataSets(processed, minChartLines, maxChartLines)
+      datasets: generateDatasets(processed, minChartLines, maxChartLines)
     }
     setVisualizerData(wrapper);
   }, [parsedData, setVisualizerData])
@@ -256,7 +255,7 @@ export function getChartConfig() {
 // Push our first num visualizer processedData into chart.js datasets
 // max = number of data sets to create
 // min = the default number that display (the rest will begin hidden)
-function createDataSets(processedData, min, max) {
+function generateDatasets(processedData, min, max) {
   var dataSets = [];
 
   console.log("createDataSets()...");
@@ -320,22 +319,4 @@ function createAchievementAnnotation(date, weight, text, background, datasetInde
 }
 
 // Show/hide the chart.js achievement annotations on the chart
-function toggleAchievements() {
-  const toggleInput = document.getElementById("toggleAchievements");
-  if (toggleInput.value === "Hide") {
-    // The user wants to hide achievements overlay
-    // myChart.config.options.plugins.annotation.annotations = null;
-
-    // Change the toggle button
-    toggleInput.value = "Show";
-    toggleInput.innerHTML = "Show Achievements";
-  } else {
-    // The user wants to show achievements overlay
-    // myChart.config.options.plugins.annotation.annotations = liftAnnotations;
-
-    // Change the toggle button
-    toggleInput.value = "Hide";
-    toggleInput.innerHTML = "Hide Achievements";
-  }
-  // myChart.update();
-}
+// function toggleAchievements() {

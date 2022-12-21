@@ -4,11 +4,6 @@
 //
 // Process our parsedData into chart.js ready format for the Strength Visualizer
 
-import { 
-  minChartLines,
-  maxChartLines
-} from "../pages/visualizer";
-
 export const dummyProcessedData = {
   datasets: [
   {
@@ -106,7 +101,7 @@ let equation = "Brzycki"; // Our favourite preferred equation - it does not over
 export function processVisualizerData(parsedData) {
   console.log("processVisualizerData()...");
 
-  const processedData = []; // See the dummyProcessedData for our expected data structure
+  const processedData = []; // See dummyProcessedData[] for the end result 
 
   for (const lift of parsedData) {
     const liftIndex = getProcessedLiftIndex(processedData, lift.name);
@@ -196,7 +191,8 @@ export function processVisualizerData(parsedData) {
   });
 
   // We now know how many lift types we have. So reduce the number of expected chart lines if needed.
-  // 202212 FIXME: logic not right and js dumbness
+  // This is needed for new users who only have 1 or 2 lifts (anything less than minChartLines)
+  // 202212 FIXME: logic not right and js dumbness - maybe we can deal with this up at the Visualizer component level
   // if (processedData.length < minChartLines) minChartLines = processedData.length;
 
   // Every element of processedData now has a data array of chart tuples
@@ -222,7 +218,7 @@ function processAchievements(parsedData, processedData) {
   // For each lift find achievements
   processedData.forEach((liftType, index) => {
     // Clear old afterLabels with achievements so we can recreate them
-    if (index >= maxChartLines) return; // Achievements and annotations only useful where we have chart lines
+    // if (index >= maxChartLines) return; // Achievements and annotations only useful where we have chart lines
     liftType.e1rmLineData.forEach((lift) => {
       lift.afterLabel.splice(0, lift.afterLabel.length); // empty array
       if (lift.notes) lift.afterLabel.push(lift.notes); // Put any notes back in first

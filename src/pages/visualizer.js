@@ -29,7 +29,6 @@ import {
 
 import { dummyProcessedData } from '../components/visualizerDataProcessing';
 
-
 const basicColors = ["#ae2012", "#ee9b00", "#03045e", "#0a9396"];
 
 // ChartJS.register(
@@ -46,7 +45,7 @@ const Visualizer = (props) => {
 
   const [parsedData, visualizerData, setVisualizerData ] = useOutletContext();
   const [minChartLines, setMinChartLines] = useState(3);
-  const [maxChartLines, saxMinChartLines] = useState(8);
+  const [maxChartLines, setMaxChartLines] = useState(8);
 
   // When parsedData changes, let's process it for our visualizer
   useEffect(() => {

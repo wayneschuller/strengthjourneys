@@ -9,9 +9,6 @@ import {
   maxChartLines
 } from "../pages/visualizer";
 
-import { parsedData } from "./parseData";
-
-// Global variables
 export const dummyProcessedData = {
   datasets: [
   {
@@ -109,7 +106,7 @@ let equation = "Brzycki"; // Our favourite preferred equation - it does not over
 export function processVisualizerData(parsedData) {
   console.log("processVisualizerData()...");
 
-  const processedData = []; // Array with one element per lift type of charts.js graph friendly data and special achievements
+  const processedData = []; // See the dummyProcessedData for our expected data structure
 
   for (const lift of parsedData) {
     const liftIndex = getProcessedLiftIndex(processedData, lift.name);
@@ -132,7 +129,7 @@ export function processVisualizerData(parsedData) {
     );
 
     if (dateIndex === -1) {
-      // Push new lift on this new date (in chartjs friendly format)
+      // Push new lift tuple on this new date (in chartjs friendly format)
       processedData[liftIndex].data.push({
         x: lift.date,
         y: oneRepMax,
@@ -218,7 +215,7 @@ export function processVisualizerData(parsedData) {
 }
 
 // Find interesting achievements
-function processAchievements(processedData) {
+function processAchievements(parsedData, processedData) {
   // Clear old chart annotations
   for (var member in liftAnnotations) delete liftAnnotations[member];
 
@@ -324,7 +321,7 @@ function estimateE1RM(reps, weight) {
 // Prepare for a data source reload while preserving as much chart as possible.
 // Normally used when we refresh the data from google sheets.
 // FIXME: this function should be in parseData.js
-function prepareDataRefresh(processedData, replaceData) {
+function prepareDataRefresh(parsedData, processedData, replaceData) {
   // Empty the parsedData array
   // This assumes we are loading a similar dataset.
   // Do not do this when concatenatng a complementary data source.

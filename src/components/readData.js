@@ -10,36 +10,9 @@
 //
 // In the future we could support another spreadsheet or fitness app API
 
-import axios from 'axios';
-import { parseData } from './parseData';
 
-import { 
-  processData,
-  processedData,
-} from "../components/visualizerDataProcessing";
+// FIXME: We had loadGSheetData here but it got merged over into a useEffect in appBar.js
 
-export const loadGSheetData = async (tokenResponse, ssid, setVisualizerData) => {
-
-  console.log("loadGSheetData()...");
-  // FIXME: Firstly do a metadata check api request for modified time.
-
-  // Attempt to load gsheet data
-  let rawData = await axios
-    .get(`https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
-      headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-    })
-    .then(res => res.data);
-
-  // FIXME: check for errors and fail nicely
-
-  console.log(rawData);
-
-  // Some things here we are moving up into React useEffect
-  // parseData(rawData.values);
-  //processData();   
-
-  return(rawData.values);
-}
 
 // Callback function for html upload file button
 // Use Papaparse to process whatever file is given via the html file picker

@@ -1,17 +1,20 @@
 import { React, useEffect } from 'react';
 import { useOutletContext } from "react-router-dom";
 
-import { 
-  Chart as ChartJS, 
-  Title,
-  CategoryScale,
-  LinearScale,
-  LineElement, 
-  PointElement, 
-  Tooltip, 
-  Legend 
-} from 'chart.js';
+import 'chartjs-adapter-date-fns';
 
+// import { 
+  // Chart as ChartJS, 
+  // Title,
+  // CategoryScale,
+  // LinearScale,
+  // LineElement, 
+  // PointElement, 
+  // Tooltip, 
+  // Legend 
+// } from 'chart.js';
+
+import 'chart.js/auto';
 import { Line } from 'react-chartjs-2';
 
 import { 
@@ -30,15 +33,15 @@ export let maxChartLines = 8; // Maximum number to graph - we will order by most
 
 const basicColors = ["#ae2012", "#ee9b00", "#03045e", "#0a9396"];
 
-ChartJS.register(
-  Title,
-  CategoryScale,
-  LinearScale,
-  LineElement, 
-  PointElement, 
-  Tooltip, 
-  Legend 
-);
+// ChartJS.register(
+  // Title,
+  // CategoryScale,
+  // LinearScale,
+  // LineElement, 
+  // PointElement, 
+  // Tooltip, 
+  // Legend 
+// );
 
 const Visualizer = (props) => {
 

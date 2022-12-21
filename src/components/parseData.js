@@ -71,6 +71,11 @@ export function parseData(data) {
 
   console.log(`Bespoke format detected. Parsing each row...`);
   data.forEach(parseBespokeRow, parsedData);
+
+  // Sort parsedData by date.
+  // FIXME: Do we need this? 
+  // parsedData.sort((a, b) => new Date(a.Date) - new Date(b.Date));
+
   return(parsedData);
 }
 

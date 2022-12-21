@@ -21,7 +21,6 @@ import useDrivePicker from 'react-google-drive-picker'
 import { useCookies } from 'react-cookie';
 import axios from 'axios';
 
-import { loadGSheetData } from './readData';
 import { parseData } from './parseData';
 
 // Array of main menu items
@@ -45,7 +44,7 @@ function ResponsiveAppBar(props) {
   const [userInfo, setUserInfo] = useState(null);  // .name .picture (from Google userinfo API)
 
   // These next four could be grouped into one dataSource object?
-  const [tokenResponse, setTokenResponse] = useState(null); // FIXME: This should replace every instance of isAuthenticated
+  const [tokenResponse, setTokenResponse] = useState(null); 
   const [dataSourceStatus, setDataSourceStatus] = useState("Choose Data Source");
   const [dataSourceName, setDataSourceName] = useState(null);
 
@@ -104,7 +103,7 @@ function ResponsiveAppBar(props) {
       }
 
     loadGSheetValues();
-  }, [tokenResponse, cookies.ssid, setParsedData])
+  }, [tokenResponse, cookies, setParsedData])
 
 
   // Google API scopes required to read one google sheet
@@ -152,11 +151,6 @@ function ResponsiveAppBar(props) {
         }
 
         setDataSourceName(data.docs[0].name);
-
-        // Load the gsheet data
-        if (loadGSheetData(tokenResponse, data.docs[0].id)) {
-          setDataSourceStatus("Data Source Connected");
-        }
 
         // park the ssid in the browser cookie for next session
         let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now

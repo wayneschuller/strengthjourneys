@@ -40,11 +40,9 @@ function ResponsiveAppBar(props) {
   const [cookies, setCookie] = useCookies(['ssid']);
 
   // We inherit this state from <App /> which then shares with subpages
-  let isAuthenticated = props.isAuthenticated;
-  let setIsAuthenticated = props.setIsAuthenticated;
   let setParsedData = props.setParsedData;
 
-  const [userInfo, setUserInfo] = useState(null);  // .name .picture 
+  const [userInfo, setUserInfo] = useState(null);  // .name .picture (from Google userinfo API)
 
   // These next four could be grouped into one dataSource object?
   const [tokenResponse, setTokenResponse] = useState(null); // FIXME: This should replace every instance of isAuthenticated
@@ -74,7 +72,7 @@ function ResponsiveAppBar(props) {
     console.log("Logging out of google...");
     googleLogout();
     setAnchorElUser(null);
-    setIsAuthenticated(false);
+    setUserInfo(null);
   };
 
   useEffect(() => {
@@ -119,21 +117,18 @@ function ResponsiveAppBar(props) {
       console.log(tokenResponse);
 
       // REST request to get user info from our token (we show avatar on navbar top right)
-      const userInfo = await axios
+      await axios
         .get('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         })
-        // .then(res => res.data);
         .then((response) => {
           // handle success
-          console.log(`axios .then response.data: ${JSON.stringify(response.data)}`);
+          // console.log(`axios .then response.data: ${JSON.stringify(response.data)}`);
           setUserInfo(response.data); 
         })
 
       setTokenResponse(tokenResponse);
-      setIsAuthenticated(true);
       setDataSourceStatus("Select Data Source");
-      console.log(userInfo);
     },
     onError: errorResponse => console.log(errorResponse),
   });  
@@ -275,7 +270,7 @@ function ResponsiveAppBar(props) {
 
 
           {/* User profile info on right hand side of the navbar */}
-          { isAuthenticated ?  
+          { userInfo ?  
             <>
               <Tooltip title={dataSourceName}>
               <Chip 

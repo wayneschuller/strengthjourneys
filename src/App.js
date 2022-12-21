@@ -10,10 +10,10 @@ import ResponsiveAppBar from './components/appBar';
 
 export default function App() {
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // FIXME: Needs to be replaced with existing tokenResponse 
+  const [parsedData, setParsedData] = useState(null);  // A set of parsed lifting data
 
-  const [parsedData, setParsedData] = useState(null);
-
+  // visualizerData with some dummy defaults
+  // This is estimated one rep max data + extra analysis for the visualizer
   const [visualizerData, setVisualizerData] = useState ({
     datasets: [{
       label: "Back Squat Sample Data",
@@ -41,9 +41,6 @@ export default function App() {
     <div>
 
      <ResponsiveAppBar 
-      isAuthenticated={isAuthenticated} 
-      setIsAuthenticated={setIsAuthenticated} 
-      parsedData={parsedData}
       setParsedData={setParsedData}
      />
 
@@ -53,7 +50,7 @@ export default function App() {
      <Box sx={{ m: 1 }} md={{ m: 3}} >
        <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', boxShadow: '13', backgroundColor: 'palette.secondary.light' }}>
         <Outlet 
-          context={[isAuthenticated, parsedData, visualizerData, setVisualizerData]} 
+          context={[parsedData, visualizerData, setVisualizerData]} 
         />
        </Container>
      </Box>

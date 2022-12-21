@@ -42,7 +42,7 @@ ChartJS.register(
 
 const Visualizer = (props) => {
 
-  const [isAuthenticated, parsedData, visualizerData, setVisualizerData ] = useOutletContext();
+  const [parsedData, visualizerData, setVisualizerData ] = useOutletContext();
 
   // When parsedData changes, let's process it for our visualizer
   useEffect(() => {
@@ -59,7 +59,7 @@ const Visualizer = (props) => {
   return (
     <div>
       <h2>Strength Visualizer</h2>
-      { isAuthenticated ? 
+      { parsedData ? 
         <>
         Logged in...
         </> : <>
@@ -73,7 +73,7 @@ const Visualizer = (props) => {
 
 export default Visualizer;
 
-// Line Chart Options
+// Line Chart Options for react-chartjs-2 Visualizer 
 export const chartOptions = {
   responsive: true,
 
@@ -120,11 +120,7 @@ export const chartOptions = {
   },
 };
 
-// ----------------------------------------------------------------------
-// createChart - visualize strength history chart
-// Takes data array from either CSV file (papaparse) or Google Sheets API
-// We expect array format of grid data[][]
-// ----------------------------------------------------------------------
+// FIXME: some old functionality remaining here that needs to be ported
 function createChart(data) {
 
   // Use the most popular lift to set some aesthetic x-axis padding at start and end
@@ -135,10 +131,6 @@ function createChart(data) {
   // padDateMax = new Date(processedData[0].e1rmLineData[processedData[0].e1rmLineData.length - 1].x);
   padDateMax = padDateMax.setDate(padDateMax.getDate() + 14);
 
-  // Create the chart.js chart
-  // let canvas = document.getElementById("myChartCanvas");
-  // myChart = new Chart(canvas, getChartConfig());
-
   // Set the zoom/pan to the last 6 months of data if we have that much
   let xAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
   if (xAxisMin < padDateMin) xAxisMin = padDateMin;
@@ -147,7 +139,7 @@ function createChart(data) {
 }
 
 
-// Setup a charts.js chart.
+// The OLD project config - here for reference while porting
 export function getChartConfig() {
   // const data = {
     // datasets: createDataSets(minChartLines, maxChartLines),
@@ -178,7 +170,6 @@ export function getChartConfig() {
   const config = {
     type: "line",
     // plugins: [ChartDataLabels],
-    // data: data,
     options: {
       onClick: chartClickHandler,
       plugins: {

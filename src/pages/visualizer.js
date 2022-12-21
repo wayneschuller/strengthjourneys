@@ -13,10 +13,10 @@ import { useOutletContext } from "react-router-dom";
   // Legend 
 // } from 'chart.js';
 
-import 'chart.js/auto';
 import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
-import {enGB} from 'date-fns/locale';
+import 'chartjs-plugin-zoom';
+import 'chart.js/auto';
 
 import { 
   chartClickHandler, 
@@ -29,6 +29,7 @@ import {
 
 import { dummyProcessedData } from '../components/visualizerDataProcessing';
 
+// FIXME: make this configurable via UI
 export let minChartLines = 3; // How many lifts to show by default
 export let maxChartLines = 8; // Maximum number to graph - we will order by most popular lifts.
 
@@ -61,18 +62,15 @@ const Visualizer = (props) => {
   }, [parsedData, setVisualizerData])
 
   // Line Chart Options for react-chartjs-2 Visualizer 
+  const zoomMinTimeRange = 1000 * 60 * 60 * 24 * 60; // 60 days limit to zoom in
   const chartOptions = {
     responsive: true,
     scales: {
       x: {
-        adapters: {
-          date: {locale: enGB},
-        },
           type: "time",
           distribution: "linear",
           time: {
-            parser: "yyyy-MM-dd",
-            unit: "month"
+            minUnit: "day"
           },
       },
       y: {
@@ -82,24 +80,35 @@ const Visualizer = (props) => {
         },
       },
     },
-  plugins: {
-    title: {
-      display: false,
-      text: 'Chart.js Line Chart',
-      font: { size: 20 },
-    },
 
-    legend: {
-      position: 'top',
-      labels: {
-        font: {
-          size: 18,
+    plugins: {
+      title: {
+        display: false,
+        text: 'Chart.js Line Chart',
+        font: { size: 20 },
+      },
+
+      legend: {
+        position: 'top',
+        labels: {
+          font: {
+            size: 18,
+          },
         },
       },
-    },
-  }
-};
 
+    zoom: {
+    zoom: {
+      enabled: true,
+      mode: 'x',
+    },
+    pan: {
+      enabled: true,
+      mode: 'x',
+    },
+    },
+    }
+  };
 
   return (
     <div>

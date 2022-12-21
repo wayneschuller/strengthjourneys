@@ -10,8 +10,9 @@ import ResponsiveAppBar from './components/appBar';
 
 export default function App() {
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isVisualizerDataProcessed, setIsVisualizerDataProcessed] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // FIXME: Needs to be replaced with existing tokenResponse 
+
+  const [parsedData, setParsedData] = useState(null);
 
   const [visualizerData, setVisualizerData] = useState ({
     datasets: [{
@@ -42,10 +43,8 @@ export default function App() {
      <ResponsiveAppBar 
       isAuthenticated={isAuthenticated} 
       setIsAuthenticated={setIsAuthenticated} 
-      isVisualizerDataProcessed={isVisualizerDataProcessed} 
-      setIsVisualizerDataProcessed={setIsVisualizerDataProcessed} 
-      visualizerData={visualizerData} 
-      setVisualizerData={setVisualizerData}
+      parsedData={parsedData}
+      setParsedData={setParsedData}
      />
 
       {/* An <Outlet> renders whatever child route is currently active,
@@ -54,7 +53,7 @@ export default function App() {
      <Box sx={{ m: 1 }} md={{ m: 3}} >
        <Container maxWidth="lg" sx={{ borderRadius: '6px', border: '1px solid grey', boxShadow: '13', backgroundColor: 'palette.secondary.light' }}>
         <Outlet 
-          context={[isAuthenticated, setIsAuthenticated, isVisualizerDataProcessed, setIsVisualizerDataProcessed, visualizerData, setVisualizerData]} 
+          context={[isAuthenticated, parsedData, visualizerData, setVisualizerData]} 
         />
        </Container>
      </Box>

@@ -97,7 +97,6 @@ export const dummyProcessedData = {
   }]
 };
 
-export const processedData = []; // Array with one element per lift type of charts.js graph friendly data and special achievements
 export const liftAnnotations = {}; // chart.js annotations plugin config for special achivements such as 1RM, 3RM, 5RM.
 export let myChart = null;
 export let chartTitle = "Strength History";
@@ -107,11 +106,13 @@ let equation = "Brzycki"; // Our favourite preferred equation - it does not over
 
 // Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
 // We collect only the best set per lift type per day, according to highest estimated one rep max
-export function processData() {
-  console.log("processData()...");
+export function processVisualizerData(parsedData) {
+  console.log("processVisualizerData()...");
+
+  const processedData = []; // Array with one element per lift type of charts.js graph friendly data and special achievements
 
   for (const lift of parsedData) {
-    const liftIndex = getProcessedLiftIndex(lift.name);
+    const liftIndex = getProcessedLiftIndex(processedData, lift.name);
 
     // Main task - find the best e1rm estimate on this date
     let oneRepMax = estimateE1RM(lift.reps, lift.weight);
@@ -126,13 +127,13 @@ export function processData() {
     if (!url) url = "";
 
     // Do we already have any processed data on this date?
-    let dateIndex = processedData[liftIndex].e1rmLineData.findIndex(
+    let dateIndex = processedData[liftIndex].data.findIndex(
       (processedLift) => processedLift.x === lift.date
     );
 
     if (dateIndex === -1) {
       // Push new lift on this new date (in chartjs friendly format)
-      processedData[liftIndex].e1rmLineData.push({
+      processedData[liftIndex].data.push({
         x: lift.date,
         y: oneRepMax,
         label: label,
@@ -151,33 +152,33 @@ export function processData() {
     // Handle a number of cases where the parsed lift date has a date match in the processed graph data.
 
     // If we are changing equation method, then update the y value
-    if (processedData[liftIndex].e1rmLineData[dateIndex].method !== equation) {
-      processedData[liftIndex].e1rmLineData[dateIndex].y = oneRepMax;
-      processedData[liftIndex].e1rmLineData[dateIndex].method = equation;
+    if (processedData[liftIndex].data[dateIndex].method !== equation) {
+      processedData[liftIndex].data[dateIndex].y = oneRepMax;
+      processedData[liftIndex].data[dateIndex].method = equation;
       continue; // Continue iterating through parsedData
     }
 
     // If this processed lift is stale and is the same e1rm/date as this parsed lift, then refresh it
     // This is important for refreshing data from Google Sheets
     if (
-      processedData[liftIndex].e1rmLineData[dateIndex].isUpdated === false &&
-      oneRepMax === processedData[liftIndex].e1rmLineData[dateIndex].y
+      processedData[liftIndex].data[dateIndex].isUpdated === false &&
+      oneRepMax === processedData[liftIndex].data[dateIndex].y
     ) {
-      processedData[liftIndex].e1rmLineData[dateIndex].isUpdated = true;
+      processedData[liftIndex].data[dateIndex].isUpdated = true;
       continue; // Continue iterating through parsedData
     }
 
     // If the parsed lift e1rm is higher than what we had on this date, then update.
     // Because our chart always has the best lift per day
-    if (oneRepMax > processedData[liftIndex].e1rmLineData[dateIndex].y) {
-      processedData[liftIndex].e1rmLineData[dateIndex].y = oneRepMax;
-      processedData[liftIndex].e1rmLineData[dateIndex].label = label;
-      processedData[liftIndex].e1rmLineData[dateIndex].notes = lift.notes;
-      processedData[liftIndex].e1rmLineData[dateIndex].method = equation;
-      processedData[liftIndex].e1rmLineData[dateIndex].isUpdated = true;
-      processedData[liftIndex].e1rmLineData[dateIndex].url = url;
-      processedData[liftIndex].e1rmLineData[dateIndex].reps = lift.reps;
-      processedData[liftIndex].e1rmLineData[dateIndex].weight = lift.weight;
+    if (oneRepMax > processedData[liftIndex].data[dateIndex].y) {
+      processedData[liftIndex].data[dateIndex].y = oneRepMax;
+      processedData[liftIndex].data[dateIndex].label = label;
+      processedData[liftIndex].data[dateIndex].notes = lift.notes;
+      processedData[liftIndex].data[dateIndex].method = equation;
+      processedData[liftIndex].data[dateIndex].isUpdated = true;
+      processedData[liftIndex].data[dateIndex].url = url;
+      processedData[liftIndex].data[dateIndex].reps = lift.reps;
+      processedData[liftIndex].data[dateIndex].weight = lift.weight;
       continue; // Continue iterating through parsedData
     }
   }
@@ -189,10 +190,10 @@ export function processData() {
   // Remove any left over stale items (needed for refreshing data from Google Sheets)
   processedData.forEach((liftType) => {
     // Loop backwards through e1rmLineData mutating it to remove stale entries
-    for (let i = liftType.e1rmLineData.length - 1; i >= 0; i--) {
-      if (liftType.e1rmLineData[i].isUpdated === false) {
-        // console.log(`Found stale ${liftType.name} graph entry #${i} is ${JSON.stringify(liftType.e1rmLineData[i])}`);
-        liftType.e1rmLineData.splice(i, 1);
+    for (let i = liftType.data.length - 1; i >= 0; i--) {
+      if (liftType.data[i].isUpdated === false) {
+        // console.log(`Found stale ${liftType.name} graph entry #${i} is ${JSON.stringify(liftType.data[i])}`);
+        liftType.data.splice(i, 1);
       }
     }
   });
@@ -201,14 +202,14 @@ export function processData() {
   // 202212 FIXME: logic not right and js dumbness
   // if (processedData.length < minChartLines) minChartLines = processedData.length;
 
-  // Every element of processedData now has a e1rmLineData array
-  // Let's sort each e1rmLineData array by date (x entry) so it draws lines correctly
+  // Every element of processedData now has a data array of chart tuples
+  // Let's sort each data array by date (x entry) so it draws lines correctly
   // (FIXME: write a custom YYYY-MM-DD compare function as 'new Date' in a sort function is frowned upon)
   // FIXME: if we presort parsedData, then e1rmLineData will already be sorted
-  processedData.forEach((arr) => arr.e1rmLineData.sort((a, b) => new Date(a.x) - new Date(b.x)));
+  processedData.forEach((arr) => arr.data.sort((a, b) => new Date(a.x) - new Date(b.x)));
 
   // Also sort our processedData so the most popular lift types get charts first
-  processedData.sort((a, b) => b.e1rmLineData.length - a.e1rmLineData.length);
+  processedData.sort((a, b) => b.data.length - a.data.length);
 
   return(processedData);
 
@@ -217,7 +218,7 @@ export function processData() {
 }
 
 // Find interesting achievements
-function processAchievements() {
+function processAchievements(processedData) {
   // Clear old chart annotations
   for (var member in liftAnnotations) delete liftAnnotations[member];
 
@@ -232,7 +233,7 @@ function processAchievements() {
     });
 
     // Get the parsed data for just this lift type
-    const lifts = parsedData.filter((lift) => lift.name === liftType.name);
+    const lifts = parsedData.filter((lift) => lift.label === liftType.name);
 
     findPRs(lifts, 1, "single", index);
 
@@ -243,7 +244,7 @@ function processAchievements() {
 }
 
 // Helper function to find top 20 singles, threes and fives for each main lift
-function findPRs(rawLifts, reps, prName, datasetIndex) {
+function findPRs(processedData, rawLifts, reps, prName, datasetIndex) {
   // Filter for this rep style
   let repLifts = rawLifts.filter((lift) => lift.reps === reps);
 
@@ -260,10 +261,10 @@ function findPRs(rawLifts, reps, prName, datasetIndex) {
   // Process the top 20 of this rep style (if we have that many)
   for (let i = 0; i < 20 && i < repLifts.length; i++) {
     // Match the lift to the chart line point.
-    const dateIndex = processedData[datasetIndex].e1rmLineData.findIndex(
+    const dateIndex = processedData[datasetIndex].data.findIndex(
       (lift) => lift.x === repLifts[i].date
     );
-    processedData[datasetIndex].e1rmLineData[dateIndex].afterLabel.push(
+    processedData[datasetIndex].data[dateIndex].afterLabel.push(
       `#${i + 1} best ${name} ${prName} of all time (${reps}@${repLifts[i].weight}${
         repLifts[i].units
       })`
@@ -323,7 +324,7 @@ function estimateE1RM(reps, weight) {
 // Prepare for a data source reload while preserving as much chart as possible.
 // Normally used when we refresh the data from google sheets.
 // FIXME: this function should be in parseData.js
-function prepareDataRefresh(replaceData) {
+function prepareDataRefresh(processedData, replaceData) {
   // Empty the parsedData array
   // This assumes we are loading a similar dataset.
   // Do not do this when concatenatng a complementary data source.
@@ -333,7 +334,7 @@ function prepareDataRefresh(replaceData) {
 
   // Iterate through processedData and mark everything as stale
   processedData.forEach((liftType) => {
-    liftType.e1rmLineData.forEach((lift) => {
+    liftType.data.forEach((lift) => {
       lift.isUpdated = false;
     });
   });
@@ -341,10 +342,10 @@ function prepareDataRefresh(replaceData) {
 
 // Used to detect a click on a graph point and open URL in the data.
 export function chartClickHandler(event, item) {
-  if (item && item.length > 0) {
-    const url = processedData[item[0].datasetIndex].e1rmLineData[item[0].index].url;
-    if (url) window.open(url);
-  }
+  // if (item && item.length > 0) {
+    // const url = processedData[item[0].datasetIndex].e1rmLineData[item[0].index].url;
+    // if (url) window.open(url);
+  // }
 }
 
 // Callback handler for button to easy zoom in and out
@@ -388,7 +389,7 @@ function changeEquation(event, newEquation) {
 
   // Change the global equation and reprocess and draw the data
   equation = newEquation;
-  processData();
+  // processData(); // FIXME 202212 should be processVisualizerData?
   myChart.update();
 
 }
@@ -398,14 +399,14 @@ function changeEquation(event, newEquation) {
 
 // Return the index for the liftType string in our processedData
 // If the lift doesn't exist in processedData, create one.
-function getProcessedLiftIndex(liftType) {
-  let liftIndex = processedData.findIndex((lift) => lift.name === liftType);
+function getProcessedLiftIndex(processedData, liftType) {
+  let liftIndex = processedData.findIndex((lift) => lift.label === liftType);
 
   if (liftIndex === -1) {
     // Create a processedLift data structure for this new lift type
     let processedLiftType = {
-      name: liftType,
-      e1rmLineData: [],
+      label: liftType,
+      data: [],
     };
     liftIndex = processedData.push(processedLiftType) - 1;
   }

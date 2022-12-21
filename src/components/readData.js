@@ -30,16 +30,15 @@ export const loadGSheetData = async (tokenResponse, ssid, setVisualizerData) => 
     })
     .then(res => res.data);
 
-  // FIXME: check for errors and return false if we fail
+  // FIXME: check for errors and fail nicely
 
   console.log(rawData);
 
-  // Now we have good rawData we should parse it.
-  parseData(rawData.values);
+  // Some things here we are moving up into React useEffect
+  // parseData(rawData.values);
+  //processData();   
 
-  //processData();   // FIXME: Check return value
-
-  return true;
+  return(rawData.values);
 }
 
 // Callback function for html upload file button

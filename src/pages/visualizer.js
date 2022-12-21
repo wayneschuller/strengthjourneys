@@ -15,14 +15,15 @@ import {
 import { Line } from 'react-chartjs-2';
 
 import { 
-  processedData,
   chartClickHandler, 
   chartTitle, 
   liftAnnotations, 
   padDateMin, padDateMax, 
   unitType, 
-  processData
+  processVisualizerData
 } from "../components/visualizerDataProcessing";
+
+import { dummyProcessedData } from '../components/visualizerDataProcessing';
 
 export let minChartLines = 3; // How many lifts to show by default
 export let maxChartLines = 8; // Maximum number to graph - we will order by most popular lifts.
@@ -41,11 +42,26 @@ ChartJS.register(
 
 const Visualizer = (props) => {
 
-  const [isAuthenticated, setIsAuthenticated, 
-     isVisualizerDataProcessed, setIsVisualizerDataProcessed,
-     visualizerData, setVisualizerData ] = useOutletContext();
+  const [isAuthenticated, parsedData, visualizerData, setVisualizerData ] = useOutletContext();
+
+  // When parsedData changes, let's process it for our visualizer
+  useEffect(() => {
+    console.log(`useEffect parsedData changed...`);
+
+    if (!parsedData) return; // nothing further to do
+
+    console.log(`useEffect: Attempting to process visualizer data...: ${JSON.stringify(parsedData[0])}`);
+    let processed = processVisualizerData(parsedData);  
+    var wrapper = {
+      datasets: processed,
+    }
+    console.log(JSON.stringify(wrapper));
+    setVisualizerData(wrapper);
+    // setVisualizerData(dummyProcessedData);
+  }, [parsedData])
 
   // When isAuthenticated state changes, load our data
+  // Not really needed - the React line chart component auto updates
   useEffect(() => {
     console.log(`useEffect visualizerData changed...`);
   }, [visualizerData]);
@@ -133,9 +149,9 @@ function createChart(data) {
   // Use the most popular lift to set some aesthetic x-axis padding at start and end
   // Right now only do this once on first csv load.
   // There is a chance loading another data set will require a new range, but unlikely.
-  padDateMin = new Date(processedData[0].e1rmLineData[0].x);
+  // padDateMin = new Date(processedData[0].e1rmLineData[0].x);
   padDateMin = padDateMin.setDate(padDateMin.getDate() - 4);
-  padDateMax = new Date(processedData[0].e1rmLineData[processedData[0].e1rmLineData.length - 1].x);
+  // padDateMax = new Date(processedData[0].e1rmLineData[processedData[0].e1rmLineData.length - 1].x);
   padDateMax = padDateMax.setDate(padDateMax.getDate() + 14);
 
   // Create the chart.js chart

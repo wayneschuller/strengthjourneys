@@ -22,7 +22,7 @@ import { useCookies } from 'react-cookie';
 import axios from 'axios';
 
 import { loadGSheetData } from './readData';
-import { dummyProcessedData } from './visualizerDataProcessing';
+import { parseData } from './parseData';
 
 // Array of main menu items
 const pages = [
@@ -42,15 +42,12 @@ function ResponsiveAppBar(props) {
   // We inherit this state from <App /> which then shares with subpages
   let isAuthenticated = props.isAuthenticated;
   let setIsAuthenticated = props.setIsAuthenticated;
-  let isVisualizerDataProcessed = props.isVisualizerDataProcessed;
-  let setIsVisualizerDataProcessed = props.setIsVisualizerDataProcessed;
-  let visualizerData = props.visualizerData;
-  let setVisualizerData = props.setVisualizerData;
+  let setParsedData = props.setParsedData;
 
   const [userInfo, setUserInfo] = useState(null);  // .name .picture 
 
   // These next four could be grouped into one dataSource object?
-  const [tokenResponse, setTokenResponse] = useState(null);
+  const [tokenResponse, setTokenResponse] = useState(null); // FIXME: This should replace every instance of isAuthenticated
   const [dataSourceStatus, setDataSourceStatus] = useState("Choose Data Source");
   const [dataSourceName, setDataSourceName] = useState(null);
 
@@ -81,11 +78,36 @@ function ResponsiveAppBar(props) {
   };
 
   useEffect(() => {
-    console.log(`useEffect isAuthenticated: ${isAuthenticated}`);
-    if (isAuthenticated) {
-      console.log(`useEffect: Attempting to load gsheet data...`);
-    }
-  }, [isAuthenticated])
+    console.log(`useEffect tokenResponse: ${JSON.stringify(tokenResponse)}`);
+
+    if (!tokenResponse) return;
+    if (cookies.ssid === undefined) return;
+
+    console.log(`useEffect: Attempting to load gsheet data with our tokenResponse...`);
+
+    async function loadGSheetValues () {
+
+      console.log("loadGSheetValues()...");
+      // FIXME: Firstly do a metadata check api request for modified time.
+    
+      // Attempt to load gsheet values 
+      const result = await axios
+        .get(`https://sheets.googleapis.com/v4/spreadsheets/${cookies.ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        })
+        .then((response) => {
+          // handle success
+          console.log(`axios .then received range ${response.data.range}`);
+          let parsedData = parseData(response.data.values);
+          console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
+          setParsedData(parsedData);
+          setDataSourceStatus("Data Source Connected and Parsed");
+        })
+      }
+
+    loadGSheetValues();
+  }, [tokenResponse])
+
 
   // Google API scopes required to read one google sheet
   const SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -101,26 +123,17 @@ function ResponsiveAppBar(props) {
         .get('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         })
-        .then(res => res.data);
+        // .then(res => res.data);
+        .then((response) => {
+          // handle success
+          console.log(`axios .then response.data: ${JSON.stringify(response.data)}`);
+          setUserInfo(response.data); 
+        })
 
       setTokenResponse(tokenResponse);
-      setUserInfo(userInfo); 
       setIsAuthenticated(true);
       setDataSourceStatus("Select Data Source");
       console.log(userInfo);
-
-      // Now we are google authenticated, we are ready to check cookie for previous GSheet ssid
-      if (cookies.ssid !== undefined) {
-        if (loadGSheetData(tokenResponse, cookies.ssid)) {
-          setDataSourceStatus("Data Source Connected");
-
-          // FIXME: loadGSheetData is async cannot assume the data is processed here yet
-          // setIsVisualizerDataProcessed(true);
-          // setVisualizerData(dummyProcessedData);
-        // FIXME: set the file name here (needed for chip tooltip)
-        //setDataSourceName();
-        }
-      }
     },
     onError: errorResponse => console.log(errorResponse),
   });  
@@ -148,7 +161,6 @@ function ResponsiveAppBar(props) {
         // Load the gsheet data
         if (loadGSheetData(tokenResponse, data.docs[0].id)) {
           setDataSourceStatus("Data Source Connected");
-          setIsVisualizerDataProcessed(true);
         }
 
         // park the ssid in the browser cookie for next session

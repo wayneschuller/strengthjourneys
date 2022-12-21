@@ -69,9 +69,9 @@ export function parseData(data) {
   notes_COL = columnNames.indexOf("Notes");
   url_COL = columnNames.indexOf("URL");
 
-  console.log(`Bespoke format detected. Processing each row...`);
+  console.log(`Bespoke format detected. Parsing each row...`);
   data.forEach(parseBespokeRow, parsedData);
-  return;
+  return(parsedData);
 }
 
 // ---------------------------------------------------------------------------------

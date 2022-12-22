@@ -310,9 +310,9 @@ function ResponsiveAppBar(props) {
                 </Menu>
               </Box>
             </> : <>
-              <tooltip title="Sign in and connect to your Google Sheet">
+              <Tooltip title="Sign in and connect to your Google Sheet">
                 <Button onClick={niceGoogleLogin} sx={{ my: 2, color: 'white', display: 'block', mx: 1 }} variant="outlined">Google Sign-In</Button>
-              </tooltip>
+              </Tooltip>
             </>
           }
                 

@@ -1,22 +1,10 @@
 import { React, useState, useEffect } from 'react';
 import { useOutletContext } from "react-router-dom";
 
-
-// import { 
-  // Chart as ChartJS, 
-  // Title,
-  // CategoryScale,
-  // LinearScale,
-  // LineElement, 
-  // PointElement, 
-  // Tooltip, 
-  // Legend 
-// } from 'chart.js';
-
+import Chart from 'chart.js/auto';    // Causes large webpack but is easier than manually registering what you need.
 import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
-import 'chartjs-plugin-zoom';
-import 'chart.js/auto';
+import zoomPlugin from 'chartjs-plugin-zoom';
 
 import { 
   chartClickHandler, 
@@ -31,15 +19,7 @@ import { dummyProcessedData } from '../components/visualizerDataProcessing';
 
 const basicColors = ["#ae2012", "#ee9b00", "#03045e", "#0a9396"];
 
-// ChartJS.register(
-  // Title,
-  // CategoryScale,
-  // LinearScale,
-  // LineElement, 
-  // PointElement, 
-  // Tooltip, 
-  // Legend 
-// );
+Chart.register(zoomPlugin);
 
 const Visualizer = (props) => {
 
@@ -80,6 +60,7 @@ const Visualizer = (props) => {
     },
 
     plugins: {
+
       title: {
         display: false,
         text: 'Chart.js Line Chart',
@@ -95,17 +76,21 @@ const Visualizer = (props) => {
         },
       },
 
-    zoom: {
-    zoom: {
-      enabled: true,
-      mode: 'x',
-    },
-    pan: {
-      enabled: true,
-      mode: 'x',
-    },
-    },
+      zoom: {
+        zoom: {
+          wheel: {enabled: true,},
+          mode: 'x',   
+        },
+        pan: {
+          enabled: true,
+          mode: 'x',
+        },
+        limits: {
+          x: { min: "original", max: "original", minRange: zoomMinTimeRange },
+        },
+      },
     }
+
   };
 
   return (

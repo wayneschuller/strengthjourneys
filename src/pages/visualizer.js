@@ -104,7 +104,7 @@ const Visualizer = (props) => {
 export default Visualizer;
 
 // FIXME: some old functionality remaining here that needs to be ported
-function createChart(data) {
+function createFart(data) {
 
   // Use the most popular lift to set some aesthetic x-axis padding at start and end
   // Right now only do this once on first csv load.
@@ -123,7 +123,7 @@ function createChart(data) {
 
 
 // The OLD project config - here for reference while porting
-export function getChartConfig() {
+export function getFartConfig() {
   // const data = {
     // datasets: createDataSets(minChartLines, maxChartLines),
   // };

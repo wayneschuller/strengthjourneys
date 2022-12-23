@@ -7,6 +7,7 @@ import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 
 import ResponsiveAppBar from './components/appBar';
+import { defaultVisualizerData } from './components/visualizerDataProcessing';
 
 export default function App() {
 
@@ -14,35 +15,14 @@ export default function App() {
 
   // visualizerData with some dummy defaults
   // This is estimated one rep max data + extra analysis for the visualizer
-  const [visualizerData, setVisualizerData] = useState ({
-    dateTime: 1,    // unix epoch timestamp of when data was loaded  
-    datasets: [{
-      label: "Back Squat Sample Data",
-      data: [
-        {
-          x: '2015-10-11', 
-          y: 196,
-          label: "Potential blah da blah",
-        }, 
-        {
-          x: '2015-11-02', 
-          y: 170,
-          label: "potential doop de doop",
-        },
-        {
-          x: '2015-11-05', 
-          y: 130,
-          label: "potential nope",
-        },
-      ]
-    }]
-  });
+  const [visualizerData, setVisualizerData] = useState(defaultVisualizerData);
 
   return (
     <div>
 
      <ResponsiveAppBar 
       setParsedData={setParsedData}
+      setVisualizerData={setVisualizerData}
      />
 
       {/* An <Outlet> renders whatever child route is currently active,

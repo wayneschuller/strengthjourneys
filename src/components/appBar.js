@@ -22,6 +22,7 @@ import { useCookies } from 'react-cookie';
 import axios from 'axios';
 
 import { parseData } from './parseData';
+import { defaultVisualizerData } from './visualizerDataProcessing';
 
 // Array of main menu items
 const pages = [
@@ -40,6 +41,7 @@ function ResponsiveAppBar(props) {
 
   // We inherit some state from our parent <App /> 
   let setParsedData = props.setParsedData;
+  let setVisualizerData = props.setVisualizerData;
 
   const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
 
@@ -70,8 +72,9 @@ function ResponsiveAppBar(props) {
     console.log("Logging out of google...");
     googleLogout();
     removeCookie('tokenResponse'); // Forget the tokenReponse 
-    setUserInfo(null);
-    setAnchorElUser(null);
+    setUserInfo(null);    // This will remove the profile menu and status button
+    setVisualizerData(defaultVisualizerData);  // Reset the graph
+    setAnchorElUser(null);  // Closes menu
   };
 
   // -------------------------------------------------------------------------------------------------

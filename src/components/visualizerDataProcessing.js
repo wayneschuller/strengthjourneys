@@ -4,6 +4,33 @@
 //
 // Process our parsedData into chart.js ready format for the Strength Visualizer
 
+// Default sample chart for first time user
+// FIXME: Make this as interesting as possible to entice new users
+export const defaultVisualizerData = {
+    dateTime: 1,    // unix epoch timestamp of when data was loaded  
+    datasets: [{
+      label: "Back Squat Sample Data",
+      data: [
+        {
+          x: '2015-10-11', 
+          y: 196,
+          label: "Potential blah da blah",
+        }, 
+        {
+          x: '2015-11-02', 
+          y: 170,
+          label: "potential doop de doop",
+        },
+        {
+          x: '2015-11-05', 
+          y: 130,
+          label: "potential nope",
+        },
+      ]
+    }]
+  };
+
+// This is used for testing purposes only
 export const dummyProcessedData = {
   datasets: [
   {

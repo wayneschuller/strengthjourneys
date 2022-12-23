@@ -83,9 +83,34 @@ const Visualizer = (props) => {
 
       datalabels: {
         formatter: (context) => context.y,
-        font: { style: "italic", size: 12 },
+        font: { style: "italic", size: 12 },  // FIXME: Old project has code to make singles in bold and slightly larger font
         align: "end",
         anchor: "end",
+      },
+
+      tooltip: {
+        enabled: true,
+        position: "nearest",
+        titleFont: { size: 14 },
+        bodyFont: { size: 14 },
+        callbacks: {
+          title: (context) => {
+            const d = new Date(context[0].parsed.x);
+            const formattedDate = d.toLocaleString([], {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            });
+            return formattedDate;
+          },
+          label: (context) => context.raw.label,
+          afterLabel: (context) => context.raw.afterLabel,
+          footer: (context) => {
+            const url = context[0].raw.url;
+            if (url)
+              return `Click to open ${url}`; // Tooltip reminder they can click to open video
+          },
+        }
       },
 
       zoom: {

@@ -212,8 +212,7 @@ function ResponsiveAppBar(props) {
       setTokenResponse(tokenResponse);
 
       // park the tokenResponse in the browser cookie - it is normally valid for about 1 hour
-      let d = new Date(); d.setTime(d.getTime() + tokenResponse.expires_in*60*15); // Cookie expires when the token does 
-      setCookie('tokenResponse', JSON.stringify(tokenResponse), { path: '/', expires: d });
+      setCookie('tokenResponse', JSON.stringify(tokenResponse), { path: '/', maxAge: tokenResponse.expires_in });
     },
     onError: errorResponse => console.log(errorResponse),
   });  
@@ -239,7 +238,7 @@ function ResponsiveAppBar(props) {
 
         setInfoChipToolTip(data.docs[0].name);
 
-        // park the ssid in the browser cookie for next session
+        // park the ssid in the browser cookie - expires in a year. They can change it anytime.
         let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now
         setCookie('ssid', data.docs[0].id, { path: '/', expires: d });
 

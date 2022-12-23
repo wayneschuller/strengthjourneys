@@ -109,10 +109,12 @@ function ResponsiveAppBar(props) {
             checkGSheetModified();
         })
         .catch((error) => {
-          console.log(`axios UserInfo error: ${error.response}`);
+          console.log(`axios.get UserInfo error:`);
+          console.log(error.response);
 
           // Just in case we had a working tokenResponse that has now expired.
           setUserInfo(null);
+          removeCookie('tokenResponse'); // Forget the tokenReponse 
 
         })
     }

@@ -8,7 +8,6 @@ import zoomPlugin from 'chartjs-plugin-zoom';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 import { 
-  chartClickHandler, 
   chartTitle, 
   liftAnnotations, 
   padDateMin, padDateMax, 
@@ -48,6 +47,14 @@ const Visualizer = (props) => {
   const zoomMinTimeRange = 1000 * 60 * 60 * 24 * 60; // 60 days limit to zoom in
   const chartOptions = {
     responsive: true,
+    onClick: (event, item) => { 
+      // Used to detect a click on a graph point and open URL in the data.
+      if (item && item.length > 0) {
+        const url = item[0].element.$context.raw.url;
+        if (url) window.open(url);
+      }
+    },
+
     scales: {
       x: {
           type: "time",
@@ -83,7 +90,15 @@ const Visualizer = (props) => {
 
       datalabels: {
         formatter: (context) => context.y,
-        font: { style: "italic", size: 12 },  // FIXME: Old project has code to make singles in bold and slightly larger font
+        font: (context) => {
+          // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
+          // FIXME: does not seem to be applying - probably a font selection issue?
+          const liftSingle = context.dataset.data[context.dataIndex].label.indexOf("Potential");
+          if (liftSingle === -1)
+            return { weight: "bold", size: 13 };
+          else
+            return { style: "italic", size: 12 };
+        },
         align: "end",
         anchor: "end",
       },
@@ -187,11 +202,11 @@ export function getFartConfig() {
 
   // Chart.defaults.font.family = "Catamaran";
 
-  const config = {
+  const configOld = {
     type: "line",
     // plugins: [ChartDataLabels],
     options: {
-      onClick: chartClickHandler,
+      // onClick: chartClickHandler,
       plugins: {
         title: {
           text: chartTitle,
@@ -268,7 +283,7 @@ export function getFartConfig() {
       },
     },
   };
-  return config;
+  return configOld;
 }
 
 

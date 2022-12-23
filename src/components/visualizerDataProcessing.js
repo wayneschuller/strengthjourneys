@@ -360,14 +360,6 @@ function prepareDataRefresh(parsedData, processedData, replaceData) {
   });
 }
 
-// Used to detect a click on a graph point and open URL in the data.
-export function chartClickHandler(event, item) {
-  // if (item && item.length > 0) {
-    // const url = processedData[item[0].datasetIndex].e1rmLineData[item[0].index].url;
-    // if (url) window.open(url);
-  // }
-}
-
 // Callback handler for button to easy zoom in and out
 function toggleZoom() {
   const toggleInput = document.getElementById("toggleZoom");

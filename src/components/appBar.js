@@ -36,7 +36,7 @@ function ResponsiveAppBar(props) {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
 
-  const [cookies, setCookie] = useCookies(['ssid', 'tokenResponse']);
+  const [cookies, setCookie, removeCookie] = useCookies(['ssid', 'tokenResponse']);
 
   // We inherit some state from our parent <App /> 
   let setParsedData = props.setParsedData;
@@ -44,7 +44,6 @@ function ResponsiveAppBar(props) {
   const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
 
   // These next four could be grouped into one dataSource object?
-  const [tokenResponse, setTokenResponse] = useState(null); 
   const [dataSourceStatus, setDataSourceStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);
 
@@ -70,20 +69,10 @@ function ResponsiveAppBar(props) {
   const handleUserMenuLogout = () => {
     console.log("Logging out of google...");
     googleLogout();
-    setTokenResponse(null);   // Forget the token upon user logout request
-    setAnchorElUser(null);
+    removeCookie('tokenResponse'); // Forget the tokenReponse 
     setUserInfo(null);
+    setAnchorElUser(null);
   };
-
-
-  // If we have a cookie tokenResponse then set it to state to save an API call
-  useEffect(() => {
-    console.log(`Looking for my cookie tokenResponse...`);
-    if (cookies.tokenResponse === undefined) return; 
-    console.log(`I sense you have a cookie tokenResponse!`);
-    console.log(cookies.tokenResponse);
-    setTokenResponse(cookies.tokenResponse);
-  }, [])
 
   // -------------------------------------------------------------------------------------------------
   // If we have a new tokenResponse, ssid (FIXME: or modified time) then 
@@ -95,9 +84,9 @@ function ResponsiveAppBar(props) {
   // -------------------------------------------------------------------------------------------------
   useEffect(() => {
     console.log(`useEffect tokenResponse/cookie changed:`);
-    // console.log(tokenResponse);
+    // console.log(cookies.tokenResponse);
 
-    if (!tokenResponse) return; // No ticket to google? Then no party.
+    if (!cookies.tokenResponse) return; // No ticket to google? Then no party.
 
     console.log(`useEffect: We now have a tokenResponse, let's talk to Google...`);
 
@@ -105,7 +94,7 @@ function ResponsiveAppBar(props) {
       // API request to get Google user info from our tokenResponse (used for profile avatar on navbar top right)
       await axios
         .get('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+          headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
         })
         .then((response) => {
           // handle success
@@ -131,7 +120,7 @@ function ResponsiveAppBar(props) {
       // API call to get GDrive file metadata to get modified time and the filename
       await axios
         .get(`https://www.googleapis.com/drive/v3/files/${cookies.ssid}?fields=modifiedTime%2Cname&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+          headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
         })
         .then((response) => {
           // handle success
@@ -157,7 +146,7 @@ function ResponsiveAppBar(props) {
 
       await axios
         .get(`https://sheets.googleapis.com/v4/spreadsheets/${cookies.ssid}?includeGridData=false`, {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+          headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
         })
         .then((response) => {
           // handle success
@@ -176,7 +165,7 @@ function ResponsiveAppBar(props) {
 
       await axios
       .get(`https://sheets.googleapis.com/v4/spreadsheets/${cookies.ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+          headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
         })
         .then((response) => {
           // handle success
@@ -194,7 +183,7 @@ function ResponsiveAppBar(props) {
     }
 
     getGoogleUserInfo();
-  }, [tokenResponse, cookies.ssid, setParsedData])
+  }, [cookies.tokenResponse, cookies.ssid, setParsedData])
 
 
   // Google API scopes required to read one google sheet
@@ -209,7 +198,6 @@ function ResponsiveAppBar(props) {
       // console.log(tokenResponse);
 
       setDataSourceStatus("Select Data Source");
-      setTokenResponse(tokenResponse);
 
       // park the tokenResponse in the browser cookie - it is normally valid for about 1 hour
       setCookie('tokenResponse', JSON.stringify(tokenResponse), { path: '/', maxAge: tokenResponse.expires_in });
@@ -225,7 +213,7 @@ function ResponsiveAppBar(props) {
       clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
       developerKey: process.env.REACT_APP_GOOGLE_API_KEY,
       viewId: "SPREADSHEETS",
-      token: tokenResponse.access_token, // pass oauth token in case you already have one
+      token: cookies.tokenResponse.access_token, // pass oauth token in case you already have one
       showUploadView: true,
       showUploadFolders: true,
       supportDrives: true,

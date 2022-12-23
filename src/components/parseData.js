@@ -102,7 +102,7 @@ function parseBespokeRow(row, index) {
   if (!row[actual_reps_COL] || !row[actual_weight_COL]) return false; // Do they even lift?
 
   if (liftType === "Sumo Deadlift") {
-    console.log(`Warning: sumo deadlifter detected. For more information: https://youtu.be/dQw4w9WgXcQ`);
+    // console.log(`Warning: sumo deadlifter detected. For more information: https://youtu.be/dQw4w9WgXcQ`);
     // return;
   }
 

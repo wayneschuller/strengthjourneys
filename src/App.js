@@ -15,6 +15,7 @@ export default function App() {
   // visualizerData with some dummy defaults
   // This is estimated one rep max data + extra analysis for the visualizer
   const [visualizerData, setVisualizerData] = useState ({
+    dateTime: 1,    // unix epoch timestamp of when data was loaded  
     datasets: [{
       label: "Back Squat Sample Data",
       data: [

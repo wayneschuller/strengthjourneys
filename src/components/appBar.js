@@ -36,17 +36,17 @@ function ResponsiveAppBar(props) {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
 
-  const [cookies, setCookie] = useCookies(['ssid']);
+  const [cookies, setCookie] = useCookies(['ssid', 'tokenResponse']);
 
-  // We inherit this state from <App /> which then shares with subpages
+  // We inherit some state from our parent <App /> 
   let setParsedData = props.setParsedData;
 
-  const [userInfo, setUserInfo] = useState(null);  // .name .picture (from Google userinfo API)
+  const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
 
   // These next four could be grouped into one dataSource object?
   const [tokenResponse, setTokenResponse] = useState(null); 
-  const [dataSourceStatus, setDataSourceStatus] = useState("Choose Data Source");
-  const [dataSourceName, setDataSourceName] = useState(null);
+  const [dataSourceStatus, setDataSourceStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
+  const [infoChipToolTip, setInfoChipToolTip] = useState(null);
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -70,67 +70,154 @@ function ResponsiveAppBar(props) {
   const handleUserMenuLogout = () => {
     console.log("Logging out of google...");
     googleLogout();
+    setTokenResponse(null);   // Forget the token upon user logout request
     setAnchorElUser(null);
     setUserInfo(null);
   };
 
+
+  // If we have a cookie tokenResponse then set it to state to save an API call
   useEffect(() => {
-    console.log(`useEffect tokenResponse: ${JSON.stringify(tokenResponse)}`);
+    console.log(`Looking for my cookie tokenResponse...`);
+    if (cookies.tokenResponse === undefined) return; 
+    console.log(`I sense you have a cookie tokenResponse!`);
+    console.log(cookies.tokenResponse);
+    setTokenResponse(cookies.tokenResponse);
+  }, [])
 
-    if (!tokenResponse) return;
-    if (cookies.ssid === undefined) return;
+  // -------------------------------------------------------------------------------------------------
+  // If we have a new tokenResponse, ssid (FIXME: or modified time) then 
+  // work through the chain of API requests: 
+  //
+  //    getGoogleUserInfo->checkGSheetModified->loadGSheetValues
+  //
+  // Along the way we update various important pieces of UI state.
+  // -------------------------------------------------------------------------------------------------
+  useEffect(() => {
+    console.log(`useEffect tokenResponse/cookie changed:`);
+    // console.log(tokenResponse);
 
-    console.log(`useEffect: Attempting to load gsheet data with our tokenResponse...`);
+    if (!tokenResponse) return; // No ticket to google? Then no party.
 
-    async function loadGSheetValues () {
+    console.log(`useEffect: We now have a tokenResponse, let's talk to Google...`);
 
-      console.log("loadGSheetValues()...");
-      // FIXME: Firstly do a metadata check api request for modified time.
-    
-      // Attempt to load gsheet values 
-      await axios
-        .get(`https://sheets.googleapis.com/v4/spreadsheets/${cookies.ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        })
-        .then((response) => {
-          // handle success
-          console.log(`axios .then received range ${response.data.range}`);
-          let parsedData = parseData(response.data.values);
-          console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
-          setParsedData(parsedData);
-          setDataSourceStatus("Data Source Connected");
-        })
-      }
-
-    loadGSheetValues();
-  }, [tokenResponse, cookies, setParsedData])
-
-
-  // Google API scopes required to read one google sheet
-  const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-
-  // niceGoogleLogin uses implicit authorisation flow to get a tokenResponse (normally lasts 60 minutes)
-  const niceGoogleLogin = useGoogleLogin({
-    scope: SCOPES,
-    onSuccess: async tokenResponse => {
-      console.log(tokenResponse);
-
-      // REST request to get user info from our token (we show avatar on navbar top right)
+    async function getGoogleUserInfo () {
+      // API request to get Google user info from our tokenResponse (used for profile avatar on navbar top right)
       await axios
         .get('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         })
         .then((response) => {
           // handle success
-          // console.log(`axios .then response.data: ${JSON.stringify(response.data)}`);
-          setUserInfo(response.data); 
-        })
+          console.log(`axios.get UserInfo success: response.data: ${JSON.stringify(response.data)}`);
+          setUserInfo(response.data);
 
-      setTokenResponse(tokenResponse);
+          // If we have an ssid then we can go to the next step in the chain
+          if (cookies.ssid !== undefined) 
+            checkGSheetModified();
+        })
+        .catch((error) => {
+          console.log(`axios UserInfo error: ${error.response}`);
+
+          // Just in case we had a working tokenResponse that has now expired.
+          setUserInfo(null);
+
+        })
+    }
+
+    async function checkGSheetModified () {
+      console.log("checkGSheetModified()...");
+
+      // API call to get GDrive file metadata to get modified time and the filename
+      await axios
+        .get(`https://www.googleapis.com/drive/v3/files/${cookies.ssid}?fields=modifiedTime%2Cname&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        })
+        .then((response) => {
+          // handle success
+          console.log(`axios.get GDrive file metadata .then received:`);
+          console.log(response.data);
+          setInfoChipToolTip(response.data.name);
+
+          // FIXME: if we don't have sheet values or if modified time has change then next step in the chain
+
+          loadGSheetValues();
+        })
+        .catch((error) => {
+          setDataSourceStatus("Error Reading GDrive File Metadata");
+          setInfoChipToolTip(error.response.data.error.message);
+          console.log(error);
+        })
+    }
+
+    // Gets interesting information about the sheet but not modified time
+    // NOTE: Currently unused, but may be useful in the future
+    async function getGSheetMetadata () {
+      console.log("getGSheetMetadata()...");
+
+      await axios
+        .get(`https://sheets.googleapis.com/v4/spreadsheets/${cookies.ssid}?includeGridData=false`, {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        })
+        .then((response) => {
+          // handle success
+          console.log(`axios.get GSheet metadata .then received:`);
+          console.log(response.data);
+        })
+        .catch((error) => {
+          setDataSourceStatus("Error Reading Google Sheet Metadata");
+          setInfoChipToolTip(error.response.data.error.message);
+          console.log(error);
+        })
+    }
+
+    async function loadGSheetValues () {
+      console.log("loadGSheetValues()...");
+
+      await axios
+      .get(`https://sheets.googleapis.com/v4/spreadsheets/${cookies.ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        })
+        .then((response) => {
+          // handle success
+          console.log(`axios.get success: range is ${response.data.range}`);
+          let parsedData = parseData(response.data.values);
+          console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
+          setParsedData(parsedData);
+          setDataSourceStatus("Data Source Connected");
+        })
+        .catch((error) => {
+          setDataSourceStatus("Error Reading Google Sheet");
+          setInfoChipToolTip(error.response.data.error.message);
+          console.log(error);
+        })
+    }
+
+    getGoogleUserInfo();
+  }, [tokenResponse, cookies.ssid, setParsedData])
+
+
+  // Google API scopes required to read one google sheet
+  const SCOPES = 'https://www.googleapis.com/auth/drive.file ' +
+                 'https://www.googleapis.com/auth/spreadsheets.readonly ' +
+                 'https://www.googleapis.com/auth/drive.metadata.readonly';
+
+  // niceGoogleLogin uses implicit authorisation flow to get a tokenResponse (normally lasts 60 minutes)
+  const niceGoogleLogin = useGoogleLogin({
+    scope: SCOPES,
+    onSuccess: async tokenResponse => {
+      // console.log(tokenResponse);
+
       setDataSourceStatus("Select Data Source");
+      setTokenResponse(tokenResponse);
+
+      // park the tokenResponse in the browser cookie - it is normally valid for about 1 hour
+      let d = new Date(); d.setTime(d.getTime() + tokenResponse.expires_in*60*15); // Cookie expires when the token does 
+      setCookie('tokenResponse', JSON.stringify(tokenResponse), { path: '/', expires: d });
     },
     onError: errorResponse => console.log(errorResponse),
   });  
+
 
   const [openPicker, authResponse] = useDrivePicker();  
   // const customViewsArray = [new google.picker.DocsView()]; // custom view
@@ -150,7 +237,7 @@ function ResponsiveAppBar(props) {
           console.log('User clicked cancel/close button')
         }
 
-        setDataSourceName(data.docs[0].name);
+        setInfoChipToolTip(data.docs[0].name);
 
         // park the ssid in the browser cookie for next session
         let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now
@@ -266,7 +353,7 @@ function ResponsiveAppBar(props) {
           {/* User profile info on right hand side of the navbar */}
           { userInfo ?  
             <>
-              <Tooltip title={dataSourceName}>
+              <Tooltip title={infoChipToolTip}>
               <Chip 
               label={dataSourceStatus}
               onClick={() => handleOpenPicker()}
@@ -321,6 +408,5 @@ function ResponsiveAppBar(props) {
     </AppBar>
   );
 }
-
 
 export default ResponsiveAppBar;

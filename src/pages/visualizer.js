@@ -30,7 +30,11 @@ const Visualizer = (props) => {
   // When parsedData changes, let's process it for our visualizer
   useEffect(() => {
     console.log(`useEffect parsedData changed...`);
+
     if (!parsedData) return; // nothing further to do
+
+    // FIXME: Check for visualizerData refresh/stale trigger
+
     console.log(`useEffect: Attempting to process visualizer data...: ${JSON.stringify(parsedData[0])}`);
     let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
     var wrapper = {

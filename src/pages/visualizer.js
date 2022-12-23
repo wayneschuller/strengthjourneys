@@ -44,7 +44,7 @@ const Visualizer = (props) => {
   }, [parsedData, setVisualizerData])
 
   // Line Chart Options for react-chartjs-2 Visualizer 
-  const zoomMinTimeRange = 1000 * 60 * 60 * 24 * 60; // 60 days limit to zoom in
+  const zoomMinTimeRange = 1000 * 60 * 60 * 24 * 60; // Minimum x-axis is 60 days
   const chartOptions = {
     responsive: true,
     onClick: (event, item) => { 
@@ -67,6 +67,9 @@ const Visualizer = (props) => {
         suggestedMin: 0,
         ticks: {
           font: { size: 15 },
+          callback: (value) => {
+            return `${value}kg`; // FIXME: unhardcode units
+          },
         },
       },
     },
@@ -176,109 +179,15 @@ function createFart(data) {
 
 // The OLD project config - here for reference while porting
 export function getFartConfig() {
-  // const data = {
-    // datasets: createDataSets(minChartLines, maxChartLines),
-  // };
-
-  const zoomMinTimeRange = 1000 * 60 * 60 * 24 * 60; // 60 days limit to zoom in
-  const zoomOptions = {
-    limits: {
-      x: { min: "original", max: "original", minRange: zoomMinTimeRange },
-    },
-    pan: {
-      enabled: true,
-      mode: "x",
-    },
-    zoom: {
-      wheel: {
-        enabled: true,
-      },
-      pinch: {
-        enabled: true,
-      },
-      mode: "x",
-    },
-  };
 
   // Chart.defaults.font.family = "Catamaran";
 
   const configOld = {
     type: "line",
-    // plugins: [ChartDataLabels],
     options: {
-      // onClick: chartClickHandler,
       plugins: {
-        title: {
-          text: chartTitle,
-          display: true,
-          font: { size: 18 },
-        },
-        zoom: zoomOptions,
         annotation: {
           annotations: liftAnnotations,
-        },
-        datalabels: {
-          formatter: (context) => context.y,
-          font: (context) => {
-            // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
-            const liftSingle = context.dataset.data[context.dataIndex].label.indexOf("Potential");
-            if (liftSingle === -1)
-              return { weight: "bold", size: 13 };
-            else
-              return { style: "italic", size: 12 };
-          },
-          align: "end",
-          anchor: "end",
-        },
-        tooltip: {
-          enabled: true,
-          position: "nearest",
-          titleFont: { size: 14 },
-          bodyFont: { size: 14 },
-          callbacks: {
-            title: (context) => {
-              const d = new Date(context[0].parsed.x);
-              const formattedDate = d.toLocaleString([], {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              });
-              return formattedDate;
-            },
-            label: (context) => context.raw.label,
-            afterLabel: (context) => context.raw.afterLabel,
-            footer: (context) => {
-              const url = context[0].raw.url;
-              if (url)
-                return `Click to open ${url}`; // Tooltip reminder they can click to open video
-            },
-          },
-        },
-        legend: {
-          labels: {
-            font: {
-              size: 18,
-            },
-          },
-        },
-      },
-      scales: {
-        xAxis: {
-          type: "time",
-          suggestedMin: padDateMin,
-          suggestedMax: padDateMax,
-          time: {
-            minUnit: "day",
-          },
-        },
-        yAxis: {
-          suggestedMin: 0,
-          ticks: {
-            font: { size: 15 },
-            callback: (value) => {
-              return `${value}${unitType}`;
-            },
-          },
         },
       },
     },
@@ -287,7 +196,7 @@ export function getFartConfig() {
 }
 
 
-// createDataSets
+// generateDataSets
 // Push our first num visualizer processedData into chart.js datasets
 // max = number of data sets to create
 // min = the default number that display (the rest will begin hidden)

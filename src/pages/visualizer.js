@@ -5,6 +5,7 @@ import Chart from 'chart.js/auto';    // Causes large webpack but is easier than
 import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import zoomPlugin from 'chartjs-plugin-zoom';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 import { 
   chartClickHandler, 
@@ -19,7 +20,7 @@ import { dummyProcessedData } from '../components/visualizerDataProcessing';
 
 const basicColors = ["#ae2012", "#ee9b00", "#03045e", "#0a9396"];
 
-Chart.register(zoomPlugin);
+Chart.register(zoomPlugin, ChartDataLabels);
 
 const Visualizer = (props) => {
 
@@ -78,6 +79,13 @@ const Visualizer = (props) => {
             size: 18,
           },
         },
+      },
+
+      datalabels: {
+        formatter: (context) => context.y,
+        font: { style: "italic", size: 12 },
+        align: "end",
+        anchor: "end",
       },
 
       zoom: {

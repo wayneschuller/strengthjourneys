@@ -47,6 +47,9 @@ const Visualizer = (props) => {
   const zoomMinTimeRange = 1000 * 60 * 60 * 24 * 60; // Minimum x-axis is 60 days
   const chartOptions = {
     responsive: true,
+
+    font: {family: "Catamaran"},
+
     onClick: (event, item) => { 
       // Used to detect a click on a graph point and open URL in the data.
       if (item && item.length > 0) {
@@ -66,7 +69,7 @@ const Visualizer = (props) => {
       y: {
         suggestedMin: 0,
         ticks: {
-          font: { size: 15 },
+          font: { family: "Catamaran", size: 15 },
           callback: (value) => {
             return `${value}kg`; // FIXME: unhardcode units
           },
@@ -86,6 +89,7 @@ const Visualizer = (props) => {
         position: 'top',
         labels: {
           font: {
+            font: "Catamaran",
             size: 18,
           },
         },
@@ -98,9 +102,9 @@ const Visualizer = (props) => {
           // FIXME: does not seem to be applying - probably a font selection issue?
           const liftSingle = context.dataset.data[context.dataIndex].label.indexOf("Potential");
           if (liftSingle === -1)
-            return { weight: "bold", size: 13 };
+            return { family:"Catamaran", weight: "bold", size: 13 };
           else
-            return { style: "italic", size: 12 };
+            return { family: "Catamaran", style: "italic", size: 12 };
         },
         align: "end",
         anchor: "end",
@@ -109,8 +113,8 @@ const Visualizer = (props) => {
       tooltip: {
         enabled: true,
         position: "nearest",
-        titleFont: { size: 14 },
-        bodyFont: { size: 14 },
+        titleFont: { family: "Catamaran", size: 14 },
+        bodyFont: { family: "Catamaran", size: 14 },
         callbacks: {
           title: (context) => {
             const d = new Date(context[0].parsed.x);
@@ -179,8 +183,6 @@ function createFart(data) {
 
 // The OLD project config - here for reference while porting
 export function getFartConfig() {
-
-  // Chart.defaults.font.family = "Catamaran";
 
   const configOld = {
     type: "line",

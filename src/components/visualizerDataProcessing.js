@@ -19,7 +19,7 @@ export const defaultVisualizerData = {
         {
           x: '2015-11-02', 
           y: 170,
-          label: "potential doop de doop",
+          label: "doop de doop",
         },
         {
           x: '2015-11-05', 
@@ -139,7 +139,7 @@ export function processVisualizerData(parsedData) {
     // Prepare our data label
     // FIXME: use the unit type in the lift.units, if missing fall back to global unitType
     let label = "";
-    if (lift.reps === 1) label = `Lifted 1@${lift.weight}${unitType}.`;
+    if (lift.reps == 1) label = `Lifted 1@${lift.weight}${unitType}.`;
     else label = `Potential 1@${oneRepMax}${unitType} from ${lift.reps}@${lift.weight}${unitType}.`;
 
     var url = lift.url;

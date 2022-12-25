@@ -9,7 +9,6 @@
 // Default sample chart for first time user
 // FIXME: Make this as interesting as possible to entice new users
 export const defaultVisualizerData = {
-    processedTimeStamp: 1,    // unix epoch timestamp
     datasets: [{
       label: "Back Squat Sample Data",
       data: [
@@ -34,7 +33,6 @@ export const defaultVisualizerData = {
 
 // This is used for testing purposes only
 export const dummyProcessedData = {
-  processedTimeStamp: 1,    // unix epoch timestamp
   datasets: [
   {
     label: "Back Squat",

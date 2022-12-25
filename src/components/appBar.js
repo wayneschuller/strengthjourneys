@@ -44,10 +44,10 @@ function ResponsiveAppBar(props) {
   let setVisualizerData = props.setVisualizerData;
 
   const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
-
-  // These next four could be grouped into one dataSource object?
-  const [dataSourceStatus, setDataSourceStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
+  const [infoChipStatus, setinfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);
+
+  const [dataModifiedTime, setDataModifiedTime] = useState(0); // Unix timestamp
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -77,38 +77,39 @@ function ResponsiveAppBar(props) {
     setAnchorElUser(null);  // Closes menu
   };
 
-    async function getGoogleUserInfo() {
-      console.log(`getGoogleUserInfo()...`);
-      // API request to get Google user info from our tokenResponse (used for profile avatar on navbar top right)
-      if (!cookies.tokenResponse) {
-        console.log(`Can't get userInfo without tokenResponse...`);
-        setVisualizerData(defaultVisualizerData);
-        return; // No ticket to google? Then no party.
-      }
+  // API request to get Google user info using the tokenResponse (used for profile avatar on navbar top right)
+  async function getGoogleUserInfo() {
+    console.log(`getGoogleUserInfo()...`);
 
-      await axios
-        .get('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
-        })
-        .then((response) => {
-          // handle success
-          console.log(`axios.get UserInfo success: response.data: ${JSON.stringify(response.data)}`);
-          setUserInfo(response.data);
-
-          // If we have an ssid then we can go to the next step in the chain
-          if (cookies.ssid !== undefined) 
-            checkGSheetModified();
-        })
-        .catch((error) => {
-          console.log(`axios.get UserInfo error:`);
-          console.log(error.response);
-
-          // Just in case we had a working tokenResponse that has now expired.
-          setUserInfo(null);
-          removeCookie('tokenResponse'); // Forget the tokenReponse 
-
-        })
+    if (!cookies.tokenResponse) {
+      console.log(`Can't get userInfo without tokenResponse...`);
+      setVisualizerData(defaultVisualizerData);
+      return; // No ticket to google? Then no party.
     }
+
+    await axios
+      .get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
+      })
+      .then((response) => {
+        // handle success
+        console.log(`axios.get UserInfo success: response.data: ${JSON.stringify(response.data)}`);
+        setUserInfo(response.data);
+
+        // If we have an ssid then we can go to the next step in the chain
+        if (cookies.ssid !== undefined) 
+          checkGSheetModified();
+      })
+      .catch((error) => {
+        console.log(`axios.get UserInfo error:`);
+        console.log(error.response);
+
+        // Just in case we had a working tokenResponse that has now expired.
+        setUserInfo(null);
+        removeCookie('tokenResponse'); // Forget the tokenReponse 
+
+      })
+  }
 
     async function checkGSheetModified () {
       console.log("checkGSheetModified()...");
@@ -124,12 +125,18 @@ function ResponsiveAppBar(props) {
           console.log(response.data);
           setInfoChipToolTip(response.data.name);
 
-          // FIXME: if we don't have sheet values or if modified time has change then next step in the chain
-
-          loadGSheetValues();
+          // If the modified time is newer then refresh the data from Google Sheets
+          const modifiedTime = Date.parse(response.data.modifiedTime);
+          // console.log(`useState dataModifiedTime: ${dataModifiedTime}. Response: ${modifiedTime}`);
+          if (modifiedTime > dataModifiedTime) {
+            setDataModifiedTime(modifiedTime);
+            loadGSheetValues();
+          } else {
+            console.log(`Google Sheet metadata check: modifiedtime is unchanged`);
+          } 
         })
         .catch((error) => {
-          setDataSourceStatus("Error Reading GDrive File Metadata");
+          setinfoChipStatus("Error Reading GDrive File Metadata");
           setInfoChipToolTip(error.response.data.error.message);
           console.log(error);
         })
@@ -150,7 +157,7 @@ function ResponsiveAppBar(props) {
           console.log(response.data);
         })
         .catch((error) => {
-          setDataSourceStatus("Error Reading Google Sheet Metadata");
+          setinfoChipStatus("Error Reading Google Sheet Metadata");
           setInfoChipToolTip(error.response.data.error.message);
           console.log(error);
         })
@@ -169,7 +176,7 @@ function ResponsiveAppBar(props) {
           let parsedData = parseData(response.data.values);
           console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
           setParsedData(parsedData);    
-          setDataSourceStatus("Data Source Connected");
+          setinfoChipStatus("Data Source Connected");
 
           // Now is the right time to process the data for the visualizer
           let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
@@ -185,7 +192,7 @@ function ResponsiveAppBar(props) {
           setVisualizerData(wrapper);
         })
         .catch((error) => {
-          setDataSourceStatus("Error Reading Google Sheet");
+          setinfoChipStatus("Error Reading Google Sheet");
           setInfoChipToolTip(error.response.data.error.message);
           console.log(error);
         })
@@ -225,7 +232,7 @@ function ResponsiveAppBar(props) {
     onSuccess: async tokenResponse => {
       // console.log(tokenResponse);
 
-      setDataSourceStatus("Select Data Source");
+      setinfoChipStatus("Select Data Source");
 
       // park the tokenResponse in the browser cookie - it is normally valid for about 1 hour
       setCookie('tokenResponse', JSON.stringify(tokenResponse), { path: '/', maxAge: tokenResponse.expires_in });
@@ -256,11 +263,17 @@ function ResponsiveAppBar(props) {
 
         setInfoChipToolTip(data.docs[0].name);
 
-        // park the ssid in the browser cookie - expires in a year. They can change it anytime.
-        let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now
-        setCookie('ssid', data.docs[0].id, { path: '/', expires: d });
-        console.log(data)
+        // Have they chosen a different file to previously
+        if (cookies.ssid != data.docs[0].id) {
+          // park the ssid in the browser cookie - expires in a year. They can change it anytime.
+          let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now
+          setCookie('ssid', data.docs[0].id, { path: '/', expires: d });
+          setDataModifiedTime(0); // Reset this for new file modified time to be loaded in
+          console.log(data)
+        }
 
+        // Reload the data as requested by the user.
+        // Even it is the same google sheet, we will do a modifiedTime check and avoid a reload 
         loadGSheetValues();
       },
     });
@@ -373,7 +386,7 @@ function ResponsiveAppBar(props) {
             <>
               <Tooltip title={infoChipToolTip}>
               <Chip 
-              label={dataSourceStatus}
+              label={infoChipStatus}
               onClick={() => handleOpenPicker()}
               variant="outlined"
               sx={{ color: 'white', mx: 1 }}

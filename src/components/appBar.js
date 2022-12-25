@@ -77,6 +77,14 @@ function ResponsiveAppBar(props) {
     setAnchorElUser(null);  // Closes menu
   };
 
+  // ------------------------------------------------------------------
+  // Data processing flow:
+  //
+  //    getGoogleUserInfo->checkGSheetModified->loadGSheetValues
+  //
+  //
+  // Flow is triggered by event handlers and also on init by useEffect 
+  // ------------------------------------------------------------------
   // API request to get Google user info using the tokenResponse (used for profile avatar on navbar top right)
   async function getGoogleUserInfo() {
     console.log(`getGoogleUserInfo()...`);
@@ -198,16 +206,9 @@ function ResponsiveAppBar(props) {
         })
     }
 
-  // -------------------------------------------------------------------------------------------------
-  // If we have a new tokenResponse, ssid (FIXME: or modified time) then 
-  // work through the chain of API requests: 
-  //
-  //    getGoogleUserInfo->checkGSheetModified->loadGSheetValues
-  //
-  // Along the way we update various important pieces of UI state.
-  // -------------------------------------------------------------------------------------------------
+  
   useEffect(() => {
-    console.log(`useEffect tokenResponse/cookie changed:`);
+    console.log(`useEffect cookies.tokenResponse/ssid changed:`);
     // console.log(cookies.tokenResponse);
 
     if (!cookies.tokenResponse) {
@@ -216,7 +217,6 @@ function ResponsiveAppBar(props) {
     }
 
     console.log(`useEffect: We now have a tokenResponse, let's talk to Google...`);
-
     getGoogleUserInfo();
   }, [cookies.tokenResponse, cookies.ssid])
 
@@ -272,9 +272,9 @@ function ResponsiveAppBar(props) {
           console.log(data)
         }
 
-        // Reload the data as requested by the user.
-        // Even it is the same google sheet, we will do a modifiedTime check and avoid a reload 
-        loadGSheetValues();
+        // React experts say do your data flow in the event handler, but right
+        // now setting the cookies.ssid will trigger the loading of data 
+        // loadGSheetValues(); 
       },
     });
   }

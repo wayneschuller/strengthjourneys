@@ -1,4 +1,4 @@
-import { React, useState, useEffect } from 'react';
+import { React, useState, useEffect, useRef } from 'react';
 import { useOutletContext } from "react-router-dom";
 
 import Chart from 'chart.js/auto';    // Causes large webpack but is easier than manually registering what you need.
@@ -25,22 +25,39 @@ const Visualizer = (props) => {
   const [minChartLines, setMinChartLines] = useState(3);
   const [maxChartLines, setMaxChartLines] = useState(8);
 
-  // When parsedData changes, let's process it for our visualizer
-  // FIXME: this is inappropriate use of useEffect
-  // useEffect(() => {
-  //   console.log(`useEffect parsedData changed...`);
+  const chartRef = useRef(null);
 
-  //   if (!parsedData) return; // nothing further to do
+  useEffect(() => {
+    console.log(`useEffect visualizer...`);
+    const chart = chartRef.current;
+    console.log(chart);
+    if (!visualizerData) return;
 
-  //   // FIXME: Check for visualizerData refresh/stale trigger
+    // Use the most popular lift to set some aesthetic x-axis padding at start and end
+    // There is a chance loading another data set will require a new range, but unlikely.
+    // console.log(visualizerData);
 
-  //   console.log(`useEffect: Attempting to process visualizer data...: ${JSON.stringify(parsedData[0])}`);
-  //   let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
-  //   var wrapper = {
-  //     datasets: generateDatasets(processed, minChartLines, maxChartLines)
-  //   }
-  //   setVisualizerData(wrapper);
-  // }, [parsedData, setVisualizerData])
+    let padDateMin = new Date(visualizerData.datasets[0].data[0].x); // First tuple in first lift
+    padDateMin = padDateMin.setDate(padDateMin.getDate() - 4);
+    let padDateMax = new Date(visualizerData.datasets[0].data[visualizerData.datasets[0].data.length - 1].x); // Last tuple in first lift
+    padDateMax = padDateMax.setDate(padDateMax.getDate() + 14);
+
+    // Set the zoom/pan to the last 6 months of data if we have that much
+    let xAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
+    if (xAxisMin < padDateMin) xAxisMin = padDateMin;
+    let xAxisMax = new Date(padDateMax);
+
+    console.log(`padDateMin: ${padDateMin}`);
+    console.log(`padDateMax: ${padDateMax}`);
+    console.log(`xAxisMin: ${xAxisMin}`);
+    console.log(`xAxisMax: ${xAxisMax}`);
+    if (chart) {
+      chart.scales.x.min = padDateMin;
+      chart.scales.x.max = padDateMax;
+      chart.update();
+      // chart.zoomScale("x", { min: xAxisMin, max: xAxisMax }, "default");
+    }
+  }, [])
 
   // Line Chart Options for react-chartjs-2 Visualizer 
   const zoomMinTimeRange = 1000 * 60 * 60 * 24 * 60; // Minimum x-axis is 60 days
@@ -60,7 +77,7 @@ const Visualizer = (props) => {
     scales: {
       x: {
           type: "time",
-          distribution: "linear",
+          distribution: "linear",  // FIXME: necessary?
           time: {
             minUnit: "day"
           },
@@ -154,7 +171,7 @@ const Visualizer = (props) => {
   return (
     <div>
       <h2>Strength Visualizer</h2>
-      { visualizerData && <Line data={visualizerData} options={chartOptions}/> }
+      { visualizerData && <Line ref={chartRef} data={visualizerData} options={chartOptions}/> }
     </div>
   );
 }
@@ -194,46 +211,6 @@ export function getFartConfig() {
     },
   };
   return configOld;
-}
-
-
-// generateDataSets
-// Push our first num visualizer processedData into chart.js datasets
-// max = number of datasets to pass into the chart 
-// min = the default number that display (the rest will begin hidden)
-function generateDatasets(processedData, min, max) {
-  var dataSets = [];
-
-  console.log("createDataSets()...");
-
-  // let hidden = false;
-
-  // for (let i = 0; i < max; i++) {
-  //   // Choose a beautiful color
-  //   let color;
-  //   const randomColor = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
-
-  //   color = i >= min ? randomColor : basicColors[i];
-
-  //   if (i >= min) hidden = true; // Initially hide the lines above the minimum
-
-  //   // Check if we have this data to chart, then push it on
-  //   if (processedData[i] && processedData[i].label && processedData[i].data)
-  //     dataSets.push({
-  //       label: processedData[i].label,
-  //       backgroundColor: color,
-  //       borderColor: "rgb(50, 50, 50)",
-  //       borderWidth: 2,
-  //       pointStyle: "circle",
-  //       radius: 4,
-  //       hitRadius: 20,
-  //       hoverRadius: 10,
-  //       cubicInterpolationMode: "monotone",
-  //       hidden: hidden,
-  //       data: processedData[i].data,
-  //     });
-  // }
-  return dataSets;
 }
 
 // Generate chart.js annotation plugin config data for an achievement

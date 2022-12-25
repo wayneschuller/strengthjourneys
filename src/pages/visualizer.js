@@ -8,7 +8,6 @@ import zoomPlugin from 'chartjs-plugin-zoom';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 import { 
-  chartTitle, 
   liftAnnotations, 
   padDateMin, padDateMax, 
   unitType, 
@@ -17,7 +16,6 @@ import {
 
 import { dummyProcessedData } from '../components/visualizerDataProcessing';
 
-const basicColors = ["#ae2012", "#ee9b00", "#03045e", "#0a9396"];
 
 Chart.register(zoomPlugin, ChartDataLabels);
 
@@ -28,20 +26,21 @@ const Visualizer = (props) => {
   const [maxChartLines, setMaxChartLines] = useState(8);
 
   // When parsedData changes, let's process it for our visualizer
-  useEffect(() => {
-    console.log(`useEffect parsedData changed...`);
+  // FIXME: this is inappropriate use of useEffect
+  // useEffect(() => {
+  //   console.log(`useEffect parsedData changed...`);
 
-    if (!parsedData) return; // nothing further to do
+  //   if (!parsedData) return; // nothing further to do
 
-    // FIXME: Check for visualizerData refresh/stale trigger
+  //   // FIXME: Check for visualizerData refresh/stale trigger
 
-    console.log(`useEffect: Attempting to process visualizer data...: ${JSON.stringify(parsedData[0])}`);
-    let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
-    var wrapper = {
-      datasets: generateDatasets(processed, minChartLines, maxChartLines)
-    }
-    setVisualizerData(wrapper);
-  }, [parsedData, setVisualizerData])
+  //   console.log(`useEffect: Attempting to process visualizer data...: ${JSON.stringify(parsedData[0])}`);
+  //   let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
+  //   var wrapper = {
+  //     datasets: generateDatasets(processed, minChartLines, maxChartLines)
+  //   }
+  //   setVisualizerData(wrapper);
+  // }, [parsedData, setVisualizerData])
 
   // Line Chart Options for react-chartjs-2 Visualizer 
   const zoomMinTimeRange = 1000 * 60 * 60 * 24 * 60; // Minimum x-axis is 60 days
@@ -155,7 +154,7 @@ const Visualizer = (props) => {
   return (
     <div>
       <h2>Strength Visualizer</h2>
-      <Line data={visualizerData} options={chartOptions}/> 
+      { visualizerData && <Line data={visualizerData} options={chartOptions}/> }
     </div>
   );
 }
@@ -200,40 +199,40 @@ export function getFartConfig() {
 
 // generateDataSets
 // Push our first num visualizer processedData into chart.js datasets
-// max = number of data sets to create
+// max = number of datasets to pass into the chart 
 // min = the default number that display (the rest will begin hidden)
 function generateDatasets(processedData, min, max) {
   var dataSets = [];
 
   console.log("createDataSets()...");
 
-  let hidden = false;
+  // let hidden = false;
 
-  for (let i = 0; i < max; i++) {
-    // Choose a beautiful color
-    let color;
-    const randomColor = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+  // for (let i = 0; i < max; i++) {
+  //   // Choose a beautiful color
+  //   let color;
+  //   const randomColor = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 
-    color = i >= min ? randomColor : basicColors[i];
+  //   color = i >= min ? randomColor : basicColors[i];
 
-    if (i >= min) hidden = true; // Initially hide the lines above the minimum
+  //   if (i >= min) hidden = true; // Initially hide the lines above the minimum
 
-    // Check if we have this data to chart, then push it on
-    if (processedData[i] && processedData[i].label && processedData[i].data)
-      dataSets.push({
-        label: processedData[i].label,
-        backgroundColor: color,
-        borderColor: "rgb(50, 50, 50)",
-        borderWidth: 2,
-        pointStyle: "circle",
-        radius: 4,
-        hitRadius: 20,
-        hoverRadius: 10,
-        cubicInterpolationMode: "monotone",
-        hidden: hidden,
-        data: processedData[i].data,
-      });
-  }
+  //   // Check if we have this data to chart, then push it on
+  //   if (processedData[i] && processedData[i].label && processedData[i].data)
+  //     dataSets.push({
+  //       label: processedData[i].label,
+  //       backgroundColor: color,
+  //       borderColor: "rgb(50, 50, 50)",
+  //       borderWidth: 2,
+  //       pointStyle: "circle",
+  //       radius: 4,
+  //       hitRadius: 20,
+  //       hoverRadius: 10,
+  //       cubicInterpolationMode: "monotone",
+  //       hidden: hidden,
+  //       data: processedData[i].data,
+  //     });
+  // }
   return dataSets;
 }
 

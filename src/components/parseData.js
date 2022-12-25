@@ -6,13 +6,14 @@
 // and parse into our common parsedData[] format.
 
 // Globals 
-export var parsedData = []; // Every unique lift from our source
 
 let workout_date_COL, workout_id_COL, completed_COL, exercise_name_COL, assigned_reps_COL, assigned_weight_COL;
 let assigned_sets_COL, actual_reps_COL, actual_weight_COL, actual_sets_COL, missed_COL, description_COL, units_COL, notes_COL, url_COL;
 
 let lastDate = "1999-12-31";
 let lastLiftType = "Tik Tok Dancing"; 
+
+var parsedData = []; // Every unique lift from our source
 
 // ------------------------------------------------------------------------------
 // parseData
@@ -25,6 +26,7 @@ let lastLiftType = "Tik Tok Dancing";
 export function parseData(data) {
 
   console.log("parseData()...");
+
 
   const columnNames = data[0];
 
@@ -71,10 +73,6 @@ export function parseData(data) {
 
   console.log(`Bespoke format detected. Parsing each row...`);
   data.forEach(parseBespokeRow, parsedData);
-
-  // Sort parsedData by date.
-  // FIXME: Do we need this? 
-  // parsedData.sort((a, b) => new Date(a.Date) - new Date(b.Date));
 
   return(parsedData);
 }

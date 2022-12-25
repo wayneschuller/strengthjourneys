@@ -4,10 +4,12 @@
 //
 // Process our parsedData into chart.js ready format for the Strength Visualizer
 
+
+
 // Default sample chart for first time user
 // FIXME: Make this as interesting as possible to entice new users
 export const defaultVisualizerData = {
-    dateTime: 1,    // unix epoch timestamp of when data was loaded  
+    processedTimeStamp: 1,    // unix epoch timestamp
     datasets: [{
       label: "Back Squat Sample Data",
       data: [
@@ -32,6 +34,7 @@ export const defaultVisualizerData = {
 
 // This is used for testing purposes only
 export const dummyProcessedData = {
+  processedTimeStamp: 1,    // unix epoch timestamp
   datasets: [
   {
     label: "Back Squat",
@@ -128,7 +131,7 @@ let equation = "Brzycki"; // Our favourite preferred equation - it does not over
 export function processVisualizerData(parsedData) {
   console.log("processVisualizerData()...");
 
-  const processedData = []; // See dummyProcessedData[] for the end result 
+  const processedData = []; // See dummyProcessedData[] for our structure design
 
   for (const lift of parsedData) {
     const liftIndex = getProcessedLiftIndex(processedData, lift.name);
@@ -231,11 +234,20 @@ export function processVisualizerData(parsedData) {
   // Also sort our processedData so the most popular lift types get charts first
   processedData.sort((a, b) => b.data.length - a.data.length);
 
+  // We don't need this wrapper anymore?
+   //   let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
+  //   var wrapper = {
+  //     datasets: generateDatasets(processed, minChartLines, maxChartLines)
+  //   }
+  //   setVisualizerData(wrapper);
+
   return(processedData);
 
   // Find achievements and put on chart
   // processAchievements();
 }
+
+
 
 // Find interesting achievements
 function processAchievements(parsedData, processedData) {
@@ -412,13 +424,43 @@ function changeEquation(event, newEquation) {
 // Return the index for the liftType string in our processedData
 // If the lift doesn't exist in processedData, create one.
 function getProcessedLiftIndex(processedData, liftType) {
+
   let liftIndex = processedData.findIndex((lift) => lift.label === liftType);
 
   if (liftIndex === -1) {
     // Create a processedLift data structure for this new lift type
+
+    // Choose beautiful colors. FIXME: Make configurable in UI
+    let color; 
+    switch (liftType) {
+      case "Back Squat":
+        color = "#ae2012";
+        break;
+      case "Deadlift":
+        color = "#ee9b00";
+        break;
+      case "Bench Press":
+        color = "#03045e";
+        break;
+      case "Strict Press":
+        color = "#0a9396";
+        break;
+      default:
+        color = `#${Math.floor(Math.random() * 16777215).toString(16)}`; 
+    }
+
     let processedLiftType = {
       label: liftType,
       data: [],
+      backgroundColor: color,
+      borderColor: "rgb(50, 50, 50)",
+      borderWidth: 2,
+      pointStyle: "circle",
+      radius: 4,
+      hitRadius: 20,
+      hoverRadius: 10,
+      cubicInterpolationMode: "monotone",
+      hidden: true,       // Default to hidden, we can unhide stuff later 
     };
     liftIndex = processedData.push(processedLiftType) - 1;
   }

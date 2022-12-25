@@ -22,7 +22,7 @@ import { useCookies } from 'react-cookie';
 import axios from 'axios';
 
 import { parseData } from './parseData';
-import { defaultVisualizerData } from './visualizerDataProcessing';
+import { defaultVisualizerData, processVisualizerData } from './visualizerDataProcessing';
 
 // Array of main menu items
 const pages = [
@@ -77,24 +77,15 @@ function ResponsiveAppBar(props) {
     setAnchorElUser(null);  // Closes menu
   };
 
-  // -------------------------------------------------------------------------------------------------
-  // If we have a new tokenResponse, ssid (FIXME: or modified time) then 
-  // work through the chain of API requests: 
-  //
-  //    getGoogleUserInfo->checkGSheetModified->loadGSheetValues
-  //
-  // Along the way we update various important pieces of UI state.
-  // -------------------------------------------------------------------------------------------------
-  useEffect(() => {
-    console.log(`useEffect tokenResponse/cookie changed:`);
-    // console.log(cookies.tokenResponse);
-
-    if (!cookies.tokenResponse) return; // No ticket to google? Then no party.
-
-    console.log(`useEffect: We now have a tokenResponse, let's talk to Google...`);
-
-    async function getGoogleUserInfo () {
+    async function getGoogleUserInfo() {
+      console.log(`getGoogleUserInfo()...`);
       // API request to get Google user info from our tokenResponse (used for profile avatar on navbar top right)
+      if (!cookies.tokenResponse) {
+        console.log(`Can't get userInfo without tokenResponse...`);
+        setVisualizerData(defaultVisualizerData);
+        return; // No ticket to google? Then no party.
+      }
+
       await axios
         .get('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
@@ -177,8 +168,21 @@ function ResponsiveAppBar(props) {
           console.log(`axios.get success: range is ${response.data.range}`);
           let parsedData = parseData(response.data.values);
           console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
-          setParsedData(parsedData);
+          setParsedData(parsedData);    
           setDataSourceStatus("Data Source Connected");
+
+          // Now is the right time to process the data for the visualizer
+          let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
+          console.log(`Here is processed[0]:`);
+          console.log(processed[0]);
+          processed[0].hidden = false; // Unhide the most popular lift
+
+          // FIXME: Don't manually set the lines like this - should be cleverer
+          var wrapper = {
+            // FIXME If we wrap the data array in an object this might become processed.datasets[0] etc
+            datasets: [processed[0], processed[1], processed[2], processed[3]],
+          }
+          setVisualizerData(wrapper);
         })
         .catch((error) => {
           setDataSourceStatus("Error Reading Google Sheet");
@@ -187,8 +191,27 @@ function ResponsiveAppBar(props) {
         })
     }
 
+  // -------------------------------------------------------------------------------------------------
+  // If we have a new tokenResponse, ssid (FIXME: or modified time) then 
+  // work through the chain of API requests: 
+  //
+  //    getGoogleUserInfo->checkGSheetModified->loadGSheetValues
+  //
+  // Along the way we update various important pieces of UI state.
+  // -------------------------------------------------------------------------------------------------
+  useEffect(() => {
+    console.log(`useEffect tokenResponse/cookie changed:`);
+    // console.log(cookies.tokenResponse);
+
+    if (!cookies.tokenResponse) {
+      setVisualizerData(defaultVisualizerData);
+      return; // No ticket to google? Then no party.
+    }
+
+    console.log(`useEffect: We now have a tokenResponse, let's talk to Google...`);
+
     getGoogleUserInfo();
-  }, [cookies.tokenResponse, cookies.ssid, setParsedData])
+  }, [cookies.tokenResponse, cookies.ssid])
 
 
   // Google API scopes required to read one google sheet
@@ -206,6 +229,8 @@ function ResponsiveAppBar(props) {
 
       // park the tokenResponse in the browser cookie - it is normally valid for about 1 hour
       setCookie('tokenResponse', JSON.stringify(tokenResponse), { path: '/', maxAge: tokenResponse.expires_in });
+
+      getGoogleUserInfo();
     },
     onError: errorResponse => console.log(errorResponse),
   });  
@@ -234,8 +259,9 @@ function ResponsiveAppBar(props) {
         // park the ssid in the browser cookie - expires in a year. They can change it anytime.
         let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now
         setCookie('ssid', data.docs[0].id, { path: '/', expires: d });
-
         console.log(data)
+
+        loadGSheetValues();
       },
     });
   }

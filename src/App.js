@@ -11,11 +11,8 @@ import { defaultVisualizerData } from './components/visualizerDataProcessing';
 
 export default function App() {
 
-  const [parsedData, setParsedData] = useState(null);  // A set of parsed lifting data
-
-  // visualizerData with some dummy defaults
-  // This is estimated one rep max data + extra analysis for the visualizer
-  const [visualizerData, setVisualizerData] = useState(defaultVisualizerData);
+  const [parsedData, setParsedData] = useState(null);  
+  const [visualizerData, setVisualizerData] = useState(null);
 
   return (
     <div>

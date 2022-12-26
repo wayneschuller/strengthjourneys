@@ -30,7 +30,7 @@ const Visualizer = (props) => {
   useEffect(() => {
     console.log(`useEffect visualizer...`);
     const chart = chartRef.current;
-    console.log(chart);
+    // console.log(chart);
     if (!visualizerData) return;
 
     // Use the most popular lift to set some aesthetic x-axis padding at start and end
@@ -90,6 +90,12 @@ const Visualizer = (props) => {
             return `${value}kg`; // FIXME: unhardcode units
           },
         },
+      },
+    },
+
+    layout: {
+      padding: {
+        right: 50,
       },
     },
 

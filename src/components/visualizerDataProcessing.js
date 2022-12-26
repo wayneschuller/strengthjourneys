@@ -204,7 +204,7 @@ export function processVisualizerData(parsedData) {
   }
 
   console.log(
-    `Processed parsedData into ${processedData.length} different types of lifts. (${equation} equation)`
+    `   ...processVisualiserData() complete: ${processedData.length} different types of lifts. (${equation} equation)`
   );
 
   // Remove any left over stale items (needed for refreshing data from Google Sheets)

@@ -38,7 +38,8 @@ export function parseData(data) {
     notes_COL = columnNames.indexOf("Notes");
 
     data.forEach(parseBtwbRow, parsedData);
-    return;
+    console.log(`   ... parseData() complete. (BTWB format)`);
+    return(parsedData);
   } 
 
   // Look for distinctive TurnKey (BLOC) data columns
@@ -59,7 +60,8 @@ export function parseData(data) {
     units_COL = columnNames.indexOf("weight_units");
 
     data.forEach(parseBlocRow, parsedData);
-    return;
+    console.log(`   ... parseData() complete. (TurnKey/BLOC format)`);
+    return(parsedData);
   } 
    
   // From here let's just assume it is our bespoke CSV/GSheet format
@@ -71,9 +73,9 @@ export function parseData(data) {
   notes_COL = columnNames.indexOf("Notes");
   url_COL = columnNames.indexOf("URL");
 
-  console.log(`Bespoke format detected. Parsing each row...`);
   data.forEach(parseBespokeRow, parsedData);
 
+  console.log(`   ... parseData() complete. (Bespoke format)`);
   return(parsedData);
 }
 

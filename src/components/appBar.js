@@ -69,13 +69,15 @@ function ResponsiveAppBar(props) {
 
   // When user clicks logout menu in profile
   const handleUserMenuLogout = () => {
-    console.log("Logging out of google...");
+    // console.log("Logging out of google...");
     googleLogout();
     removeCookie('tokenResponse'); // Forget the tokenReponse 
     setUserInfo(null);    // This will remove the profile menu and status button
     setVisualizerData(defaultVisualizerData);  // Reset the graph
     setAnchorElUser(null);  // Closes menu
   };
+
+  console.log(`Top level <ResponsiveAppBar />...`);
 
   // ------------------------------------------------------------------
   // Data processing flow:
@@ -101,7 +103,7 @@ function ResponsiveAppBar(props) {
       })
       .then((response) => {
         // handle success
-        console.log(`axios.get UserInfo success: response.data: ${JSON.stringify(response.data)}`);
+        // console.log(`API get UserInfo success: response.data: ${JSON.stringify(response.data)}`);
         setUserInfo(response.data);
 
         // If we have an ssid then we can go to the next step in the chain
@@ -129,7 +131,7 @@ function ResponsiveAppBar(props) {
         })
         .then((response) => {
           // handle success
-          console.log(`axios.get GDrive file metadata .then received:`);
+          console.log(`API get GDrive file metadata .then received:`);
           console.log(response.data);
           setInfoChipToolTip(response.data.name);
 
@@ -161,7 +163,7 @@ function ResponsiveAppBar(props) {
         })
         .then((response) => {
           // handle success
-          console.log(`axios.get GSheet metadata .then received:`);
+          // console.log(`API get GSheet metadata .then received:`);
           console.log(response.data);
         })
         .catch((error) => {
@@ -180,16 +182,16 @@ function ResponsiveAppBar(props) {
         })
         .then((response) => {
           // handle success
-          console.log(`axios.get success: range is ${response.data.range}`);
+          console.log(`API get GSheet values success: range is ${response.data.range}`);
           let parsedData = parseData(response.data.values);
-          console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
+          // console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
           setParsedData(parsedData);    
           setinfoChipStatus("Data Source Connected");
 
           // Now is the right time to process the data for the visualizer
           let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
-          console.log(`Here is processed[0]:`);
-          console.log(processed[0]);
+          // console.log(`Here is processed[0]:`);
+          // console.log(processed[0]);
           processed[0].hidden = false; // Unhide the most popular lift
 
           // FIXME: Don't manually set the lines like this - should be cleverer
@@ -207,18 +209,18 @@ function ResponsiveAppBar(props) {
     }
 
   
-  useEffect(() => {
-    console.log(`useEffect cookies.tokenResponse/ssid changed:`);
-    // console.log(cookies.tokenResponse);
+  // useEffect(() => {
+  //   console.log(`useEffect cookies.tokenResponse/ssid changed:`);
+  //   // console.log(cookies.tokenResponse);
 
-    if (!cookies.tokenResponse) {
-      setVisualizerData(defaultVisualizerData);
-      return; // No ticket to google? Then no party.
-    }
+  //   if (!cookies.tokenResponse) {
+  //     setVisualizerData(defaultVisualizerData);
+  //     return; // No ticket to google? Then no party.
+  //   }
 
-    console.log(`useEffect: We now have a tokenResponse, let's talk to Google...`);
-    getGoogleUserInfo();
-  }, [cookies.tokenResponse, cookies.ssid])
+  //   console.log(`useEffect: We now have a tokenResponse, let's talk to Google...`);
+  //   getGoogleUserInfo();
+  // }, [cookies.tokenResponse, cookies.ssid])
 
 
   // Google API scopes required to read one google sheet

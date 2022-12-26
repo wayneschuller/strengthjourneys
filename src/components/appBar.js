@@ -44,7 +44,7 @@ function ResponsiveAppBar(props) {
   let setVisualizerData = props.setVisualizerData;
 
   const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
-  const [infoChipStatus, setinfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
+  const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);
 
   const [dataModifiedTime, setDataModifiedTime] = useState(0); // Unix timestamp
@@ -77,43 +77,48 @@ function ResponsiveAppBar(props) {
     setAnchorElUser(null);  // Closes menu
   };
 
-  console.log(`Top level <ResponsiveAppBar />...`);
+  // console.log(`Top level <ResponsiveAppBar />...`);
 
-  // If we have no userInfo but a stored token then likely we can login automatically
-  if (!userInfo && cookies.tokenResponse) {
-    console.log(`Attempting init data chain...`)
-    getGoogleUserInfo();
-  }
+  // If we have a stored token then likely we can login automatically
+  // FIXME: I've moved this code back into the useEffect
+  // if (!userInfo && cookies.tokenResponse && cookies.tokenResponse.access_token) {
+    // console.log(`Attempting init data chain...${cookies.tokenResponse.access_token}`)
+    // getGoogleUserInfo(cookies.tokenResponse);
+  // }
 
   // ------------------------------------------------------------------
   // Data processing flow:
   //
   //    getGoogleUserInfo->checkGSheetModified->loadGSheetValues
   //
-  //
-  // Flow is triggered by event handlers and also on init by useEffect 
+  // Flow is mostly triggered by event handlers
+  // FIXME: figure out how to init run data processing flow if cookie token and ssid are there
   // ------------------------------------------------------------------
   // API request to get Google user info using the tokenResponse (used for profile avatar on navbar top right)
-  async function getGoogleUserInfo() {
+  async function getGoogleUserInfo(tokenResponse) {
     console.log(`getGoogleUserInfo()...`);
 
-    if (!cookies.tokenResponse) {
+    if (!tokenResponse && tokenResponse.access_token) {
       console.log(`Can't get userInfo without tokenResponse...`);
       setVisualizerData(defaultVisualizerData);
       return; // No ticket to google? Then no party.
     }
 
+    if (userInfo !== null) {
+      console.log(`...ABORT as we seem to already have userInfo`);
+    }
+
     await axios
       .get('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
+        headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
       })
       .then((response) => {
         // handle success
-        // console.log(`API get UserInfo success: response.data: ${JSON.stringify(response.data)}`);
+        console.log(`API get UserInfo success: response.data: ${JSON.stringify(response.data)}`);
         setUserInfo(response.data);
 
-        // If we have an ssid then we can go to the next step in the chain
-        if (cookies.ssid !== undefined) 
+        // If we have a valid looking ssid then we can go to the next step in the chain
+        if (cookies.ssid !== undefined && cookies.ssid.length > 10) 
           checkGSheetModified();
       })
       .catch((error) => {
@@ -146,13 +151,13 @@ function ResponsiveAppBar(props) {
           // console.log(`useState dataModifiedTime: ${dataModifiedTime}. Response: ${modifiedTime}`);
           if (modifiedTime > dataModifiedTime) {
             setDataModifiedTime(modifiedTime);
-            loadGSheetValues();
+            loadGSheetValues(cookies.ssid);
           } else {
             console.log(`Google Sheet metadata check: modifiedtime is unchanged`);
           } 
         })
         .catch((error) => {
-          setinfoChipStatus("Error Reading GDrive File Metadata");
+          setInfoChipStatus("Error Reading GDrive File Metadata");
           setInfoChipToolTip(error.response.data.error.message);
           console.log(error);
         })
@@ -173,17 +178,17 @@ function ResponsiveAppBar(props) {
           console.log(response.data);
         })
         .catch((error) => {
-          setinfoChipStatus("Error Reading Google Sheet Metadata");
+          setInfoChipStatus("Error Reading Google Sheet Metadata");
           setInfoChipToolTip(error.response.data.error.message);
           console.log(error);
         })
     }
 
-    async function loadGSheetValues () {
+    async function loadGSheetValues(ssid) {
       console.log("loadGSheetValues()...");
 
       await axios
-      .get(`https://sheets.googleapis.com/v4/spreadsheets/${cookies.ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
+      .get(`https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
           headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
         })
         .then((response) => {
@@ -192,7 +197,7 @@ function ResponsiveAppBar(props) {
           let parsedData = parseData(response.data.values);
           // console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
           setParsedData(parsedData);    
-          setinfoChipStatus("Data Source Connected");
+          setInfoChipStatus("Data Source Connected");
 
           // Now is the right time to process the data for the visualizer
           let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
@@ -208,25 +213,27 @@ function ResponsiveAppBar(props) {
           setVisualizerData(wrapper);
         })
         .catch((error) => {
-          setinfoChipStatus("Error Reading Google Sheet");
+          setInfoChipStatus("Error Reading Google Sheet");
           setInfoChipToolTip(error.response.data.error.message);
           console.log(error);
         })
     }
 
-  
-  // useEffect(() => {
-  //   console.log(`useEffect cookies.tokenResponse/ssid changed:`);
-  //   // console.log(cookies.tokenResponse);
+ 
+   // Event handlers do most of the data flow for us
+   // However we want useEffect to autoload on init from cookies
+   useEffect(() => {
+    //  console.log(cookies.tokenResponse);
 
-  //   if (!cookies.tokenResponse) {
-  //     setVisualizerData(defaultVisualizerData);
-  //     return; // No ticket to google? Then no party.
-  //   }
+     if (!cookies.tokenResponse) {
+      console.log(`   ...bailing out of useEffect - poor tokenResponse`)
+      return; // No ticket to google? Then no party.
+    }
 
-  //   console.log(`useEffect: We now have a tokenResponse, let's talk to Google...`);
-  //   getGoogleUserInfo();
-  // }, [cookies.tokenResponse, cookies.ssid])
+    console.log(`useEffect: We now have a tokenResponse, let's talk to Google...`);
+    getGoogleUserInfo(cookies.tokenResponse);
+
+  }, [])
 
 
   // Google API scopes required to read one google sheet
@@ -238,14 +245,14 @@ function ResponsiveAppBar(props) {
   const niceGoogleLogin = useGoogleLogin({
     scope: SCOPES,
     onSuccess: async tokenResponse => {
-      // console.log(tokenResponse);
-
-      setinfoChipStatus("Select Data Source");
-
       // park the tokenResponse in the browser cookie - it is normally valid for about 1 hour
       setCookie('tokenResponse', JSON.stringify(tokenResponse), { path: '/', maxAge: tokenResponse.expires_in });
 
-      getGoogleUserInfo();
+      console.log(tokenResponse);
+
+      setInfoChipStatus("Select Data Source");
+
+      getGoogleUserInfo(tokenResponse);
     },
     onError: errorResponse => console.log(errorResponse),
   });  
@@ -267,12 +274,15 @@ function ResponsiveAppBar(props) {
       callbackFunction: (data) => {
         if (data.action === 'cancel') {
           console.log('User clicked cancel/close button')
+          removeCookie('ssid'); // Forget the ssid previously chosen
+          return;
         }
 
         setInfoChipToolTip(data.docs[0].name);
 
-        // Have they chosen a different file to previously
-        if (cookies.ssid != data.docs[0].id) {
+        console.log(`User chose ssid. New: ${data.docs[0].id}. Old cookie: ${cookies.ssid}`)
+        // Have they chosen a different file to previously?
+        if (data.docs[0].id !== cookies.ssid) {
           // park the ssid in the browser cookie - expires in a year. They can change it anytime.
           let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now
           setCookie('ssid', data.docs[0].id, { path: '/', expires: d });
@@ -280,9 +290,7 @@ function ResponsiveAppBar(props) {
           console.log(data)
         }
 
-        // React experts say do your data flow in the event handler, but right
-        // now setting the cookies.ssid will trigger the loading of data 
-        // loadGSheetValues(); 
+        loadGSheetValues(data.docs[0].id); 
       },
     });
   }

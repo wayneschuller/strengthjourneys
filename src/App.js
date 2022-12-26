@@ -7,7 +7,6 @@ import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 
 import ResponsiveAppBar from './components/appBar';
-import { defaultVisualizerData } from './components/visualizerDataProcessing';
 
 export default function App() {
 
@@ -28,7 +27,7 @@ export default function App() {
      <Box sx={{ m: 1 }} md={{ m: 3}} >
        <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', boxShadow: '13', backgroundColor: 'palette.secondary.light' }}>
         <Outlet 
-          context={[parsedData, visualizerData, setVisualizerData]} 
+          context={[parsedData, visualizerData]} 
         />
        </Container>
      </Box>

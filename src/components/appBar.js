@@ -79,6 +79,12 @@ function ResponsiveAppBar(props) {
 
   console.log(`Top level <ResponsiveAppBar />...`);
 
+  // If we have no userInfo but a stored token then likely we can login automatically
+  if (!userInfo && cookies.tokenResponse) {
+    console.log(`Attempting init data chain...`)
+    getGoogleUserInfo();
+  }
+
   // ------------------------------------------------------------------
   // Data processing flow:
   //

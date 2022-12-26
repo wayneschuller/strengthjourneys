@@ -21,7 +21,7 @@ Chart.register(zoomPlugin, ChartDataLabels);
 
 const Visualizer = (props) => {
 
-  const [parsedData, visualizerData, setVisualizerData ] = useOutletContext();
+  const [parsedData, visualizerData ] = useOutletContext();
   const [minChartLines, setMinChartLines] = useState(3);
   const [maxChartLines, setMaxChartLines] = useState(8);
 

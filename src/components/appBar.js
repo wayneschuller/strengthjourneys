@@ -110,7 +110,7 @@ function ResponsiveAppBar({ setParsedData, setVisualizerData }) {
       })
       .then((response) => {
         // handle success
-        console.log(`API get UserInfo success: response.data: ${JSON.stringify(response.data)}`);
+        // console.log(`API get UserInfo success: response.data: ${JSON.stringify(response.data)}`);
         setUserInfo(response.data);
 
         // If we have a valid looking ssid then we can go to the next step in the chain
@@ -138,8 +138,8 @@ function ResponsiveAppBar({ setParsedData, setVisualizerData }) {
         })
         .then((response) => {
           // handle success
-          console.log(`API get GDrive file metadata .then received:`);
-          console.log(response.data);
+          // console.log(`API get GDrive file metadata .then received:`);
+          // console.log(response.data);
           setInfoChipToolTip(response.data.name);
 
           // If the modified time is newer then refresh the data from Google Sheets
@@ -171,7 +171,7 @@ function ResponsiveAppBar({ setParsedData, setVisualizerData }) {
         .then((response) => {
           // handle success
           // console.log(`API get GSheet metadata .then received:`);
-          console.log(response.data);
+          // console.log(response.data);
         })
         .catch((error) => {
           setInfoChipStatus("Error Reading Google Sheet Metadata");
@@ -215,21 +215,17 @@ function ResponsiveAppBar({ setParsedData, setVisualizerData }) {
         })
     }
 
- 
-   // Event handlers do most of the data flow for us
-   // However we want useEffect to autoload on init from cookies
-   useEffect(() => {
-    //  console.log(cookies.tokenResponse);
-
-     if (!cookies.tokenResponse) {
-      console.log(`   ...bailing out of useEffect - poor tokenResponse`)
-      return; // No ticket to google? Then no party.
+  // Event handlers do most of the data flow for us
+  // However we want useEffect to auto load data on init from cookies
+  let didInit = false;
+  useEffect(() => {
+    if (!didInit && cookies.tokenResponse) {
+      didInit = true;
+      // ✅ Only runs once per app load
+      // console.log(`useEffect: We now have a tokenResponse, let's talk to Google...`);
+      getGoogleUserInfo(cookies.tokenResponse);
     }
-
-    console.log(`useEffect: We now have a tokenResponse, let's talk to Google...`);
-    getGoogleUserInfo(cookies.tokenResponse);
-
-  }, [])
+  }, []);
 
 
   // Google API scopes required to read one google sheet

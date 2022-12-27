@@ -38,9 +38,13 @@ export const data = {
 const Analyzer = () => {
   return (
     <div>
+     <Box sx={{ m: 1 }} md={{ m: 3}} >
+       <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}>
       <h2>Strength Analyzer</h2>
       <p>PRs and other interesting data points will appear here. </p>
       <Doughnut data={data} />
+        </Container>
+      </Box>
     </div>
   );
 }

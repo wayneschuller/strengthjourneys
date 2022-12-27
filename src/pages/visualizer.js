@@ -1,6 +1,12 @@
 import { React, useState, useEffect, useRef } from 'react';
 import { useOutletContext } from "react-router-dom";
 
+import Container from '@mui/material/Container';
+import Box from '@mui/material/Box';
+import Grid from '@mui/material/Unstable_Grid2';
+import Typography from '@mui/material/Typography';
+import Divider from '@mui/material/Divider';
+
 import Chart from 'chart.js/auto';    // Causes large webpack but is easier than manually registering what you need.
 import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
@@ -10,11 +16,12 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { 
   liftAnnotations, 
   padDateMin, padDateMax, 
-  unitType, 
-  processVisualizerData
 } from "../components/visualizerDataProcessing";
 
+import ChartControls from '../components/vizualizerChartControls';
+
 import { dummyProcessedData } from '../components/visualizerDataProcessing';
+import { Button } from '@mui/material';
 
 
 Chart.register(zoomPlugin, ChartDataLabels);
@@ -176,8 +183,23 @@ const Visualizer = (props) => {
 
   return (
     <div>
-      <h2>Strength Visualizer</h2>
-      { visualizerData && <Line ref={chartRef} data={visualizerData} options={chartOptions}/> }
+     <Box sx={{ m: 1 }} md={{ m: 3}} >
+      <Grid container spacing={2} >
+
+        { !visualizerData && 
+        <Grid md={12}>
+        <Typography variant="h3" gutterBottom>Strength Visualizer </Typography>
+        </Grid>
+        }
+
+        <Grid md={10}>
+          { visualizerData && <Line ref={chartRef} data={visualizerData} options={chartOptions}/> }
+        </Grid>
+        <Grid md={2}>
+          { visualizerData && <ChartControls /> }
+        </Grid>
+      </Grid>
+      </Box>
     </div>
   );
 }

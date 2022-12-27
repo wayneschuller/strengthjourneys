@@ -24,13 +24,9 @@ export default function App() {
       {/* An <Outlet> renders whatever child route is currently active,
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
-     <Box sx={{ m: 1 }} md={{ m: 3}} >
-       <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', boxShadow: '13', backgroundColor: 'palette.secondary.light' }}>
         <Outlet 
           context={[parsedData, visualizerData]} 
         />
-       </Container>
-     </Box>
     </div>
   );
 }

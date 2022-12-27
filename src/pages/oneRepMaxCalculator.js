@@ -8,6 +8,8 @@ import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Unstable_Grid2';
 import MuiInput from '@mui/material/Input';
 import Divider from '@mui/material/Divider';
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
 
 import {
   EmailShareButton,
@@ -97,6 +99,10 @@ const OneRepMaxCalculator = () => {
 
   return (
     <div>
+
+     <Box sx={{ m: 1 }} md={{ m: 3}} >
+       <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}>
+
     <Grid container spacing={2} display="flex" justifyContent="center" alignItems="center">
 
       <Grid xs={12}>
@@ -177,6 +183,8 @@ const OneRepMaxCalculator = () => {
       <Grid xs={12} md={12}> </Grid>
 
     </Grid>
+       </Container>
+     </Box>
     </div>
   );
 }

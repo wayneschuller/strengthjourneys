@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useState, useEffect} from 'react';
 
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
@@ -23,8 +23,6 @@ import Typography from '@mui/material/Typography';
 // --------------------------------------------------------------------------------------------------------
 export default function ChartControls (props) {
 
-  let chartRef = props.chartRef;
-
   return (
     <div>
      <Box sx={{ m: 1 }} md={{ m: 3}} >
@@ -34,7 +32,7 @@ export default function ChartControls (props) {
       <Divider />
       <VizConfigPRs />
       <Divider />
-      <VizConfigZoom ref={chartRef} />
+      <VizConfigZoom zoomRecent={props.zoomRecent} setZoomRecent={props.setZoomRecent} />
       <Divider />
       <VizConfigEquation />
       <Divider />
@@ -50,76 +48,11 @@ export default function ChartControls (props) {
 
 
 // --------------------------------------------------------------------------------------------------------
-// <VizConfigLiftChooser />
-// --------------------------------------------------------------------------------------------------------
-
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 50,
-    },
-  },
-};
-
-const names = [
-  'Back Squat',
-  'Deadlift',
-  'Bench Press',
-  'Strict Press',
-];
-
-function VizConfigLiftChooser() {
-  const [personName, setPersonName] = React.useState([]);
-
-  const handleChange = (event) => {
-    const {
-      target: { value },
-    } = event;
-    setPersonName(
-      // On autofill we get a stringified value.
-      typeof value === 'string' ? value.split(',') : value,
-    );
-  };
-
-  return (
-    <div>
-    <FormGroup>
-      <FormControl sx={{ m: 1, width: {xs: 200, md: 100, lg: 150, xl: 200}, }}>
-        {/* <FormLabel id="VizConfigLiftChooser">Lifts to display</FormLabel> */}
-
-        <InputLabel id="VizConfigLiftChooser">Lift Types</InputLabel>
-        <Select
-          labelId="VizConfigLiftChooser"
-          id="demo-multiple-checkbox"
-          multiple
-          value={personName}
-          onChange={handleChange}
-          input={<OutlinedInput label="Lift Types" />}
-          renderValue={(selected) => selected.join(', ')}
-          MenuProps={MenuProps}
-        >
-          {names.map((name) => (
-            <MenuItem key={name} value={name}>
-              <Checkbox checked={personName.indexOf(name) > -1} />
-              <ListItemText primary={name} />
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      </FormGroup>
-    </div>
-  );
-}
-
-// --------------------------------------------------------------------------------------------------------
 // <VizConfigPRs />
 // --------------------------------------------------------------------------------------------------------
 
 function VizConfigPRs() {
-  const [checked, setChecked] = React.useState(true);
+  const [checked, setChecked] = useState(true);
 
   const handleChange = (event) => {
     setChecked(event.target.checked);
@@ -137,15 +70,15 @@ function VizConfigPRs() {
 // --------------------------------------------------------------------------------------------------------
 // <VizConfigZoom />
 // --------------------------------------------------------------------------------------------------------
-function VizConfigZoom(chartRef) {
-  const [value, setValue] = React.useState('Show Recent');
+function VizConfigZoom({zoomRecent, setZoomRecent}) {
+  const [value, setValue] = useState('Show Recent');
 
   const handleChange = (event) => {
     setValue(event.target.value);
-    if (event.target.value === "Show All") {
-      console.log(`zoomScale Show All`);
+    if (event.target.value === "Show All Time") {
+      setZoomRecent(false);
     } else {
-      console.log(`zoomScale Show Recent`);
+      setZoomRecent(true);
     }
   };
 
@@ -159,7 +92,7 @@ function VizConfigZoom(chartRef) {
         onChange={handleChange}
       >
         <FormControlLabel value="Show Recent" control={<Radio />} label="Show Recent" />
-        <FormControlLabel value="Show All" control={<Radio />} label="Show All" />
+        <FormControlLabel value="Show All Time" control={<Radio />} label="Show All Time" />
       </RadioGroup>
     </FormControl>
   );
@@ -169,7 +102,7 @@ function VizConfigZoom(chartRef) {
 // <VizConfigEquation />
 // --------------------------------------------------------------------------------------------------------
 function VizConfigEquation() {
-  const [value, setValue] = React.useState('Bryzcki');
+  const [value, setValue] = useState('Bryzcki');
 
   const handleChange = (event) => {
     setValue(event.target.value);
@@ -198,5 +131,71 @@ function VizConfigEquation() {
           {equations.map((equation) => ( <FormControlLabel value={equation} key={equation} control={<Radio />} label={equation} />))}
       </RadioGroup>
     </FormControl>
+  );
+}
+
+// --------------------------------------------------------------------------------------------------------
+// <VizConfigLiftChooser />
+// --------------------------------------------------------------------------------------------------------
+
+const ITEM_HEIGHT = 47;
+const ITEM_PADDING_TOP = 7;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 3.5 + ITEM_PADDING_TOP,
+      width: 49,
+    },
+  },
+};
+
+// FIXME: get these from the processedData
+const names = [
+  'Back Squat',
+  'Deadlift',
+  'Bench Press',
+  'Strict Press',
+];
+
+function VizConfigLiftChooser() {
+  const [personName, setPersonName] = useState([]);
+
+  const handleChange = (event) => {
+    const {
+      target: { value },
+    } = event;
+    setPersonName(
+      // On autofill we get a stringified value.
+      typeof value === 'string' ? value.split(',') : value,
+    );
+  };
+
+  return (
+    <div>
+    <FormGroup>
+      <FormControl sx={{ m: 0, width: {xs: 200, md: 100, lg: 150, xl: 200}, }}>
+        {/* <FormLabel id="VizConfigLiftChooser">Lifts to display</FormLabel> */}
+
+        <InputLabel id="VizConfigLiftChooser">Lift Types</InputLabel>
+        <Select
+          labelId="VizConfigLiftChooser"
+          id="demo-multiple-checkbox"
+          multiple
+          value={personName}
+          onChange={handleChange}
+          input={<OutlinedInput label="Lift Types" />}
+          renderValue={(selected) => selected.join(', ')}
+          MenuProps={MenuProps}
+        >
+          {names.map((name) => (
+            <MenuItem key={name} value={name}>
+              <Checkbox checked={personName.indexOf(name) > -2} />
+              <ListItemText primary={name} />
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      </FormGroup>
+    </div>
   );
 }

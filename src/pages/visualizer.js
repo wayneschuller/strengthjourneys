@@ -32,42 +32,36 @@ const Visualizer = (props) => {
   const [padDateMin, setPadDateMin] = useState(null);
   const [padDateMax, setPadDateMax] = useState(null);
 
+  const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
+
   const chartRef = useRef(null);
 
   useEffect(() => {
-    console.log(`useEffect visualizer...`);
+    // console.log(`<Visualizer /> useEffect zoomRecent: ${zoomRecent}`);
     const chart = chartRef.current;
+
     if (!visualizerData || !chart) return;
 
-    console.log(chart);
+    // FIXME: This padDate stuff should be in the config already.
 
     // Use the most popular lift to set some aesthetic x-axis padding at start and end
     // There is a chance loading another data set will require a new range, but unlikely.
-    // console.log(visualizerData);
-
     let padDateMin = new Date(visualizerData.datasets[0].data[0].x); // First tuple in first lift
     padDateMin = padDateMin.setDate(padDateMin.getDate() - 4);
     let padDateMax = new Date(visualizerData.datasets[0].data[visualizerData.datasets[0].data.length - 1].x); // Last tuple in first lift
     padDateMax = padDateMax.setDate(padDateMax.getDate() + 14);
 
+    if (zoomRecent) {
     // Set the zoom/pan to the last 6 months of data if we have that much
     let recentXAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
     if (recentXAxisMin < padDateMin) recentXAxisMin = padDateMin;
     let recentXAxisMax = new Date(padDateMax);
-
-    console.log(`padDateMin: ${padDateMin}`);
-    console.log(`padDateMax: ${padDateMax}`);
-    console.log(`recentXAxisMin: ${recentXAxisMin}`);
-    console.log(`recentXAxisMax: ${recentXAxisMax}`);
-    if (chart) {
-      // chart.scales.x.min = padDateMin;
-      // chart.scales.x.max = padDateMax;
-      chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
-      // chart.update();
-      // setPadDateMin(padDateMin);
-      // setPadDateMax(padDateMax);
+    if (chart) chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
+    } else {
+    if (chart) chart.zoomScale("x", { min: padDateMin, max: padDateMax }, "default");
     }
-  }, [])
+
+  }, [zoomRecent])
 
   // Line Chart Options for react-chartjs-2 Visualizer 
   const zoomMinTimeRange = 1000 * 60 * 60 * 24 * 60; // Minimum x-axis is 60 days
@@ -188,7 +182,7 @@ const Visualizer = (props) => {
 
   return (
     <div>
-     <Box sx={{ m: 1 }} md={{ m: 3}} >
+     <Box sx={{ m: 1 }} >
       <Grid container spacing={1} >
 
         { !visualizerData && 
@@ -197,11 +191,18 @@ const Visualizer = (props) => {
         </Grid>
         }
 
+
         <Grid md={10}>
           { visualizerData && <Line ref={chartRef} data={visualizerData} options={chartOptions}/> }
         </Grid>
         <Grid md={2}>
-          { visualizerData && <ChartControls /> }
+          { visualizerData && <ChartControls 
+                                zoomRecent={zoomRecent} 
+                                setZoomRecent={setZoomRecent} 
+                                /> 
+          }
+
+
         </Grid>
       </Grid>
       </Box>

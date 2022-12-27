@@ -5,7 +5,6 @@ import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
-import Divider from '@mui/material/Divider';
 
 import Chart from 'chart.js/auto';    // Causes large webpack but is easier than manually registering what you need.
 import { Line } from 'react-chartjs-2';
@@ -15,13 +14,11 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 import { 
   liftAnnotations, 
-  padDateMin, padDateMax, 
 } from "../components/visualizerDataProcessing";
 
 import ChartControls from '../components/vizualizerChartControls';
 
 import { dummyProcessedData } from '../components/visualizerDataProcessing';
-import { Button } from '@mui/material';
 
 
 Chart.register(zoomPlugin, ChartDataLabels);
@@ -32,13 +29,17 @@ const Visualizer = (props) => {
   const [minChartLines, setMinChartLines] = useState(3);
   const [maxChartLines, setMaxChartLines] = useState(8);
 
+  const [padDateMin, setPadDateMin] = useState(null);
+  const [padDateMax, setPadDateMax] = useState(null);
+
   const chartRef = useRef(null);
 
   useEffect(() => {
     console.log(`useEffect visualizer...`);
     const chart = chartRef.current;
-    // console.log(chart);
-    if (!visualizerData) return;
+    if (!visualizerData || !chart) return;
+
+    console.log(chart);
 
     // Use the most popular lift to set some aesthetic x-axis padding at start and end
     // There is a chance loading another data set will require a new range, but unlikely.
@@ -50,19 +51,21 @@ const Visualizer = (props) => {
     padDateMax = padDateMax.setDate(padDateMax.getDate() + 14);
 
     // Set the zoom/pan to the last 6 months of data if we have that much
-    let xAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
-    if (xAxisMin < padDateMin) xAxisMin = padDateMin;
-    let xAxisMax = new Date(padDateMax);
+    let recentXAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
+    if (recentXAxisMin < padDateMin) recentXAxisMin = padDateMin;
+    let recentXAxisMax = new Date(padDateMax);
 
     console.log(`padDateMin: ${padDateMin}`);
     console.log(`padDateMax: ${padDateMax}`);
-    console.log(`xAxisMin: ${xAxisMin}`);
-    console.log(`xAxisMax: ${xAxisMax}`);
+    console.log(`recentXAxisMin: ${recentXAxisMin}`);
+    console.log(`recentXAxisMax: ${recentXAxisMax}`);
     if (chart) {
-      chart.scales.x.min = padDateMin;
-      chart.scales.x.max = padDateMax;
-      chart.update();
-      // chart.zoomScale("x", { min: xAxisMin, max: xAxisMax }, "default");
+      // chart.scales.x.min = padDateMin;
+      // chart.scales.x.max = padDateMax;
+      chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
+      // chart.update();
+      // setPadDateMin(padDateMin);
+      // setPadDateMax(padDateMax);
     }
   }, [])
 
@@ -84,6 +87,8 @@ const Visualizer = (props) => {
     scales: {
       x: {
           type: "time",
+          suggestedMin: {padDateMin},
+          suggestedMax: {padDateMax},
           distribution: "linear",  // FIXME: necessary?
           time: {
             minUnit: "day"
@@ -184,7 +189,7 @@ const Visualizer = (props) => {
   return (
     <div>
      <Box sx={{ m: 1 }} md={{ m: 3}} >
-      <Grid container spacing={2} >
+      <Grid container spacing={1} >
 
         { !visualizerData && 
         <Grid md={12}>
@@ -205,24 +210,6 @@ const Visualizer = (props) => {
 }
 
 export default Visualizer;
-
-// FIXME: some old functionality remaining here that needs to be ported
-function createFart(data) {
-
-  // Use the most popular lift to set some aesthetic x-axis padding at start and end
-  // Right now only do this once on first csv load.
-  // There is a chance loading another data set will require a new range, but unlikely.
-  // padDateMin = new Date(processedData[0].e1rmLineData[0].x);
-  padDateMin = padDateMin.setDate(padDateMin.getDate() - 4);
-  // padDateMax = new Date(processedData[0].e1rmLineData[processedData[0].e1rmLineData.length - 1].x);
-  padDateMax = padDateMax.setDate(padDateMax.getDate() + 14);
-
-  // Set the zoom/pan to the last 6 months of data if we have that much
-  let xAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
-  if (xAxisMin < padDateMin) xAxisMin = padDateMin;
-  let xAxisMax = new Date(padDateMax);
-  // myChart.zoomScale("xAxis", { min: xAxisMin, max: xAxisMax }, "default");
-}
 
 
 // The OLD project config - here for reference while porting
@@ -268,6 +255,3 @@ function createAchievementAnnotation(date, weight, text, background, datasetInde
     // scaleID: 'y',
   };
 }
-
-// Show/hide the chart.js achievement annotations on the chart
-// function toggleAchievements() {

@@ -119,8 +119,8 @@ export const dummyProcessedData = {
 
 export const liftAnnotations = {}; // chart.js annotations plugin config for special achivements such as 1RM, 3RM, 5RM.
 export let myChart = null;
-export let chartTitle = "Strength History";
-export let padDateMin, padDateMax;
+export let chartTitle = "Strength History";  // hmmm
+let padDateMin, padDateMax;
 export let unitType = "lb"; // Default to freedom units
 let equation = "Brzycki"; // Our favourite preferred equation - it does not over promise
 

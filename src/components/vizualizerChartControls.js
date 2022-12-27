@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import Container from '@mui/material/Container';
 import Divider from '@mui/material/Divider';
@@ -23,6 +22,9 @@ import Typography from '@mui/material/Typography';
 // <ChartControls />
 // --------------------------------------------------------------------------------------------------------
 export default function ChartControls (props) {
+
+  let chartRef = props.chartRef;
+
   return (
     <div>
      <Box sx={{ m: 1 }} md={{ m: 3}} >
@@ -32,7 +34,7 @@ export default function ChartControls (props) {
       <Divider />
       <VizConfigPRs />
       <Divider />
-      <VizConfigZoom />
+      <VizConfigZoom ref={chartRef} />
       <Divider />
       <VizConfigEquation />
       <Divider />
@@ -84,10 +86,13 @@ function VizConfigLiftChooser() {
 
   return (
     <div>
-      <FormControl sx={{ m: 1, width: 200 }}>
-        <InputLabel id="demo-multiple-checkbox-label">Lift Types</InputLabel>
+    <FormGroup>
+      <FormControl sx={{ m: 1, width: {xs: 200, md: 100, lg: 150, xl: 200}, }}>
+        {/* <FormLabel id="VizConfigLiftChooser">Lifts to display</FormLabel> */}
+
+        <InputLabel id="VizConfigLiftChooser">Lift Types</InputLabel>
         <Select
-          labelId="demo-multiple-checkbox-label"
+          labelId="VizConfigLiftChooser"
           id="demo-multiple-checkbox"
           multiple
           value={personName}
@@ -104,6 +109,7 @@ function VizConfigLiftChooser() {
           ))}
         </Select>
       </FormControl>
+      </FormGroup>
     </div>
   );
 }
@@ -122,8 +128,8 @@ function VizConfigPRs() {
 
   return (
     <FormGroup>
-     <FormLabel id="VizConfigPRs">Achievements</FormLabel>
-    <FormControlLabel control={<Switch checked={checked} onChange={handleChange} />} label="Show PRs" />
+      <FormLabel id="VizConfigPRs">Achievements</FormLabel>
+      <FormControlLabel control={<Switch checked={checked} onChange={handleChange} />} label="Show PRs" />
   </FormGroup>
   );
 }
@@ -131,11 +137,16 @@ function VizConfigPRs() {
 // --------------------------------------------------------------------------------------------------------
 // <VizConfigZoom />
 // --------------------------------------------------------------------------------------------------------
-function VizConfigZoom() {
+function VizConfigZoom(chartRef) {
   const [value, setValue] = React.useState('Show Recent');
 
   const handleChange = (event) => {
     setValue(event.target.value);
+    if (event.target.value === "Show All") {
+      console.log(`zoomScale Show All`);
+    } else {
+      console.log(`zoomScale Show Recent`);
+    }
   };
 
   return (
@@ -177,14 +188,14 @@ function VizConfigEquation() {
 
   return (
     <FormControl>
-      <FormLabel id="demo-controlled-radio-buttons-group">Equation</FormLabel>
+      <FormLabel id="VizConfigEquation">One Rep Max Equation</FormLabel>
       <RadioGroup
-        aria-labelledby="demo-controlled-radio-buttons-group"
+        aria-labelledby="VizConfigEquation"
         name="controlled-radio-buttons-group"
         value={value}
         onChange={handleChange}
       >
-          {equations.map((equation) => ( <FormControlLabel value={equation} control={<Radio />} label={equation} />))}
+          {equations.map((equation) => ( <FormControlLabel value={equation} key={equation} control={<Radio />} label={equation} />))}
       </RadioGroup>
     </FormControl>
   );

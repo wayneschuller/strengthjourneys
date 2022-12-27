@@ -33,15 +33,11 @@ const pages = [
 
 const settings = ['Profile', 'Settings'];
 
-function ResponsiveAppBar(props) {
+function ResponsiveAppBar({ setParsedData, setVisualizerData }) {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
 
   const [cookies, setCookie, removeCookie] = useCookies(['ssid', 'tokenResponse']);
-
-  // We inherit some state from our parent <App /> 
-  let setParsedData = props.setParsedData;
-  let setVisualizerData = props.setVisualizerData;
 
   const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button

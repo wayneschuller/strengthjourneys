@@ -40,7 +40,7 @@ const Visualizer = (props) => {
     // console.log(`<Visualizer /> useEffect zoomRecent: ${zoomRecent}`);
     const chart = chartRef.current;
 
-    if (!visualizerData || !chart) return;
+    if (!visualizerData) return;
 
     // FIXME: This padDate stuff should be in the config already.
 
@@ -52,13 +52,14 @@ const Visualizer = (props) => {
     padDateMax = padDateMax.setDate(padDateMax.getDate() + 14);
 
     if (zoomRecent) {
-    // Set the zoom/pan to the last 6 months of data if we have that much
-    let recentXAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
-    if (recentXAxisMin < padDateMin) recentXAxisMin = padDateMin;
-    let recentXAxisMax = new Date(padDateMax);
-    if (chart) chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
+      // Set the zoom/pan to the last 6 months of data if we have that much
+      let recentXAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
+      if (recentXAxisMin < padDateMin) recentXAxisMin = padDateMin;
+      let recentXAxisMax = new Date(padDateMax);
+      chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
     } else {
-    if (chart) chart.zoomScale("x", { min: padDateMin, max: padDateMax }, "default");
+      // Zoom out to show all time
+      chart.zoomScale("x", { min: padDateMin, max: padDateMax }, "default");
     }
 
   }, [zoomRecent])

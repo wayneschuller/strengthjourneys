@@ -189,7 +189,7 @@ function ResponsiveAppBar({ setParsedData, setVisualizerData }) {
         })
         .then((response) => {
           // handle success
-          console.log(`API get GSheet values success: range is ${response.data.range}`);
+          // console.log(`API get GSheet values success: range is ${response.data.range}`);
           let parsedData = parseData(response.data.values);
           // console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
           setParsedData(parsedData);    

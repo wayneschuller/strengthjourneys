@@ -18,11 +18,6 @@ import Chip from '@mui/material/Chip';
 
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import useDrivePicker from 'react-google-drive-picker'
-import { useCookies } from 'react-cookie';
-import axios from 'axios';
-
-import { parseData } from './parseData';
-import { defaultVisualizerData, processVisualizerData } from './visualizerDataProcessing';
 
 // Array of main menu items
 const pages = [
@@ -33,17 +28,21 @@ const pages = [
 
 const settings = ['Profile', 'Settings'];
 
-function ResponsiveAppBar({ setParsedData, setVisualizerData }) {
+function ResponsiveAppBar(props) {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
 
-  const [cookies, setCookie, removeCookie] = useCookies(['ssid', 'tokenResponse']);
-
-  const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
-  const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
-  const [infoChipToolTip, setInfoChipToolTip] = useState(null);
-
-  const [dataModifiedTime, setDataModifiedTime] = useState(0); // Unix timestamp
+  const cookies = props.cookies;
+  const setCookie = props.setCookie;
+  const removeCookie = props.removeCookie;
+  const userInfo = props.userInfo;
+  const setUserInfo = props.setUserInfo; 
+  const infoChipStatus = props.infoChipStatus;
+  const setInfoChipStatus = props.setInfoChipStatus;
+  const infoChipToolTip = props.infoChipStatus;
+  const setInfoChipToolTip = props.setInfoChipToolTip;
+  const getGoogleUserInfo = props.getGoogleUserInfo;
+  const loadGSheetValues = props.loadGSheetValues;
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -69,163 +68,12 @@ function ResponsiveAppBar({ setParsedData, setVisualizerData }) {
     googleLogout();
     removeCookie('tokenResponse'); // Forget the tokenReponse 
     setUserInfo(null);    // This will remove the profile menu and status button
-    setVisualizerData(defaultVisualizerData);  // Reset the graph
+    // setVisualizerData(defaultVisualizerData);  // Reset the graph
     setAnchorElUser(null);  // Closes menu
   };
 
   // console.log(`Top level <ResponsiveAppBar />...`);
 
-  // If we have a stored token then likely we can login automatically
-  // FIXME: I've moved this code back into the useEffect
-  // if (!userInfo && cookies.tokenResponse && cookies.tokenResponse.access_token) {
-    // console.log(`Attempting init data chain...${cookies.tokenResponse.access_token}`)
-    // getGoogleUserInfo(cookies.tokenResponse);
-  // }
-
-  // ------------------------------------------------------------------
-  // Data processing flow:
-  //
-  //    getGoogleUserInfo->checkGSheetModified->loadGSheetValues
-  //
-  // Flow is mostly triggered by event handlers
-  // FIXME: figure out how to init run data processing flow if cookie token and ssid are there
-  // ------------------------------------------------------------------
-  // API request to get Google user info using the tokenResponse (used for profile avatar on navbar top right)
-  async function getGoogleUserInfo(tokenResponse) {
-    console.log(`getGoogleUserInfo()...`);
-
-    if (!tokenResponse && tokenResponse.access_token) {
-      console.log(`Can't get userInfo without tokenResponse...`);
-      setVisualizerData(defaultVisualizerData);
-      return; // No ticket to google? Then no party.
-    }
-
-    if (userInfo !== null) {
-      console.log(`...ABORT as we seem to already have userInfo`);
-    }
-
-    await axios
-      .get('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-      })
-      .then((response) => {
-        // handle success
-        // console.log(`API get UserInfo success: response.data: ${JSON.stringify(response.data)}`);
-        setUserInfo(response.data);
-
-        // If we have a valid looking ssid then we can go to the next step in the chain
-        if (cookies.ssid !== undefined && cookies.ssid.length > 10) 
-          checkGSheetModified();
-      })
-      .catch((error) => {
-        console.log(`axios.get UserInfo error:`);
-        console.log(error.response);
-
-        // Just in case we had a working tokenResponse that has now expired.
-        setUserInfo(null);
-        removeCookie('tokenResponse'); // Forget the tokenReponse 
-
-      })
-  }
-
-    async function checkGSheetModified () {
-      console.log("checkGSheetModified()...");
-
-      // API call to get GDrive file metadata to get modified time and the filename
-      await axios
-        .get(`https://www.googleapis.com/drive/v3/files/${cookies.ssid}?fields=modifiedTime%2Cname&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
-          headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
-        })
-        .then((response) => {
-          // handle success
-          // console.log(`API get GDrive file metadata .then received:`);
-          // console.log(response.data);
-          setInfoChipToolTip(response.data.name);
-
-          // If the modified time is newer then refresh the data from Google Sheets
-          const modifiedTime = Date.parse(response.data.modifiedTime);
-          // console.log(`useState dataModifiedTime: ${dataModifiedTime}. Response: ${modifiedTime}`);
-          if (modifiedTime > dataModifiedTime) {
-            setDataModifiedTime(modifiedTime);
-            loadGSheetValues(cookies.ssid);
-          } else {
-            console.log(`Google Sheet metadata check: modifiedtime is unchanged`);
-          } 
-        })
-        .catch((error) => {
-          setInfoChipStatus("Error Reading GDrive File Metadata");
-          setInfoChipToolTip(error.response.data.error.message);
-          console.log(error);
-        })
-    }
-
-    // Gets interesting information about the sheet but not modified time
-    // NOTE: Currently unused, but may be useful in the future
-    async function getGSheetMetadata () {
-      console.log("getGSheetMetadata()...");
-
-      await axios
-        .get(`https://sheets.googleapis.com/v4/spreadsheets/${cookies.ssid}?includeGridData=false`, {
-          headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
-        })
-        .then((response) => {
-          // handle success
-          // console.log(`API get GSheet metadata .then received:`);
-          // console.log(response.data);
-        })
-        .catch((error) => {
-          setInfoChipStatus("Error Reading Google Sheet Metadata");
-          setInfoChipToolTip(error.response.data.error.message);
-          console.log(error);
-        })
-    }
-
-    async function loadGSheetValues(ssid) {
-      console.log("loadGSheetValues()...");
-
-      await axios
-      .get(`https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
-          headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
-        })
-        .then((response) => {
-          // handle success
-          // console.log(`API get GSheet values success: range is ${response.data.range}`);
-          let parsedData = parseData(response.data.values);
-          // console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
-          setParsedData(parsedData);    
-          setInfoChipStatus("Data Source Connected");
-
-          // Now is the right time to process the data for the visualizer
-          let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
-          // console.log(`Here is processed[0]:`);
-          // console.log(processed[0]);
-          processed[0].hidden = false; // Unhide the most popular lift
-
-          // FIXME: Don't manually set the lines like this - should be cleverer
-          var wrapper = {
-            // FIXME If we wrap the data array in an object this might become processed.datasets[0] etc
-            datasets: [processed[0], processed[1], processed[2], processed[3]],
-          }
-          setVisualizerData(wrapper);
-        })
-        .catch((error) => {
-          setInfoChipStatus("Error Reading Google Sheet");
-          setInfoChipToolTip(error.response.data.error.message);
-          console.log(error);
-        })
-    }
-
-  // Event handlers do most of the data flow for us
-  // However we want useEffect to auto load data on init from cookies
-  let didInit = false;
-  useEffect(() => {
-    if (!didInit && cookies.tokenResponse) {
-      didInit = true;
-      // ✅ Only runs once per app load
-      // console.log(`useEffect: We now have a tokenResponse, let's talk to Google...`);
-      getGoogleUserInfo(cookies.tokenResponse);
-    }
-  }, []);
 
 
   // Google API scopes required to read one google sheet
@@ -278,7 +126,7 @@ function ResponsiveAppBar({ setParsedData, setVisualizerData }) {
           // park the ssid in the browser cookie - expires in a year. They can change it anytime.
           let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now
           setCookie('ssid', data.docs[0].id, { path: '/', expires: d });
-          setDataModifiedTime(0); // Reset this for new file modified time to be loaded in
+          // setDataModifiedTime(0); // FIXME: do we need this?
           console.log(data)
         }
 

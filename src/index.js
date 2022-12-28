@@ -31,26 +31,17 @@ root.render(
     <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
       <CookiesProvider>
         <ThemeProvider theme={theme}>
-
-        <BrowserRouter>
-      {/* Routes nest inside one another. Nested route paths build upon
-            parent route paths, and nested route elements render inside
-            parent route elements. See the note about <Outlet> below. */}
-      <Routes>
-        <Route path="/" element={<App />}>
-          <Route index element={<Home />} />
-          <Route path="visualizer" element={<Visualizer />} />
-          <Route path="analyzer" element={<Analyzer />} />
-          <Route path="calculator" element={<OneRepMaxCalculator />} />
-
-          {/* Using path="*"" means "match anything", so this route
-                acts like a catch-all for URLs that we don't have explicit
-                routes for. */}
-          <Route path="*" element={<NoMatch />} />
-        </Route>
-      </Routes>
-      </BrowserRouter>
-
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<App />}>
+              <Route index element={<Home />} /> 
+              <Route path="visualizer" element={<Visualizer />} />
+              <Route path="analyzer" element={<Analyzer />} />
+              <Route path="calculator" element={<OneRepMaxCalculator />} />
+              <Route path="*" element={<NoMatch />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
       </ThemeProvider>
      </CookiesProvider>
   </GoogleOAuthProvider>

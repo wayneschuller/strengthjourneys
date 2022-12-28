@@ -1,7 +1,6 @@
 import { React, useState, useEffect, useRef } from 'react';
 import { useOutletContext } from "react-router-dom";
 
-import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
@@ -25,13 +24,9 @@ Chart.register(zoomPlugin, ChartDataLabels);
 
 const Visualizer = (props) => {
 
-  const [parsedData, visualizerData ] = useOutletContext();
+  const [visualizerData, padDateMin, padDateMax ] = useOutletContext();
   const [minChartLines, setMinChartLines] = useState(3);
   const [maxChartLines, setMaxChartLines] = useState(8);
-
-  const [padDateMin, setPadDateMin] = useState(null);
-  const [padDateMax, setPadDateMax] = useState(null);
-
   const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
 
   const chartRef = useRef(null);
@@ -42,10 +37,7 @@ const Visualizer = (props) => {
 
     if (!visualizerData) return;
 
-    // FIXME: This padDate stuff should be in the config already.
 
-    // Use the most popular lift to set some aesthetic x-axis padding at start and end
-    // There is a chance loading another data set will require a new range, but unlikely.
     let padDateMin = new Date(visualizerData.datasets[0].data[0].x); // First tuple in first lift
     padDateMin = padDateMin.setDate(padDateMin.getDate() - 4);
     let padDateMax = new Date(visualizerData.datasets[0].data[visualizerData.datasets[0].data.length - 1].x); // Last tuple in first lift
@@ -91,6 +83,8 @@ const Visualizer = (props) => {
       },
       y: {
         suggestedMin: 0,
+        suggestedMax: 250, // FIXME: don't hardcode this but base it on data
+
         ticks: {
           font: { family: "Catamaran", size: 15 },
           callback: (value) => {

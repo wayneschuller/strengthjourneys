@@ -25,29 +25,39 @@ Chart.register(zoomPlugin, ChartDataLabels);
 const Visualizer = (props) => {
 
   const [visualizerData, padDateMin, padDateMax ] = useOutletContext();
-  const [minChartLines, setMinChartLines] = useState(3);
-  const [maxChartLines, setMaxChartLines] = useState(8);
   const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
 
   const chartRef = useRef(null);
+
+  let didInit = false;
+  useEffect(() => {
+    const chart = chartRef.current;
+
+    if (!didInit && visualizerData && chart) {
+      didInit = true;
+      // ✅ Only runs once per app load
+      console.log(`Running things on chart init`);
+      // Set the zoom/pan to the last 6 months of data if we have that much
+      let recentXAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
+      if (recentXAxisMin < padDateMin) recentXAxisMin = padDateMin;
+      let recentXAxisMax = new Date(padDateMax);
+      console.log(`Init chart.zoomScale ${recentXAxisMin.getTime()}, ${recentXAxisMax.getTime()}`);
+      chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
+    }
+  }, [visualizerData]);
 
   useEffect(() => {
     // console.log(`<Visualizer /> useEffect zoomRecent: ${zoomRecent}`);
     const chart = chartRef.current;
 
-    if (!visualizerData) return;
-
-
-    let padDateMin = new Date(visualizerData.datasets[0].data[0].x); // First tuple in first lift
-    padDateMin = padDateMin.setDate(padDateMin.getDate() - 4);
-    let padDateMax = new Date(visualizerData.datasets[0].data[visualizerData.datasets[0].data.length - 1].x); // Last tuple in first lift
-    padDateMax = padDateMax.setDate(padDateMax.getDate() + 14);
+    if (!chart || !padDateMin || !padDateMax) return;
 
     if (zoomRecent) {
       // Set the zoom/pan to the last 6 months of data if we have that much
       let recentXAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
       if (recentXAxisMin < padDateMin) recentXAxisMin = padDateMin;
       let recentXAxisMax = new Date(padDateMax);
+      console.log(`Chart controls setting chart.zoomScale ${recentXAxisMin.getTime()}, ${recentXAxisMax.getTime()}`);
       chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
     } else {
       // Zoom out to show all time
@@ -74,8 +84,11 @@ const Visualizer = (props) => {
     scales: {
       x: {
           type: "time",
-          suggestedMin: {padDateMin},
+          // bounds: "ticks",       // Doesn't seem to do much, try again when we have padding in ticks
+          suggestedMin: {padDateMin}, // Later changes to padDateMin state don't impact the Min. :(
           suggestedMax: {padDateMax},
+          // suggestedMin: 1444176000000,
+          // suggestedMax: 1673308800000,
           distribution: "linear",  // FIXME: necessary?
           time: {
             minUnit: "day"
@@ -94,12 +107,6 @@ const Visualizer = (props) => {
       },
     },
 
-    layout: {
-      padding: {
-        right: 50,
-      },
-    },
-
     plugins: {
 
       title: {
@@ -109,6 +116,7 @@ const Visualizer = (props) => {
       },
 
       legend: {
+        display: true,
         position: 'top',
         labels: {
           font: {

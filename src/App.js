@@ -156,7 +156,8 @@ export default function App() {
           padDateMin = padDateMin.setDate(padDateMin.getDate() - 4);
           let padDateMax = new Date(processed[0].data[processed[0].data.length - 1].x); // Last tuple in first lift
           padDateMax = padDateMax.setDate(padDateMax.getDate() + 14);
-
+          setPadDateMin(padDateMin);
+          setPadDateMax(padDateMax);
           setVisualizerData(wrapper);
         })
         .catch((error) => {

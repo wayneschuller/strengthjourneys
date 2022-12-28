@@ -24,7 +24,7 @@ Chart.register(zoomPlugin, ChartDataLabels);
 
 const Visualizer = (props) => {
 
-  const [visualizerData, padDateMin, padDateMax ] = useOutletContext();
+  const [visualizerData, padDateMin, padDateMax, recentXAxisMin, recentXAxisMax, suggestedYMax ] = useOutletContext();
   const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
 
   const chartRef = useRef(null);
@@ -32,17 +32,11 @@ const Visualizer = (props) => {
   let didInit = false;
   useEffect(() => {
     const chart = chartRef.current;
-
     if (!didInit && visualizerData && chart) {
       didInit = true;
       // ✅ Only runs once per app load
-      console.log(`Running things on chart init`);
-      // Set the zoom/pan to the last 6 months of data if we have that much
-      let recentXAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
-      if (recentXAxisMin < padDateMin) recentXAxisMin = padDateMin;
-      let recentXAxisMax = new Date(padDateMax);
-      console.log(`Init chart.zoomScale ${recentXAxisMin.getTime()}, ${recentXAxisMax.getTime()}`);
-      chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
+      // console.log(`Running things on chart init`);
+      console.log(chart);
     }
   }, [visualizerData]);
 
@@ -53,11 +47,7 @@ const Visualizer = (props) => {
     if (!chart || !padDateMin || !padDateMax) return;
 
     if (zoomRecent) {
-      // Set the zoom/pan to the last 6 months of data if we have that much
-      let recentXAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
-      if (recentXAxisMin < padDateMin) recentXAxisMin = padDateMin;
-      let recentXAxisMax = new Date(padDateMax);
-      console.log(`Chart controls setting chart.zoomScale ${recentXAxisMin.getTime()}, ${recentXAxisMax.getTime()}`);
+      // console.log(`Chart controls setting chart.zoomScale ${recentXAxisMin.getTime()}, ${recentXAxisMax.getTime()}`);
       chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
     } else {
       // Zoom out to show all time
@@ -84,19 +74,22 @@ const Visualizer = (props) => {
     scales: {
       x: {
           type: "time",
-          // bounds: "ticks",       // Doesn't seem to do much, try again when we have padding in ticks
-          suggestedMin: {padDateMin}, // Later changes to padDateMin state don't impact the Min. :(
+          suggestedMin: {padDateMin}, // FIXME: does not seem to apply
           suggestedMax: {padDateMax},
+          // min: {padDateMin},
+          // max: {padDateMax},
           // suggestedMin: 1444176000000,
           // suggestedMax: 1673308800000,
-          distribution: "linear",  // FIXME: necessary?
+          // min: 1444176000000,
+          // max: 1673308800000,
           time: {
             minUnit: "day"
           },
       },
       y: {
         suggestedMin: 0,
-        suggestedMax: 250, // FIXME: don't hardcode this but base it on data
+        suggestedMax: 200, 
+        // suggestedMax: {suggestedYMax}, 
 
         ticks: {
           font: { family: "Catamaran", size: 15 },
@@ -110,8 +103,8 @@ const Visualizer = (props) => {
     plugins: {
 
       title: {
-        display: false,
-        text: 'Chart.js Line Chart',
+        display: true,
+        text: `suggestedYMax: ${suggestedYMax}, padDateMin: ${padDateMin}, padDateMax: ${padDateMax}, recent ${zoomRecent}`, // Weird title for testing purposes
         font: { size: 20 },
       },
 
@@ -180,7 +173,6 @@ const Visualizer = (props) => {
         },
       },
     }
-
   };
 
   return (

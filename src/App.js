@@ -12,7 +12,7 @@ import ResponsiveAppBar from './components/appBar';
 
 export default function App() {
 
-  const [parsedData, setParsedData] = useState(null);  
+  // const [parsedData, setParsedData] = useState(null);  
   const [visualizerData, setVisualizerData] = useState(null);
 
   const [dataModifiedTime, setDataModifiedTime] = useState(0); // Unix timestamp
@@ -23,6 +23,10 @@ export default function App() {
 
   const [padDateMin, setPadDateMin] = useState(null);
   const [padDateMax, setPadDateMax] = useState(null);
+  const [recentXAxisMin, setRecentXAxisMin] = useState(null);
+  const [recentXAxisMax, setRecentXAxisMax] = useState(null);
+
+  const [suggestedYMax, setSuggestedYMax] = useState(null);
 
   // ------------------------------------------------------------------
   // Data processing flow:
@@ -133,10 +137,10 @@ export default function App() {
           // console.log(`API get GSheet values success: range is ${response.data.range}`);
           let parsedData = parseData(response.data.values);
           // console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
-          setParsedData(parsedData);    
+          // setParsedData(parsedData);    
           setInfoChipStatus("Data Source Connected");
 
-          // Now is the right time to process the data for the visualizer
+          // Process the data for the visualizer
           let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
           // console.log(`Here is processed[0]:`);
           // console.log(processed[0]);
@@ -148,17 +152,33 @@ export default function App() {
             datasets: [processed[0], processed[1], processed[2], processed[3]],
           }
 
-          // FIXME: here would be a good place inside <App/> to set padDate and so on...
 
           // Use the most popular lift to set some aesthetic x-axis padding at start and end
           // There is a chance loading another data set will require a new range, but unlikely.
           let padDateMin = new Date(processed[0].data[0].x); // First tuple in first lift
-          padDateMin = padDateMin.setDate(padDateMin.getDate() - 4);
+          padDateMin = padDateMin.setDate(padDateMin.getDate() - 6);
           let padDateMax = new Date(processed[0].data[processed[0].data.length - 1].x); // Last tuple in first lift
           padDateMax = padDateMax.setDate(padDateMax.getDate() + 14);
           setPadDateMin(padDateMin);
           setPadDateMax(padDateMax);
+
+          // Also set some unixtimes for the last 6 months.
+          // Set the zoom/pan to the last 6 months of data if we have that much
+          let recentXAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
+          if (recentXAxisMin < padDateMin) recentXAxisMin = padDateMin;
+          let recentXAxisMax = new Date(padDateMax);
+          setRecentXAxisMin(recentXAxisMin);
+          setRecentXAxisMax(recentXAxisMax);
+
+          // Search through the processed data and find the largest estimate
+          // Round up to the nearest 50
+          let yMax = 250;
+          setSuggestedYMax(yMax);
+
+          // Load in the data
           setVisualizerData(wrapper);
+
+
         })
         .catch((error) => {
           setInfoChipStatus("Error Reading Google Sheet");
@@ -200,7 +220,7 @@ export default function App() {
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
         <Outlet 
-          context={[visualizerData, padDateMin, padDateMax]} 
+          context={[visualizerData, padDateMin, padDateMax, recentXAxisMin, recentXAxisMax, suggestedYMax]} 
         />
     </div>
   );

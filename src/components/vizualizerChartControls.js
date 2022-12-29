@@ -121,7 +121,7 @@ export function LiftControls (props) {
     <div>
 
         {visualizerData && visualizerData.map((lift) => (
-          <Chip sx={{ mr: 1, mb: 1 }} size="small" key={lift.label} 
+          <Chip sx={{ mr: 1, mb: 1 }} size="large" key={lift.label} 
                 label={lift.label} 
                 color={selectedChips.includes(lift.label) ? 'primary' : 'default'}
                 onClick={() => handleChipClick(lift.label)}

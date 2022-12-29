@@ -6,8 +6,8 @@ import { Outlet } from "react-router-dom";
 import axios from 'axios';
 import { useCookies } from 'react-cookie';
 
-import { parseData } from './components/parseData';
-import { defaultVisualizerData, processVisualizerData, processAchievements } from './components/visualizerDataProcessing';
+import { parseData } from './utils/parseData';
+import { defaultVisualizerData, processVisualizerData, processAchievements } from './utils/visualizerDataProcessing';
 import ResponsiveAppBar from './components/appBar';
 
 export default function App() {
@@ -151,9 +151,10 @@ export default function App() {
 
           // Process the PRs/Achivements and return some chartjs annotation config.
           let annotations = processAchievements(parsedData, processed);
+
           setAchievementAnnotations(annotations);
 
-          processed[0].hidden = false; // Unhide the most popular lift
+          processed[0].hidden = false; // FIXME: this needs to be done properly
           // FIXME: Don't manually set the lines like this - should be cleverer
           var wrapper = {
             // FIXME If we wrap the data array in an object this might become processed.datasets[0] etc

@@ -14,7 +14,7 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 
 import ChartControls from '../components/vizualizerChartControls';
 
-import { dummyProcessedData } from '../components/visualizerDataProcessing';
+import { dummyProcessedData } from '../utils/visualizerDataProcessing';
 
 
 Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);

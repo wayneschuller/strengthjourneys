@@ -1,4 +1,5 @@
 import { useState, useEffect} from 'react';
+import { useCookies } from 'react-cookie';
 
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
@@ -50,15 +51,27 @@ export function ChartControls (props) {
 // --------------------------------------------------------------------------------------------------------
 export function LiftControls (props) {
   const [selectedChips, setSelectedChips] = useState([]);
+  const [cookies, setCookie] = useCookies(['selectedChips']);
 
   // Do some kind of map on processedData and make toggle keys 
   let visualizerData = props.visualizerData;
   let setSelectedVisualizerData = props.setSelectedVisualizerData;
 
   useEffect(() => {
-    // Initialize the selectedChips array based on the items prop
-    setSelectedChips(visualizerData.filter((item) => item.selected).map((item) => item.label));
+    if (cookies.selectedChips) {
+      // Initialize the selectedChips array based on the cookie value
+      setSelectedChips(cookies.selectedChips);
+      
+    } else {
+      // Initialize the selectedChips array based on the .selected value in visualizerData
+      setSelectedChips(visualizerData.filter((item) => item.selected).map((item) => item.label));
+    }
   }, []); // Only run this effect once, on mount
+
+   // Save the selectedChips array to a cookie when it changes
+  useEffect(() => {
+    setCookie('selectedChips', JSON.stringify(selectedChips), { path: '/' });
+  }, [selectedChips]);
 
   function handleChipClick(liftType) {
 
@@ -77,6 +90,7 @@ export function LiftControls (props) {
     // Check if the liftType is already in the selectedVisuazlierData, if so, remove it.
     if (visualizerData[liftIndex].selected === true) {
       visualizerData[liftIndex].selected = false; 
+      visualizerData[liftIndex].hidden = true; 
     } else {
       visualizerData[liftIndex].selected = true; 
       visualizerData[liftIndex].hidden = false; 

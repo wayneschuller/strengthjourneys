@@ -1,5 +1,6 @@
 import { React, useState, useEffect, useRef } from 'react';
 import { useOutletContext } from "react-router-dom";
+import { useCookies } from 'react-cookie';
 
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -34,6 +35,7 @@ const Visualizer = (props) => {
   const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
   const [showAchievements, setShowAchievements] = useState(true); // PR/Achivement annotations
   const [selectedVisualizerData, setSelectedVisualizerData] = useState(null); 
+  const [cookies, setCookie] = useCookies(['selectedChips']);
 
   const chartRef = useRef(null);
 
@@ -43,11 +45,22 @@ const Visualizer = (props) => {
 
     if (!visualizerData) return;
 
-    // Top 4 is a good default
-    visualizerData[0].selected = true;
-    visualizerData[1].selected = true;
-    visualizerData[2].selected = true;
-    visualizerData[3].selected = true;
+    if (cookies.selectedChips) {
+      // If we have the cookie, modify our visualizerData so the .selected key matches what was in the cookie
+      // console.log(`<Visualizer /> useEffect modifying visualizerData based on cookie`);
+      visualizerData.forEach((item) => {
+        item.selected = cookies.selectedChips.includes(item.label);
+        item.hidden = false;
+      });  
+    } else {
+
+      // No cookie? Top four lifts is a good default
+      visualizerData[0].selected = true;
+      visualizerData[1].selected = true;
+      visualizerData[2].selected = true;
+      visualizerData[3].selected = true;
+      visualizerData[0].hidden = false; // Let them see the top lift line only only (the other 3 will be in the chart legend)
+    }
 
     var wrapper = {
       datasets: visualizerData.filter(lift => lift.selected)
@@ -55,7 +68,6 @@ const Visualizer = (props) => {
 
     setSelectedVisualizerData(wrapper);
 
-    visualizerData[0].hidden = false; // Let them see the top lift line only only (the other 3 will be in the chart legend)
 
   }, [visualizerData]);
 

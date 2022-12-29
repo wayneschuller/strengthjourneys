@@ -54,11 +54,11 @@ const Visualizer = (props) => {
       });  
     } else {
 
-      // No cookie? Top four lifts is a good default
+      // No cookie? Top three lifts is a good default
+      // FIXME: This will break if we have less than three lifts
       visualizerData[0].selected = true;
       visualizerData[1].selected = true;
       visualizerData[2].selected = true;
-      visualizerData[3].selected = true;
       visualizerData[0].hidden = false; // Let them see the top lift line only only (the other 3 will be in the chart legend)
     }
 

@@ -188,12 +188,13 @@ export function VerticalChartControls({ zoomRecent, setZoomRecent }) {
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleChange = (event, nextView) => {
+    setZoomRecent(true);
     setView(nextView);
     console.log(`user clicked a toggle button:`);
     console.log(nextView);
     if (nextView == "showRecent") {
       console.log(`Let's zoom in`);
-      setZoomRecent(true);
+      // setZoomRecent(true);
     }
   };
 

@@ -32,6 +32,7 @@ export const defaultVisualizerData = {
   };
 
 // This is used for testing purposes only
+// FIXME: processedData is always an array with one object per lift in the arrray. No datasets object stuff...
 export const dummyProcessedData = {
   datasets: [
   {
@@ -117,8 +118,6 @@ export const dummyProcessedData = {
   }]
 };
 
-export const liftAnnotations = {}; // chart.js annotations plugin config for special achivements such as 1RM, 3RM, 5RM.
-export let myChart = null;
 export let unitType = "lb"; // Default to freedom units
 let equation = "Brzycki"; // Our favourite preferred equation - it does not over promise
 
@@ -216,19 +215,35 @@ export function processVisualizerData(parsedData) {
     }
   });
 
-  // We now know how many lift types we have. So reduce the number of expected chart lines if needed.
-  // This is needed for new users who only have 1 or 2 lifts (anything less than minChartLines)
-  // 202212 FIXME: logic not right and js dumbness - maybe we can deal with this up at the Visualizer component level
-  // if (processedData.length < minChartLines) minChartLines = processedData.length;
-
   // Every element of processedData now has a data array of chart tuples
   // Let's sort each data array by date (x entry) so it draws lines correctly
   // (FIXME: write a custom YYYY-MM-DD compare function as 'new Date' in a sort function is frowned upon)
-  // FIXME: if we presort parsedData, then e1rmLineData will already be sorted
+  // FIXME: if we presort parsedData, then e1rmLineData will already be sorted?
   processedData.forEach((arr) => arr.data.sort((a, b) => new Date(a.x) - new Date(b.x)));
 
   // Also sort our processedData so the most popular lift types get charts first
   processedData.sort((a, b) => b.data.length - a.data.length);
+
+
+  // If we have many lift types (> 15) then intelligently ignore uninteresting data.
+  // We remove any lift types if:
+  // 1) we have not performed that lift type in the last 2 years 
+  // AND
+  // 2) we only did that lift type less than 10 times. 
+  //
+  // So just keep lifting or do lots of a lift type to keep it as a chat option 
+  if (processedData.length > 15) {
+    const twoYearsInMilliseconds = 2 * 365 * 24 * 60 * 60 * 1000;
+    const currentTime = Date.now();
+  
+    for (let i = processedData.length - 1; i >= 0; i--) {
+      const lastDate = new Date(processedData[i].data[processedData[i].data.length-1].x);
+
+      if ((currentTime - lastDate.getTime() > twoYearsInMilliseconds) && (processedData[i].data.length < 10)) {
+        processedData.splice(i, 1); // delete the minor obsolete lift 
+      }
+    }
+  }
 
   return(processedData);
 }
@@ -413,7 +428,7 @@ function changeEquation(event, newEquation) {
   // Change the global equation and reprocess and draw the data
   equation = newEquation;
   // processData(); // FIXME 202212 should be processVisualizerData?
-  myChart.update();
+  // myChart.update();
 
 }
 

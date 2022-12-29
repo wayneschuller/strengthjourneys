@@ -13,7 +13,7 @@ import zoomPlugin from 'chartjs-plugin-zoom';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
-import { ChartControls, LiftControls } from '../components/vizualizerChartControls';
+import { VerticalChartControls, LiftControls } from '../components/vizualizerChartControls';
 
 import { dummyProcessedData } from '../utils/visualizerDataProcessing';
 
@@ -205,7 +205,7 @@ const Visualizer = (props) => {
 
   return (
     <div>
-     <Box sx={{ m: 4 }} >
+     <Box sx={{ mx: 5 }} >
       <Grid container spacing={1} >
 
         { !visualizerData && 
@@ -218,15 +218,15 @@ const Visualizer = (props) => {
         <Grid md={11}>
           { (visualizerData && selectedVisualizerData) && <Line ref={chartRef} data={selectedVisualizerData} options={chartOptions}/> }
         </Grid>
-        {/* <Grid md={2}>
-          { (visualizerData && selectedVisualizerData) && <ChartControls 
+        <Grid md={1} container justifyContent="flex-end" alignItems="center">
+          { (visualizerData && selectedVisualizerData) && <VerticalChartControls 
                                 zoomRecent={zoomRecent} 
                                 setZoomRecent={setZoomRecent} 
                                 showAchievements={showAchievements}
                                 setShowAchievements={setShowAchievements}
                                 /> 
           }
-        </Grid> */}
+        </Grid>
 
 
         <Grid md={12}>

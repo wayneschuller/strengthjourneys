@@ -1,6 +1,7 @@
 import { useState, useEffect} from 'react';
 import { useCookies } from 'react-cookie';
 
+// MUI Components
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
@@ -18,8 +19,16 @@ import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import Select from '@mui/material/Select';
 import Switch from '@mui/material/Switch';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import ZoomInIcon from '@mui/icons-material/ZoomIn';
+
+// MUI Icons
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import PsychologyIcon from '@mui/icons-material/Psychology';
+import ZoomInMapIcon from '@mui/icons-material/ZoomInMap';
+import ZoomOutMapIcon from '@mui/icons-material/ZoomInMap';
 
 // --------------------------------------------------------------------------------------------------------
 // <ChartControls />
@@ -61,7 +70,7 @@ export function LiftControls (props) {
     if (cookies.selectedChips) {
       // Initialize the selectedChips array based on the cookie value
       setSelectedChips(cookies.selectedChips);
-      
+
     } else {
       // Initialize the selectedChips array based on the .selected value in visualizerData
       setSelectedChips(visualizerData.filter((item) => item.selected).map((item) => item.label));
@@ -270,5 +279,50 @@ function VizConfigLiftChooser() {
       </FormControl>
       </FormGroup>
     </div>
+  );
+}
+
+
+export function VerticalChartControls() {
+  const [view, setView] = useState('list');
+
+  const handleChange = (event, nextView) => {
+    setView(nextView);
+  };
+
+  return (
+    <ToggleButtonGroup
+      orientation="vertical"
+      value={view}
+      exclusive
+      onChange={handleChange}
+    >
+
+      <Tooltip title="Show PR achievements">
+        <ToggleButton value="showPRs" aria-label="Show PR achievements">
+          <EmojiEventsIcon />
+        </ToggleButton>
+      </Tooltip>
+
+      <Tooltip title="Show recent lifts">
+        <ToggleButton value="showRecent" aria-label="Show recent data">
+          <ZoomInMapIcon />
+        </ToggleButton>
+      </Tooltip>
+
+      <Tooltip title="Show all time ">
+        <ToggleButton value="showAll" aria-label="Show all time">
+         <ZoomOutMapIcon />
+        </ToggleButton>
+      </Tooltip>
+
+      <Tooltip title="Change 1RM formula">
+        <ToggleButton value="equation" aria-label="Change 1RM formula">
+         <PsychologyIcon />
+        </ToggleButton>
+      </Tooltip>
+
+
+    </ToggleButtonGroup>
   );
 }

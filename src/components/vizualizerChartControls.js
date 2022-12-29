@@ -49,28 +49,43 @@ export function ChartControls (props) {
 // <LiftControls />
 // --------------------------------------------------------------------------------------------------------
 export function LiftControls (props) {
+  const [selectedChips, setSelectedChips] = useState([]);
 
   // Do some kind of map on processedData and make toggle keys 
   let visualizerData = props.visualizerData;
   let setSelectedVisualizerData = props.setSelectedVisualizerData;
 
-  function liftClicked(event) {
-    let liftType = event.target.textContent;
+  useEffect(() => {
+    // Initialize the selectedChips array based on the items prop
+    setSelectedChips(visualizerData.filter((item) => item.selected).map((item) => item.label));
+  }, []); // Only run this effect once, on mount
 
-    console.log(`Hide/Show ${liftType}`);
+  function handleChipClick(liftType) {
 
     // Reconstruct selectedVisualizerData with or without the selected liftType
-    
+    if (selectedChips.includes(liftType)) {
+      setSelectedChips(selectedChips.filter((chipId) => chipId !== liftType));
+    } else {
+      setSelectedChips([...selectedChips, liftType]);
+    }
+
     // Get the index for this lift from visualizerData
     let liftIndex = visualizerData.findIndex((lift) => lift.label === liftType);
 
+    // if (liftIndex <= 3) return; // We always show top 4, so do nothing for now.
+
+    // Check if the liftType is already in the selectedVisuazlierData, if so, remove it.
+    if (visualizerData[liftIndex].selected === true) {
+      visualizerData[liftIndex].selected = false; 
+    } else {
+      visualizerData[liftIndex].selected = true; 
+      visualizerData[liftIndex].hidden = false; 
+    }
+
     // Create a new wrapper for the user seletecd lift types
     // FIXME: is there a distinction between var and let here?
-    if (liftIndex <= 3) return; // We always show top 4, so do nothing for now.
-
-    visualizerData[liftIndex].hidden = false; 
     var wrapper = {
-      datasets: [visualizerData[0], visualizerData[1], visualizerData[2], visualizerData[3], visualizerData[liftIndex]],
+      datasets: visualizerData.filter(lift => lift.selected)
     };
 
     setSelectedVisualizerData(wrapper);
@@ -82,7 +97,11 @@ export function LiftControls (props) {
     <div>
 
         {visualizerData && visualizerData.map((lift) => (
-          <Chip sx={{ borderRadius: '2px' }} size="small" key={lift.label} label={lift.label} onClick={liftClicked} />
+          <Chip sx={{ mr: 1, mb: 1 }} size="small" key={lift.label} 
+                label={lift.label} 
+                color={selectedChips.includes(lift.label) ? 'primary' : 'default'}
+                onClick={() => handleChipClick(lift.label)}
+                />
         ))}
     </div>
 

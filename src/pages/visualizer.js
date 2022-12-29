@@ -43,18 +43,19 @@ const Visualizer = (props) => {
 
     if (!visualizerData) return;
 
+    // Top 4 is a good default
+    visualizerData[0].selected = true;
+    visualizerData[1].selected = true;
+    visualizerData[2].selected = true;
+    visualizerData[3].selected = true;
 
-    // FIXME: Top 4 is a good default, but try to remember their selection from last time.
     var wrapper = {
-      datasets: [visualizerData[0], visualizerData[1], visualizerData[2], visualizerData[3]],
+      datasets: visualizerData.filter(lift => lift.selected)
     };
-
-    console.log(`Setting setSelectedVisualizerData`);
-    console.log(wrapper);
 
     setSelectedVisualizerData(wrapper);
 
-    visualizerData[0].hidden = false; // Let them see the top lift only as a default.
+    visualizerData[0].hidden = false; // Let them see the top lift line only only (the other 3 will be in the chart legend)
 
   }, [visualizerData]);
 
@@ -202,10 +203,10 @@ const Visualizer = (props) => {
         }
 
 
-        <Grid md={10}>
+        <Grid md={11}>
           { (visualizerData && selectedVisualizerData) && <Line ref={chartRef} data={selectedVisualizerData} options={chartOptions}/> }
         </Grid>
-        <Grid md={2}>
+        {/* <Grid md={2}>
           { (visualizerData && selectedVisualizerData) && <ChartControls 
                                 zoomRecent={zoomRecent} 
                                 setZoomRecent={setZoomRecent} 
@@ -213,7 +214,7 @@ const Visualizer = (props) => {
                                 setShowAchievements={setShowAchievements}
                                 /> 
           }
-        </Grid>
+        </Grid> */}
 
 
         <Grid md={12}>

@@ -154,13 +154,6 @@ export default function App() {
 
           setAchievementAnnotations(annotations);
 
-          // processed[0].hidden = false; // FIXME: this needs to be done properly
-          // FIXME: Don't manually set the lines like this - should be cleverer
-          // var wrapper = {
-            // FIXME If we wrap the data array in an object this might become processed.datasets[0] etc
-            // datasets: [processed[0], processed[1], processed[2], processed[3]],
-          // }
-
           // Use the most popular lift to set some aesthetic x-axis padding at start and end
           // There is a chance loading another data set will require a new range, but unlikely.
           let padDateMin = new Date(processed[0].data[0].x); // First tuple in first lift

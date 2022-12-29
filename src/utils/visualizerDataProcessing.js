@@ -333,15 +333,6 @@ function createAchievementAnnotation(date, weight, text, background, datasetInde
     },
     // scaleID: 'y',
     display: false,   // Default to false and we can turn them on later
-
-    // FIXME: can't be done this way in React. Change display variable elsewhere.
-    // display: (chart, options) => {
-    //   // Only show if dataset line is visible on chart
-    //   let meta = chart.chart.getDatasetMeta(datasetIndex);
-    //   if (meta === undefined) return false;
-    //   return meta.visible;
-    // },
-
   };
 }
 
@@ -465,7 +456,8 @@ function getProcessedLiftIndex(processedData, liftType) {
       hitRadius: 20,
       hoverRadius: 10,
       cubicInterpolationMode: "monotone",
-      hidden: true,       // Default to hidden, we can unhide stuff later 
+      selected: false,    // If false we will not put on the chart legend at all
+      hidden: true,       // This is chartjs for not on the chart but still in the legend
     };
     liftIndex = processedData.push(processedLiftType) - 1;
   }

@@ -7,7 +7,7 @@ import axios from 'axios';
 import { useCookies } from 'react-cookie';
 
 import { parseData } from './components/parseData';
-import { defaultVisualizerData, processVisualizerData } from './components/visualizerDataProcessing';
+import { defaultVisualizerData, processVisualizerData, processAchievements } from './components/visualizerDataProcessing';
 import ResponsiveAppBar from './components/appBar';
 
 export default function App() {
@@ -25,8 +25,8 @@ export default function App() {
   const [padDateMax, setPadDateMax] = useState(null);
   const [recentXAxisMin, setRecentXAxisMin] = useState(null);
   const [recentXAxisMax, setRecentXAxisMax] = useState(null);
-
   const [suggestedYMax, setSuggestedYMax] = useState(null);
+  const [achievementAnnotations, setAchievementAnnotations] = useState(null);
 
   // ------------------------------------------------------------------
   // Data processing flow:
@@ -133,25 +133,32 @@ export default function App() {
           headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
         })
         .then((response) => {
-          // handle success
-          // console.log(`API get GSheet values success: range is ${response.data.range}`);
-          let parsedData = parseData(response.data.values);
-          // console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
-          // setParsedData(parsedData);    
+
           setInfoChipStatus("Data Source Connected");
+
+          // SUCCESS - We have the Google Sheet Data.
+          // Now we do some significant processing.
+
+          let parsedData = parseData(response.data.values);
+          // console.log(`API get GSheet values success: range is ${response.data.range}`);
+          // console.log(`setParsedData to: ${JSON.stringify(parsedData[0])}`);
+          // setParsedData(parsedData);    // FIXME: we might need parsedData in state later
 
           // Process the data for the visualizer
           let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
           // console.log(`Here is processed[0]:`);
           // console.log(processed[0]);
-          processed[0].hidden = false; // Unhide the most popular lift
 
+          // Process the PRs/Achivements and return some chartjs annotation config.
+          let annotations = processAchievements(parsedData, processed);
+          setAchievementAnnotations(annotations);
+
+          processed[0].hidden = false; // Unhide the most popular lift
           // FIXME: Don't manually set the lines like this - should be cleverer
           var wrapper = {
             // FIXME If we wrap the data array in an object this might become processed.datasets[0] etc
             datasets: [processed[0], processed[1], processed[2], processed[3]],
           }
-
 
           // Use the most popular lift to set some aesthetic x-axis padding at start and end
           // There is a chance loading another data set will require a new range, but unlikely.
@@ -164,6 +171,7 @@ export default function App() {
 
           // Also set some unixtimes for the last 6 months.
           // Set the zoom/pan to the last 6 months of data if we have that much
+          // FIXME: we could simply use padeDateMax and calculate 6 months from that. Remove recentXAxisMin/Max state
           let recentXAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
           if (recentXAxisMin < padDateMin) recentXAxisMin = padDateMin;
           let recentXAxisMax = new Date(padDateMax);
@@ -172,18 +180,16 @@ export default function App() {
 
           // Search through the processed data and find the largest estimate
           // Round up to the nearest 50
-          let yMax = 250;
+          let yMax = 220;
           setSuggestedYMax(yMax);
 
-          // Load in the data
+          // Lastly, load in the data.
           setVisualizerData(wrapper);
-
-
         })
         .catch((error) => {
           setInfoChipStatus("Error Reading Google Sheet");
-          setInfoChipToolTip(error.response.data.error.message);
           console.log(error);
+          // setInfoChipToolTip(error.response.data.error.message);
         })
     }
 
@@ -220,7 +226,7 @@ export default function App() {
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
         <Outlet 
-          context={[visualizerData, padDateMin, padDateMax, recentXAxisMin, recentXAxisMax, suggestedYMax]} 
+          context={[visualizerData, padDateMin, padDateMax, recentXAxisMin, recentXAxisMax, suggestedYMax, achievementAnnotations]} 
         />
     </div>
   );

@@ -17,6 +17,7 @@ import RadioGroup from '@mui/material/RadioGroup';
 import Select from '@mui/material/Select';
 import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
 
 // --------------------------------------------------------------------------------------------------------
 // <ChartControls />
@@ -30,7 +31,7 @@ export default function ChartControls (props) {
         <Typography  component="h2" gutterBottom><b>Chart Controls</b></Typography>
 
       <Divider />
-      <VizConfigPRs />
+      <VizConfigPRs showAchievements={props.showAchievements} setShowAchievements={props.setShowAchievements} />
       <Divider />
       <VizConfigZoom zoomRecent={props.zoomRecent} setZoomRecent={props.setZoomRecent} />
       <Divider />
@@ -51,18 +52,16 @@ export default function ChartControls (props) {
 // <VizConfigPRs />
 // --------------------------------------------------------------------------------------------------------
 
-function VizConfigPRs() {
-  const [checked, setChecked] = useState(true);
+function VizConfigPRs({showAchievements, setShowAchievements}) {
 
   const handleChange = (event) => {
-    setChecked(event.target.checked);
-    console.log(`show PRs or not`);
+    setShowAchievements(event.target.checked);
   };
 
   return (
     <FormGroup>
       <FormLabel id="VizConfigPRs">Achievements</FormLabel>
-      <FormControlLabel control={<Switch checked={checked} onChange={handleChange} />} label="Show PRs" />
+      <FormControlLabel control={<Switch checked={showAchievements} onChange={handleChange} />} label="Show PRs" />
   </FormGroup>
   );
 }

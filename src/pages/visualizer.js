@@ -10,35 +10,22 @@ import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-
-import { 
-  liftAnnotations, 
-} from "../components/visualizerDataProcessing";
+import annotationPlugin from 'chartjs-plugin-annotation';
 
 import ChartControls from '../components/vizualizerChartControls';
 
 import { dummyProcessedData } from '../components/visualizerDataProcessing';
 
 
-Chart.register(zoomPlugin, ChartDataLabels);
+Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 
 const Visualizer = (props) => {
 
-  const [visualizerData, padDateMin, padDateMax, recentXAxisMin, recentXAxisMax, suggestedYMax ] = useOutletContext();
+  const [visualizerData, padDateMin, padDateMax, recentXAxisMin, recentXAxisMax, suggestedYMax, achievementAnnotations ] = useOutletContext();
   const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
+  const [showAchievements, setShowAchievements] = useState(true); // PR/Achivement annotations
 
   const chartRef = useRef(null);
-
-  let didInit = false;
-  useEffect(() => {
-    const chart = chartRef.current;
-    if (!didInit && visualizerData && chart) {
-      didInit = true;
-      // ✅ Only runs once per app load
-      // console.log(`Running things on chart init`);
-      console.log(chart);
-    }
-  }, [visualizerData]);
 
   useEffect(() => {
     // console.log(`<Visualizer /> useEffect zoomRecent: ${zoomRecent}`);
@@ -74,22 +61,15 @@ const Visualizer = (props) => {
     scales: {
       x: {
           type: "time",
-          suggestedMin: {padDateMin}, // FIXME: does not seem to apply
-          suggestedMax: {padDateMax},
-          // min: {padDateMin},
-          // max: {padDateMax},
-          // suggestedMin: 1444176000000,
-          // suggestedMax: 1673308800000,
-          // min: 1444176000000,
-          // max: 1673308800000,
+          suggestedMin: padDateMin, 
+          suggestedMax: padDateMax,
           time: {
             minUnit: "day"
           },
       },
       y: {
         suggestedMin: 0,
-        suggestedMax: 200, 
-        // suggestedMax: {suggestedYMax}, 
+        suggestedMax: suggestedYMax, 
 
         ticks: {
           font: { family: "Catamaran", size: 15 },
@@ -104,7 +84,7 @@ const Visualizer = (props) => {
 
       title: {
         display: true,
-        text: `suggestedYMax: ${suggestedYMax}, padDateMin: ${padDateMin}, padDateMax: ${padDateMax}, recent ${zoomRecent}`, // Weird title for testing purposes
+        text: `suggestedYMax: ${suggestedYMax}, PRs ${showAchievements}`, // Weird title for testing purposes
         font: { size: 20 },
       },
 
@@ -172,7 +152,11 @@ const Visualizer = (props) => {
           x: { min: "original", max: "original", minRange: zoomMinTimeRange },
         },
       },
-    }
+
+      annotation: {
+          annotations: achievementAnnotations,
+          },
+      },
   };
 
   return (
@@ -194,6 +178,8 @@ const Visualizer = (props) => {
           { visualizerData && <ChartControls 
                                 zoomRecent={zoomRecent} 
                                 setZoomRecent={setZoomRecent} 
+                                showAchievements={showAchievements}
+                                setShowAchievements={setShowAchievements}
                                 /> 
           }
 
@@ -206,48 +192,3 @@ const Visualizer = (props) => {
 }
 
 export default Visualizer;
-
-
-// The OLD project config - here for reference while porting
-export function getFartConfig() {
-
-  const configOld = {
-    type: "line",
-    options: {
-      plugins: {
-        annotation: {
-          annotations: liftAnnotations,
-        },
-      },
-    },
-  };
-  return configOld;
-}
-
-// Generate chart.js annotation plugin config data for an achievement
-function createAchievementAnnotation(date, weight, text, background, datasetIndex) {
-  return {
-    type: "label",
-    borderColor: (context) => context.chart.data.datasets[datasetIndex].backgroundColor,
-    borderRadius: 3,
-    borderWidth: 2,
-    yAdjust: 20,
-    content: [text],
-    xValue: date,
-    yValue: weight,
-    backgroundColor: background,
-    padding: {
-      top: 2,
-      left: 2,
-      right: 2,
-      bottom: 1,
-    },
-    display: (chart, options) => {
-      // Only show if dataset line is visible on chart
-      let meta = chart.chart.getDatasetMeta(datasetIndex);
-      if (meta === undefined) return false;
-      return meta.visible;
-    },
-    // scaleID: 'y',
-  };
-}

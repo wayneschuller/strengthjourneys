@@ -119,8 +119,6 @@ export const dummyProcessedData = {
 
 export const liftAnnotations = {}; // chart.js annotations plugin config for special achivements such as 1RM, 3RM, 5RM.
 export let myChart = null;
-export let chartTitle = "Strength History";  // hmmm
-let padDateMin, padDateMax;
 export let unitType = "lb"; // Default to freedom units
 let equation = "Brzycki"; // Our favourite preferred equation - it does not over promise
 
@@ -232,61 +230,64 @@ export function processVisualizerData(parsedData) {
   // Also sort our processedData so the most popular lift types get charts first
   processedData.sort((a, b) => b.data.length - a.data.length);
 
-  // We don't need this wrapper anymore?
-   //   let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
-  //   var wrapper = {
-  //     datasets: generateDatasets(processed, minChartLines, maxChartLines)
-  //   }
-  //   setVisualizerData(wrapper);
-
   return(processedData);
-
-  // Find achievements and put on chart
-  // processAchievements();
 }
 
-
-
 // Find interesting achievements
-function processAchievements(parsedData, processedData) {
+export function processAchievements(parsedData, processedData) {
+
+  // FIXME: clearing annotations is needed for data refresh. I will leave the code here for now
+  // but likely it should go elsewhere once we have data refresh working.
   // Clear old chart annotations
-  for (var member in liftAnnotations) delete liftAnnotations[member];
+  // for (var member in liftAnnotations) delete liftAnnotations[member];
+
+  let liftAnnotations = {};
 
   // For each lift find achievements
   processedData.forEach((liftType, index) => {
     // Clear old afterLabels with achievements so we can recreate them
+
     // if (index >= maxChartLines) return; // Achievements and annotations only useful where we have chart lines
-    liftType.e1rmLineData.forEach((lift) => {
+    liftType.data.forEach((lift) => {
       lift.afterLabel.splice(0, lift.afterLabel.length); // empty array
       if (lift.notes) lift.afterLabel.push(lift.notes); // Put any notes back in first
       else lift.afterLabel = [];
     });
 
-    // Get the parsed data for just this lift type
-    const lifts = parsedData.filter((lift) => lift.label === liftType.name);
+    // We go 'backwards' and look at the original parsed data for just this lift type
+    const lifts = parsedData.filter((lift) => lift.name === liftType.label);
 
-    findPRs(lifts, 1, "single", index);
+    findPRs(lifts, 1, "single", index, processedData, liftAnnotations);
 
-    findPRs(lifts, 3, "triple", index);
+    findPRs(lifts, 3, "triple", index, processedData, liftAnnotations);
 
-    findPRs(lifts, 5, "five", index);
+    findPRs(lifts, 5, "five", index, processedData, liftAnnotations);
   });
+
+  return(liftAnnotations);
 }
 
 // Helper function to find top 20 singles, threes and fives for each main lift
-function findPRs(processedData, rawLifts, reps, prName, datasetIndex) {
-  // Filter for this rep style
-  let repLifts = rawLifts.filter((lift) => lift.reps === reps);
+function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnotations) {
+  const name = processedData[datasetIndex].label;
 
-  // Sort by weight. (award ties to the earlier lift)
+  // console.log(`Finding ${reps}-rep PRs for ${name}`);
+
+  // console.log(rawLifts);
+
+  // Filter for this rep style
+  let repLifts = rawLifts.filter((lift) => lift.reps == reps);
+
+  // console.log(repLifts);
+
+  // Sort by weight. (award any ties to the earlier lift)
+  // FIXME: any ties on the SAME day should go to the later lift
   repLifts.sort((a, b) => {
     if (a.weight === b.weight) {
       return new Date(a.date) - new Date(b.date);
     }
     return b.weight - a.weight;
   });
-
-  const name = processedData[datasetIndex].name;
 
   // Process the top 20 of this rep style (if we have that many)
   for (let i = 0; i < 20 && i < repLifts.length; i++) {
@@ -300,17 +301,50 @@ function findPRs(processedData, rawLifts, reps, prName, datasetIndex) {
       })`
     );
 
-    // Actual top PR gets a special annotation marker on the chart
-    // if (i == 0)
-      // liftAnnotations[`${name}_best_${reps}RM`] = createAchievementAnnotation(
-        // repLifts[i].date,
-        // estimateE1RM(reps, repLifts[i].weight),
-        // `${reps}RM`,
-        // "rgba(255, 99, 132, 0.25)",
-        // datasetIndex
-      // );
+    // Actual top PR gets a special chartjs annotation marker on the chart
+    if (i == 0) 
+      liftAnnotations[`${name}_best_${reps}RM`] = createAchievementAnnotation(
+        repLifts[i].date,
+        estimateE1RM(reps, repLifts[i].weight),
+        `${reps}RM`,
+        "rgba(255, 99, 132, 0.25)",
+        datasetIndex
+      );
   }
 }
+
+// Generate chart.js annotation plugin config data for an achievement
+function createAchievementAnnotation(date, weight, text, background, datasetIndex) {
+  return {
+    type: "label",
+    // borderColor: (context) => context.chart.data.datasets[datasetIndex].backgroundColor,
+    borderRadius: 3,
+    borderWidth: 2,
+    yAdjust: 20,
+    content: [text],
+    xValue: date,
+    yValue: weight,
+    backgroundColor: background,
+    padding: {
+      top: 2,
+      left: 2,
+      right: 2,
+      bottom: 1,
+    },
+    // scaleID: 'y',
+    display: false,   // Default to false and we can turn them on later
+
+    // FIXME: can't be done this way in React. Change display variable elsewhere.
+    // display: (chart, options) => {
+    //   // Only show if dataset line is visible on chart
+    //   let meta = chart.chart.getDatasetMeta(datasetIndex);
+    //   if (meta === undefined) return false;
+    //   return meta.visible;
+    // },
+
+  };
+}
+
 
 
 // Return a rounded 1 rep max
@@ -370,30 +404,6 @@ function prepareDataRefresh(parsedData, processedData, replaceData) {
   });
 }
 
-// Callback handler for button to easy zoom in and out
-function toggleZoom() {
-  const toggleInput = document.getElementById("toggleZoom");
-  if (toggleInput.value === "Show All Time") {
-    // The user wants to zoom out to show all data
-    myChart.resetZoom();
-
-    // Change the toggle button
-    toggleInput.value = "Show Recent";
-    toggleInput.innerHTML = "Show Recent"; // FIXME: why do we set both .value and .innerHTML???
-  } else {
-    // The user wants to zoom in to show recent data
-    // Set the zoom/pan to the last 6 months of data if we have that much
-    let xAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
-    if (xAxisMin < padDateMin) xAxisMin = padDateMin;
-    let xAxisMax = new Date(padDateMax);
-    myChart.zoomScale("xAxis", { min: xAxisMin, max: xAxisMax }, "default");
-
-    // Change the toggle button
-    toggleInput.value = "Show All Time";
-    toggleInput.innerHTML = "Show All Time";
-  }
-}
-
 // Callback handlers for equation html dropup menu
 function changeEquation(event, newEquation) {
 
@@ -415,9 +425,6 @@ function changeEquation(event, newEquation) {
   myChart.update();
 
 }
-
-
-
 
 // Return the index for the liftType string in our processedData
 // If the lift doesn't exist in processedData, create one.

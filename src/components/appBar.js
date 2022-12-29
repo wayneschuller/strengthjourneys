@@ -75,8 +75,6 @@ function ResponsiveAppBar(props) {
 
   // console.log(`Top level <ResponsiveAppBar />...`);
 
-
-
   // Google API scopes required to read one google sheet
   const SCOPES = 'https://www.googleapis.com/auth/drive.file ' +
                  'https://www.googleapis.com/auth/spreadsheets.readonly ' +
@@ -101,7 +99,7 @@ function ResponsiveAppBar(props) {
 
   const [openPicker, authResponse] = useDrivePicker();  
   // const customViewsArray = [new google.picker.DocsView()]; // custom view
-  const handleOpenPicker = () => {
+  const openGDrivePicker = () => {
     openPicker({
       clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
       developerKey: process.env.REACT_APP_GOOGLE_API_KEY,
@@ -114,8 +112,7 @@ function ResponsiveAppBar(props) {
       // customViews: customViewsArray, // custom view
       callbackFunction: (data) => {
         if (data.action === 'cancel') {
-          console.log('User clicked cancel/close button')
-          removeCookie('ssid'); // Forget the ssid previously chosen
+          // console.log('User clicked cancel GDrive Picker')
           return;
         }
 
@@ -131,7 +128,7 @@ function ResponsiveAppBar(props) {
           console.log(data)
         }
 
-        loadGSheetValues(data.docs[0].id); 
+        loadGSheetValues(data.docs[0].id, cookies.tokenResponse); 
       },
     });
   }
@@ -240,14 +237,17 @@ function ResponsiveAppBar(props) {
           {/* User profile info on right hand side of the navbar */}
           { userInfo ?  
             <>
+
               <Tooltip title={infoChipToolTip}>
-              <Chip 
-              label={infoChipStatus}
-              onClick={() => handleOpenPicker()}
-              variant="outlined"
-              sx={{ color: 'white', mx: 1 }}
+                <Chip 
+                  label={infoChipStatus}
+                  onClick={() => openGDrivePicker()}
+                  variant="filled"
+                  color="info"
+                  sx={{ color: 'white', mx: 1 }}
               />
               </Tooltip>
+
 
               <Box sx={{ flexGrow: 0 }}>
                 <Tooltip title={userInfo.name}>

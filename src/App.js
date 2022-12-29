@@ -60,7 +60,7 @@ export default function App() {
 
         // If we have a valid looking ssid then we can go to the next step in the chain
         if (cookies.ssid !== undefined && cookies.ssid.length > 10) 
-          checkGSheetModified();
+          checkGSheetModified(tokenResponse);
       })
       .catch((error) => {
         console.log(`axios.get UserInfo error:`);
@@ -73,40 +73,40 @@ export default function App() {
       })
   }
 
-    async function checkGSheetModified () {
-      console.log("checkGSheetModified()...");
+  async function checkGSheetModified (tokenResponse) {
+    console.log("checkGSheetModified()...");
 
-      // API call to get GDrive file metadata to get modified time and the filename
-      await axios
-        .get(`https://www.googleapis.com/drive/v3/files/${cookies.ssid}?fields=modifiedTime%2Cname&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
-          headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
-        })
-        .then((response) => {
-          // handle success
-          // console.log(`API get GDrive file metadata .then received:`);
-          // console.log(response.data);
-          setInfoChipToolTip(response.data.name);
+    // API call to get GDrive file metadata to get modified time and the filename
+    await axios
+      .get(`https://www.googleapis.com/drive/v3/files/${cookies.ssid}?fields=modifiedTime%2Cname&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
+        headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+      })
+      .then((response) => {
+        // handle success
+        // console.log(`API get GDrive file metadata .then received:`);
+        // console.log(response.data);
+        setInfoChipToolTip(response.data.name);
 
-          // If the modified time is newer then refresh the data from Google Sheets
-          const modifiedTime = Date.parse(response.data.modifiedTime);
-          // console.log(`useState dataModifiedTime: ${dataModifiedTime}. Response: ${modifiedTime}`);
-          if (modifiedTime > dataModifiedTime) {
-            setDataModifiedTime(modifiedTime);
-            loadGSheetValues(cookies.ssid);
-          } else {
-            console.log(`Google Sheet metadata check: modifiedtime is unchanged`);
-          } 
-        })
-        .catch((error) => {
-          setInfoChipStatus("Error Reading GDrive File Metadata");
-          setInfoChipToolTip(error.response.data.error.message);
-          console.log(error);
-        })
-    }
+        // If the modified time is newer then refresh the data from Google Sheets
+        const modifiedTime = Date.parse(response.data.modifiedTime);
+        // console.log(`useState dataModifiedTime: ${dataModifiedTime}. Response: ${modifiedTime}`);
+        if (modifiedTime > dataModifiedTime) {
+          setDataModifiedTime(modifiedTime);
+          loadGSheetValues(cookies.ssid, tokenResponse);
+        } else {
+          console.log(`Google Sheet metadata check: modifiedtime is unchanged`);
+        } 
+      })
+      .catch((error) => {
+        setInfoChipStatus("Error Reading GDrive File Metadata");
+        setInfoChipToolTip(error.response.data.error.message);
+        console.log(error);
+      })
+  }
 
-    // Gets interesting information about the sheet but not modified time
-    // NOTE: Currently unused, but may be useful in the future
-    async function getGSheetMetadata () {
+  // Gets interesting information about the sheet but not modified time
+  // NOTE: Currently unused, but may be useful in the future
+  async function getGSheetMetadata () {
       console.log("getGSheetMetadata()...");
 
       await axios
@@ -125,12 +125,12 @@ export default function App() {
         })
     }
 
-    async function loadGSheetValues(ssid) {
+  async function loadGSheetValues(ssid, tokenResponse) {
       console.log("loadGSheetValues()...");
 
       await axios
       .get(`https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
-          headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         })
         .then((response) => {
 
@@ -164,7 +164,7 @@ export default function App() {
           // Use the most popular lift to set some aesthetic x-axis padding at start and end
           // There is a chance loading another data set will require a new range, but unlikely.
           let padDateMin = new Date(processed[0].data[0].x); // First tuple in first lift
-          padDateMin = padDateMin.setDate(padDateMin.getDate() - 6);
+          padDateMin = padDateMin.setDate(padDateMin.getDate() - 10);
           let padDateMax = new Date(processed[0].data[processed[0].data.length - 1].x); // Last tuple in first lift
           padDateMax = padDateMax.setDate(padDateMax.getDate() + 14);
           setPadDateMin(padDateMin);
@@ -221,6 +221,7 @@ export default function App() {
       setInfoChipToolTip={setInfoChipToolTip}
       getGoogleUserInfo={getGoogleUserInfo}
       loadGSheetValues={loadGSheetValues}
+      setVisualizerData={setVisualizerData}
      />
 
       {/* An <Outlet> renders whatever child route is currently active,

@@ -83,7 +83,7 @@ const Visualizer = (props) => {
     plugins: {
 
       title: {
-        display: true,
+        display: false,
         text: `suggestedYMax: ${suggestedYMax}, PRs ${showAchievements}`, // Weird title for testing purposes
         font: { size: 20 },
       },
@@ -161,7 +161,7 @@ const Visualizer = (props) => {
 
   return (
     <div>
-     <Box sx={{ m: 1 }} >
+     <Box sx={{ m: 4 }} >
       <Grid container spacing={1} >
 
         { !visualizerData && 

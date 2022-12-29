@@ -43,6 +43,7 @@ function ResponsiveAppBar(props) {
   const setInfoChipToolTip = props.setInfoChipToolTip;
   const getGoogleUserInfo = props.getGoogleUserInfo;
   const loadGSheetValues = props.loadGSheetValues;
+  const setVisualizerData = props.setVisualizerData;
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -68,7 +69,7 @@ function ResponsiveAppBar(props) {
     googleLogout();
     removeCookie('tokenResponse'); // Forget the tokenReponse 
     setUserInfo(null);    // This will remove the profile menu and status button
-    // setVisualizerData(defaultVisualizerData);  // Reset the graph
+    setVisualizerData(null);  // Reset the graph
     setAnchorElUser(null);  // Closes menu
   };
 

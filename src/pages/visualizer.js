@@ -50,7 +50,6 @@ const Visualizer = (props) => {
       // console.log(`<Visualizer /> useEffect modifying visualizerData based on cookie`);
       visualizerData.forEach((item) => {
         item.selected = cookies.selectedChips.includes(item.label);
-        item.hidden = false;
       });  
     } else {
 
@@ -59,7 +58,6 @@ const Visualizer = (props) => {
       visualizerData[0].selected = true;
       visualizerData[1].selected = true;
       visualizerData[2].selected = true;
-      visualizerData[0].hidden = false; // Let them see the top lift line only only (the other 3 will be in the chart legend)
     }
 
     var wrapper = {

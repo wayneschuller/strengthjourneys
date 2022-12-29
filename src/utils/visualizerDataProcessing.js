@@ -471,8 +471,8 @@ function getProcessedLiftIndex(processedData, liftType) {
       hitRadius: 20,
       hoverRadius: 10,
       cubicInterpolationMode: "monotone",
-      selected: false,    // If false we will not put on the chart legend at all
-      hidden: true,       // This is chartjs for not on the chart but still in the legend
+      selected: false,    // Our chips UI underneath the chart will select lifts for the chart
+      hidden: false,      // This is for chart.js config - always show
     };
     liftIndex = processedData.push(processedLiftType) - 1;
   }

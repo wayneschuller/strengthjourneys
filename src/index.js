@@ -26,6 +26,9 @@ const theme = createTheme({
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
+// FIXME: the index <Home /> element resets the whole app
+// TODO: Maybe just delete the index <Home /> stuff and default to visualizer page?
+
 root.render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>

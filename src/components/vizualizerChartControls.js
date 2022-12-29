@@ -113,8 +113,8 @@ export function LiftControls (props) {
     setSelectedVisualizerData(wrapper);
   }
 
-  // FIXME: Make the top 4 'locked' - so not clickable and always lit up as chosen. They will always be on the chart.
-  // These chips allow the user to choose one extra line to show on the chart.
+  // TODO: Could we set the colour of each selected chip to be based on the colour of the lift line? Then we could delete chartjs legend.
+  // Return a bunch of chips to let user select what lift types appear on the chart.
   return (
     <div>
 

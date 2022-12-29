@@ -133,6 +133,10 @@ function ResponsiveAppBar(props) {
     });
   }
 
+  // TODO: We really need to handle 3 use cases 
+  // 1. Absolute first time user. Nice hero page with explanation and images etc.
+  // 2. Returning user with an expired token. Welcome them back, explain the process
+  // 3. Returning user with valid token - insta load the data 
   return (
     <AppBar position="static">
       <Container maxWidth="xl">

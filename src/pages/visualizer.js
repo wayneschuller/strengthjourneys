@@ -65,25 +65,28 @@ const Visualizer = (props) => {
     };
 
     setSelectedVisualizerData(wrapper);
-
-
   }, [visualizerData]);
 
+  // FIXME: Zoom in to recent as soon as chart is fully loaded
+  // useEffect(() => {
+  //   const chart = chartRef.current;
+  //   console.log(`Zoom in on data change. chart: ${chart}`);
+  //   if (!chart) return;
+  //   chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
+  // }, [visualizerData, selectedVisualizerData, recentXAxisMax, recentXAxisMin]);
+
+  // On any change to zoomRecent state we zoom in
+  // FIXME: We are using useEffect instead of a button handler (not best practice)
+  // https://beta.reactjs.org/learn/you-might-not-need-an-effect
+  // I would prefer to do this in the button handler but I can't
+  // figure out how to access the chartRef to get chartRef.current.zoomScale down there
   useEffect(() => {
-    console.log(`<Visualizer /> useEffect zoomRecent: ${zoomRecent}`);
+    console.log(`<Visualizer /> useEffect [zoomRecent]`);
     const chart = chartRef.current;
-
-    if (!chart || !padDateMin || !padDateMax) return;
-
-    if (zoomRecent) {
-      // console.log(`Chart controls setting chart.zoomScale ${recentXAxisMin.getTime()}, ${recentXAxisMax.getTime()}`);
-      chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
-    } else {
-      // Zoom out to show all time
-      chart.zoomScale("x", { min: padDateMin, max: padDateMax }, "default");
-    }
-
+    if (!chart) return;
+    chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
   }, [zoomRecent]);
+
 
   // Line Chart Options for react-chartjs-2 Visualizer 
   const zoomMinTimeRange = 1000 * 60 * 60 * 24 * 60; // Minimum x-axis is 60 days

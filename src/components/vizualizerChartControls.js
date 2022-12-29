@@ -188,10 +188,10 @@ export function VerticalChartControls({ zoomRecent, setZoomRecent }) {
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleChange = (event, nextView) => {
-    setZoomRecent(true);
+    setZoomRecent(!zoomRecent); // Any change to trigger the useEffect zoom in <Visualizer />
     setView(nextView);
-    console.log(`user clicked a toggle button:`);
-    console.log(nextView);
+    return;
+
     if (nextView == "showRecent") {
       console.log(`Let's zoom in`);
       // setZoomRecent(true);

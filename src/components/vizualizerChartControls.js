@@ -2,6 +2,7 @@ import { useState, useEffect} from 'react';
 
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
+import Chip from '@mui/material/Chip';
 import Container from '@mui/material/Container';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -22,7 +23,7 @@ import ZoomInIcon from '@mui/icons-material/ZoomIn';
 // --------------------------------------------------------------------------------------------------------
 // <ChartControls />
 // --------------------------------------------------------------------------------------------------------
-export default function ChartControls (props) {
+export function ChartControls (props) {
 
   return (
     <div>
@@ -37,8 +38,6 @@ export default function ChartControls (props) {
       <Divider />
       <VizConfigEquation />
       <Divider />
-      <VizConfigLiftChooser />
-      <Divider />
 
       </Container>
       </Box>
@@ -46,7 +45,49 @@ export default function ChartControls (props) {
   );
 }
 
+// --------------------------------------------------------------------------------------------------------
+// <LiftControls />
+// --------------------------------------------------------------------------------------------------------
+export function LiftControls (props) {
 
+  // Do some kind of map on processedData and make toggle keys 
+  let visualizerData = props.visualizerData;
+  let setSelectedVisualizerData = props.setSelectedVisualizerData;
+
+  function liftClicked(event) {
+    let liftType = event.target.textContent;
+
+    console.log(`Hide/Show ${liftType}`);
+
+    // Reconstruct selectedVisualizerData with or without the selected liftType
+    
+    // Get the index for this lift from visualizerData
+    let liftIndex = visualizerData.findIndex((lift) => lift.label === liftType);
+
+    // Create a new wrapper for the user seletecd lift types
+    // FIXME: is there a distinction between var and let here?
+    if (liftIndex <= 3) return; // We always show top 4, so do nothing for now.
+
+    visualizerData[liftIndex].hidden = false; 
+    var wrapper = {
+      datasets: [visualizerData[0], visualizerData[1], visualizerData[2], visualizerData[3], visualizerData[liftIndex]],
+    };
+
+    setSelectedVisualizerData(wrapper);
+  }
+
+  // FIXME: Make the top 4 'locked' - so not clickable and always lit up as chosen. They will always be on the chart.
+  // These chips allow the user to choose one extra line to show on the chart.
+  return (
+    <div>
+
+        {visualizerData && visualizerData.map((lift) => (
+          <Chip sx={{ borderRadius: '2px' }} size="small" key={lift.label} label={lift.label} onClick={liftClicked} />
+        ))}
+    </div>
+
+  );
+}
 
 // --------------------------------------------------------------------------------------------------------
 // <VizConfigPRs />

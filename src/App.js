@@ -154,12 +154,12 @@ export default function App() {
 
           setAchievementAnnotations(annotations);
 
-          processed[0].hidden = false; // FIXME: this needs to be done properly
+          // processed[0].hidden = false; // FIXME: this needs to be done properly
           // FIXME: Don't manually set the lines like this - should be cleverer
-          var wrapper = {
+          // var wrapper = {
             // FIXME If we wrap the data array in an object this might become processed.datasets[0] etc
-            datasets: [processed[0], processed[1], processed[2], processed[3]],
-          }
+            // datasets: [processed[0], processed[1], processed[2], processed[3]],
+          // }
 
           // Use the most popular lift to set some aesthetic x-axis padding at start and end
           // There is a chance loading another data set will require a new range, but unlikely.
@@ -185,7 +185,7 @@ export default function App() {
           setSuggestedYMax(yMax);
 
           // Lastly, load in the data.
-          setVisualizerData(wrapper);
+          setVisualizerData(processed);
         })
         .catch((error) => {
           setInfoChipStatus("Error Reading Google Sheet");
@@ -228,7 +228,12 @@ export default function App() {
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
         <Outlet 
-          context={[visualizerData, padDateMin, padDateMax, recentXAxisMin, recentXAxisMax, suggestedYMax, achievementAnnotations]} 
+          context={[  visualizerData, 
+                      padDateMin, padDateMax, 
+                      recentXAxisMin, recentXAxisMax, 
+                      suggestedYMax, 
+                      achievementAnnotations, setAchievementAnnotations,
+                    ]} 
         />
     </div>
   );

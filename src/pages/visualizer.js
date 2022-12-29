@@ -12,7 +12,7 @@ import zoomPlugin from 'chartjs-plugin-zoom';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
-import ChartControls from '../components/vizualizerChartControls';
+import { ChartControls, LiftControls } from '../components/vizualizerChartControls';
 
 import { dummyProcessedData } from '../utils/visualizerDataProcessing';
 
@@ -21,11 +21,42 @@ Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 
 const Visualizer = (props) => {
 
-  const [visualizerData, padDateMin, padDateMax, recentXAxisMin, recentXAxisMax, suggestedYMax, achievementAnnotations ] = useOutletContext();
+  const [ visualizerData, 
+          padDateMin, 
+          padDateMax, 
+          recentXAxisMin, 
+          recentXAxisMax, 
+          suggestedYMax, 
+          achievementAnnotations,
+          setAchievementAnnotations,
+        ] = useOutletContext();
+
   const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
   const [showAchievements, setShowAchievements] = useState(true); // PR/Achivement annotations
+  const [selectedVisualizerData, setSelectedVisualizerData] = useState(null); 
 
   const chartRef = useRef(null);
+
+
+  // Every time visualizerData changes, wrap a new selectedVisualizerData
+  useEffect(() => {
+
+    if (!visualizerData) return;
+
+
+    // FIXME: Top 4 is a good default, but try to remember their selection from last time.
+    var wrapper = {
+      datasets: [visualizerData[0], visualizerData[1], visualizerData[2], visualizerData[3]],
+    };
+
+    console.log(`Setting setSelectedVisualizerData`);
+    console.log(wrapper);
+
+    setSelectedVisualizerData(wrapper);
+
+    visualizerData[0].hidden = false; // Let them see the top lift only as a default.
+
+  }, [visualizerData]);
 
   useEffect(() => {
     // console.log(`<Visualizer /> useEffect zoomRecent: ${zoomRecent}`);
@@ -41,7 +72,7 @@ const Visualizer = (props) => {
       chart.zoomScale("x", { min: padDateMin, max: padDateMax }, "default");
     }
 
-  }, [zoomRecent])
+  }, [zoomRecent]);
 
   // Line Chart Options for react-chartjs-2 Visualizer 
   const zoomMinTimeRange = 1000 * 60 * 60 * 24 * 60; // Minimum x-axis is 60 days
@@ -166,25 +197,36 @@ const Visualizer = (props) => {
 
         { !visualizerData && 
         <Grid md={12}>
-        <Typography variant="h3" gutterBottom>Strength Visualizer </Typography>
+          <Typography variant="h3" gutterBottom>Strength Visualizer </Typography>
         </Grid>
         }
 
 
         <Grid md={10}>
-          { visualizerData && <Line ref={chartRef} data={visualizerData} options={chartOptions}/> }
+          { (visualizerData && selectedVisualizerData) && <Line ref={chartRef} data={selectedVisualizerData} options={chartOptions}/> }
         </Grid>
         <Grid md={2}>
-          { visualizerData && <ChartControls 
+          { (visualizerData && selectedVisualizerData) && <ChartControls 
                                 zoomRecent={zoomRecent} 
                                 setZoomRecent={setZoomRecent} 
                                 showAchievements={showAchievements}
                                 setShowAchievements={setShowAchievements}
                                 /> 
           }
-
-
         </Grid>
+
+
+        <Grid md={12}>
+          { (visualizerData && selectedVisualizerData) && <LiftControls
+                                visualizerData={visualizerData}
+                                setSelectedVisualizerData={setSelectedVisualizerData}
+                                showAchievements={showAchievements}
+                                achievementAnnotations={achievementAnnotations}
+                                setAchievementAnnotations={setAchievementAnnotations}                                
+                              />
+          }
+        </Grid>
+
       </Grid>
       </Box>
     </div>

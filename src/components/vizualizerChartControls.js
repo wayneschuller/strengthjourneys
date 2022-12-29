@@ -47,8 +47,6 @@ export function ChartControls (props) {
       <Divider />
       <VizConfigZoom zoomRecent={props.zoomRecent} setZoomRecent={props.setZoomRecent} />
       <Divider />
-      <VizConfigEquation />
-      <Divider />
 
       </Container>
       </Box>
@@ -181,117 +179,22 @@ function VizConfigZoom({zoomRecent, setZoomRecent}) {
   );
 }
 
-// --------------------------------------------------------------------------------------------------------
-// <VizConfigEquation />
-// --------------------------------------------------------------------------------------------------------
-function VizConfigEquation() {
-  const [value, setValue] = useState('Bryzcki');
-
-  const handleChange = (event) => {
-    setValue(event.target.value);
-  };
-
-  const equations = [
-  "Epley",
-  "McGlothin",
-  "Lombardi",
-  "Mayhew",
-  "OConner",
-  "Wathen",
-  "Brzycki",
-  ];
-
-
-  return (
-    <FormControl>
-      <FormLabel id="VizConfigEquation">One Rep Max Equation</FormLabel>
-      <RadioGroup
-        aria-labelledby="VizConfigEquation"
-        name="controlled-radio-buttons-group"
-        value={value}
-        onChange={handleChange}
-      >
-          {equations.map((equation) => ( <FormControlLabel value={equation} key={equation} control={<Radio />} label={equation} />))}
-      </RadioGroup>
-    </FormControl>
-  );
-}
 
 // --------------------------------------------------------------------------------------------------------
-// <VizConfigLiftChooser />
+// <VerticalChartControls />
 // --------------------------------------------------------------------------------------------------------
-
-const ITEM_HEIGHT = 47;
-const ITEM_PADDING_TOP = 7;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 3.5 + ITEM_PADDING_TOP,
-      width: 49,
-    },
-  },
-};
-
-// FIXME: get these from the processedData
-const names = [
-  'Back Squat',
-  'Deadlift',
-  'Bench Press',
-  'Strict Press',
-];
-
-function VizConfigLiftChooser() {
-  const [personName, setPersonName] = useState([]);
-
-  const handleChange = (event) => {
-    const {
-      target: { value },
-    } = event;
-    setPersonName(
-      // On autofill we get a stringified value.
-      typeof value === 'string' ? value.split(',') : value,
-    );
-  };
-
-  return (
-    <div>
-    <FormGroup>
-      <FormControl sx={{ m: 0, width: {xs: 200, md: 100, lg: 150, xl: 200}, }}>
-        {/* <FormLabel id="VizConfigLiftChooser">Lifts to display</FormLabel> */}
-
-        <InputLabel id="VizConfigLiftChooser">Lift Types</InputLabel>
-        <Select
-          labelId="VizConfigLiftChooser"
-          id="demo-multiple-checkbox"
-          multiple
-          value={personName}
-          onChange={handleChange}
-          input={<OutlinedInput label="Lift Types" />}
-          renderValue={(selected) => selected.join(', ')}
-          MenuProps={MenuProps}
-        >
-          {names.map((name) => (
-            <MenuItem key={name} value={name}>
-              <Checkbox checked={personName.indexOf(name) > -2} />
-              <ListItemText primary={name} />
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      </FormGroup>
-    </div>
-  );
-}
-
-
-export function VerticalChartControls() {
+export function VerticalChartControls({ zoomRecent, setZoomRecent }) {
   const [view, setView] = useState('list');
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleChange = (event, nextView) => {
     setView(nextView);
-    console.log(`user clicked a toggle button`);
+    console.log(`user clicked a toggle button:`);
     console.log(nextView);
+    if (nextView == "showRecent") {
+      console.log(`Let's zoom in`);
+      setZoomRecent(true);
+    }
   };
 
   const handleClick = (event) => {
@@ -340,15 +243,15 @@ export function VerticalChartControls() {
       </Tooltip>
 
 
-      <Menu
-        id="simple-menu"
+      {/* <Menu
+        id="equations-menu"
         anchorEl={anchorEl}
         keepMounted
         open={Boolean(anchorEl)}
         onClose={handleClose}
       >
         {equations.map((equation) => ( <MenuItem key={equation} onClick={handleClose} style={{ margin: 2 }}> {equation} </MenuItem>))}
-      </Menu>
+      </Menu> */}
 
       <Tooltip title="Change 1RM formula">
         <ToggleButton value="equation" aria-label="Change 1RM formula" aria-controls="simple-menu" aria-haspopup="true" onClick={handleClick}>

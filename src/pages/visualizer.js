@@ -72,7 +72,7 @@ const Visualizer = (props) => {
   }, [visualizerData]);
 
   useEffect(() => {
-    // console.log(`<Visualizer /> useEffect zoomRecent: ${zoomRecent}`);
+    console.log(`<Visualizer /> useEffect zoomRecent: ${zoomRecent}`);
     const chart = chartRef.current;
 
     if (!chart || !padDateMin || !padDateMax) return;

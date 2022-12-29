@@ -13,6 +13,7 @@ import FormGroup from '@mui/material/FormGroup';
 import FormLabel from '@mui/material/FormLabel';
 import InputLabel from '@mui/material/InputLabel';
 import ListItemText from '@mui/material/ListItemText';
+import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Radio from '@mui/material/Radio';
@@ -285,10 +286,32 @@ function VizConfigLiftChooser() {
 
 export function VerticalChartControls() {
   const [view, setView] = useState('list');
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const handleChange = (event, nextView) => {
     setView(nextView);
+    console.log(`user clicked a toggle button`);
+    console.log(nextView);
   };
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+    console.log(`user changed equation`);
+  };
+
+  const equations = [
+  "Epley",
+  "McGlothin",
+  "Lombardi",
+  "Mayhew",
+  "OConner",
+  "Wathen",
+  "Brzycki",
+  ];
 
   return (
     <ToggleButtonGroup
@@ -316,13 +339,26 @@ export function VerticalChartControls() {
         </ToggleButton>
       </Tooltip>
 
+
+      <Menu
+        id="simple-menu"
+        anchorEl={anchorEl}
+        keepMounted
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
+      >
+        {equations.map((equation) => ( <MenuItem key={equation} onClick={handleClose} style={{ margin: 2 }}> {equation} </MenuItem>))}
+      </Menu>
+
       <Tooltip title="Change 1RM formula">
-        <ToggleButton value="equation" aria-label="Change 1RM formula">
+        <ToggleButton value="equation" aria-label="Change 1RM formula" aria-controls="simple-menu" aria-haspopup="true" onClick={handleClick}>
          <PsychologyIcon />
         </ToggleButton>
       </Tooltip>
 
-
     </ToggleButtonGroup>
   );
-}
+};
+
+
+    // <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>

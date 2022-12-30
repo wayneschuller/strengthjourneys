@@ -2,19 +2,22 @@ import { useState } from 'react';
 import { Link } from "react-router-dom";
 
 import AppBar from '@mui/material/AppBar';
+import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
 import Menu from '@mui/material/Menu';
 import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
+import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
+
+// MUI icons
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import Chip from '@mui/material/Chip';
 
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import useDrivePicker from 'react-google-drive-picker'
@@ -44,6 +47,8 @@ function ResponsiveAppBar(props) {
   const getGoogleUserInfo = props.getGoogleUserInfo;
   const loadGSheetValues = props.loadGSheetValues;
   const setVisualizerData = props.setVisualizerData;
+  const isLoading = props.isLoading;
+  const setIsLoading = props.setIsLoading;
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -240,6 +245,7 @@ function ResponsiveAppBar(props) {
             ))}
           </Box>
 
+          { isLoading && <CircularProgress color="success" /> }
 
           {/* User profile info on right hand side of the navbar */}
           { userInfo ?  

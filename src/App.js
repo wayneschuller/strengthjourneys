@@ -21,6 +21,8 @@ export default function App() {
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);  
 
+  const [isLoading, setIsLoading] = useState(false); // Use to show loading animation
+
   const [padDateMin, setPadDateMin] = useState(null);
   const [padDateMax, setPadDateMax] = useState(null);
   const [recentXAxisMin, setRecentXAxisMin] = useState(null);
@@ -79,6 +81,7 @@ export default function App() {
   async function checkGSheetModified (tokenResponse) {
     console.log("checkGSheetModified()...");
 
+    setIsLoading(true);
     // API call to get GDrive file metadata to get modified time and the filename
     await axios
       .get(`https://www.googleapis.com/drive/v3/files/${cookies.ssid}?fields=modifiedTime%2Cname&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
@@ -111,6 +114,7 @@ export default function App() {
   // NOTE: Currently unused, but may be useful in the future
   async function getGSheetMetadata () {
       console.log("getGSheetMetadata()...");
+      setIsLoading(true);
 
       await axios
         .get(`https://sheets.googleapis.com/v4/spreadsheets/${cookies.ssid}?includeGridData=false`, {
@@ -130,6 +134,7 @@ export default function App() {
 
   async function loadGSheetValues(ssid, tokenResponse) {
       console.log("loadGSheetValues()...");
+      setIsLoading(true);
 
       await axios
       .get(`https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
@@ -183,6 +188,7 @@ export default function App() {
 
           // Lastly, load in the data.
           setVisualizerData(processed);
+          setIsLoading(false);
         })
         .catch((error) => {
           setInfoChipStatus("Error Reading Google Sheet");
@@ -219,6 +225,8 @@ export default function App() {
       getGoogleUserInfo={getGoogleUserInfo}
       loadGSheetValues={loadGSheetValues}
       setVisualizerData={setVisualizerData}
+      isLoading={isLoading}
+      setIsLoading={setIsLoading}
      />
 
       {/* An <Outlet> renders whatever child route is currently active,

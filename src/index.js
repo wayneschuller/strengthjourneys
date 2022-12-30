@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Routes, Route, BrowserRouter } from "react-router-dom";
+import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
 
 import './index.css';
 import App from './App';
@@ -36,8 +36,11 @@ root.render(
         <ThemeProvider theme={theme}>
           <BrowserRouter>
             <Routes>
+
+              {/* FIXME: How can code so wrong work so right? */}
               <Route path="/" element={<App />}>
-              <Route index element={<Home />} /> 
+              <Route path="/" element={ <Navigate replace to="/visualizer" /> } /> 
+
               <Route path="visualizer" element={<Visualizer />} />
               <Route path="analyzer" element={<Analyzer />} />
               <Route path="calculator" element={<OneRepMaxCalculator />} />

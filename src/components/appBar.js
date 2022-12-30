@@ -147,7 +147,7 @@ function ResponsiveAppBar(props) {
             variant="h6"
             noWrap
             component="a"
-            href="/"
+            // href="/"
             sx={{
               mr: 2,
               display: { xs: 'none', md: 'flex' },
@@ -160,6 +160,9 @@ function ResponsiveAppBar(props) {
           >
            SJ 
           </Typography>
+
+
+
 
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
             <IconButton

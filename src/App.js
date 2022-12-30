@@ -178,7 +178,7 @@ export default function App() {
 
           // Search through the processed data and find the largest estimate
           // Round up to the nearest 50
-          let yMax = 220;
+          let yMax = 200;
           setSuggestedYMax(yMax);
 
           // Lastly, load in the data.

@@ -187,6 +187,8 @@ const Visualizer = (props) => {
   return (
     <div>
       <Container maxWidth='xl'>
+          { !visualizerData && <Typography> Welcome to Strength Journeys. Click Google sign in to continue. </Typography> } 
+
           { (visualizerData && selectedVisualizerData) && <Line ref={chartRef} data={selectedVisualizerData} options={chartOptions}/> }
 
           { (visualizerData && selectedVisualizerData) && <LiftControls

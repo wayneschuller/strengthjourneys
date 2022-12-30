@@ -16,6 +16,7 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import { VerticalChartControls, LiftControls } from '../components/vizualizerChartControls';
 
 import { dummyProcessedData } from '../utils/visualizerDataProcessing';
+import { Container } from '@mui/system';
 
 Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 
@@ -40,6 +41,7 @@ const Visualizer = (props) => {
   const chartRef = useRef(null);
 
   // Every time visualizerData changes, wrap a new selectedVisualizerData
+  // FIXME: could we prevent the rezoom in that happens here on data change?
   useEffect(() => {
 
     if (!visualizerData) return;
@@ -68,9 +70,9 @@ const Visualizer = (props) => {
 
   // On any change to zoomRecent state we zoom in
   // FIXME: We are using useEffect instead of a button handler (not best practice)
-  // https://beta.reactjs.org/learn/you-might-not-need-an-effect
-  // I would prefer to do this in the button handler but I can't
-  // figure out how to access the chartRef to get chartRef.current.zoomScale down there
+  // See: https://beta.reactjs.org/learn/you-might-not-need-an-effect
+  // I would prefer to do this in the <VerticalChartControls /> button handler but I can't
+  // figure out how to access the chartRef to get chartRef.current.zoomScale() down there
   useEffect(() => {
     console.log(`<Visualizer /> useEffect [zoomRecent]`);
     const chart = chartRef.current;
@@ -197,31 +199,9 @@ const Visualizer = (props) => {
 
   return (
     <div>
-     <Box sx={{ mx: 2, my: 2 }} >
-      <Grid container spacing={0} >
-
-        { !visualizerData && 
-        <Grid md={12}>
-          <Typography variant="h3" gutterBottom>Strength Visualizer </Typography>
-        </Grid>
-        }
-
-
-        <Grid md={11}>
+      <Container maxWidth='xl'>
           { (visualizerData && selectedVisualizerData) && <Line ref={chartRef} data={selectedVisualizerData} options={chartOptions}/> }
-        </Grid>
-        <Grid md={1} container justifyContent="flex-end" alignItems="center">
-          { (visualizerData && selectedVisualizerData) && <VerticalChartControls 
-                                zoomRecent={zoomRecent} 
-                                setZoomRecent={setZoomRecent} 
-                                showAchievements={showAchievements}
-                                setShowAchievements={setShowAchievements}
-                                /> 
-          }
-        </Grid>
 
-
-        <Grid md={12}>
           { (visualizerData && selectedVisualizerData) && <LiftControls
                                 visualizerData={visualizerData}
                                 setSelectedVisualizerData={setSelectedVisualizerData}
@@ -230,10 +210,7 @@ const Visualizer = (props) => {
                                 setAchievementAnnotations={setAchievementAnnotations}                                
                               />
           }
-        </Grid>
-
-      </Grid>
-      </Box>
+      </Container>
     </div>
   );
 }

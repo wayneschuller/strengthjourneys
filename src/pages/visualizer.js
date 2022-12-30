@@ -68,19 +68,6 @@ const Visualizer = (props) => {
     setSelectedVisualizerData(wrapper);
   }, [visualizerData]);
 
-  // On any change to zoomRecent state we zoom in
-  // FIXME: We are using useEffect instead of a button handler (not best practice)
-  // See: https://beta.reactjs.org/learn/you-might-not-need-an-effect
-  // I would prefer to do this in the <VerticalChartControls /> button handler but I can't
-  // figure out how to access the chartRef to get chartRef.current.zoomScale() down there
-  useEffect(() => {
-    console.log(`<Visualizer /> useEffect [zoomRecent]`);
-    const chart = chartRef.current;
-    if (!chart) return;
-    chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
-  }, [zoomRecent]);
-
-
   // Line Chart Options for react-chartjs-2 Visualizer 
   const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000;
   const chartOptions = {

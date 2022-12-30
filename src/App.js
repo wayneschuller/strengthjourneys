@@ -61,8 +61,12 @@ export default function App() {
         setUserInfo(response.data);
 
         // If we have a valid looking ssid then we can go to the next step in the chain
-        if (cookies.ssid !== undefined && cookies.ssid.length > 10) 
+        if (cookies.ssid !== undefined && cookies.ssid.length > 10)  {
+          setInfoChipStatus("Checking GSheet Modified Time"); 
           checkGSheetModified(tokenResponse);
+        } else {
+          setInfoChipStatus("Select Data Source");  // User must click to get File Picker
+        }
       })
       .catch((error) => {
         console.log(`axios.get UserInfo error:`);
@@ -93,10 +97,13 @@ export default function App() {
         // console.log(response.data);
         setInfoChipToolTip(response.data.name);
 
+        // FIXME: Checking for modified time needs an interval handler
+        // FIXME: We should check if the data is loaded - if not then go ahead anyway
         // If the modified time is newer then refresh the data from Google Sheets
         const modifiedTime = Date.parse(response.data.modifiedTime);
         // console.log(`useState dataModifiedTime: ${dataModifiedTime}. Response: ${modifiedTime}`);
         if (modifiedTime > dataModifiedTime) {
+          setInfoChipStatus("Loading GSheet Values"); 
           setDataModifiedTime(modifiedTime);
           loadGSheetValues(cookies.ssid, tokenResponse);
         } else {
@@ -142,7 +149,7 @@ export default function App() {
         })
         .then((response) => {
 
-          setInfoChipStatus("Data Source Connected");
+          setInfoChipStatus("Google Sheet Data Loaded");
 
           // SUCCESS - We have the Google Sheet Data.
           // Now we do some significant processing.
@@ -234,6 +241,7 @@ export default function App() {
           the child routes we defined above. */}
         <Outlet 
           context={[  visualizerData, 
+                      isLoading,
                       padDateMin, padDateMax, 
                       recentXAxisMin, setRecentXAxisMin,
                       recentXAxisMax, 

@@ -94,7 +94,8 @@ function ResponsiveAppBar(props) {
 
       console.log(tokenResponse);
 
-      setInfoChipStatus("Select Data Source");
+      // FIXME: if we have an SSID then setinfoChip "Checking User Info", else set it to:
+      setInfoChipStatus("Checking User Info"); 
 
       getGoogleUserInfo(tokenResponse);
     },
@@ -245,7 +246,7 @@ function ResponsiveAppBar(props) {
             ))}
           </Box>
 
-          { isLoading && <CircularProgress color="success" /> }
+          {/* { isLoading && <CircularProgress color="success" /> } */}
 
           {/* User profile info on right hand side of the navbar */}
           { userInfo ?  

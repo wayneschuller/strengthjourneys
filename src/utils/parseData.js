@@ -121,6 +121,8 @@ function parseBespokeRow(row, index) {
     weight = parseFloat(weight.slice(0, weight.length-2)); // Remove the units from the end
   } 
 
+  // FIXME: we seem to have lost the ability to have 0.5kg increments?
+
   if (reps === 0 || weight === 0) return false; // Do they even lift?
 
   // If we don't have these fields put in empty strings

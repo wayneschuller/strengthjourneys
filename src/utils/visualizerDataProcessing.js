@@ -284,7 +284,7 @@ export function processAchievements(parsedData, processedData) {
 
 // Helper function to find top 20 singles, threes and fives for each main lift
 function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnotations) {
-  const name = processedData[datasetIndex].label;
+  const liftType = processedData[datasetIndex].label;
 
   // console.log(`Finding ${reps}-rep PRs for ${name}`);
 
@@ -311,14 +311,14 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
       (lift) => lift.x === repLifts[i].date
     );
     processedData[datasetIndex].data[dateIndex].afterLabel.push(
-      `#${i + 1} best ${name} ${prName} of all time (${reps}@${repLifts[i].weight}${
+      `#${i + 1} best ${liftType} ${prName} of all time (${reps}@${repLifts[i].weight}${
         repLifts[i].units
       })`
     );
 
     // Actual top PR gets a special chartjs annotation marker on the chart
     if (i == 0) 
-      liftAnnotations[`${name}_best_${reps}RM`] = createAchievementAnnotation(
+      liftAnnotations[`${liftType}_best_${reps}RM`] = createAchievementAnnotation(
         repLifts[i].date,
         estimateE1RM(reps, repLifts[i].weight),
         `${reps}RM`,
@@ -347,7 +347,15 @@ function createAchievementAnnotation(date, weight, text, background, datasetInde
       bottom: 1,
     },
     // scaleID: 'y',
-    display: false,   // Default to false and we can turn them on later
+    // display: false,   // Default to false and we can turn them on later
+    display: (chart, options) => {
+      console.log(chart);
+      // Only show if dataset line is visible on chart
+      // let meta = chart.chart.getDatasetMeta(datasetIndex);
+      // if (meta === undefined) return false;
+      // return meta.visible;
+      return(true);   // FIXME: temporary
+    },
   };
 }
 

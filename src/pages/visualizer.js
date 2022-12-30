@@ -3,7 +3,10 @@ import { useOutletContext } from "react-router-dom";
 import { useCookies } from 'react-cookie';
 
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Grid from '@mui/material/Unstable_Grid2';
+import LinearProgress from '@mui/material/LinearProgress';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import Chart from 'chart.js/auto';    // Causes large webpack but is easier than manually registering what you need.
@@ -23,6 +26,7 @@ Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 const Visualizer = (props) => {
 
   const [ visualizerData, 
+          isLoading,
           padDateMin, 
           padDateMax, 
           recentXAxisMin, 
@@ -36,7 +40,7 @@ const Visualizer = (props) => {
   const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
   const [showAchievements, setShowAchievements] = useState(true); // PR/Achivement annotations
   const [selectedVisualizerData, setSelectedVisualizerData] = useState(null); 
-  const [cookies, setCookie] = useCookies(['selectedChips']);
+  const [cookies, setCookie] = useCookies(['selectedChips', 'ssid']);
 
   const chartRef = useRef(null);
 
@@ -201,8 +205,11 @@ const Visualizer = (props) => {
   return (
     <div>
       <Container maxWidth='xl'>
-          { !visualizerData && <Typography> Welcome to Strength Journeys. Click Google sign in to continue. </Typography> } 
+          {/* { !visualizerData && <Typography> Welcome to Strength Journeys. Click Google sign in to continue. </Typography> }  */}
+          { (!visualizerData && !cookies.ssid) && <NewUserWelcome /> } 
+          { (!visualizerData && cookies.ssid) && <OldUserWelcome /> } 
 
+          { isLoading && <LoadingLinearProgress /> }
           { (visualizerData && selectedVisualizerData) && <Line ref={chartRef} data={selectedVisualizerData} options={chartOptions}/> }
 
           { (visualizerData && selectedVisualizerData) && <LiftControls
@@ -219,3 +226,40 @@ const Visualizer = (props) => {
 }
 
 export default Visualizer;
+
+function NewUserWelcome() {
+
+  return (
+    <div>
+     <Box sx={{ m: 1 }} md={{ m: 3}} >
+       <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}>
+          <h1>Welcome to Strength Journeys</h1>
+          <h3>Visualize your lifting history - lift consistently for a long time.</h3>
+       </Container>
+     </Box>
+    </div>
+  );
+}
+
+function OldUserWelcome() {
+  return (
+    <div>
+     <Box sx={{ m: 1 }} md={{ m: 3}} >
+       <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}>
+          <h1>Welcome back to Strength Journeys</h1>
+          <h3>Visualize your lifting history - lift consistently for a long time.</h3>
+          <h3>Please sign in again to Google.</h3>
+       </Container>
+     </Box>
+    </div>
+  );
+}
+
+
+function LoadingLinearProgress() {
+  return (
+    <Stack sx={{ width: '100%', color: 'grey.500' }} spacing={2}>
+      <LinearProgress color="inherit" />
+    </Stack>
+  );
+}

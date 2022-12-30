@@ -17,7 +17,6 @@ import { VerticalChartControls, LiftControls } from '../components/vizualizerCha
 
 import { dummyProcessedData } from '../utils/visualizerDataProcessing';
 
-
 Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 
 const Visualizer = (props) => {
@@ -26,6 +25,7 @@ const Visualizer = (props) => {
           padDateMin, 
           padDateMax, 
           recentXAxisMin, 
+          setRecentXAxisMin, 
           recentXAxisMax, 
           suggestedYMax, 
           achievementAnnotations,
@@ -38,7 +38,6 @@ const Visualizer = (props) => {
   const [cookies, setCookie] = useCookies(['selectedChips']);
 
   const chartRef = useRef(null);
-
 
   // Every time visualizerData changes, wrap a new selectedVisualizerData
   useEffect(() => {
@@ -67,14 +66,6 @@ const Visualizer = (props) => {
     setSelectedVisualizerData(wrapper);
   }, [visualizerData]);
 
-  // FIXME: Zoom in to recent as soon as chart is fully loaded
-  // useEffect(() => {
-  //   const chart = chartRef.current;
-  //   console.log(`Zoom in on data change. chart: ${chart}`);
-  //   if (!chart) return;
-  //   chart.zoomScale("x", { min: recentXAxisMin.getTime(), max: recentXAxisMax.getTime() }, "default");
-  // }, [visualizerData, selectedVisualizerData, recentXAxisMax, recentXAxisMin]);
-
   // On any change to zoomRecent state we zoom in
   // FIXME: We are using useEffect instead of a button handler (not best practice)
   // https://beta.reactjs.org/learn/you-might-not-need-an-effect
@@ -89,7 +80,7 @@ const Visualizer = (props) => {
 
 
   // Line Chart Options for react-chartjs-2 Visualizer 
-  const zoomMinTimeRange = 1000 * 60 * 60 * 24 * 60; // Minimum x-axis is 60 days
+  const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000;
   const chartOptions = {
     responsive: true,
 
@@ -106,7 +97,7 @@ const Visualizer = (props) => {
     scales: {
       x: {
           type: "time",
-          suggestedMin: padDateMin, 
+          min: recentXAxisMin,      // Default to zoomed in the last 6 months
           suggestedMax: padDateMax,
           time: {
             minUnit: "day"
@@ -194,7 +185,7 @@ const Visualizer = (props) => {
           mode: 'x',
         },
         limits: {
-          x: { min: "original", max: "original", minRange: zoomMinTimeRange },
+          x: { min: padDateMin, max: padDateMax, minRange: sixtyDaysInMilliseconds },
         },
       },
 
@@ -206,8 +197,8 @@ const Visualizer = (props) => {
 
   return (
     <div>
-     <Box sx={{ mx: 5 }} >
-      <Grid container spacing={1} >
+     <Box sx={{ mx: 2, my: 2 }} >
+      <Grid container spacing={0} >
 
         { !visualizerData && 
         <Grid md={12}>

@@ -159,10 +159,11 @@ export default function App() {
 
           // Use the most popular lift to set some aesthetic x-axis padding at start and end
           // There is a chance loading another data set will require a new range, but unlikely.
+          // FIXME: just check ALL the first tuples in every lift and use the most recent one.
           let padDateMin = new Date(processed[0].data[0].x); // First tuple in first lift
           padDateMin = padDateMin.setDate(padDateMin.getDate() - 10);
           let padDateMax = new Date(processed[0].data[processed[0].data.length - 1].x); // Last tuple in first lift
-          padDateMax = padDateMax.setDate(padDateMax.getDate() + 14);
+          padDateMax = padDateMax.setDate(padDateMax.getDate() + 10);
           setPadDateMin(padDateMin);
           setPadDateMax(padDateMax);
 
@@ -226,7 +227,8 @@ export default function App() {
         <Outlet 
           context={[  visualizerData, 
                       padDateMin, padDateMax, 
-                      recentXAxisMin, recentXAxisMax, 
+                      recentXAxisMin, setRecentXAxisMin,
+                      recentXAxisMax, 
                       suggestedYMax, 
                       achievementAnnotations, setAchievementAnnotations,
                     ]} 

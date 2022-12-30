@@ -51,14 +51,24 @@ const Visualizer = (props) => {
       // console.log(`<Visualizer /> useEffect modifying visualizerData based on cookie`);
       visualizerData.forEach((item) => {
         item.selected = cookies.selectedChips.includes(item.label);
+        if (item.selected) {
+          // Turn on achievement annotations for this selected lift
+          if (achievementAnnotations[`${item.label}_best_1RM`]) achievementAnnotations[`${item.label}_best_1RM`].display = true;
+          if (achievementAnnotations[`${item.label}_best_3RM`]) achievementAnnotations[`${item.label}_best_3RM`].display = true;
+          if (achievementAnnotations[`${item.label}_best_5RM`]) achievementAnnotations[`${item.label}_best_5RM`].display = true;
+        } else {
+          // Turn off achievement annotations for this NOT selected lift
+          if (achievementAnnotations[`${item.label}_best_1RM`]) achievementAnnotations[`${item.label}_best_1RM`].display = false;
+          if (achievementAnnotations[`${item.label}_best_3RM`]) achievementAnnotations[`${item.label}_best_3RM`].display = false;
+          if (achievementAnnotations[`${item.label}_best_5RM`]) achievementAnnotations[`${item.label}_best_5RM`].display = false;
+        }
       });  
     } else {
 
       // No cookie? Top three lifts is a good default
-      // FIXME: This will break if we have less than three lifts
-      visualizerData[0].selected = true;
-      visualizerData[1].selected = true;
-      visualizerData[2].selected = true;
+      if (visualizerData[0]) visualizerData[0].selected = true;
+      if (visualizerData[1]) visualizerData[1].selected = true;
+      if (visualizerData[2]) visualizerData[2].selected = true;
     }
 
     var wrapper = {
@@ -66,6 +76,10 @@ const Visualizer = (props) => {
     };
 
     setSelectedVisualizerData(wrapper);
+
+    // Also let us load the annotations for these lifts.
+    
+
   }, [visualizerData]);
 
   // Line Chart Options for react-chartjs-2 Visualizer 

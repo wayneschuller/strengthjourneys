@@ -4,8 +4,6 @@
 //
 // Process our parsedData into chart.js ready format for the Strength Visualizer
 
-
-
 // Default sample chart for first time user
 // FIXME: Make this as interesting as possible to entice new users
 export const defaultVisualizerData = {
@@ -231,7 +229,7 @@ export function processVisualizerData(parsedData) {
   // AND
   // 2) we only did that lift type less than 10 times. 
   //
-  // So just keep lifting or do lots of a lift type to keep it as a chat option 
+  // Advice to user: Keep lifting or do lots of a lift type to keep it visualized
   if (processedData.length > 15) {
     const twoYearsInMilliseconds = 2 * 365 * 24 * 60 * 60 * 1000;
     const currentTime = Date.now();

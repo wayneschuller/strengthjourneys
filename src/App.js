@@ -188,10 +188,16 @@ export default function App() {
           setRecentXAxisMin(recentXAxisMin);
           setRecentXAxisMax(recentXAxisMax);
 
-          // Search through the processed data and find the largest estimate
-          // Round up to the nearest 50
-          let yMax = 200;
-          setSuggestedYMax(yMax);
+          // Search through the processed data and find the largest y value 
+          let highestWeight = 0;
+          processed.forEach((liftType) => {
+            liftType.data.forEach((lift) => {
+              if (lift.y > highestWeight) 
+                highestWeight = lift.y;
+            });
+          });
+          highestWeight = Math.ceil(highestWeight / 50) * 50; // Round up to the next mulitiple of 50
+          setSuggestedYMax(highestWeight);
 
           // Lastly, load in the data.
           setVisualizerData(processed);

@@ -121,10 +121,10 @@ function ResponsiveAppBar(props) {
           // console.log('User clicked cancel GDrive Picker')
           return;
         }
-
         setInfoChipToolTip(data.docs[0].name);
 
         console.log(`User chose ssid. New: ${data.docs[0].id}. Old cookie: ${cookies.ssid}`)
+        // console.log(data);
         // Have they chosen a different file to previously?
         if (data.docs[0].id !== cookies.ssid) {
           // park the ssid in the browser cookie - expires in a year. They can change it anytime.
@@ -133,8 +133,8 @@ function ResponsiveAppBar(props) {
           // setDataModifiedTime(0); // FIXME: do we need this?
           console.log(data)
         }
-
         loadGSheetValues(data.docs[0].id, cookies.tokenResponse); 
+        // loadGSheetValues(data.docs[0].id, data.docs.view_token);  // FIXME: Ignore this dumb guessing mistake
       },
     });
   }

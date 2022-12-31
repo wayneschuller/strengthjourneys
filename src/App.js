@@ -41,7 +41,7 @@ export default function App() {
   async function getGoogleUserInfo(tokenResponse) {
     console.log(`getGoogleUserInfo()...`);
 
-    if (!tokenResponse && tokenResponse.access_token) {
+    if (!tokenResponse) {
       console.log(`Can't get userInfo without tokenResponse...`);
       setVisualizerData(defaultVisualizerData);
       return; // No ticket to google? Then no party.
@@ -119,13 +119,13 @@ export default function App() {
 
   // Gets interesting information about the sheet but not modified time
   // NOTE: Currently unused, but may be useful in the future
-  async function getGSheetMetadata () {
+  async function getGSheetMetadata (tokenResponse) {
       console.log("getGSheetMetadata()...");
       setIsLoading(true);
 
       await axios
         .get(`https://sheets.googleapis.com/v4/spreadsheets/${cookies.ssid}?includeGridData=false`, {
-          headers: { Authorization: `Bearer ${cookies.tokenResponse.access_token}` },
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         })
         .then((response) => {
           // handle success
@@ -189,7 +189,7 @@ export default function App() {
           setRecentXAxisMax(recentXAxisMax);
 
           // Search through the processed data and find the largest y value 
-          let highestWeight = 0;
+          let highestWeight = 1;
           processed.forEach((liftType) => {
             liftType.data.forEach((lift) => {
               if (lift.y > highestWeight) 

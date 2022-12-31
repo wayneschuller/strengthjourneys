@@ -40,7 +40,7 @@ const Visualizer = (props) => {
   const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
   const [showAchievements, setShowAchievements] = useState(true); // PR/Achivement annotations
   const [selectedVisualizerData, setSelectedVisualizerData] = useState(null); 
-  const [cookies, setCookie] = useCookies(['selectedChips', 'ssid']);
+  const [cookies, setCookie] = useCookies(['selectedChips', 'ssid', 'tokenResponse']);
 
   const chartRef = useRef(null);
 
@@ -205,11 +205,13 @@ const Visualizer = (props) => {
   return (
     <div>
       <Container maxWidth='xl'>
-          {/* { !visualizerData && <Typography> Welcome to Strength Journeys. Click Google sign in to continue. </Typography> }  */}
-          { (!visualizerData && !cookies.ssid) && <NewUserWelcome /> } 
-          { (!visualizerData && cookies.ssid) && <OldUserWelcome /> } 
 
+          { (!visualizerData && !cookies.ssid) && <NewUserWelcome /> } 
+          { (!visualizerData && cookies.ssid) && <OldUserWelcome tokenResponse={cookies.tokenResponse} /> } 
+
+          {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
           { isLoading && <LoadingLinearProgress /> }
+
           { (visualizerData && selectedVisualizerData) && <Line ref={chartRef} data={selectedVisualizerData} options={chartOptions}/> }
 
           { (visualizerData && selectedVisualizerData) && <LiftControls
@@ -241,14 +243,16 @@ function NewUserWelcome() {
   );
 }
 
-function OldUserWelcome() {
+function OldUserWelcome({ tokenResponse }) {
   return (
     <div>
      <Box sx={{ m: 1 }} md={{ m: 3}} >
        <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}>
-          <h1>Welcome back to Strength Journeys</h1>
-          <h3>Visualize your lifting history - lift consistently for a long time.</h3>
-          <h3>Please sign in again to Google.</h3>
+          <h1>Welcome back to Strength Journeys.</h1>
+          <h3>You are looking stronger than last time.</h3>
+
+          { tokenResponse && <h3>Auto-connecting to Google using recent login...</h3> }
+          { !tokenResponse && <><h3>Please click the "Google sign-in" button in the top right corner and we will visualize your greatness.</h3></> }
        </Container>
      </Box>
     </div>

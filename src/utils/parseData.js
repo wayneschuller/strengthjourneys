@@ -176,7 +176,7 @@ function parseBtwbRow(row) {
   let unitType;
     if (lift.indexOf("kg") !== -1) {
       unitType = "kg";
-      regex = /[0-9|\.]+\skg$/gm; 
+      regex = /[0-9|\.]+\skg$/gm;     // FIXME: could be done easier WITHOUT regex
     } else if (lift.indexOf("lb") !== -1) {
       unitType = "lb";
       regex = /[0-9|\.]+\slb$/gm; 

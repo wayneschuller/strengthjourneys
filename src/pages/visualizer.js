@@ -38,8 +38,6 @@ const Visualizer = (props) => {
 
   const chartRef = useRef(null);
 
-  const dateMin = 3; // FIXME: calculate here from processed data?
-
   // Set the zoom/pan to the last 6 months of data if we have that much
   let sixMonthsAgo = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
   if (sixMonthsAgo < padDateMin) sixMonthsAgo = padDateMin;

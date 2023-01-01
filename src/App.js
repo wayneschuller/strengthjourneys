@@ -92,7 +92,7 @@ export default function App() {
         setInfoChipToolTip(response.data.name); // Put the GSheet filename in the chip tooltip
 
         // FIXME: Checking for modified time needs an interval handler
-        // FIXME: We should check if the data is loaded - if not then go ahead anyway
+        // FIXME: If this is our first time through always move forward
         // If the modified time is newer then refresh the data from Google Sheets
         const modifiedTime = Date.parse(response.data.modifiedTime);
         // console.log(`useState dataModifiedTime: ${dataModifiedTime}. Response: ${modifiedTime}`);

@@ -92,8 +92,7 @@ function ResponsiveAppBar(props) {
     onSuccess: async tokenResponse => {
       // park the tokenResponse in the browser cookie - it is normally valid for about 1 hour
       setCookie('tokenResponse', JSON.stringify(tokenResponse), { path: '/', maxAge: tokenResponse.expires_in });
-
-      console.log(tokenResponse);
+      // console.log(tokenResponse);
 
       setInfoChipStatus("Checking User Info"); 
       getGoogleUserInfo(tokenResponse);
@@ -127,7 +126,6 @@ function ResponsiveAppBar(props) {
           // park the ssid in the browser cookie - expires in a year. They can change it anytime.
           let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now
           setCookie('ssid', data.docs[0].id, { path: '/', expires: d });
-          // setDataModifiedTime(0); // FIXME: do we need this?
         }
 
         getGDriveMetadata(data.docs[0].id, cookies.tokenResponse);
@@ -135,10 +133,6 @@ function ResponsiveAppBar(props) {
     });
   }
 
-  // TODO: We really need to handle 3 use cases 
-  // 1. Absolute first time user. Nice hero page with explanation and images etc.
-  // 2. Returning user with an expired token. Welcome them back, explain the process
-  // 3. Returning user with valid token - insta load the data 
   return (
     <AppBar position="static">
       <Container maxWidth="xl">
@@ -241,8 +235,6 @@ function ResponsiveAppBar(props) {
               </Button>
             ))}
           </Box>
-
-          {/* { isLoading && <CircularProgress color="success" /> } */}
 
           {/* User profile info on right hand side of the navbar */}
           { userInfo ?  

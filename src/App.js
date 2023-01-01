@@ -33,7 +33,7 @@ export default function App() {
   // ------------------------------------------------------------------
   // Data processing flow:
   //
-  //    getGoogleUserInfo->checkGSheetModified->loadGSheetValues
+  //    getGoogleUserInfo->getGSheetMetadata->loadGSheetValues
   //
   // Flow is mostly triggered by event handlers, but also can process
   // the data on launch if they have a valid token and ssid in cookies
@@ -63,7 +63,7 @@ export default function App() {
         // If we have a valid looking ssid then we can go to the next step in the chain
         if (cookies.ssid !== undefined && cookies.ssid.length > 10)  {
           setInfoChipStatus("Checking GSheet Modified Time"); 
-          checkGSheetModified(tokenResponse);
+          getGDriveMetadata(cookies.ssid, tokenResponse);    
         } else {
           setInfoChipStatus("Select Data Source");  // User must click to get File Picker
         }
@@ -82,13 +82,13 @@ export default function App() {
       })
   }
 
-  async function checkGSheetModified (tokenResponse) {
-    console.log("checkGSheetModified()...");
+  async function getGDriveMetadata (ssid, tokenResponse) {
+    console.log("getGSheetMetadata()...");
 
     setIsLoading(true);
     // API call to get GDrive file metadata to get modified time and the filename
     await axios
-      .get(`https://www.googleapis.com/drive/v3/files/${cookies.ssid}?fields=modifiedTime%2Cname&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
+      .get(`https://www.googleapis.com/drive/v3/files/${ssid}?fields=modifiedTime%2Cname&key=${process.env.REACT_APP_GOOGLE_API_KEY}`, {
         headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
       })
       .then((response) => {
@@ -102,10 +102,13 @@ export default function App() {
         // If the modified time is newer then refresh the data from Google Sheets
         const modifiedTime = Date.parse(response.data.modifiedTime);
         // console.log(`useState dataModifiedTime: ${dataModifiedTime}. Response: ${modifiedTime}`);
-        if (modifiedTime > dataModifiedTime) {
+
+        // FIXME: don't check for modified time yet.
+        // if (modifiedTime > dataModifiedTime) {
+        if (true) {
           setInfoChipStatus("Loading GSheet Values"); 
           setDataModifiedTime(modifiedTime);
-          loadGSheetValues(cookies.ssid, tokenResponse);
+          loadGSheetValues(ssid, tokenResponse);
         } else {
           console.log(`Google Sheet metadata check: modifiedtime is unchanged`);
         } 
@@ -119,12 +122,12 @@ export default function App() {
 
   // Gets interesting information about the sheet but not modified time
   // NOTE: Currently unused, but may be useful in the future
-  async function getGSheetMetadata (tokenResponse) {
+  async function getGSheetMetadata (ssid, tokenResponse) {
       console.log("getGSheetMetadata()...");
       setIsLoading(true);
 
       await axios
-        .get(`https://sheets.googleapis.com/v4/spreadsheets/${cookies.ssid}?includeGridData=false`, {
+        .get(`https://sheets.googleapis.com/v4/spreadsheets/${ssid}?includeGridData=false`, {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         })
         .then((response) => {
@@ -236,6 +239,7 @@ export default function App() {
       infoChipToolTip={infoChipToolTip}
       setInfoChipToolTip={setInfoChipToolTip}
       getGoogleUserInfo={getGoogleUserInfo}
+      getGDriveMetadata={getGDriveMetadata}
       loadGSheetValues={loadGSheetValues}
       setVisualizerData={setVisualizerData}
       isLoading={isLoading}

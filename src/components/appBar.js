@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 
 import AppBar from '@mui/material/AppBar';
@@ -21,6 +21,7 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import useDrivePicker from 'react-google-drive-picker'
+// import { loadGooglePicker } from '../utils/google';
 
 // Array of main menu items
 const pages = [
@@ -46,6 +47,7 @@ function ResponsiveAppBar(props) {
   const setInfoChipToolTip = props.setInfoChipToolTip;
   const getGoogleUserInfo = props.getGoogleUserInfo;
   const loadGSheetValues = props.loadGSheetValues;
+  const getGDriveMetadata = props.getGDriveMetadata;
   const setVisualizerData = props.setVisualizerData;
   const isLoading = props.isLoading;
   const setIsLoading = props.setIsLoading;
@@ -72,18 +74,18 @@ function ResponsiveAppBar(props) {
   const handleUserMenuLogout = () => {
     // console.log("Logging out of google...");
     googleLogout();
+    removeCookie('ssid'); // Forget the SSID (TEMPORARY) 
     removeCookie('tokenResponse'); // Forget the tokenReponse 
     setUserInfo(null);    // This will remove the profile menu and status button
     setVisualizerData(null);  // Reset the graph
     setAnchorElUser(null);  // Closes menu
+    setIsLoading(false);
   };
 
   // console.log(`Top level <ResponsiveAppBar />...`);
 
-  // Google API scopes required to read one google sheet
-  const SCOPES = 'https://www.googleapis.com/auth/drive.file ' +
-                 'https://www.googleapis.com/auth/spreadsheets.readonly ' +
-                 'https://www.googleapis.com/auth/drive.metadata.readonly';
+  // MINIMUM Google API scopes required to read one google sheet
+  const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
   // niceGoogleLogin uses implicit authorisation flow to get a tokenResponse (normally lasts 60 minutes)
   const niceGoogleLogin = useGoogleLogin({
@@ -94,28 +96,24 @@ function ResponsiveAppBar(props) {
 
       console.log(tokenResponse);
 
-      // FIXME: if we have an SSID then setinfoChip "Checking User Info", else set it to:
       setInfoChipStatus("Checking User Info"); 
-
       getGoogleUserInfo(tokenResponse);
     },
     onError: errorResponse => console.log(errorResponse),
   });  
 
-
   const [openPicker, authResponse] = useDrivePicker();  
-  // const customViewsArray = [new google.picker.DocsView()]; // custom view
   const openGDrivePicker = () => {
     openPicker({
       clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
       developerKey: process.env.REACT_APP_GOOGLE_API_KEY,
+      appId: process.env.REACT_APP_GOOGLE_APP_ID,
       viewId: "SPREADSHEETS",
-      token: cookies.tokenResponse.access_token, // pass oauth token in case you already have one
+      token: cookies.tokenResponse.access_token, // Pass a pre-obtained token with drive.file scope
       showUploadView: true,
       showUploadFolders: true,
       supportDrives: true,
-      multiselect: true,
-      // customViews: customViewsArray, // custom view
+      multiselect: false,
       callbackFunction: (data) => {
         if (data.action === 'cancel') {
           // console.log('User clicked cancel GDrive Picker')
@@ -123,7 +121,7 @@ function ResponsiveAppBar(props) {
         }
         setInfoChipToolTip(data.docs[0].name);
 
-        console.log(`User chose ssid. New: ${data.docs[0].id}. Old cookie: ${cookies.ssid}`)
+        // console.log(`User chose ssid. New: ${data.docs[0].id}. Old cookie: ${cookies.ssid}`)
         // console.log(data);
         // Have they chosen a different file to previously?
         if (data.docs[0].id !== cookies.ssid) {
@@ -131,10 +129,9 @@ function ResponsiveAppBar(props) {
           let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now
           setCookie('ssid', data.docs[0].id, { path: '/', expires: d });
           // setDataModifiedTime(0); // FIXME: do we need this?
-          console.log(data)
         }
-        loadGSheetValues(data.docs[0].id, cookies.tokenResponse); 
-        // loadGSheetValues(data.docs[0].id, data.docs.view_token);  // FIXME: Ignore this dumb guessing mistake
+
+        getGDriveMetadata(data.docs[0].id, cookies.tokenResponse);
       },
     });
   }

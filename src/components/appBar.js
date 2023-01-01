@@ -6,7 +6,6 @@ import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -75,7 +74,6 @@ function ResponsiveAppBar(props) {
   const handleUserMenuLogout = () => {
     // console.log("Logging out of google...");
     googleLogout();
-    removeCookie('ssid'); // Forget the SSID (TEMPORARY) 
     removeCookie('tokenResponse'); // Forget the tokenReponse 
     setUserInfo(null);    // This will remove the profile menu and status button
     setVisualizerData(null);  // Reset the graph

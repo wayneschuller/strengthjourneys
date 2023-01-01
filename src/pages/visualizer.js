@@ -207,7 +207,7 @@ const Visualizer = (props) => {
       <Container maxWidth='xl'>
 
           { (!visualizerData && !cookies.ssid) && <NewUserWelcome /> } 
-          { (!visualizerData && cookies.ssid) && <OldUserWelcome tokenResponse={cookies.tokenResponse} /> } 
+          { (!visualizerData && cookies.ssid) && <ReturningUserWelcome tokenResponse={cookies.tokenResponse} /> } 
 
           {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
           { isLoading && <LoadingLinearProgress /> }
@@ -243,7 +243,7 @@ function NewUserWelcome() {
   );
 }
 
-function OldUserWelcome({ tokenResponse }) {
+function ReturningUserWelcome({ tokenResponse }) {
   return (
     <div>
      <Box sx={{ m: 1 }} md={{ m: 3}} >
@@ -251,7 +251,6 @@ function OldUserWelcome({ tokenResponse }) {
           <h1>Welcome back to Strength Journeys.</h1>
           <h3>You are looking stronger than last time.</h3>
 
-          { tokenResponse && <h3>Auto-connecting to Google using recent login...</h3> }
           { !tokenResponse && <><h3>Please click the "Google sign-in" button in the top right corner and we will visualize your greatness.</h3></> }
        </Container>
      </Box>

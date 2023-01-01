@@ -73,12 +73,8 @@ export default function App() {
         console.log(error.response);
 
         // Just in case we had a working tokenResponse that has now expired.
-
-        // TODO: It would be good to set some informative UI to past users than they need to sign in again.
-        // TODO: Don't treat old users like new users...
         setUserInfo(null);
         removeCookie('tokenResponse'); // Forget the tokenReponse 
-
       })
   }
 
@@ -134,6 +130,7 @@ export default function App() {
           // handle success
           // console.log(`API get GSheet metadata .then received:`);
           // console.log(response.data);
+          // loadGSheetValues(ssid, tokenResponse);  // Next step in the chain
         })
         .catch((error) => {
           setInfoChipStatus("Error Reading Google Sheet Metadata");

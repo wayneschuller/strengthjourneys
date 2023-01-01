@@ -57,11 +57,13 @@ const Visualizer = (props) => {
         item.selected = cookies.selectedChips.includes(item.label);
         if (item.selected) {
           // Turn on achievement annotations for this selected lift
+          console.log(`Turning ON annotations for lift: ${item.label}`);
           if (achievementAnnotations[`${item.label}_best_1RM`]) achievementAnnotations[`${item.label}_best_1RM`].display = true;
           if (achievementAnnotations[`${item.label}_best_3RM`]) achievementAnnotations[`${item.label}_best_3RM`].display = true;
           if (achievementAnnotations[`${item.label}_best_5RM`]) achievementAnnotations[`${item.label}_best_5RM`].display = true;
         } else {
           // Turn off achievement annotations for this NOT selected lift
+          console.log(`Turning OFF annotations for lift: ${item.label}`);
           if (achievementAnnotations[`${item.label}_best_1RM`]) achievementAnnotations[`${item.label}_best_1RM`].display = false;
           if (achievementAnnotations[`${item.label}_best_3RM`]) achievementAnnotations[`${item.label}_best_3RM`].display = false;
           if (achievementAnnotations[`${item.label}_best_5RM`]) achievementAnnotations[`${item.label}_best_5RM`].display = false;
@@ -146,7 +148,6 @@ const Visualizer = (props) => {
         formatter: (context) => context.y,
         font: (context) => {
           // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
-          // FIXME: does not seem to be applying - probably a font selection issue?
           const liftSingle = context.dataset.data[context.dataIndex].label.indexOf("Potential");
           if (liftSingle === -1)
             return { family:"Catamaran", weight: "bold", size: 13 };

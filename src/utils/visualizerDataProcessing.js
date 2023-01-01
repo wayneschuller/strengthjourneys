@@ -344,16 +344,19 @@ function createAchievementAnnotation(date, weight, text, background, datasetInde
       right: 2,
       bottom: 1,
     },
-    // scaleID: 'y',
-    // display: false,   // Default to false and we can turn them on later
-    display: (chart, options) => {
-      console.log(chart);
+    display: false,   // Default to false and we can turn them on later
+
+    // FIXME: Various experiments in futility below
+    //  display: (chart, options) => {
+      // console.log(`annotation display handler`);
+      // console.log(chart); 
+      // if (chart) return chart.getDataVisibility(0);  // blah
       // Only show if dataset line is visible on chart
       // let meta = chart.chart.getDatasetMeta(datasetIndex);
       // if (meta === undefined) return false;
       // return meta.visible;
-      return(true);   // FIXME: temporary
-    },
+      // return(true);   // FIXME: temporary
+    // },
   };
 }
 

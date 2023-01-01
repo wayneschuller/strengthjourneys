@@ -25,8 +25,6 @@ export default function App() {
 
   const [padDateMin, setPadDateMin] = useState(null);
   const [padDateMax, setPadDateMax] = useState(null);
-  const [recentXAxisMin, setRecentXAxisMin] = useState(null);
-  const [recentXAxisMax, setRecentXAxisMax] = useState(null);
   const [suggestedYMax, setSuggestedYMax] = useState(null);
   const [achievementAnnotations, setAchievementAnnotations] = useState(null);
 
@@ -179,17 +177,8 @@ export default function App() {
           setPadDateMin(padDateMin);
           setPadDateMax(padDateMax);
 
-          // Also set some unixtimes for the last 6 months.
-          // Set the zoom/pan to the last 6 months of data if we have that much
-          // FIXME: we could simply use padeDateMax and calculate 6 months from that. Remove recentXAxisMin/Max state
-          let recentXAxisMin = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
-          if (recentXAxisMin < padDateMin) recentXAxisMin = padDateMin;
-          let recentXAxisMax = new Date(padDateMax);
-          setRecentXAxisMin(recentXAxisMin);
-          setRecentXAxisMax(recentXAxisMax);
-
           // Search through the processed data and find the largest y value 
-          let highestWeight = 1;
+          let highestWeight = 0;
           processed.forEach((liftType) => {
             liftType.data.forEach((lift) => {
               if (lift.y > highestWeight) 
@@ -250,8 +239,6 @@ export default function App() {
           context={[  visualizerData, 
                       isLoading,
                       padDateMin, padDateMax, 
-                      recentXAxisMin, setRecentXAxisMin,
-                      recentXAxisMax, 
                       suggestedYMax, 
                       achievementAnnotations, setAchievementAnnotations,
                     ]} 

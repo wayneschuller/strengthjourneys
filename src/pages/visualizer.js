@@ -3,13 +3,10 @@ import { useOutletContext } from "react-router-dom";
 import { useCookies } from 'react-cookie';
 
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Grid from '@mui/material/Unstable_Grid2';
 import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 
-import Chart from 'chart.js/auto';    // Causes large webpack but is easier than manually registering what you need.
+import Chart from 'chart.js/auto';    // FIXME: do I still need this now that I use Chart.register below?
 import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import zoomPlugin from 'chartjs-plugin-zoom';
@@ -29,9 +26,6 @@ const Visualizer = (props) => {
           isLoading,
           padDateMin, 
           padDateMax, 
-          recentXAxisMin, 
-          setRecentXAxisMin, 
-          recentXAxisMax, 
           suggestedYMax, 
           achievementAnnotations,
           setAchievementAnnotations,
@@ -44,9 +38,17 @@ const Visualizer = (props) => {
 
   const chartRef = useRef(null);
 
-  // Every time visualizerData changes, wrap a new selectedVisualizerData
-  // FIXME: could we prevent the rezoom in that happens here on data change?
+  const dateMin = 3; // FIXME: calculate here from processed data?
+
+  // Set the zoom/pan to the last 6 months of data if we have that much
+  let sixMonthsAgo = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
+  if (sixMonthsAgo < padDateMin) sixMonthsAgo = padDateMin;
+
+  // This useEffect on [visualizerData] filters into the selectedVisualizerData 
+  // Because selectedVisualizerData begins null, once we set it the chart appears
+  // So this useEffect is like a delayed mount - used once.
   useEffect(() => {
+    // console.log(`useEffect visualizerData`);
 
     if (!visualizerData) return;
 
@@ -57,13 +59,11 @@ const Visualizer = (props) => {
         item.selected = cookies.selectedChips.includes(item.label);
         if (item.selected) {
           // Turn on achievement annotations for this selected lift
-          console.log(`Turning ON annotations for lift: ${item.label}`);
           if (achievementAnnotations[`${item.label}_best_1RM`]) achievementAnnotations[`${item.label}_best_1RM`].display = true;
           if (achievementAnnotations[`${item.label}_best_3RM`]) achievementAnnotations[`${item.label}_best_3RM`].display = true;
           if (achievementAnnotations[`${item.label}_best_5RM`]) achievementAnnotations[`${item.label}_best_5RM`].display = true;
         } else {
           // Turn off achievement annotations for this NOT selected lift
-          console.log(`Turning OFF annotations for lift: ${item.label}`);
           if (achievementAnnotations[`${item.label}_best_1RM`]) achievementAnnotations[`${item.label}_best_1RM`].display = false;
           if (achievementAnnotations[`${item.label}_best_3RM`]) achievementAnnotations[`${item.label}_best_3RM`].display = false;
           if (achievementAnnotations[`${item.label}_best_5RM`]) achievementAnnotations[`${item.label}_best_5RM`].display = false;
@@ -82,11 +82,20 @@ const Visualizer = (props) => {
     };
 
     setSelectedVisualizerData(wrapper);
-
-    // Also let us load the annotations for these lifts.
-    
-
   }, [visualizerData]);
+
+  // FIXME: below useEffect is just for testing purposes - delete
+  useEffect(() => {
+    // console.log(`useEffect selectedVisualizerData`);
+    // Try to manually zoom in to recent data
+    const chart = chartRef.current;
+    if (!chart) return;
+    // console.log(`manually setting x min. Before:`)
+    // console.log(chart.options.scales.x.min);
+    // chart.options.scales.x.min = recentXAxisMin;
+    // console.log(chart.options.scales.x.min);
+
+  }, [selectedVisualizerData]);
 
   // Line Chart Options for react-chartjs-2 Visualizer 
   const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000;
@@ -106,7 +115,7 @@ const Visualizer = (props) => {
     scales: {
       x: {
           type: "time",
-          min: recentXAxisMin,      // Default to zoomed in the last 6 months
+          min: sixMonthsAgo,      // Default to zoomed in the last 6 months
           suggestedMax: padDateMax,
           time: {
             minUnit: "day"

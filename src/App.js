@@ -95,7 +95,7 @@ export default function App() {
         // handle success
         // console.log(`API get GDrive file metadata .then received:`);
         // console.log(response.data);
-        setInfoChipToolTip(response.data.name);
+        setInfoChipToolTip(response.data.name); // Put the GSheet filename in the chip tooltip
 
         // FIXME: Checking for modified time needs an interval handler
         // FIXME: We should check if the data is loaded - if not then go ahead anyway
@@ -209,7 +209,7 @@ export default function App() {
         .catch((error) => {
           setInfoChipStatus("Error Reading Google Sheet");
           console.log(error);
-          // setInfoChipToolTip(error.response.data.error.message);
+          setInfoChipToolTip(error.response.data.error.message);
         })
     }
 

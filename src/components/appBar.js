@@ -36,6 +36,7 @@ function ResponsiveAppBar(props) {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
 
+  // FIXME: This is not best practice
   const cookies = props.cookies;
   const setCookie = props.setCookie;
   const removeCookie = props.removeCookie;
@@ -43,7 +44,7 @@ function ResponsiveAppBar(props) {
   const setUserInfo = props.setUserInfo; 
   const infoChipStatus = props.infoChipStatus;
   const setInfoChipStatus = props.setInfoChipStatus;
-  const infoChipToolTip = props.infoChipStatus;
+  const infoChipToolTip = props.infoChipToolTip;
   const setInfoChipToolTip = props.setInfoChipToolTip;
   const getGoogleUserInfo = props.getGoogleUserInfo;
   const loadGSheetValues = props.loadGSheetValues;

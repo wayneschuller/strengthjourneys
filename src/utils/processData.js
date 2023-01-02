@@ -282,7 +282,7 @@ export function processAchievements(parsedData, processedData) {
 function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnotations) {
   const liftType = processedData[datasetIndex].label;
 
-  // console.log(`Finding ${reps}-rep PRs for ${name}`);
+  // console.log(`Finding ${reps}-rep PRs for ${processedData[datasetIndex].label}`);
 
   // console.log(rawLifts);
 
@@ -313,7 +313,7 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
     );
 
     // Actual best lift for this rep scheme
-    if (i == 0) 
+    if (i == 0)  {
 
       // Actual top PR gets a special chartjs annotation marker on the chart
       liftAnnotations[`${liftType}_best_${reps}RM`] = createAchievementAnnotation(
@@ -332,6 +332,7 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
         unitType: repLifts[i].unitType,
         url: repLifts[i].url,
       };
+    }
   }
 }
 

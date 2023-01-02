@@ -82,10 +82,16 @@ const PRDataGrid = (props) => {
     // console.log(`Find best ${visualizerData[index].label}, ${reps}`);
 
     let PR = "";
-    if (visualizerData[index][`${reps}PR`]) {
-      PR = visualizerData[index][`${reps}PR`].weight + visualizerData[index][`${reps}PR`].unitType;
+    if (visualizerData[index][`${reps}RM`]) {
+      PR = visualizerData[index][`${reps}RM`].weight + visualizerData[index][`${reps}RM`].unitType;
     }
 
+    // FIXME: make a hyperlink if we have the url
+    // let url = false;
+    // if (visualizerData[index][`${reps}RM`].url) {
+      //  url = visualizerData[index][`${reps}RM`].url;
+    // }
+    // PR = "<a href=`${url}`>PR</a>";
     return(PR); 
   }
 

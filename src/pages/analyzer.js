@@ -13,9 +13,12 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
+import { LoadingLinearProgress } from './visualizer';
+
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { processVisualizerData } from '../utils/processData';
 ChartJS.register(ArcElement, Tooltip, Legend);
+
 
 export const data = {
   labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
@@ -59,8 +62,13 @@ const Analyzer = (props) => {
     <div>
      <Box sx={{ m: 1 }} md={{ m: 3}} >
        <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}>
+
       {/* <h2>Strength Analyzer</h2> */}
+
       { !visualizerData &&  <p>PRs and other interesting data points will appear here. </p> }
+
+      { isLoading && <LoadingLinearProgress /> }
+
       { visualizerData && <PRDataGrid visualizerData={visualizerData} achievementAnnotations={achievementAnnotations} /> }
 
       {/* <Doughnut data={data} /> */}

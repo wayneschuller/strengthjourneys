@@ -18,6 +18,8 @@ import MenuItem from '@mui/material/MenuItem';
 // MUI icons
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 
+import logo from './logo.png';
+
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import useDrivePicker from 'react-google-drive-picker'
 // import { loadGooglePicker } from '../utils/google';
@@ -138,26 +140,16 @@ function ResponsiveAppBar(props) {
       <Container maxWidth="xl">
         <Toolbar disableGutters>
 
-          <FitnessCenterIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
-          <Typography
-            variant="h6"
-            noWrap
-            component="a"
-            // href="/"
+          {/* Show the logo on the left on md+ sizes  */}
+          <Box
+            component="img"
+            width='10%'
             sx={{
-              mr: 2,
-              display: { xs: 'none', md: 'flex' },
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
-          >
-           SJ 
-          </Typography>
-
-
+                display: { xs: 'none', md: 'block' },
+             }}
+            alt="Strength Journeys logo"
+            src={logo}
+          />
 
 
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
@@ -203,25 +195,20 @@ function ResponsiveAppBar(props) {
               ))}
             </Menu>
           </Box>
-
-          <FitnessCenterIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
-          <Typography
-            variant="h5"
-            noWrap
-            component={Link} to="/"
+          
+          {/* Show the logo in the middle on xs sizes  */}
+          <Box
+            component="img"
+            width='20%'
             sx={{
-              mr: 2,
-              display: { xs: 'flex', md: 'none' },
-              flexGrow: 1,
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
-          >
-            SJ
-          </Typography>
+                display: { xs: 'flex', md: 'none' },
+             }}
+            alt="Strength Journeys logo"
+            src={logo}
+          />
+
+
+
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             {pages.map((page) => (
               <Button
@@ -245,7 +232,7 @@ function ResponsiveAppBar(props) {
                   label={infoChipStatus}
                   onClick={() => openGDrivePicker()}
                   variant="filled"
-                  color="info"
+                  color="neutral"
                   sx={{ color: 'white', mx: 1 }}
               />
               </Tooltip>

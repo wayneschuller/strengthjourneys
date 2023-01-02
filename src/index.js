@@ -20,7 +20,14 @@ import Visualizer from './pages/visualizer';
 
 const theme = createTheme({
   palette: {
-    primary: color,
+    // primary: color,
+    primary: {
+      main: '#393e46',
+    },
+    neutral: {
+      main: '#64748B',
+      contrastText: '#fff',
+    },
   },
 });
 

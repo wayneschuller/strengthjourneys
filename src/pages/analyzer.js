@@ -1,11 +1,20 @@
-import { React } from 'react';
+import * as React from 'react';
+import { useOutletContext } from "react-router-dom";
 
-import Container from '@mui/material/Container';
+// MUI Components
 import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import { Doughnut } from 'react-chartjs-2';
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
-
+import { processVisualizerData } from '../utils/processData';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export const data = {
@@ -35,14 +44,27 @@ export const data = {
   ],
 };
 
-const Analyzer = () => {
+const Analyzer = (props) => {
+
+  const [ visualizerData, 
+    isLoading,
+    padDateMin, 
+    padDateMax, 
+    suggestedYMax, 
+    achievementAnnotations,
+    setAchievementAnnotations,
+  ] = useOutletContext();
+
   return (
     <div>
      <Box sx={{ m: 1 }} md={{ m: 3}} >
        <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}>
-      <h2>Strength Analyzer</h2>
-      <p>PRs and other interesting data points will appear here. </p>
-      <Doughnut data={data} />
+      {/* <h2>Strength Analyzer</h2> */}
+      { !visualizerData &&  <p>PRs and other interesting data points will appear here. </p> }
+      { visualizerData && <PRDataGrid visualizerData={visualizerData} achievementAnnotations={achievementAnnotations} /> }
+
+      {/* <Doughnut data={data} /> */}
+
         </Container>
       </Box>
     </div>
@@ -50,3 +72,51 @@ const Analyzer = () => {
 }
 
 export default Analyzer;
+
+const PRDataGrid = (props) => {
+  const visualizerData = props.visualizerData;
+  const achievementAnnotations = props.achievementAnnotations;
+
+
+  const getPRs = (index, reps) => {
+    // console.log(`Find best ${visualizerData[index].label}, ${reps}`);
+
+    let PR = "";
+    if (visualizerData[index][`${reps}PR`]) {
+      PR = visualizerData[index][`${reps}PR`].weight + visualizerData[index][`${reps}PR`].unitType;
+    }
+
+    return(PR); 
+  }
+
+  return (
+    <TableContainer component={Paper}>
+      <Table sx={{ minWidth: 150 }} aria-label="simple table">
+        <TableHead>
+          <TableRow>
+            <TableCell>Lift Type</TableCell>
+            <TableCell align="right">One Rep Max</TableCell>
+            <TableCell align="right">Three Rep Max</TableCell>
+            <TableCell align="right">Five Rep Max</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+
+          {visualizerData.map((lift, index) => ( 
+            <TableRow
+              key={lift.label}
+              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+            >
+              <TableCell component="th" scope="row">
+                {lift.label}
+              </TableCell>
+              <TableCell align="right">{getPRs(index, 1)}</TableCell>
+              <TableCell align="right">{getPRs(index, 3)}</TableCell>
+              <TableCell align="right">{getPRs(index, 5)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}

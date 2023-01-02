@@ -126,7 +126,7 @@ const Visualizer = (props) => {
         ticks: {
           font: { family: "Catamaran", size: 15 },
           callback: (value) => {
-            return `${value}kg`; // FIXME: unhardcode units
+            return `${value}`; // FIXME: insert unitType from data
           },
         },
       },

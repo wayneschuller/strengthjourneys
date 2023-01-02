@@ -152,7 +152,9 @@ const Visualizer = (props) => {
       },
 
       datalabels: {
-        formatter: (context) => context.y,
+        formatter: (context) => {
+          return(context.y);
+          },
         font: (context) => {
           // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
           const liftSingle = context.dataset.data[context.dataIndex].label.indexOf("Potential");

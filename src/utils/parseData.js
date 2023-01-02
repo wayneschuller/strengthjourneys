@@ -121,8 +121,6 @@ function parseBespokeRow(row, index) {
     weight = parseFloat(weight.slice(0, weight.length-2)); // Remove the units from the end
   } 
 
-  // FIXME: we seem to have lost the ability to have 0.5kg increments?
-
   if (reps === 0 || weight === 0) return false; // Do they even lift?
 
   // If we don't have these fields put in empty strings
@@ -244,7 +242,7 @@ function parseBlocRow(row) {
 
   let liftType = row[exercise_name_COL];
 
-  if (liftType === "Squat") liftType = "Back Squat"; // Our other two data types prefer the full squat type
+  if (liftType === "Squat") liftType = "Back Squat"; // Our other two data types prefer the full name 
 
   // Expand BLOC sets into separate liftEntry tuples
   // This makes no difference to the graph, but it benefits a user wanting to convert their BLOC data to our bespoke format
@@ -266,18 +264,4 @@ function parseBlocRow(row) {
       notes: notes, 
     });
   }
-}
-
-// Export the current parsedData to the user in a simple CSV format.
-function exportRawCSV () {
-  let csvContent = "data:text/csv;charset=utf-8,";
-
-  csvContent += `"Date","Lift Type","Reps","Weight","Notes","URL"` + "\r\n"; // header row
-  parsedData.forEach(function(lift) {
-    let row = `${lift.date},"${lift.name}",${lift.reps},"${lift.weight}${lift.units}","${lift.notes}","${lift.url}"`;
-    csvContent += row + "\r\n";
-  });
-
-  var encodedUri = encodeURI(csvContent);
-  window.open(encodedUri);
 }

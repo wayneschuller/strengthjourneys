@@ -247,6 +247,9 @@ function NewUserWelcome() {
        <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}>
           <h1>Welcome to Strength Journeys</h1>
           <h3>Visualize your lifting history - lift consistently for a long time.</h3>
+          <p>We recommend every lifter record and own their own data in a Google Sheet. (Don't just let your health and fitness data be trapped in someone else's application.)</p>
+          <p>Here is our custom <a href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0" target="_blank">Google Sheet data format</a>. 
+            Make a copy of this Google Sheet for your own use.</p>
        </Container>
      </Box>
     </div>

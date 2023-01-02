@@ -112,7 +112,7 @@ function parseBespokeRow(row, index) {
   let weight = row[actual_weight_COL];
 
   // Look for units inside the weight string 
-  let unitType;
+  let unitType = "lb"; // Default to freedom units
   if (row[actual_weight_COL].indexOf("kg") !== -1) {
     unitType = "kg";
     weight = parseFloat(weight.slice(0, weight.length-2)); // Remove the units from the end
@@ -134,7 +134,7 @@ function parseBespokeRow(row, index) {
     name: liftType,
     reps: reps,
     weight: weight,
-    units: unitType, 
+    unitType: unitType, 
     notes: notes,
     url: url,
   });
@@ -173,10 +173,10 @@ function parseBtwbRow(row) {
     if (curReps === 0) continue; // FIXME: check why this would happen
 
     // Get units then weight
-  let unitType;
+    let unitType = "lb"; // Default to freedom units
     if (lift.indexOf("kg") !== -1) {
       unitType = "kg";
-      regex = /[0-9|\.]+\skg$/gm;     // FIXME: could be done easier WITHOUT regex
+      regex = /[0-9|\.]+\skg$/gm;     // FIXME: could be done easier WITHOUT regex?
     } else if (lift.indexOf("lb") !== -1) {
       unitType = "lb";
       regex = /[0-9|\.]+\slb$/gm; 
@@ -194,7 +194,7 @@ function parseBtwbRow(row) {
       name: liftType,
       reps: curReps,
       weight: curWeight,
-      units: unitType, 
+      unitType: unitType, 
       notes: notes,
       url: '',
     }
@@ -262,7 +262,7 @@ function parseBlocRow(row) {
       reps: lifted_reps,
       weight: lifted_weight,
       url: liftUrl,
-      units: unitType, 
+      unitType: unitType, 
       notes: notes, 
     });
   }

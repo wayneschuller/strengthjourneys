@@ -15,7 +15,7 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 
 import { VerticalChartControls, LiftControls } from '../components/vizualizerChartControls';
 
-import { dummyProcessedData } from '../utils/visualizerDataProcessing';
+import { dummyProcessedData } from '../utils/processData';
 import { Container } from '@mui/system';
 
 Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);

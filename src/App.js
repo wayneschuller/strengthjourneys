@@ -7,7 +7,7 @@ import axios from 'axios';
 import { useCookies } from 'react-cookie';
 
 import { parseData } from './utils/parseData';
-import { defaultVisualizerData, processVisualizerData, processAchievements } from './utils/visualizerDataProcessing';
+import { defaultVisualizerData, processVisualizerData, processAchievements } from './utils/processData';
 import ResponsiveAppBar from './components/appBar';
 
 export default function App() {

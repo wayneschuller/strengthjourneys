@@ -380,7 +380,7 @@ function estimateE1RM(reps, weight) {
     return 0;
   }
 
-  if (parseInt(reps) === 1) return weight; // Heavy single requires no estimate!
+  if (reps === 1) return weight; // Heavy single requires no estimate!
 
   switch (equation) {
     case "Epley":

@@ -5,15 +5,13 @@
 // parseData will take raw imported 2d grid data from different formats
 // and parse into our common parsedData[] format.
 
-// Globals 
-
+// FIXME: Globals are not best practice
 let workout_date_COL, workout_id_COL, completed_COL, exercise_name_COL, assigned_reps_COL, assigned_weight_COL;
 let assigned_sets_COL, actual_reps_COL, actual_weight_COL, actual_sets_COL, missed_COL, description_COL, units_COL, notes_COL, url_COL;
-
+var parsedData = []; // Every unique lift from our source
 let lastDate = "1999-12-31";
 let lastLiftType = "Tik Tok Dancing"; 
 
-var parsedData = []; // Every unique lift from our source
 
 // ------------------------------------------------------------------------------
 // parseData
@@ -26,7 +24,6 @@ var parsedData = []; // Every unique lift from our source
 export function parseData(data) {
 
   console.log("parseData()...");
-
 
   const columnNames = data[0];
 
@@ -96,7 +93,7 @@ function parseBespokeRow(row, index) {
   let liftType = row[exercise_name_COL];
 
   // If lift type is empty we need to use the previous lift type (via liftType global)
-  if (liftType === null || liftType === '') liftType = lastLiftType;
+  if (!liftType.length) liftType = lastLiftType;
     else lastLiftType = liftType; // Remember good life type in case we need it in a later row
 
   if (!row[actual_reps_COL] || !row[actual_weight_COL]) return false; // Do they even lift?
@@ -106,7 +103,7 @@ function parseBespokeRow(row, index) {
     // return;
   }
 
-  const reps = row[actual_reps_COL];
+  const reps = parseInt(row[actual_reps_COL]);
 
   // Default will be to assume a raw number that is in pounds
   let weight = row[actual_weight_COL];
@@ -154,7 +151,7 @@ function parseBtwbRow(row) {
   const result = regex.exec(row[1]); // Second column has the description - FIXME: use const column index format
   const liftType = result[0].trim();
 
-  if (liftType === "") return;
+  if (!liftType.length) return; 
 
   // Our app is not very interested in Crossfit WODs yet
   // The CSV has no clear indication we can use, so just exclude a few obvious non-lifts
@@ -167,7 +164,7 @@ function parseBtwbRow(row) {
     let regex = /^[0-9]+/gm;  
     let result = regex.exec(lift);
     if (!result) continue;
-    let curReps = parseFloat(result[0]);
+    let curReps = parseFloat(result[0]); // FIXME: should be parseInt for reps?
     if (curReps === 0) continue; // FIXME: check why this would happen
 
     // Get units then weight

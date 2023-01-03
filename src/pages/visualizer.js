@@ -31,7 +31,7 @@ const Visualizer = (props) => {
   const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
   const [showAchievements, setShowAchievements] = useState(true); // PR/Achivement annotations
   const [selectedVisualizerData, setSelectedVisualizerData] = useState(null); 
-  const [cookies, setCookie] = useCookies(['selectedChips', 'ssid', 'tokenResponse']);
+  const [cookies] = useCookies(['selectedChips', 'ssid', 'tokenResponse']);
   const chartRef = useRef(null);
 
   // This useEffect on [visualizerData] filters into the selectedVisualizerData 
@@ -231,7 +231,6 @@ const Visualizer = (props) => {
                                 setSelectedVisualizerData={setSelectedVisualizerData}
                                 showAchievements={showAchievements}
                                 visualizerConfig={visualizerConfig}
-                                setVisualizerConfig={setVisualizerConfig}
                               />
           }
       </Container>

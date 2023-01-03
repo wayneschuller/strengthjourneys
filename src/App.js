@@ -10,7 +10,7 @@ import { getGoogleUserInfo } from './utils/readData';
 export default function App() {
   const [visualizerData, setVisualizerData] = useState(null);
   const [dataModifiedTime, setDataModifiedTime] = useState(0); // Unix timestamp
-  const [cookies, setCookie, removeCookie] = useCookies(['ssid', 'tokenResponse']);
+  const [cookies] = useCookies(['ssid', 'tokenResponse']);
   const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);  

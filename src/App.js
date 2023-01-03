@@ -31,7 +31,7 @@ export default function App() {
   // ------------------------------------------------------------------
   // Data processing flow:
   //
-  //    getGoogleUserInfo->getGSheetMetadata->loadGSheetValues
+  //    getGoogleUserInfo->getGDriveMetadata->loadGSheetValues
   //
   // Flow is mostly triggered by event handlers, but also can process
   // the data on launch if they have a valid token and ssid in cookies

@@ -249,7 +249,7 @@ function NewUserWelcome() {
           <h3>Visualize your lifting history - lift consistently for a long time.</h3>
           <p>We recommend every lifter record and own their own data in a Google Sheet. (Don't just let your health and fitness data be trapped in someone else's application.)</p>
           <p>Here is our custom <a href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0" target="_blank">Google Sheet data format</a>. 
-            From Google Sheets click "File"menu and then click "Make a copy" and edit with your data.</p>
+            From Google Sheets, click "File" menu and then click "Make a copy" and edit with your data.</p>
        </Container>
      </Box>
     </div>

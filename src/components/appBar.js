@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
+import { useCookies } from 'react-cookie';
 
 import AppBar from '@mui/material/AppBar';
 import Avatar from '@mui/material/Avatar';
@@ -19,6 +20,7 @@ import MenuItem from '@mui/material/MenuItem';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 
 import logo from './logo.png';
+import { getGoogleUserInfo, getGDriveMetadata } from '../utils/readData';
 
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import useDrivePicker from 'react-google-drive-picker'
@@ -36,22 +38,18 @@ const settings = ['Profile', 'Settings'];
 function ResponsiveAppBar(props) {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
+  const [cookies, setCookie, removeCookie] = useCookies(['ssid', 'tokenResponse']);
 
   // FIXME: This is not best practice
-  const cookies = props.cookies;
-  const setCookie = props.setCookie;
-  const removeCookie = props.removeCookie;
   const userInfo = props.userInfo;
   const setUserInfo = props.setUserInfo; 
   const infoChipStatus = props.infoChipStatus;
   const setInfoChipStatus = props.setInfoChipStatus;
   const infoChipToolTip = props.infoChipToolTip;
   const setInfoChipToolTip = props.setInfoChipToolTip;
-  const getGoogleUserInfo = props.getGoogleUserInfo;
-  const loadGSheetValues = props.loadGSheetValues;
-  const getGDriveMetadata = props.getGDriveMetadata;
   const setVisualizerData = props.setVisualizerData;
-  const isLoading = props.isLoading;
+  const visualizerConfig = props.visualizerConfig;
+  const setVisualizerConfig = props.setVisualizerConfig;
   const setIsLoading = props.setIsLoading;
 
   const handleOpenNavMenu = (event) => {
@@ -97,7 +95,14 @@ function ResponsiveAppBar(props) {
       // console.log(tokenResponse);
 
       setInfoChipStatus("Checking User Info"); 
-      getGoogleUserInfo(tokenResponse);
+      getGoogleUserInfo(cookies.ssid, tokenResponse,
+                        setUserInfo,
+                        setInfoChipStatus,
+                        setInfoChipToolTip,
+                        setIsLoading,
+                        setVisualizerData,
+                        visualizerConfig, setVisualizerConfig,
+                        );
     },
     onError: errorResponse => console.log(errorResponse),
   });  
@@ -130,7 +135,13 @@ function ResponsiveAppBar(props) {
           setCookie('ssid', data.docs[0].id, { path: '/', expires: d });
         }
 
-        getGDriveMetadata(data.docs[0].id, cookies.tokenResponse);
+        getGDriveMetadata(data.docs[0].id, cookies.tokenResponse,
+                            setInfoChipStatus,
+                            setInfoChipToolTip,
+                            setIsLoading,     
+                            setVisualizerData,
+                            visualizerConfig, setVisualizerConfig,
+                          );
       },
     });
   }

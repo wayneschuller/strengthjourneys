@@ -24,23 +24,15 @@ const Visualizer = (props) => {
 
   const [ visualizerData, 
           isLoading,
-          padDateMin, 
-          padDateMax, 
-          suggestedYMax, 
-          achievementAnnotations,
-          setAchievementAnnotations,
+          visualizerConfig,
+          setVisualizerConfig,
         ] = useOutletContext();
 
   const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
   const [showAchievements, setShowAchievements] = useState(true); // PR/Achivement annotations
   const [selectedVisualizerData, setSelectedVisualizerData] = useState(null); 
   const [cookies, setCookie] = useCookies(['selectedChips', 'ssid', 'tokenResponse']);
-
   const chartRef = useRef(null);
-
-  // Set the zoom/pan to the last 6 months of data if we have that much
-  let sixMonthsAgo = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
-  if (sixMonthsAgo < padDateMin) sixMonthsAgo = padDateMin;
 
   // This useEffect on [visualizerData] filters into the selectedVisualizerData 
   // Because selectedVisualizerData begins null, once we set it the chart appears
@@ -48,27 +40,36 @@ const Visualizer = (props) => {
   useEffect(() => {
     // console.log(`useEffect visualizerData`);
 
-    if (!visualizerData) return;
+    if (!visualizerData) {
+      console.log(`Abort: Invalid visualizerData.`);
+      return;
+    }
+    if (!visualizerConfig.achievementAnnotations) {
+      console.log(`Abort: Invalid achievementAnnotations.`);
+      // return;
+    }
 
     if (cookies.selectedChips) {
       // If we have the cookie, modify our visualizerData so the .selected key matches what was in the cookie
       // console.log(`<Visualizer /> useEffect modifying visualizerData based on cookie`);
       visualizerData.forEach((item) => {
         item.selected = cookies.selectedChips.includes(item.label);
+        let singleRM = visualizerConfig.achievementAnnotations[`${item.label}_best_1RM`];
+        let tripleRM = visualizerConfig.achievementAnnotations[`${item.label}_best_3RM`];
+        let fiveRM = visualizerConfig.achievementAnnotations[`${item.label}_best_5RM`];
         if (item.selected) {
           // Turn on achievement annotations for this selected lift
-          if (achievementAnnotations[`${item.label}_best_1RM`]) achievementAnnotations[`${item.label}_best_1RM`].display = true;
-          if (achievementAnnotations[`${item.label}_best_3RM`]) achievementAnnotations[`${item.label}_best_3RM`].display = true;
-          if (achievementAnnotations[`${item.label}_best_5RM`]) achievementAnnotations[`${item.label}_best_5RM`].display = true;
+          if (singleRM) singleRM.display = true;
+          if (tripleRM) tripleRM.display = true;
+          if (fiveRM) fiveRM.display = true;
         } else {
           // Turn off achievement annotations for this NOT selected lift
-          if (achievementAnnotations[`${item.label}_best_1RM`]) achievementAnnotations[`${item.label}_best_1RM`].display = false;
-          if (achievementAnnotations[`${item.label}_best_3RM`]) achievementAnnotations[`${item.label}_best_3RM`].display = false;
-          if (achievementAnnotations[`${item.label}_best_5RM`]) achievementAnnotations[`${item.label}_best_5RM`].display = false;
+          if (singleRM) singleRM.display = false;
+          if (tripleRM) tripleRM.display = false;
+          if (fiveRM) fiveRM.display = false;
         }
       });  
     } else {
-
       // No cookie? Top three lifts is a good default
       if (visualizerData[0]) visualizerData[0].selected = true;
       if (visualizerData[1]) visualizerData[1].selected = true;
@@ -97,7 +98,8 @@ const Visualizer = (props) => {
 
   // Line Chart Options for react-chartjs-2 Visualizer 
   const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000;
-  const chartOptions = {
+  // console.log(`<Visualizer > padDateMin: ${visualizerConfig.padDateMin}, padDateMax: ${visualizerConfig.padDateMax}`);
+  var chartOptions = {
     responsive: true,
 
     font: {family: "Catamaran"},
@@ -113,15 +115,15 @@ const Visualizer = (props) => {
     scales: {
       x: {
           type: "time",
-          min: sixMonthsAgo,      // Default to zoomed in the last 6 months
-          suggestedMax: padDateMax,
+          min: visualizerConfig.sixMonthsAgo,      // Default to zoomed in the last 6 months
+          suggestedMax: visualizerConfig.padDateMax,
           time: {
             minUnit: "day"
           },
       },
       y: {
         suggestedMin: 0,
-        suggestedMax: suggestedYMax, 
+        suggestedMax: visualizerConfig.highestWeight, 
 
         ticks: {
           font: { family: "Catamaran", size: 15 },
@@ -136,7 +138,7 @@ const Visualizer = (props) => {
 
       title: {
         display: false,
-        text: `suggestedYMax: ${suggestedYMax}, PRs ${showAchievements}`, // Weird title for testing purposes
+        text: `Title`, // Weird title for testing purposes
         font: { size: 20 },
       },
 
@@ -202,12 +204,12 @@ const Visualizer = (props) => {
           mode: 'x',
         },
         limits: {
-          x: { min: padDateMin, max: padDateMax, minRange: sixtyDaysInMilliseconds },
+          x: { min: visualizerConfig.padDateMin, max: visualizerConfig.padDateMax, minRange: sixtyDaysInMilliseconds },
         },
       },
 
       annotation: {
-          annotations: achievementAnnotations,
+          annotations: visualizerConfig.achievementAnnotations,
           },
       },
   };
@@ -228,8 +230,8 @@ const Visualizer = (props) => {
                                 visualizerData={visualizerData}
                                 setSelectedVisualizerData={setSelectedVisualizerData}
                                 showAchievements={showAchievements}
-                                achievementAnnotations={achievementAnnotations}
-                                setAchievementAnnotations={setAchievementAnnotations}                                
+                                visualizerConfig={visualizerConfig}
+                                setVisualizerConfig={setVisualizerConfig}
                               />
           }
       </Container>

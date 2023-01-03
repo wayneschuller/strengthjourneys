@@ -63,7 +63,8 @@ export function LiftControls (props) {
 
   let visualizerData = props.visualizerData;
   let setSelectedVisualizerData = props.setSelectedVisualizerData;
-  let achievementAnnotations = props.achievementAnnotations;
+  let visualizerConfig = props.visualizerConfig;
+  let setVisualizerConfig = props.setVisualizerConfig;
 
   useEffect(() => {
     if (cookies.selectedChips) {
@@ -97,30 +98,32 @@ export function LiftControls (props) {
 
     // if (liftIndex <= 3) return; // We always show top 4, so do nothing for now.
 
-    // Check if the liftType is already in the selectedVisuazlierData, if so, remove it.
+    let singleRM = visualizerConfig.achievementAnnotations[`${liftType}_best_1RM`];
+    let tripleRM = visualizerConfig.achievementAnnotations[`${liftType}_best_3RM`];
+    let fiveRM = visualizerConfig.achievementAnnotations[`${liftType}_best_5RM`];
+
+    // Check if the liftType is already in the selectedVisualizerData, if so, remove it.
     if (visualizerData[liftIndex].selected === true) {
       visualizerData[liftIndex].selected = false; 
       visualizerData[liftIndex].hidden = true; 
 
       // Turn off achievement annotations for this NOT selected lift
       // console.log(`Turning OFF annotations for lift: ${liftType}`);
-      if (achievementAnnotations[`${liftType}_best_1RM`]) achievementAnnotations[`${liftType}_best_1RM`].display = false;
-      if (achievementAnnotations[`${liftType}_best_3RM`]) achievementAnnotations[`${liftType}_best_3RM`].display = false;
-      if (achievementAnnotations[`${liftType}_best_5RM`]) achievementAnnotations[`${liftType}_best_5RM`].display = false;
-
+      if (singleRM) singleRM.display = false;
+      if (tripleRM) tripleRM.display = false;
+      if (fiveRM) fiveRM.display = false;
     } else {
       visualizerData[liftIndex].selected = true; 
       visualizerData[liftIndex].hidden = false; 
 
       // Turn ON achievement annotations for this selected lift
       // console.log(`Turning ON annotations for lift: ${liftType}`);
-      if (achievementAnnotations[`${liftType}_best_1RM`]) achievementAnnotations[`${liftType}_best_1RM`].display = true;
-      if (achievementAnnotations[`${liftType}_best_3RM`]) achievementAnnotations[`${liftType}_best_3RM`].display = true;
-      if (achievementAnnotations[`${liftType}_best_5RM`]) achievementAnnotations[`${liftType}_best_5RM`].display = true;
+      if (singleRM) singleRM.display = true;
+      if (tripleRM) tripleRM.display = true;
+      if (fiveRM) fiveRM.display = true;
     }
 
     // Create a new wrapper for the user seletecd lift types
-    // FIXME: is there a distinction between var and let here?
     var wrapper = {
       datasets: visualizerData.filter(lift => lift.selected)
     };

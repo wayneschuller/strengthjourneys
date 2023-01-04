@@ -27,6 +27,7 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import SvgIcon from '@mui/material/SvgIcon';
 
 
 // MUI Icons
@@ -34,6 +35,8 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import ZoomInMapIcon from '@mui/icons-material/ZoomInMap';
 import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
+import UnfoldLess from '@mui/icons-material/UnfoldLess';
+
 
 // --------------------------------------------------------------------------------------------------------
 // <ChartControls />
@@ -45,9 +48,9 @@ export function ChartControls (props) {
      {/* <Box sx={{ m: 1 }} md={{ m: 3}} > */}
        {/* <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}> */}
   <Grid container spacing={2}>
-  <Grid item xs={6}> <VizConfigZoom zoomShowAllTime={props.zoomShowAllTime} zoomShowRecent={props.zoomShowRecent}/> 
+  <Grid item xs={5}> <VizConfigZoom zoomShowAllTime={props.zoomShowAllTime} zoomShowRecent={props.zoomShowRecent}/> 
   </Grid>
-  <Grid item xs={6}> 
+  <Grid item xs={7}> 
   <EquationChooser visualizerConfig={props.visualizerConfig} setVisualizerConfig={props.setVisualizerConfig} /> 
   </Grid>
 </Grid>
@@ -175,8 +178,8 @@ export function VizConfigZoom({zoomShowAllTime, zoomShowRecent}) {
   return (
     <>
     <Stack direction="row" spacing={2}>
-      <Button variant="outlined" startIcon={<ZoomInMapIcon />} onClick={zoomShowRecent}> Show Recent </Button>
-      <Button variant="outlined" startIcon={<ZoomOutMapIcon />} onClick={zoomShowAllTime}> Show All Time </Button>
+      <Button variant="outlined" startIcon={<ZoomInMapIcon />} onClick={zoomShowRecent}>Show Recent</Button>
+      <Button variant="outlined" startIcon={<ZoomOutMapIcon />} onClick={zoomShowAllTime}>Show All Time</Button>
     </Stack>
     </>
   );
@@ -291,25 +294,11 @@ export function EquationChooser({visualizerConfig, setVisualizerConfig}) {
     setVisualizerConfig({...visualizerConfig, equation: event.target.value});
   };
 
-  return (
-    <div>
-      <FormControl sx={{ m: 1, minWidth: 120  }}>
-        <InputLabel id="demo-simple-select-autowidth-label">E1RM Equation</InputLabel>
-        { visualizerConfig && 
-        <Select
-          labelId="demo-simple-select-autowidth-label"
-          id="demo-simple-select-autowidth"
-          value={visualizerConfig.equation}
-          onChange={handleChange}
-          autoWidth
-          label="E1RM Equation"
-        >
-
-          {equations.map((equation) => ( <MenuItem key={equation} value={equation} style={{ margin: 2 }} >{equation}</MenuItem>))}
-
-        </Select>
-        }
-      </FormControl>
-    </div>
+    return (
+    <RadioGroup value={visualizerConfig.equation} onChange={handleChange} row>
+      {equations.map((equation) => (
+        <FormControlLabel value={equation} key={equation} control={<Radio />} label={equation} />
+      ))}
+    </RadioGroup>
   );
 }

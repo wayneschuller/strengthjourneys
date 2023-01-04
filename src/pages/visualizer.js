@@ -106,6 +106,12 @@ const Visualizer = (props) => {
 
   }
 
+  const animationOptions = {
+    // duration:  2000,
+    easing: "easeInExpo",
+  }
+
+
   // Line Chart Options for react-chartjs-2 Visualizer 
   const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000;
   // console.log(`<Visualizer > padDateMin: ${visualizerConfig.padDateMin}, padDateMax: ${visualizerConfig.padDateMax}`);
@@ -113,6 +119,8 @@ const Visualizer = (props) => {
     responsive: true,
 
     font: {family: "Catamaran"},
+
+    animation: animationOptions,
 
     onClick: (event, item) => { 
       // Used to detect a click on a graph point and open URL in the data.

@@ -4,6 +4,11 @@
 //
 // Process our parsedData into chart.js ready format for the Strength Visualizer
 
+export function processData(parsedData, equation, setVisualizerConfig) {
+
+}
+
+
 // Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
 // We collect only the best set per lift type per day, according to highest estimated one rep max
 export function processVisualizerData(parsedData, equation) {
@@ -134,7 +139,7 @@ export function processVisualizerData(parsedData, equation) {
 }
 
 // Find interesting achievements
-export function processAchievements(parsedData, processedData) {
+export function processAchievements(parsedData, processedData, equation) {
 
   // FIXME: clearing annotations is needed for data refresh. I will leave the code here for now
   // but likely it should go elsewhere once we have data refresh working.
@@ -157,18 +162,18 @@ export function processAchievements(parsedData, processedData) {
     // We go 'backwards' and look at the original parsed data for just this lift type
     const lifts = parsedData.filter((lift) => lift.name === liftType.label);
 
-    findPRs(lifts, 1, "single", index, processedData, liftAnnotations);
+    findPRs(lifts, 1, "single", index, processedData, liftAnnotations, equation);
 
-    findPRs(lifts, 3, "triple", index, processedData, liftAnnotations);
+    findPRs(lifts, 3, "triple", index, processedData, liftAnnotations, equation);
 
-    findPRs(lifts, 5, "five", index, processedData, liftAnnotations);
+    findPRs(lifts, 5, "five", index, processedData, liftAnnotations, equation);
   });
 
   return(liftAnnotations);
 }
 
 // Helper function to find top 20 singles, threes and fives for each main lift
-function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnotations) {
+function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnotations, equation) {
   const liftType = processedData[datasetIndex].label;
 
   // console.log(`Finding ${reps}-rep PRs for ${processedData[datasetIndex].label}`);
@@ -207,7 +212,7 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
       // Actual top PR gets a special chartjs annotation marker on the chart
       liftAnnotations[`${liftType}_best_${reps}RM`] = createAchievementAnnotation(
         repLifts[i].date,
-        estimateE1RM(reps, repLifts[i].weight),
+        estimateE1RM(reps, repLifts[i].weight, equation),
         `${reps}RM`,
         "rgba(255, 99, 132, 0.25)",
         datasetIndex

@@ -20,6 +20,7 @@ export default function App() {
     padDateMax: null,
     highestWeight: null,
     sixMonthsAgo: null,
+    min: null,
     achievementAnnotations: null,
   });
 

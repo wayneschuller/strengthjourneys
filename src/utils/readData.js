@@ -193,7 +193,8 @@ export async function getGDriveMetadata (ssid, tokenResponse,
           padDateMax = padDateMax.setDate(padDateMax.getDate() + 10);
 
           // Set the zoom/pan to the last 6 months of data if we have that much
-          let sixMonthsAgo = new Date(padDateMax - 1000 * 60 * 60 * 24 * 30 * 6);
+          let sixMonthsAgo = padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
+          // console.log(`Processing: pads: ${padDateMin}, ${padDateMax}, sixMonthsAgo: ${sixMonthsAgo}`);
           if (sixMonthsAgo < padDateMin) sixMonthsAgo = padDateMin;
 
           // Search through the processed data and find the largest y value 
@@ -211,6 +212,7 @@ export async function getGDriveMetadata (ssid, tokenResponse,
                                 padDateMax: padDateMax,
                                 highestWeight: highestWeight,
                                 sixMonthsAgo: sixMonthsAgo,
+                                min:  sixMonthsAgo,
                                 achievementAnnotations: annotations,
           });
 
@@ -225,3 +227,8 @@ export async function getGDriveMetadata (ssid, tokenResponse,
           setInfoChipToolTip(error.response.data.error.message);
         })
     }
+
+// Convert JS new Date() time to unix time stamp
+export function toUnixTimestamp(date) {
+  return Math.floor(date.getTime() / 1000);
+}

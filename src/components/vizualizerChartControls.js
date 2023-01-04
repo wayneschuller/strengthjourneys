@@ -24,12 +24,16 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SendIcon from '@mui/icons-material/Send';
+import Stack from '@mui/material/Stack';
 
 // MUI Icons
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import ZoomInMapIcon from '@mui/icons-material/ZoomInMap';
-import ZoomOutMapIcon from '@mui/icons-material/ZoomInMap';
+import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 
 // --------------------------------------------------------------------------------------------------------
 // <ChartControls />
@@ -169,31 +173,15 @@ function VizConfigPRs({showAchievements, setShowAchievements}) {
 // --------------------------------------------------------------------------------------------------------
 // <VizConfigZoom />
 // --------------------------------------------------------------------------------------------------------
-function VizConfigZoom({zoomRecent, setZoomRecent}) {
-  const [value, setValue] = useState('Show Recent');
-
-  const handleChange = (event) => {
-    setValue(event.target.value);
-    if (event.target.value === "Show All Time") {
-      setZoomRecent(false);
-    } else {
-      setZoomRecent(true);
-    }
-  };
+export function VizConfigZoom({zoomShowAllTime, zoomShowRecent}) {
 
   return (
-    <FormControl>
-      <FormLabel id="VizConfigZoom">Zoom</FormLabel>
-      <RadioGroup
-        aria-labelledby="VizConfigZoom"
-        name="VizConfigZoom"
-        value={value}
-        onChange={handleChange}
-      >
-        <FormControlLabel value="Show Recent" control={<Radio />} label="Show Recent" />
-        <FormControlLabel value="Show All Time" control={<Radio />} label="Show All Time" />
-      </RadioGroup>
-    </FormControl>
+    <>
+    <Stack direction="row" spacing={2}>
+      <Button variant="outlined" startIcon={<ZoomInMapIcon />} onClick={zoomShowRecent}> Show Recent </Button>
+      <Button variant="outlined" startIcon={<ZoomOutMapIcon />} onClick={zoomShowAllTime}> Show All Time </Button>
+    </Stack>
+    </>
   );
 }
 

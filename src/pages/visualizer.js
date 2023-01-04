@@ -13,7 +13,7 @@ import zoomPlugin from 'chartjs-plugin-zoom';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
-import { VerticalChartControls, LiftControls } from '../components/vizualizerChartControls';
+import { VerticalChartControls, LiftControls, VizConfigZoom } from '../components/vizualizerChartControls';
 
 import { Container } from '@mui/system';
 
@@ -59,6 +59,17 @@ const Visualizer = (props) => {
       setCookie('selectedLifts', JSON.stringify(selectedLifts), { path: '/' });
     }
   }, [visualizerData]); // Only run this effect once, on mount
+
+  function zoomShowAllTime() {
+    const chart = chartRef.current;
+    if (chart) chart.zoomScale('x', { min: visualizerConfig.padDateMin, max: visualizerConfig.padDateMax }, "default");
+  }
+
+  function zoomShowRecent() {
+    const chart = chartRef.current;
+    if (chart) chart.resetZoom();
+  }
+
 
   // When someone clicks an item in the legend we will:
   // 1) Show/Hide the line (default behaviour)
@@ -115,7 +126,7 @@ const Visualizer = (props) => {
     scales: {
       x: {
           type: "time",
-          min: visualizerConfig.sixMonthsAgo,      // Default to zoomed in the last 6 months
+          min: visualizerConfig.min,      
           suggestedMax: visualizerConfig.padDateMax,
           time: {
             minUnit: "day"
@@ -225,6 +236,7 @@ const Visualizer = (props) => {
           { isLoading && <LoadingLinearProgress /> }
 
           { visualizerData && <Line ref={chartRef} data={visualizerData} options={chartOptions}/> }
+          { visualizerData && <VizConfigZoom zoomShowAllTime={zoomShowAllTime} zoomShowRecent={zoomShowRecent} /> }
 
       </Container>
   );

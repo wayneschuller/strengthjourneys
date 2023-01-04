@@ -4,11 +4,9 @@
 //
 // Process our parsedData into chart.js ready format for the Strength Visualizer
 
-let equation = "Brzycki"; // Our favourite preferred equation - it does not over promise
-
 // Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
 // We collect only the best set per lift type per day, according to highest estimated one rep max
-export function processVisualizerData(parsedData) {
+export function processVisualizerData(parsedData, equation) {
   console.log("processVisualizerData()...");
 
   const processedData = []; // See dummyProcessedData[] for our structure design
@@ -17,7 +15,7 @@ export function processVisualizerData(parsedData) {
     const liftIndex = getProcessedLiftIndex(processedData, lift.name);
 
     // Main task - find the best e1rm estimate on this date
-    let oneRepMax = estimateE1RM(lift.reps, lift.weight);
+    let oneRepMax = estimateE1RM(lift.reps, lift.weight, equation);
 
     // Give informative data label for tooltip
     let label = "";
@@ -261,7 +259,7 @@ function createAchievementAnnotation(date, weight, text, background, datasetInde
 
 // Return a rounded 1 rep max
 // For theory see: https://en.wikipedia.org/wiki/One-repetition_maximum
-function estimateE1RM(reps, weight) {
+function estimateE1RM(reps, weight, equation) {
   if (reps === 0) {
     console.error("Somebody passed 0 reps... naughty.");
     return 0;
@@ -314,28 +312,6 @@ function prepareDataRefresh(parsedData, processedData, replaceData) {
       lift.isUpdated = false;
     });
   });
-}
-
-// Callback handlers for equation html dropup menu
-function changeEquation(event, newEquation) {
-
-  if (equation === newEquation) return; // nothing to do
-
-  // Clear class "equations"
-  //  links = document.getElementsByClassName("equations");
-  //  for (i = 0; i < links.length; i++) {
-    //  links[i].className = links[i].className.replace(" active", "");
-  //  }
- 
-   // Add an "active" class to the button that opened the tab
-   // This will trigger the css rule to set the color
-   event.currentTarget.className += " active";
-
-  // Change the global equation and reprocess and draw the data
-  equation = newEquation;
-  // processData(); // FIXME 202212 should be processVisualizerData?
-  // myChart.update();
-
 }
 
 // Return the index for the liftType string in our processedData

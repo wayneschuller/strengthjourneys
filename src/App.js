@@ -22,6 +22,7 @@ export default function App() {
     sixMonthsAgo: null,
     min: null,
     achievementAnnotations: null,
+    equation: 'Brzycki',
   });
 
   // Event handlers do most of the data flow for us
@@ -41,6 +42,18 @@ export default function App() {
         );
     }
   }, []);
+
+  useEffect(() => {
+    console.log(`visualizerConfig useEffect:`)
+    console.log(visualizerConfig);
+
+    // Has equation changed from the cookie version
+
+      // Process data again
+
+      // Change equation cookie
+
+  }, [visualizerConfig]);
 
   return (
     <div>

@@ -177,11 +177,12 @@ export async function getGDriveMetadata (ssid, tokenResponse,
           // setParsedData(parsedData);    // FIXME: we might need parsedData in state later
 
           // Process the data for the visualizer
-          let processed = processVisualizerData(parsedData);   // FIXME: check for errors?
+          const equation = visualizerConfig.equation;
+          let processed = processVisualizerData(parsedData, equation);   // FIXME: check for errors?
           // console.log(`Here is processed[0]:`); console.log(processed[0]);
 
           // Process the PRs/Achivements and return some chartjs annotation config.
-          let annotations = processAchievements(parsedData, processed);
+          let annotations = processAchievements(parsedData, processed, equation);
 
           // 10 day padding for the beginning and end of our data makes chart look nice
           // Use the most popular lift to set some aesthetic x-axis padding at start and end
@@ -206,13 +207,14 @@ export async function getGDriveMetadata (ssid, tokenResponse,
             });
           });
           highestWeight = Math.ceil(highestWeight / 50) * 50; // Round up to the next mulitiple of 50
-
+          
           setVisualizerConfig({
                                 padDateMin: padDateMin,
                                 padDateMax: padDateMax,
                                 highestWeight: highestWeight,
                                 sixMonthsAgo: sixMonthsAgo,
                                 min:  sixMonthsAgo,
+                                equation: equation,
                                 achievementAnnotations: annotations,
           });
 

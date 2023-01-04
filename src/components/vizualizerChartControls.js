@@ -3,6 +3,7 @@ import { useCookies } from 'react-cookie';
 
 // MUI Components
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import Container from '@mui/material/Container';
@@ -11,6 +12,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import FormGroup from '@mui/material/FormGroup';
 import FormLabel from '@mui/material/FormLabel';
+import Grid from '@mui/material/Grid';
 import InputLabel from '@mui/material/InputLabel';
 import ListItemText from '@mui/material/ListItemText';
 import Menu from '@mui/material/Menu';
@@ -19,15 +21,13 @@ import OutlinedInput from '@mui/material/OutlinedInput';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import Select from '@mui/material/Select';
+import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import DeleteIcon from '@mui/icons-material/Delete';
-import SendIcon from '@mui/icons-material/Send';
-import Stack from '@mui/material/Stack';
+
 
 // MUI Icons
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -42,18 +42,15 @@ export function ChartControls (props) {
 
   return (
     <div>
-     <Box sx={{ m: 1 }} md={{ m: 3}} >
-       <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}>
-        <Typography  component="h2" gutterBottom><b>Chart Controls</b></Typography>
-
-      <Divider />
-      <VizConfigPRs showAchievements={props.showAchievements} setShowAchievements={props.setShowAchievements} />
-      <Divider />
-      <VizConfigZoom zoomRecent={props.zoomRecent} setZoomRecent={props.setZoomRecent} />
-      <Divider />
-
-      </Container>
-      </Box>
+     {/* <Box sx={{ m: 1 }} md={{ m: 3}} > */}
+       {/* <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}> */}
+  <Grid container spacing={2}>
+  <Grid item xs={6}> <VizConfigZoom zoomShowAllTime={props.zoomShowAllTime} zoomShowRecent={props.zoomShowRecent}/> 
+  </Grid>
+  <Grid item xs={6}> 
+  <EquationChooser visualizerConfig={props.visualizerConfig} setVisualizerConfig={props.setVisualizerConfig} /> 
+  </Grid>
+</Grid>
     </div>
   );
 }
@@ -272,3 +269,47 @@ export function VerticalChartControls({ zoomRecent, setZoomRecent }) {
 
 
     // <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+
+
+// --------------------------------------------------------------------------------------------------------
+// <EquationChooser />
+// --------------------------------------------------------------------------------------------------------
+export function EquationChooser({visualizerConfig, setVisualizerConfig}) {
+
+  const equations = [
+  "Epley",
+  "McGlothin",
+  "Lombardi",
+  "Mayhew",
+  "OConner",
+  "Wathen",
+  "Brzycki",
+  ];
+
+  const handleChange = (event) => {
+    // setEquation(event.target.value);
+    setVisualizerConfig({...visualizerConfig, equation: event.target.value});
+  };
+
+  return (
+    <div>
+      <FormControl sx={{ m: 1, minWidth: 120  }}>
+        <InputLabel id="demo-simple-select-autowidth-label">E1RM Equation</InputLabel>
+        { visualizerConfig && 
+        <Select
+          labelId="demo-simple-select-autowidth-label"
+          id="demo-simple-select-autowidth"
+          value={visualizerConfig.equation}
+          onChange={handleChange}
+          autoWidth
+          label="E1RM Equation"
+        >
+
+          {equations.map((equation) => ( <MenuItem key={equation} value={equation} style={{ margin: 2 }} >{equation}</MenuItem>))}
+
+        </Select>
+        }
+      </FormControl>
+    </div>
+  );
+}

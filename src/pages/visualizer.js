@@ -13,7 +13,7 @@ import zoomPlugin from 'chartjs-plugin-zoom';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
-import { VerticalChartControls, LiftControls, VizConfigZoom } from '../components/vizualizerChartControls';
+import { EquationChooser, VerticalChartControls, LiftControls, VizConfigZoom, ChartControls } from '../components/vizualizerChartControls';
 
 import { Container } from '@mui/system';
 
@@ -27,7 +27,6 @@ const Visualizer = (props) => {
           setVisualizerConfig,
         ] = useOutletContext();
 
-  const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
   const [cookies, setCookie] = useCookies(['selectedLifts', 'ssid', 'tokenResponse']);
   const chartRef = useRef(null);
 
@@ -236,7 +235,10 @@ const Visualizer = (props) => {
           { isLoading && <LoadingLinearProgress /> }
 
           { visualizerData && <Line ref={chartRef} data={visualizerData} options={chartOptions}/> }
-          { visualizerData && <VizConfigZoom zoomShowAllTime={zoomShowAllTime} zoomShowRecent={zoomShowRecent} /> }
+          { (visualizerData && visualizerConfig) && <ChartControls 
+                                zoomShowAllTime={zoomShowAllTime}  zoomShowRecent={zoomShowRecent}
+                                visualizerConfig={visualizerConfig} setVisualizerConfig={setVisualizerConfig} 
+                                /> }
 
       </Container>
   );

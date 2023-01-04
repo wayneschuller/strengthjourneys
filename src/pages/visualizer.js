@@ -29,7 +29,6 @@ const Visualizer = (props) => {
         ] = useOutletContext();
 
   const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
-  const [showAchievements, setShowAchievements] = useState(true); // PR/Achivement annotations
   const [selectedVisualizerData, setSelectedVisualizerData] = useState(null); 
   const [cookies] = useCookies(['selectedChips', 'ssid', 'tokenResponse']);
   const chartRef = useRef(null);
@@ -39,7 +38,7 @@ const Visualizer = (props) => {
   // So this useEffect is like a delayed mount - used once.
   useEffect(() => {
     // console.log(`useEffect visualizerData`);
-
+    return;
     if (!visualizerData) {
       console.log(`Abort: Invalid visualizerData.`);
       return;
@@ -59,14 +58,14 @@ const Visualizer = (props) => {
         let fiveRM = visualizerConfig.achievementAnnotations[`${item.label}_best_5RM`];
         if (item.selected) {
           // Turn on achievement annotations for this selected lift
-          if (singleRM) singleRM.display = true;
-          if (tripleRM) tripleRM.display = true;
-          if (fiveRM) fiveRM.display = true;
+          // if (singleRM) singleRM.display = true;
+          // if (tripleRM) tripleRM.display = true;
+          // if (fiveRM) fiveRM.display = true;
         } else {
           // Turn off achievement annotations for this NOT selected lift
-          if (singleRM) singleRM.display = false;
-          if (tripleRM) tripleRM.display = false;
-          if (fiveRM) fiveRM.display = false;
+          // if (singleRM) singleRM.display = false;
+          // if (tripleRM) tripleRM.display = false;
+          // if (fiveRM) fiveRM.display = false;
         }
       });  
     } else {
@@ -82,19 +81,6 @@ const Visualizer = (props) => {
 
     setSelectedVisualizerData(wrapper);
   }, [visualizerData]);
-
-  // FIXME: below useEffect is just for testing purposes - delete
-  useEffect(() => {
-    // console.log(`useEffect selectedVisualizerData`);
-    // Try to manually zoom in to recent data
-    const chart = chartRef.current;
-    if (!chart) return;
-    // console.log(`manually setting x min. Before:`)
-    // console.log(chart.options.scales.x.min);
-    // chart.options.scales.x.min = recentXAxisMin;
-    // console.log(chart.options.scales.x.min);
-
-  }, [selectedVisualizerData]);
 
   // Line Chart Options for react-chartjs-2 Visualizer 
   const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000;
@@ -209,6 +195,7 @@ const Visualizer = (props) => {
       },
 
       annotation: {
+          // drawTime: 'afterDraw',  // FIXME: just testing. It normally defaults to afterDatasetsDraw
           annotations: visualizerConfig.achievementAnnotations,
           },
       },
@@ -224,12 +211,11 @@ const Visualizer = (props) => {
           {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
           { isLoading && <LoadingLinearProgress /> }
 
-          { (visualizerData && selectedVisualizerData) && <Line ref={chartRef} data={selectedVisualizerData} options={chartOptions}/> }
+          { visualizerData && <Line ref={chartRef} data={visualizerData} options={chartOptions}/> }
 
-          { (visualizerData && selectedVisualizerData) && <LiftControls
+          { (false && visualizerData && selectedVisualizerData) && <LiftControls
                                 visualizerData={visualizerData}
                                 setSelectedVisualizerData={setSelectedVisualizerData}
-                                showAchievements={showAchievements}
                                 visualizerConfig={visualizerConfig}
                               />
           }

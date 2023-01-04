@@ -64,7 +64,6 @@ export function LiftControls (props) {
   let visualizerData = props.visualizerData;
   let setSelectedVisualizerData = props.setSelectedVisualizerData;
   let visualizerConfig = props.visualizerConfig;
-  let setVisualizerConfig = props.setVisualizerConfig;
 
   useEffect(() => {
     if (cookies.selectedChips) {
@@ -84,6 +83,7 @@ export function LiftControls (props) {
 
   function handleChipClick(liftType) {
 
+    return; 
     // FIXME: should we block the user from toggling down to ZERO lifts? 
 
     // Reconstruct selectedVisualizerData with or without the selected liftType
@@ -109,18 +109,18 @@ export function LiftControls (props) {
 
       // Turn off achievement annotations for this NOT selected lift
       // console.log(`Turning OFF annotations for lift: ${liftType}`);
-      if (singleRM) singleRM.display = false;
-      if (tripleRM) tripleRM.display = false;
-      if (fiveRM) fiveRM.display = false;
+      // if (singleRM) singleRM.display = false;
+      // if (tripleRM) tripleRM.display = false;
+      // if (fiveRM) fiveRM.display = false;
     } else {
       visualizerData[liftIndex].selected = true; 
       visualizerData[liftIndex].hidden = false; 
 
       // Turn ON achievement annotations for this selected lift
       // console.log(`Turning ON annotations for lift: ${liftType}`);
-      if (singleRM) singleRM.display = true;
-      if (tripleRM) tripleRM.display = true;
-      if (fiveRM) fiveRM.display = true;
+      // if (singleRM) singleRM.display = true;
+      // if (tripleRM) tripleRM.display = true;
+      // if (fiveRM) fiveRM.display = true;
     }
 
     // Create a new wrapper for the user seletecd lift types

@@ -1,120 +1,8 @@
-// visualizerDataProcessing.js
+// processData.js
 // Wayne Schuller, wayne@schuller.id.au
 // Licenced under https://www.gnu.org/licenses/gpl-3.0.html
 //
 // Process our parsedData into chart.js ready format for the Strength Visualizer
-
-// Default sample chart for first time user
-// FIXME: Make this as interesting as possible to entice new users
-export const defaultVisualizerData = {
-    datasets: [{
-      label: "Back Squat Sample Data",
-      data: [
-        {
-          x: '2015-10-11', 
-          y: 196,
-          label: "Potential blah da blah",
-        }, 
-        {
-          x: '2015-11-02', 
-          y: 170,
-          label: "doop de doop",
-        },
-        {
-          x: '2015-11-05', 
-          y: 130,
-          label: "potential nope",
-        },
-      ]
-    }]
-  };
-
-// This is used for testing purposes only
-// FIXME: processedData is always an array with one object per lift in the arrray. No datasets object stuff...
-export const dummyProcessedData = {
-  datasets: [
-  {
-    label: "Back Squat",
-    data: [
-    {
-    "x": "2015-10-11",
-    "y": 106,
-    "label": "Potential 1@106kg from 3@100kg.",
-    "method": "Brzycki",
-    "notes": "",
-    "afterLabel": [],
-    "isUpdated": true,
-    "url": "",
-    "reps": 3,
-    "weight": 100
-    },
-    {
-    "x": "2015-11-02",
-    "y": 106,
-    "label": "Potential 1@106kg from 3@100kg.",
-    "method": "Brzycki",
-    "notes": "",
-    "afterLabel": [],
-    "isUpdated": true,
-    "url": "",
-    "reps": 3,
-    "weight": 100
-    },
-    {
-    "x": "2015-11-03",
-    "y": 109,
-    "label": "Potential 1@109kg from 4@100kg.",
-    "method": "Brzycki",
-    "notes": "",
-    "afterLabel": [],
-    "isUpdated": true,
-    "url": "",
-    "reps": 4,
-    "weight": 100
-    },
-  ]
-  },
-  {
-    label: "Deadlift",
-    data: [
-    {
-    "x": "2015-10-01",
-    "y": 170,
-    "label": "Lifted 1@170kg.",
-    "method": "Brzycki",
-    "notes": "",
-    "afterLabel": [],
-    "isUpdated": true,
-    "url": "",
-    "reps": 1,
-    "weight": 170
-    },
-    {
-    "x": "2015-11-08",
-    "y": 144,
-    "label": "Potential 1@144kg from 2@140kg.",
-    "method": "Brzycki",
-    "notes": "",
-    "afterLabel": [],
-    "isUpdated": true,
-    "url": "",
-    "reps": 2,
-    "weight": 140
-  },
-  {
-    "x": "2015-11-23",
-    "y": 155,
-    "label": "Potential 1@155kg from 3@146kg.",
-    "method": "Brzycki",
-    "notes": "",
-    "afterLabel": [],
-    "isUpdated": true,
-    "url": "",
-    "reps": 3,
-    "weight": 146
-  }],
-  }]
-};
 
 let equation = "Brzycki"; // Our favourite preferred equation - it does not over promise
 
@@ -165,7 +53,7 @@ export function processVisualizerData(parsedData) {
     // Handle a number of cases where the parsed lift date has a date match in the processed graph data.
 
     // If we are changing equation method, then update the y value
-    if (processedData[liftIndex].data[dateIndex].method !== equation) {
+    if (processedData[liftIndex].data[dateIndex].method != equation) {
       processedData[liftIndex].data[dateIndex].y = oneRepMax;
       processedData[liftIndex].data[dateIndex].method = equation;
       continue; // Continue iterating through parsedData
@@ -174,8 +62,8 @@ export function processVisualizerData(parsedData) {
     // If this processed lift is stale and is the same e1rm/date as this parsed lift, then refresh it
     // This is important for refreshing data from Google Sheets
     if (
-      processedData[liftIndex].data[dateIndex].isUpdated === false &&
-      oneRepMax === processedData[liftIndex].data[dateIndex].y
+      processedData[liftIndex].data[dateIndex].isUpdated == false &&
+      oneRepMax == processedData[liftIndex].data[dateIndex].y
     ) {
       processedData[liftIndex].data[dateIndex].isUpdated = true;
       continue; // Continue iterating through parsedData
@@ -240,6 +128,9 @@ export function processVisualizerData(parsedData) {
       }
     }
   }
+
+  // FIXME: Let's do another run through an only keep the top 10 lifts.
+  processedData.splice(10); // Delete everything above 10
 
   return(processedData);
 }
@@ -340,7 +231,9 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
 function createAchievementAnnotation(date, weight, text, background, datasetIndex) {
   return {
     type: "label",
-    // borderColor: (context) => context.chart.data.datasets[datasetIndex].backgroundColor,
+    borderColor: (context) => {
+      return context.chart.data.datasets[datasetIndex].backgroundColor;
+    },
     borderRadius: 3,
     borderWidth: 2,
     yAdjust: 20,
@@ -354,19 +247,10 @@ function createAchievementAnnotation(date, weight, text, background, datasetInde
       right: 2,
       bottom: 1,
     },
-    display: false,   // Default to false and we can turn them on later
-
-    // FIXME: Various experiments in futility below
-    //  display: (chart, options) => {
-      // console.log(`annotation display handler`);
-      // console.log(chart); 
-      // if (chart) return chart.getDataVisibility(0);  // blah
-      // Only show if dataset line is visible on chart
-      // let meta = chart.chart.getDatasetMeta(datasetIndex);
-      // if (meta === undefined) return false;
-      // return meta.visible;
-      // return(true);   // FIXME: temporary
-    // },
+     display: (context, options) => {
+      let meta = context.chart.getDatasetMeta(datasetIndex);
+      return(meta.visible);
+    },
   };
 }
 
@@ -490,7 +374,7 @@ function getProcessedLiftIndex(processedData, liftType) {
       hitRadius: 20,
       hoverRadius: 10,
       cubicInterpolationMode: "monotone",
-      selected: false,    // Our chips UI underneath the chart will select lifts for the chart
+      // selected: false,    // Our chips UI underneath the chart will select lifts for the chart
       hidden: false,      // This is for chart.js config - always show
     };
     liftIndex = processedData.push(processedLiftType) - 1;

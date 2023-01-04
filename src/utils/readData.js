@@ -12,7 +12,7 @@
 
 import axios from 'axios';
 import { parseData } from './parseData';
-import { defaultVisualizerData, processVisualizerData, processAchievements } from './processData';
+import { processVisualizerData, processAchievements } from './processData';
 
 
  // ------------------------------------------------------------------
@@ -35,8 +35,6 @@ export async function getGoogleUserInfo(ssid, tokenResponse,
     console.log(`getGoogleUserInfo()...`);
 
     if (!tokenResponse) {
-      console.log(`Can't get userInfo without tokenResponse...`);
-      setVisualizerData(defaultVisualizerData);
       return; // No ticket to google? Then no party.
     }
 
@@ -217,8 +215,9 @@ export async function getGDriveMetadata (ssid, tokenResponse,
           });
 
           // Lastly, load in the data.
-          setVisualizerData(processed);   // This should trigger <Visualizer /> and <Analyzer /> creation
           setIsLoading(false);            // Stop the loading animations
+
+          setVisualizerData({datasets: processed});   // This should trigger <Visualizer /> and <Analyzer /> creation
         })
         .catch((error) => {
           setInfoChipStatus("Error Reading Google Sheet");

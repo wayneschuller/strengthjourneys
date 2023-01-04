@@ -8,13 +8,13 @@ import ResponsiveAppBar from './components/appBar';
 import { getGoogleUserInfo } from './utils/readData';
 
 export default function App() {
-  const [visualizerData, setVisualizerData] = useState(null);
   const [dataModifiedTime, setDataModifiedTime] = useState(0); // Unix timestamp
   const [cookies] = useCookies(['ssid', 'tokenResponse']);
   const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);  
   const [isLoading, setIsLoading] = useState(false); // Use to show loading animation
+  const [visualizerData, setVisualizerData] = useState(null);
   const [visualizerConfig, setVisualizerConfig] = useState({
     padDateMin: null,
     padDateMax: null,
@@ -24,7 +24,7 @@ export default function App() {
   });
 
   // Event handlers do most of the data flow for us
-  // However we want useEffect to auto load data on init from cookies
+  // However we want this mount useEffect to auto load data on init from cookies
   let didInit = false;
   useEffect(() => {
     if (!didInit && cookies.tokenResponse) {

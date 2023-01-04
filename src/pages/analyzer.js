@@ -82,7 +82,7 @@ const Analyzer = (props) => {
 export default Analyzer;
 
 const PRDataGrid = (props) => {
-  const visualizerData = props.visualizerData;
+  const visualizerData = props.visualizerData.datasets;
   const achievementAnnotations = props.achievementAnnotations;
 
 

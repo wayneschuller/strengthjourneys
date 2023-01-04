@@ -15,7 +15,6 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 
 import { VerticalChartControls, LiftControls } from '../components/vizualizerChartControls';
 
-import { dummyProcessedData } from '../utils/processData';
 import { Container } from '@mui/system';
 
 Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
@@ -29,58 +28,73 @@ const Visualizer = (props) => {
         ] = useOutletContext();
 
   const [zoomRecent, setZoomRecent] = useState(true); // Zoom recent or zoom to all
-  const [selectedVisualizerData, setSelectedVisualizerData] = useState(null); 
-  const [cookies] = useCookies(['selectedChips', 'ssid', 'tokenResponse']);
+  const [cookies, setCookie] = useCookies(['selectedLifts', 'ssid', 'tokenResponse']);
   const chartRef = useRef(null);
 
-  // This useEffect on [visualizerData] filters into the selectedVisualizerData 
-  // Because selectedVisualizerData begins null, once we set it the chart appears
-  // So this useEffect is like a delayed mount - used once.
+  // On chart load hide certain lifts that were hidden last sesssion (remembered via cookie)
   useEffect(() => {
-    // console.log(`useEffect visualizerData`);
-    return;
-    if (!visualizerData) {
-      console.log(`Abort: Invalid visualizerData.`);
-      return;
-    }
-    if (!visualizerConfig.achievementAnnotations) {
-      console.log(`Abort: Invalid achievementAnnotations.`);
-      // return;
-    }
+    if (!visualizerData) return; 
 
-    if (cookies.selectedChips) {
-      // If we have the cookie, modify our visualizerData so the .selected key matches what was in the cookie
-      // console.log(`<Visualizer /> useEffect modifying visualizerData based on cookie`);
-      visualizerData.forEach((item) => {
-        item.selected = cookies.selectedChips.includes(item.label);
-        let singleRM = visualizerConfig.achievementAnnotations[`${item.label}_best_1RM`];
-        let tripleRM = visualizerConfig.achievementAnnotations[`${item.label}_best_3RM`];
-        let fiveRM = visualizerConfig.achievementAnnotations[`${item.label}_best_5RM`];
-        if (item.selected) {
-          // Turn on achievement annotations for this selected lift
-          // if (singleRM) singleRM.display = true;
-          // if (tripleRM) tripleRM.display = true;
-          // if (fiveRM) fiveRM.display = true;
-        } else {
-          // Turn off achievement annotations for this NOT selected lift
-          // if (singleRM) singleRM.display = false;
-          // if (tripleRM) tripleRM.display = false;
-          // if (fiveRM) fiveRM.display = false;
+    if (cookies.selectedLifts) {
+      
+      // Loop through visualizerData and hide the lifts not in the cookie
+      visualizerData.datasets.forEach(lift => {
+        if (!cookies.selectedLifts.includes(lift.label)) {
+          lift.hidden = true;     // Hide the lift on the legend (strikethrough appears)
+
+          // Hide the corresponding annotations
+          let singleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_1RM`];
+          let tripleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_3RM`];
+          let fiveRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_5RM`];
+          if (singleRM) singleRM.display = false;
+          if (tripleRM) tripleRM.display = false;
+          if (fiveRM) fiveRM.display = false;
+
         }
-      });  
+      });
+
     } else {
-      // No cookie? Top three lifts is a good default
-      if (visualizerData[0]) visualizerData[0].selected = true;
-      if (visualizerData[1]) visualizerData[1].selected = true;
-      if (visualizerData[2]) visualizerData[2].selected = true;
+      // We have no cookie so let's make one for next time with every lift
+      let selectedLifts = visualizerData.datasets.map(item => item.label);
+      setCookie('selectedLifts', JSON.stringify(selectedLifts), { path: '/' });
     }
+  }, [visualizerData]); // Only run this effect once, on mount
 
-    var wrapper = {
-      datasets: visualizerData.filter(lift => lift.selected)
-    };
+  // When someone clicks an item in the legend we will:
+  // 1) Show/Hide the line (default behaviour)
+  // 2) Show/Hide PR annotations for that line
+  // 3) Remember the choice in a cookie for next time
+  const newLegendClickHandler = function (e, legendItem, legend) {
+    const index = legendItem.datasetIndex;
+    const ci = legend.chart;
 
-    setSelectedVisualizerData(wrapper);
-  }, [visualizerData]);
+    let selectedLifts = cookies.selectedLifts; // We assume this cookie is ALWAYS set
+    let liftType = legendItem.text;
+    let singleRM = visualizerConfig.achievementAnnotations[`${liftType}_best_1RM`];
+    let tripleRM = visualizerConfig.achievementAnnotations[`${liftType}_best_3RM`];
+    let fiveRM = visualizerConfig.achievementAnnotations[`${liftType}_best_5RM`];
+
+    if (ci.isDatasetVisible(index)) {
+        console.log(`Hide ${legendItem.text}`);
+        ci.hide(index);
+        legendItem.hidden = true;
+        if (singleRM) singleRM.display = false;
+        if (tripleRM) tripleRM.display = false;
+        if (fiveRM) fiveRM.display = false;
+        selectedLifts = selectedLifts.filter((lift) => lift !== liftType);  // Exclude unclicked lift
+    } else {
+        console.log(`Show ${legendItem.text}`);
+        ci.show(index);
+        legendItem.hidden = false;
+        if (singleRM) singleRM.display = true;
+        if (tripleRM) tripleRM.display = true;
+        if (fiveRM) fiveRM.display = true;
+        selectedLifts = [...selectedLifts, liftType];  // Include clicked lift
+    }
+    // Update our cookie with the state of which lifts are selected
+    setCookie('selectedLifts', JSON.stringify(selectedLifts), { path: '/' });
+
+  }
 
   // Line Chart Options for react-chartjs-2 Visualizer 
   const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000;
@@ -137,6 +151,7 @@ const Visualizer = (props) => {
             size: 18,
           },
         },
+        onClick: newLegendClickHandler,
       },
 
       datalabels: {
@@ -195,14 +210,12 @@ const Visualizer = (props) => {
       },
 
       annotation: {
-          // drawTime: 'afterDraw',  // FIXME: just testing. It normally defaults to afterDatasetsDraw
           annotations: visualizerConfig.achievementAnnotations,
           },
       },
   };
 
   return (
-    <div>
       <Container maxWidth='xl'>
 
           { (!visualizerData && !cookies.ssid) && <NewUserWelcome /> } 
@@ -213,14 +226,7 @@ const Visualizer = (props) => {
 
           { visualizerData && <Line ref={chartRef} data={visualizerData} options={chartOptions}/> }
 
-          { (false && visualizerData && selectedVisualizerData) && <LiftControls
-                                visualizerData={visualizerData}
-                                setSelectedVisualizerData={setSelectedVisualizerData}
-                                visualizerConfig={visualizerConfig}
-                              />
-          }
       </Container>
-    </div>
   );
 }
 
@@ -246,14 +252,12 @@ function NewUserWelcome() {
 function ReturningUserWelcome({ tokenResponse }) {
   return (
     <div>
-     <Box sx={{ m: 1 }} md={{ m: 3}} >
        <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}>
           <h1>Welcome back to Strength Journeys.</h1>
           <h3>You are looking stronger than last time.</h3>
 
           { !tokenResponse && <><h3>Please click the "Google sign-in" button in the top right corner and we will visualize your greatness.</h3></> }
        </Container>
-     </Box>
     </div>
   );
 }

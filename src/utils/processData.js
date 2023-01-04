@@ -247,10 +247,13 @@ function createAchievementAnnotation(date, weight, text, background, datasetInde
       right: 2,
       bottom: 1,
     },
-     display: (context, options) => {
-      let meta = context.chart.getDatasetMeta(datasetIndex);
-      return(meta.visible);
-    },
+    display: true,  // default to display
+
+    // Below display handler works but is quite slow. So now we show/hide in our legend click handler
+    //  display: (context, options) => {
+      // let meta = context.chart.getDatasetMeta(datasetIndex);
+      // return(meta.visible);
+    // },
   };
 }
 

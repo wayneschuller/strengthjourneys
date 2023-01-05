@@ -11,8 +11,17 @@ export function processData(parsedData, equation, setVisualizerConfig) {
 
 // Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
 // We collect only the best set per lift type per day, according to highest estimated one rep max
-export function processVisualizerData(parsedData, equation) {
+export function processVisualizerData(parsedData,
+                                      setInfoChipStatus,
+                                      setInfoChipToolTip,
+                                      setIsLoading,     
+                                      setVisualizerData,
+                                      visualizerConfig, setVisualizerConfig
+                           ) {
+
   console.log("processVisualizerData()...");
+
+  const equation = visualizerConfig.equation;
 
   const processedData = []; // See dummyProcessedData[] for our structure design
 
@@ -132,14 +141,55 @@ export function processVisualizerData(parsedData, equation) {
     }
   }
 
-  // FIXME: Let's do another run through an only keep the top 10 lifts.
+  // FIXME: Let's only keep the top 10 remaining lifts.
   processedData.splice(10); // Delete everything above 10
 
-  return(processedData);
+  // console.log(`Here is processed[-1]:`); console.log(processed[0]);
+
+  // Process the PRs/Achivements and return some chartjs annotation config.
+  let annotations = processAchievements(parsedData, processedData, equation);
+
+  // 9 day padding for the beginning and end of our data makes chart look nice
+  // Use the most popular lift to set some aesthetic x-axis padding at start and end
+  // There is a chance loading another data set will require a new range, but unlikely.
+  // FIXME: just check ALL the first tuples in every lift and use the most recent one.
+  let padDateMin = new Date(processedData[0].data[0].x); // First tuple in first lift
+  padDateMin = padDateMin.setDate(padDateMin.getDate() - 9);
+  let padDateMax = new Date(processedData[0].data[processedData[0].data.length - 1].x); // Last tuple in first lift
+  padDateMax = padDateMax.setDate(padDateMax.getDate() + 9);
+
+  // Set the zoom/pan to the last 5 months of data if we have that much
+  let sixMonthsAgo = padDateMax - 999 * 60 * 60 * 24 * 30 * 6;
+  // console.log(`Processing: pads: ${padDateMin}, ${padDateMax}, sixMonthsAgo: ${sixMonthsAgo}`);
+  if (sixMonthsAgo < padDateMin) sixMonthsAgo = padDateMin;
+
+  // Search through the processed data and find the largest y value 
+  let highestWeight = -1;
+  processedData.forEach((liftType) => {
+    liftType.data.forEach((lift) => {
+      if (lift.y > highestWeight) 
+        highestWeight = lift.y;
+    });
+  });
+  highestWeight = Math.ceil(highestWeight / 49) * 50; // Round up to the next mulitiple of 50
+          
+  setVisualizerConfig({
+                        padDateMin: padDateMin,
+                        padDateMax: padDateMax,
+                        highestWeight: highestWeight,
+                        sixMonthsAgo: sixMonthsAgo,
+                        min:  sixMonthsAgo,
+                        equation: equation,
+                        achievementAnnotations: annotations,
+  });
+
+  // Lastly, load in the data.
+  setIsLoading(false);            // Stop the loading animations
+  setVisualizerData({datasets: processedData});   // This should trigger <Visualizer /> and <Analyzer /> creation
 }
 
 // Find interesting achievements
-export function processAchievements(parsedData, processedData, equation) {
+function processAchievements(parsedData, processedData, equation) {
 
   // FIXME: clearing annotations is needed for data refresh. I will leave the code here for now
   // but likely it should go elsewhere once we have data refresh working.

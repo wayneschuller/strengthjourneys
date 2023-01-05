@@ -5,10 +5,11 @@
 // parseData will take raw imported 2d grid data from different formats
 // and parse into our common parsedData[] format.
 
+import { processVisualizerData, processAchievements } from "./processData";
+
 // FIXME: Globals are not best practice
 let workout_date_COL, workout_id_COL, completed_COL, exercise_name_COL, assigned_reps_COL, assigned_weight_COL;
 let assigned_sets_COL, actual_reps_COL, actual_weight_COL, actual_sets_COL, missed_COL, description_COL, units_COL, notes_COL, url_COL;
-var parsedData = []; // Every unique lift from our source
 let lastDate = "1999-12-31";
 let lastLiftType = "Tik Tok Dancing"; 
 
@@ -21,11 +22,19 @@ let lastLiftType = "Tik Tok Dancing";
 // FIXME: We should return false if it is bad data
 //
 // ------------------------------------------------------------------------------
-export function parseData(data) {
+export function parseData(data,
+            setInfoChipStatus,
+            setInfoChipToolTip,
+            setIsLoading,     
+            setVisualizerData,
+            visualizerConfig, setVisualizerConfig) {
 
   console.log("parseData()...");
 
+  let parsedData = []; // FIXME: we should be checking for existing state parseData?
+
   const columnNames = data[0];
+
 
   // Look for distinctive BTWB data columns - no one else will have a Pukie column
   if (columnNames[0] === "Date" && columnNames[4] === "Pukie") {
@@ -34,13 +43,12 @@ export function parseData(data) {
     description_COL = columnNames.indexOf("Description");
     notes_COL = columnNames.indexOf("Notes");
 
-    data.forEach(parseBtwbRow, parsedData);
+    data.forEach(parseBtwbRow);
     console.log(`   ... parseData() complete. (BTWB format)`);
-    return(parsedData);
-  } 
+    return(parsedData); // FIXME: should not return now but go to the flow below
 
-  // Look for distinctive TurnKey (BLOC) data columns
-  if (columnNames[0] === "user_name" && columnNames[1] === "workout_id") {
+  // Else look for distinctive TurnKey (BLOC) data columns
+  } else if (columnNames[0] === "user_name" && columnNames[1] === "workout_id") {
 
     // Dynamically find where all our needed columns are 
     workout_date_COL = columnNames.indexOf("workout_date");
@@ -56,31 +64,50 @@ export function parseData(data) {
     missed_COL = columnNames.indexOf("assigned_exercise_missed");
     units_COL = columnNames.indexOf("weight_units");
 
-    data.forEach(parseBlocRow, parsedData);
+    data.forEach(parseBlocRow);
     console.log(`   ... parseData() complete. (TurnKey/BLOC format)`);
-    return(parsedData);
-  } 
-   
-  // From here let's just assume it is our bespoke CSV/GSheet format
-  // FIXME: URL link to public Google Sheet sample
-  workout_date_COL = columnNames.indexOf("Date");
-  exercise_name_COL = columnNames.indexOf("Lift Type");
-  actual_reps_COL = columnNames.indexOf("Reps");
-  actual_weight_COL = columnNames.indexOf("Weight");
-  notes_COL = columnNames.indexOf("Notes");
-  url_COL = columnNames.indexOf("URL");
 
-  data.forEach(parseBespokeRow, parsedData);
+
+    // Else let's just assume it is our bespoke "Strength Journeys" format
+  } else {
+   
+    // FIXME: URL link to public Google Sheet sample
+    workout_date_COL = columnNames.indexOf("Date");
+    exercise_name_COL = columnNames.indexOf("Lift Type");
+    actual_reps_COL = columnNames.indexOf("Reps");
+    actual_weight_COL = columnNames.indexOf("Weight");
+    notes_COL = columnNames.indexOf("Notes");
+    url_COL = columnNames.indexOf("URL");
+
+    data.forEach(parseBespokeRow);
+  }
 
   console.log(`   ... parseData() complete. (Bespoke format)`);
-  return(parsedData);
-}
+
+  // Next in the data flow is to process the data.
+  // console.log(`setParsedData to: ${JSON.stringify(parsedData[-1])}`);
+  //  setParsedData(parsedData);    // FIXME: we might need parsedData in state later
+
+  // Process the data for the visualizer
+  processVisualizerData(parsedData, 
+                        setInfoChipStatus,
+                        setInfoChipToolTip,
+                        setIsLoading,     
+                        setVisualizerData,
+                        visualizerConfig, setVisualizerConfig);
+
+         
+          return;
+
+          // Below are some helper functions we put inside our parseData function for scope
 
 // ---------------------------------------------------------------------------------
 // Array method to parse a row of Bespoke data as a liftEntry object into parsedData
 // Goal is to make this as flexible as possible - it will be our most common data format
 // ---------------------------------------------------------------------------------
 function parseBespokeRow(row, index) {
+  // console.log(`parseBespokeRow():`);
+  // console.log(row);
 
   if (!row[actual_reps_COL] || row[actual_reps_COL] === "Reps") return false; // Bad row
 
@@ -122,7 +149,8 @@ function parseBespokeRow(row, index) {
 
   // If we don't have these fields put in empty strings
   let url = row[url_COL]; if (!url) url = '';
-  let notes = row[notes_COL]; if (!notes) notes = '';
+  let notes = '';
+  if (notes_COL && row[notes_COL]) notes = row[notes_COL]; 
 
   parsedData.push({
     date: date,
@@ -261,4 +289,6 @@ function parseBlocRow(row) {
       notes: notes, 
     });
   }
+}
+
 }

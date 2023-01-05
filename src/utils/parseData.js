@@ -5,14 +5,13 @@
 // parseData will take raw imported 2d grid data from different formats
 // and parse into our common parsedData[] format.
 
-import { processVisualizerData, processAchievements } from "./processData";
+import { processVisualizerData } from "./processData";
 
 // FIXME: Globals are not best practice
 let workout_date_COL, workout_id_COL, completed_COL, exercise_name_COL, assigned_reps_COL, assigned_weight_COL;
 let assigned_sets_COL, actual_reps_COL, actual_weight_COL, actual_sets_COL, missed_COL, description_COL, units_COL, notes_COL, url_COL;
 let lastDate = "1999-12-31";
 let lastLiftType = "Tik Tok Dancing"; 
-
 
 // ------------------------------------------------------------------------------
 // parseData
@@ -161,8 +160,6 @@ function parseBespokeRow(row, index) {
     notes: notes,
     url: url,
   });
-
-  // console.log(`Pushed: ${date}, ${liftType}, ${reps}, ${weight}`);
 }
 
 // --------------------------------------------------------------------------------

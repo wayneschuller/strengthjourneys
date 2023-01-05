@@ -2,13 +2,6 @@
 // Wayne Schuller, wayne@schuller.id.au
 // Licenced under https://www.gnu.org/licenses/gpl-3.0.html
 //
-// Process our parsedData into chart.js ready format for the Strength Visualizer
-
-export function processData(parsedData, equation, setVisualizerConfig) {
-
-}
-
-
 // Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
 // We collect only the best set per lift type per day, according to highest estimated one rep max
 export function processVisualizerData(parsedData,
@@ -23,7 +16,7 @@ export function processVisualizerData(parsedData,
 
   const equation = visualizerConfig.equation;
 
-  const processedData = []; // See dummyProcessedData[] for our structure design
+  const processedData = [];
 
   for (const lift of parsedData) {
     const liftIndex = getProcessedLiftIndex(processedData, lift.name);
@@ -408,7 +401,6 @@ function getProcessedLiftIndex(processedData, liftType) {
       hitRadius: 20,
       hoverRadius: 10,
       cubicInterpolationMode: "monotone",
-      // selected: false,    // Our chips UI underneath the chart will select lifts for the chart
       hidden: false,      // This is for chart.js config - always show
     };
     liftIndex = processedData.push(processedLiftType) - 1;

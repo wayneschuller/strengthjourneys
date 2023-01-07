@@ -51,7 +51,7 @@ export function ChartControls (props) {
   <Grid item xs={5}> <VizConfigZoom zoomShowAllTime={props.zoomShowAllTime} zoomShowRecent={props.zoomShowRecent}/> 
   </Grid>
   <Grid item xs={7}> 
-  <EquationChooser visualizerConfig={props.visualizerConfig} setVisualizerConfig={props.setVisualizerConfig} /> 
+  <EquationChooser setEquation={props.setEquation} /> 
   </Grid>
 </Grid>
     </div>
@@ -277,8 +277,10 @@ export function VerticalChartControls({ zoomRecent, setZoomRecent }) {
 // --------------------------------------------------------------------------------------------------------
 // <EquationChooser />
 // --------------------------------------------------------------------------------------------------------
-export function EquationChooser({visualizerConfig, setVisualizerConfig}) {
+export function EquationChooser({setEquation}) {
+  const [value, setValue] = useState('Brzycki');
 
+  console.log(`<EquationChooser />`);
   const equations = [
   "Epley",
   "McGlothin",
@@ -290,15 +292,19 @@ export function EquationChooser({visualizerConfig, setVisualizerConfig}) {
   ];
 
   const handleChange = (event) => {
-    // setEquation(event.target.value);
-    setVisualizerConfig({...visualizerConfig, equation: event.target.value});
+    console.log(`setEquation...${event.target.value}`);
+    setValue(event.target.value);
+    setEquation(event.target.value);
   };
 
     return (
-    <RadioGroup value={visualizerConfig.equation} onChange={handleChange} row>
-      {equations.map((equation) => (
-        <FormControlLabel value={equation} key={equation} control={<Radio />} label={equation} />
-      ))}
-    </RadioGroup>
+      <FormControl>
+        <FormLabel id="demo-row-radio-buttons-group-label">One Rep Max Estimate Formula</FormLabel>
+          <RadioGroup value={value} onChange={handleChange} row>
+            {equations.map((eqn) => (
+              <FormControlLabel value={eqn} key={eqn} control={<Radio />} label={eqn} />
+            ))}
+          </RadioGroup>
+      </FormControl>
   );
 }

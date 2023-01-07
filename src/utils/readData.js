@@ -33,6 +33,7 @@ export async function getGoogleUserInfo(ssid, tokenResponse,
                                         setIsLoading,     
                                         setVisualizerData,
                                         visualizerConfig, setVisualizerConfig,
+                                        equation,
                                         ) {
 
   console.log(`getGoogleUserInfo()...`);
@@ -59,6 +60,7 @@ export async function getGoogleUserInfo(ssid, tokenResponse,
                           setIsLoading,     
                           setVisualizerData,
                           visualizerConfig, setVisualizerConfig,
+                          equation,
                          );
       } else {
         setInfoChipStatus("Select Data Source");  // User must click to get File Picker
@@ -80,6 +82,7 @@ export async function getGDriveMetadata (ssid, tokenResponse,
                                         setIsLoading,     
                                         setVisualizerData,
                                         visualizerConfig, setVisualizerConfig,
+                                        equation,
                                         ) {
   console.log("getGSheetMetadata()...");
 
@@ -112,6 +115,7 @@ export async function getGDriveMetadata (ssid, tokenResponse,
                           setIsLoading,     
                           setVisualizerData,
                           visualizerConfig, setVisualizerConfig,
+                          equation,
                         );
       } else {
         console.log(`Google Sheet metadata check: modifiedtime is unchanged`);
@@ -124,41 +128,13 @@ export async function getGDriveMetadata (ssid, tokenResponse,
     })
 }
 
-// Gets interesting information about the sheet but not modified time
-// NOTE: Currently unused, but may be useful in the future
-async function getGSheetMetadata (ssid, tokenResponse,
-                                        setInfoChipStatus,
-                                        setInfoChipToolTip,
-                                        setIsLoading,     
-                                        setVisualizerData,
-                                        visualizerConfig, setVisualizerConfig,
-                                    ){
-  console.log("getGSheetMetadata()...");
-  setIsLoading(true);
-
-  await axios
-    .get(`https://sheets.googleapis.com/v4/spreadsheets/${ssid}?includeGridData=false`, {
-      headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-    })
-    .then((response) => {
-      // handle success
-      // console.log(`API get GSheet metadata .then received:`);
-      // console.log(response.data);
-      // loadGSheetValues(ssid, tokenResponse);  // Next step in the chain
-    })
-    .catch((error) => {
-      setInfoChipStatus("Error Reading Google Sheet Metadata");
-      setInfoChipToolTip(error.response.data.error.message);
-      console.log(error);
-    })
-}
-
 async function loadGSheetValues(ssid, tokenResponse,
                                         setInfoChipStatus,
                                         setInfoChipToolTip,
                                         setIsLoading,     
                                         setVisualizerData,
                                         visualizerConfig, setVisualizerConfig,
+                                        equation,
                                         ) {
   console.log("loadGSheetValues()...");
   setIsLoading(true);
@@ -175,7 +151,9 @@ async function loadGSheetValues(ssid, tokenResponse,
                     setInfoChipToolTip,
                     setIsLoading,     
                     setVisualizerData,
-                    visualizerConfig, setVisualizerConfig);
+                    visualizerConfig, setVisualizerConfig,
+                    equation,
+                    );
     })
     .catch((error) => {
       setInfoChipStatus("Error Reading Google Sheet");

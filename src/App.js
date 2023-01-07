@@ -15,6 +15,7 @@ export default function App() {
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);  
   const [isLoading, setIsLoading] = useState(false); // Use to show loading animation
   const [visualizerData, setVisualizerData] = useState(null);
+  const [equation, setEquation] = useState('Brzycki');
   const [visualizerConfig, setVisualizerConfig] = useState({
     padDateMin: null,
     padDateMax: null,
@@ -22,8 +23,8 @@ export default function App() {
     sixMonthsAgo: null,
     min: null,
     achievementAnnotations: null,
-    equation: 'Brzycki',
   });
+  console.log(`<App />...`)
 
   // Event handlers do most of the data flow for us
   // However we want this mount useEffect to auto load data on init from cookies
@@ -39,21 +40,21 @@ export default function App() {
         setIsLoading,
         setVisualizerData,
         visualizerConfig, setVisualizerConfig,
+        equation,
         );
     }
   }, []);
 
-  useEffect(() => {
-    console.log(`visualizerConfig useEffect:`)
-    console.log(visualizerConfig);
+  // useEffect(() => {
+  //   console.log(`equation useEffect: ${equation}`)
 
-    // Has equation changed from the cookie version
+  //   // Has equation changed from the cookie version
 
-      // Process data again
+  //     // Process data again
 
-      // Change equation cookie
+  //     // Change equation cookie
 
-  }, [visualizerConfig]);
+  // }, [equation]);
 
   return (
     <div>
@@ -78,7 +79,8 @@ export default function App() {
         <Outlet 
           context={[  visualizerData, 
                       isLoading,
-                      visualizerConfig, setVisualizerConfig,
+                      visualizerConfig,
+                      setEquation,
                     ]} 
         />
     </div>

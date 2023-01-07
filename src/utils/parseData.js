@@ -26,7 +26,9 @@ export function parseData(data,
             setInfoChipToolTip,
             setIsLoading,     
             setVisualizerData,
-            visualizerConfig, setVisualizerConfig) {
+            visualizerConfig, setVisualizerConfig,
+            equation,
+            ) {
 
   console.log("parseData()...");
 
@@ -93,7 +95,9 @@ export function parseData(data,
                         setInfoChipToolTip,
                         setIsLoading,     
                         setVisualizerData,
-                        visualizerConfig, setVisualizerConfig);
+                        visualizerConfig, setVisualizerConfig,
+                        equation,
+                        );
 
          
           return;

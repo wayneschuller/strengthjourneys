@@ -9,12 +9,11 @@ export function processVisualizerData(parsedData,
                                       setInfoChipToolTip,
                                       setIsLoading,     
                                       setVisualizerData,
-                                      visualizerConfig, setVisualizerConfig
-                           ) {
+                                      visualizerConfig, setVisualizerConfig,
+                                      equation,
+                                      ) {
 
   console.log("processVisualizerData()...");
-
-  const equation = visualizerConfig.equation;
 
   const processedData = [];
 
@@ -129,6 +128,7 @@ export function processVisualizerData(parsedData,
       const lastDate = new Date(processedData[i].data[processedData[i].data.length-1].x);
 
       if ((currentTime - lastDate.getTime() > twoYearsInMilliseconds) && (processedData[i].data.length < 10)) {
+        // processedData[i].data.splice(0); // delete the minor obsolete lift chart data (but we keep the PRs)
         processedData.splice(i, 1); // delete the minor obsolete lift 
       }
     }
@@ -136,8 +136,6 @@ export function processVisualizerData(parsedData,
 
   // FIXME: Let's only keep the top 10 remaining lifts.
   processedData.splice(10); // Delete everything above 10
-
-  // console.log(`Here is processed[-1]:`); console.log(processed[0]);
 
   // Process the PRs/Achivements and return some chartjs annotation config.
   let annotations = processAchievements(parsedData, processedData, equation);
@@ -147,13 +145,12 @@ export function processVisualizerData(parsedData,
   // There is a chance loading another data set will require a new range, but unlikely.
   // FIXME: just check ALL the first tuples in every lift and use the most recent one.
   let padDateMin = new Date(processedData[0].data[0].x); // First tuple in first lift
-  padDateMin = padDateMin.setDate(padDateMin.getDate() - 9);
+  padDateMin = padDateMin.setDate(padDateMin.getDate() - 10);
   let padDateMax = new Date(processedData[0].data[processedData[0].data.length - 1].x); // Last tuple in first lift
-  padDateMax = padDateMax.setDate(padDateMax.getDate() + 9);
+  padDateMax = padDateMax.setDate(padDateMax.getDate() + 10);
 
-  // Set the zoom/pan to the last 5 months of data if we have that much
-  let sixMonthsAgo = padDateMax - 999 * 60 * 60 * 24 * 30 * 6;
-  // console.log(`Processing: pads: ${padDateMin}, ${padDateMax}, sixMonthsAgo: ${sixMonthsAgo}`);
+  // Set the zoom/pan to the last 6 months of data if we have that much
+  let sixMonthsAgo = padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
   if (sixMonthsAgo < padDateMin) sixMonthsAgo = padDateMin;
 
   // Search through the processed data and find the largest y value 
@@ -170,9 +167,8 @@ export function processVisualizerData(parsedData,
                         padDateMin: padDateMin,
                         padDateMax: padDateMax,
                         highestWeight: highestWeight,
-                        sixMonthsAgo: sixMonthsAgo,
                         min:  sixMonthsAgo,
-                        equation: equation,
+                        sixMonthsAgo: sixMonthsAgo,
                         achievementAnnotations: annotations,
   });
 

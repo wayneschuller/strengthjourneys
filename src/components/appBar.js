@@ -52,6 +52,8 @@ function ResponsiveAppBar(props) {
   const setVisualizerConfig = props.setVisualizerConfig;
   const setIsLoading = props.setIsLoading;
 
+  console.log(`<ResponsiveAppBar />...`);
+
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
   };

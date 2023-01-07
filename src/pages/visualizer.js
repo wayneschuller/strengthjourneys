@@ -5,6 +5,7 @@ import { useCookies } from 'react-cookie';
 import Box from '@mui/material/Box';
 import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
+import { Container } from '@mui/system';
 
 import Chart from 'chart.js/auto';    // FIXME: do I still need this now that I use Chart.register below?
 import { Line } from 'react-chartjs-2';
@@ -13,18 +14,18 @@ import zoomPlugin from 'chartjs-plugin-zoom';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
-import { EquationChooser, VerticalChartControls, LiftControls, VizConfigZoom, ChartControls } from '../components/vizualizerChartControls';
+import { ChartControls } from '../components/vizualizerChartControls';
 
-import { Container } from '@mui/system';
 
 Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 
 const Visualizer = (props) => {
+  console.log(`<Visualizer />...`);
 
   const [ visualizerData, 
           isLoading,
-          visualizerConfig,
-          setVisualizerConfig,
+          visualizerConfig, 
+          setEquation,
         ] = useOutletContext();
 
   const [cookies, setCookie] = useCookies(['selectedLifts', 'ssid', 'tokenResponse']);
@@ -32,6 +33,8 @@ const Visualizer = (props) => {
 
   // On chart load hide certain lifts that were hidden last sesssion (remembered via cookie)
   useEffect(() => {
+    console.log(`Visualiser useEffect [visualizerData]`);
+
     if (!visualizerData) return; 
 
     if (cookies.selectedLifts) {
@@ -57,6 +60,10 @@ const Visualizer = (props) => {
       let selectedLifts = visualizerData.datasets.map(item => item.label);
       setCookie('selectedLifts', JSON.stringify(selectedLifts), { path: '/' });
     }
+
+    // const chart = chartRef.current;
+    // if (chart) chart.zoomScale('x', { min: visualizerConfig.sixMonthsAgo, max: visualizerConfig.padDateMax }, "default");
+
   }, [visualizerData]); // Only run this effect once, on mount
 
   function zoomShowAllTime() {
@@ -66,7 +73,11 @@ const Visualizer = (props) => {
 
   function zoomShowRecent() {
     const chart = chartRef.current;
-    if (chart) chart.resetZoom();
+    // if (chart) chart.resetZoom(); 
+    let _sixMonthsAgo = visualizerConfig.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
+    if (_sixMonthsAgo < visualizerConfig.padDateMin) sixMonthsAgo = visualizerConfig.padDateMin;
+    const _padDateMax = visualizerConfig.padDateMax;
+    if (chart) chart.zoomScale('x', { min: _sixMonthsAgo, max: _padDateMax }, "default");
   }
 
 
@@ -101,8 +112,10 @@ const Visualizer = (props) => {
         if (fiveRM) fiveRM.display = true;
         selectedLifts = [...selectedLifts, liftType];  // Include clicked lift
     }
+
     // Update our cookie with the state of which lifts are selected
-    setCookie('selectedLifts', JSON.stringify(selectedLifts), { path: '/' });
+    // FIXME: calling setCookie causes a whole rerender of chart (and changes the zoom to default)
+    // setCookie('selectedLifts', JSON.stringify(selectedLifts), { path: '/' });
 
   }
 
@@ -111,10 +124,43 @@ const Visualizer = (props) => {
     easing: "easeInExpo",
   }
 
+  // Work out some bounds of our data and six months figure
+  const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000;   // Used for zoom config limits
+
+  // let tenDaysInMilliseconds = 10 * 24 * 60 * 60 * 1000;
+  // // let padDateMax = new Date(Date.now() + tenDaysInMilliseconds);
+  // // padDateMax = padDateMax.getTime();
+  // let padDateMin = new Date(visualizerData[0].data[0].x); // First tuple in first lift
+  // padDateMin = padDateMin.setDate(padDateMin.getTime() - tenDaysInMilliseconds);
+
+  // let padDateMax = new Date(visualizerData[0].data[visualizerData[0].data.length - 1].x); // Last tuple in first lift
+  // padDateMax = padDateMax.setDate(padDateMax.getTime() + tenDaysInMilliseconds);
+
+  // // Set the zoom/pan to the last 6 months of data if we have that much
+  // let sixMonthsAgo = padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
+  // if (sixMonthsAgo < padDateMin) sixMonthsAgo = padDateMin;
+
+  // // Search through the processed data and find the largest y value 
+  // let highestWeight = -1;
+  // processedData.forEach((liftType) => {
+  //   liftType.data.forEach((lift) => {
+  //     if (lift.y > highestWeight) 
+  //       highestWeight = lift.y;
+  //   });
+  // });
+  // highestWeight = Math.ceil(highestWeight / 49) * 50; // Round up to the next mulitiple of 50
+
+  console.log(`<Visualizer > vis.padDateMin: ${visualizerConfig.padDateMin}, vis.padDateMax: ${visualizerConfig.padDateMax}, vis.sixMonthsAgo: ${visualizerConfig.sixMonthsAgo}`);
+
+  // Make private copies so that the chart doesn't redraw on state change (kindy hacky test)
+  const _padDateMin = visualizerConfig.padDateMin
+  const _padDateMax = visualizerConfig.padDateMax
+  const _highestWeight = visualizerConfig.highestWeight;
+  const _sixMonthsAgo = visualizerConfig.sixMonthsAgo;
+  const _achievementAnnotations = visualizerConfig.achievementAnnotations;
+  console.log(`<Visualizer > _padDateMin: ${_padDateMin}, _padDateMax: ${_padDateMax}, _sixMonthsAgo: ${_sixMonthsAgo}`);
 
   // Line Chart Options for react-chartjs-2 Visualizer 
-  const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000;
-  // console.log(`<Visualizer > padDateMin: ${visualizerConfig.padDateMin}, padDateMax: ${visualizerConfig.padDateMax}`);
   var chartOptions = {
     responsive: true,
 
@@ -133,15 +179,18 @@ const Visualizer = (props) => {
     scales: {
       x: {
           type: "time",
-          min: visualizerConfig.min,      
-          suggestedMax: visualizerConfig.padDateMax,
+          // suggestedMin: visualizerConfig.sixMonthsAgo,
+          // suggestedMax: visualizerConfig.padDateMax,
+          min: _sixMonthsAgo,
+          suggestedMax: _padDateMax,
           time: {
             minUnit: "day"
           },
       },
       y: {
         suggestedMin: 0,
-        suggestedMax: visualizerConfig.highestWeight, 
+        // suggestedMax: visualizerConfig.highestWeight, 
+        suggestedMax: _highestWeight,
 
         ticks: {
           font: { family: "Catamaran", size: 15 },
@@ -223,12 +272,13 @@ const Visualizer = (props) => {
           mode: 'x',
         },
         limits: {
-          x: { min: visualizerConfig.padDateMin, max: visualizerConfig.padDateMax, minRange: sixtyDaysInMilliseconds },
+          x: { min: _padDateMin, max: _padDateMax, minRange: sixtyDaysInMilliseconds },
         },
       },
 
       annotation: {
-          annotations: visualizerConfig.achievementAnnotations,
+          // annotations: visualizerConfig.achievementAnnotations,
+          annotations: _achievementAnnotations,
           },
       },
   };
@@ -242,10 +292,11 @@ const Visualizer = (props) => {
           {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
           { isLoading && <LoadingLinearProgress /> }
 
-          { visualizerData && <Line ref={chartRef} data={visualizerData} options={chartOptions}/> }
-          { (visualizerData && visualizerConfig) && <ChartControls 
+          { (visualizerData && visualizerConfig) && <Line ref={chartRef} data={visualizerData} options={chartOptions} /> }
+
+          { visualizerData && <ChartControls 
                                 zoomShowAllTime={zoomShowAllTime}  zoomShowRecent={zoomShowRecent}
-                                visualizerConfig={visualizerConfig} setVisualizerConfig={setVisualizerConfig} 
+                                setEquation={setEquation}
                                 /> }
 
       </Container>

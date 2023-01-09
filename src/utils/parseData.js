@@ -91,11 +91,9 @@ export function parseData(data,
 
   // Process the data for the visualizer
   processVisualizerData(parsedData, 
-                        setInfoChipStatus,
-                        setInfoChipToolTip,
                         setIsLoading,     
                         setVisualizerData,
-                        visualizerConfig, setVisualizerConfig,
+                        setVisualizerConfig,
                         equation,
                         );
 

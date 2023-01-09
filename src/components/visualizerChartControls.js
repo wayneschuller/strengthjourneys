@@ -57,13 +57,13 @@ export function VizConfigZoom({zoomShowAllTime, zoomShowRecent}) {
 // <EquationChooser />
 // --------------------------------------------------------------------------------------------------------
 export function EquationChooser({setEquation}) {
+  // console.log(`<EquationChooser />`);
 
   let initEquation = localStorage.getItem('equation');
   if (!initEquation) initEquation = "Brzycki";
 
   const [value, setValue] = useState(initEquation);
 
-  console.log(`<EquationChooser />`);
   const equations = [
   "Epley",
   "McGlothin",

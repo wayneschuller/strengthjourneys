@@ -49,9 +49,11 @@ export const data = {
 
 const Analyzer = (props) => {
 
-  const [ visualizerData, 
-    isLoading,
-  ] = useOutletContext();
+  const [ parsedData, 
+          isLoading,
+          visualizerData, setVisualizerData,
+          visualizerConfig, setVisualizerConfig,
+        ] = useOutletContext();
 
   return (
     <div>
@@ -62,9 +64,9 @@ const Analyzer = (props) => {
 
       { !visualizerData &&  <p>PRs and other interesting data points will appear here. </p> }
 
-      { isLoading && <LoadingLinearProgress /> }
+      { !visualizerData && <LoadingLinearProgress /> }
 
-      { visualizerData && <PRDataGrid visualizerData={visualizerData} achievementAnnotations={achievementAnnotations} /> }
+      { visualizerData && <PRDataGrid visualizerData={visualizerData} achievementAnnotations={visualizerConfig.achievementAnnotations} /> }
 
       {/* <Doughnut data={data} /> */}
 
@@ -77,7 +79,7 @@ const Analyzer = (props) => {
 export default Analyzer;
 
 const PRDataGrid = (props) => {
-  const visualizerData = props.visualizerData.datasets;
+  const visualizerData = props.visualizerData;
   const achievementAnnotations = props.achievementAnnotations;
 
 

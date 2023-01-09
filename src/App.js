@@ -41,7 +41,6 @@ export default function App() {
         setIsLoading,
         setVisualizerData,
         visualizerConfig, setVisualizerConfig,
-        equation,
         );
     }
   }, []);

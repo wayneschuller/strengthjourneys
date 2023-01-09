@@ -8,10 +8,12 @@ export function processVisualizerData(parsedData,
                                       setIsLoading,     
                                       setVisualizerData,
                                       setVisualizerConfig,
-                                      equation,
                                       ) {
 
   console.log("processVisualizerData()...");
+
+  let equation = localStorage.getItem('equation');
+  if (!equation) equation = "Brzycki"; // Probably not needed. Just in case.
 
   const processedData = [];
 

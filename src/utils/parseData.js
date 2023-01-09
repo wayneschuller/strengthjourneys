@@ -22,12 +22,9 @@ let lastLiftType = "Tik Tok Dancing";
 //
 // ------------------------------------------------------------------------------
 export function parseData(data,
-            setInfoChipStatus,
-            setInfoChipToolTip,
             setIsLoading,     
             setVisualizerData,
-            visualizerConfig, setVisualizerConfig,
-            equation,
+            setVisualizerConfig,
             ) {
 
   console.log("parseData()...");
@@ -94,7 +91,6 @@ export function parseData(data,
                         setIsLoading,     
                         setVisualizerData,
                         setVisualizerConfig,
-                        equation,
                         );
 
          

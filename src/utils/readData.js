@@ -32,7 +32,6 @@ export async function getGoogleUserInfo(setUserInfo,
                                         setIsLoading,     
                                         setVisualizerData,
                                         visualizerConfig, setVisualizerConfig,
-                                        equation,
                                         ) {
 
   console.log(`getGoogleUserInfo()...`);
@@ -62,7 +61,6 @@ export async function getGoogleUserInfo(setUserInfo,
                           setIsLoading,     
                           setVisualizerData,
                           visualizerConfig, setVisualizerConfig,
-                          equation,
                          );
       } else {
         setInfoChipStatus("Select Data Source");  // User must click to get File Picker
@@ -84,7 +82,6 @@ export async function getGDriveMetadata (
                                         setIsLoading,     
                                         setVisualizerData,
                                         visualizerConfig, setVisualizerConfig,
-                                        equation,
                                         ) {
   console.log("getGSheetMetadata()...");
 
@@ -119,7 +116,6 @@ export async function getGDriveMetadata (
                           setIsLoading,     
                           setVisualizerData,
                           visualizerConfig, setVisualizerConfig,
-                          equation,
                         );
       } else {
         console.log(`Google Sheet metadata check: modifiedtime is unchanged`);
@@ -137,7 +133,6 @@ async function loadGSheetValues( setInfoChipStatus,
                                  setIsLoading,     
                                  setVisualizerData,
                                  visualizerConfig, setVisualizerConfig,
-                                 equation,
                                  ) {
   console.log("loadGSheetValues()...");
 
@@ -154,12 +149,9 @@ async function loadGSheetValues( setInfoChipStatus,
       setInfoChipStatus("Google Sheet Data Loaded");
 
       parseData(response.data.values, 
-                    setInfoChipStatus,
-                    setInfoChipToolTip,
                     setIsLoading,     
                     setVisualizerData,
-                    visualizerConfig, setVisualizerConfig,
-                    equation,
+                    setVisualizerConfig,
                     );
     })
     .catch((error) => {

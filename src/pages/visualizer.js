@@ -12,6 +12,8 @@ import { SJLineChart } from '../components/SJLineChart';
 // Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 
 const Visualizer = (props) => {
+  const [cookies, setCookie] = useCookies(['ssid']);
+
   console.log(`<Visualizer />...`);
 
   const [ visualizerData, 

@@ -1,8 +1,8 @@
 
-import { useState, useEffect, useRef} from 'react';
+import { useEffect, useRef} from 'react';
 import { useCookies } from 'react-cookie';
 
-import Chart from 'chart.js/auto';    // FIXME: do I still need this now that I use Chart.register below?
+import Chart from 'chart.js/auto';      // Pick everything. You can hand pick which chartjs features you want, see chartjs docs. 
 import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import zoomPlugin from 'chartjs-plugin-zoom';
@@ -33,6 +33,10 @@ export function SJLineChart (props) {
 
     if (!visualizerData) return; 
 
+    const chart = chartRef.current;
+    console.log(chart);
+    // console.log(chart.annotation);
+
     if (cookies.selectedLifts) {
       
       // Loop through visualizerData and hide the lifts not in the cookie
@@ -41,6 +45,7 @@ export function SJLineChart (props) {
           lift.hidden = true;     // Hide the lift on the legend (strikethrough appears)
 
           // Hide the corresponding annotations
+  // FIXME: This might work better if we referenced the chart.datasets internals directly?!?
           let singleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_0RM`];
           let tripleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_2RM`];
           let fiveRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_4RM`];
@@ -85,6 +90,8 @@ export function SJLineChart (props) {
   const newLegendClickHandler = function (e, legendItem, legend) {
     const index = legendItem.datasetIndex;
     const ci = legend.chart;
+    // console.log(`newLegendClickHandler:`);
+    // console.log(e);
 
     let selectedLifts = cookies.selectedLifts; // We assume this cookie is ALWAYS set
     let liftType = legendItem.text;
@@ -109,6 +116,9 @@ export function SJLineChart (props) {
         if (fiveRM) fiveRM.display = true;
         selectedLifts = [...selectedLifts, liftType];  // Include clicked lift
     }
+
+    // Update the chart instance to reflect changes to data we made
+    ci.update();
 
     // Update our cookie with the state of which lifts are selected
     // FIXME: calling setCookie causes a whole rerender of chart (and changes the zoom to default)
@@ -288,10 +298,8 @@ export function SJLineChart (props) {
   return (
     <>
     { props.visualizerData && <Line ref={chartRef} options={chartOptions} data={visualizerData} /> }
-    {/* <ChartControls zoomShowAllTime={zoomShowAllTime}  zoomShowRecent={zoomShowRecent} setEquation={props.setEquation} />  */}
+    <ChartControls zoomShowAllTime={zoomShowAllTime}  zoomShowRecent={zoomShowRecent} setEquation={props.setEquation} /> 
     </>
   );
 
 }
-
-

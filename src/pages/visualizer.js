@@ -6,7 +6,7 @@ import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
 import { Container } from '@mui/system';
 
-import { SJLineChart } from '../components/SJLineChart';
+import { VisualizerLineChart } from '../components/visualizerLineChart';
 
 const Visualizer = (props) => {
 
@@ -28,7 +28,7 @@ const Visualizer = (props) => {
           { (!visualizerData && ssid) && <ReturningUserWelcome tokenResponse={tokenResponse} /> } 
 
           {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
-          { !visualizerData ? <LoadingLinearProgress /> : <SJLineChart  visualizerData={visualizerData} 
+          { !visualizerData ? <LoadingLinearProgress /> : <VisualizerLineChart  visualizerData={visualizerData} 
                                                                         visualizerConfig={visualizerConfig} 
                                                                         setEquation={setEquation}
                                                                         /> }

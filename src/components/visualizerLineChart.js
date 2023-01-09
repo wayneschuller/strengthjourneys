@@ -6,14 +6,14 @@ import 'chartjs-adapter-date-fns';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import annotationPlugin from 'chartjs-plugin-annotation';
-import { ChartControls } from './vizualizerChartControls';
+import { ChartControls } from './visualizerChartControls';
 
 Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 
-export function SJLineChart (props) {
+export function VisualizerLineChart (props) {
   const chartRef = useRef(null);
 
-  console.log(`<SJLine />...`);
+  console.log(`<VisualiserLineChart />...`);
   // console.log(props);
 
   if (!props.visualizerData) return;

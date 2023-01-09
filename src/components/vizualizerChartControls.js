@@ -1,40 +1,20 @@
-import { useState, useEffect} from 'react';
+import { useState } from 'react';
 
 // MUI Components
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
-import Chip from '@mui/material/Chip';
-import Container from '@mui/material/Container';
-import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
-import FormGroup from '@mui/material/FormGroup';
 import FormLabel from '@mui/material/FormLabel';
 import Grid from '@mui/material/Grid';
-import InputLabel from '@mui/material/InputLabel';
-import ListItemText from '@mui/material/ListItemText';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import OutlinedInput from '@mui/material/OutlinedInput';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
-import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
-import SvgIcon from '@mui/material/SvgIcon';
 
 
 // MUI Icons
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import PsychologyIcon from '@mui/icons-material/Psychology';
 import ZoomInMapIcon from '@mui/icons-material/ZoomInMap';
 import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
-import UnfoldLess from '@mui/icons-material/UnfoldLess';
 
 
 // --------------------------------------------------------------------------------------------------------
@@ -57,25 +37,6 @@ export function ChartControls (props) {
   );
 }
 
-
-// --------------------------------------------------------------------------------------------------------
-// <VizConfigPRs />
-// --------------------------------------------------------------------------------------------------------
-
-function VizConfigPRs({showAchievements, setShowAchievements}) {
-
-  const handleChange = (event) => {
-    setShowAchievements(event.target.checked);
-  };
-
-  return (
-    <FormGroup>
-      <FormLabel id="VizConfigPRs">Achievements</FormLabel>
-      <FormControlLabel control={<Switch checked={showAchievements} onChange={handleChange} />} label="Show PRs" />
-  </FormGroup>
-  );
-}
-
 // --------------------------------------------------------------------------------------------------------
 // <VizConfigZoom />
 // --------------------------------------------------------------------------------------------------------
@@ -90,94 +51,6 @@ export function VizConfigZoom({zoomShowAllTime, zoomShowRecent}) {
     </>
   );
 }
-
-
-// --------------------------------------------------------------------------------------------------------
-// <VerticalChartControls />
-// --------------------------------------------------------------------------------------------------------
-export function VerticalChartControls({ zoomRecent, setZoomRecent }) {
-  const [view, setView] = useState('list');
-  const [anchorEl, setAnchorEl] = useState(null);
-
-  const handleChange = (event, nextView) => {
-    setZoomRecent(!zoomRecent); // Any change to trigger the useEffect zoom in <Visualizer />
-    setView(nextView);
-    return;
-
-    if (nextView == "showRecent") {
-      console.log(`Let's zoom in`);
-      // setZoomRecent(true);
-    }
-  };
-
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-    console.log(`user changed equation`);
-  };
-
-  const equations = [
-  "Epley",
-  "McGlothin",
-  "Lombardi",
-  "Mayhew",
-  "OConner",
-  "Wathen",
-  "Brzycki",
-  ];
-
-  return (
-    <ToggleButtonGroup
-      orientation="vertical"
-      value={view}
-      exclusive
-      onChange={handleChange}
-    >
-
-      <Tooltip title="Show PR achievements">
-        <ToggleButton value="showPRs" aria-label="Show PR achievements">
-          <EmojiEventsIcon />
-        </ToggleButton>
-      </Tooltip>
-
-      <Tooltip title="Show recent lifts">
-        <ToggleButton value="showRecent" aria-label="Show recent data">
-          <ZoomInMapIcon />
-        </ToggleButton>
-      </Tooltip>
-
-      <Tooltip title="Show all time ">
-        <ToggleButton value="showAll" aria-label="Show all time">
-         <ZoomOutMapIcon />
-        </ToggleButton>
-      </Tooltip>
-
-
-      {/* <Menu
-        id="equations-menu"
-        anchorEl={anchorEl}
-        keepMounted
-        open={Boolean(anchorEl)}
-        onClose={handleClose}
-      >
-        {equations.map((equation) => ( <MenuItem key={equation} onClick={handleClose} style={{ margin: 2 }}> {equation} </MenuItem>))}
-      </Menu> */}
-
-      <Tooltip title="Change 1RM formula">
-        <ToggleButton value="equation" aria-label="Change 1RM formula" aria-controls="simple-menu" aria-haspopup="true" onClick={handleClick}>
-         <PsychologyIcon />
-        </ToggleButton>
-      </Tooltip>
-
-    </ToggleButtonGroup>
-  );
-};
-
-
-    // <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
 
 
 // --------------------------------------------------------------------------------------------------------

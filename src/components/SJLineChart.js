@@ -90,10 +90,11 @@ export function SJLineChart (props) {
   const newLegendClickHandler = function (e, legendItem, legend) {
     const index = legendItem.datasetIndex;
     const ci = legend.chart;
-    // console.log(`newLegendClickHandler:`);
-    // console.log(e);
 
-    let selectedLifts = cookies.selectedLifts; // We assume this cookie is ALWAYS set
+    let selectedLifts = JSON.parse(localStorage.getItem('selectedLifts'));
+    console.log(selectedLifts);
+    if (!selectedLifts) selectedLifts = [];
+
     let liftType = legendItem.text;
     let singleRM = visualizerConfig.achievementAnnotations[`${liftType}_best_1RM`];
     let tripleRM = visualizerConfig.achievementAnnotations[`${liftType}_best_3RM`];
@@ -123,6 +124,7 @@ export function SJLineChart (props) {
     // Update our cookie with the state of which lifts are selected
     // FIXME: calling setCookie causes a whole rerender of chart (and changes the zoom to default)
     // setCookie('selectedLifts', JSON.stringify(selectedLifts), { path: '/' });
+    localStorage.setItem('selectedLifts', JSON.stringify(selectedLifts));
 
   }
 

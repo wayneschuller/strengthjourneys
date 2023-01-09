@@ -15,8 +15,8 @@ export function VisualizerLineChart(props) {
 
   console.log(`<VisualiserLineChart />...`);
 
-  if (!props.visualizerData) return;
-  if (!props.visualizerConfig) return;
+  // if (!props.visualizerData) return;
+  // if (!props.visualizerConfig) return;
 
   let parsedData = props.parsedData;
   let visualizerData = props.visualizerData;
@@ -29,7 +29,6 @@ export function VisualizerLineChart(props) {
 
 
   // On chart load hide certain lifts that were hidden last sesssion (remembered via localStorage)
-  let didZoom = false;
   useEffect(() => {
     console.log(`<SJLineChart /> useEffect [visualizerData]`);
     if (!visualizerData) return;
@@ -62,12 +61,10 @@ export function VisualizerLineChart(props) {
       localStorage.setItem("selectedLifts", JSON.stringify(selectedLifts));
     }
 
-    // FIXME: We could manually zoom in here so as to not hardcode in config?
     if (chart) {
-      // chart.zoomScale('x', { min: visualizerConfig.sixMonthsAgo, max: visualizerConfig.padDateMax }, "default");
       zoomShowRecent();
     }
-  }, [visualizerData]); // Only run this effect once, on mount
+  }, [props.visualizerData]); // Only run this effect once, on mount
 
   function zoomShowAllTime() {
     const chart = chartRef.current;

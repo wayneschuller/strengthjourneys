@@ -286,7 +286,7 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
       if (a.date === b.date) {
 
         // Same weight same day - tie goes to the last lift
-        return 1; // FIXME: does not seem to be the correct result
+        return 1; // Put a AFTER b. FIXME: does not seem to be the correct result
 
       } else {
 

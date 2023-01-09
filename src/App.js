@@ -18,8 +18,6 @@ export default function App() {
     padDateMin: null,
     padDateMax: null,
     highestWeight: null,
-    sixMonthsAgo: null,
-    min: null,
     achievementAnnotations: null,
   });
   console.log(`<App />...`)
@@ -44,17 +42,6 @@ export default function App() {
         );
     }
   }, []);
-
-  // useEffect(() => {
-  //   console.log(`equation useEffect: ${equation}`)
-
-  //   // Has equation changed from the localStorage previous version?
-
-  //     // Process data again
-
-  //     // Change equation in localStorage
-
-  // }, [equation]);
 
   return (
     <div>

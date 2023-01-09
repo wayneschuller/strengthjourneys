@@ -23,6 +23,7 @@ export function VisualizerLineChart(props) {
   let visualizerConfig = props.visualizerConfig;
 
   // On chart load hide certain lifts that were hidden last sesssion (remembered via localStorage)
+  let didZoom = false;
   useEffect(() => {
     console.log(`<SJLineChart /> useEffect [visualizerData]`);
     if (!visualizerData) return;
@@ -56,7 +57,10 @@ export function VisualizerLineChart(props) {
     }
 
     // FIXME: We could manually zoom in here so as to not hardcode in config?
-    // if (chart) chart.zoomScale('x', { min: visualizerConfig.sixMonthsAgo, max: visualizerConfig.padDateMax }, "default");
+    if (chart) {
+      // chart.zoomScale('x', { min: visualizerConfig.sixMonthsAgo, max: visualizerConfig.padDateMax }, "default");
+      zoomShowRecent();
+    }
   }, [visualizerData]); // Only run this effect once, on mount
 
   function zoomShowAllTime() {
@@ -72,13 +76,12 @@ export function VisualizerLineChart(props) {
   function zoomShowRecent() {
     const chart = chartRef.current;
     // if (chart) chart.resetZoom();
-    let _sixMonthsAgo =
+    let sixMonthsAgo =
       visualizerConfig.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
-    if (_sixMonthsAgo < visualizerConfig.padDateMin)
+    if (sixMonthsAgo < visualizerConfig.padDateMin)
       sixMonthsAgo = visualizerConfig.padDateMin;
-    const _padDateMax = visualizerConfig.padDateMax;
     if (chart)
-      chart.zoomScale("x", { min: _sixMonthsAgo, max: _padDateMax }, "default");
+      chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerConfig.padDateMax }, "default");
   }
 
   // When someone clicks an item in the legend we will:
@@ -128,42 +131,8 @@ export function VisualizerLineChart(props) {
   // Work out some bounds of our data and six months figure
   const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000; // Used for zoom config limits
 
-  // let tenDaysInMilliseconds = 10 * 24 * 60 * 60 * 1000;
-  // // let padDateMax = new Date(Date.now() + tenDaysInMilliseconds);
-  // // padDateMax = padDateMax.getTime();
-  // let padDateMin = new Date(visualizerData[0].data[0].x); // First tuple in first lift
-  // padDateMin = padDateMin.setDate(padDateMin.getTime() - tenDaysInMilliseconds);
-
-  // let padDateMax = new Date(visualizerData[0].data[visualizerData[0].data.length - 1].x); // Last tuple in first lift
-  // padDateMax = padDateMax.setDate(padDateMax.getTime() + tenDaysInMilliseconds);
-
-  // // Set the zoom/pan to the last 6 months of data if we have that much
-  // let sixMonthsAgo = padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
-  // if (sixMonthsAgo < padDateMin) sixMonthsAgo = padDateMin;
-
-  // // Search through the processed data and find the largest y value
-  // let highestWeight = -1;
-  // processedData.forEach((liftType) => {
-  //   liftType.data.forEach((lift) => {
-  //     if (lift.y > highestWeight)
-  //       highestWeight = lift.y;
-  //   });
-  // });
-  // highestWeight = Math.ceil(highestWeight / 49) * 50; // Round up to the next mulitiple of 50
-
   console.log(
-    `<Visualizer > vis.padDateMin: ${visualizerConfig.padDateMin}, vis.padDateMax: ${visualizerConfig.padDateMax}, vis.sixMonthsAgo: ${visualizerConfig.sixMonthsAgo}`
-  );
-
-  // Make private copies so that the chart doesn't redraw on state change (kindy hacky test)
-  const _padDateMin = visualizerConfig.padDateMin;
-  const _padDateMax = visualizerConfig.padDateMax;
-  const _highestWeight = visualizerConfig.highestWeight;
-  const _sixMonthsAgo = visualizerConfig.sixMonthsAgo;
-  const _achievementAnnotations = visualizerConfig.achievementAnnotations;
-  console.log(
-    `<Visualizer > _padDateMin: ${_padDateMin}, _padDateMax: ${_padDateMax}, _sixMonthsAgo: ${_sixMonthsAgo}`
-  );
+    `<Visualizer > vis.padDateMin: ${visualizerConfig.padDateMin}, vis.padDateMax: ${visualizerConfig.padDateMax}`);
 
   const animationOptions = {
     // duration:  2000,
@@ -173,18 +142,13 @@ export function VisualizerLineChart(props) {
   const scalesOptions = {
     x: {
       type: "time",
-      // suggestedMin: visualizerConfig.sixMonthsAgo,
-      // suggestedMax: visualizerConfig.padDateMax,
-      min: _sixMonthsAgo,
-      suggestedMax: _padDateMax,
       time: {
         minUnit: "day",
       },
     },
     y: {
       suggestedMin: 0,
-      // suggestedMax: visualizerConfig.highestWeight,
-      suggestedMax: _highestWeight,
+      suggestedMax: visualizerConfig.highestWeight,
 
       ticks: {
         font: { family: "Catamaran", size: 15 },
@@ -264,8 +228,8 @@ export function VisualizerLineChart(props) {
     },
     limits: {
       x: {
-        min: _padDateMin,
-        max: _padDateMax,
+        min: visualizerConfig.padDateMin,
+        max: visualizerConfig.padDateMax,
         minRange: sixtyDaysInMilliseconds,
       },
     },
@@ -273,7 +237,6 @@ export function VisualizerLineChart(props) {
 
   const annotationOptions = {
     annotations: visualizerConfig.achievementAnnotations,
-    // annotations: _achievementAnnotations,
   };
 
   // Line Chart Options for react-chartjs-2 Visualizer

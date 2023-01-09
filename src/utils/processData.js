@@ -140,18 +140,16 @@ export function processVisualizerData(parsedData,
   // Process the PRs/Achivements and return some chartjs annotation config.
   let annotations = processAchievements(parsedData, processedData, equation);
 
-  // 9 day padding for the beginning and end of our data makes chart look nice
+  // 10 day padding for the beginning and end of our data makes chart look nice
   // Use the most popular lift to set some aesthetic x-axis padding at start and end
   // There is a chance loading another data set will require a new range, but unlikely.
   // FIXME: just check ALL the first tuples in every lift and use the most recent one.
   let padDateMin = new Date(processedData[0].data[0].x); // First tuple in first lift
   padDateMin = padDateMin.setDate(padDateMin.getDate() - 10);
+
+  // FIXME: this could just do 10 days from now
   let padDateMax = new Date(processedData[0].data[processedData[0].data.length - 1].x); // Last tuple in first lift
   padDateMax = padDateMax.setDate(padDateMax.getDate() + 10);
-
-  // Set the zoom/pan to the last 6 months of data if we have that much
-  let sixMonthsAgo = padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
-  if (sixMonthsAgo < padDateMin) sixMonthsAgo = padDateMin;
 
   // Search through the processed data and find the largest y value 
   let highestWeight = -1;
@@ -167,8 +165,6 @@ export function processVisualizerData(parsedData,
                         padDateMin: padDateMin,
                         padDateMax: padDateMax,
                         highestWeight: highestWeight,
-                        min:  sixMonthsAgo,
-                        sixMonthsAgo: sixMonthsAgo,
                         achievementAnnotations: annotations,
   });
 

@@ -138,6 +138,9 @@ async function loadGSheetValues( setInfoChipStatus,
 
   const tokenResponse = JSON.parse(localStorage.getItem(`tokenResponse`));
   const ssid = localStorage.getItem(`ssid`);
+  if (!ssid) {
+    return;
+  }
 
   setIsLoading(true);
 
@@ -157,6 +160,6 @@ async function loadGSheetValues( setInfoChipStatus,
     .catch((error) => {
       setInfoChipStatus("Error Reading Google Sheet");
       console.log(error);
-      setInfoChipToolTip(error.response.data.error.message);
+      // setInfoChipToolTip(error.response.data.error.message);
     })
 }

@@ -57,6 +57,10 @@ export async function getGoogleUserInfo(setUserInfo,
       // If we have a valid looking ssid then we can go to the next step in the chain
       if (ssid && ssid.length > 10)  {
         setInfoChipStatus("Loading GSheet Values"); 
+        if (localStorage.getItem('gSheetName')) {
+          setInfoChipToolTip(localStorage.getItem('gSheetName')); // Put the GSheet filename in the chip tooltip
+        }
+
         loadGSheetValues( setInfoChipStatus,
                         setInfoChipToolTip,
                         setIsLoading,     
@@ -134,7 +138,7 @@ export async function getGDriveMetadata (
     })
 }
 
-async function loadGSheetValues( setInfoChipStatus,
+export async function loadGSheetValues( setInfoChipStatus,
                                  setInfoChipToolTip,
                                  setIsLoading,     
                                  visualizerData, setVisualizerData,

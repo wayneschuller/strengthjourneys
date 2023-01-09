@@ -19,7 +19,7 @@ import MenuItem from '@mui/material/MenuItem';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 
 import logo from './logo.png';
-import { getGoogleUserInfo, getGDriveMetadata } from '../utils/readData';
+import { getGoogleUserInfo, loadGSheetValues } from '../utils/readData';
 
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import useDrivePicker from 'react-google-drive-picker'
@@ -134,6 +134,8 @@ function ResponsiveAppBar(props) {
           return;
         }
         setInfoChipToolTip(data.docs[0].name);
+        localStorage.setItem('gSheetName', data.docs[0].name);
+
         let ssid = localStorage.getItem(`ssid`);
 
         // Have they chosen a different file to previously?
@@ -142,13 +144,24 @@ function ResponsiveAppBar(props) {
           localStorage.setItem('ssid', data.docs[0].id);
         }
 
-        getGDriveMetadata(  setInfoChipStatus,
-                            setInfoChipToolTip,
-                            setIsLoading,     
-                            visualizerData, setVisualizerData,
-                            visualizerConfig, setVisualizerConfig,
-                            setParsedData,
-                          );
+        setInfoChipStatus("Loading GSheet Values"); 
+        loadGSheetValues( setInfoChipStatus,
+                        setInfoChipToolTip,
+                        setIsLoading,     
+                        visualizerData, setVisualizerData,
+                        visualizerConfig, setVisualizerConfig,
+                        setParsedData,
+                      );
+
+        // For now we no longer bother with this part of the data chain
+        // because we are not checking for modifiedTime for autorefresh
+        // getGDriveMetadata(  setInfoChipStatus,
+                            // setInfoChipToolTip,
+                            // setIsLoading,     
+                            // visualizerData, setVisualizerData,
+                            // visualizerConfig, setVisualizerConfig,
+                            // setParsedData,
+                          // );
       },
     });
   }

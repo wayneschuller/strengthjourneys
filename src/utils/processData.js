@@ -280,11 +280,22 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
   // console.log(repLifts);
 
   // Sort by weight. (award any ties to the earlier lift)
-  // FIXME: any ties on the SAME day should go to the later lift
   repLifts.sort((a, b) => {
     if (a.weight === b.weight) {
-      return new Date(a.date) - new Date(b.date);
+
+      if (a.date === b.date) {
+
+        // Same weight same day - tie goes to the last lift
+        return 1; // FIXME: does not seem to be the correct result
+
+      } else {
+
+        // Same weight different day - tie goes to the earlier lift
+        return new Date(a.date) - new Date(b.date);
+      }
     }
+
+    // Different weights - bigger is better
     return b.weight - a.weight;
   });
 

@@ -1,7 +1,5 @@
 
 import { useEffect, useRef} from 'react';
-import { useCookies } from 'react-cookie';
-
 import Chart from 'chart.js/auto';      // Pick everything. You can hand pick which chartjs features you want, see chartjs docs. 
 import { Line } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
@@ -13,7 +11,6 @@ import { ChartControls } from './vizualizerChartControls';
 Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 
 export function SJLineChart (props) {
-  const [cookies, setCookie] = useCookies(['selectedLifts']);
   const chartRef = useRef(null);
 
   console.log(`<SJLine />...`);
@@ -29,26 +26,23 @@ export function SJLineChart (props) {
   // On chart load hide certain lifts that were hidden last sesssion (remembered via cookie)
   useEffect(() => {
     console.log(`<SJLineChart /> useEffect [visualizerData]`);
-    // console.log(visualizerData);
-
     if (!visualizerData) return; 
 
     const chart = chartRef.current;
-    console.log(chart);
-    // console.log(chart.annotation);
+    let selectedLifts = JSON.parse(localStorage.getItem('selectedLifts'));
 
-    if (cookies.selectedLifts) {
+    if (selectedLifts) {
       
-      // Loop through visualizerData and hide the lifts not in the cookie
+      // Loop through visualizerData and only show the same lifts as previous session
       visualizerData.datasets.forEach(lift => {
-        if (!cookies.selectedLifts.includes(lift.label)) {
+        if (!selectedLifts.includes(lift.label)) {
           lift.hidden = true;     // Hide the lift on the legend (strikethrough appears)
 
           // Hide the corresponding annotations
   // FIXME: This might work better if we referenced the chart.datasets internals directly?!?
-          let singleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_0RM`];
-          let tripleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_2RM`];
-          let fiveRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_4RM`];
+          let singleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_1RM`];
+          let tripleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_3RM`];
+          let fiveRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_5RM`];
           if (singleRM) singleRM.display = false;
           if (tripleRM) tripleRM.display = false;
           if (fiveRM) fiveRM.display = false;
@@ -57,12 +51,12 @@ export function SJLineChart (props) {
       });
 
     } else {
-      // We have no cookie so let's make one for next time with every lift
+      // We have no localstorage for selectedLifts so let's make one for next time with every lift
       let selectedLifts = visualizerData.datasets.map(item => item.label);
-      setCookie('selectedLifts', JSON.stringify(selectedLifts), { path: '/' });
+      localStorage.setItem('selectedLifts', JSON.stringify(selectedLifts));
     }
 
-    // const chart = chartRef.current;
+    // FIXME: We could manually zoom in here so as to not hardcode in config?
     // if (chart) chart.zoomScale('x', { min: visualizerConfig.sixMonthsAgo, max: visualizerConfig.padDateMax }, "default");
 
   }, [visualizerData]); // Only run this effect once, on mount
@@ -85,14 +79,11 @@ export function SJLineChart (props) {
   // 1) Show/Hide the line (default behaviour)
   // 2) Show/Hide PR annotations for that line
   // 3) Remember the choice in a cookie for next time
-  //
-  // FIXME: This might work better if we referenced the chart.datasets internals directly?!?
   const newLegendClickHandler = function (e, legendItem, legend) {
     const index = legendItem.datasetIndex;
-    const ci = legend.chart;
+    const chart = legend.chart;
 
     let selectedLifts = JSON.parse(localStorage.getItem('selectedLifts'));
-    console.log(selectedLifts);
     if (!selectedLifts) selectedLifts = [];
 
     let liftType = legendItem.text;
@@ -100,9 +91,9 @@ export function SJLineChart (props) {
     let tripleRM = visualizerConfig.achievementAnnotations[`${liftType}_best_3RM`];
     let fiveRM = visualizerConfig.achievementAnnotations[`${liftType}_best_5RM`];
 
-    if (ci.isDatasetVisible(index)) {
+    if (chart.isDatasetVisible(index)) {
         console.log(`Hide ${legendItem.text}`);
-        ci.hide(index);
+        chart.hide(index);
         legendItem.hidden = true;
         if (singleRM) singleRM.display = false;
         if (tripleRM) tripleRM.display = false;
@@ -110,7 +101,7 @@ export function SJLineChart (props) {
         selectedLifts = selectedLifts.filter((lift) => lift !== liftType);  // Exclude unclicked lift
     } else {
         console.log(`Show ${legendItem.text}`);
-        ci.show(index);
+        chart.show(index);
         legendItem.hidden = false;
         if (singleRM) singleRM.display = true;
         if (tripleRM) tripleRM.display = true;
@@ -119,11 +110,9 @@ export function SJLineChart (props) {
     }
 
     // Update the chart instance to reflect changes to data we made
-    ci.update();
+    chart.update();
 
-    // Update our cookie with the state of which lifts are selected
-    // FIXME: calling setCookie causes a whole rerender of chart (and changes the zoom to default)
-    // setCookie('selectedLifts', JSON.stringify(selectedLifts), { path: '/' });
+    // Update our localstorage with the array of which lifts are selected
     localStorage.setItem('selectedLifts', JSON.stringify(selectedLifts));
 
   }

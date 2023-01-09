@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { processVisualizerData } from '../utils/processData';
+
 // MUI Components
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -21,16 +23,25 @@ import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 // <ChartControls />
 // --------------------------------------------------------------------------------------------------------
 export function ChartControls (props) {
+  console.log(`<ChartConrols />...`)
+  console.log(props);
 
   return (
     <div>
      {/* <Box sx={{ m: 1 }} md={{ m: 3}} > */}
        {/* <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}> */}
   <Grid container spacing={2}>
-  <Grid item xs={5}> <VizConfigZoom zoomShowAllTime={props.zoomShowAllTime} zoomShowRecent={props.zoomShowRecent}/> 
+    <Grid item xs={5}> <VizConfigZoom zoomShowAllTime={props.zoomShowAllTime} zoomShowRecent={props.zoomShowRecent}/> 
   </Grid>
   <Grid item xs={7}> 
-  <EquationChooser setEquation={props.setEquation} /> 
+     <EquationChooser 
+        parsedData={props.parsedData}
+        visualizerData={props.visualizerData}
+        setVisualizerData={props.setVisualizerData}
+        visualizerConfig={props.visualizerConfig}
+        setVisualizerConfig={props.setVisualizerConfig}
+        zoomShowRecent={props.zoomShowRecent}
+        /> 
   </Grid>
 </Grid>
     </div>
@@ -56,8 +67,9 @@ export function VizConfigZoom({zoomShowAllTime, zoomShowRecent}) {
 // --------------------------------------------------------------------------------------------------------
 // <EquationChooser />
 // --------------------------------------------------------------------------------------------------------
-export function EquationChooser({setEquation}) {
-  // console.log(`<EquationChooser />`);
+export function EquationChooser(props) {
+  console.log(`<EquationChooser />`);
+  console.log(props);
 
   let initEquation = localStorage.getItem('equation');
   if (!initEquation) initEquation = "Brzycki";
@@ -85,6 +97,18 @@ export function EquationChooser({setEquation}) {
     // setEquation(event.target.value);
 
     localStorage.setItem('equation', event.target.value);
+
+
+    // Mark visualizerData as needing reprocessing
+    
+    // Process the data with the new equation (processer will detect it is a refresh)
+    processVisualizerData(props.parsedData, 
+                         props.visualizerData, props.setVisualizerData,
+                         props.visualizerConfig, props.setVisualizerConfig,
+                        );
+
+    // Refresh the chart
+    props.zoomShowRecent();
   };
 
     return (

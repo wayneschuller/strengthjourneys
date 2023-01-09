@@ -15,7 +15,6 @@ export default function App() {
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);  
   const [isLoading, setIsLoading] = useState(false); // Use to show loading animation
-  const [equation, setEquation] = useState('Brzycki');
   const [visualizerConfig, setVisualizerConfig] = useState({
     padDateMin: null,
     padDateMax: null,
@@ -69,10 +68,10 @@ export default function App() {
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
         <Outlet 
-          context={[  visualizerData, 
+          context={[  parsedData,
                       isLoading,
-                      visualizerConfig,
-                      setEquation,
+                      visualizerData, setVisualizerData,
+                      visualizerConfig, setVisualizerConfig,
                     ]} 
         />
     </div>

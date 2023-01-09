@@ -18,10 +18,13 @@ export function VisualizerLineChart(props) {
   if (!props.visualizerData) return;
   if (!props.visualizerConfig) return;
 
+  let parsedData = props.parsedData;
   let visualizerData = props.visualizerData;
+  let setVisualizerData = props.setVisualizerData;
   let visualizerConfig = props.visualizerConfig;
+  let setVisualizerConfig = props.setVisualizerConfig;
 
-  console.log(visualizerData);
+  console.log(parsedData);
 
 
   // On chart load hide certain lifts that were hidden last sesssion (remembered via localStorage)
@@ -269,11 +272,16 @@ export function VisualizerLineChart(props) {
       {visualizerData && (
         <Line ref={chartRef} options={chartOptions} data={{ datasets: visualizerData }} />
       )}
-      <ChartControls
-        zoomShowAllTime={zoomShowAllTime}
-        zoomShowRecent={zoomShowRecent}
-        setEquation={props.setEquation}
-      />
+      { (visualizerData && parsedData) && <ChartControls
+            zoomShowAllTime={zoomShowAllTime}
+            zoomShowRecent={zoomShowRecent}
+            parsedData={parsedData}
+            visualizerData={visualizerData}
+            setVisualizerData={setVisualizerData}
+            visualizerConfig={visualizerConfig}
+            setVisualizerConfig={setVisualizerConfig}
+          />
+      }
     </>
   );
 }

@@ -89,7 +89,6 @@ export function parseData(data,
 
   // Process the data for the visualizer
   processVisualizerData(parsedData, 
-                        setIsLoading,     
                         visualizerData, setVisualizerData,
                         visualizerConfig, setVisualizerConfig,
                         );

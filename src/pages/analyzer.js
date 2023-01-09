@@ -51,11 +51,6 @@ const Analyzer = (props) => {
 
   const [ visualizerData, 
     isLoading,
-    padDateMin, 
-    padDateMax, 
-    suggestedYMax, 
-    achievementAnnotations,
-    setAchievementAnnotations,
   ] = useOutletContext();
 
   return (

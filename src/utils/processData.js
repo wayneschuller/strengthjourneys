@@ -5,7 +5,6 @@
 // Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
 // We collect only the best set per lift type per day, according to highest estimated one rep max
 export function processVisualizerData(parsedData,
-                                      setIsLoading,     
                                       visualizerData, setVisualizerData,
                                       visualizerConfig, setVisualizerConfig,
                                       ) {
@@ -174,16 +173,20 @@ export function processVisualizerData(parsedData,
     });
   });
   highestWeight = Math.ceil(highestWeight / 49) * 50; // Round up to the next mulitiple of 50
-          
-  setVisualizerConfig({
+ 
+  // If this is not a refresh then set state stuff
+  // However if we are just refreshing, we will have mutated the annotations but don't tell React
+  // because React will rerender everything in a dumb way
+  if (!isRefresh) {
+    setVisualizerConfig({
                         padDateMin: padDateMin,
                         padDateMax: padDateMax,
                         highestWeight: highestWeight,
                         achievementAnnotations: annotations,
-  });
+    });
+  }
 
-  // Lastly, load in the data.
-  setIsLoading(false);            // Stop the loading animations
+  // setIsLoading(false);            // Stop the loading animations
 
   // If it is not a refresh - set the React state for rendering to happen
   // If it is a refresh - we will rely on local mutation to change the chart without React knowing

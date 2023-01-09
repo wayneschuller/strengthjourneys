@@ -12,10 +12,10 @@ const Visualizer = (props) => {
 
   console.log(`<Visualizer />...`);
 
-  const [ visualizerData, 
+  const [ parsedData, 
           isLoading,
-          visualizerConfig, 
-          setEquation,
+          visualizerData, setVisualizerData,
+          visualizerConfig, setVisualizerConfig,
         ] = useOutletContext();
 
   const ssid = localStorage.getItem('ssid');
@@ -28,9 +28,12 @@ const Visualizer = (props) => {
           { (!visualizerData && ssid) && <ReturningUserWelcome tokenResponse={tokenResponse} /> } 
 
           {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
-          { !visualizerData ? <LoadingLinearProgress /> : <VisualizerLineChart  visualizerData={visualizerData} 
+          { !visualizerData ? <LoadingLinearProgress /> : <VisualizerLineChart  
+                                                                        parsedData={parsedData} 
+                                                                        visualizerData={visualizerData} 
+                                                                        setVisualizerData={setVisualizerData}
                                                                         visualizerConfig={visualizerConfig} 
-                                                                        setEquation={setEquation}
+                                                                        setVisualizerConfig={setVisualizerConfig} 
                                                                         /> }
 
       </Container>

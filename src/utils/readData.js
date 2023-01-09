@@ -56,14 +56,26 @@ export async function getGoogleUserInfo(setUserInfo,
 
       // If we have a valid looking ssid then we can go to the next step in the chain
       if (ssid && ssid.length > 10)  {
-        setInfoChipStatus("Checking GSheet Modified Time"); 
-        getGDriveMetadata(setInfoChipStatus,
-                          setInfoChipToolTip,
-                          setIsLoading,     
-                          visualizerData, setVisualizerData,
-                          visualizerConfig, setVisualizerConfig,
-                          setParsedData,
-                         );
+        setInfoChipStatus("Loading GSheet Values"); 
+        loadGSheetValues( setInfoChipStatus,
+                        setInfoChipToolTip,
+                        setIsLoading,     
+                        visualizerData, setVisualizerData,
+                        visualizerConfig, setVisualizerConfig,
+                        setParsedData,
+                      );
+
+
+        // We used to get the filename and modified time, but let's 
+        // try not bothering with that exta API get step
+        // setInfoChipStatus("Checking GSheet Filename"); 
+        // getGDriveMetadata(setInfoChipStatus,
+                          // setInfoChipToolTip,
+                          // setIsLoading,     
+                          // visualizerData, setVisualizerData,
+                          // visualizerConfig, setVisualizerConfig,
+                          // setParsedData,
+                        //  );
       } else {
         setInfoChipStatus("Select Data Source");  // User must click to get File Picker
       }
@@ -90,9 +102,8 @@ export async function getGDriveMetadata (
 
   const tokenResponse = JSON.parse(localStorage.getItem(`tokenResponse`));
   const ssid = localStorage.getItem(`ssid`);
-  const isInit = localStorage.getItem('isInit');
 
-  if (isInit) setIsLoading(true);
+  setIsLoading(true);
 
   // API call to get GDrive file metadata to get modified time and the filename
   await axios
@@ -104,47 +115,16 @@ export async function getGDriveMetadata (
       // console.log(`API get GDrive file metadata .then received:`);
       // console.log(response.data);
 
+      setInfoChipToolTip(response.data.name); // Put the GSheet filename in the chip tooltip
+      setInfoChipStatus("Loading GSheet Values"); 
 
-      if (isInit) setInfoChipToolTip(response.data.name); // Put the GSheet filename in the chip tooltip
-
-      let prevModifiedTime = localStorage.getItem('modifiedTime');
-      if (prevModifiedTime === null) {
-        prevModifiedTime = 0; // Very old in unix time 
-      }
-
-      const modifiedTime = Date.parse(response.data.modifiedTime);
-
-      console.log(`prevModifiedTime: ${prevModifiedTime}. modifiedTime: ${modifiedTime}, isInit: ${isInit}`);
-
-      // If the modified time is newer then refresh the data from Google Sheets
-      if (isInit || modifiedTime > prevModifiedTime) {
-
-        if (isInit) setInfoChipStatus("Loading GSheet Values"); 
-
-        localStorage.setItem('isInit', false);
-        localStorage.setItem('modifiedTime', modifiedTime);
-
-        loadGSheetValues( setInfoChipStatus,
-                          setInfoChipToolTip,
-                          setIsLoading,     
-                          visualizerData, setVisualizerData,
-                          visualizerConfig, setVisualizerConfig,
-                          setParsedData,
-                        );
-      } else {
-        console.log(`GSheet metadata: modifiedtime is unchanged, no refresh needed. Checking again soon...`);
-
-    	  // Call yourself again in a few seconds to auto refresh Google Sheet data
-   		  setTimeout(function run() {
-          getGDriveMetadata(setInfoChipStatus,
-                           setInfoChipToolTip,
-                           setIsLoading,     
-                           visualizerData, setVisualizerData,
-                           visualizerConfig, setVisualizerConfig,
-                           setParsedData,
-                          );
-   		    }, 10000);
-      } 
+      loadGSheetValues( setInfoChipStatus,
+                        setInfoChipToolTip,
+                        setIsLoading,     
+                        visualizerData, setVisualizerData,
+                        visualizerConfig, setVisualizerConfig,
+                        setParsedData,
+                      );
     })
     .catch((error) => {
       setIsLoading(false);
@@ -184,17 +164,6 @@ async function loadGSheetValues( setInfoChipStatus,
                     visualizerConfig, setVisualizerConfig,
                     setParsedData,
                     );
-
-      // Set a timeout to auto-refresh the google sheet data
-   		  setTimeout(function run() {
-          getGDriveMetadata(setInfoChipStatus,
-                           setInfoChipToolTip,
-                           setIsLoading,     
-                           visualizerData, setVisualizerData,
-                           visualizerConfig, setVisualizerConfig,
-                           setParsedData,
-                          );
-   		    }, 10000);
     })
     .catch((error) => {
       setInfoChipStatus("Error Reading Google Sheet");

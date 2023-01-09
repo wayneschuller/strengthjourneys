@@ -31,8 +31,6 @@ export default function App() {
     if (!didInit && tokenResponse) {
       didInit = true;
 
-      localStorage.setItem('isInit', true);
-
       // ✅ Only runs once per app load
       getGoogleUserInfo(
         setUserInfo,

@@ -57,7 +57,11 @@ export function VizConfigZoom({zoomShowAllTime, zoomShowRecent}) {
 // <EquationChooser />
 // --------------------------------------------------------------------------------------------------------
 export function EquationChooser({setEquation}) {
-  const [value, setValue] = useState('Brzycki');
+
+  let initEquation = localStorage.getItem('equation');
+  if (!initEquation) initEquation = "Brzycki";
+
+  const [value, setValue] = useState(initEquation);
 
   console.log(`<EquationChooser />`);
   const equations = [
@@ -70,10 +74,15 @@ export function EquationChooser({setEquation}) {
   "Brzycki",
   ];
 
+
   const handleChange = (event) => {
     console.log(`setEquation...${event.target.value}`);
     setValue(event.target.value);
-    setEquation(event.target.value);
+
+    // We were setting equation state which was lifted high
+    // But every change triggered a rerender of the chart
+    // which in turn triggered a zoom reset which was BAD
+    // setEquation(event.target.value);
 
     localStorage.setItem('equation', event.target.value);
   };

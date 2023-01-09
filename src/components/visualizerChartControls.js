@@ -40,7 +40,7 @@ export function ChartControls (props) {
         setVisualizerData={props.setVisualizerData}
         visualizerConfig={props.visualizerConfig}
         setVisualizerConfig={props.setVisualizerConfig}
-        zoomShowRecent={props.zoomShowRecent}
+        chartUpdate={props.chartUpdate}
         /> 
   </Grid>
 </Grid>
@@ -108,7 +108,7 @@ export function EquationChooser(props) {
                         );
 
     // Refresh the chart
-    props.zoomShowRecent();
+    props.chartUpdate();
   };
 
     return (

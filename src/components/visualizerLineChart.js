@@ -24,7 +24,8 @@ export function VisualizerLineChart(props) {
   let visualizerConfig = props.visualizerConfig;
   let setVisualizerConfig = props.setVisualizerConfig;
 
-  // console.log(parsedData);
+  console.log(visualizerData);
+  console.log(visualizerConfig);
 
 
   // On chart load hide certain lifts that were hidden last sesssion (remembered via localStorage)
@@ -87,6 +88,11 @@ export function VisualizerLineChart(props) {
       sixMonthsAgo = visualizerConfig.padDateMin;
     if (chart)
       chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerConfig.padDateMax }, "default");
+  }
+
+  function chartUpdate() {
+    const chart = chartRef.current;
+    if (chart) chart.update();
   }
 
   // When someone clicks an item in the legend we will:
@@ -244,6 +250,7 @@ export function VisualizerLineChart(props) {
   // Line Chart Options for react-chartjs-2 Visualizer
   let chartOptions = {
     responsive: true,
+    // parsing: false,     // if you can match data to chartjs internal formats - this will improve speed
     font: { family: "Catamaran" },
     animation: animationOptions,
     onClick: (event, item) => {
@@ -277,6 +284,7 @@ export function VisualizerLineChart(props) {
             setVisualizerData={setVisualizerData}
             visualizerConfig={visualizerConfig}
             setVisualizerConfig={setVisualizerConfig}
+            chartUpdate={chartUpdate}
           />
       }
     </>

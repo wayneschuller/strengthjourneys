@@ -150,7 +150,13 @@ export function processVisualizerData(parsedData,
   processedData.splice(10); // Delete everything above 10
 
   // Process the PRs/Achivements and return some chartjs annotation config.
-  let annotations = processAchievements(parsedData, processedData, equation);
+  if (isRefresh) {
+    // If we have annotations this function will just mutate them
+    updateAchievements(processedData, equation, visualizerConfig.achievementAnnotations);
+  } else {
+    // If annotations are null this function will give us a fresh set
+    var annotations = processAchievements(parsedData, processedData, equation);
+  }
 
   // 10 day padding for the beginning and end of our data makes chart look nice
   // Use the most popular lift to set some aesthetic x-axis padding at start and end
@@ -195,21 +201,52 @@ export function processVisualizerData(parsedData,
   }
 }
 
-// Find interesting achievements
+
+// When refreshing, we want to simply update the y position of the annotations based on a new equation
+// We can reuse the PR data stored in processedData for each lift
+function updateAchievements(processedData, equation, achievementAnnotations) {
+
+    // console.log(`updateAnnotations(). Mutating Y values on existing annotations`);
+
+    // Loop through each lift and recalculate the e1rm for the achievement label
+    processedData.forEach((liftType, index) => {
+
+      let reps; let weight;
+
+      if (liftType['1RM']) {
+        reps = liftType['1RM']['reps'];
+        weight = liftType['1RM']['weight'];
+        if (reps && weight)
+          achievementAnnotations[`${liftType.label}_best_1RM`].yValue = estimateE1RM(reps, weight, equation);
+      }
+
+      if (liftType['3RM']) {
+        reps = liftType['3RM']['reps'];
+        weight = liftType['3RM']['weight'];
+        if (reps && weight)
+          achievementAnnotations[`${liftType.label}_best_3RM`].yValue = estimateE1RM(reps, weight, equation);
+      }
+
+      if (liftType['5RM']) {
+        reps = liftType['5RM']['reps'];
+        weight = liftType['5RM']['weight'];
+        if (reps && weight)
+          achievementAnnotations[`${liftType.label}_best_5RM`].yValue = estimateE1RM(reps, weight, equation);
+      }
+    });
+}
+
+
+// Find interesting achievements for this dataset
 function processAchievements(parsedData, processedData, equation) {
 
-  // FIXME: clearing annotations is needed for data refresh. I will leave the code here for now
-  // but likely it should go elsewhere once we have data refresh working.
-  // Clear old chart annotations
-  // for (var member in liftAnnotations) delete liftAnnotations[member];
-
+  // We are creating a first time set of annotations
   let liftAnnotations = {};
 
   // For each lift find achievements
   processedData.forEach((liftType, index) => {
     // Clear old afterLabels with achievements so we can recreate them
 
-    // if (index >= maxChartLines) return; // Achievements and annotations only useful where we have chart lines
     liftType.data.forEach((lift) => {
       lift.afterLabel.splice(0, lift.afterLabel.length); // empty array
       if (lift.notes) lift.afterLabel.push(lift.notes); // Put any notes back in first

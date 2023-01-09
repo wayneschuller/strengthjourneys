@@ -9,8 +9,6 @@ import { getGoogleUserInfo } from './utils/readData';
 export default function App() {
   const [parsedData, setParsedData] = useState(null);
   const [visualizerData, setVisualizerData] = useState(null);
-
-  const [dataModifiedTime, setDataModifiedTime] = useState(0); // Unix timestamp
   const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);  
@@ -32,6 +30,9 @@ export default function App() {
 
     if (!didInit && tokenResponse) {
       didInit = true;
+
+      localStorage.setItem('isInit', true);
+
       // ✅ Only runs once per app load
       getGoogleUserInfo(
         setUserInfo,

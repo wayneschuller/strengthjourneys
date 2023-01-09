@@ -24,9 +24,8 @@ export function VisualizerLineChart(props) {
   let visualizerConfig = props.visualizerConfig;
   let setVisualizerConfig = props.setVisualizerConfig;
 
-  console.log(visualizerData);
-  console.log(visualizerConfig);
-
+  // console.log(visualizerData);
+  // console.log(visualizerConfig);
 
   // On chart load hide certain lifts that were hidden last sesssion (remembered via localStorage)
   useEffect(() => {

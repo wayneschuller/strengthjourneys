@@ -7,12 +7,14 @@ import ResponsiveAppBar from './components/appBar';
 import { getGoogleUserInfo } from './utils/readData';
 
 export default function App() {
+  const [parsedData, setParsedData] = useState(null);
+  const [visualizerData, setVisualizerData] = useState(null);
+
   const [dataModifiedTime, setDataModifiedTime] = useState(0); // Unix timestamp
   const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);  
   const [isLoading, setIsLoading] = useState(false); // Use to show loading animation
-  const [visualizerData, setVisualizerData] = useState(null);
   const [equation, setEquation] = useState('Brzycki');
   const [visualizerConfig, setVisualizerConfig] = useState({
     padDateMin: null,
@@ -37,8 +39,9 @@ export default function App() {
         setInfoChipStatus,
         setInfoChipToolTip,
         setIsLoading,
-        setVisualizerData,
-        visualizerConfig, setVisualizerConfig,
+        visualizerData, setVisualizerData,
+        visualizerConfig,  setVisualizerConfig,
+        setParsedData,
         );
     }
   }, []);
@@ -53,11 +56,13 @@ export default function App() {
       setInfoChipStatus={setInfoChipStatus}
       infoChipToolTip={infoChipToolTip}
       setInfoChipToolTip={setInfoChipToolTip}
+      visualizerData={visualizerData}
       setVisualizerData={setVisualizerData}
       isLoading={isLoading}
       setIsLoading={setIsLoading}
       visualizerConfig={visualizerConfig}
       setVisualizerConfig={setVisualizerConfig}
+      setParsedData={setParsedData}
      />
 
       {/* An <Outlet> renders whatever child route is currently active,

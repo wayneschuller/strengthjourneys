@@ -14,13 +14,15 @@ export function VisualizerLineChart(props) {
   const chartRef = useRef(null);
 
   console.log(`<VisualiserLineChart />...`);
-  // console.log(props);
 
   if (!props.visualizerData) return;
   if (!props.visualizerConfig) return;
 
   let visualizerData = props.visualizerData;
   let visualizerConfig = props.visualizerConfig;
+
+  console.log(visualizerData);
+
 
   // On chart load hide certain lifts that were hidden last sesssion (remembered via localStorage)
   let didZoom = false;
@@ -33,7 +35,7 @@ export function VisualizerLineChart(props) {
 
     if (selectedLifts) {
       // Loop through visualizerData and only show the same lifts as previous session
-      visualizerData.datasets.forEach((lift) => {
+      visualizerData.forEach((lift) => {
         if (!selectedLifts.includes(lift.label)) {
           lift.hidden = true; // Hide the lift on the legend (strikethrough appears)
 
@@ -52,7 +54,7 @@ export function VisualizerLineChart(props) {
       });
     } else {
       // We have no localstorage for selectedLifts so let's make one for next time with every lift
-      let selectedLifts = visualizerData.datasets.map((item) => item.label);
+      let selectedLifts = visualizerData.map((item) => item.label);
       localStorage.setItem("selectedLifts", JSON.stringify(selectedLifts));
     }
 
@@ -264,8 +266,8 @@ export function VisualizerLineChart(props) {
 
   return (
     <>
-      {props.visualizerData && (
-        <Line ref={chartRef} options={chartOptions} data={visualizerData} />
+      {visualizerData && (
+        <Line ref={chartRef} options={chartOptions} data={{ datasets: visualizerData }} />
       )}
       <ChartControls
         zoomShowAllTime={zoomShowAllTime}

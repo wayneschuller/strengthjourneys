@@ -45,10 +45,12 @@ function ResponsiveAppBar(props) {
   const setInfoChipStatus = props.setInfoChipStatus;
   const infoChipToolTip = props.infoChipToolTip;
   const setInfoChipToolTip = props.setInfoChipToolTip;
+  const visualizerData = props.visualizerData;
   const setVisualizerData = props.setVisualizerData;
   const visualizerConfig = props.visualizerConfig;
   const setVisualizerConfig = props.setVisualizerConfig;
   const setIsLoading = props.setIsLoading;
+  const setParsedData = props.setParsedData;
 
   // console.log(`<ResponsiveAppBar />...`);
 
@@ -102,8 +104,9 @@ function ResponsiveAppBar(props) {
                         setInfoChipStatus,
                         setInfoChipToolTip,
                         setIsLoading,
-                        setVisualizerData,
+                        visualizerData, setVisualizerData,
                         visualizerConfig, setVisualizerConfig,
+                        setParsedData,
                         );
     },
     onError: errorResponse => console.log(errorResponse),
@@ -142,8 +145,9 @@ function ResponsiveAppBar(props) {
         getGDriveMetadata(  setInfoChipStatus,
                             setInfoChipToolTip,
                             setIsLoading,     
-                            setVisualizerData,
+                            visualizerData, setVisualizerData,
                             visualizerConfig, setVisualizerConfig,
+                            setParsedData,
                           );
       },
     });

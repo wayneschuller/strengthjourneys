@@ -30,8 +30,9 @@ export async function getGoogleUserInfo(setUserInfo,
                                         setInfoChipStatus,
                                         setInfoChipToolTip,
                                         setIsLoading,     
-                                        setVisualizerData,
+                                        visualizerData, setVisualizerData,
                                         visualizerConfig, setVisualizerConfig,
+                                        setParsedData,
                                         ) {
 
   console.log(`getGoogleUserInfo()...`);
@@ -59,8 +60,9 @@ export async function getGoogleUserInfo(setUserInfo,
         getGDriveMetadata(setInfoChipStatus,
                           setInfoChipToolTip,
                           setIsLoading,     
-                          setVisualizerData,
+                          visualizerData, setVisualizerData,
                           visualizerConfig, setVisualizerConfig,
+                          setParsedData,
                          );
       } else {
         setInfoChipStatus("Select Data Source");  // User must click to get File Picker
@@ -80,8 +82,9 @@ export async function getGDriveMetadata (
                                         setInfoChipStatus,
                                         setInfoChipToolTip,
                                         setIsLoading,     
-                                        setVisualizerData,
+                                        visualizerData, setVisualizerData,
                                         visualizerConfig, setVisualizerConfig,
+                                        setParsedData,
                                         ) {
   console.log("getGSheetMetadata()...");
 
@@ -114,8 +117,9 @@ export async function getGDriveMetadata (
         loadGSheetValues( setInfoChipStatus,
                           setInfoChipToolTip,
                           setIsLoading,     
-                          setVisualizerData,
+                          visualizerData, setVisualizerData,
                           visualizerConfig, setVisualizerConfig,
+                          setParsedData,
                         );
       } else {
         console.log(`Google Sheet metadata check: modifiedtime is unchanged`);
@@ -131,8 +135,9 @@ export async function getGDriveMetadata (
 async function loadGSheetValues( setInfoChipStatus,
                                  setInfoChipToolTip,
                                  setIsLoading,     
-                                 setVisualizerData,
+                                 visualizerData, setVisualizerData,
                                  visualizerConfig, setVisualizerConfig,
+                                 setParsedData,
                                  ) {
   console.log("loadGSheetValues()...");
 
@@ -153,8 +158,9 @@ async function loadGSheetValues( setInfoChipStatus,
 
       parseData(response.data.values, 
                     setIsLoading,     
-                    setVisualizerData,
-                    setVisualizerConfig,
+                    visualizerData, setVisualizerData,
+                    visualizerConfig, setVisualizerConfig,
+                    setParsedData,
                     );
     })
     .catch((error) => {

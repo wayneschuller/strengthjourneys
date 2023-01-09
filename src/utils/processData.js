@@ -6,16 +6,28 @@
 // We collect only the best set per lift type per day, according to highest estimated one rep max
 export function processVisualizerData(parsedData,
                                       setIsLoading,     
-                                      setVisualizerData,
-                                      setVisualizerConfig,
+                                      visualizerData, setVisualizerData,
+                                      visualizerConfig, setVisualizerConfig,
                                       ) {
 
   console.log("processVisualizerData()...");
-
+  console.log(visualizerData);
+                                        
   let equation = localStorage.getItem('equation');
   if (!equation) equation = "Brzycki"; // Probably not needed. Just in case.
 
-  const processedData = [];
+  let isRefresh = false
+  // Do we already have some visualizerData? This is a refresh caused by:
+  //   a) changing the equation method
+  //   b) automatic google sheets refresh 
+  //
+  let processedData = [];
+  if (visualizerData) {
+    console.log(`existing chart date detected in state:`)
+    console.log(visualizerData);
+    processedData = visualizerData; // We are going to discretely mutate React state to modify chart without a rerender
+    isRefresh = true;
+  } 
 
   for (const lift of parsedData) {
     const liftIndex = getProcessedLiftIndex(processedData, lift.name);
@@ -57,6 +69,8 @@ export function processVisualizerData(parsedData,
     // Handle a number of cases where the parsed lift date has a date match in the processed graph data.
 
     // If we are changing equation method, then update the y value
+    // FIXME: what happens if changing the equation changes the top estimate lift for that session?
+    // FIXME: should we be setting .isUpdated here?
     if (processedData[liftIndex].data[dateIndex].method != equation) {
       processedData[liftIndex].data[dateIndex].y = oneRepMax;
       processedData[liftIndex].data[dateIndex].method = equation;
@@ -170,7 +184,13 @@ export function processVisualizerData(parsedData,
 
   // Lastly, load in the data.
   setIsLoading(false);            // Stop the loading animations
-  setVisualizerData({datasets: processedData});   // This should trigger <Visualizer /> and <Analyzer /> creation
+
+  // If it is not a refresh - set the React state for rendering to happen
+  // If it is a refresh - we will rely on local mutation to change the chart without React knowing
+  if (!isRefresh) {
+    // setVisualizerData({datasets: processedData});   // This should trigger <Visualizer /> and <Analyzer /> creation
+    setVisualizerData(processedData);   // This should trigger <Visualizer /> and <Analyzer /> creation
+  }
 }
 
 // Find interesting achievements

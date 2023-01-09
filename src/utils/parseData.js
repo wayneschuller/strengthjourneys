@@ -23,8 +23,9 @@ let lastLiftType = "Tik Tok Dancing";
 // ------------------------------------------------------------------------------
 export function parseData(data,
             setIsLoading,     
-            setVisualizerData,
-            setVisualizerConfig,
+            visualizerData, setVisualizerData,
+            visualizerConfig, setVisualizerConfig,
+            setParsedData,
             ) {
 
   console.log("parseData()...");
@@ -84,13 +85,13 @@ export function parseData(data,
 
   // Next in the data flow is to process the data.
   // console.log(`setParsedData to: ${JSON.stringify(parsedData[-1])}`);
-  //  setParsedData(parsedData);    // FIXME: we might need parsedData in state later
+  setParsedData(parsedData);    // We need this in state for refreshes later on
 
   // Process the data for the visualizer
   processVisualizerData(parsedData, 
                         setIsLoading,     
-                        setVisualizerData,
-                        setVisualizerConfig,
+                        visualizerData, setVisualizerData,
+                        visualizerConfig, setVisualizerConfig,
                         );
 
          

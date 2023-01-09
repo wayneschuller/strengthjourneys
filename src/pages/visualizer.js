@@ -7,13 +7,6 @@ import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
 import { Container } from '@mui/system';
 
-// import Chart from 'chart.js/auto';    // FIXME: do I still need this now that I use Chart.register below?
-// import { Line } from 'react-chartjs-2';
-// import 'chartjs-adapter-date-fns';
-// import zoomPlugin from 'chartjs-plugin-zoom';
-// import ChartDataLabels from 'chartjs-plugin-datalabels';
-// import annotationPlugin from 'chartjs-plugin-annotation';
-
 import { SJLineChart } from '../components/SJLineChart';
 
 // Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
@@ -27,44 +20,6 @@ const Visualizer = (props) => {
           setEquation,
         ] = useOutletContext();
 
-  const [cookies, setCookie] = useCookies(['selectedLifts', 'ssid', 'tokenResponse']);
-
-  // On chart load hide certain lifts that were hidden last sesssion (remembered via cookie)
-  useEffect(() => {
-    console.log(`Visualiser useEffect [visualizerData]`);
-
-    return; // FIXME: This should maybe be moved into SJLineChart.js wrapper?
-
-    if (!visualizerData) return; 
-
-    if (cookies.selectedLifts) {
-      
-      // Loop through visualizerData and hide the lifts not in the cookie
-      visualizerData.datasets.forEach(lift => {
-        if (!cookies.selectedLifts.includes(lift.label)) {
-          lift.hidden = true;     // Hide the lift on the legend (strikethrough appears)
-
-          // Hide the corresponding annotations
-          let singleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_1RM`];
-          let tripleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_3RM`];
-          let fiveRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_5RM`];
-          if (singleRM) singleRM.display = false;
-          if (tripleRM) tripleRM.display = false;
-          if (fiveRM) fiveRM.display = false;
-
-        }
-      });
-
-    } else {
-      // We have no cookie so let's make one for next time with every lift
-      let selectedLifts = visualizerData.datasets.map(item => item.label);
-      setCookie('selectedLifts', JSON.stringify(selectedLifts), { path: '/' });
-    }
-
-    // const chart = chartRef.current;
-    // if (chart) chart.zoomScale('x', { min: visualizerConfig.sixMonthsAgo, max: visualizerConfig.padDateMax }, "default");
-
-  }, [visualizerData]); // Only run this effect once, on mount
 
   return (
       <Container maxWidth='xl'>

@@ -3,13 +3,11 @@ import './App.css';
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 
-import { useCookies } from 'react-cookie';
 import ResponsiveAppBar from './components/appBar';
 import { getGoogleUserInfo } from './utils/readData';
 
 export default function App() {
   const [dataModifiedTime, setDataModifiedTime] = useState(0); // Unix timestamp
-  const [cookies] = useCookies(['ssid', 'tokenResponse']);
   const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);  
@@ -27,13 +25,17 @@ export default function App() {
   console.log(`<App />...`)
 
   // Event handlers do most of the data flow for us
-  // However we want this mount useEffect to auto load data on init from cookies
+  // However we want this mount useEffect to auto load data on init when we have a previous tokenResponse and ssid
   let didInit = false;
   useEffect(() => {
-    if (!didInit && cookies.tokenResponse) {
+
+    const tokenResponse = JSON.parse(localStorage.getItem(`tokenResponse`));
+    const ssid = localStorage.getItem(`ssid`);
+
+    if (!didInit && tokenResponse) {
       didInit = true;
       // ✅ Only runs once per app load
-      getGoogleUserInfo(cookies.ssid, cookies.tokenResponse,
+      getGoogleUserInfo(ssid, tokenResponse,
         setUserInfo,
         setInfoChipStatus,
         setInfoChipToolTip,
@@ -48,11 +50,11 @@ export default function App() {
   // useEffect(() => {
   //   console.log(`equation useEffect: ${equation}`)
 
-  //   // Has equation changed from the cookie version
+  //   // Has equation changed from the localStorage previous version?
 
   //     // Process data again
 
-  //     // Change equation cookie
+  //     // Change equation in localStorage
 
   // }, [equation]);
 

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useCookies } from 'react-cookie';
 
 import Slider from '@mui/material/Slider';
 import { styled } from '@mui/material/styles';
@@ -40,24 +39,26 @@ const Item = styled(Paper)(({ theme }) => ({
 
 const OneRepMaxCalculator = () => {
 
-  const [cookies, setCookie] = useCookies(['reps', 'weight', 'isMetric']);
+  // Get some initial values from any browser localstorage 
+  let initReps = localStorage.getItem('calcReps');
+  initReps = (initReps) ? parseInt(initReps) : 5;
 
-  // Get some initial values from any cookies.
-  let initReps = (cookies.reps === undefined) ? 5 : parseInt(cookies.reps);
-  let initWeight = (cookies.weight === undefined) ? 225 : parseFloat(cookies.weight);
-  let initIsMetric = (cookies.isMetric === "true"); // boolean is true if string is "true" otherwise false
+  let initWeight = localStorage.getItem('calcWeight');
+  initWeight = (initWeight) ? parseFloat(initWeight) : 225;
+
+  let initIsMetric = localStorage.getItem('calcIsMetric');
+  initIsMetric = (initIsMetric === "true")      // boolean is true if string is "true" otherwise false
 
   const [reps, setReps] = useState(initReps);
   const [weight, setWeight] = useState(initWeight);
   const [isMetric, setMetric] = useState(initIsMetric); 
 
-  // useEffect when state changes put key variables in cookies so we can default to them next time
+  // useEffect when state changes put key variables in localStorage so we can default to them next time
   useEffect(() => {
-    let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now
-    setCookie('reps', reps, { path: '/', expires: d });
-    setCookie('weight', weight, { path: '/', expires: d });
-    setCookie('isMetric', isMetric, { path: '/', expires: d });
-  }, [weight, reps, isMetric, setCookie])
+    localStorage.setItem('calcReps', reps);
+    localStorage.setItem('calcWeight', weight);
+    localStorage.setItem('calcIsMetric', isMetric);
+  }, [weight, reps, isMetric])
 
   const handleRepsSliderChange = (event, newValue) => {
     setReps(newValue);

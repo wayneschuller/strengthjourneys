@@ -1,6 +1,5 @@
 import { React, useEffect } from 'react';
 import { useOutletContext } from "react-router-dom";
-import { useCookies } from 'react-cookie';
 
 import Box from '@mui/material/Box';
 import LinearProgress from '@mui/material/LinearProgress';
@@ -9,10 +8,7 @@ import { Container } from '@mui/system';
 
 import { SJLineChart } from '../components/SJLineChart';
 
-// Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
-
 const Visualizer = (props) => {
-  const [cookies, setCookie] = useCookies(['ssid']);
 
   console.log(`<Visualizer />...`);
 
@@ -22,12 +18,14 @@ const Visualizer = (props) => {
           setEquation,
         ] = useOutletContext();
 
+  const ssid = localStorage.getItem('ssid');
+  const tokenResponse = JSON.parse(localStorage.getItem('tokenResponse'));
 
   return (
       <Container maxWidth='xl'>
 
-          { (!visualizerData && !cookies.ssid) && <NewUserWelcome /> } 
-          { (!visualizerData && cookies.ssid) && <ReturningUserWelcome tokenResponse={cookies.tokenResponse} /> } 
+          { (!visualizerData && !ssid) && <NewUserWelcome /> } 
+          { (!visualizerData && ssid) && <ReturningUserWelcome tokenResponse={tokenResponse} /> } 
 
           {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
           { !visualizerData ? <LoadingLinearProgress /> : <SJLineChart  visualizerData={visualizerData} 

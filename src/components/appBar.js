@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
-import { useCookies } from 'react-cookie';
 
 import AppBar from '@mui/material/AppBar';
 import Avatar from '@mui/material/Avatar';
@@ -38,7 +37,6 @@ const settings = ['Profile', 'Settings'];
 function ResponsiveAppBar(props) {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
-  const [cookies, setCookie, removeCookie] = useCookies(['ssid', 'tokenResponse']);
 
   // FIXME: This is not best practice
   const userInfo = props.userInfo;
@@ -76,7 +74,9 @@ function ResponsiveAppBar(props) {
   const handleUserMenuLogout = () => {
     // console.log("Logging out of google...");
     googleLogout();
-    removeCookie('tokenResponse'); // Forget the tokenReponse 
+    localStorage.removeItem('tokenResponse');
+    localStorage.removeItem('selectedLifts');
+    localStorage.removeItem('ssid');
     setUserInfo(null);    // This will remove the profile menu and status button
     setVisualizerData(null);  // Reset the graph
     setAnchorElUser(null);  // Closes menu
@@ -92,12 +92,13 @@ function ResponsiveAppBar(props) {
   const niceGoogleLogin = useGoogleLogin({
     scope: SCOPES,
     onSuccess: async tokenResponse => {
-      // park the tokenResponse in the browser cookie - it is normally valid for about 1 hour
-      setCookie('tokenResponse', JSON.stringify(tokenResponse), { path: '/', maxAge: tokenResponse.expires_in });
-      // console.log(tokenResponse);
+      // Park the tokenResponse in the browser - it is normally valid for about 1 hour
+      localStorage.setItem('tokenResponse', JSON.stringify(tokenResponse));
+
+      const ssid = localStorage.getItem('ssid');
 
       setInfoChipStatus("Checking User Info"); 
-      getGoogleUserInfo(cookies.ssid, tokenResponse,
+      getGoogleUserInfo(ssid, tokenResponse,
                         setUserInfo,
                         setInfoChipStatus,
                         setInfoChipToolTip,
@@ -111,12 +112,16 @@ function ResponsiveAppBar(props) {
 
   const [openPicker, authResponse] = useDrivePicker();  
   const openGDrivePicker = () => {
+
+    const tokenResponse = JSON.parse(localStorage.getItem('tokenResponse'));
+    // console.log(tokenResponse);
+
     openPicker({
       clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
       developerKey: process.env.REACT_APP_GOOGLE_API_KEY,
       appId: process.env.REACT_APP_GOOGLE_APP_ID,
       viewId: "SPREADSHEETS",
-      token: cookies.tokenResponse.access_token, // Pass a pre-obtained token with drive.file scope
+      token: tokenResponse.access_token, // Pass a pre-obtained token with drive.file scope
       showUploadView: true,
       showUploadFolders: true,
       supportDrives: true,
@@ -127,17 +132,15 @@ function ResponsiveAppBar(props) {
           return;
         }
         setInfoChipToolTip(data.docs[0].name);
+        let ssid = localStorage.getItem(`ssid`);
 
-        // console.log(`User chose ssid. New: ${data.docs[0].id}. Old cookie: ${cookies.ssid}`)
-        // console.log(data);
         // Have they chosen a different file to previously?
-        if (data.docs[0].id !== cookies.ssid) {
-          // park the ssid in the browser cookie - expires in a year. They can change it anytime.
-          let d = new Date(); d.setTime(d.getTime() + (365*24*60*60*1000)); // 365 days from now
-          setCookie('ssid', data.docs[0].id, { path: '/', expires: d });
+        if (data.docs[0].id !== ssid) {
+          // park the ssid in the browser
+          localStorage.setItem('ssid', data.docs[0].id);
         }
 
-        getGDriveMetadata(data.docs[0].id, cookies.tokenResponse,
+        getGDriveMetadata(data.docs[0].id, tokenResponse,
                             setInfoChipStatus,
                             setInfoChipToolTip,
                             setIsLoading,     

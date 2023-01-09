@@ -5,7 +5,6 @@ import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { CookiesProvider } from 'react-cookie';
 
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import color from '@mui/material/colors/indigo';
@@ -36,7 +35,6 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
-      <CookiesProvider>
         <ThemeProvider theme={theme}>
           <BrowserRouter>
             <Routes>
@@ -53,7 +51,6 @@ root.render(
           </Routes>
         </BrowserRouter>
       </ThemeProvider>
-     </CookiesProvider>
   </GoogleOAuthProvider>
   </React.StrictMode>
 );

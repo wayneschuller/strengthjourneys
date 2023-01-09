@@ -14,7 +14,7 @@ export function SJLineChart (props) {
   const chartRef = useRef(null);
 
   console.log(`<SJLine />...`);
-  console.log(props);
+  // console.log(props);
 
   if (!props.visualizerData) return;
   if (!props.visualizerConfig) return;

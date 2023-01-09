@@ -37,6 +37,7 @@ export async function getGoogleUserInfo(ssid, tokenResponse,
                                         ) {
 
   console.log(`getGoogleUserInfo()...`);
+  console.log(ssid);
 
   if (!tokenResponse) {
     return; // No ticket to google? Then no party.
@@ -52,7 +53,7 @@ export async function getGoogleUserInfo(ssid, tokenResponse,
       setUserInfo(response.data);
 
       // If we have a valid looking ssid then we can go to the next step in the chain
-      if (ssid !== undefined && ssid.length > 10)  {
+      if (ssid && ssid.length > 10)  {
         setInfoChipStatus("Checking GSheet Modified Time"); 
         getGDriveMetadata(ssid, tokenResponse,
                           setInfoChipStatus,
@@ -68,7 +69,7 @@ export async function getGoogleUserInfo(ssid, tokenResponse,
     })
     .catch((error) => {
       console.log(`axios.get UserInfo error:`);
-      console.log(error.response);
+      console.log(error);
 
       // Just in case we had a working tokenResponse that has now expired.
       setUserInfo(null);

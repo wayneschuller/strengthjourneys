@@ -1,5 +1,4 @@
 import { useState, useEffect} from 'react';
-import { useCookies } from 'react-cookie';
 
 // MUI Components
 import Box from '@mui/material/Box';
@@ -58,99 +57,6 @@ export function ChartControls (props) {
   );
 }
 
-// --------------------------------------------------------------------------------------------------------
-// <LiftControls />
-// --------------------------------------------------------------------------------------------------------
-export function LiftControls (props) {
-  const [selectedChips, setSelectedChips] = useState([]);
-  const [cookies, setCookie] = useCookies(['selectedChips']);
-
-  let visualizerData = props.visualizerData;
-  let setSelectedVisualizerData = props.setSelectedVisualizerData;
-  let visualizerConfig = props.visualizerConfig;
-
-  useEffect(() => {
-    if (cookies.selectedChips) {
-      // Initialize the selectedChips array based on the cookie value
-      setSelectedChips(cookies.selectedChips);
-
-    } else {
-      // Initialize the selectedChips array based on the .selected value in visualizerData
-      setSelectedChips(visualizerData.filter((item) => item.selected).map((item) => item.label));
-    }
-  }, []); // Only run this effect once, on mount
-
-   // Save the selectedChips array to a cookie when it changes
-  useEffect(() => {
-    setCookie('selectedChips', JSON.stringify(selectedChips), { path: '/' });
-  }, [selectedChips]);
-
-  function handleChipClick(liftType) {
-
-    return; 
-    // FIXME: should we block the user from toggling down to ZERO lifts? 
-
-    // Reconstruct selectedVisualizerData with or without the selected liftType
-    if (selectedChips.includes(liftType)) {
-      setSelectedChips(selectedChips.filter((chipId) => chipId !== liftType));
-    } else {
-      setSelectedChips([...selectedChips, liftType]);
-    }
-
-    // Get the index for this lift from visualizerData
-    let liftIndex = visualizerData.findIndex((lift) => lift.label === liftType);
-
-    // if (liftIndex <= 3) return; // We always show top 4, so do nothing for now.
-
-    let singleRM = visualizerConfig.achievementAnnotations[`${liftType}_best_1RM`];
-    let tripleRM = visualizerConfig.achievementAnnotations[`${liftType}_best_3RM`];
-    let fiveRM = visualizerConfig.achievementAnnotations[`${liftType}_best_5RM`];
-
-    // Check if the liftType is already in the selectedVisualizerData, if so, remove it.
-    if (visualizerData[liftIndex].selected === true) {
-      visualizerData[liftIndex].selected = false; 
-      visualizerData[liftIndex].hidden = true; 
-
-      // Turn off achievement annotations for this NOT selected lift
-      // console.log(`Turning OFF annotations for lift: ${liftType}`);
-      // if (singleRM) singleRM.display = false;
-      // if (tripleRM) tripleRM.display = false;
-      // if (fiveRM) fiveRM.display = false;
-    } else {
-      visualizerData[liftIndex].selected = true; 
-      visualizerData[liftIndex].hidden = false; 
-
-      // Turn ON achievement annotations for this selected lift
-      // console.log(`Turning ON annotations for lift: ${liftType}`);
-      // if (singleRM) singleRM.display = true;
-      // if (tripleRM) tripleRM.display = true;
-      // if (fiveRM) fiveRM.display = true;
-    }
-
-    // Create a new wrapper for the user seletecd lift types
-    var wrapper = {
-      datasets: visualizerData.filter(lift => lift.selected)
-    };
-
-    setSelectedVisualizerData(wrapper);
-  }
-
-  // TODO: Could we set the colour of each selected chip to be based on the colour of the lift line? Then we could delete chartjs legend.
-  // Return a bunch of chips to let user select what lift types appear on the chart.
-  return (
-    <div>
-
-        {visualizerData && visualizerData.map((lift) => (
-          <Chip sx={{ mr: 1, mb: 1 }} size="large" key={lift.label} 
-                label={lift.label} 
-                color={selectedChips.includes(lift.label) ? 'primary' : 'default'}
-                onClick={() => handleChipClick(lift.label)}
-                />
-        ))}
-    </div>
-
-  );
-}
 
 // --------------------------------------------------------------------------------------------------------
 // <VizConfigPRs />

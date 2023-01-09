@@ -21,7 +21,6 @@
     "date-fns": "^2.29.3",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.0.1",
-    "react-cookie": "^4.1.1",
     "react-dom": "^18.2.0",
     "react-google-drive-picker": "file:dependencies/react-google-drive-picker",
     "react-router-dom": "^6.6.1",

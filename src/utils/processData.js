@@ -10,7 +10,6 @@ export function processVisualizerData(parsedData,
                                       ) {
 
   console.log("processVisualizerData()...");
-  console.log(visualizerData);
                                         
   let equation = localStorage.getItem('equation');
   if (!equation) equation = "Brzycki"; // Probably not needed. Just in case.
@@ -22,8 +21,8 @@ export function processVisualizerData(parsedData,
   //
   let processedData = [];
   if (visualizerData) {
-    console.log(`existing chart date detected in state:`)
-    console.log(visualizerData);
+    console.log(`... refreshing old data...`)
+    // console.log(visualizerData);
     processedData = visualizerData; // We are going to discretely mutate React state to modify chart without a rerender
     isRefresh = true;
   } 

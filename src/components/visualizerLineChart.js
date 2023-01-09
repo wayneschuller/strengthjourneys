@@ -24,7 +24,7 @@ export function VisualizerLineChart(props) {
   let visualizerConfig = props.visualizerConfig;
   let setVisualizerConfig = props.setVisualizerConfig;
 
-  console.log(parsedData);
+  // console.log(parsedData);
 
 
   // On chart load hide certain lifts that were hidden last sesssion (remembered via localStorage)
@@ -133,11 +133,6 @@ export function VisualizerLineChart(props) {
     localStorage.setItem("selectedLifts", JSON.stringify(selectedLifts));
   };
 
-  // Work out some bounds of our data and six months figure
-  const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000; // Used for zoom config limits
-
-  console.log(
-    `<Visualizer > vis.padDateMin: ${visualizerConfig.padDateMin}, vis.padDateMax: ${visualizerConfig.padDateMax}`);
 
   const animationOptions = {
     // duration:  2000,
@@ -222,6 +217,8 @@ export function VisualizerLineChart(props) {
     },
   };
 
+  // Work out some bounds of our data and six months figure
+  const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000; // Used for zoom config limits
   const zoomOptions = {
     zoom: {
       wheel: { enabled: true },

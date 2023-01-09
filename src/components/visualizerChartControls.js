@@ -23,8 +23,8 @@ import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 // <ChartControls />
 // --------------------------------------------------------------------------------------------------------
 export function ChartControls (props) {
-  console.log(`<ChartConrols />...`)
-  console.log(props);
+  // console.log(`<ChartConrols />...`)
+  // console.log(props);
 
   return (
     <div>
@@ -68,8 +68,8 @@ export function VizConfigZoom({zoomShowAllTime, zoomShowRecent}) {
 // <EquationChooser />
 // --------------------------------------------------------------------------------------------------------
 export function EquationChooser(props) {
-  console.log(`<EquationChooser />`);
-  console.log(props);
+  // console.log(`<EquationChooser />`);
+  // console.log(props);
 
   let initEquation = localStorage.getItem('equation');
   if (!initEquation) initEquation = "Brzycki";

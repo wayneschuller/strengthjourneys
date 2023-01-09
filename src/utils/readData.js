@@ -26,8 +26,7 @@ import { parseData } from './parseData';
 //
 // (the entry point will be different for each of those triggers)
 // ------------------------------------------------------------------
-export async function getGoogleUserInfo(ssid, tokenResponse,
-                                        setUserInfo,
+export async function getGoogleUserInfo(setUserInfo,
                                         setInfoChipStatus,
                                         setInfoChipToolTip,
                                         setIsLoading,     
@@ -37,9 +36,12 @@ export async function getGoogleUserInfo(ssid, tokenResponse,
                                         ) {
 
   console.log(`getGoogleUserInfo()...`);
-  console.log(ssid);
+
+  const tokenResponse = JSON.parse(localStorage.getItem(`tokenResponse`));
+  const ssid = localStorage.getItem(`ssid`);
 
   if (!tokenResponse) {
+    setUserInfo(null);
     return; // No ticket to google? Then no party.
   }
 
@@ -55,8 +57,7 @@ export async function getGoogleUserInfo(ssid, tokenResponse,
       // If we have a valid looking ssid then we can go to the next step in the chain
       if (ssid && ssid.length > 10)  {
         setInfoChipStatus("Checking GSheet Modified Time"); 
-        getGDriveMetadata(ssid, tokenResponse,
-                          setInfoChipStatus,
+        getGDriveMetadata(setInfoChipStatus,
                           setInfoChipToolTip,
                           setIsLoading,     
                           setVisualizerData,
@@ -77,7 +78,7 @@ export async function getGoogleUserInfo(ssid, tokenResponse,
     })
 }
 
-export async function getGDriveMetadata (ssid, tokenResponse,
+export async function getGDriveMetadata (
                                         setInfoChipStatus,
                                         setInfoChipToolTip,
                                         setIsLoading,     
@@ -86,6 +87,9 @@ export async function getGDriveMetadata (ssid, tokenResponse,
                                         equation,
                                         ) {
   console.log("getGSheetMetadata()...");
+
+  const tokenResponse = JSON.parse(localStorage.getItem(`tokenResponse`));
+  const ssid = localStorage.getItem(`ssid`);
 
   setIsLoading(true);
   // API call to get GDrive file metadata to get modified time and the filename
@@ -110,8 +114,7 @@ export async function getGDriveMetadata (ssid, tokenResponse,
       if (true) {
         setInfoChipStatus("Loading GSheet Values"); 
         // setDataModifiedTime(modifiedTime);
-        loadGSheetValues(ssid, tokenResponse,
-                          setInfoChipStatus,
+        loadGSheetValues( setInfoChipStatus,
                           setInfoChipToolTip,
                           setIsLoading,     
                           setVisualizerData,
@@ -129,15 +132,18 @@ export async function getGDriveMetadata (ssid, tokenResponse,
     })
 }
 
-async function loadGSheetValues(ssid, tokenResponse,
-                                        setInfoChipStatus,
-                                        setInfoChipToolTip,
-                                        setIsLoading,     
-                                        setVisualizerData,
-                                        visualizerConfig, setVisualizerConfig,
-                                        equation,
-                                        ) {
+async function loadGSheetValues( setInfoChipStatus,
+                                 setInfoChipToolTip,
+                                 setIsLoading,     
+                                 setVisualizerData,
+                                 visualizerConfig, setVisualizerConfig,
+                                 equation,
+                                 ) {
   console.log("loadGSheetValues()...");
+
+  const tokenResponse = JSON.parse(localStorage.getItem(`tokenResponse`));
+  const ssid = localStorage.getItem(`ssid`);
+
   setIsLoading(true);
 
   await axios

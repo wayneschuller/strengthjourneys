@@ -98,8 +98,7 @@ function ResponsiveAppBar(props) {
       const ssid = localStorage.getItem('ssid');
 
       setInfoChipStatus("Checking User Info"); 
-      getGoogleUserInfo(ssid, tokenResponse,
-                        setUserInfo,
+      getGoogleUserInfo(setUserInfo,
                         setInfoChipStatus,
                         setInfoChipToolTip,
                         setIsLoading,
@@ -140,8 +139,7 @@ function ResponsiveAppBar(props) {
           localStorage.setItem('ssid', data.docs[0].id);
         }
 
-        getGDriveMetadata(data.docs[0].id, tokenResponse,
-                            setInfoChipStatus,
+        getGDriveMetadata(  setInfoChipStatus,
                             setInfoChipToolTip,
                             setIsLoading,     
                             setVisualizerData,

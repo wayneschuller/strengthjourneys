@@ -74,6 +74,8 @@ export function EquationChooser({setEquation}) {
     console.log(`setEquation...${event.target.value}`);
     setValue(event.target.value);
     setEquation(event.target.value);
+
+    localStorage.setItem('equation', event.target.value);
   };
 
     return (

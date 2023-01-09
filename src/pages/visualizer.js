@@ -15,7 +15,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
 import { ChartControls } from '../components/vizualizerChartControls';
-
+import { SJLineChart } from '../components/vanillaChartJS';
 
 Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 
@@ -290,9 +290,9 @@ const Visualizer = (props) => {
           { (!visualizerData && cookies.ssid) && <ReturningUserWelcome tokenResponse={cookies.tokenResponse} /> } 
 
           {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
-          { isLoading && <LoadingLinearProgress /> }
+          { !visualizerData ? <LoadingLinearProgress /> : <SJLineChart data={visualizerData} options={chartOptions} /> }
 
-          { (visualizerData && visualizerConfig) && <Line ref={chartRef} data={visualizerData} options={chartOptions} /> }
+          {/* { (visualizerData && visualizerConfig) && <Line data={visualizerData} options={chartOptions} /> } */}
 
           { visualizerData && <ChartControls 
                                 zoomShowAllTime={zoomShowAllTime}  zoomShowRecent={zoomShowRecent}

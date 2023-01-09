@@ -13,7 +13,7 @@ export default function App() {
   const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);  
-  const [isLoading, setIsLoading] = useState(false); // Use to show loading animation
+  const [isLoading, setIsLoading] = useState(true); // Use to show loading animation
   const [visualizerData, setVisualizerData] = useState(null);
   const [equation, setEquation] = useState('Brzycki');
   const [visualizerConfig, setVisualizerConfig] = useState({

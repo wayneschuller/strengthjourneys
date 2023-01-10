@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from "react-router-dom";
 
 import AppBar from '@mui/material/AppBar';
@@ -14,9 +14,6 @@ import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
-
-// MUI icons
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 
 import logo from './logo.png';
 import { getGoogleUserInfo, loadGSheetValues } from '../utils/readData';
@@ -97,8 +94,6 @@ function ResponsiveAppBar(props) {
     onSuccess: async tokenResponse => {
       // Park the tokenResponse in the browser - it is normally valid for about 1 hour
       localStorage.setItem('tokenResponse', JSON.stringify(tokenResponse));
-
-      const ssid = localStorage.getItem('ssid');
 
       setInfoChipStatus("Checking User Info"); 
       getGoogleUserInfo(setUserInfo,

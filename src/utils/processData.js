@@ -110,7 +110,7 @@ export function processVisualizerData(parsedData,
     // If we are changing equation method, then update the y value
     // FIXME: what happens if changing the equation changes the top estimate lift for that session?
     // FIXME: should we be setting .isUpdated here?
-    if (processedData[liftIndex].data[dateIndex].method != equation) {
+    if (processedData[liftIndex].data[dateIndex].method !== equation) {
       processedData[liftIndex].data[dateIndex].y = oneRepMax;
       processedData[liftIndex].data[dateIndex].method = equation;
       continue; // Continue iterating through parsedData
@@ -353,7 +353,7 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
     );
 
     // Actual best lift for this rep scheme
-    if (i == 0)  {
+    if (i === 0)  {
 
       // Actual top PR gets a special chartjs annotation marker on the chart
       liftAnnotations[`${liftType}_best_${reps}RM`] = createAchievementAnnotation(

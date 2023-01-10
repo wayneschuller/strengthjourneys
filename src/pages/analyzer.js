@@ -1,19 +1,21 @@
-import * as React from 'react';
+/** @format */
+
+import * as React from "react";
 import { useOutletContext } from "react-router-dom";
 
 // MUI Components
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import Grid from '@mui/material/Unstable_Grid2';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
+import Grid from "@mui/material/Unstable_Grid2";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 
-import { LoadingLinearProgress } from './visualizer';
+import { LoadingLinearProgress } from "./visualizer";
 
 // import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 // ChartJS.register(ArcElement, Tooltip, Legend);
@@ -21,13 +23,16 @@ import { LoadingLinearProgress } from './visualizer';
 import { Pie } from "react-chartjs-2";
 
 const Analyzer = () => {
-
-  const [ parsedData,
-          isLoading,
-          visualizerData, setVisualizerData,
-          visualizerConfig, setVisualizerConfig,
-          analyzerData, setAnalyzerData,
-        ] = useOutletContext();
+  const [
+    parsedData,
+    isLoading,
+    visualizerData,
+    setVisualizerData,
+    visualizerConfig,
+    setVisualizerConfig,
+    analyzerData,
+    setAnalyzerData,
+  ] = useOutletContext();
 
   const titleOptions = {
     display: true,
@@ -38,7 +43,7 @@ const Analyzer = () => {
   // Line Chart Options for react-chartjs-2 Doughnut/Pie Chart PR Analyzer
   let chartOptions = {
     responsive: true,
-    font: { family: "Catamaran", size: 20, weight: "bold", },
+    font: { family: "Catamaran", size: 20, weight: "bold" },
     // animation: animationOptions,
     onClick: (event, item) => {
       console.log(event);
@@ -58,41 +63,39 @@ const Analyzer = () => {
   };
 
   let chartData = {
-    datasets: [{
-      data: analyzerData,
-      color: '#000', 
-      font: { family: "Catamaran", size: 20, weight: "bold", },
-    }],
-  }
+    datasets: [
+      {
+        data: analyzerData,
+        color: "#000",
+        font: { family: "Catamaran", size: 20, weight: "bold" },
+      },
+    ],
+  };
 
   return (
     <div>
-     <Box sx={{ m: 1 }} md={{ m: 3}} >
-       <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}>
+      <Box sx={{ m: 1 }} md={{ m: 3 }}>
+        <Container
+          maxWidth="xl"
+          sx={{ borderRadius: "6px", border: "1px solid grey", backgroundColor: "palette.secondary.light" }}
+        >
+          {!visualizerData && <p>PRs and other interesting data points will appear here. </p>}
 
-      { !visualizerData &&  <p>PRs and other interesting data points will appear here. </p> }
+          {!visualizerData && isLoading && <LoadingLinearProgress />}
 
-      { (!visualizerData && isLoading) && <LoadingLinearProgress /> }
+          <Box sx={{ width: "100%" }}>
+            <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
+              <Grid xs={6}>{analyzerData && <Pie options={chartOptions} data={chartData} />}</Grid>
+              <Grid xs={6}>{/* <></> */}</Grid>
+            </Grid>
+          </Box>
 
-     <Box sx={{ width: '100%' }}>
-      <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
-        <Grid xs={6}>
-      { analyzerData && <Pie options={chartOptions} data={chartData} /> }
-        </Grid>
-        <Grid xs={6}>
-          {/* <></> */}
-        </Grid>
-      </Grid>
-    </Box>
-
-      { visualizerData && <PRDataTable visualizerData={visualizerData} /> }
-
-
+          {visualizerData && <PRDataTable visualizerData={visualizerData} />}
         </Container>
       </Box>
     </div>
   );
-}
+};
 
 export default Analyzer;
 
@@ -116,8 +119,8 @@ const PRDataTable = (props) => {
         // PR = `<a href='${url}'>${PR}</a>`;
       }
     }
-    return(PR); 
-  }
+    return PR;
+  };
 
   return (
     <TableContainer component={Paper}>
@@ -131,12 +134,8 @@ const PRDataTable = (props) => {
           </TableRow>
         </TableHead>
         <TableBody>
-
-          {visualizerData.map((lift, index) => ( 
-            <TableRow
-              key={lift.label}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-            >
+          {visualizerData.map((lift, index) => (
+            <TableRow key={lift.label} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
               <TableCell component="th" scope="row">
                 {lift.label}
               </TableCell>
@@ -149,4 +148,4 @@ const PRDataTable = (props) => {
       </Table>
     </TableContainer>
   );
-}
+};

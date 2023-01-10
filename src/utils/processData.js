@@ -1,3 +1,5 @@
+/** @format */
+
 // processData.js
 // Wayne Schuller, wayne@schuller.id.au
 // Licenced under https://www.gnu.org/licenses/gpl-3.0.html
@@ -5,66 +7,67 @@
 
 // Collect some simple stats for doughnut/pie chart in the <Analyzer />
 export function processAnalyzerData(parsedData, setAnalyzerData) {
+  let dummyAnalyzerData = [
+    {
+      label: "Back Squat",
+      value: 340,
+    },
+    {
+      label: "Bench Press",
+      value: 280,
+    },
+    {
+      label: "Deadlift",
+      value: 170,
+    },
+  ];
 
-    let dummyAnalyzerData = [
-      {
-        label: 'Back Squat',
-        value: 340,
-      },
-      {
-        label: 'Bench Press',
-        value: 280,
-      },
-      {
-        label: 'Deadlift',
-        value: 170,
-      },
-    ];
+  // Do a survey on total number of each lift type
+  const liftCounts = parsedData.reduce((counts, lift) => {
+    if (counts[lift.name]) {
+      counts[lift.name] += 1;
+    } else {
+      counts[lift.name] = 1;
+    }
+    return counts;
+  }, {});
 
-    // Do a survey on total number of each lift type
-    const liftCounts = parsedData.reduce((counts, lift) => {
-      if (counts[lift.name]) {
-        counts[lift.name] += 1;
-      } else {
-        counts[lift.name] = 1;
-      }
-      return counts;
-      }, {});
+  let analyzerData = Object.entries(liftCounts).map(([label, value]) => ({ label, value }));
 
-    let analyzerData = Object.entries(liftCounts).map(([label, value]) => ({ label, value }));
-    
-    analyzerData.sort((a, b) => b.value - a.value);
+  analyzerData.sort((a, b) => b.value - a.value);
 
-    // Let's only keep the top 10 remaining lifts.
-    analyzerData.splice(10); // Delete everything above 10
+  // Let's only keep the top 10 remaining lifts.
+  analyzerData.splice(10); // Delete everything above 10
 
-    setAnalyzerData(analyzerData);
+  setAnalyzerData(analyzerData);
 }
 
 // Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
 // We collect only the best set per lift type per day, according to highest estimated one rep max
-export function processVisualizerData(parsedData,
-                                      visualizerData, setVisualizerData,
-                                      visualizerConfig, setVisualizerConfig,
-                                      ) {
-
+export function processVisualizerData(
+  parsedData,
+  visualizerData,
+  setVisualizerData,
+  visualizerConfig,
+  setVisualizerConfig
+) {
   console.log("processVisualizerData()...");
-                                        
-  let equation = localStorage.getItem('equation');
+
+  let equation = localStorage.getItem("equation");
   if (!equation) equation = "Brzycki"; // Probably not needed. Just in case.
 
-  let isRefresh = false
+  let isRefresh = false;
   // Do we already have some visualizerData? This is a refresh caused by:
   //   a) changing the equation method
-  //   b) automatic google sheets refresh 
+  //   b) automatic google sheets refresh
   //
   let processedData = [];
   if (visualizerData) {
-    console.log(`... refreshing old data...`)
+    console.log(`... refreshing old data...`);
     // console.log(visualizerData);
     processedData = visualizerData; // We are going to discretely mutate React state to modify chart without a rerender
     isRefresh = true;
-  } 
+  }
 
   for (const lift of parsedData) {
     const liftIndex = getProcessedLiftIndex(processedData, lift.name);
@@ -81,9 +84,7 @@ export function processVisualizerData(parsedData,
     if (!url) url = "";
 
     // Do we already have any processed data on this date?
-    let dateIndex = processedData[liftIndex].data.findIndex(
-      (processedLift) => processedLift.x === lift.date
-    );
+    let dateIndex = processedData[liftIndex].data.findIndex((processedLift) => processedLift.x === lift.date);
 
     if (dateIndex === -1) {
       // Push new lift tuple on this new date (in chartjs friendly format)
@@ -163,24 +164,23 @@ export function processVisualizerData(parsedData,
   // Also sort our processedData so the most popular lift types get charts first
   processedData.sort((a, b) => b.data.length - a.data.length);
 
-
   // If we have many lift types (> 15) then intelligently ignore uninteresting data.
   // We remove any lift types if:
-  // 1) we have not performed that lift type in the last 2 years 
+  // 1) we have not performed that lift type in the last 2 years
   // AND
-  // 2) we only did that lift type less than 10 times. 
+  // 2) we only did that lift type less than 10 times.
   //
   // Advice to user: Keep lifting or do lots of a lift type to keep it visualized
   if (processedData.length > 15) {
     const twoYearsInMilliseconds = 2 * 365 * 24 * 60 * 60 * 1000;
     const currentTime = Date.now();
-  
-    for (let i = processedData.length - 1; i >= 0; i--) {
-      const lastDate = new Date(processedData[i].data[processedData[i].data.length-1].x);
 
-      if ((currentTime - lastDate.getTime() > twoYearsInMilliseconds) && (processedData[i].data.length < 10)) {
+    for (let i = processedData.length - 1; i >= 0; i--) {
+      const lastDate = new Date(processedData[i].data[processedData[i].data.length - 1].x);
+
+      if (currentTime - lastDate.getTime() > twoYearsInMilliseconds && processedData[i].data.length < 10) {
         // processedData[i].data.splice(0); // delete the minor obsolete lift chart data (but we keep the PRs)
-        processedData.splice(i, 1); // delete the minor obsolete lift 
+        processedData.splice(i, 1); // delete the minor obsolete lift
       }
     }
   }
@@ -208,25 +208,24 @@ export function processVisualizerData(parsedData,
   let padDateMax = new Date(processedData[0].data[processedData[0].data.length - 1].x); // Last tuple in first lift
   padDateMax = padDateMax.setDate(padDateMax.getDate() + 10);
 
-  // Search through the processed data and find the largest y value 
+  // Search through the processed data and find the largest y value
   let highestWeight = -1;
   processedData.forEach((liftType) => {
     liftType.data.forEach((lift) => {
-      if (lift.y > highestWeight) 
-        highestWeight = lift.y;
+      if (lift.y > highestWeight) highestWeight = lift.y;
     });
   });
   highestWeight = Math.ceil(highestWeight / 49) * 50; // Round up to the next mulitiple of 50
- 
+
   // If this is not a refresh then set state stuff
   // However if we are just refreshing, we will have mutated the annotations but don't tell React
   // because React will rerender everything in a dumb way
   if (!isRefresh) {
     setVisualizerConfig({
-                        padDateMin: padDateMin,
-                        padDateMax: padDateMax,
-                        highestWeight: highestWeight,
-                        achievementAnnotations: annotations,
+      padDateMin: padDateMin,
+      padDateMax: padDateMax,
+      highestWeight: highestWeight,
+      achievementAnnotations: annotations,
     });
   }
 
@@ -236,49 +235,45 @@ export function processVisualizerData(parsedData,
   // If it is a refresh - we will rely on local mutation to change the chart without React knowing
   if (!isRefresh) {
     // setVisualizerData({datasets: processedData});   // This should trigger <Visualizer /> and <Analyzer /> creation
-    setVisualizerData(processedData);   // This should trigger <Visualizer /> and <Analyzer /> creation
+    setVisualizerData(processedData); // This should trigger <Visualizer /> and <Analyzer /> creation
   }
 }
-
 
 // When refreshing, we want to simply update the y position of the annotations based on a new equation
 // We can reuse the PR data stored in processedData for each lift
 function updateAchievements(processedData, equation, achievementAnnotations) {
+  // console.log(`updateAnnotations(). Mutating Y values on existing annotations`);
 
-    // console.log(`updateAnnotations(). Mutating Y values on existing annotations`);
+  // Loop through each lift and recalculate the e1rm for the achievement label
+  processedData.forEach((liftType, index) => {
+    let reps;
+    let weight;
 
-    // Loop through each lift and recalculate the e1rm for the achievement label
-    processedData.forEach((liftType, index) => {
+    if (liftType["1RM"]) {
+      reps = liftType["1RM"]["reps"];
+      weight = liftType["1RM"]["weight"];
+      if (reps && weight)
+        achievementAnnotations[`${liftType.label}_best_1RM`].yValue = estimateE1RM(reps, weight, equation);
+    }
 
-      let reps; let weight;
+    if (liftType["3RM"]) {
+      reps = liftType["3RM"]["reps"];
+      weight = liftType["3RM"]["weight"];
+      if (reps && weight)
+        achievementAnnotations[`${liftType.label}_best_3RM`].yValue = estimateE1RM(reps, weight, equation);
+    }
 
-      if (liftType['1RM']) {
-        reps = liftType['1RM']['reps'];
-        weight = liftType['1RM']['weight'];
-        if (reps && weight)
-          achievementAnnotations[`${liftType.label}_best_1RM`].yValue = estimateE1RM(reps, weight, equation);
-      }
-
-      if (liftType['3RM']) {
-        reps = liftType['3RM']['reps'];
-        weight = liftType['3RM']['weight'];
-        if (reps && weight)
-          achievementAnnotations[`${liftType.label}_best_3RM`].yValue = estimateE1RM(reps, weight, equation);
-      }
-
-      if (liftType['5RM']) {
-        reps = liftType['5RM']['reps'];
-        weight = liftType['5RM']['weight'];
-        if (reps && weight)
-          achievementAnnotations[`${liftType.label}_best_5RM`].yValue = estimateE1RM(reps, weight, equation);
-      }
-    });
+    if (liftType["5RM"]) {
+      reps = liftType["5RM"]["reps"];
+      weight = liftType["5RM"]["weight"];
+      if (reps && weight)
+        achievementAnnotations[`${liftType.label}_best_5RM`].yValue = estimateE1RM(reps, weight, equation);
+    }
+  });
 }
-
 
 // Find interesting achievements for this dataset
 function processAchievements(parsedData, processedData, equation) {
-
   // We are creating a first time set of annotations
   let liftAnnotations = {};
 
@@ -302,7 +297,7 @@ function processAchievements(parsedData, processedData, equation) {
     findPRs(lifts, 5, "five", index, processedData, liftAnnotations, equation);
   });
 
-  return(liftAnnotations);
+  return liftAnnotations;
 }
 
 // Helper function to find top 20 singles, threes and fives for each main lift
@@ -321,14 +316,10 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
   // Sort by weight. (award any ties to the earlier lift)
   repLifts.sort((a, b) => {
     if (a.weight === b.weight) {
-
       if (a.date === b.date) {
-
         // Same weight same day - tie goes to the last lift
         return 1; // Put a AFTER b. FIXME: does not seem to be the correct result
-
       } else {
-
         // Same weight different day - tie goes to the earlier lift
         return new Date(a.date) - new Date(b.date);
       }
@@ -341,18 +332,13 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
   // Process the top 20 of this rep style (if we have that many)
   for (let i = 0; i < 20 && i < repLifts.length; i++) {
     // Match the lift to the chart line point.
-    const dateIndex = processedData[datasetIndex].data.findIndex(
-      (lift) => lift.x === repLifts[i].date
-    );
+    const dateIndex = processedData[datasetIndex].data.findIndex((lift) => lift.x === repLifts[i].date);
     processedData[datasetIndex].data[dateIndex].afterLabel.push(
-      `#${i + 1} best ${liftType} ${prName} of all time (${reps}@${repLifts[i].weight}${
-        repLifts[i].unitType
-      })`
+      `#${i + 1} best ${liftType} ${prName} of all time (${reps}@${repLifts[i].weight}${repLifts[i].unitType})`
     );
 
     // Actual best lift for this rep scheme
-    if (i === 0)  {
-
+    if (i === 0) {
       // Actual top PR gets a special chartjs annotation marker on the chart
       liftAnnotations[`${liftType}_best_${reps}RM`] = createAchievementAnnotation(
         repLifts[i].date,
@@ -394,17 +380,15 @@ function createAchievementAnnotation(date, weight, text, background, datasetInde
       right: 2,
       bottom: 1,
     },
-    display: true,  // default to display
+    display: true, // default to display
 
     // Below display handler works but is quite slow. So now we show/hide in our legend click handler
     //  display: (context, options) => {
-      // let meta = context.chart.getDatasetMeta(datasetIndex);
-      // return(meta.visible);
+    // let meta = context.chart.getDatasetMeta(datasetIndex);
+    // return(meta.visible);
     // },
   };
 }
-
-
 
 // Return a rounded 1 rep max
 // For theory see: https://en.wikipedia.org/wiki/One-repetition_maximum
@@ -458,14 +442,13 @@ function prepareDataRefresh(parsedData, processedData, replaceData) {
 // Return the index for the liftType string in our processedData
 // If the lift doesn't exist in processedData, create one.
 function getProcessedLiftIndex(processedData, liftType) {
-
   let liftIndex = processedData.findIndex((lift) => lift.label === liftType);
 
   if (liftIndex === -1) {
     // Create a processedLift data structure for this new lift type
 
     // Choose beautiful colors. FIXME: Make configurable in UI
-    let color; 
+    let color;
     switch (liftType) {
       case "Back Squat":
         color = "#ae2012";
@@ -480,7 +463,7 @@ function getProcessedLiftIndex(processedData, liftType) {
         color = "#0a9396";
         break;
       default:
-        color = `#${Math.floor(Math.random() * 16777215).toString(16)}`; 
+        color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
     }
 
     let processedLiftType = {
@@ -494,7 +477,7 @@ function getProcessedLiftIndex(processedData, liftType) {
       hitRadius: 20,
       hoverRadius: 10,
       cubicInterpolationMode: "monotone",
-      hidden: false,      // This is for chart.js config - always show
+      hidden: false, // This is for chart.js config - always show
     };
     liftIndex = processedData.push(processedLiftType) - 1;
   }

@@ -1,46 +1,47 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+/** @format */
+
+import React from "react";
+import ReactDOM from "react-dom/client";
 import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
 
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import "./index.css";
+import App from "./App";
+import reportWebVitals from "./reportWebVitals";
 
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import color from '@mui/material/colors/indigo';
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import color from "@mui/material/colors/indigo";
 
-import { GoogleOAuthProvider } from '@react-oauth/google';
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
-import Analyzer from './pages/analyzer';
-import Home from './pages/home';
-import NoMatch from './pages/nomatch';
-import OneRepMaxCalculator from './pages/oneRepMaxCalculator';
-import Visualizer from './pages/visualizer';
+import Analyzer from "./pages/analyzer";
+import Home from "./pages/home";
+import NoMatch from "./pages/nomatch";
+import OneRepMaxCalculator from "./pages/oneRepMaxCalculator";
+import Visualizer from "./pages/visualizer";
 
 const theme = createTheme({
   palette: {
     // primary: color,
     primary: {
-      main: '#393e46',
+      main: "#393e46",
     },
     neutral: {
-      main: '#64748B',
-      contrastText: '#fff',
+      main: "#64748B",
+      contrastText: "#fff",
     },
   },
 });
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
-        <ThemeProvider theme={theme}>
-          <BrowserRouter>
-            <Routes>
-
-              <Route path="/" element={<App />}>
-              <Route path="/" element={ <Navigate replace to="/visualizer" /> } /> 
+      <ThemeProvider theme={theme}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<App />}>
+              <Route path="/" element={<Navigate replace to="/visualizer" />} />
 
               <Route path="visualizer" element={<Visualizer />} />
               <Route path="analyzer" element={<Analyzer />} />
@@ -50,7 +51,7 @@ root.render(
           </Routes>
         </BrowserRouter>
       </ThemeProvider>
-  </GoogleOAuthProvider>
+    </GoogleOAuthProvider>
   </React.StrictMode>
 );
 

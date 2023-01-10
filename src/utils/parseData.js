@@ -7,12 +7,6 @@
 
 import { processVisualizerData, processAnalyzerData } from "./processData";
 
-// FIXME: Globals are not best practice
-let workout_date_COL, workout_id_COL, completed_COL, exercise_name_COL, assigned_reps_COL, assigned_weight_COL;
-let assigned_sets_COL, actual_reps_COL, actual_weight_COL, actual_sets_COL, missed_COL, description_COL, units_COL, notes_COL, url_COL;
-let lastDate = "1999-12-31";
-let lastLiftType = "Tik Tok Dancing"; 
-
 // ------------------------------------------------------------------------------
 // parseData
 // Discern the raw data format, parse into the parsedData global
@@ -30,7 +24,12 @@ export function parseData(data,
 
   console.log("parseData()...");
 
-  let parsedData = []; // FIXME: we should be checking for existing state parseData?
+  let workout_date_COL, workout_id_COL, completed_COL, exercise_name_COL, assigned_reps_COL, assigned_weight_COL;
+  let assigned_sets_COL, actual_reps_COL, actual_weight_COL, actual_sets_COL, missed_COL, description_COL, units_COL, notes_COL, url_COL;
+  let lastDate = "1999-12-31";
+  let lastLiftType = "Tik Tok Dancing"; 
+
+  let parsedData = []; 
 
   const columnNames = data[0];
 

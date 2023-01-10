@@ -76,7 +76,7 @@ export function processVisualizerData(parsedData,
 
     // Give informative data label for tooltip
     let label = "";
-    if (lift.reps == 1) label = `Lifted 1@${lift.weight}${lift.unitType}.`;
+    if (lift.reps === 1) label = `Lifted 1@${lift.weight}${lift.unitType}.`;
     else label = `Potential 1@${oneRepMax}${lift.unitType} from ${lift.reps}@${lift.weight}${lift.unitType}.`;
 
     var url = lift.url;
@@ -119,8 +119,8 @@ export function processVisualizerData(parsedData,
     // If this processed lift is stale and is the same e1rm/date as this parsed lift, then refresh it
     // This is important for refreshing data from Google Sheets
     if (
-      processedData[liftIndex].data[dateIndex].isUpdated == false &&
-      oneRepMax == processedData[liftIndex].data[dateIndex].y
+      processedData[liftIndex].data[dateIndex].isUpdated === false &&
+      oneRepMax === processedData[liftIndex].data[dateIndex].y
     ) {
       processedData[liftIndex].data[dateIndex].isUpdated = true;
       continue; // Continue iterating through parsedData
@@ -316,7 +316,7 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
   // console.log(rawLifts);
 
   // Filter for this rep style
-  let repLifts = rawLifts.filter((lift) => lift.reps == reps);
+  let repLifts = rawLifts.filter((lift) => lift.reps === reps);
 
   // console.log(repLifts);
 
@@ -421,34 +421,26 @@ function estimateE1RM(reps, weight, equation) {
   switch (equation) {
     case "Epley":
       return Math.round(weight * (1 + reps / 30));
-      break;
     case "McGlothin":
       return Math.round((100 * weight) / (101.3 - 2.67123 * reps));
-      break;
     case "Lombardi":
       return Math.round(weight * Math.pow(reps, 0.1));
-      break;
     case "Mayhew":
       return Math.round((100 * weight) / (52.2 + 41.9 * Math.pow(Math.E, -0.055 * reps)));
-      break;
     case "OConner":
       return Math.round(weight * (1 + reps / 40));
-      break;
     case "Wathen":
       return Math.round((100 * weight) / (48.8 + 53.8 * Math.pow(Math.E, -0.075 * reps)));
-      break;
     case "Brzycki":
       return Math.round(weight / (1.0278 - 0.0278 * reps));
-      break;
     default: // Repeat Brzycki formula as a default here
       return Math.round(weight / (1.0278 - 0.0278 * reps));
-      break;
   }
 }
 
 // Prepare for a data source reload while preserving as much chart as possible.
 // Normally used when we refresh the data from google sheets.
-// FIXME: this function should be in parseData.js
+// FIXME: This function is needed for google autorefresh but this feature is not implemented
 function prepareDataRefresh(parsedData, processedData, replaceData) {
   // Empty the parsedData array
   // This assumes we are loading a similar dataset.

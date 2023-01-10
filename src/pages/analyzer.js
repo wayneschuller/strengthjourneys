@@ -20,40 +20,12 @@ import { LoadingLinearProgress } from './visualizer';
 
 import { Pie } from "react-chartjs-2";
 
-export const data = {
-  labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-  datasets: [
-    {
-      label: '# of Votes',
-      data: [12, 19, 3, 5, 2, 3],
-      backgroundColor: [
-        'rgba(255, 99, 132, 0.2)',
-        'rgba(54, 162, 235, 0.2)',
-        'rgba(255, 206, 86, 0.2)',
-        'rgba(75, 192, 192, 0.2)',
-        'rgba(153, 102, 255, 0.2)',
-        'rgba(255, 159, 64, 0.2)',
-      ],
-      borderColor: [
-        'rgba(255, 99, 132, 1)',
-        'rgba(54, 162, 235, 1)',
-        'rgba(255, 206, 86, 1)',
-        'rgba(75, 192, 192, 1)',
-        'rgba(153, 102, 255, 1)',
-        'rgba(255, 159, 64, 1)',
-      ],
-      borderWidth: 1,
-    },
-  ],
-};
-
 const Analyzer = (props) => {
 
-  const [ parsedData, 
+  const [  
           isLoading,
-          visualizerData, setVisualizerData,
-          visualizerConfig, setVisualizerConfig,
-          analyzerData, setAnalyzerData,
+          visualizerData, 
+          analyzerData, 
         ] = useOutletContext();
 
   const titleOptions = {
@@ -117,7 +89,7 @@ const Analyzer = (props) => {
       </Grid>
     </Box>
 
-      { visualizerData && <PRDataTable visualizerData={visualizerData} achievementAnnotations={visualizerConfig.achievementAnnotations} /> }
+      { visualizerData && <PRDataTable visualizerData={visualizerData} /> }
 
 
         </Container>
@@ -130,7 +102,6 @@ export default Analyzer;
 
 const PRDataTable = (props) => {
   const visualizerData = props.visualizerData;
-  const achievementAnnotations = props.achievementAnnotations;
 
 
   const getPRs = (index, reps) => {
@@ -139,14 +110,15 @@ const PRDataTable = (props) => {
     let PR = "";
     if (visualizerData[index][`${reps}RM`]) {
       PR = visualizerData[index][`${reps}RM`].weight + visualizerData[index][`${reps}RM`].unitType;
-    }
 
-    // FIXME: make a hyperlink if we have the url
-    // let url = false;
-    // if (visualizerData[index][`${reps}RM`].url) {
-      //  url = visualizerData[index][`${reps}RM`].url;
-    // }
-    // PR = "<a href=`${url}`>PR</a>";
+      // Make a hyperlink if we have the url
+      if (visualizerData[index][`${reps}RM`].url) {
+        let url = visualizerData[index][`${reps}RM`].url;
+
+        // FIXME: this is not how we link inside MUI
+        // PR = `<a href='${url}'>${PR}</a>`;
+      }
+    }
     return(PR); 
   }
 

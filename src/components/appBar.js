@@ -18,6 +18,7 @@ import Typography from "@mui/material/Typography";
 import MenuItem from "@mui/material/MenuItem";
 
 import logo from "./logo.png";
+import GitHubIcon from "@mui/icons-material/GitHub";
 import { getGoogleUserInfo, loadGSheetValues } from "../utils/readData";
 
 import { useGoogleLogin, googleLogout } from "@react-oauth/google";
@@ -175,7 +176,7 @@ function ResponsiveAppBar(props) {
     <AppBar position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          {/* Show the logo on the left on md+ sizes  */}
+          {/* Show the SJ logo on the left on md+ sizes  */}
           <Box
             component="img"
             width="10%"
@@ -250,6 +251,13 @@ function ResponsiveAppBar(props) {
               </Button>
             ))}
           </Box>
+
+          {/* Link to our GitHub project on large screens */}
+          <Tooltip title="Click to open GitHub source code">
+            <GitHubIcon
+              onClick={(event) => window.open("https://github.com/wayneschuller/strengthjourneys", "_blank")}
+            />
+          </Tooltip>
 
           {/* User profile info on right hand side of the navbar */}
           {userInfo ? (

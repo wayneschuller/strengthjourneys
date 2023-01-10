@@ -20,12 +20,13 @@ import { LoadingLinearProgress } from './visualizer';
 
 import { Pie } from "react-chartjs-2";
 
-const Analyzer = (props) => {
+const Analyzer = () => {
 
-  const [  
+  const [ parsedData,
           isLoading,
-          visualizerData, 
-          analyzerData, 
+          visualizerData, setVisualizerData,
+          visualizerConfig, setVisualizerConfig,
+          analyzerData, setAnalyzerData,
         ] = useOutletContext();
 
   const titleOptions = {
@@ -50,7 +51,6 @@ const Analyzer = (props) => {
     // scales: scalesOptions,
     plugins: {
       title: titleOptions,
-      // legend: legendOptions,
       // datalabels: datalabelsOptions,
       // tooltip: tooltipOptions,
       // annotation: annotationOptions,
@@ -70,17 +70,13 @@ const Analyzer = (props) => {
      <Box sx={{ m: 1 }} md={{ m: 3}} >
        <Container maxWidth="xl" sx={{ borderRadius: '6px', border: '1px solid grey', backgroundColor: 'palette.secondary.light' }}>
 
-      {/* <h2>Strength Analyzer</h2> */}
-
       { !visualizerData &&  <p>PRs and other interesting data points will appear here. </p> }
 
       { (!visualizerData && isLoading) && <LoadingLinearProgress /> }
 
-      {}
      <Box sx={{ width: '100%' }}>
       <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
         <Grid xs={6}>
-      {/* { analyzerData && <Pie options={chartOptions} data={{ datasets: [{ data: analyzerData }] }} /> } */}
       { analyzerData && <Pie options={chartOptions} data={chartData} /> }
         </Grid>
         <Grid xs={6}>
@@ -103,6 +99,7 @@ export default Analyzer;
 const PRDataTable = (props) => {
   const visualizerData = props.visualizerData;
 
+  if (!visualizerData) return;
 
   const getPRs = (index, reps) => {
     // console.log(`Find best ${visualizerData[index].label}, ${reps}`);

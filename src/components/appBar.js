@@ -79,6 +79,7 @@ function ResponsiveAppBar(props) {
     localStorage.removeItem('tokenResponse');
     localStorage.removeItem('selectedLifts');
     localStorage.removeItem('ssid');
+    localStorage.removeItem('gSheetName');
     setUserInfo(null);    // This will remove the profile menu and status button
     setVisualizerData(null);  // Reset the graph
     setAnchorElUser(null);  // Closes menu

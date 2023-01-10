@@ -38,8 +38,6 @@ export function processAnalyzerData(parsedData, setAnalyzerData) {
     // Let's only keep the top 10 remaining lifts.
     analyzerData.splice(10); // Delete everything above 10
 
-    console.log(analyzerData);
-
     setAnalyzerData(analyzerData);
 }
 

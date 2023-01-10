@@ -1,18 +1,20 @@
-import './App.css';
+/** @format */
+
+import "./App.css";
 
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 
-import ResponsiveAppBar from './components/appBar';
-import { getGoogleUserInfo } from './utils/readData';
+import ResponsiveAppBar from "./components/appBar";
+import { getGoogleUserInfo } from "./utils/readData";
 
 export default function App() {
   const [parsedData, setParsedData] = useState(null);
   const [visualizerData, setVisualizerData] = useState(null);
   const [analyzerData, setAnalyzerData] = useState(null);
-  const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
-  const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
-  const [infoChipToolTip, setInfoChipToolTip] = useState(null);  
+  const [userInfo, setUserInfo] = useState(null); // .name .picture .email (from Google userinfo API)
+  const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source"); // Used in the navbar info chip-button
+  const [infoChipToolTip, setInfoChipToolTip] = useState(null);
   const [isLoading, setIsLoading] = useState(false); // Use to show loading animation
   const [visualizerConfig, setVisualizerConfig] = useState({
     padDateMin: null,
@@ -20,13 +22,12 @@ export default function App() {
     highestWeight: null,
     achievementAnnotations: null,
   });
-  console.log(`<App />...`)
+  console.log(`<App />...`);
 
   // Event handlers do most of the data flow for us
   // However we want this mount useEffect to auto load data on init when we have a previous tokenResponse and ssid
   let didInit = false;
   useEffect(() => {
-
     const tokenResponse = JSON.parse(localStorage.getItem(`tokenResponse`));
 
     if (!didInit && tokenResponse) {
@@ -38,44 +39,50 @@ export default function App() {
         setInfoChipStatus,
         setInfoChipToolTip,
         setIsLoading,
-        visualizerData, setVisualizerData,
-        visualizerConfig,  setVisualizerConfig,
-        setParsedData, setAnalyzerData,
-        );
+        visualizerData,
+        setVisualizerData,
+        visualizerConfig,
+        setVisualizerConfig,
+        setParsedData,
+        setAnalyzerData
+      );
     }
   }, []);
 
   return (
     <div>
-
-     <ResponsiveAppBar 
-      userInfo={userInfo}
-      setUserInfo={setUserInfo}
-      infoChipStatus={infoChipStatus}
-      setInfoChipStatus={setInfoChipStatus}
-      infoChipToolTip={infoChipToolTip}
-      setInfoChipToolTip={setInfoChipToolTip}
-      visualizerData={visualizerData}
-      setVisualizerData={setVisualizerData}
-      isLoading={isLoading}
-      setIsLoading={setIsLoading}
-      visualizerConfig={visualizerConfig}
-      setVisualizerConfig={setVisualizerConfig}
-      setParsedData={setParsedData}
-      setAnalyzerData={setAnalyzerData}
-     />
+      <ResponsiveAppBar
+        userInfo={userInfo}
+        setUserInfo={setUserInfo}
+        infoChipStatus={infoChipStatus}
+        setInfoChipStatus={setInfoChipStatus}
+        infoChipToolTip={infoChipToolTip}
+        setInfoChipToolTip={setInfoChipToolTip}
+        visualizerData={visualizerData}
+        setVisualizerData={setVisualizerData}
+        isLoading={isLoading}
+        setIsLoading={setIsLoading}
+        visualizerConfig={visualizerConfig}
+        setVisualizerConfig={setVisualizerConfig}
+        setParsedData={setParsedData}
+        setAnalyzerData={setAnalyzerData}
+      />
 
       {/* An <Outlet> renders whatever child route is currently active,
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
-        <Outlet 
-          context={[  parsedData,
-                      isLoading,
-                      visualizerData, setVisualizerData,
-                      visualizerConfig, setVisualizerConfig,
-                      analyzerData, setAnalyzerData,
-                    ]} 
-        />
+      <Outlet
+        context={[
+          parsedData,
+          isLoading,
+          visualizerData,
+          setVisualizerData,
+          visualizerConfig,
+          setVisualizerConfig,
+          analyzerData,
+          setAnalyzerData,
+        ]}
+      />
     </div>
   );
 }

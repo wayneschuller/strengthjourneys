@@ -32,7 +32,7 @@ export async function getGoogleUserInfo(setUserInfo,
                                         setIsLoading,     
                                         visualizerData, setVisualizerData,
                                         visualizerConfig, setVisualizerConfig,
-                                        setParsedData,
+                                        setParsedData, setAnalyzerData,
                                         ) {
 
   console.log(`getGoogleUserInfo()...`);
@@ -66,7 +66,7 @@ export async function getGoogleUserInfo(setUserInfo,
                         setIsLoading,     
                         visualizerData, setVisualizerData,
                         visualizerConfig, setVisualizerConfig,
-                        setParsedData,
+                        setParsedData, setAnalyzerData,
                       );
 
 
@@ -78,7 +78,7 @@ export async function getGoogleUserInfo(setUserInfo,
                           // setIsLoading,     
                           // visualizerData, setVisualizerData,
                           // visualizerConfig, setVisualizerConfig,
-                          // setParsedData,
+                          // setParsedData, setAnalyzerData,
                         //  );
       } else {
         setInfoChipStatus("Select Data Source");  // User must click to get File Picker
@@ -101,7 +101,7 @@ export async function getGDriveMetadata (
                                         setIsLoading,     
                                         visualizerData, setVisualizerData,
                                         visualizerConfig, setVisualizerConfig,
-                                        setParsedData,
+                                        setParsedData, setAnalyzerData,
                                         ) {
   console.log("getGSheetMetadata()...");
 
@@ -128,7 +128,7 @@ export async function getGDriveMetadata (
                         setIsLoading,     
                         visualizerData, setVisualizerData,
                         visualizerConfig, setVisualizerConfig,
-                        setParsedData,
+                        setParsedData, setAnalyzerData,
                       );
     })
     .catch((error) => {
@@ -144,7 +144,7 @@ export async function loadGSheetValues( setInfoChipStatus,
                                  setIsLoading,     
                                  visualizerData, setVisualizerData,
                                  visualizerConfig, setVisualizerConfig,
-                                 setParsedData,
+                                 setParsedData, setAnalyzerData,
                                  ) {
   console.log("loadGSheetValues()...");
 
@@ -167,7 +167,7 @@ export async function loadGSheetValues( setInfoChipStatus,
                     setIsLoading,     
                     visualizerData, setVisualizerData,
                     visualizerConfig, setVisualizerConfig,
-                    setParsedData,
+                    setParsedData, setAnalyzerData
                     );
     })
     .catch((error) => {

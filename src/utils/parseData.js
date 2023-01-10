@@ -5,7 +5,7 @@
 // parseData will take raw imported 2d grid data from different formats
 // and parse into our common parsedData[] format.
 
-import { processVisualizerData } from "./processData";
+import { processVisualizerData, processAnalyzerData } from "./processData";
 
 // FIXME: Globals are not best practice
 let workout_date_COL, workout_id_COL, completed_COL, exercise_name_COL, assigned_reps_COL, assigned_weight_COL;
@@ -25,7 +25,7 @@ export function parseData(data,
             setIsLoading,     
             visualizerData, setVisualizerData,
             visualizerConfig, setVisualizerConfig,
-            setParsedData,
+            setParsedData, setAnalyzerData,
             ) {
 
   console.log("parseData()...");
@@ -87,12 +87,13 @@ export function parseData(data,
   // console.log(`setParsedData to: ${JSON.stringify(parsedData[-1])}`);
   setParsedData(parsedData);    // We need this in state for refreshes later on
 
-  // Process the data for the visualizer
+  processAnalyzerData(parsedData, setAnalyzerData);
+
   processVisualizerData(parsedData, 
                         visualizerData, setVisualizerData,
                         visualizerConfig, setVisualizerConfig,
+                        setAnalyzerData,
                         );
-
          
           return;
 

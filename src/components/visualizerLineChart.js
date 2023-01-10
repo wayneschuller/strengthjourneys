@@ -41,8 +41,9 @@ export function VisualizerLineChart(props) {
         if (!selectedLifts.includes(lift.label)) {
           lift.hidden = true; // Hide the lift on the legend (strikethrough appears)
 
-          // Hide the corresponding annotations
-          // FIXME: This might work better if we referenced the chart.datasets internals directly?!?
+          // Hide the corresponding annotations.
+          // This might work better if we referenced the chart.datasets internals directly,
+          // however it seems to change the existing chart even without running chart.update().
           let singleRM =
             visualizerConfig.achievementAnnotations[`${lift.label}_best_1RM`];
           let tripleRM =

@@ -23,7 +23,6 @@ import { getGoogleUserInfo, loadGSheetValues } from '../utils/readData';
 
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import useDrivePicker from 'react-google-drive-picker'
-// import { loadGooglePicker } from '../utils/google';
 
 // Array of main menu items
 const pages = [
@@ -51,6 +50,7 @@ function ResponsiveAppBar(props) {
   const setVisualizerConfig = props.setVisualizerConfig;
   const setIsLoading = props.setIsLoading;
   const setParsedData = props.setParsedData;
+  const setAnalyzerData = props.setAnalyzerData;
 
   // console.log(`<ResponsiveAppBar />...`);
 
@@ -106,7 +106,7 @@ function ResponsiveAppBar(props) {
                         setIsLoading,
                         visualizerData, setVisualizerData,
                         visualizerConfig, setVisualizerConfig,
-                        setParsedData,
+                        setParsedData, setAnalyzerData,
                         );
     },
     onError: errorResponse => console.log(errorResponse),
@@ -150,7 +150,7 @@ function ResponsiveAppBar(props) {
                         setIsLoading,     
                         visualizerData, setVisualizerData,
                         visualizerConfig, setVisualizerConfig,
-                        setParsedData,
+                        setParsedData, setAnalyzerData,
                       );
 
         // For now we no longer bother with this part of the data chain
@@ -160,7 +160,7 @@ function ResponsiveAppBar(props) {
                             // setIsLoading,     
                             // visualizerData, setVisualizerData,
                             // visualizerConfig, setVisualizerConfig,
-                            // setParsedData,
+                            // setParsedData, setAnalyzerData
                           // );
       },
     });

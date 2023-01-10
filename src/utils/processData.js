@@ -2,6 +2,47 @@
 // Wayne Schuller, wayne@schuller.id.au
 // Licenced under https://www.gnu.org/licenses/gpl-3.0.html
 //
+
+// Collect some simple stats for doughnut/pie chart in the <Analyzer />
+export function processAnalyzerData(parsedData, setAnalyzerData) {
+
+    let dummyAnalyzerData = [
+      {
+        label: 'Back Squat',
+        value: 340,
+      },
+      {
+        label: 'Bench Press',
+        value: 280,
+      },
+      {
+        label: 'Deadlift',
+        value: 170,
+      },
+    ];
+
+    // Do a survey on total number of each lift type
+    const liftCounts = parsedData.reduce((counts, lift) => {
+      if (counts[lift.name]) {
+        counts[lift.name] += 1;
+      } else {
+        counts[lift.name] = 1;
+      }
+      return counts;
+      }, {});
+
+    let analyzerData = Object.entries(liftCounts).map(([label, value]) => ({ label, value }));
+    
+    analyzerData.sort((a, b) => b.value - a.value);
+
+    // Let's only keep the top 10 remaining lifts.
+    analyzerData.splice(10); // Delete everything above 10
+
+    console.log(analyzerData);
+
+    setAnalyzerData(analyzerData);
+}
+
 // Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
 // We collect only the best set per lift type per day, according to highest estimated one rep max
 export function processVisualizerData(parsedData,
@@ -146,7 +187,7 @@ export function processVisualizerData(parsedData,
     }
   }
 
-  // FIXME: Let's only keep the top 10 remaining lifts.
+  // Let's only keep the top 10 remaining lifts.
   processedData.splice(10); // Delete everything above 10
 
   // Process the PRs/Achivements and return some chartjs annotation config.

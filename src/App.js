@@ -9,6 +9,7 @@ import { getGoogleUserInfo } from './utils/readData';
 export default function App() {
   const [parsedData, setParsedData] = useState(null);
   const [visualizerData, setVisualizerData] = useState(null);
+  const [analyzerData, setAnalyzerData] = useState(null);
   const [userInfo, setUserInfo] = useState(null);  // .name .picture .email (from Google userinfo API)
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source");  // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);  
@@ -39,7 +40,7 @@ export default function App() {
         setIsLoading,
         visualizerData, setVisualizerData,
         visualizerConfig,  setVisualizerConfig,
-        setParsedData,
+        setParsedData, setAnalyzerData,
         );
     }
   }, []);
@@ -61,6 +62,7 @@ export default function App() {
       visualizerConfig={visualizerConfig}
       setVisualizerConfig={setVisualizerConfig}
       setParsedData={setParsedData}
+      setAnalyzerData={setAnalyzerData}
      />
 
       {/* An <Outlet> renders whatever child route is currently active,
@@ -71,6 +73,7 @@ export default function App() {
                       isLoading,
                       visualizerData, setVisualizerData,
                       visualizerConfig, setVisualizerConfig,
+                      analyzerData, setAnalyzerData,
                     ]} 
         />
     </div>

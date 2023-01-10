@@ -1,3 +1,4 @@
+/** @format */
 
 import { useEffect, useRef } from "react";
 import Chart from "chart.js/auto"; // Pick everything. You can hand pick which chartjs features you want, see chartjs docs.
@@ -44,12 +45,9 @@ export function VisualizerLineChart(props) {
           // Hide the corresponding annotations.
           // This might work better if we referenced the chart.datasets internals directly,
           // however it seems to change the existing chart even without running chart.update().
-          let singleRM =
-            visualizerConfig.achievementAnnotations[`${lift.label}_best_1RM`];
-          let tripleRM =
-            visualizerConfig.achievementAnnotations[`${lift.label}_best_3RM`];
-          let fiveRM =
-            visualizerConfig.achievementAnnotations[`${lift.label}_best_5RM`];
+          let singleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_1RM`];
+          let tripleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_3RM`];
+          let fiveRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_5RM`];
           if (singleRM) singleRM.display = false;
           if (tripleRM) tripleRM.display = false;
           if (fiveRM) fiveRM.display = false;
@@ -68,23 +66,15 @@ export function VisualizerLineChart(props) {
 
   function zoomShowAllTime() {
     const chart = chartRef.current;
-    if (chart)
-      chart.zoomScale(
-        "x",
-        { min: visualizerConfig.padDateMin, max: visualizerConfig.padDateMax },
-        "default"
-      );
+    if (chart) chart.zoomScale("x", { min: visualizerConfig.padDateMin, max: visualizerConfig.padDateMax }, "default");
   }
 
   function zoomShowRecent() {
     const chart = chartRef.current;
     // if (chart) chart.resetZoom();
-    let sixMonthsAgo =
-      visualizerConfig.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
-    if (sixMonthsAgo < visualizerConfig.padDateMin)
-      sixMonthsAgo = visualizerConfig.padDateMin;
-    if (chart)
-      chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerConfig.padDateMax }, "default");
+    let sixMonthsAgo = visualizerConfig.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
+    if (sixMonthsAgo < visualizerConfig.padDateMin) sixMonthsAgo = visualizerConfig.padDateMin;
+    if (chart) chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerConfig.padDateMax }, "default");
   }
 
   function chartUpdate() {
@@ -104,12 +94,9 @@ export function VisualizerLineChart(props) {
     if (!selectedLifts) selectedLifts = [];
 
     let liftType = legendItem.text;
-    let singleRM =
-      visualizerConfig.achievementAnnotations[`${liftType}_best_1RM`];
-    let tripleRM =
-      visualizerConfig.achievementAnnotations[`${liftType}_best_3RM`];
-    let fiveRM =
-      visualizerConfig.achievementAnnotations[`${liftType}_best_5RM`];
+    let singleRM = visualizerConfig.achievementAnnotations[`${liftType}_best_1RM`];
+    let tripleRM = visualizerConfig.achievementAnnotations[`${liftType}_best_3RM`];
+    let fiveRM = visualizerConfig.achievementAnnotations[`${liftType}_best_5RM`];
 
     if (chart.isDatasetVisible(index)) {
       console.log(`Hide ${legendItem.text}`);
@@ -135,7 +122,6 @@ export function VisualizerLineChart(props) {
     // Update our localstorage with the array of which lifts are selected
     localStorage.setItem("selectedLifts", JSON.stringify(selectedLifts));
   };
-
 
   const animationOptions = {
     // duration:  2000,
@@ -186,10 +172,8 @@ export function VisualizerLineChart(props) {
     },
     font: (context) => {
       // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
-      const liftSingle =
-        context.dataset.data[context.dataIndex].label.indexOf("Potential");
-      if (liftSingle === -1)
-        return { family: "Catamaran", weight: "bold", size: 13 };
+      const liftSingle = context.dataset.data[context.dataIndex].label.indexOf("Potential");
+      if (liftSingle === -1) return { family: "Catamaran", weight: "bold", size: 13 };
       else return { family: "Catamaran", style: "italic", size: 12 };
     },
     align: "end",
@@ -270,20 +254,19 @@ export function VisualizerLineChart(props) {
 
   return (
     <>
-      {visualizerData && (
-        <Line ref={chartRef} options={chartOptions} data={{ datasets: visualizerData }} />
+      {visualizerData && <Line ref={chartRef} options={chartOptions} data={{ datasets: visualizerData }} />}
+      {visualizerData && parsedData && (
+        <ChartControls
+          zoomShowAllTime={zoomShowAllTime}
+          zoomShowRecent={zoomShowRecent}
+          parsedData={parsedData}
+          visualizerData={visualizerData}
+          setVisualizerData={setVisualizerData}
+          visualizerConfig={visualizerConfig}
+          setVisualizerConfig={setVisualizerConfig}
+          chartUpdate={chartUpdate}
+        />
       )}
-      { (visualizerData && parsedData) && <ChartControls
-            zoomShowAllTime={zoomShowAllTime}
-            zoomShowRecent={zoomShowRecent}
-            parsedData={parsedData}
-            visualizerData={visualizerData}
-            setVisualizerData={setVisualizerData}
-            visualizerConfig={visualizerConfig}
-            setVisualizerConfig={setVisualizerConfig}
-            chartUpdate={chartUpdate}
-          />
-      }
     </>
   );
 }

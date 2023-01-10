@@ -39,7 +39,6 @@ root.render(
           <BrowserRouter>
             <Routes>
 
-              {/* FIXME: How can code so wrong work so right? */}
               <Route path="/" element={<App />}>
               <Route path="/" element={ <Navigate replace to="/visualizer" /> } /> 
 

@@ -157,7 +157,7 @@ export function processVisualizerData(parsedData,
   // Every element of processedData now has a data array of chart tuples
   // Let's sort each data array by date (x entry) so it draws lines correctly
   // (FIXME: write a custom YYYY-MM-DD compare function as 'new Date' in a sort function is frowned upon)
-  // FIXME: if we presort parsedData, then e1rmLineData will already be sorted?
+  // FIXME: if we presort parsedData, then .data will already be sorted?
   processedData.forEach((arr) => arr.data.sort((a, b) => new Date(a.x) - new Date(b.x)));
 
   // Also sort our processedData so the most popular lift types get charts first

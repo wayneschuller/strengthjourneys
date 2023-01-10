@@ -25,10 +25,12 @@ const Visualizer = (props) => {
       <Container maxWidth='xl'>
 
           { (!visualizerData && !ssid) && <NewUserWelcome /> } 
+
           { (!visualizerData && ssid) && <ReturningUserWelcome tokenResponse={tokenResponse} /> } 
 
           {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
-          { !visualizerData ? <LoadingLinearProgress /> : <VisualizerLineChart  
+
+          { (!visualizerData && isLoading) ? <LoadingLinearProgress /> : <VisualizerLineChart  
                                                                         parsedData={parsedData} 
                                                                         visualizerData={visualizerData} 
                                                                         setVisualizerData={setVisualizerData}

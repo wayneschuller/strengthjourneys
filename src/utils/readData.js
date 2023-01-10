@@ -90,7 +90,8 @@ export async function getGoogleUserInfo(setUserInfo,
 
       // Just in case we had a working tokenResponse that has now expired.
       setUserInfo(null);
-      // removeCookie('tokenResponse'); // Forget the tokenReponse  FIXME
+      localStorage.removeItem('tokenResponse');
+      setIsLoading(false);
     })
 }
 
@@ -171,6 +172,7 @@ export async function loadGSheetValues( setInfoChipStatus,
     })
     .catch((error) => {
       setInfoChipStatus("Error Reading Google Sheet");
+      localStorage.removeItem('ssid'); // Remove ssid if it failed. FIXME: good idea?
       console.log(error);
       // setInfoChipToolTip(error.response.data.error.message);
     })

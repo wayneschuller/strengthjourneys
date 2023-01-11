@@ -50,45 +50,40 @@ const Analyzer = () => {
 
   return (
     <div>
-      <Box sx={{ m: 1 }} md={{ m: 3 }}>
-        <Container
-          maxWidth="xl"
-          sx={{ borderRadius: "6px", border: "1px solid grey", backgroundColor: "palette.secondary.light" }}
-        >
-          {!visualizerData && <p>PRs and other interesting data points will appear here. </p>}
+      <Box sx={{ m: 3, width: "90%" }}>
+        {!visualizerData && <p>PRs and other interesting data points will appear here. </p>}
 
-          {!visualizerData && isLoading && <LoadingLinearProgress />}
+        {!visualizerData && isLoading && <LoadingLinearProgress />}
 
-          <Box sx={{ width: "100%" }}>
-            <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 8 }}>
-              <Grid xs={12} lg={6}>
-                {analyzerData && (
-                  <AnalyzerPieChart
-                    selectedLift={selectedLift}
-                    setSelectedLift={setSelectedLift}
-                    analyzerData={analyzerData}
-                  />
-                )}
-              </Grid>
+        {/* <Box sx={{ width: "100%" }}> */}
+        <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 8 }}>
+          <Grid xs={12} lg={6}>
+            {analyzerData && (
+              <AnalyzerPieChart
+                selectedLift={selectedLift}
+                setSelectedLift={setSelectedLift}
+                analyzerData={analyzerData}
+              />
+            )}
+          </Grid>
 
-              <Grid xs={12} lg={6}>
-                {selectedLift && (
-                  <Item elevation={20}>
-                    {" "}
-                    <LiftDataCard
-                      selectedLift={selectedLift}
-                      analyzerData={analyzerData}
-                      visualizerData={visualizerData}
-                    />{" "}
-                  </Item>
-                )}
-              </Grid>
-            </Grid>
-          </Box>
+          <Grid xs={12} lg={6}>
+            {selectedLift && (
+              <Item elevation={20}>
+                {" "}
+                <LiftDataCard
+                  selectedLift={selectedLift}
+                  analyzerData={analyzerData}
+                  visualizerData={visualizerData}
+                />{" "}
+              </Item>
+            )}
+          </Grid>
+        </Grid>
+        {/* </Box> */}
 
-          {/* FIXME: We probably don't need the PR table anymore? */}
-          {/* {visualizerData && <PRDataTable visualizerData={visualizerData} />} */}
-        </Container>
+        {/* FIXME: We probably don't need the PR table anymore? */}
+        {/* {visualizerData && <PRDataTable visualizerData={visualizerData} />} */}
       </Box>
     </div>
   );

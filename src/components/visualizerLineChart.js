@@ -83,7 +83,7 @@ export function VisualizerLineChart(props) {
   };
 
   const animationOptions = {
-    // duration:  2000,
+    duration: 1000,
     easing: "easeInExpo",
   };
 
@@ -98,6 +98,7 @@ export function VisualizerLineChart(props) {
     x: {
       type: "time",
       min: sixMonthsAgo,
+      suggestedMax: visualizerConfig.padDateMax,
       time: {
         minUnit: "day",
       },

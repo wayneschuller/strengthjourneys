@@ -1,9 +1,9 @@
 /** @format */
-
 // processData.js
 // Wayne Schuller, wayne@schuller.id.au
 // Licenced under https://www.gnu.org/licenses/gpl-3.0.html
-//
+
+import { getLiftColor } from "./getLiftColor";
 
 // Collect some simple stats for doughnut/pie chart in the <Analyzer />
 export function processAnalyzerData(parsedData, setAnalyzerData) {
@@ -38,6 +38,13 @@ export function processAnalyzerData(parsedData, setAnalyzerData) {
 
   // Let's only keep the top 10 remaining lifts.
   analyzerData.splice(10); // Delete everything above 10
+
+  // Use our color system
+  // analyzerData.forEach((lift) => {
+  // lift.backgroundColor = getLiftColor(lift.label);
+  // lift.borderColor = "rgb(50, 50, 50)";
+  // });
+  // console.log(analyzerData);
 
   setAnalyzerData(analyzerData);
 }
@@ -457,25 +464,7 @@ function getProcessedLiftIndex(processedData, liftType) {
   if (liftIndex === -1) {
     // Create a processedLift data structure for this new lift type
 
-    // Choose beautiful colors.
-    // FIXME: Extract out into a color function to be shared with the <Analyzer /> and for a configurable UI
-    let color;
-    switch (liftType) {
-      case "Back Squat":
-        color = "#ae2012";
-        break;
-      case "Deadlift":
-        color = "#ee9b00";
-        break;
-      case "Bench Press":
-        color = "#03045e";
-        break;
-      case "Strict Press":
-        color = "#0a9396";
-        break;
-      default:
-        color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
-    }
+    const color = getLiftColor(liftType);
 
     // It is reverse logic because the option key is 'hidden' - positive selected means negative hidden
     const hidden = !wasLiftSelected(liftType);

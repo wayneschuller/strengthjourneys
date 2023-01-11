@@ -21,6 +21,7 @@ import { LoadingLinearProgress } from "./visualizer";
 // ChartJS.register(ArcElement, Tooltip, Legend);
 
 import { Pie } from "react-chartjs-2";
+import { getLiftColor } from "../utils/getLiftColor";
 
 const Analyzer = () => {
   const [
@@ -36,7 +37,7 @@ const Analyzer = () => {
 
   const titleOptions = {
     display: true,
-    text: `PR Analyzer`, // Weird title for testing purposes
+    text: `PR Analyzer`,
     font: { font: "Catamaran", size: 20 },
   };
 
@@ -62,12 +63,20 @@ const Analyzer = () => {
     },
   };
 
+  let backgroundColor = [];
+  if (analyzerData) {
+    backgroundColor = analyzerData.map((lift) => {
+      return getLiftColor(lift.label);
+    });
+  }
+
   let chartData = {
     datasets: [
       {
         data: analyzerData,
-        color: "#000",
-        font: { family: "Catamaran", size: 20, weight: "bold" },
+        // color: "#000",
+        font: { family: "Catamaran, Times", size: 20, weight: "bold" },
+        backgroundColor: backgroundColor,
       },
     ],
   };

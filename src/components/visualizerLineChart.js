@@ -91,7 +91,6 @@ export function VisualizerLineChart(props) {
   if (visualizerConfig) {
     sixMonthsAgo = visualizerConfig.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
     if (sixMonthsAgo < visualizerConfig.padDateMin) sixMonthsAgo = visualizerConfig.padDateMin;
-    console.log(`sixMonthsAgo = ${sixMonthsAgo}`);
   }
 
   const scalesOptions = {

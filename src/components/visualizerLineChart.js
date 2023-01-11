@@ -99,25 +99,23 @@ export function VisualizerLineChart(props) {
     let fiveRM = visualizerConfig.achievementAnnotations[`${liftType}_best_5RM`];
 
     if (chart.isDatasetVisible(index)) {
-      console.log(`Hide ${legendItem.text}`);
-      chart.hide(index);
       legendItem.hidden = true;
       if (singleRM) singleRM.display = false;
       if (tripleRM) tripleRM.display = false;
       if (fiveRM) fiveRM.display = false;
       selectedLifts = selectedLifts.filter((lift) => lift !== liftType); // Exclude unclicked lift
+      chart.hide(index);
     } else {
-      console.log(`Show ${legendItem.text}`);
-      chart.show(index);
       legendItem.hidden = false;
       if (singleRM) singleRM.display = true;
       if (tripleRM) tripleRM.display = true;
       if (fiveRM) fiveRM.display = true;
       selectedLifts = [...selectedLifts, liftType]; // Include clicked lift
+      chart.show(index);
     }
 
     // Update the chart instance to reflect changes to data we made
-    chart.update();
+    // chart.update();
 
     // Update our localstorage with the array of which lifts are selected
     localStorage.setItem("selectedLifts", JSON.stringify(selectedLifts));

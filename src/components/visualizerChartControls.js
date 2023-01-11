@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { processVisualizerData } from "../utils/processData";
+import { processData } from "../utils/processData";
 
 // MUI Components
 import Box from "@mui/material/Box";
@@ -96,7 +96,7 @@ export function EquationChooser(props) {
     // Mark visualizerData as needing reprocessing
 
     // Process the data with the new equation (processer will detect it is a refresh)
-    processVisualizerData(
+    processData(
       props.parsedData,
       props.visualizerData,
       props.setVisualizerData,

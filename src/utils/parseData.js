@@ -7,7 +7,7 @@
 // parseData will take raw imported 2d grid data from different formats
 // and parse into our common parsedData[] format.
 
-import { processVisualizerData, processAnalyzerData } from "./processData";
+import { processData, processAnalyzerData } from "./processData";
 
 // ------------------------------------------------------------------------------
 // parseData
@@ -95,16 +95,7 @@ export function parseData(
   // console.log(`setParsedData to: ${JSON.stringify(parsedData[-1])}`);
   setParsedData(parsedData); // We need this in state for refreshes later on
 
-  processAnalyzerData(parsedData, setAnalyzerData);
-
-  processVisualizerData(
-    parsedData,
-    visualizerData,
-    setVisualizerData,
-    visualizerConfig,
-    setVisualizerConfig,
-    setAnalyzerData
-  );
+  processData(parsedData, visualizerData, setVisualizerData, visualizerConfig, setVisualizerConfig, setAnalyzerData);
 
   return;
 

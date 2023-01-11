@@ -6,44 +6,49 @@
 import { getLiftColor } from "./getLiftColor";
 
 // Collect some simple stats for doughnut/pie chart in the <Analyzer />
-export function processAnalyzerData(parsedData, setAnalyzerData) {
-  // Do a survey on total number of each lift type
-  const liftCounts = parsedData.reduce((counts, lift) => {
-    if (counts[lift.name]) {
-      counts[lift.name] += 1;
-    } else {
-      counts[lift.name] = 1;
-    }
-    return counts;
-  }, {});
+export function processAnalyzerData(parsedData, visualizerData, setAnalyzerData) {
+  let analyzerData = [];
 
-  let analyzerData = Object.entries(liftCounts).map(([label, value]) => ({ label, value }));
-
-  analyzerData.sort((a, b) => b.value - a.value);
-
-  // Let's only keep the top 10 remaining lifts.
-  analyzerData.splice(10); // Delete everything above 10
-
-  // Use our color system
-  analyzerData.forEach((lift) => {
-    lift.backgroundColor = getLiftColor(lift.label);
-    lift.borderColor = "rgb(50, 50, 50)";
+  // Steal what is useful from the visualizerData for the Analyzer pie chart
+  visualizerData.forEach((lift) => {
+    analyzerData.push({
+      label: lift.label,
+      value: lift.data.length,
+      backgroundColor: lift.backgroundColor,
+      borderColor: lift.borderColor,
+    });
   });
-  console.log(analyzerData);
+
+  // Do a survey on total number of each lift type
+  // const liftCounts = parsedData.reduce((counts, lift) => {
+  //   if (counts[lift.name]) {
+  //     counts[lift.name] += 1;
+  //   } else {
+  //     counts[lift.name] = 1;
+  //   }
+  //   return counts;
+  // }, {});
+  // analyzerData = Object.entries(liftCounts).map(([label, lifts]) => ({ label, lifts }));
+  // analyzerData.sort((a, b) => b.value - a.value);
+  // Let's only keep the top 10 remaining lifts.
+  // analyzerData.splice(10); // Delete everything above 10
+
+  // console.log(analyzerData);
 
   setAnalyzerData(analyzerData);
 }
 
 // Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
 // We collect only the best set per lift type per day, according to highest estimated one rep max
-export function processVisualizerData(
+export function processData(
   parsedData,
   visualizerData,
   setVisualizerData,
   visualizerConfig,
-  setVisualizerConfig
+  setVisualizerConfig,
+  setAnalyzerData
 ) {
-  console.log("processVisualizerData()...");
+  console.log("processData()...");
 
   let equation = localStorage.getItem("equation");
   if (!equation) equation = "Brzycki"; // Probably not needed. Just in case.
@@ -179,6 +184,8 @@ export function processVisualizerData(
 
   // Let's only keep the top 10 remaining lifts.
   processedData.splice(10); // Delete everything above 10
+
+  processAnalyzerData(parsedData, processedData, setAnalyzerData);
 
   // Do we have a localStorage selectedLifts item? First time user will not have one.
   const selectedLiftsItem = localStorage.getItem("selectedLifts");

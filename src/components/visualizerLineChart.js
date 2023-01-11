@@ -1,6 +1,6 @@
 /** @format */
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import Chart from "chart.js/auto"; // Pick everything. You can hand pick which chartjs features you want, see chartjs docs.
 import { Line } from "react-chartjs-2";
 import "chartjs-adapter-date-fns";
@@ -16,55 +16,14 @@ export function VisualizerLineChart(props) {
 
   console.log(`<VisualiserLineChart />...`);
 
-  // if (!props.visualizerData) return;
-  // if (!props.visualizerConfig) return;
+  if (!props.visualizerData) return;
+  if (!props.visualizerConfig) return;
 
   let parsedData = props.parsedData;
   let visualizerData = props.visualizerData;
   let setVisualizerData = props.setVisualizerData;
   let visualizerConfig = props.visualizerConfig;
   let setVisualizerConfig = props.setVisualizerConfig;
-
-  // console.log(visualizerData);
-  // console.log(visualizerConfig);
-
-  // On chart load hide certain lifts that were hidden last sesssion (remembered via localStorage)
-  // useEffect(() => {
-  //   console.log(`<SJLineChart /> useEffect [visualizerData]`);
-  //   if (!visualizerData) return;
-
-  //   const chart = chartRef.current;
-  //   console.log(chart);
-
-  //   let selectedLifts = JSON.parse(localStorage.getItem("selectedLifts"));
-
-  //   if (selectedLifts) {
-  //     // Loop through visualizerData and only show the same lifts as previous session
-  //     visualizerData.forEach((lift) => {
-  //       if (!selectedLifts.includes(lift.label)) {
-  //         lift.hidden = true; // Hide the lift on the legend (strikethrough appears)
-
-  //         // Hide the corresponding annotations.
-  //         // This might work better if we referenced the chart.datasets internals directly,
-  //         // however it seems to change the existing chart even without running chart.update().
-  //         let singleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_1RM`];
-  //         let tripleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_3RM`];
-  //         let fiveRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_5RM`];
-  //         if (singleRM) singleRM.display = false;
-  //         if (tripleRM) tripleRM.display = false;
-  //         if (fiveRM) fiveRM.display = false;
-  //       }
-  //     });
-  //   } else {
-  //     // We have no localstorage for selectedLifts so let's make one for next time with every lift
-  //     let selectedLifts = visualizerData.map((item) => item.label);
-  //     localStorage.setItem("selectedLifts", JSON.stringify(selectedLifts));
-  //   }
-
-  //   if (chart) {
-  //     zoomShowRecent();
-  //   }
-  // }, []); // Only run this effect once, on mount
 
   function zoomShowAllTime() {
     const chart = chartRef.current;
@@ -128,9 +87,17 @@ export function VisualizerLineChart(props) {
     easing: "easeInExpo",
   };
 
+  let sixMonthsAgo = 0;
+  if (visualizerConfig) {
+    sixMonthsAgo = visualizerConfig.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
+    if (sixMonthsAgo < visualizerConfig.padDateMin) sixMonthsAgo = visualizerConfig.padDateMin;
+    console.log(`sixMonthsAgo = ${sixMonthsAgo}`);
+  }
+
   const scalesOptions = {
     x: {
       type: "time",
+      min: sixMonthsAgo,
       time: {
         minUnit: "day",
       },

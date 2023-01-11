@@ -16,12 +16,17 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 
 import { LoadingLinearProgress } from "./visualizer";
-
-// import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-// ChartJS.register(ArcElement, Tooltip, Legend);
-
-import { Pie } from "react-chartjs-2";
 import { getLiftColor } from "../utils/getLiftColor";
+
+import Chart from "chart.js/auto"; // Pick everything. You can hand pick which chartjs features you want, see chartjs docs.
+// import { Chart, ArcElement, Tooltip, Legend } from "chart.js";
+import { Pie } from "react-chartjs-2";
+import "chartjs-adapter-date-fns";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+// import annotationPlugin from "chartjs-plugin-annotation";
+
+// import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+// ChartJS.register(ArcElement, Tooltip, Legend);
 
 const Analyzer = () => {
   const [
@@ -36,7 +41,7 @@ const Analyzer = () => {
   ] = useOutletContext();
 
   const titleOptions = {
-    display: true,
+    display: false,
     text: `PR Analyzer`,
     font: { font: "Catamaran", size: 20, backgroundColor: "#FFFFFF" },
   };
@@ -56,7 +61,41 @@ const Analyzer = () => {
 
   const arcOptions = {};
 
+  const tooltipOptions = {
+    enabled: false,
+  };
+
+  const datalabelsOptions = {
+    backgroundColor: function (context) {
+      return context.dataset.backgroundColor; // Follow lift background color
+      // return "#000000";   // Black background for datalabel
+    },
+    borderColor: "white",
+    borderRadius: 25,
+    borderWidth: 2,
+    color: "white",
+    // display: true,
+    display: function (context) {
+      let dataset = context.dataset;
+      let totalValue = dataset.data.reduce((acc, obj) => acc + obj.value, 0); // Total sum of the values in the pie chart
+      let currentValue = dataset.data[context.dataIndex].value;
+      // Don't show if quantity is less than 10% of chart
+      return currentValue > totalValue * 0.1;
+    },
+    font: {
+      family: "Catamaran",
+      weight: "bold",
+      size: "14",
+    },
+    padding: 10,
+    formatter: function (context) {
+      return [context.label, `${context.value} lifts`];
+    },
+  };
+
+  // ---------------------------------------------------------------------------
   // Line Chart Options for react-chartjs-2 Doughnut/Pie Chart PR Analyzer
+  // ---------------------------------------------------------------------------
   let chartOptions = {
     responsive: true,
     font: {
@@ -79,12 +118,15 @@ const Analyzer = () => {
     // scales: scalesOptions,
     plugins: {
       title: titleOptions,
-      // datalabels: datalabelsOptions,
-      // tooltip: tooltipOptions,
+      legend: legendOptions,
+      datalabels: datalabelsOptions,
+      tooltip: tooltipOptions,
       // annotation: annotationOptions,
     },
   };
 
+  // Create an array of colors for the pie chart that matches lifts
+  // correctly - whatever order they are in.
   let backgroundColor = [];
   if (analyzerData) {
     backgroundColor = analyzerData.map((lift) => {
@@ -92,6 +134,10 @@ const Analyzer = () => {
     });
   }
 
+  // ------------------------------------------------------------------------------
+  // Set chart.js Pie Chart data
+  // For weird reasons some of the options need to go into the datasets section here
+  // ------------------------------------------------------------------------------
   let chartData = {
     datasets: [
       {
@@ -100,7 +146,9 @@ const Analyzer = () => {
         borderWidth: 4,
         hoverOffset: 20,
         hoverBorderColor: "#222222",
-        // font: { family: "Catamaran, Times", size: 20, weight: "bold" }, // FIXME: Doesn't fit here
+        datalabels: {
+          anchor: "end",
+        },
       },
     ],
   };

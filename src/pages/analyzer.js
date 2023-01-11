@@ -105,7 +105,7 @@ const Analyzer = () => {
   };
 
   const legendOptions = {
-    display: true,
+    display: false,
     position: "top",
     labels: {
       font: {
@@ -136,8 +136,8 @@ const Analyzer = () => {
       let totalValue = dataset.data.reduce((acc, obj) => acc + obj.value, 0); // Total sum of the values in the pie chart
       let currentValue = dataset.data[context.dataIndex].value;
       // Don't show if quantity is less than 10% of chart
-      // return currentValue > totalValue * 0.1;
-      return true;
+      return currentValue > totalValue * 0.1;
+      // return true; // Use this option to show all charts
     },
     font: {
       family: fontFamily,

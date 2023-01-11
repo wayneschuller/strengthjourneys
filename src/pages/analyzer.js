@@ -44,6 +44,24 @@ const Analyzer = () => {
 
   const [selectedLift, setSelectedLift] = useState(null);
 
+  if (!visualizerData) return;
+  if (!analyzerData) return;
+
+  const dummyAnalyzerData = [
+    {
+      label: "Back Squat",
+      value: 340,
+    },
+    {
+      label: "Bench Press",
+      value: 280,
+    },
+    {
+      label: "Deadlift",
+      value: 170,
+    },
+  ];
+
   // Taken from https://mui.com/material-ui/react-grid2/
   const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -64,6 +82,12 @@ const Analyzer = () => {
   const legendOptions = {
     display: true,
     position: "top",
+    labels: {
+      font: {
+        family: fontFamily,
+        size: 20,
+      },
+    },
     // onClick: newLegendClickHandler,
   };
 
@@ -87,7 +111,8 @@ const Analyzer = () => {
       let totalValue = dataset.data.reduce((acc, obj) => acc + obj.value, 0); // Total sum of the values in the pie chart
       let currentValue = dataset.data[context.dataIndex].value;
       // Don't show if quantity is less than 10% of chart
-      return currentValue > totalValue * 0.1;
+      // return currentValue > totalValue * 0.1;
+      return true;
     },
     font: {
       family: fontFamily,
@@ -137,20 +162,19 @@ const Analyzer = () => {
     },
   };
 
-  // Create an array of colors for the pie chart that matches lifts
-  // correctly - whatever order they are in.
-  let backgroundColor = [];
-  if (analyzerData) {
-    backgroundColor = analyzerData.map((lift) => {
-      return getLiftColor(lift.label);
-    });
-  }
+  // Pie chart wants a separate array of colors even though we have that key in each tuple
+  const backgroundColor = analyzerData.map((lift) => lift.backgroundColor);
+
+  // Pie chart wants a separate array of labels even though we have that key in each tuple
+  // (if you don't do this then you do not get a legend)
+  let labels = analyzerData.map((lift) => lift.label);
 
   // ------------------------------------------------------------------------------
   // Set chart.js Pie Chart data
   // For weird reasons some of the options need to go into the datasets section here
   // ------------------------------------------------------------------------------
   let chartData = {
+    labels: labels,
     datasets: [
       {
         data: analyzerData,
@@ -262,7 +286,7 @@ function getPRInfo(visualizerData, index, reps) {
   if (prTuple) {
     result = `${prTuple.weight}${prTuple.unitType} (${prTuple.date})`;
     // If we have a URL wrap it in a link
-    if (prTuple.url && prTuple.url != "") {
+    if (prTuple.url && prTuple.url !== "") {
       let url = prTuple.url;
       // result = `<a href='${url}'>${result}</a>`;  // Figure out how to link in React/MUI
       // console.log(result);

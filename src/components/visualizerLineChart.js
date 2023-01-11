@@ -1,14 +1,14 @@
 /** @format */
 
 import { useRef } from "react";
+import { ChartControls } from "./visualizerChartControls";
+
 import Chart from "chart.js/auto"; // Pick everything. You can hand pick which chartjs features you want, see chartjs docs.
 import { Line } from "react-chartjs-2";
 import "chartjs-adapter-date-fns";
 import zoomPlugin from "chartjs-plugin-zoom";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import annotationPlugin from "chartjs-plugin-annotation";
-import { ChartControls } from "./visualizerChartControls";
-
 Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 
 export function VisualizerLineChart(props) {
@@ -126,8 +126,8 @@ export function VisualizerLineChart(props) {
     position: "top",
     labels: {
       font: {
-        font: "Catamaran",
-        size: 18,
+        family: "Catamaran",
+        size: 20,
       },
     },
     onClick: newLegendClickHandler,

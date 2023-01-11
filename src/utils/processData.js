@@ -7,21 +7,6 @@ import { getLiftColor } from "./getLiftColor";
 
 // Collect some simple stats for doughnut/pie chart in the <Analyzer />
 export function processAnalyzerData(parsedData, setAnalyzerData) {
-  let dummyAnalyzerData = [
-    {
-      label: "Back Squat",
-      value: 340,
-    },
-    {
-      label: "Bench Press",
-      value: 280,
-    },
-    {
-      label: "Deadlift",
-      value: 170,
-    },
-  ];
-
   // Do a survey on total number of each lift type
   const liftCounts = parsedData.reduce((counts, lift) => {
     if (counts[lift.name]) {
@@ -40,11 +25,11 @@ export function processAnalyzerData(parsedData, setAnalyzerData) {
   analyzerData.splice(10); // Delete everything above 10
 
   // Use our color system
-  // analyzerData.forEach((lift) => {
-  // lift.backgroundColor = getLiftColor(lift.label);
-  // lift.borderColor = "rgb(50, 50, 50)";
-  // });
-  // console.log(analyzerData);
+  analyzerData.forEach((lift) => {
+    lift.backgroundColor = getLiftColor(lift.label);
+    lift.borderColor = "rgb(50, 50, 50)";
+  });
+  console.log(analyzerData);
 
   setAnalyzerData(analyzerData);
 }

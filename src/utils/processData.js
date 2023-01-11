@@ -188,6 +188,13 @@ export function processVisualizerData(
   // Let's only keep the top 10 remaining lifts.
   processedData.splice(10); // Delete everything above 10
 
+  // Do we have a localStorage selectedLifts item? First time user will not have one.
+  const selectedLiftsItem = localStorage.getItem("selectedLifts");
+  if (selectedLiftsItem === null) {
+    let selectedLifts = processedData.map((item) => item.label);
+    localStorage.setItem("selectedLifts", JSON.stringify(selectedLifts)); // Default to select all
+  }
+
   // Process the PRs/Achivements and return some chartjs annotation config.
   if (isRefresh) {
     // If we have annotations this function will just mutate them
@@ -341,6 +348,7 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
     if (i === 0) {
       // Actual top PR gets a special chartjs annotation marker on the chart
       liftAnnotations[`${liftType}_best_${reps}RM`] = createAchievementAnnotation(
+        liftType,
         repLifts[i].date,
         estimateE1RM(reps, repLifts[i].weight, equation),
         `${reps}RM`,
@@ -361,7 +369,9 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
 }
 
 // Generate chart.js annotation plugin config data for an achievement
-function createAchievementAnnotation(date, weight, text, background, datasetIndex) {
+function createAchievementAnnotation(liftType, date, weight, text, background, datasetIndex) {
+  const display = wasLiftSelected(liftType);
+
   return {
     type: "label",
     borderColor: (context) => {
@@ -380,7 +390,7 @@ function createAchievementAnnotation(date, weight, text, background, datasetInde
       right: 2,
       bottom: 1,
     },
-    display: true, // default to display
+    display: display, // default to display
 
     // Below display handler works but is quite slow. So now we show/hide in our legend click handler
     //  display: (context, options) => {
@@ -447,7 +457,8 @@ function getProcessedLiftIndex(processedData, liftType) {
   if (liftIndex === -1) {
     // Create a processedLift data structure for this new lift type
 
-    // Choose beautiful colors. FIXME: Make configurable in UI
+    // Choose beautiful colors.
+    // FIXME: Extract out into a color function to be shared with the <Analyzer /> and for a configurable UI
     let color;
     switch (liftType) {
       case "Back Squat":
@@ -466,6 +477,9 @@ function getProcessedLiftIndex(processedData, liftType) {
         color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
     }
 
+    // It is reverse logic because the option key is 'hidden' - positive selected means negative hidden
+    const hidden = !wasLiftSelected(liftType);
+
     let processedLiftType = {
       label: liftType,
       data: [],
@@ -477,10 +491,22 @@ function getProcessedLiftIndex(processedData, liftType) {
       hitRadius: 20,
       hoverRadius: 10,
       cubicInterpolationMode: "monotone",
-      hidden: false, // This is for chart.js config - always show
+      hidden: hidden, // This is for chart.js config - always show
     };
     liftIndex = processedData.push(processedLiftType) - 1;
   }
 
   return liftIndex;
+}
+
+// Look in our localStorage to see if a lift type is in the selectedList from a previous session
+function wasLiftSelected(liftType) {
+  let selectedLifts = JSON.parse(localStorage.getItem("selectedLifts"));
+
+  // If there is no localStorage item we will just say yes to everything for the first time user.
+  // At the end of the processing chain we will put all the lifts into seletedLifts localStorage
+  // (don't create localStorage here in the middle of processing)
+  if (selectedLifts === null) return true;
+
+  return selectedLifts.includes(liftType);
 }

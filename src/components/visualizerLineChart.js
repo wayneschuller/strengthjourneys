@@ -29,40 +29,42 @@ export function VisualizerLineChart(props) {
   // console.log(visualizerConfig);
 
   // On chart load hide certain lifts that were hidden last sesssion (remembered via localStorage)
-  useEffect(() => {
-    console.log(`<SJLineChart /> useEffect [visualizerData]`);
-    if (!visualizerData) return;
+  // useEffect(() => {
+  //   console.log(`<SJLineChart /> useEffect [visualizerData]`);
+  //   if (!visualizerData) return;
 
-    const chart = chartRef.current;
-    let selectedLifts = JSON.parse(localStorage.getItem("selectedLifts"));
+  //   const chart = chartRef.current;
+  //   console.log(chart);
 
-    if (selectedLifts) {
-      // Loop through visualizerData and only show the same lifts as previous session
-      visualizerData.forEach((lift) => {
-        if (!selectedLifts.includes(lift.label)) {
-          lift.hidden = true; // Hide the lift on the legend (strikethrough appears)
+  //   let selectedLifts = JSON.parse(localStorage.getItem("selectedLifts"));
 
-          // Hide the corresponding annotations.
-          // This might work better if we referenced the chart.datasets internals directly,
-          // however it seems to change the existing chart even without running chart.update().
-          let singleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_1RM`];
-          let tripleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_3RM`];
-          let fiveRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_5RM`];
-          if (singleRM) singleRM.display = false;
-          if (tripleRM) tripleRM.display = false;
-          if (fiveRM) fiveRM.display = false;
-        }
-      });
-    } else {
-      // We have no localstorage for selectedLifts so let's make one for next time with every lift
-      let selectedLifts = visualizerData.map((item) => item.label);
-      localStorage.setItem("selectedLifts", JSON.stringify(selectedLifts));
-    }
+  //   if (selectedLifts) {
+  //     // Loop through visualizerData and only show the same lifts as previous session
+  //     visualizerData.forEach((lift) => {
+  //       if (!selectedLifts.includes(lift.label)) {
+  //         lift.hidden = true; // Hide the lift on the legend (strikethrough appears)
 
-    if (chart) {
-      zoomShowRecent();
-    }
-  }, [props.visualizerData]); // Only run this effect once, on mount
+  //         // Hide the corresponding annotations.
+  //         // This might work better if we referenced the chart.datasets internals directly,
+  //         // however it seems to change the existing chart even without running chart.update().
+  //         let singleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_1RM`];
+  //         let tripleRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_3RM`];
+  //         let fiveRM = visualizerConfig.achievementAnnotations[`${lift.label}_best_5RM`];
+  //         if (singleRM) singleRM.display = false;
+  //         if (tripleRM) tripleRM.display = false;
+  //         if (fiveRM) fiveRM.display = false;
+  //       }
+  //     });
+  //   } else {
+  //     // We have no localstorage for selectedLifts so let's make one for next time with every lift
+  //     let selectedLifts = visualizerData.map((item) => item.label);
+  //     localStorage.setItem("selectedLifts", JSON.stringify(selectedLifts));
+  //   }
+
+  //   if (chart) {
+  //     zoomShowRecent();
+  //   }
+  // }, []); // Only run this effect once, on mount
 
   function zoomShowAllTime() {
     const chart = chartRef.current;

@@ -38,13 +38,32 @@ const Analyzer = () => {
   const titleOptions = {
     display: true,
     text: `PR Analyzer`,
-    font: { font: "Catamaran", size: 20 },
+    font: { font: "Catamaran", size: 20, backgroundColor: "#FFFFFF" },
   };
+
+  const legendOptions = {
+    display: true,
+    position: "top",
+    labels: {
+      font: {
+        font: "Catamaran",
+        size: 18,
+        backgroundColor: "#FFFFFF",
+      },
+    },
+    // onClick: newLegendClickHandler,
+  };
+
+  const arcOptions = {};
 
   // Line Chart Options for react-chartjs-2 Doughnut/Pie Chart PR Analyzer
   let chartOptions = {
     responsive: true,
-    font: { family: "Catamaran", size: 20, weight: "bold" },
+    font: {
+      family: "Catamaran",
+      size: 20,
+      weight: "bold",
+    },
     // animation: animationOptions,
     onClick: (event, item) => {
       console.log(event);
@@ -53,6 +72,9 @@ const Analyzer = () => {
         const url = item[0].element.$context.raw.url;
         if (url) window.open(url);
       }
+    },
+    elements: {
+      arc: arcOptions,
     },
     // scales: scalesOptions,
     plugins: {
@@ -74,9 +96,11 @@ const Analyzer = () => {
     datasets: [
       {
         data: analyzerData,
-        // color: "#000",
-        font: { family: "Catamaran, Times", size: 20, weight: "bold" },
         backgroundColor: backgroundColor,
+        borderWidth: 4,
+        hoverOffset: 20,
+        hoverBorderColor: "#222222",
+        // font: { family: "Catamaran, Times", size: 20, weight: "bold" }, // FIXME: Doesn't fit here
       },
     ],
   };
@@ -93,7 +117,7 @@ const Analyzer = () => {
           {!visualizerData && isLoading && <LoadingLinearProgress />}
 
           <Box sx={{ width: "100%" }}>
-            <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
+            <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 8 }}>
               <Grid xs={6}>{analyzerData && <Pie options={chartOptions} data={chartData} />}</Grid>
               <Grid xs={6}>{/* <></> */}</Grid>
             </Grid>

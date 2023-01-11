@@ -75,9 +75,6 @@ export function VisualizerLineChart(props) {
       chart.show(index);
     }
 
-    // Update the chart instance to reflect changes to data we made
-    // chart.update();
-
     // Update our localstorage with the array of which lifts are selected
     localStorage.setItem("selectedLifts", JSON.stringify(selectedLifts));
   };

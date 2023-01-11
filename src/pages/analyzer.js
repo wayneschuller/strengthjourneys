@@ -47,6 +47,8 @@ const Analyzer = () => {
   if (!visualizerData) return;
   if (!analyzerData) return;
 
+  // console.log(`<Analyzer />`);
+
   const dummyAnalyzerData = [
     {
       label: "Back Squat",
@@ -77,6 +79,29 @@ const Analyzer = () => {
     display: false,
     text: `PR Analyzer`,
     font: { font: "Catamaran", size: 20, backgroundColor: "#FFFFFF" },
+  };
+
+  const newLegendClickHandler = function (e, legendItem, legend) {
+    const index = legendItem.datasetIndex;
+    const chart = legend.chart;
+
+    let selectedLifts = JSON.parse(localStorage.getItem("selectedLifts"));
+    if (!selectedLifts) selectedLifts = [];
+
+    let liftType = legendItem.text;
+
+    if (chart.isDatasetVisible(index)) {
+      legendItem.hidden = true;
+      selectedLifts = selectedLifts.filter((lift) => lift !== liftType); // Exclude unclicked lift
+      chart.hide(index);
+    } else {
+      legendItem.hidden = false;
+      selectedLifts = [...selectedLifts, liftType]; // Include clicked lift
+      chart.show(index);
+    }
+
+    // Update our localstorage with the array of which lifts are selected
+    localStorage.setItem("selectedLifts", JSON.stringify(selectedLifts));
   };
 
   const legendOptions = {
@@ -144,10 +169,23 @@ const Analyzer = () => {
       let index = element[0].index;
       let liftType = chart._metasets[0]._dataset.data[index].label; // FIXME: find a better method
       // console.log(`Show info for ${liftType} (position ${index})`);
-      setSelectedLift({
-        liftType: liftType,
-        index: index,
-      });
+      if (!selectedLift || liftType !== selectedLift.liftType)
+        setSelectedLift({
+          liftType: liftType,
+          index: index,
+        });
+    },
+    onHover: (context, element) => {
+      let chart = context.chart;
+      if (!element[0]) return; // Probably a click outside the Pie chart
+      let datasetIndex = element[0].datasetIndex;
+      let index = element[0].index;
+      let liftType = chart._metasets[0]._dataset.data[index].label; // FIXME: find a better method
+      if (!selectedLift || liftType !== selectedLift.liftType)
+        setSelectedLift({
+          liftType: liftType,
+          index: index,
+        });
     },
     elements: {
       arc: arcOptions,

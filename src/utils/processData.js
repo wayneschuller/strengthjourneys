@@ -187,7 +187,8 @@ export function processData(
   // Let's only keep the top 10 remaining lifts.
   processedData.splice(10); // Delete everything above 10
 
-  processAnalyzerData(parsedData, processedData, setAnalyzerData);
+  // FIXME: Not sure why this is needed, but it is.
+  if (!isRefresh) processAnalyzerData(parsedData, processedData, setAnalyzerData);
 
   // Do we have a localStorage selectedLifts item? First time user will not have one.
   const selectedLiftsItem = localStorage.getItem("selectedLifts");

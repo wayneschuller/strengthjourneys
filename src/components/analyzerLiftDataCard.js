@@ -1,5 +1,7 @@
 /** @format */
 
+import { useState, useEffect } from "react";
+import Grow from "@mui/material/Grow";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import { styled } from "@mui/material/styles";
@@ -14,10 +16,15 @@ const Item = styled(Paper)(({ theme }) => ({
 }));
 
 export const LiftDataCard = (props) => {
+  // console.log(`LiftDataCard... `);
+
+  if (!props.selectedLift) return;
+
   const liftType = props.selectedLift.liftType;
   const index = props.selectedLift.index;
   const visualizerData = props.visualizerData;
   const analyzerData = props.analyzerData;
+  const checked = props.checked;
 
   let single = getPRInfo(visualizerData, index, 1);
   let triple = getPRInfo(visualizerData, index, 3);
@@ -28,12 +35,14 @@ export const LiftDataCard = (props) => {
 
   return (
     <>
-      <Item elevation={20}>
-        <h2>{liftType} PR Analysis</h2>
-        <ShowPR liftType={liftType} index={index} reps={1} visualizerData={visualizerData} />
-        <ShowPR liftType={liftType} index={index} reps={3} visualizerData={visualizerData} />
-        <ShowPR liftType={liftType} index={index} reps={5} visualizerData={visualizerData} />
-      </Item>
+      <Grow in={checked} appear={true}>
+        <Item elevation={20}>
+          <h2>{liftType} PR Analysis</h2>
+          <ShowPR liftType={liftType} index={index} reps={1} visualizerData={visualizerData} />
+          <ShowPR liftType={liftType} index={index} reps={3} visualizerData={visualizerData} />
+          <ShowPR liftType={liftType} index={index} reps={5} visualizerData={visualizerData} />
+        </Item>
+      </Grow>
     </>
   );
 };

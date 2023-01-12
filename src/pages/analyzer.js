@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useOutletContext } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // MUI Components
 import Box from "@mui/material/Box";
@@ -34,11 +34,28 @@ const Analyzer = () => {
   ] = useOutletContext();
 
   const [selectedLift, setSelectedLift] = useState(null);
+  const [selectedLiftTransitionDelay, setSelectedLiftTransitionDelay] = useState(null);
+  const [checked, setChecked] = React.useState(true); // used for fade in of PR Card
+
+  // console.log(`<Analyzer />`);
+
+  // On cleanup we will set checked false to fade out the outgoing <LiftDataCard />
+  // On new selectedLift in the pie chart we will trigger this useEffect to wait a moment before turning
+  // on the updated new <LiftDataCard /> component.
+  useEffect(() => {
+    setTimeout(() => {
+      setChecked(true);
+      setSelectedLiftTransitionDelay(selectedLift);
+    }, 200);
+
+    // On unmount we will set checked false to fade out the outgoing <LiftDataCard />
+    return () => {
+      setChecked(false);
+    };
+  }, [selectedLift]);
 
   if (!visualizerData) return;
   if (!analyzerData) return;
-
-  // console.log(`<Analyzer />`);
 
   return (
     <div>
@@ -60,7 +77,12 @@ const Analyzer = () => {
 
           <Grid xs={12} lg={6}>
             {selectedLift && (
-              <LiftDataCard selectedLift={selectedLift} analyzerData={analyzerData} visualizerData={visualizerData} />
+              <LiftDataCard
+                checked={checked}
+                selectedLift={selectedLiftTransitionDelay}
+                analyzerData={analyzerData}
+                visualizerData={visualizerData}
+              />
             )}
           </Grid>
         </Grid>

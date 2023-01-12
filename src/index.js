@@ -19,6 +19,9 @@ import NoMatch from "./pages/nomatch";
 import OneRepMaxCalculator from "./pages/oneRepMaxCalculator";
 import Visualizer from "./pages/visualizer";
 
+import "typeface-roboto";
+import "typeface-catamaran";
+
 const theme = createTheme({
   palette: {
     // primary: color,

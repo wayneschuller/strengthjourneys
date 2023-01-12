@@ -26,6 +26,8 @@
     "react-router-dom": "^6.6.1",
     "react-scripts": "5.0.1",
     "react-share": "^4.4.1",
+    "typeface-catamaran": "^1.1.13",
+    "typeface-roboto": "^1.1.13",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

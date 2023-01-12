@@ -1,7 +1,6 @@
 /** @format */
 
 import { useState, useEffect } from "react";
-import Grow from "@mui/material/Grow";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import { styled } from "@mui/material/styles";
@@ -35,14 +34,12 @@ export const LiftDataCard = (props) => {
 
   return (
     <>
-      <Grow in={checked} appear={true}>
-        <Item elevation={20}>
-          <h2>{liftType} PR Analysis</h2>
-          <ShowPR liftType={liftType} index={index} reps={1} visualizerData={visualizerData} />
-          <ShowPR liftType={liftType} index={index} reps={3} visualizerData={visualizerData} />
-          <ShowPR liftType={liftType} index={index} reps={5} visualizerData={visualizerData} />
-        </Item>
-      </Grow>
+      <Item elevation={20}>
+        <h2>{liftType} PR Analysis</h2>
+        <ShowPR liftType={liftType} index={index} reps={1} visualizerData={visualizerData} />
+        <ShowPR liftType={liftType} index={index} reps={3} visualizerData={visualizerData} />
+        <ShowPR liftType={liftType} index={index} reps={5} visualizerData={visualizerData} />
+      </Item>
     </>
   );
 };

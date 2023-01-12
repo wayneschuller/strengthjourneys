@@ -100,6 +100,7 @@ export function VisualizerLineChart(props) {
       },
     },
     y: {
+      display: false, // Google Material UI guidelines suggest you don't always have to show axes if you have datalabels
       suggestedMin: 0,
       suggestedMax: visualizerConfig.highestWeight,
 
@@ -132,7 +133,7 @@ export function VisualizerLineChart(props) {
 
   const datalabelsOptions = {
     formatter: (context) => {
-      return context.y;
+      return context.y + context.unitType;
     },
     font: (context) => {
       // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic

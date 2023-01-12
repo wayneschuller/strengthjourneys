@@ -94,6 +94,7 @@ export function processData(
         afterLabel: [],
         isUpdated: true,
         url: url,
+        unitType: lift.unitType,
         reps: lift.reps,
         weight: lift.weight,
       });
@@ -131,6 +132,7 @@ export function processData(
       processedData[liftIndex].data[dateIndex].method = equation;
       processedData[liftIndex].data[dateIndex].isUpdated = true;
       processedData[liftIndex].data[dateIndex].url = url;
+      processedData[liftIndex].data[dateIndex].unitType = lift.unitType;
       processedData[liftIndex].data[dateIndex].reps = lift.reps;
       processedData[liftIndex].data[dateIndex].weight = lift.weight;
       continue; // Continue iterating through parsedData
@@ -289,7 +291,8 @@ function processAchievements(parsedData, processedData, equation) {
 
     liftType.data.forEach((lift) => {
       lift.afterLabel.splice(0, lift.afterLabel.length); // empty array
-      if (lift.notes) lift.afterLabel.push(lift.notes); // Put any notes back in first
+      if (lift.notes) lift.afterLabel.push(lift.notes);
+      // Put any notes back in first
       else lift.afterLabel = [];
     });
 
@@ -424,7 +427,8 @@ function estimateE1RM(reps, weight, equation) {
       return Math.round((100 * weight) / (48.8 + 53.8 * Math.pow(Math.E, -0.075 * reps)));
     case "Brzycki":
       return Math.round(weight / (1.0278 - 0.0278 * reps));
-    default: // Repeat Brzycki formula as a default here
+    default:
+      // Repeat Brzycki formula as a default here
       return Math.round(weight / (1.0278 - 0.0278 * reps));
   }
 }

@@ -65,7 +65,26 @@ function ShowPR({ liftType, index, reps, visualizerData }) {
   let isUrl = false;
 
   if (prTuple) {
-    let dateString = prTuple.date; // FIXME: Change "2021-03-01" to "1 March, 2021"
+    let date = new Date(prTuple.date);
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    const day = date.getDate();
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    let dateString = `${day} ${month}, ${year}`;
+
     resultText = `${reps}@${prTuple.weight}${prTuple.unitType} (${dateString})`;
     if (prTuple.url && prTuple.url !== "") {
       isUrl = true;

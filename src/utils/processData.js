@@ -25,11 +25,11 @@ function processAnalyzerPieData(parsedData, processedData) {
 
   // Steal what is useful from the visualizerData for the Analyzer pie chart
   processedData.forEach((lift) => {
-    let totalLifts = liftCounts[lift.label];
+    let totalSets = liftCounts[lift.label];
     analyzerPieData.push({
       label: lift.label,
-      value: lift.data.length, // Number of 'lifting sessions' involving this lift
-      totalLifts: totalLifts, // Total number of they did this movement
+      totalSessions: lift.data.length, // Number of 'lifting sessions' involving this lift
+      totalSets: totalSets, // Another possible metric
       backgroundColor: lift.backgroundColor,
       borderColor: lift.borderColor,
     });

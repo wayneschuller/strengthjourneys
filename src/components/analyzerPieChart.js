@@ -79,8 +79,8 @@ export function AnalyzerPieChart(props) {
     color: "white",
     display: function (context) {
       let dataset = context.dataset;
-      let totalValue = dataset.data.reduce((acc, obj) => acc + obj.value, 0); // Total sum of the values in the pie chart
-      let currentValue = dataset.data[context.dataIndex].value;
+      let totalValue = dataset.data.reduce((acc, obj) => acc + obj.totalSessions, 0); // Total sum of the values in the pie chart
+      let currentValue = dataset.data[context.dataIndex].totalSessions;
       // Don't show data label if arc piece is less than 10% of chart
       return currentValue > totalValue * 0.1;
       // return true; // Use this  to show data labels on every arc data item
@@ -92,8 +92,14 @@ export function AnalyzerPieChart(props) {
     },
     padding: 10,
     formatter: function (context) {
-      return [context.label, `${context.value} sessions`];
+      return [context.label, `${context.totalSessions} sessions`];
+      // return [context.label];
     },
+  };
+
+  const parsingOptions = {
+    key: "totalSessions",
+    // key: "totalSets",  // We could group the pieChart by total sets performed...
   };
 
   // ---------------------------------------------------------------------------
@@ -135,6 +141,7 @@ export function AnalyzerPieChart(props) {
     elements: {
       arc: arcOptions,
     },
+    parsing: parsingOptions,
     plugins: {
       title: titleOptions,
       legend: legendOptions,

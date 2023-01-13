@@ -65,7 +65,7 @@ function LiftOverviewCard({ liftType, index, analyzerData }) {
   if (!analyzerData) return;
   if (!analyzerData.analyzerPRCardData[liftType]) return;
 
-  console.log(analyzerData);
+  // console.log(analyzerData);
 
   const sessions = analyzerData.analyzerPRCardData[liftType].sessions;
   const firstLift = analyzerData.analyzerPRCardData[liftType].firstLift;
@@ -77,12 +77,28 @@ function LiftOverviewCard({ liftType, index, analyzerData }) {
         <CardHeader title={liftType} subheader="Overview" />
         <CardContent>
           <b>{sessions}</b> sessions. First {liftType}: <b>{firstLift}</b>.
+          {analyzerData.analyzerPRCardData[liftType].recentHighlights && (
+            <RecentHighlights liftType={liftType} analyzerData={analyzerData} />
+          )}
         </CardContent>
       </Card>
     </>
   );
 }
 
+function RecentHighlights({ liftType, analyzerData }) {
+  return (
+    <>
+      <Typography variant="body1">Recent highlights in the last month:</Typography>
+
+      {analyzerData.analyzerPRCardData[liftType].recentHighlights.map((highlight, index) => (
+        <Typography variant="body2" key={highlight}>
+          {highlight}
+        </Typography>
+      ))}
+    </>
+  );
+}
 function PRCard({ liftType, reps, analyzerData }) {
   if (!analyzerData.analyzerPRCardData[liftType]) return;
   if (!analyzerData.analyzerPRCardData[liftType].repPRLifts) return;

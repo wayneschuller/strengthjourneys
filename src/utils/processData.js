@@ -480,8 +480,10 @@ function processAnalyzerPRCardData(parsedData, processedData) {
     const rawLifts = parsedData.filter((lift) => lift.name === liftType.label);
 
     // Get the i-rep maxes for this lift type up to a 10 rep max
+    // Collect interesting data along the way
     let repPRLifts = {};
     let repRecentLifts = {};
+    let recentHighlights = [];
     for (let reps = 1; reps <= 10; reps++) {
       // Filter for this rep style
       let repLifts = rawLifts.filter((lift) => lift.reps === reps);
@@ -517,6 +519,17 @@ function processAnalyzerPRCardData(parsedData, processedData) {
 
       // Store the top 5 lifts for this rep scheme
       repPRLifts[reps] = prLifts;
+
+      for (let i = 0; i < 20; i++) {
+        if (repLifts[i] === undefined) break; // We ran out of lifts
+
+        let date = new Date(repLifts[i].date);
+        if (date < new Date().setDate(new Date().getDate() - 30)) continue; // Too old, keep looking
+
+        recentHighlights.push(
+          `${reps}@${repLifts[i].weight}${repLifts[i].unitType} (${repLifts[i].date}), #${i + 1} best ${reps}RM ever.`
+        );
+      }
     }
 
     // Store key information for this lift type
@@ -526,6 +539,7 @@ function processAnalyzerPRCardData(parsedData, processedData) {
       yearlyAverage: 365,
       repPRLifts: repPRLifts,
       repRecentLifts: repRecentLifts,
+      recentHighlights: recentHighlights,
     };
   });
 

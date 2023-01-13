@@ -16,6 +16,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false); // Used to show loading animation
   const [isDataReady, setIsDataReady] = useState(false); // Used to trigger when app is ready to render
 
+  // FIXME: We don't need to put null values here. EVerything just gets overwritten anyway.
   const [visualizerData, setVisualizerData] = useState({
     padDateMin: null,
     padDateMax: null,
@@ -24,9 +25,10 @@ export default function App() {
     visualizerE1RMLineData: null,
   });
 
+  // FIXME: We don't need to put null values here. EVerything just gets overwritten anyway.
   const [analyzerData, setAnalyzerData] = useState({
-    coolStuff: null,
-    PRs: null,
+    calendarHeatmapData: null,
+    analyzerPRCardData: null,
     analyzerPieData: null,
   });
 

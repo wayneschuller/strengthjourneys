@@ -21,44 +21,26 @@ export const LiftDataCard = (props) => {
 
   const liftType = props.selectedLift.liftType;
   const index = props.selectedLift.index;
-  const visualizerData = props.visualizerData;
   const analyzerData = props.analyzerData;
-  const checked = props.checked;
 
   return (
     <>
       <Item elevation={20}>
         <h2>{liftType} PR Analysis</h2>
-        <ShowPR liftType={liftType} index={index} reps={1} visualizerData={visualizerData} />
-        <ShowPR liftType={liftType} index={index} reps={3} visualizerData={visualizerData} />
-        <ShowPR liftType={liftType} index={index} reps={5} visualizerData={visualizerData} />
+        <ShowPR liftType={liftType} index={index} reps={1} analyzerData={analyzerData} />
       </Item>
     </>
   );
 };
 
-// Returns a full PR info string (with possible hyperlink included)
-export function getPRInfo(visualizerData, index, reps) {
-  let prTuple = visualizerData[index][`${reps}RM`];
+function ShowPR({ liftType, index, reps, analyzerData }) {
+  if (!analyzerData.analyzerPRCardData[liftType]) return;
+  if (!analyzerData.analyzerPRCardData[liftType].repMaxPRs) return;
+  if (!analyzerData.analyzerPRCardData[liftType].repMaxPRs[reps]) return;
 
-  let result = "";
-  if (prTuple) {
-    result = `${prTuple.weight}${prTuple.unitType} (${prTuple.date})`;
-    // If we have a URL wrap it in a link
-    if (prTuple.url && prTuple.url !== "") {
-      let url = prTuple.url;
-      // result = `<a href='${url}'>${result}</a>`;  // Figure out how to link in React/MUI
-      result = `<ButtonLink />`;
-      // console.log(result);
-    }
-  } else {
-    result = "Not found.";
-  }
-  return result;
-}
-
-function ShowPR({ liftType, index, reps, visualizerData }) {
-  let prTuple = visualizerData.visualizerE1RMLineData[index][`${reps}RM`];
+  let prTuple = analyzerData.analyzerPRCardData[liftType].repMaxPRs[reps][0];
+  // let prTuple = visualizerData.visualizerE1RMLineData[index][`${reps}RM`];
+  // console.log(`prTuple: ${prTuple}`);
 
   let resultText = "";
   let isUrl = false;

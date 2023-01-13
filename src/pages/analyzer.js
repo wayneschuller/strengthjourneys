@@ -19,7 +19,7 @@ import TableRow from "@mui/material/TableRow";
 
 import { LoadingLinearProgress } from "./visualizer";
 import { AnalyzerPieChart } from "../components/analyzerPieChart";
-import { LiftDataCard, getPRInfo } from "../components/analyzerLiftDataCard";
+import { LiftDataCard } from "../components/analyzerLiftDataCard";
 
 const Analyzer = () => {
   const [parsedData, isLoading, isDataReady, visualizerData, setVisualizerData, analyzerData, setAnalyzerData] =
@@ -51,9 +51,7 @@ const Analyzer = () => {
           </Grid>
 
           <Grid xs={12} lg={6}>
-            {selectedLift && (
-              <LiftDataCard selectedLift={selectedLift} analyzerData={analyzerData} visualizerData={visualizerData} />
-            )}
+            {selectedLift && <LiftDataCard selectedLift={selectedLift} analyzerData={analyzerData} />}
           </Grid>
         </Grid>
       </Box>
@@ -62,37 +60,3 @@ const Analyzer = () => {
 };
 
 export default Analyzer;
-
-// An old component - not used anymore
-const PRDataTable = (props) => {
-  const visualizerData = props.visualizerData;
-
-  if (!visualizerData) return;
-
-  return (
-    <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 150 }} aria-label="simple table">
-        <TableHead>
-          <TableRow>
-            <TableCell>Lift Type</TableCell>
-            <TableCell align="right">One Rep Max</TableCell>
-            <TableCell align="right">Three Rep Max</TableCell>
-            <TableCell align="right">Five Rep Max</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {visualizerData.map((lift, index) => (
-            <TableRow key={lift.label} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-              <TableCell component="th" scope="row">
-                {lift.label}
-              </TableCell>
-              <TableCell align="right">{getPRInfo(visualizerData, index, 1)}</TableCell>
-              <TableCell align="right">{getPRInfo(visualizerData, index, 3)}</TableCell>
-              <TableCell align="right">{getPRInfo(visualizerData, index, 5)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-};

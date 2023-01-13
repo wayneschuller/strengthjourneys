@@ -253,6 +253,9 @@ function ResponsiveAppBar(props) {
           {/* Link to our GitHub project on large screens */}
           <Tooltip title="Click to open GitHub source code">
             <GitHubIcon
+              sx={{
+                display: { xs: "none", md: "block" },
+              }}
               onClick={(event) => window.open("https://github.com/wayneschuller/strengthjourneys", "_blank")}
             />
           </Tooltip>

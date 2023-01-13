@@ -41,7 +41,7 @@ export const LiftDataPanel = (props) => {
       {/* <Box sx={{ width: 500, minHeight: 377 }}> */}
       <Box>
         <Stack spacing={1}>
-          <LiftOverviewCard liftType={liftType} analyzerData={analyzerData} />
+          <LiftOverviewCard liftType={liftType} index={index} analyzerData={analyzerData} />
           <Masonry columns={3} spacing={1}>
             <PRCard liftType={liftType} reps={1} analyzerData={analyzerData} />
             <PRCard liftType={liftType} reps={2} analyzerData={analyzerData} />
@@ -61,41 +61,24 @@ export const LiftDataPanel = (props) => {
   );
 };
 
-function LiftOverviewCard({ liftType, analyzerData }) {
+function LiftOverviewCard({ liftType, index, analyzerData }) {
   if (!analyzerData) return;
   if (!analyzerData.analyzerPRCardData[liftType]) return;
 
+  console.log(analyzerData);
   const sessions = analyzerData.analyzerPRCardData[liftType].sessions;
   const firstLift = analyzerData.analyzerPRCardData[liftType].firstLift;
+  const liftColor = analyzerData.analyzerPieData[index].backgroundColor;
 
   return (
     <>
-      <Card variant="filled" sx={{ backgroundColor: "Brown", color: "white", m: 2 }}>
+      <Card variant="filled" sx={{ backgroundColor: liftColor, color: "white", m: 2 }}>
         <CardHeader title={liftType} subheader="Overview" />
         <CardContent>
-          <p>
-            <b>{sessions}</b> sessions
-          </p>
-          <p>
-            First {liftType}: {firstLift}
-          </p>
+          <b>{sessions}</b> sessions. First {liftType}: <b>{firstLift}</b>.
         </CardContent>
       </Card>
     </>
-  );
-}
-
-function ButtonLink({ text, url }) {
-  return (
-    <Link
-      component="button"
-      variant="body2"
-      onClick={() => {
-        window.open(url);
-      }}
-    >
-      {text}
-    </Link>
   );
 }
 

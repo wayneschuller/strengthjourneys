@@ -23,6 +23,10 @@ import "typeface-roboto";
 import "typeface-catamaran";
 
 const theme = createTheme({
+  typography: {
+    // fontSize: 12,
+    // FIXME: Leave Roboto for titles, but choose Catamaran for body
+  },
   palette: {
     // primary: color,
     primary: {

@@ -19,7 +19,7 @@ import TableRow from "@mui/material/TableRow";
 
 import { LoadingLinearProgress } from "./visualizer";
 import { AnalyzerPieChart } from "../components/analyzerPieChart";
-import { LiftDataCard, getPRInfo } from "../components/analyzerLiftDataCard";
+import { LiftDataPanel, getPRInfo } from "../components/analyzerLiftDataPanel";
 
 const Analyzer = () => {
   const [
@@ -43,7 +43,7 @@ const Analyzer = () => {
 
   return (
     <div>
-      <Box sx={{ m: 3, width: "90%" }}>
+      <Box sx={{ m: 3, width: "90%" }} color="secondary">
         {!visualizerData && <p>PRs and other interesting data points will appear here. </p>}
 
         {!visualizerData && isLoading && <LoadingLinearProgress />}
@@ -61,9 +61,10 @@ const Analyzer = () => {
 
           <Grid xs={12} lg={6}>
             {selectedLift && (
-              <LiftDataCard
+              <LiftDataPanel
                 checked={checked}
                 selectedLift={selectedLift}
+                parsedData={parsedData}
                 analyzerData={analyzerData}
                 visualizerData={visualizerData}
               />

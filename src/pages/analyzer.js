@@ -53,7 +53,6 @@ const Analyzer = () => {
           <Grid xs={12} lg={6}>
             {selectedLift && (
               <LiftDataPanel
-                checked={checked}
                 selectedLift={selectedLift}
                 parsedData={parsedData}
                 analyzerData={analyzerData}

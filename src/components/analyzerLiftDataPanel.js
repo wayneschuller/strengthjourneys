@@ -34,25 +34,23 @@ export const LiftDataPanel = (props) => {
   const analyzerData = props.analyzerData;
   const checked = props.checked;
 
-  let single = getPRInfo(visualizerData, index, 1);
-  let triple = getPRInfo(visualizerData, index, 3);
-  let five = getPRInfo(visualizerData, index, 5);
-  let prTuple = visualizerData[index][`3RM`];
-  let singleURL = false;
-  if (prTuple && prTuple.url) singleURL = true;
-
   return (
     <>
       {/* <Item elevation={0} sx={{ backgroundColor: "#dddd99" }}> */}
       {/* <Box sx={{ width: 500, minHeight: 377 }}> */}
       <Box>
         <Masonry columns={2} spacing={4}>
-          <LiftOverviewCard liftType={liftType} index={index} visualizerData={visualizerData} />
-          <PRCard liftType={liftType} index={index} reps={1} visualizerData={visualizerData} />
-          <PRCard liftType={liftType} index={index} reps={2} visualizerData={visualizerData} />
-          <PRCard liftType={liftType} index={index} reps={3} visualizerData={visualizerData} />
-          <PRCard liftType={liftType} index={index} reps={4} visualizerData={visualizerData} />
-          <PRCard liftType={liftType} index={index} reps={5} visualizerData={visualizerData} />
+          <LiftOverviewCard liftType={liftType} analyzerData={analyzerData} />
+          <PRCard liftType={liftType} reps={1} analyzerData={analyzerData} />
+          <PRCard liftType={liftType} reps={2} analyzerData={analyzerData} />
+          <PRCard liftType={liftType} reps={3} analyzerData={analyzerData} />
+          <PRCard liftType={liftType} reps={4} analyzerData={analyzerData} />
+          <PRCard liftType={liftType} reps={5} analyzerData={analyzerData} />
+          <PRCard liftType={liftType} reps={6} analyzerData={analyzerData} />
+          <PRCard liftType={liftType} reps={7} analyzerData={analyzerData} />
+          <PRCard liftType={liftType} reps={8} analyzerData={analyzerData} />
+          <PRCard liftType={liftType} reps={9} analyzerData={analyzerData} />
+          <PRCard liftType={liftType} reps={10} analyzerData={analyzerData} />
         </Masonry>
       </Box>
       {/* </Item> */}
@@ -80,17 +78,23 @@ export function getPRInfo(visualizerData, index, reps) {
   return result;
 }
 
-function LiftOverviewCard({ liftType, index, reps, visualizerData }) {
+function LiftOverviewCard({ liftType, analyzerData }) {
+  if (!analyzerData) return;
+  if (!analyzerData.analyzerPRCardData[liftType]) return;
+
+  const sessions = analyzerData.analyzerPRCardData[liftType].sessions;
+  const firstLift = analyzerData.analyzerPRCardData[liftType].firstLift;
+
   return (
     <>
       <Card variant="filled" sx={{ backgroundColor: "Brown", color: "white", m: 2 }}>
         <CardHeader title={liftType} subheader="Overview" />
         <CardContent>
           <p>
-            <b>{visualizerData[index].data.length}</b> sessions
+            <b>{sessions}</b> sessions
           </p>
           <p>
-            First {liftType}: {visualizerData[index].data[0].x}
+            First {liftType}: {firstLift}
           </p>
         </CardContent>
       </Card>
@@ -162,8 +166,11 @@ function ButtonLink({ text, url }) {
   );
 }
 
-function PRCard({ liftType, index, reps, visualizerData }) {
-  let prTuple = visualizerData[index][`${reps}RM`];
+function PRCard({ liftType, reps, analyzerData }) {
+  if (!analyzerData.analyzerPRCardData[liftType]) return;
+  if (!analyzerData.analyzerPRCardData[liftType].repMaxPRs) return;
+  if (!analyzerData.analyzerPRCardData[liftType].repMaxPRs[reps]) return;
+  let prTuple = analyzerData.analyzerPRCardData[liftType].repMaxPRs[reps][0];
   let resultText = "";
   let isFound = false;
   let isUrl = false;

@@ -25,6 +25,7 @@ const Analyzer = () => {
   const [
     parsedData,
     isLoading,
+    isDataReady,
     visualizerData,
     setVisualizerData,
     visualizerConfig,
@@ -44,13 +45,13 @@ const Analyzer = () => {
   return (
     <div>
       <Box sx={{ m: 3, width: "90%" }}>
-        {!visualizerData && <p>PRs and other interesting data points will appear here. </p>}
+        {!isDataReady && <p>PRs and other interesting data points will appear here. </p>}
 
-        {!visualizerData && isLoading && <LoadingLinearProgress />}
+        {!isDataReady && isLoading && <LoadingLinearProgress />}
 
         <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 8 }}>
           <Grid xs={12} lg={6}>
-            {analyzerData && (
+            {isDataReady && (
               <AnalyzerPieChart
                 selectedLift={selectedLift}
                 setSelectedLift={setSelectedLift}

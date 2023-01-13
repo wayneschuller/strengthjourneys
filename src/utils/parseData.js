@@ -20,6 +20,7 @@ import { processData, processAnalyzerData } from "./processData";
 export function parseData(
   data,
   setIsLoading,
+  setIsDataReady,
   visualizerData,
   setVisualizerData,
   visualizerConfig,
@@ -95,7 +96,16 @@ export function parseData(
   // console.log(`setParsedData to: ${JSON.stringify(parsedData[-1])}`);
   setParsedData(parsedData); // We need this in state for refreshes later on
 
-  processData(parsedData, visualizerData, setVisualizerData, visualizerConfig, setVisualizerConfig, setAnalyzerData);
+  processData(
+    setIsLoading,
+    setIsDataReady,
+    parsedData,
+    visualizerData,
+    setVisualizerData,
+    visualizerConfig,
+    setVisualizerConfig,
+    setAnalyzerData
+  );
 
   return;
 

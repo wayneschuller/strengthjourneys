@@ -41,6 +41,8 @@ export function processAnalyzerData(parsedData, visualizerData, setAnalyzerData)
 // Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
 // We collect only the best set per lift type per day, according to highest estimated one rep max
 export function processData(
+  setIsLoading,
+  setIsDataReady,
   parsedData,
   visualizerData,
   setVisualizerData,
@@ -238,14 +240,15 @@ export function processData(
     });
   }
 
-  // setIsLoading(false);            // Stop the loading animations
-
-  // If it is not a refresh - set the React state for rendering to happen
+  // If it is not a refresh - set the React state
   // If it is a refresh - we will rely on local mutation to change the chart without React knowing
   if (!isRefresh) {
     // setVisualizerData({datasets: processedData});   // This should trigger <Visualizer /> and <Analyzer /> creation
-    setVisualizerData(processedData); // This should trigger <Visualizer /> and <Analyzer /> creation
+    setVisualizerData(processedData);
   }
+
+  setIsLoading(false); // Stop the loading animations
+  setIsDataReady(true); // This should trigger <Visualizer /> and <Analyzer /> creation
 }
 
 // When refreshing, we want to simply update the y position of the annotations based on a new equation

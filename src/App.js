@@ -15,7 +15,8 @@ export default function App() {
   const [userInfo, setUserInfo] = useState(null); // .name .picture .email (from Google userinfo API)
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source"); // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // Use to show loading animation
+  const [isLoading, setIsLoading] = useState(false); // Used to show loading animation
+  const [isDataReady, setIsDataReady] = useState(false); // Used to trigger when app is ready to render
   const [visualizerConfig, setVisualizerConfig] = useState({
     padDateMin: null,
     padDateMax: null,
@@ -39,6 +40,7 @@ export default function App() {
         setInfoChipStatus,
         setInfoChipToolTip,
         setIsLoading,
+        setIsDataReady,
         visualizerData,
         setVisualizerData,
         visualizerConfig,
@@ -62,6 +64,8 @@ export default function App() {
         setVisualizerData={setVisualizerData}
         isLoading={isLoading}
         setIsLoading={setIsLoading}
+        isDataReady={isDataReady}
+        setIsDataReady={setIsDataReady}
         visualizerConfig={visualizerConfig}
         setVisualizerConfig={setVisualizerConfig}
         setParsedData={setParsedData}
@@ -75,6 +79,7 @@ export default function App() {
         context={[
           parsedData,
           isLoading,
+          isDataReady,
           visualizerData,
           setVisualizerData,
           visualizerConfig,

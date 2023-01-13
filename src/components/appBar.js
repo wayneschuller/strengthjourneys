@@ -49,6 +49,7 @@ function ResponsiveAppBar(props) {
   const visualizerConfig = props.visualizerConfig;
   const setVisualizerConfig = props.setVisualizerConfig;
   const setIsLoading = props.setIsLoading;
+  const setIsDataReady = props.setIsDataReady;
   const setParsedData = props.setParsedData;
   const setAnalyzerData = props.setAnalyzerData;
 
@@ -84,6 +85,7 @@ function ResponsiveAppBar(props) {
     setVisualizerData(null); // Reset the graph
     setAnchorElUser(null); // Closes menu
     setIsLoading(false);
+    setIsDataReady(false);
   };
 
   // console.log(`Top level <ResponsiveAppBar />...`);
@@ -104,6 +106,7 @@ function ResponsiveAppBar(props) {
         setInfoChipStatus,
         setInfoChipToolTip,
         setIsLoading,
+        setIsDataReady,
         visualizerData,
         setVisualizerData,
         visualizerConfig,
@@ -151,6 +154,7 @@ function ResponsiveAppBar(props) {
           setInfoChipStatus,
           setInfoChipToolTip,
           setIsLoading,
+          setIsDataReady,
           visualizerData,
           setVisualizerData,
           visualizerConfig,
@@ -164,6 +168,7 @@ function ResponsiveAppBar(props) {
         // getGDriveMetadata(  setInfoChipStatus,
         // setInfoChipToolTip,
         // setIsLoading,
+        // setIsDataReady,
         // visualizerData, setVisualizerData,
         // visualizerConfig, setVisualizerConfig,
         // setParsedData, setAnalyzerData

@@ -44,13 +44,12 @@ function ResponsiveAppBar(props) {
   const setInfoChipStatus = props.setInfoChipStatus;
   const infoChipToolTip = props.infoChipToolTip;
   const setInfoChipToolTip = props.setInfoChipToolTip;
-  const visualizerData = props.visualizerData;
-  const setVisualizerData = props.setVisualizerData;
-  const visualizerConfig = props.visualizerConfig;
-  const setVisualizerConfig = props.setVisualizerConfig;
   const setIsLoading = props.setIsLoading;
+  const setIsDataReady = props.setIsDataReady;
   const setParsedData = props.setParsedData;
   const setAnalyzerData = props.setAnalyzerData;
+  const visualizerData = props.visualizerData;
+  const setVisualizerData = props.setVisualizerData;
 
   // console.log(`<ResponsiveAppBar />...`);
 
@@ -81,9 +80,10 @@ function ResponsiveAppBar(props) {
     localStorage.removeItem("ssid");
     localStorage.removeItem("gSheetName");
     setUserInfo(null); // This will remove the profile menu and status button
-    setVisualizerData(null); // Reset the graph
+    setVisualizerData(null); // Reset the graph // FIXME: do we need to nullify the internals more carefully?
     setAnchorElUser(null); // Closes menu
     setIsLoading(false);
+    setIsDataReady(false);
   };
 
   // console.log(`Top level <ResponsiveAppBar />...`);
@@ -104,10 +104,9 @@ function ResponsiveAppBar(props) {
         setInfoChipStatus,
         setInfoChipToolTip,
         setIsLoading,
+        setIsDataReady,
         visualizerData,
         setVisualizerData,
-        visualizerConfig,
-        setVisualizerConfig,
         setParsedData,
         setAnalyzerData
       );
@@ -151,10 +150,9 @@ function ResponsiveAppBar(props) {
           setInfoChipStatus,
           setInfoChipToolTip,
           setIsLoading,
+          setIsDataReady,
           visualizerData,
           setVisualizerData,
-          visualizerConfig,
-          setVisualizerConfig,
           setParsedData,
           setAnalyzerData
         );
@@ -164,8 +162,8 @@ function ResponsiveAppBar(props) {
         // getGDriveMetadata(  setInfoChipStatus,
         // setInfoChipToolTip,
         // setIsLoading,
+        // setIsDataReady,
         // visualizerData, setVisualizerData,
-        // visualizerConfig, setVisualizerConfig,
         // setParsedData, setAnalyzerData
         // );
       },

@@ -7,7 +7,7 @@
 // parseData will take raw imported 2d grid data from different formats
 // and parse into our common parsedData[] format.
 
-import { processData, processAnalyzerData } from "./processData";
+import { processData, processAnalyzerPieData } from "./processData";
 
 // ------------------------------------------------------------------------------
 // parseData
@@ -20,10 +20,9 @@ import { processData, processAnalyzerData } from "./processData";
 export function parseData(
   data,
   setIsLoading,
+  setIsDataReady,
   visualizerData,
   setVisualizerData,
-  visualizerConfig,
-  setVisualizerConfig,
   setParsedData,
   setAnalyzerData
 ) {
@@ -91,11 +90,14 @@ export function parseData(
 
   console.log(`   ... parseData() complete. (Bespoke format)`);
 
-  // Next in the data flow is to process the data.
-  // console.log(`setParsedData to: ${JSON.stringify(parsedData[-1])}`);
   setParsedData(parsedData); // We need this in state for refreshes later on
 
-  processData(parsedData, visualizerData, setVisualizerData, visualizerConfig, setVisualizerConfig, setAnalyzerData);
+  // Next in the data flow is to process the data.
+  processData(parsedData, visualizerData, setVisualizerData, setAnalyzerData, setIsLoading, setIsDataReady);
+
+  // FIXME: on success we could just setIsLoading and setIsDataReady here?
+  // Then we would not need to pass them to processData and then the equation
+  // changer could call processData without needing those arguments.
 
   return;
 

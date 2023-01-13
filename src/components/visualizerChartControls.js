@@ -40,8 +40,6 @@ export function ChartControls(props) {
             parsedData={props.parsedData}
             visualizerData={props.visualizerData}
             setVisualizerData={props.setVisualizerData}
-            visualizerConfig={props.visualizerConfig}
-            setVisualizerConfig={props.setVisualizerConfig}
             chartUpdate={props.chartUpdate}
           />
         </Grid>
@@ -89,20 +87,13 @@ export function EquationChooser(props) {
     // We were setting equation state which was lifted high
     // But every change triggered a rerender of the chart
     // which in turn triggered a zoom reset which was BAD
+    // Instead we mutate visualizerData without telling React
     // setEquation(event.target.value);
 
     localStorage.setItem("equation", event.target.value);
 
-    // Mark visualizerData as needing reprocessing
-
     // Process the data with the new equation (processer will detect it is a refresh)
-    processData(
-      props.parsedData,
-      props.visualizerData,
-      props.setVisualizerData,
-      props.visualizerConfig,
-      props.setVisualizerConfig
-    );
+    processData(props.parsedData, props.visualizerData, props.setVisualizerData);
 
     // Refresh the chart
     props.chartUpdate();

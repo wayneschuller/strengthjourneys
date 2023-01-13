@@ -3,50 +3,57 @@
 // Wayne Schuller, wayne@schuller.id.au
 // Licenced under https://www.gnu.org/licenses/gpl-3.0.html
 
+import { estimateE1RM } from "./estimateE1RM";
 import { getLiftColor } from "./getLiftColor";
 
 // Collect some simple stats for doughnut/pie chart in the <Analyzer />
-export function processAnalyzerData(parsedData, visualizerData, setAnalyzerData) {
-  let analyzerData = [];
+
+// Here we will get the numbe of sessions for each lift in Pie Chart format (label/value)
+// Let's also get the total number of lifts for each lift type
+function processAnalyzerPieData(parsedData, processedData) {
+  let analyzerPieData = [];
+
+  // Do a survey on total number of each lift lifted
+  const liftCounts = parsedData.reduce((counts, lift) => {
+    if (counts[lift.name]) {
+      counts[lift.name] += 1;
+    } else {
+      counts[lift.name] = 1;
+    }
+    return counts;
+  }, {});
 
   // Steal what is useful from the visualizerData for the Analyzer pie chart
-  visualizerData.forEach((lift) => {
-    analyzerData.push({
+  processedData.forEach((lift) => {
+    let totalLifts = liftCounts[lift.label];
+    analyzerPieData.push({
       label: lift.label,
-      value: lift.data.length,
+      value: lift.data.length, // Number of 'lifting sessions' involving this lift
+      totalLifts: totalLifts, // Total number of they did this movement
       backgroundColor: lift.backgroundColor,
       borderColor: lift.borderColor,
     });
   });
 
-  // Do a survey on total number of each lift type
-  // const liftCounts = parsedData.reduce((counts, lift) => {
-  //   if (counts[lift.name]) {
-  //     counts[lift.name] += 1;
-  //   } else {
-  //     counts[lift.name] = 1;
-  //   }
-  //   return counts;
-  // }, {});
-  // analyzerData = Object.entries(liftCounts).map(([label, lifts]) => ({ label, lifts }));
-  // analyzerData.sort((a, b) => b.value - a.value);
-  // Let's only keep the top 10 remaining lifts.
-  // analyzerData.splice(10); // Delete everything above 10
+  // Object.entries(liftCounts).forEach(([label, lifts]) =>
+  // console.log(`label: ${label}, lifts: ${lifts}`)
+  // });
 
-  // console.log(analyzerData);
-
-  setAnalyzerData(analyzerData);
+  // setAnalyzerData(analyzerPieData);
+  return analyzerPieData;
 }
 
-// Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
-// We collect only the best set per lift type per day, according to highest estimated one rep max
+// Process the parsedData array of lifts into data structures ready for the <Visualiser /> and <Analyzer />
+// We collect only the best set per lift type per day, according to highest estimated one rep max for the visualizer
+// When an equation change causes a refresh, we will call this function with only the first three
+// arguments. So we cannot access the last three arguments in that case...
 export function processData(
   parsedData,
   visualizerData,
   setVisualizerData,
-  visualizerConfig,
-  setVisualizerConfig,
-  setAnalyzerData
+  setAnalyzerData,
+  setIsLoading,
+  setIsDataReady
 ) {
   console.log("processData()...");
 
@@ -54,15 +61,12 @@ export function processData(
   if (!equation) equation = "Brzycki"; // Probably not needed. Just in case.
 
   let isRefresh = false;
-  // Do we already have some visualizerData? This is a refresh caused by:
-  //   a) changing the equation method
-  //   b) automatic google sheets refresh
-  //
+
+  // Do we already have a set of visualizerE1RMLineData? Then this must be a refresh caused by changing the equation method
   let processedData = [];
-  if (visualizerData) {
+  if (visualizerData && visualizerData.visualizerE1RMLineData) {
     console.log(`... refreshing old data...`);
-    // console.log(visualizerData);
-    processedData = visualizerData; // We are going to discretely mutate React state to modify chart without a rerender
+    processedData = visualizerData.visualizerE1RMLineData; // We are going to discretely mutate React state to modify chart without a rerender
     isRefresh = true;
   }
 
@@ -185,10 +189,11 @@ export function processData(
   }
 
   // Let's only keep the top 10 remaining lifts.
-  processedData.splice(10); // Delete everything above 10
+  processedData.splice(10); // FIXME: this could be configurable in settings
 
-  // FIXME: Not sure why this is needed, but it is.
-  if (!isRefresh) processAnalyzerData(parsedData, processedData, setAnalyzerData);
+  // Get the top lifts by session for the main Analyzer Pie chart
+  let analyzerPieData = processAnalyzerPieData(parsedData, processedData);
+  let analyzerPRCardData = processAnalyzerPRCardData(parsedData, processedData);
 
   // Do we have a localStorage selectedLifts item? First time user will not have one.
   const selectedLiftsItem = localStorage.getItem("selectedLifts");
@@ -200,7 +205,7 @@ export function processData(
   // Process the PRs/Achivements and return some chartjs annotation config.
   if (isRefresh) {
     // If we have annotations this function will just mutate them
-    updateAchievements(processedData, equation, visualizerConfig.achievementAnnotations);
+    updateAchievements(processedData, equation, visualizerData.achievementAnnotations);
   } else {
     // If annotations are null this function will give us a fresh set
     var annotations = processAchievements(parsedData, processedData, equation);
@@ -226,25 +231,28 @@ export function processData(
   });
   highestWeight = Math.ceil(highestWeight / 49) * 50; // Round up to the next mulitiple of 50
 
-  // If this is not a refresh then set state stuff
-  // However if we are just refreshing, we will have mutated the annotations but don't tell React
+  // If this is not a refresh then set React state to trigger our visualizations
+  // If it is a refresh - we will rely on local mutation to change the chart without React knowing
   // because React will rerender everything in a dumb way
   if (!isRefresh) {
-    setVisualizerConfig({
+    setAnalyzerData({
+      // FIXME: put metadata here (such as calendarHeatmapData)
+      analyzerPieData: analyzerPieData,
+      analyzerPRCardData: analyzerPRCardData,
+    });
+
+    setVisualizerData({
       padDateMin: padDateMin,
       padDateMax: padDateMax,
       highestWeight: highestWeight,
       achievementAnnotations: annotations,
+      visualizerE1RMLineData: processedData,
+      // We could wrap the datasets for chartjs here, but nevermind we will do it in the <Line /> component
+      // visualizerE1RMLineData: {datasets: processedData},
     });
-  }
 
-  // setIsLoading(false);            // Stop the loading animations
-
-  // If it is not a refresh - set the React state for rendering to happen
-  // If it is a refresh - we will rely on local mutation to change the chart without React knowing
-  if (!isRefresh) {
-    // setVisualizerData({datasets: processedData});   // This should trigger <Visualizer /> and <Analyzer /> creation
-    setVisualizerData(processedData); // This should trigger <Visualizer /> and <Analyzer /> creation
+    setIsLoading(false); // Stop the loading animations
+    setIsDataReady(true); // This should trigger <Visualizer /> and <Analyzer /> rendering
   }
 }
 
@@ -291,7 +299,7 @@ function processAchievements(parsedData, processedData, equation) {
     // Clear old afterLabels with achievements so we can recreate them
 
     liftType.data.forEach((lift) => {
-      lift.afterLabel.splice(0, lift.afterLabel.length); // empty array
+      lift.afterLabel.splice(0, lift.afterLabel.length); // empty the array
       if (lift.notes) lift.afterLabel.push(lift.notes);
       // Put any notes back in first
       else lift.afterLabel = [];
@@ -326,13 +334,8 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
   // Sort by weight. (award any ties to the earlier lift)
   repLifts.sort((a, b) => {
     if (a.weight === b.weight) {
-      if (a.date === b.date) {
-        // Same weight same day - tie goes to the last lift
-        return 1; // Put a AFTER b. FIXME: does not seem to be the correct result
-      } else {
-        // Same weight different day - tie goes to the earlier lift
-        return new Date(a.date) - new Date(b.date);
-      }
+      // Same weight tie goes to the earlier lift
+      return new Date(a.date) - new Date(b.date);
     }
 
     // Different weights - bigger is better
@@ -403,37 +406,6 @@ function createAchievementAnnotation(liftType, date, weight, text, background, d
   };
 }
 
-// Return a rounded 1 rep max
-// For theory see: https://en.wikipedia.org/wiki/One-repetition_maximum
-function estimateE1RM(reps, weight, equation) {
-  if (reps === 0) {
-    console.error("Somebody passed 0 reps... naughty.");
-    return 0;
-  }
-
-  if (reps === 1) return weight; // Heavy single requires no estimate!
-
-  switch (equation) {
-    case "Epley":
-      return Math.round(weight * (1 + reps / 30));
-    case "McGlothin":
-      return Math.round((100 * weight) / (101.3 - 2.67123 * reps));
-    case "Lombardi":
-      return Math.round(weight * Math.pow(reps, 0.1));
-    case "Mayhew":
-      return Math.round((100 * weight) / (52.2 + 41.9 * Math.pow(Math.E, -0.055 * reps)));
-    case "OConner":
-      return Math.round(weight * (1 + reps / 40));
-    case "Wathen":
-      return Math.round((100 * weight) / (48.8 + 53.8 * Math.pow(Math.E, -0.075 * reps)));
-    case "Brzycki":
-      return Math.round(weight / (1.0278 - 0.0278 * reps));
-    default:
-      // Repeat Brzycki formula as a default here
-      return Math.round(weight / (1.0278 - 0.0278 * reps));
-  }
-}
-
 // Prepare for a data source reload while preserving as much chart as possible.
 // Normally used when we refresh the data from google sheets.
 // FIXME: This function is needed for google autorefresh but this feature is not implemented
@@ -490,9 +462,60 @@ function wasLiftSelected(liftType) {
   let selectedLifts = JSON.parse(localStorage.getItem("selectedLifts"));
 
   // If there is no localStorage item we will just say yes to everything for the first time user.
-  // At the end of the processing chain we will put all the lifts into seletedLifts localStorage
-  // (don't create localStorage here in the middle of processing)
+  // At the end of the processing chain we will put all the lifts into selectedLifts localStorage
+  // (don't create localStorage here in the middle of processing - just say YES/TRUE always)
   if (selectedLifts === null) return true;
 
   return selectedLifts.includes(liftType);
+}
+
+function processAnalyzerPRCardData(parsedData, processedData) {
+  // We are creating a first time set of annotations
+  let analyzerPRCardData = {};
+
+  // For each lift find important statistics for the <Analyzer /> page
+  processedData.forEach((liftType, index) => {
+    // Find the best n-rep maxes for this lift type
+    // We go 'backwards' and look at the original parsed data for just this lift type
+    const rawLifts = parsedData.filter((lift) => lift.name === liftType.label);
+
+    // Get the i-rep maxes for this lift type up to a 10 rep max
+    let repMaxPRs = {};
+    for (let reps = 1; reps <= 10; reps++) {
+      // Filter for this rep style
+      let repLifts = rawLifts.filter((lift) => lift.reps === reps);
+
+      if (repLifts.length === 0) continue; // They don't have any lifts for this rep scheme
+
+      // Sort by weight. (award any ties to the earlier lift)
+      repLifts.sort((a, b) => {
+        if (a.weight === b.weight) {
+          // Same weight tie goes to the earlier lift
+          return new Date(a.date) - new Date(b.date);
+        }
+        // Different weights - bigger is better
+        return b.weight - a.weight;
+      });
+
+      // Let's make an array of the top 5 lifts for this rep scheme
+      let topLifts = [];
+      for (let i = 0; i < 5; i++) {
+        if (repLifts[i] === undefined) break; // We ran out of lifts
+        topLifts.push(repLifts[i]);
+      }
+
+      // Store the top 5 lifts for this rep scheme
+      repMaxPRs[reps] = topLifts;
+    }
+
+    // Store key information for this lift type
+    analyzerPRCardData[liftType.label] = {
+      sessions: liftType.data.length,
+      firstLift: liftType.data[0].x,
+      yearlyAverage: 365,
+      repMaxPRs: repMaxPRs,
+    };
+  });
+
+  return analyzerPRCardData;
 }

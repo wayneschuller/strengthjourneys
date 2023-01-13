@@ -33,10 +33,9 @@ export async function getGoogleUserInfo(
   setInfoChipStatus,
   setInfoChipToolTip,
   setIsLoading,
+  setIsDataReady,
   visualizerData,
   setVisualizerData,
-  visualizerConfig,
-  setVisualizerConfig,
   setParsedData,
   setAnalyzerData
 ) {
@@ -70,10 +69,9 @@ export async function getGoogleUserInfo(
           setInfoChipStatus,
           setInfoChipToolTip,
           setIsLoading,
+          setIsDataReady,
           visualizerData,
           setVisualizerData,
-          visualizerConfig,
-          setVisualizerConfig,
           setParsedData,
           setAnalyzerData
         );
@@ -84,8 +82,8 @@ export async function getGoogleUserInfo(
         // getGDriveMetadata(setInfoChipStatus,
         // setInfoChipToolTip,
         // setIsLoading,
+        // setIsDataReady,
         // visualizerData, setVisualizerData,
-        // visualizerConfig, setVisualizerConfig,
         // setParsedData, setAnalyzerData,
         //  );
       } else {
@@ -107,10 +105,9 @@ export async function getGDriveMetadata(
   setInfoChipStatus,
   setInfoChipToolTip,
   setIsLoading,
+  setIsDataReady,
   visualizerData,
   setVisualizerData,
-  visualizerConfig,
-  setVisualizerConfig,
   setParsedData,
   setAnalyzerData
 ) {
@@ -141,10 +138,9 @@ export async function getGDriveMetadata(
         setInfoChipStatus,
         setInfoChipToolTip,
         setIsLoading,
+        setIsDataReady,
         visualizerData,
         setVisualizerData,
-        visualizerConfig,
-        setVisualizerConfig,
         setParsedData,
         setAnalyzerData
       );
@@ -161,10 +157,9 @@ export async function loadGSheetValues(
   setInfoChipStatus,
   setInfoChipToolTip,
   setIsLoading,
+  setIsDataReady,
   visualizerData,
   setVisualizerData,
-  visualizerConfig,
-  setVisualizerConfig,
   setParsedData,
   setAnalyzerData
 ) {
@@ -191,10 +186,9 @@ export async function loadGSheetValues(
       parseData(
         response.data.values,
         setIsLoading,
+        setIsDataReady,
         visualizerData,
         setVisualizerData,
-        visualizerConfig,
-        setVisualizerConfig,
         setParsedData,
         setAnalyzerData
       );

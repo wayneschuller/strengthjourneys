@@ -10,18 +10,28 @@ import { getGoogleUserInfo } from "./utils/readData";
 
 export default function App() {
   const [parsedData, setParsedData] = useState(null);
-  const [visualizerData, setVisualizerData] = useState(null);
-  const [analyzerData, setAnalyzerData] = useState(null);
   const [userInfo, setUserInfo] = useState(null); // .name .picture .email (from Google userinfo API)
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source"); // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // Use to show loading animation
-  const [visualizerConfig, setVisualizerConfig] = useState({
+  const [isLoading, setIsLoading] = useState(false); // Used to show loading animation
+  const [isDataReady, setIsDataReady] = useState(false); // Used to trigger when app is ready to render
+
+  // FIXME: We don't need to put null values here. EVerything just gets overwritten anyway.
+  const [visualizerData, setVisualizerData] = useState({
     padDateMin: null,
     padDateMax: null,
     highestWeight: null,
     achievementAnnotations: null,
+    visualizerE1RMLineData: null,
   });
+
+  // FIXME: We don't need to put null values here. EVerything just gets overwritten anyway.
+  const [analyzerData, setAnalyzerData] = useState({
+    calendarHeatmapData: null,
+    analyzerPRCardData: null,
+    analyzerPieData: null,
+  });
+
   console.log(`<App />...`);
 
   // Event handlers do most of the data flow for us
@@ -39,10 +49,9 @@ export default function App() {
         setInfoChipStatus,
         setInfoChipToolTip,
         setIsLoading,
+        setIsDataReady,
         visualizerData,
         setVisualizerData,
-        visualizerConfig,
-        setVisualizerConfig,
         setParsedData,
         setAnalyzerData
       );
@@ -58,12 +67,12 @@ export default function App() {
         setInfoChipStatus={setInfoChipStatus}
         infoChipToolTip={infoChipToolTip}
         setInfoChipToolTip={setInfoChipToolTip}
-        visualizerData={visualizerData}
-        setVisualizerData={setVisualizerData}
         isLoading={isLoading}
         setIsLoading={setIsLoading}
-        visualizerConfig={visualizerConfig}
-        setVisualizerConfig={setVisualizerConfig}
+        isDataReady={isDataReady}
+        setIsDataReady={setIsDataReady}
+        visualizerData={visualizerData}
+        setVisualizerData={setVisualizerData}
         setParsedData={setParsedData}
         setAnalyzerData={setAnalyzerData}
       />
@@ -72,16 +81,7 @@ export default function App() {
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
       <Outlet
-        context={[
-          parsedData,
-          isLoading,
-          visualizerData,
-          setVisualizerData,
-          visualizerConfig,
-          setVisualizerConfig,
-          analyzerData,
-          setAnalyzerData,
-        ]}
+        context={[parsedData, isLoading, isDataReady, visualizerData, setVisualizerData, analyzerData, setAnalyzerData]}
       />
     </div>
   );

@@ -62,8 +62,8 @@ export default function App() {
         setIsLoading={setIsLoading}
         isDataReady={isDataReady}
         setIsDataReady={setIsDataReady}
-        visualizerConfig={visualizerData}
-        setVisualizerConfig={setVisualizerData}
+        visualizerData={visualizerData}
+        setVisualizerData={setVisualizerData}
         setParsedData={setParsedData}
         setAnalyzerData={setAnalyzerData}
       />

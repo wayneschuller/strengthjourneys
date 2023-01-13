@@ -59,7 +59,8 @@ export function processData(
 
   // Do we already have a set of visualizerE1RMLineData? Then this must be a refresh caused by changing the equation method
   let processedData = [];
-  if (visualizerData.visualizerE1RMLineData) {
+  console.log(setVisualizerData);
+  if (visualizerData && visualizerData.visualizerE1RMLineData) {
     console.log(`... refreshing old data...`);
     processedData = visualizerData.visualizerE1RMLineData; // We are going to discretely mutate React state to modify chart without a rerender
     isRefresh = true;

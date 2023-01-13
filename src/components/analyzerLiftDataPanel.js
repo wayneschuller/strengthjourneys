@@ -10,6 +10,7 @@ import CardHeader from "@mui/material/CardHeader";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Masonry from "@mui/lab/Masonry";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 
@@ -39,44 +40,26 @@ export const LiftDataPanel = (props) => {
       {/* <Item elevation={0} sx={{ backgroundColor: "#dddd99" }}> */}
       {/* <Box sx={{ width: 500, minHeight: 377 }}> */}
       <Box>
-        <Masonry columns={2} spacing={4}>
+        <Stack spacing={1}>
           <LiftOverviewCard liftType={liftType} analyzerData={analyzerData} />
-          <PRCard liftType={liftType} reps={1} analyzerData={analyzerData} />
-          <PRCard liftType={liftType} reps={2} analyzerData={analyzerData} />
-          <PRCard liftType={liftType} reps={3} analyzerData={analyzerData} />
-          <PRCard liftType={liftType} reps={4} analyzerData={analyzerData} />
-          <PRCard liftType={liftType} reps={5} analyzerData={analyzerData} />
-          <PRCard liftType={liftType} reps={6} analyzerData={analyzerData} />
-          <PRCard liftType={liftType} reps={7} analyzerData={analyzerData} />
-          <PRCard liftType={liftType} reps={8} analyzerData={analyzerData} />
-          <PRCard liftType={liftType} reps={9} analyzerData={analyzerData} />
-          <PRCard liftType={liftType} reps={10} analyzerData={analyzerData} />
-        </Masonry>
+          <Masonry columns={3} spacing={1}>
+            <PRCard liftType={liftType} reps={1} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} reps={2} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} reps={3} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} reps={4} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} reps={5} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} reps={6} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} reps={7} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} reps={8} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} reps={9} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} reps={10} analyzerData={analyzerData} />
+          </Masonry>
+        </Stack>
       </Box>
       {/* </Item> */}
     </>
   );
 };
-
-// Returns a full PR info string (with possible hyperlink included)
-export function getPRInfo(visualizerData, index, reps) {
-  let prTuple = visualizerData[index][`${reps}RM`];
-
-  let result = "";
-  if (prTuple) {
-    result = `${prTuple.weight}${prTuple.unitType} (${prTuple.date})`;
-    // If we have a URL wrap it in a link
-    if (prTuple.url && prTuple.url !== "") {
-      let url = prTuple.url;
-      // result = `<a href='${url}'>${result}</a>`;  // Figure out how to link in React/MUI
-      result = `<ButtonLink />`;
-      // console.log(result);
-    }
-  } else {
-    result = "Not found.";
-  }
-  return result;
-}
 
 function LiftOverviewCard({ liftType, analyzerData }) {
   if (!analyzerData) return;
@@ -100,56 +83,6 @@ function LiftOverviewCard({ liftType, analyzerData }) {
       </Card>
     </>
   );
-}
-
-function ShowPR({ liftType, index, reps, visualizerData }) {
-  let prTuple = visualizerData[index][`${reps}RM`];
-
-  let resultText = "";
-  let isFound = false;
-  let isUrl = false;
-
-  if (prTuple) {
-    isFound = true;
-    let date = new Date(prTuple.date);
-    const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    const day = date.getDate();
-    const month = monthNames[date.getMonth()];
-    const year = date.getFullYear();
-    let dateString = `${day} ${month}, ${year}`;
-
-    resultText = `${reps}@${prTuple.weight}${prTuple.unitType} (${dateString})`;
-    if (prTuple.url && prTuple.url !== "") {
-      isUrl = true;
-    }
-  }
-
-  if (isFound === true) {
-    return (
-      <>
-        {isUrl ? (
-          <p>
-            <ButtonLink text={resultText} url={prTuple.url} />
-          </p>
-        ) : (
-          <p>{resultText}</p>
-        )}
-      </>
-    );
-  } else return <></>;
 }
 
 function ButtonLink({ text, url }) {
@@ -222,7 +155,13 @@ function PRCard({ liftType, reps, analyzerData }) {
       </CardContent>
       {isUrl && (
         <CardActions sx={{ backgroundColor: "black" }}>
-          <Button size="small" sx={{ color: "white" }}>
+          <Button
+            size="small"
+            sx={{ color: "white" }}
+            onClick={() => {
+              window.open(prTuple.url);
+            }}
+          >
             Watch Video
           </Button>
         </CardActions>

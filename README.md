@@ -2,9 +2,9 @@
 
 # Strength Journeys
 
-https://www.strengthjourneys.xyz
+## https://www.strengthjourneys.xyz
 
-Highly usable React based strength analysis suite for powerlifters.
+### Interaction visualisations for strength progress for barbell and other gym lifts
 
 Unites features from my previous projects:
 

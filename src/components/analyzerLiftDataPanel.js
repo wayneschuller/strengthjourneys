@@ -71,6 +71,8 @@ function LiftOverviewCard({ liftType, index, analyzerData }) {
   const firstLift = analyzerData.analyzerPRCardData[liftType].firstLift;
   const liftColor = analyzerData.analyzerPieData[index].backgroundColor;
 
+  let firstDateString = getReadableDataString(firstLift.x);
+
   return (
     <>
       <Card
@@ -85,7 +87,7 @@ function LiftOverviewCard({ liftType, index, analyzerData }) {
             <b>{sessions}</b> of your lifting sessions included a {liftType}.
           </Typography>
           <Typography variant="body1">
-            Your first recorded {liftType} was <b>{firstLift}</b>.
+            Your first recorded {liftType} was on {firstDateString}.
           </Typography>
           {analyzerData.analyzerPRCardData[liftType].recentHighlights && (
             <RecentHighlights liftType={liftType} analyzerData={analyzerData} />
@@ -97,6 +99,28 @@ function LiftOverviewCard({ liftType, index, analyzerData }) {
 }
 
 function RecentHighlights({ liftType, analyzerData }) {
+  // If there are no recent highlights, tell them the last time they lifted this lift type
+
+  if (analyzerData.analyzerPRCardData[liftType].recentHighlights.length === 0) {
+    let lastLift = analyzerData.analyzerPRCardData[liftType].lastLift;
+    let dateString = getReadableDataString(lastLift.x);
+    if (!lastLift) return <></>;
+    else
+      return (
+        <>
+          <Typography variant="body1">
+            Your last recorded {liftType} was{" "}
+            <b>
+              {lastLift.reps}@{lastLift.weight}
+              {lastLift.unitType}
+            </b>{" "}
+            on {dateString}.
+          </Typography>
+        </>
+      );
+  }
+
+  // Give them encouraging highlights from the last month
   return (
     <>
       <Typography variant="h6">Recent {liftType} highlights in the last month:</Typography>
@@ -123,25 +147,7 @@ function PRCard({ liftType, reps, analyzerData }) {
 
   if (prTuple) {
     isFound = true;
-    let date = new Date(prTuple.date);
-    const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    const day = date.getDate();
-    const month = monthNames[date.getMonth()];
-    const year = date.getFullYear();
-    dateString = `${day} ${month}, ${year}`;
+    dateString = getReadableDataString(prTuple.date);
 
     resultText = `${reps}@${prTuple.weight}${prTuple.unitType} (${dateString})`;
     if (prTuple.url && prTuple.url !== "") {
@@ -178,4 +184,30 @@ function PRCard({ liftType, reps, analyzerData }) {
       )}
     </Card>
   );
+}
+
+// Convert ISO "YYYY-MM-DD" to readable date string
+function getReadableDataString(ISOdate) {
+  let date = new Date(ISOdate);
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const day = date.getDate();
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+
+  let dateString = `${day} ${month}, ${year}`;
+  return dateString;
 }

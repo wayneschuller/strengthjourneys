@@ -479,6 +479,15 @@ function processAnalyzerPRCardData(parsedData, processedData) {
     // We go 'backwards' and look at the original parsed data for just this lift type
     const rawLifts = parsedData.filter((lift) => lift.name === liftType.label);
 
+    // We use a processed tuple to get the best session lift each time
+    // So the date field will be x not .date (FIXME: we could change this)
+    const firstLift = liftType.data[0];
+    const lastLift = liftType.data[liftType.data.length - 1];
+
+    // Alternative but it gets the warmups not the top lift of the first session
+    // const firstLift = rawLifts[rawLifts.length - 1];
+    // const lastLift = rawLifts[0];
+
     // Get the i-rep maxes for this lift type up to a 10 rep max
     // Collect interesting data along the way
     let repPRLifts = {};
@@ -560,11 +569,12 @@ function processAnalyzerPRCardData(parsedData, processedData) {
     // Store key information for this lift type
     analyzerPRCardData[liftType.label] = {
       sessions: liftType.data.length,
-      firstLift: liftType.data[0].x,
       yearlyAverage: 365,
       repPRLifts: repPRLifts,
       repRecentLifts: repRecentLifts,
       recentHighlights: recentHighlights,
+      firstLift: firstLift,
+      lastLift: lastLift,
     };
   });
 

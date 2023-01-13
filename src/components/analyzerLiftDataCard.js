@@ -25,13 +25,6 @@ export const LiftDataCard = (props) => {
   const analyzerData = props.analyzerData;
   const checked = props.checked;
 
-  let single = getPRInfo(visualizerData, index, 1);
-  let triple = getPRInfo(visualizerData, index, 3);
-  let five = getPRInfo(visualizerData, index, 5);
-  let prTuple = visualizerData[index][`3RM`];
-  let singleURL = false;
-  if (prTuple && prTuple.url) singleURL = true;
-
   return (
     <>
       <Item elevation={20}>
@@ -65,7 +58,7 @@ export function getPRInfo(visualizerData, index, reps) {
 }
 
 function ShowPR({ liftType, index, reps, visualizerData }) {
-  let prTuple = visualizerData[index][`${reps}RM`];
+  let prTuple = visualizerData.visualizerE1RMLineData[index][`${reps}RM`];
 
   let resultText = "";
   let isUrl = false;

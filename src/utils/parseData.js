@@ -21,8 +21,8 @@ export function parseData(
   data,
   setIsLoading,
   setIsDataReady,
-  visualizerConfig,
-  setVisualizerConfig,
+  visualizerData,
+  setVisualizerData,
   setParsedData,
   setAnalyzerData
 ) {
@@ -93,7 +93,7 @@ export function parseData(
   setParsedData(parsedData); // We need this in state for refreshes later on
 
   // Next in the data flow is to process the data.
-  processData(parsedData, visualizerConfig, setVisualizerConfig, setAnalyzerData, setIsLoading, setIsDataReady);
+  processData(parsedData, visualizerData, setVisualizerData, setAnalyzerData, setIsLoading, setIsDataReady);
 
   // FIXME: on success we could just setIsLoading and setIsDataReady here?
   // Then we would not need to pass them to processData and then the equation

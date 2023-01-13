@@ -38,8 +38,8 @@ export function ChartControls(props) {
         <Grid item xs={7}>
           <EquationChooser
             parsedData={props.parsedData}
-            visualizerConfig={props.visualizerConfig}
-            setVisualizerConfig={props.setVisualizerConfig}
+            visualizerData={props.visualizerData}
+            setVisualizerData={props.setVisualizerData}
             chartUpdate={props.chartUpdate}
           />
         </Grid>
@@ -93,7 +93,7 @@ export function EquationChooser(props) {
     localStorage.setItem("equation", event.target.value);
 
     // Process the data with the new equation (processer will detect it is a refresh)
-    processData(props.parsedData, props.visualizerConfig, props.setVisualizerConfig);
+    processData(props.parsedData, props.visualizerData, props.setVisualizerData);
 
     // Refresh the chart
     props.chartUpdate();

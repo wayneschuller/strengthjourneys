@@ -34,8 +34,8 @@ export async function getGoogleUserInfo(
   setInfoChipToolTip,
   setIsLoading,
   setIsDataReady,
-  visualizerConfig,
-  setVisualizerConfig,
+  visualizerData,
+  setVisualizerData,
   setParsedData,
   setAnalyzerData
 ) {
@@ -70,8 +70,8 @@ export async function getGoogleUserInfo(
           setInfoChipToolTip,
           setIsLoading,
           setIsDataReady,
-          visualizerConfig,
-          setVisualizerConfig,
+          visualizerData,
+          setVisualizerData,
           setParsedData,
           setAnalyzerData
         );
@@ -83,7 +83,7 @@ export async function getGoogleUserInfo(
         // setInfoChipToolTip,
         // setIsLoading,
         // setIsDataReady,
-        // visualizerConfig, setVisualizerConfig,
+        // visualizerData, setVisualizerData,
         // setParsedData, setAnalyzerData,
         //  );
       } else {
@@ -106,8 +106,8 @@ export async function getGDriveMetadata(
   setInfoChipToolTip,
   setIsLoading,
   setIsDataReady,
-  visualizerConfig,
-  setVisualizerConfig,
+  visualizerData,
+  setVisualizerData,
   setParsedData,
   setAnalyzerData
 ) {
@@ -139,8 +139,8 @@ export async function getGDriveMetadata(
         setInfoChipToolTip,
         setIsLoading,
         setIsDataReady,
-        visualizerConfig,
-        setVisualizerConfig,
+        visualizerData,
+        setVisualizerData,
         setParsedData,
         setAnalyzerData
       );
@@ -158,8 +158,8 @@ export async function loadGSheetValues(
   setInfoChipToolTip,
   setIsLoading,
   setIsDataReady,
-  visualizerConfig,
-  setVisualizerConfig,
+  visualizerData,
+  setVisualizerData,
   setParsedData,
   setAnalyzerData
 ) {
@@ -187,8 +187,8 @@ export async function loadGSheetValues(
         response.data.values,
         setIsLoading,
         setIsDataReady,
-        visualizerConfig,
-        setVisualizerConfig,
+        visualizerData,
+        setVisualizerData,
         setParsedData,
         setAnalyzerData
       );

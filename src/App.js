@@ -16,12 +16,12 @@ export default function App() {
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);
   const [isLoading, setIsLoading] = useState(false); // Used to show loading animation
   const [isDataReady, setIsDataReady] = useState(false); // Used to trigger when app is ready to render
-  const [visualizerConfig, setVisualizerConfig] = useState({
+  const [visualizerData, setVisualizerData] = useState({
     padDateMin: null,
     padDateMax: null,
     highestWeight: null,
     achievementAnnotations: null,
-    visualizerData: null,
+    visualizerE1RMLineData: null,
   });
   console.log(`<App />...`);
 
@@ -41,8 +41,8 @@ export default function App() {
         setInfoChipToolTip,
         setIsLoading,
         setIsDataReady,
-        visualizerConfig,
-        setVisualizerConfig,
+        visualizerData,
+        setVisualizerData,
         setParsedData,
         setAnalyzerData
       );
@@ -62,8 +62,8 @@ export default function App() {
         setIsLoading={setIsLoading}
         isDataReady={isDataReady}
         setIsDataReady={setIsDataReady}
-        visualizerConfig={visualizerConfig}
-        setVisualizerConfig={setVisualizerConfig}
+        visualizerConfig={visualizerData}
+        setVisualizerConfig={setVisualizerData}
         setParsedData={setParsedData}
         setAnalyzerData={setAnalyzerData}
       />
@@ -72,15 +72,7 @@ export default function App() {
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
       <Outlet
-        context={[
-          parsedData,
-          isLoading,
-          isDataReady,
-          visualizerConfig,
-          setVisualizerConfig,
-          analyzerData,
-          setAnalyzerData,
-        ]}
+        context={[parsedData, isLoading, isDataReady, visualizerData, setVisualizerData, analyzerData, setAnalyzerData]}
       />
     </div>
   );

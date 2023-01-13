@@ -44,8 +44,8 @@ export function processAnalyzerData(parsedData, processedData, setAnalyzerData) 
 // arguments. So we cannot access the last three arguments in that case...
 export function processData(
   parsedData,
-  visualizerConfig,
-  setVisualizerConfig,
+  visualizerData,
+  setVisualizerData,
   setAnalyzerData,
   setIsLoading,
   setIsDataReady
@@ -57,12 +57,11 @@ export function processData(
 
   let isRefresh = false;
 
-  // Do we already have some visualizerData? This is a refresh caused by changing the equation method
+  // Do we already have a set of visualizerE1RMLineData? Then this must be a refresh caused by changing the equation method
   let processedData = [];
-  if (visualizerConfig.visualizerData) {
+  if (visualizerData.visualizerE1RMLineData) {
     console.log(`... refreshing old data...`);
-    // console.log(visualizerData);
-    processedData = visualizerConfig.visualizerData; // We are going to discretely mutate React state to modify chart without a rerender
+    processedData = visualizerData.visualizerE1RMLineData; // We are going to discretely mutate React state to modify chart without a rerender
     isRefresh = true;
   }
 
@@ -200,7 +199,7 @@ export function processData(
   // Process the PRs/Achivements and return some chartjs annotation config.
   if (isRefresh) {
     // If we have annotations this function will just mutate them
-    updateAchievements(processedData, equation, visualizerConfig.achievementAnnotations);
+    updateAchievements(processedData, equation, visualizerData.achievementAnnotations);
   } else {
     // If annotations are null this function will give us a fresh set
     var annotations = processAchievements(parsedData, processedData, equation);
@@ -230,14 +229,14 @@ export function processData(
   // If it is a refresh - we will rely on local mutation to change the chart without React knowing
   // because React will rerender everything in a dumb way
   if (!isRefresh) {
-    setVisualizerConfig({
+    setVisualizerData({
       padDateMin: padDateMin,
       padDateMax: padDateMax,
       highestWeight: highestWeight,
       achievementAnnotations: annotations,
-      visualizerData: processedData,
+      visualizerE1RMLineData: processedData,
       // We could wrap the datasets for chartjs here, but nevermind
-      // visualizerData: {datasets: processedData},
+      // visualizerE1RMLineData: {datasets: processedData},
     });
     setIsLoading(false); // Stop the loading animations
     setIsDataReady(true); // This should trigger <Visualizer /> and <Analyzer /> creation

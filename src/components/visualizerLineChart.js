@@ -16,24 +16,24 @@ export function VisualizerLineChart(props) {
 
   console.log(`<VisualiserLineChart />...`);
 
-  if (!props.visualizerConfig && !props.visualizerConfig.visualizerData) return;
+  if (props.visualizerData === null) return;
+  if (props.visualizerData.visualizerE1RMLineData === null) return;
 
   let parsedData = props.parsedData;
-  let visualizerConfig = props.visualizerConfig;
-  let setVisualizerConfig = props.setVisualizerConfig;
-  let visualizerData = props.visualizerConfig.visualizerData;
+  let visualizerData = props.visualizerData;
+  let setVisualizerData = props.setVisualizerData;
 
   function zoomShowAllTime() {
     const chart = chartRef.current;
-    if (chart) chart.zoomScale("x", { min: visualizerConfig.padDateMin, max: visualizerConfig.padDateMax }, "default");
+    if (chart) chart.zoomScale("x", { min: visualizerData.padDateMin, max: visualizerData.padDateMax }, "default");
   }
 
   function zoomShowRecent() {
     const chart = chartRef.current;
     // if (chart) chart.resetZoom();
-    let sixMonthsAgo = visualizerConfig.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
-    if (sixMonthsAgo < visualizerConfig.padDateMin) sixMonthsAgo = visualizerConfig.padDateMin;
-    if (chart) chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerConfig.padDateMax }, "default");
+    let sixMonthsAgo = visualizerData.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
+    if (sixMonthsAgo < visualizerData.padDateMin) sixMonthsAgo = visualizerData.padDateMin;
+    if (chart) chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerData.padDateMax }, "default");
   }
 
   function chartUpdate() {
@@ -53,9 +53,9 @@ export function VisualizerLineChart(props) {
     if (!selectedLifts) selectedLifts = [];
 
     let liftType = legendItem.text;
-    let singleRM = visualizerConfig.achievementAnnotations[`${liftType}_best_1RM`];
-    let tripleRM = visualizerConfig.achievementAnnotations[`${liftType}_best_3RM`];
-    let fiveRM = visualizerConfig.achievementAnnotations[`${liftType}_best_5RM`];
+    let singleRM = visualizerData.achievementAnnotations[`${liftType}_best_1RM`];
+    let tripleRM = visualizerData.achievementAnnotations[`${liftType}_best_3RM`];
+    let fiveRM = visualizerData.achievementAnnotations[`${liftType}_best_5RM`];
 
     if (chart.isDatasetVisible(index)) {
       legendItem.hidden = true;
@@ -83,16 +83,16 @@ export function VisualizerLineChart(props) {
   };
 
   let sixMonthsAgo = 0;
-  if (visualizerConfig) {
-    sixMonthsAgo = visualizerConfig.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
-    if (sixMonthsAgo < visualizerConfig.padDateMin) sixMonthsAgo = visualizerConfig.padDateMin;
+  if (visualizerData) {
+    sixMonthsAgo = visualizerData.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
+    if (sixMonthsAgo < visualizerData.padDateMin) sixMonthsAgo = visualizerData.padDateMin;
   }
 
   const scalesOptions = {
     x: {
       type: "time",
       min: sixMonthsAgo,
-      suggestedMax: visualizerConfig.padDateMax,
+      suggestedMax: visualizerData.padDateMax,
       time: {
         minUnit: "day",
       },
@@ -100,7 +100,7 @@ export function VisualizerLineChart(props) {
     y: {
       display: false, // Google Material UI guidelines suggest you don't always have to show axes if you have datalabels
       suggestedMin: 0,
-      suggestedMax: visualizerConfig.highestWeight,
+      suggestedMax: visualizerData.highestWeight,
 
       ticks: {
         font: { family: "Catamaran", size: 15 },
@@ -180,15 +180,15 @@ export function VisualizerLineChart(props) {
     },
     limits: {
       x: {
-        min: visualizerConfig.padDateMin,
-        max: visualizerConfig.padDateMax,
+        min: visualizerData.padDateMin,
+        max: visualizerData.padDateMax,
         minRange: sixtyDaysInMilliseconds,
       },
     },
   };
 
   const annotationOptions = {
-    annotations: visualizerConfig.achievementAnnotations,
+    annotations: visualizerData.achievementAnnotations,
   };
 
   // Line Chart Options for react-chartjs-2 Visualizer
@@ -217,15 +217,16 @@ export function VisualizerLineChart(props) {
 
   return (
     <>
-      {visualizerData && <Line ref={chartRef} options={chartOptions} data={{ datasets: visualizerData }} />}
+      {visualizerData && (
+        <Line ref={chartRef} options={chartOptions} data={{ datasets: visualizerData.visualizerE1RMLineData }} />
+      )}
       {visualizerData && parsedData && (
         <ChartControls
           zoomShowAllTime={zoomShowAllTime}
           zoomShowRecent={zoomShowRecent}
           parsedData={parsedData}
           visualizerData={visualizerData}
-          visualizerConfig={visualizerConfig}
-          setVisualizerConfig={setVisualizerConfig}
+          setVisualizerData={setVisualizerData}
           chartUpdate={chartUpdate}
         />
       )}

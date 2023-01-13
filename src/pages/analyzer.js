@@ -22,15 +22,14 @@ import { AnalyzerPieChart } from "../components/analyzerPieChart";
 import { LiftDataCard, getPRInfo } from "../components/analyzerLiftDataCard";
 
 const Analyzer = () => {
-  const [parsedData, isLoading, isDataReady, visualizerConfig, setVisualizerConfig, analyzerData, setAnalyzerData] =
+  const [parsedData, isLoading, isDataReady, visualizerData, setVisualizerData, analyzerData, setAnalyzerData] =
     useOutletContext();
 
   const [selectedLift, setSelectedLift] = useState(null);
-  const [checked, setChecked] = React.useState(true); // used for fade in of PR Card
 
   // console.log(`<Analyzer />`);
 
-  if (!visualizerConfig && !visualizerConfig.visualizerData) return;
+  if (!visualizerData && !visualizerData.visualizerE1RMLineData) return;
   if (!analyzerData) return;
 
   return (
@@ -53,12 +52,7 @@ const Analyzer = () => {
 
           <Grid xs={12} lg={6}>
             {selectedLift && (
-              <LiftDataCard
-                checked={checked}
-                selectedLift={selectedLift}
-                analyzerData={analyzerData}
-                visualizerData={visualizerConfig.visualizerData}
-              />
+              <LiftDataCard selectedLift={selectedLift} analyzerData={analyzerData} visualizerData={visualizerData} />
             )}
           </Grid>
         </Grid>

@@ -48,8 +48,8 @@ function ResponsiveAppBar(props) {
   const setIsDataReady = props.setIsDataReady;
   const setParsedData = props.setParsedData;
   const setAnalyzerData = props.setAnalyzerData;
-  const visualizerConfig = props.visualizerConfig;
-  const setVisualizerConfig = props.setVisualizerConfig;
+  const visualizerData = props.visualizerData;
+  const setVisualizerData = props.setVisualizerData;
 
   // console.log(`<ResponsiveAppBar />...`);
 
@@ -80,7 +80,7 @@ function ResponsiveAppBar(props) {
     localStorage.removeItem("ssid");
     localStorage.removeItem("gSheetName");
     setUserInfo(null); // This will remove the profile menu and status button
-    setVisualizerConfig(null); // Reset the graph // FIXME: do we need to nullify the internals more carefully?
+    setVisualizerData(null); // Reset the graph // FIXME: do we need to nullify the internals more carefully?
     setAnchorElUser(null); // Closes menu
     setIsLoading(false);
     setIsDataReady(false);
@@ -105,8 +105,8 @@ function ResponsiveAppBar(props) {
         setInfoChipToolTip,
         setIsLoading,
         setIsDataReady,
-        visualizerConfig,
-        setVisualizerConfig,
+        visualizerData,
+        setVisualizerData,
         setParsedData,
         setAnalyzerData
       );
@@ -151,8 +151,8 @@ function ResponsiveAppBar(props) {
           setInfoChipToolTip,
           setIsLoading,
           setIsDataReady,
-          visualizerConfig,
-          setVisualizerConfig,
+          visualizerData,
+          setVisualizerData,
           setParsedData,
           setAnalyzerData
         );
@@ -163,7 +163,7 @@ function ResponsiveAppBar(props) {
         // setInfoChipToolTip,
         // setIsLoading,
         // setIsDataReady,
-        // visualizerConfig, setVisualizerConfig,
+        // visualizerData, setVisualizerData,
         // setParsedData, setAnalyzerData
         // );
       },

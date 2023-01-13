@@ -30,7 +30,7 @@ const Analyzer = () => {
   // console.log(`<Analyzer />`);
 
   if (!visualizerData && !visualizerData.visualizerE1RMLineData) return;
-  if (!analyzerData) return;
+  if (!analyzerData && !analyzerData.analyzerPieData) return;
 
   return (
     <div>

@@ -7,7 +7,7 @@
 // parseData will take raw imported 2d grid data from different formats
 // and parse into our common parsedData[] format.
 
-import { processData, processAnalyzerData } from "./processData";
+import { processData, processAnalyzerPieData } from "./processData";
 
 // ------------------------------------------------------------------------------
 // parseData

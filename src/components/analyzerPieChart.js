@@ -11,24 +11,13 @@ import { Chart, ArcElement, Tooltip, Legend } from "chart.js";
 Chart.register(ArcElement, Tooltip, Legend);
 
 export function AnalyzerPieChart(props) {
+  // console.log(`<AnalyzerPieChart />...`);
+
+  if (!props.analyzerData && !props.analyzerData.analyzerPieData) return;
+
   const analyzerData = props.analyzerData;
   const selectedLift = props.selectedLift;
   const setSelectedLift = props.setSelectedLift;
-
-  const dummyAnalyzerData = [
-    {
-      label: "Back Squat",
-      value: 339,
-    },
-    {
-      label: "Bench Press",
-      value: 279,
-    },
-    {
-      label: "Deadlift",
-      value: 169,
-    },
-  ];
 
   const fontFamily = "Catamaran, Arial";
 
@@ -156,11 +145,11 @@ export function AnalyzerPieChart(props) {
   };
 
   // Pie chart wants a separate array of colors even though we have that key in each tuple
-  const backgroundColor = analyzerData.map((lift) => lift.backgroundColor);
+  const backgroundColor = analyzerData.analyzerPieData.map((lift) => lift.backgroundColor);
 
   // Pie chart wants a separate array of labels even though we have that key in each tuple
   // (if you don't do this then you do not get a legend)
-  let labels = analyzerData.map((lift) => lift.label);
+  let labels = analyzerData.analyzerPieData.map((lift) => lift.label);
 
   // ------------------------------------------------------------------------------
   // Set chart.js Pie Chart data
@@ -170,7 +159,7 @@ export function AnalyzerPieChart(props) {
     labels: labels,
     datasets: [
       {
-        data: analyzerData,
+        data: analyzerData.analyzerPieData,
         backgroundColor: backgroundColor,
         borderWidth: 4,
         hoverOffset: 20,

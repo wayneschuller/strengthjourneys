@@ -6,40 +6,44 @@
 import { getLiftColor } from "./getLiftColor";
 
 // Collect some simple stats for doughnut/pie chart in the <Analyzer />
-export function processAnalyzerData(parsedData, processedData, setAnalyzerData) {
-  let analyzerData = [];
+
+// Here we will get the numbe of sessions for each lift in Pie Chart format (label/value)
+// Let's also get the total number of lifts for each lift type
+function processAnalyzerPieData(parsedData, processedData) {
+  let analyzerPieData = [];
+
+  // Do a survey on total number of each lift lifted
+  const liftCounts = parsedData.reduce((counts, lift) => {
+    if (counts[lift.name]) {
+      counts[lift.name] += 1;
+    } else {
+      counts[lift.name] = 1;
+    }
+    return counts;
+  }, {});
 
   // Steal what is useful from the visualizerData for the Analyzer pie chart
   processedData.forEach((lift) => {
-    analyzerData.push({
+    let totalLifts = liftCounts[lift.label];
+    analyzerPieData.push({
       label: lift.label,
-      value: lift.data.length,
+      value: lift.data.length, // Number of 'lifting sessions' involving this lift
+      totalLifts: totalLifts, // Total number of they did this movement
       backgroundColor: lift.backgroundColor,
       borderColor: lift.borderColor,
     });
   });
 
-  // Do a survey on total number of each lift type
-  // const liftCounts = parsedData.reduce((counts, lift) => {
-  //   if (counts[lift.name]) {
-  //     counts[lift.name] += 1;
-  //   } else {
-  //     counts[lift.name] = 1;
-  //   }
-  //   return counts;
-  // }, {});
-  // analyzerData = Object.entries(liftCounts).map(([label, lifts]) => ({ label, lifts }));
-  // analyzerData.sort((a, b) => b.value - a.value);
-  // Let's only keep the top 10 remaining lifts.
-  // analyzerData.splice(10); // Delete everything above 10
+  // Object.entries(liftCounts).forEach(([label, lifts]) =>
+  // console.log(`label: ${label}, lifts: ${lifts}`)
+  // });
 
-  // console.log(analyzerData);
-
-  setAnalyzerData(analyzerData);
+  // setAnalyzerData(analyzerPieData);
+  return analyzerPieData;
 }
 
-// Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
-// We collect only the best set per lift type per day, according to highest estimated one rep max
+// Process the parsedData array of lifts into data structures ready for the <Visualiser /> and <Analyzer />
+// We collect only the best set per lift type per day, according to highest estimated one rep max for the visualizer
 // When an equation change causes a refresh, we will call this function with only the first three
 // arguments. So we cannot access the last three arguments in that case...
 export function processData(
@@ -59,7 +63,6 @@ export function processData(
 
   // Do we already have a set of visualizerE1RMLineData? Then this must be a refresh caused by changing the equation method
   let processedData = [];
-  console.log(setVisualizerData);
   if (visualizerData && visualizerData.visualizerE1RMLineData) {
     console.log(`... refreshing old data...`);
     processedData = visualizerData.visualizerE1RMLineData; // We are going to discretely mutate React state to modify chart without a rerender
@@ -187,8 +190,8 @@ export function processData(
   // Let's only keep the top 10 remaining lifts.
   processedData.splice(10); // Delete everything above 10
 
-  // FIXME: Not sure why this is needed, but it is.
-  if (!isRefresh) processAnalyzerData(parsedData, processedData, setAnalyzerData);
+  // Get the top lifts by session for the main Analyzer Pie chart
+  let analyzerPieData = processAnalyzerPieData(parsedData, processedData);
 
   // Do we have a localStorage selectedLifts item? First time user will not have one.
   const selectedLiftsItem = localStorage.getItem("selectedLifts");
@@ -226,21 +229,28 @@ export function processData(
   });
   highestWeight = Math.ceil(highestWeight / 49) * 50; // Round up to the next mulitiple of 50
 
-  // If this is not a refresh then set state stuff
+  // If this is not a refresh then set React state to trigger our visualizations
   // If it is a refresh - we will rely on local mutation to change the chart without React knowing
   // because React will rerender everything in a dumb way
   if (!isRefresh) {
+    setAnalyzerData({
+      coolStuff: "ice cream",
+      PRs: "so many PRs",
+      analyzerPieData: analyzerPieData,
+    });
+
     setVisualizerData({
       padDateMin: padDateMin,
       padDateMax: padDateMax,
       highestWeight: highestWeight,
       achievementAnnotations: annotations,
       visualizerE1RMLineData: processedData,
-      // We could wrap the datasets for chartjs here, but nevermind
+      // We could wrap the datasets for chartjs here, but nevermind we will do it in the <Line /> component
       // visualizerE1RMLineData: {datasets: processedData},
     });
+
     setIsLoading(false); // Stop the loading animations
-    setIsDataReady(true); // This should trigger <Visualizer /> and <Analyzer /> creation
+    setIsDataReady(true); // This should trigger <Visualizer /> and <Analyzer /> rendering
   }
 }
 

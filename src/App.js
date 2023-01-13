@@ -10,12 +10,12 @@ import { getGoogleUserInfo } from "./utils/readData";
 
 export default function App() {
   const [parsedData, setParsedData] = useState(null);
-  const [analyzerData, setAnalyzerData] = useState(null);
   const [userInfo, setUserInfo] = useState(null); // .name .picture .email (from Google userinfo API)
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source"); // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);
   const [isLoading, setIsLoading] = useState(false); // Used to show loading animation
   const [isDataReady, setIsDataReady] = useState(false); // Used to trigger when app is ready to render
+
   const [visualizerData, setVisualizerData] = useState({
     padDateMin: null,
     padDateMax: null,
@@ -23,6 +23,13 @@ export default function App() {
     achievementAnnotations: null,
     visualizerE1RMLineData: null,
   });
+
+  const [analyzerData, setAnalyzerData] = useState({
+    coolStuff: null,
+    PRs: null,
+    analyzerPieData: null,
+  });
+
   console.log(`<App />...`);
 
   // Event handlers do most of the data flow for us

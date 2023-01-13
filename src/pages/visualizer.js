@@ -11,7 +11,7 @@ import { Container } from "@mui/system";
 import { VisualizerLineChart } from "../components/visualizerLineChart";
 
 const Visualizer = (props) => {
-  console.log(`<Visualizer />...`);
+  // console.log(`<Visualizer />...`);
 
   const [parsedData, isLoading, isDataReady, visualizerData, setVisualizerData, analyzerData, setAnalyzerData] =
     useOutletContext();

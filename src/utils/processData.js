@@ -526,8 +526,33 @@ function processAnalyzerPRCardData(parsedData, processedData) {
         let date = new Date(repLifts[i].date);
         if (date < new Date().setDate(new Date().getDate() - 30)) continue; // Too old, keep looking
 
+        // Encouragement emojies: clapping, trophy, fire, 100, starstuck
+        let encouragements = ["\u{1F44F}", "\u{1F3C6}", "\u{1F525}", "\u{1F4AF}", "\u{1F929}"];
+        let emoji;
+        switch (i) {
+          case 0:
+            emoji = "\u{1F947}";
+            break;
+          case 1:
+            emoji = "\u{1F948}";
+            break;
+          case 2:
+            emoji = "\u{1F949}";
+            break;
+          default:
+            if (i > 2 && i < 10) {
+              // Choose a random element from the encouragements array
+              emoji = encouragements[Math.floor(Math.random() * encouragements.length)];
+            } else {
+              // ok emoji for 10th place or worse
+              emoji = "\u{1F44C}";
+            }
+        }
+
         recentHighlights.push(
-          `${reps}@${repLifts[i].weight}${repLifts[i].unitType} (${repLifts[i].date}), #${i + 1} best ${reps}RM ever.`
+          `${reps}@${repLifts[i].weight}${repLifts[i].unitType} (${repLifts[i].date}), ${emoji} #${
+            i + 1
+          } best ${reps}RM ever.`
         );
       }
     }

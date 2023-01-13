@@ -104,12 +104,14 @@ function RecentHighlights({ liftType, analyzerData }) {
   if (analyzerData.analyzerPRCardData[liftType].recentHighlights.length === 0) {
     let lastLift = analyzerData.analyzerPRCardData[liftType].lastLift;
     let dateString = getReadableDataString(lastLift.x);
+    let elapsedString = getReadableTimeElapsed(lastLift.x);
+
     if (!lastLift) return <></>;
     else
       return (
         <>
           <Typography variant="body1">
-            Your last recorded {liftType} was{" "}
+            It has been {elapsedString} since your last {liftType}, which was{" "}
             <b>
               {lastLift.reps}@{lastLift.weight}
               {lastLift.unitType}
@@ -210,4 +212,22 @@ function getReadableDataString(ISOdate) {
 
   let dateString = `${day} ${month}, ${year}`;
   return dateString;
+}
+
+function getReadableTimeElapsed(ISODate) {
+  let currentDate = new Date();
+  let previousDate = new Date(ISODate);
+  let timeDiff = Math.abs(currentDate.getTime() - previousDate.getTime());
+
+  let diffDays = Math.floor(timeDiff / (1000 * 3600 * 24));
+  let diffMonths = Math.floor(diffDays / 30);
+  let diffYears = (diffMonths / 12).toFixed(1);
+
+  if (diffYears > 1) {
+    return diffYears + " years";
+  } else if (diffMonths > 1) {
+    return diffMonths + " months";
+  } else {
+    return diffDays + " days";
+  }
 }

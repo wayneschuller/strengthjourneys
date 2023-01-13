@@ -42,7 +42,7 @@ export const LiftDataPanel = (props) => {
       <Box>
         <Stack spacing={1}>
           <LiftOverviewCard liftType={liftType} index={index} analyzerData={analyzerData} />
-          <Masonry columns={3} spacing={2}>
+          <Masonry columns={2} spacing={2} sx={{}}>
             <PRCard liftType={liftType} reps={1} analyzerData={analyzerData} />
             <PRCard liftType={liftType} reps={2} analyzerData={analyzerData} />
             <PRCard liftType={liftType} reps={3} analyzerData={analyzerData} />

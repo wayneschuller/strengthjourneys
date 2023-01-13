@@ -65,6 +65,8 @@ function LiftOverviewCard({ liftType, index, analyzerData }) {
   if (!analyzerData) return;
   if (!analyzerData.analyzerPRCardData[liftType]) return;
 
+  console.log(analyzerData);
+
   const sessions = analyzerData.analyzerPRCardData[liftType].sessions;
   const firstLift = analyzerData.analyzerPRCardData[liftType].firstLift;
   const liftColor = analyzerData.analyzerPieData[index].backgroundColor;
@@ -83,9 +85,9 @@ function LiftOverviewCard({ liftType, index, analyzerData }) {
 
 function PRCard({ liftType, reps, analyzerData }) {
   if (!analyzerData.analyzerPRCardData[liftType]) return;
-  if (!analyzerData.analyzerPRCardData[liftType].repMaxPRs) return;
-  if (!analyzerData.analyzerPRCardData[liftType].repMaxPRs[reps]) return;
-  let prTuple = analyzerData.analyzerPRCardData[liftType].repMaxPRs[reps][0];
+  if (!analyzerData.analyzerPRCardData[liftType].repPRLifts) return;
+  if (!analyzerData.analyzerPRCardData[liftType].repPRLifts[reps]) return;
+  let prTuple = analyzerData.analyzerPRCardData[liftType].repPRLifts[reps][0];
   let resultText = "";
   let isFound = false;
   let isUrl = false;

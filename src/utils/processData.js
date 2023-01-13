@@ -480,12 +480,23 @@ function processAnalyzerPRCardData(parsedData, processedData) {
     const rawLifts = parsedData.filter((lift) => lift.name === liftType.label);
 
     // Get the i-rep maxes for this lift type up to a 10 rep max
-    let repMaxPRs = {};
+    let repPRLifts = {};
+    let repRecentLifts = {};
     for (let reps = 1; reps <= 10; reps++) {
       // Filter for this rep style
       let repLifts = rawLifts.filter((lift) => lift.reps === reps);
 
       if (repLifts.length === 0) continue; // They don't have any lifts for this rep scheme
+
+      // Let's make an array of the top 5 lifts for this rep scheme
+      let recentLifts = [];
+      for (let i = 0; i < 5; i++) {
+        if (repLifts[i] === undefined) break; // We ran out of lifts
+        recentLifts.push(repLifts[i]);
+      }
+
+      // Store the most recent 5 lifts for this rep scheme
+      repRecentLifts[reps] = recentLifts;
 
       // Sort by weight. (award any ties to the earlier lift)
       repLifts.sort((a, b) => {
@@ -498,14 +509,14 @@ function processAnalyzerPRCardData(parsedData, processedData) {
       });
 
       // Let's make an array of the top 5 lifts for this rep scheme
-      let topLifts = [];
+      let prLifts = [];
       for (let i = 0; i < 5; i++) {
         if (repLifts[i] === undefined) break; // We ran out of lifts
-        topLifts.push(repLifts[i]);
+        prLifts.push(repLifts[i]);
       }
 
       // Store the top 5 lifts for this rep scheme
-      repMaxPRs[reps] = topLifts;
+      repPRLifts[reps] = prLifts;
     }
 
     // Store key information for this lift type
@@ -513,7 +524,8 @@ function processAnalyzerPRCardData(parsedData, processedData) {
       sessions: liftType.data.length,
       firstLift: liftType.data[0].x,
       yearlyAverage: 365,
-      repMaxPRs: repMaxPRs,
+      repPRLifts: repPRLifts,
+      repRecentLifts: repRecentLifts,
     };
   });
 

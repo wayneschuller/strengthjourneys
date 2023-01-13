@@ -28,6 +28,15 @@ export const LiftDataCard = (props) => {
       <Item elevation={20}>
         <h2>{liftType} PR Analysis</h2>
         <ShowPR liftType={liftType} index={index} reps={1} analyzerData={analyzerData} />
+        <ShowPR liftType={liftType} index={index} reps={2} analyzerData={analyzerData} />
+        <ShowPR liftType={liftType} index={index} reps={3} analyzerData={analyzerData} />
+        <ShowPR liftType={liftType} index={index} reps={4} analyzerData={analyzerData} />
+        <ShowPR liftType={liftType} index={index} reps={5} analyzerData={analyzerData} />
+        <ShowPR liftType={liftType} index={index} reps={6} analyzerData={analyzerData} />
+        <ShowPR liftType={liftType} index={index} reps={7} analyzerData={analyzerData} />
+        <ShowPR liftType={liftType} index={index} reps={8} analyzerData={analyzerData} />
+        <ShowPR liftType={liftType} index={index} reps={9} analyzerData={analyzerData} />
+        <ShowPR liftType={liftType} index={index} reps={10} analyzerData={analyzerData} />
       </Item>
     </>
   );

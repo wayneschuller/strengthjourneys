@@ -42,7 +42,7 @@ export const LiftDataPanel = (props) => {
       <Box>
         <Stack spacing={1}>
           <LiftOverviewCard liftType={liftType} index={index} analyzerData={analyzerData} />
-          <Masonry columns={3} spacing={1}>
+          <Masonry columns={3} spacing={2}>
             <PRCard liftType={liftType} reps={1} analyzerData={analyzerData} />
             <PRCard liftType={liftType} reps={2} analyzerData={analyzerData} />
             <PRCard liftType={liftType} reps={3} analyzerData={analyzerData} />
@@ -73,10 +73,20 @@ function LiftOverviewCard({ liftType, index, analyzerData }) {
 
   return (
     <>
-      <Card variant="filled" sx={{ backgroundColor: liftColor, color: "white", m: 2 }}>
-        <CardHeader title={liftType} subheader="Overview" />
+      <Card
+        variant="filled"
+        sx={{ backgroundColor: liftColor, color: "white", border: "2px solid grey", borderRadius: "10px" }}
+      >
+        {/* <CardHeader title={liftType} /> */}
         <CardContent>
-          <b>{sessions}</b> sessions. First {liftType}: <b>{firstLift}</b>.
+          <Typography variant="h4">{liftType}</Typography>
+          <Typography variant="h5">Overview</Typography>
+          <Typography variant="body1">
+            <b>{sessions}</b> of your lifting sessions included a {liftType}.
+          </Typography>
+          <Typography variant="body1">
+            Your first recorded {liftType} was <b>{firstLift}</b>.
+          </Typography>
           {analyzerData.analyzerPRCardData[liftType].recentHighlights && (
             <RecentHighlights liftType={liftType} analyzerData={analyzerData} />
           )}
@@ -89,7 +99,7 @@ function LiftOverviewCard({ liftType, index, analyzerData }) {
 function RecentHighlights({ liftType, analyzerData }) {
   return (
     <>
-      <Typography variant="body1">Recent highlights in the last month:</Typography>
+      <Typography variant="h6">Recent {liftType} highlights in the last month:</Typography>
 
       {analyzerData.analyzerPRCardData[liftType].recentHighlights.map((highlight, index) => (
         <Typography variant="body2" key={highlight}>
@@ -140,7 +150,7 @@ function PRCard({ liftType, reps, analyzerData }) {
   }
 
   return (
-    <Card variant="filled" sx={{ backgroundColor: "grey", color: "white", mx: 1 }}>
+    <Card variant="filled" sx={{ backgroundColor: "grey", color: "white", border: "1px solid black" }}>
       <CardContent>
         <Typography variant="h4" color="text.primary" gutterBottom>
           {reps} Rep Max

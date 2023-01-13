@@ -10,7 +10,6 @@ import { getGoogleUserInfo } from "./utils/readData";
 
 export default function App() {
   const [parsedData, setParsedData] = useState(null);
-  const [visualizerData, setVisualizerData] = useState(null);
   const [analyzerData, setAnalyzerData] = useState(null);
   const [userInfo, setUserInfo] = useState(null); // .name .picture .email (from Google userinfo API)
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source"); // Used in the navbar info chip-button
@@ -22,6 +21,7 @@ export default function App() {
     padDateMax: null,
     highestWeight: null,
     achievementAnnotations: null,
+    visualizerData: null,
   });
   console.log(`<App />...`);
 
@@ -41,8 +41,6 @@ export default function App() {
         setInfoChipToolTip,
         setIsLoading,
         setIsDataReady,
-        visualizerData,
-        setVisualizerData,
         visualizerConfig,
         setVisualizerConfig,
         setParsedData,
@@ -60,8 +58,6 @@ export default function App() {
         setInfoChipStatus={setInfoChipStatus}
         infoChipToolTip={infoChipToolTip}
         setInfoChipToolTip={setInfoChipToolTip}
-        visualizerData={visualizerData}
-        setVisualizerData={setVisualizerData}
         isLoading={isLoading}
         setIsLoading={setIsLoading}
         isDataReady={isDataReady}
@@ -80,8 +76,6 @@ export default function App() {
           parsedData,
           isLoading,
           isDataReady,
-          visualizerData,
-          setVisualizerData,
           visualizerConfig,
           setVisualizerConfig,
           analyzerData,

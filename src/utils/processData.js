@@ -6,11 +6,11 @@
 import { getLiftColor } from "./getLiftColor";
 
 // Collect some simple stats for doughnut/pie chart in the <Analyzer />
-export function processAnalyzerData(parsedData, visualizerData, setAnalyzerData) {
+export function processAnalyzerData(parsedData, processedData, setAnalyzerData) {
   let analyzerData = [];
 
   // Steal what is useful from the visualizerData for the Analyzer pie chart
-  visualizerData.forEach((lift) => {
+  processedData.forEach((lift) => {
     analyzerData.push({
       label: lift.label,
       value: lift.data.length,
@@ -40,15 +40,15 @@ export function processAnalyzerData(parsedData, visualizerData, setAnalyzerData)
 
 // Process the parsedData array of lifts into processedData (AKA charts.js format for the visualizer)
 // We collect only the best set per lift type per day, according to highest estimated one rep max
+// When an equation change causes a refresh, we will call this function with only the first three
+// arguments. So we cannot access the last three arguments in that case...
 export function processData(
-  setIsLoading,
-  setIsDataReady,
   parsedData,
-  visualizerData,
-  setVisualizerData,
   visualizerConfig,
   setVisualizerConfig,
-  setAnalyzerData
+  setAnalyzerData,
+  setIsLoading,
+  setIsDataReady
 ) {
   console.log("processData()...");
 
@@ -56,15 +56,13 @@ export function processData(
   if (!equation) equation = "Brzycki"; // Probably not needed. Just in case.
 
   let isRefresh = false;
-  // Do we already have some visualizerData? This is a refresh caused by:
-  //   a) changing the equation method
-  //   b) automatic google sheets refresh
-  //
+
+  // Do we already have some visualizerData? This is a refresh caused by changing the equation method
   let processedData = [];
-  if (visualizerData) {
+  if (visualizerConfig.visualizerData) {
     console.log(`... refreshing old data...`);
     // console.log(visualizerData);
-    processedData = visualizerData; // We are going to discretely mutate React state to modify chart without a rerender
+    processedData = visualizerConfig.visualizerData; // We are going to discretely mutate React state to modify chart without a rerender
     isRefresh = true;
   }
 
@@ -229,7 +227,7 @@ export function processData(
   highestWeight = Math.ceil(highestWeight / 49) * 50; // Round up to the next mulitiple of 50
 
   // If this is not a refresh then set state stuff
-  // However if we are just refreshing, we will have mutated the annotations but don't tell React
+  // If it is a refresh - we will rely on local mutation to change the chart without React knowing
   // because React will rerender everything in a dumb way
   if (!isRefresh) {
     setVisualizerConfig({
@@ -237,18 +235,13 @@ export function processData(
       padDateMax: padDateMax,
       highestWeight: highestWeight,
       achievementAnnotations: annotations,
+      visualizerData: processedData,
+      // We could wrap the datasets for chartjs here, but nevermind
+      // visualizerData: {datasets: processedData},
     });
+    setIsLoading(false); // Stop the loading animations
+    setIsDataReady(true); // This should trigger <Visualizer /> and <Analyzer /> creation
   }
-
-  // If it is not a refresh - set the React state
-  // If it is a refresh - we will rely on local mutation to change the chart without React knowing
-  if (!isRefresh) {
-    // setVisualizerData({datasets: processedData});   // This should trigger <Visualizer /> and <Analyzer /> creation
-    setVisualizerData(processedData);
-  }
-
-  setIsLoading(false); // Stop the loading animations
-  setIsDataReady(true); // This should trigger <Visualizer /> and <Analyzer /> creation
 }
 
 // When refreshing, we want to simply update the y position of the annotations based on a new equation

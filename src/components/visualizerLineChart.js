@@ -16,14 +16,12 @@ export function VisualizerLineChart(props) {
 
   console.log(`<VisualiserLineChart />...`);
 
-  if (!props.visualizerData) return;
-  if (!props.visualizerConfig) return;
+  if (!props.visualizerConfig && !props.visualizerConfig.visualizerData) return;
 
   let parsedData = props.parsedData;
-  let visualizerData = props.visualizerData;
-  let setVisualizerData = props.setVisualizerData;
   let visualizerConfig = props.visualizerConfig;
   let setVisualizerConfig = props.setVisualizerConfig;
+  let visualizerData = props.visualizerConfig.visualizerData;
 
   function zoomShowAllTime() {
     const chart = chartRef.current;
@@ -226,7 +224,6 @@ export function VisualizerLineChart(props) {
           zoomShowRecent={zoomShowRecent}
           parsedData={parsedData}
           visualizerData={visualizerData}
-          setVisualizerData={setVisualizerData}
           visualizerConfig={visualizerConfig}
           setVisualizerConfig={setVisualizerConfig}
           chartUpdate={chartUpdate}

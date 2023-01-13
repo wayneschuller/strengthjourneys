@@ -13,7 +13,7 @@ import { VisualizerLineChart } from "../components/visualizerLineChart";
 const Visualizer = (props) => {
   console.log(`<Visualizer />...`);
 
-  const [parsedData, isLoading, isDataReady, visualizerData, setVisualizerData, visualizerConfig, setVisualizerConfig] =
+  const [parsedData, isLoading, isDataReady, visualizerConfig, setVisualizerConfig, analyzerData, setAnalyzerData] =
     useOutletContext();
 
   const ssid = localStorage.getItem("ssid");
@@ -31,8 +31,6 @@ const Visualizer = (props) => {
       ) : (
         <VisualizerLineChart
           parsedData={parsedData}
-          visualizerData={visualizerData}
-          setVisualizerData={setVisualizerData}
           visualizerConfig={visualizerConfig}
           setVisualizerConfig={setVisualizerConfig}
         />

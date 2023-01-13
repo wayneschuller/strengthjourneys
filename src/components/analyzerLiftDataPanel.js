@@ -65,7 +65,6 @@ function LiftOverviewCard({ liftType, index, analyzerData }) {
   if (!analyzerData) return;
   if (!analyzerData.analyzerPRCardData[liftType]) return;
 
-  console.log(analyzerData);
   const sessions = analyzerData.analyzerPRCardData[liftType].sessions;
   const firstLift = analyzerData.analyzerPRCardData[liftType].firstLift;
   const liftColor = analyzerData.analyzerPieData[index].backgroundColor;

@@ -225,8 +225,19 @@ function PRCard({ liftType, reps, analyzerData }) {
       <Collapse in={expanded} timeout="auto" unmountOnExit>
         <CardActionArea onClick={() => onClickHandler()}>
           <CardContent>
+            {prTuple.notes && (
+              <>
+                <Typography variant="h6" color={textColor}>
+                  {reps} Rep Max Notes:
+                </Typography>
+                <Typography variant="body2" color={textColor}>
+                  {prTuple.notes}
+                </Typography>
+              </>
+            )}
+
             <Typography variant="h6" color={textColor}>
-              All time best {reps}RM {liftType}:
+              Previous best {reps}RM {liftType} lifts:
             </Typography>
 
             {analyzerData.analyzerPRCardData[liftType].repPRLifts[reps].map((lift, index) => {

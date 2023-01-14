@@ -9,6 +9,7 @@ import { CardActionArea } from "@mui/material";
 
 import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
+import Collapse from "@mui/material/Collapse";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import Grid from "@mui/material/Unstable_Grid2";
@@ -49,16 +50,16 @@ export const LiftDataPanel = (props) => {
         <Stack spacing={1}>
           <LiftOverviewCard liftType={liftType} index={index} analyzerData={analyzerData} />
           <Masonry columns={2} spacing={2} sx={{}}>
-            <PRCard liftType={liftType} reps={1} analyzerData={analyzerData} />
-            <PRCard liftType={liftType} reps={2} analyzerData={analyzerData} />
-            <PRCard liftType={liftType} reps={3} analyzerData={analyzerData} />
-            <PRCard liftType={liftType} reps={4} analyzerData={analyzerData} />
-            <PRCard liftType={liftType} reps={5} analyzerData={analyzerData} />
-            <PRCard liftType={liftType} reps={6} analyzerData={analyzerData} />
-            <PRCard liftType={liftType} reps={7} analyzerData={analyzerData} />
-            <PRCard liftType={liftType} reps={8} analyzerData={analyzerData} />
-            <PRCard liftType={liftType} reps={9} analyzerData={analyzerData} />
-            <PRCard liftType={liftType} reps={10} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} key={`1${liftType}`} reps={1} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} key={`2${liftType}`} reps={2} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} key={`3${liftType}`} reps={3} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} key={`4${liftType}`} reps={4} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} key={`5${liftType}`} reps={5} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} key={`6${liftType}`} reps={6} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} key={`7${liftType}`} reps={7} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} key={`8${liftType}`} reps={8} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} key={`9${liftType}`} reps={9} analyzerData={analyzerData} />
+            <PRCard liftType={liftType} key={`10${liftType}`} reps={10} analyzerData={analyzerData} />
           </Masonry>
         </Stack>
       </Box>
@@ -163,6 +164,7 @@ function RecentHighlights({ liftType, analyzerData }) {
   );
 }
 function PRCard({ liftType, reps, analyzerData }) {
+  const [expanded, setExpanded] = useState(false); // FIXME: rename as cardsExpanded
   if (!analyzerData.analyzerPRCardData[liftType]) return;
   if (!analyzerData.analyzerPRCardData[liftType].repPRLifts) return;
   if (!analyzerData.analyzerPRCardData[liftType].repPRLifts[reps]) return;
@@ -186,14 +188,13 @@ function PRCard({ liftType, reps, analyzerData }) {
 
   let textColor = "#eeeeee";
 
-  function onClickHandler(event) {
-    console.log("card clicked");
-    console.log(event);
+  function onClickHandler(liftType, reps) {
+    setExpanded(!expanded);
   }
 
   return (
     <Card variant="filled" sx={{ backgroundColor: "#222222", border: "1px solid black" }}>
-      <CardActionArea onClick={onClickHandler}>
+      <CardActionArea onClick={() => onClickHandler()}>
         <CardContent>
           <Typography variant="h4" color={textColor}>
             {reps} Rep Max
@@ -217,10 +218,33 @@ function PRCard({ liftType, reps, analyzerData }) {
               window.open(prTuple.url);
             }}
           >
-            Watch Video
+            Watch {reps}RM Video
           </Button>
         </CardActions>
       )}
+      <Collapse in={expanded} timeout="auto" unmountOnExit>
+        <CardActionArea onClick={() => onClickHandler()}>
+          <CardContent>
+            <Typography variant="h6" color={textColor}>
+              All time best {reps}RM {liftType}:
+            </Typography>
+
+            {analyzerData.analyzerPRCardData[liftType].repPRLifts[reps].map((lift, index) => {
+              let dateString = getReadableDataString(lift.date);
+              let key = `${index}${liftType}${reps}`;
+
+              if (index === 0) return;
+              else
+                return (
+                  <Typography variant="body2" color={textColor} key={key}>
+                    #{index + 1}: {lift.reps}@{lift.weight}
+                    {lift.unitType} ({dateString})
+                  </Typography>
+                );
+            })}
+          </CardContent>
+        </CardActionArea>
+      </Collapse>
     </Card>
   );
 }

@@ -120,11 +120,12 @@ export function AnalyzerPieChart(props) {
       let datasetIndex = element[0].datasetIndex;
       let index = element[0].index;
       let liftType = chart._metasets[0]._dataset.data[index].label; // FIXME: find a better method
-      if (!selectedLift || liftType !== selectedLift.liftType)
+      if (!selectedLift || liftType !== selectedLift.liftType) {
         setSelectedLift({
           liftType: liftType,
           index: index,
         });
+      }
     },
     onHover: (context, element) => {
       let chart = context.chart;
@@ -132,11 +133,12 @@ export function AnalyzerPieChart(props) {
       let datasetIndex = element[0].datasetIndex;
       let index = element[0].index;
       let liftType = chart._metasets[0]._dataset.data[index].label; // FIXME: find a better method
-      if (!selectedLift || liftType !== selectedLift.liftType)
+      if (!selectedLift || liftType !== selectedLift.liftType) {
         setSelectedLift({
           liftType: liftType,
           index: index,
         });
+      }
     },
     elements: {
       arc: arcOptions,

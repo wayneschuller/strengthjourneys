@@ -41,7 +41,7 @@ const Visualizer = (props) => {
 
 export default Visualizer;
 
-function NewUserWelcome() {
+export function NewUserWelcome() {
   return (
     <div>
       <Box sx={{ m: 1 }} md={{ m: 3 }}>

@@ -17,6 +17,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 
+import { NewUserWelcome } from "./visualizer";
 import { LoadingLinearProgress } from "./visualizer";
 import { AnalyzerPieChart } from "../components/analyzerPieChart";
 import { LiftDataPanel, getPRInfo } from "../components/analyzerLiftDataPanel";
@@ -35,7 +36,7 @@ const Analyzer = () => {
   return (
     <div>
       <Box sx={{ m: 3, width: "90%" }} color="secondary">
-        {!visualizerData && <p>PRs and other interesting data points will appear here. </p>}
+        {!isDataReady && <NewUserWelcome />}
 
         {!isDataReady && isLoading && <LoadingLinearProgress />}
 

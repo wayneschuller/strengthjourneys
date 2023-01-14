@@ -31,7 +31,7 @@ const pages = [
   { name: "E1RM Calculator", route: "calculator" },
 ];
 
-const settings = ["Profile", "Settings"];
+const settings = ["Report Issue", "Email Author", "Logout"]; // If we ever need a settings menu - put it here
 
 function ResponsiveAppBar(props) {
   const [anchorElNav, setAnchorElNav] = useState(null);
@@ -67,23 +67,26 @@ function ResponsiveAppBar(props) {
   };
 
   // Called when one of the right hand side settings menus is clicked
-  const handleCloseUserMenu = () => {
+  const handleCloseUserMenu = (setting) => {
     setAnchorElUser(null);
-  };
-
-  // When user clicks logout menu in profile
-  const handleUserMenuLogout = () => {
-    // console.log("Logging out of google...");
-    googleLogout();
-    localStorage.removeItem("tokenResponse");
-    localStorage.removeItem("selectedLifts");
-    localStorage.removeItem("ssid");
-    localStorage.removeItem("gSheetName");
-    setUserInfo(null); // This will remove the profile menu and status button
-    setVisualizerData(null); // Reset the graph // FIXME: do we need to nullify the internals more carefully?
-    setAnchorElUser(null); // Closes menu
-    setIsLoading(false);
-    setIsDataReady(false);
+    if (setting === "Report Issue") {
+      console.log("Report Issue clicked");
+      window.open("https://github.com/wayneschuller/strengthjourneys/issues");
+    } else if (setting === "Email Author") {
+      window.open("mailto:wayneschuller@gmail.com?subject=Thank you for Strength Journeys it is the best!");
+    } else if (setting === "Logout") {
+      console.log("Logout clicked");
+      setIsDataReady(false);
+      googleLogout();
+      localStorage.removeItem("tokenResponse");
+      localStorage.removeItem("selectedLifts");
+      localStorage.removeItem("ssid");
+      localStorage.removeItem("gSheetName");
+      setIsLoading(false);
+      setVisualizerData(null); // FIXME: nullify the internals more carefully to remove chart etc
+      setUserInfo(null); // This will remove the profile menu and status button
+      setAnchorElUser(null); // Closes menu
+    }
   };
 
   // console.log(`Top level <ResponsiveAppBar />...`);
@@ -296,14 +299,15 @@ function ResponsiveAppBar(props) {
                   onClose={handleCloseUserMenu}
                 >
                   {settings.map((setting) => (
-                    <MenuItem key={setting} onClick={handleCloseUserMenu}>
+                    <MenuItem
+                      key={setting}
+                      onClick={() => {
+                        handleCloseUserMenu(setting);
+                      }}
+                    >
                       <Typography textAlign="center">{setting}</Typography>
                     </MenuItem>
                   ))}
-
-                  <MenuItem onClick={handleUserMenuLogout}>
-                    <Typography textAlign="center">Logout</Typography>
-                  </MenuItem>
                 </Menu>
               </Box>
             </>

@@ -5,14 +5,20 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardActions from "@mui/material/CardActions";
+import { CardActionArea } from "@mui/material";
+
 import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import Grid from "@mui/material/Unstable_Grid2";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Masonry from "@mui/lab/Masonry";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
+import ShareIcon from "@mui/icons-material/Share";
 
 // Taken from https://mui.com/material-ui/react-grid2/
 const Item = styled(Paper)(({ theme }) => ({
@@ -71,6 +77,8 @@ function LiftOverviewCard({ liftType, index, analyzerData }) {
   const firstLift = analyzerData.analyzerPRCardData[liftType].firstLift;
   const liftColor = analyzerData.analyzerPieData[index].backgroundColor;
 
+  const showShare = false; // FIXME: experimental UI for sharing the lift data to social media
+
   let firstDateString = getReadableDataString(firstLift.x);
 
   return (
@@ -93,7 +101,26 @@ function LiftOverviewCard({ liftType, index, analyzerData }) {
             <RecentHighlights liftType={liftType} analyzerData={analyzerData} />
           )}
         </CardContent>
+        {showShare && <LiftCardActions />}
       </Card>
+    </>
+  );
+}
+
+function LiftCardActions() {
+  const [expanded, setExpanded] = useState(false);
+
+  const handleExpandClick = () => {
+    setExpanded(!expanded);
+  };
+
+  return (
+    <>
+      <CardActions disableSpacing>
+        <IconButton aria-label="share">
+          <ShareIcon />
+        </IconButton>
+      </CardActions>
     </>
   );
 }
@@ -157,20 +184,30 @@ function PRCard({ liftType, reps, analyzerData }) {
     }
   }
 
+  let textColor = "#eeeeee";
+
+  function onClickHandler(event) {
+    console.log("card clicked");
+    console.log(event);
+  }
+
   return (
-    <Card variant="filled" sx={{ backgroundColor: "grey", color: "white", border: "1px solid black" }}>
-      <CardContent>
-        <Typography variant="h4" color="text.primary" gutterBottom>
-          {reps} Rep Max
-        </Typography>
-        <Typography variant="h5" component="div">
-          {prTuple.weight}
-          {prTuple.unitType}
-        </Typography>
-        <Typography sx={{ mb: 1.5 }} color="text.secondary">
-          {dateString}
-        </Typography>
-      </CardContent>
+    <Card variant="filled" sx={{ backgroundColor: "#222222", border: "1px solid black" }}>
+      <CardActionArea onClick={onClickHandler}>
+        <CardContent>
+          <Typography variant="h4" color={textColor}>
+            {reps} Rep Max
+            <Divider color="grey"></Divider>
+          </Typography>
+          <Typography variant="h5" color={textColor} align="left">
+            {prTuple.weight}
+            {prTuple.unitType}
+          </Typography>
+          <Typography variant="body1" align="right" color={textColor}>
+            {dateString}
+          </Typography>
+        </CardContent>
+      </CardActionArea>
       {isUrl && (
         <CardActions sx={{ backgroundColor: "black" }}>
           <Button

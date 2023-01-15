@@ -11,7 +11,7 @@ import { Chart, ArcElement, Tooltip, Legend } from "chart.js";
 Chart.register(ArcElement, Tooltip, Legend);
 
 export function AnalyzerPieChart(props) {
-  // console.log(`<AnalyzerPieChart />...`);
+  console.log(`<AnalyzerPieChart />...`);
 
   if (!props.analyzerData && !props.analyzerData.analyzerPieData) return;
 
@@ -170,12 +170,9 @@ export function AnalyzerPieChart(props) {
       {
         data: analyzerData.analyzerPieData,
         backgroundColor: backgroundColor,
-        borderWidth: 4,
-        hoverOffset: 20,
+        borderWidth: 3,
+        hoverOffset: 5,
         hoverBorderColor: "#222222",
-        datalabels: {
-          // anchor: "end",
-        },
       },
     ],
   };

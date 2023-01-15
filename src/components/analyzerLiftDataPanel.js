@@ -31,7 +31,7 @@ const Item = styled(Paper)(({ theme }) => ({
 }));
 
 export const LiftDataPanel = (props) => {
-  // console.log(`LiftDataPanel... `);
+  console.log(`LiftDataPanel... `);
 
   if (!props.selectedLift) return;
 
@@ -49,7 +49,7 @@ export const LiftDataPanel = (props) => {
       <Box>
         <Stack spacing={1}>
           <LiftOverviewCard liftType={liftType} index={index} analyzerData={analyzerData} />
-          <Masonry columns={2} spacing={2} sx={{}}>
+          <Masonry columns={{ sm: 1, md: 2, xl: 3 }} spacing={2}>
             <PRCard liftType={liftType} key={`1${liftType}`} reps={1} analyzerData={analyzerData} />
             <PRCard liftType={liftType} key={`2${liftType}`} reps={2} analyzerData={analyzerData} />
             <PRCard liftType={liftType} key={`3${liftType}`} reps={3} analyzerData={analyzerData} />

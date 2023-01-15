@@ -18,7 +18,7 @@ import { parseData } from "./parseData";
 // ------------------------------------------------------------------
 // Data processing flow:
 //
-//  getGoogleUserInfo->(getGDriveMetadata)->loadGSheetValues->parseData->processData
+//  getGoogleUserInfo->loadGSheetValues->parseData->processData
 //
 // Flow can be triggered by:
 //  - on app launch using previous ssid and tokenResponse from localStorage
@@ -48,6 +48,7 @@ export async function getGoogleUserInfo(
     setUserInfo(null);
     return; // No ticket to google? Then no party.
   }
+  setIsLoading(true);
 
   await axios
     .get("https://www.googleapis.com/oauth2/v3/userinfo", {
@@ -75,19 +76,9 @@ export async function getGoogleUserInfo(
           setParsedData,
           setAnalyzerData
         );
-
-        // We used to get the filename and modified time, but let's
-        // try not bothering with that exta API get step
-        // setInfoChipStatus("Checking GSheet Filename");
-        // getGDriveMetadata(setInfoChipStatus,
-        // setInfoChipToolTip,
-        // setIsLoading,
-        // setIsDataReady,
-        // visualizerData, setVisualizerData,
-        // setParsedData, setAnalyzerData,
-        //  );
       } else {
         setInfoChipStatus("Select Data Source"); // User must click to get File Picker
+        setIsLoading(false);
       }
     })
     .catch((error) => {
@@ -98,58 +89,7 @@ export async function getGoogleUserInfo(
       setUserInfo(null);
       localStorage.removeItem("tokenResponse");
       setIsLoading(false);
-    });
-}
-
-export async function getGDriveMetadata(
-  setInfoChipStatus,
-  setInfoChipToolTip,
-  setIsLoading,
-  setIsDataReady,
-  visualizerData,
-  setVisualizerData,
-  setParsedData,
-  setAnalyzerData
-) {
-  console.log("getGSheetMetadata()...");
-
-  const tokenResponse = JSON.parse(localStorage.getItem(`tokenResponse`));
-  const ssid = localStorage.getItem(`ssid`);
-
-  setIsLoading(true);
-
-  // API call to get GDrive file metadata to get modified time and the filename
-  await axios
-    .get(
-      `https://www.googleapis.com/drive/v3/files/${ssid}?fields=modifiedTime%2Cname&key=${process.env.REACT_APP_GOOGLE_API_KEY}`,
-      {
-        headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-      }
-    )
-    .then((response) => {
-      // handle success
-      // console.log(`API get GDrive file metadata .then received:`);
-      // console.log(response.data);
-
-      setInfoChipToolTip(response.data.name); // Put the GSheet filename in the chip tooltip
-      setInfoChipStatus("Loading GSheet Values");
-
-      loadGSheetValues(
-        setInfoChipStatus,
-        setInfoChipToolTip,
-        setIsLoading,
-        setIsDataReady,
-        visualizerData,
-        setVisualizerData,
-        setParsedData,
-        setAnalyzerData
-      );
-    })
-    .catch((error) => {
-      setIsLoading(false);
-      setInfoChipStatus("Error Reading GDrive File Metadata");
-      setInfoChipToolTip(error.response.data.error.message);
-      console.log(error);
+      setIsDataReady(false);
     });
 }
 
@@ -172,6 +112,7 @@ export async function loadGSheetValues(
   }
 
   setIsLoading(true);
+  setInfoChipStatus("Loading GSheet Values");
 
   await axios
     .get(

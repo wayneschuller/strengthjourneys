@@ -30,8 +30,10 @@ const Analyzer = () => {
 
   // console.log(`<Analyzer />`);
 
-  if (!visualizerData && !visualizerData.visualizerE1RMLineData) return;
-  if (!analyzerData && !analyzerData.analyzerPieData) return;
+  if (!visualizerData) return;
+  if (!visualizerData.visualizerE1RMLineData) return;
+  if (!analyzerData) return;
+  if (!analyzerData.analyzerPieData) return;
 
   return (
     <div>
@@ -42,7 +44,7 @@ const Analyzer = () => {
 
         <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 8 }}>
           <Grid xs={12} lg={6}>
-            {isDataReady && (
+            {isDataReady && !isLoading && (
               <AnalyzerPieChart
                 selectedLift={selectedLift}
                 setSelectedLift={setSelectedLift}
@@ -52,7 +54,7 @@ const Analyzer = () => {
           </Grid>
 
           <Grid xs={12} lg={6}>
-            {selectedLift && (
+            {isDataReady && !isLoading && selectedLift && (
               <LiftDataPanel
                 selectedLift={selectedLift}
                 parsedData={parsedData}

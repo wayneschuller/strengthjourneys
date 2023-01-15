@@ -159,16 +159,6 @@ function ResponsiveAppBar(props) {
           setParsedData,
           setAnalyzerData
         );
-
-        // For now we no longer bother with this part of the data chain
-        // because we are not checking for modifiedTime for autorefresh
-        // getGDriveMetadata(  setInfoChipStatus,
-        // setInfoChipToolTip,
-        // setIsLoading,
-        // setIsDataReady,
-        // visualizerData, setVisualizerData,
-        // setParsedData, setAnalyzerData
-        // );
       },
     });
   };

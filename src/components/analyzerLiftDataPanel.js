@@ -46,10 +46,10 @@ export const LiftDataPanel = (props) => {
     <>
       {/* <Item elevation={0} sx={{ backgroundColor: "#dddd99" }}> */}
       {/* <Box sx={{ width: 500, minHeight: 377 }}> */}
-      <Box>
+      <Box m={2}>
         <Stack spacing={1}>
-          <LiftOverviewCard liftType={liftType} index={index} analyzerData={analyzerData} />
-          <Masonry columns={{ sm: 1, md: 2, xl: 3 }} spacing={2}>
+          <LiftOverviewCard liftType={liftType} index={index} analyzerData={analyzerData} spacing={2} />
+          <Masonry direction={{ sm: "column", lg: "row" }} columns={{ xs: 1, sm: 1, md: 2, lg: 2, xl: 3 }} spacing={2}>
             <PRCard liftType={liftType} key={`1${liftType}`} reps={1} analyzerData={analyzerData} />
             <PRCard liftType={liftType} key={`2${liftType}`} reps={2} analyzerData={analyzerData} />
             <PRCard liftType={liftType} key={`3${liftType}`} reps={3} analyzerData={analyzerData} />

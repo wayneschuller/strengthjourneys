@@ -42,8 +42,9 @@ const Analyzer = () => {
 
         {!isDataReady && isLoading && <LoadingLinearProgress />}
 
-        <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 8 }}>
-          <Grid xs={12} lg={6}>
+        {/* <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 8 }}> */}
+        <Grid container>
+          <Grid sm={12} lg={6}>
             {isDataReady && !isLoading && (
               <AnalyzerPieChart
                 selectedLift={selectedLift}
@@ -53,7 +54,7 @@ const Analyzer = () => {
             )}
           </Grid>
 
-          <Grid xs={12} lg={6}>
+          <Grid sm={12} lg={6}>
             {isDataReady && !isLoading && selectedLift && (
               <LiftDataPanel
                 selectedLift={selectedLift}

@@ -28,7 +28,7 @@ const Analyzer = () => {
 
   const [selectedLift, setSelectedLift] = useState(null);
 
-  // console.log(`<Analyzer />`);
+  console.log(`<Analyzer />`);
 
   if (!visualizerData) return;
   if (!visualizerData.visualizerE1RMLineData) return;

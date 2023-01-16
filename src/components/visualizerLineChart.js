@@ -189,6 +189,12 @@ export function VisualizerLineChart(props) {
 
   const annotationOptions = {
     annotations: visualizerData.achievementAnnotations,
+    animations: {
+      numbers: {
+        properties: ["x", "y", "x2", "y2", "width", "height", "radius"],
+        type: "number",
+      },
+    },
   };
 
   // Line Chart Options for react-chartjs-2 Visualizer

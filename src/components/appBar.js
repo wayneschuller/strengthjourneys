@@ -177,7 +177,6 @@ function ResponsiveAppBar(props) {
             alt="Strength Journeys logo"
             src={logo}
           />
-
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
             <IconButton
               size="large"
@@ -216,7 +215,6 @@ function ResponsiveAppBar(props) {
               ))}
             </Menu>
           </Box>
-
           {/* Show the logo in the middle on xs sizes  */}
           <Box
             component="img"
@@ -227,7 +225,6 @@ function ResponsiveAppBar(props) {
             alt="Strength Journeys logo"
             src={logo}
           />
-
           <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
             {pages.map((page) => (
               <Button
@@ -242,7 +239,6 @@ function ResponsiveAppBar(props) {
               </Button>
             ))}
           </Box>
-
           {/* Link to our GitHub project on large screens */}
           <Tooltip title="Click to open GitHub source code">
             <GitHubIcon

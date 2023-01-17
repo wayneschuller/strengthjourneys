@@ -77,10 +77,7 @@ export function VisualizerLineChart(props) {
     localStorage.setItem("selectedLifts", JSON.stringify(selectedLifts));
   };
 
-  const animationOptions = {
-    duration: 1000,
-    easing: "easeInExpo",
-  };
+  const animationOptions = {};
 
   let sixMonthsAgo = 0;
   if (visualizerData) {
@@ -189,12 +186,6 @@ export function VisualizerLineChart(props) {
 
   const annotationOptions = {
     annotations: visualizerData.achievementAnnotations,
-    animations: {
-      numbers: {
-        properties: ["x", "y", "x2", "y2", "width", "height", "radius"],
-        type: "number",
-      },
-    },
   };
 
   // Line Chart Options for react-chartjs-2 Visualizer

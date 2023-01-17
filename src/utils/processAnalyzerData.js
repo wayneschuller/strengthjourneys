@@ -106,7 +106,7 @@ export function processAnalyzerPRCardData(parsedData, processedData) {
         if (repLifts[i] === undefined) break; // We ran out of lifts
 
         let date = new Date(repLifts[i].date);
-        if (date < new Date().setDate(new Date().getDate() - 30)) continue; // Too old, keep looking
+        if (date < new Date().setDate(new Date().getDate() - 30)) continue; // Is it this month?
 
         // Encouragement emojies: clapping, trophy, fire, 100, starstuck
         let encouragements = ["\u{1F44F}", "\u{1F3C6}", "\u{1F525}", "\u{1F4AF}", "\u{1F929}"];

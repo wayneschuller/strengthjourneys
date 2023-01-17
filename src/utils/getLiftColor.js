@@ -9,6 +9,7 @@ export function getLiftColor(liftType) {
 
   switch (liftType) {
     case "Back Squat":
+    case "Squat":
       color = "#9B2226";
       break;
     case "Deadlift":
@@ -18,6 +19,7 @@ export function getLiftColor(liftType) {
       color = "#94D2BD";
       break;
     case "Strict Press":
+    case "Overhead Press":
       color = "#E9D8A6";
       break;
     case "Front Squat":

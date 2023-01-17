@@ -98,8 +98,13 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
     return b.weight - a.weight;
   });
 
-  // Process the top 20 of this rep style (if we have that many)
-  for (let i = 0; i < 20 && i < repLifts.length; i++) {
+  let topHighlights = 20;
+  if (repLifts.length < 100) topHighlights = 5; // Novices only get top 5 highlights on visualiser tooltips
+
+  // Process the top highlights of this rep style (if we have that many)
+  for (let i = 0; i < topHighlights && i < repLifts.length; i++) {
+    if (repLifts[i] === undefined) break; // We ran out of lifts
+
     // Match the lift to the chart line point.
     const dateIndex = processedData[datasetIndex].data.findIndex((lift) => lift.x === repLifts[i].date);
     processedData[datasetIndex].data[dateIndex].afterLabel.push(
@@ -112,7 +117,7 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
       liftAnnotations[`${liftType}_best_${reps}RM`] = createAchievementAnnotation(
         liftType,
         repLifts[i].date,
-        estimateE1RM(reps, repLifts[i].weight, equation),
+        estimateE1RM(reps, repLifts[i].weight, equation), // FIXME: should this be at the e1rm line height?
         `${reps}RM`,
         "rgba(255, 99, 132, 0.25)",
         datasetIndex

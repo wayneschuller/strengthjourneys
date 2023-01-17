@@ -102,7 +102,10 @@ export function processAnalyzerPRCardData(parsedData, processedData) {
       // Store the top 5 lifts for this rep scheme
       repPRLifts[reps] = prLifts;
 
-      for (let i = 0; i < 20; i++) {
+      let topHighlights = 20;
+      if (repLifts.length < 100) topHighlights = 5; // Novices only get top 5 highlights on visualiser tooltips
+
+      for (let i = 0; i < topHighlights; i++) {
         if (repLifts[i] === undefined) break; // We ran out of lifts
 
         let date = new Date(repLifts[i].date);

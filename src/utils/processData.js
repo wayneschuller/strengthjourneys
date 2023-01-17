@@ -116,7 +116,7 @@ export function processData(
   let padDateMin = new Date(visualizerE1RMLineData[0].data[0].x); // First tuple in first lift
   padDateMin = padDateMin.setDate(padDateMin.getDate() - 10);
 
-  // FIXME: this could just do 10 days from now
+  // Set a padDateMax 10 days from the newest tuple date
   let padDateMax = new Date(visualizerE1RMLineData[0].data[visualizerE1RMLineData[0].data.length - 1].x); // Last tuple in first lift
   padDateMax = padDateMax.setDate(padDateMax.getDate() + 10);
 

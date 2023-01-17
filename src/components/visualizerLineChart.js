@@ -163,8 +163,11 @@ export function VisualizerLineChart(props) {
     },
   };
 
-  // Work out some bounds of our data and six months figure
-  const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000; // Used for zoom config limits
+  // Min zoom-in time range in is normally 60 days. Unless the data is less than 60 days...
+  let sixtyDaysInMilliseconds = 20 * 24 * 60 * 60 * 1000; // Used for zoom config limits
+  if (sixtyDaysInMilliseconds > visualizerData.padDateMax - visualizerData.padDateMin)
+    sixtyDaysInMilliseconds = visualizerData.padDateMax - visualizerData.padDateMin;
+
   const zoomOptions = {
     zoom: {
       wheel: { enabled: true },

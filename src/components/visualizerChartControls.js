@@ -50,6 +50,8 @@ export function ChartControls(props) {
 
 // --------------------------------------------------------------------------------------------------------
 // <VizConfigZoom />
+//
+// FIXME: Could we consider hiding these controls until the data is bigger than the screen?
 // --------------------------------------------------------------------------------------------------------
 export function VizConfigZoom({ zoomShowAllTime, zoomShowRecent }) {
   return (

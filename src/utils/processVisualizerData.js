@@ -99,7 +99,7 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
   });
 
   let topHighlights = 20;
-  if (repLifts.length < 100) topHighlights = 5; // Novices only get top 5 highlights on visualiser tooltips
+  if (repLifts.length < 50) topHighlights = 5; // Novices only get top 5 highlights on visualiser tooltips
 
   // Process the top highlights of this rep style (if we have that many)
   for (let i = 0; i < topHighlights && i < repLifts.length; i++) {
@@ -113,8 +113,8 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
 
     // Create some visual annotations for the top lift for this rep scheme
     // The visual annotations are only worthwhile when they have completed
-    // more than 50 lifts of this rep and liftType combination.
-    if (i === 0 && repLifts.length > 50) {
+    // more than 10 lifts of this rep and liftType combination.
+    if (i === 0 && repLifts.length > 10) {
       // Actual top PR gets a special chartjs annotation marker on the chart
       liftAnnotations[`${liftType}_best_${reps}RM`] = createAchievementAnnotation(
         liftType,

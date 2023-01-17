@@ -148,6 +148,8 @@ function ResponsiveAppBar(props) {
           localStorage.setItem("ssid", data.docs[0].id);
         }
 
+        localStorage.removeItem(`selectedLifts`); // Clear the selected lifts before we process the new file
+
         setInfoChipStatus("Loading GSheet Values");
         loadGSheetValues(
           setInfoChipStatus,

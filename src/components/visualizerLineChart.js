@@ -142,7 +142,6 @@ export function VisualizerLineChart(props) {
 
   const tooltipOptions = {
     enabled: true,
-    position: "nearest",
     titleFont: { family: "Catamaran", size: 14 },
     bodyFont: { family: "Catamaran", size: 14 },
     callbacks: {

@@ -140,15 +140,16 @@ function ResponsiveAppBar(props) {
         setInfoChipToolTip(data.docs[0].name);
         localStorage.setItem("gSheetName", data.docs[0].name);
 
-        let ssid = localStorage.getItem(`ssid`);
+        localStorage.setItem("ssid", data.docs[0].id);
 
-        // Have they chosen a different file to previously?
-        if (data.docs[0].id !== ssid) {
-          // park the ssid in the browser
-          localStorage.setItem("ssid", data.docs[0].id);
-        }
-
+        // FIXME: we cannot change Google Sheets without reloading the app. BUG
+        // It the app is already loaded with data, we need to clear the data before we load the new file
         localStorage.removeItem(`selectedLifts`); // Clear the selected lifts before we process the new file
+        setVisualizerData(null); // FIXME: nullify the internals more carefully to remove chart etc
+        setAnalyzerData(null);
+        setParsedData(null);
+        setIsDataReady(false);
+        setIsLoading(true);
 
         setInfoChipStatus("Loading GSheet Values");
         loadGSheetValues(

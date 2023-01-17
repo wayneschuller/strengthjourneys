@@ -111,8 +111,10 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
       `#${i + 1} best ${liftType} ${prName} of all time (${reps}@${repLifts[i].weight}${repLifts[i].unitType})`
     );
 
-    // Actual best lift for this rep scheme
-    if (i === 0) {
+    // Create some visual annotations for the top lift for this rep scheme
+    // The visual annotations are only worthwhile when they have completed
+    // more than 50 lifts of this rep and liftType combination.
+    if (i === 0 && repLifts.length > 50) {
       // Actual top PR gets a special chartjs annotation marker on the chart
       liftAnnotations[`${liftType}_best_${reps}RM`] = createAchievementAnnotation(
         liftType,
@@ -122,15 +124,6 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
         "rgba(255, 99, 132, 0.25)",
         datasetIndex
       );
-
-      // Keep a special copy of the winning PR for the <Analyzer />
-      processedData[datasetIndex][`${reps}RM`] = {
-        reps: reps,
-        weight: repLifts[i].weight,
-        date: repLifts[i].date,
-        unitType: repLifts[i].unitType,
-        url: repLifts[i].url,
-      };
     }
   }
 }

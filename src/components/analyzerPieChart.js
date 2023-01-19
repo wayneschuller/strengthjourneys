@@ -11,7 +11,7 @@ import { Chart, ArcElement, Tooltip, Legend } from "chart.js";
 Chart.register(ArcElement, Tooltip, Legend);
 
 export function AnalyzerPieChart(props) {
-  console.log(`<AnalyzerPieChart />...`);
+  // console.log(`<AnalyzerPieChart />...`);
 
   if (!props.analyzerData && !props.analyzerData.analyzerPieData) return;
 

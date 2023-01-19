@@ -17,6 +17,11 @@ import { wasLiftSelected } from "./processData";
 export function updateAchievements(processedData, equation, achievementAnnotations) {
   // console.log(`updateAnnotations(). Mutating Y values on existing annotations`);
 
+  // FIXME: these changes are not applying to the chart when the equation changes
+  // FIXME: We do not need to handle 1RM because it's level will not change. :)
+  // FIXME: We should be looping through the achievementAnnotations, then for the 3RM and 5RM
+  // we can look up the liftType and date in processedData and get the y value from there
+
   // Loop through each lift and recalculate the e1rm for the achievement label
   processedData.forEach((liftType, index) => {
     let reps;
@@ -119,7 +124,8 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
       liftAnnotations[`${liftType}_best_${reps}RM`] = createAchievementAnnotation(
         liftType,
         repLifts[i].date,
-        estimateE1RM(reps, repLifts[i].weight, equation), // FIXME: should this be at the e1rm line height?
+        processedData[datasetIndex].data[dateIndex].y, // Put annotation at the line point for this date
+        // estimateE1RM(reps, repLifts[i].weight, equation), // FIXME: should this be at the e1rm line height?
         `${reps}RM`,
         "rgba(255, 99, 132, 0.25)",
         datasetIndex
@@ -129,7 +135,7 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
 }
 
 // Generate chart.js annotation plugin config data for an achievement
-function createAchievementAnnotation(liftType, date, weight, text, background, datasetIndex) {
+function createAchievementAnnotation(liftType, date, yValue, text, background, datasetIndex) {
   const display = wasLiftSelected(liftType);
 
   return {
@@ -142,7 +148,7 @@ function createAchievementAnnotation(liftType, date, weight, text, background, d
     yAdjust: 20,
     content: [text],
     xValue: date,
-    yValue: weight,
+    yValue: yValue,
     backgroundColor: background,
     padding: {
       top: 2,

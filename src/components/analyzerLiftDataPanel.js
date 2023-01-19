@@ -31,7 +31,7 @@ const Item = styled(Paper)(({ theme }) => ({
 }));
 
 export const LiftDataPanel = (props) => {
-  console.log(`LiftDataPanel... `);
+  // console.log(`<LiftDataPanel />... `);
 
   if (!props.selectedLift) return;
 

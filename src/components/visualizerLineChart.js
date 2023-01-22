@@ -128,7 +128,8 @@ export function VisualizerLineChart(props) {
 
   const datalabelsOptions = {
     formatter: (context) => {
-      return context.y + context.unitType;
+      return `${context.reps}@${context.weight}${context.unitType}`;
+      // return context.y + context.unitType;
     },
     font: (context) => {
       // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic

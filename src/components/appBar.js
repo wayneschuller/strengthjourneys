@@ -8,10 +8,11 @@ import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Container from "@mui/material/Container";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuIcon from "@mui/icons-material/Menu";
-import Container from "@mui/material/Container";
+import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -19,6 +20,8 @@ import MenuItem from "@mui/material/MenuItem";
 
 import logo from "./logo.png";
 import GitHubIcon from "@mui/icons-material/GitHub";
+import GoogleIcon from "@mui/icons-material/Google";
+
 import { getGoogleUserInfo, loadGSheetValues } from "../utils/readData";
 
 import { useGoogleLogin, googleLogout } from "@react-oauth/google";
@@ -243,14 +246,19 @@ function ResponsiveAppBar(props) {
             ))}
           </Box>
           {/* Link to our GitHub project on large screens */}
-          <Tooltip title="Click to open GitHub source code">
-            <GitHubIcon
-              sx={{
-                display: { xs: "none", md: "block" },
-              }}
-              onClick={(event) => window.open("https://github.com/wayneschuller/strengthjourneys", "_blank")}
-            />
-          </Tooltip>
+          <Avatar
+            sx={{ bgcolor: "#333333", display: { xs: "none", md: "flex" } }}
+            variant="rounded"
+            onClick={(event) => window.open("https://github.com/wayneschuller/strengthjourneys", "_blank")}
+          >
+            <Tooltip title="Click to open GitHub source code">
+              <GitHubIcon
+              // sx={{
+              // display: { xs: "none", md: "block" },
+              // }}
+              />
+            </Tooltip>
+          </Avatar>
 
           {/* User profile info on right hand side of the navbar */}
           {userInfo ? (
@@ -303,11 +311,7 @@ function ResponsiveAppBar(props) {
           ) : (
             <>
               <Tooltip title="Sign in and connect to your Google Sheet">
-                <Button
-                  onClick={niceGoogleLogin}
-                  sx={{ my: 2, color: "white", display: "block", mx: 1 }}
-                  variant="outlined"
-                >
+                <Button onClick={niceGoogleLogin} sx={{ color: "white", display: "block" }} variant="outlined">
                   Google Sign-In
                 </Button>
               </Tooltip>

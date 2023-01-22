@@ -128,8 +128,8 @@ export function VisualizerLineChart(props) {
 
   const datalabelsOptions = {
     formatter: (context) => {
-      return `${context.reps}@${context.weight}${context.unitType}`;
-      // return context.y + context.unitType;
+      // return `${context.reps}@${context.weight}${context.unitType}`; // Show full lift
+      return context.y + context.unitType; // Show e1rm
     },
     font: (context) => {
       // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
@@ -165,7 +165,7 @@ export function VisualizerLineChart(props) {
   };
 
   // Min zoom-in time range in is normally 60 days. Unless the data is less than 60 days...
-  let sixtyDaysInMilliseconds = 20 * 24 * 60 * 60 * 1000; // Used for zoom config limits
+  let sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000; // Used for zoom config limits
   if (sixtyDaysInMilliseconds > visualizerData.padDateMax - visualizerData.padDateMin)
     sixtyDaysInMilliseconds = visualizerData.padDateMax - visualizerData.padDateMin;
 

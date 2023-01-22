@@ -16,6 +16,8 @@ import { EmailShareButton, FacebookShareButton, RedditShareButton, TwitterShareB
 
 import { EmailIcon, FacebookIcon, RedditIcon, TwitterIcon } from "react-share";
 
+import { estimateE1RM } from "../utils/estimateE1RM";
+
 const Input = styled(MuiInput)`
   width: 5rem; // Goal is to have 4 digits in weight input - 3 plus one decimal digit
 `;
@@ -29,7 +31,7 @@ const Item = styled(Paper)(({ theme }) => ({
   color: theme.palette.text.secondary,
 }));
 
-const OneRepMaxCalculator = () => {
+export default function OneRepMaxCalculator() {
   // Get some initial values from any browser localstorage
   let initReps = localStorage.getItem("calcReps");
   initReps = initReps ? parseInt(initReps) : 5;
@@ -235,7 +237,7 @@ const OneRepMaxCalculator = () => {
       </Box>
     </div>
   );
-};
+}
 
 // Reps input component
 const Reps = (props) => {
@@ -272,30 +274,3 @@ const Weight = (props) => {
     />
   );
 };
-
-// Return a rounded 1 rep max
-// For theory see: https://en.wikipedia.org/wiki/One-repetition_maximum
-function estimateE1RM(reps, weight, equation) {
-  if (reps === 1) return weight; // Heavy single requires no estimate!
-
-  switch (equation) {
-    case "Epley":
-      return Math.round(weight * (1 + reps / 30));
-    case "McGlothin":
-      return Math.round((100 * weight) / (101.3 - 2.67123 * reps));
-    case "Lombardi":
-      return Math.round(weight * Math.pow(reps, 0.1));
-    case "Mayhew":
-      return Math.round((100 * weight) / (52.2 + 41.9 * Math.pow(Math.E, -0.055 * reps)));
-    case "OConner":
-      return Math.round(weight * (1 + reps / 40));
-    case "Wathen":
-      return Math.round((100 * weight) / (48.8 + 53.8 * Math.pow(Math.E, -0.075 * reps)));
-    case "Brzycki":
-      return Math.round(weight / (1.0278 - 0.0278 * reps));
-    default: // Repeat Brzycki formula as a default here
-      return Math.round(weight / (1.0278 - 0.0278 * reps));
-  }
-}
-
-export default OneRepMaxCalculator;

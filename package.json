@@ -25,7 +25,7 @@
     "react-dom": "^18.2.0",
     "react-google-drive-picker": "file:dependencies/react-google-drive-picker",
     "react-router-dom": "^6.6.1",
-    "react-scripts": "5.0.1",
+    "react-scripts": "^5.0.1",
     "react-share": "^4.4.1",
     "typeface-catamaran": "^1.1.13",
     "typeface-roboto": "^1.1.13",

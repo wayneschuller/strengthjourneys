@@ -41,6 +41,8 @@ const theme = createTheme({
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
+// Spew a console.error and html error if we don't the process.env keys we need
+
 root.render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>

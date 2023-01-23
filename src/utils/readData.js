@@ -122,18 +122,12 @@ export async function loadGSheetValues(
       }
     )
     .then((response) => {
-      let result = parseData(
-        response.data.values,
-        setIsLoading,
-        setIsDataReady,
-        visualizerData,
-        setVisualizerData,
-        setParsedData,
-        setAnalyzerData
-      );
+      let result = parseData(response.data.values, visualizerData, setVisualizerData, setParsedData, setAnalyzerData);
 
       if (result) {
         setInfoChipStatus("Google Sheet Data Loaded");
+        setIsLoading(false); // Stop the loading animations
+        setIsDataReady(true); // This should trigger <Visualizer /> and <Analyzer /> rendering
       } else {
         // We have data that could not be parsed
         setInfoChipStatus("Bad Google Sheet Data");

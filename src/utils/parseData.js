@@ -17,15 +17,7 @@ import { processData, processAnalyzerPieData } from "./processData";
 // FIXME: We should return false if it is bad data
 //
 // ------------------------------------------------------------------------------
-export function parseData(
-  data,
-  setIsLoading,
-  setIsDataReady,
-  visualizerData,
-  setVisualizerData,
-  setParsedData,
-  setAnalyzerData
-) {
+export function parseData(data, visualizerData, setVisualizerData, setParsedData, setAnalyzerData) {
   console.log("parseData()...");
 
   let workout_date_COL, workout_id_COL, completed_COL, exercise_name_COL, assigned_reps_COL, assigned_weight_COL;
@@ -96,11 +88,7 @@ export function parseData(
   setParsedData(parsedData); // We need this in state for refreshes later on
 
   // Next in the data flow is to process the data.
-  processData(parsedData, visualizerData, setVisualizerData, setAnalyzerData, setIsLoading, setIsDataReady);
-
-  // FIXME: on success we could just setIsLoading and setIsDataReady here?
-  // Then we would not need to pass them to processData and then the equation
-  // changer could call processData without needing those arguments.
+  processData(parsedData, visualizerData, setVisualizerData, setAnalyzerData);
 
   return true;
 

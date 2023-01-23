@@ -13,17 +13,8 @@ import { processAnalyzerPieData, processAnalyzerPRCardData } from "./processAnal
 //
 // Process the parsedData array of lifts into data structures ready for the <Visualiser /> and <Analyzer />
 //
-// When an equation change causes a refresh, we will call this function with only the first three
-// arguments. So we cannot access the last three arguments in that case... FIXME: this is hacky
 // --------------------------------------------------------------------------------------------
-export function processData(
-  parsedData,
-  visualizerData,
-  setVisualizerData,
-  setAnalyzerData,
-  setIsLoading,
-  setIsDataReady
-) {
+export function processData(parsedData, visualizerData, setVisualizerData, setAnalyzerData) {
   console.log("processData()...");
 
   let isRefresh = false;
@@ -148,9 +139,6 @@ export function processData(
       // We could wrap the datasets for chartjs here, but nevermind we will do it in the <Line /> component
       // visualizerE1RMLineData: {datasets: processedData},
     });
-
-    setIsLoading(false); // Stop the loading animations
-    setIsDataReady(true); // This should trigger <Visualizer /> and <Analyzer /> rendering
   }
 }
 

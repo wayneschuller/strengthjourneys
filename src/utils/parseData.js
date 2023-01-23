@@ -85,6 +85,9 @@ export function parseData(
     notes_COL = columnNames.indexOf("Notes");
     url_COL = columnNames.indexOf("URL");
 
+    if (workout_date_COL === -1 || exercise_name_COL === -1 || actual_reps_COL === -1 || actual_weight_COL === -1) {
+      return false; // Bad data - hasn't matched any formats we know
+    }
     data.forEach(parseBespokeRow);
   }
 
@@ -99,7 +102,7 @@ export function parseData(
   // Then we would not need to pass them to processData and then the equation
   // changer could call processData without needing those arguments.
 
-  return;
+  return true;
 
   // Below are some helper functions we put inside our parseData function for scope
 

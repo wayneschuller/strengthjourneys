@@ -122,9 +122,7 @@ export async function loadGSheetValues(
       }
     )
     .then((response) => {
-      setInfoChipStatus("Google Sheet Data Loaded");
-
-      parseData(
+      let result = parseData(
         response.data.values,
         setIsLoading,
         setIsDataReady,
@@ -133,6 +131,24 @@ export async function loadGSheetValues(
         setParsedData,
         setAnalyzerData
       );
+
+      if (result) {
+        setInfoChipStatus("Google Sheet Data Loaded");
+      } else {
+        // We have data that could not be parsed
+        setInfoChipStatus("Bad Google Sheet Data");
+        if (localStorage.getItem("gSheetName")) {
+          setInfoChipToolTip(`Could not parse lifting data in file "${localStorage.getItem("gSheetName")}"`); // Put the GSheet filename in the chip tooltip
+        } else {
+          setInfoChipToolTip("Click to choose another Google Sheet");
+        }
+
+        // Clean up gracefully
+        localStorage.removeItem("selectedLifts");
+        localStorage.removeItem("ssid");
+        localStorage.removeItem("gSheetName");
+        setIsLoading(false);
+      }
     })
     .catch((error) => {
       setInfoChipStatus("Error Reading Google Sheet");

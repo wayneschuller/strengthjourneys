@@ -134,6 +134,8 @@ export function processAnalyzerPRCardData(parsedData, processedData) {
             }
         }
 
+        // FIXME: it would be good to do an extra celebration if #1 PR happened in the last 24 hours.
+
         recentHighlights.push(
           `${reps}@${repLifts[i].weight}${repLifts[i].unitType} (${repLifts[i].date}), ${emoji} #${
             i + 1

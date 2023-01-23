@@ -2,7 +2,6 @@
 
 import { useRef } from "react";
 import { ChartControls } from "./visualizerChartControls";
-
 import Chart from "chart.js/auto"; // Pick everything. You can hand pick which chartjs features you want, see chartjs docs.
 import { Line } from "react-chartjs-2";
 import "chartjs-adapter-date-fns";
@@ -194,6 +193,7 @@ export function VisualizerLineChart(props) {
   // Line Chart Options for react-chartjs-2 Visualizer
   let chartOptions = {
     responsive: true,
+    resizeDelay: 20, // milliseconds delay before resizing responsive chart - makes things smoother
     // parsing: false,     // if you can match data to chartjs internal formats - this will improve speed
     font: { family: "Catamaran" },
     animation: animationOptions,

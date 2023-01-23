@@ -4,6 +4,7 @@ import { React } from "react";
 import { useOutletContext } from "react-router-dom";
 
 import Box from "@mui/material/Box";
+import Grid from "@mui/material/Unstable_Grid2";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import { Container } from "@mui/system";
@@ -29,11 +30,13 @@ const Visualizer = (props) => {
       {!isDataReady && isLoading ? (
         <LoadingLinearProgress />
       ) : (
-        <VisualizerLineChart
-          parsedData={parsedData}
-          visualizerData={visualizerData}
-          setVisualizerData={setVisualizerData}
-        />
+        <Box>
+          <VisualizerLineChart
+            parsedData={parsedData}
+            visualizerData={visualizerData}
+            setVisualizerData={setVisualizerData}
+          />
+        </Box>
       )}
     </Container>
   );

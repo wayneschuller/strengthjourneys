@@ -5,7 +5,6 @@ import { useState } from "react";
 import { processData } from "../utils/processData";
 
 // MUI Components
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";

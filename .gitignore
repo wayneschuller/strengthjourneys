@@ -25,3 +25,4 @@ yarn-error.log*
 
 # Added by Wayne Schuller
 .env
+/dependencies/react-google-drive-picker/node_modules/

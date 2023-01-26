@@ -55,9 +55,10 @@ function ResponsiveAppBar(props) {
   const visualizerData = props.visualizerData;
   const setVisualizerData = props.setVisualizerData;
 
-  // console.log(`<ResponsiveAppBar />...`);
+  console.log(`<ResponsiveAppBar />...`);
 
   const auth = useAuth();
+  console.log(auth);
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -83,7 +84,8 @@ function ResponsiveAppBar(props) {
     } else if (setting === "Logout") {
       console.log("Logout clicked");
       setIsDataReady(false);
-      googleLogout();
+      // googleLogout();
+      auth.signout();
       localStorage.removeItem("tokenResponse");
       localStorage.removeItem("selectedLifts");
       localStorage.removeItem("ssid");
@@ -125,15 +127,17 @@ function ResponsiveAppBar(props) {
 
   const [openPicker, authResponse] = useDrivePicker();
   const openGDrivePicker = () => {
-    const tokenResponse = JSON.parse(localStorage.getItem("tokenResponse"));
+    // const tokenResponse = JSON.parse(localStorage.getItem("tokenResponse"));
     // console.log(tokenResponse);
+    console.log(`Opening picker with token ${auth.user.accessToken}`);
+    console.log(auth);
 
     openPicker({
       clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
       developerKey: process.env.REACT_APP_GOOGLE_API_KEY,
       appId: process.env.REACT_APP_GOOGLE_APP_ID,
       viewId: "SPREADSHEETS",
-      token: tokenResponse.access_token, // Pass a pre-obtained token with drive.file scope
+      token: auth.user.accessToken, // Pass a pre-obtained token with drive.file scope
       showUploadView: true,
       showUploadFolders: true,
       supportDrives: true,
@@ -159,6 +163,7 @@ function ResponsiveAppBar(props) {
 
         setInfoChipStatus("Loading GSheet Values");
         loadGSheetValues(
+          auth.user.accessToken,
           setInfoChipStatus,
           setInfoChipToolTip,
           setIsLoading,
@@ -264,7 +269,7 @@ function ResponsiveAppBar(props) {
           </Avatar>
 
           {/* User profile info on right hand side of the navbar */}
-          {userInfo ? (
+          {auth.user ? (
             <>
               <Tooltip title={infoChipToolTip}>
                 <Chip
@@ -277,9 +282,9 @@ function ResponsiveAppBar(props) {
               </Tooltip>
 
               <Box sx={{ flexGrow: 0 }}>
-                <Tooltip title={userInfo.name}>
+                <Tooltip title={auth.user.name}>
                   <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                    <Avatar alt={userInfo.name} src={userInfo.picture} />
+                    <Avatar alt={auth.user.name} src={auth.user.photoUrl} />
                   </IconButton>
                 </Tooltip>
                 <Menu

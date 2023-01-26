@@ -8,10 +8,13 @@ let app = initFirebase();
 
 // Create firebase auth object
 const auth = getAuth(app);
-console.log(auth);
 
-// Create google provider object for bonus section ..
+// Create google provider object for Firebase authentication
 const googleProvider = new GoogleAuthProvider();
+
+// MINIMUM Google API scopes required to read one google sheet
+const SCOPES = "https://www.googleapis.com/auth/drive.file";
+googleProvider.addScope(SCOPES);
 
 const authContext = createContext();
 
@@ -28,9 +31,9 @@ function useProvideAuth() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const handleUser = (rawUser) => {
+  const handleUser = (rawUser, accessToken) => {
     if (rawUser) {
-      const user = formatUser(rawUser);
+      const user = formatUser(rawUser, accessToken);
 
       setLoading(false);
       setUser(user);
@@ -45,8 +48,8 @@ function useProvideAuth() {
   const signinWithGoogle = (redirect) => {
     setLoading(true);
     return signInWithPopup(auth, googleProvider).then((response) => {
-      handleUser(response.user);
-      console.log(response);
+      const credential = GoogleAuthProvider.credentialFromResult(response);
+      handleUser(response.user, credential.accessToken);
       if (redirect) {
         // Router.push(redirect); // FIXME: not using redirect for now
       }
@@ -71,12 +74,13 @@ function useProvideAuth() {
   };
 }
 
-const formatUser = (user) => {
+const formatUser = (user, accessToken) => {
   return {
     uid: user.uid,
     email: user.email,
     name: user.displayName,
     provider: user.providerData[0].providerId,
     photoUrl: user.photoURL,
+    accessToken: accessToken,
   };
 };

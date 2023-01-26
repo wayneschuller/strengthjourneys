@@ -14,6 +14,7 @@
 
 import axios from "axios";
 import { parseData } from "./parseData";
+import { useAuth } from "../utils/auth";
 
 // ------------------------------------------------------------------
 // Data processing flow:
@@ -67,6 +68,7 @@ export async function getGoogleUserInfo(
         }
 
         loadGSheetValues(
+          tokenResponse.access_token,
           setInfoChipStatus,
           setInfoChipToolTip,
           setIsLoading,
@@ -94,6 +96,7 @@ export async function getGoogleUserInfo(
 }
 
 export async function loadGSheetValues(
+  accessToken,
   setInfoChipStatus,
   setInfoChipToolTip,
   setIsLoading,
@@ -105,7 +108,6 @@ export async function loadGSheetValues(
 ) {
   console.log("loadGSheetValues()...");
 
-  const tokenResponse = JSON.parse(localStorage.getItem(`tokenResponse`));
   const ssid = localStorage.getItem(`ssid`);
   if (!ssid) {
     return;
@@ -118,7 +120,7 @@ export async function loadGSheetValues(
     .get(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`,
       {
-        headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
       }
     )
     .then((response) => {

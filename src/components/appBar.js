@@ -23,6 +23,7 @@ import GitHubIcon from "@mui/icons-material/GitHub";
 import GoogleIcon from "@mui/icons-material/Google";
 
 import { getGoogleUserInfo, loadGSheetValues } from "../utils/readData";
+import { useAuth } from "../utils/auth";
 
 import { useGoogleLogin, googleLogout } from "@react-oauth/google";
 import useDrivePicker from "react-google-drive-picker";
@@ -55,6 +56,8 @@ function ResponsiveAppBar(props) {
   const setVisualizerData = props.setVisualizerData;
 
   // console.log(`<ResponsiveAppBar />...`);
+
+  const auth = useAuth();
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -311,7 +314,11 @@ function ResponsiveAppBar(props) {
           ) : (
             <>
               <Tooltip title="Sign in and connect to your Google Sheet">
-                <Button onClick={niceGoogleLogin} sx={{ color: "white", display: "block" }} variant="outlined">
+                <Button
+                  onClick={(e) => auth.signinWithGoogle()}
+                  sx={{ color: "white", display: "block" }}
+                  variant="outlined"
+                >
                   Google Sign-In
                 </Button>
               </Tooltip>

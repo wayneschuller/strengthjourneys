@@ -12,6 +12,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import color from "@mui/material/colors/indigo";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { AuthProvider } from "./utils/auth";
 
 import Analyzer from "./pages/analyzer";
 import Home from "./pages/home";
@@ -46,20 +47,22 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
-      <ThemeProvider theme={theme}>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<App />}>
-              <Route path="/" element={<Navigate replace to="/visualizer" />} />
+      <AuthProvider>
+        <ThemeProvider theme={theme}>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<App />}>
+                <Route path="/" element={<Navigate replace to="/visualizer" />} />
 
-              <Route path="visualizer" element={<Visualizer />} />
-              <Route path="analyzer" element={<Analyzer />} />
-              <Route path="calculator" element={<OneRepMaxCalculator />} />
-              <Route path="*" element={<NoMatch />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </ThemeProvider>
+                <Route path="visualizer" element={<Visualizer />} />
+                <Route path="analyzer" element={<Analyzer />} />
+                <Route path="calculator" element={<OneRepMaxCalculator />} />
+                <Route path="*" element={<NoMatch />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </ThemeProvider>
+      </AuthProvider>
     </GoogleOAuthProvider>
   </React.StrictMode>
 );

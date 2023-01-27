@@ -130,9 +130,6 @@ function ResponsiveAppBar(props) {
         setAnalyzerData(null);
         setParsedData(null);
 
-        setIsDataReady(false);
-        setIsLoading(true);
-
         setInfoChipStatus("Loading GSheet Values");
         loadGSheetValues(
           setInfoChipStatus,

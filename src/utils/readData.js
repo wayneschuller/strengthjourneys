@@ -54,6 +54,7 @@ export async function loadGSheetValues(
   }
 
   setIsLoading(true);
+  setIsDataReady(false);
   setInfoChipStatus("Loading GSheet Values");
 
   await axios

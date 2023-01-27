@@ -31,9 +31,9 @@ function useProvideAuth() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const handleUser = (rawUser, accessToken) => {
+  const handleUser = (rawUser) => {
     if (rawUser) {
-      const user = formatUser(rawUser, accessToken);
+      const user = formatUser(rawUser);
 
       setLoading(false);
       setUser(user);
@@ -49,8 +49,8 @@ function useProvideAuth() {
     setLoading(true);
     return signInWithPopup(auth, googleProvider).then((response) => {
       const credential = GoogleAuthProvider.credentialFromResult(response);
-      localStorage.setItem("googleCredential", JSON.stringify(credential));
-      handleUser(response.user, credential.accessToken);
+      localStorage.setItem("googleCredential", JSON.stringify(credential)); // Store credential locally
+      handleUser(response.user);
       if (redirect) {
         // Router.push(redirect); // FIXME: not using redirect for now
       }
@@ -75,13 +75,12 @@ function useProvideAuth() {
   };
 }
 
-const formatUser = (user, accessToken) => {
+const formatUser = (user) => {
   return {
     uid: user.uid,
     email: user.email,
     name: user.displayName,
     provider: user.providerData[0].providerId,
     photoUrl: user.photoURL,
-    accessToken: accessToken,
   };
 };

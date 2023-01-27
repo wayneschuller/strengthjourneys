@@ -10,7 +10,6 @@ import { loadGSheetValues } from "./utils/readData";
 import { useAuth } from "./utils/auth";
 
 export default function App() {
-  const [userInfo, setUserInfo] = useState(null); // .name .picture .email (from Google userinfo API)
   const auth = useAuth();
 
   // Top right information chip. FIXME: merge these two together.
@@ -26,10 +25,10 @@ export default function App() {
   const [visualizerData, setVisualizerData] = useState(null);
   const [analyzerData, setAnalyzerData] = useState(null);
 
-  console.log(`<App />...`);
+  // console.log(`<App />...`);
 
   // Event handlers do most of the data flow for us
-  // However we want this mount useEffect to auto load data on init when we have a previous tokenResponse and ssid
+  // However we want this mount useEffect to auto load data on init when we have a previous accessToken
   let didInit = false;
   useEffect(() => {
     const credential = JSON.parse(localStorage.getItem(`googleCredential`));
@@ -46,7 +45,8 @@ export default function App() {
         visualizerData,
         setVisualizerData,
         setParsedData,
-        setAnalyzerData
+        setAnalyzerData,
+        auth
       );
     }
   }, [auth.user]);
@@ -54,8 +54,6 @@ export default function App() {
   return (
     <div>
       <ResponsiveAppBar
-        userInfo={userInfo}
-        setUserInfo={setUserInfo}
         infoChipStatus={infoChipStatus}
         setInfoChipStatus={setInfoChipStatus}
         infoChipToolTip={infoChipToolTip}

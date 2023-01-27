@@ -36,7 +36,8 @@ export async function loadGSheetValues(
   visualizerData,
   setVisualizerData,
   setParsedData,
-  setAnalyzerData
+  setAnalyzerData,
+  auth
 ) {
   console.log("loadGSheetValues()...");
 
@@ -48,6 +49,7 @@ export async function loadGSheetValues(
 
   const ssid = localStorage.getItem(`ssid`);
   if (!ssid) {
+    console.log("No ssid found in localStorage");
     return;
   }
 
@@ -85,11 +87,8 @@ export async function loadGSheetValues(
       }
     })
     .catch((error) => {
-      // Ok the most likely scenario is the access token has expired
-      // FIXME: So handle this gracefully here - maybe we can even get it and try again?
-
-      setInfoChipStatus("Error Reading Google Sheet");
-      console.log(error);
-      // setInfoChipToolTip(error.response.data.error.message);
+      // The most likely scenario is the access token has expired
+      // So try to sign in again.
+      auth.signinWithGoogle();
     });
 }

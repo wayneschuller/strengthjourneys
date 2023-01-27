@@ -42,8 +42,6 @@ function ResponsiveAppBar(props) {
   const auth = useAuth();
 
   // FIXME: This is not best practice
-  const userInfo = props.userInfo;
-  const setUserInfo = props.setUserInfo;
   const infoChipStatus = props.infoChipStatus;
   const setInfoChipStatus = props.setInfoChipStatus;
   const infoChipToolTip = props.infoChipToolTip;
@@ -85,9 +83,9 @@ function ResponsiveAppBar(props) {
       auth.signout();
       // localStorage.removeItem("tokenResponse");
       localStorage.removeItem("googleCredential");
-      localStorage.removeItem("selectedLifts");
-      localStorage.removeItem("ssid");
-      localStorage.removeItem("gSheetName");
+      // localStorage.removeItem("selectedLifts");
+      // localStorage.removeItem("ssid");
+      // localStorage.removeItem("gSheetName");
       setIsLoading(false);
       setVisualizerData(null); // FIXME: nullify the internals more carefully to remove chart etc
       setUserInfo(null); // This will remove the profile menu and status button
@@ -127,7 +125,7 @@ function ResponsiveAppBar(props) {
 
         // FIXME: we cannot change Google Sheets without reloading the app. BUG
         // It the app is already loaded with data, we need to clear the data before we load the new file
-        localStorage.removeItem(`selectedLifts`); // Clear the selected lifts before we process the new file
+        localStorage.removeItem(`selectedLifts`); // Clear the selected lifts before we process a new file with new lifts
         setVisualizerData(null); // FIXME: nullify the internals more carefully to remove chart etc
         setAnalyzerData(null);
         setParsedData(null);
@@ -144,7 +142,8 @@ function ResponsiveAppBar(props) {
           visualizerData,
           setVisualizerData,
           setParsedData,
-          setAnalyzerData
+          setAnalyzerData,
+          auth
         );
       },
     });

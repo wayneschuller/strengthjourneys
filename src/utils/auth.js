@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useContext, createContext } from "react";
 import { initFirebase } from "./firebase";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { createUser } from "./db";
 
 let app = initFirebase();
 
@@ -29,24 +30,20 @@ export const useAuth = () => {
 
 function useProvideAuth() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   const handleUser = (rawUser) => {
     if (rawUser) {
       const user = formatUser(rawUser);
-
-      setLoading(false);
+      createUser(user.uid, user);
       setUser(user);
       return user;
     } else {
-      setLoading(false);
       setUser(false);
       return false;
     }
   };
 
   const signinWithGoogle = (redirect) => {
-    setLoading(true);
     return signInWithPopup(auth, googleProvider).then((response) => {
       const credential = GoogleAuthProvider.credentialFromResult(response);
       localStorage.setItem("googleCredential", JSON.stringify(credential)); // Store credential locally
@@ -69,7 +66,6 @@ function useProvideAuth() {
 
   return {
     user,
-    loading,
     signinWithGoogle,
     signout,
   };

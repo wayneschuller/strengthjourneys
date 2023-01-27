@@ -1,6 +1,7 @@
 /** @format */
 
 import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 
 const clientCredentials = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -20,8 +21,7 @@ function initFirebase() {
   return null;
 }
 
-// const app = initializeApp(clientCredentials);
+const app = initializeApp(clientCredentials);
+const db = getFirestore(app);
 
-// const db = getFirestore(app);
-
-export { initFirebase };
+export { initFirebase, db };

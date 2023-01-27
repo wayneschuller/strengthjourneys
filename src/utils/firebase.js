@@ -14,6 +14,8 @@ const clientCredentials = {
 };
 
 function initFirebase() {
+  // FIXME: test here if clientCredentials env vars are set and throw error and tell user if not
+
   if (typeof window !== undefined) {
     let app = initializeApp(clientCredentials);
     return app;

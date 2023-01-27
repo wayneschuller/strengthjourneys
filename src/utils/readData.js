@@ -108,6 +108,11 @@ export async function loadGSheetValues(
 ) {
   console.log("loadGSheetValues()...");
 
+  const credential = JSON.parse(localStorage.getItem(`googleCredential`));
+  if (!credential?.accessToken) {
+    return;
+  }
+
   const ssid = localStorage.getItem(`ssid`);
   if (!ssid) {
     return;
@@ -120,7 +125,7 @@ export async function loadGSheetValues(
     .get(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`,
       {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: { Authorization: `Bearer ${credential.accessToken}` },
       }
     )
     .then((response) => {
@@ -147,8 +152,10 @@ export async function loadGSheetValues(
       }
     })
     .catch((error) => {
+      // Ok the most likely scenario is the access token has expired
+      // FIXME: So handle this gracefully here - maybe we can even get it and try again?
+
       setInfoChipStatus("Error Reading Google Sheet");
-      localStorage.removeItem("ssid"); // Remove ssid if it failed. FIXME: good idea?
       console.log(error);
       // setInfoChipToolTip(error.response.data.error.message);
     });

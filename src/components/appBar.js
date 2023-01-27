@@ -40,6 +40,7 @@ const settings = ["Report Issue", "Email Author", "Logout"]; // If we ever need 
 function ResponsiveAppBar(props) {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
+  const auth = useAuth();
 
   // FIXME: This is not best practice
   const userInfo = props.userInfo;
@@ -55,10 +56,7 @@ function ResponsiveAppBar(props) {
   const visualizerData = props.visualizerData;
   const setVisualizerData = props.setVisualizerData;
 
-  console.log(`<ResponsiveAppBar />...`);
-
-  const auth = useAuth();
-  console.log(auth);
+  // console.log(`<ResponsiveAppBar />...`);
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -86,7 +84,8 @@ function ResponsiveAppBar(props) {
       setIsDataReady(false);
       // googleLogout();
       auth.signout();
-      localStorage.removeItem("tokenResponse");
+      // localStorage.removeItem("tokenResponse");
+      localStorage.removeItem("googleCredential");
       localStorage.removeItem("selectedLifts");
       localStorage.removeItem("ssid");
       localStorage.removeItem("gSheetName");
@@ -129,15 +128,16 @@ function ResponsiveAppBar(props) {
   const openGDrivePicker = () => {
     // const tokenResponse = JSON.parse(localStorage.getItem("tokenResponse"));
     // console.log(tokenResponse);
-    console.log(`Opening picker with token ${auth.user.accessToken}`);
-    console.log(auth);
+    const credential = JSON.parse(localStorage.getItem(`googleCredential`));
+    console.log(`Opening picker with token ${credential.accessToken}`);
 
     openPicker({
       clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
       developerKey: process.env.REACT_APP_GOOGLE_API_KEY,
       appId: process.env.REACT_APP_GOOGLE_APP_ID,
       viewId: "SPREADSHEETS",
-      token: auth.user.accessToken, // Pass a pre-obtained token with drive.file scope
+      // token: auth.user.accessToken, // Pass a pre-obtained token with drive.file scope
+      token: credential.accessToken, // Pass a pre-obtained token with drive.file scope
       showUploadView: true,
       showUploadFolders: true,
       supportDrives: true,
@@ -158,12 +158,13 @@ function ResponsiveAppBar(props) {
         setVisualizerData(null); // FIXME: nullify the internals more carefully to remove chart etc
         setAnalyzerData(null);
         setParsedData(null);
+
         setIsDataReady(false);
         setIsLoading(true);
 
         setInfoChipStatus("Loading GSheet Values");
         loadGSheetValues(
-          auth.user.accessToken,
+          credential.accessToken,
           setInfoChipStatus,
           setInfoChipToolTip,
           setIsLoading,

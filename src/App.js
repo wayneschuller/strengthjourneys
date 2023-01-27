@@ -6,10 +6,12 @@ import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 
 import ResponsiveAppBar from "./components/appBar";
-import { getGoogleUserInfo } from "./utils/readData";
+import { getGoogleUserInfo, loadGSheetValues } from "./utils/readData";
+import { useAuth } from "./utils/auth";
 
 export default function App() {
   const [userInfo, setUserInfo] = useState(null); // .name .picture .email (from Google userinfo API)
+  const auth = useAuth();
 
   // Top right information chip. FIXME: merge these two together.
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source"); // Used in the navbar info chip-button
@@ -30,14 +32,17 @@ export default function App() {
   // However we want this mount useEffect to auto load data on init when we have a previous tokenResponse and ssid
   let didInit = false;
   useEffect(() => {
-    const tokenResponse = JSON.parse(localStorage.getItem(`tokenResponse`));
+    console.log(`init useEffect`);
+    console.log(auth);
 
-    if (!didInit && tokenResponse) {
+    const credential = JSON.parse(localStorage.getItem(`googleCredential`));
+
+    if (!didInit && auth.user) {
       didInit = true;
 
       // ✅ Only runs once per app load
-      getGoogleUserInfo(
-        setUserInfo,
+      loadGSheetValues(
+        credential.accessToken,
         setInfoChipStatus,
         setInfoChipToolTip,
         setIsLoading,
@@ -47,8 +52,19 @@ export default function App() {
         setParsedData,
         setAnalyzerData
       );
+      // getGoogleUserInfo(
+      //   setUserInfo,
+      //   setInfoChipStatus,
+      //   setInfoChipToolTip,
+      //   setIsLoading,
+      //   setIsDataReady,
+      //   visualizerData,
+      //   setVisualizerData,
+      //   setParsedData,
+      //   setAnalyzerData
+      // );
     }
-  }, []);
+  }, [auth.user]);
 
   return (
     <div>

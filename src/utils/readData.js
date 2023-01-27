@@ -14,12 +14,11 @@
 
 import axios from "axios";
 import { parseData } from "./parseData";
-import { useAuth } from "../utils/auth";
 
 // ------------------------------------------------------------------
 // Data processing flow:
 //
-//  getGoogleUserInfo->loadGSheetValues->parseData->processData
+//  loadGSheetValues->parseData->processData
 //
 // Flow can be triggered by:
 //  - on app launch using previous ssid and tokenResponse from localStorage
@@ -29,74 +28,7 @@ import { useAuth } from "../utils/auth";
 //
 // (the entry point will be different for each of those triggers)
 // ------------------------------------------------------------------
-export async function getGoogleUserInfo(
-  setUserInfo,
-  setInfoChipStatus,
-  setInfoChipToolTip,
-  setIsLoading,
-  setIsDataReady,
-  visualizerData,
-  setVisualizerData,
-  setParsedData,
-  setAnalyzerData
-) {
-  console.log(`getGoogleUserInfo()...`);
-
-  const tokenResponse = JSON.parse(localStorage.getItem(`tokenResponse`));
-  const ssid = localStorage.getItem(`ssid`);
-
-  if (!tokenResponse) {
-    setUserInfo(null);
-    return; // No ticket to google? Then no party.
-  }
-  setIsLoading(true);
-
-  await axios
-    .get("https://www.googleapis.com/oauth2/v3/userinfo", {
-      headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-    })
-    .then((response) => {
-      // handle success
-      // console.log(`API get UserInfo success: response.data: ${JSON.stringify(response.data)}`);
-      setUserInfo(response.data);
-
-      // If we have a valid looking ssid then we can go to the next step in the chain
-      if (ssid && ssid.length > 10) {
-        setInfoChipStatus("Loading GSheet Values");
-        if (localStorage.getItem("gSheetName")) {
-          setInfoChipToolTip(localStorage.getItem("gSheetName")); // Put the GSheet filename in the chip tooltip
-        }
-
-        loadGSheetValues(
-          tokenResponse.access_token,
-          setInfoChipStatus,
-          setInfoChipToolTip,
-          setIsLoading,
-          setIsDataReady,
-          visualizerData,
-          setVisualizerData,
-          setParsedData,
-          setAnalyzerData
-        );
-      } else {
-        setInfoChipStatus("Select Data Source"); // User must click to get File Picker
-        setIsLoading(false);
-      }
-    })
-    .catch((error) => {
-      console.log(`axios.get UserInfo error:`);
-      console.log(error);
-
-      // Just in case we had a working tokenResponse that has now expired.
-      setUserInfo(null);
-      localStorage.removeItem("tokenResponse");
-      setIsLoading(false);
-      setIsDataReady(false);
-    });
-}
-
 export async function loadGSheetValues(
-  accessToken,
   setInfoChipStatus,
   setInfoChipToolTip,
   setIsLoading,
@@ -110,6 +42,7 @@ export async function loadGSheetValues(
 
   const credential = JSON.parse(localStorage.getItem(`googleCredential`));
   if (!credential?.accessToken) {
+    console.log("No access token found in localStorage");
     return;
   }
 

@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 
 import ResponsiveAppBar from "./components/appBar";
-import { getGoogleUserInfo, loadGSheetValues } from "./utils/readData";
+import { loadGSheetValues } from "./utils/readData";
 import { useAuth } from "./utils/auth";
 
 export default function App() {
@@ -32,17 +32,13 @@ export default function App() {
   // However we want this mount useEffect to auto load data on init when we have a previous tokenResponse and ssid
   let didInit = false;
   useEffect(() => {
-    console.log(`init useEffect`);
-    console.log(auth);
-
     const credential = JSON.parse(localStorage.getItem(`googleCredential`));
 
-    if (!didInit && auth.user) {
+    if (!didInit && auth?.user && credential?.accessToken) {
       didInit = true;
 
       // ✅ Only runs once per app load
       loadGSheetValues(
-        credential.accessToken,
         setInfoChipStatus,
         setInfoChipToolTip,
         setIsLoading,
@@ -52,17 +48,6 @@ export default function App() {
         setParsedData,
         setAnalyzerData
       );
-      // getGoogleUserInfo(
-      //   setUserInfo,
-      //   setInfoChipStatus,
-      //   setInfoChipToolTip,
-      //   setIsLoading,
-      //   setIsDataReady,
-      //   visualizerData,
-      //   setVisualizerData,
-      //   setParsedData,
-      //   setAnalyzerData
-      // );
     }
   }, [auth.user]);
 

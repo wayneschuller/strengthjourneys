@@ -22,10 +22,9 @@ import logo from "./logo.png";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import GoogleIcon from "@mui/icons-material/Google";
 
-import { getGoogleUserInfo, loadGSheetValues } from "../utils/readData";
+import { loadGSheetValues } from "../utils/readData";
 import { useAuth } from "../utils/auth";
 
-import { useGoogleLogin, googleLogout } from "@react-oauth/google";
 import useDrivePicker from "react-google-drive-picker";
 
 // Array of main menu items
@@ -98,32 +97,6 @@ function ResponsiveAppBar(props) {
 
   // console.log(`Top level <ResponsiveAppBar />...`);
 
-  // MINIMUM Google API scopes required to read one google sheet
-  const SCOPES = "https://www.googleapis.com/auth/drive.file";
-
-  // niceGoogleLogin uses implicit authorisation flow to get a tokenResponse (normally lasts 60 minutes)
-  const niceGoogleLogin = useGoogleLogin({
-    scope: SCOPES,
-    onSuccess: async (tokenResponse) => {
-      // Park the tokenResponse in the browser - it is normally valid for about 1 hour
-      localStorage.setItem("tokenResponse", JSON.stringify(tokenResponse));
-
-      setInfoChipStatus("Checking User Info");
-      getGoogleUserInfo(
-        setUserInfo,
-        setInfoChipStatus,
-        setInfoChipToolTip,
-        setIsLoading,
-        setIsDataReady,
-        visualizerData,
-        setVisualizerData,
-        setParsedData,
-        setAnalyzerData
-      );
-    },
-    onError: (errorResponse) => console.log(errorResponse),
-  });
-
   const [openPicker, authResponse] = useDrivePicker();
   const openGDrivePicker = () => {
     // const tokenResponse = JSON.parse(localStorage.getItem("tokenResponse"));
@@ -164,7 +137,6 @@ function ResponsiveAppBar(props) {
 
         setInfoChipStatus("Loading GSheet Values");
         loadGSheetValues(
-          credential.accessToken,
           setInfoChipStatus,
           setInfoChipToolTip,
           setIsLoading,

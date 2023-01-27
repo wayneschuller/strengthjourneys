@@ -14,11 +14,7 @@ const clientCredentials = {
 
 function initFirebase() {
   if (typeof window !== undefined) {
-    console.log(`Attempting to initialise with these credentials:`);
-    console.log(clientCredentials);
     let app = initializeApp(clientCredentials);
-    console.log("Firebase has been inited successfully");
-    console.log(app);
     return app;
   }
   return null;

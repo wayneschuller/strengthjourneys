@@ -107,7 +107,6 @@ function ResponsiveAppBar(props) {
       developerKey: process.env.REACT_APP_GOOGLE_API_KEY,
       appId: process.env.REACT_APP_GOOGLE_APP_ID,
       viewId: "SPREADSHEETS",
-      // token: auth.user.accessToken, // Pass a pre-obtained token with drive.file scope
       token: credential.accessToken, // Pass a pre-obtained token with drive.file scope
       showUploadView: true,
       showUploadFolders: true,

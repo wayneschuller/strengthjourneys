@@ -90,6 +90,8 @@ export async function loadGSheetValues(
     .catch((error) => {
       // The most likely scenario is the access token has expired
       // So try to sign in again.
+
+      // FIXME: should only try once, otherwise we get infinite loops
       auth.signinWithGoogle();
     });
 }

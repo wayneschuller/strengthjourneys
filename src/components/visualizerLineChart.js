@@ -127,8 +127,16 @@ export function VisualizerLineChart(props) {
 
   const datalabelsOptions = {
     formatter: (context) => {
-      // return `${context.reps}@${context.weight}${context.unitType}`; // Show full lift
-      return context.y + context.unitType; // Show e1rm
+      let result = [];
+      const liftSingle = context.label.indexOf("Potential");
+      // console.log(context);
+      if (liftSingle === -1) {
+        result.push(`${context.y}${context.unitType}`); // Show e1rm
+      } else {
+        result.push(`${context.y}${context.unitType}`); // Show e1rm
+        // result.push(`${context.reps}@${context.weight}${context.unitType}`); // Show full lift
+      }
+      return result;
     },
     font: (context) => {
       // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic

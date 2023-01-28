@@ -48,6 +48,7 @@ function useProvideAuth() {
       const credential = GoogleAuthProvider.credentialFromResult(response);
       localStorage.setItem("googleCredential", JSON.stringify(credential)); // Store credential locally
       handleUser(response.user);
+      console.log(response.user);
       if (redirect) {
         // Router.push(redirect); // FIXME: not using redirect for now
       }

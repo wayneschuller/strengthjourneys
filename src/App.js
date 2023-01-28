@@ -28,7 +28,7 @@ export default function App() {
   // console.log(`<App />...`);
 
   // Event handlers do most of the data flow for us
-  // However we want this mount useEffect to auto load data on init when we have a previous accessToken
+  // However we want this authorisation useEffect to auto load data on init when we have a previous accessToken
   let didInit = false;
   useEffect(() => {
     const credential = JSON.parse(localStorage.getItem(`googleCredential`));

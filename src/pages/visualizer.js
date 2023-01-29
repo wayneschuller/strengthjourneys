@@ -7,7 +7,7 @@ import Box from "@mui/material/Box";
 import Grid from "@mui/material/Unstable_Grid2";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
-import { Container } from "@mui/system";
+import Container from "@mui/material/Container";
 
 import { VisualizerLineChart } from "../components/visualizerLineChart";
 
@@ -30,13 +30,11 @@ const Visualizer = (props) => {
       {!isDataReady && isLoading ? (
         <LoadingLinearProgress />
       ) : (
-        <Box>
-          <VisualizerLineChart
-            parsedData={parsedData}
-            visualizerData={visualizerData}
-            setVisualizerData={setVisualizerData}
-          />
-        </Box>
+        <VisualizerLineChart
+          parsedData={parsedData}
+          visualizerData={visualizerData}
+          setVisualizerData={setVisualizerData}
+        />
       )}
     </>
   );
@@ -46,31 +44,29 @@ export default Visualizer;
 
 export function NewUserWelcome() {
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ m: 1 }} md={{ m: 3 }}>
-        <Container
-          maxWidth="xl"
-          sx={{ borderRadius: "6px", border: "1px solid grey", backgroundColor: "palette.secondary.light" }}
-        >
-          <h1>Welcome to Strength Journeys</h1>
-          <h3>Visualize your lifting history - lift consistently for a long time.</h3>
-          <p>
-            We recommend every lifter record and own their own data in a Google Sheet. (Don't just let your health and
-            fitness data be trapped in someone else's application.)
-          </p>
-          <p>
-            Here is our custom{" "}
-            <a
-              href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
-              target="_blank"
-            >
-              Google Sheet data format
-            </a>
-            . From Google Sheets, click "File" menu and then click "Make a copy" and edit with your data.
-          </p>
-        </Container>
-      </Box>
-    </Container>
+    <Box sx={{ m: 1 }} md={{ m: 3 }}>
+      <Container
+        maxWidth="xl"
+        sx={{ borderRadius: "6px", border: "1px solid grey", backgroundColor: "palette.secondary.light" }}
+      >
+        <h1>Welcome to Strength Journeys</h1>
+        <h3>Visualize your lifting history - lift consistently for a long time.</h3>
+        <p>
+          We recommend every lifter record and own their own data in a Google Sheet. (Don't just let your health and
+          fitness data be trapped in someone else's application.)
+        </p>
+        <p>
+          Here is our custom{" "}
+          <a
+            href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+            target="_blank"
+          >
+            Google Sheet data format
+          </a>
+          . From Google Sheets, click "File" menu and then click "Make a copy" and edit with your data.
+        </p>
+      </Container>
+    </Box>
   );
 }
 

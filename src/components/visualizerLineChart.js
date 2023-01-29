@@ -1,6 +1,10 @@
 /** @format */
 
 import { useRef } from "react";
+
+import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
+
 import { ChartControls } from "./visualizerChartControls";
 import Chart from "chart.js/auto"; // Pick everything. You can hand pick which chartjs features you want, see chartjs docs.
 import { Line } from "react-chartjs-2";
@@ -224,20 +228,22 @@ export function VisualizerLineChart(props) {
   };
 
   return (
-    <>
-      {visualizerData && (
-        <Line ref={chartRef} options={chartOptions} data={{ datasets: visualizerData.visualizerE1RMLineData }} />
-      )}
-      {visualizerData && parsedData && (
-        <ChartControls
-          zoomShowAllTime={zoomShowAllTime}
-          zoomShowRecent={zoomShowRecent}
-          parsedData={parsedData}
-          visualizerData={visualizerData}
-          setVisualizerData={setVisualizerData}
-          chartUpdate={chartUpdate}
-        />
-      )}
-    </>
+    <Container maxWidth="xl">
+      <Box>
+        {visualizerData && (
+          <Line ref={chartRef} options={chartOptions} data={{ datasets: visualizerData.visualizerE1RMLineData }} />
+        )}
+        {visualizerData && parsedData && (
+          <ChartControls
+            zoomShowAllTime={zoomShowAllTime}
+            zoomShowRecent={zoomShowRecent}
+            parsedData={parsedData}
+            visualizerData={visualizerData}
+            setVisualizerData={setVisualizerData}
+            chartUpdate={chartUpdate}
+          />
+        )}
+      </Box>
+    </Container>
   );
 }

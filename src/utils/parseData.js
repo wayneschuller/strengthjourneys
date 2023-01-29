@@ -81,7 +81,7 @@ export function parseData(data, visualizerData, setVisualizerData, setParsedData
   }
 
   console.log(`   ... parseData() complete. (Bespoke format)`);
-  console.log(JSON.stringify(parsedData));
+
   setParsedData(parsedData); // We need this in state for refreshes later on
 
   // Next in the data flow is to process the data.

@@ -21,7 +21,7 @@ const Visualizer = (props) => {
   const tokenResponse = JSON.parse(localStorage.getItem("tokenResponse"));
 
   return (
-    <Container maxWidth="xl">
+    <>
       {!isDataReady && !ssid && <NewUserWelcome />}
 
       {!isDataReady && ssid && !isLoading && <ReturningUserWelcome tokenResponse={tokenResponse} />}
@@ -38,7 +38,7 @@ const Visualizer = (props) => {
           />
         </Box>
       )}
-    </Container>
+    </>
   );
 };
 
@@ -46,7 +46,7 @@ export default Visualizer;
 
 export function NewUserWelcome() {
   return (
-    <div>
+    <Container maxWidth="xl">
       <Box sx={{ m: 1 }} md={{ m: 3 }}>
         <Container
           maxWidth="xl"
@@ -70,7 +70,7 @@ export function NewUserWelcome() {
           </p>
         </Container>
       </Box>
-    </div>
+    </Container>
   );
 }
 

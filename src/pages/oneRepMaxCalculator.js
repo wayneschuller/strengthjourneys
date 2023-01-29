@@ -89,7 +89,7 @@ export default function OneRepMaxCalculator() {
   };
 
   // Used for share buttons
-  const url = "https://www.onerepmaxcalculator.xyz";
+  const url = "https://www.strengthjourneys.xyz/calculator";
   const title = "Helpful one rep max utility calculator with multiple equations";
 
   return (

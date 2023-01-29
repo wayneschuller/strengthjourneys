@@ -30,18 +30,18 @@ const Analyzer = () => {
 
   console.log(`<Analyzer />`);
 
-  if (!visualizerData) return;
-  if (!visualizerData.visualizerE1RMLineData) return;
-  if (!analyzerData) return;
-  if (!analyzerData.analyzerPieData) return;
+  // if (!visualizerData) return;
+  // if (!visualizerData.visualizerE1RMLineData) return;
+  // if (!analyzerData) return;
+  // if (!analyzerData.analyzerPieData) return;
 
   return (
     <div>
+      {!isDataReady && <NewUserWelcome />}
+
+      {!isDataReady && isLoading && <LoadingLinearProgress />}
+
       <Box sx={{ m: 3, width: "90%" }} color="secondary">
-        {!isDataReady && <NewUserWelcome />}
-
-        {!isDataReady && isLoading && <LoadingLinearProgress />}
-
         {/* <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 8 }}> */}
         <Grid container>
           <Grid sm={12} lg={6}>

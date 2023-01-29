@@ -11,6 +11,7 @@ import MuiInput from "@mui/material/Input";
 import Divider from "@mui/material/Divider";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
+import Zoom from "@mui/material/Zoom";
 
 import { EmailShareButton, FacebookShareButton, RedditShareButton, TwitterShareButton } from "react-share";
 
@@ -94,146 +95,148 @@ export default function OneRepMaxCalculator() {
   return (
     <div>
       <Box sx={{ m: 1 }} md={{ m: 3 }}>
-        <Container
-          maxWidth="xl"
-          sx={{ borderRadius: "6px", border: "1px solid grey", backgroundColor: "palette.secondary.light" }}
-        >
-          <Grid container spacing={2} display="flex" justifyContent="center" alignItems="center">
-            <Grid xs={12}>
-              <h2>E1RM One Rep Max Calculator</h2>
-              Estimate your max single based on reps and weight (see{" "}
-              <a href="https://en.wikipedia.org/wiki/One-repetition_maximum" target="_blank" rel="noreferrer">
-                Wikipedia article
-              </a>{" "}
-              for theory)
-            </Grid>
+        <Zoom in={true}>
+          <Container
+            maxWidth="xl"
+            sx={{ borderRadius: "6px", border: "1px solid grey", backgroundColor: "palette.secondary.light" }}
+          >
+            <Grid container spacing={2} display="flex" justifyContent="center" alignItems="center">
+              <Grid xs={12}>
+                <h2>E1RM One Rep Max Calculator</h2>
+                Estimate your max single based on reps and weight (see{" "}
+                <a href="https://en.wikipedia.org/wiki/One-repetition_maximum" target="_blank" rel="noreferrer">
+                  Wikipedia article
+                </a>{" "}
+                for theory)
+              </Grid>
 
-            <Grid xs={2} md={1}>
-              Reps:
-            </Grid>
-            <Grid xs={8} md={9}>
-              <Reps value={reps} onChange={handleRepsSliderChange} />
-            </Grid>
-            <Grid xs={2} md={2}>
-              {reps}
-            </Grid>
+              <Grid xs={2} md={1}>
+                Reps:
+              </Grid>
+              <Grid xs={8} md={9}>
+                <Reps value={reps} onChange={handleRepsSliderChange} />
+              </Grid>
+              <Grid xs={2} md={2}>
+                {reps}
+              </Grid>
 
-            <Grid xs={12} md={1}>
-              Weight:
-            </Grid>
-            <Grid xs={9} md={9}>
-              <Weight value={weight} isMetric={isMetric} onChange={handleWeightSliderChange} />
-            </Grid>
-            <Grid xs={3} md={2}>
-              <Input
-                value={weight}
-                size="small"
-                type="number"
-                onChange={handleWeightInputChange}
-                endAdornment={isMetric ? "kg" : "lb"}
-              />
-            </Grid>
+              <Grid xs={12} md={1}>
+                Weight:
+              </Grid>
+              <Grid xs={9} md={9}>
+                <Weight value={weight} isMetric={isMetric} onChange={handleWeightSliderChange} />
+              </Grid>
+              <Grid xs={3} md={2}>
+                <Input
+                  value={weight}
+                  size="small"
+                  type="number"
+                  onChange={handleWeightInputChange}
+                  endAdornment={isMetric ? "kg" : "lb"}
+                />
+              </Grid>
 
-            <Grid xs={2} md={3}>
-              {" "}
-            </Grid>
-            <Grid xs={8} md={6}>
-              <Item elevation={4}>
-                <h2>
-                  Estimated One Rep Max: {estimateE1RM(reps, weight, "Brzycki")}
-                  {isMetric ? "kg" : "lb"}
-                </h2>{" "}
-                (Brzycki formula)
-              </Item>
-            </Grid>
-            <Grid xs={2} md={3}>
-              <Chip label="lb" color={isMetric ? "default" : "primary"} onClick={onUnitClick} />
-              <Chip label="kg" color={isMetric ? "primary" : "default"} onClick={onUnitClick} />
-            </Grid>
-
-            <Grid xs={6} md={2}>
-              <Item elevation={2}>
-                Epley: {estimateE1RM(reps, weight, "Epley")}
-                {isMetric ? "kg" : "lb"}
-              </Item>
-            </Grid>
-            <Grid xs={6} md={2}>
-              <Item elevation={2}>
-                McGlothin: {estimateE1RM(reps, weight, "McGlothin")}
-                {isMetric ? "kg" : "lb"}
-              </Item>
-            </Grid>
-            <Grid xs={6} md={2}>
-              <Item elevation={2}>
-                Lombardi: {estimateE1RM(reps, weight, "Lombardi")}
-                {isMetric ? "kg" : "lb"}
-              </Item>
-            </Grid>
-            <Grid xs={6} md={2}>
-              <Item elevation={2}>
-                Mayhew et al.: {estimateE1RM(reps, weight, "Mayhew")}
-                {isMetric ? "kg" : "lb"}
-              </Item>
-            </Grid>
-            <Grid xs={6} md={2}>
-              <Item elevation={2}>
-                O'Conner et al.: {estimateE1RM(reps, weight, "OConner")}
-                {isMetric ? "kg" : "lb"}
-              </Item>
-            </Grid>
-            <Grid xs={6} md={2}>
-              <Item elevation={2}>
-                Wathen: {estimateE1RM(reps, weight, "Wathen")}
-                {isMetric ? "kg" : "lb"}
-              </Item>
-            </Grid>
-
-            <Grid xs={12} md={12}>
-              {" "}
-            </Grid>
-            <Grid xs={12} md={12}>
-              {" "}
-              <Divider />{" "}
-            </Grid>
-            <Grid xs={12} md={12}>
-              {" "}
-            </Grid>
-            <Grid xs={12} md={12}>
-              {" "}
-            </Grid>
-
-            <Grid xs={8} md={8}>
-              Please give us feedback!{" "}
-              <a href="mailto:feedback@onerepmaxcalculator.xyz">feedback@onerepmaxcalculator.xyz</a>
-            </Grid>
-            <Grid xs={4} md={4}>
-              {/* Sharing is caring. */}
-            </Grid>
-
-            <Grid xs={7} md={9}>
-              May you be harder to kill and more useful in general.
-            </Grid>
-            <Grid xs={5} md={3}>
-              <EmailShareButton url={url} subject={title}>
+              <Grid xs={2} md={3}>
                 {" "}
-                <EmailIcon size={32} round />{" "}
-              </EmailShareButton>
-              <FacebookShareButton url={url}>
-                <FacebookIcon size={32} round />
-              </FacebookShareButton>
-              <RedditShareButton url={url} title={title}>
-                <RedditIcon size={32} round />
-              </RedditShareButton>
-              <TwitterShareButton url={url}>
-                <TwitterIcon size={32} round />
-              </TwitterShareButton>
-            </Grid>
+              </Grid>
+              <Grid xs={8} md={6}>
+                <Item elevation={4}>
+                  <h2>
+                    Estimated One Rep Max: {estimateE1RM(reps, weight, "Brzycki")}
+                    {isMetric ? "kg" : "lb"}
+                  </h2>{" "}
+                  (Brzycki formula)
+                </Item>
+              </Grid>
+              <Grid xs={2} md={3}>
+                <Chip label="lb" color={isMetric ? "default" : "primary"} onClick={onUnitClick} />
+                <Chip label="kg" color={isMetric ? "primary" : "default"} onClick={onUnitClick} />
+              </Grid>
 
-            <Grid xs={12} md={12}>
-              {" "}
+              <Grid xs={6} md={2}>
+                <Item elevation={2}>
+                  Epley: {estimateE1RM(reps, weight, "Epley")}
+                  {isMetric ? "kg" : "lb"}
+                </Item>
+              </Grid>
+              <Grid xs={6} md={2}>
+                <Item elevation={2}>
+                  McGlothin: {estimateE1RM(reps, weight, "McGlothin")}
+                  {isMetric ? "kg" : "lb"}
+                </Item>
+              </Grid>
+              <Grid xs={6} md={2}>
+                <Item elevation={2}>
+                  Lombardi: {estimateE1RM(reps, weight, "Lombardi")}
+                  {isMetric ? "kg" : "lb"}
+                </Item>
+              </Grid>
+              <Grid xs={6} md={2}>
+                <Item elevation={2}>
+                  Mayhew et al.: {estimateE1RM(reps, weight, "Mayhew")}
+                  {isMetric ? "kg" : "lb"}
+                </Item>
+              </Grid>
+              <Grid xs={6} md={2}>
+                <Item elevation={2}>
+                  O'Conner et al.: {estimateE1RM(reps, weight, "OConner")}
+                  {isMetric ? "kg" : "lb"}
+                </Item>
+              </Grid>
+              <Grid xs={6} md={2}>
+                <Item elevation={2}>
+                  Wathen: {estimateE1RM(reps, weight, "Wathen")}
+                  {isMetric ? "kg" : "lb"}
+                </Item>
+              </Grid>
+
+              <Grid xs={12} md={12}>
+                {" "}
+              </Grid>
+              <Grid xs={12} md={12}>
+                {" "}
+                <Divider />{" "}
+              </Grid>
+              <Grid xs={12} md={12}>
+                {" "}
+              </Grid>
+              <Grid xs={12} md={12}>
+                {" "}
+              </Grid>
+
+              <Grid xs={8} md={8}>
+                Please give us feedback!{" "}
+                <a href="mailto:feedback@onerepmaxcalculator.xyz">feedback@onerepmaxcalculator.xyz</a>
+              </Grid>
+              <Grid xs={4} md={4}>
+                {/* Sharing is caring. */}
+              </Grid>
+
+              <Grid xs={7} md={9}>
+                May you be harder to kill and more useful in general.
+              </Grid>
+              <Grid xs={5} md={3}>
+                <EmailShareButton url={url} subject={title}>
+                  {" "}
+                  <EmailIcon size={32} round />{" "}
+                </EmailShareButton>
+                <FacebookShareButton url={url}>
+                  <FacebookIcon size={32} round />
+                </FacebookShareButton>
+                <RedditShareButton url={url} title={title}>
+                  <RedditIcon size={32} round />
+                </RedditShareButton>
+                <TwitterShareButton url={url}>
+                  <TwitterIcon size={32} round />
+                </TwitterShareButton>
+              </Grid>
+
+              <Grid xs={12} md={12}>
+                {" "}
+              </Grid>
             </Grid>
-          </Grid>
-        </Container>
+          </Container>
+        </Zoom>
       </Box>
     </div>
   );

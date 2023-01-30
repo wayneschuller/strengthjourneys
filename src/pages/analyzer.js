@@ -17,7 +17,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 
-import { NewUserWelcome } from "./visualizer";
+import { NewUserWelcome } from "../components/welcome";
 import { LoadingLinearProgress } from "./visualizer";
 import { AnalyzerPieChart } from "../components/analyzerPieChart";
 import { LiftDataPanel, getPRInfo } from "../components/analyzerLiftDataPanel";
@@ -29,11 +29,6 @@ const Analyzer = () => {
   const [selectedLift, setSelectedLift] = useState(null);
 
   console.log(`<Analyzer />`);
-
-  // if (!visualizerData) return;
-  // if (!visualizerData.visualizerE1RMLineData) return;
-  // if (!analyzerData) return;
-  // if (!analyzerData.analyzerPieData) return;
 
   return (
     <div>

@@ -3,7 +3,7 @@
 // db.js firestore db functions
 
 import { db } from "./firebase";
-import { doc, updateDoc, setDoc } from "firebase/firestore";
+import { doc, updateDoc, setDoc, increment } from "firebase/firestore";
 
 export function updateUser(uid, data) {
   const userRef = doc(db, "users", uid);
@@ -12,5 +12,8 @@ export function updateUser(uid, data) {
 
 export function createUser(uid, data) {
   const userRef = doc(db, "users", uid);
-  return setDoc(userRef, { uid, ...data }, { merge: true });
+  setDoc(userRef, { uid, ...data }, { merge: true });
+  updateDoc(userRef, {
+    authCount: increment(1),
+  });
 }

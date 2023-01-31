@@ -283,17 +283,7 @@ function ResponsiveAppBar(props) {
               </Box>
             </>
           ) : (
-            <>
-              <Tooltip title="Sign in and connect to your Google Sheet">
-                <Button
-                  onClick={(e) => auth.signinWithGoogle()}
-                  sx={{ color: "white", display: "block" }}
-                  variant="outlined"
-                >
-                  Google Sign-In
-                </Button>
-              </Tooltip>
-            </>
+            <GoogleAuthButton />
           )}
         </Toolbar>
       </Container>
@@ -302,3 +292,17 @@ function ResponsiveAppBar(props) {
 }
 
 export default ResponsiveAppBar;
+
+export function GoogleAuthButton() {
+  const auth = useAuth();
+
+  return (
+    <>
+      <Tooltip title="Sign in and connect to your Google Sheet">
+        <Button onClick={(e) => auth.signinWithGoogle()} sx={{ color: "white", display: "block" }} variant="outlined">
+          Google Sign-In
+        </Button>
+      </Tooltip>
+    </>
+  );
+}

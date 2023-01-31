@@ -75,13 +75,11 @@ function ResponsiveAppBar(props) {
       console.log("Report Issue clicked");
       window.open("https://github.com/wayneschuller/strengthjourneys/issues");
     } else if (setting === "Email Author") {
-      window.open("mailto:wayneschuller@gmail.com?subject=Thank you for Strength Journeys it is the best!");
+      window.open("mailto:info@strengthjourneys.xyz?subject=Thank you for Strength Journeys it is the best!");
     } else if (setting === "Logout") {
       console.log("Logout clicked");
       setIsDataReady(false);
-      // googleLogout();
       auth.signout();
-      // localStorage.removeItem("tokenResponse");
       localStorage.removeItem("googleCredential");
       // localStorage.removeItem("selectedLifts");
       // localStorage.removeItem("ssid");

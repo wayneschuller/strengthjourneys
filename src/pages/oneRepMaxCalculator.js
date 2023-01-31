@@ -207,6 +207,7 @@ export default function OneRepMaxCalculator() {
               <Grid xs={8} md={8}>
                 Please give us feedback!{" "}
                 <a href="mailto:feedback@onerepmaxcalculator.xyz">feedback@onerepmaxcalculator.xyz</a>
+                <a href="mailto:info@strengthjourneys.xyz">info@strengthjourneys.xyz</a>
               </Grid>
               <Grid xs={4} md={4}>
                 {/* Sharing is caring. */}

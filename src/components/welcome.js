@@ -6,7 +6,8 @@ import { GoogleAuthButton } from "./appBar";
 
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
-import { Typography } from "@mui/material";
+import Typography from "@mui/material/Typography";
+import Slide from "@mui/material/Slide";
 
 export function NewUserWelcome() {
   return (
@@ -38,27 +39,31 @@ export function NewUserWelcome() {
 
 export function NewUserHero() {
   return (
-    <Container maxWidth="xl">
-      {/* <Box textAlign="center" color="common.white"> */}
-      <Box textAlign="center">
-        <Typography variant="h2" component="h2" gutterBottom={true}>
-          <Typography color="secondary" variant="h2" component="span">
-            Visualize your lifting history,{" "}
-          </Typography>
-          <Typography color="secondary" variant="h2" component="span">
-            lift consistently for a long time.
-          </Typography>
-        </Typography>
-        <Container maxWidth="sm">
-          <Typography variant="subtitle1" color="textSecondary" paragraph={true}>
-            Welcome to Strength Journeys.
-          </Typography>
+    <Box sx={{ m: 1 }} md={{ m: 8 }}>
+      <Slide direction="right" in={true}>
+        <Container maxWidth="xl" sx={{ borderRadius: "6px", border: "0px solid grey", backgroundColor: "#bbaaee" }}>
+          {/* <Box textAlign="center" color="common.white"> */}
+          <Box textAlign="center">
+            <Typography variant="h2" component="h2" gutterBottom={true}>
+              <Typography color="secondary" variant="h2" component="span">
+                Visualize your lifting history,{" "}
+              </Typography>
+              <Typography color="secondary" variant="h2" component="span">
+                lift consistently for a long time.
+              </Typography>
+            </Typography>
+            <Container maxWidth="sm">
+              <Typography variant="subtitle1" color="textSecondary" paragraph={true}>
+                Welcome to Strength Journeys.
+              </Typography>
+            </Container>
+            <Box mt={3} align="center">
+              <GoogleAuthButton />
+            </Box>
+          </Box>
         </Container>
-        <Box mt={3}>
-          <GoogleAuthButton />
-        </Box>
-      </Box>
-    </Container>
+      </Slide>
+    </Box>
   );
 }
 

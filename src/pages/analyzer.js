@@ -17,7 +17,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 
-import { NewUserWelcome } from "../components/welcome";
+import { NewUserWelcome, ReturningUserWelcome } from "../components/welcome";
 import { LoadingLinearProgress } from "./visualizer";
 import { AnalyzerPieChart } from "../components/analyzerPieChart";
 import { LiftDataPanel, getPRInfo } from "../components/analyzerLiftDataPanel";
@@ -30,9 +30,13 @@ const Analyzer = () => {
 
   console.log(`<Analyzer />`);
 
+  const ssid = localStorage.getItem("ssid");
+
   return (
     <div>
-      {!isDataReady && <NewUserWelcome />}
+      {!isDataReady && !ssid && <NewUserWelcome />}
+
+      {!isDataReady && ssid && !isLoading && <ReturningUserWelcome />}
 
       {!isDataReady && isLoading && <LoadingLinearProgress />}
 

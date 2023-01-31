@@ -18,13 +18,12 @@ const Visualizer = (props) => {
     useOutletContext();
 
   const ssid = localStorage.getItem("ssid");
-  const tokenResponse = JSON.parse(localStorage.getItem("tokenResponse"));
 
   return (
     <>
       {!isDataReady && !ssid && <NewUserWelcome />}
 
-      {!isDataReady && ssid && !isLoading && <ReturningUserWelcome tokenResponse={tokenResponse} />}
+      {!isDataReady && ssid && !isLoading && <ReturningUserWelcome />}
 
       {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
       {!isDataReady && isLoading ? (

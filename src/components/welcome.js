@@ -33,8 +33,7 @@ export function NewUserWelcome() {
   );
 }
 
-// FIXME: this really should not depend on tokenResponse, but on isDataReady or put logic above it
-export function ReturningUserWelcome({ tokenResponse }) {
+export function ReturningUserWelcome({}) {
   return (
     <div>
       <Container
@@ -43,14 +42,6 @@ export function ReturningUserWelcome({ tokenResponse }) {
       >
         <h1>Welcome back to Strength Journeys.</h1>
         <h3>You are looking stronger than last time.</h3>
-
-        {!tokenResponse && (
-          <>
-            <h3>
-              Please click the "Google sign-in" button in the top right corner and we will visualize your greatness.
-            </h3>
-          </>
-        )}
       </Container>
     </div>
   );

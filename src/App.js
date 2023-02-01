@@ -25,7 +25,7 @@ export default function App() {
   const [visualizerData, setVisualizerData] = useState(null);
   const [analyzerData, setAnalyzerData] = useState(null);
 
-  // console.log(`<App />...`);
+  console.log(`<App />...`);
 
   // Event handlers do most of the data flow for us
   // However we want this authorisation useEffect to auto load data on init when we have a previous accessToken
@@ -35,6 +35,8 @@ export default function App() {
 
     if (!didInit && auth?.user && credential?.accessToken) {
       didInit = true;
+
+      console.log(`Loading Google Sheet data from previous session.`);
 
       // ✅ Only runs once per app load
       loadGSheetValues(
@@ -64,7 +66,9 @@ export default function App() {
         setIsDataReady={setIsDataReady}
         visualizerData={visualizerData}
         setVisualizerData={setVisualizerData}
+        parsedData={parsedData}
         setParsedData={setParsedData}
+        analyzerData={analyzerData}
         setAnalyzerData={setAnalyzerData}
       />
 

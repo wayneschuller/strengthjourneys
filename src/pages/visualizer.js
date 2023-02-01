@@ -9,13 +9,15 @@ import Stack from "@mui/material/Stack";
 import Container from "@mui/material/Container";
 
 import { VisualizerLineChart } from "../components/visualizerLineChart";
-import { NewUserWelcome, ReturningUserWelcome } from "../components/welcome";
+import { NewUserWelcome, ReturningUserWelcome, DemoModeWelcome, WelcomeModal } from "../components/welcome";
 
 const Visualizer = (props) => {
   // console.log(`<Visualizer />...`);
 
   const [parsedData, isLoading, isDataReady, visualizerData, setVisualizerData, analyzerData, setAnalyzerData] =
     useOutletContext();
+
+  if (visualizerData === null) return;
 
   const ssid = localStorage.getItem("ssid");
 
@@ -26,14 +28,16 @@ const Visualizer = (props) => {
       {!isDataReady && ssid && !isLoading && <ReturningUserWelcome />}
 
       {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
-      {!isDataReady && isLoading ? (
+      {!isDataReady && isLoading && !ssid ? (
         <LoadingLinearProgress />
       ) : (
-        <VisualizerLineChart
-          parsedData={parsedData}
-          visualizerData={visualizerData}
-          setVisualizerData={setVisualizerData}
-        />
+        <>
+          <VisualizerLineChart
+            parsedData={parsedData}
+            visualizerData={visualizerData}
+            setVisualizerData={setVisualizerData}
+          />
+        </>
       )}
     </>
   );

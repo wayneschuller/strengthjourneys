@@ -92,6 +92,8 @@ export async function loadGSheetValues(
       // So try to sign in again.
 
       // FIXME: should only try once, otherwise we get infinite loops
+      console.log("loadGSheetValues() had an error, so trying to sign in again...");
+      console.log(error);
       auth.signinWithGoogle();
     });
 }

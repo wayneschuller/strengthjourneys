@@ -24,6 +24,7 @@ import GoogleIcon from "@mui/icons-material/Google";
 
 import { loadGSheetValues } from "../utils/readData";
 import { useAuth } from "../utils/auth";
+import { WelcomeModal } from "./welcome";
 
 import useDrivePicker from "react-google-drive-picker";
 
@@ -48,10 +49,13 @@ function ResponsiveAppBar(props) {
   const setInfoChipToolTip = props.setInfoChipToolTip;
   const setIsLoading = props.setIsLoading;
   const setIsDataReady = props.setIsDataReady;
+  const isDataReady = props.isDataReady;
+  const parsedData = props.parsedData;
   const setParsedData = props.setParsedData;
-  const setAnalyzerData = props.setAnalyzerData;
   const visualizerData = props.visualizerData;
   const setVisualizerData = props.setVisualizerData;
+  const analyzerData = props.analyzerData;
+  const setAnalyzerData = props.setAnalyzerData;
 
   // console.log(`<ResponsiveAppBar />...`);
 
@@ -98,7 +102,7 @@ function ResponsiveAppBar(props) {
     // const tokenResponse = JSON.parse(localStorage.getItem("tokenResponse"));
     // console.log(tokenResponse);
     const credential = JSON.parse(localStorage.getItem(`googleCredential`));
-    console.log(`Opening picker with token ${credential.accessToken}`);
+    // console.log(`Opening picker with token ${credential.accessToken}`);
 
     openPicker({
       clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
@@ -113,21 +117,45 @@ function ResponsiveAppBar(props) {
       callbackFunction: (data) => {
         if (data.action === "cancel") {
           // console.log('User clicked cancel GDrive Picker')
+          localStorage.removeItem("selectedLifts");
+          localStorage.removeItem("ssid");
+          localStorage.removeItem("gSheetName");
           return;
         }
-        setInfoChipToolTip(data.docs[0].name);
-        localStorage.setItem("gSheetName", data.docs[0].name);
-
-        localStorage.setItem("ssid", data.docs[0].id);
 
         // FIXME: we cannot change Google Sheets without reloading the app. BUG
         // It the app is already loaded with data, we need to clear the data before we load the new file
-        localStorage.removeItem(`selectedLifts`); // Clear the selected lifts before we process a new file with new lifts
-        setVisualizerData(null); // FIXME: nullify the internals more carefully to remove chart etc
-        setAnalyzerData(null);
-        setParsedData(null);
+        // console.log(`User selected ${data.docs[0].name}, isDataReady = ${isDataReady}`);
+        if (isDataReady) {
+          localStorage.removeItem(`selectedLifts`); // Clear the selected lifts before we process a new file with new lifts
 
+          parsedData.splice(0, parsedData.length); // empty the array
+          setParsedData(null);
+
+          visualizerData.visualizerE1RMLineData.forEach((liftType) => {
+            liftType.data.splice(0, liftType.data.length); // empty the line data array for this lift type
+          });
+          for (let key in visualizerData.achievementAnnotations) {
+            if (visualizerData.achievementAnnotations.hasOwnProperty(key)) {
+              delete visualizerData.achievementAnnotations[key];
+            }
+          }
+          setVisualizerData(null);
+
+          analyzerData.analyzerPieData.splice(0, analyzerData.analyzerPieData.length); // empty the array
+          for (let key in analyzerData.analyzerPRCardData) {
+            if (analyzerData.analyzerPRCardData.hasOwnProperty(key)) {
+              delete analyzerData.analyzerPRCardData[key];
+            }
+          }
+          setAnalyzerData(null);
+        }
+
+        localStorage.setItem("gSheetName", data.docs[0].name);
+        localStorage.setItem("ssid", data.docs[0].id);
         setInfoChipStatus("Loading GSheet Values");
+        setInfoChipToolTip(data.docs[0].name);
+
         loadGSheetValues(
           setInfoChipStatus,
           setInfoChipToolTip,
@@ -210,7 +238,7 @@ function ResponsiveAppBar(props) {
               <Button
                 key={page.name}
                 onClick={handleCloseNavMenu}
-                sx={{ my: 2, color: "white", display: "block", mx: 1 }}
+                sx={{ my: 1, color: "white", display: "block", mx: 1 }}
                 variant="contained"
                 component={Link}
                 to={`/${page.route}`}
@@ -219,6 +247,9 @@ function ResponsiveAppBar(props) {
               </Button>
             ))}
           </Box>
+
+          <WelcomeModal />
+
           {/* Link to our GitHub project on large screens */}
           <Avatar
             sx={{ bgcolor: "#333333", display: { xs: "none", md: "flex" } }}
@@ -226,11 +257,7 @@ function ResponsiveAppBar(props) {
             onClick={(event) => window.open("https://github.com/wayneschuller/strengthjourneys", "_blank")}
           >
             <Tooltip title="Click to open GitHub source code">
-              <GitHubIcon
-              // sx={{
-              // display: { xs: "none", md: "block" },
-              // }}
-              />
+              <GitHubIcon />
             </Tooltip>
           </Avatar>
 
@@ -299,7 +326,11 @@ export function GoogleAuthButton() {
   return (
     <>
       <Tooltip title="Sign in and connect to your Google Sheet">
-        <Button onClick={(e) => auth.signinWithGoogle()} sx={{ color: "white", display: "block" }} variant="outlined">
+        <Button
+          onClick={(e) => auth.signinWithGoogle()}
+          sx={{ color: "white", display: "block", mx: 1 }}
+          variant="contained"
+        >
           Google Sign-In
         </Button>
       </Tooltip>

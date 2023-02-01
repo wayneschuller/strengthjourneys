@@ -80,7 +80,7 @@ export function parseData(data, visualizerData, setVisualizerData, setParsedData
     data.forEach(parseBespokeRow);
   }
 
-  console.log(`   ... parseData() complete. (Bespoke format)`);
+  console.log(`   ... parseData() complete. ${parsedData.length} rows parsed. (Bespoke format)`);
 
   setParsedData(parsedData); // We need this in state for refreshes later on
 

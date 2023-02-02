@@ -21,10 +21,11 @@ import MenuItem from "@mui/material/MenuItem";
 import logo from "./logo.png";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import GoogleIcon from "@mui/icons-material/Google";
+import TableChartIcon from "@mui/icons-material/TableChart";
 
 import { loadGSheetValues } from "../utils/loadGSheetValues";
 import { useAuth } from "../utils/auth";
-import { WelcomeModal } from "./welcome";
+import { sampleGSheet } from "./welcome";
 
 import useDrivePicker from "react-google-drive-picker";
 import scrubData from "../utils/scrubData";
@@ -229,16 +230,27 @@ function ResponsiveAppBar(props) {
             ))}
           </Box>
 
+          {/* Sample Google Sheet icon on large screens */}
+          <Tooltip title="Click to open sample Google Sheet data">
+            <Avatar
+              sx={{ mx: 1, bgcolor: "#333333", display: { xs: "none", md: "flex" } }}
+              variant="rounded"
+              onClick={(event) => window.open(sampleGSheet, "_blank")}
+            >
+              <TableChartIcon />
+            </Avatar>
+          </Tooltip>
+
           {/* Link to our GitHub project on large screens */}
-          <Avatar
-            sx={{ bgcolor: "#333333", display: { xs: "none", md: "flex" } }}
-            variant="rounded"
-            onClick={(event) => window.open("https://github.com/wayneschuller/strengthjourneys", "_blank")}
-          >
-            <Tooltip title="Click to open GitHub source code">
+          <Tooltip title="Click to open GitHub source code">
+            <Avatar
+              sx={{ bgcolor: "#333333", display: { xs: "none", md: "flex" } }}
+              variant="rounded"
+              onClick={(event) => window.open("https://github.com/wayneschuller/strengthjourneys", "_blank")}
+            >
               <GitHubIcon />
-            </Tooltip>
-          </Avatar>
+            </Avatar>
+          </Tooltip>
 
           {/* User profile info on right hand side of the navbar */}
           {auth.user ? (

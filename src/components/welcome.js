@@ -17,29 +17,34 @@ import Typography from "@mui/material/Typography";
 
 import logo from "./sample_google_sheet_fuzzy_border.png";
 
-const sampleGsheet = "https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0";
+export const sampleGSheet =
+  "https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0";
 
 export function DemoModeWelcome() {
   return (
-    <Box sx={{ m: 3, width: "90%" }} color="secondary" align="center">
+    <>
+      {/* <Box sx={{ m: 3, width: "90%" }} color="secondary" align="center"> */}
       {/* <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 8 }}> */}
-      <Grid container spacing={2} display="flex" justifyContent="center" alignItems="center">
-        <Grid sm={12} lg={8}>
+      <Grid container spacing={2} display="flex" justifyContent="center">
+        <Grid sm={12} display="flex" justifyContent="center" alignItems="start">
           <h1>Strength Journeys</h1>
+        </Grid>
+        <Grid sm={12} lg={8}>
           <h3>Visualize your lifting history, lift consistently for a long time.</h3>
           <p>We recommend every lifter keep their own Google Sheet records.</p>
           <p>Click "Google Sign In" to give Strength Journeys read only access to visualize your data.</p>
         </Grid>
         <Grid sm={13} lg={4}>
-          <a href={sampleGsheet} target="_blank">
+          <a href={sampleGSheet} target="_blank">
             Sample Google Sheet format
           </a>
-          <Link href={sampleGsheet}>
+          <Link href={sampleGSheet}>
             <Box component="img" width="100%" alt="Sample Google Sheet Data" src={logo} />
           </Link>
         </Grid>
       </Grid>
-    </Box>
+      {/* </Box> */}
+    </>
   );
 }
 
@@ -58,7 +63,7 @@ export function NewUserWelcome(props) {
         </p>
         <p>
           Here is our custom{" "}
-          <a href={sampleGsheet} target="_blank">
+          <a href={sampleGSheet} target="_blank">
             Google Sheet data format
           </a>
           . From Google Sheets, click "File" menu and then click "Make a copy" and edit with your data.
@@ -117,7 +122,7 @@ const style = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  // width: 500,
+  width: "70%",
   bgcolor: "background.paper",
   border: "1px solid #000",
   boxShadow: 24,

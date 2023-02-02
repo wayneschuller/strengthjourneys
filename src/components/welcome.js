@@ -144,8 +144,8 @@ export function WelcomeModal() {
         <Box sx={style}>
           <Grid display="flex" justifyContent="end">
             <Grid sm={12} lg={8}>
-              <IconButton>
-                <CloseIcon onClick={handleClose} />
+              <IconButton onClick={handleClose}>
+                <CloseIcon />
               </IconButton>
             </Grid>
           </Grid>

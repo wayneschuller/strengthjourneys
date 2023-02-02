@@ -117,15 +117,19 @@ function ResponsiveAppBar(props) {
       callbackFunction: (data) => {
         if (data.action === "cancel") {
           // console.log('User clicked cancel GDrive Picker')
+
+          scrubData(parsedData, setParsedData, visualizerData, setVisualizerData, analyzerData, setAnalyzerData);
+          setIsDataReady(false);
           localStorage.removeItem("selectedLifts");
           localStorage.removeItem("ssid");
           localStorage.removeItem("gSheetName");
           return;
         }
 
-        // FIXME: we cannot change Google Sheets without reloading the app. BUG
         // console.log(`User selected ${data.docs[0].name}, isDataReady = ${isDataReady}`);
+
         // We need to clear the data before we load the new file
+        // NOTE: this will not be instant so we cannot assume it happens before the loadGSheetValues() call
         scrubData(parsedData, setParsedData, visualizerData, setVisualizerData, analyzerData, setAnalyzerData);
 
         localStorage.removeItem(`selectedLifts`); // Clear the selected lifts before we process a new file with new lifts
@@ -134,16 +138,11 @@ function ResponsiveAppBar(props) {
         setInfoChipStatus("Loading GSheet Values");
         setInfoChipToolTip(data.docs[0].name);
 
-        console.log(
-          `picker about to loadGSheetValues() with analyzerData = ${analyzerData}, visualizerData = ${visualizerData} (should be null!)`
-        );
-
         loadGSheetValues(
           setInfoChipStatus,
           setInfoChipToolTip,
           setIsLoading,
           setIsDataReady,
-          visualizerData,
           setVisualizerData,
           setParsedData,
           setAnalyzerData,

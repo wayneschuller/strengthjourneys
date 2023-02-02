@@ -14,7 +14,7 @@ import { processData, processAnalyzerPieData } from "./processData";
 // Discern the raw data format, parse into the parsedData global
 // Assumes raw lifting data[][] 2d grid (from CSV or Google Sheets or similar)
 // ------------------------------------------------------------------------------
-export function parseData(data, visualizerData, setVisualizerData, setParsedData, setAnalyzerData) {
+export function parseData(data, setVisualizerData, setParsedData, setAnalyzerData) {
   console.log("parseData()...");
 
   let workout_date_COL, workout_id_COL, completed_COL, exercise_name_COL, assigned_reps_COL, assigned_weight_COL;
@@ -85,7 +85,7 @@ export function parseData(data, visualizerData, setVisualizerData, setParsedData
   setParsedData(parsedData); // We need this in state for refreshes later on
 
   // Next in the data flow is to process the data.
-  processData(parsedData, visualizerData, setVisualizerData, setAnalyzerData);
+  processData(parsedData, setVisualizerData, setAnalyzerData);
 
   return true;
 

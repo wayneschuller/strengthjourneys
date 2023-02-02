@@ -16,6 +16,8 @@ import Slide from "@mui/material/Slide";
 import Typography from "@mui/material/Typography";
 
 import logo from "./sample_google_sheet_fuzzy_border.png";
+import { sampleData } from "../utils/sampleData";
+import { parseData } from "../utils/parseData";
 
 const sampleGsheet = "https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0";
 
@@ -43,7 +45,14 @@ export function DemoModeWelcome() {
   );
 }
 
-export function NewUserWelcome() {
+export function NewUserWelcome(props) {
+  console.log(`<NewUserWelcome />... (${sampleData})`);
+
+  // Load sample data.
+  parseData(sampleData, props.setVisualizerData, props.setParsedData, props.setAnalyzerData);
+
+  // Set timeout to load welcome modal after 20 seconds
+
   return (
     <Box sx={{ m: 1 }} md={{ m: 3 }}>
       <Container
@@ -64,6 +73,11 @@ export function NewUserWelcome() {
           . From Google Sheets, click "File" menu and then click "Make a copy" and edit with your data.
         </p>
       </Container>
+      <VisualizerLineChart
+        parsedData={parsedData}
+        visualizerData={visualizerData}
+        setVisualizerData={setVisualizerData}
+      />
     </Box>
   );
 }
@@ -108,7 +122,6 @@ export function ReturningUserWelcome({}) {
         <h1>Welcome back to Strength Journeys.</h1>
         <h3>You are looking stronger than last time.</h3>
       </Container>
-      {/* <NewUserHero /> */}
     </div>
   );
 }

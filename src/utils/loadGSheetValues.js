@@ -33,7 +33,6 @@ export async function loadGSheetValues(
   setInfoChipToolTip,
   setIsLoading,
   setIsDataReady,
-  visualizerData,
   setVisualizerData,
   setParsedData,
   setAnalyzerData,
@@ -65,7 +64,7 @@ export async function loadGSheetValues(
       }
     )
     .then((response) => {
-      let result = parseData(response.data.values, visualizerData, setVisualizerData, setParsedData, setAnalyzerData);
+      let result = parseData(response.data.values, setVisualizerData, setParsedData, setAnalyzerData);
 
       if (result) {
         setInfoChipStatus("Google Sheet Data Loaded");

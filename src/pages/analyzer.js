@@ -23,13 +23,20 @@ import { AnalyzerPieChart } from "../components/analyzerPieChart";
 import { LiftDataPanel, getPRInfo } from "../components/analyzerLiftDataPanel";
 
 const Analyzer = () => {
-  const [parsedData, isLoading, isDataReady, visualizerData, setVisualizerData, analyzerData, setAnalyzerData] =
-    useOutletContext();
+  const [
+    isLoading,
+    isDataReady,
+    parsedData,
+    setParsedData,
+    visualizerData,
+    setVisualizerData,
+    analyzerData,
+    setAnalyzerData,
+  ] = useOutletContext();
 
   const [selectedLift, setSelectedLift] = useState(null);
 
   console.log(`<Analyzer />... (analyzerData: ${analyzerData})`);
-  if (analyzerData === null) return;
 
   const ssid = localStorage.getItem("ssid");
 

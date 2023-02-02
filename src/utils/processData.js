@@ -14,7 +14,7 @@ import { processAnalyzerPieData, processAnalyzerPRCardData } from "./processAnal
 // Process the parsedData array of lifts into data structures ready for the <Visualiser /> and <Analyzer />
 //
 // --------------------------------------------------------------------------------------------
-export function processData(parsedData, visualizerData, setVisualizerData, setAnalyzerData) {
+export function processData(parsedData, setVisualizerData, setAnalyzerData) {
   console.log("processData()...");
 
   let visualizerE1RMLineData = [];

@@ -39,7 +39,6 @@ export default function App() {
         setInfoChipToolTip,
         setIsLoading,
         setIsDataReady,
-        visualizerData,
         setVisualizerData,
         setParsedData,
         setAnalyzerData,
@@ -71,7 +70,16 @@ export default function App() {
           so you can think about this <Outlet> as a placeholder for
           the child routes we defined above. */}
       <Outlet
-        context={[parsedData, isLoading, isDataReady, visualizerData, setVisualizerData, analyzerData, setAnalyzerData]}
+        context={[
+          isLoading,
+          isDataReady,
+          parsedData,
+          setParsedData,
+          visualizerData,
+          setVisualizerData,
+          analyzerData,
+          setAnalyzerData,
+        ]}
       />
     </div>
   );

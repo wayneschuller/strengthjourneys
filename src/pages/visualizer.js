@@ -10,21 +10,38 @@ import Container from "@mui/material/Container";
 
 import { VisualizerLineChart } from "../components/visualizerLineChart";
 import { NewUserWelcome, ReturningUserWelcome, DemoModeWelcome, WelcomeModal } from "../components/welcome";
+import { useAuth } from "../utils/auth";
 
 const Visualizer = (props) => {
-  const [parsedData, isLoading, isDataReady, visualizerData, setVisualizerData, analyzerData, setAnalyzerData] =
-    useOutletContext();
+  const [
+    isLoading,
+    isDataReady,
+    parsedData,
+    setParsedData,
+    visualizerData,
+    setVisualizerData,
+    analyzerData,
+    setAnalyzerData,
+  ] = useOutletContext();
+
+  const auth = useAuth();
 
   console.log(`<Visualizer />...(visualizerData: ${visualizerData})`);
-  if (visualizerData === null) return;
 
   const ssid = localStorage.getItem("ssid");
 
   return (
     <>
-      {!isDataReady && !isLoading && !ssid && <NewUserWelcome />}
+      {!isDataReady && !isLoading && !auth.user && (
+        <NewUserWelcome
+          parsedData={parsedData}
+          setParsedData={setParsedData}
+          setVisualizerData={setVisualizerData}
+          setAnalyzerData={setAnalyzerData}
+        />
+      )}
 
-      {!isDataReady && !isLoading && ssid && <ReturningUserWelcome />}
+      {!isDataReady && !isLoading && auth.user && <ReturningUserWelcome />}
 
       {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
       {!isDataReady && isLoading && !ssid ? (

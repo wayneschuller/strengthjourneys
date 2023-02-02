@@ -50,6 +50,7 @@ export default function App() {
   useEffect(() => {
     if (!didInit && auth?.user) {
       didInit = true;
+      setIsDemoMode(false);
       // ✅ Only runs once per app load
       loadGSheetValues(
         setInfoChipStatus,

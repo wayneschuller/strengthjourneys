@@ -25,7 +25,7 @@ export function DemoModeWelcome() {
       {/* <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 8 }}> */}
       <Grid container spacing={2} display="flex" justifyContent="center" alignItems="center">
         <Grid sm={12} lg={8}>
-          <h1>Strength Journeys Demo Mode</h1>
+          <h1>Strength Journeys</h1>
           <h3>Visualize your lifting history, lift consistently for a long time.</h3>
           <p>We recommend every lifter keep their own Google Sheet records.</p>
           <p>Click "Google Sign In" to give Strength Journeys read only access to visualize your data.</p>

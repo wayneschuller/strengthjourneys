@@ -22,9 +22,9 @@ const Visualizer = (props) => {
 
   return (
     <>
-      {!isDataReady && !ssid && <NewUserWelcome />}
+      {!isDataReady && !isLoading && !ssid && <NewUserWelcome />}
 
-      {!isDataReady && ssid && !isLoading && <ReturningUserWelcome />}
+      {!isDataReady && !isLoading && ssid && <ReturningUserWelcome />}
 
       {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
       {!isDataReady && isLoading && !ssid ? (

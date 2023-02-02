@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 
 import ResponsiveAppBar from "./components/appBar";
-import { loadGSheetValues } from "./utils/readData";
+import { loadGSheetValues } from "./utils/loadGSheetValues";
 import { useAuth } from "./utils/auth";
 
 export default function App() {
@@ -31,13 +31,8 @@ export default function App() {
   // However we want this authorisation useEffect to auto load data on init when we have a previous accessToken
   let didInit = false;
   useEffect(() => {
-    const credential = JSON.parse(localStorage.getItem(`googleCredential`));
-
-    if (!didInit && auth?.user && credential?.accessToken) {
+    if (!didInit && auth?.user) {
       didInit = true;
-
-      console.log(`Loading Google Sheet data from previous session.`);
-
       // ✅ Only runs once per app load
       loadGSheetValues(
         setInfoChipStatus,

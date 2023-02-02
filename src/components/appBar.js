@@ -22,7 +22,7 @@ import logo from "./logo.png";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import GoogleIcon from "@mui/icons-material/Google";
 
-import { loadGSheetValues } from "../utils/readData";
+import { loadGSheetValues } from "../utils/loadGSheetValues";
 import { useAuth } from "../utils/auth";
 import { WelcomeModal } from "./welcome";
 

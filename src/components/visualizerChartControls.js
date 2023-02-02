@@ -93,8 +93,7 @@ export function EquationChooser(props) {
 
     localStorage.setItem("equation", event.target.value);
 
-    // Process the data with the new equation (processer will detect it is a refresh)
-    // FIXME: untested
+    // Mutate the existing dataset with this new e1rm equation
     updateE1RMEquation(props.parsedData, props.visualizerData.visualizerE1RMLineData);
 
     // Refresh the chart

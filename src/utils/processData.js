@@ -16,9 +16,7 @@ import { processAnalyzerPieData, processAnalyzerPRCardData } from "./processAnal
 // --------------------------------------------------------------------------------------------
 export function processData(parsedData, visualizerData, setVisualizerData, setAnalyzerData) {
   console.log("processData()...");
-  console.log(visualizerData);
 
-  // Do we already have a set of visualizerE1RMLineData? Then this must be a refresh caused by changing the equation method
   let visualizerE1RMLineData = [];
 
   let equation = localStorage.getItem("equation");

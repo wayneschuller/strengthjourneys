@@ -28,7 +28,7 @@ const Analyzer = () => {
 
   const [selectedLift, setSelectedLift] = useState(null);
 
-  console.log(`<Analyzer />`);
+  console.log(`<Analyzer />... (analyzerData: ${analyzerData})`);
   if (analyzerData === null) return;
 
   const ssid = localStorage.getItem("ssid");

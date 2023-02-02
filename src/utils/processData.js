@@ -16,16 +16,10 @@ import { processAnalyzerPieData, processAnalyzerPRCardData } from "./processAnal
 // --------------------------------------------------------------------------------------------
 export function processData(parsedData, visualizerData, setVisualizerData, setAnalyzerData) {
   console.log("processData()...");
-
-  let isRefresh = false;
+  console.log(visualizerData);
 
   // Do we already have a set of visualizerE1RMLineData? Then this must be a refresh caused by changing the equation method
   let visualizerE1RMLineData = [];
-  if (visualizerData && visualizerData.visualizerE1RMLineData) {
-    console.log(`... refreshing old data...`);
-    visualizerE1RMLineData = visualizerData.visualizerE1RMLineData; // We are going to discretely mutate React state to modify chart without a rerender
-    isRefresh = true;
-  }
 
   let equation = localStorage.getItem("equation");
   if (!equation) equation = "Brzycki"; // Probably not needed. Just in case.
@@ -36,6 +30,7 @@ export function processData(parsedData, visualizerData, setVisualizerData, setAn
     `   ...processVisualiserData() complete: ${visualizerE1RMLineData.length} different types of lifts. (${equation} equation)`
   );
 
+  /*  FIXME: NOT NEEDED CURRENTLY - PARKED FOR REFERENCE
   // Remove any left over stale items (needed for refreshing data from Google Sheets)
   visualizerE1RMLineData.forEach((liftType) => {
     // Loop backwards through e1rmLineData mutating it to remove stale entries
@@ -46,6 +41,7 @@ export function processData(parsedData, visualizerData, setVisualizerData, setAn
       }
     }
   });
+  */
 
   // Every element of processedData now has a data array of chart tuples
   // Let's sort each data array by date (x entry) so it draws lines correctly
@@ -68,10 +64,13 @@ export function processData(parsedData, visualizerData, setVisualizerData, setAn
     const currentTime = Date.now();
 
     for (let i = visualizerE1RMLineData.length - 1; i >= 0; i--) {
+      // console.log(`checking last date for lift type ${visualizerE1RMLineData[i].label} `);
+      // console.log(visualizerE1RMLineData[i].data[visualizerE1RMLineData[i].data.length - 1].x);
       const lastDate = new Date(visualizerE1RMLineData[i].data[visualizerE1RMLineData[i].data.length - 1].x);
 
       if (currentTime - lastDate.getTime() > twoYearsInMilliseconds && visualizerE1RMLineData[i].data.length < 10) {
         // processedData[i].data.splice(0); // delete the minor obsolete lift chart data (but we keep the PRs)
+        // console.log(`Ignoring minor lift type ${visualizerE1RMLineData[i].label}`);
         visualizerE1RMLineData.splice(i, 1); // delete the minor obsolete lift
       }
     }
@@ -92,13 +91,7 @@ export function processData(parsedData, visualizerData, setVisualizerData, setAn
   }
 
   // Process the PRs/Achivements and return some chartjs annotation config.
-  if (isRefresh) {
-    // If we have annotations this function will just mutate them
-    updateAchievements(visualizerE1RMLineData, equation, visualizerData.achievementAnnotations);
-  } else {
-    // If annotations are null this function will give us a fresh set
-    var annotations = processAchievements(parsedData, visualizerE1RMLineData, equation);
-  }
+  var annotations = processAchievements(parsedData, visualizerE1RMLineData, equation);
 
   // 10 day padding for the beginning and end of our data makes chart look nice
   // Use the most popular lift to set some aesthetic x-axis padding at start and end
@@ -120,26 +113,22 @@ export function processData(parsedData, visualizerData, setVisualizerData, setAn
   });
   highestWeight = Math.ceil(highestWeight / 49) * 50; // Round up to the next mulitiple of 50
 
-  // If this is not a refresh then set React state to trigger our visualizations
-  // If it is a refresh - we will rely on local mutation to change the chart without React knowing
-  // because React will often rerender everything in a dumb way
-  if (!isRefresh) {
-    setAnalyzerData({
-      // FIXME: put metadata here (such as calendarHeatmapData)
-      analyzerPieData: analyzerPieData,
-      analyzerPRCardData: analyzerPRCardData,
-    });
+  // Set React state for our main data structures
+  setAnalyzerData({
+    // FIXME: put metadata here (such as calendarHeatmapData)
+    analyzerPieData: analyzerPieData,
+    analyzerPRCardData: analyzerPRCardData,
+  });
 
-    setVisualizerData({
-      padDateMin: padDateMin,
-      padDateMax: padDateMax,
-      highestWeight: highestWeight,
-      achievementAnnotations: annotations,
-      visualizerE1RMLineData: visualizerE1RMLineData,
-      // We could wrap the datasets for chartjs here, but nevermind we will do it in the <Line /> component
-      // visualizerE1RMLineData: {datasets: processedData},
-    });
-  }
+  setVisualizerData({
+    padDateMin: padDateMin,
+    padDateMax: padDateMax,
+    highestWeight: highestWeight,
+    achievementAnnotations: annotations,
+    visualizerE1RMLineData: visualizerE1RMLineData,
+    // We could wrap the datasets for chartjs here, but nevermind we will do it in the <Line /> chart component
+    // visualizerE1RMLineData: {datasets: processedData},
+  });
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -221,6 +210,18 @@ function processEstimateData(parsedData, visualizerE1RMLineData, equation) {
       continue;
     }
   }
+}
+
+// When equation changes, we need to update the chart
+// Discretely mutate React state internally
+// This will animate the chart automatically, without changing React state or
+// re-rendering the entire chart component.
+export function updateE1RMEquation(parsedData, visualizerE1RMLineData) {
+  const equation = localStorage.getItem("equation");
+
+  processEstimateData(parsedData, visualizerE1RMLineData, equation);
+
+  updateAchievements(parsedData, visualizerE1RMLineData);
 }
 
 // Prepare for a data source reload while preserving as much chart as possible.

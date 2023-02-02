@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { processData } from "../utils/processData";
+import { updateE1RMEquation } from "../utils/processData";
 
 // MUI Components
 import Button from "@mui/material/Button";
@@ -94,7 +94,8 @@ export function EquationChooser(props) {
     localStorage.setItem("equation", event.target.value);
 
     // Process the data with the new equation (processer will detect it is a refresh)
-    processData(props.parsedData, props.visualizerData, props.setVisualizerData);
+    // FIXME: untested
+    updateE1RMEquation(props.parsedData, props.visualizerData.visualizerE1RMLineData);
 
     // Refresh the chart
     props.chartUpdate();

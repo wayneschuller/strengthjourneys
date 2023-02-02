@@ -27,6 +27,7 @@ import { useAuth } from "../utils/auth";
 import { WelcomeModal } from "./welcome";
 
 import useDrivePicker from "react-google-drive-picker";
+import scrubData from "../utils/scrubData";
 
 // Array of main menu items
 const pages = [
@@ -88,9 +89,8 @@ function ResponsiveAppBar(props) {
       // localStorage.removeItem("selectedLifts");
       // localStorage.removeItem("ssid");
       // localStorage.removeItem("gSheetName");
+      scrubData(parsedData, setParsedData, visualizerData, setVisualizerData, analyzerData, setAnalyzerData);
       setIsLoading(false);
-      setVisualizerData(null); // FIXME: nullify the internals more carefully to remove chart etc
-      setUserInfo(null); // This will remove the profile menu and status button
       setAnchorElUser(null); // Closes menu
     }
   };
@@ -124,37 +124,19 @@ function ResponsiveAppBar(props) {
         }
 
         // FIXME: we cannot change Google Sheets without reloading the app. BUG
-        // It the app is already loaded with data, we need to clear the data before we load the new file
         // console.log(`User selected ${data.docs[0].name}, isDataReady = ${isDataReady}`);
-        if (isDataReady) {
-          localStorage.removeItem(`selectedLifts`); // Clear the selected lifts before we process a new file with new lifts
+        // We need to clear the data before we load the new file
+        scrubData(parsedData, setParsedData, visualizerData, setVisualizerData, analyzerData, setAnalyzerData);
 
-          parsedData.splice(0, parsedData.length); // empty the array
-          setParsedData(null);
-
-          visualizerData.visualizerE1RMLineData.forEach((liftType) => {
-            liftType.data.splice(0, liftType.data.length); // empty the line data array for this lift type
-          });
-          for (let key in visualizerData.achievementAnnotations) {
-            if (visualizerData.achievementAnnotations.hasOwnProperty(key)) {
-              delete visualizerData.achievementAnnotations[key];
-            }
-          }
-          setVisualizerData(null);
-
-          analyzerData.analyzerPieData.splice(0, analyzerData.analyzerPieData.length); // empty the array
-          for (let key in analyzerData.analyzerPRCardData) {
-            if (analyzerData.analyzerPRCardData.hasOwnProperty(key)) {
-              delete analyzerData.analyzerPRCardData[key];
-            }
-          }
-          setAnalyzerData(null);
-        }
-
+        localStorage.removeItem(`selectedLifts`); // Clear the selected lifts before we process a new file with new lifts
         localStorage.setItem("gSheetName", data.docs[0].name);
         localStorage.setItem("ssid", data.docs[0].id);
         setInfoChipStatus("Loading GSheet Values");
         setInfoChipToolTip(data.docs[0].name);
+
+        console.log(
+          `picker about to loadGSheetValues() with analyzerData = ${analyzerData}, visualizerData = ${visualizerData} (should be null!)`
+        );
 
         loadGSheetValues(
           setInfoChipStatus,

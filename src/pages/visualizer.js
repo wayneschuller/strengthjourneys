@@ -12,11 +12,10 @@ import { VisualizerLineChart } from "../components/visualizerLineChart";
 import { NewUserWelcome, ReturningUserWelcome, DemoModeWelcome, WelcomeModal } from "../components/welcome";
 
 const Visualizer = (props) => {
-  // console.log(`<Visualizer />...`);
-
   const [parsedData, isLoading, isDataReady, visualizerData, setVisualizerData, analyzerData, setAnalyzerData] =
     useOutletContext();
 
+  console.log(`<Visualizer />...(visualizerData: ${visualizerData})`);
   if (visualizerData === null) return;
 
   const ssid = localStorage.getItem("ssid");

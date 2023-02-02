@@ -8,6 +8,9 @@ import { Outlet } from "react-router-dom";
 import ResponsiveAppBar from "./components/appBar";
 import { loadGSheetValues } from "./utils/loadGSheetValues";
 import { useAuth } from "./utils/auth";
+import { sampleData } from "./utils/sampleData";
+import { processData } from "./utils/processData";
+import { WelcomeModal } from "./components/welcome";
 
 export default function App() {
   const auth = useAuth();
@@ -19,13 +22,27 @@ export default function App() {
   // These control the rendering of various progress and chart.js components
   const [isLoading, setIsLoading] = useState(false); // Used to show loading animation
   const [isDataReady, setIsDataReady] = useState(false); // Used to trigger when app is ready to render
+  const [isDemoMode, setIsDemoMode] = useState(false); // Used to show demo Data
 
   // Main data elements. These may not need to be in React state.
-  const [parsedData, setParsedData] = useState(null);
+  const [parsedData, setParsedData] = useState(sampleData);
   const [visualizerData, setVisualizerData] = useState(null);
   const [analyzerData, setAnalyzerData] = useState(null);
 
   console.log(`<App />...`);
+
+  let didProcessSampleData = false;
+  useEffect(() => {
+    // console.log(`[] useEffect...`);
+
+    if (!didProcessSampleData) {
+      didProcessSampleData = true;
+      setIsDemoMode(true);
+      // Process the sample data for demo mode
+      processData(parsedData, setVisualizerData, setAnalyzerData);
+      setIsDataReady(true);
+    }
+  }, []);
 
   // Event handlers do most of the data flow for us
   // However we want this authorisation useEffect to auto load data on init when we have a previous accessToken
@@ -81,6 +98,8 @@ export default function App() {
           setAnalyzerData,
         ]}
       />
+
+      {isDemoMode && <WelcomeModal />}
     </div>
   );
 }

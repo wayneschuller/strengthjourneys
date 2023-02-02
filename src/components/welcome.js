@@ -16,8 +16,6 @@ import Slide from "@mui/material/Slide";
 import Typography from "@mui/material/Typography";
 
 import logo from "./sample_google_sheet_fuzzy_border.png";
-import { sampleData } from "../utils/sampleData";
-import { parseData } from "../utils/parseData";
 
 const sampleGsheet = "https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0";
 
@@ -46,13 +44,6 @@ export function DemoModeWelcome() {
 }
 
 export function NewUserWelcome(props) {
-  console.log(`<NewUserWelcome />... (${sampleData})`);
-
-  // Load sample data.
-  parseData(sampleData, props.setVisualizerData, props.setParsedData, props.setAnalyzerData);
-
-  // Set timeout to load welcome modal after 20 seconds
-
   return (
     <Box sx={{ m: 1 }} md={{ m: 3 }}>
       <Container
@@ -73,11 +64,6 @@ export function NewUserWelcome(props) {
           . From Google Sheets, click "File" menu and then click "Make a copy" and edit with your data.
         </p>
       </Container>
-      <VisualizerLineChart
-        parsedData={parsedData}
-        visualizerData={visualizerData}
-        setVisualizerData={setVisualizerData}
-      />
     </Box>
   );
 }
@@ -141,13 +127,12 @@ const style = {
 // When in demo mode, we will pop this up every now and then
 // FIXME: The google sign in button does not close the modal but it should.
 export function WelcomeModal() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   return (
     <div>
-      <Button onClick={handleOpen}>Open modal</Button>
       <Modal
         open={open}
         onClose={handleClose}

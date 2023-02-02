@@ -229,8 +229,6 @@ function ResponsiveAppBar(props) {
             ))}
           </Box>
 
-          <WelcomeModal />
-
           {/* Link to our GitHub project on large screens */}
           <Avatar
             sx={{ bgcolor: "#333333", display: { xs: "none", md: "flex" } }}

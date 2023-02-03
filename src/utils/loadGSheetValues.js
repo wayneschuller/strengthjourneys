@@ -52,6 +52,9 @@ export async function loadGSheetValues(
     return;
   }
 
+  const gSheetName = localStorage.getItem(`gSheetName`);
+  if (gSheetName) setInfoChipToolTip(gSheetName);
+
   setIsLoading(true);
   setIsDataReady(false);
   setInfoChipStatus("Loading GSheet Values");
@@ -64,6 +67,8 @@ export async function loadGSheetValues(
       }
     )
     .then((response) => {
+      console.log(response);
+
       let result = parseData(response.data.values, setVisualizerData, setParsedData, setAnalyzerData);
 
       if (result) {

@@ -82,7 +82,7 @@ export function EquationChooser(props) {
   const equations = ["Epley", "McGlothin", "Lombardi", "Mayhew", "OConner", "Wathen", "Brzycki"];
 
   const handleChange = (event) => {
-    console.log(`setEquation...${event.target.value}`);
+    // console.log(`setEquation...${event.target.value}`);
     setValue(event.target.value);
 
     // We were setting equation state which was lifted high
@@ -104,8 +104,8 @@ export function EquationChooser(props) {
     <FormControl>
       <FormLabel id="demo-row-radio-buttons-group-label">One Rep Max Estimate Formula</FormLabel>
       <RadioGroup value={value} onChange={handleChange} row>
-        {equations.map((eqn) => (
-          <FormControlLabel value={eqn} key={eqn} control={<Radio />} label={eqn} />
+        {equations.map((equation) => (
+          <FormControlLabel value={equation} key={equation} control={<Radio />} label={equation} />
         ))}
       </RadioGroup>
     </FormControl>

@@ -71,9 +71,6 @@ export function VizConfigZoom({ zoomShowAllTime, zoomShowRecent }) {
 // <EquationChooser />
 // --------------------------------------------------------------------------------------------------------
 export function EquationChooser(props) {
-  // console.log(`<EquationChooser />`);
-  // console.log(props);
-
   let initEquation = localStorage.getItem("equation");
   if (!initEquation) initEquation = "Brzycki";
 

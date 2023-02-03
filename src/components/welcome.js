@@ -25,9 +25,11 @@ export function DemoModeWelcome() {
     <>
       {/* <Box sx={{ m: 3, width: "90%" }} color="secondary" align="center"> */}
       {/* <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 8 }}> */}
-      <Grid container spacing={2} display="flex" justifyContent="center">
+      <Grid container spacing={0} display="flex" justifyContent="center">
         <Grid sm={12} display="flex" justifyContent="center" alignItems="start">
-          <h1>Strength Journeys</h1>
+          <h1>
+            Welcome to <i>Strength Journeys</i>
+          </h1>
         </Grid>
         <Grid sm={12} lg={8}>
           <h3>Visualize your lifting history, lift consistently for a long time.</h3>
@@ -130,7 +132,6 @@ const style = {
 };
 
 // When in demo mode, we will pop this up every now and then
-// FIXME: The google sign in button does not close the modal but it should.
 export function WelcomeModal() {
   const [open, setOpen] = useState(true);
   const handleOpen = () => setOpen(true);
@@ -146,13 +147,15 @@ export function WelcomeModal() {
       >
         <Box sx={style}>
           <Grid display="flex" justifyContent="end">
-            <Grid sm={12} lg={8}>
+            <Grid sm={11}>
+              <DemoModeWelcome />
+            </Grid>
+            <Grid sm={1}>
               <IconButton onClick={handleClose}>
                 <CloseIcon />
               </IconButton>
             </Grid>
           </Grid>
-          <DemoModeWelcome />
         </Box>
       </Modal>
     </div>

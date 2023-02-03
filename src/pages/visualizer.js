@@ -30,9 +30,11 @@ const Visualizer = (props) => {
 
   const ssid = localStorage.getItem("ssid");
 
+  // FIXME: rendering logic still not right here. It shows nothing on logout
+
   return (
     <>
-      {!isDataReady && !isLoading && !auth.user && (
+      {!isDataReady && !isLoading && !ssid && (
         <NewUserWelcome
           parsedData={parsedData}
           setParsedData={setParsedData}

@@ -35,8 +35,15 @@ export default function App() {
   useEffect(() => {
     // console.log(`[] useEffect...`);
 
+    const credential = JSON.parse(localStorage.getItem(`googleCredential`));
+    const ssid = localStorage.getItem(`ssid`);
+
+    // Don't go to demo mode if we can autoload from previous session
+    if (credential && ssid) return;
+
     if (!didProcessSampleData) {
       didProcessSampleData = true;
+
       setIsDemoMode(true);
       // Process the sample data for demo mode
       processData(parsedData, setVisualizerData, setAnalyzerData);

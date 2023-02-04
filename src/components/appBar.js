@@ -42,7 +42,12 @@ const settings = ["Report Issue", "Email Author", "Logout"]; // If we ever need 
 function ResponsiveAppBar(props) {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
+  const [sheetIcon, setSheetIcon] = useState({ url: sampleGSheet, tooltip: "Click to open sample Google Sheet data" });
   const auth = useAuth();
+
+  // FIXME: make a state object with the url and tooltip for the spreadsheet icon.
+  // Default will be: {url: sampleGSheet, tooltip: "Click to open sample Google Sheet data"}
+  // When file is selected, it will be: {url: file.url, tooltip: `Click to open your Google Sheet ${gSheetName}`}
 
   // FIXME: This is not best practice
   const infoChipStatus = props.infoChipStatus;
@@ -136,8 +141,6 @@ function ResponsiveAppBar(props) {
         localStorage.removeItem(`selectedLifts`); // Clear the selected lifts before we process a new file with new lifts
         localStorage.setItem("gSheetName", data.docs[0].name);
         localStorage.setItem("ssid", data.docs[0].id);
-        setInfoChipStatus("Loading GSheet Values");
-        setInfoChipToolTip(data.docs[0].name);
 
         loadGSheetValues(
           setInfoChipStatus,
@@ -147,7 +150,8 @@ function ResponsiveAppBar(props) {
           setVisualizerData,
           setParsedData,
           setAnalyzerData,
-          auth
+          auth,
+          setSheetIcon
         );
       },
     });
@@ -231,11 +235,11 @@ function ResponsiveAppBar(props) {
           </Box>
 
           {/* Sample Google Sheet icon on large screens */}
-          <Tooltip title="Click to open sample Google Sheet data">
+          <Tooltip title={sheetIcon.tooltip}>
             <Avatar
               sx={{ mx: 1, bgcolor: "#333333", display: { xs: "none", md: "flex" } }}
               variant="rounded"
-              onClick={(event) => window.open(sampleGSheet, "_blank")}
+              onClick={(event) => window.open(sheetIcon.url, "_blank")}
             >
               <TableChartIcon />
             </Avatar>

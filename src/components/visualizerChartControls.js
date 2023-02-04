@@ -25,6 +25,8 @@ export function ChartControls(props) {
   // console.log(`<ChartConrols />...`)
   // console.log(props);
 
+  // FIXME: Do not show the zoom controls if we only have 6 months or less of data
+
   return (
     <div>
       {/* <Box sx={{ m: 1 }} md={{ m: 3}} > */}

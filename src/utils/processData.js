@@ -82,6 +82,7 @@ export function processData(parsedData, setVisualizerData, setAnalyzerData) {
   let analyzerPRCardData = processAnalyzerPRCardData(parsedData, visualizerE1RMLineData);
 
   // Do we have a localStorage selectedLifts item? First time user will not have one.
+  // FIXME: don't do this in demo mode?
   const selectedLiftsItem = localStorage.getItem("selectedLifts");
   if (selectedLiftsItem === null) {
     let selectedLifts = visualizerE1RMLineData.map((item) => item.label);
@@ -252,6 +253,7 @@ function getProcessedLiftIndex(processedData, liftType) {
     const color = getLiftColor(liftType);
 
     // It is reverse logic because the option key is 'hidden' - positive selected means negative hidden
+    // FIXME: don't do this in demo mode - everything should be { hidden: false }
     const hidden = !wasLiftSelected(liftType);
 
     let processedLiftType = {

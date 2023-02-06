@@ -177,23 +177,27 @@ export function VisualizerLineChart(props) {
 
   // Min zoom-in time range in is normally 60 days. Unless the data is less than 60 days...
   let sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000; // Used for zoom config limits
-  if (sixtyDaysInMilliseconds > visualizerData.padDateMax - visualizerData.padDateMin)
-    sixtyDaysInMilliseconds = visualizerData.padDateMax - visualizerData.padDateMin;
+  let minRange = sixtyDaysInMilliseconds;
+  let zoomPanEnabled = true;
+  if (sixtyDaysInMilliseconds > visualizerData.padDateMax - visualizerData.padDateMin) {
+    minRange = visualizerData.padDateMax - visualizerData.padDateMin;
+    zoomPanEnabled = false;
+  }
 
   const zoomOptions = {
     zoom: {
-      wheel: { enabled: true },
+      wheel: { enabled: zoomPanEnabled },
       mode: "x",
     },
     pan: {
-      enabled: true,
+      enabled: zoomPanEnabled,
       mode: "x",
     },
     limits: {
       x: {
         min: visualizerData.padDateMin,
         max: visualizerData.padDateMax,
-        minRange: sixtyDaysInMilliseconds,
+        minRange: minRange,
       },
     },
   };
@@ -241,6 +245,7 @@ export function VisualizerLineChart(props) {
             visualizerData={visualizerData}
             setVisualizerData={setVisualizerData}
             chartUpdate={chartUpdate}
+            zoomPanEnabled={zoomPanEnabled}
           />
         )}
       </Box>

@@ -23,7 +23,6 @@ import { parseData } from "./parseData";
 // Flow can be triggered by:
 //  - on app launch using previous ssid and tokenResponse from localStorage
 //  - on choosing a GSheet from the Google File Picker
-//  - when a user changes equation
 //  - on auto-refresh of Google Sheet data (FIXME: not implemented)
 //
 // (the entry point will be different for each of those triggers)

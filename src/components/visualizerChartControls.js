@@ -22,10 +22,8 @@ import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 // <ChartControls />
 // --------------------------------------------------------------------------------------------------------
 export function ChartControls(props) {
-  // console.log(`<ChartConrols />...`)
+  console.log(`<ChartConrols />...`);
   // console.log(props);
-
-  // FIXME: Do not show the zoom controls if we only have 6 months or less of data
 
   return (
     <div>
@@ -34,7 +32,9 @@ export function ChartControls(props) {
       <Grid container spacing={2}>
         <Grid item xs={5}>
           {" "}
-          <VizConfigZoom zoomShowAllTime={props.zoomShowAllTime} zoomShowRecent={props.zoomShowRecent} />
+          {props.zoomPanEnabled && (
+            <VizConfigZoom zoomShowAllTime={props.zoomShowAllTime} zoomShowRecent={props.zoomShowRecent} />
+          )}
         </Grid>
         <Grid item xs={7}>
           <EquationChooser

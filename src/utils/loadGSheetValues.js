@@ -55,7 +55,9 @@ export async function loadGSheetValues(
   const gSheetName = localStorage.getItem(`gSheetName`);
   if (gSheetName) setInfoChipToolTip(gSheetName);
 
-  // FIXME: We can call setSheetIcon.url and setSheetIcon.tooltip here so user can click icon to open their own data
+  const url = localStorage.getItem(`url`);
+
+  if (url && gSheetName) setSheetIcon({ url: url, tooltip: `Click to open ${gSheetName}` });
 
   setIsLoading(true);
   setIsDataReady(false);

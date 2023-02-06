@@ -42,7 +42,6 @@ const settings = ["Report Issue", "Email Author", "Logout"]; // If we ever need 
 function ResponsiveAppBar(props) {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
-  const [sheetIcon, setSheetIcon] = useState({ url: sampleGSheet, tooltip: "Click to open sample Google Sheet data" });
   const auth = useAuth();
 
   // FIXME: make a state object with the url and tooltip for the spreadsheet icon.
@@ -63,6 +62,8 @@ function ResponsiveAppBar(props) {
   const setVisualizerData = props.setVisualizerData;
   const analyzerData = props.analyzerData;
   const setAnalyzerData = props.setAnalyzerData;
+  const sheetIcon = props.sheetIcon;
+  const setSheetIcon = props.setSheetIcon;
 
   // console.log(`<ResponsiveAppBar />...`);
 
@@ -98,6 +99,8 @@ function ResponsiveAppBar(props) {
       scrubData(parsedData, setParsedData, visualizerData, setVisualizerData, analyzerData, setAnalyzerData);
       setIsLoading(false);
       setAnchorElUser(null); // Closes menu
+      setSheetIcon({ url: sampleGSheet, tooltip: "Click to open sample Google Sheet data" });
+      // FIXME: we should find a way to go back to demo mode without having to refresh the page
     }
   };
 
@@ -133,6 +136,7 @@ function ResponsiveAppBar(props) {
         }
 
         // console.log(`User selected ${data.docs[0].name}, isDataReady = ${isDataReady}`);
+        console.log(data);
 
         // We need to clear the data before we load the new file
         // NOTE: this will not be instant so we cannot assume it happens before the loadGSheetValues() call
@@ -141,6 +145,7 @@ function ResponsiveAppBar(props) {
         localStorage.removeItem(`selectedLifts`); // Clear the selected lifts before we process a new file with new lifts
         localStorage.setItem("gSheetName", data.docs[0].name);
         localStorage.setItem("ssid", data.docs[0].id);
+        localStorage.setItem("url", data.docs[0].url);
 
         loadGSheetValues(
           setInfoChipStatus,

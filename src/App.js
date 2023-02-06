@@ -10,7 +10,7 @@ import { loadGSheetValues } from "./utils/loadGSheetValues";
 import { useAuth } from "./utils/auth";
 import { sampleData } from "./utils/sampleData";
 import { processData } from "./utils/processData";
-import { WelcomeModal } from "./components/welcome";
+import { WelcomeModal, sampleGSheet } from "./components/welcome";
 
 export default function App() {
   const auth = useAuth();
@@ -18,6 +18,7 @@ export default function App() {
   // Top right information chip. FIXME: merge these two together.
   const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source"); // Used in the navbar info chip-button
   const [infoChipToolTip, setInfoChipToolTip] = useState(null);
+  const [sheetIcon, setSheetIcon] = useState({ url: sampleGSheet, tooltip: "Click to open sample Google Sheet data" });
 
   // These control the rendering of various progress and chart.js components
   const [isLoading, setIsLoading] = useState(false); // Used to show loading animation
@@ -67,7 +68,8 @@ export default function App() {
         setVisualizerData,
         setParsedData,
         setAnalyzerData,
-        auth
+        auth,
+        setSheetIcon
       );
     }
   }, [auth.user]);
@@ -89,6 +91,8 @@ export default function App() {
         setParsedData={setParsedData}
         analyzerData={analyzerData}
         setAnalyzerData={setAnalyzerData}
+        sheetIcon={sheetIcon}
+        setSheetIcon={setSheetIcon}
       />
 
       {/* An <Outlet> renders whatever child route is currently active,

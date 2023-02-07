@@ -71,7 +71,7 @@ export async function loadGSheetValues(
       }
     )
     .then((response) => {
-      console.log(response);
+      // console.log(response);
 
       let result = parseData(response.data.values, setVisualizerData, setParsedData, setAnalyzerData);
 
@@ -92,6 +92,8 @@ export async function loadGSheetValues(
         localStorage.removeItem("selectedLifts");
         localStorage.removeItem("ssid");
         localStorage.removeItem("gSheetName");
+
+        localStorage.setItem("retryLoadGSheetValues", true); // Prevent infinite loops
         setIsLoading(false);
       }
     })
@@ -99,9 +101,17 @@ export async function loadGSheetValues(
       // The most likely scenario is the access token has expired
       // So try to sign in again.
 
-      // FIXME: should only try once, otherwise we get infinite loops
-      console.log("loadGSheetValues() had an error, so trying to sign in again...");
-      console.log(error);
-      auth.signinWithGoogle();
+      if (localStorage.getItem("retryLoadGSheetValues")) {
+        console.log("loadGSheetValues() had an error, but we have already retried. Do not try again.");
+        console.log(error);
+        localStorage.removeItem("retryLoadGSheetValues");
+        setInfoChipToolTip("Error reading Google Sheet"); // FIXME: Should be similar to the error cleanup above?
+        setInfoChipStatus("Error Reading Google Sheet");
+      } else {
+        console.log("loadGSheetValues() had an error, so trying to sign in again...");
+        console.log(error);
+        auth.signinWithGoogle();
+        localStorage.setItem("retryLoadGSheetValues", true); // Prevent infinite loops
+      }
     });
 }

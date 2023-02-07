@@ -44,10 +44,6 @@ function ResponsiveAppBar(props) {
   const [anchorElUser, setAnchorElUser] = useState(null);
   const auth = useAuth();
 
-  // FIXME: make a state object with the url and tooltip for the spreadsheet icon.
-  // Default will be: {url: sampleGSheet, tooltip: "Click to open sample Google Sheet data"}
-  // When file is selected, it will be: {url: file.url, tooltip: `Click to open your Google Sheet ${gSheetName}`}
-
   // FIXME: This is not best practice
   const infoChipStatus = props.infoChipStatus;
   const setInfoChipStatus = props.setInfoChipStatus;

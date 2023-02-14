@@ -32,8 +32,8 @@ import scrubData from "../utils/scrubData";
 
 // Array of main menu items
 const pages = [
-  { name: "Strength Visualizer", route: "visualizer" },
   { name: "PR Analyzer", route: "analyzer" },
+  { name: "Strength Visualizer", route: "visualizer" },
   { name: "E1RM Calculator", route: "calculator" },
 ];
 

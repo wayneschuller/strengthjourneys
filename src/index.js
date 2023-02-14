@@ -50,7 +50,7 @@ root.render(
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<App />}>
-              <Route path="/" element={<Navigate replace to="/visualizer" />} />
+              <Route path="/" element={<Navigate replace to="/analyzer" />} />
 
               <Route path="visualizer" element={<Visualizer />} />
               <Route path="analyzer" element={<Analyzer />} />

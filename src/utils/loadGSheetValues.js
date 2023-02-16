@@ -28,8 +28,7 @@ import { parseData } from "./parseData";
 // (the entry point will be different for each of those triggers)
 // ------------------------------------------------------------------
 export async function loadGSheetValues(
-  setInfoChipStatus,
-  setInfoChipToolTip,
+  setInfoChip,
   setIsLoading,
   setIsDataReady,
   setVisualizerData,
@@ -53,7 +52,7 @@ export async function loadGSheetValues(
   }
 
   const gSheetName = localStorage.getItem(`gSheetName`);
-  if (gSheetName) setInfoChipToolTip(gSheetName);
+  setInfoChip({ label: "Loading GSheet Values", tooltip: gSheetName });
 
   const url = localStorage.getItem(`url`);
 
@@ -61,7 +60,6 @@ export async function loadGSheetValues(
 
   setIsLoading(true);
   setIsDataReady(false);
-  setInfoChipStatus("Loading GSheet Values");
 
   await axios
     .get(
@@ -76,17 +74,18 @@ export async function loadGSheetValues(
       let result = parseData(response.data.values, setVisualizerData, setParsedData, setAnalyzerData);
 
       if (result) {
-        setInfoChipStatus("Google Sheet Data Loaded");
+        setInfoChip({ label: "Google Sheet Data Loaded", tooltip: gSheetName });
         setIsLoading(false); // Stop the loading animations
         setIsDataReady(true); // This should trigger <Visualizer /> and <Analyzer /> rendering
       } else {
         // We have data that could not be parsed
-        setInfoChipStatus("Bad Google Sheet Data");
+        let tooltip = "";
         if (localStorage.getItem("gSheetName")) {
-          setInfoChipToolTip(`Could not parse lifting data in file "${localStorage.getItem("gSheetName")}"`); // Put the GSheet filename in the chip tooltip
+          tooltip = `Could not parse lifting data in file "${localStorage.getItem("gSheetName")}"`; // Put the GSheet filename in the chip tooltip
         } else {
-          setInfoChipToolTip("Click to choose another Google Sheet");
+          tooltip = "Click to choose another Google Sheet";
         }
+        setInfoChip({ label: "Bad Google Sheet Data", tooltip: tooltip });
 
         // Clean up gracefully
         localStorage.removeItem("selectedLifts");
@@ -105,8 +104,7 @@ export async function loadGSheetValues(
         console.log("loadGSheetValues() had an error, but we have already retried. Do not try again.");
         console.log(error);
         localStorage.removeItem("retryLoadGSheetValues");
-        setInfoChipToolTip("Error reading Google Sheet"); // FIXME: Should be similar to the error cleanup above?
-        setInfoChipStatus("Error Reading Google Sheet");
+        setInfoChip({ label: "Error reading Google Sheet", tooltip: null }); // FIXME: Should be similar to the error cleanup above?
       } else {
         console.log("loadGSheetValues() had an error, so trying to sign in again...");
         console.log(error);

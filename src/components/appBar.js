@@ -45,10 +45,8 @@ function ResponsiveAppBar(props) {
   const auth = useAuth();
 
   // FIXME: This is not best practice
-  const infoChipStatus = props.infoChipStatus;
-  const setInfoChipStatus = props.setInfoChipStatus;
-  const infoChipToolTip = props.infoChipToolTip;
-  const setInfoChipToolTip = props.setInfoChipToolTip;
+  const infoChip = props.infoChip;
+  const setInfoChip = props.setInfoChip;
   const setIsLoading = props.setIsLoading;
   const setIsDataReady = props.setIsDataReady;
   const isDataReady = props.isDataReady;
@@ -144,8 +142,7 @@ function ResponsiveAppBar(props) {
         localStorage.setItem("url", data.docs[0].url);
 
         loadGSheetValues(
-          setInfoChipStatus,
-          setInfoChipToolTip,
+          setInfoChip,
           setIsLoading,
           setIsDataReady,
           setVisualizerData,
@@ -260,9 +257,9 @@ function ResponsiveAppBar(props) {
           {/* User profile info on right hand side of the navbar */}
           {auth.user ? (
             <>
-              <Tooltip title={infoChipToolTip}>
+              <Tooltip title={infoChip.tooltip}>
                 <Chip
-                  label={infoChipStatus}
+                  label={infoChip.label}
                   onClick={() => openGDrivePicker()}
                   variant="filled"
                   color="neutral"

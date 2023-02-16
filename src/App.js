@@ -15,9 +15,7 @@ import { WelcomeModal, sampleGSheet } from "./components/welcome";
 export default function App() {
   const auth = useAuth();
 
-  // Top right information chip. FIXME: merge these two together.
-  const [infoChipStatus, setInfoChipStatus] = useState("Choose Data Source"); // Used in the navbar info chip-button
-  const [infoChipToolTip, setInfoChipToolTip] = useState(null);
+  const [infoChip, setInfoChip] = useState({ label: "Choose Data Source", tooltip: null });
   const [sheetIcon, setSheetIcon] = useState({ url: sampleGSheet, tooltip: "Click to open sample Google Sheet data" });
 
   // These control the rendering of various progress and chart.js components
@@ -61,8 +59,7 @@ export default function App() {
       setIsDemoMode(false);
       // ✅ Only runs once per app load
       loadGSheetValues(
-        setInfoChipStatus,
-        setInfoChipToolTip,
+        setInfoChip,
         setIsLoading,
         setIsDataReady,
         setVisualizerData,
@@ -77,10 +74,8 @@ export default function App() {
   return (
     <div>
       <ResponsiveAppBar
-        infoChipStatus={infoChipStatus}
-        setInfoChipStatus={setInfoChipStatus}
-        infoChipToolTip={infoChipToolTip}
-        setInfoChipToolTip={setInfoChipToolTip}
+        infoChip={infoChip}
+        setInfoChip={setInfoChip}
         isLoading={isLoading}
         setIsLoading={setIsLoading}
         isDataReady={isDataReady}

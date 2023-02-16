@@ -252,7 +252,7 @@ function getProcessedLiftIndex(processedData, liftType) {
 
     const color = getLiftColor(liftType);
 
-    // It is reverse logic because the option key is 'hidden' - positive selected means negative hidden
+    // It is reverse logic because the chart.js option key is 'hidden' - positive selected means negative hidden
     // FIXME: don't do this in demo mode - everything should be { hidden: false }
     const hidden = !wasLiftSelected(liftType);
 
@@ -267,7 +267,7 @@ function getProcessedLiftIndex(processedData, liftType) {
       hitRadius: 20,
       hoverRadius: 10,
       cubicInterpolationMode: "monotone",
-      hidden: hidden, // This is for chart.js config - always show
+      hidden: hidden, // This is for chart.js config
     };
     liftIndex = processedData.push(processedLiftType) - 1;
   }

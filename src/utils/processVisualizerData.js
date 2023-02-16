@@ -116,6 +116,8 @@ function findPRs(rawLifts, reps, prName, datasetIndex, processedData, liftAnnota
       `#${i + 1} best ${liftType} ${prName} of all time (${reps}@${repLifts[i].weight}${repLifts[i].unitType})`
     );
 
+    // FIXME: Consider using a Javascript Map instead of the liftAnnotations object structure
+
     // Create some visual annotations for the top lift for this rep scheme
     // The visual annotations are only worthwhile when they have completed
     // more than 10 lifts of this rep and liftType combination.

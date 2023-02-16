@@ -28,9 +28,8 @@ import { parseData } from "./parseData";
 // (the entry point will be different for each of those triggers)
 // ------------------------------------------------------------------
 export async function loadGSheetValues(
+  setAppStatus,
   setInfoChip,
-  setIsLoading,
-  setIsDataReady,
   setVisualizerData,
   setParsedData,
   setAnalyzerData,
@@ -58,8 +57,7 @@ export async function loadGSheetValues(
 
   if (url && gSheetName) setSheetIcon({ url: url, tooltip: `Click to open ${gSheetName}` });
 
-  setIsLoading(true);
-  setIsDataReady(false);
+  setAppStatus("loading");
 
   await axios
     .get(
@@ -75,8 +73,7 @@ export async function loadGSheetValues(
 
       if (result) {
         setInfoChip({ label: "Google Sheet Data Loaded", tooltip: gSheetName });
-        setIsLoading(false); // Stop the loading animations
-        setIsDataReady(true); // This should trigger <Visualizer /> and <Analyzer /> rendering
+        setAppStatus("processed"); // This should trigger <Visualizer /> and <Analyzer /> rendering
       } else {
         // We have data that could not be parsed
         let tooltip = "";
@@ -93,7 +90,7 @@ export async function loadGSheetValues(
         localStorage.removeItem("gSheetName");
 
         localStorage.setItem("retryLoadGSheetValues", true); // Prevent infinite loops
-        setIsLoading(false);
+        setAppStatus("ready"); // We are 'ready' in auth for the user to pick a good gsheet
       }
     })
     .catch((error) => {
@@ -105,6 +102,7 @@ export async function loadGSheetValues(
         console.log(error);
         localStorage.removeItem("retryLoadGSheetValues");
         setInfoChip({ label: "Error reading Google Sheet", tooltip: null }); // FIXME: Should be similar to the error cleanup above?
+        setAppStatus("ready"); // We are 'ready' in auth for the user to pick a good gsheet
       } else {
         console.log("loadGSheetValues() had an error, so trying to sign in again...");
         console.log(error);

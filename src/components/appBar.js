@@ -47,9 +47,7 @@ function ResponsiveAppBar(props) {
   // FIXME: This is not best practice
   const infoChip = props.infoChip;
   const setInfoChip = props.setInfoChip;
-  const setIsLoading = props.setIsLoading;
-  const setIsDataReady = props.setIsDataReady;
-  const isDataReady = props.isDataReady;
+  const setAppStatus = props.setAppStatus;
   const parsedData = props.parsedData;
   const setParsedData = props.setParsedData;
   const visualizerData = props.visualizerData;
@@ -84,17 +82,16 @@ function ResponsiveAppBar(props) {
       window.open("mailto:info@strengthjourneys.xyz?subject=Thank you for Strength Journeys it is the best!");
     } else if (setting === "Logout") {
       console.log("Logout clicked");
-      setIsDataReady(false);
       auth.signout();
       localStorage.removeItem("googleCredential");
       // localStorage.removeItem("selectedLifts");
       // localStorage.removeItem("ssid");
       // localStorage.removeItem("gSheetName");
       scrubData(parsedData, setParsedData, visualizerData, setVisualizerData, analyzerData, setAnalyzerData);
-      setIsLoading(false);
       setAnchorElUser(null); // Closes menu
       setSheetIcon({ url: sampleGSheet, tooltip: "Click to open sample Google Sheet data" });
-      // FIXME: we should find a way to go back to demo mode without having to refresh the page
+      setAppStatus("demo");
+      // FIXME: more is needed to get back to demo mode...
     }
   };
 
@@ -142,9 +139,8 @@ function ResponsiveAppBar(props) {
         localStorage.setItem("url", data.docs[0].url);
 
         loadGSheetValues(
+          setAppStatus,
           setInfoChip,
-          setIsLoading,
-          setIsDataReady,
           setVisualizerData,
           setParsedData,
           setAnalyzerData,

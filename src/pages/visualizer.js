@@ -13,16 +13,8 @@ import { NewUserWelcome, ReturningUserWelcome, DemoModeWelcome, WelcomeModal } f
 import { useAuth } from "../utils/auth";
 
 const Visualizer = (props) => {
-  const [
-    isLoading,
-    isDataReady,
-    parsedData,
-    setParsedData,
-    visualizerData,
-    setVisualizerData,
-    analyzerData,
-    setAnalyzerData,
-  ] = useOutletContext();
+  const [appStatus, parsedData, setParsedData, visualizerData, setVisualizerData, analyzerData, setAnalyzerData] =
+    useOutletContext();
 
   const auth = useAuth();
 
@@ -34,28 +26,15 @@ const Visualizer = (props) => {
 
   return (
     <>
-      {!isDataReady && !isLoading && !ssid && (
-        <NewUserWelcome
-          parsedData={parsedData}
-          setParsedData={setParsedData}
-          setVisualizerData={setVisualizerData}
-          setAnalyzerData={setAnalyzerData}
-        />
-      )}
-
-      {!isDataReady && !isLoading && auth.user && <ReturningUserWelcome />}
-
       {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
-      {!isDataReady && isLoading && !ssid ? (
-        <LoadingLinearProgress />
-      ) : (
-        <>
-          <VisualizerLineChart
-            parsedData={parsedData}
-            visualizerData={visualizerData}
-            setVisualizerData={setVisualizerData}
-          />
-        </>
+      {appStatus === "loading" && !ssid && <LoadingLinearProgress />}
+
+      {(appStatus === "processed" || appStatus === "demo") && (
+        <VisualizerLineChart
+          parsedData={parsedData}
+          visualizerData={visualizerData}
+          setVisualizerData={setVisualizerData}
+        />
       )}
     </>
   );

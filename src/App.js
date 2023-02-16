@@ -17,11 +17,7 @@ export default function App() {
 
   const [infoChip, setInfoChip] = useState({ label: "Choose Data Source", tooltip: null });
   const [sheetIcon, setSheetIcon] = useState({ url: sampleGSheet, tooltip: "Click to open sample Google Sheet data" });
-
-  // These control the rendering of various progress and chart.js components
-  const [isLoading, setIsLoading] = useState(false); // Used to show loading animation
-  const [isDataReady, setIsDataReady] = useState(false); // Used to trigger when app is ready to render
-  const [isDemoMode, setIsDemoMode] = useState(false); // Used to show demo Data
+  const [appStatus, setAppStatus] = useState("demo"); // 'demo' | 'ready' | 'loading' | 'processed'
 
   // Main data elements. These may not need to be in React state.
   const [parsedData, setParsedData] = useState(sampleData);
@@ -34,34 +30,31 @@ export default function App() {
   useEffect(() => {
     // console.log(`[] useEffect...`);
 
+    // Don't process sample data if are about to autoload from previous session
     const credential = JSON.parse(localStorage.getItem(`googleCredential`));
     const ssid = localStorage.getItem(`ssid`);
-
-    // Don't go to demo mode if we can autoload from previous session
     if (credential && ssid) return;
 
     if (!didProcessSampleData) {
       didProcessSampleData = true;
 
-      setIsDemoMode(true);
       // Process the sample data for demo mode
       processData(parsedData, setVisualizerData, setAnalyzerData);
-      setIsDataReady(true);
     }
   }, []);
 
   // Event handlers do most of the data flow for us
   // However we want this authorisation useEffect to auto load data on init when we have a previous accessToken
+  // FIXME: we could be processing the sample data here and defaulting to demo mode
   let didInit = false;
   useEffect(() => {
     if (!didInit && auth?.user) {
       didInit = true;
-      setIsDemoMode(false);
+      setAppStatus("loading");
       // ✅ Only runs once per app load
       loadGSheetValues(
+        setAppStatus,
         setInfoChip,
-        setIsLoading,
-        setIsDataReady,
         setVisualizerData,
         setParsedData,
         setAnalyzerData,
@@ -74,12 +67,10 @@ export default function App() {
   return (
     <div>
       <ResponsiveAppBar
+        appStatus={appStatus}
+        setAppStatus={setAppStatus}
         infoChip={infoChip}
         setInfoChip={setInfoChip}
-        isLoading={isLoading}
-        setIsLoading={setIsLoading}
-        isDataReady={isDataReady}
-        setIsDataReady={setIsDataReady}
         visualizerData={visualizerData}
         setVisualizerData={setVisualizerData}
         parsedData={parsedData}
@@ -95,8 +86,7 @@ export default function App() {
           the child routes we defined above. */}
       <Outlet
         context={[
-          isLoading,
-          isDataReady,
+          appStatus,
           parsedData,
           setParsedData,
           visualizerData,
@@ -106,7 +96,7 @@ export default function App() {
         ]}
       />
 
-      {isDemoMode && <WelcomeModal />}
+      {appStatus === "demo" && <WelcomeModal />}
     </div>
   );
 }

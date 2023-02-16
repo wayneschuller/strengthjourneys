@@ -23,57 +23,44 @@ import { AnalyzerPieChart } from "../components/analyzerPieChart";
 import { LiftDataPanel, getPRInfo } from "../components/analyzerLiftDataPanel";
 
 const Analyzer = () => {
-  const [
-    isLoading,
-    isDataReady,
-    parsedData,
-    setParsedData,
-    visualizerData,
-    setVisualizerData,
-    analyzerData,
-    setAnalyzerData,
-  ] = useOutletContext();
+  const [appStatus, parsedData, setParsedData, visualizerData, setVisualizerData, analyzerData, setAnalyzerData] =
+    useOutletContext();
 
   const [selectedLift, setSelectedLift] = useState(null);
+
+  if (analyzerData === null) return;
 
   console.log(`<Analyzer />... (analyzerData: ${analyzerData})`);
 
   const ssid = localStorage.getItem("ssid");
 
   return (
-    <div>
-      {!isDataReady && !ssid && <NewUserWelcome />}
+    <>
+      {appStatus === "loading" && !ssid && <LoadingLinearProgress />}
 
-      {!isDataReady && ssid && !isLoading && <ReturningUserWelcome />}
-
-      {!isDataReady && isLoading && <LoadingLinearProgress />}
-
-      <Box sx={{ m: 3, width: "90%" }} color="secondary">
-        {/* <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 8 }}> */}
-        <Grid container>
-          <Grid sm={12} lg={6}>
-            {isDataReady && !isLoading && (
+      {(appStatus === "processed" || appStatus === "demo") && (
+        <Box sx={{ m: 3, width: "90%" }} color="secondary">
+          {/* <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 8 }}> */}
+          <Grid container>
+            <Grid sm={12} lg={6}>
               <AnalyzerPieChart
                 selectedLift={selectedLift}
                 setSelectedLift={setSelectedLift}
                 analyzerData={analyzerData}
               />
-            )}
-          </Grid>
-
-          <Grid sm={12} lg={6}>
-            {isDataReady && !isLoading && selectedLift && (
+            </Grid>
+            <Grid sm={12} lg={6}>
               <LiftDataPanel
                 selectedLift={selectedLift}
                 parsedData={parsedData}
                 analyzerData={analyzerData}
                 visualizerData={visualizerData}
               />
-            )}
+            </Grid>
           </Grid>
-        </Grid>
-      </Box>
-    </div>
+        </Box>
+      )}
+    </>
   );
 };
 

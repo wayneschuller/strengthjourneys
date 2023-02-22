@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import { useOutletContext } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import CalendarHeatmap from "react-calendar-heatmap";
+import "react-calendar-heatmap/dist/styles.css";
 
 // MUI Components
 import Box from "@mui/material/Box";
@@ -17,7 +19,6 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 
-import { NewUserWelcome, ReturningUserWelcome } from "../components/welcome";
 import { LoadingLinearProgress } from "./visualizer";
 import { AnalyzerPieChart } from "../components/analyzerPieChart";
 import { LiftDataPanel, getPRInfo } from "../components/analyzerLiftDataPanel";
@@ -37,6 +38,21 @@ const Analyzer = () => {
   return (
     <>
       {appStatus === "loading" && !ssid && <LoadingLinearProgress />}
+
+      {(appStatus === "processed" || appStatus === "demo") && (
+        <Box sx={{ m: 3, width: "90%" }} color="secondary">
+          <CalendarHeatmap
+            // startDate={new Date("2016-01-01")}
+            // endDate={new Date("2016-04-01")}
+            values={[
+              { date: "2016-01-01", count: 12 },
+              { date: "2016-01-22", count: 122 },
+              { date: "2016-01-30", count: 38 },
+              // ...and so on
+            ]}
+          />
+        </Box>
+      )}
 
       {(appStatus === "processed" || appStatus === "demo") && (
         <Box sx={{ m: 3, width: "90%" }} color="secondary">

@@ -10,6 +10,7 @@ import { CardActionArea } from "@mui/material";
 import CardContent from "@mui/material/CardContent";
 import Collapse from "@mui/material/Collapse";
 import Divider from "@mui/material/Divider";
+import Grow from "@mui/material/Grow";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Masonry from "@mui/lab/Masonry";

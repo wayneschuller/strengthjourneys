@@ -19,6 +19,8 @@ import { EmailIcon, FacebookIcon, RedditIcon, TwitterIcon } from "react-share";
 
 import { estimateE1RM } from "../utils/estimateE1RM";
 
+// FIXME: We should be using the same font as the rest of the app
+
 const Input = styled(MuiInput)`
   width: 5rem; // Goal is to have 4 digits in weight input - 3 plus one decimal digit
 `;

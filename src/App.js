@@ -45,10 +45,13 @@ export default function App() {
 
   // Event handlers do most of the data flow for us
   // However we want this authorisation useEffect to auto load data on init when we have a previous accessToken
-  // FIXME: we could be processing the sample data here and defaulting to demo mode
   let didInit = false;
   useEffect(() => {
-    if (!didInit && auth?.user) {
+    const credential = JSON.parse(localStorage.getItem(`googleCredential`));
+    const ssid = localStorage.getItem(`ssid`);
+
+    // Check if we have everything we need to auto-load data
+    if (credential && ssid && !didInit && auth?.user) {
       didInit = true;
       setAppStatus("loading");
       // ✅ Only runs once per app load

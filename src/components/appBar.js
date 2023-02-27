@@ -26,6 +26,8 @@ import TableChartIcon from "@mui/icons-material/TableChart";
 import { loadGSheetValues } from "../utils/loadGSheetValues";
 import { useAuth } from "../utils/auth";
 import { sampleGSheet } from "./welcome";
+import { sampleData } from "../utils/sampleData";
+import { processData } from "../utils/processData";
 
 import useDrivePicker from "react-google-drive-picker";
 import scrubData from "../utils/scrubData";
@@ -84,14 +86,19 @@ function ResponsiveAppBar(props) {
       console.log("Logout clicked");
       auth.signout();
       localStorage.removeItem("googleCredential");
-      // localStorage.removeItem("selectedLifts");
+
+      // User may want to log back in another time and get their ssid etc.
       // localStorage.removeItem("ssid");
       // localStorage.removeItem("gSheetName");
+
       scrubData(parsedData, setParsedData, visualizerData, setVisualizerData, analyzerData, setAnalyzerData);
       setAnchorElUser(null); // Closes menu
       setSheetIcon({ url: sampleGSheet, tooltip: "Click to open sample Google Sheet data" });
+
+      // Get back to demo mode
+      localStorage.removeItem("selectedLifts"); // Need to reset this for clean demo mode
+      processData(sampleData, setVisualizerData, setAnalyzerData);
       setAppStatus("demo");
-      // FIXME: more is needed to get back to demo mode...
     }
   };
 

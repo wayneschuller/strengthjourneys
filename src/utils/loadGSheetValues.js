@@ -1,17 +1,5 @@
 /** @format */
 
-// readData.js
-// Wayne Schuller, wayne@schuller.id.au
-// Licenced under https://www.gnu.org/licenses/gpl-3.0.html
-//
-// Utility functions for reading raw lift data
-//
-// Two main sources:
-//  - google sheets api
-//  - local CSV upload (code removed - FIXME: implement google picker csv upload)
-//
-// In the future we could support another spreadsheet or fitness app API
-
 import axios from "axios";
 import { parseData } from "./parseData";
 

@@ -15,7 +15,7 @@ import { parseData } from "./parseData";
 //
 // (the entry point will be different for each of those triggers)
 // ------------------------------------------------------------------
-export async function loadGSheetValues(
+export function loadGSheetValues(
   setAppStatus,
   setInfoChip,
   setVisualizerData,
@@ -47,7 +47,7 @@ export async function loadGSheetValues(
 
   setAppStatus("loading");
 
-  await axios
+  axios
     .get(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`,
       {

@@ -24,7 +24,7 @@ export default function App() {
   const [visualizerData, setVisualizerData] = useState(null);
   const [analyzerData, setAnalyzerData] = useState(null);
 
-  console.log(`<App />...`);
+  // console.log(`<App />...`);
 
   let didProcessSampleData = false;
   useEffect(() => {

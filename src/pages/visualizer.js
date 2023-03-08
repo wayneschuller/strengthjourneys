@@ -15,7 +15,7 @@ const Visualizer = (props) => {
 
   const auth = useAuth();
 
-  console.log(`<Visualizer />...(visualizerData: ${visualizerData})`);
+  // console.log(`<Visualizer />...(visualizerData: ${visualizerData})`);
 
   const ssid = localStorage.getItem("ssid");
 

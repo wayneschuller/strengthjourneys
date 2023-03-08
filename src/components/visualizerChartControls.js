@@ -22,7 +22,7 @@ import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 // <ChartControls />
 // --------------------------------------------------------------------------------------------------------
 export function ChartControls(props) {
-  console.log(`<ChartConrols />...`);
+  // console.log(`<ChartConrols />...`);
   // console.log(props);
 
   return (

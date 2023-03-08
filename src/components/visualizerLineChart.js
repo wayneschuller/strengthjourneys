@@ -17,7 +17,7 @@ Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 export function VisualizerLineChart(props) {
   const chartRef = useRef(null);
 
-  console.log(`<VisualiserLineChart />...`);
+  // console.log(`<VisualiserLineChart />...`);
 
   if (props.visualizerData === null) return;
   if (props.visualizerData.visualizerE1RMLineData === null) return;

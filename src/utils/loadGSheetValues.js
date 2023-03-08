@@ -1,17 +1,5 @@
 /** @format */
 
-// readData.js
-// Wayne Schuller, wayne@schuller.id.au
-// Licenced under https://www.gnu.org/licenses/gpl-3.0.html
-//
-// Utility functions for reading raw lift data
-//
-// Two main sources:
-//  - google sheets api
-//  - local CSV upload (code removed - FIXME: implement google picker csv upload)
-//
-// In the future we could support another spreadsheet or fitness app API
-
 import axios from "axios";
 import { parseData } from "./parseData";
 
@@ -27,7 +15,7 @@ import { parseData } from "./parseData";
 //
 // (the entry point will be different for each of those triggers)
 // ------------------------------------------------------------------
-export async function loadGSheetValues(
+export function loadGSheetValues(
   setAppStatus,
   setInfoChip,
   setVisualizerData,
@@ -59,7 +47,7 @@ export async function loadGSheetValues(
 
   setAppStatus("loading");
 
-  await axios
+  axios
     .get(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`,
       {

@@ -3,13 +3,10 @@
 import { React } from "react";
 import { useOutletContext } from "react-router-dom";
 
-import Grid from "@mui/material/Unstable_Grid2";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
-import Container from "@mui/material/Container";
 
 import { VisualizerLineChart } from "../components/visualizerLineChart";
-import { NewUserWelcome, ReturningUserWelcome, DemoModeWelcome, WelcomeModal } from "../components/welcome";
 import { useAuth } from "../utils/auth";
 
 const Visualizer = (props) => {
@@ -21,8 +18,6 @@ const Visualizer = (props) => {
   console.log(`<Visualizer />...(visualizerData: ${visualizerData})`);
 
   const ssid = localStorage.getItem("ssid");
-
-  // FIXME: rendering logic still not right here. It shows nothing on logout
 
   return (
     <>

@@ -5,9 +5,13 @@ import CalendarHeatmap from "react-calendar-heatmap";
 import "react-calendar-heatmap/dist/styles.css";
 
 export function LiftingCalendarHeatmap(props) {
-  // if (!props.analyzerData && !props.analyzerData.analyzerPieData) return;
-  // const analyzerData = props.analyzerData;
+  if (!props.analyzerData) return;
+  const analyzerData = props.analyzerData;
 
+  console.log(`<LiftingCalendarHeatmap />... analyzerData.heatmapData:`);
+  console.log(analyzerData.heatmapData);
+
+  // FIXME: can we use MUI transitions to slide in/out?
   return (
     <>
       <Box sx={{ m: 3, width: "90%" }} color="secondary">
@@ -16,8 +20,9 @@ export function LiftingCalendarHeatmap(props) {
           endDate={new Date("2016-04-01")}
           values={[
             { date: "2016-01-01", count: 12 },
-            { date: "2016-01-22", count: 122 },
-            { date: "2016-01-30", count: 38 },
+            { date: "2016-01-22", count: 12 },
+            { date: "2016-02-30", count: 38 },
+            { date: "2016-03-30", count: 38 },
             // ...and so on
           ]}
         />

@@ -29,7 +29,7 @@ const Analyzer = () => {
     <>
       {appStatus === "loading" && !ssid && <LoadingLinearProgress />}
 
-      {(appStatus === "processed" || appStatus === "demo") && <LiftingCalendarHeatmap />}
+      {(appStatus === "processed" || appStatus === "demo") && <LiftingCalendarHeatmap analyzerData={analyzerData} />}
 
       {(appStatus === "processed" || appStatus === "demo") && (
         <Box sx={{ m: 3, width: "90%" }} color="secondary">

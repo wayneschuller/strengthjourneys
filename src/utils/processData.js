@@ -7,6 +7,7 @@ import { estimateE1RM } from "./estimateE1RM";
 import { getLiftColor } from "./getLiftColor";
 import { processAchievements, updateAchievements } from "./processVisualizerData";
 import { processAnalyzerPieData, processAnalyzerPRCardData } from "./processAnalyzerData";
+import { processHeatmapData } from "./processHeatmapData";
 
 // --------------------------------------------------------------------------------------------
 // processData()
@@ -77,9 +78,10 @@ export function processData(parsedData, setVisualizerData, setAnalyzerData) {
   // Let's only keep the top 10 remaining lifts.
   visualizerE1RMLineData.splice(10); // FIXME: this could be configurable in settings
 
-  // Get the top lifts by session for the main Analyzer Pie chart
+  // Get the data needed for the <Analyzer /> page
   let analyzerPieData = processAnalyzerPieData(parsedData, visualizerE1RMLineData);
   let analyzerPRCardData = processAnalyzerPRCardData(parsedData, visualizerE1RMLineData);
+  let heatmapData = processHeatmapData(parsedData, visualizerE1RMLineData);
 
   // Do we have a localStorage selectedLifts item? First time user will not have one.
   // FIXME: don't do this in demo mode?
@@ -114,9 +116,9 @@ export function processData(parsedData, setVisualizerData, setAnalyzerData) {
 
   // Set React state for our main data structures
   setAnalyzerData({
-    // FIXME: put metadata here (such as calendarHeatmapData)
     analyzerPieData: analyzerPieData,
     analyzerPRCardData: analyzerPRCardData,
+    heatmapData: heatmapData,
   });
 
   setVisualizerData({

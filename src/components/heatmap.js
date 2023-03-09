@@ -16,12 +16,12 @@ export function LiftingCalendarHeatmap(props) {
     <>
       <Box sx={{ m: 3, width: "90%" }} color="secondary">
         <CalendarHeatmap
-          startDate={new Date("2016-01-01")}
-          endDate={new Date("2023-04-01")}
+          startDate={analyzerData.heatmapData.startDate}
+          endDate={analyzerData.heatmapData.endDate}
           showOutOfRangeDays={true}
           showWeekdayLabels={false}
           showMonthLabels={false}
-          values={analyzerData.heatmapData}
+          values={analyzerData.heatmapData.values}
         />
       </Box>
     </>

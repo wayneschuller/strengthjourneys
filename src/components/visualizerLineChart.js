@@ -17,12 +17,9 @@ import annotationPlugin from "chartjs-plugin-annotation";
 Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 
 export function VisualizerLineChart(props) {
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-
   const chartRef = useRef(null);
 
-  // console.log(`<VisualiserLineChart />...`);
+  console.log(`<VisualiserLineChart />...`);
 
   if (props.visualizerData === null) return;
   if (props.visualizerData.visualizerE1RMLineData === null) return;
@@ -33,15 +30,13 @@ export function VisualizerLineChart(props) {
   let analyzerData = props.analyzerData; // FIXME: this is for heatmapdata, maybe we should abstract it to a sibling of vis/analyizerData
   let appStatus = props.appStatus;
 
-  // setStartDate(visualizerData.padDateMin);
-  // setEndDate(visualizerData.padDateMax);
+  let startDate = visualizerData.padDateMin;
+  let endDate = visualizerData.padDateMax;
 
   function zoomShowAllTime() {
     const chart = chartRef.current;
     if (chart) {
       chart.zoomScale("x", { min: visualizerData.padDateMin, max: visualizerData.padDateMax }, "default");
-      setStartDate(visualizerData.padDateMin);
-      setEndDate(visualizerData.padDateMax);
     }
   }
 
@@ -52,8 +47,6 @@ export function VisualizerLineChart(props) {
     if (sixMonthsAgo < visualizerData.padDateMin) sixMonthsAgo = visualizerData.padDateMin;
     if (chart) {
       chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerData.padDateMax }, "default");
-      setStartDate(sixMonthsAgo);
-      setEndDate(visualizerData.padDateMax);
     }
   }
 
@@ -206,6 +199,14 @@ export function VisualizerLineChart(props) {
     zoom: {
       wheel: { enabled: zoomPanEnabled },
       mode: "x",
+      onZoomComplete: (chart) => {
+        // onZoomComplete saves more cpu than onZoom
+        console.log("Zooming");
+        // console.log(chart.chart.scales);
+        // console.log(chart);
+        if (chart.chart.scales.x.min) startDate = chart.chart.scales.x.min;
+        if (chart.chart.scales.x.max) endDate = chart.chart.scales.x.max;
+      },
     },
     pan: {
       enabled: zoomPanEnabled,

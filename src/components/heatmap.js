@@ -13,15 +13,13 @@ export function LiftingCalendarHeatmap(props) {
   if (!startDate) startDate = analyzerData.heatmapData.startDate;
   if (!endDate) endDate = analyzerData.heatmapData.endDate;
 
-  // console.log(`<LiftingCalendarHeatmap />... analyzerData.heatmapData:`);
-  // console.log(analyzerData.heatmapData);
+  console.log(`<LiftingCalendarHeatmap />... props:`);
+  console.log(props);
 
   return (
     <>
       <Box sx={{ m: 1 }} color="secondary">
         <CalendarHeatmap
-          // startDate={analyzerData.heatmapData.startDate}
-          // endDate={analyzerData.heatmapData.endDate}
           startDate={startDate}
           endDate={endDate}
           showOutOfRangeDays={false}

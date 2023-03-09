@@ -40,6 +40,7 @@ const Visualizer = (props) => {
           setVisualizerData={setVisualizerData}
           appStatus={appStatus}
           analyzerData={analyzerData}
+          setHeatmapData={setHeatmapData}
           heatmapData={heatmapData}
         />
       )}

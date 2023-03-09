@@ -28,10 +28,7 @@ export function VisualizerLineChart(props) {
   let visualizerData = props.visualizerData;
   let setVisualizerData = props.setVisualizerData;
   let heatmapData = props.heatmapData;
-  let appStatus = props.appStatus;
-
-  let startDate = visualizerData.padDateMin;
-  let endDate = visualizerData.padDateMax;
+  let setHeatmapData = props.setHeatmapData;
 
   function zoomShowAllTime() {
     const chart = chartRef.current;
@@ -204,8 +201,9 @@ export function VisualizerLineChart(props) {
         console.log("Zooming");
         // console.log(chart.chart.scales);
         // console.log(chart);
-        if (chart.chart.scales.x.min) startDate = chart.chart.scales.x.min;
-        if (chart.chart.scales.x.max) endDate = chart.chart.scales.x.max;
+
+        if (chart.chart.scales.x.min) setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min });
+        if (chart.chart.scales.x.min) setHeatmapData({ ...heatmapData, endDate: chart.chart.scales.x.max });
       },
     },
     pan: {
@@ -257,7 +255,7 @@ export function VisualizerLineChart(props) {
           <Line ref={chartRef} options={chartOptions} data={{ datasets: visualizerData.visualizerE1RMLineData }} />
         )}
 
-        {(appStatus === "processed" || appStatus === "demo") && <LiftingCalendarHeatmap heatmapData={heatmapData} />}
+        <LiftingCalendarHeatmap heatmapData={heatmapData} />
 
         {visualizerData && parsedData && (
           <ChartControls

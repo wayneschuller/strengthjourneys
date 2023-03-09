@@ -16,12 +16,13 @@ import { parseData } from "./parseData";
 // (the entry point will be different for each of those triggers)
 // ------------------------------------------------------------------
 export function loadGSheetValues(
+  auth,
   setAppStatus,
   setInfoChip,
   setVisualizerData,
   setParsedData,
   setAnalyzerData,
-  auth,
+  setHeatmapData,
   setSheetIcon
 ) {
   console.log("loadGSheetValues()...");
@@ -57,7 +58,7 @@ export function loadGSheetValues(
     .then((response) => {
       // console.log(response);
 
-      let result = parseData(response.data.values, setVisualizerData, setParsedData, setAnalyzerData);
+      let result = parseData(response.data.values, setVisualizerData, setParsedData, setAnalyzerData, setHeatmapData);
 
       if (result) {
         setInfoChip({ label: "Google Sheet Data Loaded", tooltip: gSheetName });

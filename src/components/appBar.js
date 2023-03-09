@@ -58,6 +58,7 @@ function ResponsiveAppBar(props) {
   const setAnalyzerData = props.setAnalyzerData;
   const sheetIcon = props.sheetIcon;
   const setSheetIcon = props.setSheetIcon;
+  const setHeatmapData = props.setHeatmapData;
 
   // console.log(`<ResponsiveAppBar />...`);
 
@@ -146,12 +147,13 @@ function ResponsiveAppBar(props) {
         localStorage.setItem("url", data.docs[0].url);
 
         loadGSheetValues(
+          auth,
           setAppStatus,
           setInfoChip,
           setVisualizerData,
           setParsedData,
           setAnalyzerData,
-          auth,
+          setHeatmapData,
           setSheetIcon
         );
       },

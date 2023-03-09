@@ -23,6 +23,7 @@ export default function App() {
   const [parsedData, setParsedData] = useState(sampleData);
   const [visualizerData, setVisualizerData] = useState(null);
   const [analyzerData, setAnalyzerData] = useState(null);
+  const [heatmapData, setHeatmapData] = useState(null);
 
   // console.log(`<App />...`);
 
@@ -39,7 +40,7 @@ export default function App() {
       didProcessSampleData = true;
 
       // Process the sample data for demo mode
-      processData(parsedData, setVisualizerData, setAnalyzerData);
+      processData(parsedData, setVisualizerData, setAnalyzerData, setHeatmapData);
     }
   }, []);
 
@@ -56,12 +57,13 @@ export default function App() {
       setAppStatus("loading");
       // ✅ Only runs once per app load
       loadGSheetValues(
+        auth,
         setAppStatus,
         setInfoChip,
         setVisualizerData,
         setParsedData,
         setAnalyzerData,
-        auth,
+        setHeatmapData,
         setSheetIcon
       );
     }
@@ -82,6 +84,8 @@ export default function App() {
         setAnalyzerData={setAnalyzerData}
         sheetIcon={sheetIcon}
         setSheetIcon={setSheetIcon}
+        heatmapData={heatmapData}
+        setHeatmapData={setHeatmapData}
       />
 
       {/* An <Outlet> renders whatever child route is currently active,
@@ -96,6 +100,8 @@ export default function App() {
           setVisualizerData,
           analyzerData,
           setAnalyzerData,
+          heatmapData,
+          setHeatmapData,
         ]}
       />
 

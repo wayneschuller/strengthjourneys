@@ -15,7 +15,7 @@ import { processHeatmapData } from "./processHeatmapData";
 // Process the parsedData array of lifts into data structures ready for the <Visualiser /> and <Analyzer />
 //
 // --------------------------------------------------------------------------------------------
-export function processData(parsedData, setVisualizerData, setAnalyzerData) {
+export function processData(parsedData, setVisualizerData, setAnalyzerData, setHeatmapData) {
   console.log("processData()...");
 
   let visualizerE1RMLineData = [];
@@ -81,7 +81,9 @@ export function processData(parsedData, setVisualizerData, setAnalyzerData) {
   // Get the data needed for the <Analyzer /> page
   let analyzerPieData = processAnalyzerPieData(parsedData, visualizerE1RMLineData);
   let analyzerPRCardData = processAnalyzerPRCardData(parsedData, visualizerE1RMLineData);
-  let heatmapData = processHeatmapData(parsedData, visualizerE1RMLineData);
+
+  // Get the data needed for the <Heatmap /> component
+  let heatmapData = processHeatmapData(parsedData);
 
   // Do we have a localStorage selectedLifts item? First time user will not have one.
   // FIXME: don't do this in demo mode?
@@ -115,10 +117,11 @@ export function processData(parsedData, setVisualizerData, setAnalyzerData) {
   highestWeight = Math.ceil(highestWeight / 49) * 50; // Round up to the next mulitiple of 50
 
   // Set React state for our main data structures
+  setHeatmapData(heatmapData);
+
   setAnalyzerData({
     analyzerPieData: analyzerPieData,
     analyzerPRCardData: analyzerPRCardData,
-    heatmapData: heatmapData,
   });
 
   setVisualizerData({

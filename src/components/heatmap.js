@@ -5,16 +5,16 @@ import CalendarHeatmap from "react-calendar-heatmap";
 import "react-calendar-heatmap/dist/styles.css";
 
 export function LiftingCalendarHeatmap(props) {
-  if (!props.analyzerData) return;
-  const analyzerData = props.analyzerData;
-  let startDate = props.startDate;
-  let endDate = props.endDate;
-
-  if (!startDate) startDate = analyzerData.heatmapData.startDate;
-  if (!endDate) endDate = analyzerData.heatmapData.endDate;
-
   console.log(`<LiftingCalendarHeatmap />... props:`);
   console.log(props);
+
+  if (!props.heatmapData) return;
+  const heatmapData = props.heatmapData;
+  let startDate = heatmapData.startDate;
+  let endDate = heatmapData.endDate;
+
+  // if (!startDate) startDate = analyzerData.heatmapData.startDate;
+  // if (!endDate) endDate = analyzerData.heatmapData.endDate;
 
   return (
     <>
@@ -25,7 +25,7 @@ export function LiftingCalendarHeatmap(props) {
           showOutOfRangeDays={false}
           showWeekdayLabels={false}
           showMonthLabels={false}
-          values={analyzerData.heatmapData.values}
+          values={heatmapData.values}
         />
       </Box>
     </>

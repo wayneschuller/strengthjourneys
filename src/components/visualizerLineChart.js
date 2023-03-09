@@ -27,7 +27,7 @@ export function VisualizerLineChart(props) {
   let parsedData = props.parsedData;
   let visualizerData = props.visualizerData;
   let setVisualizerData = props.setVisualizerData;
-  let analyzerData = props.analyzerData; // FIXME: this is for heatmapdata, maybe we should abstract it to a sibling of vis/analyizerData
+  let heatmapData = props.heatmapData;
   let appStatus = props.appStatus;
 
   let startDate = visualizerData.padDateMin;
@@ -257,9 +257,7 @@ export function VisualizerLineChart(props) {
           <Line ref={chartRef} options={chartOptions} data={{ datasets: visualizerData.visualizerE1RMLineData }} />
         )}
 
-        {(appStatus === "processed" || appStatus === "demo") && (
-          <LiftingCalendarHeatmap analyzerData={analyzerData} startDate={startDate} endDate={endDate} />
-        )}
+        {(appStatus === "processed" || appStatus === "demo") && <LiftingCalendarHeatmap heatmapData={heatmapData} />}
 
         {visualizerData && parsedData && (
           <ChartControls

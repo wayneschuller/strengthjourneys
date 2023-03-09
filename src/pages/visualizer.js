@@ -10,8 +10,17 @@ import { VisualizerLineChart } from "../components/visualizerLineChart";
 import { useAuth } from "../utils/auth";
 
 const Visualizer = (props) => {
-  const [appStatus, parsedData, setParsedData, visualizerData, setVisualizerData, analyzerData, setAnalyzerData] =
-    useOutletContext();
+  const [
+    appStatus,
+    parsedData,
+    setParsedData,
+    visualizerData,
+    setVisualizerData,
+    analyzerData,
+    setAnalyzerData,
+    heatmapData,
+    setHeatmapData,
+  ] = useOutletContext();
 
   const auth = useAuth();
 
@@ -31,6 +40,7 @@ const Visualizer = (props) => {
           setVisualizerData={setVisualizerData}
           appStatus={appStatus}
           analyzerData={analyzerData}
+          heatmapData={heatmapData}
         />
       )}
     </>

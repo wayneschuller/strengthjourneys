@@ -1,6 +1,6 @@
 /** @format */
 
-export function processHeatmapData(parsedData, processedData) {
+export function processHeatmapData(parsedData) {
   let heatmapData = {};
   const values = [];
 

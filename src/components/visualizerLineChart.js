@@ -1,6 +1,6 @@
 /** @format */
 
-import { useRef } from "react";
+import { useState, useRef } from "react";
 
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
@@ -17,6 +17,9 @@ import annotationPlugin from "chartjs-plugin-annotation";
 Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 
 export function VisualizerLineChart(props) {
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+
   const chartRef = useRef(null);
 
   // console.log(`<VisualiserLineChart />...`);
@@ -30,9 +33,16 @@ export function VisualizerLineChart(props) {
   let analyzerData = props.analyzerData; // FIXME: this is for heatmapdata, maybe we should abstract it to a sibling of vis/analyizerData
   let appStatus = props.appStatus;
 
+  // setStartDate(visualizerData.padDateMin);
+  // setEndDate(visualizerData.padDateMax);
+
   function zoomShowAllTime() {
     const chart = chartRef.current;
-    if (chart) chart.zoomScale("x", { min: visualizerData.padDateMin, max: visualizerData.padDateMax }, "default");
+    if (chart) {
+      chart.zoomScale("x", { min: visualizerData.padDateMin, max: visualizerData.padDateMax }, "default");
+      setStartDate(visualizerData.padDateMin);
+      setEndDate(visualizerData.padDateMax);
+    }
   }
 
   function zoomShowRecent() {
@@ -40,7 +50,11 @@ export function VisualizerLineChart(props) {
     // if (chart) chart.resetZoom();
     let sixMonthsAgo = visualizerData.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
     if (sixMonthsAgo < visualizerData.padDateMin) sixMonthsAgo = visualizerData.padDateMin;
-    if (chart) chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerData.padDateMax }, "default");
+    if (chart) {
+      chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerData.padDateMax }, "default");
+      setStartDate(sixMonthsAgo);
+      setEndDate(visualizerData.padDateMax);
+    }
   }
 
   function chartUpdate() {
@@ -243,11 +257,7 @@ export function VisualizerLineChart(props) {
         )}
 
         {(appStatus === "processed" || appStatus === "demo") && (
-          <LiftingCalendarHeatmap
-            analyzerData={analyzerData}
-            startDate={visualizerData.padDateMin}
-            endDate={visualizerData.padDateMax}
-          />
+          <LiftingCalendarHeatmap analyzerData={analyzerData} startDate={startDate} endDate={endDate} />
         )}
 
         {visualizerData && parsedData && (

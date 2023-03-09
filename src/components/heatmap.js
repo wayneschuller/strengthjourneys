@@ -7,8 +7,11 @@ import "react-calendar-heatmap/dist/styles.css";
 export function LiftingCalendarHeatmap(props) {
   if (!props.analyzerData) return;
   const analyzerData = props.analyzerData;
-  const startDate = props.startDate;
-  const endDate = props.endDate;
+  let startDate = props.startDate;
+  let endDate = props.endDate;
+
+  if (!startDate) startDate = analyzerData.heatmapData.startDate;
+  if (!endDate) endDate = analyzerData.heatmapData.endDate;
 
   // console.log(`<LiftingCalendarHeatmap />... analyzerData.heatmapData:`);
   // console.log(analyzerData.heatmapData);

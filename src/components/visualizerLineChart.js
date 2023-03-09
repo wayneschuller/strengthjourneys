@@ -183,6 +183,8 @@ export function VisualizerLineChart(props) {
     const chart = chartRef.current;
     if (chart) {
       chart.zoomScale("x", { min: visualizerData.padDateMin, max: visualizerData.padDateMax }, "default");
+      setHeatmapData({ ...heatmapData, startDate: visualizerData.padDateMin });
+      setHeatmapData({ ...heatmapData, endDate: visualizerData.padDateMax });
     }
   }
 
@@ -193,6 +195,8 @@ export function VisualizerLineChart(props) {
     if (sixMonthsAgo < visualizerData.padDateMin) sixMonthsAgo = visualizerData.padDateMin;
     if (chart) {
       chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerData.padDateMax }, "default");
+      setHeatmapData({ ...heatmapData, startDate: sixMonthsAgo });
+      setHeatmapData({ ...heatmapData, endDate: visualizerData.padDateMax });
     }
   }
 
@@ -202,7 +206,7 @@ export function VisualizerLineChart(props) {
   let zoomPanEnabled = true;
   if (sixtyDaysInMilliseconds > visualizerData.padDateMax - visualizerData.padDateMin) {
     minRange = visualizerData.padDateMax - visualizerData.padDateMin;
-    zoomPanEnabled = false;
+    zoomPanEnabled = false; // No zooming or panning if they don't have sixty days of data
   }
 
   const zoomOptions = {
@@ -216,14 +220,18 @@ export function VisualizerLineChart(props) {
         // console.log(chart);
 
         if (chart.chart.scales.x.min) setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min });
-        if (chart.chart.scales.x.min) setHeatmapData({ ...heatmapData, endDate: chart.chart.scales.x.max });
+        if (chart.chart.scales.x.max) setHeatmapData({ ...heatmapData, endDate: chart.chart.scales.x.max });
       },
     },
     pan: {
       enabled: zoomPanEnabled,
       mode: "x",
       onPan: (chart) => {
-        console.log(chart);
+        // Use onPan not onPanComplete because we want to sync scrolling between chart and heatmap
+        console.log(`Panning`);
+        // console.log(chart);
+        if (chart.chart.scales.x.min) setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min });
+        if (chart.chart.scales.x.max) setHeatmapData({ ...heatmapData, endDate: chart.chart.scales.x.max });
       },
     },
     limits: {
@@ -240,7 +248,7 @@ export function VisualizerLineChart(props) {
   };
 
   // ----------------------------------------------------------------------------------------------
-  // Line Chart Options for react-chartjs-2 Visualizer
+  // Top level line Chart Options for react-chartjs-2 Visualizer
   // ----------------------------------------------------------------------------------------------
   let chartOptions = {
     responsive: true,

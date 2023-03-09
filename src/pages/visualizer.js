@@ -29,6 +29,8 @@ const Visualizer = (props) => {
           parsedData={parsedData}
           visualizerData={visualizerData}
           setVisualizerData={setVisualizerData}
+          appStatus={appStatus}
+          analyzerData={analyzerData}
         />
       )}
     </>

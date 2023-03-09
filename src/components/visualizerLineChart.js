@@ -6,6 +6,8 @@ import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 
 import { ChartControls } from "./visualizerChartControls";
+import { LiftingCalendarHeatmap } from "./heatmap";
+
 import Chart from "chart.js/auto"; // Pick everything. You can hand pick which chartjs features you want, see chartjs docs.
 import { Line } from "react-chartjs-2";
 import "chartjs-adapter-date-fns";
@@ -25,6 +27,8 @@ export function VisualizerLineChart(props) {
   let parsedData = props.parsedData;
   let visualizerData = props.visualizerData;
   let setVisualizerData = props.setVisualizerData;
+  let analyzerData = props.analyzerData; // FIXME: this is for heatmapdata, maybe we should abstract it to a sibling of vis/analyizerData
+  let appStatus = props.appStatus;
 
   function zoomShowAllTime() {
     const chart = chartRef.current;
@@ -237,6 +241,15 @@ export function VisualizerLineChart(props) {
         {visualizerData && (
           <Line ref={chartRef} options={chartOptions} data={{ datasets: visualizerData.visualizerE1RMLineData }} />
         )}
+
+        {(appStatus === "processed" || appStatus === "demo") && (
+          <LiftingCalendarHeatmap
+            analyzerData={analyzerData}
+            startDate={visualizerData.padDateMin}
+            endDate={visualizerData.padDateMax}
+          />
+        )}
+
         {visualizerData && parsedData && (
           <ChartControls
             zoomShowAllTime={zoomShowAllTime}

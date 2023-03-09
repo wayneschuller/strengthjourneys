@@ -30,23 +30,6 @@ export function VisualizerLineChart(props) {
   let heatmapData = props.heatmapData;
   let setHeatmapData = props.setHeatmapData;
 
-  function zoomShowAllTime() {
-    const chart = chartRef.current;
-    if (chart) {
-      chart.zoomScale("x", { min: visualizerData.padDateMin, max: visualizerData.padDateMax }, "default");
-    }
-  }
-
-  function zoomShowRecent() {
-    const chart = chartRef.current;
-    // if (chart) chart.resetZoom();
-    let sixMonthsAgo = visualizerData.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
-    if (sixMonthsAgo < visualizerData.padDateMin) sixMonthsAgo = visualizerData.padDateMin;
-    if (chart) {
-      chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerData.padDateMax }, "default");
-    }
-  }
-
   function chartUpdate() {
     const chart = chartRef.current;
     if (chart) chart.update();
@@ -96,6 +79,9 @@ export function VisualizerLineChart(props) {
     if (sixMonthsAgo < visualizerData.padDateMin) sixMonthsAgo = visualizerData.padDateMin;
   }
 
+  // ----------------------------------------------------------------------------------------------
+  // scalesOptions
+  // ----------------------------------------------------------------------------------------------
   const scalesOptions = {
     x: {
       type: "time",
@@ -137,6 +123,9 @@ export function VisualizerLineChart(props) {
     onClick: newLegendClickHandler,
   };
 
+  // ----------------------------------------------------------------------------------------------
+  // datalabelsOptions
+  // ----------------------------------------------------------------------------------------------
   const datalabelsOptions = {
     formatter: (context) => {
       let result = [];
@@ -160,6 +149,9 @@ export function VisualizerLineChart(props) {
     anchor: "end",
   };
 
+  // ----------------------------------------------------------------------------------------------
+  // tooltipOptions
+  // ----------------------------------------------------------------------------------------------
   const tooltipOptions = {
     enabled: true,
     titleFont: { family: "Catamaran", size: 14 },
@@ -182,6 +174,27 @@ export function VisualizerLineChart(props) {
       },
     },
   };
+
+  // ----------------------------------------------------------------------------------------------
+  // zoomOptions
+  // ----------------------------------------------------------------------------------------------
+
+  function zoomShowAllTime() {
+    const chart = chartRef.current;
+    if (chart) {
+      chart.zoomScale("x", { min: visualizerData.padDateMin, max: visualizerData.padDateMax }, "default");
+    }
+  }
+
+  function zoomShowRecent() {
+    const chart = chartRef.current;
+    // if (chart) chart.resetZoom();
+    let sixMonthsAgo = visualizerData.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
+    if (sixMonthsAgo < visualizerData.padDateMin) sixMonthsAgo = visualizerData.padDateMin;
+    if (chart) {
+      chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerData.padDateMax }, "default");
+    }
+  }
 
   // Min zoom-in time range in is normally 60 days. Unless the data is less than 60 days...
   let sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000; // Used for zoom config limits
@@ -209,6 +222,9 @@ export function VisualizerLineChart(props) {
     pan: {
       enabled: zoomPanEnabled,
       mode: "x",
+      onPan: (chart) => {
+        console.log(chart);
+      },
     },
     limits: {
       x: {
@@ -223,7 +239,9 @@ export function VisualizerLineChart(props) {
     annotations: visualizerData.achievementAnnotations,
   };
 
+  // ----------------------------------------------------------------------------------------------
   // Line Chart Options for react-chartjs-2 Visualizer
+  // ----------------------------------------------------------------------------------------------
   let chartOptions = {
     responsive: true,
     resizeDelay: 20, // milliseconds delay before resizing responsive chart - makes things smoother

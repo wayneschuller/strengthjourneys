@@ -6,7 +6,6 @@ import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 
 import { ChartControls } from "./visualizerChartControls";
-import { LiftingCalendarHeatmap } from "./heatmap";
 
 import Chart from "chart.js/auto"; // Pick everything. You can hand pick which chartjs features you want, see chartjs docs.
 import { Line } from "react-chartjs-2";
@@ -27,8 +26,7 @@ export function VisualizerLineChart(props) {
   let parsedData = props.parsedData;
   let visualizerData = props.visualizerData;
   let setVisualizerData = props.setVisualizerData;
-  let heatmapData = props.heatmapData;
-  let setHeatmapData = props.setHeatmapData;
+  let handleZoomPan = props.handleZoomPan;
 
   function chartUpdate() {
     const chart = chartRef.current;
@@ -135,7 +133,7 @@ export function VisualizerLineChart(props) {
         result.push(`${context.y}${context.unitType}`); // Show e1rm
       } else {
         result.push(`${context.y}${context.unitType}`); // Show e1rm
-        // result.push(`${context.reps}@${context.weight}${context.unitType}`); // Show full lift
+        // result.push(`${context.reps}@${context.weight}${context.unitType}`); // Alternatively: Show full lift
       }
       return result;
     },
@@ -211,26 +209,12 @@ export function VisualizerLineChart(props) {
     zoom: {
       wheel: { enabled: zoomPanEnabled },
       mode: "x",
-      onZoomComplete: (chart) => {
-        // onZoomComplete saves more cpu than onZoom
-        console.log("Zooming");
-        // console.log(chart.chart.scales);
-        // console.log(chart);
-
-        setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min, endDate: chart.chart.scales.x.max });
-        // zoomEndDateRef.current = chart.chart.scales.x.max;
-      },
+      onZoomComplete: handleZoomPan,
     },
     pan: {
       enabled: zoomPanEnabled,
       mode: "x",
-      onPan: (chart) => {
-        // Use onPan not onPanComplete because we want to sync scrolling between chart and heatmap
-        console.log(`Panning`);
-        // console.log(chart);
-        setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min, endDate: chart.chart.scales.x.max });
-        // zoomEndDateRef.current = chart.chart.scales.x.max;
-      },
+      onPan: handleZoomPan,
     },
     limits: {
       x: {
@@ -278,8 +262,6 @@ export function VisualizerLineChart(props) {
         {visualizerData && (
           <Line ref={chartRef} options={chartOptions} data={{ datasets: visualizerData.visualizerE1RMLineData }} />
         )}
-
-        <LiftingCalendarHeatmap heatmapData={heatmapData} />
 
         {visualizerData && parsedData && (
           <ChartControls

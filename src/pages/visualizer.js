@@ -5,7 +5,7 @@ import { useOutletContext } from "react-router-dom";
 
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
-
+import { LiftingCalendarHeatmap } from "../components/heatmap";
 import { VisualizerLineChart } from "../components/visualizerLineChart";
 import { useAuth } from "../utils/auth";
 
@@ -26,11 +26,17 @@ const Visualizer = (props) => {
 
   // console.log(`<Visualizer />...(visualizerData: ${visualizerData})`);
 
+  const handleZoomPan = ({ chart }) => {
+    console.log(`handleZoomPan()...`);
+    console.log(chart);
+    // Update start and end dates of the heatmap
+    // setHeatmapData({ ...heatmapData, startDate: chart.scales.x.min, endDate: chart.scales.x.max });
+  };
+
   const ssid = localStorage.getItem("ssid");
 
   return (
     <>
-      {/* FIXME: I like this Liner Progress UI but I would like it center middle of the page  */}
       {appStatus === "loading" && !ssid && <LoadingLinearProgress />}
 
       {(appStatus === "processed" || appStatus === "demo") && (
@@ -40,10 +46,13 @@ const Visualizer = (props) => {
           setVisualizerData={setVisualizerData}
           appStatus={appStatus}
           analyzerData={analyzerData}
-          setHeatmapData={setHeatmapData}
-          heatmapData={heatmapData}
+          handleZoomPan={handleZoomPan}
         />
       )}
+
+      {/* {(appStatus === "processed" || appStatus === "demo") && <LiftingCalendarHeatmap heatmapData={heatmapData} />} */}
+
+      <LiftingCalendarHeatmap heatmapData={heatmapData} />
     </>
   );
 };

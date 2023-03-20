@@ -53,6 +53,10 @@ export default function App() {
     // Check if we have everything we need to auto-load data
     if (credential && ssid && !didInit && auth?.user) {
       didInit = true;
+
+      console.log(`[] useEffect... auto-load data - check if auth is right below:`);
+      console.log(auth);
+
       setAppStatus("loading");
       // ✅ Only runs once per app load
       loadGSheetValues(

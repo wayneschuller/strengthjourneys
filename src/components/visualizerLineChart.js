@@ -183,8 +183,7 @@ export function VisualizerLineChart(props) {
     const chart = chartRef.current;
     if (chart) {
       chart.zoomScale("x", { min: visualizerData.padDateMin, max: visualizerData.padDateMax }, "default");
-      setHeatmapData({ ...heatmapData, startDate: visualizerData.padDateMin });
-      setHeatmapData({ ...heatmapData, endDate: visualizerData.padDateMax });
+      // setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min, endDate: chart.chart.scales.x.max });
     }
   }
 
@@ -195,8 +194,7 @@ export function VisualizerLineChart(props) {
     if (sixMonthsAgo < visualizerData.padDateMin) sixMonthsAgo = visualizerData.padDateMin;
     if (chart) {
       chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerData.padDateMax }, "default");
-      setHeatmapData({ ...heatmapData, startDate: sixMonthsAgo });
-      setHeatmapData({ ...heatmapData, endDate: visualizerData.padDateMax });
+      // setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min, endDate: chart.chart.scales.x.max });
     }
   }
 
@@ -219,8 +217,8 @@ export function VisualizerLineChart(props) {
         // console.log(chart.chart.scales);
         // console.log(chart);
 
-        if (chart.chart.scales.x.min) setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min });
-        if (chart.chart.scales.x.max) setHeatmapData({ ...heatmapData, endDate: chart.chart.scales.x.max });
+        setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min, endDate: chart.chart.scales.x.max });
+        // zoomEndDateRef.current = chart.chart.scales.x.max;
       },
     },
     pan: {
@@ -230,8 +228,8 @@ export function VisualizerLineChart(props) {
         // Use onPan not onPanComplete because we want to sync scrolling between chart and heatmap
         console.log(`Panning`);
         // console.log(chart);
-        if (chart.chart.scales.x.min) setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min });
-        if (chart.chart.scales.x.max) setHeatmapData({ ...heatmapData, endDate: chart.chart.scales.x.max });
+        setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min, endDate: chart.chart.scales.x.max });
+        // zoomEndDateRef.current = chart.chart.scales.x.max;
       },
     },
     limits: {

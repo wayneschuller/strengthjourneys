@@ -1,10 +1,11 @@
 /** @format */
+import { forwardRef, useRef } from "react";
 
 import Box from "@mui/material/Box";
 import CalendarHeatmap from "react-calendar-heatmap";
 import "react-calendar-heatmap/dist/styles.css";
 
-export function LiftingCalendarHeatmap(props) {
+export const LiftingCalendarHeatmap = (props) => {
   console.log(`<LiftingCalendarHeatmap />... props:`);
   console.log(props);
 
@@ -20,8 +21,8 @@ export function LiftingCalendarHeatmap(props) {
     <>
       <Box sx={{ m: 1 }} color="secondary">
         <CalendarHeatmap
-          startDate={startDate}
-          endDate={endDate}
+          startDate={props.heatmapData.startDate}
+          endDate={props.heatmapData.endDate}
           showOutOfRangeDays={false}
           showWeekdayLabels={false}
           showMonthLabels={false}
@@ -30,4 +31,4 @@ export function LiftingCalendarHeatmap(props) {
       </Box>
     </>
   );
-}
+};

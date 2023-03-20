@@ -62,6 +62,7 @@ export function loadGSheetValues(
       if (result) {
         setInfoChip({ label: "Google Sheet Data Loaded", tooltip: gSheetName });
         setAppStatus("processed"); // This should trigger <Visualizer /> and <Analyzer /> rendering
+        localStorage.removeItem("retryLoadGSheetValues"); // Reset the retry flag
       } else {
         // We have data that could not be parsed
         let tooltip = "";

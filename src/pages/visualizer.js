@@ -30,7 +30,7 @@ const Visualizer = (props) => {
     console.log(`handleZoomPan()...`);
     console.log(chart);
     // Update start and end dates of the heatmap
-    // setHeatmapData({ ...heatmapData, startDate: chart.scales.x.min, endDate: chart.scales.x.max });
+    setHeatmapData({ ...heatmapData, startDate: chart.scales.x.min, endDate: chart.scales.x.max });
   };
 
   const ssid = localStorage.getItem("ssid");

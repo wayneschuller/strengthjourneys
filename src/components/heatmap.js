@@ -2,6 +2,7 @@
 import { forwardRef, useRef } from "react";
 
 import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
 import CalendarHeatmap from "react-calendar-heatmap";
 import "react-calendar-heatmap/dist/styles.css";
 
@@ -19,7 +20,7 @@ export const LiftingCalendarHeatmap = (props) => {
 
   return (
     <>
-      <Box sx={{ m: 1 }} color="secondary">
+      <Container sx={{ m: 1, height: "200px", overflow: "auto" }} color="secondary">
         <CalendarHeatmap
           startDate={props.heatmapData.startDate}
           endDate={props.heatmapData.endDate}
@@ -28,7 +29,7 @@ export const LiftingCalendarHeatmap = (props) => {
           showMonthLabels={false}
           values={heatmapData.values}
         />
-      </Box>
+      </Container>
     </>
   );
 };

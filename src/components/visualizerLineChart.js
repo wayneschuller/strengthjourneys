@@ -13,6 +13,7 @@ import "chartjs-adapter-date-fns";
 import zoomPlugin from "chartjs-plugin-zoom";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import annotationPlugin from "chartjs-plugin-annotation";
+import { processHeatmapData } from "../utils/processHeatmapData";
 Chart.register(zoomPlugin, ChartDataLabels, annotationPlugin);
 
 export function VisualizerLineChart(props) {
@@ -27,6 +28,8 @@ export function VisualizerLineChart(props) {
   let visualizerData = props.visualizerData;
   let setVisualizerData = props.setVisualizerData;
   let handleZoomPan = props.handleZoomPan;
+  let heatmapData = props.heatmapData;
+  let setHeatmapData = props.setHeatmapData;
 
   function chartUpdate() {
     const chart = chartRef.current;
@@ -83,8 +86,10 @@ export function VisualizerLineChart(props) {
   const scalesOptions = {
     x: {
       type: "time",
-      min: sixMonthsAgo,
-      suggestedMax: visualizerData.padDateMax,
+      // min: sixMonthsAgo,
+      // suggestedMax: visualizerData.padDateMax,
+      min: heatmapData.startDate,
+      max: heatmapData.endDate,
       time: {
         minUnit: "day",
       },
@@ -181,7 +186,7 @@ export function VisualizerLineChart(props) {
     const chart = chartRef.current;
     if (chart) {
       chart.zoomScale("x", { min: visualizerData.padDateMin, max: visualizerData.padDateMax }, "default");
-      // setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min, endDate: chart.chart.scales.x.max });
+      setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min, endDate: chart.chart.scales.x.max });
     }
   }
 
@@ -192,7 +197,7 @@ export function VisualizerLineChart(props) {
     if (sixMonthsAgo < visualizerData.padDateMin) sixMonthsAgo = visualizerData.padDateMin;
     if (chart) {
       chart.zoomScale("x", { min: sixMonthsAgo, max: visualizerData.padDateMax }, "default");
-      // setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min, endDate: chart.chart.scales.x.max });
+      setHeatmapData({ ...heatmapData, startDate: chart.chart.scales.x.min, endDate: chart.chart.scales.x.max });
     }
   }
 
@@ -209,7 +214,7 @@ export function VisualizerLineChart(props) {
     zoom: {
       wheel: { enabled: zoomPanEnabled },
       mode: "x",
-      onZoomComplete: handleZoomPan,
+      onZoom: handleZoomPan,
     },
     pan: {
       enabled: zoomPanEnabled,
@@ -218,8 +223,8 @@ export function VisualizerLineChart(props) {
     },
     limits: {
       x: {
-        min: visualizerData.padDateMin,
-        max: visualizerData.padDateMax,
+        min: visualizerData.padDateMin, // Don't let the user pan before this minimum date (with padding)
+        max: visualizerData.padDateMax, // Don't let the user pan after this max date (with padding)
         minRange: minRange,
       },
     },

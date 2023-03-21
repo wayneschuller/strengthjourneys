@@ -3,6 +3,7 @@
 import { React } from "react";
 import { useOutletContext } from "react-router-dom";
 
+import Grid from "@mui/material/Unstable_Grid2";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import { LiftingCalendarHeatmap } from "../components/heatmap";
@@ -27,8 +28,8 @@ const Visualizer = (props) => {
   // console.log(`<Visualizer />...(visualizerData: ${visualizerData})`);
 
   const handleZoomPan = ({ chart }) => {
-    console.log(`handleZoomPan()...`);
-    console.log(chart);
+    // console.log(`handleZoomPan()...`);
+    // console.log(chart);
     // Update start and end dates of the heatmap
     setHeatmapData({ ...heatmapData, startDate: chart.scales.x.min, endDate: chart.scales.x.max });
   };
@@ -47,12 +48,14 @@ const Visualizer = (props) => {
           appStatus={appStatus}
           analyzerData={analyzerData}
           handleZoomPan={handleZoomPan}
+          heatmapData={heatmapData}
+          setHeatmapData={setHeatmapData}
         />
       )}
 
-      {/* {(appStatus === "processed" || appStatus === "demo") && <LiftingCalendarHeatmap heatmapData={heatmapData} />} */}
+      {(appStatus === "processed" || appStatus === "demo") && <LiftingCalendarHeatmap heatmapData={heatmapData} />}
 
-      <LiftingCalendarHeatmap heatmapData={heatmapData} />
+      {/* <LiftingCalendarHeatmap heatmapData={heatmapData} /> */}
     </>
   );
 };

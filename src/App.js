@@ -57,6 +57,14 @@ export default function App() {
       console.log(`[] useEffect... auto-load data - check if auth is right below:`);
       console.log(auth);
 
+      // This flag is used to allow one second attempt at API data fetching
+      // We have had bugs where this flag was lingering around improperly
+      // so we clean it now before we attempt a first data fetch.
+      if (localStorage.getItem("retryLoadGSheetValues")) {
+        console.log(`[] useEffect... Warning: found dangling flag retryLoadGSheetValues. Removing.`);
+        localStorage.removeItem("retryLoadGSheetValues");
+      }
+
       setAppStatus("loading");
       // ✅ Only runs once per app load
       loadGSheetValues(

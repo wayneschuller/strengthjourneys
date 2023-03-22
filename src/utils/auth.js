@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useContext, createContext } from "react";
 import { initFirebase } from "./firebase";
-import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, signInWithPopup, signInWithCredential, GoogleAuthProvider } from "firebase/auth";
 import { createUser } from "./db";
 
 let app = initFirebase();
@@ -43,12 +43,33 @@ function useProvideAuth() {
     }
   };
 
+  const signInWithGoogleReturning = (googleCredential) => {
+    console.log(`signinWithGoogleReturning... FirebaseAuth is:`);
+    console.log(auth);
+
+    return signInWithCredential(auth, googleCredential).then((response) => {
+      // FIXME: we need some kind of error checking so we can then go to signInWithPopup
+      // const credential = GoogleAuthProvider.credentialFromResult(response);
+      // localStorage.setItem("googleCredential", JSON.stringify(credential)); // Store credential locally
+      handleUser(response.user);
+
+      console.log(`Firebase signInWithCredential user response:`);
+      console.log(response.user);
+    });
+  };
+
   const signinWithGoogle = (redirect) => {
+    console.log(`signinWithGoogle... FirebaseAuth is:`);
+    console.log(auth);
+
     return signInWithPopup(auth, googleProvider).then((response) => {
       const credential = GoogleAuthProvider.credentialFromResult(response);
       localStorage.setItem("googleCredential", JSON.stringify(credential)); // Store credential locally
       handleUser(response.user);
+
+      console.log(`Firebase signInWithPopup user response:`);
       console.log(response.user);
+
       if (redirect) {
         // Router.push(redirect); // FIXME: not using redirect for now
       }
@@ -68,6 +89,7 @@ function useProvideAuth() {
   return {
     user,
     signinWithGoogle,
+    signInWithGoogleReturning,
     signout,
   };
 }

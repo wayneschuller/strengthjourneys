@@ -90,12 +90,14 @@ export function loadGSheetValues(
         console.log("loadGSheetValues() had an error, but we have already retried. Do not try again.");
         console.log(error);
         localStorage.removeItem("retryLoadGSheetValues");
-        setInfoChip({ label: "Error reading Google Sheet", tooltip: null }); // FIXME: Should be similar to the error cleanup above?
+        setInfoChip({ label: "Auth error reading Google Sheet", tooltip: null });
         setAppStatus("ready"); // We are 'ready' in auth for the user to pick a good gsheet
+        // FIXME: we should probably have a separate state for auth errors
       } else {
-        console.log("loadGSheetValues() had an error, so trying to sign in again...");
+        console.log("loadGSheetValues() had an API fetch error, we will try to sign in again...");
         console.log(error);
-        auth.signinWithGoogle();
+        auth.signInWithGoogleReturning(credential); // This should trigger useEffect [auth] which will try to load the GSheet again
+        // auth.signinWithGoogle(); // This should trigger useEffect [auth] which will try to load the GSheet again
         localStorage.setItem("retryLoadGSheetValues", true); // Prevent infinite loops
       }
     });

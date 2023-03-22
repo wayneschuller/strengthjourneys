@@ -50,12 +50,13 @@ export default function App() {
     const credential = JSON.parse(localStorage.getItem(`googleCredential`));
     const ssid = localStorage.getItem(`ssid`);
 
+    // Are they are return user? Then we will try to autoload their data from google sheets.
     // Check if we have everything we need to auto-load data
     if (credential && ssid && !didInit && auth?.user) {
       didInit = true;
 
-      console.log(`[] useEffect... auto-load data - check if auth is right below:`);
-      console.log(auth);
+      // console.log(`[] useEffect... auto-load data - check if auth is right below:`);
+      // console.log(auth);
 
       // This flag is used to allow one second attempt at API data fetching
       // We have had bugs where this flag was lingering around improperly

@@ -55,7 +55,7 @@ export function loadGSheetValues(
       }
     )
     .then((response) => {
-      // console.log(response);
+      console.log(response);
 
       let result = parseData(response.data.values, setVisualizerData, setParsedData, setAnalyzerData);
 

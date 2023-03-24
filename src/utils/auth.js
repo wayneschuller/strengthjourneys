@@ -44,32 +44,30 @@ function useProvideAuth() {
   };
 
   const signInWithGoogleReturning = () => {
-    console.log(`signinWithGoogleReturning... FirebaseAuth is:`);
-    console.log(auth);
+    // console.log(`signinWithGoogleReturning... FirebaseAuth is:`);
+    // console.log(auth);
 
-    // const old_credential = JSON.parse(localStorage.getItem(`googleCredential`));
-    // const credential = GoogleAuthProvider.credential(old_credential.id_token);
     const idToken = localStorage.getItem(`googleIdToken`);
-    console.log(`Old idToken is: ${idToken}`);
 
     const credential = GoogleAuthProvider.credential(idToken);
-    console.log(`New credential from that idtoken is:`);
-    console.log(credential);
 
     return signInWithCredential(auth, credential)
       .then((response) => {
-        // console.log(`Firebase signInWithCredential user response:`);
-        // console.log(response.user);
+        console.log(`Firebase signInWithCredential user response:`);
+        console.log(response.user);
 
         // We run an update to the auth object to trigger a rerender however
         // there is probably a better way. This can cause infinite loops even
         // though we have a retry flag.
         handleUser(response.user);
+        return true;
       })
       .catch((error) => {
         console.log(`Firebase signInWithCredential error:`);
         console.log(error);
         // FIXME: This would be a point you could go to signInWithPopup() to get a new credential
+
+        return false;
       });
   };
 

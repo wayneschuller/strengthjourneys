@@ -58,16 +58,13 @@ function useProvideAuth() {
 
     return signInWithCredential(auth, credential)
       .then((response) => {
-        const credential = GoogleAuthProvider.credentialFromResult(response);
+        // console.log(`Firebase signInWithCredential user response:`);
+        // console.log(response.user);
 
-        console.log(`signInWithCredential... credentialFromResult is:`);
-        console.log(credential);
-
-        // We don't need to update the auth user?
+        // We run an update to the auth object to trigger a rerender however
+        // there is probably a better way. This can cause infinite loops even
+        // though we have a retry flag.
         handleUser(response.user);
-
-        console.log(`Firebase signInWithCredential user response:`);
-        console.log(response.user);
       })
       .catch((error) => {
         console.log(`Firebase signInWithCredential error:`);
@@ -82,10 +79,13 @@ function useProvideAuth() {
 
     return signInWithPopup(auth, googleProvider)
       .then((response) => {
+        // console.log(`Firebase signInWithPopup user response:`);
+        // console.log(response.user);
+
         const credential = GoogleAuthProvider.credentialFromResult(response);
 
-        console.log(`signInWithPopup... credentialFromResult is:`);
-        console.log(credential);
+        // console.log(`signInWithPopup... credentialFromResult is:`);
+        // console.log(credential);
 
         // Store new access token in localStorage
         // This will give 1 hour access to gsheets API
@@ -96,9 +96,6 @@ function useProvideAuth() {
         localStorage.setItem("googleIdToken", credential.idToken);
 
         handleUser(response.user);
-
-        console.log(`Firebase signInWithPopup user response:`);
-        console.log(response.user);
 
         if (redirect) {
           // Router.push(redirect); // FIXME: not using redirect for now

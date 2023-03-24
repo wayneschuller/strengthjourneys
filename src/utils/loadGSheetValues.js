@@ -97,7 +97,7 @@ export function loadGSheetValues(
         console.log("loadGSheetValues() had an API fetch error, we will try to sign in again...");
         console.log(error);
         auth.signInWithGoogleReturning(); // This should trigger useEffect [auth] which will try to load the GSheet again
-        localStorage.setItem("retryLoadGSheetValues", true); // Prevent infinite loops
+        localStorage.setItem("retryLoadGSheetValues", true); // Prevent infinite loops (FIXME: it doesn't)
       }
     });
 }

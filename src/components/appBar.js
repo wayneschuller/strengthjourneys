@@ -85,7 +85,9 @@ function ResponsiveAppBar(props) {
     } else if (setting === "Logout") {
       console.log("Logout clicked");
       auth.signout();
-      localStorage.removeItem("googleCredential");
+      localStorage.removeItem("googleCredential"); // Not using this anymore but just in case
+      localStorage.removeItem("googleAccessToken");
+      localStorage.removeItem("googleIdToken");
 
       // User may want to log back in another time and get their ssid etc.
       // localStorage.removeItem("ssid");
@@ -106,17 +108,14 @@ function ResponsiveAppBar(props) {
 
   const [openPicker, authResponse] = useDrivePicker();
   const openGDrivePicker = () => {
-    // const tokenResponse = JSON.parse(localStorage.getItem("tokenResponse"));
-    // console.log(tokenResponse);
-    const credential = JSON.parse(localStorage.getItem(`googleCredential`));
-    // console.log(`Opening picker with token ${credential.accessToken}`);
+    const accessToken = localStorage.getItem(`googleAccessToken`);
 
     openPicker({
       clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
       developerKey: process.env.REACT_APP_GOOGLE_API_KEY,
       appId: process.env.REACT_APP_GOOGLE_APP_ID,
       viewId: "SPREADSHEETS",
-      token: credential.accessToken, // Pass a pre-obtained token with drive.file scope
+      token: accessToken, // Pass a pre-obtained token with drive.file scope
       showUploadView: true,
       showUploadFolders: true,
       supportDrives: true,
@@ -344,7 +343,7 @@ function TestGoogleAuthButton() {
     <>
       <Tooltip title="Sign in and connect to your Google Sheet">
         <Button
-          onClick={(e) => auth.signInWithGoogleReturning(credential)}
+          onClick={(e) => auth.signInWithGoogleReturning()}
           sx={{ color: "white", display: "block", mx: 1 }}
           variant="contained"
         >

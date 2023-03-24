@@ -43,37 +43,71 @@ function useProvideAuth() {
     }
   };
 
-  const signInWithGoogleReturning = (googleCredential) => {
+  const signInWithGoogleReturning = () => {
     console.log(`signinWithGoogleReturning... FirebaseAuth is:`);
     console.log(auth);
 
-    return signInWithCredential(auth, googleCredential).then((response) => {
-      // FIXME: we need some kind of error checking so we can then go to signInWithPopup
-      // const credential = GoogleAuthProvider.credentialFromResult(response);
-      // localStorage.setItem("googleCredential", JSON.stringify(credential)); // Store credential locally
-      handleUser(response.user);
+    // const old_credential = JSON.parse(localStorage.getItem(`googleCredential`));
+    // const credential = GoogleAuthProvider.credential(old_credential.id_token);
+    const idToken = localStorage.getItem(`googleIdToken`);
+    console.log(`Old idToken is: ${idToken}`);
 
-      console.log(`Firebase signInWithCredential user response:`);
-      console.log(response.user);
-    });
+    const credential = GoogleAuthProvider.credential(idToken);
+    console.log(`New credential from that idtoken is:`);
+    console.log(credential);
+
+    return signInWithCredential(auth, credential)
+      .then((response) => {
+        const credential = GoogleAuthProvider.credentialFromResult(response);
+
+        console.log(`signInWithCredential... credentialFromResult is:`);
+        console.log(credential);
+
+        // We don't need to update the auth user?
+        handleUser(response.user);
+
+        console.log(`Firebase signInWithCredential user response:`);
+        console.log(response.user);
+      })
+      .catch((error) => {
+        console.log(`Firebase signInWithCredential error:`);
+        console.log(error);
+        // FIXME: This would be a point you could go to signInWithPopup() to get a new credential
+      });
   };
 
   const signinWithGoogle = (redirect) => {
-    console.log(`signinWithGoogle... FirebaseAuth is:`);
-    console.log(auth);
+    // console.log(`signinWithGoogle... FirebaseAuth is:`);
+    // console.log(auth);
 
-    return signInWithPopup(auth, googleProvider).then((response) => {
-      const credential = GoogleAuthProvider.credentialFromResult(response);
-      localStorage.setItem("googleCredential", JSON.stringify(credential)); // Store credential locally
-      handleUser(response.user);
+    return signInWithPopup(auth, googleProvider)
+      .then((response) => {
+        const credential = GoogleAuthProvider.credentialFromResult(response);
 
-      console.log(`Firebase signInWithPopup user response:`);
-      console.log(response.user);
+        console.log(`signInWithPopup... credentialFromResult is:`);
+        console.log(credential);
 
-      if (redirect) {
-        // Router.push(redirect); // FIXME: not using redirect for now
-      }
-    });
+        // Store new access token in localStorage
+        // This will give 1 hour access to gsheets API
+        localStorage.setItem("googleAccessToken", credential.accessToken);
+
+        // Store credential.id_token in localStorage
+        // When access token has expired we can use this to refresh the access token
+        localStorage.setItem("googleIdToken", credential.idToken);
+
+        handleUser(response.user);
+
+        console.log(`Firebase signInWithPopup user response:`);
+        console.log(response.user);
+
+        if (redirect) {
+          // Router.push(redirect); // FIXME: not using redirect for now
+        }
+      })
+      .catch((error) => {
+        console.log(`Firebase signInWithPopup error:`);
+        console.log(error);
+      });
   };
 
   const signout = () => {

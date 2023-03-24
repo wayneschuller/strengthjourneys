@@ -26,8 +26,8 @@ export function loadGSheetValues(
 ) {
   console.log("loadGSheetValues()...");
 
-  const credential = JSON.parse(localStorage.getItem(`googleCredential`));
-  if (!credential?.accessToken) {
+  const accessToken = localStorage.getItem(`googleAccessToken`);
+  if (!accessToken) {
     console.log("No access token found in localStorage");
     return;
   }
@@ -51,7 +51,7 @@ export function loadGSheetValues(
     .get(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`,
       {
-        headers: { Authorization: `Bearer ${credential.accessToken}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
       }
     )
     .then((response) => {
@@ -96,8 +96,7 @@ export function loadGSheetValues(
       } else {
         console.log("loadGSheetValues() had an API fetch error, we will try to sign in again...");
         console.log(error);
-        auth.signInWithGoogleReturning(credential); // This should trigger useEffect [auth] which will try to load the GSheet again
-        // auth.signinWithGoogle(); // This should trigger useEffect [auth] which will try to load the GSheet again
+        auth.signInWithGoogleReturning(); // This should trigger useEffect [auth] which will try to load the GSheet again
         localStorage.setItem("retryLoadGSheetValues", true); // Prevent infinite loops
       }
     });

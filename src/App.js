@@ -47,12 +47,12 @@ export default function App() {
   // However we want this authorisation useEffect to auto load data on init when we have a previous accessToken
   let didInit = false;
   useEffect(() => {
-    const credential = JSON.parse(localStorage.getItem(`googleCredential`));
+    const accessToken = localStorage.getItem(`googleAccessToken`);
     const ssid = localStorage.getItem(`ssid`);
 
     // Are they are return user? Then we will try to autoload their data from google sheets.
     // Check if we have everything we need to auto-load data
-    if (credential && ssid && !didInit && auth?.user) {
+    if (accessToken && ssid && !didInit && auth?.user) {
       didInit = true;
 
       // console.log(`[] useEffect... auto-load data - check if auth is right below:`);

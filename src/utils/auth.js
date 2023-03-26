@@ -48,13 +48,38 @@ function useProvideAuth() {
     // console.log(auth);
 
     const idToken = localStorage.getItem(`googleIdToken`);
+    const accessToken = localStorage.getItem(`googleAccessToken`);
 
+    // console.log(googleProvider);
+    // console.log(GoogleAuthProvider);
+
+    // I have a bunch of attempts below to build a credential from our idToken
+    // that will refresh our accessToken for google sheet API access.
+    // The hope was to get a refreshed token without the popup window thing. But I
+    // can't get it to work. I think it must mean direct google API stuff rather
+    // that the simplistic firebase layer?
+
+    // This is my best attempt at a quiet background refresh.
+    // However it works only in first hour
+    // And doesn't give a true access token in the response (it puts the idtoken in there)
+    // So it's really just Firebase talking to itself
     const credential = GoogleAuthProvider.credential(idToken);
+
+    // Failed attempts
+    // const credential = googleProvider.credential(idToken);  // credential method doesn't exist
+    // const credential = GoogleAuthProvider.credential(idToken, accessToken); // didn't help
+    // const credential = GoogleAuthProvider.credential(null, accessToken); // didn't work
+    console.log(`signInWithGoogleReturning... googleProvider.credential is:`);
+    console.log(credential);
 
     return signInWithCredential(auth, credential)
       .then((response) => {
         console.log(`Firebase signInWithCredential user response:`);
         console.log(response.user);
+
+        const credential = GoogleAuthProvider.credentialFromResult(response);
+        console.log(`signInWithGoogleReturning... credentialFromResult is:`);
+        console.log(credential);
 
         // We run an update to the auth object to trigger a rerender however
         // there is probably a better way. This can cause infinite loops even
@@ -81,9 +106,8 @@ function useProvideAuth() {
         // console.log(response.user);
 
         const credential = GoogleAuthProvider.credentialFromResult(response);
-
-        // console.log(`signInWithPopup... credentialFromResult is:`);
-        // console.log(credential);
+        console.log(`signInWithPopup... credentialFromResult is:`);
+        console.log(credential);
 
         // Store new access token in localStorage
         // This will give 1 hour access to gsheets API

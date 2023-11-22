@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 
 import {
   Chart as ChartJS,
+  Colors,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -22,6 +23,7 @@ import {
 import { Line } from "react-chartjs-2";
 
 ChartJS.register(
+  Colors,
   CategoryScale,
   LinearScale,
   PointElement,

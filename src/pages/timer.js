@@ -1,6 +1,8 @@
 /** @format */
-
 // pages/timer.js
+
+"use client";
+
 import Head from "next/head";
 import React, { useState, useEffect } from "react";
 

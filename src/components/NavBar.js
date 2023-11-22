@@ -22,17 +22,6 @@ export default function NavBar() {
         </Link>
         <nav className="flex flex-1 items-center space-x-2 text-sm font-medium md:space-x-6">
           <Link
-            href="/visualizer"
-            className={cn(
-              "transition-colors hover:text-foreground/80",
-              pathname === "/visualizer"
-                ? "text-foreground"
-                : "text-foreground/60",
-            )}
-          >
-            Strength Visualizer
-          </Link>
-          <Link
             href="/analyzer"
             className={cn(
               "transition-colors hover:text-foreground/80",
@@ -42,6 +31,17 @@ export default function NavBar() {
             )}
           >
             PR Analyzer
+          </Link>
+          <Link
+            href="/visualizer"
+            className={cn(
+              "transition-colors hover:text-foreground/80",
+              pathname === "/visualizer"
+                ? "text-foreground"
+                : "text-foreground/60",
+            )}
+          >
+            Strength Visualizer
           </Link>
           <Link
             href="/calculator"

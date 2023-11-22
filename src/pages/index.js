@@ -42,7 +42,7 @@ export default function Home() {
       <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
         Welcome to Strength Journeys 2.0
       </h1>
-      <div className="mt-8 grid grid-cols-2 gap-8">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2 2xl:grid-cols-4">
         <Link href="/analyzer">
           <Card className="hover:ring-1">
             <CardHeader>

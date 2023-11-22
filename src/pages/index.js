@@ -37,8 +37,10 @@ export default function Home() {
 
         <link rel="canonical" href="https://www.onerepmaxcalculator.xyz/" />
       </Head>
-      <main className={`flex justify-center `}>
-        Welcome to Strength Journeys 2.0
+      <main className={`mt-4 flex justify-center `}>
+        <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
+          Welcome to Strength Journeys 2.0
+        </h1>
       </main>
       <Toaster />
     </div>

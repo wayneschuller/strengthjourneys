@@ -17,11 +17,11 @@ export default function App({ Component, pageProps }) {
         enableSystem
         disableTransitionOnChange
       >
-        <main className={`min-h-screen bg-background ${inter.className}`}>
+        <div className={`min-h-screen bg-background ${inter.className}`}>
           <Layout>
             <Component {...pageProps} />
           </Layout>
-        </main>
+        </div>
       </ThemeProvider>
       <Analytics />
     </>

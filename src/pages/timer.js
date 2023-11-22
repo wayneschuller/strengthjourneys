@@ -4,8 +4,6 @@
 import Head from "next/head";
 import React, { useState, useEffect } from "react";
 
-import { Inter, Fira_Mono } from "next/font/google";
-const inter = Inter({ subsets: ["latin"] });
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -20,14 +18,12 @@ const Timer = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main
-        className={`flex flex-col items-center justify-between pt-4 ${inter.className}`}
-      >
+      <div className="flex flex-col items-center justify-between pt-4">
         <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
           Lifting Set Timer
         </h1>
         <Stopwatch time={time} setTime={setTime} />
-      </main>
+      </div>
     </>
   );
 };

@@ -8,7 +8,7 @@ export function Layout({ children }) {
   return (
     <>
       <Navbar />
-      <main>{children}</main>
+      <main className={`mt-4 flex justify-center`}>{children}</main>
       <Footer />
     </>
   );

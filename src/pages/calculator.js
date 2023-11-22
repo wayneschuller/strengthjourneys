@@ -226,138 +226,133 @@ export default function E1RMCalculator() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={`flex justify-center `}>
-        <div className="w-11/12 rounded-xl border-2 border-background bg-muted/50 p-4 md:w-4/5 md:p-6">
-          <div className="flex flex-row gap-1 md:gap-2">
-            <h1 className="flex-1 scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl ">
-              E1RM One Rep Max Calculator
-            </h1>
-            <div className="flex flex-col gap-1 md:flex-row">
-              <UnitChooser
-                isMetric={isMetric}
-                onSwitchChange={toggleIsMetric}
-              />
-            </div>
-          </div>
-          <h3 className="mb-10 mt-2 flex-1 scroll-m-20 text-xl tracking-tight md:mb-8 md:text-2xl">
-            Estimate your max single based on reps and weight (see this{" "}
-            <a
-              href="https://en.wikipedia.org/wiki/One-repetition_maximum"
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-            >
-              Wikipedia article
-            </a>{" "}
-            for the theory)
-          </h3>
-
-          {/* Two main sliders */}
-          <div className="mt-4 grid grid-cols-1 items-center gap-6 md:grid-cols-6 md:gap-4">
-            <div className="ml-2 justify-self-center text-2xl md:hidden">
-              {reps} reps
-            </div>
-            <Slider
-              className="md:col-span-5"
-              value={[reps]}
-              min={1}
-              max={20}
-              step={1}
-              onValueChange={handleRepsSliderChange}
-              onValueCommit={handleRepsSliderCommit}
-            />
-            <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
-              {reps} reps
-            </div>
-            <div className="ml-2 mt-6 w-[8rem] justify-self-center md:hidden">
-              <div className="flex items-center gap-1 text-2xl">
-                <Input
-                  className="text-2xl"
-                  type="number"
-                  min="1"
-                  step="1"
-                  id="weightInput"
-                  value={weight}
-                  onChange={handleEntryWeightChange}
-                  onKeyPress={handleKeyPress}
-                  onKeyDown={handleKeyDown}
-                />
-                {isMetric ? "kg" : "lb"}
-              </div>
-            </div>
-            <Slider
-              className="md:col-span-5"
-              value={[weight]}
-              min={1}
-              max={isMetric ? 250 : 600}
-              onValueChange={handleWeightSliderChange}
-              onValueCommit={handleWeightSliderCommit}
-            />
-            <div className="ml-1 hidden w-[7rem] justify-self-center md:block md:justify-self-start">
-              <div className="flex items-center gap-1">
-                <Input
-                  className="text-lg"
-                  type="number"
-                  min="1"
-                  step="1"
-                  id="weightInput"
-                  value={weight}
-                  onChange={handleEntryWeightChange}
-                  onKeyPress={handleKeyPress}
-                  onKeyDown={handleKeyDown}
-                />
-                {isMetric ? "kg" : "lb"}
-              </div>
-            </div>
-          </div>
-
-          {/* Center card */}
-          <div className="mt-8 flex flex-1 justify-center gap-4">
-            <Card className="hover:ring-1">
-              <CardHeader>
-                <CardTitle>Estimated One Rep Max</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center">
-                  {reps}@{weight}
-                  {isMetric ? "kg" : "lb"}
-                </div>
-                <div className="text-center text-4xl font-bold tracking-tight md:text-5xl">
-                  {estimateE1RM(reps, weight, defaultFormula)}
-                  {isMetric ? "kg" : "lb"}
-                </div>
-              </CardContent>
-              <CardFooter className="text-muted-foreground">
-                Using {defaultFormula} formula
-              </CardFooter>
-            </Card>
-          </div>
-          <div className="mt-4 flex justify-center">
-            <ShareButton onClick={handleCopyToClipboard} />
-          </div>
-
-          {/* Grid of other formulae cards */}
-          <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {e1rmFormulae.map((formula, index) =>
-              formula === defaultFormula ? null : (
-                <div key={index} className="card">
-                  <Card className="hover:ring-1">
-                    <CardHeader>
-                      <CardTitle className="text-xl text-muted-foreground">
-                        {formula}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-xl font-bold tracking-tight md:text-2xl">
-                        {estimateE1RM(reps, weight, formula)}
-                        {isMetric ? "kg" : "lb"}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-              ),
-            )}
+      <div className="w-11/12 rounded-xl border-2 border-background bg-muted/50 p-4 md:w-4/5 md:p-6">
+        <div className="flex flex-row gap-1 md:gap-2">
+          <h1 className="flex-1 scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl ">
+            E1RM One Rep Max Calculator
+          </h1>
+          <div className="flex flex-col gap-1 md:flex-row">
+            <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
           </div>
         </div>
-      </main>
+        <h3 className="mb-10 mt-2 flex-1 scroll-m-20 text-xl tracking-tight md:mb-8 md:text-2xl">
+          Estimate your max single based on reps and weight (see this{" "}
+          <a
+            href="https://en.wikipedia.org/wiki/One-repetition_maximum"
+            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          >
+            Wikipedia article
+          </a>{" "}
+          for the theory)
+        </h3>
+
+        {/* Two main sliders */}
+        <div className="mt-4 grid grid-cols-1 items-center gap-6 md:grid-cols-6 md:gap-4">
+          <div className="ml-2 justify-self-center text-2xl md:hidden">
+            {reps} reps
+          </div>
+          <Slider
+            className="md:col-span-5"
+            value={[reps]}
+            min={1}
+            max={20}
+            step={1}
+            onValueChange={handleRepsSliderChange}
+            onValueCommit={handleRepsSliderCommit}
+          />
+          <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
+            {reps} reps
+          </div>
+          <div className="ml-2 mt-6 w-[8rem] justify-self-center md:hidden">
+            <div className="flex items-center gap-1 text-2xl">
+              <Input
+                className="text-2xl"
+                type="number"
+                min="1"
+                step="1"
+                id="weightInput"
+                value={weight}
+                onChange={handleEntryWeightChange}
+                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
+              />
+              {isMetric ? "kg" : "lb"}
+            </div>
+          </div>
+          <Slider
+            className="md:col-span-5"
+            value={[weight]}
+            min={1}
+            max={isMetric ? 250 : 600}
+            onValueChange={handleWeightSliderChange}
+            onValueCommit={handleWeightSliderCommit}
+          />
+          <div className="ml-1 hidden w-[7rem] justify-self-center md:block md:justify-self-start">
+            <div className="flex items-center gap-1">
+              <Input
+                className="text-lg"
+                type="number"
+                min="1"
+                step="1"
+                id="weightInput"
+                value={weight}
+                onChange={handleEntryWeightChange}
+                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
+              />
+              {isMetric ? "kg" : "lb"}
+            </div>
+          </div>
+        </div>
+
+        {/* Center card */}
+        <div className="mt-8 flex flex-1 justify-center gap-4">
+          <Card className="hover:ring-1">
+            <CardHeader>
+              <CardTitle>Estimated One Rep Max</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                {reps}@{weight}
+                {isMetric ? "kg" : "lb"}
+              </div>
+              <div className="text-center text-4xl font-bold tracking-tight md:text-5xl">
+                {estimateE1RM(reps, weight, defaultFormula)}
+                {isMetric ? "kg" : "lb"}
+              </div>
+            </CardContent>
+            <CardFooter className="text-muted-foreground">
+              Using {defaultFormula} formula
+            </CardFooter>
+          </Card>
+        </div>
+        <div className="mt-4 flex justify-center">
+          <ShareButton onClick={handleCopyToClipboard} />
+        </div>
+
+        {/* Grid of other formulae cards */}
+        <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+          {e1rmFormulae.map((formula, index) =>
+            formula === defaultFormula ? null : (
+              <div key={index} className="card">
+                <Card className="hover:ring-1">
+                  <CardHeader>
+                    <CardTitle className="text-xl text-muted-foreground">
+                      {formula}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xl font-bold tracking-tight md:text-2xl">
+                      {estimateE1RM(reps, weight, formula)}
+                      {isMetric ? "kg" : "lb"}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            ),
+          )}
+        </div>
+      </div>
     </>
   );
 }

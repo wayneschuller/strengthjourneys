@@ -19,14 +19,11 @@ const Visualizer = () => {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      <main
-        className={`flex flex-col items-center justify-between pt-4 ${inter.className}`}
-      >
+      <div>
         <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
           Strength Visualizer
         </h1>
-      </main>
+      </div>
     </>
   );
 };

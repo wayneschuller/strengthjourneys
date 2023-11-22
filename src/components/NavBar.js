@@ -6,8 +6,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
-// import Logo from "../../public/logo_transparent.png";
-// import Image from "next/image";
+import Logo from "../../public/logo_transparent.png";
+
+import Image from "next/image";
 
 export default function NavBar() {
   const pathname = usePathname();

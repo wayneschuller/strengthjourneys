@@ -5,6 +5,7 @@
 import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,10 +15,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import CalculatorThumbnail from "../../public/calculator_thumbnail.jpg";
+import CalculatorThumbnailDark from "../../public/CalculatorThumbnailDark.jpg";
+import CalculatorThumbnailLight from "../../public/CalculatorThumbnailLight.jpg";
 
 export default function Home() {
+  const { theme, setTheme } = useTheme();
+
   const title = "Strength Journeys";
+  console.log(`rendering landing`);
+  console.log(theme);
 
   return (
     <div>
@@ -68,7 +74,13 @@ export default function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Image src={CalculatorThumbnail} />
+              <Image
+                src={
+                  theme === "dark"
+                    ? CalculatorThumbnailDark
+                    : CalculatorThumbnailLight
+                }
+              />
             </CardContent>
           </Card>
         </Link>

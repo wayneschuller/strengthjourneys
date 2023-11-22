@@ -4,7 +4,6 @@
 
 import { useState, useEffect } from "react";
 import Head from "next/head";
-import { estimateE1RM } from "../lib/estimateE1RM";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
@@ -18,15 +17,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { e1rmFormulae } from "../lib/estimateE1RM";
-import { Input } from "@/components/ui/input";
-
-import { Slider } from "@/components/ui/slider";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Home() {
-  const title = "E1RM One Rep Max Calculator";
+  const title = "Strength Journeys";
 
   return (
     <div>

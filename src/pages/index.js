@@ -40,7 +40,6 @@ export default function Home() {
       <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
         Welcome to Strength Journeys 2.0
       </h1>
-      <Toaster />
     </div>
   );
 }

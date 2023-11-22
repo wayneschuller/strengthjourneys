@@ -18,9 +18,7 @@ import {
 } from "@/components/ui/card";
 import { e1rmFormulae } from "../lib/estimateE1RM";
 import { Input } from "@/components/ui/input";
-
 import { Slider } from "@/components/ui/slider";
-import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
 
 let didInit = false;

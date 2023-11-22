@@ -4,7 +4,7 @@ import "@/styles/globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Layout } from "@/components/Layout";
-
+import { Toaster } from "@/components/ui/toaster";
 import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,6 +21,7 @@ export default function App({ Component, pageProps }) {
           <Layout>
             <Component {...pageProps} />
           </Layout>
+          <Toaster />
         </div>
       </ThemeProvider>
       <Analytics />

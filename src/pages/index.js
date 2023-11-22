@@ -2,13 +2,10 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import Link from "next/link";
 import Head from "next/head";
-import { useRouter } from "next/router";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { DarkModeToggle } from "@/components/DarkModeToggle";
-import { ThemeProvider } from "@/components/theme-provider";
-import { UnitChooser } from "../components/UnitChooser";
 import {
   Card,
   CardContent,
@@ -17,8 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Toaster } from "@/components/ui/toaster";
-import { useToast } from "@/components/ui/use-toast";
+import CalculatorThumbnail from "../../public/calculator_thumbnail.jpg";
 
 export default function Home() {
   const title = "Strength Journeys";
@@ -40,6 +36,54 @@ export default function Home() {
       <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
         Welcome to Strength Journeys 2.0
       </h1>
+      <div className="mt-8 grid grid-cols-2 gap-8">
+        <Link href="/analyzer">
+          <Card className="hover:ring-1">
+            <CardHeader>
+              <CardTitle>PR Analyzer</CardTitle>
+              <CardDescription>
+                See lifetime and recent personal records.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>Page thumbnail</CardContent>
+          </Card>
+        </Link>
+        <Link href="/visualizer">
+          <Card className="hover:ring-1">
+            <CardHeader>
+              <CardTitle>Strength Visualizer</CardTitle>
+              <CardDescription>
+                Interactive lifetime charts of all lifts.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>Chart thumbnail</CardContent>
+          </Card>
+        </Link>
+        <Link href="/calculator">
+          <Card className="hover:ring-1">
+            <CardHeader>
+              <CardTitle>One Rep Max Calculator</CardTitle>
+              <CardDescription>
+                Multi-formula one rep max calculations.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Image src={CalculatorThumbnail} />
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/timer">
+          <Card className="hover:ring-1">
+            <CardHeader>
+              <CardTitle>Lifting Set Timer</CardTitle>
+              <CardDescription>
+                Set timer for phones or large gym screens.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>Thumbnail</CardContent>
+          </Card>
+        </Link>
+      </div>
     </div>
   );
 }

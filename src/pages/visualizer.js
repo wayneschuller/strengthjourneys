@@ -72,12 +72,9 @@ const Chart2 = ({}) => {
   const [primaryColor, setPrimaryColor] = useState("");
   const [mutedColor, setMutedColor] = useState("");
   const [mutedForegroundColor, setMutedForegroundColor] = useState("");
-
-  // const tickColor = theme === "dark" ? "white" : "black";
-  const lineColor = theme === "dark" ? "#222" : "#BBB";
+  const [gridColor, setGridColor] = useState("");
 
   useEffect(() => {
-    console.log("getting css colors...");
     // Accessing the HSL color variable
     const root = document.documentElement;
 
@@ -88,8 +85,12 @@ const Chart2 = ({}) => {
 
     setMutedColor(convertToHslFormat(computedMutedColor));
     setMutedForegroundColor(convertToHslFormat(computedMutedForegroundColor));
-    // console.log(computedMutedForegroundColor);
-    // console.log(convertToHslFormat(computedMutedForegroundColor));
+
+    setGridColor(
+      fadeHslColor(computedMutedForegroundColor, 20, theme === "dark"),
+    );
+
+    console.log(gridColor);
   }, [theme]);
 
   // Function to calculate 1RM using Brzycki formula
@@ -139,7 +140,7 @@ const Chart2 = ({}) => {
           color: mutedForegroundColor,
         },
         grid: {
-          color: mutedForegroundColor,
+          color: gridColor,
         },
       },
       y: {
@@ -147,7 +148,7 @@ const Chart2 = ({}) => {
           color: mutedForegroundColor,
         },
         grid: {
-          color: mutedForegroundColor,
+          color: gridColor,
         },
       },
     },
@@ -184,4 +185,29 @@ function convertToHslFormat(originalHsl) {
   const hslFormat = `hsl(${numericHue}, ${numericSaturation}%, ${numericLightness}%)`;
 
   return hslFormat;
+}
+
+function fadeHslColor(originalHsl, fadeAmount, isDarkMode) {
+  console.log(originalHsl);
+  // Split the original HSL string into individual components
+  const [hue, saturation, lightness] = originalHsl.split(" ");
+
+  // Extract numeric values
+  const numericHue = parseFloat(hue);
+  const numericSaturation = parseFloat(saturation);
+  let numericLightness = parseFloat(lightness);
+
+  // Adjust lightness based on mode
+  if (isDarkMode) {
+    // Dark mode: decrease lightness
+    numericLightness = Math.max(0, numericLightness - fadeAmount);
+  } else {
+    // Light mode: increase lightness
+    numericLightness = Math.min(100, numericLightness + fadeAmount);
+  }
+
+  // Construct the new HSL format string
+  const fadedHsl = `hsl(${numericHue}, ${numericSaturation}%, ${numericLightness}%)`;
+
+  return fadedHsl;
 }

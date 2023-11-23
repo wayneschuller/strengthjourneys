@@ -4,7 +4,7 @@ import Head from "next/head";
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 
-import { Inter } from "next/font/google";
+import { Inter, Righteous } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -155,6 +155,9 @@ const Chart2 = ({}) => {
     plugins: {
       title: {
         display: false,
+      },
+      legend: {
+        position: "right",
       },
     },
   };

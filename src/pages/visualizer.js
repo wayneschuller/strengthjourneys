@@ -67,25 +67,45 @@ const Visualizer = () => {
 export default Visualizer;
 
 const Chart2 = ({}) => {
-  // Group the data by name
-  const groupedData = sampleData.reduce((acc, entry) => {
-    if (!acc[entry.name]) {
-      acc[entry.name] = [];
-    }
-    acc[entry.name].push({ x: entry.date, y: entry.weight });
-    return acc;
-  }, {});
+  // Function to calculate 1RM using Brzycki formula
+  function calculateOneRepMax(weight, reps) {
+    return weight * (1 - (0.025 * reps) / 100);
+  }
 
-  // Create an array of datasets
-  const datasets = Object.entries(groupedData).map(([name, data]) => ({
-    label: `${name}`,
-    data,
-    borderColor: getRandomColor(), // Add a function to generate random colors
-    borderWidth: 2,
-    pointBackgroundColor: getRandomColor(),
-    pointRadius: 5,
-    pointHoverRadius: 8,
+  // Process the data to create an array of arrays per lift
+  const liftArrays = {};
+
+  sampleData.forEach((entry) => {
+    const { date, name, reps, weight } = entry;
+    const oneRepMax = calculateOneRepMax(weight, reps);
+
+    if (!liftArrays[name]) {
+      liftArrays[name] = [];
+    }
+
+    const existingEntry = liftArrays[name].find((item) => item[0] === date);
+
+    if (!existingEntry || existingEntry[1] < oneRepMax) {
+      // If there's no existing entry for this date or the existing one is lower, update it
+      liftArrays[name] = liftArrays[name].filter((item) => item[0] !== date);
+      liftArrays[name].push([date, oneRepMax]);
+    }
+  });
+
+  // Sort the arrays chronologically
+  Object.values(liftArrays).forEach((arr) => {
+    arr.sort((a, b) => new Date(a[0]) - new Date(b[0]));
+  });
+
+  console.log(liftArrays);
+
+  // Convert liftArrays to Chart.js compatible format
+  const chartData = Object.entries(liftArrays).map(([lift, data]) => ({
+    label: lift,
+    data: data.map(([date, value]) => ({ x: date, y: value })),
   }));
+
+  console.log(chartData);
 
   return (
     <Line
@@ -111,7 +131,7 @@ const Chart2 = ({}) => {
             },
           },
         },
-        datasets: datasets,
+        datasets: chartData,
       }}
     />
   );

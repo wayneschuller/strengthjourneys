@@ -79,15 +79,15 @@ const Chart2 = ({}) => {
     const root = document.documentElement;
 
     const computedMutedColor =
-      getComputedStyle(root).getPropertyValue("--muted");
+      getComputedStyle(root).getPropertyValue("--foreground");
+    setMutedColor(convertToHslFormat(computedMutedColor));
+
     const computedMutedForegroundColor =
       getComputedStyle(root).getPropertyValue("--muted-foreground");
-
-    setMutedColor(convertToHslFormat(computedMutedColor));
     setMutedForegroundColor(convertToHslFormat(computedMutedForegroundColor));
 
     setGridColor(
-      fadeHslColor(computedMutedForegroundColor, 20, theme === "dark"),
+      fadeHslColor(computedMutedForegroundColor, 30, theme === "dark"),
     );
 
     console.log(gridColor);
@@ -136,16 +136,22 @@ const Chart2 = ({}) => {
   const options = {
     scales: {
       x: {
+        type: "time",
         ticks: {
-          color: mutedForegroundColor,
+          // color: mutedForegroundColor,
         },
         grid: {
+          // color: mutedColor,
           color: gridColor,
+        },
+        time: {
+          minUnit: "day",
         },
       },
       y: {
         ticks: {
-          color: mutedForegroundColor,
+          // color: mutedForegroundColor,
+          display: false,
         },
         grid: {
           color: gridColor,
@@ -157,6 +163,7 @@ const Chart2 = ({}) => {
         display: false,
       },
       legend: {
+        display: false,
         position: "right",
       },
     },

@@ -54,11 +54,14 @@ const Visualizer = () => {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="w-11/12 md:w-4/5">
+      <div className="">
         <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
           Strength Visualizer
         </h1>
-        <div className="mt-6">
+        <div
+          style={{ position: "relative", height: "80vh", width: "90vw" }}
+          className="mt-4"
+        >
           <Chart2 />
         </div>
       </div>

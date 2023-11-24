@@ -13,13 +13,11 @@ import MobileNav from "@/components/MobileNav";
 
 export default function NavBar() {
   return (
-    <div className="container flex h-14 items-center">
+    <div className="mx-3 flex items-center md:container">
       <DesktopNav />
       <MobileNav />
-      <div className="flex flex-1 items-center justify-end">
-        <div className="p-2">
-          <DarkModeToggle />
-        </div>
+      <div className="mt-2 flex flex-1 items-center justify-end">
+        <DarkModeToggle />
       </div>
     </div>
   );

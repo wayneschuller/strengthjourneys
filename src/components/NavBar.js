@@ -6,12 +6,27 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
+import MobileNav from "@/components/MobileNav";
+
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
 
 export default function NavBar() {
-  const pathname = usePathname();
+  return (
+    <div className="container flex h-14 items-center">
+      <DesktopNav />
+      <MobileNav />
+      <div className="flex flex-1 items-center justify-end">
+        <div className="p-2">
+          <DarkModeToggle />
+        </div>
+      </div>
+    </div>
+  );
+}
 
+export function DesktopNav() {
+  const pathname = usePathname();
   return (
     <>
       <div className="ml-4 hidden md:flex">
@@ -63,9 +78,6 @@ export default function NavBar() {
             Lifting Set Timer
           </Link>
         </nav>
-        <div className="p-2">
-          <DarkModeToggle />
-        </div>
       </div>
     </>
   );

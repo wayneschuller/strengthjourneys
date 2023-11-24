@@ -4,7 +4,6 @@ import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { DarkModeToggle } from "@/components/DarkModeToggle";
 import { Button } from "@/components/ui/button";
 import { ViewVerticalIcon } from "@radix-ui/react-icons";
 
@@ -29,7 +28,7 @@ export default function MobileNav() {
       <SheetTrigger asChild>
         <Button
           variant="ghost"
-          className="ml-4 mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
+          className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
         >
           <ViewVerticalIcon className="h-5 w-5" />
           <span className="sr-only">Toggle Menu</span>

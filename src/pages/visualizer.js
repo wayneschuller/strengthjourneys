@@ -134,6 +134,8 @@ const Chart2 = ({}) => {
   // console.log(chartData);
 
   const options = {
+    maintainAspectRatio: false,
+
     scales: {
       x: {
         type: "time",
@@ -149,6 +151,8 @@ const Chart2 = ({}) => {
         },
       },
       y: {
+        suggestedMin: 0,
+
         ticks: {
           // color: mutedForegroundColor,
           display: false,

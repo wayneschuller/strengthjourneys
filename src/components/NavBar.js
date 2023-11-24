@@ -14,7 +14,7 @@ export default function NavBar() {
 
   return (
     <>
-      <div className="ml-4 mr-2 flex">
+      <div className="ml-4 hidden md:flex">
         <Link href="/" className="mr-6 flex items-center space-x-2">
           {/* <Image src={Logo} className="h-10 w-10" alt="Logo" /> */}
           <span className="inline-block font-bold">Strength Journeys</span>

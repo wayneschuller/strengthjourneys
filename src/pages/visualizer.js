@@ -11,6 +11,16 @@ import { Card } from "@/components/ui/card";
 import { sampleData } from "@/lib/sampleData";
 
 import {
+  Sheet,
+  SheetContent,
+  SheetClose,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+
+import {
   Chart as ChartJS,
   Colors,
   TimeScale,
@@ -55,11 +65,12 @@ const Visualizer = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="">
-        <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
+        <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           Strength Visualizer
         </h1>
+        <div>{/* <LiftChooserPanel /> */}</div>
         <div
-          style={{ position: "relative", height: "80vh", width: "90vw" }}
+          style={{ position: "relative", height: "85vh", width: "92vw" }}
           className="mt-4"
         >
           <Chart2 />
@@ -69,6 +80,28 @@ const Visualizer = () => {
   );
 };
 export default Visualizer;
+
+const LiftChooserPanel = ({}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button className="mt-2 px-2 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 ">
+          {/* <ViewVerticalIcon className="h-5 w-5" /> */}
+          Choose Lifts
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="pr-0">
+        <div className="flex flex-col">
+          <SheetClose asChild>
+            <Button> Close controls</Button>
+          </SheetClose>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+};
 
 const Chart2 = ({}) => {
   const { theme } = useTheme();

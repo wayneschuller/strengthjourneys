@@ -5,6 +5,15 @@ import React, { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Sheet,
+  SheetContent,
+  SheetClose,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const Analyzer = () => {
   const [time, setTime] = useState(1);

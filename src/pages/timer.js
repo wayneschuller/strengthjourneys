@@ -20,8 +20,8 @@ const Timer = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="flex flex-col items-center justify-between">
-        <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
+      <div className="flex  flex-col items-center ">
+        <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           Lifting Set Timer
         </h1>
         <Stopwatch time={time} setTime={setTime} />
@@ -62,8 +62,8 @@ function Stopwatch({ time, setTime }) {
 
   return (
     <>
-      <Card className="my-2 bg-muted p-4 ring-4 hover:ring-blue-800 md:my-5 md:p-10">
-        <div className="font-mono text-7xl font-bold md:text-9xl lg:text-[15rem] 2xl:text-[25rem]">
+      <Card className="my-10 bg-muted p-4 ring-4 hover:ring-blue-800 md:my-5 md:p-10">
+        <div className="font-mono text-8xl font-bold md:text-[15rem] lg:text-[20rem] xl:text-[20rem] 2xl:text-[30rem]">
           {formatTime(time)}
         </div>
       </Card>

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ViewVerticalIcon } from "@radix-ui/react-icons";
+import { useRouter } from "next/router";
 
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
@@ -13,6 +14,7 @@ import { ViewVerticalIcon } from "@radix-ui/react-icons";
 import {
   Sheet,
   SheetContent,
+  SheetClose,
   SheetDescription,
   SheetHeader,
   SheetTitle,
@@ -36,61 +38,70 @@ export default function MobileNav() {
       </SheetTrigger>
       <SheetContent side="left" className="pr-0">
         <div className="flex flex-col">
-          <Link href="/" className="mb-6 flex gap-4">
-            {/* <Image src={Logo} className="h-10 w-10" alt="Logo" /> */}
-            <span className="inline-block font-bold">Strength Journeys</span>
-          </Link>
+          <SheetClose asChild>
+            <Link href="/" className="mb-6 flex gap-4">
+              {/* <Image src={Logo} className="h-10 w-10" alt="Logo" /> */}
+              <span className="inline-block font-bold">Strength Journeys</span>
+            </Link>
+          </SheetClose>
+
           <div className="flex flex-1 flex-col  gap-4 text-base font-medium">
-            <Link
-              href="/analyzer"
-              className={cn(
-                "transition-colors hover:text-foreground/80",
-                pathname === "/analyzer"
-                  ? "text-foreground"
-                  : "text-foreground/60",
-              )}
-            >
-              PR Analyzer
-            </Link>
+            <SheetClose asChild>
+              <Link
+                href="/analyzer"
+                className={cn(
+                  "transition-colors hover:text-foreground/80",
+                  pathname === "/analyzer"
+                    ? "text-foreground"
+                    : "text-foreground/60",
+                )}
+              >
+                PR Analyzer
+              </Link>
+            </SheetClose>
 
-            <Link href="/some-page" passHref></Link>
+            <SheetClose asChild>
+              <Link
+                href="/visualizer"
+                onOpenChange={setOpen}
+                className={cn(
+                  "transition-colors hover:text-foreground/80",
+                  pathname === "/visualizer"
+                    ? "text-foreground"
+                    : "text-foreground/60",
+                )}
+              >
+                Strength Visualizer
+              </Link>
+            </SheetClose>
 
-            <Link
-              href="/visualizer"
-              onOpenChange={setOpen}
-              passHref
-              legacyBehavior
-              className={cn(
-                "transition-colors hover:text-foreground/80",
-                pathname === "/visualizer"
-                  ? "text-foreground"
-                  : "text-foreground/60",
-              )}
-            >
-              <a onClick={() => setIsOpen(false)}>Strength Visualizer</a>
-            </Link>
-            <Link
-              href="/calculator"
-              className={cn(
-                "transition-colors hover:text-foreground/80",
-                pathname === "/calculator"
-                  ? "text-foreground"
-                  : "text-foreground/60",
-              )}
-            >
-              One Rep Max Calculator
-            </Link>
-            <Link
-              href="/timer"
-              className={cn(
-                "transition-colors hover:text-foreground/80",
-                pathname === "/timer"
-                  ? "text-foreground"
-                  : "text-foreground/60",
-              )}
-            >
-              Lifting Set Timer
-            </Link>
+            <SheetClose asChild>
+              <Link
+                href="/calculator"
+                className={cn(
+                  "transition-colors hover:text-foreground/80",
+                  pathname === "/calculator"
+                    ? "text-foreground"
+                    : "text-foreground/60",
+                )}
+              >
+                One Rep Max Calculator
+              </Link>
+            </SheetClose>
+
+            <SheetClose asChild>
+              <Link
+                href="/timer"
+                className={cn(
+                  "transition-colors hover:text-foreground/80",
+                  pathname === "/timer"
+                    ? "text-foreground"
+                    : "text-foreground/60",
+                )}
+              >
+                Lifting Set Timer
+              </Link>
+            </SheetClose>
           </div>
         </div>
       </SheetContent>

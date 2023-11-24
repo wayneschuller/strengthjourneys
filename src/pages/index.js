@@ -26,7 +26,7 @@ export default function Home() {
   console.log(theme);
 
   return (
-    <div>
+    <div className="mx-4">
       <Head>
         <title>{title}</title>
         {/* <link rel="icon" href="/favicon.ico" /> */}
@@ -39,7 +39,7 @@ export default function Home() {
 
         <link rel="canonical" href="https://www.onerepmaxcalculator.xyz/" />
       </Head>
-      <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
+      <h1 className="flex-1 space-x-2 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
         Welcome to Strength Journeys 2.0
       </h1>
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2 2xl:grid-cols-4">

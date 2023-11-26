@@ -9,6 +9,7 @@ const inter = Inter({ subsets: ["latin"] });
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { sampleData } from "@/lib/sampleData";
+import { getLiftColor } from "@/lib/getLiftColor";
 
 import {
   Sheet,
@@ -38,6 +39,7 @@ import "chartjs-adapter-date-fns";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
 import { Line } from "react-chartjs-2";
+import { Bold } from "lucide-react";
 
 ChartJS.register(
   Colors,
@@ -54,7 +56,7 @@ ChartJS.register(
 );
 
 const Visualizer = () => {
-  const [time, setTime] = useState(1);
+  console.log(getLiftColor("Back Squat"));
 
   return (
     <>
@@ -70,9 +72,7 @@ const Visualizer = () => {
         <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           Strength Visualizer
         </h1>
-        <div>
-          <LiftChooserPanel />
-        </div>
+        <div>{/* <LiftChooserPanel /> */}</div>
         <div
           style={{ position: "relative", height: "85vh", width: "92vw" }}
           className="mt-4"
@@ -173,9 +173,65 @@ const VisualizerChart = ({}) => {
   const chartData = Object.entries(liftArrays).map(([lift, data]) => ({
     label: lift,
     data: data.map(([date, value]) => ({ x: date, y: value })),
+    backgroundColor: getLiftColor(lift),
+    borderColor: "rgb(50, 50, 50)",
+    borderWidth: 2,
+    pointStyle: "circle",
+    radius: 4,
+    hitRadius: 20,
+    hoverRadius: 10,
+    cubicInterpolationMode: "monotone",
+    // hidden: hidden, // This is for chart.js config
   }));
 
   // console.log(chartData);
+
+  const scalesOptions = {
+    x: {
+      type: "time",
+      // min: sixMonthsAgo,
+      // suggestedMax: visualizerData.padDateMax,
+      time: {
+        minUnit: "day",
+      },
+      ticks: {
+        // font: { family: "Catamaran", size: 15 },
+        // font: { size: 15 },
+        // color: mutedForegroundColor,
+      },
+      grid: {
+        // color: mutedColor,
+        color: gridColor,
+        display: true,
+      },
+    },
+    y: {
+      // suggestedMin: 0,
+      // suggestedMax: visualizerData.highestWeight,
+
+      ticks: {
+        display: false, // Google Material UI guidelines suggest you don't always have to show axes if you have datalabels
+        // font: { family: "Catamaran", size: 15 },
+        // color: mutedForegroundColor,
+        callback: (value) => {
+          return `${value}`; // FIXME: insert unitType from data
+        },
+      },
+      grid: {
+        display: true,
+        color: gridColor,
+      },
+    },
+  };
+
+  const titleOptions = {
+    display: false,
+  };
+
+  const legendOptions = {
+    display: false,
+    position: "right",
+  };
 
   const dataLabelsOptions = {
     display: true,
@@ -185,7 +241,8 @@ const VisualizerChart = ({}) => {
     },
     font: (context) => {
       // FIXME: Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
-      return { family: "Sans", size: 12 };
+      // return { family: "Sans", size: 12 };
+      return { weight: "bold" };
     },
     align: "end",
     anchor: "end",
@@ -203,47 +260,18 @@ const VisualizerChart = ({}) => {
         });
         return formattedDate;
       },
-      label: (context) => context.raw.label,
     },
   };
 
   const options = {
     maintainAspectRatio: false,
+    responsive: true,
+    resizeDelay: 20,
 
-    scales: {
-      x: {
-        type: "time",
-        ticks: {
-          // color: mutedForegroundColor,
-        },
-        grid: {
-          // color: mutedColor,
-          color: gridColor,
-        },
-        time: {
-          minUnit: "day",
-        },
-      },
-      y: {
-        suggestedMin: 0,
-
-        ticks: {
-          // color: mutedForegroundColor,
-          display: false,
-        },
-        grid: {
-          color: gridColor,
-        },
-      },
-    },
+    scales: scalesOptions,
     plugins: {
-      title: {
-        display: false,
-      },
-      legend: {
-        display: false,
-        position: "right",
-      },
+      title: titleOptions,
+      legend: legendOptions,
       datalabels: dataLabelsOptions,
       tooltip: tooltipOptions,
     },

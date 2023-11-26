@@ -35,6 +35,7 @@ import {
 } from "chart.js";
 
 import "chartjs-adapter-date-fns";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
 import { Line } from "react-chartjs-2";
 
@@ -49,6 +50,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
+  ChartDataLabels,
 );
 
 const Visualizer = () => {
@@ -137,7 +139,7 @@ const VisualizerChart = ({}) => {
 
   // Function to calculate 1RM using Brzycki formula
   function calculateOneRepMax(weight, reps) {
-    return weight * (1 - (0.025 * reps) / 100);
+    return Math.round(weight * (1 - (0.025 * reps) / 100));
   }
 
   // Process the data to create an array of arrays per lift
@@ -174,6 +176,36 @@ const VisualizerChart = ({}) => {
   }));
 
   // console.log(chartData);
+
+  const dataLabelsOptions = {
+    display: true,
+    formatter: (context) => {
+      // console.log(context);
+      return `${context.y}kg`;
+    },
+    font: (context) => {
+      // FIXME: Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
+      return { family: "Sans", size: 12 };
+    },
+    align: "end",
+    anchor: "end",
+  };
+
+  const tooltipOptions = {
+    enabled: true,
+    callbacks: {
+      title: (context) => {
+        const d = new Date(context[0].parsed.x);
+        const formattedDate = d.toLocaleString([], {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        return formattedDate;
+      },
+      label: (context) => context.raw.label,
+    },
+  };
 
   const options = {
     maintainAspectRatio: false,
@@ -212,6 +244,8 @@ const VisualizerChart = ({}) => {
         display: false,
         position: "right",
       },
+      datalabels: dataLabelsOptions,
+      tooltip: tooltipOptions,
     },
   };
 

@@ -241,6 +241,8 @@ const VisualizerChart = ({}) => {
       // color: primaryForegroundColor,
       font: {
         size: 16,
+        // family: "'Inter', 'Sans'",
+        // family: "'Arial'",
       },
     },
   };

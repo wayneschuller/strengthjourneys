@@ -227,13 +227,13 @@ export default function E1RMCalculator() {
       <div className="w-11/12 rounded-xl border-2 border-background bg-muted/50 p-4 md:w-4/5 md:p-6">
         <div className="flex flex-row gap-1 md:gap-2">
           <h1 className="flex-1 scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl ">
-            E1RM One Rep Max Calculator
+            One Rep Max Calculator
           </h1>
           <div className="flex flex-col gap-1 md:flex-row">
             <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
           </div>
         </div>
-        <h3 className="mb-10 mt-2 flex-1 scroll-m-20 text-xl tracking-tight md:mb-8 md:text-2xl">
+        <h3 className="mb-10 mt-2 hidden flex-1 scroll-m-20 text-xl tracking-tight md:mb-8 md:block md:text-2xl">
           Estimate your max single based on reps and weight (see this{" "}
           <a
             href="https://en.wikipedia.org/wiki/One-repetition_maximum"
@@ -303,7 +303,7 @@ export default function E1RMCalculator() {
           </div>
         </div>
 
-        {/* Center card */}
+        {/* Center E1RM card */}
         <div className="mt-8 flex flex-1 justify-center gap-4">
           <Card className="hover:ring-1">
             <CardHeader>
@@ -314,7 +314,7 @@ export default function E1RMCalculator() {
                 {reps}@{weight}
                 {isMetric ? "kg" : "lb"}
               </div>
-              <div className="text-center text-4xl font-bold tracking-tight md:text-5xl">
+              <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
                 {estimateE1RM(reps, weight, defaultFormula)}
                 {isMetric ? "kg" : "lb"}
               </div>

@@ -68,12 +68,14 @@ const Visualizer = () => {
         <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           Strength Visualizer
         </h1>
-        <div>{/* <LiftChooserPanel /> */}</div>
+        <div>
+          <LiftChooserPanel />
+        </div>
         <div
           style={{ position: "relative", height: "85vh", width: "92vw" }}
           className="mt-4"
         >
-          <Chart2 />
+          <VisualizerChart />
         </div>
       </div>
     </>
@@ -93,9 +95,12 @@ const LiftChooserPanel = ({}) => {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="pr-0">
-        <div className="flex flex-col">
-          <SheetClose asChild>
-            <Button> Close controls</Button>
+        <div className="flex w-min flex-col">
+          <div>Back Squat</div>
+          <div>Deadlift</div>
+          <div>Bench Press</div>
+          <SheetClose asChild className="flex justify-center">
+            <Button>Close controls</Button>
           </SheetClose>
         </div>
       </SheetContent>
@@ -103,7 +108,7 @@ const LiftChooserPanel = ({}) => {
   );
 };
 
-const Chart2 = ({}) => {
+const VisualizerChart = ({}) => {
   const { theme } = useTheme();
   const [primaryColor, setPrimaryColor] = useState("");
   const [mutedColor, setMutedColor] = useState("");
@@ -111,7 +116,8 @@ const Chart2 = ({}) => {
   const [gridColor, setGridColor] = useState("");
 
   useEffect(() => {
-    // Accessing the HSL color variable
+    // Accessing the HSL color variables
+    // from the shadcn theme
     const root = document.documentElement;
 
     const computedMutedColor =
@@ -126,7 +132,7 @@ const Chart2 = ({}) => {
       fadeHslColor(computedMutedForegroundColor, 30, theme === "dark"),
     );
 
-    console.log(gridColor);
+    // console.log(gridColor);
   }, [theme]);
 
   // Function to calculate 1RM using Brzycki formula

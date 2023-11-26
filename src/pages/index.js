@@ -22,8 +22,6 @@ export default function Home() {
   const { theme, setTheme } = useTheme();
 
   const title = "Strength Journeys";
-  console.log(`rendering landing`);
-  console.log(theme);
 
   return (
     <div className="mx-4">

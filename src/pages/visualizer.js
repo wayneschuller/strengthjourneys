@@ -112,15 +112,20 @@ const LiftChooserPanel = ({}) => {
 
 const VisualizerChart = ({}) => {
   const { theme } = useTheme();
-  const [primaryColor, setPrimaryColor] = useState("");
-  const [mutedColor, setMutedColor] = useState("");
-  const [mutedForegroundColor, setMutedForegroundColor] = useState("");
-  const [gridColor, setGridColor] = useState("");
+  const [primaryForegroundColor, setPrimaryForegroundColor] = useState(null);
+  const [mutedColor, setMutedColor] = useState(null);
+  const [mutedForegroundColor, setMutedForegroundColor] = useState(null);
+  const [gridColor, setGridColor] = useState(null);
 
   useEffect(() => {
     // Accessing the HSL color variables
     // from the shadcn theme
     const root = document.documentElement;
+
+    const computedPrimaryColor = getComputedStyle(root).getPropertyValue(
+      "--primary-foreground",
+    );
+    setPrimaryForegroundColor(convertToHslFormat(computedPrimaryColor));
 
     const computedMutedColor =
       getComputedStyle(root).getPropertyValue("--foreground");
@@ -229,8 +234,15 @@ const VisualizerChart = ({}) => {
   };
 
   const legendOptions = {
-    display: false,
-    position: "right",
+    display: true,
+    position: "top",
+    labels: {
+      color: theme === "dark" ? "white" : "black",
+      // color: primaryForegroundColor,
+      font: {
+        size: 16,
+      },
+    },
   };
 
   const dataLabelsOptions = {
@@ -306,7 +318,7 @@ function convertToHslFormat(originalHsl) {
 }
 
 function fadeHslColor(originalHsl, fadeAmount, isDarkMode) {
-  console.log(originalHsl);
+  // console.log(originalHsl);
   // Split the original HSL string into individual components
   const [hue, saturation, lightness] = originalHsl.split(" ");
 

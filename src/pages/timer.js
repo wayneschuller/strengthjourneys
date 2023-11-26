@@ -63,7 +63,7 @@ function Stopwatch({ time, setTime }) {
   return (
     <>
       <Card
-        className="my-10 bg-muted ring-4 hover:ring-blue-800 md:my-5"
+        className="my-10 bg-muted ring-4 hover:bg-muted/80 hover:ring-blue-900 md:my-5"
         onClick={handleRestart}
       >
         <CardContent>

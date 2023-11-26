@@ -32,7 +32,7 @@ const Timer = () => {
 export default Timer;
 
 function Stopwatch({ time, setTime }) {
-  const [isRunning, setIsRunning] = useState(false);
+  const [isRunning, setIsRunning] = useState(true);
 
   useEffect(() => {
     let interval;

@@ -7,7 +7,7 @@ import Head from "next/head";
 import React, { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Timer = () => {
   const [time, setTime] = useState(1);
@@ -20,7 +20,7 @@ const Timer = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="flex  flex-col items-center ">
+      <div className="flex flex-col items-center">
         <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           Lifting Set Timer
         </h1>
@@ -62,10 +62,17 @@ function Stopwatch({ time, setTime }) {
 
   return (
     <>
-      <Card className="my-10 bg-muted p-4 ring-4 hover:ring-blue-800 md:my-5 md:p-10">
-        <div className="font-mono text-8xl font-bold md:text-[10rem] lg:text-[20rem] xl:text-[20rem] 2xl:text-[30rem]">
-          {formatTime(time)}
-        </div>
+      <Card
+        className="my-10 bg-muted px-4 ring-4 hover:ring-blue-800 md:my-5"
+        onClick={handleRestart}
+      >
+        <CardContent>
+          <div
+            className={`pt-6 font-mono text-8xl font-bold md:text-[10rem] lg:text-[20rem] xl:text-[20rem] 2xl:text-[30rem]`}
+          >
+            {formatTime(time)}
+          </div>
+        </CardContent>
       </Card>
       <Button
         // className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 mx-2 rounded"

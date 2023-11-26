@@ -63,12 +63,12 @@ function Stopwatch({ time, setTime }) {
   return (
     <>
       <Card
-        className="my-10 bg-muted px-4 ring-4 hover:ring-blue-800 md:my-5"
+        className="my-10 bg-muted ring-4 hover:ring-blue-800 md:my-5"
         onClick={handleRestart}
       >
         <CardContent>
           <div
-            className={`pt-6 font-mono text-8xl font-bold md:text-[10rem] lg:text-[20rem] xl:text-[20rem] 2xl:text-[30rem]`}
+            className={`pt-6 text-center font-mono text-8xl font-bold md:text-[10rem] lg:text-[20rem] xl:text-[20rem] 2xl:text-[30rem]`}
           >
             {formatTime(time)}
           </div>

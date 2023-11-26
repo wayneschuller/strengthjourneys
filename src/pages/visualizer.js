@@ -37,6 +37,7 @@ import {
 
 import "chartjs-adapter-date-fns";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import zoomPlugin from "chartjs-plugin-zoom";
 
 import { Line } from "react-chartjs-2";
 import { Bold } from "lucide-react";
@@ -53,6 +54,7 @@ ChartJS.register(
   Tooltip,
   Legend,
   ChartDataLabels,
+  zoomPlugin,
 );
 
 const Visualizer = () => {
@@ -277,6 +279,24 @@ const VisualizerChart = ({}) => {
     },
   };
 
+  const zoomOptions = {
+    zoom: {
+      wheel: { enabled: true },
+      mode: "x",
+    },
+    pan: {
+      enabled: true,
+      mode: "x",
+    },
+    // limits: {
+    // x: {
+    // min: visualizerData.padDateMin,
+    // max: visualizerData.padDateMax,
+    // minRange: minRange,
+    // },
+    // },
+  };
+
   const options = {
     maintainAspectRatio: false,
     responsive: true,
@@ -288,6 +308,7 @@ const VisualizerChart = ({}) => {
       legend: legendOptions,
       datalabels: dataLabelsOptions,
       tooltip: tooltipOptions,
+      zoom: zoomOptions,
     },
   };
 

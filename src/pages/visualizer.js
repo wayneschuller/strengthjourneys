@@ -58,8 +58,6 @@ ChartJS.register(
 );
 
 const Visualizer = () => {
-  console.log(getLiftColor("Back Squat"));
-
   return (
     <>
       <Head>

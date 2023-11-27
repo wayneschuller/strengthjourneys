@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { sampleData } from "@/lib/sampleData";
 import { getLiftColor } from "@/lib/getLiftColor";
 import { Line } from "react-chartjs-2";
 
@@ -39,7 +38,7 @@ ChartJS.register(
   zoomPlugin,
 );
 
-const VisualizerChart = ({}) => {
+const VisualizerChart = ({ rawData }) => {
   const { theme } = useTheme();
   const [primaryForegroundColor, setPrimaryForegroundColor] = useState(null);
   const [mutedColor, setMutedColor] = useState(null);
@@ -86,7 +85,7 @@ const VisualizerChart = ({}) => {
   // Process the data to create an array of arrays per lift
   const liftArrays = {};
 
-  sampleData.forEach((entry) => {
+  rawData.forEach((entry) => {
     const { date, name, reps, weight } = entry;
     const oneRepMax = calculateOneRepMax(weight, reps);
 

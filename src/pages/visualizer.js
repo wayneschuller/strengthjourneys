@@ -2,12 +2,9 @@
 
 import dynamic from "next/dynamic";
 import Head from "next/head";
-import React, { useState } from "react";
-
-import { Inter, Righteous } from "next/font/google";
-const inter = Inter({ subsets: ["latin"] });
+import React, { useEffect, useState } from "react";
+import { sampleData } from "@/lib/sampleData";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 
 import {
   Sheet,
@@ -29,6 +26,12 @@ const DynamicHeaderVisualizerChart = dynamic(
 );
 
 const Visualizer = () => {
+  let rawData = sampleData;
+
+  useEffect(() => {
+    console.log(`visualiser useEffect`);
+  }, []);
+
   return (
     <>
       <Head>
@@ -51,7 +54,7 @@ const Visualizer = () => {
             width: "92vw",
           }}
         >
-          <DynamicHeaderVisualizerChart />
+          <DynamicHeaderVisualizerChart rawData={rawData} />
         </div>
       </div>
     </>

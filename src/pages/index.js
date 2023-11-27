@@ -36,6 +36,14 @@ export default function Home() {
         />
 
         <link rel="canonical" href="https://www.onerepmaxcalculator.xyz/" />
+
+        {/* We need to load Inter here for chart.js?! */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap"
+          rel="stylesheet"
+        />
       </Head>
       <h1 className="flex-1 space-x-2 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
         Welcome to Strength Journeys 2.0

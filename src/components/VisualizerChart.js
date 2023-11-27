@@ -6,6 +6,7 @@ import { getLiftColor } from "@/lib/getLiftColor";
 import { Line } from "react-chartjs-2";
 
 import {
+  defaults as chartDefaults,
   Chart as ChartJS,
   Colors,
   TimeScale,
@@ -70,6 +71,12 @@ const VisualizerChart = ({}) => {
 
     // console.log(gridColor);
   }, [theme]);
+
+  // We imported chartDefaults from chart.js above
+  // chartDefaults.font.family = "'Inter', 'Helvetica','Arial'";
+  // chartDefaults.font.family = "'Inter'";
+  // chartDefaults.font.size = 20;
+  chartDefaults.normalized = true;
 
   // Function to calculate 1RM using Brzycki formula
   function calculateOneRepMax(weight, reps) {
@@ -230,7 +237,7 @@ const VisualizerChart = ({}) => {
   const options = {
     maintainAspectRatio: false,
     responsive: true,
-    resizeDelay: 20,
+    // resizeDelay: 20,
 
     scales: scalesOptions,
     plugins: {

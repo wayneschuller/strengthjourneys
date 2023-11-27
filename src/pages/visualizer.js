@@ -45,8 +45,11 @@ const Visualizer = () => {
         </h1>
         <div>{/* <LiftChooserPanel /> */}</div>
         <div
-          style={{ position: "relative", height: "80vh", width: "92vw" }}
-          className=""
+          style={{
+            position: "relative",
+            height: "80vh",
+            width: "92vw",
+          }}
         >
           <DynamicHeaderVisualizerChart />
         </div>

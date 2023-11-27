@@ -10,17 +10,21 @@ const scopes = [
 
 const JWT_SECRET = String(process.env.NEXTAUTH_SECRET);
 
+const authorizationUrl = new URL(
+  "https://accounts.google.com/o/oauth2/v2/auth",
+);
+authorizationUrl.searchParams.set("prompt", "consent");
+authorizationUrl.searchParams.set("access_type", "offline");
+authorizationUrl.searchParams.set("response_type", "code");
+
 export const authOptions = {
   // Configure one or more authentication providers
   providers: [
     GoogleProvider({
       clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      authorization: {
-        params: {
-          scope: scopes.join(" "),
-        },
-      },
+      authorizationUrl: authorizationUrl.toString(),
+      scope: scopes.join(" "),
     }),
   ],
   secret: JWT_SECRET,

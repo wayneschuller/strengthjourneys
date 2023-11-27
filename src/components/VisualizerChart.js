@@ -4,7 +4,6 @@ import { useTheme } from "next-themes";
 import { sampleData } from "@/lib/sampleData";
 import { getLiftColor } from "@/lib/getLiftColor";
 import { Line } from "react-chartjs-2";
-import { convertToHslFormat, fadeHslColor } from "../pages/visualizer";
 
 import {
   Chart as ChartJS,
@@ -49,6 +48,7 @@ const VisualizerChart = ({}) => {
   useEffect(() => {
     // Accessing the HSL color variables
     // from the shadcn theme
+    // FIXME: Not sure this is worth it
     const root = document.documentElement;
 
     const computedPrimaryColor = getComputedStyle(root).getPropertyValue(
@@ -130,16 +130,19 @@ const VisualizerChart = ({}) => {
         // font: { family: "Catamaran", size: 15 },
         // font: { size: 15 },
         // color: mutedForegroundColor,
+        display: true,
+        // color: "red",
+        maxRotation: 0, // The default rotation is good on desktop but on mobile causes constant layout shifting on zoom
       },
       grid: {
         // color: mutedColor,
         color: gridColor,
-        display: false,
+        display: true,
       },
     },
     y: {
-      // suggestedMin: 0,
-      // suggestedMax: visualizerData.highestWeight,
+      suggestedMin: 0,
+      suggestedMax: 250,
       ticks: {
         display: false,
 
@@ -242,3 +245,43 @@ const VisualizerChart = ({}) => {
 };
 
 export default VisualizerChart;
+
+function convertToHslFormat(originalHsl) {
+  // Split the original HSL string into individual components
+  const [hue, saturation, lightness] = originalHsl.split(" ");
+
+  // Extract numeric values
+  const numericHue = parseFloat(hue);
+  const numericSaturation = parseFloat(saturation);
+  const numericLightness = parseFloat(lightness);
+
+  // Construct the HSL format string
+  const hslFormat = `hsl(${numericHue}, ${numericSaturation}%, ${numericLightness}%)`;
+
+  return hslFormat;
+}
+
+function fadeHslColor(originalHsl, fadeAmount, isDarkMode) {
+  // console.log(originalHsl);
+  // Split the original HSL string into individual components
+  const [hue, saturation, lightness] = originalHsl.split(" ");
+
+  // Extract numeric values
+  const numericHue = parseFloat(hue);
+  const numericSaturation = parseFloat(saturation);
+  let numericLightness = parseFloat(lightness);
+
+  // Adjust lightness based on mode
+  if (isDarkMode) {
+    // Dark mode: decrease lightness
+    numericLightness = Math.max(0, numericLightness - fadeAmount);
+  } else {
+    // Light mode: increase lightness
+    numericLightness = Math.min(100, numericLightness + fadeAmount);
+  }
+
+  // Construct the new HSL format string
+  const fadedHsl = `hsl(${numericHue}, ${numericSaturation}%, ${numericLightness}%)`;
+
+  return fadedHsl;
+}

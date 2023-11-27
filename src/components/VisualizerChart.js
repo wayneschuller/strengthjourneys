@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { getLiftColor } from "@/lib/getLiftColor";
 import { Line } from "react-chartjs-2";
+import { useSession } from "next-auth/react";
+import useSWR from "swr";
 
 import {
   defaults as chartDefaults,
@@ -38,12 +40,47 @@ ChartJS.register(
   zoomPlugin,
 );
 
+const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
+
 const VisualizerChart = ({ rawData }) => {
   const { theme } = useTheme();
   const [primaryForegroundColor, setPrimaryForegroundColor] = useState(null);
   const [mutedColor, setMutedColor] = useState(null);
   const [mutedForegroundColor, setMutedForegroundColor] = useState(null);
   const [gridColor, setGridColor] = useState(null);
+  const { data: session } = useSession();
+
+  const ssid = "1kVtmK_Kw3imUZT-x7mldakENsK0KGqhgok_6XwCtk10"; // Replace with your actual spreadsheet ID
+
+  console.log(session);
+  console.log(process.env.REACT_APP_GOOGLE_API_KEY);
+
+  const { data, error } = useSWR(
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`,
+    async (url) => {
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch data");
+      }
+
+      const data = await response.json();
+      return data;
+    },
+    {
+      revalidateOnFocus: false,
+    },
+  );
+
+  console.log(data);
+
+  if (!data) {
+    return <div>Loading...</div>;
+  }
 
   useEffect(() => {
     // Accessing the HSL color variables

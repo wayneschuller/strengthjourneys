@@ -16,7 +16,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function NavBar() {
   const { data: session } = useSession();
-  console.log(session);
+
+  // session.accessToken
+  // console.log(session);
+
   return (
     <div className="mx-3 flex items-center md:container">
       <DesktopNav />

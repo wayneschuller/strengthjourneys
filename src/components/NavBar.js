@@ -7,16 +7,28 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
 import MobileNav from "@/components/MobileNav";
+import { useSession, signIn, signOut } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
 
 export default function NavBar() {
+  const { data: session } = useSession();
+  console.log(session);
   return (
     <div className="mx-3 flex items-center md:container">
       <DesktopNav />
       <MobileNav />
-      <div className="mt-2 flex flex-1 items-center justify-end">
+      <div className="mt-2 flex flex-1 items-center justify-end gap-2">
+        {session && (
+          <Avatar>
+            <AvatarImage src={session.user.image} />
+            <AvatarFallback>session.user.name</AvatarFallback>
+          </Avatar>
+        )}
+        {!session && <Button onClick={() => signIn()}>Sign in</Button>}
         <DarkModeToggle />
       </div>
     </div>

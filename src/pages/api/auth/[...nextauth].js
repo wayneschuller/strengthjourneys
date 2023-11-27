@@ -8,6 +8,11 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorization: {
+        params: {
+          scope: "openid https://www.googleapis.com/auth/drive.file",
+        },
+      },
     }),
   ],
 };

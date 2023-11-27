@@ -23,7 +23,7 @@ export default function NavBar() {
       <MobileNav />
       <div className="mt-2 flex flex-1 items-center justify-end gap-2">
         {session && (
-          <Avatar>
+          <Avatar onClick={() => signOut()}>
             <AvatarImage src={session.user.image} />
             <AvatarFallback>session.user.name</AvatarFallback>
           </Avatar>

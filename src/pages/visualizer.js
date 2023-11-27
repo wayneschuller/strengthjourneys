@@ -45,7 +45,7 @@ const Visualizer = () => {
         </h1>
         <div>{/* <LiftChooserPanel /> */}</div>
         <div
-          style={{ position: "relative", height: "85vh", width: "92vw" }}
+          style={{ position: "relative", height: "80vh", width: "92vw" }}
           className="mt-4"
         >
           <DynamicHeaderVisualizerChart />

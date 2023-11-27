@@ -134,7 +134,7 @@ const VisualizerChart = ({}) => {
       grid: {
         // color: mutedColor,
         color: gridColor,
-        display: true,
+        display: false,
       },
     },
     y: {
@@ -150,7 +150,7 @@ const VisualizerChart = ({}) => {
         },
       },
       grid: {
-        display: true,
+        display: false,
         color: gridColor,
       },
     },

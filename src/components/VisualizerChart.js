@@ -138,6 +138,7 @@ const VisualizerChart = ({}) => {
         // color: mutedColor,
         color: gridColor,
         display: true,
+        tickColor: theme === "dark" ? "white" : "black",
       },
     },
     y: {

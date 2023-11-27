@@ -18,7 +18,7 @@ export default function NavBar() {
   const { data: session } = useSession();
 
   // session.accessToken
-  // console.log(session);
+  console.log(session);
 
   return (
     <div className="mx-3 flex items-center md:container">

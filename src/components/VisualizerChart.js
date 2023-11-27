@@ -208,6 +208,7 @@ const VisualizerChart = ({}) => {
     zoom: {
       wheel: { enabled: true },
       mode: "x",
+      pinch: { enabled: true },
     },
     pan: {
       enabled: true,

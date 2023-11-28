@@ -31,9 +31,8 @@ export default function NavBar() {
   // console.log(session);
   const handleOpenPicker = () => {
     openPicker({
-      clientId:
-        "666675096917-bnglrufs6q2q0gmpdof0cjks6pjbchoc.apps.googleusercontent.com",
-      developerKey: "AIzaSyB1bu2k6O_v2-1LRVeOfgh5r-KZfgxABTI",
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
       viewId: "DOCS",
       token: session.accessToken,
       showUploadView: false,
@@ -46,7 +45,8 @@ export default function NavBar() {
           console.log("User clicked cancel/close button");
         }
         // console.log(data);
-        localStorage.setItem("ssid", data.docs[0]?.id);
+        if (data.docs && data.docs[0])
+          localStorage.setItem("ssid", data.docs[0]?.id);
       },
     });
   };

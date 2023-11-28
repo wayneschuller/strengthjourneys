@@ -28,10 +28,10 @@ export default function NavBar() {
       developerKey: "AIzaSyB1bu2k6O_v2-1LRVeOfgh5r-KZfgxABTI",
       viewId: "DOCS",
       token: session.accessToken, // pass oauth token in case you already have one
-      showUploadView: true,
+      showUploadView: false,
       showUploadFolders: true,
       supportDrives: true,
-      multiselect: true,
+      multiselect: false,
       // customViews: customViewsArray, // custom view
       callbackFunction: (data) => {
         if (data.action === "cancel") {

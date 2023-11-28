@@ -42,7 +42,7 @@ ChartJS.register(
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
-const VisualizerChart = ({ rawData }) => {
+export const VisualizerChart = ({ rawData }) => {
   const { theme } = useTheme();
   const [primaryForegroundColor, setPrimaryForegroundColor] = useState(null);
   const [mutedColor, setMutedColor] = useState(null);
@@ -51,8 +51,6 @@ const VisualizerChart = ({ rawData }) => {
   const [ssid, setSsid] = useState(null);
   const { data: session } = useSession();
 
-  // const ssid = "1kVtmK_Kw3imUZT-x7mldakENsK0KGqhgok_6XwCtk10"; // FIXME: Get from user
-
   const { data } = useSWR(`/api/readGSheet?ssid=${ssid}`, fetcher, {
     revalidateOnFocus: false,
   });
@@ -60,7 +58,7 @@ const VisualizerChart = ({ rawData }) => {
   useEffect(() => {
     const initSsid = localStorage.getItem("ssid");
     if (initSsid) setSsid(initSsid);
-    console.log(initSsid);
+    // console.log(initSsid);
   }, []);
 
   useEffect(() => {
@@ -90,12 +88,11 @@ const VisualizerChart = ({ rawData }) => {
   }, [theme]);
 
   // console.log(data);
-
   if (!session) {
     return <div>Awaiting login... (FIXME: show sample data)</div>;
   }
 
-  console.log(ssid);
+  // console.log(ssid);
   if (!ssid) {
     return <div>Choose a file FIXME: button (FIXME: show sample data)</div>;
   }
@@ -169,12 +166,10 @@ const VisualizerChart = ({ rawData }) => {
   });
 
   // console.log(liftArrays);
-
   // Sort the arrays chronologically FIXME NEEDED?
   // Object.values(liftArrays).forEach((arr) => {
   // arr.sort((a, b) => new Date(a[0]) - new Date(b[0]));
   // });
-
   // Sort the arrays by the number of entries in descending order
   const sortedLiftArrays = Object.entries(liftArrays)
     .sort(([, dataA], [, dataB]) => dataB.length - dataA.length)
@@ -196,7 +191,6 @@ const VisualizerChart = ({ rawData }) => {
   }));
 
   // console.log(chartData);
-
   const scalesOptions = {
     x: {
       type: "time",
@@ -310,7 +304,6 @@ const VisualizerChart = ({ rawData }) => {
     maintainAspectRatio: false,
     responsive: true,
     // resizeDelay: 20,
-
     scales: scalesOptions,
     plugins: {
       title: titleOptions,

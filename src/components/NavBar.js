@@ -45,8 +45,8 @@ export default function NavBar() {
         if (data.action === "cancel") {
           console.log("User clicked cancel/close button");
         }
-        console.log(data);
-        localStorage.setItem("ssid", data.docs[0].id);
+        // console.log(data);
+        localStorage.setItem("ssid", data.docs[0]?.id);
       },
     });
   };

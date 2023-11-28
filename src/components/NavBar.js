@@ -38,7 +38,7 @@ export default function NavBar() {
           console.log("User clicked cancel/close button");
         }
         console.log(data);
-        localStorage.setItem("SJ_googleSheetId", data.ssid);
+        localStorage.setItem("SJ_googleSheetId", data.docs[0].id);
       },
     });
   };

@@ -1,5 +1,7 @@
 <!-- @format -->
 
+# ARCHIVE OF V1 (late 2022) - BASED ON CREATE REACT APP
+
 # Strength Journeys
 
 ## https://www.strengthjourneys.xyz
@@ -17,4 +19,3 @@ Unites features from my previous projects:
 
 - https://www.onerepmaxcalculator.xyz/
 - https://wayneschuller.github.io/powerlifting_strength_tracker_js/e1rm.html
-

@@ -49,8 +49,8 @@ const VisualizerChart = ({ rawData }) => {
   const [mutedForegroundColor, setMutedForegroundColor] = useState(null);
   const [gridColor, setGridColor] = useState(null);
   const { data: session } = useSession();
-  const ssid = "1kVtmK_Kw3imUZT-x7mldakENsK0KGqhgok_6XwCtk10"; // FIXME: Get from user
-  // let data = null;
+  // const ssid = "1kVtmK_Kw3imUZT-x7mldakENsK0KGqhgok_6XwCtk10"; // FIXME: Get from user
+  const ssid = localStorage.getItem("googleSheetId");
 
   const { data } = useSWR(`/api/readGSheet?ssid=${ssid}`, fetcher, {
     revalidateOnFocus: false,
@@ -86,6 +86,11 @@ const VisualizerChart = ({ rawData }) => {
 
   if (!session) {
     return <div>Awaiting login... (FIXME: show sample data)</div>;
+  }
+
+  console.log(ssid);
+  if (!ssid) {
+    return <div>Choose a file FIXME: button (FIXME: show sample data)</div>;
   }
 
   if (!data) {

@@ -10,21 +10,49 @@ import MobileNav from "@/components/MobileNav";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import useDrivePicker from "@fyelci/react-google-drive-picker";
 
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
 
 export default function NavBar() {
   const { data: session } = useSession();
+  const [openPicker, authResponse] = useDrivePicker();
 
   // session.accessToken
   // console.log(session);
+  const handleOpenPicker = () => {
+    openPicker({
+      clientId:
+        "666675096917-bnglrufs6q2q0gmpdof0cjks6pjbchoc.apps.googleusercontent.com",
+      developerKey: "AIzaSyB1bu2k6O_v2-1LRVeOfgh5r-KZfgxABTI",
+      viewId: "DOCS",
+      token: session.accessToken, // pass oauth token in case you already have one
+      showUploadView: true,
+      showUploadFolders: true,
+      supportDrives: true,
+      multiselect: true,
+      // customViews: customViewsArray, // custom view
+      callbackFunction: (data) => {
+        if (data.action === "cancel") {
+          console.log("User clicked cancel/close button");
+        }
+        console.log(data);
+        localStorage.setItem("SJ_googleSheetId", data.ssid);
+      },
+    });
+  };
 
   return (
     <div className="mx-3 flex items-center md:container">
       <DesktopNav />
       <MobileNav />
       <div className="mt-2 flex flex-1 items-center justify-end gap-2">
+        {session && (
+          <Button onClick={() => handleOpenPicker()}>
+            Choose Google Sheet
+          </Button>
+        )}
         {session && (
           <Avatar onClick={() => signOut()}>
             <AvatarImage src={session.user.image} />

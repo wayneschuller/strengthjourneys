@@ -51,6 +51,7 @@ export const VisualizerChart = ({ rawData }) => {
   const [ssid, setSsid] = useState(null);
   const { data: session } = useSession();
 
+  // FIXME: this calls when ssid is null. Make a hook wrapper?
   const { data } = useSWR(`/api/readGSheet?ssid=${ssid}`, fetcher, {
     revalidateOnFocus: false,
   });

@@ -17,8 +17,11 @@ export default async function handler(req, res) {
 
   const { ssid } = req.query;
 
+  console.log(`ssid is ${ssid}`);
+
   // Check that query has ssid parameter
-  if (!ssid) {
+  if (!ssid || ssid === null) {
+    // FIXME:  this return point is not being triggered and we keep passing null ssid to google
     res.status(400).json({ error: "Missing ssid parameter" });
     return;
   }

@@ -19,7 +19,7 @@ import useDrivePicker from "@fyelci/react-google-drive-picker";
 export default function NavBar() {
   const { data: session } = useSession();
   const [openPicker, authResponse] = useDrivePicker();
-  const [ssid, setSsid] = useState(null);
+  const [ssid, setSsid] = useState(null); // FIXME: this should be higher and shared with other components - custom hook?
 
   useEffect(() => {
     const initSsid = localStorage.getItem("ssid");
@@ -33,9 +33,9 @@ export default function NavBar() {
     openPicker({
       clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
       developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
-      viewId: "DOCS",
+      viewId: "SPREADSHEETS",
       token: session.accessToken,
-      showUploadView: false,
+      showUploadView: true,
       showUploadFolders: true,
       supportDrives: true,
       multiselect: false,
@@ -43,10 +43,14 @@ export default function NavBar() {
       callbackFunction: (data) => {
         if (data.action === "cancel") {
           console.log("User clicked cancel/close button");
+          return;
         }
         // console.log(data);
-        if (data.docs && data.docs[0])
+        if (data.docs && data.docs[0]) {
           localStorage.setItem("ssid", data.docs[0]?.id);
+          // FIXME: set state ssid here
+          return;
+        }
       },
     });
   };

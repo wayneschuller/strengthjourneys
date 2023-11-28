@@ -28,10 +28,6 @@ const DynamicHeaderVisualizerChart = dynamic(
 const Visualizer = () => {
   let rawData = sampleData;
 
-  useEffect(() => {
-    console.log(`visualiser useEffect`);
-  }, []);
-
   return (
     <>
       <Head>

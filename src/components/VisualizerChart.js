@@ -49,38 +49,12 @@ const VisualizerChart = ({ rawData }) => {
   const [mutedForegroundColor, setMutedForegroundColor] = useState(null);
   const [gridColor, setGridColor] = useState(null);
   const { data: session } = useSession();
+  const ssid = "1kVtmK_Kw3imUZT-x7mldakENsK0KGqhgok_6XwCtk10"; // FIXME: Get from user
+  // let data = null;
 
-  const ssid = "1kVtmK_Kw3imUZT-x7mldakENsK0KGqhgok_6XwCtk10"; // Replace with your actual spreadsheet ID
-
-  console.log(session);
-  console.log(process.env.REACT_APP_GOOGLE_API_KEY);
-
-  const { data, error } = useSWR(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.REACT_APP_GOOGLE_API_KEY}`,
-    async (url) => {
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch data");
-      }
-
-      const data = await response.json();
-      return data;
-    },
-    {
-      revalidateOnFocus: false,
-    },
-  );
-
-  console.log(data);
-
-  if (!data) {
-    return <div>Loading...</div>;
-  }
+  const { data } = useSWR(`/api/readGSheet?ssid=${ssid}`, fetcher, {
+    revalidateOnFocus: false,
+  });
 
   useEffect(() => {
     // Accessing the HSL color variables
@@ -108,6 +82,16 @@ const VisualizerChart = ({ rawData }) => {
     // console.log(gridColor);
   }, [theme]);
 
+  // console.log(data);
+
+  if (!session) {
+    return <div>Awaiting login... (FIXME: show sample data)</div>;
+  }
+
+  if (!data) {
+    return <div>Loading...</div>;
+  }
+
   // We imported chartDefaults from chart.js above
   // chartDefaults.font.family = "'Inter', 'Helvetica','Arial'";
   // chartDefaults.font.family = "'Inter'";
@@ -121,10 +105,39 @@ const VisualizerChart = ({ rawData }) => {
 
   // Process the data to create an array of arrays per lift
   const liftArrays = {};
+  let lastUsedName = null;
+  let lastUsedDate = null;
 
-  rawData.forEach((entry) => {
-    const { date, name, reps, weight } = entry;
-    const oneRepMax = calculateOneRepMax(weight, reps);
+  data.values.forEach((entry) => {
+    if (entry.length < 4) return;
+
+    let date = entry[0];
+    let name = entry[1];
+    let reps = entry[2];
+    let weight = entry[3];
+
+    // Convert reps to a number
+    reps = parseInt(reps, 10);
+
+    const weightValue = weight ? parseFloat(weight.replace("kg", "")) : null;
+
+    if (!Number.isInteger(reps) || isNaN(weightValue)) {
+      // You may want to log a message or handle the skip in some way
+      // console.log( `Skipping row: ${reps} ${weightValue} ${JSON.stringify(entry)}`,);
+      return; // Skip to the next iteration
+    }
+
+    // If 'date' is empty, use the most recent date from the previous row
+    if (!date && lastUsedDate !== null) {
+      date = lastUsedDate;
+    }
+
+    // If 'name' is empty, use the most recent name from the previous row
+    if (!name && lastUsedName !== null) {
+      name = lastUsedName;
+    }
+
+    const oneRepMax = calculateOneRepMax(weightValue, reps);
 
     if (!liftArrays[name]) {
       liftArrays[name] = [];
@@ -137,16 +150,26 @@ const VisualizerChart = ({ rawData }) => {
       liftArrays[name] = liftArrays[name].filter((item) => item[0] !== date);
       liftArrays[name].push([date, oneRepMax]);
     }
-  });
 
-  // Sort the arrays chronologically
-  Object.values(liftArrays).forEach((arr) => {
-    arr.sort((a, b) => new Date(a[0]) - new Date(b[0]));
+    // Update the lastUsedName and lastUsedDate for the next iteration
+    lastUsedName = name;
+    lastUsedDate = date;
   });
 
   // console.log(liftArrays);
+
+  // Sort the arrays chronologically FIXME NEEDED?
+  // Object.values(liftArrays).forEach((arr) => {
+  // arr.sort((a, b) => new Date(a[0]) - new Date(b[0]));
+  // });
+
+  // Sort the arrays by the number of entries in descending order
+  const sortedLiftArrays = Object.entries(liftArrays)
+    .sort(([, dataA], [, dataB]) => dataB.length - dataA.length)
+    .slice(0, 5); // Select the top 5 lift arrays
+
   // Convert liftArrays to Chart.js compatible format
-  const chartData = Object.entries(liftArrays).map(([lift, data]) => ({
+  const chartData = sortedLiftArrays.map(([lift, data]) => ({
     label: lift,
     data: data.map(([date, value]) => ({ x: date, y: value })),
     backgroundColor: getLiftColor(lift),
@@ -161,6 +184,7 @@ const VisualizerChart = ({ rawData }) => {
   }));
 
   // console.log(chartData);
+
   const scalesOptions = {
     x: {
       type: "time",

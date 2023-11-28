@@ -11,8 +11,8 @@ export default async function handler(req, res) {
     return;
   }
 
-  console.log(`serverside...`);
-  console.log(session);
+  // console.log(`serverside...`);
+  // console.log(session);
   // console.log(`googleAPIKey is: ${googleAPIKey}`);
 
   const { ssid } = req.query;
@@ -36,7 +36,9 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      throw new Error(
+        `HTTP error in readGSheet API! Status: ${response.status}`,
+      );
     }
 
     const data = await response.json();

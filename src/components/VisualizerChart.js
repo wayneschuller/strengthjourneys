@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { getLiftColor } from "@/lib/getLiftColor";
 import { Line } from "react-chartjs-2";
@@ -58,8 +58,9 @@ const VisualizerChart = ({ rawData }) => {
   });
 
   useEffect(() => {
-    const ssid = localStorage.getItem("googleSheetId");
-    if (ssid) setSsid(ssid);
+    const initSsid = localStorage.getItem("ssid");
+    if (initSsid) setSsid(initSsid);
+    console.log(initSsid);
   }, []);
 
   useEffect(() => {

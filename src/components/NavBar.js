@@ -2,6 +2,7 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,13 @@ import useDrivePicker from "@fyelci/react-google-drive-picker";
 export default function NavBar() {
   const { data: session } = useSession();
   const [openPicker, authResponse] = useDrivePicker();
+  const [ssid, setSsid] = useState(null);
+
+  useEffect(() => {
+    const initSsid = localStorage.getItem("ssid");
+    if (initSsid) setSsid(initSsid);
+    console.log(`Navbar: ssid is ${initSsid}`);
+  }, []);
 
   // session.accessToken
   // console.log(session);
@@ -38,7 +46,7 @@ export default function NavBar() {
           console.log("User clicked cancel/close button");
         }
         console.log(data);
-        localStorage.setItem("SJ_googleSheetId", data.docs[0].id);
+        localStorage.setItem("ssid", data.docs[0].id);
       },
     });
   };
@@ -48,11 +56,12 @@ export default function NavBar() {
       <DesktopNav />
       <MobileNav />
       <div className="mt-2 flex flex-1 items-center justify-end gap-2">
-        {session && (
-          <Button onClick={() => handleOpenPicker()}>
-            Choose Google Sheet
-          </Button>
-        )}
+        {session &&
+          !ssid && (
+            <Button onClick={() => handleOpenPicker()}>
+              Choose Google Sheet
+            </Button>,
+          )}
         {session && (
           <Avatar onClick={() => signOut()}>
             <AvatarImage src={session.user.image} />

@@ -15,7 +15,7 @@ const Timer = () => {
   return (
     <>
       <Head>
-        <title>{formatTime(time)} (Lifting Timer)</title>
+        <title>{formatTime(time) + "(Lifting Timer)"}</title>
         <meta name="description" content="Lifing Set Timer App" />
         <link rel="icon" href="/favicon.ico" />
       </Head>

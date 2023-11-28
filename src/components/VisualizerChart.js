@@ -107,90 +107,9 @@ export const VisualizerChart = ({ rawData }) => {
   // chartDefaults.font.size = 20;
   chartDefaults.normalized = true;
 
-  // Function to calculate 1RM using Brzycki formula
-  function calculateOneRepMax(weight, reps) {
-    return Math.round(weight * (1 - (0.025 * reps) / 100));
-  }
-
-  // Process the data to create an array of arrays per lift
-  const liftArrays = {};
-  let lastUsedName = null;
-  let lastUsedDate = null;
-
-  data.values.forEach((entry) => {
-    if (entry.length < 4) return;
-
-    let date = entry[0];
-    let name = entry[1];
-    let reps = entry[2];
-    let weight = entry[3];
-
-    // Convert reps to a number
-    reps = parseInt(reps, 10);
-
-    const weightValue = weight ? parseFloat(weight.replace("kg", "")) : null;
-
-    if (!Number.isInteger(reps) || isNaN(weightValue)) {
-      // You may want to log a message or handle the skip in some way
-      // console.log( `Skipping row: ${reps} ${weightValue} ${JSON.stringify(entry)}`,);
-      return; // Skip to the next iteration
-    }
-
-    // If 'date' is empty, use the most recent date from the previous row
-    if (!date && lastUsedDate !== null) {
-      date = lastUsedDate;
-    }
-
-    // If 'name' is empty, use the most recent name from the previous row
-    if (!name && lastUsedName !== null) {
-      name = lastUsedName;
-    }
-
-    const oneRepMax = calculateOneRepMax(weightValue, reps);
-
-    if (!liftArrays[name]) {
-      liftArrays[name] = [];
-    }
-
-    const existingEntry = liftArrays[name].find((item) => item[0] === date);
-
-    if (!existingEntry || existingEntry[1] < oneRepMax) {
-      // If there's no existing entry for this date or the existing one is lower, update it
-      liftArrays[name] = liftArrays[name].filter((item) => item[0] !== date);
-      liftArrays[name].push([date, oneRepMax]);
-    }
-
-    // Update the lastUsedName and lastUsedDate for the next iteration
-    lastUsedName = name;
-    lastUsedDate = date;
-  });
-
-  // console.log(liftArrays);
-  // Sort the arrays chronologically FIXME NEEDED?
-  // Object.values(liftArrays).forEach((arr) => {
-  // arr.sort((a, b) => new Date(a[0]) - new Date(b[0]));
-  // });
-  // Sort the arrays by the number of entries in descending order
-  const sortedLiftArrays = Object.entries(liftArrays)
-    .sort(([, dataA], [, dataB]) => dataB.length - dataA.length)
-    .slice(0, 5); // Select the top 5 lift arrays
-
-  // Convert liftArrays to Chart.js compatible format
-  const chartData = sortedLiftArrays.map(([lift, data]) => ({
-    label: lift,
-    data: data.map(([date, value]) => ({ x: date, y: value })),
-    backgroundColor: getLiftColor(lift),
-    borderColor: "rgb(50, 50, 50)",
-    borderWidth: 2,
-    pointStyle: "circle",
-    radius: 4,
-    hitRadius: 20,
-    hoverRadius: 10,
-    cubicInterpolationMode: "monotone",
-    // hidden: hidden, // This is for chart.js config
-  }));
-
+  let chartData = processRawData(data);
   // console.log(chartData);
+
   const scalesOptions = {
     x: {
       type: "time",
@@ -357,4 +276,92 @@ function fadeHslColor(originalHsl, fadeAmount, isDarkMode) {
   const fadedHsl = `hsl(${numericHue}, ${numericSaturation}%, ${numericLightness}%)`;
 
   return fadedHsl;
+}
+
+// Convert the GSheet data into what we need for visualizer
+function processRawData(data) {
+  // Function to calculate 1RM using Brzycki formula
+  function calculateOneRepMax(weight, reps) {
+    return Math.round(weight * (1 - (0.025 * reps) / 100));
+  }
+
+  // Process the data to create an array of arrays per lift
+  const liftArrays = {};
+  let lastUsedName = null;
+  let lastUsedDate = null;
+
+  data.values.forEach((entry) => {
+    if (entry.length < 4) return;
+
+    let date = entry[0];
+    let name = entry[1];
+    let reps = entry[2];
+    let weight = entry[3];
+
+    // Convert reps to a number
+    reps = parseInt(reps, 10);
+
+    const weightValue = weight ? parseFloat(weight.replace("kg", "")) : null;
+
+    if (!Number.isInteger(reps) || isNaN(weightValue)) {
+      // You may want to log a message or handle the skip in some way
+      // console.log( `Skipping row: ${reps} ${weightValue} ${JSON.stringify(entry)}`,);
+      return; // Skip to the next iteration
+    }
+
+    // If 'date' is empty, use the most recent date from the previous row
+    if (!date && lastUsedDate !== null) {
+      date = lastUsedDate;
+    }
+
+    // If 'name' is empty, use the most recent name from the previous row
+    if (!name && lastUsedName !== null) {
+      name = lastUsedName;
+    }
+
+    const oneRepMax = calculateOneRepMax(weightValue, reps);
+
+    if (!liftArrays[name]) {
+      liftArrays[name] = [];
+    }
+
+    const existingEntry = liftArrays[name].find((item) => item[0] === date);
+
+    if (!existingEntry || existingEntry[1] < oneRepMax) {
+      // If there's no existing entry for this date or the existing one is lower, update it
+      liftArrays[name] = liftArrays[name].filter((item) => item[0] !== date);
+      liftArrays[name].push([date, oneRepMax]);
+    }
+
+    // Update the lastUsedName and lastUsedDate for the next iteration
+    lastUsedName = name;
+    lastUsedDate = date;
+  });
+
+  // console.log(liftArrays);
+  // Sort the arrays chronologically FIXME NEEDED?
+  // Object.values(liftArrays).forEach((arr) => {
+  // arr.sort((a, b) => new Date(a[0]) - new Date(b[0]));
+  // });
+  // Sort the arrays by the number of entries in descending order
+  const sortedLiftArrays = Object.entries(liftArrays)
+    .sort(([, dataA], [, dataB]) => dataB.length - dataA.length)
+    .slice(0, 5); // Select the top 5 lift arrays
+
+  // Convert liftArrays to Chart.js compatible format
+  const chartData = sortedLiftArrays.map(([lift, data]) => ({
+    label: lift,
+    data: data.map(([date, value]) => ({ x: date, y: value })),
+    backgroundColor: getLiftColor(lift),
+    borderColor: "rgb(50, 50, 50)",
+    borderWidth: 2,
+    pointStyle: "circle",
+    radius: 4,
+    hitRadius: 20,
+    hoverRadius: 10,
+    cubicInterpolationMode: "monotone",
+    // hidden: hidden, // This is for chart.js config
+  }));
+
+  return chartData;
 }

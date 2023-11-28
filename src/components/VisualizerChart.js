@@ -58,7 +58,7 @@ export const VisualizerChart = ({ rawData }) => {
   useEffect(() => {
     const initSsid = localStorage.getItem("ssid");
     if (initSsid) setSsid(initSsid);
-    // console.log(initSsid);
+    console.log(`Visualizer: ssid is ${initSsid}`);
   }, []);
 
   useEffect(() => {

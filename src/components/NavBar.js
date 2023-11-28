@@ -35,7 +35,7 @@ export default function NavBar() {
         "666675096917-bnglrufs6q2q0gmpdof0cjks6pjbchoc.apps.googleusercontent.com",
       developerKey: "AIzaSyB1bu2k6O_v2-1LRVeOfgh5r-KZfgxABTI",
       viewId: "DOCS",
-      token: session.accessToken, // pass oauth token in case you already have one
+      token: session.accessToken,
       showUploadView: false,
       showUploadFolders: true,
       supportDrives: true,
@@ -56,12 +56,11 @@ export default function NavBar() {
       <DesktopNav />
       <MobileNav />
       <div className="mt-2 flex flex-1 items-center justify-end gap-2">
-        {session &&
-          !ssid && (
-            <Button onClick={() => handleOpenPicker()}>
-              Choose Google Sheet
-            </Button>,
-          )}
+        {session && !ssid && (
+          <Button onClick={() => handleOpenPicker()}>
+            Choose Google Sheet
+          </Button>
+        )}
         {session && (
           <Avatar onClick={() => signOut()}>
             <AvatarImage src={session.user.image} />

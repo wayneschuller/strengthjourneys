@@ -26,16 +26,7 @@ const DynamicHeaderVisualizerChart = dynamic(
 );
 
 const Visualizer = () => {
-  const [ssid, setSsid] = useState(null);
   let rawData = sampleData;
-
-  useEffect(() => {
-    const initSsid = localStorage.getItem("ssid");
-    if (initSsid) {
-      setSsid(initSsid);
-    }
-    console.log(`Visualizer: ssid is ${initSsid}`);
-  }, []);
 
   return (
     <>
@@ -59,7 +50,7 @@ const Visualizer = () => {
             width: "92vw",
           }}
         >
-          <DynamicHeaderVisualizerChart rawData={rawData} ssid={ssid} />
+          <DynamicHeaderVisualizerChart />
         </div>
       </div>
     </>

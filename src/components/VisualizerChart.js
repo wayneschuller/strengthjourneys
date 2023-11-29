@@ -3,7 +3,7 @@ import { useState, useEffect, useContext } from "react";
 import { useTheme } from "next-themes";
 import { getLiftColor } from "@/lib/getLiftColor";
 import { Line } from "react-chartjs-2";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import useUserLiftData from "@/lib/useUserLiftData";
 import { ParsedDataContext } from "@/pages/_app";
 import { useToast } from "@/components/ui/use-toast";
@@ -50,7 +50,7 @@ ChartJS.register(
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
-export const VisualizerChart = ({ rawData }) => {
+export const VisualizerChart = () => {
   const { theme } = useTheme();
   const [primaryForegroundColor, setPrimaryForegroundColor] = useState(null);
   const [mutedColor, setMutedColor] = useState(null);
@@ -76,7 +76,11 @@ export const VisualizerChart = ({ rawData }) => {
       toast({
         title: "Visualizer Demo Mode",
         description: "Sign in to connect your Google Sheet lifting data.",
-        action: <ToastAction altText="Google Login">Sign in</ToastAction>,
+        action: (
+          <ToastAction altText="Google Login" onClick={() => signIn()}>
+            Sign in
+          </ToastAction>
+        ),
       });
       return;
     }

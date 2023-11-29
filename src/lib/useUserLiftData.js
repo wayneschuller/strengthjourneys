@@ -1,8 +1,11 @@
 import useSWR from "swr";
+import { useToast } from "@/components/ui/use-toast";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
 function useUserLiftData(ssid) {
+  const { toast } = useToast();
+
   console.log(`useUserLiftData hook: ssid is ${ssid}`);
 
   const { data, isLoading } = useSWR(`/api/readGSheet?ssid=${ssid}`, fetcher, {

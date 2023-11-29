@@ -1,7 +1,7 @@
 /** @format */
 
 "use client";
-import Navbar from "@/components/NavBar";
+import Navbar from "./NavBar";
 import Footer from "@/components/Footer";
 
 export function Layout({ children }) {

@@ -2,16 +2,18 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useContext, useState, useEffect } from "react";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
 import MobileNav from "@/components/MobileNav";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
+import { handleOpenPicker } from "@/components/handleOpenPicker";
+import { ParsedDataContext } from "@/pages/_app";
 
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
@@ -19,44 +21,8 @@ import useDrivePicker from "@fyelci/react-google-drive-picker";
 export default function NavBar() {
   const { data: session } = useSession();
   const [openPicker, authResponse] = useDrivePicker();
-  const [ssid, setSsid] = useState(null); // FIXME: this should be higher and shared with other components - custom hook?
-
-  // This reading of localstorage in useEffect is repeated in the VisualizerChart.js
-  // FIXME: Put into useContext?
-  // FIXME: it won't auto detect when localstorage is changed - is that bad/good?
-  useEffect(() => {
-    const initSsid = localStorage.getItem("ssid");
-    if (initSsid) setSsid(initSsid);
-    console.log(`Navbar: ssid is ${initSsid}`);
-  }, []);
-
-  // session.accessToken
-  // console.log(session);
-  const handleOpenPicker = () => {
-    openPicker({
-      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-      developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
-      viewId: "SPREADSHEETS",
-      token: session.accessToken,
-      showUploadView: true,
-      showUploadFolders: true,
-      supportDrives: true,
-      multiselect: false,
-      // customViews: customViewsArray, // custom view
-      callbackFunction: (data) => {
-        if (data.action === "cancel") {
-          console.log("User clicked cancel/close button");
-          return;
-        }
-        // console.log(data);
-        if (data.docs && data.docs[0]) {
-          localStorage.setItem("ssid", data.docs[0]?.id);
-          // FIXME: set state ssid here
-          return;
-        }
-      },
-    });
-  };
+  const { parsedData, setParsedData, ssid, setSsid } =
+    useContext(ParsedDataContext);
 
   return (
     <div className="mx-3 flex items-center md:container">
@@ -64,7 +30,11 @@ export default function NavBar() {
       <MobileNav />
       <div className="mt-2 flex flex-1 items-center justify-end gap-2">
         {session && !ssid && (
-          <Button onClick={() => handleOpenPicker()}>
+          <Button
+            onClick={() =>
+              handleOpenPicker(openPicker, session.accessToken, setSsid)
+            }
+          >
             Choose Google Sheet
           </Button>
         )}

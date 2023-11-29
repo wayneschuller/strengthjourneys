@@ -36,7 +36,9 @@ export default function App({ Component, pageProps, session }) {
         disableTransitionOnChange
       >
         <SessionProvider session={session}>
-          <ParsedDataContext.Provider value={{ parsedData, setParsedData }}>
+          <ParsedDataContext.Provider
+            value={{ parsedData, setParsedData, ssid, setSsid }}
+          >
             <div className={`min-h-screen bg-background ${inter.className}`}>
               <Layout>
                 <Component {...pageProps} />

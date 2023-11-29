@@ -6,6 +6,10 @@ import { Line } from "react-chartjs-2";
 import { useSession } from "next-auth/react";
 import useUserLiftData from "@/lib/useUserLiftData";
 import { ParsedDataContext } from "@/pages/_app";
+import { useToast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+import useDrivePicker from "@fyelci/react-google-drive-picker";
+import { handleOpenPicker } from "@/components/handleOpenPicker";
 
 import useSWR from "swr";
 
@@ -46,20 +50,63 @@ ChartJS.register(
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
-export const VisualizerChart = ({ rawData, ssid }) => {
+export const VisualizerChart = ({ rawData }) => {
   const { theme } = useTheme();
   const [primaryForegroundColor, setPrimaryForegroundColor] = useState(null);
   const [mutedColor, setMutedColor] = useState(null);
   const [mutedForegroundColor, setMutedForegroundColor] = useState(null);
   const [gridColor, setGridColor] = useState(null);
-  const { parsedData, setParsedData } = useContext(ParsedDataContext);
+  const { parsedData, setParsedData, ssid, setSsid } =
+    useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { data, isLoading } = useUserLiftData(ssid);
+  const { toast } = useToast();
+  const [openPicker, authResponse] = useDrivePicker();
 
   // const { data, isError, isLoading } = useUserLiftData(ssid);
   // const { data, isLoading } = useSWR(`/api/readGSheet?ssid=${ssid}`, fetcher, {
   // revalidateOnFocus: false,
   // });
+
+  useEffect(() => {
+    console.log(`VisualizerChart useEffect isLoading: ${isLoading}`);
+    if (isLoading) return;
+
+    if (!session) {
+      toast({
+        title: "Visualizer Demo Mode",
+        description: "Sign in to connect your Google Sheet lifting data.",
+        action: <ToastAction altText="Google Login">Sign in</ToastAction>,
+      });
+      return;
+    }
+
+    if (!ssid) {
+      toast({
+        title: "Visualizer Demo Mode",
+        description: "Google Sheet not yet selected.",
+        action: (
+          <ToastAction
+            altText="Google Login"
+            onClick={() =>
+              handleOpenPicker(openPicker, session.accessToken, setSsid)
+            }
+          >
+            Choose file
+          </ToastAction>
+        ),
+      });
+      return;
+    }
+
+    if (session && ssid) {
+      toast({
+        title: "Data loaded from Google Sheets",
+        description: "Bespoke lifting data",
+      });
+      return;
+    }
+  }, [session, ssid, isLoading]);
 
   useEffect(() => {
     // Accessing the HSL color variables

@@ -42,8 +42,8 @@ export default function App({ Component, pageProps, session }) {
             <div className={`min-h-screen bg-background ${inter.className}`}>
               <Layout>
                 <Component {...pageProps} />
-                <Toaster />
               </Layout>
+              <Toaster />
             </div>
           </ParsedDataContext.Provider>
         </SessionProvider>

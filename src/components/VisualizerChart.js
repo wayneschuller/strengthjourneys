@@ -167,7 +167,7 @@ export const VisualizerChart = () => {
 
   let chartData = [];
 
-  if (data) {
+  if (session && data) {
     // console.log(data);
     let parsedData = parseGSheetData(data.values);
     // setParsedData(parsedData);

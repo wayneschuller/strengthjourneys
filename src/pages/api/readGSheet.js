@@ -7,26 +7,24 @@ export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
 
   if (!session) {
-    res.status(401).json({ message: "You must be logged in." });
+    res.status(401).json({ error: "You must be logged in." });
     return;
   }
 
   // console.log(`serverside...`);
   // console.log(session);
-  // console.log(`googleAPIKey is: ${googleAPIKey}`);
 
   const { ssid } = req.query;
 
-  console.log(`ssid is ${ssid}`);
+  console.log(`/api/readGSheet ssid: ${ssid}`);
 
   // Check that query has ssid parameter
-  if (!ssid || ssid === null) {
+  if (!ssid || ssid === "null") {
     // FIXME:  this return point is not being triggered and we keep passing null ssid to google
+    // console.log(`ssid null check happening`);
     res.status(400).json({ error: "Missing ssid parameter" });
     return;
   }
-
-  // res.status(200).json(["poop", "doop", "scoopity"]);
 
   const googleAPIKey = process.env.REACT_APP_GOOGLE_API_KEY;
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${googleAPIKey}`;

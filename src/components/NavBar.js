@@ -21,6 +21,9 @@ export default function NavBar() {
   const [openPicker, authResponse] = useDrivePicker();
   const [ssid, setSsid] = useState(null); // FIXME: this should be higher and shared with other components - custom hook?
 
+  // This reading of localstorage in useEffect is repeated in the VisualizerChart.js
+  // FIXME: Put into useContext?
+  // FIXME: it won't auto detect when localstorage is changed - is that bad/good?
   useEffect(() => {
     const initSsid = localStorage.getItem("ssid");
     if (initSsid) setSsid(initSsid);

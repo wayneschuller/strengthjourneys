@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Head from "next/head";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { sampleData } from "@/lib/sampleData";
 import { Button } from "@/components/ui/button";
 
@@ -26,7 +26,16 @@ const DynamicHeaderVisualizerChart = dynamic(
 );
 
 const Visualizer = () => {
+  const [ssid, setSsid] = useState(null);
   let rawData = sampleData;
+
+  useEffect(() => {
+    const initSsid = localStorage.getItem("ssid");
+    if (initSsid) {
+      setSsid(initSsid);
+    }
+    console.log(`Visualizer: ssid is ${initSsid}`);
+  }, []);
 
   return (
     <>
@@ -50,7 +59,7 @@ const Visualizer = () => {
             width: "92vw",
           }}
         >
-          <DynamicHeaderVisualizerChart rawData={rawData} />
+          <DynamicHeaderVisualizerChart rawData={rawData} ssid={ssid} />
         </div>
       </div>
     </>

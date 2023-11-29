@@ -1,9 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useTheme } from "next-themes";
 import { getLiftColor } from "@/lib/getLiftColor";
 import { Line } from "react-chartjs-2";
 import { useSession } from "next-auth/react";
+import useUserLiftData from "@/lib/useUserLiftData";
+import { ParsedDataContext } from "@/pages/_app";
+
 import useSWR from "swr";
 
 import {
@@ -24,6 +27,7 @@ import {
 import "chartjs-adapter-date-fns";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import zoomPlugin from "chartjs-plugin-zoom";
+import { sampleData } from "@/lib/sampleData";
 
 ChartJS.register(
   Colors,
@@ -42,25 +46,20 @@ ChartJS.register(
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
-export const VisualizerChart = ({ rawData }) => {
+export const VisualizerChart = ({ rawData, ssid }) => {
   const { theme } = useTheme();
   const [primaryForegroundColor, setPrimaryForegroundColor] = useState(null);
   const [mutedColor, setMutedColor] = useState(null);
   const [mutedForegroundColor, setMutedForegroundColor] = useState(null);
   const [gridColor, setGridColor] = useState(null);
-  const [ssid, setSsid] = useState(null);
+  const { parsedData, setParsedData } = useContext(ParsedDataContext);
   const { data: session } = useSession();
+  const { data, isLoading } = useUserLiftData(ssid);
 
-  // FIXME: this calls when ssid is null. Make a hook wrapper?
-  const { data } = useSWR(`/api/readGSheet?ssid=${ssid}`, fetcher, {
-    revalidateOnFocus: false,
-  });
-
-  useEffect(() => {
-    const initSsid = localStorage.getItem("ssid");
-    if (initSsid) setSsid(initSsid);
-    console.log(`Visualizer: ssid is ${initSsid}`);
-  }, []);
+  // const { data, isError, isLoading } = useUserLiftData(ssid);
+  // const { data, isLoading } = useSWR(`/api/readGSheet?ssid=${ssid}`, fetcher, {
+  // revalidateOnFocus: false,
+  // });
 
   useEffect(() => {
     // Accessing the HSL color variables
@@ -89,16 +88,16 @@ export const VisualizerChart = ({ rawData }) => {
   }, [theme]);
 
   // console.log(data);
-  if (!session) {
-    return <div>Awaiting login... (FIXME: show sample data)</div>;
-  }
-
   // console.log(ssid);
   if (!ssid) {
     return <div>Choose a file FIXME: button (FIXME: show sample data)</div>;
   }
+  // console.log(isError);
+  if (data?.error) {
+    return <div>Error: {data.error}</div>;
+  }
 
-  if (!data) {
+  if (isLoading) {
     return <div>Loading...</div>;
   }
 
@@ -108,7 +107,13 @@ export const VisualizerChart = ({ rawData }) => {
   // chartDefaults.font.size = 20;
   chartDefaults.normalized = true;
 
-  let chartData = processRawData(data);
+  let chartData = [];
+
+  if (session && data) {
+    chartData = processRawData(data.values);
+  } else {
+    chartData = processRawData(sampleData);
+  }
   // console.log(chartData);
 
   const scalesOptions = {
@@ -234,7 +239,11 @@ export const VisualizerChart = ({ rawData }) => {
     },
   };
 
-  return <Line options={options} data={{ datasets: chartData }} />;
+  return (
+    <>
+      <Line options={options} data={{ datasets: chartData }} />
+    </>
+  );
 };
 
 export default VisualizerChart;
@@ -291,7 +300,8 @@ function processRawData(data) {
   let lastUsedName = null;
   let lastUsedDate = null;
 
-  data.values.forEach((entry) => {
+  console.log(data);
+  data.forEach((entry) => {
     if (entry.length < 4) return;
 
     let date = entry[0];

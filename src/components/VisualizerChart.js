@@ -168,14 +168,17 @@ export const VisualizerChart = () => {
   let chartData = [];
 
   if (session && data) {
-    console.log(data);
+    // console.log(data);
     let parsedData = parseGSheetData(data.values);
-    console.log(parsedData);
-    // chartData = processParsedData(parsedData);
     // setParsedData(parsedData);
+    console.log(parsedData);
+    const sortedDatasets = processParsedData(parsedData);
+    chartData = sortedDatasets.slice(0, 5); // Get top 5
   } else {
     chartData = processParsedData(sampleParsedData);
   }
+
+  console.log(`Visualizer chartData:`);
   console.log(chartData);
 
   const scalesOptions = {
@@ -394,6 +397,7 @@ function processParsedData(parsedData) {
           x: entry.date,
           y: oneRepMax,
         });
+        // console.log( `Visualizer processor: pushing: ${liftKey} ${entry.date} ${oneRepMax}`,);
       } else {
         // If the date exists but the new one-rep max is higher, update it
         datasets[liftKey].data[existingDataIndex] = {
@@ -404,8 +408,10 @@ function processParsedData(parsedData) {
     }
   });
 
-  // Convert datasets object to array
-  const chartDatasets = Object.values(datasets);
+  // Sort datasets based on the size of the data (number of entries)
+  const sortedDatasets = Object.values(datasets).sort(
+    (a, b) => b.data.length - a.data.length,
+  );
 
-  return chartDatasets;
+  return sortedDatasets;
 }

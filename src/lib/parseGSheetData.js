@@ -36,8 +36,8 @@ function parseGSheetData(data) {
       columnNames.forEach((columnName, index) => {
         switch (columnName) {
           case "Date":
-            obj[columnName] = convertDate(row[index], previousDate);
-            previousDate = obj[columnName];
+            obj["date"] = convertDate(row[index], previousDate);
+            previousDate = obj["date"];
             break;
           case "Lift Type":
             // Use one camelcase word for the field
@@ -45,19 +45,19 @@ function parseGSheetData(data) {
             previousLiftType = obj["liftType"];
             break;
           case "Reps":
-            obj[columnName] = convertReps(row[index]);
+            obj["reps"] = convertReps(row[index]);
             break;
           case "Weight":
             const { value, unitType } = convertWeight(row[index]);
-            obj[columnName] = value;
+            obj["weight"] = value;
             obj["unitType"] = unitType;
             break;
           default:
-            obj[columnName] = row[index];
+            obj[columnName] = row[index]; // Pass through any other user rows
         }
       });
 
-      if (obj["Reps"] === undefined || obj["Weight"] === undefined) {
+      if (obj["reps"] === undefined || obj["weight"] === undefined) {
         return null;
       }
 

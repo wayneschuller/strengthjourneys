@@ -3,7 +3,7 @@
 export const sampleParsedData = [
   {
     date: "2023-05-27",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -13,7 +13,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-27",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -22,7 +22,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-27",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 3,
     weight: 135,
     unitType: "lb",
@@ -31,7 +31,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-27",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 2,
     weight: 160,
     unitType: "lb",
@@ -40,7 +40,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-27",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 2,
     weight: 185,
     unitType: "lb",
@@ -49,7 +49,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-27",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 225,
     unitType: "lb",
@@ -58,7 +58,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-27",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 225,
     unitType: "lb",
@@ -67,7 +67,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-27",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 225,
     unitType: "lb",
@@ -76,7 +76,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-27",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 45,
     unitType: "lb",
@@ -85,7 +85,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-27",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 65,
     unitType: "lb",
@@ -94,7 +94,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-27",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 65,
     unitType: "lb",
@@ -103,7 +103,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-27",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 65,
     unitType: "lb",
@@ -112,7 +112,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -121,7 +121,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -130,7 +130,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 3,
     weight: 135,
     unitType: "lb",
@@ -139,7 +139,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 2,
     weight: 185,
     unitType: "lb",
@@ -148,7 +148,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 205,
     unitType: "lb",
@@ -157,7 +157,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 205,
     unitType: "lb",
@@ -166,7 +166,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 205,
     unitType: "lb",
@@ -175,7 +175,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 205,
     unitType: "lb",
@@ -184,7 +184,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -193,7 +193,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -202,7 +202,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -211,7 +211,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -220,7 +220,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -229,7 +229,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -238,7 +238,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 3,
     weight: 135,
     unitType: "lb",
@@ -247,7 +247,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 2,
     weight: 185,
     unitType: "lb",
@@ -256,7 +256,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-25",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 5,
     weight: 225,
     unitType: "lb",
@@ -265,7 +265,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-23",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -274,7 +274,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-23",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -283,7 +283,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-23",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 3,
     weight: 135,
     unitType: "lb",
@@ -292,7 +292,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-23",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 2,
     weight: 160,
     unitType: "lb",
@@ -301,7 +301,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-23",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 2,
     weight: 185,
     unitType: "lb",
@@ -310,7 +310,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-23",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 195,
     unitType: "lb",
@@ -319,7 +319,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-23",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 195,
     unitType: "lb",
@@ -328,7 +328,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-23",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 195,
     unitType: "lb",
@@ -337,7 +337,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-23",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 45,
     unitType: "lb",
@@ -346,7 +346,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-23",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 65,
     unitType: "lb",
@@ -355,7 +355,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-23",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 65,
     unitType: "lb",
@@ -364,7 +364,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-23",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 65,
     unitType: "lb",
@@ -373,7 +373,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -382,7 +382,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -391,7 +391,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 3,
     weight: 135,
     unitType: "lb",
@@ -400,7 +400,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 2,
     weight: 160,
     unitType: "lb",
@@ -409,7 +409,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 185,
     unitType: "lb",
@@ -418,7 +418,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 185,
     unitType: "lb",
@@ -427,7 +427,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 185,
     unitType: "lb",
@@ -436,7 +436,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -445,7 +445,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 80,
     unitType: "lb",
@@ -454,7 +454,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 80,
     unitType: "lb",
@@ -463,7 +463,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 80,
     unitType: "lb",
@@ -472,7 +472,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -481,7 +481,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -490,7 +490,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 3,
     weight: 135,
     unitType: "lb",
@@ -499,7 +499,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 2,
     weight: 185,
     unitType: "lb",
@@ -508,7 +508,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-20",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 5,
     weight: 215,
     unitType: "lb",
@@ -517,7 +517,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-18",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -526,7 +526,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-18",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -535,7 +535,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-18",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 3,
     weight: 135,
     unitType: "lb",
@@ -544,7 +544,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-18",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 2,
     weight: 160,
     unitType: "lb",
@@ -553,7 +553,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-18",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 180,
     unitType: "lb",
@@ -562,7 +562,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-18",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 180,
     unitType: "lb",
@@ -571,7 +571,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-18",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 180,
     unitType: "lb",
@@ -580,7 +580,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-18",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 45,
     unitType: "lb",
@@ -589,7 +589,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-18",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 60,
     unitType: "lb",
@@ -598,7 +598,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-18",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 60,
     unitType: "lb",
@@ -607,7 +607,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-18",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 60,
     unitType: "lb",
@@ -616,7 +616,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -625,7 +625,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -634,7 +634,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 3,
     weight: 135,
     unitType: "lb",
@@ -643,7 +643,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 2,
     weight: 160,
     unitType: "lb",
@@ -652,7 +652,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 175,
     unitType: "lb",
@@ -661,7 +661,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 175,
     unitType: "lb",
@@ -670,7 +670,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 175,
     unitType: "lb",
@@ -679,7 +679,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -688,7 +688,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 75,
     unitType: "lb",
@@ -697,7 +697,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 75,
     unitType: "lb",
@@ -706,7 +706,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 75,
     unitType: "lb",
@@ -715,7 +715,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -724,7 +724,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -733,7 +733,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 3,
     weight: 135,
     unitType: "lb",
@@ -742,7 +742,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-16",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 5,
     weight: 200,
     unitType: "lb",
@@ -751,7 +751,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-13",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -760,7 +760,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-13",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 3,
     weight: 95,
     unitType: "lb",
@@ -769,7 +769,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-13",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 2,
     weight: 135,
     unitType: "lb",
@@ -778,7 +778,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-13",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 170,
     unitType: "lb",
@@ -787,7 +787,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-13",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 170,
     unitType: "lb",
@@ -796,7 +796,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-13",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 170,
     unitType: "lb",
@@ -805,7 +805,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-13",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 45,
     unitType: "lb",
@@ -814,7 +814,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-13",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 60,
     unitType: "lb",
@@ -823,7 +823,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-13",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 60,
     unitType: "lb",
@@ -832,7 +832,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-13",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 60,
     unitType: "lb",
@@ -841,7 +841,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -850,7 +850,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 3,
     weight: 95,
     unitType: "lb",
@@ -859,7 +859,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 2,
     weight: 135,
     unitType: "lb",
@@ -868,7 +868,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 165,
     unitType: "lb",
@@ -877,7 +877,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 165,
     unitType: "lb",
@@ -886,7 +886,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 165,
     unitType: "lb",
@@ -895,7 +895,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -904,7 +904,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 65,
     unitType: "lb",
@@ -913,7 +913,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 65,
     unitType: "lb",
@@ -922,7 +922,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 65,
     unitType: "lb",
@@ -931,7 +931,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -940,7 +940,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -949,7 +949,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 5,
     weight: 135,
     unitType: "lb",
@@ -958,7 +958,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-11",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 5,
     weight: 190,
     unitType: "lb",
@@ -967,7 +967,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-09",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -976,7 +976,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-09",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -985,7 +985,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-09",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 3,
     weight: 135,
     unitType: "lb",
@@ -994,7 +994,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-09",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 160,
     unitType: "lb",
@@ -1003,7 +1003,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-09",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 160,
     unitType: "lb",
@@ -1012,7 +1012,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-09",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 160,
     unitType: "lb",
@@ -1021,7 +1021,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-09",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 45,
     unitType: "lb",
@@ -1030,7 +1030,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-09",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 55,
     unitType: "lb",
@@ -1039,7 +1039,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-09",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 55,
     unitType: "lb",
@@ -1048,7 +1048,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-09",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 55,
     unitType: "lb",
@@ -1057,7 +1057,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-06",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -1066,7 +1066,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-06",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -1075,7 +1075,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-06",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 155,
     unitType: "lb",
@@ -1084,7 +1084,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-06",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 155,
     unitType: "lb",
@@ -1093,7 +1093,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-06",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 155,
     unitType: "lb",
@@ -1102,7 +1102,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-06",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -1111,7 +1111,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-06",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 55,
     unitType: "lb",
@@ -1120,7 +1120,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-06",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 55,
     unitType: "lb",
@@ -1129,7 +1129,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-06",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 55,
     unitType: "lb",
@@ -1138,7 +1138,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-06",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -1147,7 +1147,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-06",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -1156,7 +1156,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-06",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 5,
     weight: 170,
     unitType: "lb",
@@ -1165,7 +1165,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-04",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -1174,7 +1174,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-04",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -1183,7 +1183,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-04",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 145,
     unitType: "lb",
@@ -1192,7 +1192,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-04",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 145,
     unitType: "lb",
@@ -1201,7 +1201,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-04",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 145,
     unitType: "lb",
@@ -1210,7 +1210,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-04",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 45,
     unitType: "lb",
@@ -1219,7 +1219,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-04",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 45,
     unitType: "lb",
@@ -1228,7 +1228,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-04",
-    name: "Overhead Press",
+    liftType: "Overhead Press",
     reps: 5,
     weight: 45,
     unitType: "lb",
@@ -1237,7 +1237,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-02",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -1246,7 +1246,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-02",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -1255,7 +1255,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-02",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 135,
     unitType: "lb",
@@ -1264,7 +1264,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-02",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 135,
     unitType: "lb",
@@ -1273,7 +1273,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-02",
-    name: "Back Squat",
+    liftType: "Back Squat",
     reps: 5,
     weight: 135,
     unitType: "lb",
@@ -1282,7 +1282,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-02",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 45,
     unitType: "lb",
@@ -1291,7 +1291,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-02",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 45,
     unitType: "lb",
@@ -1300,7 +1300,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-02",
-    name: "Bench Press",
+    liftType: "Bench Press",
     reps: 5,
     weight: 45,
     unitType: "lb",
@@ -1309,7 +1309,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-02",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 10,
     weight: 45,
     unitType: "lb",
@@ -1318,7 +1318,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-02",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 5,
     weight: 95,
     unitType: "lb",
@@ -1327,7 +1327,7 @@ export const sampleParsedData = [
   },
   {
     date: "2023-05-02",
-    name: "Deadlift",
+    liftType: "Deadlift",
     reps: 5,
     weight: 145,
     unitType: "lb",

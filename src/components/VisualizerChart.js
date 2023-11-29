@@ -10,6 +10,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
 import { handleOpenPicker } from "@/components/handleOpenPicker";
+import { parseGSheetData } from "@/lib/parseGSheetData";
+import { estimateE1RM } from "@/lib/estimateE1RM";
 
 import useSWR from "swr";
 
@@ -107,6 +109,7 @@ export const VisualizerChart = () => {
       return;
     }
 
+    // FIXME: This should also test for parsedData in state
     if (session && ssid) {
       toast({
         title: "Data loaded from Google Sheets",
@@ -142,15 +145,15 @@ export const VisualizerChart = () => {
     // console.log(gridColor);
   }, [theme]);
 
-  // console.log(data);
+  console.log(data);
   // console.log(ssid);
   if (!ssid) {
     return <div>Choose a file FIXME: button (FIXME: show sample data)</div>;
   }
   // console.log(isError);
-  if (data?.error) {
-    return <div>Error: {data.error}</div>;
-  }
+  // if (data?.error) {
+  // return <div>Error: {data.error}</div>;
+  // }
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -165,11 +168,15 @@ export const VisualizerChart = () => {
   let chartData = [];
 
   if (session && data) {
-    chartData = processRawData(data.values);
+    console.log(data);
+    let parsedData = parseGSheetData(data.values);
+    console.log(parsedData);
+    // chartData = processParsedData(parsedData);
+    // setParsedData(parsedData);
   } else {
-    chartData = processRawData(sampleParsedData);
+    chartData = processParsedData(sampleParsedData);
   }
-  // console.log(chartData);
+  console.log(chartData);
 
   const scalesOptions = {
     x: {
@@ -343,91 +350,62 @@ function fadeHslColor(originalHsl, fadeAmount, isDarkMode) {
   return fadedHsl;
 }
 
-// Convert the GSheet data into what we need for visualizer
-function processRawData(data) {
-  // Function to calculate 1RM using Brzycki formula
-  function calculateOneRepMax(weight, reps) {
-    return Math.round(weight * (1 - (0.025 * reps) / 100));
-  }
+// This function uniquely processes the parsed Data for the Visualizer
+// So it lives here in the <VisualizerChart /> component
+function processParsedData(parsedData) {
+  const datasets = {};
 
-  // Process the data to create an array of arrays per lift
-  const liftArrays = {};
-  let lastUsedName = null;
-  let lastUsedDate = null;
+  parsedData.forEach((entry) => {
+    // Create a unique identifier for each lift type
+    const liftKey = entry.liftType;
 
-  console.log(data);
-  data.forEach((entry) => {
-    if (entry.length < 4) return;
+    // Calculate one-rep max using the provided function (e.g., "Brzycki" formula)
+    const oneRepMax = estimateE1RM(entry.reps, entry.weight, "Brzycki");
 
-    let date = entry[0];
-    let name = entry[1];
-    let reps = entry[2];
-    let weight = entry[3];
-
-    // Convert reps to a number
-    reps = parseInt(reps, 10);
-
-    const weightValue = weight ? parseFloat(weight.replace("kg", "")) : null;
-
-    if (!Number.isInteger(reps) || isNaN(weightValue)) {
-      // You may want to log a message or handle the skip in some way
-      // console.log( `Skipping row: ${reps} ${weightValue} ${JSON.stringify(entry)}`,);
-      return; // Skip to the next iteration
+    // Check if the lift type already exists in datasets
+    if (!datasets[liftKey]) {
+      datasets[liftKey] = {
+        label: entry.liftType,
+        data: [],
+        backgroundColor: getLiftColor(entry.liftType),
+        borderColor: "rgb(50, 50, 50)",
+        borderWidth: 2,
+        pointStyle: "circle",
+        radius: 4,
+        hitRadius: 20,
+        hoverRadius: 10,
+        cubicInterpolationMode: "monotone",
+      };
     }
 
-    // If 'date' is empty, use the most recent date from the previous row
-    if (!date && lastUsedDate !== null) {
-      date = lastUsedDate;
+    // Check if the date already exists in the dataset for the lift type
+    const existingDataIndex = datasets[liftKey].data.findIndex(
+      (item) => item.x === entry.date,
+    );
+
+    // If the date doesn't exist or the new one-rep max is higher, update the dataset
+    if (
+      existingDataIndex === -1 ||
+      datasets[liftKey].data[existingDataIndex].y < oneRepMax
+    ) {
+      if (existingDataIndex === -1) {
+        // If the date doesn't exist, add it to the dataset
+        datasets[liftKey].data.push({
+          x: entry.date,
+          y: oneRepMax,
+        });
+      } else {
+        // If the date exists but the new one-rep max is higher, update it
+        datasets[liftKey].data[existingDataIndex] = {
+          x: entry.date,
+          y: oneRepMax,
+        };
+      }
     }
-
-    // If 'name' is empty, use the most recent name from the previous row
-    if (!name && lastUsedName !== null) {
-      name = lastUsedName;
-    }
-
-    const oneRepMax = calculateOneRepMax(weightValue, reps);
-
-    if (!liftArrays[name]) {
-      liftArrays[name] = [];
-    }
-
-    const existingEntry = liftArrays[name].find((item) => item[0] === date);
-
-    if (!existingEntry || existingEntry[1] < oneRepMax) {
-      // If there's no existing entry for this date or the existing one is lower, update it
-      liftArrays[name] = liftArrays[name].filter((item) => item[0] !== date);
-      liftArrays[name].push([date, oneRepMax]);
-    }
-
-    // Update the lastUsedName and lastUsedDate for the next iteration
-    lastUsedName = name;
-    lastUsedDate = date;
   });
 
-  // console.log(liftArrays);
-  // Sort the arrays chronologically FIXME NEEDED?
-  // Object.values(liftArrays).forEach((arr) => {
-  // arr.sort((a, b) => new Date(a[0]) - new Date(b[0]));
-  // });
-  // Sort the arrays by the number of entries in descending order
-  const sortedLiftArrays = Object.entries(liftArrays)
-    .sort(([, dataA], [, dataB]) => dataB.length - dataA.length)
-    .slice(0, 5); // Select the top 5 lift arrays
+  // Convert datasets object to array
+  const chartDatasets = Object.values(datasets);
 
-  // Convert liftArrays to Chart.js compatible format
-  const chartData = sortedLiftArrays.map(([lift, data]) => ({
-    label: lift,
-    data: data.map(([date, value]) => ({ x: date, y: value })),
-    backgroundColor: getLiftColor(lift),
-    borderColor: "rgb(50, 50, 50)",
-    borderWidth: 2,
-    pointStyle: "circle",
-    radius: 4,
-    hitRadius: 20,
-    hoverRadius: 10,
-    cubicInterpolationMode: "monotone",
-    // hidden: hidden, // This is for chart.js config
-  }));
-
-  return chartData;
+  return chartDatasets;
 }

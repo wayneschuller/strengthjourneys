@@ -147,9 +147,9 @@ export const VisualizerChart = () => {
 
   console.log(data);
   // console.log(ssid);
-  if (session && !ssid) {
-    return <div>Choose a file FIXME: button (FIXME: show sample data)</div>;
-  }
+  // if (session && !ssid) {
+  // return <div>Choose a file FIXME: button (FIXME: show sample data)</div>;
+  // }
   // console.log(isError);
   // if (data?.error) {
   // return <div>Error: {data.error}</div>;
@@ -167,7 +167,7 @@ export const VisualizerChart = () => {
 
   let chartData = [];
 
-  if (session && data) {
+  if (data) {
     // console.log(data);
     let parsedData = parseGSheetData(data.values);
     // setParsedData(parsedData);

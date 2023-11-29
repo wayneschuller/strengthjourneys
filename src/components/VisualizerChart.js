@@ -147,7 +147,7 @@ export const VisualizerChart = () => {
 
   console.log(data);
   // console.log(ssid);
-  if (!ssid) {
+  if (session && !ssid) {
     return <div>Choose a file FIXME: button (FIXME: show sample data)</div>;
   }
   // console.log(isError);

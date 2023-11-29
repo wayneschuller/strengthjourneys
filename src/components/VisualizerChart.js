@@ -145,15 +145,7 @@ export const VisualizerChart = () => {
     // console.log(gridColor);
   }, [theme]);
 
-  console.log(data);
-  // console.log(ssid);
-  // if (session && !ssid) {
-  // return <div>Choose a file FIXME: button (FIXME: show sample data)</div>;
-  // }
-  // console.log(isError);
-  // if (data?.error) {
-  // return <div>Error: {data.error}</div>;
-  // }
+  // console.log(data);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -172,6 +164,7 @@ export const VisualizerChart = () => {
     let parsedData = parseGSheetData(data.values);
     // setParsedData(parsedData);
     console.log(parsedData);
+
     const sortedDatasets = processParsedData(parsedData);
     chartData = sortedDatasets.slice(0, 5); // Get top 5
   } else {

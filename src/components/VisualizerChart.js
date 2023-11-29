@@ -70,6 +70,9 @@ export const VisualizerChart = () => {
 
   useEffect(() => {
     console.log(`VisualizerChart useEffect isLoading: ${isLoading}`);
+    console.log(`VisualizerChart useEffect session:`);
+    console.log(session);
+
     if (isLoading) return;
 
     if (!session) {

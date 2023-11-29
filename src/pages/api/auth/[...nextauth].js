@@ -25,10 +25,17 @@ export const authOptions = {
       if (account?.access_token) {
         token.access_token = account.access_token;
       }
+
+      // If possible pass forward the refresh_token - not sure if this works.
+      // More info here: https://github.com/nextauthjs/next-auth-refresh-token-example/blob/main/pages/api/auth/%5B...nextauth%5D.js
+      if (account?.refresh_token) {
+        token.refresh_token = account.refresh_token;
+      }
       return token;
     },
     async session({ session, token }) {
       session.accessToken = token.access_token; // Give the user the access_token from Google
+      session.refreshToken = token.refreshToken;
       return session;
     },
   },

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { sampleData } from "@/lib/sampleData";
+import { sampleParsedData } from "@/lib/sampleParsedData";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -26,7 +26,7 @@ const DynamicHeaderVisualizerChart = dynamic(
 );
 
 const Visualizer = () => {
-  let rawData = sampleData;
+  let rawData = sampleParsedData;
 
   return (
     <>

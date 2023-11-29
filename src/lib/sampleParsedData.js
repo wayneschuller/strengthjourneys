@@ -1,6 +1,6 @@
 /** @format */
 
-export const sampleData = [
+export const sampleParsedData = [
   {
     date: "2023-05-27",
     name: "Back Squat",

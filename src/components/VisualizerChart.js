@@ -31,7 +31,7 @@ import {
 import "chartjs-adapter-date-fns";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import zoomPlugin from "chartjs-plugin-zoom";
-import { sampleData } from "@/lib/sampleData";
+import { sampleParsedData } from "@/lib/sampleParsedData";
 
 ChartJS.register(
   Colors,
@@ -167,7 +167,7 @@ export const VisualizerChart = () => {
   if (session && data) {
     chartData = processRawData(data.values);
   } else {
-    chartData = processRawData(sampleData);
+    chartData = processRawData(sampleParsedData);
   }
   // console.log(chartData);
 

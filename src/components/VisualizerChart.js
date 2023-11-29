@@ -75,7 +75,8 @@ export const VisualizerChart = () => {
     if (!session) {
       toast({
         title: "Visualizer Demo Mode",
-        description: "Sign in to connect your Google Sheet lifting data.",
+        description:
+          "Sign in to visualize your personal Google Sheet lifting data.",
         action: (
           <ToastAction altText="Google Login" onClick={() => signIn()}>
             Sign in
@@ -91,7 +92,7 @@ export const VisualizerChart = () => {
         description: "Google Sheet not yet selected.",
         action: (
           <ToastAction
-            altText="Google Login"
+            altText="Choose google sheet file"
             onClick={() =>
               handleOpenPicker(openPicker, session.accessToken, setSsid)
             }

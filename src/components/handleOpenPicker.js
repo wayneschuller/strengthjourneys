@@ -1,6 +1,6 @@
 /** @format */
 "use client";
-export function handleOpenPicker(openPicker, accessToken) {
+export function handleOpenPicker(openPicker, accessToken, setSsid) {
   openPicker({
     clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
     developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
@@ -18,10 +18,11 @@ export function handleOpenPicker(openPicker, accessToken) {
       }
       // console.log(data);
       if (data.docs && data.docs[0]) {
-        localStorage.setItem("ssid", data.docs[0]?.id);
-        // FIXME: set state ssid here
+        const newSsid = data.docs[0].id;
+        localStorage.setItem("ssid", newSsid);
+        setSsid(newSsid);
         // FIXME: the right thing to do is to trigger a parsing of the data
-        // But we don't have to do the visualizer/analyzer stuff.
+        // But it seems to happen through reactivity once Ssid is set in state
         return;
       }
     },

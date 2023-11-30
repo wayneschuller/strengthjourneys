@@ -59,8 +59,8 @@ const Analyzer = () => {
   } else {
     localParsedData = sampleParsedData;
   }
-  const maxWeightsByLiftType = analyzerProcessParsedData(localParsedData);
-  console.log(maxWeightsByLiftType);
+
+  const achievementsArray = analyzerProcessParsedData(localParsedData);
 
   return (
     <>
@@ -77,15 +77,13 @@ const Analyzer = () => {
           {!session && <div> You need to sign in. </div>}
           {session && (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {Object.entries(maxWeightsByLiftType).map(
-                ([liftType, achievements]) => (
-                  <LiftAchievements
-                    key={liftType}
-                    liftType={liftType}
-                    achievements={achievements}
-                  />
-                ),
-              )}
+              {achievementsArray.map((entry) => (
+                <LiftAchievements
+                  key={entry.liftType}
+                  liftType={entry.liftType}
+                  entry={entry}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -95,7 +93,7 @@ const Analyzer = () => {
 };
 export default Analyzer;
 
-const LiftAchievements = ({ liftType, achievements }) => {
+const LiftAchievements = ({ liftType, entry }) => {
   return (
     <Card>
       <CardHeader>
@@ -103,9 +101,7 @@ const LiftAchievements = ({ liftType, achievements }) => {
         {/* <CardDescription>Card Description</CardDescription> */}
       </CardHeader>
       <CardContent>
-        <p>One Rep Max: {achievements.oneRepMax} lb</p>
-        <p>Three Rep Max: {achievements.threeRepMax} lb</p>
-        <p>Five Rep Max: {achievements.fiveRepMax} lb</p>
+        <p>Total lifts: {entry.totalLifts}</p>
       </CardContent>
     </Card>
   );
@@ -119,57 +115,46 @@ function analyzerProcessParsedData(parsedData) {
     return;
   }
 
-  // Function to calculate max weights for each lift type
+  const liftTypeCounts = {};
 
-  const calculateMaxWeights = (data, liftType) => {
-    const parsedData = data.filter((entry) => entry.liftType === liftType);
+  // Count the number of tuples for each lift type
+  parsedData.forEach((entry) => {
+    const { liftType } = entry;
 
-    // Sort the data by weight in descending order
-    parsedData.sort((a, b) => b.weight - a.weight);
-
-    const oneRepMax = parsedData[0].weight;
-    const threeRepMax =
-      parsedData.find((entry) => entry.reps === 3)?.weight || 0;
-    const fiveRepMax =
-      parsedData.find((entry) => entry.reps === 5)?.weight || 0;
-
-    return {
-      oneRepMax,
-      threeRepMax,
-      fiveRepMax,
-    };
-  };
-
-  // Function to group data by lift type
-  const groupDataByLiftType = (data) => {
-    return data.reduce((acc, entry) => {
-      const liftType = entry.liftType;
-      if (!acc[liftType]) {
-        acc[liftType] = [];
-      }
-      acc[liftType].push(entry);
-      return acc;
-    }, {});
-  };
-
-  // Function to calculate max weights for each lift type
-  const calculateMaxWeightsForLiftTypes = (data) => {
-    const groupedData = groupDataByLiftType(data);
-
-    const maxWeightsByLiftType = {};
-
-    for (const liftType in groupedData) {
-      if (groupedData.hasOwnProperty(liftType)) {
-        maxWeightsByLiftType[liftType] = calculateMaxWeights(
-          groupedData[liftType],
-          liftType,
-        );
-      }
+    if (!liftTypeCounts[liftType]) {
+      liftTypeCounts[liftType] = 0;
     }
 
-    return maxWeightsByLiftType;
+    liftTypeCounts[liftType]++;
+  });
+
+  // Convert the liftTypeCounts object to an array of objects
+  const achievementsArray = Object.entries(liftTypeCounts).map(
+    ([liftType, totalLifts]) => ({
+      liftType,
+      totalLifts,
+    }),
+  );
+
+  // Sort the array by totalLifts in descending order
+  achievementsArray.sort((a, b) => b.totalLifts - a.totalLifts);
+
+  console.log(achievementsArray);
+
+  // Function to get the best five lifts for a specific lift type and reps
+  const bestFiveLifts = (data, liftType, reps) => {
+    const filteredData = data.filter(
+      (entry) => entry.liftType === liftType && entry.reps === reps,
+    );
+
+    // Sort the filtered data by weight in descending order
+    filteredData.sort((a, b) => b.weight - a.weight);
+
+    // Take the top five entries
+    const topFive = filteredData.slice(0, 5);
+
+    return topFive;
   };
 
-  const maxWeightsByLiftType = calculateMaxWeightsForLiftTypes(parsedData);
-  return maxWeightsByLiftType;
+  return achievementsArray;
 }

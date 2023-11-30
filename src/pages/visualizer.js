@@ -26,8 +26,6 @@ const DynamicHeaderVisualizerChart = dynamic(
 );
 
 const Visualizer = () => {
-  let rawData = sampleParsedData;
-
   return (
     <>
       <Head>

@@ -11,6 +11,7 @@ import { ToastAction } from "@/components/ui/toast";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
 import { handleOpenPicker } from "@/components/handleOpenPicker";
 import { parseGSheetData } from "@/lib/parseGSheetData";
+import { sampleParsedData } from "@/lib/sampleParsedData";
 import { estimateE1RM } from "@/lib/estimateE1RM";
 import { Button } from "@/components/ui/button";
 
@@ -34,7 +35,6 @@ import {
 import "chartjs-adapter-date-fns";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import zoomPlugin from "chartjs-plugin-zoom";
-import { sampleParsedData } from "@/lib/sampleParsedData";
 
 ChartJS.register(
   Colors,
@@ -90,7 +90,7 @@ export const VisualizerChart = () => {
       return;
     }
 
-    if (session && !ssid && !parsedData) {
+    if (session.user && !ssid && !parsedData) {
       toast({
         title: "Visualizer Demo Mode",
         description: "Google Sheet not yet selected.",
@@ -108,7 +108,7 @@ export const VisualizerChart = () => {
       return;
     }
 
-    if (!isLoading && session && ssid) {
+    if (!isLoading && session.user && ssid) {
       toast({
         title: "Data loaded from Google Sheets",
         description: "Bespoke lifting data",
@@ -168,18 +168,24 @@ export const VisualizerChart = () => {
 
   let chartData = [];
 
-  if (session && data) {
-    console.log(data);
+  // If we don't have parsedData yet grab it
+  let localParsedData = null;
 
-    let parsedData = parseGSheetData(data.values);
-    // setParsedData(parsedData); // This triggers an infinite loop of rerendering
-    console.log(parsedData);
+  if (session && data?.values) {
+    // console.log(data);
 
-    const sortedDatasets = processParsedData(parsedData);
-    chartData = sortedDatasets.slice(0, 5); // Get top 5
+    if (parsedData === null) {
+      localParsedData = parseGSheetData(data.values); // FIXME: Do this in the useEffect?
+      // setParsedData(newParsedData); // This triggers an infinite loop of rerendering
+      console.log(parsedData);
+    } else {
+      localParsedData = parsedData;
+    }
   } else {
-    chartData = processParsedData(sampleParsedData);
+    localParsedData = sampleParsedData;
   }
+  const sortedDatasets = processParsedData(localParsedData);
+  chartData = sortedDatasets.slice(0, 5); // Get top 5
 
   console.log(`Visualizer chartData:`);
   console.log(chartData);
@@ -359,6 +365,11 @@ function fadeHslColor(originalHsl, fadeAmount, isDarkMode) {
 // This function uniquely processes the parsed Data for the Visualizer
 // So it lives here in the <VisualizerChart /> component
 function processParsedData(parsedData) {
+  if (parsedData === null) {
+    console.log(`Error: processParsedData passed null.`);
+    return;
+  }
+
   const datasets = {};
 
   parsedData.forEach((entry) => {

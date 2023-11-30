@@ -63,7 +63,14 @@ export function AvatarDropdown({ ssid, setSsid }) {
           Email Author
         </DropdownMenuItem>
 
-        <DropdownMenuItem onClick={() => signOut()}>Sign Out</DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => {
+            signOut();
+            // FIXME: setParsedData(null);
+          }}
+        >
+          Sign Out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

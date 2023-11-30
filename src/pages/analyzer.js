@@ -59,7 +59,7 @@ const Analyzer = () => {
   } else {
     localParsedData = sampleParsedData;
   }
-  const maxWeightsByLiftType = processParsedData(localParsedData);
+  const maxWeightsByLiftType = analyzerProcessParsedData(localParsedData);
   console.log(maxWeightsByLiftType);
 
   return (
@@ -111,11 +111,11 @@ const LiftAchievements = ({ liftType, achievements }) => {
   );
 };
 
-// This function uniquely processes the parsed Data for the Visualizer
-// So it lives here in the <VisualizerChart /> component
-function processParsedData(parsedData) {
+// This function uniquely processes the parsed Data for the Analyzer
+// So it lives here in the <Analyzer /> component
+function analyzerProcessParsedData(parsedData) {
   if (parsedData === null) {
-    console.log(`Error: processParsedData passed null.`);
+    console.log(`Error: analyzerProcessParsedData passed null.`);
     return;
   }
 

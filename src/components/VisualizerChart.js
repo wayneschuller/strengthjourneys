@@ -167,13 +167,9 @@ export const VisualizerChart = () => {
   chartDefaults.normalized = true;
 
   let chartData = [];
-
-  // If we don't have parsedData yet grab it
   let localParsedData = null;
-
   if (session && data?.values) {
     // console.log(data);
-
     if (parsedData === null) {
       localParsedData = parseGSheetData(data.values); // FIXME: Do this in the useEffect?
       // setParsedData(newParsedData); // This triggers an infinite loop of rerendering
@@ -184,11 +180,11 @@ export const VisualizerChart = () => {
   } else {
     localParsedData = sampleParsedData;
   }
-  const sortedDatasets = processParsedData(localParsedData);
+  const sortedDatasets = visualizerProcessParsedData(localParsedData);
   chartData = sortedDatasets.slice(0, 5); // Get top 5
 
-  console.log(`Visualizer chartData:`);
-  console.log(chartData);
+  // console.log(`Visualizer chartData:`);
+  // console.log(chartData);
 
   const scalesOptions = {
     x: {
@@ -364,9 +360,9 @@ function fadeHslColor(originalHsl, fadeAmount, isDarkMode) {
 
 // This function uniquely processes the parsed Data for the Visualizer
 // So it lives here in the <VisualizerChart /> component
-function processParsedData(parsedData) {
+function visualizerProcessParsedData(parsedData) {
   if (parsedData === null) {
-    console.log(`Error: processParsedData passed null.`);
+    console.log(`Error: visualizerProcessParsedData passed null.`);
     return;
   }
 

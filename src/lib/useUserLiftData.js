@@ -17,9 +17,8 @@ function useUserLiftData(session, ssid) {
     },
   );
 
-  // FIXME: can we parse the gsheet into our internal format here before returning to the user?
-  console.log(`useUserLiftData hook. data is:`);
-  console.log(data);
+  // console.log(`useUserLiftData hook. data is:`);
+  // console.log(data);
 
   return {
     data,

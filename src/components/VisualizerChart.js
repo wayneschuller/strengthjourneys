@@ -71,11 +71,9 @@ export const VisualizerChart = () => {
   // });
 
   useEffect(() => {
-    console.log(`VisualizerChart useEffect isLoading: ${isLoading}`);
-    console.log(`VisualizerChart useEffect session:`);
-    console.log(session);
-
-    if (isLoading) return;
+    // console.log(`VisualizerChart useEffect isLoading: ${isLoading}`);
+    // console.log(`VisualizerChart useEffect session:`);
+    // console.log(session);
 
     if (!session) {
       toast({
@@ -91,7 +89,7 @@ export const VisualizerChart = () => {
       return;
     }
 
-    if (!ssid) {
+    if (session && !ssid && !parsedData) {
       toast({
         title: "Visualizer Demo Mode",
         description: "Google Sheet not yet selected.",
@@ -109,8 +107,7 @@ export const VisualizerChart = () => {
       return;
     }
 
-    // FIXME: This should also test for parsedData in state
-    if (session && ssid && parsedData) {
+    if (!isLoading && session && ssid) {
       toast({
         title: "Data loaded from Google Sheets",
         description: "Bespoke lifting data",

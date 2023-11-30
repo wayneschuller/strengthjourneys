@@ -1,6 +1,7 @@
 /** @format */
 "use client";
 export function handleOpenPicker(openPicker, accessToken, setSsid) {
+  console.log(`Opening Google Sheet Picker...`);
   openPicker({
     clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
     developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,

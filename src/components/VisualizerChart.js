@@ -61,7 +61,7 @@ export const VisualizerChart = () => {
   const { parsedData, setParsedData, ssid, setSsid } =
     useContext(ParsedDataContext);
   const { data: session } = useSession();
-  const { data, isLoading } = useUserLiftData(ssid);
+  const { data, isError, isLoading } = useUserLiftData(session, ssid);
   const { toast } = useToast();
   const [openPicker, authResponse] = useDrivePicker();
 
@@ -110,7 +110,7 @@ export const VisualizerChart = () => {
     }
 
     // FIXME: This should also test for parsedData in state
-    if (session && ssid) {
+    if (session && ssid && parsedData) {
       toast({
         title: "Data loaded from Google Sheets",
         description: "Bespoke lifting data",
@@ -151,6 +151,17 @@ export const VisualizerChart = () => {
     return <div>Loading...</div>;
   }
 
+  if (isError) {
+    return (
+      <div className="text-center">
+        <div className="text-bold">Error reading GSheet data: {data.error}</div>
+        <div>
+          Sometimes logging out and in again will help Google be friendlier.
+        </div>
+      </div>
+    );
+  }
+
   // We imported chartDefaults from chart.js above
   // chartDefaults.font.family = "'Inter', 'Helvetica','Arial'";
   // chartDefaults.font.family = "'Inter'";
@@ -160,9 +171,10 @@ export const VisualizerChart = () => {
   let chartData = [];
 
   if (session && data) {
-    // console.log(data);
+    console.log(data);
+
     let parsedData = parseGSheetData(data.values);
-    // setParsedData(parsedData);
+    // setParsedData(parsedData); // This triggers an infinite loop of rerendering
     console.log(parsedData);
 
     const sortedDatasets = processParsedData(parsedData);

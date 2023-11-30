@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
 import { handleOpenPicker } from "@/components/handleOpenPicker";
 import { ParsedDataContext } from "@/pages/_app";
+import { AvatarDropdown } from "./AvatarDropdown";
 
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
@@ -29,22 +30,7 @@ export default function NavBar() {
       <DesktopNav />
       <MobileNav />
       <div className="mt-2 flex flex-1 items-center justify-end gap-2">
-        {session && !ssid && (
-          <Button
-            onClick={() =>
-              handleOpenPicker(openPicker, session.accessToken, setSsid)
-            }
-          >
-            Choose Google Sheet
-          </Button>
-        )}
-        {session && (
-          <Avatar onClick={() => signOut()}>
-            <AvatarImage src={session.user.image} />
-            <AvatarFallback>session.user.name</AvatarFallback>
-          </Avatar>
-        )}
-        {!session && <Button onClick={() => signIn()}>Sign in</Button>}
+        <AvatarDropdown ssid={ssid} setSsid={setSsid} />
         <DarkModeToggle />
       </div>
     </div>

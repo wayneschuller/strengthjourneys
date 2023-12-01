@@ -60,10 +60,22 @@ export function AvatarDropdown({ ssid, setSsid }) {
             Forget Google Sheet
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
+        <DropdownMenuItem
+          onClick={() =>
+            window.open(
+              "https://github.com/wayneschuller/strengthjourneys/issues",
+            )
+          }
+        >
           Report Issue
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
+        <DropdownMenuItem
+          onClick={() =>
+            window.open(
+              "mailto:info@strengthjourneys.xyz?subject=Thank you for Strength Journeys it is the best!",
+            )
+          }
+        >
           Email Author
         </DropdownMenuItem>
 

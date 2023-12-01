@@ -1,8 +1,6 @@
 /** @format */
 "use client";
 
-"use client";
-
 import * as Switch from "@radix-ui/react-switch";
 
 import * as React from "react";

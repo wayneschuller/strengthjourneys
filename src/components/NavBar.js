@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useContext, useState, useEffect } from "react";
-import { DarkModeToggle, DarkModeToggle2 } from "@/components/DarkModeToggle";
+import { DarkModeToggle } from "@/components/DarkModeToggle";
 import MobileNav from "@/components/MobileNav";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";

@@ -1,5 +1,7 @@
 /** @format */
 
+"use client";
+
 import "@/styles/globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider } from "@/components/theme-provider";

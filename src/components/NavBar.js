@@ -18,8 +18,8 @@ export default function NavBar() {
       <DesktopNav />
       <MobileNav />
       <div className="mt-2 flex flex-1 items-center justify-end gap-2">
-        <AvatarDropdown />
         <DarkModeToggle />
+        <AvatarDropdown />
       </div>
     </div>
   );

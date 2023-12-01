@@ -89,14 +89,12 @@ const Analyzer = () => {
           {/* {!session && !parsedData && <div> You need to sign in. </div>} */}
 
           {achievementsArray.map((entry) => (
-            <div>
-              <LiftAchievements
-                key={entry.liftType}
-                liftType={entry.liftType}
-                entry={entry}
-                bestSets={bestSets[entry.liftType]}
-              />
-            </div>
+            <LiftAchievements
+              key={entry.liftType}
+              liftType={entry.liftType}
+              entry={entry}
+              bestSets={bestSets[entry.liftType]}
+            />
           ))}
         </div>
       </div>

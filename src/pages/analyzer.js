@@ -82,26 +82,40 @@ const Analyzer = () => {
         <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           PR Analyzer
         </h1>
-        <div className="mt-4">
-          {!session && <div> You need to sign in. </div>}
-          {session && (
-            <div className="mx-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
-              {achievementsArray.map((entry) => (
-                <LiftAchievements
-                  key={entry.liftType}
-                  liftType={entry.liftType}
-                  entry={entry}
-                  bestSets={bestSets[entry.liftType]}
-                />
-              ))}
-            </div>
-          )}
+        <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
+          <div className="md:col-span-2 xl:col-span-4">
+            <OverviewAchievements />
+          </div>
+          {/* {!session && !parsedData && <div> You need to sign in. </div>} */}
+          {achievementsArray.map((entry) => (
+            <LiftAchievements
+              key={entry.liftType}
+              liftType={entry.liftType}
+              entry={entry}
+              bestSets={bestSets[entry.liftType]}
+              className="col-span-1"
+            />
+          ))}
         </div>
       </div>
     </>
   );
 };
 export default Analyzer;
+
+const OverviewAchievements = ({}) => {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Big Picture</CardTitle>
+        {/* <CardDescription>Card Description</CardDescription> */}
+      </CardHeader>
+      <CardContent>
+        <div></div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const LiftAchievements = ({ liftType, entry, bestSets }) => {
   return (
@@ -128,6 +142,13 @@ const LiftAchievements = ({ liftType, entry, bestSets }) => {
           <div>
             Best triple: {bestSets["3"][0].weight}
             {bestSets["3"][0].unitType} ({bestSets["3"][0].date})
+          </div>
+        )}
+
+        {bestSets?.["5"]?.[0] && (
+          <div>
+            Best 5RM: {bestSets["5"][0].weight}
+            {bestSets["5"][0].unitType} ({bestSets["5"][0].date})
           </div>
         )}
       </CardContent>

@@ -150,7 +150,7 @@ export const VisualizerChart = () => {
   }
 
   console.log(data);
-  if (isError && !data.values) {
+  if (isError && !data?.values) {
     return (
       <div className="text-center">
         <div className="text-bold">Error reading GSheet data: {data.error}</div>

@@ -70,6 +70,10 @@ const Analyzer = () => {
   achievementsArray.sort((a, b) => b.totalSets - a.totalSets);
 
   const bestSets = processBestSets(localParsedData); // Collect the top 5 of each rep scheme 1..10
+  console.log(`Best sets:`, bestSets);
+
+  const recentBestSets = getRecentBestSets(bestSets); // Have they done any this month?
+  console.log(`Recent best sets:`, recentBestSets);
 
   return (
     <>
@@ -84,7 +88,7 @@ const Analyzer = () => {
         </h1>
         <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
           <div className="md:col-span-2 xl:col-span-4">
-            <OverviewAchievements />
+            <OverviewAchievements recentBestSets={recentBestSets} />
           </div>
           {/* {!session && !parsedData && <div> You need to sign in. </div>} */}
 
@@ -103,7 +107,7 @@ const Analyzer = () => {
 };
 export default Analyzer;
 
-const OverviewAchievements = ({}) => {
+const OverviewAchievements = ({ recentBestSets }) => {
   return (
     <Card>
       <CardHeader>
@@ -111,7 +115,18 @@ const OverviewAchievements = ({}) => {
         {/* <CardDescription>Card Description</CardDescription> */}
       </CardHeader>
       <CardContent>
-        <div></div>
+        <div>
+          {Object.keys(recentBestSets).map((liftType) =>
+            Object.keys(recentBestSets[liftType]).map((reps) => (
+              <BestSetDisplay
+                key={`${liftType}-${reps}`}
+                liftType={liftType}
+                reps={reps}
+                recentBestSets={recentBestSets}
+              />
+            )),
+          )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -153,6 +168,20 @@ const LiftAchievements = ({ liftType, entry, bestSets }) => {
         )}
       </CardContent>
     </Card>
+  );
+};
+
+const BestSetDisplay = ({ liftType, reps, recentBestSets }) => {
+  return (
+    <div>
+      {recentBestSets.map((entry, index) => (
+        <div key={index} className="best-set-entry">
+          <p>{`${entry.liftType}: ${entry.reps}@${entry.weight}kg (${entry.date})`}</p>
+          {/* Display other fields from the entry as needed */}
+          {/* Example: <p>{`🥇 #${index + 1} best 1RM ${entry.liftType} ever.`}</p> */}
+        </div>
+      ))}
+    </div>
   );
 };
 
@@ -201,7 +230,7 @@ function analyzerProcessParsedData(parsedData) {
 
 const processBestSets = (parsedData) => {
   // Initialize the 'bestLifts' object to store the best five lifts for each liftType and rep value
-  const bestLifts = {};
+  const bestSets = {};
 
   // Iterate through the data array to identify the best five lifts for each liftType and rep value
   parsedData.forEach((entry) => {
@@ -210,26 +239,59 @@ const processBestSets = (parsedData) => {
     // Ensure the rep value is within the range [1, 10]
     if (reps >= 1 && reps <= 10) {
       // If the liftType doesn't exist in bestLifts, initialize it
-      if (!bestLifts[liftType]) {
-        bestLifts[liftType] = {};
+      if (!bestSets[liftType]) {
+        bestSets[liftType] = {};
       }
 
       // If the rep value doesn't exist for the current liftType, initialize it
-      if (!bestLifts[liftType][reps]) {
-        bestLifts[liftType][reps] = [];
+      if (!bestSets[liftType][reps]) {
+        bestSets[liftType][reps] = [];
       }
 
       // Add the current lift entry to the bestLifts array for the current liftType and rep value
-      bestLifts[liftType][reps].push(entry);
+      bestSets[liftType][reps].push(entry);
 
       // Sort the bestLifts array by weight in descending order and keep only the top 20 lifts
-      bestLifts[liftType][reps] = bestLifts[liftType][reps]
+      bestSets[liftType][reps] = bestSets[liftType][reps]
         .sort((a, b) => b.weight - a.weight)
         .slice(0, 20);
     }
   });
 
-  // console.log(bestLifts);
+  return bestSets;
+};
 
-  return bestLifts;
+const getRecentBestSets = (bestSets) => {
+  if (!bestSets) return;
+
+  // Get the current date
+  const currentDate = new Date();
+
+  // Flatten and filter entries within the last 30 days
+  const recentEntries = [];
+
+  // Iterate through lift types
+  Object.keys(bestSets).forEach((liftType) => {
+    // Iterate through reps for each lift type
+    Object.keys(bestSets[liftType]).forEach((reps) => {
+      recentEntries.push(
+        ...bestSets[liftType][reps].filter((entry) => {
+          // Assuming each entry has a 'date' property
+          const entryDate = new Date(entry.date);
+
+          // Check if the entry date is within the last 30 days
+          const daysDifference = Math.ceil(
+            (currentDate - entryDate) / (1000 * 60 * 60 * 24),
+          );
+
+          return daysDifference <= 30;
+        }),
+      );
+    });
+  });
+
+  // Sort entries by date in descending order
+  recentEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  return recentEntries;
 };

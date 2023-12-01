@@ -2,6 +2,13 @@
 "use client";
 export function handleOpenPicker(openPicker, accessToken, setSsid) {
   console.log(`Opening Google Sheet Picker...`);
+
+  const scopes = [
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "https://www.googleapis.com/auth/drive.file",
+  ];
+
   openPicker({
     clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
     developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
@@ -11,6 +18,8 @@ export function handleOpenPicker(openPicker, accessToken, setSsid) {
     showUploadFolders: true,
     supportDrives: true,
     multiselect: false,
+    // customScopes: scopes,
+    customScopes: ["https://www.googleapis.com/auth/drive.file"],
     // customViews: customViewsArray, // custom view
     callbackFunction: (data) => {
       if (data.action === "cancel") {

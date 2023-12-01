@@ -42,7 +42,11 @@ export function AvatarDropdown({ ssid, setSsid }) {
           </DropdownMenuItem>
         )}
         {ssid && (
-          <DropdownMenuItem onClick={() => setTheme("light")}>
+          <DropdownMenuItem
+            onClick={() =>
+              handleOpenPicker(openPicker, session.accessToken, setSsid)
+            }
+          >
             Choose New Google Sheet
           </DropdownMenuItem>
         )}

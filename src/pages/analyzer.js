@@ -52,7 +52,7 @@ const Analyzer = () => {
     if (parsedData === null) {
       localParsedData = parseGSheetData(data.values); // FIXME: Do this in the useEffect?
       // setParsedData(newParsedData); // This triggers an infinite loop of rerendering
-      console.log(parsedData);
+      // console.log(parsedData);
     } else {
       localParsedData = parsedData;
     }
@@ -60,7 +60,16 @@ const Analyzer = () => {
     localParsedData = sampleParsedData;
   }
 
-  const achievementsArray = analyzerProcessParsedData(localParsedData);
+  // Get the giant object of achivements["Back Squat"] which contains interesting statistics
+  // Convert to array
+  const achievementsArray = Object.values(
+    analyzerProcessParsedData(localParsedData),
+  );
+
+  // Sort the array by totalSets in descending order
+  achievementsArray.sort((a, b) => b.totalSets - a.totalSets);
+
+  const bestSets = processBestSets(localParsedData); // Collect the top 5 of each rep scheme 1..10
 
   return (
     <>
@@ -70,18 +79,19 @@ const Analyzer = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div>
-        <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
+        <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           PR Analyzer
         </h1>
-        <div>
+        <div className="mt-4">
           {!session && <div> You need to sign in. </div>}
           {session && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mx-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
               {achievementsArray.map((entry) => (
                 <LiftAchievements
                   key={entry.liftType}
                   liftType={entry.liftType}
                   entry={entry}
+                  bestSets={bestSets[entry.liftType]}
                 />
               ))}
             </div>
@@ -93,7 +103,7 @@ const Analyzer = () => {
 };
 export default Analyzer;
 
-const LiftAchievements = ({ liftType, entry }) => {
+const LiftAchievements = ({ liftType, entry, bestSets }) => {
   return (
     <Card>
       <CardHeader>
@@ -101,7 +111,25 @@ const LiftAchievements = ({ liftType, entry }) => {
         {/* <CardDescription>Card Description</CardDescription> */}
       </CardHeader>
       <CardContent>
-        <p>Total lifts: {entry.totalLifts}</p>
+        <div>
+          Total reps: {entry.totalReps}. Total sets: {entry.totalSets}.{" "}
+        </div>
+        <div>First lift: {entry.oldestDate}</div>
+        <div>Most recent lift: {entry.newestDate}</div>
+
+        {bestSets?.["1"]?.[0] && (
+          <div>
+            Best single: {bestSets["1"][0].weight}
+            {bestSets["1"][0].unitType} ({bestSets["1"][0].date})
+          </div>
+        )}
+
+        {bestSets?.["3"]?.[0] && (
+          <div>
+            Best triple: {bestSets["3"][0].weight}
+            {bestSets["3"][0].unitType} ({bestSets["3"][0].date})
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -109,52 +137,78 @@ const LiftAchievements = ({ liftType, entry }) => {
 
 // This function uniquely processes the parsed Data for the Analyzer
 // So it lives here in the <Analyzer /> component
+// We build an achievements object which will contain interesting stats per lift. e.g.: achievements["Back Squat"]
 function analyzerProcessParsedData(parsedData) {
   if (parsedData === null) {
     console.log(`Error: analyzerProcessParsedData passed null.`);
     return;
   }
 
-  const liftTypeCounts = {};
+  // Initialize the 'achievements' object
+  const achievements = {};
 
-  // Count the number of tuples for each lift type
+  // Iterate through the data array to calculate totalReps and totalSets for each liftType
   parsedData.forEach((entry) => {
-    const { liftType } = entry;
+    const { liftType, reps, date } = entry;
 
-    if (!liftTypeCounts[liftType]) {
-      liftTypeCounts[liftType] = 0;
+    if (!achievements[liftType]) {
+      // If the liftType doesn't exist in achievements, initialize it
+      achievements[liftType] = {
+        liftType,
+        totalReps: 0,
+        totalSets: 0,
+        oldestDate: date,
+        newestDate: date,
+      };
     }
 
-    liftTypeCounts[liftType]++;
+    achievements[liftType].totalReps += reps;
+    achievements[liftType].totalSets += 1;
+
+    // Update oldestDate and newestDate for the current liftType
+    if (date < achievements[liftType].oldestDate) {
+      achievements[liftType].oldestDate = date;
+    }
+
+    if (date > achievements[liftType].newestDate) {
+      achievements[liftType].newestDate = date;
+    }
   });
 
-  // Convert the liftTypeCounts object to an array of objects
-  const achievementsArray = Object.entries(liftTypeCounts).map(
-    ([liftType, totalLifts]) => ({
-      liftType,
-      totalLifts,
-    }),
-  );
-
-  // Sort the array by totalLifts in descending order
-  achievementsArray.sort((a, b) => b.totalLifts - a.totalLifts);
-
-  console.log(achievementsArray);
-
-  // Function to get the best five lifts for a specific lift type and reps
-  const bestFiveLifts = (data, liftType, reps) => {
-    const filteredData = data.filter(
-      (entry) => entry.liftType === liftType && entry.reps === reps,
-    );
-
-    // Sort the filtered data by weight in descending order
-    filteredData.sort((a, b) => b.weight - a.weight);
-
-    // Take the top five entries
-    const topFive = filteredData.slice(0, 5);
-
-    return topFive;
-  };
-
-  return achievementsArray;
+  return achievements;
 }
+
+const processBestSets = (parsedData) => {
+  // Initialize the 'bestLifts' object to store the best five lifts for each liftType and rep value
+  const bestLifts = {};
+
+  // Iterate through the data array to identify the best five lifts for each liftType and rep value
+  parsedData.forEach((entry) => {
+    const { liftType, reps, weight } = entry;
+
+    // Ensure the rep value is within the range [1, 10]
+    if (reps >= 1 && reps <= 10) {
+      // If the liftType doesn't exist in bestLifts, initialize it
+      if (!bestLifts[liftType]) {
+        bestLifts[liftType] = {};
+      }
+
+      // If the rep value doesn't exist for the current liftType, initialize it
+      if (!bestLifts[liftType][reps]) {
+        bestLifts[liftType][reps] = [];
+      }
+
+      // Add the current lift entry to the bestLifts array for the current liftType and rep value
+      bestLifts[liftType][reps].push(entry);
+
+      // Sort the bestLifts array by weight in descending order and keep only the top 20 lifts
+      bestLifts[liftType][reps] = bestLifts[liftType][reps]
+        .sort((a, b) => b.weight - a.weight)
+        .slice(0, 20);
+    }
+  });
+
+  // console.log(bestLifts);
+
+  return bestLifts;
+};

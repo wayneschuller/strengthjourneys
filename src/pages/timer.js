@@ -44,7 +44,7 @@ function Stopwatch({ time, setTime }) {
     }
 
     return () => clearInterval(interval);
-  }, [isRunning]);
+  }, [isRunning, setTime]);
 
   const handleStartStop = () => {
     setIsRunning((prevIsRunning) => !prevIsRunning);

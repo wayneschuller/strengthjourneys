@@ -72,6 +72,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <Image
+                alt="Calculator thumbnail"
                 src={
                   theme === "dark"
                     ? CalculatorThumbnailDark

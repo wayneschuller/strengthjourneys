@@ -11,6 +11,8 @@ import useDrivePicker from "@fyelci/react-google-drive-picker";
 import { handleOpenPicker } from "@/components/handleOpenPicker";
 import { parseGSheetData } from "@/lib/parseGSheetData";
 import { sampleParsedData } from "@/lib/sampleParsedData";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 
@@ -40,6 +42,7 @@ const Analyzer = () => {
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
   const { toast } = useToast();
   const [openPicker, authResponse] = useDrivePicker();
+  const [animationParent] = useAutoAnimate();
 
   useEffect(() => {
     console.log(`Analyzer useEffect[]`);
@@ -82,18 +85,21 @@ const Analyzer = () => {
         <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           PR Analyzer
         </h1>
-        <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
+        <div
+          className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4"
+          ref={animationParent}
+        >
           <div className="md:col-span-2 xl:col-span-4">
             <OverviewAchievements />
           </div>
           {/* {!session && !parsedData && <div> You need to sign in. </div>} */}
           {achievementsArray.map((entry) => (
             <LiftAchievements
+              ref={animationParent}
               key={entry.liftType}
               liftType={entry.liftType}
               entry={entry}
               bestSets={bestSets[entry.liftType]}
-              className="col-span-1"
             />
           ))}
         </div>

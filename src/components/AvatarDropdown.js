@@ -1,12 +1,14 @@
 "use client";
 
 import * as React from "react";
+import { useContext, useState, useEffect } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
 import { useSession, signIn, signOut } from "next-auth/react";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
 import { handleOpenPicker } from "@/components/handleOpenPicker";
+import { ParsedDataContext } from "@/pages/_app";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,10 +18,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function AvatarDropdown({ ssid, setSsid }) {
+export function AvatarDropdown() {
   const { setTheme } = useTheme();
   const { data: session } = useSession();
   const [openPicker, authResponse] = useDrivePicker();
+  const { parsedData, setParsedData, ssid, setSsid } =
+    useContext(ParsedDataContext);
 
   if (!session) return <Button onClick={() => signIn()}>Sign in</Button>;
 
@@ -82,7 +86,7 @@ export function AvatarDropdown({ ssid, setSsid }) {
         <DropdownMenuItem
           onClick={() => {
             signOut();
-            // FIXME: setParsedData(null);
+            setParsedData(null); // FIXME: do we need this? does it help?
           }}
         >
           Sign Out

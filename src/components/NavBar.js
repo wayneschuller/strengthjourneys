@@ -5,32 +5,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useContext, useState, useEffect } from "react";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
 import MobileNav from "@/components/MobileNav";
-import { useSession, signIn, signOut } from "next-auth/react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import useDrivePicker from "@fyelci/react-google-drive-picker";
-import { handleOpenPicker } from "@/components/handleOpenPicker";
-import { ParsedDataContext } from "@/pages/_app";
 import { AvatarDropdown } from "./AvatarDropdown";
 
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
 
 export default function NavBar() {
-  const { data: session } = useSession();
-  const [openPicker, authResponse] = useDrivePicker();
-  const { parsedData, setParsedData, ssid, setSsid } =
-    useContext(ParsedDataContext);
-
   return (
     <div className="mx-3 flex items-center md:container">
       <DesktopNav />
       <MobileNav />
       <div className="mt-2 flex flex-1 items-center justify-end gap-2">
-        <AvatarDropdown ssid={ssid} setSsid={setSsid} />
+        <AvatarDropdown />
         <DarkModeToggle />
       </div>
     </div>

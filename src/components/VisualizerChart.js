@@ -73,8 +73,8 @@ export const VisualizerChart = () => {
 
   useEffect(() => {
     // console.log(`VisualizerChart useEffect isLoading: ${isLoading}`);
-    // console.log(`VisualizerChart useEffect session:`);
-    // console.log(session);
+    console.log(`VisualizerChart useEffect session:`);
+    console.log(session);
 
     if (!session) {
       toast({

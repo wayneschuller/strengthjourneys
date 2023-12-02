@@ -25,7 +25,8 @@ export function AvatarDropdown() {
   const { parsedData, setParsedData, ssid, setSsid } =
     useContext(ParsedDataContext);
 
-  if (!session) return <Button onClick={() => signIn()}>Sign in</Button>;
+  if (!session)
+    return <Button onClick={() => signIn("google")}>Sign in</Button>;
 
   return (
     <DropdownMenu>

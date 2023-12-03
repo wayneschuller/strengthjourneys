@@ -299,10 +299,21 @@ const getRecentBestSets = (bestSets) => {
     });
   });
 
-  // Sort entries by position and date
-  recentEntries.sort(
-    (a, b) => a.position - b.position || new Date(b.date) - new Date(a.date),
-  );
+  // Sort entries by position, reps and date
+  recentEntries.sort((a, b) => {
+    // Sort by position in ascending order
+    if (a.position !== b.position) {
+      return a.position - b.position;
+    }
+
+    // If positions are equal, sort by reps in ascending order
+    if (a.reps !== b.reps) {
+      return a.reps - b.reps;
+    }
+
+    // If both position and reps are equal, sort by date in descending order
+    return new Date(b.date) - new Date(a.date);
+  });
 
   return recentEntries;
 };

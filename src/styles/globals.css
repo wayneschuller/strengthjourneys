@@ -77,3 +77,78 @@
     @apply bg-background text-foreground;
   }
 }
+
+/*
+ * react-calendar-heatmap styles
+ *
+ * All of the styles in this file are optional and configurable!
+ * The github and gitlab color scales are provided for reference.
+ */
+
+.react-calendar-heatmap text {
+  font-size: 12px;
+  fill: #aaa;
+}
+
+.react-calendar-heatmap .react-calendar-heatmap-small-text {
+  font-size: 5px;
+}
+
+.react-calendar-heatmap rect:hover {
+  stroke: #555;
+  stroke-width: 1px;
+}
+
+/*
+ * Default color scale
+ */
+
+.react-calendar-heatmap .color-empty {
+  fill: #eeeeee;
+}
+
+.react-calendar-heatmap .color-filled {
+  fill: #8cc665;
+}
+
+/* Light heatmap theme styles */
+.react-calendar-heatmap .color-gh-light-0 {
+  fill: #eeeeee; /* Light gray */
+}
+
+.react-calendar-heatmap .color-gh-light-1 {
+  fill: #d6e685; /* Light green */
+}
+
+.react-calendar-heatmap .color-gh-light-2 {
+  fill: #8cc665; /* Olive green */
+}
+
+.react-calendar-heatmap .color-gh-light-3 {
+  fill: #44a340; /* Sea green */
+}
+
+.react-calendar-heatmap .color-gh-light-4 {
+  fill: #1e6823; /* Dark green */
+}
+
+/* Dark heatmap theme styles */
+.react-calendar-heatmap .color-gh-dark-0 {
+  fill: #2b2b2b; /* Dark gray */
+}
+
+.react-calendar-heatmap .color-gh-dark-1 {
+  fill: #354a34; /* Dark green */
+}
+
+.react-calendar-heatmap .color-gh-dark-2 {
+  fill: #4d683f; /* Dark olive green */
+}
+
+.react-calendar-heatmap .color-gh-dark-3 {
+  fill: #6f8d60; /* Dark sea green */
+}
+
+.react-calendar-heatmap .color-gh-dark-4 {
+  fill: #a1bfa5; /* Light green */
+}

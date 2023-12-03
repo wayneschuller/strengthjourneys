@@ -1,6 +1,9 @@
 import React from "react";
+import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
-import "react-calendar-heatmap/dist/styles.css";
+// import "react-calendar-heatmap/dist/styles.css";
+// import "../styles/heatmap.css";
+// import styles from "../styles/heatmap.css";
 
 const generateRandomData = () => {
   // Generate random data with counts ranging from 0 to 3
@@ -21,19 +24,15 @@ const generateRandomData = () => {
 };
 
 const Heatmap = ({ parsedData }) => {
-  console.log(`Heatmap parsedData:`);
-  console.log(parsedData);
+  const { theme } = useTheme();
   if (!parsedData) return;
 
   // Generate random data
   // const data = generateRandomData();
   const heatmap = generateHeatmapData(parsedData);
 
-  console.log(`Heatmap:`);
+  console.log(`Heatmap (theme: ${theme}):`);
   console.log(heatmap);
-
-  // Define a custom color scale with shades of green
-  // const customColorScale = ["#d9f0a3", "#addd8e", "#78c679", "#41ab5d"];
 
   return (
     <div className="">
@@ -43,9 +42,9 @@ const Heatmap = ({ parsedData }) => {
         values={heatmap.heatmapData}
         classForValue={(value) => {
           if (!value) {
-            return "color-empty";
+            return `color-gh-${theme}-0`; // Grabs colors from css
           }
-          return `color-github-${value.count}`; // Grabs colors from css
+          return `color-gh-${theme}-${value.count}`; // Grabs colors from css
         }}
         tooltipDataAttrs={(value) => {
           return {

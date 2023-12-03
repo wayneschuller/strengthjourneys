@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import Head from "next/head";
-import { Calculator, Timer, LineChart, TrendingUp } from "lucide-react";
+import { Calculator, Timer, LineChart, Trophy } from "lucide-react";
 
 import {
   Card,
@@ -47,7 +47,7 @@ export default function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
-              <TrendingUp size={iconSize} strokeWidth={iconStrokeWidth} />
+              <Trophy size={iconSize} strokeWidth={iconStrokeWidth} />
             </CardContent>
           </Card>
         </Link>

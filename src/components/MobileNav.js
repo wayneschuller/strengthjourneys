@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ViewVerticalIcon } from "@radix-ui/react-icons";
 import { useRouter } from "next/router";
+import { Calculator, Timer, LineChart, Trophy } from "lucide-react";
 
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
@@ -24,6 +25,8 @@ import {
 export default function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const iconSize = 16;
+  const iconStrokeWidth = 1.25;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -41,11 +44,13 @@ export default function MobileNav() {
           <SheetClose asChild>
             <Link href="/" className="mb-6 flex gap-4">
               {/* <Image src={Logo} className="h-10 w-10" alt="Logo" /> */}
-              <span className="inline-block font-bold">Strength Journeys</span>
+              <span className="inline-block text-xl font-bold">
+                Strength Journeys
+              </span>
             </Link>
           </SheetClose>
 
-          <div className="flex flex-1 flex-col  gap-4 text-base font-medium">
+          <div className="flex flex-1 flex-col  gap-4 text-lg font-medium">
             <SheetClose asChild>
               <Link
                 href="/analyzer"

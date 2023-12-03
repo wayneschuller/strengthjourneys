@@ -89,6 +89,19 @@ const Analyzer = () => {
         </h1>
         <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
           <div className="md:col-span-2 xl:col-span-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Two Years of Activity</CardTitle>
+                {/* <CardDescription>Card Description</CardDescription> */}
+              </CardHeader>
+              <CardContent>
+                <div className="">
+                  <Heatmap parsedData={localParsedData} />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="xl:col-span-2">
             <OverviewAchievements
               parsedData={localParsedData}
               recentBestSets={recentBestSets}
@@ -116,13 +129,10 @@ const OverviewAchievements = ({ parsedData, recentBestSets, maxRows }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>One Year Highlights</CardTitle>
+        <CardTitle>This Month's Highlights</CardTitle>
         {/* <CardDescription>Card Description</CardDescription> */}
       </CardHeader>
       <CardContent>
-        <div className="mb-5">
-          <Heatmap parsedData={parsedData} />
-        </div>
         <BestSetDisplay recentBestSets={recentBestSets} maxRows={maxRows} />
       </CardContent>
     </Card>

@@ -163,8 +163,37 @@ const LiftAchievements = ({ liftType, entry, bestSets }) => {
   );
 };
 
+// Array of 20 celebration emojis to display based on PR position
+function getCelebrationEmoji(position) {
+  const positionEmojis = [
+    "\u{1F947}", // 🥇 Gold Medal (1st place)
+    "\u{1F948}", // 🥈 Silver Medal (2nd place)
+    "\u{1F949}", // 🥉 Bronze Medal (3rd place)
+    "\u{1F4AA}", // 💪 Flexed Biceps
+    "\u{1F44C}", // 👌 OK Hand Sign
+    "\u{1F44F}", // 👏 Clapping Hands
+    "\u{1F3C6}", // 🏆 Trophy
+    "\u{1F525}", // 🔥 Fire
+    "\u{1F4AF}", // 💯 Hundred Points Symbol
+    "\u{1F929}", // 🤩 Star-Struck
+    "\u{1F389}", // 🎉 Party Popper
+    "\u{1F44D}", // 👍 Thumbs Up
+    "\u{1F381}", // 🎁 Wrapped Gift
+    "\u{1F60D}", // 😍 Heart Eyes
+    "\u{1F389}", // 🎉 Party Popper
+    "\u{1F60A}", // 😊 Smiling Face with Smiling Eyes
+    "\u{1F604}", // 😄 Grinning Face with Smiling Eyes
+    "\u{1F60B}", // 😋 Face Savoring Food
+    "\u{1F973}", // 🥳 Partying Face
+    "\u{1F609}", // 😉 Winking Face
+  ];
+
+  return positionEmojis[position];
+}
+
 const BestSetDisplay = ({ recentBestSets, maxRows }) => {
   const displayedEntries = recentBestSets.slice(0, maxRows);
+
   return (
     <div>
       <ul className="best-set-list">
@@ -172,9 +201,9 @@ const BestSetDisplay = ({ recentBestSets, maxRows }) => {
           <li key={`bestSet-${index}`} className="best-set-entry">
             <p>{`${entry.liftType}: ${entry.reps}@${entry.weight}kg (${
               entry.date
-            }) #${entry.position + 1} best ${entry.reps}RM ${
-              entry.liftType
-            } ever.`}</p>
+            }) ${getCelebrationEmoji(entry.position)} #${
+              entry.position + 1
+            } best ${entry.reps}RM ${entry.liftType} ever.`}</p>
             {/* Display other fields from the entry as needed */}
           </li>
         ))}

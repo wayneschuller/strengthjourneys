@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import { useState, useEffect, useContext } from "react";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
 // import "react-calendar-heatmap/dist/styles.css";
@@ -34,7 +36,19 @@ function generateRandomHeatmapData() {
 }
 
 const Heatmap = ({ parsedData, bestSets, months }) => {
-  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
+
+  // useEffect only runs on the client, so now we can safely show the UI
+  // As advised by: https://github.com/pacocoursey/next-themes#avoid-hydration-mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   if (!parsedData) return;
 
   // Generate random data
@@ -42,28 +56,26 @@ const Heatmap = ({ parsedData, bestSets, months }) => {
 
   const heatmap = generateHeatmapData(parsedData, bestSets, months);
 
-  console.log(`Heatmap (theme: ${theme}):`);
-  console.log(heatmap);
+  // console.log(`Heatmap (theme: ${theme}):`);
+  // console.log(heatmap);
 
   return (
-    <div className="">
-      <CalendarHeatmap
-        startDate={heatmap.startDate}
-        endDate={heatmap.endDate}
-        values={heatmap.heatmapData}
-        classForValue={(value) => {
-          if (!value) {
-            return `color-gh-${theme}-0`; // Grabs colors from css
-          }
-          return `color-gh-${theme}-${value.count}`; // Grabs colors from css
-        }}
-        titleForValue={(value) => {
-          if (!value) return null;
+    <CalendarHeatmap
+      startDate={heatmap.startDate}
+      endDate={heatmap.endDate}
+      values={heatmap.heatmapData}
+      classForValue={(value) => {
+        if (!value) {
+          return `color-gh-${theme || "light"}-0`; // Grabs colors from css
+        }
+        return `color-gh-${theme || "light"}-${value.count}`; // Grabs colors from css
+      }}
+      titleForValue={(value) => {
+        if (!value) return null;
 
-          return `${value?.date}: ${value?.count}`;
-        }}
-      />
-    </div>
+        return `${value?.date}: ${value?.count}`;
+      }}
+    />
   );
 };
 

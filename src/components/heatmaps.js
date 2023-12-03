@@ -33,14 +33,14 @@ function generateRandomHeatmapData() {
   };
 }
 
-const Heatmap = ({ parsedData, bestSets }) => {
+const Heatmap = ({ parsedData, bestSets, months }) => {
   const { theme } = useTheme();
   if (!parsedData) return;
 
   // Generate random data
   // const heatmap = generateRandomHeatmapData();
 
-  const heatmap = generateHeatmapData(parsedData, bestSets);
+  const heatmap = generateHeatmapData(parsedData, bestSets, months);
 
   console.log(`Heatmap (theme: ${theme}):`);
   console.log(heatmap);
@@ -73,9 +73,9 @@ export default Heatmap;
 // liftData.js
 // liftData.js
 
-export const generateHeatmapData = (parsedData, bestSets) => {
+export const generateHeatmapData = (parsedData, bestSets, months) => {
   const currentDate = new Date();
-  const windowMonths = 24;
+  const windowMonths = months;
 
   const windowPeriod = new Date();
   windowPeriod.setMonth(currentDate.getMonth() - windowMonths);

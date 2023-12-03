@@ -11,6 +11,7 @@ import useDrivePicker from "@fyelci/react-google-drive-picker";
 import { handleOpenPicker } from "@/components/handleOpenPicker";
 import { parseGSheetData } from "@/lib/parseGSheetData";
 import { sampleParsedData } from "@/lib/sampleParsedData";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 
@@ -91,12 +92,28 @@ const Analyzer = () => {
           <div className="md:col-span-2 xl:col-span-4">
             <Card>
               <CardHeader>
-                <CardTitle>Two Years of Activity</CardTitle>
+                <CardTitle className="hidden md:block">
+                  Two Years of Activity
+                </CardTitle>
+                <CardTitle className="block md:hidden">
+                  Six Months of Activity
+                </CardTitle>
                 {/* <CardDescription>Card Description</CardDescription> */}
               </CardHeader>
               <CardContent>
-                <div className="">
-                  <Heatmap parsedData={localParsedData} bestSets={bestSets} />
+                <div className="md:hidden">
+                  <Heatmap
+                    parsedData={localParsedData}
+                    bestSets={bestSets}
+                    months={6}
+                  />
+                </div>
+                <div className="hidden md:block">
+                  <Heatmap
+                    parsedData={localParsedData}
+                    bestSets={bestSets}
+                    months={24}
+                  />
                 </div>
               </CardContent>
             </Card>

@@ -63,7 +63,8 @@ function parseGSheetData(data) {
 
       return obj;
     })
-    .filter(Boolean);
+    .filter(Boolean)
+    .sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort by date ascending
 
   return objectsArray;
 }

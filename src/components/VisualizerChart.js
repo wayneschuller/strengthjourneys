@@ -170,11 +170,11 @@ export const VisualizerChart = () => {
   let chartData = [];
   let localParsedData = null;
   if (session && data?.values) {
-    // console.log(data);
+    console.log(data);
     if (parsedData === null) {
       localParsedData = parseGSheetData(data.values); // FIXME: Do this in the useEffect?
       // setParsedData(newParsedData); // This triggers an infinite loop of rerendering
-      console.log(parsedData);
+      console.log(localParsedData);
     } else {
       localParsedData = parsedData;
     }

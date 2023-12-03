@@ -13,9 +13,7 @@ import { handleOpenPicker } from "@/components/handleOpenPicker";
 import { parseGSheetData } from "@/lib/parseGSheetData";
 import { sampleParsedData } from "@/lib/sampleParsedData";
 import { estimateE1RM } from "@/lib/estimateE1RM";
-import { Button } from "@/components/ui/button";
-
-import useSWR from "swr";
+import { devLog } from "@/lib/devLog";
 
 import {
   defaults as chartDefaults,
@@ -73,8 +71,8 @@ export const VisualizerChart = () => {
 
   useEffect(() => {
     // console.log(`VisualizerChart useEffect isLoading: ${isLoading}`);
-    console.log(`VisualizerChart useEffect session:`);
-    console.log(session);
+    devLog(`VisualizerChart useEffect session:`);
+    devLog(session);
 
     if (!session) {
       toast({
@@ -149,7 +147,7 @@ export const VisualizerChart = () => {
     return <div>Loading...</div>;
   }
 
-  console.log(data);
+  devLog(data);
   if (isError && !data?.values) {
     return (
       <div className="text-center">
@@ -170,11 +168,11 @@ export const VisualizerChart = () => {
   let chartData = [];
   let localParsedData = null;
   if (session && data?.values) {
-    console.log(data);
+    devLog(data);
     if (parsedData === null) {
       localParsedData = parseGSheetData(data.values); // FIXME: Do this in the useEffect?
       // setParsedData(newParsedData); // This triggers an infinite loop of rerendering
-      console.log(localParsedData);
+      devLog(localParsedData);
     } else {
       localParsedData = parsedData;
     }

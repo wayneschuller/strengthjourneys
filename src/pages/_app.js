@@ -11,6 +11,7 @@ import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
 import { SessionProvider } from "next-auth/react";
 import { useState, useEffect, createContext } from "react";
+import { devLog } from "@/lib/devLog";
 
 export const ParsedDataContext = createContext(null); // Internal SJ format of user gsheet (see sampleData.js for design)
 
@@ -25,7 +26,7 @@ export default function App({ Component, pageProps, session }) {
     if (!didInit && initSsid) {
       didInit = true;
       setSsid(initSsid);
-      console.log(`App didInit set ssid: ${initSsid}`);
+      devLog(`App didInit set ssid: ${initSsid}`);
     }
   }, []);
 

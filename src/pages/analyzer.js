@@ -101,13 +101,13 @@ const Analyzer = () => {
                 {/* <CardDescription>Card Description</CardDescription> */}
               </CardHeader>
               <CardContent>
-                <div className="md:hidden">
+                {/* <div className="block md:hidden">
                   <Heatmap
                     parsedData={localParsedData}
                     bestSets={bestSets}
                     months={6}
                   />
-                </div>
+                </div> */}
                 <div className="hidden md:block">
                   <Heatmap
                     parsedData={localParsedData}

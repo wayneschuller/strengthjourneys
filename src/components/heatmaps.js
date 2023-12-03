@@ -59,7 +59,8 @@ const Heatmap = ({ parsedData, bestSets, months }) => {
         }}
         titleForValue={(value) => {
           if (!value) return null;
-          return `${value.date}: ${value.count}`;
+
+          return `${value?.date}: ${value?.count}`;
         }}
       />
     </div>

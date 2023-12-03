@@ -8,10 +8,9 @@ import { ParsedDataContext } from "@/pages/_app";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
-import { handleOpenPicker } from "@/components/handleOpenPicker";
 import { parseGSheetData } from "@/lib/parseGSheetData";
 import { sampleParsedData } from "@/lib/sampleParsedData";
-import { cn } from "@/lib/utils";
+import { devLog } from "@/lib/devLog";
 
 import { Button } from "@/components/ui/button";
 
@@ -45,7 +44,7 @@ const Analyzer = () => {
   const [openPicker, authResponse] = useDrivePicker();
 
   useEffect(() => {
-    console.log(`Analyzer useEffect[]`);
+    devLog(`Analyzer useEffect[]`);
   }, []);
 
   let chartData = [];
@@ -73,10 +72,10 @@ const Analyzer = () => {
   achievementsArray.sort((a, b) => b.totalSets - a.totalSets);
 
   const bestSets = processBestSets(localParsedData); // Collect the top 5 of each rep scheme 1..10
-  console.log(`Best sets:`, bestSets);
+  devLog(`Best sets:`, bestSets);
 
   const recentBestSets = getRecentBestSets(bestSets); // Have they done any this month?
-  console.log(`Recent best sets:`, recentBestSets);
+  devLog(`Recent best sets:`, recentBestSets);
 
   return (
     <>

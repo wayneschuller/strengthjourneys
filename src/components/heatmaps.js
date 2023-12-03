@@ -3,15 +3,16 @@
 import { useState, useEffect, useContext } from "react";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
+import { devLog } from "@/lib/devLog";
+
+// We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
-// import "../styles/heatmap.css";
-// import styles from "../styles/heatmap.css";
 
 function generateRandomHeatmapData() {
   const currentDate = new Date();
-  const windowMonths = 24;
+  const windowMonths = 24; // Two years ago
   const startDate = new Date(currentDate);
-  startDate.setMonth(currentDate.getMonth() - windowMonths); // Two years ago
+  startDate.setMonth(currentDate.getMonth() - windowMonths);
 
   const endDate = new Date();
 
@@ -50,6 +51,7 @@ const Heatmap = ({ parsedData, bestSets, months }) => {
   }
 
   // FIXME: if we are checking for mounted we could do clever stuff to get window width and adjust the heatmap data size accordingly?
+  // We could set months based on window size here
 
   if (!parsedData) return;
 
@@ -58,8 +60,8 @@ const Heatmap = ({ parsedData, bestSets, months }) => {
 
   const heatmap = generateHeatmapData(parsedData, bestSets, months);
 
-  // console.log(`Heatmap (theme: ${theme}):`);
-  // console.log(heatmap);
+  devLog(`Heatmap (theme: ${theme}):`);
+  devLog(heatmap);
 
   return (
     <CalendarHeatmap

@@ -117,19 +117,23 @@
 }
 
 .react-calendar-heatmap .color-gh-light-1 {
-  fill: #d6e685; /* Light green */
+  /* fill: #d6e685; Light green */
+  fill: #a3b18a; /* Light green */
 }
 
 .react-calendar-heatmap .color-gh-light-2 {
-  fill: #8cc665; /* Olive green */
+  /* fill: #8cc665; Olive green */
+  fill: #588157; /* Olive green */
 }
 
 .react-calendar-heatmap .color-gh-light-3 {
-  fill: #44a340; /* Sea green */
+  /* fill: #44a340; Sea green */
+  fill: #3a5a40; /* Sea green */
 }
 
 .react-calendar-heatmap .color-gh-light-4 {
-  fill: #1e6823; /* Dark green */
+  /* fill: #1e6823; Dark green */
+  fill: #344e41; /* Dark green */
 }
 
 /* Dark heatmap theme styles */

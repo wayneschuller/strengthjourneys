@@ -96,7 +96,7 @@ const Analyzer = () => {
               </CardHeader>
               <CardContent>
                 <div className="">
-                  <Heatmap parsedData={localParsedData} />
+                  <Heatmap parsedData={localParsedData} bestSets={bestSets} />
                 </div>
               </CardContent>
             </Card>

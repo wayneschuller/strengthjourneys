@@ -5,31 +5,42 @@ import CalendarHeatmap from "react-calendar-heatmap";
 // import "../styles/heatmap.css";
 // import styles from "../styles/heatmap.css";
 
-const generateRandomData = () => {
-  // Generate random data with counts ranging from 0 to 3
-  const startDate = new Date("2023-01-01");
-  const endDate = new Date("2023-12-31");
-  const data = [];
+function generateRandomHeatmapData() {
+  const currentDate = new Date();
+  const windowMonths = 24;
+  const startDate = new Date(currentDate);
+  startDate.setMonth(currentDate.getMonth() - windowMonths); // Two years ago
+
+  const endDate = new Date();
+
+  const randomHeatmapData = [];
 
   for (
     let date = new Date(startDate);
     date <= endDate;
     date.setDate(date.getDate() + 1)
   ) {
-    const count = Math.floor(Math.random() * 4); // Random count between 0 and 3
-    data.push({ date: new Date(date), count });
+    randomHeatmapData.push({
+      date: new Date(date),
+      count: Math.floor(Math.random() * 5),
+    });
   }
 
-  return data;
-};
+  return {
+    startDate,
+    endDate,
+    heatmapData: randomHeatmapData,
+  };
+}
 
-const Heatmap = ({ parsedData }) => {
+const Heatmap = ({ parsedData, bestSets }) => {
   const { theme } = useTheme();
   if (!parsedData) return;
 
   // Generate random data
-  // const data = generateRandomData();
-  const heatmap = generateHeatmapData(parsedData);
+  // const heatmap = generateRandomHeatmapData();
+
+  const heatmap = generateHeatmapData(parsedData, bestSets);
 
   console.log(`Heatmap (theme: ${theme}):`);
   console.log(heatmap);
@@ -46,10 +57,9 @@ const Heatmap = ({ parsedData }) => {
           }
           return `color-gh-${theme}-${value.count}`; // Grabs colors from css
         }}
-        tooltipDataAttrs={(value) => {
-          return {
-            "data-tip": `count: ${value}`,
-          };
+        titleForValue={(value) => {
+          if (!value) return null;
+          return `${value.date}: ${value.count}`;
         }}
       />
     </div>
@@ -63,7 +73,7 @@ export default Heatmap;
 // liftData.js
 // liftData.js
 
-export const generateHeatmapData = (parsedData) => {
+export const generateHeatmapData = (parsedData, bestSets) => {
   const currentDate = new Date();
   const windowMonths = 24;
 
@@ -77,7 +87,7 @@ export const generateHeatmapData = (parsedData) => {
   // Create a Set to track unique dates
   const uniqueDates = new Set();
 
-  // Filter and create heatmapData with unique dates and a constant count of 4
+  // Filter and create heatmapData with unique dates and a constant count of 1
   const heatmapData = filteredData
     .filter((lift) => {
       const dateStr = lift.date.toString();
@@ -87,7 +97,7 @@ export const generateHeatmapData = (parsedData) => {
       }
       return false;
     })
-    .map((lift) => ({ date: lift.date, count: 4 }));
+    .map((lift) => ({ date: lift.date, count: 1 }));
 
   // Ensure there's an entry for the date 12 months ago with count: 0
   if (new Date(heatmapData[0].date) > windowPeriod) {

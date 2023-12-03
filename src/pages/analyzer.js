@@ -100,8 +100,7 @@ const Analyzer = () => {
                   {session?.user == null && " (Sample Data)"}
                 </CardTitle>
                 <CardTitle className="block md:hidden">
-                  Six Months of{" "}
-                  {session?.user?.name ? `${session.user.name}'s` : ""} Lifting
+                  Six Months of Lifting{" "}
                   {session?.user == null && " (Sample Data)"}
                 </CardTitle>
                 {/* <CardDescription>Card Description</CardDescription> */}

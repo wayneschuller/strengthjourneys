@@ -20,7 +20,9 @@ import {
 
 export function AvatarDropdown() {
   const { setTheme } = useTheme();
-  const { data: session } = useSession();
+  // const { data: session } = useSession();
+  const { data: session } = useSession({ autoSignIn: false });
+
   const [openPicker, authResponse] = useDrivePicker();
   const { parsedData, setParsedData, ssid, setSsid } =
     useContext(ParsedDataContext);

@@ -77,6 +77,8 @@ const Analyzer = () => {
   const recentBestSets = getRecentBestSets(bestSets); // Have they done any this month?
   devLog(`Recent best sets:`, recentBestSets);
 
+  devLog(session);
+
   return (
     <>
       <Head>
@@ -93,10 +95,12 @@ const Analyzer = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="hidden md:block">
-                  Two Years of Activity
+                  Two Years of{" "}
+                  {session?.user?.name ? `${session.user.name}'s` : ""} Lifting
                 </CardTitle>
                 <CardTitle className="block md:hidden">
-                  Six Months of Activity
+                  Six Months of{" "}
+                  {session?.user?.name ? `${session.user.name}'s` : ""} Lifting
                 </CardTitle>
                 {/* <CardDescription>Card Description</CardDescription> */}
               </CardHeader>

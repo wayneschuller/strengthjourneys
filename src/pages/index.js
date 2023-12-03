@@ -4,9 +4,8 @@
 
 import Link from "next/link";
 import Head from "next/head";
-import Image from "next/image";
-import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
+import { Calculator, Timer, LineChart, TrendingUp } from "lucide-react";
+
 import {
   Card,
   CardContent,
@@ -15,11 +14,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import CalculatorThumbnailDark from "../../public/CalculatorThumbnailDark.jpg";
-import CalculatorThumbnailLight from "../../public/CalculatorThumbnailLight.jpg";
 
 export default function Home() {
-  const { theme, setTheme } = useTheme();
+  const iconSize = 64;
+  const iconStrokeWidth = 1.25;
 
   const title = "Strength Journeys";
 
@@ -48,7 +46,9 @@ export default function Home() {
                 See lifetime and recent personal records.
               </CardDescription>
             </CardHeader>
-            <CardContent>Page thumbnail</CardContent>
+            <CardContent className="flex justify-center">
+              <TrendingUp size={iconSize} strokeWidth={iconStrokeWidth} />
+            </CardContent>
           </Card>
         </Link>
         <Link href="/visualizer">
@@ -59,7 +59,9 @@ export default function Home() {
                 Interactive lifetime charts of all lifts.
               </CardDescription>
             </CardHeader>
-            <CardContent>Chart thumbnail</CardContent>
+            <CardContent className="flex justify-center">
+              <LineChart size={iconSize} strokeWidth={iconStrokeWidth} />
+            </CardContent>
           </Card>
         </Link>
         <Link href="/calculator">
@@ -70,15 +72,8 @@ export default function Home() {
                 Multi-formula one rep max calculations.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Image
-                alt="Calculator thumbnail"
-                src={
-                  theme === "dark"
-                    ? CalculatorThumbnailDark
-                    : CalculatorThumbnailLight
-                }
-              />
+            <CardContent className="flex justify-center">
+              <Calculator size={iconSize} strokeWidth={iconStrokeWidth} />
             </CardContent>
           </Card>
         </Link>
@@ -90,7 +85,9 @@ export default function Home() {
                 Set timer for phones or large gym screens.
               </CardDescription>
             </CardHeader>
-            <CardContent>Thumbnail</CardContent>
+            <CardContent className="flex justify-center">
+              <Timer size={iconSize} strokeWidth={iconStrokeWidth} />
+            </CardContent>
           </Card>
         </Link>
       </div>

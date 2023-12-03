@@ -32,6 +32,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import Heatmap from "@/components/heatmaps";
 
 const Analyzer = () => {
   const { parsedData, setParsedData, ssid, setSsid } =
@@ -89,6 +90,7 @@ const Analyzer = () => {
         <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
           <div className="md:col-span-2 xl:col-span-4">
             <OverviewAchievements
+              parsedData={localParsedData}
               recentBestSets={recentBestSets}
               maxRows={10}
             />
@@ -110,14 +112,17 @@ const Analyzer = () => {
 };
 export default Analyzer;
 
-const OverviewAchievements = ({ recentBestSets, maxRows }) => {
+const OverviewAchievements = ({ parsedData, recentBestSets, maxRows }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Big Picture</CardTitle>
+        <CardTitle>One Year Highlights</CardTitle>
         {/* <CardDescription>Card Description</CardDescription> */}
       </CardHeader>
       <CardContent>
+        <div className="mb-5">
+          <Heatmap parsedData={parsedData} />
+        </div>
         <BestSetDisplay recentBestSets={recentBestSets} maxRows={maxRows} />
       </CardContent>
     </Card>

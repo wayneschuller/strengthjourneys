@@ -34,6 +34,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import Heatmap from "@/components/heatmaps";
+import { Separator } from "@/components/ui/separator";
 
 const Analyzer = () => {
   const { parsedData, setParsedData, ssid, setSsid } =
@@ -101,14 +102,7 @@ const Analyzer = () => {
                 {/* <CardDescription>Card Description</CardDescription> */}
               </CardHeader>
               <CardContent>
-                {/* <div className="block md:hidden">
-                  <Heatmap
-                    parsedData={localParsedData}
-                    bestSets={bestSets}
-                    months={6}
-                  />
-                </div> */}
-                <div className="hidden md:block">
+                <div className="">
                   <Heatmap
                     parsedData={localParsedData}
                     bestSets={bestSets}
@@ -126,7 +120,7 @@ const Analyzer = () => {
             />
           </div>
           {/* {!session && !parsedData && <div> You need to sign in. </div>} */}
-
+          <Separator className="md:col-span-2 xl:col-span-4" />
           {achievementsArray.map((entry) => (
             <LiftAchievements
               key={entry.liftType}

@@ -129,7 +129,7 @@ const OverviewAchievements = ({ parsedData, recentBestSets, maxRows }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>This Month's Highlights</CardTitle>
+        <CardTitle>This Month{"'"}s Highlights</CardTitle>
         {/* <CardDescription>Card Description</CardDescription> */}
       </CardHeader>
       <CardContent>

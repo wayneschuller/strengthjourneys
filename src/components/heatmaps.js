@@ -49,6 +49,8 @@ const Heatmap = ({ parsedData, bestSets, months }) => {
     return null;
   }
 
+  // FIXME: if we are checking for mounted we could do clever stuff to get window width and adjust the heatmap data size accordingly?
+
   if (!parsedData) return;
 
   // Generate random data

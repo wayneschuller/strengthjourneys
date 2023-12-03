@@ -97,10 +97,12 @@ const Analyzer = () => {
                 <CardTitle className="hidden md:block">
                   Two Years of{" "}
                   {session?.user?.name ? `${session.user.name}'s` : ""} Lifting
+                  {session?.user == null && " (Sample Data)"}
                 </CardTitle>
                 <CardTitle className="block md:hidden">
                   Six Months of{" "}
                   {session?.user?.name ? `${session.user.name}'s` : ""} Lifting
+                  {session?.user == null && " (Sample Data)"}
                 </CardTitle>
                 {/* <CardDescription>Card Description</CardDescription> */}
               </CardHeader>

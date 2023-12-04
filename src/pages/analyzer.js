@@ -242,22 +242,26 @@ function getCelebrationEmoji(position) {
 const BestSetDisplay = ({ recentBestSets, maxRows }) => {
   const displayedEntries = recentBestSets.slice(0, maxRows);
 
+  // FIXME: I don't like how this map creates multiple grids rather than placing
+  // them all in one grid.
   return (
     <div>
-      <ul className="best-set-list">
-        {displayedEntries.map((entry, index) => (
-          <li key={`bestSet-${index}`} className="best-set-entry">
-            <p>{`${entry.liftType}: ${entry.reps}@${
-              entry.weight
-            }kg (${getReadableDateString(entry.date)}) ${getCelebrationEmoji(
-              entry.position,
-            )} #${entry.position + 1} best ${entry.reps}RM ${
-              entry.liftType
-            } ever.`}</p>
-            {/* Display other fields from the entry as needed */}
-          </li>
-        ))}
-      </ul>
+      {displayedEntries.map((entry, index) => (
+        <div key={`bestSet-${index}`} className="mb-4 grid grid-cols-4 lg:mb-0">
+          <div>{entry.liftType}:</div>
+          <div className="flex flex-col xl:flex-row xl:gap-1">
+            <div className="font-semibold">
+              {entry.reps}@{entry.weight}kg
+            </div>
+            <div>({getReadableDateString(entry.date)})</div>
+          </div>
+
+          <div className="col-span-2">
+            {getCelebrationEmoji(entry.position)} #{entry.position + 1} best{" "}
+            {entry.reps}RM ever.
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

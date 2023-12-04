@@ -166,35 +166,46 @@ const LiftAchievements = ({ liftType, entry, bestSets }) => {
         {/* <CardDescription>Card Description</CardDescription> */}
       </CardHeader>
       <CardContent>
-        <div>
-          Total reps: {entry.totalReps}. Total sets: {entry.totalSets}.{" "}
+        <div className="grid grid-cols-2 gap-x-1">
+          <div className="font-semibold">Total reps (sets):</div>
+          <div>
+            {entry.totalReps} ({entry.totalSets})
+          </div>
+          <div className="font-semibold">First lift:</div>
+          <div>{getReadableDateString(entry.oldestDate)}</div>
+          <div className="font-semibold">Most recent lift:</div>{" "}
+          <div>{getReadableDateString(entry.newestDate)}</div>
+          {bestSets?.["1"]?.[0] && (
+            <div className="font-semibold">Best single:</div>
+          )}
+          {bestSets?.["1"]?.[0] && (
+            <div>
+              {bestSets["1"][0].weight}
+              {bestSets["1"][0].unitType} (
+              {getReadableDateString(bestSets["1"][0].date)})
+            </div>
+          )}
+          {bestSets?.["3"]?.[0] && (
+            <div className="font-semibold">Best triple:</div>
+          )}
+          {bestSets?.["3"]?.[0] && (
+            <div>
+              {bestSets["3"][0].weight}
+              {bestSets["3"][0].unitType} (
+              {getReadableDateString(bestSets["3"][0].date)})
+            </div>
+          )}
+          {bestSets?.["5"]?.[0] && (
+            <div className="font-semibold">Best 5RM:</div>
+          )}
+          {bestSets?.["5"]?.[0] && (
+            <div>
+              {bestSets["5"][0].weight}
+              {bestSets["5"][0].unitType} (
+              {getReadableDateString(bestSets["5"][0].date)})
+            </div>
+          )}
         </div>
-        <div>First lift: {getReadableDateString(entry.oldestDate)}</div>
-        <div>Most recent lift: {getReadableDateString(entry.newestDate)}</div>
-
-        {bestSets?.["1"]?.[0] && (
-          <div>
-            Best single: {bestSets["1"][0].weight}
-            {bestSets["1"][0].unitType} (
-            {getReadableDateString(bestSets["1"][0].date)})
-          </div>
-        )}
-
-        {bestSets?.["3"]?.[0] && (
-          <div>
-            Best triple: {bestSets["3"][0].weight}
-            {bestSets["3"][0].unitType} (
-            {getReadableDateString(bestSets["3"][0].date)})
-          </div>
-        )}
-
-        {bestSets?.["5"]?.[0] && (
-          <div>
-            Best 5RM: {bestSets["5"][0].weight}
-            {bestSets["5"][0].unitType} (
-            {getReadableDateString(bestSets["5"][0].date)})
-          </div>
-        )}
       </CardContent>
     </Card>
   );

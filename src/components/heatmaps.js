@@ -60,8 +60,8 @@ const Heatmap = ({ parsedData, bestSets, months }) => {
 
   const heatmap = generateHeatmapData(parsedData, bestSets, months);
 
-  devLog(`Heatmap (theme: ${theme}):`);
-  devLog(heatmap);
+  // devLog(`Heatmap (theme: ${theme}):`);
+  // devLog(heatmap);
 
   return (
     <CalendarHeatmap

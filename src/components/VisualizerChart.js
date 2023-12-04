@@ -372,6 +372,8 @@ export const VisualizerChart = () => {
           Show Recent
         </Button>
         <Button
+          // variant="outline"
+          size="icon"
           onClick={(e) => {
             const chart = chartRef.current;
             if (chart) chart.zoom(0.5, "default");
@@ -380,6 +382,8 @@ export const VisualizerChart = () => {
           <ZoomOut />
         </Button>
         <Button
+          // variant="outline"
+          size="icon"
           onClick={(e) => {
             const chart = chartRef.current;
             if (chart) chart.zoom(1.5, "default");

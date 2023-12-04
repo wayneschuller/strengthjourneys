@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { useTheme } from "next-themes";
 import { getLiftColor } from "@/lib/getLiftColor";
 import { Line } from "react-chartjs-2";
@@ -63,6 +63,7 @@ export const VisualizerChart = () => {
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
   const { toast } = useToast();
   const [openPicker, authResponse] = useDrivePicker();
+  const chartRef = useRef(null);
 
   // const { data, isError, isLoading } = useUserLiftData(ssid);
   // const { data, isLoading } = useSWR(`/api/readGSheet?ssid=${ssid}`, fetcher, {
@@ -182,6 +183,8 @@ export const VisualizerChart = () => {
   const sortedDatasets = visualizerProcessParsedData(localParsedData);
   chartData = sortedDatasets.slice(0, 5); // Get top 5
 
+  const { firstDate, lastDate } = getFirstAndLastDatesFromChartData(chartData);
+
   // console.log(`Visualizer chartData:`);
   // console.log(chartData);
 
@@ -285,13 +288,13 @@ export const VisualizerChart = () => {
       enabled: true,
       mode: "x",
     },
-    // limits: {
-    // x: {
-    // min: visualizerData.padDateMin,
-    // max: visualizerData.padDateMax,
-    // minRange: minRange,
-    // },
-    // },
+    limits: {
+      x: {
+        min: firstDate,
+        max: lastDate,
+        // minRange: minRange,
+      },
+    },
   };
 
   const options = {
@@ -310,7 +313,7 @@ export const VisualizerChart = () => {
 
   return (
     <>
-      <Line options={options} data={{ datasets: chartData }} />
+      <Line ref={chartRef} options={options} data={{ datasets: chartData }} />
     </>
   );
 };
@@ -423,4 +426,35 @@ function visualizerProcessParsedData(parsedData) {
   );
 
   return sortedDatasets;
+}
+
+function getFirstAndLastDatesFromChartData(chartData) {
+  if (!Array.isArray(chartData) || chartData.length === 0) {
+    console.log(`Error: Invalid or empty chartData.`);
+    return null;
+  }
+
+  const allDates = chartData.reduce((dates, dataset) => {
+    dataset.data.forEach((point) => {
+      const date = new Date(point.x);
+      dates.push(date);
+    });
+    return dates;
+  }, []);
+
+  const firstDate = new Date(Math.min(...allDates));
+  const lastDate = new Date(Math.max(...allDates));
+
+  // Hardcoded padding value of 10 days
+  const paddingDays = 10;
+
+  // Pad the start and end dates
+  const paddedStartDate = new Date(firstDate);
+  const paddedEndDate = new Date(lastDate);
+
+  paddedStartDate.setDate(firstDate.getDate() - paddingDays);
+  paddedEndDate.setDate(lastDate.getDate() + paddingDays);
+
+  // return { firstDate, lastDate };
+  return { firstDate: paddedStartDate, lastDate: paddedEndDate };
 }

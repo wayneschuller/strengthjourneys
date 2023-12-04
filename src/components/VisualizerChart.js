@@ -16,6 +16,7 @@ import { estimateE1RM } from "@/lib/estimateE1RM";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/devLog";
 import { ZoomIn, ZoomOut } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
   defaults as chartDefaults,
@@ -171,7 +172,7 @@ export const VisualizerChart = () => {
   // console.log(data);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <Skeleton className="h-[80vh] w-[90vw]"></Skeleton>;
   }
 
   // devLog(data);

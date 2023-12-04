@@ -5,6 +5,8 @@ import Head from "next/head";
 import { useEffect, useState } from "react";
 import { sampleParsedData } from "@/lib/sampleParsedData";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton"
+
 
 import {
   Sheet,

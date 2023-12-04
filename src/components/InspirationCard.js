@@ -47,7 +47,7 @@ function InspirationCard() {
         <div className="text-xl italic md:text-3xl">
           &ldquo;{quote.quote}&rdquo;
         </div>
-        <div className="text-right text-lg md:text-xl">{quote.author}</div>
+        <div className="mt-2 text-right text-lg md:text-xl">{quote.author}</div>
       </CardContent>
     </Card>
   );

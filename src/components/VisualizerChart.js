@@ -183,7 +183,8 @@ export const VisualizerChart = () => {
   const sortedDatasets = visualizerProcessParsedData(localParsedData);
   chartData = sortedDatasets.slice(0, 5); // Get top 5
 
-  const { firstDate, lastDate } = getFirstAndLastDatesFromChartData(chartData);
+  const { firstDate, lastDate, roundedMaxWeightValue } =
+    getFirstLastDatesMaxWeightFromChartData(chartData);
 
   // console.log(`Visualizer chartData:`);
   // console.log(chartData);
@@ -213,7 +214,7 @@ export const VisualizerChart = () => {
     },
     y: {
       suggestedMin: 0,
-      suggestedMax: 250,
+      suggestedMax: roundedMaxWeightValue,
       ticks: {
         display: false,
 
@@ -428,16 +429,23 @@ function visualizerProcessParsedData(parsedData) {
   return sortedDatasets;
 }
 
-function getFirstAndLastDatesFromChartData(chartData) {
+function getFirstLastDatesMaxWeightFromChartData(chartData) {
   if (!Array.isArray(chartData) || chartData.length === 0) {
     console.log(`Error: Invalid or empty chartData.`);
     return null;
   }
 
+  let maxWeightValue = -Infinity; // Initialize with a very small value
+
   const allDates = chartData.reduce((dates, dataset) => {
     dataset.data.forEach((point) => {
       const date = new Date(point.x);
       dates.push(date);
+
+      // Update maxWeightValue if the current y value is higher
+      if (point.y > maxWeightValue) {
+        maxWeightValue = point.y;
+      }
     });
     return dates;
   }, []);
@@ -455,6 +463,13 @@ function getFirstAndLastDatesFromChartData(chartData) {
   paddedStartDate.setDate(firstDate.getDate() - paddingDays);
   paddedEndDate.setDate(lastDate.getDate() + paddingDays);
 
+  // Round maxWeightValue up to the next multiple of 50
+  const roundedMaxWeightValue = Math.ceil(maxWeightValue / 50) * 50;
+
   // return { firstDate, lastDate };
-  return { firstDate: paddedStartDate, lastDate: paddedEndDate };
+  return {
+    firstDate: paddedStartDate,
+    lastDate: paddedEndDate,
+    roundedMaxWeightValue,
+  };
 }

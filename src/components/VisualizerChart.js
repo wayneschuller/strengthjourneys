@@ -3,7 +3,7 @@ import { useState, useEffect, useContext, useRef } from "react";
 import { useTheme } from "next-themes";
 import { getLiftColor } from "@/lib/getLiftColor";
 import { Line } from "react-chartjs-2";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import useUserLiftData from "@/lib/useUserLiftData";
 import { ParsedDataContext } from "@/pages/_app";
 import { useToast } from "@/components/ui/use-toast";
@@ -175,15 +175,20 @@ export const VisualizerChart = () => {
   }
 
   // devLog(data);
-  if (isError && !data?.values) {
-    return (
-      <div className="text-center">
-        <div className="text-bold">Error reading GSheet data: {data.error}</div>
-        <div>
-          Sometimes logging out and in again will help Google be friendlier.
-        </div>
-      </div>
-    );
+  // if (isError && !data?.values) {
+
+  if (isError) {
+    devLog(`isError so signing out hopefully you get sample data`);
+    signOut();
+    // setParsedData(null); // FIXME: do we need this? does it help?
+    // return (
+    // <div className="text-center">
+    // <div className="text-bold">Error reading GSheet data: {data.error}</div>
+    // <div>
+    // Sometimes logging out and in again will help Google be friendlier.
+    // </div>
+    // </div>
+    // );
   }
 
   // We imported chartDefaults from chart.js above

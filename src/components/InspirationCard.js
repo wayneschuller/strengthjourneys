@@ -20,6 +20,11 @@ const inspirationalQuotes = [
     author: "David Goggins",
     URL: null,
   },
+  {
+    quote: "Whether you think you can, or you think you can’t, you’re right.",
+    author: "Henry Ford",
+    URL: null,
+  },
 ];
 
 const getRandomQuote = () => {

@@ -12,6 +12,7 @@ import { parseGSheetData } from "@/lib/parseGSheetData";
 import { sampleParsedData } from "@/lib/sampleParsedData";
 import { devLog } from "@/lib/devLog";
 import InspirationCard from "@/components/InspirationCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { Button } from "@/components/ui/button";
 
@@ -107,22 +108,34 @@ const Analyzer = () => {
                 {/* <CardDescription>Card Description</CardDescription> */}
               </CardHeader>
               <CardContent>
-                <div className="">
+                {isLoading && (
+                  <div className="flex">
+                    <Skeleton className="h-36 w-11/12 flex-1" />
+                  </div>
+                )}
+                {!isLoading && (
                   <Heatmap
                     parsedData={localParsedData}
                     bestSets={bestSets}
                     months={24}
                   />
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
           <div className="xl:col-span-2">
-            <OverviewAchievements
-              parsedData={localParsedData}
-              recentBestSets={recentBestSets}
-              maxRows={10}
-            />
+            {isLoading && (
+              <div className="flex">
+                <Skeleton className="h-36 w-11/12 flex-1" />
+              </div>
+            )}
+            {!isLoading && (
+              <OverviewAchievements
+                parsedData={localParsedData}
+                recentBestSets={recentBestSets}
+                maxRows={10}
+              />
+            )}
           </div>
           <div className="xl:col-span-2">
             <InspirationCard />

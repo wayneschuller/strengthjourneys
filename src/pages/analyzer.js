@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/sheet";
 import Heatmap from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
+import { InspirationalQuote } from "./InspirationalQuote";
 
 const Analyzer = () => {
   const { parsedData, setParsedData, ssid, setSsid } =
@@ -122,6 +123,9 @@ const Analyzer = () => {
               recentBestSets={recentBestSets}
               maxRows={10}
             />
+          </div>
+          <div className="xl:col-span-2">
+            <InspirationalQuote />
           </div>
           {/* {!session && !parsedData && <div> You need to sign in. </div>} */}
           <Separator className="md:col-span-2 xl:col-span-4" />
@@ -376,3 +380,17 @@ const getRecentBestSets = (bestSets) => {
 
   return recentEntries;
 };
+
+export const InspirationalQuotes = [
+  {
+    quote:
+      "Strong people are harder to kill than weak people and more useful in general. A weak man is not as happy as that same man would be if he were strong.",
+    author: "Mark Rippetoe",
+    URL: null,
+  },
+  {
+    quote: "The only bad workout is the one that didn't happen.",
+    author: "Unknown",
+    URL: null,
+  },
+];

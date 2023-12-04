@@ -13,6 +13,7 @@ import { handleOpenPicker } from "@/components/handleOpenPicker";
 import { parseGSheetData } from "@/lib/parseGSheetData";
 import { sampleParsedData } from "@/lib/sampleParsedData";
 import { estimateE1RM } from "@/lib/estimateE1RM";
+import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/devLog";
 
 import {
@@ -69,6 +70,30 @@ export const VisualizerChart = () => {
   // const { data, isLoading } = useSWR(`/api/readGSheet?ssid=${ssid}`, fetcher, {
   // revalidateOnFocus: false,
   // });
+
+  useEffect(() => {
+    // FIXME Try to zoom to recent
+    const chart = chartRef.current;
+    devLog(`zoom useeffect`);
+    devLog(chart);
+    // if (chart) chart.resetZoom();
+    // let sixMonthsAgo = visualizerData.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
+    // if (sixMonthsAgo < visualizerData.padDateMin)
+    // sixMonthsAgo = visualizerData.padDateMin;
+    if (chart) {
+      devLog(`ZOOMING IN`);
+      chart.zoomScale(
+        "x",
+        {
+          // min: "Sat Apr 22 2023 10:00:00 GMT+1000 (Australian Eastern Standard Time)",
+          min: "2023-06-01",
+          // max: "Mon Dec 04 2023 10:00:00 GMT+1000 (Australian Eastern Standard Time)",
+          max: "2023-12-05",
+        },
+        "default",
+      );
+    }
+  }, [chartRef]);
 
   useEffect(() => {
     // console.log(`VisualizerChart useEffect isLoading: ${isLoading}`);
@@ -148,7 +173,7 @@ export const VisualizerChart = () => {
     return <div>Loading...</div>;
   }
 
-  devLog(data);
+  // devLog(data);
   if (isError && !data?.values) {
     return (
       <div className="text-center">
@@ -169,11 +194,11 @@ export const VisualizerChart = () => {
   let chartData = [];
   let localParsedData = null;
   if (session && data?.values) {
-    devLog(data);
+    // devLog(data);
     if (parsedData === null) {
       localParsedData = parseGSheetData(data.values); // FIXME: Do this in the useEffect?
       // setParsedData(newParsedData); // This triggers an infinite loop of rerendering
-      devLog(localParsedData);
+      // devLog(localParsedData);
     } else {
       localParsedData = parsedData;
     }
@@ -186,6 +211,7 @@ export const VisualizerChart = () => {
   const { firstDate, lastDate, roundedMaxWeightValue } =
     getFirstLastDatesMaxWeightFromChartData(chartData);
 
+  devLog(firstDate);
   // console.log(`Visualizer chartData:`);
   // console.log(chartData);
 
@@ -315,6 +341,37 @@ export const VisualizerChart = () => {
   return (
     <>
       <Line ref={chartRef} options={options} data={{ datasets: chartData }} />
+      <div className="flex flex-row gap-4">
+        <Button
+          onClick={(e) => {
+            const chart = chartRef.current;
+            chart.resetZoom();
+          }}
+        >
+          Show All
+        </Button>
+        <Button
+          onClick={(e) => {
+            const chart = chartRef.current;
+            if (chart) {
+              const isZoom = chart.isZoomedOrPanned();
+              devLog(`isZoom: ${isZoom}`);
+              chart.zoomScale(
+                "x",
+                {
+                  // min: "Sat Apr 22 2023 10:00:00 GMT+1000 (Australian Eastern Standard Time)",
+                  min: "2023-06-01",
+                  // max: "Mon Dec 04 2023 10:00:00 GMT+1000 (Australian Eastern Standard Time)",
+                  max: "2023-12-05",
+                },
+                "default",
+              );
+            }
+          }}
+        >
+          Show Recent
+        </Button>
+      </div>
     </>
   );
 };

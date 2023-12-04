@@ -169,27 +169,30 @@ const LiftAchievements = ({ liftType, entry, bestSets }) => {
         <div>
           Total reps: {entry.totalReps}. Total sets: {entry.totalSets}.{" "}
         </div>
-        <div>First lift: {entry.oldestDate}</div>
-        <div>Most recent lift: {entry.newestDate}</div>
+        <div>First lift: {getReadableDateString(entry.oldestDate)}</div>
+        <div>Most recent lift: {getReadableDateString(entry.newestDate)}</div>
 
         {bestSets?.["1"]?.[0] && (
           <div>
             Best single: {bestSets["1"][0].weight}
-            {bestSets["1"][0].unitType} ({bestSets["1"][0].date})
+            {bestSets["1"][0].unitType} (
+            {getReadableDateString(bestSets["1"][0].date)})
           </div>
         )}
 
         {bestSets?.["3"]?.[0] && (
           <div>
             Best triple: {bestSets["3"][0].weight}
-            {bestSets["3"][0].unitType} ({bestSets["3"][0].date})
+            {bestSets["3"][0].unitType} (
+            {getReadableDateString(bestSets["3"][0].date)})
           </div>
         )}
 
         {bestSets?.["5"]?.[0] && (
           <div>
             Best 5RM: {bestSets["5"][0].weight}
-            {bestSets["5"][0].unitType} ({bestSets["5"][0].date})
+            {bestSets["5"][0].unitType} (
+            {getReadableDateString(bestSets["5"][0].date)})
           </div>
         )}
       </CardContent>
@@ -233,11 +236,13 @@ const BestSetDisplay = ({ recentBestSets, maxRows }) => {
       <ul className="best-set-list">
         {displayedEntries.map((entry, index) => (
           <li key={`bestSet-${index}`} className="best-set-entry">
-            <p>{`${entry.liftType}: ${entry.reps}@${entry.weight}kg (${
-              entry.date
-            }) ${getCelebrationEmoji(entry.position)} #${
-              entry.position + 1
-            } best ${entry.reps}RM ${entry.liftType} ever.`}</p>
+            <p>{`${entry.liftType}: ${entry.reps}@${
+              entry.weight
+            }kg (${getReadableDateString(entry.date)}) ${getCelebrationEmoji(
+              entry.position,
+            )} #${entry.position + 1} best ${entry.reps}RM ${
+              entry.liftType
+            } ever.`}</p>
             {/* Display other fields from the entry as needed */}
           </li>
         ))}
@@ -380,3 +385,29 @@ const getRecentBestSets = (bestSets) => {
 
   return recentEntries;
 };
+
+// Convert ISO "YYYY-MM-DD" to readable date string
+function getReadableDateString(ISOdate) {
+  let date = new Date(ISOdate);
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const day = date.getDate();
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+
+  let dateString = `${day} ${month}, ${year}`;
+  return dateString;
+}

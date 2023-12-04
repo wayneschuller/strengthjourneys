@@ -400,7 +400,23 @@ const getRecentBestSets = (bestSets) => {
 // Convert ISO "YYYY-MM-DD" to readable date string
 function getReadableDateString(ISOdate) {
   let date = new Date(ISOdate);
+
   const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const monthNamesFull = [
     "January",
     "February",
     "March",
@@ -419,6 +435,13 @@ function getReadableDateString(ISOdate) {
   const month = monthNames[date.getMonth()];
   const year = date.getFullYear();
 
-  let dateString = `${day} ${month}, ${year}`;
+  let dateString = `${month} ${day}`;
+  const currentYear = new Date().getFullYear();
+
+  // Include the year only if it's not the current year
+  if (year !== currentYear) {
+    dateString += `, ${year}`;
+  }
+
   return dateString;
 }

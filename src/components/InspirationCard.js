@@ -44,7 +44,9 @@ function InspirationCard() {
         <CardTitle>Inspirational Quote</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-xl italic md:text-3xl">{quote.quote}</div>
+        <div className="text-xl italic md:text-3xl">
+          &ldquo;{quote.quote}&rdquo;
+        </div>
         <div className="text-right text-lg md:text-xl">{quote.author}</div>
       </CardContent>
     </Card>

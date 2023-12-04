@@ -15,6 +15,7 @@ import { sampleParsedData } from "@/lib/sampleParsedData";
 import { estimateE1RM } from "@/lib/estimateE1RM";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/devLog";
+import { ZoomIn, ZoomOut } from "lucide-react";
 
 import {
   defaults as chartDefaults,
@@ -354,15 +355,14 @@ export const VisualizerChart = () => {
           onClick={(e) => {
             const chart = chartRef.current;
             if (chart) {
-              const isZoom = chart.isZoomedOrPanned();
-              devLog(`isZoom: ${isZoom}`);
+              // const isZoom = chart.isZoomedOrPanned();
+              // devLog(`isZoom: ${isZoom}`);
+              // devLog(chart.getZoomLevel());
               chart.zoomScale(
                 "x",
                 {
-                  // min: "Sat Apr 22 2023 10:00:00 GMT+1000 (Australian Eastern Standard Time)",
-                  min: "2023-06-01",
-                  // max: "Mon Dec 04 2023 10:00:00 GMT+1000 (Australian Eastern Standard Time)",
-                  max: "2023-12-05",
+                  min: 1685832543,
+                  max: 1701679743,
                 },
                 "default",
               );
@@ -370,6 +370,22 @@ export const VisualizerChart = () => {
           }}
         >
           Show Recent
+        </Button>
+        <Button
+          onClick={(e) => {
+            const chart = chartRef.current;
+            if (chart) chart.zoom(0.5, "default");
+          }}
+        >
+          <ZoomOut />
+        </Button>
+        <Button
+          onClick={(e) => {
+            const chart = chartRef.current;
+            if (chart) chart.zoom(1.5, "default");
+          }}
+        >
+          <ZoomIn />
         </Button>
       </div>
     </>

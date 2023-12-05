@@ -182,7 +182,7 @@ export const VisualizerChart = () => {
   chartDefaults.normalized = true;
 
   // FIXME: I think we need to put this in useEffect[parsedData]? Like we do in Analyzer?
-  const sortedDatasets = visualizerProcessParsedData(parsedData);
+  const sortedDatasets = processVisualizerData(parsedData);
 
   const chartData = sortedDatasets.slice(0, 5); // Get top 5
 
@@ -417,11 +417,13 @@ function fadeHslColor(originalHsl, fadeAmount, isDarkMode) {
 
 // This function uniquely processes the parsed Data for the Visualizer
 // So it lives here in the <VisualizerChart /> component
-function visualizerProcessParsedData(parsedData) {
+function processVisualizerData(parsedData) {
   if (parsedData === null) {
     console.log(`Error: visualizerProcessParsedData passed null.`);
     return;
   }
+
+  const startTime = performance.now(); // We measure critical processing steps
 
   const datasets = {};
 
@@ -478,6 +480,12 @@ function visualizerProcessParsedData(parsedData) {
   // Sort datasets based on the size of the data (number of entries)
   const sortedDatasets = Object.values(datasets).sort(
     (a, b) => b.data.length - a.data.length,
+  );
+
+  devLog(
+    "processVisualizerData execution time: " +
+      Math.round(performance.now() - startTime) +
+      "ms",
   );
 
   return sortedDatasets;

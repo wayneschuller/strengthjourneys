@@ -25,8 +25,8 @@ function convertDate(dateString, previousDate) {
 // Trying to be agnostic about column position
 // We do assume that if date or lift type are blank we can infer from a previous row
 function parseGSheetData(data) {
+  const startTime = performance.now(); // We measure critical processing steps
   const columnNames = data[0];
-  devLog(`parseGSheetData()...`);
 
   let previousDate = null;
   let previousLiftType = null;
@@ -68,6 +68,12 @@ function parseGSheetData(data) {
     })
     .filter(Boolean)
     .sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort by date ascending
+
+  devLog(
+    "parseGSheetData() execution time: " +
+      Math.round(performance.now() - startTime) +
+      "ms",
+  );
 
   return objectsArray;
 }

@@ -21,8 +21,8 @@ export function Layout({ children }) {
   // When userUserLiftData (useSWR) gives new Google sheet data, parse it
   // useSWR can ping google and cache it and it won't trigger until data changes
   useEffect(() => {
-    devLog(`<Layout /> useEffect[data]: isError is ${isError}`);
-    devLog(data);
+    // devLog(`<Layout /> useEffect[data]: isError is ${isError}`);
+    // devLog(data);
 
     // If data changes and we have isError then signOut
     // This is because our token has expired

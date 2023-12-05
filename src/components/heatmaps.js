@@ -91,6 +91,8 @@ export default Heatmap;
 // liftData.js
 
 export const generateHeatmapData = (parsedData, months) => {
+  const startTime = performance.now(); // We measure critical processing steps
+
   const currentDate = new Date();
   const windowMonths = months;
 
@@ -130,6 +132,12 @@ export const generateHeatmapData = (parsedData, months) => {
   // Set startDate to at least 12 months ago
   const startDate = heatmapData.length > 0 ? heatmapData[0].date : windowPeriod;
   const endDate = currentDate;
+
+  devLog(
+    "generateHeatmapData() execution time: " +
+      Math.round(performance.now() - startTime) +
+      "ms",
+  );
 
   return {
     startDate,

@@ -46,17 +46,22 @@ const InstructionsCard = ({ session }) => {
           entering your lifts)
         </div>
         <div className="">
-          <Image
-            className="w-5/6 md:w-1/2"
-            src={SampleImage}
-            priority={true}
-            alt="Screenshot of sample google sheet data"
-          />
+          <a
+            href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+            target="_blank"
+          >
+            <Image
+              className="w-5/6 md:w-1/2"
+              src={SampleImage}
+              priority={true}
+              alt="Screenshot of sample google sheet data"
+            />
+          </a>
         </div>
         <div className="">
           Strength Journeys does not collect or store your data. Instead we
-          encourage every lifter to own their own Google Sheet of their personal
-          strength journey.
+          encourage every lifter to own the data of their personal strength
+          journey.
         </div>
         <div className="">
           Link a Google sheet then every time you use Strength Journeys your web

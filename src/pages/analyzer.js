@@ -14,6 +14,7 @@ import { devLog } from "@/lib/devLog";
 import InspirationCard from "@/components/InspirationCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import InstructionsCard from "@/components/InstructionsCard";
+import LiftAchievementsCard from "@/components/LiftAchievementsCard";
 
 import { Button } from "@/components/ui/button";
 
@@ -39,59 +40,69 @@ import Heatmap from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
 import LiftChooserComboMenu from "@/components/LiftChooserComboMenu";
 
-// FIXME: Generate this dynamically from data via useEffect
-const liftTypesDELETE = [
-  {
-    value: "Back Squat",
-    label: "Back Squat",
-  },
-  {
-    value: "Deadlift",
-    label: "Deadlift",
-  },
-  {
-    value: "Bench Press",
-    label: "Bench Press",
-  },
-  {
-    value: "Strict Press",
-    label: "Strict Press",
-  },
-  {
-    value: "Front Squat",
-    label: "Front Squat",
-  },
-  {
-    value: "Thruster",
-    label: "Thruster",
-  },
-  {
-    value: "Squat Clean",
-    label: "Squat Clean",
-  },
-  {
-    value: "Power Snatch",
-    label: "Power Snatch",
-  },
-];
-
 let didInit = false;
 
 const Analyzer = () => {
+  const [liftTypes, setLiftTypes] = useState([]);
   const [liftTypesSelected, setLiftTypesSelected] = useState([]);
   const { parsedData, setParsedData, ssid, setSsid } =
     useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
 
+  // Now declare all our local variables that show computable derivable stuff
+  let localParsedData = null;
+  let achievementsArray = [];
+
+  // FIXME: we need a useEffect for:
+  // - loading localstorage into selected
+  // - saving to localstorage when setSelected called? (or do via wrapper)
+  // - loading the lift options into the combo menu from user data
+
+  // Main useEffect - wait for gsheet in data then process
   useEffect(() => {
-    // FIXME: we need a useEffect for:
-    // - loading localstorage into selected
-    // - saving to localstorage when setSelected called? (or do via wrapper)
-    // - loading the lift options into the combo menu from user data
-    devLog(`Analyzer useEffect[]:`);
-    // devLog(parsedData);
-  }, [parsedData]);
+    devLog(`Analyzer useEffect[data]:`);
+    devLog(data);
+
+    // Let's start a compute chain for data needed by the Analyzer only
+
+    // Get some parsedData
+    if (data?.values) {
+      localParsedData = parseGSheetData(data.values);
+    } else {
+      localParsedData = sampleParsedData;
+    }
+
+    devLog(`localParsedData:`);
+    devLog(localParsedData);
+    setParsedData(localParsedData);
+
+    // Get the giant object of achivements["Back Squat"] which contains interesting statistics
+    // Convert to array
+    // achievementsArray = Object.values(
+    // analyzerProcessParsedData(localParsedData),
+    // );
+    // Sort the array by totalSets in descending order
+    // achievementsArray.sort((a, b) => b.totalSets - a.totalSets);
+    // Transform the array
+
+    // Count the frequency of each liftType
+    // We need this for the fancy multi select
+    const liftTypeFrequency = {};
+    localParsedData.forEach((lifting) => {
+      const liftType = lifting.liftType;
+      liftTypeFrequency[liftType] = (liftTypeFrequency[liftType] || 0) + 1;
+    });
+
+    // Create an array of objects with value property for the multi-select
+    const sortedLiftTypes = Object.keys(liftTypeFrequency)
+      .sort((a, b) => liftTypeFrequency[b] - liftTypeFrequency[a])
+      .map((liftType) => ({ value: liftType, label: liftType }));
+
+    // console.log(sortedLiftTypes);
+
+    setLiftTypes(sortedLiftTypes);
+  }, [data]);
 
   if (!isLoading && session?.user && !data?.values)
     return (
@@ -100,48 +111,17 @@ const Analyzer = () => {
       </div>
     );
 
-  // FIXME: this logic is all messed up - should not need localParsedData???
-
-  let localParsedData = null;
-  if (session && data?.values) {
-    // console.log(data);
-    if (parsedData === null) {
-      localParsedData = parseGSheetData(data.values); // FIXME: Do this in the useEffect?
-      // console.log(parsedData);
-    } else {
-      localParsedData = parsedData;
-    }
-  } else {
-    localParsedData = sampleParsedData;
-  }
-  devLog(`Setting setParsedData`);
-  // setParsedData(localParsedData); // This triggers an infinite loop of rerendering???
-
-  // Get the giant object of achivements["Back Squat"] which contains interesting statistics
-  // Convert to array
-  const achievementsArray = Object.values(
-    analyzerProcessParsedData(localParsedData),
-  );
-
-  // Sort the array by totalSets in descending order
-  achievementsArray.sort((a, b) => b.totalSets - a.totalSets);
-
-  // Transform the array
-  const liftTypes = achievementsArray.map((lift) => ({
-    value: lift.liftType,
-    label: lift.liftType,
-  }));
-
-  devLog(`Achivements array:`);
-  devLog(achievementsArray);
+  // devLog(`Achivements array:`);
+  // devLog(achievementsArray);
+  devLog(liftTypesSelected);
 
   const bestSets = processBestSets(localParsedData); // Collect the top 5 of each rep scheme 1..10
-  devLog(`Best sets:`);
-  devLog(bestSets);
+  // devLog(`Best sets:`);
+  // devLog(bestSets);
 
   const recentBestSets = getRecentBestSets(bestSets); // Have they done any this month?
-  devLog(`Recent best sets:`);
-  devLog(recentBestSets);
+  // devLog(`Recent best sets:`);
+  // devLog(recentBestSets);
 
   // FIXME: try to refactor this JSX to breakdown each unique Card to separate components
 
@@ -179,7 +159,7 @@ const Analyzer = () => {
                 )}
                 {!isLoading && (
                   <Heatmap
-                    parsedData={localParsedData}
+                    parsedData={parsedData}
                     bestSets={bestSets}
                     months={24}
                   />
@@ -214,12 +194,11 @@ const Analyzer = () => {
               menuOptions={liftTypes}
             />
           </div>
-          {achievementsArray.map((entry) => (
-            <LiftAchievements
-              key={entry.liftType}
-              liftType={entry.liftType}
-              entry={entry}
-              bestSets={bestSets[entry.liftType]}
+          {liftTypesSelected.map((lift) => (
+            <LiftAchievementsCard
+              key={lift.value}
+              liftType={lift.value}
+              parsedData={parsedData}
             />
           ))}
         </div>
@@ -238,59 +217,6 @@ const OverviewAchievements = ({ parsedData, recentBestSets, maxRows }) => {
       </CardHeader>
       <CardContent>
         <BestSetDisplay recentBestSets={recentBestSets} maxRows={maxRows} />
-      </CardContent>
-    </Card>
-  );
-};
-
-const LiftAchievements = ({ liftType, entry, bestSets }) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{liftType} Achievements</CardTitle>
-        {/* <CardDescription>Card Description</CardDescription> */}
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-x-1">
-          <div className="font-semibold">Total reps (sets):</div>
-          <div>
-            {entry.totalReps} ({entry.totalSets})
-          </div>
-          <div className="font-semibold">First lift:</div>
-          <div>{getReadableDateString(entry.oldestDate)}</div>
-          <div className="font-semibold">Most recent lift:</div>{" "}
-          <div>{getReadableDateString(entry.newestDate)}</div>
-          {bestSets?.["1"]?.[0] && (
-            <div className="font-semibold">Best single:</div>
-          )}
-          {bestSets?.["1"]?.[0] && (
-            <div>
-              {bestSets["1"][0].weight}
-              {bestSets["1"][0].unitType} (
-              {getReadableDateString(bestSets["1"][0].date)})
-            </div>
-          )}
-          {bestSets?.["3"]?.[0] && (
-            <div className="font-semibold">Best triple:</div>
-          )}
-          {bestSets?.["3"]?.[0] && (
-            <div>
-              {bestSets["3"][0].weight}
-              {bestSets["3"][0].unitType} (
-              {getReadableDateString(bestSets["3"][0].date)})
-            </div>
-          )}
-          {bestSets?.["5"]?.[0] && (
-            <div className="font-semibold">Best 5RM:</div>
-          )}
-          {bestSets?.["5"]?.[0] && (
-            <div>
-              {bestSets["5"][0].weight}
-              {bestSets["5"][0].unitType} (
-              {getReadableDateString(bestSets["5"][0].date)})
-            </div>
-          )}
-        </div>
       </CardContent>
     </Card>
   );
@@ -325,6 +251,7 @@ function getCelebrationEmoji(position) {
 }
 
 const BestSetDisplay = ({ recentBestSets, maxRows }) => {
+  if (!recentBestSets) return null;
   const displayedEntries = recentBestSets.slice(0, maxRows);
 
   // FIXME: I don't like how this map creates multiple grids rather than placing
@@ -395,6 +322,8 @@ function analyzerProcessParsedData(parsedData) {
 }
 
 const processBestSets = (parsedData) => {
+  if (!parsedData) return null;
+
   const bestSets = {};
 
   parsedData.forEach((entry) => {
@@ -487,7 +416,7 @@ const getRecentBestSets = (bestSets) => {
 };
 
 // Convert ISO "YYYY-MM-DD" to readable date string
-function getReadableDateString(ISOdate) {
+export function getReadableDateString(ISOdate) {
   let date = new Date(ISOdate);
 
   const monthNames = [

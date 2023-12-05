@@ -18,7 +18,7 @@ const MonthsHighlightsCard = ({ parsedData, liftTypesSelected }) => {
         {/* <CardDescription>Card Description</CardDescription> */}
       </CardHeader>
       <CardContent>
-        {parsedData && <div>Tuples: {parsedData.length}</div>}
+        {parsedData && <div>Sets: {parsedData.length}</div>}
       </CardContent>
     </Card>
   );

@@ -46,9 +46,6 @@ const Analyzer = () => {
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
 
-  // Now declare all our local variables for computable derivable stuff
-  let localParsedData = null;
-
   useEffect(() => {
     if (!parsedData) return; // Don't set localStorage until we are in a running state
     localStorage.setItem("SelectedLifts", JSON.stringify(liftTypesSelected));
@@ -71,36 +68,27 @@ const Analyzer = () => {
   // }, []);
 
   // Main useEffect - wait for gsheet in data then process
+  // FIXME: this data->parseGSheet should be done at app level
+  // Then <Analyzer /> and <Visualizer /> can just do their own useEffect [parsedData] process chain
   useEffect(() => {
-    devLog(`Analyzer useEffect[data]:`);
-    devLog(data);
+    devLog(`Analyzer useEffect[parsedData]:`);
+    devLog(parsedData);
+    if (!parsedData) return;
+    // let localParsedData = null;
 
-    // Let's start a compute chain for data needed by the Analyzer only
+    // // Get some parsedData
+    // if (data?.values) {
+    //   localParsedData = parseGSheetData(data.values);
+    // } else {
+    //   localParsedData = sampleParsedData;
+    // }
 
-    // Get some parsedData
-    if (data?.values) {
-      localParsedData = parseGSheetData(data.values);
-    } else {
-      localParsedData = sampleParsedData;
-    }
-
-    // devLog(`localParsedData:`);
-    // devLog(localParsedData);
-    setParsedData(localParsedData);
-
-    // Get the giant object of achivements["Back Squat"] which contains interesting statistics
-    // Convert to array
-    // achievementsArray = Object.values(
-    // analyzerProcessParsedData(localParsedData),
-    // );
-    // Sort the array by totalSets in descending order
-    // achievementsArray.sort((a, b) => b.totalSets - a.totalSets);
-    // Transform the array
+    // setParsedData(localParsedData);
 
     // Count the frequency of each liftType
-    // We need this for the multi-select
+    // We need this for the lift type multi-select UI immediately
     const liftTypeFrequency = {};
-    localParsedData.forEach((lifting) => {
+    parsedData.forEach((lifting) => {
       const liftType = lifting.liftType;
       liftTypeFrequency[liftType] = (liftTypeFrequency[liftType] || 0) + 1;
     });
@@ -115,7 +103,7 @@ const Analyzer = () => {
     // Maybe here is the time to check localstorage?
     // let selectedLifts = JSON.parse(localStorage.getItem("SelectedLifts")) || [];
     // setLiftTypesSelected(selectedLifts);
-  }, [data]);
+  }, [parsedData]);
 
   devLog(`Rendering <Analyzer />...`);
 

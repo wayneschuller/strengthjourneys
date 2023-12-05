@@ -14,7 +14,7 @@ import { parseGSheetData } from "@/lib/parseGSheetData";
 import { sampleParsedData } from "@/lib/sampleParsedData";
 import { estimateE1RM } from "@/lib/estimateE1RM";
 import { Button } from "@/components/ui/button";
-import { devLog } from "@/lib/devLog";
+import { devLog } from "@/lib/SJ-utils";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
@@ -197,29 +197,13 @@ export const VisualizerChart = () => {
   // chartDefaults.font.size = 20;
   chartDefaults.normalized = true;
 
-  let chartData = [];
-  let localParsedData = null;
-
-  devLog(data);
-
-  if (session && data?.values) {
-    if (parsedData === null) {
-      localParsedData = parseGSheetData(data.values); // FIXME: Do this in the useEffect?
-      // setParsedData(newParsedData); // This triggers an infinite loop of rerendering
-      // devLog(localParsedData);
-    } else {
-      localParsedData = parsedData;
-    }
-  } else {
-    localParsedData = sampleParsedData;
-  }
-  const sortedDatasets = visualizerProcessParsedData(localParsedData);
-  chartData = sortedDatasets.slice(0, 5); // Get top 5
+  const sortedDatasets = visualizerProcessParsedData(parsedData);
+  const chartData = sortedDatasets.slice(0, 5); // Get top 5
 
   const { firstDate, lastDate, roundedMaxWeightValue } =
     getFirstLastDatesMaxWeightFromChartData(chartData);
 
-  devLog(firstDate);
+  // devLog(firstDate);
   // console.log(`Visualizer chartData:`);
   // console.log(chartData);
 

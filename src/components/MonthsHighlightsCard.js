@@ -8,8 +8,8 @@ const MonthsHighlightsCard = ({ parsedData, liftTypesSelected }) => {
   if (!parsedData) return;
 
   let array = getBestEverLastMonth(liftTypesSelected, parsedData);
-  devLog(`MonthsHighlightsCard`);
-  devLog(array);
+  // devLog(`MonthsHighlightsCard`);
+  // devLog(array);
 
   return (
     <Card>

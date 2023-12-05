@@ -116,6 +116,7 @@ export const VisualizerChart = () => {
     // devLog(`VisualizerChart useEffect session:`);
     // devLog(session);
 
+    // FIXME: this shows toast demo when demo appears for 1 second before session connects
     if (!demoToastInit && !isLoading && !session?.user) {
       demoToastInit = true; // Don't show this again
       toast({
@@ -197,7 +198,9 @@ export const VisualizerChart = () => {
   // chartDefaults.font.size = 20;
   chartDefaults.normalized = true;
 
+  // FIXME: I think we need to put this in useEffect[parsedData]? Like we do in Analyzer?
   const sortedDatasets = visualizerProcessParsedData(parsedData);
+
   const chartData = sortedDatasets.slice(0, 5); // Get top 5
 
   const { firstDate, lastDate, roundedMaxWeightValue } =

@@ -57,7 +57,6 @@ const Visualizer = () => {
         <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           Strength Visualizer
         </h1>
-        <div>{/* <LiftChooserPanel /> */}</div>
         <div
           style={{
             position: "relative",

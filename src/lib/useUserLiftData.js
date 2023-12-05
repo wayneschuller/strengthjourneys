@@ -7,7 +7,10 @@ function useUserLiftData(session, ssid) {
   let shouldFetch = session && ssid ? true : false; // Only fetch if we have session and ssid
 
   // FIXME: useSWRImmutable until we are ready to having in session data autoupdate live from gsheets
-  const { data, isLoading } = useSWRImmutable(
+  // FIXME: after testing, it is always faster to pull the data again (although bigger payload)
+  // const { data, isLoading } = useSWRImmutable(
+
+  const { data, isLoading } = useSWR(
     shouldFetch ? `/api/readGSheet?ssid=${ssid}` : null,
     fetcher,
     {

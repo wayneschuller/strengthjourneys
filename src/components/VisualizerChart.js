@@ -117,10 +117,10 @@ export const VisualizerChart = () => {
       toast({
         title: "Visualizer Demo Mode",
         description:
-          "Sign in to visualize your personal Google Sheet lifting data.",
+          "Sign in via Google to visualize your personal Google Sheet lifting data.",
         action: (
           <ToastAction altText="Google Login" onClick={() => signIn("google")}>
-            Sign in
+            Google Sign in
           </ToastAction>
         ),
       });

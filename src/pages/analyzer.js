@@ -262,7 +262,7 @@ const BestSetDisplay = ({ recentBestSets, maxRows }) => {
   return (
     <div>
       {displayedEntries.map((entry, index) => (
-        <div key={`bestSet-${index}`} className="mb-4 grid grid-cols-4 lg:mb-0">
+        <div key={`bestSet-${index}`} className="mb-4 grid grid-cols-3 lg:mb-0">
           <div>{entry.liftType}:</div>
           <div className="flex flex-col xl:flex-row xl:gap-1">
             <div className="font-semibold">
@@ -271,7 +271,7 @@ const BestSetDisplay = ({ recentBestSets, maxRows }) => {
             <div>({getReadableDateString(entry.date)})</div>
           </div>
 
-          <div className="col-span-2">
+          <div className="col-span-1">
             {getCelebrationEmoji(entry.position)} #{entry.position + 1} best{" "}
             {entry.reps}RM ever.
           </div>

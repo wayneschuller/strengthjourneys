@@ -28,7 +28,9 @@ export function AvatarDropdown() {
     useContext(ParsedDataContext);
 
   if (!session)
-    return <Button onClick={() => signIn("google")}>Sign in</Button>;
+    return (
+      <Button onClick={() => signIn("google")}>Sign in to personalize</Button>
+    );
 
   return (
     <DropdownMenu>

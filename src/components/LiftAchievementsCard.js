@@ -18,7 +18,7 @@ const LiftAchievementsCard = ({ liftType, parsedData }) => {
   const fiveRM = getLiftPR(liftType, parsedData, 5);
 
   return (
-    <Card>
+    <Card className="hover:ring-1">
       <CardHeader>
         <CardTitle>{liftType} Achievements</CardTitle>
         {/* <CardDescription>Card Description</CardDescription> */}

@@ -15,7 +15,6 @@ const FancyMultiSelect = ({
 }) => {
   const inputRef = useRef(null);
   const [open, setOpen] = useState(false);
-  // const [selected, setSelected] = useState([FRAMEWORKS[0]]);
   const [inputValue, setInputValue] = useState("");
 
   const handleUnselect = useCallback((framework) => {

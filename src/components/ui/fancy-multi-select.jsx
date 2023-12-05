@@ -7,45 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Command as CommandPrimitive } from "cmdk";
 
-const FRAMEWORKS = [
-  {
-    value: "Back Squat",
-    label: "Back Squat",
-  },
-  {
-    value: "Deadlift",
-    label: "Deadlift",
-  },
-  {
-    value: "Bench Press",
-    label: "Bench Press",
-  },
-  {
-    value: "Strict Press",
-    label: "Strict Press",
-  },
-  {
-    value: "Front Squat",
-    label: "Front Squat",
-  },
-  {
-    value: "Thruster",
-    label: "Thruster",
-  },
-  {
-    value: "Squat Clean",
-    label: "Squat Clean",
-  },
-  {
-    value: "Power Snatch",
-    label: "Power Snatch",
-  },
-];
-
-const FancyMultiSelect = ({ placeholder }) => {
+const FancyMultiSelect = ({
+  placeholder,
+  selected,
+  setSelected,
+  menuOptions,
+}) => {
   const inputRef = useRef(null);
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState([FRAMEWORKS[0]]);
+  // const [selected, setSelected] = useState([FRAMEWORKS[0]]);
   const [inputValue, setInputValue] = useState("");
 
   const handleUnselect = useCallback((framework) => {
@@ -71,7 +41,7 @@ const FancyMultiSelect = ({ placeholder }) => {
     }
   }, []);
 
-  const selectables = FRAMEWORKS.filter(
+  const selectables = menuOptions.filter(
     (framework) => !selected.includes(framework),
   );
 

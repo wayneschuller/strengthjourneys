@@ -1,17 +1,25 @@
 "use client";
 
 import * as React from "react";
-import { X } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Command as CommandPrimitive } from "cmdk";
 import FancyMultiSelect from "./ui/fancy-multi-select";
 
-const LiftChooserComboMenu = () => {
+// We don't really need this component unless we make it a super card.
+
+const LiftChooserComboMenu = ({
+  placeholder,
+  selected,
+  setSelected,
+  menuOptions,
+}) => {
   return (
     <div>
-      <FancyMultiSelect placeholder={"Choose lift types"} />
+      <FancyMultiSelect
+        placeholder={placeholder}
+        selected={selected}
+        setSelected={setSelected}
+        menuOptions={menuOptions}
+      />
     </div>
   );
 };

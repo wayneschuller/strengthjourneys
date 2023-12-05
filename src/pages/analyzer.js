@@ -39,11 +39,59 @@ import Heatmap from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
 import LiftChooserComboMenu from "@/components/LiftChooserComboMenu";
 
+// FIXME: Generate this dynamically from data via useEffect
+const liftTypesDELETE = [
+  {
+    value: "Back Squat",
+    label: "Back Squat",
+  },
+  {
+    value: "Deadlift",
+    label: "Deadlift",
+  },
+  {
+    value: "Bench Press",
+    label: "Bench Press",
+  },
+  {
+    value: "Strict Press",
+    label: "Strict Press",
+  },
+  {
+    value: "Front Squat",
+    label: "Front Squat",
+  },
+  {
+    value: "Thruster",
+    label: "Thruster",
+  },
+  {
+    value: "Squat Clean",
+    label: "Squat Clean",
+  },
+  {
+    value: "Power Snatch",
+    label: "Power Snatch",
+  },
+];
+
+let didInit = false;
+
 const Analyzer = () => {
+  const [liftTypesSelected, setLiftTypesSelected] = useState([]);
   const { parsedData, setParsedData, ssid, setSsid } =
     useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
+
+  useEffect(() => {
+    // FIXME: we need a useEffect for:
+    // - loading localstorage into selected
+    // - saving to localstorage when setSelected called? (or do via wrapper)
+    // - loading the lift options into the combo menu from user data
+    devLog(`Analyzer useEffect[]:`);
+    // devLog(parsedData);
+  }, [parsedData]);
 
   if (!isLoading && session?.user && !data?.values)
     return (
@@ -52,13 +100,13 @@ const Analyzer = () => {
       </div>
     );
 
-  let chartData = [];
+  // FIXME: this logic is all messed up - should not need localParsedData???
+
   let localParsedData = null;
   if (session && data?.values) {
     // console.log(data);
     if (parsedData === null) {
       localParsedData = parseGSheetData(data.values); // FIXME: Do this in the useEffect?
-      // setParsedData(newParsedData); // This triggers an infinite loop of rerendering
       // console.log(parsedData);
     } else {
       localParsedData = parsedData;
@@ -66,6 +114,8 @@ const Analyzer = () => {
   } else {
     localParsedData = sampleParsedData;
   }
+  devLog(`Setting setParsedData`);
+  // setParsedData(localParsedData); // This triggers an infinite loop of rerendering???
 
   // Get the giant object of achivements["Back Squat"] which contains interesting statistics
   // Convert to array
@@ -76,13 +126,22 @@ const Analyzer = () => {
   // Sort the array by totalSets in descending order
   achievementsArray.sort((a, b) => b.totalSets - a.totalSets);
 
+  // Transform the array
+  const liftTypes = achievementsArray.map((lift) => ({
+    value: lift.liftType,
+    label: lift.liftType,
+  }));
+
+  devLog(`Achivements array:`);
+  devLog(achievementsArray);
+
   const bestSets = processBestSets(localParsedData); // Collect the top 5 of each rep scheme 1..10
-  devLog(`Best sets:`, bestSets);
+  devLog(`Best sets:`);
+  devLog(bestSets);
 
   const recentBestSets = getRecentBestSets(bestSets); // Have they done any this month?
-  devLog(`Recent best sets:`, recentBestSets);
-
-  devLog(session);
+  devLog(`Recent best sets:`);
+  devLog(recentBestSets);
 
   // FIXME: try to refactor this JSX to breakdown each unique Card to separate components
 
@@ -148,7 +207,12 @@ const Analyzer = () => {
           {/* {!session && !parsedData && <div> You need to sign in. </div>} */}
           <Separator className="md:col-span-2 xl:col-span-4" />
           <div className="md:col-span-2 xl:col-span-4">
-            <LiftChooserComboMenu />
+            <LiftChooserComboMenu
+              placeholder={"Choose lift types"}
+              selected={liftTypesSelected}
+              setSelected={setLiftTypesSelected}
+              menuOptions={liftTypes}
+            />
           </div>
           {achievementsArray.map((entry) => (
             <LiftAchievements

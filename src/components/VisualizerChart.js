@@ -77,7 +77,7 @@ export const VisualizerChart = () => {
   const { parsedData, setParsedData, ssid, setSsid } =
     useContext(ParsedDataContext);
   const { data: session } = useSession();
-  const { data, isError, isLoading } = useUserLiftData(session, ssid);
+  const { isLoading } = useUserLiftData(session, ssid);
   const { toast } = useToast();
   const [openPicker, authResponse] = useDrivePicker();
   const chartRef = useRef(null);
@@ -90,14 +90,14 @@ export const VisualizerChart = () => {
   useEffect(() => {
     // FIXME Try to zoom to recent
     const chart = chartRef.current;
-    devLog(`zoom useeffect`);
-    devLog(chart);
+    // devLog(`zoom useeffect`);
+    // devLog(chart);
     // if (chart) chart.resetZoom();
     // let sixMonthsAgo = visualizerData.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
     // if (sixMonthsAgo < visualizerData.padDateMin)
     // sixMonthsAgo = visualizerData.padDateMin;
     if (chart) {
-      devLog(`ZOOMING IN`);
+      // devLog(`ZOOMING IN`);
       chart.zoomScale(
         "x",
         {
@@ -173,23 +173,6 @@ export const VisualizerChart = () => {
 
   if (isLoading) {
     return <Skeleton className="h-[80vh] w-[90vw]"></Skeleton>;
-  }
-
-  // devLog(data);
-  // if (isError && !data?.values) {
-
-  if (isError) {
-    devLog(`isError so signing out hopefully you get sample data`);
-    signOut();
-    // setParsedData(null); // FIXME: do we need this? does it help?
-    // return (
-    // <div className="text-center">
-    // <div className="text-bold">Error reading GSheet data: {data.error}</div>
-    // <div>
-    // Sometimes logging out and in again will help Google be friendlier.
-    // </div>
-    // </div>
-    // );
   }
 
   // We imported chartDefaults from chart.js above

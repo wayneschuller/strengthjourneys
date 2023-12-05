@@ -18,12 +18,29 @@ export function Layout({ children }) {
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
 
-  // When the user has gsheet data here were parse it for the components
+  // When userUserLiftData (useSWR) gives new Google sheet data, parse it
+  // useSWR can ping google and cache it and it won't trigger until data changes
   useEffect(() => {
-    // devLog(`<Layout /> useEffect[data]:`);
-    // devLog(data);
+    devLog(`<Layout /> useEffect[data]: isError is ${isError}`);
+    devLog(data);
+
+    // If data changes and we have isError then signOut
+    // This is because our token has expired
+    // FIXME: get Google refreshtokens working
+    if (isError) {
+      console.log(
+        "Couldn't speak to Google. This is normally because it is more than one hour since you logged in. Automatically signing out. This will be fixed in a future version using refresh tokens",
+      );
+      devLog(data);
+      signOut();
+      return;
+    }
 
     let localParsedData = null;
+
+    // useSWR will sometimes give us the same data cached
+    // FIXME: check if the data has changed?
+    // Or at least check if parsedData has changed?
 
     // Get some parsedData
     if (data?.values) {
@@ -33,7 +50,7 @@ export function Layout({ children }) {
     }
 
     setParsedData(localParsedData);
-  }, [data]);
+  }, [data, isError]);
 
   return (
     <>

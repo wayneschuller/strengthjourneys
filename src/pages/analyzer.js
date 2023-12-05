@@ -71,8 +71,8 @@ const Analyzer = () => {
   // FIXME: this data->parseGSheet should be done at app level
   // Then <Analyzer /> and <Visualizer /> can just do their own useEffect [parsedData] process chain
   useEffect(() => {
-    devLog(`Analyzer useEffect[parsedData]:`);
-    devLog(parsedData);
+    // devLog(`Analyzer useEffect[parsedData]:`);
+    // devLog(parsedData);
     if (!parsedData) return;
     // let localParsedData = null;
 
@@ -105,18 +105,16 @@ const Analyzer = () => {
     // setLiftTypesSelected(selectedLifts);
   }, [parsedData]);
 
-  devLog(`Rendering <Analyzer />...`);
+  // devLog(`Rendering <Analyzer />...`);
 
-  if (!isLoading && session?.user && !data?.values)
+  if (!isLoading && session?.user && !ssid)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
         <InstructionsCard session={session} />
       </div>
     );
 
-  // devLog(`Achivements array:`);
-  // devLog(achievementsArray);
-  devLog(liftTypesSelected);
+  // devLog(liftTypesSelected);
 
   return (
     <>

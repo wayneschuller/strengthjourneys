@@ -1,5 +1,7 @@
 // parseGSheetData.js
 
+import { devLog } from "@/lib/SJ-utils";
+
 function convertWeight(weightString) {
   if (weightString === undefined || weightString === "") {
     return { value: undefined, unitType: undefined };
@@ -24,6 +26,7 @@ function convertDate(dateString, previousDate) {
 // We do assume that if date or lift type are blank we can infer from a previous row
 function parseGSheetData(data) {
   const columnNames = data[0];
+  devLog(`parseGSheetData()...`);
 
   let previousDate = null;
   let previousLiftType = null;

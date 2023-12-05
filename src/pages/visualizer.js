@@ -34,9 +34,9 @@ const Visualizer = () => {
   const { parsedData, setParsedData, ssid, setSsid } =
     useContext(ParsedDataContext);
   const { data: session } = useSession();
-  const { data, isError, isLoading } = useUserLiftData(session, ssid);
+  const { isLoading } = useUserLiftData(session, ssid);
 
-  if (!isLoading && session?.user && !data?.values)
+  if (!isLoading && session?.user && !ssid)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
         <InstructionsCard session={session} />

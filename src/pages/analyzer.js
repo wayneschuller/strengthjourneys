@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/sheet";
 import Heatmap from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
+import LiftChooserComboMenu from "@/components/LiftChooserComboMenu";
 
 const Analyzer = () => {
   const { parsedData, setParsedData, ssid, setSsid } =
@@ -82,6 +83,8 @@ const Analyzer = () => {
   devLog(`Recent best sets:`, recentBestSets);
 
   devLog(session);
+
+  // FIXME: try to refactor this JSX to breakdown each unique Card to separate components
 
   return (
     <>
@@ -144,6 +147,9 @@ const Analyzer = () => {
           </div>
           {/* {!session && !parsedData && <div> You need to sign in. </div>} */}
           <Separator className="md:col-span-2 xl:col-span-4" />
+          <div className="md:col-span-2 xl:col-span-4">
+            <LiftChooserComboMenu />
+          </div>
           {achievementsArray.map((entry) => (
             <LiftAchievements
               key={entry.liftType}

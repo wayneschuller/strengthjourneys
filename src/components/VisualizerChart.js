@@ -110,12 +110,12 @@ export const VisualizerChart = () => {
 
   useEffect(() => {
     // console.log(`VisualizerChart useEffect isLoading: ${isLoading}`);
-    devLog(`VisualizerChart useEffect session:`);
-    devLog(session);
+    // devLog(`VisualizerChart useEffect session:`);
+    // devLog(session);
 
     if (!isLoading && !session?.user) {
       toast({
-        title: "Visualizer Demo Mode",
+        title: "Demo Mode",
         description:
           "Sign in via Google to visualize your personal Google Sheet lifting data.",
         action: (

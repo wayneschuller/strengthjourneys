@@ -1,13 +1,9 @@
 import useSWR from "swr";
-import { useToast } from "@/components/ui/use-toast";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
 function useUserLiftData(session, ssid) {
-  const { toast } = useToast();
-  let shouldFetch = session && ssid ? true : false;
-
-  // console.log(`useUserLiftData hook: ssid is ${ssid}`);
+  let shouldFetch = session && ssid ? true : false; // Only fetch if we have session and ssid
 
   const { data, isLoading } = useSWR(
     shouldFetch ? `/api/readGSheet?ssid=${ssid}` : null,

@@ -11,7 +11,7 @@ import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
 import { SessionProvider } from "next-auth/react";
 import { useState, useEffect, createContext } from "react";
-import { devLog } from "@/lib/devLog";
+import { devLog } from "@/lib/SJ-utils";
 
 export const ParsedDataContext = createContext(null); // Internal SJ format of user gsheet (see sampleData.js for design)
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useContext } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getReadableDateString } from "../pages/analyzer";
+import { getReadableDateString } from "@/lib/SJ-utils";
 
 const LiftAchievementsCard = ({ liftType, parsedData }) => {
   // Check the liftType exists in the data.

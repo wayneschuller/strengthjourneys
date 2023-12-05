@@ -3,7 +3,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
-import { devLog } from "@/lib/devLog";
+import { devLog } from "@/lib/SJ-utils";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";

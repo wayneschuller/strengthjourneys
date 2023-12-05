@@ -5,7 +5,7 @@ import { ParsedDataContext } from "@/pages/_app";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
 import { handleOpenPicker } from "@/components/handleOpenPicker";
 import { Button } from "@/components/ui/button";
-import { devLog } from "@/lib/devLog";
+import { devLog } from "@/lib/SJ-utils";
 import Image from "next/image";
 
 import SampleImage from "../../public/sample_google_sheet_fuzzy_border.png";

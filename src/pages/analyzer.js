@@ -15,6 +15,7 @@ import InspirationCard from "@/components/InspirationCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import InstructionsCard from "@/components/InstructionsCard";
 import LiftAchievementsCard from "@/components/LiftAchievementsCard";
+import FancyMultiSelect from "@/components/ui/fancy-multi-select";
 
 import { Button } from "@/components/ui/button";
 
@@ -38,7 +39,6 @@ import {
 } from "@/components/ui/sheet";
 import Heatmap from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
-import LiftChooserComboMenu from "@/components/LiftChooserComboMenu";
 
 let didInit = false;
 
@@ -50,14 +50,29 @@ const Analyzer = () => {
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
 
-  // Now declare all our local variables that show computable derivable stuff
+  // Now declare all our local variables for computable derivable stuff
   let localParsedData = null;
-  let achievementsArray = [];
 
-  // FIXME: we need a useEffect for:
-  // - loading localstorage into selected
-  // - saving to localstorage when setSelected called? (or do via wrapper)
-  // - loading the lift options into the combo menu from user data
+  useEffect(() => {
+    if (!parsedData) return; // Don't set localStorage until we are in a running state
+    localStorage.setItem("SelectedLifts", JSON.stringify(liftTypesSelected));
+  }, [liftTypesSelected]);
+
+  // useEffect(() => {
+  //   if (!didInit) {
+  //     didInit = true;
+  //     // Get the array from local storage or use an empty array if not present
+  //     let selectedLifts =
+  //       JSON.parse(localStorage.getItem("SelectedLifts")) || [];
+
+  //     devLog(`Found localStorage lifts:`);
+  //     devLog(selectedLifts);
+
+  //     setLiftTypesSelected(selectedLifts);
+  //     // setLiftTypesSelectedState([]);
+  //     // devLog(`useEffect[liftTypesSelected]`);
+  //   }
+  // }, []);
 
   // Main useEffect - wait for gsheet in data then process
   useEffect(() => {
@@ -73,8 +88,8 @@ const Analyzer = () => {
       localParsedData = sampleParsedData;
     }
 
-    devLog(`localParsedData:`);
-    devLog(localParsedData);
+    // devLog(`localParsedData:`);
+    // devLog(localParsedData);
     setParsedData(localParsedData);
 
     // Get the giant object of achivements["Back Squat"] which contains interesting statistics
@@ -87,7 +102,7 @@ const Analyzer = () => {
     // Transform the array
 
     // Count the frequency of each liftType
-    // We need this for the fancy multi select
+    // We need this for the multi-select
     const liftTypeFrequency = {};
     localParsedData.forEach((lifting) => {
       const liftType = lifting.liftType;
@@ -99,9 +114,11 @@ const Analyzer = () => {
       .sort((a, b) => liftTypeFrequency[b] - liftTypeFrequency[a])
       .map((liftType) => ({ value: liftType, label: liftType }));
 
-    // console.log(sortedLiftTypes);
-
     setLiftTypes(sortedLiftTypes);
+
+    // Maybe here is the time to check localstorage?
+    // let selectedLifts = JSON.parse(localStorage.getItem("SelectedLifts")) || [];
+    // setLiftTypesSelected(selectedLifts);
   }, [data]);
 
   if (!isLoading && session?.user && !data?.values)
@@ -184,10 +201,9 @@ const Analyzer = () => {
           <div className="xl:col-span-2">
             <InspirationCard />
           </div>
-          {/* {!session && !parsedData && <div> You need to sign in. </div>} */}
           <Separator className="md:col-span-2 xl:col-span-4" />
           <div className="md:col-span-2 xl:col-span-4">
-            <LiftChooserComboMenu
+            <FancyMultiSelect
               placeholder={"Choose lift types"}
               selected={liftTypesSelected}
               setSelected={setLiftTypesSelected}
@@ -196,7 +212,7 @@ const Analyzer = () => {
           </div>
           {liftTypesSelected.map((lift) => (
             <LiftAchievementsCard
-              key={lift.value}
+              key={`${lift.value}-card`}
               liftType={lift.value}
               parsedData={parsedData}
             />

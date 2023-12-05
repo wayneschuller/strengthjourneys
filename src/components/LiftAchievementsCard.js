@@ -5,6 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getReadableDateString } from "../pages/analyzer";
 
 const LiftAchievementsCard = ({ liftType, parsedData }) => {
+  // Check the liftType exists in the data.
+  // This sometimes happens when the user moves from bespoke to sample data
+  if (parsedData.some((lifting) => lifting.liftType === liftType) === false)
+    return;
+
   const { totalCountReps, totalSets, oldestDate, newestDate } =
     getLiftTypeStats(liftType, parsedData);
 

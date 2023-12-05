@@ -65,6 +65,9 @@ ChartJS.register(
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
+let demoToastInit = false;
+let loadedToastInit = false;
+
 export const VisualizerChart = () => {
   const { theme } = useTheme();
   const [primaryForegroundColor, setPrimaryForegroundColor] = useState(null);
@@ -113,7 +116,8 @@ export const VisualizerChart = () => {
     // devLog(`VisualizerChart useEffect session:`);
     // devLog(session);
 
-    if (!isLoading && !session?.user) {
+    if (!demoToastInit && !isLoading && !session?.user) {
+      demoToastInit = true; // Don't show this again
       toast({
         title: "Demo Mode",
         description:
@@ -128,7 +132,8 @@ export const VisualizerChart = () => {
     }
 
     // FIXME: maybe we could just do this in the processing loop?
-    if (!isLoading && session.user && ssid) {
+    if (!loadedToastInit && !isLoading && session?.user && ssid) {
+      loadedToastInit = true; // Don't show this again
       toast({
         title: "Data loaded from Google Sheets",
         description: "Bespoke lifting data",

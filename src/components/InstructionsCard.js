@@ -27,7 +27,7 @@ const InstructionsCard = ({ session }) => {
   return (
     <Card className="w-2/3">
       <CardHeader>
-        <CardTitle>You are logged in as {session.user.name}</CardTitle>
+        <CardTitle>Hello {session.user.name}! You're logged in.</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="">

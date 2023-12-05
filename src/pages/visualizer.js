@@ -2,11 +2,14 @@
 
 import dynamic from "next/dynamic";
 import Head from "next/head";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
+import { useSession, signIn } from "next-auth/react";
+import useUserLiftData from "@/lib/useUserLiftData";
+import { ParsedDataContext } from "@/pages/_app";
 import { sampleParsedData } from "@/lib/sampleParsedData";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton"
-
+import { Skeleton } from "@/components/ui/skeleton";
+import InstructionsCard from "@/components/InstructionsCard";
 
 import {
   Sheet,
@@ -28,6 +31,18 @@ const DynamicHeaderVisualizerChart = dynamic(
 );
 
 const Visualizer = () => {
+  const { parsedData, setParsedData, ssid, setSsid } =
+    useContext(ParsedDataContext);
+  const { data: session } = useSession();
+  const { data, isError, isLoading } = useUserLiftData(session, ssid);
+
+  if (!isLoading && session && !data?.values)
+    return (
+      <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
+        <InstructionsCard session={session} />
+      </div>
+    );
+
   return (
     <>
       <Head>

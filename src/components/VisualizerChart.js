@@ -17,6 +17,17 @@ import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/devLog";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
+import InstructionsCard from "@/components/InstructionsCard";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 import {
   defaults as chartDefaults,
@@ -116,24 +127,7 @@ export const VisualizerChart = () => {
       return;
     }
 
-    if (!isLoading && session?.user && !ssid && !parsedData) {
-      toast({
-        title: "Visualizer Demo Mode",
-        description: "Google Sheet not yet selected.",
-        action: (
-          <ToastAction
-            altText="Choose google sheet file"
-            onClick={() =>
-              handleOpenPicker(openPicker, session.accessToken, setSsid)
-            }
-          >
-            Choose file
-          </ToastAction>
-        ),
-      });
-      return;
-    }
-
+    // FIXME: maybe we could just do this in the processing loop?
     if (!isLoading && session.user && ssid) {
       toast({
         title: "Data loaded from Google Sheets",
@@ -200,8 +194,10 @@ export const VisualizerChart = () => {
 
   let chartData = [];
   let localParsedData = null;
+
+  devLog(data);
+
   if (session && data?.values) {
-    // devLog(data);
     if (parsedData === null) {
       localParsedData = parseGSheetData(data.values); // FIXME: Do this in the useEffect?
       // setParsedData(newParsedData); // This triggers an infinite loop of rerendering

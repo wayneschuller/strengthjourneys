@@ -13,6 +13,7 @@ import { sampleParsedData } from "@/lib/sampleParsedData";
 import { devLog } from "@/lib/devLog";
 import InspirationCard from "@/components/InspirationCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import InstructionsCard from "@/components/InstructionsCard";
 
 import { Button } from "@/components/ui/button";
 
@@ -42,12 +43,13 @@ const Analyzer = () => {
     useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
-  const { toast } = useToast();
-  const [openPicker, authResponse] = useDrivePicker();
 
-  useEffect(() => {
-    devLog(`Analyzer useEffect[]`);
-  }, []);
+  if (!isLoading && session?.user && !data?.values)
+    return (
+      <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
+        <InstructionsCard session={session} />
+      </div>
+    );
 
   let chartData = [];
   let localParsedData = null;

@@ -102,7 +102,7 @@ export const VisualizerChart = () => {
     devLog(`VisualizerChart useEffect session:`);
     devLog(session);
 
-    if (!session) {
+    if (!isLoading && !session?.user) {
       toast({
         title: "Visualizer Demo Mode",
         description:
@@ -116,7 +116,7 @@ export const VisualizerChart = () => {
       return;
     }
 
-    if (session.user && !ssid && !parsedData) {
+    if (!isLoading && session?.user && !ssid && !parsedData) {
       toast({
         title: "Visualizer Demo Mode",
         description: "Google Sheet not yet selected.",

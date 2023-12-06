@@ -76,7 +76,7 @@ export function Layout({ children }) {
     if (session === undefined) return;
 
     // Tell the user when demo mode has started
-    if (!demoToastInit && session === null && !ssid) {
+    if (!demoToastInit && session === null) {
       demoToastInit = true; // Don't show this again
       toast({
         title: "Demo Mode",

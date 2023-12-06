@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useContext, useState, useEffect } from "react";
-import { Moon, Sun } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -91,7 +90,6 @@ export function AvatarDropdown() {
         <DropdownMenuItem
           onClick={() => {
             signOut();
-            setParsedData(null); // FIXME: do we need this? does it help?
           }}
         >
           Sign Out
@@ -100,24 +98,3 @@ export function AvatarDropdown() {
     </DropdownMenu>
   );
 }
-
-// {
-//   session && !ssid && (
-//     <Button
-//       onClick={() => handleOpenPicker(openPicker, session.accessToken, setSsid)}
-//     >
-//       Choose Google Sheet
-//     </Button>
-//   );
-// }
-// {
-//   session && (
-//     <Avatar onClick={() => signOut()}>
-//       <AvatarImage src={session.user.image} />
-//       <AvatarFallback>session.user.name</AvatarFallback>
-//     </Avatar>
-//   );
-// }
-// {
-//   !session && <Button onClick={() => signIn()}>Sign in</Button>;
-// }

@@ -6,8 +6,11 @@ import { getReadableDateString } from "@/lib/SJ-utils";
 
 const LiftAchievementsCard = ({ liftType, parsedData }) => {
   // Check the liftType exists in the data.
-  // This sometimes happens when the user moves from bespoke to sample data
-  if (parsedData.some((lifting) => lifting.liftType === liftType) === false)
+  // This sometimes happens when selectedLifts doesn't match data
+  if (
+    !parsedData ||
+    parsedData.some((lifting) => lifting.liftType === liftType) === false
+  )
     return;
 
   const { totalCountReps, totalSets, oldestDate, newestDate } =

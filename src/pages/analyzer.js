@@ -14,6 +14,7 @@ import InstructionsCard from "@/components/InstructionsCard";
 import LiftAchievementsCard from "@/components/LiftAchievementsCard";
 import FancyMultiSelect from "@/components/ui/fancy-multi-select";
 import MonthsHighlightsCard from "@/components/MonthsHighlightsCard";
+import { useLocalStorage } from "usehooks-ts";
 
 import {
   Card,
@@ -35,39 +36,20 @@ import {
 } from "@/components/ui/sheet";
 import Heatmap from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
+import { SidePanelLiftChooser } from "@/components/SidePaneLiftChooser";
 
 let didInit = false;
 
 const Analyzer = () => {
   const [liftTypes, setLiftTypes] = useState([]);
-  const [liftTypesSelected, setLiftTypesSelected] = useState([]);
+  const [liftTypesSelected, setLiftTypesSelected] = useLocalStorage(
+    "selectedLifts",
+    [],
+  );
   const { parsedData, setParsedData, ssid, setSsid } =
     useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
-
-  // FIXME: set the localStorage when they click - try to avoid useEffect
-  // useEffect(() => {
-  //   if (!parsedData) return; // Don't set localStorage until we are in a running state
-  //   localStorage.setItem("SelectedLifts", JSON.stringify(liftTypesSelected));
-  // }, [liftTypesSelected]);
-
-  // FIXME: trying to load localStorage on init (maybe could be higher up? or lower down in select?)
-  // useEffect(() => {
-  //   if (!didInit) {
-  //     didInit = true;
-  //     // Get the array from local storage or use an empty array if not present
-  //     let selectedLifts =
-  //       JSON.parse(localStorage.getItem("SelectedLifts")) || [];
-
-  //     devLog(`Found localStorage lifts:`);
-  //     devLog(selectedLifts);
-
-  //     setLiftTypesSelected(selectedLifts);
-  //     // setLiftTypesSelectedState([]);
-  //     // devLog(`useEffect[liftTypesSelected]`);
-  //   }
-  // }, []);
 
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
@@ -89,11 +71,29 @@ const Analyzer = () => {
       .map((liftType) => ({ value: liftType, label: liftType }));
 
     setLiftTypes(sortedLiftTypes);
-
-    // Maybe here is the time to check localstorage?
-    // let selectedLifts = JSON.parse(localStorage.getItem("SelectedLifts")) || [];
-    // setLiftTypesSelected(selectedLifts);
   }, [parsedData]);
+
+  useEffect(() => {
+    devLog(`liftTypes:`);
+    devLog(liftTypes);
+
+    devLog(`liftTypesSelected (length: ${liftTypesSelected.length}):`);
+    devLog(liftTypesSelected);
+
+    if (
+      typeof liftTypesSelected === "undefined" ||
+      liftTypesSelected.length === 0
+    ) {
+      // Determine the number of elements to copy (up to a maximum of 4)
+      const elementsToCopy = Math.min(4, liftTypes.length);
+
+      // Copy the elements from sortedLiftTypes to liftTypeSelected state
+      setLiftTypesSelected(liftTypes.slice(0, elementsToCopy));
+    } else {
+      // FIXME: we need to check that the liftTypesSelected only has elements that are in sortedLiftTypes
+      // OR handle this graciously elsewhere?
+    }
+  }, [liftTypes, liftTypesSelected]);
 
   // devLog(`Rendering <Analyzer />...`);
 
@@ -160,12 +160,17 @@ const Analyzer = () => {
           </div>
           <Separator className="md:col-span-2 xl:col-span-4" />
           <div className="md:col-span-2 xl:col-span-4">
-            <FancyMultiSelect
+            <SidePanelLiftChooser
+              liftTypes={liftTypes}
+              selected={liftTypesSelected}
+              setSelected={setLiftTypesSelected}
+            />
+            {/* <FancyMultiSelect
               placeholder={"Choose lift types"}
               selected={liftTypesSelected}
               setSelected={setLiftTypesSelected}
               menuOptions={liftTypes}
-            />
+            /> */}
           </div>
           {liftTypesSelected.map((lift) => (
             <LiftAchievementsCard

@@ -75,8 +75,7 @@ export const VisualizerChart = () => {
   const chartRef = useRef(null);
   const [chartData, setChartData] = useState(null);
 
-  // Local computed data. FIXME: Should be in state?
-
+  // Local computed data.
   let firstDate = null;
   let lastDate = null;
   let roundedMaxWeightValue = null;
@@ -91,12 +90,7 @@ export const VisualizerChart = () => {
 
     const sortedDatasets = processVisualizerData(parsedData);
     const chartData = sortedDatasets.slice(0, 5); // Get top 5
-
     setChartData(chartData);
-
-    // Destructuring assignment to get values from the returned object
-    ({ firstDate, lastDate, roundedMaxWeightValue } =
-      getFirstLastDatesMaxWeightFromChartData(chartData));
   }, [parsedData]);
 
   useEffect(() => {
@@ -155,7 +149,11 @@ export const VisualizerChart = () => {
     return <Skeleton className="h-[80vh] w-[90vw]"></Skeleton>;
   }
 
-  if (!chartData) return;
+  if (!chartData) return; // Eventually in the useEffect this will have data
+
+  // Destructuring assignment to get values from the returned object
+  ({ firstDate, lastDate, roundedMaxWeightValue } =
+    getFirstLastDatesMaxWeightFromChartData(chartData));
 
   // We imported chartDefaults from chart.js above
   // chartDefaults.font.family = "'Inter', 'Helvetica','Arial'";

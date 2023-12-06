@@ -83,10 +83,7 @@ const Analyzer = () => {
     devLog(`liftTypesSelected (length: ${liftTypesSelected.length}):`);
     devLog(liftTypesSelected);
 
-    // Filter the selected lift types to keep only those present in the liftTypes array
-    const validSelections = liftTypesSelected.filter((selected) =>
-      liftTypes.includes(selected),
-    );
+    let updatedSelections;
 
     if (
       typeof liftTypesSelected === "undefined" ||
@@ -97,16 +94,62 @@ const Analyzer = () => {
 
       // Copy the elements from sortedLiftTypes to liftTypeSelected state
       // Just an array of lift name strings
-      setLiftTypesSelected(
-        liftTypes
-          .slice(0, elementsToCopy)
-          .map((liftTypeObj) => liftTypeObj.liftType),
-      );
+      updatedSelections = liftTypes
+        .slice(0, elementsToCopy)
+        .map((liftTypeObj) => liftTypeObj.liftType);
     } else {
-      // FIXME: we need to check that the liftTypesSelected only has elements that are in sortedLiftTypes
-      // OR handle this graciously elsewhere?
+      // Filter the selected lift types to keep only those present in the liftTypes array
+      const validSelections = liftTypesSelected.filter((selected) =>
+        liftTypes.map((liftTypeObj) => liftTypeObj.liftType).includes(selected),
+      );
+
+      // Update liftTypesSelected to only include valid selections
+      updatedSelections = validSelections;
     }
+
+    // If validSelections is empty, pick the first four from liftTypes
+    if (updatedSelections.length === 0) {
+      const elementsToCopy = Math.min(4, liftTypes.length);
+      updatedSelections = liftTypes
+        .slice(0, elementsToCopy)
+        .map((liftTypeObj) => liftTypeObj.liftType);
+    }
+
+    // Update liftTypesSelected
+    setLiftTypesSelected(updatedSelections);
   }, [liftTypes, liftTypesSelected]);
+
+  // useEffect(() => {
+  //   devLog(`liftTypes:`);
+  //   devLog(liftTypes);
+
+  //   devLog(`liftTypesSelected (length: ${liftTypesSelected.length}):`);
+  //   devLog(liftTypesSelected);
+
+  //   // Filter the selected lift types to keep only those present in the liftTypes array
+  //   const validSelections = liftTypesSelected.filter((selected) =>
+  //     liftTypes.includes(selected),
+  //   );
+
+  //   if (
+  //     typeof liftTypesSelected === "undefined" ||
+  //     liftTypesSelected.length === 0
+  //   ) {
+  //     // Determine the number of elements to copy (up to a maximum of 4)
+  //     const elementsToCopy = Math.min(4, liftTypes.length);
+
+  //     // Copy the elements from sortedLiftTypes to liftTypeSelected state
+  //     // Just an array of lift name strings
+  //     setLiftTypesSelected(
+  //       liftTypes
+  //         .slice(0, elementsToCopy)
+  //         .map((liftTypeObj) => liftTypeObj.liftType),
+  //     );
+  //   } else {
+  //     // FIXME: we need to check that the liftTypesSelected only has elements that are in sortedLiftTypes
+  //     // OR handle this graciously elsewhere?
+  //   }
+  // }, [liftTypes, liftTypesSelected]);
 
   // devLog(`Rendering <Analyzer />...`);
 

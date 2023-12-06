@@ -75,7 +75,8 @@ export function Layout({ children }) {
     // session starts undefined, but if they are not logged in it just becomes null
     if (session === undefined) return;
 
-    if (!demoToastInit && session === null) {
+    // Tell the user when demo mode has started
+    if (!demoToastInit && session === null && !ssid) {
       demoToastInit = true; // Don't show this again
       toast({
         title: "Demo Mode",
@@ -105,7 +106,7 @@ export function Layout({ children }) {
       });
       return;
     }
-  }, [session, isLoading, ssid, parsedData]);
+  }, [session, isLoading, ssid, parsedData, router]);
 
   return (
     <>

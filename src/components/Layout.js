@@ -11,12 +11,21 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import useUserLiftData from "@/lib/useUserLiftData";
 import { devLog } from "@/lib/SJ-utils";
 import { sampleParsedData } from "@/lib/sampleParsedData";
+import { useToast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+import { useRouter } from "next/router";
+
+let demoToastInit = false;
+let loadedToastInit = false;
 
 export function Layout({ children }) {
   const { parsedData, setParsedData, ssid, setSsid } =
     useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
+  const { toast } = useToast();
+  const router = useRouter();
+  const currentPath = router.asPath;
 
   // When userUserLiftData (useSWR) gives new Google sheet data, parse it
   // useSWR can ping google and cache it and it won't trigger until data changes
@@ -51,6 +60,50 @@ export function Layout({ children }) {
 
     setParsedData(localParsedData);
   }, [data, isError]);
+
+  // useEffect for showing toast instructions on key state changes
+  useEffect(() => {
+    devLog(`toast useEffect`);
+    devLog(session);
+
+    // Check if the current path is "/visualizer" or "/analyzer"
+    const isVisualizerRoute = currentPath === "/visualizer";
+    const isAnalyzerRoute = currentPath === "/analyzer";
+
+    if (!isVisualizerRoute && !isAnalyzerRoute) return; // Don't show toast on generic pages like Timer
+
+    // session starts undefined, but if they are not logged in it just becomes null
+    if (session === undefined) return;
+
+    if (!demoToastInit && session === null) {
+      demoToastInit = true; // Don't show this again
+      toast({
+        title: "Demo Mode",
+        description:
+          "Sign in via Google to visualize your personal Google Sheet lifting data.",
+        action: (
+          <ToastAction altText="Google Login" onClick={() => signIn("google")}>
+            Google Sign in
+          </ToastAction>
+        ),
+      });
+      return;
+    }
+
+    if (
+      !loadedToastInit &&
+      !isLoading &&
+      session?.user &&
+      parsedData?.length !== 0
+    ) {
+      loadedToastInit = true; // Don't show this again
+      toast({
+        title: "Data loaded from Google Sheets",
+        description: "Bespoke lifting data",
+      });
+      return;
+    }
+  }, [session, isLoading, parsedData]);
 
   return (
     <>

@@ -6,8 +6,6 @@ import { Line } from "react-chartjs-2";
 import { useSession, signIn, signOut } from "next-auth/react";
 import useUserLiftData from "@/lib/useUserLiftData";
 import { ParsedDataContext } from "@/pages/_app";
-import { useToast } from "@/components/ui/use-toast";
-import { ToastAction } from "@/components/ui/toast";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
 import { handleOpenPicker } from "@/components/handleOpenPicker";
 import { parseGSheetData } from "@/lib/parseGSheetData";
@@ -63,11 +61,6 @@ ChartJS.register(
   zoomPlugin,
 );
 
-const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
-
-let demoToastInit = false;
-let loadedToastInit = false;
-
 export const VisualizerChart = () => {
   const { theme } = useTheme();
   const [primaryForegroundColor, setPrimaryForegroundColor] = useState(null);
@@ -78,14 +71,33 @@ export const VisualizerChart = () => {
     useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { isLoading } = useUserLiftData(session, ssid);
-  const { toast } = useToast();
   const [openPicker, authResponse] = useDrivePicker();
   const chartRef = useRef(null);
+  const [chartData, setChartData] = useState(null);
 
-  // const { data, isError, isLoading } = useUserLiftData(ssid);
-  // const { data, isLoading } = useSWR(`/api/readGSheet?ssid=${ssid}`, fetcher, {
-  // revalidateOnFocus: false,
-  // });
+  // Local computed data. FIXME: Should be in state?
+
+  let firstDate = null;
+  let lastDate = null;
+  let roundedMaxWeightValue = null;
+
+  // Main useEffect - wait for parsedData process component specfic data
+  useEffect(() => {
+    devLog(
+      `VisualizerChart useEffect[parsedData] with ${parsedData?.length} tuples of parsedData`,
+    );
+    // devLog(parsedData);
+    if (!parsedData) return;
+
+    const sortedDatasets = processVisualizerData(parsedData);
+    const chartData = sortedDatasets.slice(0, 5); // Get top 5
+
+    setChartData(chartData);
+
+    // Destructuring assignment to get values from the returned object
+    ({ firstDate, lastDate, roundedMaxWeightValue } =
+      getFirstLastDatesMaxWeightFromChartData(chartData));
+  }, [parsedData]);
 
   useEffect(() => {
     // FIXME Try to zoom to recent
@@ -112,51 +124,19 @@ export const VisualizerChart = () => {
   }, [chartRef]);
 
   useEffect(() => {
-    // console.log(`VisualizerChart useEffect isLoading: ${isLoading}`);
-    // devLog(`VisualizerChart useEffect session:`);
-    // devLog(session);
-
-    // FIXME: this shows toast demo when demo appears for 1 second before session connects
-    if (!demoToastInit && !isLoading && !session?.user) {
-      demoToastInit = true; // Don't show this again
-      toast({
-        title: "Demo Mode",
-        description:
-          "Sign in via Google to visualize your personal Google Sheet lifting data.",
-        action: (
-          <ToastAction altText="Google Login" onClick={() => signIn("google")}>
-            Google Sign in
-          </ToastAction>
-        ),
-      });
-      return;
-    }
-
-    // FIXME: maybe we could just do this in the processing loop?
-    if (!loadedToastInit && !isLoading && session?.user && ssid) {
-      loadedToastInit = true; // Don't show this again
-      toast({
-        title: "Data loaded from Google Sheets",
-        description: "Bespoke lifting data",
-      });
-      return;
-    }
-  }, [session, ssid, isLoading]);
-
-  useEffect(() => {
     // Accessing the HSL color variables
     // from the shadcn theme
     // FIXME: Not sure this is worth it
     const root = document.documentElement;
 
-    const computedPrimaryColor = getComputedStyle(root).getPropertyValue(
-      "--primary-foreground",
-    );
-    setPrimaryForegroundColor(convertToHslFormat(computedPrimaryColor));
+    // const computedPrimaryColor = getComputedStyle(root).getPropertyValue(
+    //   "--primary-foreground",
+    // );
+    // setPrimaryForegroundColor(convertToHslFormat(computedPrimaryColor));
 
-    const computedMutedColor =
-      getComputedStyle(root).getPropertyValue("--foreground");
-    setMutedColor(convertToHslFormat(computedMutedColor));
+    // const computedMutedColor =
+    //   getComputedStyle(root).getPropertyValue("--foreground");
+    // setMutedColor(convertToHslFormat(computedMutedColor));
 
     const computedMutedForegroundColor =
       getComputedStyle(root).getPropertyValue("--muted-foreground");
@@ -175,19 +155,13 @@ export const VisualizerChart = () => {
     return <Skeleton className="h-[80vh] w-[90vw]"></Skeleton>;
   }
 
+  if (!chartData) return;
+
   // We imported chartDefaults from chart.js above
   // chartDefaults.font.family = "'Inter', 'Helvetica','Arial'";
   // chartDefaults.font.family = "'Inter'";
   // chartDefaults.font.size = 20;
   chartDefaults.normalized = true;
-
-  // FIXME: I think we need to put this in useEffect[parsedData]? Like we do in Analyzer?
-  const sortedDatasets = processVisualizerData(parsedData);
-
-  const chartData = sortedDatasets.slice(0, 5); // Get top 5
-
-  const { firstDate, lastDate, roundedMaxWeightValue } =
-    getFirstLastDatesMaxWeightFromChartData(chartData);
 
   // devLog(firstDate);
   // console.log(`Visualizer chartData:`);

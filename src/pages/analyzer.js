@@ -46,11 +46,13 @@ const Analyzer = () => {
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
 
-  useEffect(() => {
-    if (!parsedData) return; // Don't set localStorage until we are in a running state
-    localStorage.setItem("SelectedLifts", JSON.stringify(liftTypesSelected));
-  }, [liftTypesSelected]);
+  // FIXME: set the localStorage when they click - try to avoid useEffect
+  // useEffect(() => {
+  //   if (!parsedData) return; // Don't set localStorage until we are in a running state
+  //   localStorage.setItem("SelectedLifts", JSON.stringify(liftTypesSelected));
+  // }, [liftTypesSelected]);
 
+  // FIXME: trying to load localStorage on init (maybe could be higher up? or lower down in select?)
   // useEffect(() => {
   //   if (!didInit) {
   //     didInit = true;
@@ -67,23 +69,11 @@ const Analyzer = () => {
   //   }
   // }, []);
 
-  // Main useEffect - wait for gsheet in data then process
-  // FIXME: this data->parseGSheet should be done at app level
-  // Then <Analyzer /> and <Visualizer /> can just do their own useEffect [parsedData] process chain
+  // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
     // devLog(`Analyzer useEffect[parsedData]:`);
     // devLog(parsedData);
     if (!parsedData) return;
-    // let localParsedData = null;
-
-    // // Get some parsedData
-    // if (data?.values) {
-    //   localParsedData = parseGSheetData(data.values);
-    // } else {
-    //   localParsedData = sampleParsedData;
-    // }
-
-    // setParsedData(localParsedData);
 
     // Count the frequency of each liftType
     // We need this for the lift type multi-select UI immediately

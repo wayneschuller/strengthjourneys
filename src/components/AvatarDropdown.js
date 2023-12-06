@@ -62,6 +62,8 @@ export function AvatarDropdown() {
           <DropdownMenuItem
             onClick={() => {
               localStorage.removeItem("ssid");
+              localStorage.removeItem("filename");
+              localStorage.removeItem("sheetURL");
               setSsid(null);
             }}
           >

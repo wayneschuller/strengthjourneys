@@ -29,10 +29,16 @@ export function handleOpenPicker(openPicker, accessToken, setSsid) {
       // console.log(data);
       if (data.docs && data.docs[0]) {
         const newSsid = data.docs[0].id;
+        const newFileName = data.docs[0].name;
+        const newSheetURL = data.docs[0].url;
+
         localStorage.setItem("ssid", newSsid);
-        setSsid(newSsid);
-        // FIXME: the right thing to do is to trigger a parsing of the data
-        // But it seems to happen through reactivity once Ssid is set in state
+        localStorage.setItem("filename", newFileName);
+        localStorage.setItem("sheetURL", newSheetURL);
+
+        setSsid(newSsid); // We keep this in state because conditional UI tests for it
+        // Should we trigger a parsing of the sheet data here?
+        // But it seems to happen through reactivity once ssid is set in state
         return;
       }
     },

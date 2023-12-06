@@ -78,6 +78,7 @@ export function Layout({ children }) {
     // Tell the user when demo mode has started
     if (!demoToastInit && session === null) {
       demoToastInit = true; // Don't show this again
+
       toast({
         title: "Demo Mode",
         description:
@@ -91,6 +92,8 @@ export function Layout({ children }) {
       return;
     }
 
+    console.log(data);
+
     // Tell the user when data is loaded
     if (
       !loadedToastInit &&
@@ -100,9 +103,14 @@ export function Layout({ children }) {
       parsedData?.length !== 0
     ) {
       loadedToastInit = true; // Don't show this again
+      const sheetFileName = localStorage.getItem("filename");
+      const sheetURL = localStorage.getItem("sheetURL");
+
+      const description = sheetFileName || "File name unknown";
+
       toast({
         title: "Data loaded from Google Sheets",
-        description: "Bespoke lifting data", // FIXME: gsheet name goes here
+        description: description,
       });
       return;
     }

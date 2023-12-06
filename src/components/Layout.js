@@ -14,6 +14,7 @@ import { sampleParsedData } from "@/lib/sampleParsedData";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { useRouter } from "next/router";
+import { useReadLocalStorage } from "usehooks-ts";
 
 let demoToastInit = false;
 let loadedToastInit = false;
@@ -23,6 +24,7 @@ export function Layout({ children }) {
     useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
+  const sheetFilename = useReadLocalStorage("sheetFilename");
   const { toast } = useToast();
   const router = useRouter();
   const currentPath = router.asPath;
@@ -92,8 +94,6 @@ export function Layout({ children }) {
       return;
     }
 
-    console.log(data);
-
     // Tell the user when data is loaded
     if (
       !loadedToastInit &&
@@ -103,10 +103,8 @@ export function Layout({ children }) {
       parsedData?.length !== 0
     ) {
       loadedToastInit = true; // Don't show this again
-      const sheetFileName = localStorage.getItem("filename");
-      const sheetURL = localStorage.getItem("sheetURL");
 
-      const description = sheetFileName || "File name unknown";
+      const description = sheetFilename || "File name unknown";
 
       toast({
         title: "Data loaded from Google Sheets",

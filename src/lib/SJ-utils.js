@@ -1,9 +1,10 @@
 // Simple wrapper for console.log
 export function devLog(message) {
-  console.log(`NODE_ENV is: ${process.env.NODE_ENV}`);
-  console.log(`STRENGTH_JOURNEYS_ENV is: ${process.env.STRENGTH_JOURNEYS_ENV}`);
+  console.log(
+    `NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV is: ${process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV}`,
+  );
 
-  if (process.env.STRENGTH_JOURNEYS_ENV === "development") {
+  if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development") {
     console.log(message);
   }
 }

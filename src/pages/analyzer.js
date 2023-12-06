@@ -14,8 +14,6 @@ import InstructionsCard from "@/components/InstructionsCard";
 import LiftAchievementsCard from "@/components/LiftAchievementsCard";
 import FancyMultiSelect from "@/components/ui/fancy-multi-select";
 import MonthsHighlightsCard from "@/components/MonthsHighlightsCard";
-// import { useLocalStorage } from "usehooks-ts";
-import { useLocalStorage } from "@uidotdev/usehooks";
 
 import {
   Card,
@@ -51,6 +49,8 @@ const Analyzer = () => {
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
 
+  const localStorageKey = `selectedLifts${isDemoMode ? "_demoMode" : ""}`;
+
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
     // devLog(`Analyzer useEffect[parsedData]: (isDemoMode: ${isDemoMode})`);
@@ -76,7 +76,7 @@ const Analyzer = () => {
     setLiftTypes(sortedLiftTypes);
 
     // Retrieve selectedLifts from localStorage
-    const selectedLifts = localStorage.getItem(`selectedLifts_${isDemoMode}`);
+    const selectedLifts = localStorage.getItem(localStorageKey);
 
     // Check if data exists in localStorage before parsing
     if (selectedLifts !== null) {

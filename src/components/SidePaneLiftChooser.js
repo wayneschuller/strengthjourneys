@@ -83,7 +83,7 @@ const CheckboxLifts = ({
     setIsDemoMode,
   } = useContext(ParsedDataContext);
 
-  const localStorageKey = `selectedLifts_${isDemoMode}`;
+  const localStorageKey = `selectedLifts${isDemoMode ? "_demoMode" : ""}`;
 
   const handleCheckboxChange = (liftType) => {
     // Calculate updatedSelected first

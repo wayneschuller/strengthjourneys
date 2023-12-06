@@ -16,6 +16,13 @@ import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/SJ-utils";
 import { useReadLocalStorage } from "usehooks-ts";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
 
@@ -95,27 +102,30 @@ export function DesktopNav() {
 const UserSheetIcon = () => {
   const { parsedData, setParsedData, ssid, setSsid } =
     useContext(ParsedDataContext);
-  // const [sheetFileName, setSheetFileName] = useLocalStorage("filename", null);
-  // const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
   const sheetFileName = useReadLocalStorage("sheetFilename");
   const sheetURL = decodeURIComponent(useReadLocalStorage("sheetURL"));
 
-  devLog(`ssid ${ssid} sheetFileName ${sheetFileName}`);
-  // if (!ssid || !sheetFileName || !sheetURL) return;
-
   return (
     ssid &&
+    sheetFileName &&
     sheetURL && (
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => {
-          // devLog(`Opening ${sheetFileName}: ${sheetURL}`);
-          window.open(sheetURL);
-        }}
-      >
-        <Table2 className="h-[1.2rem] w-[1.2rem]" />
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                // devLog(`Opening ${sheetFileName}: ${sheetURL}`);
+                window.open(sheetURL);
+              }}
+            >
+              <Table2 className="h-[1.2rem] w-[1.2rem]" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Click to open {sheetFileName} </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     )
   );
 };

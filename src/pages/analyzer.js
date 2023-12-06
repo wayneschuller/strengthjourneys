@@ -65,10 +65,13 @@ const Analyzer = () => {
       liftTypeFrequency[liftType] = (liftTypeFrequency[liftType] || 0) + 1;
     });
 
-    // Create an array of objects with value property for the multi-select
+    // Create an array of objects with liftType and frequency properties, sorted by frequency descending
     const sortedLiftTypes = Object.keys(liftTypeFrequency)
-      .sort((a, b) => liftTypeFrequency[b] - liftTypeFrequency[a])
-      .map((liftType) => ({ value: liftType, label: liftType }));
+      .map((liftType) => ({
+        liftType: liftType,
+        frequency: liftTypeFrequency[liftType],
+      }))
+      .sort((a, b) => b.frequency - a.frequency);
 
     setLiftTypes(sortedLiftTypes);
   }, [parsedData]);
@@ -174,8 +177,8 @@ const Analyzer = () => {
           </div>
           {liftTypesSelected.map((lift) => (
             <LiftAchievementsCard
-              key={`${lift.value}-card`}
-              liftType={lift.value}
+              key={`${lift.liftType}-card`}
+              liftType={lift.liftType}
               parsedData={parsedData}
             />
           ))}

@@ -3,10 +3,14 @@
 import { useState, useEffect, useContext } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getReadableDateString } from "@/lib/SJ-utils";
+import { devLog } from "@/lib/SJ-utils";
 
 const LiftAchievementsCard = ({ liftType, parsedData }) => {
   // Check the liftType exists in the data.
   // This sometimes happens when selectedLifts doesn't match data
+  devLog(`LiftAchievementsCard: liftType:`);
+  devLog(liftType);
+
   if (
     !parsedData ||
     parsedData.some((lifting) => lifting.liftType === liftType) === false

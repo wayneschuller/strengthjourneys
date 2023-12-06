@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Bold, Italic, Underline } from "lucide-react";
 import { devLog } from "@/lib/SJ-utils";
+import { useLocalStorage } from "usehooks-ts";
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -28,12 +29,14 @@ export function SidePanelLiftChooser({ liftTypes, selected, setSelected }) {
       </SheetTrigger>
       <SheetContent side="left">
         <SheetHeader>
-          <SheetTitle>ChooseLifts</SheetTitle>
+          <SheetTitle>Choose Lifts</SheetTitle>
           <SheetDescription>
-            Choose what lifts to display below
+            Choose what lifts to analyze and visualize (sets)
           </SheetDescription>
         </SheetHeader>
-        <ToggleGroupDemo liftTypes={liftTypes} />
+        <div className="mt-2 overflow-scroll">
+          <CheckboxLifts sortedLiftTypes={liftTypes} />
+        </div>
         {/* <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
@@ -57,6 +60,50 @@ export function SidePanelLiftChooser({ liftTypes, selected, setSelected }) {
     </Sheet>
   );
 }
+
+const CheckboxLifts = ({ sortedLiftTypes }) => {
+  // const [selectedLiftTypes, setSelectedLiftTypes] = useState([]);
+  const [selectedLiftTypes, setSelectedLiftTypes] = useLocalStorage(
+    "selectedLifts",
+    [],
+  );
+
+  useEffect(() => {
+    devLog(selectedLiftTypes);
+  }, [selectedLiftTypes]);
+
+  const handleCheckboxChange = (liftType) => {
+    setSelectedLiftTypes((prevSelected) => {
+      if (prevSelected.includes(liftType)) {
+        // Remove the liftType if already selected
+        return prevSelected.filter((selected) => selected !== liftType);
+      } else {
+        // Add the liftType if not selected
+        return [...prevSelected, liftType];
+      }
+    });
+  };
+
+  return (
+    <div>
+      <div>
+        {sortedLiftTypes.map(({ liftType, frequency }) => (
+          <div key={liftType}>
+            <input
+              className="mr-4"
+              type="checkbox"
+              id={liftType}
+              value={liftType}
+              checked={selectedLiftTypes.includes(liftType)}
+              onChange={() => handleCheckboxChange(liftType)}
+            />
+            <label htmlFor={liftType}>{`${liftType} (${frequency})`}</label>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 function ToggleGroupDemo({ liftTypes }) {
   devLog(liftTypes);

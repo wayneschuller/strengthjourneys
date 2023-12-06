@@ -1,9 +1,7 @@
 // Simple wrapper for console.log
 export function devLog(message) {
-  console.log(
-    `NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV is: ${process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV}`,
-  );
-
+  // We setup this special env variable on Vercel dev and preview but NOT production builds
+  // This is so non-localhost clients can see devLogs on Vercel preview builds
   if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development") {
     console.log(message);
   }

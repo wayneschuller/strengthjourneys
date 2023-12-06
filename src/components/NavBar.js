@@ -4,6 +4,8 @@
 
 import * as React from "react";
 import { useState, useEffect, useContext } from "react";
+import { useSession, signIn, sgnOut } from "next-auth/react";
+import { useReadLocalStorage } from "usehooks-ts";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -11,10 +13,10 @@ import { DarkModeToggle } from "@/components/DarkModeToggle";
 import MobileNav from "@/components/MobileNav";
 import { AvatarDropdown } from "./AvatarDropdown";
 import { ParsedDataContext } from "@/pages/_app";
+import useUserLiftData from "@/lib/useUserLiftData";
 import { Table2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/SJ-utils";
-import { useReadLocalStorage } from "usehooks-ts";
 
 import {
   Tooltip,
@@ -98,32 +100,35 @@ export function DesktopNav() {
   );
 }
 
-// When user data is loaded, give a link to their google sheet
+// When user is logged in with data, give a link to their google sheet
 const UserSheetIcon = () => {
   const { parsedData, setParsedData, ssid, setSsid } =
     useContext(ParsedDataContext);
-  const sheetFileName = useReadLocalStorage("sheetFilename");
+  const sheetFilename = useReadLocalStorage("sheetFilename");
   const sheetURL = decodeURIComponent(useReadLocalStorage("sheetURL"));
+  const { data: session } = useSession();
+  const { data, isError, isLoading } = useUserLiftData(session, ssid);
 
   return (
+    !isLoading &&
+    session?.user &&
     ssid &&
-    sheetFileName &&
-    sheetURL && (
+    sheetURL &&
+    sheetFilename && (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger>
+          <TooltipTrigger asChild>
             <Button
               variant="outline"
               size="icon"
               onClick={() => {
-                // devLog(`Opening ${sheetFileName}: ${sheetURL}`);
                 window.open(sheetURL);
               }}
             >
               <Table2 className="h-[1.2rem] w-[1.2rem]" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Click to open {sheetFileName} </TooltipContent>
+          <TooltipContent>Click to open {sheetFilename} </TooltipContent>
         </Tooltip>
       </TooltipProvider>
     )

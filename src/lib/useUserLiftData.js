@@ -1,3 +1,5 @@
+"use client";
+
 import useSWR from "swr";
 import useSWRImmutable from "swr/immutable";
 

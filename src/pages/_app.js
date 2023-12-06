@@ -21,7 +21,8 @@ let didInit = false;
 
 export default function App({ Component, pageProps, session }) {
   const [parsedData, setParsedData] = useState(null);
-  const [ssid, setSsid] = useState(null);
+  const [ssid, setSsid] = useState(null); // FIXME: convert to useLocalStorage hook
+  const [isDemoMode, setIsDemoMode] = useState(false); // needed for lift selector modes
 
   useEffect(() => {
     const initSsid = localStorage.getItem("ssid");
@@ -42,7 +43,14 @@ export default function App({ Component, pageProps, session }) {
       >
         <SessionProvider session={session}>
           <ParsedDataContext.Provider
-            value={{ parsedData, setParsedData, ssid, setSsid }}
+            value={{
+              parsedData,
+              setParsedData,
+              ssid,
+              setSsid,
+              isDemoMode,
+              setIsDemoMode,
+            }}
           >
             <div className={`min-h-screen bg-background ${inter.className}`}>
               <Layout>

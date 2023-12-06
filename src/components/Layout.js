@@ -20,8 +20,14 @@ let demoToastInit = false;
 let loadedToastInit = false;
 
 export function Layout({ children }) {
-  const { parsedData, setParsedData, ssid, setSsid } =
-    useContext(ParsedDataContext);
+  const {
+    parsedData,
+    setParsedData,
+    ssid,
+    setSsid,
+    isDemoMode,
+    setIsDemoMode,
+  } = useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
   const sheetFilename = useReadLocalStorage("sheetFilename");
@@ -44,6 +50,7 @@ export function Layout({ children }) {
       );
       devLog(data);
       signOut();
+      setIsDemoMode(true); // Go to demo mode when auto signing out
       return;
     }
 
@@ -56,8 +63,10 @@ export function Layout({ children }) {
     // Get some parsedData
     if (data?.values) {
       localParsedData = parseGSheetData(data.values);
+      setIsDemoMode(false);
     } else {
       localParsedData = sampleParsedData;
+      setIsDemoMode(true);
     }
 
     setParsedData(localParsedData);
@@ -112,7 +121,7 @@ export function Layout({ children }) {
       });
       return;
     }
-  }, [session, isLoading, ssid, parsedData, router]);
+  }, [session, isLoading, parsedData, router]);
 
   return (
     <>

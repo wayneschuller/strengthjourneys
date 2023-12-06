@@ -10,6 +10,7 @@ import { sampleParsedData } from "@/lib/sampleParsedData";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import InstructionsCard from "@/components/InstructionsCard";
+import { devLog } from "@/lib/SJ-utils";
 
 import {
   Sheet,
@@ -31,11 +32,18 @@ const DynamicHeaderVisualizerChart = dynamic(
 );
 
 const Visualizer = () => {
-  const { parsedData, setParsedData, ssid, setSsid } =
-    useContext(ParsedDataContext);
+  const {
+    parsedData,
+    setParsedData,
+    ssid,
+    setSsid,
+    isDemoMode,
+    setIsDemoMode,
+  } = useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { isLoading } = useUserLiftData(session, ssid);
 
+  devLog(`Visualizer render: ssid: ${ssid}`);
   if (!isLoading && session?.user && !ssid)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">

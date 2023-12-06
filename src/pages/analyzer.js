@@ -42,18 +42,24 @@ let didInit = false;
 
 const Analyzer = () => {
   const [liftTypes, setLiftTypes] = useState([]);
+  const {
+    parsedData,
+    setParsedData,
+    ssid,
+    setSsid,
+    isDemoMode,
+    setIsDemoMode,
+  } = useContext(ParsedDataContext);
   const [liftTypesSelected, setLiftTypesSelected] = useLocalStorage(
-    "selectedLifts",
+    `selectedLifts_${isDemoMode}`,
     [],
   );
-  const { parsedData, setParsedData, ssid, setSsid } =
-    useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
 
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
-    // devLog(`Analyzer useEffect[parsedData]:`);
+    devLog(`Analyzer useEffect[parsedData]:`);
     // devLog(parsedData);
     if (!parsedData) return;
 
@@ -115,41 +121,14 @@ const Analyzer = () => {
         .map((liftTypeObj) => liftTypeObj.liftType);
     }
 
-    // Update liftTypesSelected
-    setLiftTypesSelected(updatedSelections);
+    // Compare arrays for equality before updating the state
+    if (!arraysAreEqual(updatedSelections, liftTypesSelected)) {
+      // Update liftTypesSelected only if there is a change
+      setLiftTypesSelected(updatedSelections);
+    } else {
+      devLog(`avoided pushing setLiftTypesSelected due to no change`);
+    }
   }, [liftTypes, liftTypesSelected]);
-
-  // useEffect(() => {
-  //   devLog(`liftTypes:`);
-  //   devLog(liftTypes);
-
-  //   devLog(`liftTypesSelected (length: ${liftTypesSelected.length}):`);
-  //   devLog(liftTypesSelected);
-
-  //   // Filter the selected lift types to keep only those present in the liftTypes array
-  //   const validSelections = liftTypesSelected.filter((selected) =>
-  //     liftTypes.includes(selected),
-  //   );
-
-  //   if (
-  //     typeof liftTypesSelected === "undefined" ||
-  //     liftTypesSelected.length === 0
-  //   ) {
-  //     // Determine the number of elements to copy (up to a maximum of 4)
-  //     const elementsToCopy = Math.min(4, liftTypes.length);
-
-  //     // Copy the elements from sortedLiftTypes to liftTypeSelected state
-  //     // Just an array of lift name strings
-  //     setLiftTypesSelected(
-  //       liftTypes
-  //         .slice(0, elementsToCopy)
-  //         .map((liftTypeObj) => liftTypeObj.liftType),
-  //     );
-  //   } else {
-  //     // FIXME: we need to check that the liftTypesSelected only has elements that are in sortedLiftTypes
-  //     // OR handle this graciously elsewhere?
-  //   }
-  // }, [liftTypes, liftTypesSelected]);
 
   // devLog(`Rendering <Analyzer />...`);
 
@@ -241,3 +220,18 @@ const Analyzer = () => {
   );
 };
 export default Analyzer;
+
+// Helper function to check if two arrays of strings are equal
+function arraysAreEqual(arr1, arr2) {
+  if (arr1.length !== arr2.length) {
+    return false;
+  }
+
+  for (let i = 0; i < arr1.length; i++) {
+    if (arr1[i] !== arr2[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}

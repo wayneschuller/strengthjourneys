@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Bold, Italic, Underline } from "lucide-react";
 import { devLog } from "@/lib/SJ-utils";
 import { useLocalStorage } from "usehooks-ts";
+import { ParsedDataContext } from "@/pages/_app";
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -63,17 +64,25 @@ export function SidePanelLiftChooser({ liftTypes, selected, setSelected }) {
 
 const CheckboxLifts = ({ sortedLiftTypes }) => {
   // const [selectedLiftTypes, setSelectedLiftTypes] = useState([]);
-  const [selectedLiftTypes, setSelectedLiftTypes] = useLocalStorage(
-    "selectedLifts",
+  const {
+    parsedData,
+    setParsedData,
+    ssid,
+    setSsid,
+    isDemoMode,
+    setIsDemoMode,
+  } = useContext(ParsedDataContext);
+  const [liftTypesSelected, setLiftTypesSelected] = useLocalStorage(
+    `selectedLifts_${isDemoMode}`,
     [],
   );
 
   useEffect(() => {
-    devLog(selectedLiftTypes);
-  }, [selectedLiftTypes]);
+    devLog(liftTypesSelected);
+  }, [liftTypesSelected]);
 
   const handleCheckboxChange = (liftType) => {
-    setSelectedLiftTypes((prevSelected) => {
+    setLiftTypesSelected((prevSelected) => {
       // If the liftType is already selected, check if it's the last one
       if (prevSelected.includes(liftType)) {
         // Ensure there is always at least one lift selected
@@ -98,11 +107,11 @@ const CheckboxLifts = ({ sortedLiftTypes }) => {
               type="checkbox"
               id={liftType}
               value={liftType}
-              checked={selectedLiftTypes.includes(liftType)}
+              checked={liftTypesSelected.includes(liftType)}
               onChange={() => handleCheckboxChange(liftType)}
               disabled={
-                selectedLiftTypes.length === 1 &&
-                selectedLiftTypes.includes(liftType)
+                liftTypesSelected.length === 1 &&
+                liftTypesSelected.includes(liftType)
               }
             />
             <label

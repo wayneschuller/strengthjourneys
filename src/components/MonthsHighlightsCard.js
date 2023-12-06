@@ -7,7 +7,7 @@ import { devLog } from "@/lib/SJ-utils";
 const MonthsHighlightsCard = ({ parsedData, liftTypesSelected }) => {
   if (!parsedData) return;
 
-  let array = getBestEverLastMonth(liftTypesSelected, parsedData);
+  // let array = getBestEverLastMonth(liftTypesSelected, parsedData);
   // devLog(`MonthsHighlightsCard`);
   // devLog(array);
 

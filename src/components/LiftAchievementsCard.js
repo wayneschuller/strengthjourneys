@@ -8,8 +8,8 @@ import { devLog } from "@/lib/SJ-utils";
 const LiftAchievementsCard = ({ liftType, parsedData }) => {
   // Check the liftType exists in the data.
   // This sometimes happens when selectedLifts doesn't match data
-  devLog(`LiftAchievementsCard: liftType:`);
-  devLog(liftType);
+  // devLog(`LiftAchievementsCard: liftType:`);
+  // devLog(liftType);
 
   if (
     !parsedData ||

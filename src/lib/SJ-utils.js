@@ -1,5 +1,6 @@
 // Simple wrapper for console.log
 export function devLog(message) {
+  console.log(`NODE_ENV is: ${process.env.NODE_ENV}`);
   if (process.env.NODE_ENV === "development") {
     console.log(message);
   }

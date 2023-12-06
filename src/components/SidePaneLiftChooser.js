@@ -105,27 +105,29 @@ const CheckboxLifts = ({
   };
 
   return (
-    <ScrollArea className="mt-2 h-5/6">
-      {sortedLiftTypes.map(({ liftType, frequency }) => (
-        <div key={liftType}>
-          <input
-            className="mr-4"
-            type="checkbox"
-            id={liftType}
-            value={liftType}
-            checked={liftTypesSelected.includes(liftType)}
-            onChange={() => handleCheckboxChange(liftType)}
-            disabled={
-              liftTypesSelected.length === 1 &&
-              liftTypesSelected.includes(liftType)
-            }
-          />
-          <label
-            className="text-lg"
-            htmlFor={liftType}
-          >{`${liftType} (${frequency})`}</label>
-        </div>
-      ))}
+    <ScrollArea className="mt-2 h-[90vh]">
+      <div className="p-4">
+        {sortedLiftTypes.map(({ liftType, frequency }) => (
+          <div key={liftType}>
+            <input
+              className="mr-4"
+              type="checkbox"
+              id={liftType}
+              value={liftType}
+              checked={liftTypesSelected.includes(liftType)}
+              onChange={() => handleCheckboxChange(liftType)}
+              disabled={
+                liftTypesSelected.length === 1 &&
+                liftTypesSelected.includes(liftType)
+              }
+            />
+            <label
+              className="text-lg"
+              htmlFor={liftType}
+            >{`${liftType} (${frequency})`}</label>
+          </div>
+        ))}
+      </div>
     </ScrollArea>
   );
 };

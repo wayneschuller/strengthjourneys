@@ -49,7 +49,7 @@ const Analyzer = () => {
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
 
-  const localStorageKey = `selectedLifts${isDemoMode ? "_demoMode" : ""}`;
+  const localStorageKey = `selectedLifts${isDemoMode ? "_demoMode" : ""}`; // FIXME: should be inside useEffect?
 
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
@@ -86,9 +86,14 @@ const Analyzer = () => {
       devLog(parsedSelectedLifts);
       setLiftTypesSelected(parsedSelectedLifts);
     } else {
-      devLog(
-        `localstorage NULL found so set some default selectedLiftTypes on parsedData`,
-      );
+      // Select a number of lift types as default, minimum of 4 or the length of sortedLiftTypes
+      const numberOfDefaultLifts = Math.min(4, sortedLiftTypes.length);
+      const defaultSelectedLifts = sortedLiftTypes
+        .slice(0, numberOfDefaultLifts)
+        .map((lift) => lift.liftType);
+
+      // Set default selected lifts
+      setLiftTypesSelected(defaultSelectedLifts);
     }
   }, [parsedData]);
 

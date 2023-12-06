@@ -24,7 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import Heatmap from "@/components/heatmaps";
+import ActivityHeatmapsCard from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
 import { SidePanelLiftChooser } from "@/components/SidePaneLiftChooser";
 
@@ -120,28 +120,12 @@ const Analyzer = () => {
         </h1>
         <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
           <div className="md:col-span-2 xl:col-span-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="hidden md:block">
-                  Two Years of{" "}
-                  {session?.user?.name ? `${session.user.name}'s` : ""} Lifting
-                  {session?.user == null && " (Sample Data)"}
-                </CardTitle>
-                <CardTitle className="block md:hidden">
-                  Six Months of Lifting{" "}
-                  {session?.user == null && " (Sample Data)"}
-                </CardTitle>
-                {/* <CardDescription>Card Description</CardDescription> */}
-              </CardHeader>
-              <CardContent>
-                {isLoading && (
-                  <div className="flex">
-                    <Skeleton className="h-36 w-11/12 flex-1" />
-                  </div>
-                )}
-                {!isLoading && <Heatmap parsedData={parsedData} months={24} />}
-              </CardContent>
-            </Card>
+            {!isLoading && <ActivityHeatmapsCard parsedData={parsedData} />}
+            {isLoading && (
+              <div className="flex">
+                <Skeleton className="h-36 w-11/12 flex-1" />
+              </div>
+            )}
           </div>
           <div className="xl:col-span-2">
             {isLoading && (

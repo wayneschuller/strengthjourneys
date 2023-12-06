@@ -4,9 +4,45 @@ import { useState, useEffect, useContext } from "react";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
 import { devLog } from "@/lib/SJ-utils";
-
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+const ActivityHeatmapsCard = ({ parsedData }) => {
+  if (!parsedData) return;
+
+  // let array = getBestEverLastMonth(liftTypesSelected, parsedData);
+  // devLog(`MonthsHighlightsCard`);
+  // devLog(array);
+
+  // FIXME: put the isLoading skelenton in here internally
+
+  // FIXME: for desktop: break up the data into 2 year chunks.
+  // The final row can be an unfinished chunk, just pad it out.
+  // Then show heatmaps for each of those chunks!
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Activity History</CardTitle>
+        {/* <CardDescription>Card Description</CardDescription> */}
+      </CardHeader>
+      <CardContent>
+        <Heatmap parsedData={parsedData} months={24} />
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ActivityHeatmapsCard;
 
 function generateRandomHeatmapData() {
   const currentDate = new Date();
@@ -50,8 +86,16 @@ const Heatmap = ({ parsedData, months }) => {
     return null;
   }
 
+  // FIXME: make this do the entire card, not just the internals.
+
   // FIXME: if we are checking for mounted we could do clever stuff to get window width and adjust the heatmap data size accordingly?
   // We could set months based on window size here
+
+  // FIXME: instead of limiting to 2 years on desktop, just show multiple heatmaps in rows for all the data?!
+  // sm: show lots of rows of 6 months heatmaps
+  // md: show lots of rows of 1 year heatmaps
+  // xl: shows lots of rows of 2 year heatmaps
+  // This would look epic - an overview of your data
 
   if (!parsedData) return;
 
@@ -82,8 +126,6 @@ const Heatmap = ({ parsedData, months }) => {
     />
   );
 };
-
-export default Heatmap;
 
 // liftData.js
 

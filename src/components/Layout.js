@@ -63,8 +63,8 @@ export function Layout({ children }) {
 
   // useEffect for showing toast instructions on key state changes
   useEffect(() => {
-    devLog(`toast useEffect`);
-    devLog(session);
+    // devLog(`<Layout /> Toast useEffect`);
+    // devLog(session);
 
     // Check if the current path is "/visualizer" or "/analyzer"
     const isVisualizerRoute = currentPath === "/visualizer";
@@ -90,20 +90,22 @@ export function Layout({ children }) {
       return;
     }
 
+    // Tell the user when data is loaded
     if (
       !loadedToastInit &&
       !isLoading &&
+      ssid &&
       session?.user &&
       parsedData?.length !== 0
     ) {
       loadedToastInit = true; // Don't show this again
       toast({
         title: "Data loaded from Google Sheets",
-        description: "Bespoke lifting data",
+        description: "Bespoke lifting data", // FIXME: gsheet name goes here
       });
       return;
     }
-  }, [session, isLoading, parsedData]);
+  }, [session, isLoading, ssid, parsedData]);
 
   return (
     <>

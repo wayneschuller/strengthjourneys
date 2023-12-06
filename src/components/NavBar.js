@@ -2,12 +2,19 @@
 
 "use client";
 
+import * as React from "react";
+import { useState, useEffect, useContext } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
 import MobileNav from "@/components/MobileNav";
 import { AvatarDropdown } from "./AvatarDropdown";
+import { ParsedDataContext } from "@/pages/_app";
+import { Table2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { devLog } from "@/lib/SJ-utils";
+import { useReadLocalStorage } from "usehooks-ts";
 
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
@@ -18,6 +25,7 @@ export default function NavBar() {
       <DesktopNav />
       <MobileNav />
       <div className="mt-2 flex flex-1 items-center justify-end gap-2">
+        <UserSheetIcon />
         <DarkModeToggle />
         <AvatarDropdown />
       </div>
@@ -82,3 +90,32 @@ export function DesktopNav() {
     </>
   );
 }
+
+// When user data is loaded, give a link to their google sheet
+const UserSheetIcon = () => {
+  const { parsedData, setParsedData, ssid, setSsid } =
+    useContext(ParsedDataContext);
+  // const [sheetFileName, setSheetFileName] = useLocalStorage("filename", null);
+  // const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
+  const sheetFileName = useReadLocalStorage("sheetFilename");
+  const sheetURL = decodeURIComponent(useReadLocalStorage("sheetURL"));
+
+  devLog(`ssid ${ssid} sheetFileName ${sheetFileName}`);
+  // if (!ssid || !sheetFileName || !sheetURL) return;
+
+  return (
+    ssid &&
+    sheetURL && (
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => {
+          // devLog(`Opening ${sheetFileName}: ${sheetURL}`);
+          window.open(sheetURL);
+        }}
+      >
+        <Table2 className="h-[1.2rem] w-[1.2rem]" />
+      </Button>
+    )
+  );
+};

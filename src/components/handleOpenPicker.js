@@ -1,6 +1,13 @@
 /** @format */
 "use client";
-export function handleOpenPicker(openPicker, accessToken, setSsid) {
+
+export function handleOpenPicker(
+  openPicker,
+  accessToken,
+  setSsid,
+  setSheetURL,
+  setSheetFilename,
+) {
   console.log(`Opening Google Sheet Picker...`);
 
   const scopes = [
@@ -29,12 +36,12 @@ export function handleOpenPicker(openPicker, accessToken, setSsid) {
       // console.log(data);
       if (data.docs && data.docs[0]) {
         const newSsid = data.docs[0].id;
-        const newFileName = data.docs[0].name;
-        const newSheetURL = data.docs[0].url;
+        const newFilename = data.docs[0].name;
+        const newSheetURL = encodeURIComponent(data.docs[0].url);
 
         localStorage.setItem("ssid", newSsid);
-        localStorage.setItem("filename", newFileName);
-        localStorage.setItem("sheetURL", newSheetURL);
+        setSheetURL(newSheetURL);
+        setSheetFilename(newFilename);
 
         setSsid(newSsid); // We keep this in state because conditional UI tests for it
         // Should we trigger a parsing of the sheet data here?

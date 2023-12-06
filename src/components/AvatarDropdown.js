@@ -8,6 +8,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
 import { handleOpenPicker } from "@/components/handleOpenPicker";
 import { ParsedDataContext } from "@/pages/_app";
+import { useLocalStorage } from "usehooks-ts";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,11 @@ export function AvatarDropdown() {
   const [openPicker, authResponse] = useDrivePicker();
   const { parsedData, setParsedData, ssid, setSsid } =
     useContext(ParsedDataContext);
+  const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
+  const [sheetFilename, setSheetFilename] = useLocalStorage(
+    "sheetFilename",
+    null,
+  );
 
   if (!session)
     return (
@@ -43,7 +49,13 @@ export function AvatarDropdown() {
         {!ssid && (
           <DropdownMenuItem
             onClick={() =>
-              handleOpenPicker(openPicker, session.accessToken, setSsid)
+              handleOpenPicker(
+                openPicker,
+                session.accessToken,
+                setSsid,
+                setSheetURL,
+                setSheetFilename,
+              )
             }
           >
             Choose Google Sheet
@@ -52,7 +64,13 @@ export function AvatarDropdown() {
         {ssid && (
           <DropdownMenuItem
             onClick={() =>
-              handleOpenPicker(openPicker, session.accessToken, setSsid)
+              handleOpenPicker(
+                openPicker,
+                session.accessToken,
+                setSsid,
+                setSheetURL,
+                setSheetFilename,
+              )
             }
           >
             Choose New Google Sheet
@@ -61,9 +79,9 @@ export function AvatarDropdown() {
         {ssid && (
           <DropdownMenuItem
             onClick={() => {
+              setSheetURL(null);
+              setSheetFilename(null);
               localStorage.removeItem("ssid");
-              localStorage.removeItem("filename");
-              localStorage.removeItem("sheetURL");
               setSsid(null);
             }}
           >

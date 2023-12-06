@@ -3,29 +3,15 @@ import { useState, useEffect, useContext, useRef } from "react";
 import { useTheme } from "next-themes";
 import { getLiftColor } from "@/lib/getLiftColor";
 import { Line } from "react-chartjs-2";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import useUserLiftData from "@/lib/useUserLiftData";
 import { ParsedDataContext } from "@/pages/_app";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
-import { handleOpenPicker } from "@/components/handleOpenPicker";
-import { parseGSheetData } from "@/lib/parseGSheetData";
-import { sampleParsedData } from "@/lib/sampleParsedData";
 import { estimateE1RM } from "@/lib/estimateE1RM";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/SJ-utils";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import Image from "next/image";
-import InstructionsCard from "@/components/InstructionsCard";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 import {
   defaults as chartDefaults,
@@ -143,8 +129,6 @@ export const VisualizerChart = () => {
     // console.log(gridColor);
   }, [theme]);
 
-  // console.log(data);
-
   if (isLoading) {
     return <Skeleton className="h-[80vh] w-[90vw]"></Skeleton>;
   }
@@ -162,8 +146,6 @@ export const VisualizerChart = () => {
   chartDefaults.normalized = true;
 
   // devLog(firstDate);
-  // console.log(`Visualizer chartData:`);
-  // console.log(chartData);
 
   const scalesOptions = {
     x: {
@@ -228,7 +210,6 @@ export const VisualizerChart = () => {
   const dataLabelsOptions = {
     display: true,
     formatter: (context) => {
-      // console.log(context);
       return `${context.y}kg`;
     },
     font: (context) => {

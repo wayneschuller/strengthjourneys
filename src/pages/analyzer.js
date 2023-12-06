@@ -59,7 +59,7 @@ const Analyzer = () => {
 
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
-    devLog(`Analyzer useEffect[parsedData]:`);
+    devLog(`Analyzer useEffect[parsedData]: (isDemoMode: ${isDemoMode})`);
     // devLog(parsedData);
     if (!parsedData) return;
 
@@ -82,53 +82,24 @@ const Analyzer = () => {
     setLiftTypes(sortedLiftTypes);
   }, [parsedData]);
 
-  useEffect(() => {
-    devLog(`liftTypes:`);
-    devLog(liftTypes);
+  // useEffect(() => {
+  //   devLog(
+  //     `useEffect[selectedLiftsTypes, liftTypes]: (isDemoMode: ${isDemoMode})`,
+  //   );
 
-    devLog(`liftTypesSelected (length: ${liftTypesSelected.length}):`);
-    devLog(liftTypesSelected);
+  //   devLog(`liftTypes:`);
+  //   devLog(liftTypes);
 
-    let updatedSelections;
+  //   devLog(`liftTypesSelected (length: ${liftTypesSelected.length}):`);
+  //   devLog(liftTypesSelected);
 
-    if (
-      typeof liftTypesSelected === "undefined" ||
-      liftTypesSelected.length === 0
-    ) {
-      // Determine the number of elements to copy (up to a maximum of 4)
-      const elementsToCopy = Math.min(4, liftTypes.length);
+  //   return;
 
-      // Copy the elements from sortedLiftTypes to liftTypeSelected state
-      // Just an array of lift name strings
-      updatedSelections = liftTypes
-        .slice(0, elementsToCopy)
-        .map((liftTypeObj) => liftTypeObj.liftType);
-    } else {
-      // Filter the selected lift types to keep only those present in the liftTypes array
-      const validSelections = liftTypesSelected.filter((selected) =>
-        liftTypes.map((liftTypeObj) => liftTypeObj.liftType).includes(selected),
-      );
+  //   // FIXME: can we rewrite based on isDemoMode?
+  //   if (liftTypes == []) return; // Don't run until it loads data
 
-      // Update liftTypesSelected to only include valid selections
-      updatedSelections = validSelections;
-    }
-
-    // If validSelections is empty, pick the first four from liftTypes
-    if (updatedSelections.length === 0) {
-      const elementsToCopy = Math.min(4, liftTypes.length);
-      updatedSelections = liftTypes
-        .slice(0, elementsToCopy)
-        .map((liftTypeObj) => liftTypeObj.liftType);
-    }
-
-    // Compare arrays for equality before updating the state
-    if (!arraysAreEqual(updatedSelections, liftTypesSelected)) {
-      // Update liftTypesSelected only if there is a change
-      setLiftTypesSelected(updatedSelections);
-    } else {
-      devLog(`avoided pushing setLiftTypesSelected due to no change`);
-    }
-  }, [liftTypes, liftTypesSelected]);
+  //   if (liftTypesSelected == []) return; // Assume localStorage hasn't loaded yet
+  // }, [liftTypes, liftTypesSelected]);
 
   // devLog(`Rendering <Analyzer />...`);
 

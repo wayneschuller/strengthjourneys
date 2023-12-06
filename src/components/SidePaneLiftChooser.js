@@ -23,6 +23,9 @@ import {
 } from "@/components/ui/sheet";
 
 export function SidePanelLiftChooser({ liftTypes, selected, setSelected }) {
+  devLog(`Rendering <SidePanelLiftChooser /> selectedlifts:`);
+  devLog(selected);
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -36,7 +39,11 @@ export function SidePanelLiftChooser({ liftTypes, selected, setSelected }) {
           </SheetDescription>
         </SheetHeader>
         <div className="mt-2 overflow-auto">
-          <CheckboxLifts sortedLiftTypes={liftTypes} />
+          <CheckboxLifts
+            sortedLiftTypes={liftTypes}
+            liftTypesSelected={selected}
+            setLiftTypesSelected={setSelected}
+          />
         </div>
         {/* <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
@@ -62,8 +69,11 @@ export function SidePanelLiftChooser({ liftTypes, selected, setSelected }) {
   );
 }
 
-const CheckboxLifts = ({ sortedLiftTypes }) => {
-  // const [selectedLiftTypes, setSelectedLiftTypes] = useState([]);
+const CheckboxLifts = ({
+  sortedLiftTypes,
+  liftTypesSelected,
+  setLiftTypesSelected,
+}) => {
   const {
     parsedData,
     setParsedData,
@@ -72,13 +82,16 @@ const CheckboxLifts = ({ sortedLiftTypes }) => {
     isDemoMode,
     setIsDemoMode,
   } = useContext(ParsedDataContext);
-  const [liftTypesSelected, setLiftTypesSelected] = useLocalStorage(
-    `selectedLifts_${isDemoMode}`,
-    [],
-  );
+  // const [liftTypesSelected, setLiftTypesSelected] = useLocalStorage(
+  // `selectedLifts_${isDemoMode}`,
+  // [],
+  // );
+
+  console.log(`<CheckboxLifts /> rendering with liftTypesSelected:`);
+  devLog(liftTypesSelected);
 
   useEffect(() => {
-    devLog(liftTypesSelected);
+    // devLog(liftTypesSelected);
   }, [liftTypesSelected]);
 
   const handleCheckboxChange = (liftType) => {

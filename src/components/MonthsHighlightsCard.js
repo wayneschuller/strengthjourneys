@@ -19,6 +19,9 @@ const MonthsHighlightsCard = ({ parsedData, liftTypesSelected }) => {
       </CardHeader>
       <CardContent>
         {parsedData && <div>Sets: {parsedData.length}</div>}
+        {liftTypesSelected.map((liftType) => (
+          <div key={liftType}>Tell me about: {liftType}</div>
+        ))}
       </CardContent>
     </Card>
   );

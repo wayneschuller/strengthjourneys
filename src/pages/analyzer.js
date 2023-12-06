@@ -82,11 +82,13 @@ const Analyzer = () => {
     if (selectedLifts !== null) {
       // Parse and set data in the state
       const parsedSelectedLifts = JSON.parse(selectedLifts);
-      // devLog(`parsed new localStorage found:`);
-      // devLog(parsedSelectedLifts);
+      devLog(`parsed new localStorage found:`);
+      devLog(parsedSelectedLifts);
       setLiftTypesSelected(parsedSelectedLifts);
     } else {
-      devLog(`no localstorage found so set some defaults`);
+      devLog(
+        `localstorage NULL found so set some default selectedLiftTypes on parsedData`,
+      );
     }
   }, [parsedData]);
 

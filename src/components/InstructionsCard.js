@@ -7,6 +7,7 @@ import { handleOpenPicker } from "@/components/handleOpenPicker";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/SJ-utils";
 import Image from "next/image";
+import { useLocalStorage } from "usehooks-ts";
 
 import SampleImage from "../../public/sample_google_sheet_fuzzy_border.png";
 
@@ -23,6 +24,11 @@ const InstructionsCard = ({ session }) => {
   const [openPicker, authResponse] = useDrivePicker();
   const { parsedData, setParsedData, ssid, setSsid } =
     useContext(ParsedDataContext);
+  const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
+  const [sheetFilename, setSheetFilename] = useLocalStorage(
+    "sheetFilename",
+    null,
+  );
 
   return (
     <Card className="w-2/3">
@@ -72,7 +78,13 @@ const InstructionsCard = ({ session }) => {
         <Button
           className="w-full"
           onClick={() =>
-            handleOpenPicker(openPicker, session.accessToken, setSsid)
+            handleOpenPicker(
+              openPicker,
+              session.accessToken,
+              setSsid,
+              setSheetURL,
+              setSheetFilename,
+            )
           }
         >
           Choose Google Sheet

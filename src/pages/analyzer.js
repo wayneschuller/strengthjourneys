@@ -14,7 +14,8 @@ import InstructionsCard from "@/components/InstructionsCard";
 import LiftAchievementsCard from "@/components/LiftAchievementsCard";
 import FancyMultiSelect from "@/components/ui/fancy-multi-select";
 import MonthsHighlightsCard from "@/components/MonthsHighlightsCard";
-import { useLocalStorage } from "usehooks-ts";
+// import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage } from "@uidotdev/usehooks";
 
 import {
   Card,
@@ -25,15 +26,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import {
-  Sheet,
-  SheetContent,
-  SheetClose,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import Heatmap from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
 import { SidePanelLiftChooser } from "@/components/SidePaneLiftChooser";
@@ -50,16 +42,18 @@ const Analyzer = () => {
     isDemoMode,
     setIsDemoMode,
   } = useContext(ParsedDataContext);
-  const [liftTypesSelected, setLiftTypesSelected] = useLocalStorage(
-    `selectedLifts_${isDemoMode}`,
-    [],
-  );
+  const [liftTypesSelected, setLiftTypesSelected] = useState([]);
+  // const [liftTypesSelected, setLiftTypesSelected] = useLocalStorage(
+  // `selectedLifts_${isDemoMode}`,
+  // [],
+  // );
+
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
 
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
-    devLog(`Analyzer useEffect[parsedData]: (isDemoMode: ${isDemoMode})`);
+    // devLog(`Analyzer useEffect[parsedData]: (isDemoMode: ${isDemoMode})`);
     // devLog(parsedData);
     if (!parsedData) return;
 
@@ -80,28 +74,24 @@ const Analyzer = () => {
       .sort((a, b) => b.frequency - a.frequency);
 
     setLiftTypes(sortedLiftTypes);
+
+    // Retrieve selectedLifts from localStorage
+    const selectedLifts = localStorage.getItem(`selectedLifts_${isDemoMode}`);
+
+    // Check if data exists in localStorage before parsing
+    if (selectedLifts !== null) {
+      // Parse and set data in the state
+      const parsedSelectedLifts = JSON.parse(selectedLifts);
+      // devLog(`parsed new localStorage found:`);
+      // devLog(parsedSelectedLifts);
+      setLiftTypesSelected(parsedSelectedLifts);
+    } else {
+      devLog(`no localstorage found so set some defaults`);
+    }
   }, [parsedData]);
 
-  // useEffect(() => {
-  //   devLog(
-  //     `useEffect[selectedLiftsTypes, liftTypes]: (isDemoMode: ${isDemoMode})`,
-  //   );
-
-  //   devLog(`liftTypes:`);
-  //   devLog(liftTypes);
-
-  //   devLog(`liftTypesSelected (length: ${liftTypesSelected.length}):`);
-  //   devLog(liftTypesSelected);
-
-  //   return;
-
-  //   // FIXME: can we rewrite based on isDemoMode?
-  //   if (liftTypes == []) return; // Don't run until it loads data
-
-  //   if (liftTypesSelected == []) return; // Assume localStorage hasn't loaded yet
-  // }, [liftTypes, liftTypesSelected]);
-
-  // devLog(`Rendering <Analyzer />...`);
+  devLog(`Rendering <Analyzer />...`);
+  devLog(liftTypesSelected);
 
   if (!isLoading && session?.user && !ssid)
     return (
@@ -109,8 +99,6 @@ const Analyzer = () => {
         <InstructionsCard session={session} />
       </div>
     );
-
-  // devLog(liftTypesSelected);
 
   return (
     <>
@@ -180,7 +168,7 @@ const Analyzer = () => {
           </div>
           {liftTypesSelected.map((lift) => (
             <LiftAchievementsCard
-              key={`${lift}-card`}
+              key={`${lift}-card-${liftTypesSelected}`}
               liftType={lift}
               parsedData={parsedData}
             />

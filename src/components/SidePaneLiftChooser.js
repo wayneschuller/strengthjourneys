@@ -23,8 +23,8 @@ import {
 } from "@/components/ui/sheet";
 
 export function SidePanelLiftChooser({ liftTypes, selected, setSelected }) {
-  devLog(`Rendering <SidePanelLiftChooser /> selectedlifts:`);
-  devLog(selected);
+  // devLog(`Rendering <SidePanelLiftChooser /> selectedlifts:`);
+  // devLog(selected);
 
   return (
     <Sheet>
@@ -82,32 +82,27 @@ const CheckboxLifts = ({
     isDemoMode,
     setIsDemoMode,
   } = useContext(ParsedDataContext);
-  // const [liftTypesSelected, setLiftTypesSelected] = useLocalStorage(
-  // `selectedLifts_${isDemoMode}`,
-  // [],
-  // );
 
-  console.log(`<CheckboxLifts /> rendering with liftTypesSelected:`);
-  devLog(liftTypesSelected);
-
-  useEffect(() => {
-    // devLog(liftTypesSelected);
-  }, [liftTypesSelected]);
+  const localStorageKey = `selectedLifts_${isDemoMode}`;
 
   const handleCheckboxChange = (liftType) => {
-    setLiftTypesSelected((prevSelected) => {
-      // If the liftType is already selected, check if it's the last one
-      if (prevSelected.includes(liftType)) {
-        // Ensure there is always at least one lift selected
-        if (prevSelected.length === 1) {
-          return prevSelected; // Do not remove the last selected lift
-        }
-        return prevSelected.filter((selected) => selected !== liftType);
-      }
+    // Calculate updatedSelected first
+    const updatedSelected = liftTypesSelected.includes(liftType)
+      ? liftTypesSelected.filter((selected) => selected !== liftType)
+      : [...liftTypesSelected, liftType];
 
-      // If the liftType is not selected, add it
-      return [...prevSelected, liftType];
-    });
+    // Ensure there is always at least one lift selected
+    // Unlikely as we also disable the UI when one is left
+    if (updatedSelected.length === 0) {
+      // Do not remove the last selected lift
+      return;
+    }
+
+    // Set the state
+    setLiftTypesSelected(updatedSelected);
+
+    // Update localStorage
+    localStorage.setItem(localStorageKey, JSON.stringify(updatedSelected));
   };
 
   return (

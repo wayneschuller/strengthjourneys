@@ -8,6 +8,7 @@ import { Bold, Italic, Underline } from "lucide-react";
 import { devLog } from "@/lib/SJ-utils";
 import { useLocalStorage } from "usehooks-ts";
 import { ParsedDataContext } from "@/pages/_app";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -38,13 +39,11 @@ export function SidePanelLiftChooser({ liftTypes, selected, setSelected }) {
             Choose what lifts to analyze and visualize (sets)
           </SheetDescription>
         </SheetHeader>
-        <div className="mt-2 overflow-auto">
-          <CheckboxLifts
-            sortedLiftTypes={liftTypes}
-            liftTypesSelected={selected}
-            setLiftTypesSelected={setSelected}
-          />
-        </div>
+        <CheckboxLifts
+          sortedLiftTypes={liftTypes}
+          liftTypesSelected={selected}
+          setLiftTypesSelected={setSelected}
+        />
         {/* <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
@@ -106,30 +105,28 @@ const CheckboxLifts = ({
   };
 
   return (
-    <div>
-      <div>
-        {sortedLiftTypes.map(({ liftType, frequency }) => (
-          <div key={liftType}>
-            <input
-              className="mr-4"
-              type="checkbox"
-              id={liftType}
-              value={liftType}
-              checked={liftTypesSelected.includes(liftType)}
-              onChange={() => handleCheckboxChange(liftType)}
-              disabled={
-                liftTypesSelected.length === 1 &&
-                liftTypesSelected.includes(liftType)
-              }
-            />
-            <label
-              className="text-lg"
-              htmlFor={liftType}
-            >{`${liftType} (${frequency})`}</label>
-          </div>
-        ))}
-      </div>
-    </div>
+    <ScrollArea className="mt-2 h-5/6">
+      {sortedLiftTypes.map(({ liftType, frequency }) => (
+        <div key={liftType}>
+          <input
+            className="mr-4"
+            type="checkbox"
+            id={liftType}
+            value={liftType}
+            checked={liftTypesSelected.includes(liftType)}
+            onChange={() => handleCheckboxChange(liftType)}
+            disabled={
+              liftTypesSelected.length === 1 &&
+              liftTypesSelected.includes(liftType)
+            }
+          />
+          <label
+            className="text-lg"
+            htmlFor={liftType}
+          >{`${liftType} (${frequency})`}</label>
+        </div>
+      ))}
+    </ScrollArea>
   );
 };
 

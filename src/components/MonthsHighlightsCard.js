@@ -26,18 +26,16 @@ const MonthsHighlightsCard = ({ parsedData, liftTypesSelected }) => {
 
 export default MonthsHighlightsCard;
 
-function getBestEverLastMonth(liftTypesSelected, parsedData) {
+function getBestEverLastMonth(selectedLiftTypes, parsedData) {
   // Calculate the date one month ago
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-  // Filter the parsedData for lifts in liftTypesSelected and within the last month
+  // Filter the parsedData for lifts in selectedLiftTypes and within the last month
   const filteredData = parsedData.filter((lifting) => {
     const liftingDate = new Date(lifting.date);
     return (
-      liftTypesSelected.some(
-        (selected) => selected.value === lifting.liftType,
-      ) && liftingDate >= oneMonthAgo
+      selectedLiftTypes.includes(lifting.liftType) && liftingDate >= oneMonthAgo
     );
   });
 
@@ -45,9 +43,7 @@ function getBestEverLastMonth(liftTypesSelected, parsedData) {
   const bestEverResults = {};
 
   parsedData.forEach((lifting) => {
-    if (
-      liftTypesSelected.some((selected) => selected.value === lifting.liftType)
-    ) {
+    if (selectedLiftTypes.includes(lifting.liftType)) {
       const { reps, weight } = lifting;
 
       if (

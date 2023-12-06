@@ -34,7 +34,7 @@ export function SidePanelLiftChooser({ liftTypes, selected, setSelected }) {
             Choose what lifts to analyze and visualize (sets)
           </SheetDescription>
         </SheetHeader>
-        <div className="mt-2 overflow-scroll">
+        <div className="mt-2 overflow-auto">
           <CheckboxLifts sortedLiftTypes={liftTypes} />
         </div>
         {/* <div className="grid gap-4 py-4">
@@ -74,13 +74,17 @@ const CheckboxLifts = ({ sortedLiftTypes }) => {
 
   const handleCheckboxChange = (liftType) => {
     setSelectedLiftTypes((prevSelected) => {
+      // If the liftType is already selected, check if it's the last one
       if (prevSelected.includes(liftType)) {
-        // Remove the liftType if already selected
+        // Ensure there is always at least one lift selected
+        if (prevSelected.length === 1) {
+          return prevSelected; // Do not remove the last selected lift
+        }
         return prevSelected.filter((selected) => selected !== liftType);
-      } else {
-        // Add the liftType if not selected
-        return [...prevSelected, liftType];
       }
+
+      // If the liftType is not selected, add it
+      return [...prevSelected, liftType];
     });
   };
 
@@ -96,8 +100,15 @@ const CheckboxLifts = ({ sortedLiftTypes }) => {
               value={liftType}
               checked={selectedLiftTypes.includes(liftType)}
               onChange={() => handleCheckboxChange(liftType)}
+              disabled={
+                selectedLiftTypes.length === 1 &&
+                selectedLiftTypes.includes(liftType)
+              }
             />
-            <label htmlFor={liftType}>{`${liftType} (${frequency})`}</label>
+            <label
+              className="text-lg"
+              htmlFor={liftType}
+            >{`${liftType} (${frequency})`}</label>
           </div>
         ))}
       </div>

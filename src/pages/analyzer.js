@@ -83,6 +83,11 @@ const Analyzer = () => {
     devLog(`liftTypesSelected (length: ${liftTypesSelected.length}):`);
     devLog(liftTypesSelected);
 
+    // Filter the selected lift types to keep only those present in the liftTypes array
+    const validSelections = liftTypesSelected.filter((selected) =>
+      liftTypes.includes(selected),
+    );
+
     if (
       typeof liftTypesSelected === "undefined" ||
       liftTypesSelected.length === 0
@@ -91,7 +96,12 @@ const Analyzer = () => {
       const elementsToCopy = Math.min(4, liftTypes.length);
 
       // Copy the elements from sortedLiftTypes to liftTypeSelected state
-      setLiftTypesSelected(liftTypes.slice(0, elementsToCopy));
+      // Just an array of lift name strings
+      setLiftTypesSelected(
+        liftTypes
+          .slice(0, elementsToCopy)
+          .map((liftTypeObj) => liftTypeObj.liftType),
+      );
     } else {
       // FIXME: we need to check that the liftTypesSelected only has elements that are in sortedLiftTypes
       // OR handle this graciously elsewhere?
@@ -177,8 +187,8 @@ const Analyzer = () => {
           </div>
           {liftTypesSelected.map((lift) => (
             <LiftAchievementsCard
-              key={`${lift.liftType}-card`}
-              liftType={lift.liftType}
+              key={`${lift}-card`}
+              liftType={lift}
               parsedData={parsedData}
             />
           ))}

@@ -2,6 +2,9 @@
 export function devLog(message) {
   console.log(`NODE_ENV is: ${process.env.NODE_ENV}`);
   console.log(`VERCEL_ENV is: ${process.env.VERCEL_ENV}`);
+  console.log(`process.env is:`);
+  console.log(process.env);
+
   if (process.env.NODE_ENV === "development") {
     console.log(message);
   }

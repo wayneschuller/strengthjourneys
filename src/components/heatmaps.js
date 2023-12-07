@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
+import { ParsedDataContext } from "@/pages/_app";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
 import { devLog } from "@/lib/SJ-utils";
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/tooltip";
 
 const ActivityHeatmapsCard = ({ parsedData }) => {
+  const { isDemoMode } = useContext(ParsedDataContext);
   const { width, height } = useWindowSize();
 
   if (!parsedData) return;
@@ -78,24 +80,26 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
           );
         })}
       </CardContent>
-      <CardFooter>
-        <div className="flex flex-1 flex-row justify-end">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline">
-                  <Share2
-                    onClick={() => {
-                      devLog(`FIXME: implement sharing of heatmap images`);
-                    }}
-                  />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Share heatmaps to clipboard</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </CardFooter>
+      {!isDemoMode && (
+        <CardFooter>
+          <div className="flex flex-1 flex-row justify-end">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline">
+                    <Share2
+                      onClick={() => {
+                        devLog(`FIXME: implement sharing of heatmap images`);
+                      }}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Share heatmaps to clipboard</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </CardFooter>
+      )}
     </Card>
   );
 };
@@ -153,6 +157,7 @@ const Heatmap = ({ parsedData, startDate, endDate }) => {
   );
 };
 
+// Create heatmapData {date: lift.date, count: 1} whever we have parsedData activity
 export const generateHeatmapData = (parsedData, startDate, endDate) => {
   const startTime = performance.now();
 
@@ -175,17 +180,9 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
     })
     .map((lift) => ({ date: lift.date, count: 1 }));
 
-  if (
-    heatmapData.length > 0 &&
-    new Date(heatmapData[0].date) > new Date(startDate)
-  ) {
-    heatmapData.unshift({
-      date: new Date(startDate),
-      count: 0,
-    });
-  }
-
-  heatmapData.sort((a, b) => new Date(a.date) - new Date(b.date));
+  // If we assume that parsedData is sorted then we don't need this
+  // expensive extra sort.
+  // heatmapData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
   devLog(
     "generateHeatmapData() execution time: " +

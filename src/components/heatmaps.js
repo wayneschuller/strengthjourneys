@@ -20,14 +20,18 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
   if (!parsedData) return;
 
   // let array = getBestEverLastMonth(liftTypesSelected, parsedData);
-  // devLog(`MonthsHighlightsCard`);
-  // devLog(array);
+  // devLog(`ActivityHeatmapsCard`);
 
   // FIXME: put the isLoading skelenton in here internally
 
   // FIXME: for desktop: break up the data into 2 year chunks.
   // The final row can be an unfinished chunk, just pad it out.
   // Then show heatmaps for each of those chunks!
+  const { startDate, endDate } = findDateRange(parsedData);
+
+  const intervals = generateDatePairs(startDate, endDate);
+  devLog(`startDate: ${startDate}, endDate: ${endDate}, intervals:`);
+  devLog(intervals);
 
   return (
     <Card>
@@ -187,3 +191,74 @@ export const generateHeatmapData = (parsedData, months) => {
     heatmapData,
   };
 };
+
+function findDateRange(parsedData) {
+  if (!parsedData || parsedData.length === 0) {
+    return null; // Return null for an empty array or invalid input
+  }
+
+  // Initialize start and end dates with the date of the first item in the array
+  let startDate = new Date(parsedData[0].date);
+  let endDate = new Date(parsedData[0].date);
+
+  // Iterate through the array to find the actual start and end dates
+  parsedData.forEach((item) => {
+    const currentDate = new Date(item.date);
+
+    if (currentDate < startDate) {
+      startDate = currentDate;
+    }
+
+    if (currentDate > endDate) {
+      endDate = currentDate;
+    }
+  });
+
+  return {
+    startDate: startDate.toISOString().split("T")[0],
+    endDate: endDate.toISOString().split("T")[0],
+  };
+}
+
+function generateDatePairs(startDateStr, endDateStr) {
+  const datePairs = [];
+
+  // Convert input strings to Date objects
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+
+  let currentIntervalStart = new Date(startDate);
+
+  // Check if the startDate is within two years of the endDate
+  if (
+    currentIntervalStart > endDate ||
+    currentIntervalStart <
+      new Date(endDate).setFullYear(endDate.getFullYear() - 2)
+  ) {
+    currentIntervalStart.setFullYear(currentIntervalStart.getFullYear() - 2);
+  }
+
+  while (currentIntervalStart < endDate) {
+    // Calculate two-year intervals
+    const currentIntervalEnd = new Date(currentIntervalStart);
+    currentIntervalEnd.setFullYear(currentIntervalEnd.getFullYear() + 2);
+
+    // Ensure the interval end is not beyond the end date
+    if (currentIntervalEnd > endDate) {
+      break;
+    }
+
+    // Format dates as strings
+    const interval = [
+      currentIntervalStart.toISOString().split("T")[0],
+      currentIntervalEnd.toISOString().split("T")[0],
+    ];
+
+    datePairs.push(interval);
+
+    // Move to the next interval
+    currentIntervalStart = new Date(currentIntervalEnd);
+  }
+
+  return datePairs;
+}

@@ -66,14 +66,6 @@ const Analyzer = () => {
           PR Analyzer
         </h1>
         <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
-          <div className="md:col-span-2 xl:col-span-4">
-            {!isLoading && <ActivityHeatmapsCard parsedData={parsedData} />}
-            {isLoading && (
-              <div className="flex">
-                <Skeleton className="h-36 w-11/12 flex-1" />
-              </div>
-            )}
-          </div>
           <div className="xl:col-span-2">
             {isLoading && (
               <div className="flex">
@@ -89,6 +81,14 @@ const Analyzer = () => {
           </div>
           <div className="xl:col-span-2">
             <InspirationCard />
+          </div>
+          <div className="md:col-span-2 xl:col-span-4">
+            {!isLoading && <ActivityHeatmapsCard parsedData={parsedData} />}
+            {isLoading && (
+              <div className="flex">
+                <Skeleton className="h-36 w-11/12 flex-1" />
+              </div>
+            )}
           </div>
           <Separator className="md:col-span-2 xl:col-span-4" />
         </div>

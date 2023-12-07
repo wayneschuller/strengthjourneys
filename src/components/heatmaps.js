@@ -29,7 +29,8 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
   // Then show heatmaps for each of those chunks!
 
   const { startDate, endDate } = findDateRange(parsedData);
-  const intervals = generateDateRanges(startDate, endDate);
+  const intervals = generateDateRanges(startDate, endDate, 24);
+  devLog(intervals);
 
   return (
     <Card>
@@ -55,7 +56,7 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
 
           return (
             <div className="mb-6" key={`${index}-heatmap`}>
-              <div className="text-center text-lg">
+              <div className="text-center text-sm lg:text-lg">
                 {formattedStartDate} - {formattedEndDate}
               </div>
               <Heatmap
@@ -181,7 +182,10 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
     })
     .map((lift) => ({ date: lift.date, count: 1 }));
 
-  if (new Date(heatmapData[0].date) > new Date(startDate)) {
+  if (
+    heatmapData.length > 0 &&
+    new Date(heatmapData[0].date) > new Date(startDate)
+  ) {
     heatmapData.unshift({
       date: new Date(startDate),
       count: 0,
@@ -283,50 +287,7 @@ function findDateRange(parsedData) {
   };
 }
 
-function generateDatePairs(startDateStr, endDateStr) {
-  const datePairs = [];
-
-  // Convert input strings to Date objects
-  const startDate = new Date(startDateStr);
-  const endDate = new Date(endDateStr);
-
-  let currentIntervalStart = new Date(startDate);
-
-  // Check if the startDate is within two years of the endDate
-  if (
-    currentIntervalStart > endDate ||
-    currentIntervalStart <
-      new Date(endDate).setFullYear(endDate.getFullYear() - 2)
-  ) {
-    currentIntervalStart.setFullYear(currentIntervalStart.getFullYear() - 2);
-  }
-
-  while (currentIntervalStart < endDate) {
-    // Calculate two-year intervals
-    const currentIntervalEnd = new Date(currentIntervalStart);
-    currentIntervalEnd.setFullYear(currentIntervalEnd.getFullYear() + 2);
-
-    // Ensure the interval end is not beyond the end date
-    if (currentIntervalEnd > endDate) {
-      break;
-    }
-
-    // Format dates as strings
-    const interval = [
-      currentIntervalStart.toISOString().split("T")[0],
-      currentIntervalEnd.toISOString().split("T")[0],
-    ];
-
-    datePairs.push(interval);
-
-    // Move to the next interval
-    currentIntervalStart = new Date(currentIntervalEnd);
-  }
-
-  return datePairs;
-}
-
-function generateDateRanges(startDateStr, endDateStr) {
+function generateDateRangesOld(startDateStr, endDateStr) {
   // Convert input date strings to Date objects
   const startDate = new Date(startDateStr);
   const endDate = new Date(endDateStr);
@@ -353,9 +314,55 @@ function generateDateRanges(startDateStr, endDateStr) {
       currentEndDate.setFullYear(currentEndDate.getFullYear() + 2);
 
       dateRanges.push({ start: currentStartDate, end: currentEndDate });
-
       // Move the start date for the next iteration
       currentStartDate = new Date(currentEndDate);
+    }
+    return dateRanges;
+  }
+}
+
+function generateDateRanges(startDateStr, endDateStr, intervalMonths) {
+  // Convert input date strings to Date objects
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+
+  // Calculate the duration of the input date range in milliseconds
+  const rangeDuration = endDate - startDate;
+
+  // Calculate the interval duration in milliseconds
+  const intervalDuration = intervalMonths * 30 * 24 * 60 * 60 * 1000;
+
+  // Check if the duration is less than the specified interval
+  if (rangeDuration < intervalDuration) {
+    // If less than the interval, place startDate and endDate in the middle of the interval
+    const middleDate = new Date(
+      startDate.getTime() + rangeDuration / 2 - intervalDuration / 2,
+    );
+    const intervalStartDate = new Date(middleDate);
+    const intervalEndDate = new Date(intervalStartDate);
+    intervalEndDate.setMilliseconds(
+      intervalEndDate.getMilliseconds() + intervalDuration,
+    );
+
+    return [{ start: intervalStartDate, end: intervalEndDate }];
+  } else {
+    // If more than the interval, generate multiple ranges with the specified interval
+    const dateRanges = [];
+    let currentStartDate = new Date(startDate);
+
+    while (currentStartDate < endDate) {
+      const currentEndDate = new Date(currentStartDate);
+      currentEndDate.setMilliseconds(
+        currentEndDate.getMilliseconds() + intervalDuration,
+      );
+
+      dateRanges.push({
+        start: new Date(currentStartDate),
+        end: new Date(currentEndDate),
+      });
+
+      // Move the start date for the next iteration
+      currentStartDate.setTime(currentEndDate.getTime());
     }
     return dateRanges;
   }

@@ -66,7 +66,7 @@ export const VisualizerChart = () => {
     setSelectedLiftTypes,
   } = useContext(ParsedDataContext);
   const { data: session } = useSession();
-  const { isLoading } = useUserLiftData(session, ssid);
+  const { isLoading } = useUserLiftData();
   const [openPicker, authResponse] = useDrivePicker();
   const chartRef = useRef(null);
   const [chartData, setChartData] = useState(null);

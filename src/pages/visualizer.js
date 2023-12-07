@@ -39,9 +39,13 @@ const Visualizer = () => {
     setSsid,
     isDemoMode,
     setIsDemoMode,
+    liftTypes,
+    setLiftTypes,
+    selectedLiftTypes,
+    setSelectedLiftTypes,
   } = useContext(ParsedDataContext);
   const { data: session } = useSession();
-  const { isLoading } = useUserLiftData(session, ssid);
+  const { isLoading } = useUserLiftData();
 
   devLog(`Visualizer render: ssid: ${ssid}`);
   if (!isLoading && session?.user && !ssid)

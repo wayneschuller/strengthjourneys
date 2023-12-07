@@ -33,7 +33,7 @@ export function Layout({ children }) {
     setSelectedLiftTypes,
   } = useContext(ParsedDataContext);
   const { data: session } = useSession();
-  const { data, isError, isLoading } = useUserLiftData(session, ssid);
+  const { data, isError, isLoading } = useUserLiftData();
   const sheetFilename = useReadLocalStorage("sheetFilename");
   const { toast } = useToast();
   const router = useRouter();

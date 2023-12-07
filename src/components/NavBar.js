@@ -115,7 +115,7 @@ const UserSheetIcon = () => {
   const sheetFilename = useReadLocalStorage("sheetFilename");
   const sheetURL = decodeURIComponent(useReadLocalStorage("sheetURL"));
   const { data: session } = useSession();
-  const { data, isError, isLoading } = useUserLiftData(session, ssid);
+  const { data, isError, isLoading } = useUserLiftData();
 
   return (
     !isLoading &&

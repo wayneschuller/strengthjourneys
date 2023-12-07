@@ -1,8 +1,8 @@
 "use client";
 
 import Head from "next/head";
-import { useContext, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useContext, useState, useEffect } from "react";
 import useUserLiftData from "@/lib/useUserLiftData";
 import { ParsedDataContext } from "@/pages/_app";
 import { parseGSheetData } from "@/lib/parseGSheetData";
@@ -45,7 +45,7 @@ const Analyzer = () => {
   } = useContext(ParsedDataContext);
 
   const { data: session } = useSession();
-  const { data, isError, isLoading } = useUserLiftData(session, ssid);
+  const { data, isError, isLoading } = useUserLiftData();
 
   // Main useEffect - wait for parsedData process component specfic data
   // useEffect(() => {

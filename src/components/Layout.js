@@ -59,18 +59,20 @@ export function Layout({ children }) {
       return;
     }
 
-    let parsedData = null; // A local parsedData for this scope only
+    let parsedData = null; // A local version for this scope only
+    let isDemoMode = true; // A local version for this scope only
 
     // Get some parsedData
     if (data?.values) {
       parsedData = parseGSheetData(data.values);
 
       // FIXME: here is the point to check for parsing failures and go to demomode.
-
-      setIsDemoMode(false);
+      isDemoMode = false;
+      setIsDemoMode(isDemoMode);
     } else {
       parsedData = sampleParsedData;
-      setIsDemoMode(true);
+      isDemoMode = true;
+      setIsDemoMode(isDemoMode);
     }
 
     // Before we set parsedData there are a few other global
@@ -106,14 +108,21 @@ export function Layout({ children }) {
       setSelectedLiftTypes(parsedSelectedLifts);
     } else {
       // Select a number of lift types as default, minimum of 4 or the length of sortedLiftTypes
-      devLog(`Setting some default selected lifts`);
       const numberOfDefaultLifts = Math.min(4, sortedLiftTypes.length);
       const defaultSelectedLifts = sortedLiftTypes
         .slice(0, numberOfDefaultLifts)
         .map((lift) => lift.liftType);
 
-      // Set default selected lifts
+      devLog(
+        `Localstorage selectedLifts not found! (demomode is ${isDemoMode}). Setting:`,
+      );
+      devLog(defaultSelectedLifts);
+      // Set default selected lifts in state and localStorage
       setSelectedLiftTypes(defaultSelectedLifts);
+      localStorage.setItem(
+        localStorageKey,
+        JSON.stringify(defaultSelectedLifts),
+      );
     }
 
     setParsedData(parsedData);

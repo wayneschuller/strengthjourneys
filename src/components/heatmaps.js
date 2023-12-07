@@ -160,29 +160,32 @@ const Heatmap = ({ parsedData, startDate, endDate, isMobile }) => {
 export const generateHeatmapData = (parsedData, startDate, endDate) => {
   const startTime = performance.now();
 
-  const filteredData = parsedData.filter(
-    (lift) =>
-      new Date(lift.date) >= new Date(startDate) &&
-      new Date(lift.date) <= new Date(endDate),
-  );
+  // Convert startDate and endDate to Date objects once
+  const startDateObj = new Date(startDate);
+  const endDateObj = new Date(endDate);
 
-  const uniqueDates = new Set();
+  // Filter data based on the date range
+  const filteredData = parsedData.filter((lift) => {
+    const liftDate = new Date(lift.date);
+    return liftDate >= startDateObj && liftDate <= endDateObj;
+  });
 
+  // Use an object to track unique dates instead of a Set
+  const uniqueDates = {};
+
+  // Create heatmapData {date: lift.date, count: 1} whenever we have parsedData activity
   const heatmapData = filteredData
     .filter((lift) => {
       const dateStr = lift.date.toString();
-      if (!uniqueDates.has(dateStr)) {
-        uniqueDates.add(dateStr);
+      if (!uniqueDates[dateStr]) {
+        uniqueDates[dateStr] = true;
         return true;
       }
       return false;
     })
     .map((lift) => ({ date: lift.date, count: 1 }));
 
-  // If we assume that parsedData is sorted then we don't need this
-  // expensive extra sort.
-  // heatmapData.sort((a, b) => new Date(a.date) - new Date(b.date));
-
+  // Log execution time using console.log
   devLog(
     "generateHeatmapData() execution time: " +
       Math.round(performance.now() - startTime) +

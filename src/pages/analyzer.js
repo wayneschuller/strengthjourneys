@@ -29,12 +29,9 @@ import ActivityHeatmapsCard from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
 import { SidePanelSelectLiftsButton } from "@/components/SidePaneLiftChooserButton";
 
-let didInit = false;
-
 const Analyzer = () => {
-  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   const { data: session } = useSession();
-  const { data, isError, isLoading } = useUserLiftData();
+  const { isLoading } = useUserLiftData();
   const ssid = useReadLocalStorage("ssid");
 
   // Main useEffect - wait for parsedData process component specfic data

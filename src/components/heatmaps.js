@@ -43,6 +43,8 @@ const ActivityHeatmapsCard = () => {
   const { startDate, endDate } = findDateRange(parsedData);
   const intervals = generateDateRanges(startDate, endDate, intervalMonths);
 
+  devLog(intervals);
+
   // FIXME: put an isLoading skeleton in here internally?
   // {isLoading && (
   //   <div className="flex">
@@ -160,6 +162,8 @@ const Heatmap = ({ parsedData, startDate, endDate, isMobile }) => {
 export const generateHeatmapData = (parsedData, startDate, endDate) => {
   const startTime = performance.now();
 
+  devLog(`generateHeatmapData, startDate ${startDate} endDate ${endDate}`);
+
   // Convert startDate and endDate to Date objects once
   const startDateObj = new Date(startDate);
   const endDateObj = new Date(endDate);
@@ -257,7 +261,12 @@ function generateDateRanges(startDateStr, endDateStr, intervalMonths) {
       intervalEndDate.getMilliseconds() + intervalDuration,
     );
 
-    return [{ start: intervalStartDate, end: intervalEndDate }];
+    return [
+      {
+        startDate: intervalStartDate.toISOString().split("T")[0],
+        endDate: intervalEndDate.toISOString().split("T")[0],
+      },
+    ];
   } else {
     // If more than the interval, generate multiple ranges with the specified interval
     const dateRanges = [];
@@ -270,8 +279,8 @@ function generateDateRanges(startDateStr, endDateStr, intervalMonths) {
       );
 
       dateRanges.push({
-        startDate: new Date(currentStartDate),
-        endDate: new Date(currentEndDate),
+        startDate: currentStartDate.toISOString().split("T")[0],
+        endDate: currentEndDate.toISOString().split("T")[0],
       });
 
       // Move the start date for the next iteration

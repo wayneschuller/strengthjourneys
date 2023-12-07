@@ -28,8 +28,9 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
   // The final row can be an unfinished chunk, just pad it out.
   // Then show heatmaps for each of those chunks!
 
+  const intervalMonths = 24;
   const { startDate, endDate } = findDateRange(parsedData);
-  const intervals = generateDateRanges(startDate, endDate, 24);
+  const intervals = generateDateRanges(startDate, endDate, intervalMonths);
   devLog(intervals);
 
   return (
@@ -37,7 +38,8 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
       <CardHeader>
         <CardTitle>Activity History</CardTitle>
         <CardDescription>
-          Two year heatmap{intervals.length > 1 && "s"} beginning {startDate}
+          {intervalMonths} month heatmap{intervals.length > 1 && "s"} beginning{" "}
+          {startDate}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -55,8 +57,8 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
           );
 
           return (
-            <div className="mb-6" key={`${index}-heatmap`}>
-              <div className="text-center text-sm lg:text-lg">
+            <div className="md:mb-6" key={`${index}-heatmap`}>
+              <div className="hidden text-center md:block lg:text-lg">
                 {formattedStartDate} - {formattedEndDate}
               </div>
               <Heatmap

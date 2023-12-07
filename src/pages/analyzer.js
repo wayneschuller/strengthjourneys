@@ -91,10 +91,8 @@ const Analyzer = () => {
             <InspirationCard />
           </div>
           <Separator className="md:col-span-2 xl:col-span-4" />
-          <div className="md:col-span-2 xl:col-span-4">
-            <KeyLiftCards />
-          </div>
         </div>
+        <KeyLiftCards />
       </div>
     </>
   );
@@ -102,24 +100,38 @@ const Analyzer = () => {
 export default Analyzer;
 
 function KeyLiftCards() {
-  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
+  const { parsedData, selectedLiftTypes, isDemoMode } =
+    useContext(ParsedDataContext);
 
   return (
-    <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
-      <div className="xl:col-span-4">
-        Below are per lift analysis for the key selected lifts. Click this
-        button or the top nav bar dumbell icon to change selected lifts.
-        <SidePanelSelectLiftsButton />
-      </div>
-      <div className="md:col-span-2 xl:col-span-4">
-        {selectedLiftTypes.map((lift) => (
-          <LiftAchievementsCard
-            key={`${lift}-card`}
-            liftType={lift}
-            parsedData={parsedData}
-          />
-        ))}
-      </div>
+    <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
+      {isDemoMode && (
+        <div className="md:col-span-2 xl:col-span-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Individual Lift Analysis Section</CardTitle>
+              <CardDescription>Demo Mode </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="">
+                Below are per lift analysis for the key selected lifts. Click
+                this button or the top nav bar dumbell icon to change selected
+                lifts.
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <SidePanelSelectLiftsButton />
+            </CardFooter>
+          </Card>
+        </div>
+      )}
+      {selectedLiftTypes.map((lift) => (
+        <LiftAchievementsCard
+          key={`${lift}-card`}
+          liftType={lift}
+          parsedData={parsedData}
+        />
+      ))}
     </div>
   );
 }

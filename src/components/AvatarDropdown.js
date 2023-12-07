@@ -34,7 +34,9 @@ export function AvatarDropdown() {
 
   if (!session)
     return (
-      <Button onClick={() => signIn("google")}>Sign in to personalize</Button>
+      <Button variant="outline" onClick={() => signIn("google")}>
+        Sign in to personalize
+      </Button>
     );
 
   return (

@@ -283,6 +283,7 @@ export const VisualizerChart = () => {
       <Line ref={chartRef} options={options} data={{ datasets: chartData }} />
       <div className="flex flex-row gap-4">
         <Button
+          variant="outline"
           onClick={(e) => {
             const chart = chartRef.current;
             chart.resetZoom();
@@ -291,6 +292,7 @@ export const VisualizerChart = () => {
           Show All
         </Button>
         <Button
+          variant="outline"
           onClick={(e) => {
             const chart = chartRef.current;
             if (chart) {
@@ -311,7 +313,7 @@ export const VisualizerChart = () => {
           Show Recent
         </Button>
         <Button
-          // variant="outline"
+          variant="outline"
           size="icon"
           onClick={(e) => {
             const chart = chartRef.current;
@@ -321,7 +323,7 @@ export const VisualizerChart = () => {
           <ZoomOut />
         </Button>
         <Button
-          // variant="outline"
+          variant="outline"
           size="icon"
           onClick={(e) => {
             const chart = chartRef.current;

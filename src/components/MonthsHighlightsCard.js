@@ -1,15 +1,24 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
+import { ParsedDataContext } from "@/pages/_app";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { devLog } from "@/lib/SJ-utils";
 
-const MonthsHighlightsCard = ({ parsedData, liftTypesSelected }) => {
+const MonthsHighlightsCard = () => {
+  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   if (!parsedData) return;
 
   // let array = getBestEverLastMonth(liftTypesSelected, parsedData);
   // devLog(`MonthsHighlightsCard`);
   // devLog(array);
+
+  // FIXME: put an isLoading skeleton in here internally?
+  // {isLoading && (
+  //   <div className="flex">
+  //     <Skeleton className="h-36 w-11/12 flex-1" />
+  //   </div>
+  // )}
 
   return (
     <Card>
@@ -19,7 +28,7 @@ const MonthsHighlightsCard = ({ parsedData, liftTypesSelected }) => {
       </CardHeader>
       <CardContent>
         {parsedData && <div>Sets: {parsedData.length}</div>}
-        {liftTypesSelected.map((liftType) => (
+        {selectedLiftTypes.map((liftType) => (
           <div key={liftType}>Tell me about: {liftType}</div>
         ))}
       </CardContent>

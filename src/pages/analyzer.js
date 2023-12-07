@@ -73,12 +73,7 @@ const Analyzer = () => {
             <InspirationCard />
           </div>
           <div className="md:col-span-2 xl:col-span-4">
-            {!isLoading && <ActivityHeatmapsCard parsedData={parsedData} />}
-            {isLoading && (
-              <div className="flex">
-                <Skeleton className="h-36 w-11/12 flex-1" />
-              </div>
-            )}
+            {!isLoading && <ActivityHeatmapsCard />}
           </div>
           <Separator className="md:col-span-2 xl:col-span-4" />
         </div>

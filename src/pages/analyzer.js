@@ -92,24 +92,34 @@ const Analyzer = () => {
           </div>
           <Separator className="md:col-span-2 xl:col-span-4" />
           <div className="md:col-span-2 xl:col-span-4">
-            <SidePanelSelectLiftsButton />
-            {/* <FancyMultiSelect
-              placeholder={"Choose lift types"}
-              selected={liftTypesSelected}
-              setSelected={setLiftTypesSelected}
-              menuOptions={liftTypes}
-            /> */}
+            <KeyLiftCards />
           </div>
-          {selectedLiftTypes.map((lift) => (
-            <LiftAchievementsCard
-              key={`${lift}-card`}
-              liftType={lift}
-              parsedData={parsedData}
-            />
-          ))}
         </div>
       </div>
     </>
   );
 };
 export default Analyzer;
+
+function KeyLiftCards() {
+  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
+
+  return (
+    <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
+      <div className="xl:col-span-4">
+        Below are per lift analysis for the key selected lifts. Click this
+        button or the top nav bar dumbell icon to change selected lifts.
+        <SidePanelSelectLiftsButton />
+      </div>
+      <div className="md:col-span-2 xl:col-span-4">
+        {selectedLiftTypes.map((lift) => (
+          <LiftAchievementsCard
+            key={`${lift}-card`}
+            liftType={lift}
+            parsedData={parsedData}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

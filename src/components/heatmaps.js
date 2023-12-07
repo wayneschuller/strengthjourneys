@@ -27,20 +27,28 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
   // FIXME: for desktop: break up the data into 2 year chunks.
   // The final row can be an unfinished chunk, just pad it out.
   // Then show heatmaps for each of those chunks!
-  const { startDate, endDate } = findDateRange(parsedData);
 
-  const intervals = generateDatePairs(startDate, endDate);
-  devLog(`startDate: ${startDate}, endDate: ${endDate}, intervals:`);
-  devLog(intervals);
+  const { startDate, endDate } = findDateRange(parsedData);
+  const intervals = generateDateRanges(startDate, endDate);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Activity History</CardTitle>
-        {/* <CardDescription>Card Description</CardDescription> */}
+        <CardDescription>
+          Two year heatmaps beginning {startDate}
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <Heatmap parsedData={parsedData} months={24} />
+        {intervals.map((interval, index) => (
+          <div className="mb-4" key={`${index}-heatmap`}>
+            <Heatmap
+              parsedData={parsedData}
+              startDate={interval.start}
+              endDate={interval.end}
+            />
+          </div>
+        ))}
       </CardContent>
     </Card>
   );
@@ -76,7 +84,7 @@ function generateRandomHeatmapData() {
   };
 }
 
-const Heatmap = ({ parsedData, months }) => {
+const Heatmap = ({ parsedData, startDate, endDate }) => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
@@ -89,8 +97,6 @@ const Heatmap = ({ parsedData, months }) => {
   if (!mounted) {
     return null;
   }
-
-  // FIXME: make this do the entire card, not just the internals.
 
   // FIXME: if we are checking for mounted we could do clever stuff to get window width and adjust the heatmap data size accordingly?
   // We could set months based on window size here
@@ -106,16 +112,16 @@ const Heatmap = ({ parsedData, months }) => {
   // Generate random data
   // const heatmap = generateRandomHeatmapData();
 
-  const heatmap = generateHeatmapData(parsedData, months);
+  const heatmapData = generateHeatmapData(parsedData, startDate, endDate);
 
   // devLog(`Heatmap (theme: ${theme}):`);
   // devLog(heatmap);
 
   return (
     <CalendarHeatmap
-      startDate={heatmap.startDate}
-      endDate={heatmap.endDate}
-      values={heatmap.heatmapData}
+      startDate={startDate}
+      endDate={endDate}
+      values={heatmapData}
       classForValue={(value) => {
         if (!value) {
           return `color-gh-${theme || "light"}-0`; // Grabs colors from css
@@ -136,7 +142,47 @@ const Heatmap = ({ parsedData, months }) => {
 // liftData.js
 // liftData.js
 
-export const generateHeatmapData = (parsedData, months) => {
+export const generateHeatmapData = (parsedData, startDate, endDate) => {
+  const startTime = performance.now();
+
+  const filteredData = parsedData.filter(
+    (lift) =>
+      new Date(lift.date) >= new Date(startDate) &&
+      new Date(lift.date) <= new Date(endDate),
+  );
+
+  const uniqueDates = new Set();
+
+  const heatmapData = filteredData
+    .filter((lift) => {
+      const dateStr = lift.date.toString();
+      if (!uniqueDates.has(dateStr)) {
+        uniqueDates.add(dateStr);
+        return true;
+      }
+      return false;
+    })
+    .map((lift) => ({ date: lift.date, count: 1 }));
+
+  if (new Date(heatmapData[0].date) > new Date(startDate)) {
+    heatmapData.unshift({
+      date: new Date(startDate),
+      count: 0,
+    });
+  }
+
+  heatmapData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  devLog(
+    "generateHeatmapData() execution time: " +
+      Math.round(performance.now() - startTime) +
+      "ms",
+  );
+
+  return heatmapData;
+};
+
+export const generateHeatmapDataMonths = (parsedData, months) => {
   const startTime = performance.now(); // We measure critical processing steps
 
   const currentDate = new Date();
@@ -261,4 +307,39 @@ function generateDatePairs(startDateStr, endDateStr) {
   }
 
   return datePairs;
+}
+
+function generateDateRanges(startDateStr, endDateStr) {
+  // Convert input date strings to Date objects
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+
+  // Calculate the duration of the input date range in milliseconds
+  const rangeDuration = endDate - startDate;
+
+  // Check if the duration is less than two years
+  if (rangeDuration < 2 * 365 * 24 * 60 * 60 * 1000) {
+    // If less than two years, return a two-year range with startDate and endDate in the middle
+    const middleDate = new Date(startDate.getTime() + rangeDuration / 2);
+    const twoYearStartDate = new Date(middleDate);
+    twoYearStartDate.setFullYear(middleDate.getFullYear() - 1);
+    const twoYearEndDate = new Date(middleDate);
+    twoYearEndDate.setFullYear(middleDate.getFullYear() + 1);
+    return [{ start: twoYearStartDate, end: twoYearEndDate }];
+  } else {
+    // If more than two years, generate multiple two-year ranges
+    const dateRanges = [];
+    let currentStartDate = new Date(startDate);
+
+    while (currentStartDate < endDate) {
+      const currentEndDate = new Date(currentStartDate);
+      currentEndDate.setFullYear(currentEndDate.getFullYear() + 2);
+
+      dateRanges.push({ start: currentStartDate, end: currentEndDate });
+
+      // Move the start date for the next iteration
+      currentStartDate = new Date(currentEndDate);
+    }
+    return dateRanges;
+  }
 }

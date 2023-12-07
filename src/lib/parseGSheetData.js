@@ -14,7 +14,17 @@ function convertWeight(weightString) {
 }
 
 function convertReps(repsString) {
-  return repsString !== "" ? parseInt(repsString, 10) : undefined;
+  if (!repsString) {
+    return undefined;
+  }
+
+  repsString = repsString.trim();
+
+  if (repsString === "" || isNaN(parseInt(repsString, 10))) {
+    return undefined;
+  }
+
+  return parseInt(repsString, 10);
 }
 
 function convertDate(dateString, previousDate) {

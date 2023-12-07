@@ -43,8 +43,6 @@ const ActivityHeatmapsCard = () => {
   const { startDate, endDate } = findDateRange(parsedData);
   const intervals = generateDateRanges(startDate, endDate, intervalMonths);
 
-  devLog(intervals);
-
   // FIXME: put an isLoading skeleton in here internally?
   // {isLoading && (
   //   <div className="flex">

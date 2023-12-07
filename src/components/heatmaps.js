@@ -8,6 +8,7 @@ import { devLog } from "@/lib/SJ-utils";
 import { useWindowSize } from "usehooks-ts";
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getReadableDateString } from "@/lib/SJ-utils";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
@@ -49,32 +50,23 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
         <CardTitle>Activity History</CardTitle>
         <CardDescription>
           {intervalMonths} month heatmap{intervals.length > 1 && "s"} for all
-          lifting sessions
+          lifting sessions from {getReadableDateString(startDate)} -{" "}
+          {getReadableDateString(endDate)}.
         </CardDescription>
       </CardHeader>
       <CardContent>
         {intervals.map((interval, index) => {
-          const formattedStartDate = new Date(
-            interval.start,
-          ).toLocaleDateString("en-US", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          });
-          const formattedEndDate = new Date(interval.end).toLocaleDateString(
-            "en-US",
-            { day: "numeric", month: "long", year: "numeric" },
-          );
-
           return (
-            <div className="md:mb-6" key={`${index}-heatmap`}>
+            <div className="mb-2 md:mb-6" key={`${index}-heatmap`}>
               <div className="hidden text-center md:block lg:text-lg">
-                {formattedStartDate} - {formattedEndDate}
+                {getReadableDateString(interval.start)} -{" "}
+                {getReadableDateString(interval.end)}
               </div>
               <Heatmap
                 parsedData={parsedData}
                 startDate={interval.start}
                 endDate={interval.end}
+                isMobile={intervalMonths === 18}
               />
             </div>
           );
@@ -106,7 +98,7 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
 
 export default ActivityHeatmapsCard;
 
-const Heatmap = ({ parsedData, startDate, endDate }) => {
+const Heatmap = ({ parsedData, startDate, endDate, isMobile }) => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
@@ -142,6 +134,7 @@ const Heatmap = ({ parsedData, startDate, endDate }) => {
       startDate={startDate}
       endDate={endDate}
       values={heatmapData}
+      showMonthLabels={!isMobile}
       classForValue={(value) => {
         if (!value) {
           return `color-gh-${theme || "light"}-0`; // Grabs colors from css

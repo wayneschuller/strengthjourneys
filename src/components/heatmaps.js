@@ -29,9 +29,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const ActivityHeatmapsCard = ({ parsedData }) => {
-  const { isDemoMode } = useContext(ParsedDataContext);
-  const { width, height } = useWindowSize();
+const ActivityHeatmapsCard = () => {
+  const { parsedData, isDemoMode } = useContext(ParsedDataContext);
+  const { width } = useWindowSize();
 
   if (!parsedData) return;
 
@@ -43,7 +43,13 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
   const { startDate, endDate } = findDateRange(parsedData);
   const intervals = generateDateRanges(startDate, endDate, intervalMonths);
 
-  // FIXME: put the isLoading skelenton in here internally
+  // FIXME: put an isLoading skeleton in here internally?
+  // {isLoading && (
+  //   <div className="flex">
+  //     <Skeleton className="h-36 w-11/12 flex-1" />
+  //   </div>
+  // )}
+
   return (
     <Card>
       <CardHeader>

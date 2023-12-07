@@ -60,7 +60,7 @@ export function Layout({ children }) {
 
     // Get some parsedData
     if (data?.values) {
-      parsedData = parseGSheetData(data.values);
+      parsedData = parseGSheetData(data.values); // Will be sorted date ascending
 
       // FIXME: here is the point to check for parsing failures and go to demomode.
       isDemoMode = false;
@@ -70,6 +70,9 @@ export function Layout({ children }) {
       isDemoMode = true;
       setIsDemoMode(isDemoMode);
     }
+
+    // As far as possible try to get components to do their own unique processing of parsedData
+    // However if there are metrics commonly needed we can do it here once to save CPU
 
     // Before we set parsedData there are a few other global
     // state variables everything needs.
@@ -99,8 +102,8 @@ export function Layout({ children }) {
     if (selectedLifts !== null) {
       // Parse and set data in the state
       const parsedSelectedLifts = JSON.parse(selectedLifts);
-      devLog(`LocalStorage (${localStorageKey}):`);
-      devLog(parsedSelectedLifts);
+      // devLog(`LocalStorage (${localStorageKey}):`);
+      // devLog(parsedSelectedLifts);
       setSelectedLiftTypes(parsedSelectedLifts);
     } else {
       // Select a number of lift types as default, minimum of 4 or the length of sortedLiftTypes

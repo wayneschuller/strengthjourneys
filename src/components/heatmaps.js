@@ -40,15 +40,32 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {intervals.map((interval, index) => (
-          <div className="mb-4" key={`${index}-heatmap`}>
-            <Heatmap
-              parsedData={parsedData}
-              startDate={interval.start}
-              endDate={interval.end}
-            />
-          </div>
-        ))}
+        {intervals.map((interval, index) => {
+          const formattedStartDate = new Date(
+            interval.start,
+          ).toLocaleDateString("en-US", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          });
+          const formattedEndDate = new Date(interval.end).toLocaleDateString(
+            "en-US",
+            { day: "numeric", month: "long", year: "numeric" },
+          );
+
+          return (
+            <div className="mb-6" key={`${index}-heatmap`}>
+              <div className="text-center text-lg">
+                {formattedStartDate} - {formattedEndDate}
+              </div>
+              <Heatmap
+                parsedData={parsedData}
+                startDate={interval.start}
+                endDate={interval.end}
+              />
+            </div>
+          );
+        })}
       </CardContent>
     </Card>
   );

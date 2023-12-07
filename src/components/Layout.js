@@ -27,6 +27,10 @@ export function Layout({ children }) {
     setSsid,
     isDemoMode,
     setIsDemoMode,
+    liftTypes,
+    setLiftTypes,
+    selectedLiftTypes,
+    setSelectedLiftTypes,
   } = useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
@@ -36,13 +40,13 @@ export function Layout({ children }) {
   const currentPath = router.asPath;
 
   // When userUserLiftData (useSWR) gives new Google sheet data, parse it
-  // useSWR can ping google and cache it and it won't trigger until data changes
+  // useSWR can ping google and cache it and it won't trigger here until data changes
   useEffect(() => {
     // devLog(`<Layout /> useEffect[data]: isError is ${isError}`);
     // devLog(data);
 
     // If data changes and we have isError then signOut
-    // This is because our token has expired
+    // This is usually because our token has expired
     // FIXME: get Google refreshtokens working
     if (isError) {
       console.log(
@@ -51,25 +55,68 @@ export function Layout({ children }) {
       devLog(data);
       signOut();
       setIsDemoMode(true); // Go to demo mode when auto signing out
+      // FIXME Actually we could keep going with the logic below to get demo mode parsedData etc.
       return;
     }
 
-    let localParsedData = null;
-
-    // useSWR will sometimes give us the same data cached
-    // FIXME: check if the data has changed?
-    // Or at least check if parsedData has changed?
+    let parsedData = null; // A local parsedData for this scope only
 
     // Get some parsedData
     if (data?.values) {
-      localParsedData = parseGSheetData(data.values);
+      parsedData = parseGSheetData(data.values);
+
+      // FIXME: here is the point to check for parsing failures and go to demomode.
+
       setIsDemoMode(false);
     } else {
-      localParsedData = sampleParsedData;
+      parsedData = sampleParsedData;
       setIsDemoMode(true);
     }
 
-    setParsedData(localParsedData);
+    // Before we set parsedData there are a few other global
+    // state variables everything needs.
+
+    // Count the frequency of each liftType
+    const liftTypeFrequency = {};
+    parsedData.forEach((lifting) => {
+      const liftType = lifting.liftType;
+      liftTypeFrequency[liftType] = (liftTypeFrequency[liftType] || 0) + 1;
+    });
+
+    // Create an array of objects with liftType and frequency properties, sorted by frequency descending
+    const sortedLiftTypes = Object.keys(liftTypeFrequency)
+      .map((liftType) => ({
+        liftType: liftType,
+        frequency: liftTypeFrequency[liftType],
+      }))
+      .sort((a, b) => b.frequency - a.frequency);
+
+    setLiftTypes(sortedLiftTypes);
+
+    // Retrieve selectedLifts from localStorage (there are two versions for demo data and user data)
+    const localStorageKey = `selectedLifts${isDemoMode ? "_demoMode" : ""}`;
+    const selectedLifts = localStorage.getItem(localStorageKey);
+
+    // Check if data exists in localStorage before parsing
+    if (selectedLifts !== null) {
+      // Parse and set data in the state
+      const parsedSelectedLifts = JSON.parse(selectedLifts);
+      devLog(`LocalStorage (${localStorageKey}):`);
+      devLog(parsedSelectedLifts);
+      setSelectedLiftTypes(parsedSelectedLifts);
+    } else {
+      // Select a number of lift types as default, minimum of 4 or the length of sortedLiftTypes
+      devLog(`Setting some default selected lifts`);
+      const numberOfDefaultLifts = Math.min(4, sortedLiftTypes.length);
+      const defaultSelectedLifts = sortedLiftTypes
+        .slice(0, numberOfDefaultLifts)
+        .map((lift) => lift.liftType);
+
+      // Set default selected lifts
+      setSelectedLiftTypes(defaultSelectedLifts);
+    }
+
+    setParsedData(parsedData);
   }, [data, isError]);
 
   // useEffect for showing toast instructions on key state changes

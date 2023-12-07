@@ -24,6 +24,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { SidePanelSelectLiftsButton } from "./SidePaneLiftChooserButton";
 
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
@@ -34,6 +35,7 @@ export default function NavBar() {
       <DesktopNav />
       <MobileNav />
       <div className="mt-2 flex flex-1 items-center justify-end gap-2">
+        <SidePanelSelectLiftsButton isIconMode={true} />
         <UserSheetIcon />
         <DarkModeToggle />
         <AvatarDropdown />

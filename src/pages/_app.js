@@ -20,9 +20,11 @@ export const ParsedDataContext = createContext(null); // Internal SJ format of u
 let didInit = false;
 
 export default function App({ Component, pageProps, session }) {
-  const [parsedData, setParsedData] = useState(null);
+  const [liftTypes, setLiftTypes] = useState([]); // Array of {liftType: "Deadlift", frequency: 232} objects
+  const [selectedLiftTypes, setSelectedLiftTypes] = useState([]); // Array of liftType strings - syncs to localStorage
+  const [parsedData, setParsedData] = useState(null); // Our main big set of data that components look for
   const [ssid, setSsid] = useState(null); // FIXME: convert to useLocalStorage hook
-  const [isDemoMode, setIsDemoMode] = useState(false); // needed for lift selector modes
+  const [isDemoMode, setIsDemoMode] = useState(true); // needed for lift selector modes
 
   useEffect(() => {
     const initSsid = localStorage.getItem("ssid");
@@ -50,6 +52,10 @@ export default function App({ Component, pageProps, session }) {
               setSsid,
               isDemoMode,
               setIsDemoMode,
+              liftTypes,
+              setLiftTypes,
+              selectedLiftTypes,
+              setSelectedLiftTypes,
             }}
           >
             <div className={`min-h-screen bg-background ${inter.className}`}>

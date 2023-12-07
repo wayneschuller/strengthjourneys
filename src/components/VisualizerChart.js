@@ -60,6 +60,10 @@ export const VisualizerChart = () => {
     setSsid,
     isDemoMode,
     setIsDemoMode,
+    liftTypes,
+    setLiftTypes,
+    selectedLiftTypes,
+    setSelectedLiftTypes,
   } = useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { isLoading } = useUserLiftData(session, ssid);
@@ -80,13 +84,10 @@ export const VisualizerChart = () => {
     // devLog(parsedData);
     if (!parsedData) return;
 
-    // Retrieve selectedLifts from localStorage
-    const localStorageKey = `selectedLifts${isDemoMode ? "_demoMode" : ""}`;
-    // FIXME: if no localStorage then find top 4 like in Analyzer
-    const selectedLiftTypes = localStorage.getItem(localStorageKey);
+    // Generate chart data!
     const chartData = processVisualizerData(parsedData, selectedLiftTypes);
     setChartData(chartData);
-  }, [parsedData]);
+  }, [parsedData, selectedLiftTypes]);
 
   useEffect(() => {
     // FIXME Try to zoom to recent

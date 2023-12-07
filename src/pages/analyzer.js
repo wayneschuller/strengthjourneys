@@ -26,12 +26,11 @@ import {
 
 import ActivityHeatmapsCard from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
-import { SidePanelLiftChooser } from "@/components/SidePaneLiftChooser";
+import { SidePanelSelectLiftsButton } from "@/components/SidePaneLiftChooserButton";
 
 let didInit = false;
 
 const Analyzer = () => {
-  const [liftTypes, setLiftTypes] = useState([]);
   const {
     parsedData,
     setParsedData,
@@ -39,12 +38,11 @@ const Analyzer = () => {
     setSsid,
     isDemoMode,
     setIsDemoMode,
+    liftTypes,
+    setLiftTypes,
+    selectedLiftTypes,
+    setSelectedLiftTypes,
   } = useContext(ParsedDataContext);
-  const [liftTypesSelected, setLiftTypesSelected] = useState([]);
-  // const [liftTypesSelected, setLiftTypesSelected] = useLocalStorage(
-  // `selectedLifts_${isDemoMode}`,
-  // [],
-  // );
 
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
@@ -53,6 +51,7 @@ const Analyzer = () => {
 
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
+    return;
     // devLog(`Analyzer useEffect[parsedData]: (isDemoMode: ${isDemoMode})`);
     // devLog(parsedData);
     if (!parsedData) return;
@@ -100,7 +99,6 @@ const Analyzer = () => {
   }, [parsedData]);
 
   devLog(`Rendering <Analyzer />...`);
-  devLog(liftTypesSelected);
 
   if (!isLoading && session?.user && !ssid)
     return (
@@ -138,7 +136,7 @@ const Analyzer = () => {
             {!isLoading && (
               <MonthsHighlightsCard
                 parsedData={parsedData}
-                liftTypesSelected={liftTypesSelected}
+                liftTypesSelected={selectedLiftTypes}
               />
             )}
           </div>
@@ -147,11 +145,7 @@ const Analyzer = () => {
           </div>
           <Separator className="md:col-span-2 xl:col-span-4" />
           <div className="md:col-span-2 xl:col-span-4">
-            <SidePanelLiftChooser
-              liftTypes={liftTypes}
-              selected={liftTypesSelected}
-              setSelected={setLiftTypesSelected}
-            />
+            <SidePanelSelectLiftsButton />
             {/* <FancyMultiSelect
               placeholder={"Choose lift types"}
               selected={liftTypesSelected}
@@ -159,9 +153,9 @@ const Analyzer = () => {
               menuOptions={liftTypes}
             /> */}
           </div>
-          {liftTypesSelected.map((lift) => (
+          {selectedLiftTypes.map((lift) => (
             <LiftAchievementsCard
-              key={`${lift}-card-${liftTypesSelected}`}
+              key={`${lift}-card`}
               liftType={lift}
               parsedData={parsedData}
             />

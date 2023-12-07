@@ -5,6 +5,8 @@ import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
 import { devLog } from "@/lib/SJ-utils";
 import { useWindowSize } from "usehooks-ts";
+import { Share2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
@@ -17,6 +19,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const ActivityHeatmapsCard = ({ parsedData }) => {
   const { width, height } = useWindowSize();
@@ -37,8 +46,8 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
       <CardHeader>
         <CardTitle>Activity History</CardTitle>
         <CardDescription>
-          {intervalMonths} month heatmap{intervals.length > 1 && "s"} beginning{" "}
-          {startDate}
+          {intervalMonths} month heatmap{intervals.length > 1 && "s"} for all
+          lifting sessions
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -69,6 +78,24 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
           );
         })}
       </CardContent>
+      <CardFooter>
+        <div className="flex flex-1 flex-row justify-end">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline">
+                  <Share2
+                    onClick={() => {
+                      devLog(`FIXME: implement sharing of heatmap images`);
+                    }}
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Share heatmaps to clipboard</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </CardFooter>
     </Card>
   );
 };

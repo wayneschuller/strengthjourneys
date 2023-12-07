@@ -47,56 +47,13 @@ const Analyzer = () => {
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData(session, ssid);
 
-  const localStorageKey = `selectedLifts${isDemoMode ? "_demoMode" : ""}`; // FIXME: should be inside useEffect?
-
   // Main useEffect - wait for parsedData process component specfic data
-  useEffect(() => {
-    return;
-    // devLog(`Analyzer useEffect[parsedData]: (isDemoMode: ${isDemoMode})`);
-    // devLog(parsedData);
-    if (!parsedData) return;
-
-    // FIXME: the Visualizer needs to be able to do this too...
-    // Count the frequency of each liftType
-    // We need this for the lift type multi-select UI immediately
-    const liftTypeFrequency = {};
-    parsedData.forEach((lifting) => {
-      const liftType = lifting.liftType;
-      liftTypeFrequency[liftType] = (liftTypeFrequency[liftType] || 0) + 1;
-    });
-
-    // Create an array of objects with liftType and frequency properties, sorted by frequency descending
-    const sortedLiftTypes = Object.keys(liftTypeFrequency)
-      .map((liftType) => ({
-        liftType: liftType,
-        frequency: liftTypeFrequency[liftType],
-      }))
-      .sort((a, b) => b.frequency - a.frequency);
-
-    setLiftTypes(sortedLiftTypes);
-
-    // Retrieve selectedLifts from localStorage
-    const selectedLifts = localStorage.getItem(localStorageKey);
-
-    // Check if data exists in localStorage before parsing
-    if (selectedLifts !== null) {
-      // Parse and set data in the state
-      const parsedSelectedLifts = JSON.parse(selectedLifts);
-      devLog(`parsed new localStorage found:`);
-      devLog(parsedSelectedLifts);
-      setLiftTypesSelected(parsedSelectedLifts);
-    } else {
-      // Select a number of lift types as default, minimum of 4 or the length of sortedLiftTypes
-      // FIXME: the Visualizer needs to be able to do this too...
-      const numberOfDefaultLifts = Math.min(4, sortedLiftTypes.length);
-      const defaultSelectedLifts = sortedLiftTypes
-        .slice(0, numberOfDefaultLifts)
-        .map((lift) => lift.liftType);
-
-      // Set default selected lifts
-      setLiftTypesSelected(defaultSelectedLifts);
-    }
-  }, [parsedData]);
+  // useEffect(() => {
+  //   return;
+  //   // devLog(`Analyzer useEffect[parsedData]: (isDemoMode: ${isDemoMode})`);
+  //   // devLog(parsedData);
+  //   if (!parsedData) return;
+  // }, [parsedData]);
 
   devLog(`Rendering <Analyzer />...`);
 
@@ -166,18 +123,3 @@ const Analyzer = () => {
   );
 };
 export default Analyzer;
-
-// Helper function to check if two arrays of strings are equal
-function arraysAreEqual(arr1, arr2) {
-  if (arr1.length !== arr2.length) {
-    return false;
-  }
-
-  for (let i = 0; i < arr1.length; i++) {
-    if (arr1[i] !== arr2[i]) {
-      return false;
-    }
-  }
-
-  return true;
-}

@@ -42,6 +42,7 @@ const ActivityHeatmapsCard = () => {
 
   const { startDate, endDate } = findDateRange(parsedData);
   const intervals = generateDateRanges(startDate, endDate, intervalMonths);
+  const aggregatedHeatmapData = generateHeatmapDataBRO(parsedData, intervals);
 
   // FIXME: put an isLoading skeleton in here internally?
   // {isLoading && (
@@ -65,13 +66,13 @@ const ActivityHeatmapsCard = () => {
           return (
             <div className="mb-2 md:mb-6" key={`${index}-heatmap`}>
               <div className="hidden text-center md:block lg:text-lg">
-                {getReadableDateString(interval.start)} -{" "}
-                {getReadableDateString(interval.end)}
+                {getReadableDateString(interval.startDate)} -{" "}
+                {getReadableDateString(interval.endDate)}
               </div>
               <Heatmap
                 parsedData={parsedData}
-                startDate={interval.start}
-                endDate={interval.end}
+                startDate={interval.startDate}
+                endDate={interval.endDate}
                 isMobile={intervalMonths === 18}
               />
             </div>
@@ -195,61 +196,50 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
   return heatmapData;
 };
 
-// export const generateHeatmapDataMonths = (parsedData, months) => {
-//   const startTime = performance.now(); // We measure critical processing steps
+export const generateHeatmapDataBRO = (parsedData, intervals) => {
+  const startTime = performance.now();
 
-//   const currentDate = new Date();
-//   const windowMonths = months;
+  // Use a Map to track heatmapData for each interval
+  const intervalHeatmaps = new Map();
 
-//   const windowPeriod = new Date();
-//   windowPeriod.setMonth(currentDate.getMonth() - windowMonths);
+  // Iterate through parsedData
+  parsedData.forEach((lift) => {
+    const liftDate = new Date(lift.date);
 
-//   const filteredData = parsedData.filter(
-//     (lift) => new Date(lift.date) >= windowPeriod,
-//   );
+    // Check if the lift date falls within any interval
+    const inInterval = intervals.some(({ startDate, endDate }) => {
+      const startDateObj = new Date(startDate);
+      const endDateObj = new Date(endDate);
+      return liftDate >= startDateObj && liftDate <= endDateObj;
+    });
 
-//   // Create a Set to track unique dates
-//   const uniqueDates = new Set();
+    // If the lift date is within any interval, add it to the corresponding interval heatmapData
+    if (inInterval) {
+      const dateStr = lift.date.toString();
 
-//   // Filter and create heatmapData with unique dates and a constant count of 1
-//   const heatmapData = filteredData
-//     .filter((lift) => {
-//       const dateStr = lift.date.toString();
-//       if (!uniqueDates.has(dateStr)) {
-//         uniqueDates.add(dateStr);
-//         return true;
-//       }
-//       return false;
-//     })
-//     .map((lift) => ({ date: lift.date, count: 1 }));
+      if (!intervalHeatmaps.has(dateStr)) {
+        // If the interval does not exist in the Map, create it
+        intervalHeatmaps.set(dateStr, { date: lift.date, count: 1 });
+      } else {
+        // If the interval exists, increment the count
+        const intervalData = intervalHeatmaps.get(dateStr);
+        intervalData.count += 1;
+      }
+    }
+  });
 
-//   // Ensure there's an entry for the date 12 months ago with count: 0
-//   if (new Date(heatmapData[0].date) > windowPeriod) {
-//     heatmapData.unshift({
-//       date: windowPeriod,
-//       count: 0,
-//     });
-//   }
+  // Convert the Map values to an array of heatmapData
+  const aggregatedHeatmapData = Array.from(intervalHeatmaps.values());
 
-//   // Sort the heatmapData by date
-//   heatmapData.sort((a, b) => new Date(a.date) - new Date(b.date));
+  // Log execution time using console.log
+  devLog(
+    "BROREPS execution time: " +
+      Math.round(performance.now() - startTime) +
+      "ms",
+  );
 
-//   // Set startDate to at least 12 months ago
-//   const startDate = heatmapData.length > 0 ? heatmapData[0].date : windowPeriod;
-//   const endDate = currentDate;
-
-//   devLog(
-//     "generateHeatmapData() execution time: " +
-//       Math.round(performance.now() - startTime) +
-//       "ms",
-//   );
-
-//   return {
-//     startDate,
-//     endDate,
-//     heatmapData,
-//   };
-// };
+  return aggregatedHeatmapData;
+};
 
 function findDateRange(parsedData) {
   if (!parsedData || parsedData.length === 0) {
@@ -327,8 +317,8 @@ function generateDateRanges(startDateStr, endDateStr, intervalMonths) {
       );
 
       dateRanges.push({
-        start: new Date(currentStartDate),
-        end: new Date(currentEndDate),
+        startDate: new Date(currentStartDate),
+        endDate: new Date(currentEndDate),
       });
 
       // Move the start date for the next iteration

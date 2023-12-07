@@ -4,6 +4,8 @@ import { useState, useEffect, useContext } from "react";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
 import { devLog } from "@/lib/SJ-utils";
+import { useWindowSize } from "usehooks-ts";
+
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
 
@@ -17,22 +19,20 @@ import {
 } from "@/components/ui/card";
 
 const ActivityHeatmapsCard = ({ parsedData }) => {
+  const { width, height } = useWindowSize();
+
   if (!parsedData) return;
 
-  // let array = getBestEverLastMonth(liftTypesSelected, parsedData);
-  // devLog(`ActivityHeatmapsCard`);
+  // Sensible defaults so the heatmap height is fairly reasonable
+  let intervalMonths = 18;
+  if (width > 768) intervalMonths = 24;
+  if (width > 1536) intervalMonths = 32;
 
-  // FIXME: put the isLoading skelenton in here internally
-
-  // FIXME: for desktop: break up the data into 2 year chunks.
-  // The final row can be an unfinished chunk, just pad it out.
-  // Then show heatmaps for each of those chunks!
-
-  const intervalMonths = 24;
   const { startDate, endDate } = findDateRange(parsedData);
   const intervals = generateDateRanges(startDate, endDate, intervalMonths);
   devLog(intervals);
 
+  // FIXME: put the isLoading skelenton in here internally
   return (
     <Card>
       <CardHeader>

@@ -20,21 +20,6 @@ import {
 } from "@/components/ui/sheet";
 
 export function SidePanelSelectLiftsButton({ isIconMode }) {
-  const {
-    parsedData,
-    setParsedData,
-    ssid,
-    setSsid,
-    isDemoMode,
-    setIsDemoMode,
-    liftTypes,
-    setLiftTypes,
-    selectedLiftTypes,
-    setSelectedLiftTypes,
-  } = useContext(ParsedDataContext);
-  // devLog(`Rendering <SidePanelLiftChooser /> selectedlifts:`);
-  // devLog(selected);
-
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -68,18 +53,8 @@ export function SidePanelSelectLiftsButton({ isIconMode }) {
 }
 
 const CheckboxLifts = ({}) => {
-  const {
-    parsedData,
-    setParsedData,
-    ssid,
-    setSsid,
-    isDemoMode,
-    setIsDemoMode,
-    liftTypes,
-    setLiftTypes,
-    selectedLiftTypes,
-    setSelectedLiftTypes,
-  } = useContext(ParsedDataContext);
+  const { isDemoMode, liftTypes, selectedLiftTypes, setSelectedLiftTypes } =
+    useContext(ParsedDataContext);
 
   const handleCheckboxChange = (liftType) => {
     // Calculate updatedSelected first

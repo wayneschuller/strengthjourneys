@@ -5,23 +5,9 @@ import Head from "next/head";
 import { useEffect, useState, useContext } from "react";
 import { useSession, signIn } from "next-auth/react";
 import useUserLiftData from "@/lib/useUserLiftData";
-import { ParsedDataContext } from "@/pages/_app";
-import { sampleParsedData } from "@/lib/sampleParsedData";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import InstructionsCard from "@/components/InstructionsCard";
 import { devLog } from "@/lib/SJ-utils";
 import { useReadLocalStorage } from "usehooks-ts";
-
-import {
-  Sheet,
-  SheetContent,
-  SheetClose,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 
 // Hack needed to get zoom/pan to work for next.js client
 // https://github.com/chartjs/chartjs-plugin-zoom/issues/742
@@ -35,7 +21,7 @@ const DynamicHeaderVisualizerChart = dynamic(
 const Visualizer = () => {
   const { data: session } = useSession();
   const { isLoading } = useUserLiftData();
-  const ssid = useReadLocalStorage("ssid2");
+  const ssid = useReadLocalStorage("ssid");
 
   // devLog(`Visualizer render: `);
   if (!isLoading && session?.user && !ssid)

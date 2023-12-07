@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
 import MobileNav from "@/components/MobileNav";
 import { AvatarDropdown } from "./AvatarDropdown";
-import { ParsedDataContext } from "@/pages/_app";
 import useUserLiftData from "@/lib/useUserLiftData";
 import { Table2 } from "lucide-react";
 import { Button } from "@/components/ui/button";

@@ -24,12 +24,8 @@ export function Layout({ children }) {
     parsedData,
     setParsedData,
     ssid,
-    setSsid,
-    isDemoMode,
     setIsDemoMode,
-    liftTypes,
     setLiftTypes,
-    selectedLiftTypes,
     setSelectedLiftTypes,
   } = useContext(ParsedDataContext);
   const { data: session } = useSession();

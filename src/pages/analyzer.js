@@ -57,6 +57,7 @@ const Analyzer = () => {
     // devLog(parsedData);
     if (!parsedData) return;
 
+    // FIXME: the Visualizer needs to be able to do this too...
     // Count the frequency of each liftType
     // We need this for the lift type multi-select UI immediately
     const liftTypeFrequency = {};
@@ -87,6 +88,7 @@ const Analyzer = () => {
       setLiftTypesSelected(parsedSelectedLifts);
     } else {
       // Select a number of lift types as default, minimum of 4 or the length of sortedLiftTypes
+      // FIXME: the Visualizer needs to be able to do this too...
       const numberOfDefaultLifts = Math.min(4, sortedLiftTypes.length);
       const defaultSelectedLifts = sortedLiftTypes
         .slice(0, numberOfDefaultLifts)

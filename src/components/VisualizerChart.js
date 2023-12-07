@@ -82,8 +82,8 @@ export const VisualizerChart = () => {
 
     // Retrieve selectedLifts from localStorage
     const localStorageKey = `selectedLifts${isDemoMode ? "_demoMode" : ""}`;
+    // FIXME: if no localStorage then find top 4 like in Analyzer
     const selectedLiftTypes = localStorage.getItem(localStorageKey);
-
     const chartData = processVisualizerData(parsedData, selectedLiftTypes);
     setChartData(chartData);
   }, [parsedData]);
@@ -377,82 +377,6 @@ function fadeHslColor(originalHsl, fadeAmount, isDarkMode) {
   return fadedHsl;
 }
 
-// This function uniquely processes the parsed Data for the Visualizer
-// So it lives here in the <VisualizerChart /> component
-function processVisualizerDataOLD(parsedData) {
-  if (parsedData === null) {
-    console.log(`Error: visualizerProcessParsedData passed null.`);
-    return;
-  }
-
-  const startTime = performance.now(); // We measure critical processing steps
-
-  const datasets = {};
-
-  parsedData.forEach((entry) => {
-    // Create a unique identifier for each lift type
-    const liftKey = entry.liftType;
-
-    // Calculate one-rep max using the provided function (e.g., "Brzycki" formula)
-    const oneRepMax = estimateE1RM(entry.reps, entry.weight, "Brzycki");
-
-    // Check if the lift type already exists in datasets
-    if (!datasets[liftKey]) {
-      datasets[liftKey] = {
-        label: entry.liftType,
-        data: [],
-        backgroundColor: getLiftColor(entry.liftType),
-        borderColor: "rgb(50, 50, 50)",
-        borderWidth: 2,
-        pointStyle: "circle",
-        radius: 4,
-        hitRadius: 20,
-        hoverRadius: 10,
-        cubicInterpolationMode: "monotone",
-      };
-    }
-
-    // Check if the date already exists in the dataset for the lift type
-    const existingDataIndex = datasets[liftKey].data.findIndex(
-      (item) => item.x === entry.date,
-    );
-
-    // If the date doesn't exist or the new one-rep max is higher, update the dataset
-    if (
-      existingDataIndex === -1 ||
-      datasets[liftKey].data[existingDataIndex].y < oneRepMax
-    ) {
-      if (existingDataIndex === -1) {
-        // If the date doesn't exist, add it to the dataset
-        datasets[liftKey].data.push({
-          x: entry.date,
-          y: oneRepMax,
-        });
-        // console.log( `Visualizer processor: pushing: ${liftKey} ${entry.date} ${oneRepMax}`,);
-      } else {
-        // If the date exists but the new one-rep max is higher, update it
-        datasets[liftKey].data[existingDataIndex] = {
-          x: entry.date,
-          y: oneRepMax,
-        };
-      }
-    }
-  });
-
-  // Sort datasets based on the size of the data (number of entries)
-  const sortedDatasets = Object.values(datasets).sort(
-    (a, b) => b.data.length - a.data.length,
-  );
-
-  devLog(
-    "processVisualizerData execution time: " +
-      Math.round(performance.now() - startTime) +
-      "ms",
-  );
-
-  return sortedDatasets;
-}
-
 function getFirstLastDatesMaxWeightFromChartData(chartData) {
   if (!Array.isArray(chartData) || chartData.length === 0) {
     console.log(`Error: Invalid or empty chartData.`);
@@ -498,6 +422,8 @@ function getFirstLastDatesMaxWeightFromChartData(chartData) {
   };
 }
 
+// This function uniquely processes the parsed Data for the Visualizer
+// So it lives here in the <VisualizerChart /> component
 function processVisualizerData(parsedData, selectedLiftTypes) {
   if (parsedData === null) {
     console.log(`Error: visualizerProcessParsedData passed null.`);

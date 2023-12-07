@@ -170,15 +170,14 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
     return liftDate >= startDateObj && liftDate <= endDateObj;
   });
 
-  // Use an object to track unique dates instead of a Set
+  // Use an object to track unique dates
   const uniqueDates = {};
 
   // Create heatmapData {date: lift.date, count: 1} whenever we have parsedData activity
   const heatmapData = filteredData
     .filter((lift) => {
-      const dateStr = lift.date.toString();
-      if (!uniqueDates[dateStr]) {
-        uniqueDates[dateStr] = true;
+      if (!uniqueDates[lift.date]) {
+        uniqueDates[lift.date] = true;
         return true;
       }
       return false;

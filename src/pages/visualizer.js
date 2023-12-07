@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import InstructionsCard from "@/components/InstructionsCard";
 import { devLog } from "@/lib/SJ-utils";
+import { useReadLocalStorage } from "usehooks-ts";
 
 import {
   Sheet,
@@ -32,22 +33,11 @@ const DynamicHeaderVisualizerChart = dynamic(
 );
 
 const Visualizer = () => {
-  const {
-    parsedData,
-    setParsedData,
-    ssid,
-    setSsid,
-    isDemoMode,
-    setIsDemoMode,
-    liftTypes,
-    setLiftTypes,
-    selectedLiftTypes,
-    setSelectedLiftTypes,
-  } = useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { isLoading } = useUserLiftData();
+  const ssid = useReadLocalStorage("ssid2");
 
-  devLog(`Visualizer render: ssid: ${ssid}`);
+  // devLog(`Visualizer render: `);
   if (!isLoading && session?.user && !ssid)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
@@ -83,28 +73,3 @@ const Visualizer = () => {
   );
 };
 export default Visualizer;
-
-const LiftChooserPanel = ({}) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button className="mt-2 px-2 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 ">
-          {/* <ViewVerticalIcon className="h-5 w-5" /> */}
-          Choose Lifts
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="pr-0">
-        <div className="flex w-min flex-col">
-          <div>Back Squat</div>
-          <div>Deadlift</div>
-          <div>Bench Press</div>
-          <SheetClose asChild className="flex justify-center">
-            <Button>Close controls</Button>
-          </SheetClose>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-};

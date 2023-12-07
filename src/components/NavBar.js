@@ -104,15 +104,8 @@ export function DesktopNav() {
 
 // When user is logged in with data, give a link to their google sheet
 const UserSheetIcon = () => {
-  const {
-    parsedData,
-    setParsedData,
-    ssid,
-    setSsid,
-    isDemoMode,
-    setIsDemoMode,
-  } = useContext(ParsedDataContext);
   const sheetFilename = useReadLocalStorage("sheetFilename");
+  const ssid = useReadLocalStorage("ssid");
   const sheetURL = decodeURIComponent(useReadLocalStorage("sheetURL"));
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData();

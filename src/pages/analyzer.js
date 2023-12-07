@@ -14,6 +14,7 @@ import InstructionsCard from "@/components/InstructionsCard";
 import LiftAchievementsCard from "@/components/LiftAchievementsCard";
 import FancyMultiSelect from "@/components/ui/fancy-multi-select";
 import MonthsHighlightsCard from "@/components/MonthsHighlightsCard";
+import { useReadLocalStorage } from "usehooks-ts";
 
 import {
   Card,
@@ -31,21 +32,10 @@ import { SidePanelSelectLiftsButton } from "@/components/SidePaneLiftChooserButt
 let didInit = false;
 
 const Analyzer = () => {
-  const {
-    parsedData,
-    setParsedData,
-    ssid,
-    setSsid,
-    isDemoMode,
-    setIsDemoMode,
-    liftTypes,
-    setLiftTypes,
-    selectedLiftTypes,
-    setSelectedLiftTypes,
-  } = useContext(ParsedDataContext);
-
+  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData();
+  const ssid = useReadLocalStorage("ssid");
 
   // Main useEffect - wait for parsedData process component specfic data
   // useEffect(() => {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useContext } from "react";
 import { ParsedDataContext } from "@/pages/_app";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
-import { handleOpenPicker } from "@/components/handleOpenPicker";
+import { handleOpenFilePicker } from "@/components/handleOpenPicker";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/SJ-utils";
 import Image from "next/image";
@@ -22,8 +22,9 @@ import {
 
 const InstructionsCard = ({ session }) => {
   const [openPicker, authResponse] = useDrivePicker();
-  const { parsedData, setParsedData, ssid, setSsid } =
-    useContext(ParsedDataContext);
+
+  // We need the next 3 for the file picker button we give with instructions
+  const [ssid, setSsid] = useLocalStorage("ssid", null);
   const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
   const [sheetFilename, setSheetFilename] = useLocalStorage(
     "sheetFilename",
@@ -78,7 +79,7 @@ const InstructionsCard = ({ session }) => {
         <Button
           className="w-full"
           onClick={() =>
-            handleOpenPicker(
+            handleOpenFilePicker(
               openPicker,
               session.accessToken,
               setSsid,

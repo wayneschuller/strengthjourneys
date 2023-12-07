@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
 import { useSession, signIn, signOut } from "next-auth/react";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
-import { handleOpenPicker } from "@/components/handleOpenPicker";
+import { handleOpenFilePicker } from "@/components/handleOpenPicker";
 import { ParsedDataContext } from "@/pages/_app";
 import { useLocalStorage } from "usehooks-ts";
 
@@ -22,10 +22,8 @@ export function AvatarDropdown() {
   const { setTheme } = useTheme();
   // const { data: session } = useSession();
   const { data: session } = useSession({ autoSignIn: false }); // FIXME: Why is autoSignin false?
-
   const [openPicker, authResponse] = useDrivePicker();
-  const { parsedData, setParsedData, ssid, setSsid } =
-    useContext(ParsedDataContext);
+  const [ssid, setSsid] = useLocalStorage("ssid", null);
   const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
   const [sheetFilename, setSheetFilename] = useLocalStorage(
     "sheetFilename",
@@ -51,7 +49,7 @@ export function AvatarDropdown() {
         {!ssid && (
           <DropdownMenuItem
             onClick={() =>
-              handleOpenPicker(
+              handleOpenFilePicker(
                 openPicker,
                 session.accessToken,
                 setSsid,
@@ -66,7 +64,7 @@ export function AvatarDropdown() {
         {ssid && (
           <DropdownMenuItem
             onClick={() =>
-              handleOpenPicker(
+              handleOpenFilePicker(
                 openPicker,
                 session.accessToken,
                 setSsid,
@@ -83,7 +81,6 @@ export function AvatarDropdown() {
             onClick={() => {
               setSheetURL(null);
               setSheetFilename(null);
-              localStorage.removeItem("ssid");
               setSsid(null);
             }}
           >

@@ -1,7 +1,9 @@
 /** @format */
 "use client";
 
-export function handleOpenPicker(
+import { devLog } from "@/lib/SJ-utils";
+
+export function handleOpenFilePicker(
   openPicker,
   accessToken,
   setSsid,
@@ -33,19 +35,18 @@ export function handleOpenPicker(
         console.log("User clicked cancel/close button");
         return;
       }
-      // console.log(data);
+      devLog(data);
       if (data.docs && data.docs[0]) {
         const newSsid = data.docs[0].id;
         const newFilename = data.docs[0].name;
         const newSheetURL = encodeURIComponent(data.docs[0].url);
 
-        localStorage.setItem("ssid", newSsid);
+        setSsid(newSsid);
         setSheetURL(newSheetURL);
         setSheetFilename(newFilename);
 
-        setSsid(newSsid); // We keep this in state because conditional UI tests for it
         // Should we trigger a parsing of the sheet data here?
-        // But it seems to happen through reactivity once ssid is set in state
+        // But it seems to happen through reactivity as ssid triggers the hook useSWR data fetch
         return;
       }
     },

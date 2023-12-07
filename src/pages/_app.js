@@ -17,23 +17,11 @@ import { sampleParsedData } from "@/lib/sampleParsedData";
 
 export const ParsedDataContext = createContext(null); // Internal SJ format of user gsheet (see sampleData.js for design)
 
-let didInit = false;
-
 export default function App({ Component, pageProps, session }) {
   const [liftTypes, setLiftTypes] = useState([]); // Array of {liftType: "Deadlift", frequency: 232} objects
   const [selectedLiftTypes, setSelectedLiftTypes] = useState([]); // Array of liftType strings - syncs to localStorage
   const [parsedData, setParsedData] = useState(null); // Our main big set of data that components look for
-  const [ssid, setSsid] = useState(null); // FIXME: convert to useLocalStorage hook
   const [isDemoMode, setIsDemoMode] = useState(true); // needed for lift selector modes
-
-  useEffect(() => {
-    const initSsid = localStorage.getItem("ssid");
-    if (!didInit && initSsid) {
-      didInit = true;
-      setSsid(initSsid);
-      devLog(`App didInit set ssid: ${initSsid}`);
-    }
-  }, []);
 
   return (
     <>
@@ -48,8 +36,6 @@ export default function App({ Component, pageProps, session }) {
             value={{
               parsedData,
               setParsedData,
-              ssid,
-              setSsid,
               isDemoMode,
               setIsDemoMode,
               liftTypes,

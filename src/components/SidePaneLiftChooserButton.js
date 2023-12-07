@@ -19,6 +19,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 export function SidePanelSelectLiftsButton({ isIconMode }) {
   return (
     <Sheet>
@@ -26,9 +33,16 @@ export function SidePanelSelectLiftsButton({ isIconMode }) {
         <div>
           {!isIconMode && <Button variant="outline"> Choose Lifts</Button>}
           {isIconMode && (
-            <Button variant="outline" size="icon">
-              <Dumbbell />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Dumbbell />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Choose lifts</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
       </SheetTrigger>

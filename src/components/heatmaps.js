@@ -42,7 +42,6 @@ const ActivityHeatmapsCard = () => {
 
   const { startDate, endDate } = findDateRange(parsedData);
   const intervals = generateDateRanges(startDate, endDate, intervalMonths);
-  const aggregatedHeatmapData = generateHeatmapDataBRO(parsedData, intervals);
 
   // FIXME: put an isLoading skeleton in here internally?
   // {isLoading && (
@@ -194,51 +193,6 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
   );
 
   return heatmapData;
-};
-
-export const generateHeatmapDataBRO = (parsedData, intervals) => {
-  const startTime = performance.now();
-
-  // Use a Map to track heatmapData for each interval
-  const intervalHeatmaps = new Map();
-
-  // Iterate through parsedData
-  parsedData.forEach((lift) => {
-    const liftDate = new Date(lift.date);
-
-    // Check if the lift date falls within any interval
-    const inInterval = intervals.some(({ startDate, endDate }) => {
-      const startDateObj = new Date(startDate);
-      const endDateObj = new Date(endDate);
-      return liftDate >= startDateObj && liftDate <= endDateObj;
-    });
-
-    // If the lift date is within any interval, add it to the corresponding interval heatmapData
-    if (inInterval) {
-      const dateStr = lift.date.toString();
-
-      if (!intervalHeatmaps.has(dateStr)) {
-        // If the interval does not exist in the Map, create it
-        intervalHeatmaps.set(dateStr, { date: lift.date, count: 1 });
-      } else {
-        // If the interval exists, increment the count
-        const intervalData = intervalHeatmaps.get(dateStr);
-        intervalData.count += 1;
-      }
-    }
-  });
-
-  // Convert the Map values to an array of heatmapData
-  const aggregatedHeatmapData = Array.from(intervalHeatmaps.values());
-
-  // Log execution time using console.log
-  devLog(
-    "BROREPS execution time: " +
-      Math.round(performance.now() - startTime) +
-      "ms",
-  );
-
-  return aggregatedHeatmapData;
 };
 
 function findDateRange(parsedData) {

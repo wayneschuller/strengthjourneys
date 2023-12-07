@@ -30,7 +30,6 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
 
   const { startDate, endDate } = findDateRange(parsedData);
   const intervals = generateDateRanges(startDate, endDate, intervalMonths);
-  devLog(intervals);
 
   // FIXME: put the isLoading skelenton in here internally
   return (
@@ -76,40 +75,13 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
 
 export default ActivityHeatmapsCard;
 
-function generateRandomHeatmapData() {
-  const currentDate = new Date();
-  const windowMonths = 24; // Two years ago
-  const startDate = new Date(currentDate);
-  startDate.setMonth(currentDate.getMonth() - windowMonths);
-
-  const endDate = new Date();
-
-  const randomHeatmapData = [];
-
-  for (
-    let date = new Date(startDate);
-    date <= endDate;
-    date.setDate(date.getDate() + 1)
-  ) {
-    randomHeatmapData.push({
-      date: new Date(date),
-      count: Math.floor(Math.random() * 5),
-    });
-  }
-
-  return {
-    startDate,
-    endDate,
-    heatmapData: randomHeatmapData,
-  };
-}
-
 const Heatmap = ({ parsedData, startDate, endDate }) => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
   // useEffect only runs on the client, so now we can safely show the UI
   // As advised by: https://github.com/pacocoursey/next-themes#avoid-hydration-mismatch
+  // FIXME:  https://usehooks-ts.com/react-hook/use-is-client ?
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -134,9 +106,6 @@ const Heatmap = ({ parsedData, startDate, endDate }) => {
 
   const heatmapData = generateHeatmapData(parsedData, startDate, endDate);
 
-  // devLog(`Heatmap (theme: ${theme}):`);
-  // devLog(heatmap);
-
   return (
     <CalendarHeatmap
       startDate={startDate}
@@ -156,11 +125,6 @@ const Heatmap = ({ parsedData, startDate, endDate }) => {
     />
   );
 };
-
-// liftData.js
-
-// liftData.js
-// liftData.js
 
 export const generateHeatmapData = (parsedData, startDate, endDate) => {
   const startTime = performance.now();
@@ -289,40 +253,18 @@ function findDateRange(parsedData) {
   };
 }
 
-function generateDateRangesOld(startDateStr, endDateStr) {
-  // Convert input date strings to Date objects
-  const startDate = new Date(startDateStr);
-  const endDate = new Date(endDateStr);
-
-  // Calculate the duration of the input date range in milliseconds
-  const rangeDuration = endDate - startDate;
-
-  // Check if the duration is less than two years
-  if (rangeDuration < 2 * 365 * 24 * 60 * 60 * 1000) {
-    // If less than two years, return a two-year range with startDate and endDate in the middle
-    const middleDate = new Date(startDate.getTime() + rangeDuration / 2);
-    const twoYearStartDate = new Date(middleDate);
-    twoYearStartDate.setFullYear(middleDate.getFullYear() - 1);
-    const twoYearEndDate = new Date(middleDate);
-    twoYearEndDate.setFullYear(middleDate.getFullYear() + 1);
-    return [{ start: twoYearStartDate, end: twoYearEndDate }];
-  } else {
-    // If more than two years, generate multiple two-year ranges
-    const dateRanges = [];
-    let currentStartDate = new Date(startDate);
-
-    while (currentStartDate < endDate) {
-      const currentEndDate = new Date(currentStartDate);
-      currentEndDate.setFullYear(currentEndDate.getFullYear() + 2);
-
-      dateRanges.push({ start: currentStartDate, end: currentEndDate });
-      // Move the start date for the next iteration
-      currentStartDate = new Date(currentEndDate);
-    }
-    return dateRanges;
-  }
-}
-
+// generateDateRanges
+//
+// 1. If the startDate and end date are within intervalMonths,
+// then we return one interval of length intervalMonths with start and end
+// date in the middle.
+//
+// 2. If the start and end date are longer than intervalMonths,
+// then return multiple intervals starting at startDate and ending
+// AFTER endDate.
+//
+// startDateStr and endDateStr format is: "yyyy-mm-dd"
+//
 function generateDateRanges(startDateStr, endDateStr, intervalMonths) {
   // Convert input date strings to Date objects
   const startDate = new Date(startDateStr);

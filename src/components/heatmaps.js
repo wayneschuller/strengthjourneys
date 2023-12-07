@@ -36,7 +36,7 @@ const ActivityHeatmapsCard = ({ parsedData }) => {
       <CardHeader>
         <CardTitle>Activity History</CardTitle>
         <CardDescription>
-          Two year heatmaps beginning {startDate}
+          Two year heatmap{intervals.length > 1 && "s"} beginning {startDate}
         </CardDescription>
       </CardHeader>
       <CardContent>

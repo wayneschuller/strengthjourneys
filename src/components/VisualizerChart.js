@@ -108,7 +108,7 @@ export const VisualizerChart = () => {
 
   if (session === undefined) return null;
 
-  if (isLoading && !isDemoMode) {
+  if (isLoading && !isDemoMode && !parsedData) {
     return <Skeleton className="h-[80vh] w-[90vw]"></Skeleton>;
   }
 

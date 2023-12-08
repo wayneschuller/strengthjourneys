@@ -69,7 +69,8 @@ export const VisualizerChart = () => {
   let lastDate = null;
   let roundedMaxWeightValue = null;
 
-  devLog(`<VisualizerChart /> rendering...`);
+  // devLog(`<VisualizerChart /> rendering...`);
+
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
     if (!parsedData) return;

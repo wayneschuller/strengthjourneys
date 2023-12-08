@@ -20,12 +20,16 @@ function useUserLiftData() {
     shouldFetch ? `/api/readGSheet?ssid=${ssid}` : null,
     fetcher,
     {
-      revalidateOnFocus: false,
+      // SWR options
+      // Don't need any because the defaults are awesome
     },
   );
 
+  // Let session warm up
+  // Return fake SWR results with isLoading until next-auth is fully initialized
+  // If there is no login then session will become null and we can just rely on the SWR results
   if (session === undefined)
-    return { data: undefined, isLoading: true, isError: false }; // Let session warm up
+    return { data: undefined, isLoading: true, isError: false };
 
   return {
     data,

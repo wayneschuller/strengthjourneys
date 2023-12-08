@@ -125,6 +125,7 @@ export const VisualizerChart = () => {
 
   // devLog(firstDate);
 
+  // Set sensible default range for desktop and mobile
   let defaultRangeInMonths = 6;
   if (width <= 768) defaultRangeInMonths = 2;
   const defaultRangeMilliseconds =
@@ -270,7 +271,16 @@ export const VisualizerChart = () => {
             variant="outline"
             onClick={(e) => {
               const chart = chartRef.current;
-              chart.resetZoom();
+              if (chart) {
+                chart.zoomScale(
+                  "x",
+                  {
+                    min: firstDate,
+                    max: lastDate,
+                  },
+                  "default",
+                );
+              }
             }}
           >
             Show All
@@ -280,13 +290,10 @@ export const VisualizerChart = () => {
             onClick={(e) => {
               const chart = chartRef.current;
               if (chart) {
-                // const isZoom = chart.isZoomedOrPanned();
-                // devLog(`isZoom: ${isZoom}`);
-                // devLog(chart.getZoomLevel());
                 chart.zoomScale(
                   "x",
                   {
-                    min: lastDate - sixMonthsInMilliseconds,
+                    min: lastDate - defaultRangeMilliseconds,
                     max: lastDate,
                   },
                   "default",

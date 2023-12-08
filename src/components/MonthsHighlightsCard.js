@@ -5,14 +5,13 @@ import { ParsedDataContext } from "@/pages/_app";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { devLog } from "@/lib/SJ-utils";
 
-const MonthsHighlightsCard = () => {
+const MonthsHighlightsCard = ({ selectedLiftsPRs }) => {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   if (!parsedData) return;
+  if (!selectedLiftTypes) return;
 
-  // let array = getBestEverLastMonth(liftTypesSelected, parsedData);
-  // devLog(`MonthsHighlightsCard`);
-  // devLog(array);
-
+  devLog(`Monthly:`);
+  devLog(selectedLiftsPRs);
   // FIXME: put an isLoading skeleton in here internally?
   // {isLoading && (
   //   <div className="flex">
@@ -27,9 +26,40 @@ const MonthsHighlightsCard = () => {
         {/* <CardDescription>Card Description</CardDescription> */}
       </CardHeader>
       <CardContent>
-        {parsedData && <div>Sets: {parsedData.length}</div>}
-        {selectedLiftTypes.map((liftType) => (
-          <div key={liftType}>Tell me about: {liftType}</div>
+        {/* ooh yeah */}
+        {Object.entries(selectedLiftsPRs).map(([liftType, prs]) => (
+          <div key={`${liftType}-monthly`}>
+            <h3>{`Monthly best for ${liftType}`}</h3>
+            <ul>
+              {prs.map(
+                (repsArray, repsIndex) =>
+                  // Skip empty arrays
+                  repsArray.length > 0 && (
+                    <li key={repsIndex}>
+                      <strong>{`${repsIndex}-rep PRs:`}</strong>
+                      <ul>
+                        {repsArray.map(
+                          (pr, nthBestIndex) =>
+                            pr.date &&
+                            new Date(pr.date) >
+                              new Date(
+                                new Date().setMonth(new Date().getMonth() - 1),
+                              ) && (
+                              <li key={nthBestIndex}>
+                                {`Weight: ${pr.weight} ${pr.unitType}, Reps: ${
+                                  pr.reps
+                                }, Date: ${pr.date} (#${
+                                  nthBestIndex + 1
+                                } ever)`}
+                              </li>
+                            ),
+                        )}
+                      </ul>
+                    </li>
+                  ),
+              )}
+            </ul>
+          </div>
         ))}
       </CardContent>
     </Card>
@@ -38,49 +68,33 @@ const MonthsHighlightsCard = () => {
 
 export default MonthsHighlightsCard;
 
-function getBestEverLastMonth(selectedLiftTypes, parsedData) {
-  // Calculate the date one month ago
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+// Function to get top lifts for different rep ranges for a specified lift type
+function getLiftTypePRs(parsedData, liftType) {
+  const startTime = performance.now();
 
-  // Filter the parsedData for lifts in selectedLiftTypes and within the last month
-  const filteredData = parsedData.filter((lifting) => {
-    const liftingDate = new Date(lifting.date);
-    return (
-      selectedLiftTypes.includes(lifting.liftType) && liftingDate >= oneMonthAgo
-    );
-  });
+  // Initialize liftTypePRs array with empty arrays for each rep range (0 to 10)
+  const liftTypePRs = Array.from({ length: 11 }, () => []);
 
-  // Find the best-ever result for each rep scheme for selected lift types
-  const bestEverResults = {};
-
-  parsedData.forEach((lifting) => {
-    if (selectedLiftTypes.includes(lifting.liftType)) {
-      const { reps, weight } = lifting;
-
-      if (
-        !bestEverResults[lifting.liftType] ||
-        weight > bestEverResults[lifting.liftType][reps]?.weight
-      ) {
-        bestEverResults[lifting.liftType] = {
-          ...bestEverResults[lifting.liftType],
-          [reps]: { reps, weight, liftingDate: lifting.date },
-        };
-      }
-    }
-  });
-
-  // Filter the best-ever results for each lift type for rep schemes that occurred in the last month
-  const bestEverLastMonth = Object.entries(bestEverResults).map(
-    ([liftType, repResults]) => {
-      const filteredRepResults = Object.values(repResults).filter((result) => {
-        const liftingDate = new Date(result.liftingDate);
-        return liftingDate >= oneMonthAgo;
-      });
-
-      return { liftType, bestEverResults: filteredRepResults };
-    },
+  // Filter entries for the specified lift type
+  const liftTypeEntries = parsedData.filter(
+    (entry) => entry.liftType === liftType,
   );
 
-  return bestEverLastMonth;
+  // Sort entries based on weight in descending order
+  const sortedEntries = liftTypeEntries.sort((a, b) => b.weight - a.weight);
+
+  // Populate liftTypePRs array for each rep range
+  for (let reps = 1; reps <= 10; reps++) {
+    const liftTypeEntriesForReps = sortedEntries.filter(
+      (entry) => entry.reps === reps,
+    );
+    liftTypePRs[reps] = liftTypeEntriesForReps.slice(0, 20);
+  }
+
+  devLog(
+    `getLiftTypePRs(${liftType}) execution time: ` +
+      `\x1b[1m${Math.round(performance.now() - startTime)}` +
+      `ms\x1b[0m`,
+  );
+  return liftTypePRs;
 }

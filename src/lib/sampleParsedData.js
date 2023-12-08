@@ -1,7 +1,7 @@
 /** @format */
 
 // Our sample parsedData format
-// All components assume it is sorted date ascending
+// It is always sorted date ascending
 export const sampleParsedData = [
   {
     date: "2023-05-27",

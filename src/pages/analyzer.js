@@ -28,6 +28,7 @@ import { SidePanelSelectLiftsButton } from "@/components/SidePaneLiftChooserButt
 const Analyzer = () => {
   const { data: session } = useSession();
   const { isLoading } = useUserLiftData();
+  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   const ssid = useReadLocalStorage("ssid");
 
   // Main useEffect - wait for parsedData process component specfic data
@@ -47,6 +48,15 @@ const Analyzer = () => {
       </div>
     );
 
+  if (!parsedData || !selectedLiftTypes) return null;
+
+  // Build an object of PRs for everything in selectedLifts
+  // liftTypePRs[liftType] = arrays (for reps 1..10) of subarrays for your top 20 lifts at those reps
+  // FIXME: if we are prop passing this do it in state useeffect?
+  const selectedLiftsPRs = getSelectedLiftsPRs(parsedData, selectedLiftTypes);
+
+  devLog(selectedLiftsPRs);
+
   return (
     <>
       <Head>
@@ -60,7 +70,7 @@ const Analyzer = () => {
         </h1>
         <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
           <div className="xl:col-span-2">
-            <MonthsHighlightsCard />
+            <MonthsHighlightsCard selectedLiftsPRs={selectedLiftsPRs} />
           </div>
           <div className="xl:col-span-2">
             <InspirationCard />
@@ -112,4 +122,66 @@ function KeyLiftCards() {
       ))}
     </div>
   );
+}
+
+function getSelectedLiftsPRs(parsedData, selectedLiftTypes) {
+  if (
+    !parsedData ||
+    !Array.isArray(parsedData) ||
+    !Array.isArray(selectedLiftTypes)
+  ) {
+    throw new Error("Invalid input parameters");
+  }
+
+  const startTime = performance.now();
+
+  const selectedLiftsPRs = {};
+
+  // Iterate through each selected lift type
+  for (const liftType of selectedLiftTypes) {
+    // Use the existing function to get PRs for the current lift type
+    const liftTypePRs = getLiftTypePRs(parsedData, liftType);
+    // Store the PRs in the result object
+    selectedLiftsPRs[liftType] = liftTypePRs;
+  }
+
+  devLog(
+    `getSelectedLiftsPRs() execution time: \x1b[1m${Math.round(
+      performance.now() - startTime,
+    )}ms\x1b[0m`,
+  );
+
+  return selectedLiftsPRs;
+}
+
+function getLiftTypePRs(parsedData, liftType) {
+  if (
+    !parsedData ||
+    !Array.isArray(parsedData) ||
+    typeof liftType !== "string"
+  ) {
+    throw new Error("Invalid input parameters");
+  }
+
+  // Initialize liftTypePRs array with empty arrays for each rep range (1 to 10)
+  const liftTypePRs = Array.from({ length: 11 }, () => []);
+
+  // Filter entries for the specified lift type
+  const liftTypeEntries = parsedData.filter(
+    (entry) => entry.liftType === liftType,
+  );
+
+  // Sort entries based on weight in descending order
+  const sortedEntries = liftTypeEntries.sort((a, b) => b.weight - a.weight);
+
+  // Populate liftTypePRs array for each rep range
+  const topEntriesCount = 20;
+  for (let reps = 1; reps <= 10; reps++) {
+    const liftTypeEntriesForReps = sortedEntries.filter(
+      (entry) => entry.reps === reps,
+    );
+    liftTypePRs[reps] = liftTypeEntriesForReps.slice(0, topEntriesCount);
+  }
+
+  return liftTypePRs;
 }

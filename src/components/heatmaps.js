@@ -33,10 +33,10 @@ import {
 const ActivityHeatmapsCard = () => {
   const { parsedData, isDemoMode } = useContext(ParsedDataContext);
   const { width } = useWindowSize();
-  const [intervalMonths, setIntervalMonths] = useState(18);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [intervals, setIntervals] = useState(null);
+  const [intervalMonths, setIntervalMonths] = useState(18);
 
   // devLog(`ActivityHeatmapsCard rendering...`);
 
@@ -48,18 +48,20 @@ const ActivityHeatmapsCard = () => {
   useEffect(() => {
     if (!parsedData) return;
 
-    // Sensible defaults so the heatmap height is fairly reasonable
-    if (width > 768) setIntervalMonths(24);
-    else if (width > 1536) setIntervalMonths(32);
-
     // Generate heatmap stuff
     const { startDate, endDate } = findStartEndDates(parsedData);
     setStartDate(startDate);
     setEndDate(endDate);
 
+    // devLog(`Width changing to ${width}`);
+    let intervalMonths = 18;
+    if (width > 768 && width <= 1536) intervalMonths = 24;
+    else if (width > 1536) intervalMonths = 24;
+    setIntervalMonths(intervalMonths);
+
     const intervals = generateDateRanges(startDate, endDate, intervalMonths);
     setIntervals(intervals);
-  }, [parsedData, isDemoMode, width]);
+  }, [parsedData, width]);
 
   if (!parsedData) return null;
   if (!intervals) return null;

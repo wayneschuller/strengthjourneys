@@ -9,6 +9,7 @@ import { useWindowSize } from "usehooks-ts";
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getReadableDateString } from "@/lib/SJ-utils";
+import { useIsClient } from "usehooks-ts";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
@@ -32,7 +33,9 @@ import {
 const ActivityHeatmapsCard = () => {
   const { parsedData, isDemoMode } = useContext(ParsedDataContext);
   const { width } = useWindowSize();
+  // const isClient = useIsClient();
 
+  // if (!isClient) return null; // Heatmaps only work on client
   if (!parsedData) return;
 
   // Sensible defaults so the heatmap height is fairly reasonable
@@ -108,31 +111,6 @@ const Heatmap = ({ parsedData, startDate, endDate, isMobile }) => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  // useEffect only runs on the client, so now we can safely show the UI
-  // As advised by: https://github.com/pacocoursey/next-themes#avoid-hydration-mismatch
-  // FIXME:  https://usehooks-ts.com/react-hook/use-is-client ?
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
-
-  // FIXME: if we are checking for mounted we could do clever stuff to get window width and adjust the heatmap data size accordingly?
-  // We could set months based on window size here
-
-  // FIXME: instead of limiting to 2 years on desktop, just show multiple heatmaps in rows for all the data?!
-  // sm: show lots of rows of 6 months heatmaps
-  // md: show lots of rows of 1 year heatmaps
-  // xl: shows lots of rows of 2 year heatmaps
-  // This would look epic - an overview of your data
-
-  if (!parsedData) return;
-
-  // Generate random data
-  // const heatmap = generateRandomHeatmapData();
-
   const heatmapData = generateHeatmapData(parsedData, startDate, endDate);
 
   return (
@@ -160,8 +138,6 @@ const Heatmap = ({ parsedData, startDate, endDate, isMobile }) => {
 export const generateHeatmapData = (parsedData, startDate, endDate) => {
   const startTime = performance.now();
 
-  devLog(`generateHeatmapData, startDate ${startDate} endDate ${endDate}`);
-
   // Convert startDate and endDate to Date objects once
   const startDateObj = new Date(startDate);
   const endDateObj = new Date(endDate);
@@ -186,11 +162,10 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
     })
     .map((lift) => ({ date: lift.date, count: 1 }));
 
-  // Log execution time using console.log
   devLog(
-    "generateHeatmapData() execution time: " +
+    `generateHeatmapData()  execution time: ` +
       Math.round(performance.now() - startTime) +
-      "ms",
+      `ms (interval: ${startDate} to ${endDate})`,
   );
 
   return heatmapData;

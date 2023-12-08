@@ -240,7 +240,7 @@ export const VisualizerChart = () => {
   let zoomPanEnabled = true;
   if (sixtyDaysInMilliseconds > lastDate - firstDate) {
     minRange = lastDate - firstDate;
-    // zoomPanEnabled = false;
+    zoomPanEnabled = false;
   }
 
   const zoomOptions = {
@@ -257,7 +257,7 @@ export const VisualizerChart = () => {
       x: {
         min: firstDate,
         max: lastDate,
-        // minRange: minRange,
+        minRange: minRange,
       },
     },
   };

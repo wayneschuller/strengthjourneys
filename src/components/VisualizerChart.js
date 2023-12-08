@@ -231,21 +231,30 @@ export const VisualizerChart = () => {
     },
   };
 
+  // Min zoom-in time range in is normally 60 days. Unless the data is less than 60 days...
+  const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000; // Used for zoom config limits
+  let minRange = sixtyDaysInMilliseconds;
+  let zoomPanEnabled = true;
+  if (sixtyDaysInMilliseconds > lastDate - firstDate) {
+    minRange = lastDate - firstDate;
+    zoomPanEnabled = false;
+  }
+
   const zoomOptions = {
     zoom: {
-      wheel: { enabled: true },
+      wheel: { enabled: zoomPanEnabled },
       mode: "x",
-      pinch: { enabled: true },
+      pinch: { enabled: zoomPanEnabled },
     },
     pan: {
-      enabled: true,
+      enabled: zoomPanEnabled,
       mode: "x",
     },
     limits: {
       x: {
         min: firstDate,
         max: lastDate,
-        // minRange: minRange,
+        minRange: minRange,
       },
     },
   };
@@ -267,58 +276,60 @@ export const VisualizerChart = () => {
   return (
     <>
       <Line ref={chartRef} options={options} data={{ datasets: chartData }} />
-      <div className="hidden flex-row gap-4 md:flex">
-        <Button
-          variant="outline"
-          onClick={(e) => {
-            const chart = chartRef.current;
-            chart.resetZoom();
-          }}
-        >
-          Show All
-        </Button>
-        <Button
-          variant="outline"
-          onClick={(e) => {
-            const chart = chartRef.current;
-            if (chart) {
-              // const isZoom = chart.isZoomedOrPanned();
-              // devLog(`isZoom: ${isZoom}`);
-              // devLog(chart.getZoomLevel());
-              chart.zoomScale(
-                "x",
-                {
-                  min: 1685832543,
-                  max: 1701679743,
-                },
-                "default",
-              );
-            }
-          }}
-        >
-          Show Recent
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={(e) => {
-            const chart = chartRef.current;
-            if (chart) chart.zoom(0.5, "default");
-          }}
-        >
-          <ZoomOut />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={(e) => {
-            const chart = chartRef.current;
-            if (chart) chart.zoom(1.5, "default");
-          }}
-        >
-          <ZoomIn />
-        </Button>
-      </div>
+      {zoomPanEnabled && (
+        <div className="hidden flex-row gap-4 md:flex">
+          <Button
+            variant="outline"
+            onClick={(e) => {
+              const chart = chartRef.current;
+              chart.resetZoom();
+            }}
+          >
+            Show All
+          </Button>
+          <Button
+            variant="outline"
+            onClick={(e) => {
+              const chart = chartRef.current;
+              if (chart) {
+                // const isZoom = chart.isZoomedOrPanned();
+                // devLog(`isZoom: ${isZoom}`);
+                // devLog(chart.getZoomLevel());
+                chart.zoomScale(
+                  "x",
+                  {
+                    min: 1685832543,
+                    max: 1701679743,
+                  },
+                  "default",
+                );
+              }
+            }}
+          >
+            Show Recent
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={(e) => {
+              const chart = chartRef.current;
+              if (chart) chart.zoom(0.5, "default");
+            }}
+          >
+            <ZoomOut />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={(e) => {
+              const chart = chartRef.current;
+              if (chart) chart.zoom(1.5, "default");
+            }}
+          >
+            <ZoomIn />
+          </Button>
+        </div>
+      )}
     </>
   );
 };

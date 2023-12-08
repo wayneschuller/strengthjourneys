@@ -33,9 +33,9 @@ import {
 const ActivityHeatmapsCard = () => {
   const { parsedData, isDemoMode } = useContext(ParsedDataContext);
   const { width } = useWindowSize();
-  // const isClient = useIsClient();
+  const isClient = useIsClient();
 
-  // if (!isClient) return null; // Heatmaps only work on client
+  if (!isClient) return null; // Heatmaps only work on client
   if (!parsedData) return;
 
   // Sensible defaults so the heatmap height is fairly reasonable
@@ -163,7 +163,7 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
     .map((lift) => ({ date: lift.date, count: 1 }));
 
   devLog(
-    `generateHeatmapData(interval: ${startDate} to ${endDate}) execution time: ` +
+    `generateHeatmapData(${startDate} to ${endDate}) execution time: ` +
       `\x1b[1m${Math.round(performance.now() - startTime)}` +
       `ms\x1b[0m`,
   );

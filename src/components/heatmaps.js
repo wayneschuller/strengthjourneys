@@ -56,7 +56,7 @@ const ActivityHeatmapsCard = () => {
     // devLog(`Width changing to ${width}`);
     let intervalMonths = 18;
     if (width > 768 && width <= 1536) intervalMonths = 24;
-    else if (width > 1536) intervalMonths = 24;
+    else if (width > 1536) intervalMonths = 32;
     setIntervalMonths(intervalMonths);
 
     const intervals = generateDateRanges(startDate, endDate, intervalMonths);

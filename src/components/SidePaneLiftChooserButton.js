@@ -31,19 +31,25 @@ export function SidePanelSelectLiftsButton({ isIconMode }) {
     <Sheet>
       <SheetTrigger asChild>
         <div>
-          {!isIconMode && <Button variant="outline"> Choose Lifts</Button>}
-          {isIconMode && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Dumbbell />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Choose lifts</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  {isIconMode && (
+                    <Button variant="outline" size="icon">
+                      <Dumbbell />
+                    </Button>
+                  )}
+                  {!isIconMode && (
+                    <Button variant="outline">
+                      <Dumbbell className="mr-3" /> Choose Lifts
+                    </Button>
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Choose lifts</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </SheetTrigger>
       <SheetContent side="left">

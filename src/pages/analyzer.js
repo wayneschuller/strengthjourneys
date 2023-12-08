@@ -102,13 +102,13 @@ function KeyLiftCards() {
             </CardHeader>
             <CardContent>
               <div className="">
-                Below are per lift analysis for the key selected lifts. Click
-                this button or the top nav bar dumbell icon to change selected
-                lifts.
+                At any time click the dumbell icon to select other lifts for
+                analysis. The lift chooser is also in the top right corner of
+                the navigation bar.
               </div>
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <SidePanelSelectLiftsButton />
+            <CardFooter className="flex justify-around">
+              <SidePanelSelectLiftsButton isIconMode={false} />
             </CardFooter>
           </Card>
         </div>
@@ -120,6 +120,29 @@ function KeyLiftCards() {
           parsedData={parsedData}
         />
       ))}
+      {!isDemoMode && (
+        <div className="grid grid-cols-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Analyzing Other Lifts</CardTitle>
+              {/* <CardDescription>Demo Mode </CardDescription> */}
+            </CardHeader>
+            <CardContent>
+              <div className="">
+                At any time click the dumbell icon to select other lifts for
+                analysis.
+              </div>
+              <div className="">
+                The lift chooser is also in the top right corner of the
+                navigation bar.
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-around">
+              <SidePanelSelectLiftsButton isIconMode={false} />
+            </CardFooter>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

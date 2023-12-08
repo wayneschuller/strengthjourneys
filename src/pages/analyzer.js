@@ -42,7 +42,7 @@ const Analyzer = () => {
   //   if (!parsedData) return;
   // }, [parsedData]);
 
-  devLog(`Rendering <Analyzer />...`);
+  // devLog(`Rendering <Analyzer />...`);
 
   if (!isLoading && session?.user && !ssid)
     return (

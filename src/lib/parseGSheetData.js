@@ -82,8 +82,9 @@ function parseGSheetData(data) {
 
   devLog(
     "parseGSheetData() execution time: " +
-      Math.round(performance.now() - startTime) +
-      "ms",
+      `\x1b[1m${Math.round(performance.now() - startTime)}` +
+      `ms\x1b[0m` +
+      ` (${objectsArray.length} tuples)`,
   );
 
   return objectsArray;

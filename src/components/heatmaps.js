@@ -163,9 +163,9 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
     .map((lift) => ({ date: lift.date, count: 1 }));
 
   devLog(
-    `generateHeatmapData()  execution time: ` +
-      Math.round(performance.now() - startTime) +
-      `ms (interval: ${startDate} to ${endDate})`,
+    `generateHeatmapData(interval: ${startDate} to ${endDate}) execution time: ` +
+      `\x1b[1m${Math.round(performance.now() - startTime)}` +
+      `ms\x1b[0m`,
   );
 
   return heatmapData;

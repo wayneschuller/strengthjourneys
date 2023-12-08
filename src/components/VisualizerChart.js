@@ -78,10 +78,6 @@ export const VisualizerChart = () => {
 
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
-    devLog(
-      `VisualizerChart useEffect[parsedData] with ${parsedData?.length} tuples of parsedData`,
-    );
-    // devLog(parsedData);
     if (!parsedData) return;
 
     // Generate chart data!
@@ -498,8 +494,8 @@ function processVisualizerData(parsedData, selectedLiftTypes) {
 
   devLog(
     "processVisualizerData execution time: " +
-      Math.round(performance.now() - startTime) +
-      "ms",
+      `\x1b[1m${Math.round(performance.now() - startTime)}` +
+      `ms\x1b[0m`,
   );
 
   return sortedDatasets;

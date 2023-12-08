@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/SJ-utils";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useWindowSize } from "usehooks-ts";
 
 import {
   defaults as chartDefaults,
@@ -61,6 +62,7 @@ export const VisualizerChart = () => {
   const [openPicker, authResponse] = useDrivePicker();
   const chartRef = useRef(null);
   const [chartData, setChartData] = useState(null);
+  const { width } = useWindowSize();
 
   // Local computed data.
   let firstDate = null;
@@ -123,12 +125,15 @@ export const VisualizerChart = () => {
 
   // devLog(firstDate);
 
-  const sixMonthsInMilliseconds = 1000 * 60 * 60 * 24 * 30 * 6;
+  let defaultRangeInMonths = 6;
+  if (width <= 768) defaultRangeInMonths = 2;
+  const defaultRangeMilliseconds =
+    1000 * 60 * 60 * 24 * 30 * defaultRangeInMonths;
 
   const scalesOptions = {
     x: {
       type: "time",
-      min: lastDate - sixMonthsInMilliseconds,
+      min: lastDate - defaultRangeMilliseconds,
       max: lastDate,
       time: {
         minUnit: "day",

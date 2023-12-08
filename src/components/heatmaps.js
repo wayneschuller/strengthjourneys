@@ -33,22 +33,36 @@ import {
 const ActivityHeatmapsCard = () => {
   const { parsedData, isDemoMode } = useContext(ParsedDataContext);
   const { width } = useWindowSize();
+  const [intervalMonths, setIntervalMonths] = useState(18);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [intervals, setIntervals] = useState(null);
 
-  devLog(`ActivityHeatmapsCard rendering...`);
+  // devLog(`ActivityHeatmapsCard rendering...`);
 
-  // FIXME: isClient check not needed?
+  // FIXME: isClient check now not needed?
   // const isClient = useIsClient();
   // if (!isClient) return null; // Heatmaps only work on client
 
-  if (!parsedData) return;
+  // Main useEffect - wait for parsedData to process component specfic data
+  useEffect(() => {
+    if (!parsedData) return;
 
-  // Sensible defaults so the heatmap height is fairly reasonable
-  let intervalMonths = 18;
-  if (width > 768) intervalMonths = 24;
-  if (width > 1536) intervalMonths = 32;
+    // Sensible defaults so the heatmap height is fairly reasonable
+    if (width > 768) setIntervalMonths(24);
+    else if (width > 1536) setIntervalMonths(32);
 
-  const { startDate, endDate } = findStartEndDates(parsedData);
-  const intervals = generateDateRanges(startDate, endDate, intervalMonths);
+    // Generate heatmap stuff
+    const { startDate, endDate } = findStartEndDates(parsedData);
+    setStartDate(startDate);
+    setEndDate(endDate);
+
+    const intervals = generateDateRanges(startDate, endDate, intervalMonths);
+    setIntervals(intervals);
+  }, [parsedData, isDemoMode, width]);
+
+  if (!parsedData) return null;
+  if (!intervals) return null;
 
   // FIXME: put an isLoading skeleton in here internally?
   // {isLoading && (

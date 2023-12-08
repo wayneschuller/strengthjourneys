@@ -245,12 +245,12 @@ export const VisualizerChart = () => {
 
   const zoomOptions = {
     zoom: {
-      wheel: { enabled: true },
+      wheel: { enabled: zoomPanEnabled },
       mode: "x",
-      pinch: { enabled: true },
+      pinch: { enabled: zoomPanEnabled },
     },
     pan: {
-      enabled: true,
+      enabled: zoomPanEnabled,
       mode: "x",
     },
     limits: {

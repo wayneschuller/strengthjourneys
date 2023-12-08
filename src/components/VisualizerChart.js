@@ -31,6 +31,7 @@ import {
 import "chartjs-adapter-date-fns";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import zoomPlugin from "chartjs-plugin-zoom";
+import { endOfDay } from "date-fns";
 
 ChartJS.register(
   Colors,
@@ -66,6 +67,7 @@ export const VisualizerChart = () => {
   let lastDate = null;
   let roundedMaxWeightValue = null;
 
+  devLog(`<VisualizerChart /> rendering...`);
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
     if (!parsedData) return;
@@ -74,30 +76,6 @@ export const VisualizerChart = () => {
     const chartData = processVisualizerData(parsedData, selectedLiftTypes);
     setChartData(chartData);
   }, [parsedData, selectedLiftTypes]);
-
-  useEffect(() => {
-    // FIXME Try to zoom to recent
-    const chart = chartRef.current;
-    // devLog(`zoom useeffect`);
-    // devLog(chart);
-    // if (chart) chart.resetZoom();
-    // let sixMonthsAgo = visualizerData.padDateMax - 1000 * 60 * 60 * 24 * 30 * 6;
-    // if (sixMonthsAgo < visualizerData.padDateMin)
-    // sixMonthsAgo = visualizerData.padDateMin;
-    if (chart) {
-      // devLog(`ZOOMING IN`);
-      chart.zoomScale(
-        "x",
-        {
-          // min: "Sat Apr 22 2023 10:00:00 GMT+1000 (Australian Eastern Standard Time)",
-          min: "2023-06-01",
-          // max: "Mon Dec 04 2023 10:00:00 GMT+1000 (Australian Eastern Standard Time)",
-          max: "2023-12-05",
-        },
-        "default",
-      );
-    }
-  }, [chartRef]);
 
   useEffect(() => {
     // Accessing the HSL color variables
@@ -133,7 +111,7 @@ export const VisualizerChart = () => {
 
   if (!chartData) return; // Eventually in the useEffect this will have data
 
-  // Destructuring assignment to get values from the returned object
+  // Get sensible padded boundaries from the user data
   ({ firstDate, lastDate, roundedMaxWeightValue } =
     getFirstLastDatesMaxWeightFromChartData(chartData));
 
@@ -145,11 +123,13 @@ export const VisualizerChart = () => {
 
   // devLog(firstDate);
 
+  const sixMonthsInMilliseconds = 1000 * 60 * 60 * 24 * 30 * 6;
+
   const scalesOptions = {
     x: {
       type: "time",
-      // min: sixMonthsAgo,
-      // suggestedMax: visualizerData.padDateMax,
+      min: lastDate - sixMonthsInMilliseconds,
+      max: lastDate,
       time: {
         minUnit: "day",
       },
@@ -301,8 +281,8 @@ export const VisualizerChart = () => {
                 chart.zoomScale(
                   "x",
                   {
-                    min: 1685832543,
-                    max: 1701679743,
+                    min: lastDate - sixMonthsInMilliseconds,
+                    max: lastDate,
                   },
                   "default",
                 );

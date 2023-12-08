@@ -24,14 +24,6 @@ function useUserLiftData() {
     },
   );
 
-  devLog(`session:`);
-  devLog(session);
-  devLog(`data:`);
-  devLog(data);
-  devLog(
-    `isLoading: ${session === undefined ? true : isLoading}, ssid: ${ssid}`,
-  );
-
   if (session === undefined)
     return { data: undefined, isLoading: true, isError: false }; // Let session warm up
 

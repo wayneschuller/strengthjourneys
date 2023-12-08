@@ -53,7 +53,8 @@ export const VisualizerChart = () => {
   const [mutedColor, setMutedColor] = useState(null);
   const [mutedForegroundColor, setMutedForegroundColor] = useState(null);
   const [gridColor, setGridColor] = useState(null);
-  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
+  const { parsedData, selectedLiftTypes, isDemoMode } =
+    useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { isLoading } = useUserLiftData();
   const [openPicker, authResponse] = useDrivePicker();
@@ -126,7 +127,7 @@ export const VisualizerChart = () => {
 
   if (session === undefined) return null;
 
-  if (isLoading) {
+  if (isLoading && !isDemoMode) {
     return <Skeleton className="h-[80vh] w-[90vw]"></Skeleton>;
   }
 

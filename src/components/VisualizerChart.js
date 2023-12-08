@@ -124,6 +124,8 @@ export const VisualizerChart = () => {
     // console.log(gridColor);
   }, [theme]);
 
+  if (session === undefined) return null;
+
   if (isLoading) {
     return <Skeleton className="h-[80vh] w-[90vw]"></Skeleton>;
   }
@@ -242,12 +244,12 @@ export const VisualizerChart = () => {
 
   const zoomOptions = {
     zoom: {
-      wheel: { enabled: zoomPanEnabled },
+      wheel: { enabled: true },
       mode: "x",
-      pinch: { enabled: zoomPanEnabled },
+      pinch: { enabled: true },
     },
     pan: {
-      enabled: zoomPanEnabled,
+      enabled: true,
       mode: "x",
     },
     limits: {

@@ -41,6 +41,10 @@ export function Layout({ children }) {
     // devLog(`<Layout /> useEffect[data]: isError is ${isError}`);
     // devLog(data);
 
+    if (isLoading) return; // Give useSWR a chance to find data
+
+    // if (data === undefined) return;
+
     // If data changes and we have isError then signOut
     // This is usually because our token has expired
     // FIXME: get Google refreshtokens working
@@ -125,7 +129,7 @@ export function Layout({ children }) {
     }
 
     setParsedData(parsedData);
-  }, [data, isError]);
+  }, [data, isLoading, isError]);
 
   // useEffect for showing toast instructions on key state changes
   useEffect(() => {

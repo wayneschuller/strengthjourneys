@@ -267,7 +267,7 @@ export const VisualizerChart = () => {
   return (
     <>
       <Line ref={chartRef} options={options} data={{ datasets: chartData }} />
-      <div className="flex flex-row gap-4">
+      <div className="hidden flex-row gap-4 md:flex">
         <Button
           variant="outline"
           onClick={(e) => {

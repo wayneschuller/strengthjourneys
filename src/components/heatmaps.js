@@ -33,9 +33,13 @@ import {
 const ActivityHeatmapsCard = () => {
   const { parsedData, isDemoMode } = useContext(ParsedDataContext);
   const { width } = useWindowSize();
-  const isClient = useIsClient();
 
-  if (!isClient) return null; // Heatmaps only work on client
+  devLog(`ActivityHeatmapsCard rendering...`);
+
+  // FIXME: isClient check not needed?
+  // const isClient = useIsClient();
+  // if (!isClient) return null; // Heatmaps only work on client
+
   if (!parsedData) return;
 
   // Sensible defaults so the heatmap height is fairly reasonable
@@ -43,7 +47,7 @@ const ActivityHeatmapsCard = () => {
   if (width > 768) intervalMonths = 24;
   if (width > 1536) intervalMonths = 32;
 
-  const { startDate, endDate } = findDateRange(parsedData);
+  const { startDate, endDate } = findStartEndDates(parsedData);
   const intervals = generateDateRanges(startDate, endDate, intervalMonths);
 
   // FIXME: put an isLoading skeleton in here internally?
@@ -108,7 +112,6 @@ const ActivityHeatmapsCard = () => {
 export default ActivityHeatmapsCard;
 
 const Heatmap = ({ parsedData, startDate, endDate, isMobile }) => {
-  const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
   const heatmapData = generateHeatmapData(parsedData, startDate, endDate);
@@ -171,7 +174,7 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
   return heatmapData;
 };
 
-function findDateRange(parsedData) {
+function findStartEndDates(parsedData) {
   if (!parsedData || parsedData.length === 0) {
     return null; // Return null for an empty array or invalid input
   }

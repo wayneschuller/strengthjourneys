@@ -53,18 +53,7 @@ export const VisualizerChart = () => {
   const [mutedColor, setMutedColor] = useState(null);
   const [mutedForegroundColor, setMutedForegroundColor] = useState(null);
   const [gridColor, setGridColor] = useState(null);
-  const {
-    parsedData,
-    setParsedData,
-    ssid,
-    setSsid,
-    isDemoMode,
-    setIsDemoMode,
-    liftTypes,
-    setLiftTypes,
-    selectedLiftTypes,
-    setSelectedLiftTypes,
-  } = useContext(ParsedDataContext);
+  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { isLoading } = useUserLiftData();
   const [openPicker, authResponse] = useDrivePicker();

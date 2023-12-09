@@ -71,6 +71,7 @@ export function Layout({ children }) {
       setIsDemoMode(isDemoMode);
     } else {
       parsedData = sampleParsedData;
+      parsedData.sort((a, b) => new Date(a.date) - new Date(b.date)); // FIXME: fix the sampleData order
       isDemoMode = true;
       setIsDemoMode(isDemoMode);
     }
@@ -81,6 +82,7 @@ export function Layout({ children }) {
     // Before we set parsedData there are a few other global
     // state variables everything needs.
     parsedData = markHigherWeightAsHistoricalPRs(parsedData);
+    // devLog(parsedData);
 
     // Count the frequency of each liftType
     const liftTypeFrequency = {};
@@ -195,31 +197,34 @@ export function Layout({ children }) {
   );
 }
 
+// Assumes data is sorted.
 export const markHigherWeightAsHistoricalPRs = (parsedData) => {
   const startTime = performance.now();
   const bestRecordsMap = {};
 
-  // Iterate through the parsedData array and mark historical PRs
-  parsedData.forEach((record) => {
+  // Create a new array with modified objects
+  const markedData = parsedData.map((record) => {
     const key = `${record.liftType}-${record.reps}`;
 
     if (!bestRecordsMap[key] || record.weight > bestRecordsMap[key].weight) {
       // If no record for this liftType and reps combination or the current record has a higher weight
       // Mark the current record as historical
-      record.isHistoricalPR = true;
-      // devLog(`PR found:`);
+      // devLog(`PR found (key: ${key}):`);
       // devLog(record);
-
-      // Update the best record for this liftType and reps combination
       bestRecordsMap[key] = record;
+      return { ...record, isHistoricalPR: true };
     } else {
       // Subsequent occurrences are not historical PRs
-      record.isHistoricalPR = false;
+      // devLog(`PR NOT FOUND (key: ${key}):`);
+      // devLog(record);
+      return { ...record, isHistoricalPR: false };
     }
   });
 
-  // Re-sort the array by date
-  parsedData.sort((a, b) => new Date(a.date) - new Date(b.date));
+  // Re-sort the new array by date
+  markedData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // devLog(markedData);
 
   devLog(
     `markPRs() execution time: ` +
@@ -227,5 +232,5 @@ export const markHigherWeightAsHistoricalPRs = (parsedData) => {
       `ms\x1b[0m`,
   );
 
-  return parsedData;
+  return markedData;
 };

@@ -61,13 +61,14 @@ export const VisualizerChart = () => {
   const { isLoading } = useUserLiftData();
   const [openPicker, authResponse] = useDrivePicker();
   const chartRef = useRef(null);
+  const { width } = useWindowSize();
   const [chartData, setChartData] = useState(null);
+
+  // FIXME: xScaleMin/Max are in state because we set them in the useEffect
+  // However they actually work just fine as internal local variables that get computed
+  // I'm trying to find a way to retain chart pan/zoom between tab changes and page changes
   const [xScaleMin, setXScaleMin] = useState(null);
   const [xScaleMax, setXScaleMax] = useState(null);
-  const { width } = useWindowSize();
-
-  // const [xScaleMin, setXScaleMin] = useLocalStorage("xScaleMin", null);
-  // const [xScaleMax, setXScaleMax] = useLocalStorage("xScaleMax", null);
 
   // Local computed data.
   let firstDate = null;
@@ -211,6 +212,9 @@ export const VisualizerChart = () => {
       type: "time",
       min: xScaleMin,
       max: xScaleMax,
+      // These don't work the way I want
+      // suggestedMin: xScaleMin,
+      // suggestedMax: xScaleMax,
       time: {
         minUnit: "day",
       },

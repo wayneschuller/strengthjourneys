@@ -314,10 +314,19 @@ export const VisualizerChart = () => {
       enabled: zoomPanEnabled,
       mode: "x",
       onPanComplete: (chart) => {
-        // FIXME: couldn't get this to work well. It's just the min/max of the full data
-        // setXScaleMin(chart?.scales?.x?.min);
-        // setXScaleMax(chart?.scales?.x?.max);
-        // devLog(chart);
+        return; // FIXME: couldn't get this to work well.
+
+        if (!chart?.chart?.scales?.x?.ticks) return;
+        let ticks = chart.chart.scales.x.ticks;
+        devLog(ticks);
+        let xScaleMin = ticks[0].value;
+        let xScaleMax = ticks[ticks.length - 1].value;
+
+        if (xScaleMin && xScaleMax) {
+          devLog(`onPanComplete: xMin ${xScaleMin}, xMax ${xScaleMax}`);
+          setXScaleMin(xScaleMin);
+          setXScaleMax(xScaleMax);
+        }
       },
     },
     limits: {

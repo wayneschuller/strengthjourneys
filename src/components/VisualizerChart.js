@@ -274,21 +274,21 @@ export const VisualizerChart = () => {
     pan: {
       enabled: zoomPanEnabled,
       mode: "x",
-      onPanComplete: (chart) => {
-        return; // FIXME: couldn't get this to work well.
+      // onPanComplete: (chart) => {
+      //   return; // FIXME: couldn't get this to work well.
 
-        if (!chart?.chart?.scales?.x?.ticks) return;
-        let ticks = chart.chart.scales.x.ticks;
-        devLog(ticks);
-        let xScaleMin = ticks[0].value;
-        let xScaleMax = ticks[ticks.length - 1].value;
+      //   if (!chart?.chart?.scales?.x?.ticks) return;
+      //   let ticks = chart.chart.scales.x.ticks;
+      //   devLog(ticks);
+      //   let xScaleMin = ticks[0].value;
+      //   let xScaleMax = ticks[ticks.length - 1].value;
 
-        if (xScaleMin && xScaleMax) {
-          devLog(`onPanComplete: xMin ${xScaleMin}, xMax ${xScaleMax}`);
-          setXScaleMin(xScaleMin);
-          setXScaleMax(xScaleMax);
-        }
-      },
+      //   if (xScaleMin && xScaleMax) {
+      //     devLog(`onPanComplete: xMin ${xScaleMin}, xMax ${xScaleMax}`);
+      //     setXScaleMin(xScaleMin);
+      //     setXScaleMax(xScaleMax);
+      //   }
+      // },
     },
     limits: {
       x: {

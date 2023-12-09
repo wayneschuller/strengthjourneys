@@ -8,7 +8,7 @@ import { devLog } from "@/lib/SJ-utils";
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getReadableDateString } from "@/lib/SJ-utils";
-import { useWindowSize } from "usehooks-ts";
+import { useIsClient, useWindowSize } from "usehooks-ts";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
@@ -36,12 +36,12 @@ const ActivityHeatmapsCard = () => {
   const [endDate, setEndDate] = useState(null);
   const [intervals, setIntervals] = useState(null);
   const [intervalMonths, setIntervalMonths] = useState(18);
+  const isClient = useIsClient();
+
+  if (!isClient) return null; // Heatmaps only work on client
 
   // devLog(`ActivityHeatmapsCard rendering...`);
   devLog(parsedData);
-  // FIXME: isClient check now not needed?
-  // const isClient = useIsClient();
-  // if (!isClient) return null; // Heatmaps only work on client
 
   // Main useEffect - wait for parsedData to process component specfic data
   useEffect(() => {

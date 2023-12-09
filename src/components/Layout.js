@@ -38,8 +38,10 @@ export function Layout({ children }) {
   // When userUserLiftData (useSWR) gives new Google sheet data, parse it
   // useSWR can ping google and cache it and it won't trigger here until data changes
   useEffect(() => {
-    devLog(`<Layout /> useEffect[data]: isError is ${isError}`);
-    devLog(data);
+    devLog(
+      `<Layout /> useEffect[data]: isLoading ${isLoading}, isError ${isError}`,
+    );
+    // devLog(data);
 
     if (isLoading) return; // Give useSWR a chance to find data
 
@@ -131,7 +133,7 @@ export function Layout({ children }) {
       );
     }
 
-    devLog(`Layout useEffect[data, isLoading, isError]...`);
+    devLog(`Layout useEffect setParsedData()`);
     setParsedData(parsedData);
   }, [data, isLoading, isError]);
 

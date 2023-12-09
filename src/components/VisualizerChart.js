@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext, useRef, useMemo } from "react";
 import { useTheme } from "next-themes";
 import { getLiftColor } from "@/lib/getLiftColor";
 import { Line } from "react-chartjs-2";
@@ -65,9 +65,9 @@ export const VisualizerChart = () => {
   const [xScaleMin, setXScaleMin] = useState(null);
   const [xScaleMax, setXScaleMax] = useState(null);
   const { width } = useWindowSize();
+
   // const [xScaleMin, setXScaleMin] = useLocalStorage("xScaleMin", null);
   // const [xScaleMax, setXScaleMax] = useLocalStorage("xScaleMax", null);
-  // const [roundedMaxWeightValue, setRoundedMaxWeightValue] = useState(null);
 
   // Local computed data.
   let firstDate = null;
@@ -79,8 +79,8 @@ export const VisualizerChart = () => {
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
     devLog(`VisualizerChart useEffect[parsedData, selectedLiftTypes]`);
-    devLog(parsedData);
-    devLog(selectedLiftTypes);
+    // devLog(parsedData);
+    // devLog(selectedLiftTypes);
     if (!parsedData) return;
 
     // Generate chart data!
@@ -313,6 +313,12 @@ export const VisualizerChart = () => {
     pan: {
       enabled: zoomPanEnabled,
       mode: "x",
+      onPanComplete: (chart) => {
+        // FIXME: couldn't get this to work well. It's just the min/max of the full data
+        // setXScaleMin(chart?.scales?.x?.min);
+        // setXScaleMax(chart?.scales?.x?.max);
+        // devLog(chart);
+      },
     },
     limits: {
       x: {

@@ -15,7 +15,6 @@ function useUserLiftData() {
 
   const shouldFetch = session && ssid ? true : false; // Only fetch if we have session and ssid
 
-  // FIXME: set an interval for auto updating?
   const { data, isLoading } = useSWR(
     shouldFetch ? `/api/readGSheet?ssid=${ssid}` : null,
     fetcher,

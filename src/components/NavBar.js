@@ -43,6 +43,8 @@ export default function NavBar() {
   );
 }
 
+// FIXME: make the menu nav options an array and reuse in MobileNav
+
 export function DesktopNav() {
   const pathname = usePathname();
   return (
@@ -85,6 +87,15 @@ export function DesktopNav() {
             )}
           >
             One Rep Max Calculator
+          </Link>
+          <Link
+            href="/warmups"
+            className={cn(
+              "transition-colors hover:text-foreground/80",
+              pathname === "/timer" ? "text-foreground" : "text-foreground/60",
+            )}
+          >
+            Warm Up Sets
           </Link>
           <Link
             href="/timer"

@@ -38,8 +38,8 @@ export function Layout({ children }) {
   // When userUserLiftData (useSWR) gives new Google sheet data, parse it
   // useSWR can ping google and cache it and it won't trigger here until data changes
   useEffect(() => {
-    // devLog(`<Layout /> useEffect[data]: isError is ${isError}`);
-    // devLog(data);
+    devLog(`<Layout /> useEffect[data]: isError is ${isError}`);
+    devLog(data);
 
     if (isLoading) return; // Give useSWR a chance to find data
 
@@ -64,6 +64,9 @@ export function Layout({ children }) {
 
     // Get some parsedData
     if (data?.values) {
+      // FIXME: can we tell here if the data has changed at all?
+      // FIXME: how to do nothing if data has not changed?
+
       parsedData = parseGSheetData(data.values); // Will be sorted date ascending
 
       // FIXME: here is the point to check for parsing failures and go to demomode.
@@ -128,6 +131,7 @@ export function Layout({ children }) {
       );
     }
 
+    devLog(`Layout useEffect[data, isLoading, isError]...`);
     setParsedData(parsedData);
   }, [data, isLoading, isError]);
 

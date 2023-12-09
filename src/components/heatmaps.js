@@ -140,9 +140,7 @@ const Heatmap = ({ parsedData, startDate, endDate, isMobile }) => {
         return `color-gh-${theme || "light"}-${value.count}`; // Grabs colors from css
       }}
       titleForValue={(value) => {
-        if (!value) return null;
-
-        return `${value?.date}: ${value?.count}`;
+        if (value?.tooltip) return value.tooltip;
       }}
     />
   );
@@ -167,7 +165,7 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
   // Use an object to track unique dates
   const uniqueDates = {};
 
-  // Create heatmapData {date: lift.date, count: 1} for activity and {date: lift.date, count: 3} for historical PRs
+  // Create heatmapData {date: lift.date, count: 1, tooltip: ""} for activity and {date: lift.date, count: 2, tooltip: "PR details"} for historical PRs
   const heatmapData = filteredData
     .filter((lift) => {
       if (!uniqueDates[lift.date]) {
@@ -176,7 +174,13 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
       }
       return false;
     })
-    .map((lift) => ({ date: lift.date, count: lift.isHistoricalPR ? 3 : 1 }));
+    .map((lift) => ({
+      date: lift.date,
+      count: lift.isHistoricalPR ? 2 : 1,
+      tooltip: lift.isHistoricalPR
+        ? `Date: ${lift.date}\nPersonal Record: ${lift.liftType} - ${lift.reps} reps - ${lift.weight} ${lift.unitType}`
+        : `Date: ${lift.date}`,
+    }));
 
   devLog(
     `generateHeatmapData(${startDate} to ${endDate}) execution time: ` +

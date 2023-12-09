@@ -38,11 +38,6 @@ const ActivityHeatmapsCard = () => {
   const [intervalMonths, setIntervalMonths] = useState(18);
   const isClient = useIsClient();
 
-  if (!isClient) return null; // Heatmaps only work on client
-
-  // devLog(`ActivityHeatmapsCard rendering...`);
-  devLog(parsedData);
-
   // Main useEffect - wait for parsedData to process component specfic data
   useEffect(() => {
     if (!parsedData) return;
@@ -62,6 +57,7 @@ const ActivityHeatmapsCard = () => {
     setIntervals(intervals);
   }, [parsedData, width]);
 
+  if (!isClient) return null; // Heatmaps only work on client
   if (!parsedData) return null;
   if (!intervals) return null;
 

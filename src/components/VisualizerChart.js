@@ -64,16 +64,12 @@ export const VisualizerChart = () => {
   const { width } = useWindowSize();
   const [chartData, setChartData] = useState(null);
 
-  // FIXME: xScaleMin/Max are in state because we set them in the useEffect
-  // However they actually work just fine as internal local variables that get computed
-  // I'm trying to find a way to retain chart pan/zoom between tab changes and page changes
-  const [xScaleMin, setXScaleMin] = useState(null);
-  const [xScaleMax, setXScaleMax] = useState(null);
-
-  // Local computed data.
+  // Local computed/derived variables
   let firstDate = null;
   let lastDate = null;
   let roundedMaxWeightValue = null;
+  let xScaleMin = null;
+  let xScaleMax = null;
 
   devLog(`<VisualizerChart /> rendering...`);
 
@@ -86,43 +82,6 @@ export const VisualizerChart = () => {
 
     // Generate chart data!
     const chartData = processVisualizerData(parsedData, selectedLiftTypes);
-
-    // Set sensible default range for desktop and mobile
-    // If user has less data than range, then their data is the range (with less padding)
-    // Get sensible padded boundaries from the user data
-    // firstDate, lastDate and scaleMin will all be Unix timestamps
-    ({ firstDate, lastDate, roundedMaxWeightValue } =
-      getFirstLastDatesMaxWeightFromChartData(chartData));
-
-    let defaultRangeInMonths = 6; // Desktop default
-    let xPaddingInDays = 10; // Desktop default
-    if (width <= 768) {
-      defaultRangeInMonths = 1; // Mobile default
-      xPaddingInDays = 2; // Mobile default
-    }
-
-    const defaultRangeMilliseconds =
-      1000 * 60 * 60 * 24 * 30 * defaultRangeInMonths;
-    let xPaddingInMilliseconds = xPaddingInDays * 24 * 60 * 60 * 1000;
-
-    if (lastDate - firstDate < defaultRangeMilliseconds) {
-      xPaddingInDays = 1; // Small padding with small data
-      xPaddingInMilliseconds = xPaddingInDays * 24 * 60 * 60 * 1000;
-
-      // Set xScaleMin to be just before the first entry on the chart
-      // xScaleMin = firstDate - xPaddingInMilliseconds;
-      setXScaleMin(firstDate - xPaddingInMilliseconds);
-    } else {
-      // Set xScaleMin to just before the preferred time range on the chart
-      // xScaleMin = lastDate - defaultRangeMilliseconds - xPaddingInMilliseconds;
-      setXScaleMin(
-        lastDate - defaultRangeMilliseconds - xPaddingInMilliseconds,
-      );
-    }
-
-    // set xScaleMax to preferred padding at right end of chart
-    // xScaleMax = lastDate + xPaddingInMilliseconds;
-    setXScaleMax(lastDate + xPaddingInMilliseconds);
 
     setChartData(chartData);
   }, [parsedData, selectedLiftTypes]);
@@ -170,42 +129,40 @@ export const VisualizerChart = () => {
   // chartDefaults.font.size = 20;
   chartDefaults.normalized = true;
 
-  // devLog(firstDate);
-
   // Set sensible default range for desktop and mobile
   // If user has less data than range, then their data is the range (with less padding)
   // Get sensible padded boundaries from the user data
   // firstDate, lastDate and scaleMin will all be Unix timestamps
-  // ({ firstDate, lastDate, roundedMaxWeightValue } =
-  //   getFirstLastDatesMaxWeightFromChartData(chartData));
+  ({ firstDate, lastDate, roundedMaxWeightValue } =
+    getFirstLastDatesMaxWeightFromChartData(chartData));
 
-  // let defaultRangeInMonths = 6; // Desktop default
-  // let xPaddingInDays = 10; // Desktop default
-  // if (width <= 768) {
-  //   defaultRangeInMonths = 1; // Mobile default
-  //   xPaddingInDays = 2; // Mobile default
-  // }
+  let defaultRangeInMonths = 6; // Desktop default
+  let xPaddingInDays = 10; // Desktop default
+  if (width <= 768) {
+    defaultRangeInMonths = 1; // Mobile default
+    xPaddingInDays = 2; // Mobile default
+  }
 
-  // const defaultRangeMilliseconds =
-  //   1000 * 60 * 60 * 24 * 30 * defaultRangeInMonths;
-  // let xPaddingInMilliseconds = xPaddingInDays * 24 * 60 * 60 * 1000;
+  const defaultRangeMilliseconds =
+    1000 * 60 * 60 * 24 * 30 * defaultRangeInMonths;
+  let xPaddingInMilliseconds = xPaddingInDays * 24 * 60 * 60 * 1000;
 
-  // if (lastDate - firstDate < defaultRangeMilliseconds) {
-  //   xPaddingInDays = 1; // Small padding with small data
-  //   xPaddingInMilliseconds = xPaddingInDays * 24 * 60 * 60 * 1000;
+  if (lastDate - firstDate < defaultRangeMilliseconds) {
+    xPaddingInDays = 1; // Small padding with small data
+    xPaddingInMilliseconds = xPaddingInDays * 24 * 60 * 60 * 1000;
 
-  //   // Set xScaleMin to be just before the first entry on the chart
-  //   // xScaleMin = firstDate - xPaddingInMilliseconds;
-  //   setXScaleMin(firstDate - xPaddingInMilliseconds);
-  // } else {
-  //   // Set xScaleMin to just before the preferred time range on the chart
-  //   // xScaleMin = lastDate - defaultRangeMilliseconds - xPaddingInMilliseconds;
-  //   setXScaleMin(lastDate - defaultRangeMilliseconds - xPaddingInMilliseconds);
-  // }
+    // Set xScaleMin to be just before the first entry on the chart
+    // xScaleMin = firstDate - xPaddingInMilliseconds;
+    xScaleMin = firstDate - xPaddingInMilliseconds;
+  } else {
+    // Set xScaleMin to just before the preferred time range on the chart
+    // xScaleMin = lastDate - defaultRangeMilliseconds - xPaddingInMilliseconds;
+    xScaleMin = lastDate - defaultRangeMilliseconds - xPaddingInMilliseconds;
+  }
 
-  // // set xScaleMax to preferred padding at right end of chart
-  // // xScaleMax = lastDate + xPaddingInMilliseconds;
-  // setXScaleMax(lastDate + xPaddingInMilliseconds);
+  // set xScaleMax to preferred padding at right end of chart
+  // xScaleMax = lastDate + xPaddingInMilliseconds;
+  xScaleMax = lastDate + xPaddingInMilliseconds;
 
   const scalesOptions = {
     x: {

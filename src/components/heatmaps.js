@@ -5,11 +5,10 @@ import { ParsedDataContext } from "@/pages/_app";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
 import { devLog } from "@/lib/SJ-utils";
-import { useWindowSize } from "usehooks-ts";
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getReadableDateString } from "@/lib/SJ-utils";
-import { useIsClient } from "usehooks-ts";
+import { useWindowSize } from "usehooks-ts";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
@@ -39,7 +38,7 @@ const ActivityHeatmapsCard = () => {
   const [intervalMonths, setIntervalMonths] = useState(18);
 
   // devLog(`ActivityHeatmapsCard rendering...`);
-
+  devLog(parsedData);
   // FIXME: isClient check now not needed?
   // const isClient = useIsClient();
   // if (!isClient) return null; // Heatmaps only work on client
@@ -153,7 +152,9 @@ const Heatmap = ({ parsedData, startDate, endDate, isMobile }) => {
   );
 };
 
-// Create heatmapData {date: lift.date, count: 1} whever we have parsedData activity
+// Create heatmapData
+// If we find activity we set: {date: lift.date, count: 1}
+// If we find isHistoricalPR we set: {date: lift.date, count: 3}
 export const generateHeatmapData = (parsedData, startDate, endDate) => {
   const startTime = performance.now();
 
@@ -170,7 +171,7 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
   // Use an object to track unique dates
   const uniqueDates = {};
 
-  // Create heatmapData {date: lift.date, count: 1} whenever we have parsedData activity
+  // Create heatmapData {date: lift.date, count: 1} for activity and {date: lift.date, count: 3} for historical PRs
   const heatmapData = filteredData
     .filter((lift) => {
       if (!uniqueDates[lift.date]) {
@@ -179,7 +180,7 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
       }
       return false;
     })
-    .map((lift) => ({ date: lift.date, count: 1 }));
+    .map((lift) => ({ date: lift.date, count: lift.isHistoricalPR ? 3 : 1 }));
 
   devLog(
     `generateHeatmapData(${startDate} to ${endDate}) execution time: ` +

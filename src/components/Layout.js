@@ -38,9 +38,7 @@ export function Layout({ children }) {
   // When userUserLiftData (useSWR) gives new Google sheet data, parse it
   // useSWR can ping google and cache it and it won't trigger here until data changes
   useEffect(() => {
-    devLog(
-      `<Layout /> useEffect[data]: isLoading ${isLoading}, isError ${isError}`,
-    );
+    // devLog( `<Layout /> useEffect[data]: isLoading ${isLoading}, isError ${isError}`,);
     // devLog(data);
 
     if (isLoading) return; // Give useSWR a chance to find data
@@ -64,11 +62,8 @@ export function Layout({ children }) {
     let parsedData = null; // A local version for this scope only
     let isDemoMode = true; // A local version for this scope only
 
-    // Get some parsedData
     if (data?.values) {
-      // FIXME: can we tell here if the data has changed at all?
-      // FIXME: how to do nothing if data has not changed?
-
+      // This always means new or changed data.
       parsedData = parseGSheetData(data.values); // Will be sorted date ascending
 
       // FIXME: here is the point to check for parsing failures and go to demomode.
@@ -85,6 +80,7 @@ export function Layout({ children }) {
 
     // Before we set parsedData there are a few other global
     // state variables everything needs.
+    parsedData = markHigherWeightAsHistoricalPRs(parsedData);
 
     // Count the frequency of each liftType
     const liftTypeFrequency = {};
@@ -198,3 +194,38 @@ export function Layout({ children }) {
     </>
   );
 }
+
+export const markHigherWeightAsHistoricalPRs = (parsedData) => {
+  const startTime = performance.now();
+  const bestRecordsMap = {};
+
+  // Iterate through the parsedData array and mark historical PRs
+  parsedData.forEach((record) => {
+    const key = `${record.liftType}-${record.reps}`;
+
+    if (!bestRecordsMap[key] || record.weight > bestRecordsMap[key].weight) {
+      // If no record for this liftType and reps combination or the current record has a higher weight
+      // Mark the current record as historical
+      record.isHistoricalPR = true;
+      // devLog(`PR found:`);
+      // devLog(record);
+
+      // Update the best record for this liftType and reps combination
+      bestRecordsMap[key] = record;
+    } else {
+      // Subsequent occurrences are not historical PRs
+      record.isHistoricalPR = false;
+    }
+  });
+
+  // Re-sort the array by date
+  parsedData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  devLog(
+    `markPRs() execution time: ` +
+      `\x1b[1m${Math.round(performance.now() - startTime)}` +
+      `ms\x1b[0m`,
+  );
+
+  return parsedData;
+};

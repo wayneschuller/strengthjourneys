@@ -114,10 +114,6 @@ export const VisualizerChart = () => {
 
   if (!chartData) return; // Eventually in the useEffect this will have data
 
-  // Get sensible padded boundaries from the user data
-  ({ firstDate, lastDate, roundedMaxWeightValue } =
-    getFirstLastDatesMaxWeightFromChartData(chartData));
-
   // We imported chartDefaults from chart.js above
   // chartDefaults.font.family = "'Inter', 'Helvetica','Arial'";
   // chartDefaults.font.family = "'Inter'";
@@ -127,16 +123,45 @@ export const VisualizerChart = () => {
   // devLog(firstDate);
 
   // Set sensible default range for desktop and mobile
-  let defaultRangeInMonths = 6;
-  if (width <= 768) defaultRangeInMonths = 2;
+  // If user has less data than range, then their data is the range (with less padding)
+  // Get sensible padded boundaries from the user data
+  // firstDate, lastDate and scaleMin will all be Unix timestamps
+  ({ firstDate, lastDate, roundedMaxWeightValue } =
+    getFirstLastDatesMaxWeightFromChartData(chartData));
+
+  let defaultRangeInMonths = 6; // Desktop default
+  let xPaddingInDays = 10; // Desktop default
+  if (width <= 768) {
+    defaultRangeInMonths = 1; // Mobile default
+    xPaddingInDays = 2; // Mobile default
+  }
+
   const defaultRangeMilliseconds =
     1000 * 60 * 60 * 24 * 30 * defaultRangeInMonths;
+  let xPaddingInMilliseconds = xPaddingInDays * 24 * 60 * 60 * 1000;
+
+  let xScaleMin;
+  let xScaleMax;
+
+  if (lastDate - firstDate < defaultRangeMilliseconds) {
+    xPaddingInDays = 1; // Small padding with small data
+    xPaddingInMilliseconds = xPaddingInDays * 24 * 60 * 60 * 1000;
+
+    // Set xScaleMin to be just before the first entry on the chart
+    xScaleMin = firstDate - xPaddingInMilliseconds;
+  } else {
+    // Set xScaleMin to just before the preferred time range on the chart
+    xScaleMin = lastDate - defaultRangeMilliseconds - xPaddingInMilliseconds;
+  }
+
+  // set xScaleMax to preferred padding at right end of chart
+  xScaleMax = lastDate + xPaddingInMilliseconds;
 
   const scalesOptions = {
     x: {
       type: "time",
-      min: lastDate - defaultRangeMilliseconds,
-      max: lastDate,
+      min: xScaleMin,
+      max: xScaleMax,
       time: {
         minUnit: "day",
       },
@@ -294,8 +319,8 @@ export const VisualizerChart = () => {
                 chart.zoomScale(
                   "x",
                   {
-                    min: lastDate - defaultRangeMilliseconds,
-                    max: lastDate,
+                    min: xScaleMin,
+                    max: xScaleMax,
                   },
                   "default",
                 );
@@ -393,26 +418,16 @@ function getFirstLastDatesMaxWeightFromChartData(chartData) {
     return dates;
   }, []);
 
-  const firstDate = new Date(Math.min(...allDates));
-  const lastDate = new Date(Math.max(...allDates));
-
-  // Hardcoded padding value of 10 days
-  const paddingDays = 10;
-
-  // Pad the start and end dates
-  const paddedStartDate = new Date(firstDate);
-  const paddedEndDate = new Date(lastDate);
-
-  paddedStartDate.setDate(firstDate.getDate() - paddingDays);
-  paddedEndDate.setDate(lastDate.getDate() + paddingDays);
+  const firstDate = new Date(Math.min(...allDates)).getTime(); // Convert to Unix timestamp
+  const lastDate = new Date(Math.max(...allDates)).getTime(); // Convert to Unix timestamp
 
   // Round maxWeightValue up to the next multiple of 50
   const roundedMaxWeightValue = Math.ceil(maxWeightValue / 50) * 50;
 
   // return { firstDate, lastDate };
   return {
-    firstDate: paddedStartDate,
-    lastDate: paddedEndDate,
+    firstDate: firstDate,
+    lastDate: lastDate,
     roundedMaxWeightValue,
   };
 }

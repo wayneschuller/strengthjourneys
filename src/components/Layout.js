@@ -163,6 +163,8 @@ export function Layout({ children }) {
     }
 
     // Tell the user when data is loaded
+    // FIXME: not working
+    // FIXME: if they have some PRs TODAY, show them a reward toast with confetti instead
     if (
       !loadedToastInit &&
       !isLoading &&

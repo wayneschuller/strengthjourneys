@@ -167,6 +167,7 @@ export const VisualizerChart = () => {
   const scalesOptions = {
     x: {
       type: "time",
+      offset: true, // Prevents some clipping of points (not as good as my default padding)
       min: xScaleMin,
       max: xScaleMax,
       // These don't work the way I want
@@ -178,10 +179,10 @@ export const VisualizerChart = () => {
       ticks: {
         // font: { family: "Catamaran", size: 15 },
         // font: { size: 15 },
-        color: mutedForegroundColor,
+        // color: mutedForegroundColor,
         display: true,
         // color: "red",
-        // maxRotation: 0, // The default rotation is good on desktop but on mobile causes constant layout shifting on zoom
+        // maxRotation: 0, // This causes layout shift on mobile but now I'm used to it.
       },
       grid: {
         // color: mutedColor,

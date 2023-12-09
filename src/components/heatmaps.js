@@ -150,7 +150,7 @@ const Heatmap = ({ parsedData, startDate, endDate, isMobile }) => {
 // If we find activity we set: {date: lift.date, count: 1}
 // If we find isHistoricalPR we set: {date: lift.date, count: 3}
 
-export const generateHeatmapData = (parsedData, startDate, endDate) => {
+export const generateHeatmapDataOLD = (parsedData, startDate, endDate) => {
   const startTime = performance.now();
 
   // Convert startDate and endDate to Date objects once
@@ -190,48 +190,6 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
 
     return accumulator;
   }, []);
-
-  devLog(
-    `generateHeatmapData(${startDate} to ${endDate}) execution time: ` +
-      `\x1b[1m${Math.round(performance.now() - startTime)}` +
-      `ms\x1b[0m`,
-  );
-
-  return heatmapData;
-};
-
-export const generateHeatmapDataOLD = (parsedData, startDate, endDate) => {
-  const startTime = performance.now();
-
-  // Convert startDate and endDate to Date objects once
-  const startDateObj = new Date(startDate);
-  const endDateObj = new Date(endDate);
-
-  // Filter data based on the date range
-  const filteredData = parsedData.filter((lift) => {
-    const liftDate = new Date(lift.date);
-    return liftDate >= startDateObj && liftDate <= endDateObj;
-  });
-
-  // Use an object to track unique dates
-  const uniqueDates = {};
-
-  // Create heatmapData {date: lift.date, count: 1, tooltip: ""} for activity and {date: lift.date, count: 2, tooltip: "PR details"} for historical PRs
-  const heatmapData = filteredData
-    .filter((lift) => {
-      if (!uniqueDates[lift.date]) {
-        uniqueDates[lift.date] = true;
-        return true;
-      }
-      return false;
-    })
-    .map((lift) => ({
-      date: lift.date,
-      count: lift.isHistoricalPR ? 2 : 1,
-      tooltip: lift.isHistoricalPR
-        ? `Date: ${lift.date}\nPersonal Record: ${lift.liftType} - ${lift.reps} reps - ${lift.weight} ${lift.unitType}`
-        : `Date: ${lift.date}`,
-    }));
 
   devLog(
     `generateHeatmapData(${startDate} to ${endDate}) execution time: ` +
@@ -332,4 +290,61 @@ function generateDateRanges(startDateStr, endDateStr, intervalMonths) {
     }
     return dateRanges;
   }
+}
+
+export const generateHeatmapData = (parsedData, startDate, endDate) => {
+  const startTime = performance.now();
+
+  // Convert startDate and endDate to Date objects once
+  const startDateObj = new Date(startDate);
+  const endDateObj = new Date(endDate);
+
+  // Filter data based on the date range
+  const filteredData = parsedData.filter((lift) => {
+    const liftDate = new Date(lift.date);
+    return liftDate >= startDateObj && liftDate <= endDateObj;
+  });
+
+  // Use an object to track unique dates
+  const uniqueDates = {};
+
+  // Create heatmapData {date: lift.date, count: 1, tooltip: ""} for activity and {date: lift.date, count: 2, tooltip: "PR details"} for historical PRs
+  const heatmapData = filteredData.reduce((accumulator, lift) => {
+    const currentDate = lift.date;
+    if (!uniqueDates[currentDate]) {
+      uniqueDates[currentDate] = true;
+
+      const isHistoricalPR = filteredData.some(
+        (pr) => pr.date === currentDate && pr.isHistoricalPR,
+      );
+
+      accumulator.push({
+        date: currentDate,
+        count: isHistoricalPR ? 2 : 1,
+        tooltip: isHistoricalPR
+          ? getHistoricalPrTooltip(filteredData, currentDate)
+          : `Date: ${currentDate}`,
+      });
+    }
+
+    return accumulator;
+  }, []);
+
+  devLog(
+    `generateHeatmapData(${startDate} to ${endDate}) execution time: ` +
+      `\x1b[1m${Math.round(performance.now() - startTime)}` +
+      `ms\x1b[0m`,
+  );
+
+  return heatmapData;
+};
+
+// Helper function to get tooltip for historical PRs on a specific date
+function getHistoricalPrTooltip(data, currentDate) {
+  const prsOnDate = data
+    .filter((pr) => pr.date === currentDate && pr.isHistoricalPR)
+    .map((pr) => `${pr.liftType} PR ${pr.reps}@${pr.weight}${pr.unitType}`)
+    .join("\n");
+
+  return `Date: ${currentDate}\n${prsOnDate}`;
 }

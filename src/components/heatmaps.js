@@ -75,7 +75,7 @@ const ActivityHeatmapsCard = () => {
         <CardDescription>
           {intervalMonths} month heatmap{intervals.length > 1 && "s"} for all
           lifting sessions from {getReadableDateString(startDate)} -{" "}
-          {getReadableDateString(endDate)}.
+          {getReadableDateString(endDate)}. Historical PRs are highlighted.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -144,60 +144,6 @@ const Heatmap = ({ parsedData, startDate, endDate, isMobile }) => {
       }}
     />
   );
-};
-
-// Create heatmapData
-// If we find activity we set: {date: lift.date, count: 1}
-// If we find isHistoricalPR we set: {date: lift.date, count: 3}
-
-export const generateHeatmapDataOLD = (parsedData, startDate, endDate) => {
-  const startTime = performance.now();
-
-  // Convert startDate and endDate to Date objects once
-  const startDateObj = new Date(startDate);
-  const endDateObj = new Date(endDate);
-
-  // Filter data based on the date range
-  const filteredData = parsedData.filter((lift) => {
-    const liftDate = new Date(lift.date);
-    return liftDate >= startDateObj && liftDate <= endDateObj;
-  });
-
-  // Use an object to track unique dates
-  const uniqueDates = {};
-
-  // Create heatmapData {date: lift.date, count: 1, tooltip: ""} for activity and {date: lift.date, count: 2, tooltip: "PR details"} for historical PRs
-  const heatmapData = filteredData.reduce((accumulator, lift) => {
-    if (!uniqueDates[lift.date]) {
-      uniqueDates[lift.date] = true;
-      accumulator.push({
-        date: lift.date,
-        count: lift.isHistoricalPR ? 2 : 1,
-        tooltip: lift.isHistoricalPR
-          ? `Date: ${lift.date}\nPR: ${lift.liftType} ${lift.reps}@${lift.weight}${lift.unitType}`
-          : `Date: ${lift.date}`,
-      });
-    } else if (lift.isHistoricalPR) {
-      // Update count and tooltip if isHistoricalPR is true
-      const existingEntry = accumulator.find(
-        (entry) => entry.date === lift.date,
-      );
-      if (existingEntry) {
-        existingEntry.count = 2;
-        existingEntry.tooltip = `Date: ${lift.date}\nPR: ${lift.liftType} ${lift.reps}@${lift.weight}${lift.unitType}`;
-      }
-    }
-
-    return accumulator;
-  }, []);
-
-  devLog(
-    `generateHeatmapData(${startDate} to ${endDate}) execution time: ` +
-      `\x1b[1m${Math.round(performance.now() - startTime)}` +
-      `ms\x1b[0m`,
-  );
-
-  return heatmapData;
 };
 
 function findStartEndDates(parsedData) {
@@ -292,6 +238,10 @@ function generateDateRanges(startDateStr, endDateStr, intervalMonths) {
   }
 }
 
+// Create heatmapData
+// If we find activity we set: {date: lift.date, count: 1}
+// If we find isHistoricalPR we set: {date: lift.date, count: 2}
+// The heatmap can take colors 0..4
 export const generateHeatmapData = (parsedData, startDate, endDate) => {
   const startTime = performance.now();
 
@@ -346,5 +296,5 @@ function getHistoricalPrTooltip(data, currentDate) {
     .map((pr) => `${pr.liftType} PR ${pr.reps}@${pr.weight}${pr.unitType}`)
     .join("\n");
 
-  return `Date: ${currentDate}\n${prsOnDate}`;
+  return `Date: ${getReadableDateString(currentDate)}\n${prsOnDate}`;
 }

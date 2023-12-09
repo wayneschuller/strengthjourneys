@@ -71,7 +71,7 @@ const ActivityHeatmapsCard = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Activity History</CardTitle>
+        <CardTitle>Activity History For All Lift Types</CardTitle>
         <CardDescription>
           {intervalMonths} month heatmap{intervals.length > 1 && "s"} for all
           lifting sessions from {getReadableDateString(startDate)} -{" "}

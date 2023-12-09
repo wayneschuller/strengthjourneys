@@ -178,10 +178,10 @@ export const VisualizerChart = () => {
       ticks: {
         // font: { family: "Catamaran", size: 15 },
         // font: { size: 15 },
-        // color: mutedForegroundColor,
+        color: mutedForegroundColor,
         display: true,
         // color: "red",
-        maxRotation: 0, // The default rotation is good on desktop but on mobile causes constant layout shifting on zoom
+        // maxRotation: 0, // The default rotation is good on desktop but on mobile causes constant layout shifting on zoom
       },
       grid: {
         // color: mutedColor,

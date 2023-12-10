@@ -23,6 +23,7 @@ export default function App({ Component, pageProps, session }) {
   const [selectedLiftTypes, setSelectedLiftTypes] = useState([]); // Array of liftType strings - syncs to localStorage
   const [parsedData, setParsedData] = useState(null); // Our main big set of data that components look for
   const [isDemoMode, setIsDemoMode] = useState(true); // needed for lift selector modes (FIXME: find a way to not need it?)
+  const [topLiftsByTypeAndReps, setTopLiftsByTypeAndReps] = useState(null); // see SJ-utils.js for data structure design
 
   return (
     <>
@@ -43,6 +44,8 @@ export default function App({ Component, pageProps, session }) {
               setLiftTypes,
               selectedLiftTypes,
               setSelectedLiftTypes,
+              topLiftsByTypeAndReps,
+              setTopLiftsByTypeAndReps,
             }}
           >
             <div className={`min-h-screen bg-background ${inter.className}`}>

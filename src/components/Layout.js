@@ -9,7 +9,7 @@ import { ParsedDataContext } from "@/pages/_app";
 import { parseGSheetData } from "@/lib/parseGSheetData";
 import { useSession, signIn, signOut } from "next-auth/react";
 import useUserLiftData from "@/lib/useUserLiftData";
-import { devLog } from "@/lib/SJ-utils";
+import { devLog, processTopLiftsByTypeAndReps } from "@/lib/SJ-utils";
 import { sampleParsedData } from "@/lib/sampleParsedData";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -27,6 +27,7 @@ export function Layout({ children }) {
     setIsDemoMode,
     setLiftTypes,
     setSelectedLiftTypes,
+    setTopLiftsByTypeAndReps,
   } = useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { data, isError, isLoading } = useUserLiftData();
@@ -99,17 +100,14 @@ export function Layout({ children }) {
 
     setLiftTypes(sortedLiftTypes);
 
-    // Retrieve selectedLifts from localStorage (there are two versions for demo data and user data)
+    // Check if selectedLifts exists in localStorage
+    // Instead of useLocalStorage we roll our own because of the unique default generation
+    // There are two localStorage keys for selectedLifts: demo data and user data
     const localStorageKey = `selectedLifts${isDemoMode ? "_demoMode" : ""}`;
-    const selectedLifts = localStorage.getItem(localStorageKey);
+    let selectedLiftTypes = localStorage.getItem(localStorageKey);
 
-    // Check if data exists in localStorage before parsing
-    if (selectedLifts !== null) {
-      // Parse and set data in the state
-      const parsedSelectedLifts = JSON.parse(selectedLifts);
-      // devLog(`LocalStorage (${localStorageKey}):`);
-      // devLog(parsedSelectedLifts);
-      setSelectedLiftTypes(parsedSelectedLifts);
+    if (selectedLiftTypes !== null) {
+      selectedLiftTypes = JSON.parse(selectedLiftTypes);
     } else {
       // Select a number of lift types as default, minimum of 4 or the length of sortedLiftTypes
       const numberOfDefaultLifts = Math.min(4, sortedLiftTypes.length);
@@ -121,13 +119,24 @@ export function Layout({ children }) {
         `Localstorage selectedLifts not found! (demomode is ${isDemoMode}). Setting:`,
       );
       devLog(defaultSelectedLifts);
-      // Set default selected lifts in state and localStorage
-      setSelectedLiftTypes(defaultSelectedLifts);
+
+      // Set the new default selected lifts in localStorage
       localStorage.setItem(
         localStorageKey,
         JSON.stringify(defaultSelectedLifts),
       );
+      selectedLiftTypes = defaultSelectedLifts;
     }
+
+    // Now set it in state for useContext usage throughout the components
+    setSelectedLiftTypes(selectedLiftTypes);
+
+    // Critical PR processing
+    const topLiftsByTypeAndReps = processTopLiftsByTypeAndReps(
+      parsedData,
+      selectedLiftTypes,
+    );
+    setTopLiftsByTypeAndReps(topLiftsByTypeAndReps);
 
     devLog(`Layout useEffect setParsedData()`);
     setParsedData(parsedData);

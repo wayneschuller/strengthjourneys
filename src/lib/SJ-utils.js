@@ -19,6 +19,7 @@ export const coreLiftTypes = [
   "Power Clean",
   "Front Squat",
 ];
+
 // Function to get a celebration emoji based on the provided position
 function getCelebrationEmoji(position) {
   // Array of celebration emojis corresponding to different positions
@@ -96,4 +97,49 @@ export function getReadableDateString(ISOdate) {
   }
 
   return dateString;
+}
+
+// Loop through the data once and collect top 20 lifts for each lift, reps 1..10
+// Only do so for selectedLiftTypes
+// This info will likely be used by both Analyzer and Visualizer components - so put in context
+//
+// The return format is: topLiftsByTypeAndReps["Back Squat"][4][17] means 18th best Back Squat 5RM ever
+//
+export function processTopLiftsByTypeAndReps(parsedData, selectedLiftTypes) {
+  const topLiftsByTypeAndReps = {};
+  const startTime = performance.now();
+
+  parsedData.forEach((entry) => {
+    const { liftType, reps } = entry;
+
+    // Skip processing if liftType is not in selectedLiftTypes
+    if (!selectedLiftTypes.includes(liftType)) {
+      return;
+    }
+
+    // Ensure that the reps value is within the expected range
+    if (reps < 1 || reps > 10) {
+      return;
+    }
+
+    if (!topLiftsByTypeAndReps[liftType]) {
+      topLiftsByTypeAndReps[liftType] = Array.from({ length: 10 }, () => []);
+    }
+
+    let repArray = topLiftsByTypeAndReps[liftType][reps - 1];
+    repArray.push(entry);
+
+    // Sort by weight in descending order and keep top 20
+    repArray.sort((a, b) => b.weight - a.weight);
+    if (repArray.length > 20) {
+      repArray.length = 20;
+    }
+  });
+
+  devLog(
+    `processWorkoutData() execution time: \x1b[1m${Math.round(
+      performance.now() - startTime,
+    )}ms\x1b[0m`,
+  );
+  return topLiftsByTypeAndReps;
 }

@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { useContext, useState, useEffect } from "react";
 import { ParsedDataContext } from "@/pages/_app";
 import useUserLiftData from "@/lib/useUserLiftData";
-import { devLog } from "@/lib/SJ-utils";
 import InspirationCard from "@/components/InspirationCard";
 import InstructionsCard from "@/components/InstructionsCard";
 import LiftAchievementsCard from "@/components/LiftAchievementsCard";
@@ -24,11 +23,13 @@ import {
 import ActivityHeatmapsCard from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
 import { SidePanelSelectLiftsButton } from "@/components/SidePaneLiftChooserButton";
+import { devLog, processTopLiftsByTypeAndReps } from "@/lib/SJ-utils";
 
 const Analyzer = () => {
   const { data: session } = useSession();
   const { isLoading } = useUserLiftData();
-  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
+  const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } =
+    useContext(ParsedDataContext);
   const ssid = useReadLocalStorage("ssid");
 
   // Main useEffect - wait for parsedData process component specfic data
@@ -56,9 +57,8 @@ const Analyzer = () => {
   // const selectedLiftsPRs = getSelectedLiftsPRs(parsedData, selectedLiftTypes);
   const selectedLiftsPRs = null;
   // devLog(selectedLiftsPRs);
-
-  const workoutPRs = processWorkoutData(parsedData, selectedLiftTypes);
-  devLog(workoutPRs);
+  // const topLiftsByTypeAndReps = processTopLiftsByTypeAndReps( parsedData, selectedLiftTypes);
+  devLog(topLiftsByTypeAndReps);
 
   return (
     <>
@@ -148,106 +148,4 @@ function KeyLiftCards() {
       )}
     </div>
   );
-}
-
-function getSelectedLiftsPRs(parsedData, selectedLiftTypes) {
-  if (
-    !parsedData ||
-    !Array.isArray(parsedData) ||
-    !Array.isArray(selectedLiftTypes)
-  ) {
-    throw new Error("Invalid input parameters");
-  }
-
-  const startTime = performance.now();
-
-  const selectedLiftsPRs = {};
-
-  // Iterate through each selected lift type
-  for (const liftType of selectedLiftTypes) {
-    // Use the existing function to get PRs for the current lift type
-    const liftTypePRs = getLiftTypePRs(parsedData, liftType);
-    // Store the PRs in the result object
-    selectedLiftsPRs[liftType] = liftTypePRs;
-  }
-
-  devLog(
-    `getSelectedLiftsPRs() execution time: \x1b[1m${Math.round(
-      performance.now() - startTime,
-    )}ms\x1b[0m`,
-  );
-
-  return selectedLiftsPRs;
-}
-
-function getLiftTypePRs(parsedData, liftType) {
-  if (
-    !parsedData ||
-    !Array.isArray(parsedData) ||
-    typeof liftType !== "string"
-  ) {
-    throw new Error("Invalid input parameters");
-  }
-
-  // Initialize liftTypePRs array with empty arrays for each rep range (1 to 10)
-  const liftTypePRs = Array.from({ length: 11 }, () => []);
-
-  // Filter entries for the specified lift type
-  const liftTypeEntries = parsedData.filter(
-    (entry) => entry.liftType === liftType,
-  );
-
-  // Sort entries based on weight in descending order
-  const sortedEntries = liftTypeEntries.sort((a, b) => b.weight - a.weight);
-
-  // Populate liftTypePRs array for each rep range
-  const topEntriesCount = 20;
-  for (let reps = 1; reps <= 10; reps++) {
-    const liftTypeEntriesForReps = sortedEntries.filter(
-      (entry) => entry.reps === reps,
-    );
-    liftTypePRs[reps] = liftTypeEntriesForReps.slice(0, topEntriesCount);
-  }
-
-  return liftTypePRs;
-}
-
-// Loop through the data once and collect top 20 lifts for each lift, reps 1..10
-function processWorkoutData(parsedData, selectedLiftTypes) {
-  const liftTypeRepPRs = {};
-  const startTime = performance.now();
-
-  parsedData.forEach((entry) => {
-    const { liftType, reps } = entry;
-
-    // Skip processing if liftType is not in selectedLiftTypes
-    if (!selectedLiftTypes.includes(liftType)) {
-      return;
-    }
-
-    // Ensure that the reps value is within the expected range
-    if (reps < 1 || reps > 10) {
-      return;
-    }
-
-    if (!liftTypeRepPRs[liftType]) {
-      liftTypeRepPRs[liftType] = Array.from({ length: 10 }, () => []);
-    }
-
-    let repArray = liftTypeRepPRs[liftType][reps - 1];
-    repArray.push(entry);
-
-    // Sort by weight in descending order and keep top 20
-    repArray.sort((a, b) => b.weight - a.weight);
-    if (repArray.length > 20) {
-      repArray.length = 20;
-    }
-  });
-
-  devLog(
-    `processWorkoutData() execution time: \x1b[1m${Math.round(
-      performance.now() - startTime,
-    )}ms\x1b[0m`,
-  );
-  return liftTypeRepPRs;
 }

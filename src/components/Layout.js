@@ -71,7 +71,6 @@ export function Layout({ children }) {
       setIsDemoMode(isDemoMode);
     } else {
       parsedData = sampleParsedData;
-      parsedData.sort((a, b) => new Date(a.date) - new Date(b.date)); // FIXME: fix the sampleData order
       isDemoMode = true;
       setIsDemoMode(isDemoMode);
     }
@@ -82,7 +81,6 @@ export function Layout({ children }) {
     // Before we set parsedData there are a few other global
     // state variables everything needs.
     parsedData = markHigherWeightAsHistoricalPRs(parsedData);
-    // devLog(parsedData);
 
     // Count the frequency of each liftType
     const liftTypeFrequency = {};

@@ -97,6 +97,8 @@ const CheckboxLifts = ({}) => {
     localStorage.setItem(localStorageKey, JSON.stringify(updatedSelected));
   };
 
+  // FIXME: if there are more than 10, add a check all button?
+
   return (
     <ScrollArea className="mt-2 h-[90vh]">
       <div className="p-4">

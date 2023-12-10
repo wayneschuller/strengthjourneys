@@ -35,8 +35,12 @@ export default function Home() {
         <link rel="canonical" href="https://www.onerepmaxcalculator.xyz/" />
       </Head>
       <h1 className="flex-1 space-x-2 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
-        Welcome to Strength Journeys 2.0
+        Welcome to Strength Journeys
       </h1>
+      <h3 className="mt-2 scroll-m-20 text-2xl font-semibold tracking-tight">
+        A free open source web app to track your strength training progress over
+        the long term.
+      </h3>
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2 2xl:grid-cols-4">
         <Link href="/analyzer">
           <Card className="hover:ring-1">

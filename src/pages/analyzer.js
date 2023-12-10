@@ -53,9 +53,9 @@ const Analyzer = () => {
   // Build an object of PRs for everything in selectedLifts
   // liftTypePRs[liftType] = arrays (for reps 1..10) of subarrays for your top 20 lifts at those reps
   // FIXME: if we are prop passing this do it in state useeffect?
-  const selectedLiftsPRs = getSelectedLiftsPRs(parsedData, selectedLiftTypes);
-
-  devLog(selectedLiftsPRs);
+  // const selectedLiftsPRs = getSelectedLiftsPRs(parsedData, selectedLiftTypes);
+  const selectedLiftsPRs = null;
+  // devLog(selectedLiftsPRs);
 
   return (
     <>

@@ -17,8 +17,8 @@ const MonthsHighlightsCard = ({ selectedLiftsPRs }) => {
   if (!parsedData) return;
   if (!selectedLiftTypes) return;
 
-  devLog(`Monthly:`);
-  devLog(selectedLiftsPRs);
+  // devLog(`Monthly:`);
+  // devLog(selectedLiftsPRs);
   // FIXME: put an isLoading skeleton in here internally?
   // {isLoading && (
   //   <div className="flex">

@@ -17,9 +17,13 @@ function LiftTypeFrequencyPieCard() {
     useContext(ParsedDataContext);
   const [pieData, setPieData] = useState(null);
 
+  // FIXME: could we add some time UI controls? Liftime, this year etc?
+
   useEffect(() => {
     // devLog(`PieCard...`);
 
+    // FIXME: do some processing - top 4-5 lifts and make an arc called "Other"?
+    // FIXME: and allow them to click other to see a second pie chart?
     const pieData = liftTypes
       .map((item) => ({
         label: item.liftType,
@@ -47,15 +51,17 @@ function LiftTypeFrequencyPieCard() {
     borderWidth: 2,
     color: "white",
     // display: function (context) {
-    //   let dataset = context.dataset;
-    //   let totalValue = dataset.data.reduce(
-    //     (acc, obj) => acc + obj.totalSessions,
-    //     0,
-    //   ); // Total sum of the values in the pie chart
-    //   let currentValue = dataset.data[context.dataIndex].totalSessions;
-    //   // Don't show data label if arc piece is less than 10% of chart
-    //   return currentValue > totalValue * 0.1;
-    //   // return true; // Use this  to show data labels on every arc data item
+    // devLog(context);
+    // let dataset = context.dataset;
+    // let totalValue = dataset.data.reduce(
+    // (acc, obj) => acc + obj.totalSessions,
+    // 0,
+    // ); // Total sum of the values in the pie chart
+    // let currentValue = dataset.data[context.dataIndex].totalSessions;
+    // Don't show data label if arc piece is less than 10% of chart
+    // return currentValue > totalValue * 0.1;
+    // return context.dataset.data[context.dataIndex].frequency;
+    // return true; // Use this  to show data labels on every arc data item
     // },
     font: {
       // family: fontFamily,
@@ -63,10 +69,10 @@ function LiftTypeFrequencyPieCard() {
       size: "14",
     },
     padding: 10,
-    // formatter: function (context) {
-    //   // return [context.label, `${context.totalSessions} sessions`];
-    //   devLog(context);
-    //   return `${context}`;
+    // formatter: function (item) {
+    // return [context.label, `${context.totalSessions} sessions`];
+    // devLog(item);
+    // return `${item.label} (${item.frequency} sets)`;
     // },
   };
 
@@ -125,7 +131,6 @@ function LiftTypeFrequencyPieCard() {
     datasets: [
       {
         label: "Frequency",
-        // data: pieData,
         data: pieData.map((item) => item.frequency),
         backgroundColor: backgroundColors,
         borderWidth: 3,

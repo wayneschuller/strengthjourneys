@@ -37,6 +37,8 @@ const ActivityHeatmapsCard = () => {
   const [intervals, setIntervals] = useState(null);
   const [intervalMonths, setIntervalMonths] = useState(18);
   const isClient = useIsClient();
+  const theme = null;
+  const colorClass = `bg-gh-${theme || "light"}-2 rounded-full`;
 
   // Main useEffect - wait for parsedData to process component specfic data
   useEffect(() => {
@@ -75,7 +77,8 @@ const ActivityHeatmapsCard = () => {
         <CardDescription>
           {intervalMonths} month heatmap{intervals.length > 1 && "s"} for all
           lifting sessions from {getReadableDateString(startDate)} -{" "}
-          {getReadableDateString(endDate)}. Historical PRs are highlighted.
+          {getReadableDateString(endDate)}. Historical PRs are highlighted. Core
+          lift PRs are brighter.
         </CardDescription>
       </CardHeader>
       <CardContent>

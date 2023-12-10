@@ -2,8 +2,15 @@
 
 import { useState, useEffect, useContext } from "react";
 import { ParsedDataContext } from "@/pages/_app";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { devLog } from "@/lib/SJ-utils";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { coreLiftTypes, devLog } from "@/lib/SJ-utils";
+import { getReadableDateString } from "@/lib/SJ-utils";
 
 const MonthsHighlightsCard = ({ selectedLiftsPRs }) => {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
@@ -18,49 +25,33 @@ const MonthsHighlightsCard = ({ selectedLiftsPRs }) => {
   //     <Skeleton className="h-36 w-11/12 flex-1" />
   //   </div>
   // )}
+  const historicalPRs = getFirstHistoricalPRsInLastMonth(parsedData);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>This Month{"'"}s Highlights</CardTitle>
-        {/* <CardDescription>Card Description</CardDescription> */}
+        <CardDescription>Core lift types are in bold.</CardDescription>
       </CardHeader>
       <CardContent>
         {/* ooh yeah */}
-        {Object.entries(selectedLiftsPRs).map(([liftType, prs]) => (
-          <div key={`${liftType}-monthly`}>
-            <h3>{`Monthly best for ${liftType}`}</h3>
-            <ul>
-              {prs.map(
-                (repsArray, repsIndex) =>
-                  // Skip empty arrays
-                  repsArray.length > 0 && (
-                    <li key={repsIndex}>
-                      <strong>{`${repsIndex}-rep PRs:`}</strong>
-                      <ul>
-                        {repsArray.map(
-                          (pr, nthBestIndex) =>
-                            pr.date &&
-                            new Date(pr.date) >
-                              new Date(
-                                new Date().setMonth(new Date().getMonth() - 1),
-                              ) && (
-                              <li key={nthBestIndex}>
-                                {`Weight: ${pr.weight} ${pr.unitType}, Reps: ${
-                                  pr.reps
-                                }, Date: ${pr.date} (#${
-                                  nthBestIndex + 1
-                                } ever)`}
-                              </li>
-                            ),
-                        )}
-                      </ul>
-                    </li>
-                  ),
-              )}
-            </ul>
-          </div>
-        ))}
+
+        <ul>
+          {historicalPRs.map((record) => (
+            <li key={record.id}>
+              <strong
+                className={
+                  coreLiftTypes.includes(record.liftType)
+                    ? "font-bold"
+                    : "font-normal"
+                }
+              >
+                {record.liftType} {record.reps}@{record.weight}
+                {record.unitType} ({getReadableDateString(record.date)})
+              </strong>
+            </li>
+          ))}
+        </ul>
       </CardContent>
     </Card>
   );
@@ -98,3 +89,52 @@ function getLiftTypePRs(parsedData, liftType) {
   );
   return liftTypePRs;
 }
+
+export const getHistoricalPRsInLastMonth = (parsedData) => {
+  const today = new Date();
+  const lastMonth = new Date(today);
+  lastMonth.setMonth(today.getMonth() - 1);
+
+  // Filter records that are historical PRs and fall within the last month
+  const historicalPRsInLastMonth = parsedData.filter((record) => {
+    return (
+      record.isHistoricalPR &&
+      new Date(record.date) >= lastMonth &&
+      new Date(record.date) <= today
+    );
+  });
+
+  return historicalPRsInLastMonth;
+};
+
+export const getFirstHistoricalPRsInLastMonth = (parsedData) => {
+  const today = new Date();
+  const lastMonth = new Date(today);
+  lastMonth.setMonth(today.getMonth() - 1);
+
+  // Filter records that are historical PRs and fall within the last month
+  const historicalPRsInLastMonth = parsedData.filter((record) => {
+    return (
+      record.isHistoricalPR &&
+      new Date(record.date) >= lastMonth &&
+      new Date(record.date) <= today
+    );
+  });
+
+  // Create a map to store the first historical PR for each lift type and reps combination
+  const firstPRsMap = new Map();
+
+  for (let i = historicalPRsInLastMonth.length - 1; i >= 0; i--) {
+    const record = historicalPRsInLastMonth[i];
+    const key = `${record.liftType}-${record.reps}`;
+
+    // If no record for this combination, store it as the first historical PR
+    if (!firstPRsMap.has(key)) {
+      firstPRsMap.set(key, record);
+    }
+  }
+
+  const firstPRs = Array.from(firstPRsMap.values());
+
+  return firstPRs;
+};

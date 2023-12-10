@@ -3,9 +3,13 @@
 // Wayne Schuller, wayne@schuller.id.au
 // Licenced under https://www.gnu.org/licenses/gpl-3.0.html
 
+import { devLog } from "./SJ-utils";
+
 // Provide good defaults for popular barbell lifts
 export function getLiftColor(liftType) {
   let color;
+
+  // devLog(`getLiftColor called for ${liftType}`);
 
   switch (liftType) {
     case "Back Squat":

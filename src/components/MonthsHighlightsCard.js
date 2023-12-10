@@ -38,7 +38,7 @@ const MonthsHighlightsCard = () => {
 
         <ul>
           {historicalPRs.map((record) => (
-            <li key={record.id}>
+            <li key={`${record.liftType}-${record.reps}-${record.date}`}>
               <strong
                 className={
                   coreLiftTypes.includes(record.liftType)

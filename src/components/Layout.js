@@ -167,13 +167,8 @@ export function Layout({ children }) {
     // Tell the user when data is loaded
     // FIXME: not working
     // FIXME: if they have some PRs TODAY, show them a reward toast with confetti instead
-    if (
-      !loadedToastInit &&
-      !isLoading &&
-      ssid &&
-      session?.user &&
-      parsedData?.length !== 0
-    ) {
+    // parsedData?.length !== 0
+    if (!loadedToastInit && !isLoading && ssid && session?.user) {
       loadedToastInit = true; // Don't show this again
 
       const description = sheetFilename || "File name unknown";
@@ -184,7 +179,7 @@ export function Layout({ children }) {
       });
       return;
     }
-  }, [session, isLoading, parsedData, router]);
+  }, [session, isLoading, router]);
 
   return (
     <>
@@ -195,7 +190,7 @@ export function Layout({ children }) {
   );
 }
 
-// Assumes data is sorted.
+// Assumes parsedData is sorted.
 export const markHigherWeightAsHistoricalPRs = (parsedData) => {
   const startTime = performance.now();
   const bestRecordsMap = {};

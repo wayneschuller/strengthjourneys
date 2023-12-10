@@ -57,6 +57,9 @@ const Analyzer = () => {
   const selectedLiftsPRs = null;
   // devLog(selectedLiftsPRs);
 
+  const workoutPRs = processWorkoutData(parsedData, selectedLiftTypes);
+  devLog(workoutPRs);
+
   return (
     <>
       <Head>
@@ -70,7 +73,7 @@ const Analyzer = () => {
         </h1>
         <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
           <div className="xl:col-span-2">
-            <MonthsHighlightsCard selectedLiftsPRs={selectedLiftsPRs} />
+            <MonthsHighlightsCard />
           </div>
           <div className="xl:col-span-2">
             <InspirationCard />
@@ -207,4 +210,44 @@ function getLiftTypePRs(parsedData, liftType) {
   }
 
   return liftTypePRs;
+}
+
+// Loop through the data once and collect top 20 lifts for each lift, reps 1..10
+function processWorkoutData(parsedData, selectedLiftTypes) {
+  const liftTypeRepPRs = {};
+  const startTime = performance.now();
+
+  parsedData.forEach((entry) => {
+    const { liftType, reps } = entry;
+
+    // Skip processing if liftType is not in selectedLiftTypes
+    if (!selectedLiftTypes.includes(liftType)) {
+      return;
+    }
+
+    // Ensure that the reps value is within the expected range
+    if (reps < 1 || reps > 10) {
+      return;
+    }
+
+    if (!liftTypeRepPRs[liftType]) {
+      liftTypeRepPRs[liftType] = Array.from({ length: 10 }, () => []);
+    }
+
+    let repArray = liftTypeRepPRs[liftType][reps - 1];
+    repArray.push(entry);
+
+    // Sort by weight in descending order and keep top 20
+    repArray.sort((a, b) => b.weight - a.weight);
+    if (repArray.length > 20) {
+      repArray.length = 20;
+    }
+  });
+
+  devLog(
+    `processWorkoutData() execution time: \x1b[1m${Math.round(
+      performance.now() - startTime,
+    )}ms\x1b[0m`,
+  );
+  return liftTypeRepPRs;
 }

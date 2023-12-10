@@ -12,7 +12,7 @@ import {
 import { coreLiftTypes, devLog } from "@/lib/SJ-utils";
 import { getReadableDateString } from "@/lib/SJ-utils";
 
-const MonthsHighlightsCard = ({ selectedLiftsPRs }) => {
+const MonthsHighlightsCard = () => {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   if (!parsedData) return;
   if (!selectedLiftTypes) return;

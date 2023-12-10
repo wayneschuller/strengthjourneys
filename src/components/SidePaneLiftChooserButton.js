@@ -94,12 +94,12 @@ const CheckboxLifts = ({}) => {
       .map((lift) => lift.liftType)
       .filter((liftType) => updatedSelected.includes(liftType));
 
-    // Set the state
-    setSelectedLiftTypes(updatedSelected);
-
     // Update localStorage
     const localStorageKey = `selectedLifts${isDemoMode ? "_demoMode" : ""}`;
     localStorage.setItem(localStorageKey, JSON.stringify(updatedSelected));
+
+    // Set the state
+    setSelectedLiftTypes(updatedSelected);
   };
 
   // FIXME: if there are more than 10, add a check all button?

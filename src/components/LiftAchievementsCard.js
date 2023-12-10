@@ -116,14 +116,15 @@ const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
 
   // Map the lifts for the given type to include their index, then filter for recent highlights
   const recentHighlights = topLiftsByTypeAndReps[liftType]
-    .flatMap((repRange, repIndex) =>
+    ?.flatMap((repRange, repIndex) =>
       repRange.map((entry, entryIndex) => ({ ...entry, repIndex, entryIndex })),
     )
     .filter((entry) => isWithinLastMonth(entry.date))
     .sort((a, b) => a.entryIndex - b.entryIndex); // Sort by entryIndex in ascending order
 
-  // FIXME: Ideally these would expand out with animation?
+  if (!recentHighlights) return null;
 
+  // FIXME: Ideally these would expand out with animation?
   return (
     <div>
       <div className="font-semibold">Recent Highlights for {liftType}:</div>

@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { useRouter } from "next/router";
 import { useReadLocalStorage } from "usehooks-ts";
+import { markHigherWeightAsHistoricalPRs } from "@/lib/SJ-utils";
 
 let demoToastInit = false;
 let loadedToastInit = false;
@@ -198,41 +199,3 @@ export function Layout({ children }) {
     </>
   );
 }
-
-// Assumes parsedData is sorted.
-export const markHigherWeightAsHistoricalPRs = (parsedData) => {
-  const startTime = performance.now();
-  const bestRecordsMap = {};
-
-  // Create a new array with modified objects
-  const markedData = parsedData.map((record) => {
-    const key = `${record.liftType}-${record.reps}`;
-
-    if (!bestRecordsMap[key] || record.weight > bestRecordsMap[key].weight) {
-      // If no record for this liftType and reps combination or the current record has a higher weight
-      // Mark the current record as historical
-      // devLog(`PR found (key: ${key}):`);
-      // devLog(record);
-      bestRecordsMap[key] = record;
-      return { ...record, isHistoricalPR: true };
-    } else {
-      // Subsequent occurrences are not historical PRs
-      // devLog(`PR NOT FOUND (key: ${key}):`);
-      // devLog(record);
-      return { ...record, isHistoricalPR: false };
-    }
-  });
-
-  // Re-sort the new array by date
-  markedData.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  // devLog(markedData);
-
-  devLog(
-    `markPRs() execution time: ` +
-      `\x1b[1m${Math.round(performance.now() - startTime)}` +
-      `ms\x1b[0m`,
-  );
-
-  return markedData;
-};

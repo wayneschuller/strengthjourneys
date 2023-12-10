@@ -99,6 +99,7 @@ export function getReadableDateString(ISOdate) {
   return dateString;
 }
 
+// This is run once at init in the <Layout /> useEffect
 // Loop through the data once and collect top 20 lifts for each lift, reps 1..10
 // Only do so for selectedLiftTypes
 // This info will likely be used by both Analyzer and Visualizer components - so put in context
@@ -143,3 +144,32 @@ export function processTopLiftsByTypeAndReps(parsedData, selectedLiftTypes) {
   );
   return topLiftsByTypeAndReps;
 }
+
+// This is run once at init in the <Layout /> useEffect
+// Assumes parsedData is sorted.
+export const markHigherWeightAsHistoricalPRs = (parsedData) => {
+  const startTime = performance.now();
+  const bestRecordsMap = {};
+
+  // Directly modify the objects for performance
+  parsedData.forEach((record) => {
+    const key = `${record.liftType}-${record.reps}`;
+
+    if (!bestRecordsMap[key] || record.weight > bestRecordsMap[key].weight) {
+      bestRecordsMap[key] = record;
+      record.isHistoricalPR = true; // Directly set the property
+    } else {
+      record.isHistoricalPR = false; // Directly set the property
+    }
+  });
+
+  // No need to re-sort if parsedData is already sorted by date
+  // Logging execution time
+  devLog(
+    `markPRs() execution time: ` +
+      `\x1b[1m${Math.round(performance.now() - startTime)}` +
+      `ms\x1b[0m`,
+  );
+
+  return parsedData;
+};

@@ -25,9 +25,9 @@ const LiftAchievementsCard = ({ liftType }) => {
     getLiftTypeStats(liftType, parsedData);
 
   const topLiftsByReps = topLiftsByTypeAndReps[liftType];
-  const oneRM = topLiftsByReps[0][0];
-  const threeRM = topLiftsByReps[2][0];
-  const fiveRM = topLiftsByReps[4][0];
+  const oneRM = topLiftsByReps?.[0]?.[0];
+  const threeRM = topLiftsByReps?.[2]?.[0];
+  const fiveRM = topLiftsByReps?.[4]?.[0];
 
   return (
     <Card className="hover:ring-1">

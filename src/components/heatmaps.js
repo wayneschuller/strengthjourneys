@@ -244,6 +244,8 @@ function generateDateRanges(startDateStr, endDateStr, intervalMonths) {
 // Create heatmapData
 // If we find activity we set: {date: lift.date, count: 1}
 // If we find isHistoricalPR we set: {date: lift.date, count: 2}
+// If the historicalPR is a coreLift we set: {date: lift.date, count: 4}
+// We also set some tooltips.
 // The heatmap can take colors 0..4
 export const generateHeatmapData = (parsedData, startDate, endDate) => {
   const startTime = performance.now();

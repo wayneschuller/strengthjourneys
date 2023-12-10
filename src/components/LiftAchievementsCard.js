@@ -2,10 +2,14 @@
 
 import { useState, useEffect, useContext } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getReadableDateString } from "@/lib/SJ-utils";
+import { getCelebrationEmoji, getReadableDateString } from "@/lib/SJ-utils";
 import { devLog } from "@/lib/SJ-utils";
+import { ParsedDataContext } from "@/pages/_app";
 
-const LiftAchievementsCard = ({ liftType, parsedData }) => {
+const LiftAchievementsCard = ({ liftType }) => {
+  const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } =
+    useContext(ParsedDataContext);
+
   // Check the liftType exists in the data.
   // This sometimes happens when selectedLifts doesn't match data
   // devLog(`LiftAchievementsCard: liftType:`);
@@ -20,9 +24,10 @@ const LiftAchievementsCard = ({ liftType, parsedData }) => {
   const { totalCountReps, totalSets, oldestDate, newestDate } =
     getLiftTypeStats(liftType, parsedData);
 
-  const oneRM = getLiftPR(liftType, parsedData, 1);
-  const threeRM = getLiftPR(liftType, parsedData, 3);
-  const fiveRM = getLiftPR(liftType, parsedData, 5);
+  const topLiftsByReps = topLiftsByTypeAndReps[liftType];
+  const oneRM = topLiftsByReps[0][0];
+  const threeRM = topLiftsByReps[2][0];
+  const fiveRM = topLiftsByReps[4][0];
 
   return (
     <Card className="hover:ring-1">
@@ -62,6 +67,10 @@ const LiftAchievementsCard = ({ liftType, parsedData }) => {
             </div>
           )}
         </div>
+        <RecentLiftHighlights
+          liftType={liftType}
+          topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+        />
       </CardContent>
     </Card>
   );
@@ -96,19 +105,42 @@ function getLiftTypeStats(liftType, parsedData) {
   };
 }
 
-function getLiftPR(liftType, parsedData, reps) {
-  // Filter the parsedData for the specific liftType and reps
-  const filteredData = parsedData.filter(
-    (lifting) => lifting.liftType === liftType && lifting.reps === reps,
+const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
+  // Helper function to check if a date is within the last month
+  const isWithinLastMonth = (dateString) => {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    return new Date(dateString) >= oneMonthAgo;
+  };
+
+  // Map the lifts for the given type to include their index, then filter for recent highlights
+  const recentHighlights = topLiftsByTypeAndReps[liftType]
+    .flatMap((repRange, repIndex) =>
+      repRange.map((entry, entryIndex) => ({ ...entry, repIndex, entryIndex })),
+    )
+    .filter((entry) => isWithinLastMonth(entry.date))
+    .sort((a, b) => a.entryIndex - b.entryIndex); // Sort by entryIndex in ascending order
+
+  // FIXME: Ideally these would expand out with animation?
+
+  return (
+    <div>
+      <div className="font-semibold">Recent Highlights for {liftType}:</div>
+      {recentHighlights.length > 0 ? (
+        <ul>
+          {recentHighlights.map((lift, index) => (
+            <li key={index}>
+              {lift.reps}@{lift.weight}
+              {lift.unitType} ({getReadableDateString(lift.date)}),{" "}
+              {getCelebrationEmoji(lift.entryIndex)} #{lift.entryIndex + 1} best{" "}
+              {lift.reps}RM ever.
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No recent lifts found for this type.</p>
+      )}
+    </div>
   );
-
-  // Find the tuple with the best result based on weight
-  const bestResult = filteredData.reduce((best, lifting) => {
-    if (!best || lifting.weight > best.weight) {
-      return lifting;
-    }
-    return best;
-  }, null);
-
-  return bestResult;
-}
+};

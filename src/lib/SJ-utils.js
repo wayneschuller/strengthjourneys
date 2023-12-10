@@ -21,7 +21,7 @@ export const coreLiftTypes = [
 ];
 
 // Function to get a celebration emoji based on the provided position
-function getCelebrationEmoji(position) {
+export function getCelebrationEmoji(position) {
   // Array of celebration emojis corresponding to different positions
   const positionEmojis = [
     "\u{1F947}", // 🥇 First Place Medal

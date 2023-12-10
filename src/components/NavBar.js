@@ -88,7 +88,7 @@ export function DesktopNav() {
           >
             One Rep Max Calculator
           </Link>
-          <Link
+          {/* <Link
             href="/warmups"
             className={cn(
               "transition-colors hover:text-foreground/80",
@@ -96,7 +96,7 @@ export function DesktopNav() {
             )}
           >
             Warm Up Sets
-          </Link>
+          </Link> */}
           <Link
             href="/timer"
             className={cn(

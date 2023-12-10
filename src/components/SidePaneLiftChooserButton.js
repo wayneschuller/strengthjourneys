@@ -26,6 +26,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+// FIXME: is there any way to detect when the sheet is closed?
+// On mobile we could do the final selectedLift change here
+// rather than when checkboxes are ticked which is CPU expensive
+const handleOnClose = (context) => {
+  devLog(`sheet closed:`);
+  devLog(context);
+};
+
 export function SidePanelSelectLiftsButton({ isIconMode }) {
   return (
     <Sheet>

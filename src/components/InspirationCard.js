@@ -33,7 +33,6 @@ const getRandomQuote = () => {
 };
 
 function InspirationCard() {
-  // const quote = InspirationalQuotes[0];
   const [quote, setQuote] = useState(null);
 
   useEffect(() => {

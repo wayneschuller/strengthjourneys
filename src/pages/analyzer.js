@@ -24,6 +24,7 @@ import ActivityHeatmapsCard from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
 import { SidePanelSelectLiftsButton } from "@/components/SidePaneLiftChooserButton";
 import { devLog, processTopLiftsByTypeAndReps } from "@/lib/SJ-utils";
+import LiftTypeFrequencyPieCard from "@/components/LiftFrequencyPie";
 
 const Analyzer = () => {
   const { data: session } = useSession();
@@ -74,6 +75,9 @@ const Analyzer = () => {
         <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
           <div className="xl:col-span-2">
             <MonthsHighlightsCard />
+          </div>
+          <div className="xl:col-span-2">
+            <LiftTypeFrequencyPieCard />
           </div>
           <div className="xl:col-span-2">
             <InspirationCard />

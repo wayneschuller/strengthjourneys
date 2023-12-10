@@ -250,15 +250,10 @@ function generateDateRanges(startDateStr, endDateStr, intervalMonths) {
 export const generateHeatmapData = (parsedData, startDate, endDate) => {
   const startTime = performance.now();
 
-  // Convert startDate and endDate to Date objects once
-  const startDateObj = new Date(startDate);
-  const endDateObj = new Date(endDate);
-
-  // Filter data based on the date range
-  const filteredData = parsedData.filter((lift) => {
-    const liftDate = new Date(lift.date);
-    return liftDate >= startDateObj && liftDate <= endDateObj;
-  });
+  // Filter data based on the date range (assumes "YYYY-MM-DD" strings)
+  const filteredData = parsedData.filter(
+    (lift) => lift.date >= startDate && lift.date <= endDate,
+  );
 
   // Use an object to track unique dates
   const uniqueDates = {};

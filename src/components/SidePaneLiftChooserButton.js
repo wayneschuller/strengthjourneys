@@ -78,7 +78,7 @@ const CheckboxLifts = ({}) => {
 
   const handleCheckboxChange = (liftType) => {
     // Calculate updatedSelected first
-    const updatedSelected = selectedLiftTypes.includes(liftType)
+    let updatedSelected = selectedLiftTypes.includes(liftType)
       ? selectedLiftTypes.filter((selected) => selected !== liftType)
       : [...selectedLiftTypes, liftType];
 
@@ -88,6 +88,11 @@ const CheckboxLifts = ({}) => {
       // Do not remove the last selected lift
       return;
     }
+
+    // Sort the selectedLiftTypes based on the frequency descending order in liftTypes
+    updatedSelected = liftTypes
+      .map((lift) => lift.liftType)
+      .filter((liftType) => updatedSelected.includes(liftType));
 
     // Set the state
     setSelectedLiftTypes(updatedSelected);

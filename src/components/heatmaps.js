@@ -4,7 +4,7 @@ import { useState, useEffect, useContext } from "react";
 import { ParsedDataContext } from "@/pages/_app";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
-import { devLog } from "@/lib/SJ-utils";
+import { coreLiftTypes, devLog } from "@/lib/SJ-utils";
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getReadableDateString } from "@/lib/SJ-utils";
@@ -258,7 +258,7 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
   // Use an object to track unique dates
   const uniqueDates = {};
 
-  // Create heatmapData {date: lift.date, count: 1, tooltip: ""} for activity and {date: lift.date, count: 2, tooltip: "PR details"} for historical PRs
+  // Create heatmapData
   const heatmapData = filteredData.reduce((accumulator, lift) => {
     const currentDate = lift.date;
     if (!uniqueDates[currentDate]) {
@@ -268,9 +268,21 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
         (pr) => pr.date === currentDate && pr.isHistoricalPR,
       );
 
+      // Initialize liftTypeCount to 1 (we have a normal lift session data on this date)
+      let liftTypeCount = 1;
+
+      if (isHistoricalPR) {
+        // Check if it's a core lift
+        if (coreLiftTypes.some((coreLift) => coreLift === lift.liftType)) {
+          liftTypeCount = 4; // Historical PR for core lift
+        } else {
+          liftTypeCount = 2; // Historical PR, but not a core lift
+        }
+      }
+
       accumulator.push({
         date: currentDate,
-        count: isHistoricalPR ? 2 : 1,
+        count: liftTypeCount,
         tooltip: isHistoricalPR
           ? getHistoricalPrTooltip(filteredData, currentDate)
           : `Date: ${currentDate}`,

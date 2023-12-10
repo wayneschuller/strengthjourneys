@@ -8,6 +8,17 @@ export function devLog(message) {
   }
 }
 
+export const coreLiftTypes = [
+  "Back Squat",
+  "Deadlift",
+  "Bench Press",
+  "Strict Press",
+  "Snatch",
+  "Power Snatch",
+  "Clean",
+  "Power Clean",
+  "Front Squat",
+];
 // Function to get a celebration emoji based on the provided position
 function getCelebrationEmoji(position) {
   // Array of celebration emojis corresponding to different positions

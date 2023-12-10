@@ -79,7 +79,7 @@ const Analyzer = () => {
           <div className="xl:col-span-2">
             <LiftTypeFrequencyPieCard />
           </div>
-          <div className="xl:col-span-2">
+          <div className="md:col-span-2 xl:col-span-4">
             <InspirationCard />
           </div>
           <div className="md:col-span-2 xl:col-span-4">

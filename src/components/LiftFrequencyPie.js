@@ -149,8 +149,10 @@ function LiftTypeFrequencyPieCard() {
         <CardTitle>Your Lifts</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="">
-          <Pie data={pieChartData} options={pieChartOptions} />
+        <div className="grid justify-center align-middle">
+          <div className="">
+            <Pie data={pieChartData} options={pieChartOptions} />
+          </div>
         </div>
       </CardContent>
     </Card>

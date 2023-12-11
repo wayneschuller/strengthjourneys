@@ -272,7 +272,7 @@ export const VisualizerChart = () => {
         // devLog(context);
         const entry = context[0].raw;
         const url = entry.URL;
-        if (url) return `Click to open ${url}`; // Tooltip reminder they can click to open video
+        if (url) return `Click to open ${url.substring(0, 15)}...`; // Tooltip reminder they can click to open video
       },
     },
   };

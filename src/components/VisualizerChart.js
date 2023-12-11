@@ -116,7 +116,7 @@ export const VisualizerChart = () => {
     // console.log(gridColor);
   }, [theme]);
 
-  devLog(`<VisualizerChart /> rendering...`);
+  // devLog(`<VisualizerChart /> rendering...`);
   if (session === undefined) return null;
 
   if (isLoading && !isDemoMode && !parsedData) {

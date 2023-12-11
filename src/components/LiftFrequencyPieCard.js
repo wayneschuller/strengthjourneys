@@ -5,12 +5,12 @@ import { useContext, useState, useEffect } from "react";
 import { devLog } from "@/lib/SJ-utils";
 import { ParsedDataContext } from "@/pages/_app";
 
-import { Chart, ArcElement, Tooltip, Legend } from "chart.js";
+import { Chart, ArcElement } from "chart.js";
 import { Pie } from "react-chartjs-2";
 import { getLiftColor } from "@/lib/getLiftColor";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
-Chart.register(ArcElement, Tooltip, Legend, ChartDataLabels);
+Chart.register(ArcElement, ChartDataLabels);
 
 function LiftTypeFrequencyPieCard() {
   const { parsedData, liftTypes, topLiftsByTypeAndReps } =
@@ -107,7 +107,6 @@ function LiftTypeFrequencyPieCard() {
         display: false,
       },
       datalabels: datalabelsOptions,
-      // tooltip: tooltipOptions,
     },
   };
 

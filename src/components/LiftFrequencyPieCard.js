@@ -36,7 +36,7 @@ function LiftTypeFrequencyPieCard() {
 
   if (!pieData) return;
   const backgroundColors = pieData.map((item) => getLiftColor(item.label));
-  devLog(pieData);
+  // devLog(pieData);
 
   // ---------------------------------------------------------------------------
   // Pie Chart Options for react-chartjs-2
@@ -57,9 +57,7 @@ function LiftTypeFrequencyPieCard() {
       size: "11",
     },
     padding: 10,
-    formatter: (item, context) => {
-      devLog(item);
-      // return [context.label, `${context.totalSessions} sessions`];
+    formatter: (item) => {
       return `${item.label}\n(${item.value} sets)`;
     },
   };

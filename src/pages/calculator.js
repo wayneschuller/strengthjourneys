@@ -236,8 +236,9 @@ export default function E1RMCalculator() {
         <h3 className="mb-10 mt-2 hidden flex-1 scroll-m-20 text-xl tracking-tight md:mb-8 md:block md:text-2xl">
           Estimate your max single based on reps and weight (see this{" "}
           <a
-            href="https://en.wikipedia.org/wiki/One-repetition_maximum"
             className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            href="https://en.wikipedia.org/wiki/One-repetition_maximum"
+            target="_blank"
           >
             Wikipedia article
           </a>{" "}

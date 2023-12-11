@@ -28,18 +28,33 @@ export default function Home() {
         {/* <link rel="icon" href="/favicon.ico" /> */}
         <meta
           name="description"
-          content="A one rep max strength calculator you can use with chalked up hands on your phone in the middle of a gym session. 
+          content="Free web based stength progress visualisations from your Google Sheet data. 
                 We give estimates using multiple exercise science formulas. Designed by lifters for lifters. 
                 Useful for powerlifting, strong lifts, crossfit, starting strength and other programs."
         />
-        <link rel="canonical" href="https://www.onerepmaxcalculator.xyz/" />
+        <link rel="canonical" href="https://www.strengthjourneys.xyz/" />
       </Head>
       <h1 className="flex-1 space-x-2 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
         Welcome to Strength Journeys
       </h1>
-      <h3 className="mt-2 scroll-m-20 text-2xl font-semibold tracking-tight">
-        A free open source web app to track your strength training progress over
-        the long term.
+      <h3 className="mt-2 scroll-m-20 text-center text-2xl tracking-tight lg:mx-20">
+        A free{" "}
+        <a
+          className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          target="_blank"
+          href="https://github.com/wayneschuller/strengthjourneys"
+        >
+          open source
+        </a>{" "}
+        web app with creative visualization and analysis of your{" "}
+        <a
+          className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          target="_blank"
+          href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+        >
+          Google Sheet
+        </a>{" "}
+        barbell lifting data.
       </h3>
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2 2xl:grid-cols-4">
         <Link href="/analyzer">

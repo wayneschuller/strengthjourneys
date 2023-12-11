@@ -81,10 +81,15 @@ export const VisualizerChart = () => {
     if (!parsedData) return;
 
     // Generate chart data!
-    const chartData = processVisualizerData(parsedData, selectedLiftTypes);
+    // FIXME: we pass theme here so this causes a reprocessing of data on theme change - not ideal
+    const chartData = processVisualizerData(
+      parsedData,
+      selectedLiftTypes,
+      theme,
+    );
 
     setChartData(chartData);
-  }, [parsedData, selectedLiftTypes]);
+  }, [parsedData, selectedLiftTypes, theme]);
 
   useEffect(() => {
     // Accessing the HSL color variables
@@ -231,12 +236,14 @@ export const VisualizerChart = () => {
   const dataLabelsOptions = {
     display: true,
     formatter: (context) => {
-      return `${context.y}kg`;
+      return `${context.y}${context.unitType}`;
     },
     font: (context) => {
-      // FIXME: Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
-      // return { family: "Sans", size: 12 };
-      return { weight: "bold" };
+      const entry = context.dataset.data[context.dataIndex]; // Our parsedData tuple
+      // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
+      const liftSingle = entry.reps === 1;
+      if (liftSingle) return { weight: "bold", size: 13 };
+      else return { style: "italic", size: 12 };
     },
     align: "end",
     anchor: "end",
@@ -460,35 +467,33 @@ function getFirstLastDatesMaxWeightFromChartData(chartData) {
 
 // This function uniquely processes the parsed Data for the Visualizer
 // So it lives here in the <VisualizerChart /> component
-function processVisualizerData(parsedData, selectedLiftTypes) {
+function processVisualizerData(parsedData, selectedLiftTypes, theme) {
   if (parsedData === null) {
     console.log(`Error: visualizerProcessParsedData passed null.`);
     return;
   }
 
-  const startTime = performance.now(); // We measure critical processing steps
+  devLog(`theme is ${theme}`);
+
+  const startTime = performance.now();
 
   const datasets = {};
 
   parsedData.forEach((entry) => {
-    // Create a unique identifier for each lift type
     const liftKey = entry.liftType;
 
-    // Check if selectedLiftTypes is provided and if the current lift type is not in the array
     if (selectedLiftTypes && !selectedLiftTypes.includes(liftKey)) {
-      return; // Skip processing if not in selectedLiftTypes
+      return;
     }
 
-    // Calculate one-rep max using the provided function (e.g., "Brzycki" formula)
     const oneRepMax = estimateE1RM(entry.reps, entry.weight, "Brzycki");
 
-    // Check if the lift type already exists in datasets
     if (!datasets[liftKey]) {
       datasets[liftKey] = {
         label: entry.liftType,
         data: [],
         backgroundColor: getLiftColor(entry.liftType),
-        borderColor: "rgb(50, 50, 50)",
+        borderColor: theme === "dark" ? "#CCCCCC" : "#111111",
         borderWidth: 2,
         pointStyle: "circle",
         radius: 4,
@@ -498,33 +503,23 @@ function processVisualizerData(parsedData, selectedLiftTypes) {
       };
     }
 
-    // Check if the date already exists in the dataset for the lift type
     const existingDataIndex = datasets[liftKey].data.findIndex(
       (item) => item.x === entry.date,
     );
 
-    // If the date doesn't exist or the new one-rep max is higher, update the dataset
-    if (
-      existingDataIndex === -1 ||
-      datasets[liftKey].data[existingDataIndex].y < oneRepMax
-    ) {
-      if (existingDataIndex === -1) {
-        // If the date doesn't exist, add it to the dataset
-        datasets[liftKey].data.push({
-          x: entry.date,
-          y: oneRepMax,
-        });
-      } else {
-        // If the date exists but the new one-rep max is higher, update it
-        datasets[liftKey].data[existingDataIndex] = {
-          x: entry.date,
-          y: oneRepMax,
-        };
-      }
+    const newDataPoint = {
+      ...entry, // Spread all properties of the entry object
+      x: entry.date,
+      y: oneRepMax,
+    };
+
+    if (existingDataIndex === -1) {
+      datasets[liftKey].data.push(newDataPoint);
+    } else if (datasets[liftKey].data[existingDataIndex].y < oneRepMax) {
+      datasets[liftKey].data[existingDataIndex] = newDataPoint;
     }
   });
 
-  // Sort datasets based on the size of the data (number of entries)
   const sortedDatasets = Object.values(datasets).sort(
     (a, b) => b.data.length - a.data.length,
   );

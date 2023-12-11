@@ -43,6 +43,7 @@ export function AvatarDropdown() {
         <Avatar>
           <AvatarImage src={session.user.image} />
           <AvatarFallback>session.user.name</AvatarFallback>
+          <span className="sr-only">Logged in user menu</span>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

@@ -53,6 +53,9 @@ export function SidePanelSelectLiftsButton({ isIconMode }) {
                       <Dumbbell className="mr-3" /> Choose Lifts
                     </Button>
                   )}
+                  <span className="sr-only">
+                    Choose lifts for special analysis
+                  </span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>Choose lifts for special analysis</TooltipContent>

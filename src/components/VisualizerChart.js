@@ -55,7 +55,7 @@ export const VisualizerChart = () => {
   const [mutedColor, setMutedColor] = useState(null);
   const [mutedForegroundColor, setMutedForegroundColor] = useState(null);
   const [gridColor, setGridColor] = useState(null);
-  const { parsedData, selectedLiftTypes, isDemoMode } =
+  const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isDemoMode } =
     useContext(ParsedDataContext);
   const { data: session } = useSession();
   const { isLoading } = useUserLiftData();
@@ -267,9 +267,16 @@ export const VisualizerChart = () => {
       },
       label: (context) => {
         if (!context) return;
-        // FIXME: in the label push in any top 20 lifts they did today
+        // FIXME: in the label push in any top 20 lifts they did today topLiftsByTypeAndReps
         const entry = context.raw;
-        const label = `${entry.reps}@${entry.weight}${entry.unitType}`;
+        const prIndex = findLiftPositionInTopLifts(
+          entry,
+          topLiftsByTypeAndReps,
+        );
+        const label =
+          `${entry.reps}@${entry.weight}${entry.unitType}` +
+          (prIndex !== -1 ? ` (#${prIndex + 1} of all time)` : "");
+
         return label;
       },
       footer: (context) => {
@@ -543,4 +550,30 @@ function processVisualizerData(parsedData, selectedLiftTypes, theme) {
   );
 
   return sortedDatasets;
+}
+
+function findLiftPositionInTopLifts(liftTuple, topLiftsByTypeAndReps) {
+  const { liftType, reps } = liftTuple;
+
+  // Check if the lift type and rep range exists in the data structure
+  if (
+    topLiftsByTypeAndReps[liftType] &&
+    topLiftsByTypeAndReps[liftType][reps - 1]
+  ) {
+    const topLifts = topLiftsByTypeAndReps[liftType][reps - 1];
+
+    for (let i = 0; i < topLifts.length; i++) {
+      let lift = topLifts[i];
+      // Assuming we compare based on weight, adjust the condition as needed
+      if (
+        lift.date === liftTuple.date &&
+        lift.weight === liftTuple.weight &&
+        lift.reps === liftTuple.reps
+      ) {
+        return i; // Return the position (index) of the lift in the array
+      }
+    }
+  }
+
+  return -1; // Return -1 if the lift is not found
 }

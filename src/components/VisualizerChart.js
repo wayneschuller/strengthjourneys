@@ -272,11 +272,11 @@ export const VisualizerChart = () => {
         let label = [];
 
         if (entry.reps === 1) {
-          label.push(`Lifted ${entry.reps}@${entry.weight}${entry.unitType}`);
+          label.push(`Lifted ${entry.reps}@${entry.weight}${entry.unitType}.`);
         } else {
           const oneRepMax = estimateE1RM(entry.reps, entry.weight, "Brzycki");
           label.push(
-            `Potential 1@${oneRepMax}${entry.unitType} from ${entry.reps}@${entry.weight}${entry.unitType}`,
+            `Potential 1@${oneRepMax}${entry.unitType} from ${entry.reps}@${entry.weight}${entry.unitType}.`,
           );
         }
         if (entry.Notes) {
@@ -355,6 +355,13 @@ export const VisualizerChart = () => {
     responsive: true,
     // resizeDelay: 20,
     scales: scalesOptions,
+    onClick: (event, item) => {
+      // Used to detect a click on a graph point and open URL in the data.
+      if (item && item.length > 0) {
+        const url = item[0].element.$context.raw.URL;
+        if (url) window.open(url);
+      }
+    },
     plugins: {
       title: titleOptions,
       legend: legendOptions,

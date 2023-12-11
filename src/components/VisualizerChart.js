@@ -267,34 +267,34 @@ export const VisualizerChart = () => {
       },
       label: (context) => {
         if (!context) return;
-        // FIXME: in the label push in any top 20 lifts they did today topLiftsByTypeAndReps
         const entry = context.raw;
-
-        devLog(entry);
-        const prIndex = findLiftPositionInTopLifts(
-          entry,
-          topLiftsByTypeAndReps,
-        );
 
         let label = [];
 
         if (entry.reps === 1) {
-          label.push(
-            `Lifted ${entry.reps}@${entry.weight}${entry.unitType}` +
-              (prIndex !== -1 ? ` (#${prIndex + 1} of all time)` : ""),
-          );
+          label.push(`Lifted ${entry.reps}@${entry.weight}${entry.unitType}`);
         } else {
-          const e1rm = 11;
+          const oneRepMax = estimateE1RM(entry.reps, entry.weight, "Brzycki");
           label.push(
-            `Potential ${e1rm}${entry.unitType} from ${entry.reps}@${entry.weight}${entry.unitType}` +
-              (prIndex !== -1 ? ` (#${prIndex + 1} of all time)` : ""),
+            `Potential 1@${oneRepMax}${entry.unitType} from ${entry.reps}@${entry.weight}${entry.unitType}`,
           );
         }
         if (entry.Notes) {
-          let noteChunks = splitIntoChunks(entry.Notes, 40);
+          let noteChunks = splitIntoChunks(entry.Notes, 60);
           label.push(...noteChunks);
         }
 
+        return label;
+      },
+      afterLabel: (context) => {
+        if (!context) return;
+        // Show any top 20 lifts they did today topLiftsByTypeAndReps
+        const entry = context.raw;
+        let label = generateLiftLabelsForDateAndType(
+          entry.date,
+          entry.liftType,
+          topLiftsByTypeAndReps,
+        );
         return label;
       },
       footer: (context) => {
@@ -608,4 +608,32 @@ function splitIntoChunks(text, maxChunkSize) {
   }
 
   return chunks;
+}
+
+function generateLiftLabelsForDateAndType(
+  date,
+  liftType,
+  topLiftsByTypeAndReps,
+) {
+  let labels = []; // Initialize labels array
+
+  // Check if the lift type exists in the data structure
+  if (topLiftsByTypeAndReps[liftType]) {
+    // Iterate through all rep schemes for the given lift type
+    for (let repScheme of topLiftsByTypeAndReps[liftType]) {
+      // Iterate through lifts in each rep scheme
+      for (let i = 0; i < repScheme.length; i++) {
+        let lift = repScheme[i];
+        if (lift.date === date) {
+          // Create and add label for the lift
+          let label = `#${i + 1} best ${liftType} ${lift.reps}RM of all time (${
+            lift.reps
+          }@${lift.weight}${lift.unitType})`;
+          labels.push(label);
+        }
+      }
+    }
+  }
+
+  return labels; // Return the array of labels
 }

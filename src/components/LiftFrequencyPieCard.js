@@ -27,7 +27,7 @@ function LiftTypeFrequencyPieCard() {
     const pieData = liftTypes
       .map((item) => ({
         label: item.liftType,
-        frequency: item.frequency,
+        value: item.frequency,
       }))
       .slice(0, 5);
 
@@ -36,6 +36,7 @@ function LiftTypeFrequencyPieCard() {
 
   if (!pieData) return;
   const backgroundColors = pieData.map((item) => getLiftColor(item.label));
+  devLog(pieData);
 
   // ---------------------------------------------------------------------------
   // Pie Chart Options for react-chartjs-2
@@ -50,30 +51,17 @@ function LiftTypeFrequencyPieCard() {
     borderRadius: 25,
     borderWidth: 2,
     color: "white",
-    // display: function (context) {
-    // devLog(context);
-    // let dataset = context.dataset;
-    // let totalValue = dataset.data.reduce(
-    // (acc, obj) => acc + obj.totalSessions,
-    // 0,
-    // ); // Total sum of the values in the pie chart
-    // let currentValue = dataset.data[context.dataIndex].totalSessions;
-    // Don't show data label if arc piece is less than 10% of chart
-    // return currentValue > totalValue * 0.1;
-    // return context.dataset.data[context.dataIndex].frequency;
-    // return true; // Use this  to show data labels on every arc data item
-    // },
     font: {
       // family: fontFamily,
       weight: "bold",
-      size: "14",
+      size: "11",
     },
     padding: 10,
-    // formatter: function (item) {
-    // return [context.label, `${context.totalSessions} sessions`];
-    // devLog(item);
-    // return `${item.label} (${item.frequency} sets)`;
-    // },
+    formatter: (item, context) => {
+      devLog(item);
+      // return [context.label, `${context.totalSessions} sessions`];
+      return `${item.label}\n(${item.value} sets)`;
+    },
   };
 
   let pieChartOptions = {
@@ -130,8 +118,8 @@ function LiftTypeFrequencyPieCard() {
 
     datasets: [
       {
-        label: "Frequency",
-        data: pieData.map((item) => item.frequency),
+        label: "frequency",
+        data: pieData,
         backgroundColor: backgroundColors,
         borderWidth: 3,
         hoverOffset: 5,
@@ -146,14 +134,10 @@ function LiftTypeFrequencyPieCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your Lifts</CardTitle>
+        <CardTitle>Your Top 5 Lifts</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid justify-center align-middle">
-          <div className="">
-            <Pie data={pieChartData} options={pieChartOptions} />
-          </div>
-        </div>
+      <CardContent className="grid grid-cols-1 justify-center xl:w-2/3 xl:gap-4">
+        <Pie data={pieChartData} options={pieChartOptions} />
       </CardContent>
     </Card>
   );

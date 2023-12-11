@@ -24,7 +24,7 @@ import ActivityHeatmapsCard from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
 import { SidePanelSelectLiftsButton } from "@/components/SidePaneLiftChooserButton";
 import { devLog, processTopLiftsByTypeAndReps } from "@/lib/SJ-utils";
-import LiftTypeFrequencyPieCard from "@/components/LiftFrequencyPie";
+import LiftTypeFrequencyPieCard from "@/components/LiftFrequencyPieCard";
 
 const Analyzer = () => {
   const { data: session } = useSession();

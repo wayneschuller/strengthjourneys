@@ -55,7 +55,7 @@ export function SidePanelSelectLiftsButton({ isIconMode }) {
                   )}
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Choose lifts</TooltipContent>
+              <TooltipContent>Choose lifts for special analysis</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>

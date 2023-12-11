@@ -29,12 +29,16 @@ import { SidePanelSelectLiftsButton } from "./SidePaneLiftChooserButton";
 // import Image from "next/image";
 
 export default function NavBar() {
+  const pathname = usePathname();
+
   return (
     <div className="mx-3 flex items-center md:container">
       <DesktopNav />
       <MobileNav />
       <div className="mt-2 flex flex-1 items-center justify-end gap-2">
-        <SidePanelSelectLiftsButton isIconMode={true} />
+        {(pathname === "/analyzer" || pathname === "/visualizer") && (
+          <SidePanelSelectLiftsButton isIconMode={true} />
+        )}
         <UserSheetIcon />
         <DarkModeToggle />
         <AvatarDropdown />

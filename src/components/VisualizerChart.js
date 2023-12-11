@@ -473,28 +473,25 @@ function processVisualizerData(parsedData, selectedLiftTypes, theme) {
     return;
   }
 
-  devLog(`theme is ${theme}`);
-
   const startTime = performance.now();
-
   const datasets = {};
 
   parsedData.forEach((entry) => {
-    const liftKey = entry.liftType;
+    const liftTypeKey = entry.liftType;
 
-    if (selectedLiftTypes && !selectedLiftTypes.includes(liftKey)) {
+    // Skip if the lift type is not selected
+    if (selectedLiftTypes && !selectedLiftTypes.includes(liftTypeKey)) {
       return;
     }
 
-    const oneRepMax = estimateE1RM(entry.reps, entry.weight, "Brzycki");
-
-    if (!datasets[liftKey]) {
-      datasets[liftKey] = {
-        label: entry.liftType,
-        data: [],
-        backgroundColor: getLiftColor(entry.liftType),
-        borderColor: theme === "dark" ? "#CCCCCC" : "#111111",
-        borderWidth: 2,
+    // Lazy initialization of dataset for the lift type
+    if (!datasets[liftTypeKey]) {
+      datasets[liftTypeKey] = {
+        label: liftTypeKey,
+        data: new Map(), // Using Map for efficient lookups
+        backgroundColor: getLiftColor(liftTypeKey),
+        borderColor: theme === "dark" ? "#EEEEEE" : "#111111",
+        borderWidth: theme === "dark" ? 1 : 2, // Aesthetical
         pointStyle: "circle",
         radius: 4,
         hitRadius: 20,
@@ -503,26 +500,23 @@ function processVisualizerData(parsedData, selectedLiftTypes, theme) {
       };
     }
 
-    const existingDataIndex = datasets[liftKey].data.findIndex(
-      (item) => item.x === entry.date,
-    );
+    const oneRepMax = estimateE1RM(entry.reps, entry.weight, "Brzycki");
+    const currentData = datasets[liftTypeKey].data.get(entry.date);
 
-    const newDataPoint = {
-      ...entry, // Spread all properties of the entry object
-      x: entry.date,
-      y: oneRepMax,
-    };
-
-    if (existingDataIndex === -1) {
-      datasets[liftKey].data.push(newDataPoint);
-    } else if (datasets[liftKey].data[existingDataIndex].y < oneRepMax) {
-      datasets[liftKey].data[existingDataIndex] = newDataPoint;
+    if (!currentData || currentData.y < oneRepMax) {
+      datasets[liftTypeKey].data.set(entry.date, {
+        ...entry,
+        x: entry.date,
+        y: oneRepMax,
+      });
     }
   });
 
-  const sortedDatasets = Object.values(datasets).sort(
-    (a, b) => b.data.length - a.data.length,
-  );
+  // Convert Map back to array and optionally sort
+  const sortedDatasets = Object.values(datasets).map((dataset) => ({
+    ...dataset,
+    data: Array.from(dataset.data.values()), // no sorting needed
+  }));
 
   devLog(
     "processVisualizerData execution time: " +

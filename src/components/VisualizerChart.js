@@ -261,6 +261,19 @@ export const VisualizerChart = () => {
         });
         return formattedDate;
       },
+      label: (context) => {
+        if (!context) return;
+        const entry = context.raw;
+        const label = `${entry.reps}@${entry.weight}${entry.unitType}`;
+        return label;
+      },
+      footer: (context) => {
+        if (!context) return;
+        // devLog(context);
+        const entry = context[0].raw;
+        const url = entry.URL;
+        if (url) return `Click to open ${url}`; // Tooltip reminder they can click to open video
+      },
     },
   };
 

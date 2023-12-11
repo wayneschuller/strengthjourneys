@@ -70,8 +70,7 @@ export const VisualizerChart = () => {
   let roundedMaxWeightValue = null;
   let xScaleMin = null;
   let xScaleMax = null;
-
-  devLog(`<VisualizerChart /> rendering...`);
+  let isMobile = false;
 
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
@@ -117,6 +116,7 @@ export const VisualizerChart = () => {
     // console.log(gridColor);
   }, [theme]);
 
+  devLog(`<VisualizerChart /> rendering...`);
   if (session === undefined) return null;
 
   if (isLoading && !isDemoMode && !parsedData) {
@@ -141,9 +141,13 @@ export const VisualizerChart = () => {
   ({ firstDate, lastDate, roundedMaxWeightValue } =
     getFirstLastDatesMaxWeightFromChartData(chartData));
 
+  if (width <= 768) {
+    isMobile = true;
+  }
+
   let defaultRangeInMonths = 6; // Desktop default
   let xPaddingInDays = 10; // Desktop default
-  if (width <= 768) {
+  if (isMobile) {
     defaultRangeInMonths = 1; // Mobile default
     xPaddingInDays = 2; // Mobile default
   }
@@ -263,6 +267,7 @@ export const VisualizerChart = () => {
       },
       label: (context) => {
         if (!context) return;
+        // FIXME: in the label push in any top 20 lifts they did today
         const entry = context.raw;
         const label = `${entry.reps}@${entry.weight}${entry.unitType}`;
         return label;
@@ -272,7 +277,7 @@ export const VisualizerChart = () => {
         // devLog(context);
         const entry = context[0].raw;
         const url = entry.URL;
-        if (url) return `Click to open ${url.substring(0, 15)}...`; // Tooltip reminder they can click to open video
+        if (url && !isMobile) return `Click to open ${url.substring(0, 15)}...`; // Tooltip reminder they can click to open video
       },
     },
   };

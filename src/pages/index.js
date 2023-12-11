@@ -37,7 +37,7 @@ export default function Home() {
       <h1 className="flex-1 space-x-2 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
         Welcome to Strength Journeys
       </h1>
-      <h3 className="mt-2 scroll-m-20 text-center text-2xl tracking-tight lg:mx-20">
+      <h2 className="mt-2 scroll-m-20 text-center text-2xl tracking-tight lg:mx-20">
         A free{" "}
         <a
           className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
@@ -55,7 +55,7 @@ export default function Home() {
           Google Sheet
         </a>{" "}
         barbell lifting data.
-      </h3>
+      </h2>
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2 2xl:grid-cols-4">
         <Link href="/analyzer">
           <Card className="hover:ring-1">

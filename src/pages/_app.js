@@ -4,6 +4,7 @@
 
 import "@/styles/globals.css";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Layout } from "@/components/Layout";
 import { Toaster } from "@/components/ui/toaster";
@@ -58,6 +59,7 @@ export default function App({ Component, pageProps, session }) {
         </SessionProvider>
       </ThemeProvider>
       <Analytics />
+      <SpeedInsights />
     </>
   );
 }

@@ -357,6 +357,7 @@ export const VisualizerChart = () => {
     scales: scalesOptions,
     onClick: (event, item) => {
       // Used to detect a click on a graph point and open URL in the data.
+      if (isMobile) return; // Clicking on mobile is for viewing the tooltip
       if (item && item.length > 0) {
         const url = item[0].element.$context.raw.URL;
         if (url) window.open(url);

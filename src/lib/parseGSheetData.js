@@ -68,6 +68,7 @@ function parseGSheetData(data) {
             break;
           default:
             obj[columnName] = row[index]; // Pass through any other user rows
+          //FIXME: Notes should become notes
         }
       });
 

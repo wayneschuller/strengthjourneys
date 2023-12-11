@@ -269,13 +269,31 @@ export const VisualizerChart = () => {
         if (!context) return;
         // FIXME: in the label push in any top 20 lifts they did today topLiftsByTypeAndReps
         const entry = context.raw;
+
+        devLog(entry);
         const prIndex = findLiftPositionInTopLifts(
           entry,
           topLiftsByTypeAndReps,
         );
-        const label =
-          `${entry.reps}@${entry.weight}${entry.unitType}` +
-          (prIndex !== -1 ? ` (#${prIndex + 1} of all time)` : "");
+
+        let label = [];
+
+        if (entry.reps === 1) {
+          label.push(
+            `Lifted ${entry.reps}@${entry.weight}${entry.unitType}` +
+              (prIndex !== -1 ? ` (#${prIndex + 1} of all time)` : ""),
+          );
+        } else {
+          const e1rm = 11;
+          label.push(
+            `Potential ${e1rm}${entry.unitType} from ${entry.reps}@${entry.weight}${entry.unitType}` +
+              (prIndex !== -1 ? ` (#${prIndex + 1} of all time)` : ""),
+          );
+        }
+        if (entry.Notes) {
+          let noteChunks = splitIntoChunks(entry.Notes, 40);
+          label.push(...noteChunks);
+        }
 
         return label;
       },
@@ -576,4 +594,18 @@ function findLiftPositionInTopLifts(liftTuple, topLiftsByTypeAndReps) {
   }
 
   return -1; // Return -1 if the lift is not found
+}
+
+function splitIntoChunks(text, maxChunkSize) {
+  let chunks = [];
+  let startIndex = 0;
+
+  while (startIndex < text.length) {
+    let endIndex = Math.min(startIndex + maxChunkSize, text.length);
+    let chunk = text.substring(startIndex, endIndex);
+    chunks.push(chunk);
+    startIndex += maxChunkSize;
+  }
+
+  return chunks;
 }

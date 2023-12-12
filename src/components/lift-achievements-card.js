@@ -121,7 +121,8 @@ const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
       repRange.map((entry, entryIndex) => ({ ...entry, repIndex, entryIndex })),
     )
     .filter((entry) => isWithinLastMonth(entry.date))
-    .sort((a, b) => a.entryIndex - b.entryIndex); // Sort by entryIndex in ascending order
+    .sort((a, b) => a.entryIndex - b.entryIndex) // Sort by entryIndex in ascending order
+    .slice(0, 10); // Only show 10 highlights per card
 
   if (!recentHighlights) return null;
 

@@ -20,28 +20,18 @@ import { e1rmFormulae } from "../lib/estimate-e1rm";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";
+import { useLocalStorage } from "usehooks-ts";
 
 let didInit = false;
 
 export default function E1RMCalculator() {
   const [reps, setReps] = useState(5);
   const [weight, setWeight] = useState(225);
-  const [isMetric, setIsMetric] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const [isMetric, setIsMetric] = useLocalStorage("calcIsMetric", false);
 
   const defaultFormula = "Brzycki"; // One day we might make this configurable.
-
-  // useEffect on first init get defaults from localStorage
-  useEffect(() => {
-    if (!didInit) {
-      didInit = true;
-
-      let initIsMetric = localStorage.getItem("calcIsMetric");
-      initIsMetric = initIsMetric === "true"; // boolean is true if string is "true" otherwise false
-      setIsMetric(initIsMetric);
-    }
-  }, []);
 
   useEffect(() => {
     // Get some initial values from URL parameters

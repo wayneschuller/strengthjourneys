@@ -28,6 +28,8 @@ export function MonthsHighlightsCard() {
   //     <Skeleton className="h-36 w-11/12 flex-1" />
   //   </div>
   // )}
+
+  // FIXME: these stats are rubbish - convert to the topSetsByLiftsAndReps in global context
   const historicalPRs = getFirstHistoricalPRsInLastMonth(parsedData);
 
   return (

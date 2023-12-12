@@ -25,6 +25,7 @@ import {
 
 import { Separator } from "@/components/ui/separator";
 import { devLog } from "@/lib/processing-utils";
+import { SessionAnalysisCard } from "@/components/session-analysis-card";
 
 const Analyzer = () => {
   const { data: session } = useSession();
@@ -74,12 +75,15 @@ const Analyzer = () => {
         </h1>
         <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
           <div className="xl:col-span-2">
+            <SessionAnalysisCard />
+          </div>
+          <div className="xl:col-span-2">
             <MonthsHighlightsCard />
           </div>
           <div className="xl:col-span-2">
             <LiftTypeFrequencyPieCard />
           </div>
-          <div className="md:col-span-2 xl:col-span-4">
+          <div className="xl:col-span-2">
             <InspirationCard />
           </div>
           <div className="md:col-span-2 xl:col-span-4">

@@ -32,7 +32,7 @@ const getRandomQuote = () => {
   return inspirationalQuotes[randomIndex];
 };
 
-export function InspirationCard() {
+export function InspirationCard({}) {
   const [quote, setQuote] = useState(null);
 
   useEffect(() => {

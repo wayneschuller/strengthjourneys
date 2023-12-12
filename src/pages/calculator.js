@@ -5,8 +5,6 @@ import Head from "next/head";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
-import { DarkModeToggle } from "@/components/dark-mode-toggle";
-import { ThemeProvider } from "@/components/theme-provider";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import {
   Card,
@@ -20,7 +18,6 @@ import { e1rmFormulae } from "../lib/estimate-e1rm";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";
-import { useLocalStorage } from "usehooks-ts";
 import { devLog } from "@/lib/processing-utils";
 
 import {
@@ -30,42 +27,60 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-let didInit = false;
-
 export default function E1RMCalculator() {
   const router = useRouter();
   const { toast } = useToast();
-  const [reps, setReps] = useLocalStorage("reps", 5);
-  const [weight, setWeight] = useLocalStorage("weight", 225);
-  const [isMetric, setIsMetric] = useLocalStorage("calcIsMetric", false);
-  const [e1rmFormula, setE1rmFormula] = useLocalStorage(
-    "e1rmFormula",
-    "Brzycki",
-  );
+  const [reps, setReps] = useState(5);
+  const [weight, setWeight] = useState(225);
+  const [isMetric, setIsMetric] = useState(false);
+  const [e1rmFormula, setE1rmFormula] = useState("Brzycki");
 
-  // Slightly complex state default management.
-  // Priority is: URL query, localstorage, code defaults
+  // State is mostly from URL query but we do fallback to isMetric and formula in localStorage
   useEffect(() => {
-    if (!didInit) {
-      // didInit = true;
-      // Get some initial values from URL parameters (URL as state)
-      if (router?.query?.isMetric !== undefined)
-        setIsMetric(router.query.isMetric);
-      if (router?.query?.reps !== undefined) setReps(router.query.reps);
-      if (router?.query?.weight !== undefined) setWeight(router.query.weight);
-      if (router?.query?.formula !== undefined)
-        setE1rmFormula(router.query.formula);
+    const initReps = router?.query?.reps ?? 5;
+
+    let initIsMetric;
+    if (router?.query?.isMetric === "false") {
+      initIsMetric = false;
+    } else if (router?.query?.isMetric === "true") {
+      initIsMetric = true;
+    } else {
+      // The URL has no guidance. So check localStorage then default to false (pounds)
+      initIsMetric = localStorage.getItem("calcIsMetric") === "true" || false;
     }
-  }, []);
+
+    let initWeight;
+    if (router?.query?.weight) {
+      initWeight = router.query.weight;
+    } else if (initIsMetric) {
+      initWeight = 100;
+    } else {
+      initWeight = 225;
+    }
+
+    let initE1rmFormula;
+    if (router?.query?.formula) {
+      initE1rmFormula = router.query.formula;
+    } else {
+      // The URL has no guidance. So check localStorage then default to Brzycki
+      initE1rmFormula = localStorage.getItem("e1rmFormula") || "Brzycki";
+    }
+
+    // Update state if query is now different to state values
+    // This could be on first load
+    // Or could be if user clicks back/forward browser button
+    if (initReps !== reps) setReps(initReps);
+    if (initWeight !== weight) setWeight(initWeight);
+    if (initIsMetric !== isMetric) setIsMetric(initIsMetric);
+    if (initE1rmFormula != e1rmFormula) setE1rmFormula(initE1rmFormula);
+  }, [router.query]);
 
   const handleRepsSliderChange = (value) => {
-    // console.log(`reps change: ${value[0]}`);
     setReps(value[0]);
   };
 
   const handleWeightSliderChange = (value) => {
     let newWeight = value[0];
-    // console.log(`weight change: ${newWeight} `);
 
     if (isMetric) {
       newWeight = 2.5 * Math.ceil(newWeight / 2.5); // For kg only allow nice multiples of 2.5kg
@@ -174,7 +189,7 @@ export default function E1RMCalculator() {
     });
 
     // Save in localStorage for this browser device
-    // localStorage.setItem("calcIsMetric", isMetric);
+    localStorage.setItem("calcIsMetric", isMetric);
   };
 
   const handleCopyToClipboard = async () => {
@@ -225,7 +240,6 @@ export default function E1RMCalculator() {
           name="description"
           content="E1RM One Rep Max Calculator App (Strength Journeys)"
         />
-        <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <div className="w-11/12 rounded-xl border-2 border-background bg-muted/50 p-4 md:w-4/5 md:p-6">
@@ -360,6 +374,8 @@ export default function E1RMCalculator() {
                             undefined,
                             { scroll: false },
                           );
+                          // Save in localStorage for this browser device
+                          localStorage.setItem("e1rmFormula", formula);
                         }}
                       >
                         <CardHeader>

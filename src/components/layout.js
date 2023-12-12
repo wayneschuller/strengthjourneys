@@ -141,7 +141,7 @@ export function Layout({ children }) {
     );
     setTopLiftsByTypeAndReps(topLiftsByTypeAndReps);
 
-    devLog(`Layout useEffect setParsedData()`);
+    // devLog(`Layout useEffect setParsedData()...`);
     setParsedData(parsedData);
   }, [data, isLoading, isError]);
 

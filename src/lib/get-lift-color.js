@@ -3,7 +3,7 @@
 // Wayne Schuller, wayne@schuller.id.au
 // Licenced under https://www.gnu.org/licenses/gpl-3.0.html
 
-import { devLog } from "./SJ-utils";
+import { devLog } from "./processing-utils";
 
 // Provide good defaults for popular barbell lifts
 export function getLiftColor(liftType) {

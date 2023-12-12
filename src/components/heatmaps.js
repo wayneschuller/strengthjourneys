@@ -4,10 +4,13 @@ import { useState, useEffect, useContext } from "react";
 import { ParsedDataContext } from "@/pages/_app";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
-import { coreLiftTypes, devLog } from "@/lib/SJ-utils";
+import {
+  coreLiftTypes,
+  devLog,
+  getReadableDateString,
+} from "@/lib/processing-utils";
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getReadableDateString } from "@/lib/SJ-utils";
 import { useIsClient, useWindowSize } from "usehooks-ts";
 
 // We don't need this because we put our own styles in our globals.css

@@ -1,7 +1,7 @@
 /** @format */
 "use client";
 
-import { devLog } from "@/lib/SJ-utils";
+import { devLog } from "@/lib/processing-utils";
 
 export function handleOpenFilePicker(
   openPicker,

@@ -12,10 +12,10 @@ import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/dark-mode-toggle";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
-import useUserLiftData from "@/lib/useUserLiftData";
+import { useUserLiftData } from "@/lib/use-userlift-data";
 import { Table2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { devLog } from "@/lib/SJ-utils";
+import { devLog } from "@/lib/processing-utils";
 
 import {
   Tooltip,

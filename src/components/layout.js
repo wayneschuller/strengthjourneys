@@ -3,18 +3,21 @@
 "use client";
 import { useState, useEffect, useContext } from "react";
 import { ParsedDataContext } from "@/pages/_app";
-import { parseGSheetData } from "@/lib/parseGSheetData";
+import { parseGSheetData } from "@/lib/parse-gsheet-data";
 import { useSession, signIn, signOut } from "next-auth/react";
-import useUserLiftData from "@/lib/useUserLiftData";
-import { devLog, processTopLiftsByTypeAndReps } from "@/lib/SJ-utils";
-import { sampleParsedData } from "@/lib/sampleParsedData";
+import { useUserLiftData } from "@/lib/use-userlift-data";
+import {
+  devLog,
+  processTopLiftsByTypeAndReps,
+  markHigherWeightAsHistoricalPRs,
+} from "@/lib/processing-utils";
+import { sampleParsedData } from "@/lib/sample-parsed-data";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 import { useRouter } from "next/router";
 import { useReadLocalStorage } from "usehooks-ts";
-import { markHigherWeightAsHistoricalPRs } from "@/lib/SJ-utils";
 
 let demoToastInit = false;
 let loadedToastInit = false;

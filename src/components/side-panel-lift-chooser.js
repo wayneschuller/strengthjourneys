@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
-import { devLog } from "@/lib/SJ-utils";
+import { devLog } from "@/lib/processing-utils";
 import { ParsedDataContext } from "@/pages/_app";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Dumbbell } from "lucide-react";

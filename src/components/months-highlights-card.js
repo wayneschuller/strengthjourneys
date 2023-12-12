@@ -9,8 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { coreLiftTypes, devLog } from "@/lib/SJ-utils";
-import { getReadableDateString } from "@/lib/SJ-utils";
+import {
+  coreLiftTypes,
+  devLog,
+  getReadableDateString,
+} from "@/lib/processing-utils";
 
 export function MonthsHighlightsCard() {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);

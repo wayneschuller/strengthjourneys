@@ -2,12 +2,12 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useContext, useState, useEffect } from "react";
-import { devLog } from "@/lib/SJ-utils";
+import { devLog } from "@/lib/processing-utils";
 import { ParsedDataContext } from "@/pages/_app";
 
 import { Chart, ArcElement } from "chart.js";
 import { Pie } from "react-chartjs-2";
-import { getLiftColor } from "@/lib/getLiftColor";
+import { getLiftColor } from "@/lib/get-lift-color";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
 Chart.register(ArcElement, ChartDataLabels);

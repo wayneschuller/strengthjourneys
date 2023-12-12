@@ -4,7 +4,7 @@ import Head from "next/head";
 import { useSession } from "next-auth/react";
 import { useContext, useState, useEffect } from "react";
 import { ParsedDataContext } from "@/pages/_app";
-import useUserLiftData from "@/lib/useUserLiftData";
+import { useUserLiftData } from "@/lib/use-userlift-data";
 import { InspirationCard } from "@/components/inspiration-card";
 import { InstructionsCard } from "@/components/instructions-card";
 import { LiftAchievementsCard } from "@/components/lift-achievements-card";
@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/card";
 
 import { Separator } from "@/components/ui/separator";
-import { devLog, processTopLiftsByTypeAndReps } from "@/lib/SJ-utils";
+import { devLog } from "@/lib/processing-utils";
 
 const Analyzer = () => {
   const { data: session } = useSession();

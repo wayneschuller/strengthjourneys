@@ -5,11 +5,11 @@ import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import useSWRImmutable from "swr/immutable";
 import { useReadLocalStorage } from "usehooks-ts";
-import { devLog } from "./SJ-utils";
+import { devLog } from "@/lib/processing-utils";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
-function useUserLiftData() {
+export function useUserLiftData() {
   const ssid = useReadLocalStorage("ssid");
   const { data: session } = useSession();
 
@@ -27,6 +27,7 @@ function useUserLiftData() {
   // Let session warm up
   // Return fake SWR results with isLoading until next-auth is fully initialized
   // If there is no login then session will become null and we can just rely on the SWR results
+  // FIXME: use the session status
   if (session === undefined)
     return { data: undefined, isLoading: true, isError: false };
 
@@ -36,5 +37,3 @@ function useUserLiftData() {
     isError: data?.error ? true : false,
   };
 }
-
-export default useUserLiftData;

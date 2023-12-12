@@ -2,8 +2,11 @@
 
 import { useState, useEffect, useContext } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getCelebrationEmoji, getReadableDateString } from "@/lib/SJ-utils";
-import { devLog } from "@/lib/SJ-utils";
+import {
+  getCelebrationEmoji,
+  getReadableDateString,
+} from "@/lib/processing-utils";
+import { devLog } from "@/lib/processing-utils";
 import { ParsedDataContext } from "@/pages/_app";
 
 export function LiftAchievementsCard({ liftType }) {

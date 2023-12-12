@@ -4,9 +4,9 @@ import dynamic from "next/dynamic";
 import Head from "next/head";
 import { useEffect, useState, useContext } from "react";
 import { useSession, signIn } from "next-auth/react";
-import useUserLiftData from "@/lib/useUserLiftData";
+import { useUserLiftData } from "@/lib/use-userlift-data";
 import { InstructionsCard } from "@/components/instructions-card";
-import { devLog } from "@/lib/SJ-utils";
+import { devLog } from "@/lib/processing-utils";
 import { useReadLocalStorage } from "usehooks-ts";
 
 // Hack needed to get zoom/pan to work for next.js client

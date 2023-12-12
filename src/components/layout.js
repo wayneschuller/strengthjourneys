@@ -32,7 +32,7 @@ export function Layout({ children }) {
     setSelectedLiftTypes,
     setTopLiftsByTypeAndReps,
   } = useContext(ParsedDataContext);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { data, isError, isLoading } = useUserLiftData();
   const sheetFilename = useReadLocalStorage("sheetFilename");
   const { toast } = useToast();
@@ -149,6 +149,8 @@ export function Layout({ children }) {
   useEffect(() => {
     // devLog(`<Layout /> Toast useEffect`);
     // devLog(session);
+
+    // FIXME: use session status
 
     // Check if the current path is "/visualizer" or "/analyzer"
     const isVisualizerRoute = currentPath === "/visualizer";

@@ -49,7 +49,8 @@ ChartJS.register(
   zoomPlugin,
 );
 
-export const VisualizerChart = () => {
+// Break convention and export a default function for the next.js dynamic loader
+export default function VisualizerChart() {
   const { theme } = useTheme();
   const [primaryForegroundColor, setPrimaryForegroundColor] = useState(null);
   const [mutedColor, setMutedColor] = useState(null);
@@ -437,9 +438,7 @@ export const VisualizerChart = () => {
       )}
     </>
   );
-};
-
-export default VisualizerChart;
+}
 
 function convertToHslFormat(originalHsl) {
   // Split the original HSL string into individual components

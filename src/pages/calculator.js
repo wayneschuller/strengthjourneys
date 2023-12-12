@@ -7,7 +7,7 @@ import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { DarkModeToggle } from "@/components/dark-mode-toggle";
 import { ThemeProvider } from "@/components/theme-provider";
-import { UnitChooser } from "../components/UnitChooser";
+import { UnitChooser } from "@/components/unit-type-chooser";
 import {
   Card,
   CardContent,

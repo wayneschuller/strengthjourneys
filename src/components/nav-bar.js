@@ -23,7 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { SidePanelSelectLiftsButton } from "./SidePaneLiftChooserButton";
+import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";

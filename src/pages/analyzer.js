@@ -11,7 +11,7 @@ import { LiftAchievementsCard } from "@/components/lift-achievements-card";
 import { MonthsHighlightsCard } from "@/components/months-highlights-card";
 import { useReadLocalStorage } from "usehooks-ts";
 import { ActivityHeatmapsCard } from "@/components/heatmaps";
-import { SidePanelSelectLiftsButton } from "@/components/SidePaneLiftChooserButton";
+import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 import { LiftTypeFrequencyPieCard } from "@/components/lift-frequency-pie-card";
 
 import {

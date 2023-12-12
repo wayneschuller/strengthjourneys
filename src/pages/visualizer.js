@@ -12,7 +12,7 @@ import { useReadLocalStorage } from "usehooks-ts";
 // Hack needed to get zoom/pan to work for next.js client
 // https://github.com/chartjs/chartjs-plugin-zoom/issues/742
 const DynamicHeaderVisualizerChart = dynamic(
-  () => import("../components/VisualizerChart"),
+  () => import("../components/visualizer-chart"),
   {
     ssr: false,
   },

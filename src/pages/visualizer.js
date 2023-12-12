@@ -5,7 +5,7 @@ import Head from "next/head";
 import { useEffect, useState, useContext } from "react";
 import { useSession, signIn } from "next-auth/react";
 import useUserLiftData from "@/lib/useUserLiftData";
-import InstructionsCard from "@/components/InstructionsCard";
+import { InstructionsCard } from "@/components/instructions-card";
 import { devLog } from "@/lib/SJ-utils";
 import { useReadLocalStorage } from "usehooks-ts";
 

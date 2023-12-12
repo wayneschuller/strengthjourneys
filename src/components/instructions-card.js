@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-const InstructionsCard = ({ session }) => {
+export function InstructionsCard({ session }) {
   const [openPicker, authResponse] = useDrivePicker();
 
   // We need the next 3 for the file picker button we give with instructions
@@ -92,6 +92,4 @@ const InstructionsCard = ({ session }) => {
       </CardFooter>
     </Card>
   );
-};
-
-export default InstructionsCard;
+}

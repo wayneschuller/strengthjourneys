@@ -120,6 +120,8 @@ export default function VisualizerChart() {
   // devLog(`<VisualizerChart /> rendering...`);
   if (session === undefined) return null;
 
+  // FIXME: use session status here?
+  // If status === "authenticated" and it's not demo mode then skeleton for the real chart
   if (isLoading && !isDemoMode && !parsedData) {
     return <Skeleton className="h-[80vh] w-[90vw]"></Skeleton>;
   }
@@ -280,8 +282,8 @@ export default function VisualizerChart() {
             `Potential 1@${oneRepMax}${entry.unitType} from ${entry.reps}@${entry.weight}${entry.unitType}.`,
           );
         }
-        if (entry.Notes) {
-          let noteChunks = splitIntoChunks(entry.Notes, 60);
+        if (entry.notes) {
+          let noteChunks = splitIntoChunks(entry.notes, 60);
           label.push(...noteChunks);
         }
 

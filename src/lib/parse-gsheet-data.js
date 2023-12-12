@@ -35,7 +35,7 @@ function convertDate(dateString, previousDate) {
 // Trying to be agnostic about column position
 // We do assume that if date or lift type are blank we can infer from a previous row
 // We return parsedData that is always sorted date ascending
-function parseGSheetData(data) {
+export function parseGSheetData(data) {
   const startTime = performance.now(); // We measure critical processing steps
   const columnNames = data[0];
 
@@ -66,6 +66,9 @@ function parseGSheetData(data) {
             obj["weight"] = value;
             obj["unitType"] = unitType;
             break;
+          case "Notes":
+            obj["notes"] = row[index];
+            break;
           default:
             obj[columnName] = row[index]; // Pass through any other user rows
           //FIXME: Notes should become notes
@@ -90,6 +93,3 @@ function parseGSheetData(data) {
 
   return objectsArray;
 }
-
-// Export the function for use in other files
-export { parseGSheetData };

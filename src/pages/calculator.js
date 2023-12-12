@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Head from "next/head";
-import { estimateE1RM } from "../lib/estimateE1RM";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { DarkModeToggle } from "@/components/dark-mode-toggle";
@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { e1rmFormulae } from "../lib/estimateE1RM";
+import { e1rmFormulae } from "../lib/estimate-e1rm";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";

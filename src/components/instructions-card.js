@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useContext } from "react";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
-import { handleOpenFilePicker } from "@/components/handle-open-picker";
+import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import Image from "next/image";

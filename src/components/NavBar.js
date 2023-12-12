@@ -11,7 +11,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/DarkModeToggle";
 import MobileNav from "@/components/MobileNav";
-import { AvatarDropdown } from "./AvatarDropdown";
+import { AvatarDropdown } from "@/components/avatar-menu";
 import useUserLiftData from "@/lib/useUserLiftData";
 import { Table2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -117,7 +117,7 @@ export function DesktopNav() {
 }
 
 // When user is logged in with data, give a link to their google sheet
-const UserSheetIcon = () => {
+export function UserSheetIcon() {
   const sheetFilename = useReadLocalStorage("sheetFilename");
   const ssid = useReadLocalStorage("ssid");
   const sheetURL = decodeURIComponent(useReadLocalStorage("sheetURL"));
@@ -148,4 +148,4 @@ const UserSheetIcon = () => {
       </TooltipProvider>
     )
   );
-};
+}

@@ -20,8 +20,7 @@ import {
 
 export function AvatarDropdown() {
   const { setTheme } = useTheme();
-  // const { data: session } = useSession();
-  const { data: session } = useSession({ autoSignIn: false }); // FIXME: Why is autoSignin false?
+  const { data: session } = useSession();
   const [openPicker, authResponse] = useDrivePicker();
   const [ssid, setSsid] = useLocalStorage("ssid", null);
   const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);

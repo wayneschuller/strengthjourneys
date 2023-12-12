@@ -1,5 +1,23 @@
 /** @format */
 
+// A function we call on the demo data to always keep it fresh
+export function transposeDatesToToday(parsedData) {
+  if (parsedData.length === 0) return parsedData; // Handle empty array
+
+  const today = new Date();
+  const lastDataDate = new Date(parsedData[parsedData.length - 1].date);
+  const dayDifference = Math.floor(
+    (today - lastDataDate) / (1000 * 60 * 60 * 24),
+  );
+
+  return parsedData.map((item) => {
+    const itemDate = new Date(item.date);
+    itemDate.setDate(itemDate.getDate() + dayDifference);
+
+    return { ...item, date: itemDate.toISOString().split("T")[0] };
+  });
+}
+
 // Our sample parsedData format
 // It is always sorted date ascending
 export const sampleParsedData = [

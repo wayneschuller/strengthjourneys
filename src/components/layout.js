@@ -11,7 +11,10 @@ import {
   processTopLiftsByTypeAndReps,
   markHigherWeightAsHistoricalPRs,
 } from "@/lib/processing-utils";
-import { sampleParsedData } from "@/lib/sample-parsed-data";
+import {
+  sampleParsedData,
+  transposeDatesToToday,
+} from "@/lib/sample-parsed-data";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { NavBar } from "@/components/nav-bar";
@@ -74,7 +77,7 @@ export function Layout({ children }) {
       isDemoMode = false;
       setIsDemoMode(isDemoMode);
     } else {
-      parsedData = sampleParsedData;
+      parsedData = transposeDatesToToday(sampleParsedData);
       isDemoMode = true;
       setIsDemoMode(isDemoMode);
     }

@@ -10,6 +10,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import {
+  findLiftPositionInTopLifts,
   getCelebrationEmoji,
   getReadableDateString,
 } from "@/lib/processing-utils";
@@ -17,7 +18,7 @@ import { devLog } from "@/lib/processing-utils";
 import { ParsedDataContext } from "@/pages/_app";
 
 export function SessionAnalysisCard() {
-  const { parsedData } = useContext(ParsedDataContext);
+  const { parsedData, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
 
   const mostRecentDate = parsedData[parsedData.length - 1].date;
   const recentWorkouts = parsedData.filter(
@@ -28,7 +29,8 @@ export function SessionAnalysisCard() {
   const groupedWorkouts = recentWorkouts.reduce((acc, workout) => {
     const { liftType } = workout;
     acc[liftType] = acc[liftType] || [];
-    acc[liftType].push(workout);
+    const prIndex = findLiftPositionInTopLifts(workout, topLiftsByTypeAndReps);
+    acc[liftType].push({ ...workout, prIndex: prIndex });
     return acc;
   }, {});
 
@@ -37,7 +39,7 @@ export function SessionAnalysisCard() {
       <CardHeader>
         <CardTitle>Recent Session Analysis</CardTitle>
         <CardDescription>
-          Date: {getReadableDateString(mostRecentDate)}
+          Lifting Session Date: {getReadableDateString(mostRecentDate)}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -46,11 +48,16 @@ export function SessionAnalysisCard() {
             {Object.entries(groupedWorkouts).map(([liftType, workouts]) => (
               <li key={liftType} className="pb-2">
                 <strong>{liftType}</strong>
-                <ul>
+                <ul className="pl-4">
                   {workouts.map((workout, index) => (
-                    <li key={index} className="pl-4">
+                    <li
+                      key={index}
+                      className={workout.prIndex !== -1 ? "font-bold" : ""}
+                    >
                       {workout.reps}@{workout.weight}
-                      {workout.unitType}
+                      {workout.unitType}{" "}
+                      {workout.prIndex !== -1 &&
+                        `(#${workout.prIndex + 1} of all time)`}
                     </li>
                   ))}
                 </ul>

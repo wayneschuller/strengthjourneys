@@ -173,3 +173,29 @@ export const markHigherWeightAsHistoricalPRs = (parsedData) => {
 
   return parsedData;
 };
+
+export function findLiftPositionInTopLifts(liftTuple, topLiftsByTypeAndReps) {
+  const { liftType, reps } = liftTuple;
+
+  // Check if the lift type and rep range exists in the data structure
+  if (
+    topLiftsByTypeAndReps[liftType] &&
+    topLiftsByTypeAndReps[liftType][reps - 1]
+  ) {
+    const topLifts = topLiftsByTypeAndReps[liftType][reps - 1];
+
+    for (let i = 0; i < topLifts.length; i++) {
+      let lift = topLifts[i];
+      // Assuming we compare based on weight, adjust the condition as needed
+      if (
+        lift.date === liftTuple.date &&
+        lift.weight === liftTuple.weight &&
+        lift.reps === liftTuple.reps
+      ) {
+        return i; // Return the position (index) of the lift in the array
+      }
+    }
+  }
+
+  return -1; // Return -1 if the lift is not found
+}

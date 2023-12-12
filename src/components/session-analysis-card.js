@@ -19,6 +19,7 @@ import { ParsedDataContext } from "@/pages/_app";
 
 export function SessionAnalysisCard() {
   const { parsedData, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
+  let prFound = false;
 
   const mostRecentDate = parsedData[parsedData.length - 1].date;
   const recentWorkouts = parsedData.filter(
@@ -30,7 +31,9 @@ export function SessionAnalysisCard() {
     const { liftType } = workout;
     acc[liftType] = acc[liftType] || [];
     const prIndex = findLiftPositionInTopLifts(workout, topLiftsByTypeAndReps);
+    if (prIndex !== -1) prFound = true;
     acc[liftType].push({ ...workout, prIndex: prIndex });
+
     return acc;
   }, {});
 
@@ -68,7 +71,12 @@ export function SessionAnalysisCard() {
           <p>No workouts available for the most recent date.</p>
         )}
       </CardContent>
-      <CardFooter>Session rating: Awesome</CardFooter>
+      <CardFooter>
+        Session rating:{" "}
+        {prFound
+          ? "Awesome"
+          : "You beat 100% of people who stayed on the couch."}
+      </CardFooter>
     </Card>
   );
 }

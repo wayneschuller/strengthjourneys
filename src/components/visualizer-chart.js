@@ -64,6 +64,10 @@ export default function VisualizerChart() {
   const chartRef = useRef(null);
   const { width } = useWindowSize();
   const [chartData, setChartData] = useState(null);
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage(
+    "e1rmFormula",
+    "Brzycki",
+  );
 
   // Local computed/derived variables
   let firstDate = null;
@@ -86,10 +90,11 @@ export default function VisualizerChart() {
       parsedData,
       selectedLiftTypes,
       theme,
+      e1rmFormula,
     );
 
     setChartData(chartData);
-  }, [parsedData, selectedLiftTypes, theme]);
+  }, [parsedData, selectedLiftTypes, theme, e1rmFormula]);
 
   useEffect(() => {
     // Accessing the HSL color variables
@@ -277,9 +282,9 @@ export default function VisualizerChart() {
         if (entry.reps === 1) {
           label.push(`Lifted ${entry.reps}@${entry.weight}${entry.unitType}.`);
         } else {
-          const oneRepMax = estimateE1RM(entry.reps, entry.weight, "Brzycki");
+          const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
           label.push(
-            `Potential 1@${oneRepMax}${entry.unitType} from ${entry.reps}@${entry.weight}${entry.unitType}.`,
+            `Potential 1@${oneRepMax}${entry.unitType} from ${entry.reps}@${entry.weight}${entry.unitType} (${e1rmFormula} formula)`,
           );
         }
         if (entry.notes) {
@@ -519,7 +524,12 @@ function getFirstLastDatesMaxWeightFromChartData(chartData) {
 
 // This function uniquely processes the parsed Data for the Visualizer
 // So it lives here in the <VisualizerChart /> component
-function processVisualizerData(parsedData, selectedLiftTypes, theme) {
+function processVisualizerData(
+  parsedData,
+  selectedLiftTypes,
+  theme,
+  e1rmFormula,
+) {
   if (parsedData === null) {
     console.log(`Error: visualizerProcessParsedData passed null.`);
     return;
@@ -552,7 +562,7 @@ function processVisualizerData(parsedData, selectedLiftTypes, theme) {
       };
     }
 
-    const oneRepMax = estimateE1RM(entry.reps, entry.weight, "Brzycki");
+    const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
     const currentData = datasets[liftTypeKey].data.get(entry.date);
 
     if (!currentData || currentData.y < oneRepMax) {

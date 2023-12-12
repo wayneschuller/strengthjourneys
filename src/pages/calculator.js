@@ -21,48 +21,42 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";
 import { useLocalStorage } from "usehooks-ts";
+import { devLog } from "@/lib/processing-utils";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 let didInit = false;
 
 export default function E1RMCalculator() {
-  const [reps, setReps] = useState(5);
-  const [weight, setWeight] = useState(225);
   const router = useRouter();
   const { toast } = useToast();
+  const [reps, setReps] = useLocalStorage("reps", 5);
+  const [weight, setWeight] = useLocalStorage("weight", 225);
   const [isMetric, setIsMetric] = useLocalStorage("calcIsMetric", false);
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage(
+    "e1rmFormula",
+    "Brzycki",
+  );
 
-  const defaultFormula = "Brzycki"; // One day we might make this configurable.
-
+  // Slightly complex state default management.
+  // Priority is: URL query, localstorage, code defaults
   useEffect(() => {
-    // Get some initial values from URL parameters (URL as state)
-    const initReps = router?.query?.reps ?? 5;
-
-    let initIsMetric;
-    if (router?.query?.isMetric === "false") {
-      initIsMetric = false;
-    } else if (router?.query?.isMetric === "true") {
-      initIsMetric = true;
-    } else {
-      // The URL has no guidance. So check localStorage then default to false (pounds)
-      initIsMetric = localStorage.getItem("calcIsMetric") === "true" || false;
+    if (!didInit) {
+      // didInit = true;
+      // Get some initial values from URL parameters (URL as state)
+      if (router?.query?.isMetric !== undefined)
+        setIsMetric(router.query.isMetric);
+      if (router?.query?.reps !== undefined) setReps(router.query.reps);
+      if (router?.query?.weight !== undefined) setWeight(router.query.weight);
+      if (router?.query?.formula !== undefined)
+        setE1rmFormula(router.query.formula);
     }
-
-    let initWeight;
-    if (router?.query?.weight) {
-      initWeight = router.query.weight;
-    } else if (initIsMetric) {
-      initWeight = 100;
-    } else {
-      initWeight = 225;
-    }
-
-    // Update state if query is now different to state values
-    // This could be on first load
-    // Or could be if user clicks back/forward browser button
-    if (initReps !== reps) setReps(initReps);
-    if (initWeight !== weight) setWeight(initWeight);
-    if (initIsMetric !== isMetric) setIsMetric(initIsMetric);
-  }, [router.query]);
+  }, []);
 
   const handleRepsSliderChange = (value) => {
     // console.log(`reps change: ${value[0]}`);
@@ -90,7 +84,12 @@ export default function E1RMCalculator() {
     router.push(
       {
         pathname: router.pathname,
-        query: { reps: reps, weight: newWeight, isMetric: isMetric },
+        query: {
+          reps: reps,
+          weight: newWeight,
+          isMetric: isMetric,
+          formula: e1rmFormula,
+        },
       },
       undefined,
       { scroll: false },
@@ -105,7 +104,12 @@ export default function E1RMCalculator() {
     router.push(
       {
         pathname: router.pathname,
-        query: { reps: newReps, weight: weight, isMetric: isMetric },
+        query: {
+          reps: newReps,
+          weight: weight,
+          isMetric: isMetric,
+          formula: e1rmFormula,
+        },
       },
       undefined,
       { scroll: false },
@@ -120,7 +124,12 @@ export default function E1RMCalculator() {
     // Update the browser URL instantly
     router.push({
       pathname: router.pathname,
-      query: { reps: reps, weight: newWeight, isMetric: isMetric },
+      query: {
+        reps: reps,
+        weight: newWeight,
+        isMetric: isMetric,
+        formula: e1rmFormula,
+      },
     });
   };
 
@@ -156,19 +165,24 @@ export default function E1RMCalculator() {
     // Update the browser URL instantly
     router.push({
       pathname: router.pathname,
-      query: { reps: reps, weight: newWeight, isMetric: isMetric },
+      query: {
+        reps: reps,
+        weight: newWeight,
+        isMetric: isMetric,
+        formula: e1rmFormula,
+      },
     });
 
     // Save in localStorage for this browser device
-    localStorage.setItem("calcIsMetric", isMetric);
+    // localStorage.setItem("calcIsMetric", isMetric);
   };
 
   const handleCopyToClipboard = async () => {
     const sentenceToCopy = `Lifting ${reps}@${weight}${
       isMetric ? "kg" : "lb"
-    } indicates a one rep max of ${estimateE1RM(reps, weight, "Brzycki")}${
+    } indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${
       isMetric ? "kg" : "lb"
-    } using Brzycki algorithm.\n(Source: onerepmaxcalculator.org/?reps=${reps}&weight=${weight}&isMetric=${isMetric})`;
+    } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?reps=${reps}&weight=${weight}&isMetric=${isMetric}&formula=${e1rmFormula})`;
 
     // Create a temporary textarea element
     const textarea = document.createElement("textarea");
@@ -306,12 +320,14 @@ export default function E1RMCalculator() {
                 {isMetric ? "kg" : "lb"}
               </div>
               <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
-                {estimateE1RM(reps, weight, defaultFormula)}
+                {estimateE1RM(reps, weight, e1rmFormula)}
                 {isMetric ? "kg" : "lb"}
               </div>
             </CardContent>
             <CardFooter className="text-muted-foreground">
-              Using {defaultFormula} formula
+              <div className="flex-1 text-center">
+                Using the <strong>{e1rmFormula}</strong> formula
+              </div>
             </CardFooter>
           </Card>
         </div>
@@ -322,21 +338,48 @@ export default function E1RMCalculator() {
         {/* Grid of other formulae cards */}
         <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           {e1rmFormulae.map((formula, index) =>
-            formula === defaultFormula ? null : (
+            formula === e1rmFormula ? null : (
               <div key={index} className="card">
-                <Card className="hover:ring-1">
-                  <CardHeader>
-                    <CardTitle className="text-xl text-muted-foreground">
-                      {formula}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xl font-bold tracking-tight md:text-2xl">
-                      {estimateE1RM(reps, weight, formula)}
-                      {isMetric ? "kg" : "lb"}
-                    </p>
-                  </CardContent>
-                </Card>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Card
+                        className="hover:ring-1"
+                        onClick={() => {
+                          setE1rmFormula(formula);
+                          router.push(
+                            {
+                              pathname: router.pathname,
+                              query: {
+                                reps: reps,
+                                weight: weight,
+                                isMetric: isMetric,
+                                formula: formula,
+                              },
+                            },
+                            undefined,
+                            { scroll: false },
+                          );
+                        }}
+                      >
+                        <CardHeader>
+                          <CardTitle className="text-xl text-muted-foreground">
+                            {formula}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-xl font-bold tracking-tight md:text-2xl">
+                            {estimateE1RM(reps, weight, formula)}
+                            {isMetric ? "kg" : "lb"}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Click to make {formula} your preferred e1rm formula
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             ),
           )}

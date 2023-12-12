@@ -7,9 +7,12 @@ import { ParsedDataContext } from "@/pages/_app";
 import useUserLiftData from "@/lib/useUserLiftData";
 import { InspirationCard } from "@/components/inspiration-card";
 import { InstructionsCard } from "@/components/instructions-card";
-import LiftAchievementsCard from "@/components/LiftAchievementsCard";
+import { LiftAchievementsCard } from "@/components/lift-achievements-card";
 import MonthsHighlightsCard from "@/components/MonthsHighlightsCard";
 import { useReadLocalStorage } from "usehooks-ts";
+import { ActivityHeatmapsCard } from "@/components/heatmaps";
+import { SidePanelSelectLiftsButton } from "@/components/SidePaneLiftChooserButton";
+import LiftTypeFrequencyPieCard from "@/components/LiftFrequencyPieCard";
 
 import {
   Card,
@@ -20,11 +23,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import ActivityHeatmapsCard from "@/components/heatmaps";
 import { Separator } from "@/components/ui/separator";
-import { SidePanelSelectLiftsButton } from "@/components/SidePaneLiftChooserButton";
 import { devLog, processTopLiftsByTypeAndReps } from "@/lib/SJ-utils";
-import LiftTypeFrequencyPieCard from "@/components/LiftFrequencyPieCard";
 
 const Analyzer = () => {
   const { data: session } = useSession();

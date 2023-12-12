@@ -6,7 +6,7 @@ import "@/styles/globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Layout } from "@/components/Layout";
+import { Layout } from "@/components/layout";
 import { Toaster } from "@/components/ui/toaster";
 import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });

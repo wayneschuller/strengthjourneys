@@ -6,7 +6,7 @@ import { getCelebrationEmoji, getReadableDateString } from "@/lib/SJ-utils";
 import { devLog } from "@/lib/SJ-utils";
 import { ParsedDataContext } from "@/pages/_app";
 
-const LiftAchievementsCard = ({ liftType }) => {
+export function LiftAchievementsCard({ liftType }) {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } =
     useContext(ParsedDataContext);
 
@@ -74,9 +74,7 @@ const LiftAchievementsCard = ({ liftType }) => {
       </CardContent>
     </Card>
   );
-};
-
-export default LiftAchievementsCard;
+}
 
 function getLiftTypeStats(liftType, parsedData) {
   // Filter the parsedData for the specific liftType

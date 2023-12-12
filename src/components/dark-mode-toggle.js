@@ -5,14 +5,7 @@
 import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 import {
   Tooltip,
@@ -21,7 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export const DarkModeToggle = () => {
+export function DarkModeToggle() {
   const { theme, setTheme } = useTheme();
 
   return (
@@ -44,4 +37,4 @@ export const DarkModeToggle = () => {
       </Tooltip>
     </TooltipProvider>
   );
-};
+}

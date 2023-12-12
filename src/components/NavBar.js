@@ -9,7 +9,7 @@ import { useReadLocalStorage } from "usehooks-ts";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { DarkModeToggle } from "@/components/DarkModeToggle";
+import { DarkModeToggle } from "@/components/dark-mode-toggle";
 import MobileNav from "@/components/MobileNav";
 import { AvatarDropdown } from "@/components/avatar-menu";
 import useUserLiftData from "@/lib/useUserLiftData";

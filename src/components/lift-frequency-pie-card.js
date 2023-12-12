@@ -12,7 +12,7 @@ import ChartDataLabels from "chartjs-plugin-datalabels";
 
 Chart.register(ArcElement, ChartDataLabels);
 
-function LiftTypeFrequencyPieCard() {
+export function LiftTypeFrequencyPieCard() {
   const { parsedData, liftTypes, topLiftsByTypeAndReps } =
     useContext(ParsedDataContext);
   const [pieData, setPieData] = useState(null);
@@ -139,5 +139,3 @@ function LiftTypeFrequencyPieCard() {
     </Card>
   );
 }
-
-export default LiftTypeFrequencyPieCard;

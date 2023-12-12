@@ -10,7 +10,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/dark-mode-toggle";
-import MobileNav from "@/components/MobileNav";
+import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
 import useUserLiftData from "@/lib/useUserLiftData";
 import { Table2 } from "lucide-react";
@@ -28,7 +28,7 @@ import { SidePanelSelectLiftsButton } from "./SidePaneLiftChooserButton";
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
 
-export default function NavBar() {
+export function NavBar() {
   const pathname = usePathname();
 
   return (

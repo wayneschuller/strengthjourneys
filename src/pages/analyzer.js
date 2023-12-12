@@ -8,11 +8,11 @@ import useUserLiftData from "@/lib/useUserLiftData";
 import { InspirationCard } from "@/components/inspiration-card";
 import { InstructionsCard } from "@/components/instructions-card";
 import { LiftAchievementsCard } from "@/components/lift-achievements-card";
-import MonthsHighlightsCard from "@/components/MonthsHighlightsCard";
+import { MonthsHighlightsCard } from "@/components/months-highlights-card";
 import { useReadLocalStorage } from "usehooks-ts";
 import { ActivityHeatmapsCard } from "@/components/heatmaps";
 import { SidePanelSelectLiftsButton } from "@/components/SidePaneLiftChooserButton";
-import LiftTypeFrequencyPieCard from "@/components/LiftFrequencyPieCard";
+import { LiftTypeFrequencyPieCard } from "@/components/lift-frequency-pie-card";
 
 import {
   Card,

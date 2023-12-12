@@ -12,7 +12,7 @@ import {
 import { coreLiftTypes, devLog } from "@/lib/SJ-utils";
 import { getReadableDateString } from "@/lib/SJ-utils";
 
-const MonthsHighlightsCard = () => {
+export function MonthsHighlightsCard() {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   if (!parsedData) return;
   if (!selectedLiftTypes) return;
@@ -55,9 +55,7 @@ const MonthsHighlightsCard = () => {
       </CardContent>
     </Card>
   );
-};
-
-export default MonthsHighlightsCard;
+}
 
 // Function to get top lifts for different rep ranges for a specified lift type
 function getLiftTypePRs(parsedData, liftType) {

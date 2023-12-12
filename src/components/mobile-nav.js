@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ViewVerticalIcon } from "@radix-ui/react-icons";
 import { useRouter } from "next/router";
-import { Calculator, Timer, LineChart, Trophy } from "lucide-react";
 
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
@@ -22,7 +21,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-export default function MobileNav() {
+export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const iconSize = 16;

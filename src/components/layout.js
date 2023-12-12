@@ -1,8 +1,6 @@
 /** @format */
 
 "use client";
-import Navbar from "@/components/NavBar";
-import { Footer } from "@/components/footer";
 import { useState, useEffect, useContext } from "react";
 import { ParsedDataContext } from "@/pages/_app";
 import { parseGSheetData } from "@/lib/parseGSheetData";
@@ -12,6 +10,8 @@ import { devLog, processTopLiftsByTypeAndReps } from "@/lib/SJ-utils";
 import { sampleParsedData } from "@/lib/sampleParsedData";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
+import { NavBar } from "@/components/nav-bar";
+import { Footer } from "@/components/footer";
 import { useRouter } from "next/router";
 import { useReadLocalStorage } from "usehooks-ts";
 import { markHigherWeightAsHistoricalPRs } from "@/lib/SJ-utils";
@@ -192,7 +192,7 @@ export function Layout({ children }) {
 
   return (
     <>
-      <Navbar />
+      <NavBar />
       <main className={`mt-4 flex justify-center`}>{children}</main>
       <Footer />
     </>

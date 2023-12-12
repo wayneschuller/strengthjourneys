@@ -64,10 +64,7 @@ export default function VisualizerChart() {
   const chartRef = useRef(null);
   const { width } = useWindowSize();
   const [chartData, setChartData] = useState(null);
-  const [e1rmFormula, setE1rmFormula] = useLocalStorage(
-    "e1rmFormula",
-    "Brzycki",
-  );
+  const [e1rmFormula, setE1rmFormula] = useState("Brzycki");
 
   // Local computed/derived variables
   let firstDate = null;
@@ -86,6 +83,9 @@ export default function VisualizerChart() {
 
     // Generate chart data!
     // FIXME: we pass theme here so this causes a reprocessing of data on theme change - not ideal
+    const e1rmFormula = localStorage.getItem("e1rmFormula") || "Brzycki";
+    setE1rmFormula(e1rmFormula);
+
     const chartData = processVisualizerData(
       parsedData,
       selectedLiftTypes,
@@ -94,7 +94,7 @@ export default function VisualizerChart() {
     );
 
     setChartData(chartData);
-  }, [parsedData, selectedLiftTypes, theme, e1rmFormula]);
+  }, [parsedData, selectedLiftTypes, theme]);
 
   useEffect(() => {
     // Accessing the HSL color variables

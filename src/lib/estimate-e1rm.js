@@ -1,5 +1,6 @@
 /** @format */
 
+// FIXME: add more formulae from the Wikipedia article?
 export const e1rmFormulae = [
   "Epley",
   "McGlothin",

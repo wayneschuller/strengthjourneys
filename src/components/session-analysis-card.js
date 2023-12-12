@@ -60,7 +60,9 @@ export function SessionAnalysisCard() {
                       {workout.reps}@{workout.weight}
                       {workout.unitType}{" "}
                       {workout.prIndex !== -1 &&
-                        `(#${workout.prIndex + 1} of all time)`}
+                        `${getCelebrationEmoji(workout.prIndex)}  #${
+                          workout.prIndex + 1
+                        } best ${workout.reps}RM ever.`}
                     </li>
                   ))}
                 </ul>

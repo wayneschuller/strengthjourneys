@@ -34,7 +34,7 @@ export default function E1RMCalculator() {
   const defaultFormula = "Brzycki"; // One day we might make this configurable.
 
   useEffect(() => {
-    // Get some initial values from URL parameters
+    // Get some initial values from URL parameters (URL as state)
     const initReps = router?.query?.reps ?? 5;
 
     let initIsMetric;

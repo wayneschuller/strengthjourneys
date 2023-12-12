@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
-import { ParsedDataContext } from "@/pages/_app";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
-import { handleOpenFilePicker } from "@/components/handleOpenPicker";
+import { handleOpenFilePicker } from "@/components/handle-open-picker";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/SJ-utils";
 import Image from "next/image";

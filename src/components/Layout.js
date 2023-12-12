@@ -1,8 +1,8 @@
 /** @format */
 
 "use client";
-import Navbar from "./NavBar";
-import Footer from "@/components/Footer";
+import Navbar from "@/components/NavBar";
+import Footer from "@/components/footer";
 import { useState, useEffect, useContext } from "react";
 import { ParsedDataContext } from "@/pages/_app";
 import { parseGSheetData } from "@/lib/parseGSheetData";

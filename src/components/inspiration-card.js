@@ -1,6 +1,6 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 const inspirationalQuotes = [
   {
@@ -32,7 +32,7 @@ const getRandomQuote = () => {
   return inspirationalQuotes[randomIndex];
 };
 
-function InspirationCard() {
+export function InspirationCard() {
   const [quote, setQuote] = useState(null);
 
   useEffect(() => {
@@ -56,5 +56,3 @@ function InspirationCard() {
     </Card>
   );
 }
-
-export default InspirationCard;

@@ -29,7 +29,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const ActivityHeatmapsCard = () => {
+export function ActivityHeatmapsCard() {
   const { parsedData, isDemoMode } = useContext(ParsedDataContext);
   const { width } = useWindowSize();
   const [startDate, setStartDate] = useState(null);
@@ -121,11 +121,9 @@ const ActivityHeatmapsCard = () => {
       )}
     </Card>
   );
-};
+}
 
-export default ActivityHeatmapsCard;
-
-const Heatmap = ({ parsedData, startDate, endDate, isMobile }) => {
+function Heatmap({ parsedData, startDate, endDate, isMobile }) {
   const { theme, setTheme } = useTheme();
 
   const heatmapData = generateHeatmapData(parsedData, startDate, endDate);
@@ -147,7 +145,7 @@ const Heatmap = ({ parsedData, startDate, endDate, isMobile }) => {
       }}
     />
   );
-};
+}
 
 function findStartEndDates(parsedData) {
   if (!parsedData || parsedData.length === 0) {

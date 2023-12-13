@@ -76,12 +76,12 @@ const Analyzer = () => {
 export default Analyzer;
 
 function KeyLiftCards() {
-  const { parsedData, selectedLiftTypes, isDemoMode } =
-    useContext(ParsedDataContext);
+  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
+  const { status } = useSession();
 
   return (
     <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
-      {isDemoMode && (
+      {status === "unauthenticated" && (
         <div className="md:col-span-2 xl:col-span-4">
           <Card>
             <CardHeader>
@@ -101,6 +101,8 @@ function KeyLiftCards() {
           </Card>
         </div>
       )}
+
+      {/* Map through each of the selected lifts  */}
       {selectedLiftTypes.map((lift) => (
         <LiftAchievementsCard
           key={`${lift}-card`}
@@ -108,7 +110,8 @@ function KeyLiftCards() {
           parsedData={parsedData}
         />
       ))}
-      {!isDemoMode && (
+
+      {status === "authenticated" && (
         <div className="grid grid-cols-1">
           <Card>
             <CardHeader>

@@ -103,7 +103,7 @@ export function ActivityHeatmapsCard() {
             );
           })}
       </CardContent>
-      {!isDemoMode && (
+      {status === "authenticated" && (
         <CardFooter>
           <div className="flex flex-1 flex-row justify-end">
             <TooltipProvider>

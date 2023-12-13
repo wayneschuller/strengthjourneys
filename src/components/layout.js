@@ -201,7 +201,7 @@ export function Layout({ children }) {
   return (
     <>
       <NavBar />
-      <main className={`mt-4 flex justify-center`}>{children}</main>
+      <main className="mx-4 mt-4 flex justify-center xl:mx-10">{children}</main>
       <Footer />
     </>
   );

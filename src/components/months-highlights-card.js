@@ -31,7 +31,7 @@ export function MonthsHighlightsCard() {
           <CardDescription>Core lift types are in bold.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-64 w-11/12 flex-1" />
+          <Skeleton className="h-[50vh]" />
         </CardContent>
       </Card>
     );
@@ -50,8 +50,6 @@ export function MonthsHighlightsCard() {
         <CardDescription>Core lift types are in bold.</CardDescription>
       </CardHeader>
       <CardContent>
-        {/* ooh yeah */}
-
         <ul>
           {historicalPRs.map((record) => (
             <li key={`${record.liftType}-${record.reps}-${record.date}`}>

@@ -33,7 +33,7 @@ export function SessionAnalysisCard() {
           <CardDescription>Lifting Session Date:</CardDescription>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-72 w-11/12 flex-1" />
+          <Skeleton className="h-[70vh] w-11/12 flex-1" />
         </CardContent>
       </Card>
     );

@@ -16,10 +16,28 @@ import {
 } from "@/lib/processing-utils";
 import { devLog } from "@/lib/processing-utils";
 import { ParsedDataContext } from "@/pages/_app";
+import { useSession } from "next-auth/react";
+import { useUserLiftData } from "@/lib/use-userlift-data";
+import { Skeleton } from "./ui/skeleton";
 
 export function SessionAnalysisCard() {
   const { parsedData, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
-  let prFound = false;
+  const { data: session, status } = useSession();
+  const { isLoading } = useUserLiftData();
+
+  if (!parsedData) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Session Analysis</CardTitle>
+          <CardDescription>Lifting Session Date:</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-72 w-11/12 flex-1" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   const mostRecentDate = parsedData[parsedData.length - 1].date;
   const recentWorkouts = parsedData.filter(
@@ -27,6 +45,7 @@ export function SessionAnalysisCard() {
   );
 
   // Group workouts by liftType
+  let prFound = false;
   const groupedWorkouts = recentWorkouts.reduce((acc, workout) => {
     const { liftType } = workout;
     acc[liftType] = acc[liftType] || [];
@@ -40,7 +59,9 @@ export function SessionAnalysisCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Session Analysis</CardTitle>
+        <CardTitle>
+          {status === "unauthenticated" && "Demo Mode: "}Recent Session Analysis
+        </CardTitle>
         <CardDescription>
           Lifting Session Date: {getReadableDateString(mostRecentDate)}
         </CardDescription>

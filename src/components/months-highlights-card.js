@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useContext } from "react";
 import { ParsedDataContext } from "@/pages/_app";
+import { useSession } from "next-auth/react";
+import { useUserLiftData } from "@/lib/use-userlift-data";
+import { Skeleton } from "./ui/skeleton";
 import {
   Card,
   CardContent,
@@ -17,17 +20,22 @@ import {
 
 export function MonthsHighlightsCard() {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
-  if (!parsedData) return;
-  if (!selectedLiftTypes) return;
+  const { data: session, status } = useSession();
+  const { isLoading } = useUserLiftData();
 
-  // devLog(`Monthly:`);
-  // devLog(selectedLiftsPRs);
-  // FIXME: put an isLoading skeleton in here internally?
-  // {isLoading && (
-  //   <div className="flex">
-  //     <Skeleton className="h-36 w-11/12 flex-1" />
-  //   </div>
-  // )}
+  if (!parsedData) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>This Month{"'"}s Highlights</CardTitle>
+          <CardDescription>Core lift types are in bold.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-64 w-11/12 flex-1" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   // FIXME: these stats are rubbish - convert to the topSetsByLiftsAndReps in global context
   const historicalPRs = getFirstHistoricalPRsInLastMonth(parsedData);
@@ -35,7 +43,10 @@ export function MonthsHighlightsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>This Month{"'"}s Highlights</CardTitle>
+        <CardTitle>
+          {status === "unauthenticated" && "Demo Mode: "}This Month{"'"}s
+          Highlights
+        </CardTitle>
         <CardDescription>Core lift types are in bold.</CardDescription>
       </CardHeader>
       <CardContent>

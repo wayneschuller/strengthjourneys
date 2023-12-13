@@ -28,39 +28,18 @@ import { devLog } from "@/lib/processing-utils";
 import { SessionAnalysisCard } from "@/components/session-analysis-card";
 
 const Analyzer = () => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { isLoading } = useUserLiftData();
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } =
     useContext(ParsedDataContext);
   const ssid = useReadLocalStorage("ssid");
 
-  // Main useEffect - wait for parsedData process component specfic data
-  // useEffect(() => {
-  //   return;
-  //   // devLog(`Analyzer useEffect[parsedData]: (isDemoMode: ${isDemoMode})`);
-  //   // devLog(parsedData);
-  //   if (!parsedData) return;
-  // }, [parsedData]);
-
-  // devLog(`Rendering <Analyzer />...`);
-
-  if (!isLoading && session?.user && !ssid)
+  if (!isLoading && status === "authenticated" && !ssid)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
         <InstructionsCard session={session} />
       </div>
     );
-
-  if (!parsedData || !selectedLiftTypes) return null;
-
-  // Build an object of PRs for everything in selectedLifts
-  // liftTypePRs[liftType] = arrays (for reps 1..10) of subarrays for your top 20 lifts at those reps
-  // FIXME: if we are prop passing this do it in state useeffect?
-  // const selectedLiftsPRs = getSelectedLiftsPRs(parsedData, selectedLiftTypes);
-  const selectedLiftsPRs = null;
-  // devLog(selectedLiftsPRs);
-  // const topLiftsByTypeAndReps = processTopLiftsByTypeAndReps( parsedData, selectedLiftTypes);
-  devLog(topLiftsByTypeAndReps);
 
   return (
     <>

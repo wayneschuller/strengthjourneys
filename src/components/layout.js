@@ -179,7 +179,6 @@ export function Layout({ children }) {
     }
 
     // Tell the user when data is loaded
-    // FIXME: not working
     // FIXME: if they have some PRs TODAY, show them a reward toast with confetti instead
     if (
       !loadedToastInit &&
@@ -201,6 +200,7 @@ export function Layout({ children }) {
   return (
     <>
       <NavBar />
+      {/* Below is where we set global x margins for all pages */}
       <main className="mx-4 mt-4 flex justify-center xl:mx-10">{children}</main>
       <Footer />
     </>

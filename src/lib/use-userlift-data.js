@@ -11,9 +11,9 @@ const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generi
 
 export function useUserLiftData() {
   const ssid = useReadLocalStorage("ssid");
-  const { data: session } = useSession();
+  const { status } = useSession();
 
-  const shouldFetch = session && ssid ? true : false; // Only fetch if we have session and ssid
+  const shouldFetch = status === "authenticated" && ssid ? true : false; // Only fetch if we have auth and ssid
 
   const { data, isLoading } = useSWR(
     shouldFetch ? `/api/readGSheet?ssid=${ssid}` : null,
@@ -23,13 +23,6 @@ export function useUserLiftData() {
       // Don't need any because the defaults are awesome
     },
   );
-
-  // Let session warm up
-  // Return fake SWR results with isLoading until next-auth is fully initialized
-  // If there is no login then session will become null and we can just rely on the SWR results
-  // FIXME: use the session status
-  if (session === undefined)
-    return { data: undefined, isLoading: true, isError: false };
 
   return {
     data,

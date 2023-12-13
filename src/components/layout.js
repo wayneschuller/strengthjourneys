@@ -47,7 +47,8 @@ export function Layout({ children }) {
   useEffect(() => {
     // devLog( `<Layout /> useEffect[data]: isLoading ${isLoading}, isError ${isError}`,);
 
-    if (isLoading) return; // Give useSWR a chance to find data
+    if (status === "loading") return; // Wait for auth. Don't prematurely go into demo mode
+    if (isLoading) return; // Wait for useSWR. Don't prematurely go into demo mode
 
     // If data changes and we have isError then signOut
     // This is usually because our token has expired
@@ -140,7 +141,7 @@ export function Layout({ children }) {
 
     // devLog(`Layout useEffect setParsedData()...`);
     setParsedData(parsedData);
-  }, [data, isLoading, isError]);
+  }, [data, isLoading, isError, status]);
 
   // useEffect for showing toast instructions on key state changes
   useEffect(() => {

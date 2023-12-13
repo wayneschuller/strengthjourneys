@@ -58,9 +58,6 @@ export default function VisualizerChart() {
   const [gridColor, setGridColor] = useState(null);
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isDemoMode } =
     useContext(ParsedDataContext);
-  const { data: session } = useSession();
-  const { isLoading } = useUserLiftData();
-  const [openPicker, authResponse] = useDrivePicker();
   const chartRef = useRef(null);
   const { width } = useWindowSize();
   const [chartData, setChartData] = useState(null);
@@ -76,7 +73,7 @@ export default function VisualizerChart() {
 
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
-    devLog(`VisualizerChart useEffect[parsedData, selectedLiftTypes]`);
+    // devLog(`VisualizerChart useEffect[parsedData, selectedLiftTypes]`);
     // devLog(parsedData);
     // devLog(selectedLiftTypes);
     if (!parsedData) return;
@@ -93,7 +90,7 @@ export default function VisualizerChart() {
       e1rmFormula,
     );
 
-    setChartData(chartData);
+    setChartData(chartData); // This should trigger everything
   }, [parsedData, selectedLiftTypes, theme]);
 
   useEffect(() => {
@@ -122,16 +119,9 @@ export default function VisualizerChart() {
     // console.log(gridColor);
   }, [theme]);
 
-  // devLog(`<VisualizerChart /> rendering...`);
-  if (session === undefined) return null;
-
-  // FIXME: use session status here?
-  // If status === "authenticated" and it's not demo mode then skeleton for the real chart
-  if (isLoading && !isDemoMode && !parsedData) {
+  if (!chartData) {
     return <Skeleton className="h-[80vh] w-[90vw]"></Skeleton>;
   }
-
-  if (!chartData) return; // Eventually in the useEffect this will have data
 
   ({ firstDate, lastDate, roundedMaxWeightValue } =
     getFirstLastDatesMaxWeightFromChartData(chartData));

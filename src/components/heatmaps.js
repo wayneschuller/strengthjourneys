@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useIsClient, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { useUserLiftData } from "@/lib/use-userlift-data";
+import { Skeleton } from "./ui/skeleton";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
@@ -63,7 +64,7 @@ export function ActivityHeatmapsCard() {
     setIntervalMonths(intervalMonths);
 
     const intervals = generateDateRanges(startDate, endDate, intervalMonths);
-    setIntervals(intervals);
+    setIntervals(intervals); // intervals is the trigger for showing the heatmaps
   }, [parsedData, width]);
 
   if (!isClient) return null; // Heatmaps only work on client
@@ -85,6 +86,7 @@ export function ActivityHeatmapsCard() {
         )}
       </CardHeader>
       <CardContent>
+        {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
         {intervals &&
           intervals.map((interval, index) => {
             return (
@@ -103,7 +105,7 @@ export function ActivityHeatmapsCard() {
             );
           })}
       </CardContent>
-      {status === "authenticated" && (
+      {status === "authenticated" && intervals && (
         <CardFooter>
           <div className="flex flex-1 flex-row justify-end">
             <TooltipProvider>

@@ -5,6 +5,7 @@ import { useContext, useState, useEffect } from "react";
 import { devLog } from "@/lib/processing-utils";
 import { ParsedDataContext } from "@/pages/_app";
 import { Skeleton } from "./ui/skeleton";
+import { useSession } from "next-auth/react";
 
 import { Chart, ArcElement } from "chart.js";
 import { Pie } from "react-chartjs-2";
@@ -16,13 +17,14 @@ Chart.register(ArcElement, ChartDataLabels);
 export function LiftTypeFrequencyPieCard() {
   const { parsedData, liftTypes } = useContext(ParsedDataContext);
   const [pieChartData, setPieChartData] = useState(null);
+  const { status } = useSession();
   const [pieChartOptions, setPieChartOptions] = useState(null);
 
   // FIXME: could we add some time UI controls? Liftime, this year etc?
   // FIXME: do some processing - top 4-5 lifts and make an arc called "Other"?
   // FIXME: and allow them to click other to see a second pie chart?
 
-  // Process the data when we have it
+  // Prepare the piechart data/options when parsedData is ready
   useEffect(() => {
     // devLog(`PieCard...`);
 
@@ -132,7 +134,9 @@ export function LiftTypeFrequencyPieCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your Top 5 Lifts</CardTitle>
+        <CardTitle>
+          {status === "unauthenticated" && "Demo mode: "} Your Top 5 Lifts
+        </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 justify-center xl:w-2/3 xl:gap-4">
         {!pieChartData && <Skeleton className="h-64 w-64 flex-1" />}

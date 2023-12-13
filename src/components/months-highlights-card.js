@@ -20,7 +20,7 @@ import {
 
 export function MonthsHighlightsCard() {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const { isLoading } = useUserLiftData();
 
   if (!parsedData) {

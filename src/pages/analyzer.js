@@ -30,8 +30,6 @@ import { SessionAnalysisCard } from "@/components/session-analysis-card";
 const Analyzer = () => {
   const { data: session, status } = useSession();
   const { isLoading } = useUserLiftData();
-  const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } =
-    useContext(ParsedDataContext);
   const ssid = useReadLocalStorage("ssid");
 
   if (!isLoading && status === "authenticated" && !ssid)

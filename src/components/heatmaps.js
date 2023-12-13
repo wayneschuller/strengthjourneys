@@ -12,6 +12,8 @@ import {
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsClient, useWindowSize } from "usehooks-ts";
+import { useSession } from "next-auth/react";
+import { useUserLiftData } from "@/lib/use-userlift-data";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
@@ -39,6 +41,8 @@ export function ActivityHeatmapsCard() {
   const [endDate, setEndDate] = useState(null);
   const [intervals, setIntervals] = useState(null);
   const [intervalMonths, setIntervalMonths] = useState(18);
+  const { status } = useSession();
+  const { isLoading } = useUserLiftData();
   const isClient = useIsClient();
   const theme = null;
   const colorClass = `bg-gh-${theme || "light"}-2 rounded-full`;
@@ -63,44 +67,41 @@ export function ActivityHeatmapsCard() {
   }, [parsedData, width]);
 
   if (!isClient) return null; // Heatmaps only work on client
-  if (!parsedData) return null;
-  if (!intervals) return null;
-
-  // FIXME: put an isLoading skeleton in here internally?
-  // {isLoading && (
-  //   <div className="flex">
-  //     <Skeleton className="h-36 w-11/12 flex-1" />
-  //   </div>
-  // )}
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Activity History For All Lift Types</CardTitle>
-        <CardDescription>
-          {intervalMonths} month heatmap{intervals.length > 1 && "s"} for all
-          lifting sessions from {getReadableDateString(startDate)} -{" "}
-          {getReadableDateString(endDate)}. Historical PRs are highlighted. Core
-          lift PRs are brighter.
-        </CardDescription>
+        <CardTitle>
+          {status === "unauthenticated" && "Demo mode: "}Activity History For
+          All Lift Types
+        </CardTitle>
+        {intervals && (
+          <CardDescription>
+            {intervalMonths} month heatmap{intervals.length > 1 && "s"} for all
+            lifting sessions from {getReadableDateString(startDate)} -{" "}
+            {getReadableDateString(endDate)}. Historical PRs are highlighted.
+            Core lift PRs are brighter.
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent>
-        {intervals.map((interval, index) => {
-          return (
-            <div className="mb-2 md:mb-6" key={`${index}-heatmap`}>
-              <div className="hidden text-center md:block lg:text-lg">
-                {getReadableDateString(interval.startDate)} -{" "}
-                {getReadableDateString(interval.endDate)}
+        {intervals &&
+          intervals.map((interval, index) => {
+            return (
+              <div className="mb-2 md:mb-6" key={`${index}-heatmap`}>
+                <div className="hidden text-center md:block lg:text-lg">
+                  {getReadableDateString(interval.startDate)} -{" "}
+                  {getReadableDateString(interval.endDate)}
+                </div>
+                <Heatmap
+                  parsedData={parsedData}
+                  startDate={interval.startDate}
+                  endDate={interval.endDate}
+                  isMobile={intervalMonths === 18}
+                />
               </div>
-              <Heatmap
-                parsedData={parsedData}
-                startDate={interval.startDate}
-                endDate={interval.endDate}
-                isMobile={intervalMonths === 18}
-              />
-            </div>
-          );
-        })}
+            );
+          })}
       </CardContent>
       {!isDemoMode && (
         <CardFooter>

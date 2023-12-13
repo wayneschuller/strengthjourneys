@@ -349,56 +349,66 @@ export default function E1RMCalculator() {
           <ShareButton onClick={handleCopyToClipboard} />
         </div>
 
-        {/* Grid of other formulae cards */}
+        {/* Grid of other formulae cards ordered by estimate ascending */}
         <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {e1rmFormulae.map((formula, index) =>
-            formula === e1rmFormula ? null : (
-              <div key={index} className="card">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Card
-                        className="hover:ring-1"
-                        onClick={() => {
-                          setE1rmFormula(formula);
-                          router.push(
-                            {
-                              pathname: router.pathname,
-                              query: {
-                                reps: reps,
-                                weight: weight,
-                                isMetric: isMetric,
-                                formula: formula,
+          {e1rmFormulae
+            .slice() // Create a shallow copy to avoid mutating the original array
+            .sort((a, b) => {
+              // Calculate estimated 1RM for both formulas
+              const e1rmA = estimateE1RM(reps, weight, a);
+              const e1rmB = estimateE1RM(reps, weight, b);
+
+              // Sort in ascending order
+              return e1rmA - e1rmB;
+            })
+            .map((formula, index) =>
+              formula === e1rmFormula ? null : (
+                <div key={index} className="card">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Card
+                          className="hover:ring-1"
+                          onClick={() => {
+                            setE1rmFormula(formula);
+                            router.push(
+                              {
+                                pathname: router.pathname,
+                                query: {
+                                  reps: reps,
+                                  weight: weight,
+                                  isMetric: isMetric,
+                                  formula: formula,
+                                },
                               },
-                            },
-                            undefined,
-                            { scroll: false },
-                          );
-                          // Save in localStorage for this browser device
-                          localStorage.setItem("e1rmFormula", formula);
-                        }}
-                      >
-                        <CardHeader>
-                          <CardTitle className="text-xl text-muted-foreground">
-                            {formula}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-xl font-bold tracking-tight md:text-2xl">
-                            {estimateE1RM(reps, weight, formula)}
-                            {isMetric ? "kg" : "lb"}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Click to make {formula} your preferred e1rm formula
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            ),
-          )}
+                              undefined,
+                              { scroll: false },
+                            );
+                            // Save in localStorage for this browser device
+                            localStorage.setItem("e1rmFormula", formula);
+                          }}
+                        >
+                          <CardHeader>
+                            <CardTitle className="text-xl text-muted-foreground">
+                              {formula}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-xl font-bold tracking-tight md:text-2xl">
+                              {estimateE1RM(reps, weight, formula)}
+                              {isMetric ? "kg" : "lb"}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Click to make {formula} your preferred e1rm formula
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              ),
+            )}
         </div>
       </div>
     </>

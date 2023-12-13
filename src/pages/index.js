@@ -16,8 +16,9 @@ import {
 } from "@/components/ui/card";
 
 export default function Home() {
+  // Big icon defaults to look good on the landing page cards
   const iconSize = 64;
-  const iconStrokeWidth = 1.25;
+  const iconStrokeWidth = 1.25; // Be slightly different from Lucide defaults
 
   const title = "Strength Journeys";
 
@@ -35,7 +36,7 @@ export default function Home() {
         <link rel="canonical" href="https://www.strengthjourneys.xyz/" />
       </Head>
       <h1 className="flex-1 space-x-2 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
-        Welcome to Strength Journeys
+        Welcome to {title}
       </h1>
       <h2 className="mt-2 scroll-m-20 text-center text-2xl tracking-tight lg:mx-20">
         A free{" "}

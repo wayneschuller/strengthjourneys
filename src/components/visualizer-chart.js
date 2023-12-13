@@ -79,10 +79,11 @@ export default function VisualizerChart() {
     if (!parsedData) return;
 
     // Generate chart data!
-    // FIXME: we pass theme here so this causes a reprocessing of data on theme change - not ideal
-    const e1rmFormula = localStorage.getItem("e1rmFormula") || "Brzycki";
+    const e1rmFormula =
+      JSON.parse(localStorage.getItem("e1rmFormula")) || "Brzycki";
     setE1rmFormula(e1rmFormula);
 
+    // FIXME: we pass theme here so this causes a reprocessing of data on theme change - not ideal
     const chartData = processVisualizerData(
       parsedData,
       selectedLiftTypes,

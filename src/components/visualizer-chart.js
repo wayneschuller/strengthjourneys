@@ -62,6 +62,7 @@ export default function VisualizerChart() {
   const { width } = useWindowSize();
   const [chartData, setChartData] = useState(null);
   const [e1rmFormula, setE1rmFormula] = useState("Brzycki");
+  const { status } = useSession();
 
   // Local computed/derived variables
   let firstDate = null;

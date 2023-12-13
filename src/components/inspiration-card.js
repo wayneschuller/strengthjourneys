@@ -25,6 +25,12 @@ const inspirationalQuotes = [
     author: "Henry Ford",
     URL: null,
   },
+  {
+    quote:
+      "For me, life is continuously being hungry. The meaning of life is not simply to exist, to survive, but to move ahead, to go up, to achieve, to conquer. ",
+    author: "Arnold Schwarzenegger",
+    URL: null,
+  },
 ];
 
 const getRandomQuote = () => {

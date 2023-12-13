@@ -22,6 +22,7 @@ import { Footer } from "@/components/footer";
 import { useRouter } from "next/router";
 import { useReadLocalStorage } from "usehooks-ts";
 
+// We use these to only trigger toast announcements once
 let demoToastInit = false;
 let loadedToastInit = false;
 
@@ -151,9 +152,8 @@ export function Layout({ children }) {
   // useEffect for showing toast instructions on key state changes
   useEffect(() => {
     // devLog(`<Layout /> Toast useEffect`);
-    // devLog(session);
 
-    // FIXME: use session status
+    if (status === "loading") return;
 
     // Check if the current path is "/visualizer" or "/analyzer"
     const isVisualizerRoute = currentPath === "/visualizer";
@@ -161,11 +161,8 @@ export function Layout({ children }) {
 
     if (!isVisualizerRoute && !isAnalyzerRoute) return; // Don't show toast on generic pages like Timer
 
-    // session starts undefined, but if they are not logged in it just becomes null
-    if (session === undefined) return;
-
     // Tell the user when demo mode has started
-    if (!demoToastInit && session === null) {
+    if (!demoToastInit && status === "unauthenticated") {
       demoToastInit = true; // Don't show this again
 
       toast({
@@ -184,8 +181,11 @@ export function Layout({ children }) {
     // Tell the user when data is loaded
     // FIXME: not working
     // FIXME: if they have some PRs TODAY, show them a reward toast with confetti instead
-    // parsedData?.length !== 0
-    if (!loadedToastInit && !isLoading && ssid && session?.user) {
+    if (
+      !loadedToastInit &&
+      status === "authenticated" &&
+      parsedData?.length > 0
+    ) {
       loadedToastInit = true; // Don't show this again
 
       const description = sheetFilename || "File name unknown";
@@ -196,7 +196,7 @@ export function Layout({ children }) {
       });
       return;
     }
-  }, [session, isLoading, router]);
+  }, [status, parsedData, router]);
 
   return (
     <>

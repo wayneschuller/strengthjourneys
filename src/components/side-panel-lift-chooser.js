@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState, useEffect, useContext } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import { ParsedDataContext } from "@/pages/_app";
@@ -84,8 +85,9 @@ export function SidePanelSelectLiftsButton({ isIconMode }) {
 }
 
 const CheckboxLifts = ({}) => {
-  const { isDemoMode, liftTypes, selectedLiftTypes, setSelectedLiftTypes } =
+  const { liftTypes, selectedLiftTypes, setSelectedLiftTypes } =
     useContext(ParsedDataContext);
+  const { status } = useSession();
 
   const handleCheckboxChange = (liftType) => {
     // Calculate updatedSelected first
@@ -106,7 +108,9 @@ const CheckboxLifts = ({}) => {
       .filter((liftType) => updatedSelected.includes(liftType));
 
     // Update localStorage
-    const localStorageKey = `selectedLifts${isDemoMode ? "_demoMode" : ""}`;
+    const localStorageKey = `selectedLifts${
+      status === "unauthenticated" ? "_demoMode" : ""
+    }`;
     localStorage.setItem(localStorageKey, JSON.stringify(updatedSelected));
 
     // Set the state

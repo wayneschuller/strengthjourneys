@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export function ActivityHeatmapsCard() {
-  const { parsedData, isDemoMode } = useContext(ParsedDataContext);
+  const { parsedData } = useContext(ParsedDataContext);
   const { width } = useWindowSize();
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);

@@ -31,7 +31,6 @@ export function Layout({ children }) {
     parsedData,
     setParsedData,
     ssid,
-    setIsDemoMode,
     setLiftTypes,
     setSelectedLiftTypes,
     setTopLiftsByTypeAndReps,
@@ -68,19 +67,16 @@ export function Layout({ children }) {
     }
 
     let parsedData = null; // A local version for this scope only
-    let isDemoMode = true; // A local version for this scope only
 
     if (data?.values) {
       // This always means new or changed data.
       parsedData = parseGSheetData(data.values); // Will be sorted date ascending
 
-      // FIXME: here is the point to check for parsing failures and go to demomode.
-      isDemoMode = false;
-      setIsDemoMode(isDemoMode);
+      // FIXME: signOut and delete ssid if they get parsing errors
     } else {
-      parsedData = transposeDatesToToday(sampleParsedData);
-      isDemoMode = true;
-      setIsDemoMode(isDemoMode);
+      // FIXME: it would be interesting to randomise the sample data a little here
+
+      parsedData = transposeDatesToToday(sampleParsedData); // Make demo mode data be recent
     }
 
     // As far as possible try to get components to do their own unique processing of parsedData
@@ -108,9 +104,10 @@ export function Layout({ children }) {
     setLiftTypes(sortedLiftTypes);
 
     // Check if selectedLifts exists in localStorage
-    // Instead of useLocalStorage we roll our own because of the unique default generation
-    // There are two localStorage keys for selectedLifts: demo data and user data
-    const localStorageKey = `selectedLifts${isDemoMode ? "_demoMode" : ""}`;
+    // When in demo mode (auth unauthenticated) we have a separate localstorage
+    const localStorageKey = `selectedLifts${
+      status === "unauthenticated" ? "_demoMode" : ""
+    }`;
     let selectedLiftTypes = localStorage.getItem(localStorageKey);
 
     if (selectedLiftTypes !== null) {
@@ -123,7 +120,7 @@ export function Layout({ children }) {
         .map((lift) => lift.liftType);
 
       devLog(
-        `Localstorage selectedLifts not found! (demomode is ${isDemoMode}). Setting:`,
+        `Localstorage selectedLifts not found! (auth status is ${status}). Setting:`,
       );
       devLog(defaultSelectedLifts);
 

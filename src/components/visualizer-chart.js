@@ -56,7 +56,7 @@ export default function VisualizerChart() {
   const [mutedColor, setMutedColor] = useState(null);
   const [mutedForegroundColor, setMutedForegroundColor] = useState(null);
   const [gridColor, setGridColor] = useState(null);
-  const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isDemoMode } =
+  const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } =
     useContext(ParsedDataContext);
   const chartRef = useRef(null);
   const { width } = useWindowSize();

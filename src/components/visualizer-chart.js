@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect, useContext, useRef } from "react";
+import { useUserLiftData } from "@/lib/use-userlift-data";
 import { useTheme } from "next-themes";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { Line } from "react-chartjs-2";
 import { useSession } from "next-auth/react";
-import { useUserLiftData } from "@/lib/use-userlift-data";
 import { ParsedDataContext } from "@/pages/_app";
 import useDrivePicker from "@fyelci/react-google-drive-picker";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
@@ -62,6 +62,7 @@ export default function VisualizerChart() {
   const { width } = useWindowSize();
   const [chartData, setChartData] = useState(null);
   const [e1rmFormula, setE1rmFormula] = useState("Brzycki");
+  const { isLoading } = useUserLiftData();
   const { status } = useSession();
 
   // Local computed/derived variables
@@ -122,7 +123,7 @@ export default function VisualizerChart() {
   }, [theme]);
 
   // Show skeleton until chartData state is ready to go
-  if (!chartData) {
+  if (isLoading || !chartData) {
     return <Skeleton className="mt-4 h-[80vh] w-[90vw]"></Skeleton>;
   }
 

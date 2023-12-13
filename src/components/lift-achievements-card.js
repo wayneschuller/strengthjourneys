@@ -8,6 +8,7 @@ import {
 } from "@/lib/processing-utils";
 import { devLog } from "@/lib/processing-utils";
 import { ParsedDataContext } from "@/pages/_app";
+import { Skeleton } from "./ui/skeleton";
 
 export function LiftAchievementsCard({ liftType }) {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } =

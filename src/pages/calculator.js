@@ -37,8 +37,6 @@ export default function E1RMCalculator() {
 
   // State is mostly from URL query but we do fallback to isMetric and formula in localStorage
   useEffect(() => {
-    const initReps = router?.query?.reps ?? 5;
-
     let initIsMetric;
     if (router?.query?.isMetric === "false") {
       initIsMetric = false;
@@ -46,16 +44,25 @@ export default function E1RMCalculator() {
       initIsMetric = true;
     } else {
       // The URL has no guidance. So check localStorage then default to false (pounds)
-      initIsMetric = localStorage.getItem("calcIsMetric") === "true" || false;
+      initIsMetric = JSON.parse(localStorage.getItem("calcIsMetric")) || false;
+    }
+
+    let initReps;
+
+    if (router?.query?.reps) {
+      initReps = router.query.reps;
+    } else {
+      initReps = JSON.parse(localStorage.getItem("reps")) || 5;
     }
 
     let initWeight;
     if (router?.query?.weight) {
       initWeight = router.query.weight;
     } else if (initIsMetric) {
-      initWeight = 100;
+      initWeight = JSON.parse(localStorage.getItem("weight")) || 100;
+      devLog(initWeight);
     } else {
-      initWeight = 225;
+      initWeight = JSON.parse(localStorage.getItem("weight")) || 225;
     }
 
     let initE1rmFormula;
@@ -63,7 +70,8 @@ export default function E1RMCalculator() {
       initE1rmFormula = router.query.formula;
     } else {
       // The URL has no guidance. So check localStorage then default to Brzycki
-      initE1rmFormula = localStorage.getItem("e1rmFormula") || "Brzycki";
+      initE1rmFormula =
+        JSON.parse(localStorage.getItem("e1rmFormula")) || "Brzycki";
     }
 
     // Update state if query is now different to state values
@@ -109,6 +117,8 @@ export default function E1RMCalculator() {
       undefined,
       { scroll: false },
     );
+
+    localStorage.setItem("weight", JSON.stringify(newWeight));
   };
 
   // When user lets go of reps slider, update the URL params
@@ -129,6 +139,7 @@ export default function E1RMCalculator() {
       undefined,
       { scroll: false },
     );
+    localStorage.setItem("reps", JSON.stringify(newReps));
   };
 
   const handleEntryWeightChange = (event) => {
@@ -146,6 +157,7 @@ export default function E1RMCalculator() {
         formula: e1rmFormula,
       },
     });
+    localStorage.setItem("weight", JSON.stringify(newWeight));
   };
 
   const handleKeyPress = (event) => {
@@ -189,7 +201,8 @@ export default function E1RMCalculator() {
     });
 
     // Save in localStorage for this browser device
-    localStorage.setItem("calcIsMetric", isMetric);
+    localStorage.setItem("calcIsMetric", JSON.stringify(isMetric));
+    localStorage.setItem("weight", JSON.stringify(newWeight));
   };
 
   const handleCopyToClipboard = async () => {
@@ -353,7 +366,6 @@ export default function E1RMCalculator() {
           >
             Wikipedia article
           </a>
-          .
         </h4>
         <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           {e1rmFormulae
@@ -390,7 +402,10 @@ export default function E1RMCalculator() {
                               { scroll: false },
                             );
                             // Save in localStorage for this browser device
-                            localStorage.setItem("e1rmFormula", formula);
+                            localStorage.setItem(
+                              "e1rmFormula",
+                              JSON.stringify(formula),
+                            );
                           }}
                         >
                           <CardHeader>

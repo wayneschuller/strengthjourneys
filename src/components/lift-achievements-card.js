@@ -13,16 +13,18 @@ export function LiftAchievementsCard({ liftType }) {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } =
     useContext(ParsedDataContext);
 
-  // Check the liftType exists in the data.
-  // This sometimes happens when selectedLifts doesn't match data
-  // devLog(`LiftAchievementsCard: liftType:`);
-  // devLog(liftType);
-
-  if (
-    !parsedData ||
-    parsedData.some((lifting) => lifting.liftType === liftType) === false
-  )
-    return;
+  if (!parsedData) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{liftType} Achievements</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-64" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   const { totalCountReps, totalSets, oldestDate, newestDate } =
     getLiftTypeStats(liftType, parsedData);

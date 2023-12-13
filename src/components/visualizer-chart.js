@@ -119,8 +119,9 @@ export default function VisualizerChart() {
     // console.log(gridColor);
   }, [theme]);
 
+  // Show skeleton until chartData state is ready to go
   if (!chartData) {
-    return <Skeleton className="h-[80vh] w-[90vw]"></Skeleton>;
+    return <Skeleton className="mt-4 h-[80vh] w-[90vw]"></Skeleton>;
   }
 
   ({ firstDate, lastDate, roundedMaxWeightValue } =

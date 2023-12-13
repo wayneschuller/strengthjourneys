@@ -252,15 +252,7 @@ export default function E1RMCalculator() {
           </div>
         </div>
         <h3 className="mb-10 mt-2 hidden flex-1 scroll-m-20 text-xl tracking-tight md:mb-8 md:block md:text-2xl">
-          Estimate your max single based on reps and weight (see this{" "}
-          <a
-            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-            href="https://en.wikipedia.org/wiki/One-repetition_maximum"
-            target="_blank"
-          >
-            Wikipedia article
-          </a>{" "}
-          for the theory)
+          Estimate your max single based on reps and weight
         </h3>
 
         {/* Two main sliders */}
@@ -350,6 +342,19 @@ export default function E1RMCalculator() {
         </div>
 
         {/* Grid of other formulae cards ordered by estimate ascending */}
+        {/* <h3 className="mt-5 hidden flex-1 scroll-m-20 text-xl tracking-tight md:mb-8 md:block md:text-2xl"> */}
+        <h4 className="mt-10 scroll-m-20 text-xl font-semibold tracking-tight">
+          Citatations and background for these exercise science formulae are
+          found in this{" "}
+          <a
+            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            href="https://en.wikipedia.org/wiki/One-repetition_maximum"
+            target="_blank"
+          >
+            Wikipedia article
+          </a>
+          .
+        </h4>
         <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           {e1rmFormulae
             .slice() // Create a shallow copy to avoid mutating the original array

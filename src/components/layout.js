@@ -61,7 +61,6 @@ export function Layout({ children }) {
       );
       devLog(data);
       signOut();
-      setIsDemoMode(true); // Go to demo mode when auto signing out
       // FIXME Actually we could keep going with the logic below to get demo mode parsedData etc.
       return;
     }
@@ -180,6 +179,7 @@ export function Layout({ children }) {
     if (
       !loadedToastInit &&
       status === "authenticated" &&
+      ssid &&
       parsedData?.length > 0
     ) {
       loadedToastInit = true; // Don't show this again

@@ -14,7 +14,7 @@ export function LiftAchievementsCard({ liftType }) {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } =
     useContext(ParsedDataContext);
 
-  if (!parsedData) {
+  if (parsedData?.length < 1) {
     return (
       <Card>
         <CardHeader>
@@ -83,6 +83,7 @@ export function LiftAchievementsCard({ liftType }) {
 }
 
 function getLiftTypeStats(liftType, parsedData) {
+  devLog(`getLiftTypeStats()...`);
   // Filter the parsedData for the specific liftType
   const filteredData = parsedData.filter(
     (lifting) => lifting.liftType === liftType,
@@ -95,17 +96,25 @@ function getLiftTypeStats(liftType, parsedData) {
   );
   const totalSets = filteredData.length;
 
-  // Find the oldest and newest date
-  const dates = filteredData.map((lifting) => new Date(lifting.date));
-  const oldestDate = new Date(Math.min(...dates));
-  const newestDate = new Date(Math.max(...dates));
+  // Extract dates, ensuring they are valid, and sort them
+  // FIXME: We had a bug with invalid dates here, we should check dates at initial parsing
+  const dates = filteredData
+    .map((lift) => new Date(lift.date))
+    .filter((date) => !isNaN(date.getTime())); // Checks if the date is valid
+
+  // Select the oldest and newest dates, if available
+  const oldestDate = dates.length > 0 ? dates[0] : new Date();
+  const newestDate = dates.length > 0 ? dates[dates.length - 1] : new Date();
+
+  // Format the dates as "YYYY-MM-DD"
+  const formatDate = (date) => date.toISOString().split("T")[0];
 
   // Return the results in an object
   return {
     totalCountReps,
     totalSets,
-    oldestDate: oldestDate.toISOString().split("T")[0], // Format as "YYYY-MM-DD"
-    newestDate: newestDate.toISOString().split("T")[0], // Format as "YYYY-MM-DD"
+    oldestDate: formatDate(oldestDate),
+    newestDate: formatDate(newestDate),
   };
 }
 

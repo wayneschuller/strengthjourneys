@@ -46,11 +46,8 @@ export function Layout({ children }) {
   // useSWR can ping google and cache it and it won't trigger here until data changes
   useEffect(() => {
     // devLog( `<Layout /> useEffect[data]: isLoading ${isLoading}, isError ${isError}`,);
-    // devLog(data);
 
     if (isLoading) return; // Give useSWR a chance to find data
-
-    // if (data === undefined) return;
 
     // If data changes and we have isError then signOut
     // This is usually because our token has expired

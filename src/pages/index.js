@@ -28,9 +28,9 @@ export default function Home() {
         {/* <link rel="icon" href="/favicon.ico" /> */}
         <meta
           name="description"
-          content="Free web based stength progress visualisations from your Google Sheet data. 
+          content="Free open source web app for stength progress visualisations from your Google Sheet data. 
                 We give estimates using multiple exercise science formulas. Designed by lifters for lifters. 
-                Useful for powerlifting, strong lifts, crossfit, starting strength and other programs."
+                Useful for powerlifting, strong lifts, Crossfit, Starting Strength and other strength programs."
         />
         <link rel="canonical" href="https://www.strengthjourneys.xyz/" />
       </Head>

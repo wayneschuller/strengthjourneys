@@ -29,8 +29,8 @@ export default function App({ Component, pageProps, session }) {
     <>
       <ThemeProvider
         attribute="class"
-        defaultTheme="system"
-        enableSystem
+        defaultTheme="light"
+        // enableSystem
         disableTransitionOnChange
       >
         <SessionProvider session={session}>

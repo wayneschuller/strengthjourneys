@@ -40,8 +40,8 @@ const Analyzer = () => {
     );
 
   return (
-    // <div className="xl:mx-10">
-    <div>
+    <div className="xl:mx-20">
+      {/* // <div> */}
       <Head>
         <title>PR Analyzer (Strength Journeys)</title>
         <meta name="description" content="Strength Journeys Lift PR Analyzer" />
@@ -81,7 +81,7 @@ function KeyLiftCards() {
   const { status } = useSession();
 
   return (
-    <div className="mx-4 mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:mx-10 xl:grid-cols-4">
+    <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
       {status === "unauthenticated" && (
         <div className="md:col-span-2 xl:col-span-4">
           <Card>
@@ -113,7 +113,8 @@ function KeyLiftCards() {
       ))}
 
       {status === "authenticated" && (
-        <div className="grid grid-cols-1">
+        // <div className="grid grid-cols-1">
+        <div className="md:col-span-2 xl:col-span-4">
           <Card>
             <CardHeader>
               <CardTitle>Analyzing Other Lifts</CardTitle>
@@ -121,12 +122,9 @@ function KeyLiftCards() {
             </CardHeader>
             <CardContent>
               <div className="">
-                At any time click the dumbell icon to select other lifts for
-                analysis.
-              </div>
-              <div className="">
-                The lift chooser is also in the top right corner of the
-                navigation bar.
+                At any time click the dumbell button to select other lifts for
+                analysis. The dumbell button is also in the top right corner of
+                the navigation bar.
               </div>
             </CardContent>
             <CardFooter className="flex justify-around">

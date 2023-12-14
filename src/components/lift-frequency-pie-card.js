@@ -59,7 +59,7 @@ export function LiftTypeFrequencyPieCard() {
       },
       padding: 10,
       formatter: (item) => {
-        return `${item.label}\n(${item.value} sets)`;
+        return `${item.label}`;
       },
     };
 

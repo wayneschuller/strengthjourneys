@@ -158,6 +158,7 @@ export function processTopLiftsByTypeAndReps(parsedData, selectedLiftTypes) {
 //
 //
 // FIXME: should liftTypes just be big object like topLiftsBySetsandReps? Merge into topLiftsBySetsAndReps?
+// So far it is only 3ms on slow PC with my biggest dataset.
 //
 export function calculateLiftTypes(parsedData) {
   const startTime = performance.now();
@@ -167,7 +168,7 @@ export function calculateLiftTypes(parsedData) {
     const liftType = lifting.liftType;
     if (!liftTypeStats[liftType]) {
       liftTypeStats[liftType] = {
-        frequency: 0,
+        frequency: 0, // FIXME: this should be totalSets
         totalReps: 0,
         newestDate: lifting.date, // Initialize with the first encountered date
         oldestDate: lifting.date, // Since parsedData is sorted by date

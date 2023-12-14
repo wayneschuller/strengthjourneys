@@ -15,127 +15,64 @@ import ChartDataLabels from "chartjs-plugin-datalabels";
 Chart.register(ArcElement, ChartDataLabels);
 
 export function LiftTypeFrequencyPieCard() {
-  const { parsedData, liftTypes } = useContext(ParsedDataContext);
-  const [pieChartData, setPieChartData] = useState(null);
+  const { liftTypes } = useContext(ParsedDataContext);
   const { status } = useSession();
-  const [pieChartOptions, setPieChartOptions] = useState(null);
 
-  // FIXME: could we add some time UI controls? Liftime, this year etc?
-  // FIXME: do some processing - top 4-5 lifts and make an arc called "Other"?
-  // FIXME: and allow them to click other to see a second pie chart?
+  const pieData = liftTypes
+    ?.map((item) => ({
+      label: item.liftType,
+      value: item.frequency,
+    }))
+    .slice(0, 5); // Up to 5 lifts
 
-  // Prepare the piechart data/options when parsedData is ready
-  useEffect(() => {
-    // devLog(`PieCard...`);
+  const backgroundColors = pieData?.map((item) => getLiftColor(item.label));
 
-    const pieData = liftTypes
-      .map((item) => ({
-        label: item.liftType,
-        value: item.frequency,
-      }))
-      .slice(0, 5);
-
-    // if (!pieData) return;
-    const backgroundColors = pieData.map((item) => getLiftColor(item.label));
-    // devLog(pieData);
-
-    // ---------------------------------------------------------------------------
-    // Pie Chart Options for react-chartjs-2
-    // ---------------------------------------------------------------------------
-
-    const datalabelsOptions = {
-      backgroundColor: function (context) {
-        return context.dataset.backgroundColor; // Follow lift background color
-        // return "#000000";   // Black background for datalabel
+  const pieChartData = {
+    labels: pieData?.map((item) => item.label),
+    datasets: [
+      {
+        label: "frequency",
+        data: pieData,
+        backgroundColor: backgroundColors,
+        borderWidth: 3,
+        hoverOffset: 5,
+        hoverBorderColor: "#222222",
       },
-      borderColor: "white",
-      borderRadius: 25,
-      borderWidth: 2,
-      color: "white",
-      font: {
-        // family: fontFamily,
-        weight: "bold",
-        size: "11",
-      },
-      padding: 10,
-      formatter: (item) => {
-        return `${item.label}`;
-      },
-    };
+    ],
+  };
 
-    let pieChartOptions = {
-      type: "pie",
-      responsive: true,
-      font: {
-        family: "Catamaran",
-        size: 20,
-        weight: "bold",
-      },
-      // animation: animationOptions,
-      // onClick: (context, element) => {
-      //   let chart = context.chart;
-      //   if (!element[0]) return; // Probably a click outside the Pie chart
-      //   let datasetIndex = element[0].datasetIndex;
-      //   let index = element[0].index;
-      //   let liftType = chart._metasets[0]._dataset.data[index].label; // FIXME: find a better method
-      //   if (!selectedLift || liftType !== selectedLift.liftType) {
-      //     setSelectedLift({
-      //       liftType: liftType,
-      //       index: index,
-      //     });
-      //   }
-      // },
-      // onHover: (context, element) => {
-      //   let chart = context.chart;
-      //   if (!element[0]) return; // Probably a click outside the Pie chart
-      //   let datasetIndex = element[0].datasetIndex;
-      //   let index = element[0].index;
-      //   let liftType = chart._metasets[0]._dataset.data[index].label; // FIXME: find a better method
-      //   if (!selectedLift || liftType !== selectedLift.liftType) {
-      //     setSelectedLift({
-      //       liftType: liftType,
-      //       index: index,
-      //     });
-      //   }
-      // },
-      elements: {
-        // arc: arcOptions,
-      },
-      // parsing: parsingOptions,
-      plugins: {
-        // title: titleOptions,
-        legend: {
-          display: false,
+  let pieChartOptions = {
+    type: "pie",
+    responsive: true,
+    font: {
+      family: "Catamaran",
+      size: 20,
+      weight: "bold",
+    },
+    plugins: {
+      datalabels: {
+        backgroundColor: function (context) {
+          return context.dataset.backgroundColor; // Follow lift background color
         },
-        datalabels: datalabelsOptions,
-      },
-    };
-
-    const pieChartData = {
-      labels: pieData.map((item) => item.label),
-
-      datasets: [
-        {
-          label: "frequency",
-          data: pieData,
-          backgroundColor: backgroundColors,
-          borderWidth: 3,
-          hoverOffset: 5,
-          hoverBorderColor: "#222222",
+        borderColor: "white",
+        borderRadius: 25,
+        borderWidth: 2,
+        color: "white",
+        font: {
+          weight: "bold",
+          size: "11",
         },
-      ],
-    };
-
-    // Setting state will trigger display
-    setPieChartOptions(pieChartOptions);
-    setPieChartData(pieChartData);
-  }, [parsedData, liftTypes]);
+        padding: 10,
+      },
+    },
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-          {status === "unauthenticated" && "Demo mode: "} Your Top 5 Lifts
+          {status === "unauthenticated" && "Demo mode: "} Your Top{" "}
+          {pieData?.length} Lifts
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 flex-row justify-center md:h-[40vh] xl:gap-4">

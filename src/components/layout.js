@@ -84,6 +84,7 @@ export function Layout({ children }) {
     // state variables everything needs.
     parsedData = markHigherWeightAsHistoricalPRs(parsedData);
 
+    // Calculate our liftTypes basic stats array (sorted by most popular lift descending)
     const liftTypes = calculateLiftTypes(parsedData);
     setLiftTypes(liftTypes);
 
@@ -97,9 +98,9 @@ export function Layout({ children }) {
     if (selectedLiftTypes !== null) {
       selectedLiftTypes = JSON.parse(selectedLiftTypes);
     } else {
-      // Select a number of lift types as default, minimum of 4 or the length of sortedLiftTypes
-      const numberOfDefaultLifts = Math.min(4, sortedLiftTypes.length);
-      const defaultSelectedLifts = sortedLiftTypes
+      // Select a number of lift types as default, minimum of 4 or the length of liftTypes (we just calculated above)
+      const numberOfDefaultLifts = Math.min(4, liftTypes.length);
+      const defaultSelectedLifts = liftTypes
         .slice(0, numberOfDefaultLifts)
         .map((lift) => lift.liftType);
 

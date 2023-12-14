@@ -11,21 +11,7 @@ import { ParsedDataContext } from "@/pages/_app";
 import { Skeleton } from "./ui/skeleton";
 
 export function LiftAchievementsCard({ liftType }) {
-  const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } =
-    useContext(ParsedDataContext);
-
-  if (parsedData?.length < 1) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{liftType} Achievements</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-64" />
-        </CardContent>
-      </Card>
-    );
-  }
+  const { parsedData, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
 
   const { totalCountReps, totalSets, oldestDate, newestDate } =
     getLiftTypeStats(liftType, parsedData);
@@ -42,41 +28,46 @@ export function LiftAchievementsCard({ liftType }) {
         {/* <CardDescription>Card Description</CardDescription> */}
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-x-1">
-          <div className="font-semibold">Total reps (sets):</div>
+        {!parsedData && <Skeleton className="h-64" />}
+        {parsedData && (
           <div>
-            {totalCountReps} ({totalSets})
+            <div className="grid grid-cols-2 gap-x-1">
+              <div className="font-semibold">Total reps (sets):</div>
+              <div>
+                {totalCountReps} ({totalSets})
+              </div>
+              <div className="font-semibold">First lift:</div>
+              <div>{getReadableDateString(oldestDate)}</div>
+              <div className="font-semibold">Most recent lift:</div>{" "}
+              <div>{getReadableDateString(newestDate)}</div>
+              {oneRM && <div className="font-semibold">Best single:</div>}
+              {oneRM && (
+                <div>
+                  {oneRM.weight}
+                  {oneRM.unitType} ({getReadableDateString(oneRM.date)})
+                </div>
+              )}
+              {threeRM && <div className="font-semibold">Best triple:</div>}
+              {threeRM && (
+                <div>
+                  {threeRM.weight}
+                  {threeRM.unitType} ({getReadableDateString(threeRM.date)})
+                </div>
+              )}
+              {fiveRM && <div className="font-semibold">Best five:</div>}
+              {fiveRM && (
+                <div>
+                  {fiveRM.weight}
+                  {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
+                </div>
+              )}
+            </div>
+            <RecentLiftHighlights
+              liftType={liftType}
+              topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+            />
           </div>
-          <div className="font-semibold">First lift:</div>
-          <div>{getReadableDateString(oldestDate)}</div>
-          <div className="font-semibold">Most recent lift:</div>{" "}
-          <div>{getReadableDateString(newestDate)}</div>
-          {oneRM && <div className="font-semibold">Best single:</div>}
-          {oneRM && (
-            <div>
-              {oneRM.weight}
-              {oneRM.unitType} ({getReadableDateString(oneRM.date)})
-            </div>
-          )}
-          {threeRM && <div className="font-semibold">Best triple:</div>}
-          {threeRM && (
-            <div>
-              {threeRM.weight}
-              {threeRM.unitType} ({getReadableDateString(threeRM.date)})
-            </div>
-          )}
-          {fiveRM && <div className="font-semibold">Best five:</div>}
-          {fiveRM && (
-            <div>
-              {fiveRM.weight}
-              {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
-            </div>
-          )}
-        </div>
-        <RecentLiftHighlights
-          liftType={liftType}
-          topLiftsByTypeAndReps={topLiftsByTypeAndReps}
-        />
+        )}
       </CardContent>
     </Card>
   );
@@ -120,6 +111,8 @@ function getLiftTypeStats(liftType, parsedData) {
 }
 
 const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
+  if (!topLiftsByTypeAndReps) return null;
+
   // Helper function to check if a date is within the last month
   const isWithinLastMonth = (dateString) => {
     const oneMonthAgo = new Date();

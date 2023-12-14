@@ -22,27 +22,13 @@ export function MonthsHighlightsCard() {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   const { status } = useSession();
   const { isLoading } = useUserLiftData();
-
-  // FIXME: if possible try to put this skeleton inside the card we will already use
-  if (!parsedData) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>This Month{"'"}s Highlights</CardTitle>
-          <CardDescription>Core lift types are in bold.</CardDescription>
-        </CardHeader>
-        <CardContent className="">
-          <Skeleton className="flex h-[50vh] flex-1" />
-        </CardContent>
-      </Card>
-    );
-  }
+  let historicalPRs = null;
 
   // FIXME: these stats are rubbish - convert to the topSetsByLiftsAndReps in global context
-  const historicalPRs = getFirstHistoricalPRsInLastMonth(parsedData);
+  historicalPRs = getFirstHistoricalPRsInLastMonth(parsedData);
 
   return (
-    <Card className="hover:ring-1">
+    <Card>
       <CardHeader>
         <CardTitle>
           {status === "unauthenticated" && "Demo Mode: "}This Month{"'"}s
@@ -52,20 +38,22 @@ export function MonthsHighlightsCard() {
       </CardHeader>
       <CardContent className="flex flex-1 flex-col">
         <ul>
-          {historicalPRs.map((record) => (
-            <li key={`${record.liftType}-${record.reps}-${record.date}`}>
-              <strong
-                className={
-                  coreLiftTypes.includes(record.liftType)
-                    ? "font-bold"
-                    : "font-normal"
-                }
-              >
-                {record.liftType} {record.reps}@{record.weight}
-                {record.unitType} ({getReadableDateString(record.date)})
-              </strong>
-            </li>
-          ))}
+          {!historicalPRs && <Skeleton className="flex h-[50vh] flex-1" />}
+          {historicalPRs &&
+            historicalPRs.map((record) => (
+              <li key={`${record.liftType}-${record.reps}-${record.date}`}>
+                <strong
+                  className={
+                    coreLiftTypes.includes(record.liftType)
+                      ? "font-bold"
+                      : "font-normal"
+                  }
+                >
+                  {record.liftType} {record.reps}@{record.weight}
+                  {record.unitType} ({getReadableDateString(record.date)})
+                </strong>
+              </li>
+            ))}
         </ul>
       </CardContent>
     </Card>
@@ -121,6 +109,8 @@ export const getHistoricalPRsInLastMonth = (parsedData) => {
 };
 
 export const getFirstHistoricalPRsInLastMonth = (parsedData) => {
+  if (!parsedData) return null;
+
   const today = new Date();
   const lastMonth = new Date(today);
   lastMonth.setMonth(today.getMonth() - 1);

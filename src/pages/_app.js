@@ -20,9 +20,9 @@ export default function App({ Component, pageProps, session }) {
   // These are our key global state variables.
   // Keep this as minimal as possible. Don't put things here that can be derived.
   // We do keep liftTypes (lift names and frequency) here as an exception to save processing it too often
-  const [liftTypes, setLiftTypes] = useState([]); // Array of {liftType: "Deadlift", frequency: 232} objects
-  const [selectedLiftTypes, setSelectedLiftTypes] = useState([]); // Array of liftType strings - syncs to localStorage
-  const [parsedData, setParsedData] = useState(null); // Our main big set of data that components look for
+  const [liftTypes, setLiftTypes] = useState([]); // see @/lib/processing-utils.js for data structure design
+  const [selectedLiftTypes, setSelectedLiftTypes] = useState([]); // see Layout useEffect for how we create this
+  const [parsedData, setParsedData] = useState(null); // see @/lib/sample-parsed-data.js for data structure design
   const [topLiftsByTypeAndReps, setTopLiftsByTypeAndReps] = useState(null); // see @/lib/processing-utils.js for data structure design
 
   return (

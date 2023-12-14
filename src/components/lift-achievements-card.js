@@ -15,7 +15,7 @@ export function LiftAchievementsCard({ liftType }) {
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
   const totalReps = lift ? lift.totalReps : null;
-  const totalSets = lift ? lift.frequency : null;
+  const totalSets = lift ? lift.totalSets : null;
   const newestDate = lift ? lift.newestDate : null;
   const oldestDate = lift ? lift.oldestDate : null;
 

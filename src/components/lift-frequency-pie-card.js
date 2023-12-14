@@ -21,7 +21,7 @@ export function LiftTypeFrequencyPieCard() {
   const pieData = liftTypes
     ?.map((item) => ({
       label: item.liftType,
-      value: item.frequency,
+      value: item.totalSets,
     }))
     .slice(0, 5); // Up to 5 lifts
 
@@ -31,7 +31,7 @@ export function LiftTypeFrequencyPieCard() {
     labels: pieData?.map((item) => item.label),
     datasets: [
       {
-        label: "frequency",
+        // label: "Total Sets:",
         data: pieData,
         backgroundColor: backgroundColors,
         borderWidth: 3,

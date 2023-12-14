@@ -122,7 +122,7 @@ const CheckboxLifts = ({}) => {
   return (
     <ScrollArea className="mt-2 h-[90vh]">
       <div className="p-4">
-        {liftTypes.map(({ liftType, frequency }) => (
+        {liftTypes.map(({ liftType, totalSets }) => (
           <div key={liftType}>
             <input
               className="mr-4"
@@ -139,7 +139,7 @@ const CheckboxLifts = ({}) => {
             <label
               className="text-lg"
               htmlFor={liftType}
-            >{`${liftType} (${frequency})`}</label>
+            >{`${liftType} (${totalSets})`}</label>
           </div>
         ))}
       </div>

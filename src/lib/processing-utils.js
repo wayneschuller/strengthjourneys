@@ -150,7 +150,7 @@ export function processTopLiftsByTypeAndReps(parsedData, selectedLiftTypes) {
 // It is an array sorted by lift set frequency descending of these objects:
 // {
 // "liftType": "Back Squat",
-// "frequency": 78,
+// "totalSets": 78,
 // "totalReps": 402,
 // "newestDate": "2023-12-11",
 // "oldestDate": "2023-11-18"
@@ -168,7 +168,7 @@ export function calculateLiftTypes(parsedData) {
     const liftType = lifting.liftType;
     if (!liftTypeStats[liftType]) {
       liftTypeStats[liftType] = {
-        frequency: 0, // FIXME: this should be totalSets
+        totalSets: 0,
         totalReps: 0,
         newestDate: lifting.date, // Initialize with the first encountered date
         oldestDate: lifting.date, // Since parsedData is sorted by date
@@ -177,49 +177,19 @@ export function calculateLiftTypes(parsedData) {
       // Since parsedData is sorted, the last date encountered is the newest
       liftTypeStats[liftType].newestDate = lifting.date;
     }
-    liftTypeStats[liftType].frequency += 1;
+    liftTypeStats[liftType].totalSets += 1;
     liftTypeStats[liftType].totalReps += lifting.reps;
   });
 
   const sortedLiftTypes = Object.keys(liftTypeStats)
     .map((liftType) => ({
       liftType: liftType,
-      frequency: liftTypeStats[liftType].frequency,
+      totalSets: liftTypeStats[liftType].totalSets,
       totalReps: liftTypeStats[liftType].totalReps,
       newestDate: liftTypeStats[liftType].newestDate,
       oldestDate: liftTypeStats[liftType].oldestDate,
     }))
-    .sort((a, b) => b.frequency - a.frequency);
-
-  devLog(
-    `calculateLiftTypes() execution time: ` +
-      `\x1b[1m${Math.round(performance.now() - startTime)}` +
-      `ms\x1b[0m`,
-  );
-
-  return sortedLiftTypes;
-}
-
-export function calculateLiftTypesOLD(parsedData) {
-  const startTime = performance.now();
-
-  const liftTypeStats = {};
-  parsedData.forEach((lifting) => {
-    const liftType = lifting.liftType;
-    if (!liftTypeStats[liftType]) {
-      liftTypeStats[liftType] = { frequency: 0, totalReps: 0 };
-    }
-    liftTypeStats[liftType].frequency += 1;
-    liftTypeStats[liftType].totalReps += lifting.reps;
-  });
-
-  const sortedLiftTypes = Object.keys(liftTypeStats)
-    .map((liftType) => ({
-      liftType: liftType,
-      frequency: liftTypeStats[liftType].frequency,
-      totalReps: liftTypeStats[liftType].totalReps,
-    }))
-    .sort((a, b) => b.frequency - a.frequency);
+    .sort((a, b) => b.totalSets - a.totalSets);
 
   devLog(
     `calculateLiftTypes() execution time: ` +

@@ -49,15 +49,17 @@ export function InspirationCard({}) {
   if (!quote) return;
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader>
         <CardTitle>Inspirational Quote</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="grid flex-1 content-around">
         <div className="text-xl italic md:text-3xl">
           &ldquo;{quote.quote}&rdquo;
+          <div className="mt-2 text-right text-lg md:text-xl">
+            {quote.author}
+          </div>
         </div>
-        <div className="mt-2 text-right text-lg md:text-xl">{quote.author}</div>
       </CardContent>
     </Card>
   );

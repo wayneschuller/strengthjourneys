@@ -138,8 +138,10 @@ export function LiftTypeFrequencyPieCard() {
           {status === "unauthenticated" && "Demo mode: "} Your Top 5 Lifts
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 justify-center xl:w-2/3 xl:gap-4">
-        {!pieChartData && <Skeleton className="h-64 w-64 flex-1" />}
+      <CardContent className="flex flex-1 flex-row justify-center md:h-[40vh] xl:gap-4">
+        {(!pieChartData || !liftTypes) && (
+          <Skeleton className="h-64 w-64 flex-1" />
+        )}
         {pieChartData && <Pie data={pieChartData} options={pieChartOptions} />}
       </CardContent>
     </Card>

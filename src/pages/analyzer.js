@@ -40,7 +40,8 @@ const Analyzer = () => {
     );
 
   return (
-    <>
+    // <div className="xl:mx-10">
+    <div>
       <Head>
         <title>PR Analyzer (Strength Journeys)</title>
         <meta name="description" content="Strength Journeys Lift PR Analyzer" />
@@ -50,18 +51,18 @@ const Analyzer = () => {
         <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           PR Analyzer
         </h1>
-        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <div className="xl:col-span-2">
+        <div className="mt-4 grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid xl:col-span-2">
             <SessionAnalysisCard />
           </div>
-          <div className="xl:col-span-2">
+          <div className="grid place-self-stretch xl:col-span-2">
             <MonthsHighlightsCard />
           </div>
-          <div className="xl:col-span-2">
-            <LiftTypeFrequencyPieCard />
-          </div>
-          <div className="xl:col-span-2">
+          <div className="grid xl:col-span-2">
             <InspirationCard />
+          </div>
+          <div className="grid xl:col-span-2">
+            <LiftTypeFrequencyPieCard />
           </div>
           <div className="md:col-span-2 xl:col-span-4">
             <ActivityHeatmapsCard />
@@ -70,7 +71,7 @@ const Analyzer = () => {
         </div>
         <KeyLiftCards />
       </div>
-    </>
+    </div>
   );
 };
 export default Analyzer;

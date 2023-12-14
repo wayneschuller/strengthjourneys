@@ -48,7 +48,6 @@ export function ActivityHeatmapsCard() {
   const theme = null;
   const colorClass = `bg-gh-${theme || "light"}-2 rounded-full`;
 
-  // Main useEffect - wait for parsedData to process component specfic data
   useEffect(() => {
     if (!parsedData) return;
 
@@ -86,7 +85,7 @@ export function ActivityHeatmapsCard() {
         )}
       </CardHeader>
       <CardContent>
-        {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
+        {/* {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />} */}
         {intervals &&
           intervals.map((interval, index) => {
             return (
@@ -131,8 +130,17 @@ export function ActivityHeatmapsCard() {
 
 function Heatmap({ parsedData, startDate, endDate, isMobile }) {
   const { theme } = useTheme();
+  const [heatmapData, setHeatmapData] = useState(null);
 
-  const heatmapData = generateHeatmapData(parsedData, startDate, endDate);
+  useEffect(() => {
+    if (!parsedData) return;
+    const heatmapData = generateHeatmapData(parsedData, startDate, endDate);
+    setHeatmapData(heatmapData);
+  }, [parsedData, startDate, endDate]);
+
+  if (!heatmapData || !startDate || !endDate) {
+    return <Skeleton className="h-24 flex-1" />;
+  }
 
   return (
     <CalendarHeatmap

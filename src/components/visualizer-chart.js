@@ -237,6 +237,14 @@ export default function VisualizerChart() {
         // family: "'Arial'",
       },
     },
+    title: {
+      display: status === "unauthenticated", // Show explanatory visualizer title in demo mode only
+      color: theme === "dark" ? "white" : "black",
+      text: "Demo mode: One rep max estimations of different rep schemes per lift over time",
+      font: {
+        size: 19,
+      },
+    },
   };
 
   const dataLabelsOptions = {

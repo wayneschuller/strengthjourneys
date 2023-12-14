@@ -85,8 +85,7 @@ function KeyLiftCards() {
         <div className="md:col-span-2 xl:col-span-4">
           <Card>
             <CardHeader>
-              <CardTitle>Individual Lift Analysis Section</CardTitle>
-              <CardDescription>Demo Mode </CardDescription>
+              <CardTitle>Demo Mode: Individual Lift Analysis Section</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="">
@@ -117,7 +116,6 @@ function KeyLiftCards() {
           <Card>
             <CardHeader>
               <CardTitle>Analyzing Other Lifts</CardTitle>
-              {/* <CardDescription>Demo Mode </CardDescription> */}
             </CardHeader>
             <CardContent>
               <div className="">

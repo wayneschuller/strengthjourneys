@@ -10,6 +10,7 @@ import {
   devLog,
   processTopLiftsByTypeAndReps,
   markHigherWeightAsHistoricalPRs,
+  calculateLiftTypes,
 } from "@/lib/processing-utils";
 import {
   sampleParsedData,
@@ -83,22 +84,8 @@ export function Layout({ children }) {
     // state variables everything needs.
     parsedData = markHigherWeightAsHistoricalPRs(parsedData);
 
-    // Count the frequency of each liftType
-    const liftTypeFrequency = {};
-    parsedData.forEach((lifting) => {
-      const liftType = lifting.liftType;
-      liftTypeFrequency[liftType] = (liftTypeFrequency[liftType] || 0) + 1;
-    });
-
-    // Create an array of objects with liftType and frequency properties, sorted by frequency descending
-    const sortedLiftTypes = Object.keys(liftTypeFrequency)
-      .map((liftType) => ({
-        liftType: liftType,
-        frequency: liftTypeFrequency[liftType],
-      }))
-      .sort((a, b) => b.frequency - a.frequency);
-
-    setLiftTypes(sortedLiftTypes);
+    const liftTypes = calculateLiftTypes(parsedData);
+    setLiftTypes(liftTypes);
 
     // Check if selectedLifts exists in localStorage
     // When in demo mode (auth unauthenticated) we have a separate localstorage

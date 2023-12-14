@@ -11,10 +11,23 @@ import { ParsedDataContext } from "@/pages/_app";
 import { Skeleton } from "./ui/skeleton";
 
 export function LiftAchievementsCard({ liftType }) {
-  const { parsedData, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
+  const { parsedData, liftTypes, topLiftsByTypeAndReps } =
+    useContext(ParsedDataContext);
 
-  const { totalCountReps, totalSets, oldestDate, newestDate } =
-    getLiftTypeStats(liftType, parsedData);
+  let totalReps = null;
+  let totalSets = null;
+  let oldestDate = null;
+  let newestDate = null;
+
+  devLog(liftTypes);
+
+  if (parsedData && liftTypes) {
+    const lift = liftTypes.find((lift) => lift.liftType === liftType);
+    totalReps = lift ? lift.totalReps : null;
+    totalSets = lift ? lift.frequency : null;
+    newestDate = lift ? lift.newestDate : null;
+    oldestDate = lift ? lift.oldestDate : null;
+  }
 
   const topLiftsByReps = topLiftsByTypeAndReps[liftType];
   const oneRM = topLiftsByReps?.[0]?.[0];
@@ -22,7 +35,7 @@ export function LiftAchievementsCard({ liftType }) {
   const fiveRM = topLiftsByReps?.[4]?.[0];
 
   return (
-    <Card className="hover:ring-1">
+    <Card>
       <CardHeader>
         <CardTitle>{liftType} Achievements</CardTitle>
         {/* <CardDescription>Card Description</CardDescription> */}
@@ -34,7 +47,7 @@ export function LiftAchievementsCard({ liftType }) {
             <div className="grid grid-cols-2 gap-x-1">
               <div className="font-semibold">Total reps (sets):</div>
               <div>
-                {totalCountReps} ({totalSets})
+                {totalReps} ({totalSets})
               </div>
               <div className="font-semibold">First lift:</div>
               <div>{getReadableDateString(oldestDate)}</div>
@@ -71,43 +84,6 @@ export function LiftAchievementsCard({ liftType }) {
       </CardContent>
     </Card>
   );
-}
-
-function getLiftTypeStats(liftType, parsedData) {
-  // devLog(`getLiftTypeStats()...`);
-
-  // Filter the parsedData for the specific liftType
-  const filteredData = parsedData.filter(
-    (lifting) => lifting.liftType === liftType,
-  );
-
-  // Calculate total count of reps and total number of sets
-  const totalCountReps = filteredData.reduce(
-    (total, lifting) => total + lifting.reps,
-    0,
-  );
-  const totalSets = filteredData.length;
-
-  // Extract dates, ensuring they are valid, and sort them
-  // FIXME: We had a bug with invalid dates here, we should check dates at initial parsing
-  const dates = filteredData
-    .map((lift) => new Date(lift.date))
-    .filter((date) => !isNaN(date.getTime())); // Checks if the date is valid
-
-  // Select the oldest and newest dates, if available
-  const oldestDate = dates.length > 0 ? dates[0] : new Date();
-  const newestDate = dates.length > 0 ? dates[dates.length - 1] : new Date();
-
-  // Format the dates as "YYYY-MM-DD"
-  const formatDate = (date) => date.toISOString().split("T")[0];
-
-  // Return the results in an object
-  return {
-    totalCountReps,
-    totalSets,
-    oldestDate: formatDate(oldestDate),
-    newestDate: formatDate(newestDate),
-  };
 }
 
 const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {

@@ -146,6 +146,95 @@ export function processTopLiftsByTypeAndReps(parsedData, selectedLiftTypes) {
 }
 
 // This is run once at init in the <Layout /> useEffect
+// liftTypes is in our global context state
+// It is an array sorted by lift set frequency descending of these objects:
+// {
+// "liftType": "Back Squat",
+// "frequency": 78,
+// "totalReps": 402,
+// "newestDate": "2023-12-11",
+// "oldestDate": "2023-11-18"
+// }
+//
+//
+// FIXME: should liftTypes just be big object like topLiftsBySetsandReps? Merge into topLiftsBySetsAndReps?
+//
+export function calculateLiftTypes(parsedData) {
+  const startTime = performance.now();
+
+  const liftTypeStats = {};
+  parsedData.forEach((lifting) => {
+    const liftType = lifting.liftType;
+    if (!liftTypeStats[liftType]) {
+      liftTypeStats[liftType] = {
+        frequency: 0,
+        totalReps: 0,
+        newestDate: lifting.date, // Initialize with the first encountered date
+        oldestDate: lifting.date, // Since parsedData is sorted by date
+      };
+    } else {
+      // Since parsedData is sorted, the last date encountered is the newest
+      liftTypeStats[liftType].newestDate = lifting.date;
+    }
+    liftTypeStats[liftType].frequency += 1;
+    liftTypeStats[liftType].totalReps += lifting.reps;
+  });
+
+  const sortedLiftTypes = Object.keys(liftTypeStats)
+    .map((liftType) => ({
+      liftType: liftType,
+      frequency: liftTypeStats[liftType].frequency,
+      totalReps: liftTypeStats[liftType].totalReps,
+      newestDate: liftTypeStats[liftType].newestDate,
+      oldestDate: liftTypeStats[liftType].oldestDate,
+    }))
+    .sort((a, b) => b.frequency - a.frequency);
+
+  devLog(
+    `calculateLiftTypes() execution time: ` +
+      `\x1b[1m${Math.round(performance.now() - startTime)}` +
+      `ms\x1b[0m`,
+  );
+
+  return sortedLiftTypes;
+}
+
+export function calculateLiftTypesOLD(parsedData) {
+  const startTime = performance.now();
+
+  const liftTypeStats = {};
+  parsedData.forEach((lifting) => {
+    const liftType = lifting.liftType;
+    if (!liftTypeStats[liftType]) {
+      liftTypeStats[liftType] = { frequency: 0, totalReps: 0 };
+    }
+    liftTypeStats[liftType].frequency += 1;
+    liftTypeStats[liftType].totalReps += lifting.reps;
+  });
+
+  const sortedLiftTypes = Object.keys(liftTypeStats)
+    .map((liftType) => ({
+      liftType: liftType,
+      frequency: liftTypeStats[liftType].frequency,
+      totalReps: liftTypeStats[liftType].totalReps,
+    }))
+    .sort((a, b) => b.frequency - a.frequency);
+
+  devLog(
+    `calculateLiftTypes() execution time: ` +
+      `\x1b[1m${Math.round(performance.now() - startTime)}` +
+      `ms\x1b[0m`,
+  );
+
+  return sortedLiftTypes;
+}
+
+// Usage example:
+// const parsedData = [...]; // your data here
+// const liftTypes = calculateLiftStats(parsedData);
+// setLiftTypes(liftTypes); // if you're using this in a React component
+
+// This is run once at init in the <Layout /> useEffect
 // Assumes parsedData is sorted.
 export const markHigherWeightAsHistoricalPRs = (parsedData) => {
   const startTime = performance.now();
@@ -164,7 +253,7 @@ export const markHigherWeightAsHistoricalPRs = (parsedData) => {
   });
 
   // No need to re-sort if parsedData is already sorted by date
-  // Logging execution time
+
   devLog(
     `markPRs() execution time: ` +
       `\x1b[1m${Math.round(performance.now() - startTime)}` +

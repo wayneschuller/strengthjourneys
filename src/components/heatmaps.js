@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useContext } from "react";
+import { cloneElement, useState, useEffect, useContext } from "react";
 import { ParsedDataContext } from "@/pages/_app";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
@@ -149,6 +149,10 @@ function Heatmap({ parsedData, startDate, endDate, isMobile }) {
       titleForValue={(value) => {
         if (value?.tooltip) return value.tooltip;
       }}
+      // Roundedness
+      transformDayElement={(element, value, index) =>
+        cloneElement(element, { rx: 3, ry: 3 })
+      }
     />
   );
 }

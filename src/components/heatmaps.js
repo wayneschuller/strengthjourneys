@@ -58,7 +58,7 @@ export function ActivityHeatmapsCard() {
     setEndDate(endDate);
 
     // devLog(`Width changing to ${width}`);
-    let intervalMonths = 18;
+    let intervalMonths = 12;
     if (width > 768 && width <= 1536) intervalMonths = 24;
     else if (width > 1536) intervalMonths = 32;
     setIntervalMonths(intervalMonths);
@@ -130,7 +130,7 @@ export function ActivityHeatmapsCard() {
 }
 
 function Heatmap({ parsedData, startDate, endDate, isMobile }) {
-  const { theme, setTheme } = useTheme();
+  const { theme } = useTheme();
 
   const heatmapData = generateHeatmapData(parsedData, startDate, endDate);
 

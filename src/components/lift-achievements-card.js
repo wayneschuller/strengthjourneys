@@ -83,7 +83,8 @@ export function LiftAchievementsCard({ liftType }) {
 }
 
 function getLiftTypeStats(liftType, parsedData) {
-  devLog(`getLiftTypeStats()...`);
+  // devLog(`getLiftTypeStats()...`);
+
   // Filter the parsedData for the specific liftType
   const filteredData = parsedData.filter(
     (lifting) => lifting.liftType === liftType,

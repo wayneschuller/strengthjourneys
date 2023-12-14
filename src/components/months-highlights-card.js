@@ -23,6 +23,7 @@ export function MonthsHighlightsCard() {
   const { status } = useSession();
   const { isLoading } = useUserLiftData();
 
+  // FIXME: if possible try to put this skeleton inside the card we will already use
   if (!parsedData) {
     return (
       <Card>
@@ -30,8 +31,8 @@ export function MonthsHighlightsCard() {
           <CardTitle>This Month{"'"}s Highlights</CardTitle>
           <CardDescription>Core lift types are in bold.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[50vh]" />
+        <CardContent className="">
+          <Skeleton className="flex h-[50vh] flex-1" />
         </CardContent>
       </Card>
     );
@@ -49,7 +50,7 @@ export function MonthsHighlightsCard() {
         </CardTitle>
         <CardDescription>Core lift types are in bold.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-1 flex-col">
         <ul>
           {historicalPRs.map((record) => (
             <li key={`${record.liftType}-${record.reps}-${record.date}`}>

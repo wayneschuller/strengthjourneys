@@ -27,13 +27,13 @@ export function SessionAnalysisCard() {
 
   if (!parsedData) {
     return (
-      <Card>
+      <Card className="">
         <CardHeader>
           <CardTitle>Recent Session Analysis</CardTitle>
           <CardDescription>Lifting Session Date:</CardDescription>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[70vh] w-11/12 flex-1" />
+          <Skeleton className="flex h-[60vh] flex-1" />
         </CardContent>
       </Card>
     );

@@ -41,7 +41,6 @@ const Analyzer = () => {
 
   return (
     <div className="xl:mx-20">
-      {/* // <div> */}
       <Head>
         <title>PR Analyzer (Strength Journeys)</title>
         <meta name="description" content="Strength Journeys Lift PR Analyzer" />
@@ -55,7 +54,7 @@ const Analyzer = () => {
           <div className="grid xl:col-span-2">
             <SessionAnalysisCard />
           </div>
-          <div className="grid place-self-stretch xl:col-span-2">
+          <div className="grid xl:col-span-2">
             <MonthsHighlightsCard />
           </div>
           <div className="grid xl:col-span-2">

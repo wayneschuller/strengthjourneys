@@ -140,7 +140,7 @@ export function LiftTypeFrequencyPieCard() {
       </CardHeader>
       <CardContent className="flex flex-1 flex-row justify-center md:h-[40vh] xl:gap-4">
         {(!pieChartData || !liftTypes) && (
-          <Skeleton className="h-64 w-64 flex-1" />
+          <Skeleton className="flex h-[40vh] w-64 flex-1" />
         )}
         {pieChartData && <Pie data={pieChartData} options={pieChartOptions} />}
       </CardContent>

@@ -22,10 +22,9 @@ export function MonthsHighlightsCard() {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   const { status } = useSession();
   const { isLoading } = useUserLiftData();
-  let historicalPRs = null;
 
   // FIXME: these stats are rubbish - convert to the topSetsByLiftsAndReps in global context
-  historicalPRs = getFirstHistoricalPRsInLastMonth(parsedData);
+  const historicalPRs = getFirstHistoricalPRsInLastMonth(parsedData);
 
   return (
     <Card>

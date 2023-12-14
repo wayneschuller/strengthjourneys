@@ -11,25 +11,15 @@ import { ParsedDataContext } from "@/pages/_app";
 import { Skeleton } from "./ui/skeleton";
 
 export function LiftAchievementsCard({ liftType }) {
-  const { parsedData, liftTypes, topLiftsByTypeAndReps } =
-    useContext(ParsedDataContext);
+  const { liftTypes, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
 
-  let totalReps = null;
-  let totalSets = null;
-  let oldestDate = null;
-  let newestDate = null;
+  const lift = liftTypes?.find((lift) => lift.liftType === liftType);
+  const totalReps = lift ? lift.totalReps : null;
+  const totalSets = lift ? lift.frequency : null;
+  const newestDate = lift ? lift.newestDate : null;
+  const oldestDate = lift ? lift.oldestDate : null;
 
-  devLog(liftTypes);
-
-  if (parsedData && liftTypes) {
-    const lift = liftTypes.find((lift) => lift.liftType === liftType);
-    totalReps = lift ? lift.totalReps : null;
-    totalSets = lift ? lift.frequency : null;
-    newestDate = lift ? lift.newestDate : null;
-    oldestDate = lift ? lift.oldestDate : null;
-  }
-
-  const topLiftsByReps = topLiftsByTypeAndReps[liftType];
+  const topLiftsByReps = topLiftsByTypeAndReps?.[liftType];
   const oneRM = topLiftsByReps?.[0]?.[0];
   const threeRM = topLiftsByReps?.[2]?.[0];
   const fiveRM = topLiftsByReps?.[4]?.[0];
@@ -38,11 +28,10 @@ export function LiftAchievementsCard({ liftType }) {
     <Card>
       <CardHeader>
         <CardTitle>{liftType} Achievements</CardTitle>
-        {/* <CardDescription>Card Description</CardDescription> */}
       </CardHeader>
       <CardContent>
-        {!parsedData && <Skeleton className="h-64" />}
-        {parsedData && (
+        {!liftTypes && <Skeleton className="h-64" />}
+        {liftTypes && (
           <div>
             <div className="grid grid-cols-2 gap-x-1">
               <div className="font-semibold">Total reps (sets):</div>

@@ -1,6 +1,12 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
+import { devLog } from "@/lib/processing-utils";
+import { ParsedDataContext } from "@/pages/_app";
+import { useSession } from "next-auth/react";
+import { useUserLiftData } from "@/lib/use-userlift-data";
+import { Skeleton } from "./ui/skeleton";
+
 import {
   Card,
   CardContent,
@@ -9,48 +15,34 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
+
 import {
   findLiftPositionInTopLifts,
   getCelebrationEmoji,
   getReadableDateString,
 } from "@/lib/processing-utils";
-import { devLog } from "@/lib/processing-utils";
-import { ParsedDataContext } from "@/pages/_app";
-import { useSession } from "next-auth/react";
-import { useUserLiftData } from "@/lib/use-userlift-data";
-import { Skeleton } from "./ui/skeleton";
 
 export function SessionAnalysisCard() {
   const { parsedData, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
   const { data: session, status } = useSession();
-  const { isLoading } = useUserLiftData();
 
   // Computed data for this component
   let prFound = false;
-  let mostRecentDate = null;
-  let recentWorkouts = null;
-  let groupedWorkouts = null;
+  const mostRecentDate = parsedData?.[parsedData.length - 1]?.date;
+  const recentWorkouts = parsedData?.filter(
+    (workout) => workout.date === mostRecentDate,
+  );
 
-  if (parsedData) {
-    mostRecentDate = parsedData[parsedData.length - 1].date;
-    recentWorkouts = parsedData.filter(
-      (workout) => workout.date === mostRecentDate,
-    );
+  // Group workouts by liftType
+  const groupedWorkouts = recentWorkouts?.reduce((acc, workout) => {
+    const { liftType } = workout;
+    acc[liftType] = acc[liftType] || [];
+    const prIndex = findLiftPositionInTopLifts(workout, topLiftsByTypeAndReps);
+    if (prIndex !== -1) prFound = true;
+    acc[liftType].push({ ...workout, prIndex: prIndex });
 
-    // Group workouts by liftType
-    groupedWorkouts = recentWorkouts.reduce((acc, workout) => {
-      const { liftType } = workout;
-      acc[liftType] = acc[liftType] || [];
-      const prIndex = findLiftPositionInTopLifts(
-        workout,
-        topLiftsByTypeAndReps,
-      );
-      if (prIndex !== -1) prFound = true;
-      acc[liftType].push({ ...workout, prIndex: prIndex });
-
-      return acc;
-    }, {});
-  }
+    return acc;
+  }, {});
 
   return (
     <Card>

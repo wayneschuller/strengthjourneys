@@ -73,7 +73,7 @@ export function Layout({ children }) {
     } else {
       // FIXME: it would be interesting to randomise the sample data a little here
 
-      parsedData = transposeDatesToToday(sampleParsedData); // Make demo mode data be recent
+      parsedData = transposeDatesToToday(sampleParsedData, true); // Make demo mode data be recent
     }
 
     // As far as possible try to get components to do their own unique processing of parsedData

@@ -1,8 +1,12 @@
 /** @format */
 
 // A function we call on the demo data to always keep it fresh
-export function transposeDatesToToday(parsedData) {
-  if (parsedData.length === 0) return parsedData; // Handle empty array
+export function transposeDatesToToday(parsedData, addJitter) {
+  // Constants for jitter settings
+  const JITTER_RANGE = 2;
+  const JITTER_PROBABILITY = 0.5; // 50% chance to apply jitter
+
+  if (parsedData.length === 0) return parsedData;
 
   const today = new Date();
   const lastDataDate = new Date(parsedData[parsedData.length - 1].date);
@@ -10,12 +14,34 @@ export function transposeDatesToToday(parsedData) {
     (today - lastDataDate) / (1000 * 60 * 60 * 24),
   );
 
-  return parsedData.map((item) => {
+  let lastJitter = 0;
+  let lastDate = "";
+
+  const updatedData = parsedData.map((item) => {
     const itemDate = new Date(item.date);
-    itemDate.setDate(itemDate.getDate() + dayDifference);
+
+    // Apply jitter with a certain probability
+    if (addJitter && item.date !== lastDate) {
+      if (Math.random() < JITTER_PROBABILITY) {
+        // Apply jitter
+        lastJitter =
+          Math.floor(Math.random() * (JITTER_RANGE * 2 + 1)) - JITTER_RANGE;
+      } else {
+        // No jitter
+        lastJitter = 0;
+      }
+      lastDate = item.date;
+    }
+
+    itemDate.setDate(itemDate.getDate() + dayDifference + lastJitter);
 
     return { ...item, date: itemDate.toISOString().split("T")[0] };
   });
+
+  // Sorting the updated data by date
+  updatedData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  return updatedData;
 }
 
 // Our sample parsedData format

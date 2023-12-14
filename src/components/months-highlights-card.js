@@ -42,7 +42,7 @@ export function MonthsHighlightsCard() {
   const historicalPRs = getFirstHistoricalPRsInLastMonth(parsedData);
 
   return (
-    <Card>
+    <Card className="hover:ring-1">
       <CardHeader>
         <CardTitle>
           {status === "unauthenticated" && "Demo Mode: "}This Month{"'"}s

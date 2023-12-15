@@ -106,6 +106,7 @@ export function Layout({ children }) {
 
     // Check if selectedLifts exists in localStorage
     // When in demo mode (auth unauthenticated) we have a separate localstorage
+    // FIXME: there is a bug here for a new user with only one type of lift data
     const localStorageKey = `selectedLifts${
       status === "unauthenticated" ? "_demoMode" : ""
     }`;

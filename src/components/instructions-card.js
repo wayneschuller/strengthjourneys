@@ -31,7 +31,7 @@ export function InstructionsCard({ session }) {
   );
 
   return (
-    <Card className="w-2/3">
+    <Card className="md:w-2/3">
       <CardHeader>
         <CardTitle>Hello {session.user.name}! You are logged in.</CardTitle>
       </CardHeader>

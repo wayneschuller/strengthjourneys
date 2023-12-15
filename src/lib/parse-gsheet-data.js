@@ -3,7 +3,7 @@
 import { devLog } from "@/lib/processing-utils";
 
 // Used to convert strings like "226lb" to {225, "lb"}
-function convertWeight(weightString) {
+function convertWeightAndUnitType(weightString) {
   if (weightString === undefined || weightString === "") {
     return { value: undefined, unitType: undefined };
   }
@@ -89,8 +89,8 @@ function parseTurnKeyData(data) {
       return false;
     }
 
-    let lifted_reps = convertStringToInt(row[assigned_reps_COL]);
-    let lifted_weight = convertStringToInt(row[assigned_weight_COL]);
+    let lifted_reps = convertStringToInt(row[assigned_reps_COL]) || 0;
+    let lifted_weight = parseFloat(row[assigned_weight_COL]) || 0;
 
     // devLog(`lifted_reps ${lifted_reps}, lifted_weight ${lifted_weight} ()`);
     // devLog(
@@ -99,10 +99,10 @@ function parseTurnKeyData(data) {
 
     // Override if there is an actual_reps and actual_weight as well
     // This happens when the person lifts different to what was assigned by their coach
-    // if (row[actual_reps_COL] !== "" && row[actual_weight_COL] !== "") {
-    // lifted_reps = convertStringToInt(row[actual_reps_COL]);
-    // lifted_weight = convertStringToInt[actual_weight_COL];
-    // }
+    if (row[actual_reps_COL] !== "" && row[actual_weight_COL] !== "") {
+      lifted_reps = convertStringToInt(row[actual_reps_COL]) || 0;
+      lifted_weight = parseFloat(row[actual_weight_COL]) || 0;
+    }
 
     if (lifted_reps === 0 || lifted_weight === 0) return;
 
@@ -187,7 +187,7 @@ function parseBespokeData(data) {
             obj["reps"] = convertStringToInt(row[index]);
             break;
           case "Weight":
-            const { value, unitType } = convertWeight(row[index]);
+            const { value, unitType } = convertWeightAndUnitType(row[index]);
             obj["weight"] = value;
             obj["unitType"] = unitType;
             break;

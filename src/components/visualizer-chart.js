@@ -126,9 +126,6 @@ export default function VisualizerChart() {
     return <Skeleton className="mt-4 h-[80vh] w-[90vw]"></Skeleton>;
   }
 
-  ({ firstDate, lastDate, roundedMaxWeightValue } =
-    getFirstLastDatesMaxWeightFromChartData(chartData));
-
   // We imported chartDefaults from chart.js above
   // chartDefaults.font.family = "'Inter', 'Helvetica','Arial'";
   // chartDefaults.font.family = "'Inter'";
@@ -498,6 +495,8 @@ function getFirstLastDatesMaxWeightFromChartData(chartData) {
 
   let maxWeightValue = -Infinity; // Initialize with a very small value
 
+  // FIXME: we can get the first/last date from the LiftTypes global context now
+  // So this can be optimised I'm sure
   const allDates = chartData.reduce((dates, dataset) => {
     dataset.data.forEach((point) => {
       const date = new Date(point.x);

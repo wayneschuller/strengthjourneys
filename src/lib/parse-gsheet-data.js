@@ -2,6 +2,7 @@
 
 import { devLog } from "@/lib/processing-utils";
 
+// Used to convert strings like "226lb" to {225, "lb"}
 function convertWeight(weightString) {
   if (weightString === undefined || weightString === "") {
     return { value: undefined, unitType: undefined };
@@ -13,7 +14,8 @@ function convertWeight(weightString) {
   return { value, unitType };
 }
 
-function convertReps(repsString) {
+// Used to convert number strings to integer
+function convertStringToInt(repsString) {
   if (!repsString) {
     return undefined;
   }
@@ -37,20 +39,120 @@ export function parseData(data) {
   let parsedData = null;
 
   if (columnNames[0] === "user_name" && columnNames[1] === "workout_id") {
-    devLog(`Turnkey data detected`);
-    devLog(data);
-    return null;
+    parsedData = parseTurnKeyData(data);
   } else {
-    parsedData = parseGSheetData(data);
-    return parsedData;
+    parsedData = parseBespokeData(data);
   }
+  return parsedData;
+}
+
+// Parse Turnkey data format
+//
+function parseTurnKeyData(data) {
+  const startTime = performance.now(); // We measure critical processing steps
+
+  // Dynamically find where all our needed columns are
+  const columnNames = data[0];
+  const workout_date_COL = columnNames.indexOf("workout_date");
+  const workout_id_COL = columnNames.indexOf("workout_id");
+  const completed_COL = columnNames.indexOf("workout_completed");
+  const exercise_name_COL = columnNames.indexOf("exercise_name");
+  const assigned_reps_COL = columnNames.indexOf("assigned_reps");
+  const assigned_weight_COL = columnNames.indexOf("assigned_weight");
+  const assigned_sets_COL = columnNames.indexOf("assigned_sets");
+  const actual_reps_COL = columnNames.indexOf("actual_reps");
+  const actual_weight_COL = columnNames.indexOf("actual_weight");
+  const actual_sets_COL = columnNames.indexOf("actual_sets");
+  const missed_COL = columnNames.indexOf("assigned_exercise_missed");
+  const units_COL = columnNames.indexOf("weight_units");
+
+  let parsedData = [];
+
+  data.slice(1).forEach((row) => {
+    if (!row || row[0] === null) {
+      // console.log(`parseBlocRow skipping bad row: ${JSON.stringify(row)}`);
+      return;
+    }
+
+    if (row[actual_reps_COL] === "actual_reps") return false; // Probably header row
+
+    // Give up on this row if it is not a completed workout
+    if (row[completed_COL] === false || row[completed_COL] === "FALSE")
+      return false;
+
+    // Give up on this row if missed_COL is true
+    if (row[missed_COL] === true || row[missed_COL] === "TRUE") return false;
+
+    // Give up on this row if there are no assigned reps
+    // Happens when a BLOC coach leaves comments in the web app
+    if (row[assigned_reps_COL] === null || row[assigned_reps_COL] === "")
+      return false;
+
+    let lifted_reps = convertStringToInt(row[assigned_reps_COL]);
+    let lifted_weight = convertStringToInt(row[assigned_weight_COL]);
+
+    // devLog(`lifted_reps ${lifted_reps}, lifted_weight ${lifted_weight} ()`);
+    // devLog(
+    // `actual lifted_reps ${lifted_reps}, actual lifted_weight ${actuweight}`,
+    // );
+
+    // Override if there is an actual_reps and actual_weight as well
+    // This happens when the person lifts different to what was assigned by their coach
+    // if (row[actual_reps_COL] !== "" && row[actual_weight_COL] !== "") {
+    // lifted_reps = convertStringToInt(row[actual_reps_COL]);
+    // lifted_weight = convertStringToInt[actual_weight_COL];
+    // }
+
+    if (lifted_reps === 0 || lifted_weight === 0) return;
+
+    let unitType = row[units_COL]; // Record the units type global for later. (we assume it won't change in the CSV)
+
+    const liftUrl = `https://app.turnkey.coach//workout/${row[workout_id_COL]}`;
+
+    let liftType = row[exercise_name_COL];
+
+    if (liftType === "Squat") liftType = "Back Squat"; // Our other two data types prefer the full name
+
+    // Expand BLOC sets into separate liftEntry tuples
+    // This makes no difference to the graph, but it benefits a user wanting to convert their BLOC data to our bespoke format
+    // It may help with some achievements and tonnage count in a future feature
+    let sets = 1;
+    if (row[assigned_sets_COL] && row[assigned_sets_COL] > 1)
+      sets = row[assigned_sets_COL];
+    if (row[actual_sets_COL] && row[actual_sets_COL] > 1)
+      sets = row[actual_sets_COL];
+
+    for (let i = 1; i <= sets; i++) {
+      let notes = `Set ${i} of ${sets}`;
+      if (sets === 1) notes = ""; // No notes for a single set
+      parsedData.push({
+        date: row[workout_date_COL],
+        name: liftType,
+        reps: lifted_reps,
+        weight: lifted_weight,
+        url: liftUrl,
+        unitType: unitType,
+        notes: notes,
+      });
+    }
+  });
+
+  devLog(
+    "parseTurnKeyData() execution time: " +
+      `\x1b[1m${Math.round(performance.now() - startTime)}` +
+      `ms\x1b[0m` +
+      ` (${parsedData.length} tuples)`,
+  );
+
+  devLog(parsedData);
+  return parsedData;
 }
 
 // Parse Bespoke Strength Journeys Google Sheet format
 // Trying to be agnostic about column position
 // We do assume that if date or lift type are blank we can infer from a previous row
 // We return parsedData that is always sorted date ascending
-function parseGSheetData(data) {
+function parseBespokeData(data) {
   const startTime = performance.now(); // We measure critical processing steps
   const columnNames = data[0];
 
@@ -74,7 +176,7 @@ function parseGSheetData(data) {
             previousLiftType = obj["liftType"];
             break;
           case "Reps":
-            obj["reps"] = convertReps(row[index]);
+            obj["reps"] = convertStringToInt(row[index]);
             break;
           case "Weight":
             const { value, unitType } = convertWeight(row[index]);

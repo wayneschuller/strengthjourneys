@@ -31,11 +31,26 @@ function convertDate(dateString, previousDate) {
   return dateString !== "" ? dateString : previousDate;
 }
 
+// Discern data format and parse (see @/lib/sample-parsed-data.js for data structure design)
+export function parseData(data) {
+  const columnNames = data[0];
+  let parsedData = null;
+
+  if (columnNames[0] === "user_name" && columnNames[1] === "workout_id") {
+    devLog(`Turnkey data detected`);
+    devLog(data);
+    return null;
+  } else {
+    parsedData = parseGSheetData(data);
+    return parsedData;
+  }
+}
+
 // Parse Bespoke Strength Journeys Google Sheet format
 // Trying to be agnostic about column position
 // We do assume that if date or lift type are blank we can infer from a previous row
 // We return parsedData that is always sorted date ascending
-export function parseGSheetData(data) {
+function parseGSheetData(data) {
   const startTime = performance.now(); // We measure critical processing steps
   const columnNames = data[0];
 

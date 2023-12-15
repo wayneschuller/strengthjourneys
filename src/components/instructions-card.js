@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
-import useDrivePicker from "@fyelci/react-google-drive-picker";
+import useDrivePicker from "../../dependencies/react-google-drive-picker/dist";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";

@@ -10,26 +10,16 @@ export function handleOpenFilePicker(
   setSheetURL,
   setSheetFilename,
 ) {
-  console.log(`Opening Google Sheet Picker...`);
-
-  const scopes = [
-    "https://www.googleapis.com/auth/userinfo.email",
-    "https://www.googleapis.com/auth/userinfo.profile",
-    "https://www.googleapis.com/auth/drive.file",
-  ];
-
   openPicker({
     clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
     developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
+    appId: process.env.NEXT_PUBLIC_GOOGLE_APP_ID, // This is needed for drive.file Google API access
     viewId: "SPREADSHEETS",
-    token: accessToken,
+    token: accessToken, // The picker will use whatever scopes are associated with this token
     showUploadView: true,
     showUploadFolders: true,
     supportDrives: true,
     multiselect: false,
-    // customScopes: scopes,
-    customScopes: ["https://www.googleapis.com/auth/drive.file"],
-    // customViews: customViewsArray, // custom view
     callbackFunction: (data) => {
       if (data.action === "cancel") {
         console.log("User clicked cancel/close button");
@@ -41,12 +31,15 @@ export function handleOpenFilePicker(
         const newFilename = data.docs[0].name;
         const newSheetURL = encodeURIComponent(data.docs[0].url);
 
+        devLog(
+          `google picker: ${newFilename} (ssid: ${newSsid}, URL: ${newSheetURL})`,
+        );
         setSsid(newSsid);
         setSheetURL(newSheetURL);
         setSheetFilename(newFilename);
 
         // Should we trigger a parsing of the sheet data here?
-        // But it seems to happen through reactivity as ssid triggers the hook useSWR data fetch
+        // But it seems to happen fine through reactivity as ssid triggers the hook useSWR data fetch
         return;
       }
     },

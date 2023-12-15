@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@fyelci/react-google-drive-picker": "^1.2.5",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
@@ -42,6 +41,7 @@
     "react-calendar-heatmap": "^1.9.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18",
+    "react-google-drive-picker": "file:dependencies/react-google-drive-picker",
     "swr": "^2.2.4",
     "tailwind-merge": "^2.0.0",
     "tailwindcss-animate": "^1.0.7",

@@ -5,12 +5,13 @@ import { useContext, useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
 import { useSession, signIn, signOut } from "next-auth/react";
-import useDrivePicker from "@fyelci/react-google-drive-picker";
+import useDrivePicker from "../../dependencies/react-google-drive-picker/dist";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { ParsedDataContext } from "@/pages/_app";
 import { useLocalStorage } from "usehooks-ts";
-
+import { devLog } from "@/lib/processing-utils";
 import { Button } from "@/components/ui/button";
+
 import {
   DropdownMenu,
   DropdownMenuContent,

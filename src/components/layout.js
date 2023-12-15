@@ -3,7 +3,7 @@
 "use client";
 import { useState, useEffect, useContext } from "react";
 import { ParsedDataContext } from "@/pages/_app";
-import { parseGSheetData } from "@/lib/parse-gsheet-data";
+import { parseData } from "@/lib/parse-gsheet-data";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useUserLiftData } from "@/lib/use-userlift-data";
 import {
@@ -21,7 +21,7 @@ import { ToastAction } from "@/components/ui/toast";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 import { useRouter } from "next/router";
-import { useReadLocalStorage } from "usehooks-ts";
+import { useLocalStorage } from "usehooks-ts";
 
 // We use these to only trigger toast announcements once
 let demoToastInit = false;
@@ -31,14 +31,18 @@ export function Layout({ children }) {
   const {
     parsedData,
     setParsedData,
-    ssid,
     setLiftTypes,
     setSelectedLiftTypes,
     setTopLiftsByTypeAndReps,
   } = useContext(ParsedDataContext);
   const { data: session, status } = useSession();
   const { data, isError, isLoading } = useUserLiftData();
-  const sheetFilename = useReadLocalStorage("sheetFilename");
+  const [ssid, setSsid] = useLocalStorage("ssid", null);
+  const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
+  const [sheetFilename, setSheetFilename] = useLocalStorage(
+    "sheetFilename",
+    null,
+  );
   const { toast } = useToast();
   const router = useRouter();
   const currentPath = router.asPath;
@@ -54,28 +58,40 @@ export function Layout({ children }) {
     // If data changes and we have isError then signOut
     // This is usually because our token has expired
     // FIXME: get Google refreshtokens working
+
     if (isError) {
-      console.log(
+      console.error(
         "Couldn't speak to Google. This is normally because it is more than one hour since you logged in. Automatically signing out. This will be fixed in a future version using refresh tokens",
       );
       devLog(data);
-      signOut();
-      // FIXME Actually we could keep going with the logic below to get demo mode parsedData etc.
-      return;
+      signOut(); // This gives them a chance to sign in again (in the meantime this useEffect will be retriggered for demo mode)
     }
 
     let parsedData = null; // A local version for this scope only
 
-    if (data?.values) {
-      // This always means new or changed data.
-      parsedData = parseGSheetData(data.values); // Will be sorted date ascending
+    if (status === "authenticated" && data?.values) {
+      parsedData = parseData(data.values); // Will be sorted date ascending
 
-      // FIXME: signOut and delete ssid if they get parsing errors
-    } else {
-      // FIXME: it would be interesting to randomise the sample data a little here
+      if (parsedData === null) {
+        console.error(`Could not parse data. Please choose a different file.`);
+        toast({
+          variant: "destructive",
+          title: "Data Parsing Error",
+          description:
+            "We could read the data but could not understand it. Please choose a different Google Sheet.",
+        });
+        demoToastInit = true; // Don't run another toast below and block this one
 
-      parsedData = transposeDatesToToday(sampleParsedData, true); // Make demo mode data be recent
+        // Forget their chosen file, we have access but we cannot parse it
+        setSsid(null);
+        setSheetFilename(null);
+        setSheetURL(null);
+        // Don't sign out, just go gracefully into demo mode below.
+      }
     }
+
+    // If there have been any problems we will switch into demo mode
+    if (!parsedData) parsedData = transposeDatesToToday(sampleParsedData, true); // Make demo mode data be recent
 
     // As far as possible try to get components to do their own unique processing of parsedData
     // However if there are metrics commonly needed we can do it here once to save CPU

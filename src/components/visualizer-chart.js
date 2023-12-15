@@ -6,7 +6,6 @@ import { getLiftColor } from "@/lib/get-lift-color";
 import { Line } from "react-chartjs-2";
 import { useSession } from "next-auth/react";
 import { ParsedDataContext } from "@/pages/_app";
-import useDrivePicker from "@fyelci/react-google-drive-picker";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";

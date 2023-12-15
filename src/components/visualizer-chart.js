@@ -239,9 +239,11 @@ export default function VisualizerChart() {
     title: {
       display: status === "unauthenticated", // Show explanatory visualizer title in demo mode only
       color: theme === "dark" ? "white" : "black",
-      text: "Demo mode: One rep max estimations of different rep schemes per lift over time",
+      text: isMobile
+        ? "Demo mode: e1rm sample data"
+        : "Visualizer Demo mode: One rep max estimations of different rep schemes per lift over time",
       font: {
-        size: 19,
+        size: isMobile ? 19 : 22,
       },
     },
   };

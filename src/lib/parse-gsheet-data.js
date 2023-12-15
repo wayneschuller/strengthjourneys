@@ -91,7 +91,7 @@ function parseTurnKeyData(data) {
     let lifted_reps = parseInt(row[assigned_reps_COL], 10);
     let lifted_weight = parseFloat(row[assigned_weight_COL]);
 
-    // Override if there is an actual_reps and actual_weight as well
+    // Override if there is an actual_reps and actual_weight
     // This happens when the person lifts different to what was assigned by their coach
     if (
       isFinite(parseInt(row[actual_reps_COL]), 10) &&

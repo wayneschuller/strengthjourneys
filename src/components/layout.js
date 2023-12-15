@@ -63,7 +63,14 @@ export function Layout({ children }) {
       console.error(
         "Couldn't speak to Google. This is normally because it is more than one hour since you logged in. Automatically signing out. This will be fixed in a future version using refresh tokens",
       );
+
       devLog(data);
+      toast({
+        variant: "destructive",
+        title: "Google Server Error",
+        description: "Google servers denied access to selected sheet.",
+      });
+      demoToastInit = true; // Don't run another toast below and block this one
       signOut(); // This gives them a chance to sign in again (in the meantime this useEffect will be retriggered for demo mode)
     }
 
@@ -79,7 +86,7 @@ export function Layout({ children }) {
           variant: "destructive",
           title: "Data Parsing Error",
           description:
-            "We could read the data but could not understand it. Please choose a different Google Sheet.",
+            "We could access the data but could not understand it. Please choose a different Google Sheet.",
         });
         demoToastInit = true; // Don't run another toast below and block this one
 
@@ -103,7 +110,6 @@ export function Layout({ children }) {
 
     // Calculate our liftTypes basic stats array (sorted by most popular lift descending)
     const liftTypes = calculateLiftTypes(parsedData);
-    devLog(liftTypes);
     setLiftTypes(liftTypes);
 
     // Check if selectedLifts exists in localStorage

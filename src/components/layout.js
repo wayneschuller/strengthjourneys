@@ -71,6 +71,7 @@ export function Layout({ children }) {
 
     if (status === "authenticated" && data?.values) {
       parsedData = parseData(data.values); // Will be sorted date ascending
+      // devLog(parsedData);
 
       if (parsedData === null) {
         console.error(`Could not parse data. Please choose a different file.`);
@@ -90,7 +91,7 @@ export function Layout({ children }) {
       }
     }
 
-    // If there have been any problems we will switch into demo mode
+    // If there have been any problems we will switch into demo mode with sample data
     if (!parsedData) parsedData = transposeDatesToToday(sampleParsedData, true); // Make demo mode data be recent
 
     // As far as possible try to get components to do their own unique processing of parsedData
@@ -102,6 +103,7 @@ export function Layout({ children }) {
 
     // Calculate our liftTypes basic stats array (sorted by most popular lift descending)
     const liftTypes = calculateLiftTypes(parsedData);
+    devLog(liftTypes);
     setLiftTypes(liftTypes);
 
     // Check if selectedLifts exists in localStorage

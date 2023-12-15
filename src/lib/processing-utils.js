@@ -163,22 +163,23 @@ export function processTopLiftsByTypeAndReps(parsedData, selectedLiftTypes) {
 export function calculateLiftTypes(parsedData) {
   const startTime = performance.now();
 
+  devLog(`calculateLiftTypes length: ${parsedData.length}`);
   const liftTypeStats = {};
-  parsedData.forEach((lifting) => {
-    const liftType = lifting.liftType;
+  parsedData.forEach((lift) => {
+    const liftType = lift.liftType;
     if (!liftTypeStats[liftType]) {
       liftTypeStats[liftType] = {
         totalSets: 0,
         totalReps: 0,
-        newestDate: lifting.date, // Initialize with the first encountered date
-        oldestDate: lifting.date, // Since parsedData is sorted by date
+        newestDate: lift.date, // Initialize with the first encountered date
+        oldestDate: lift.date, // Since parsedData is sorted by date
       };
     } else {
       // Since parsedData is sorted, the last date encountered is the newest
-      liftTypeStats[liftType].newestDate = lifting.date;
+      liftTypeStats[liftType].newestDate = lift.date;
     }
     liftTypeStats[liftType].totalSets += 1;
-    liftTypeStats[liftType].totalReps += lifting.reps;
+    liftTypeStats[liftType].totalReps += lift.reps;
   });
 
   const sortedLiftTypes = Object.keys(liftTypeStats)

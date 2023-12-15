@@ -89,8 +89,8 @@ function parseTurnKeyData(data) {
       return false;
     }
 
-    let lifted_reps = convertStringToInt(row[assigned_reps_COL]) || 0;
-    let lifted_weight = parseFloat(row[assigned_weight_COL]) || 0;
+    let lifted_reps = parseInt(row[assigned_reps_COL], 10);
+    let lifted_weight = parseFloat(row[assigned_weight_COL]);
 
     // devLog(`lifted_reps ${lifted_reps}, lifted_weight ${lifted_weight} ()`);
     // devLog(
@@ -100,11 +100,12 @@ function parseTurnKeyData(data) {
     // Override if there is an actual_reps and actual_weight as well
     // This happens when the person lifts different to what was assigned by their coach
     if (row[actual_reps_COL] !== "" && row[actual_weight_COL] !== "") {
-      lifted_reps = convertStringToInt(row[actual_reps_COL]) || 0;
-      lifted_weight = parseFloat(row[actual_weight_COL]) || 0;
+      lifted_reps = parseInt(row[actual_reps_COL], 10);
+      lifted_weight = parseFloat(row[actual_weight_COL]);
     }
 
-    if (lifted_reps === 0 || lifted_weight === 0) return;
+    if (isNaN(lifted_reps) || lifted_reps === 0) return;
+    if (isNaN(lifted_weight) || lifted_weight === 0) return;
 
     let unitType = row[units_COL]; // Record the units type global for later. (we assume it won't change in the data)
 

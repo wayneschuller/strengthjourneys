@@ -71,7 +71,8 @@ export function Layout({ children }) {
         description: "Google servers denied access to selected sheet.",
       });
       demoToastInit = true; // Don't run another toast below and block this one
-      signOut(); // This gives them a chance to sign in again (in the meantime this useEffect will be retriggered for demo mode)
+      // signOut(); // This gives them a chance to sign in again (in the meantime this useEffect will be retriggered for demo mode)
+      return; // Don't sign out
     }
 
     let parsedData = null; // A local version for this scope only

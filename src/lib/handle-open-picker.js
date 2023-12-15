@@ -31,9 +31,6 @@ export function handleOpenFilePicker(
         const newFilename = data.docs[0].name;
         const newSheetURL = encodeURIComponent(data.docs[0].url);
 
-        devLog(
-          `google picker: ${newFilename} (ssid: ${newSsid}, URL: ${newSheetURL})`,
-        );
         setSsid(newSsid);
         setSheetURL(newSheetURL);
         setSheetFilename(newFilename);

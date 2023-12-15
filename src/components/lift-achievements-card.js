@@ -100,7 +100,9 @@ const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
   // FIXME: Ideally these would expand out with animation?
   return (
     <div>
-      <div className="font-semibold">Recent Highlights for {liftType}:</div>
+      <div className="mt-4 font-semibold">
+        Recent Highlights for {liftType}:
+      </div>
       {recentHighlights.length > 0 ? (
         <ul>
           {recentHighlights.map((lift, index) => (
@@ -113,7 +115,7 @@ const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
           ))}
         </ul>
       ) : (
-        <p>No recent lifts found for this type.</p>
+        <p>Unable to load highlights right now...</p>
       )}
     </div>
   );

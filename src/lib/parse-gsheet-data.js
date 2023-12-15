@@ -70,36 +70,33 @@ function parseTurnKeyData(data) {
 
   data.slice(1).forEach((row) => {
     if (!row || row[0] === null) {
-      // console.log(`parseBlocRow skipping bad row: ${JSON.stringify(row)}`);
+      devLog(`parseTurnKeyData() skipping bad row: ${JSON.stringify(row)}`);
       return;
     }
 
-    if (row[actual_reps_COL] === "actual_reps") return false; // Probably header row
+    if (row[actual_reps_COL] === "actual_reps") return; // Probably header row
 
     // Give up on this row if it is not a completed workout
-    if (row[completed_COL] === false || row[completed_COL] === "FALSE")
-      return false;
+    if (row[completed_COL] === "FALSE") return;
 
     // Give up on this row if missed_COL is true
-    if (row[missed_COL] === true || row[missed_COL] === "TRUE") return false;
+    if (row[missed_COL] === "TRUE") return;
 
     // Give up on this row if there are no assigned reps
     // Happens when a BLOC coach leaves comments in the web app
-    if (row[assigned_reps_COL] === null || row[assigned_reps_COL] === "") {
-      return false;
+    if (isNaN(parseInt(row[assigned_reps_COL]), 10)) {
+      return;
     }
 
     let lifted_reps = parseInt(row[assigned_reps_COL], 10);
     let lifted_weight = parseFloat(row[assigned_weight_COL]);
 
-    // devLog(`lifted_reps ${lifted_reps}, lifted_weight ${lifted_weight} ()`);
-    // devLog(
-    // `actual lifted_reps ${lifted_reps}, actual lifted_weight ${actuweight}`,
-    // );
-
     // Override if there is an actual_reps and actual_weight as well
     // This happens when the person lifts different to what was assigned by their coach
-    if (row[actual_reps_COL] !== "" && row[actual_weight_COL] !== "") {
+    if (
+      isFinite(parseInt(row[actual_reps_COL]), 10) &&
+      isFinite(parseFloat(row[actual_weight_COL]))
+    ) {
       lifted_reps = parseInt(row[actual_reps_COL], 10);
       lifted_weight = parseFloat(row[actual_weight_COL]);
     }
@@ -112,7 +109,6 @@ function parseTurnKeyData(data) {
     const liftUrl = `https://app.turnkey.coach//workout/${row[workout_id_COL]}`;
 
     let liftType = row[exercise_name_COL];
-    // devLog(`lifttype: "${liftType}"`);
 
     if (liftType === "Squat") liftType = "Back Squat"; // Our other two data types prefer the full name
 
@@ -120,10 +116,10 @@ function parseTurnKeyData(data) {
     // This makes no difference to the graph, but it benefits a user wanting to convert their TurnKey data to our bespoke format
     // It may help with some achievements and tonnage count in a future feature
     let sets = 1;
-    if (row[assigned_sets_COL] && row[assigned_sets_COL] > 1)
-      sets = row[assigned_sets_COL];
-    if (row[actual_sets_COL] && row[actual_sets_COL] > 1)
-      sets = row[actual_sets_COL];
+    if (parseInt(row[assigned_sets_COL], 10) > 1)
+      sets = parseInt(row[assigned_sets_COL], 10);
+    if (parseInt(row[actual_sets_COL], 10) > 1)
+      sets = parseInt(row[actual_sets_COL], 10);
 
     for (let i = 1; i <= sets; i++) {
       let notes = `Set ${i} of ${sets}`;

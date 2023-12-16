@@ -13,7 +13,6 @@ export function parseData(data) {
     parsedData = parseBespokeData(data);
   }
 
-  devLog(parsedData);
   return parsedData;
 }
 

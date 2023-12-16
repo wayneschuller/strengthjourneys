@@ -22,6 +22,16 @@ export const authOptions = {
   ],
   callbacks: {
     jwt: ({ token, account }) => {
+      if (account) {
+        console.log(`account not undefined!`);
+        console.log(account);
+      }
+
+      if (token?.refreshToken) {
+        console.log(`refresh token found in the wild`);
+        console.log(token);
+      }
+
       if (account?.access_token) {
         token.access_token = account.access_token;
       }
@@ -34,8 +44,13 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
+      // console.log(`session callback:`);
+
       session.accessToken = token.access_token; // Give the user the access_token from Google
       session.refreshToken = token.refreshToken;
+
+      // console.log(session);
+
       return session;
     },
   },

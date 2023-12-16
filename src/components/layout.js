@@ -3,7 +3,7 @@
 "use client";
 import { useState, useEffect, useContext } from "react";
 import { ParsedDataContext } from "@/pages/_app";
-import { parseData } from "@/lib/parse-gsheet-data";
+import { parseData } from "@/lib/parse-data";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useUserLiftData } from "@/lib/use-userlift-data";
 import {

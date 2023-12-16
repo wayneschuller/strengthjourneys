@@ -84,7 +84,7 @@ export function Layout({ children }) {
 
     if (status === "authenticated" && data?.values) {
       parsedData = parseData(data.values); // Will be sorted date ascending
-      // devLog(parsedData);
+      devLog(`this is here`);
 
       if (parsedData === null) {
         console.error(`Could not parse data. Please choose a different file.`);
@@ -105,10 +105,11 @@ export function Layout({ children }) {
     }
 
     // If there have been any problems we will switch into demo mode with sample data
+    // FIXME: Logic is NQR, demo data should only be when unauthenticated
     if (!parsedData) parsedData = transposeDatesToToday(sampleParsedData, true); // Make demo mode data be recent
 
     // As far as possible try to get components to do their own unique processing of parsedData
-    // However if there are metrics commonly needed we can do it here once to save CPU
+    // However if there are metrics commonly needed we can do it here just once to save CPU later
 
     // Before we set parsedData there are a few other global
     // state variables everything needs.
@@ -157,8 +158,8 @@ export function Layout({ children }) {
       selectedLiftTypes,
     );
     setTopLiftsByTypeAndReps(topLiftsByTypeAndReps);
+    // devLog(topLiftsByTypeAndReps);
 
-    // devLog(`Layout useEffect setParsedData()...`);
     setParsedData(parsedData);
   }, [data, isLoading, isError, status]);
 

@@ -2,38 +2,7 @@
 
 import { devLog } from "@/lib/processing-utils";
 
-// Used to convert strings like "226lb" to {225, "lb"}
-function convertWeightAndUnitType(weightString) {
-  if (weightString === undefined || weightString === "") {
-    return { value: undefined, unitType: undefined };
-  }
-
-  const value = parseFloat(weightString);
-  const unitType = weightString.includes("kg") ? "kg" : "lb";
-
-  return { value, unitType };
-}
-
-// Used to convert number strings to integer
-function convertStringToInt(repsString) {
-  if (!repsString) {
-    return undefined;
-  }
-
-  repsString = repsString.trim();
-
-  if (repsString === "" || isNaN(parseInt(repsString, 10))) {
-    return undefined;
-  }
-
-  return parseInt(repsString, 10);
-}
-
-function convertDate(dateString, previousDate) {
-  return dateString !== "" ? dateString : previousDate;
-}
-
-// Discern data format and parse (see @/lib/sample-parsed-data.js for data structure design)
+// Discern data format and parse
 export function parseData(data) {
   const columnNames = data[0];
   let parsedData = null;
@@ -43,6 +12,8 @@ export function parseData(data) {
   } else {
     parsedData = parseBespokeData(data);
   }
+
+  devLog(parsedData);
   return parsedData;
 }
 
@@ -157,6 +128,7 @@ function parseTurnKeyData(data) {
 // Trying to be agnostic about column position
 // We do assume that if date or lift type are blank we can infer from a previous row
 // We return parsedData that is always sorted date ascending
+// See @/lib/sample-parsed-data.js for data structure design
 function parseBespokeData(data) {
   const startTime = performance.now(); // We measure critical processing steps
   const columnNames = data[0];
@@ -214,4 +186,36 @@ function parseBespokeData(data) {
   );
 
   return objectsArray;
+}
+
+// Used to convert strings like "226lb" to {225, "lb"}
+function convertWeightAndUnitType(weightString) {
+  if (weightString === undefined || weightString === "") {
+    return { value: undefined, unitType: undefined };
+  }
+
+  const value = parseFloat(weightString);
+  const unitType = weightString.includes("kg") ? "kg" : "lb";
+
+  return { value, unitType };
+}
+
+// Used to convert number strings to integer
+// FIXME: not really needed
+function convertStringToInt(repsString) {
+  if (!repsString) {
+    return undefined;
+  }
+
+  repsString = repsString.trim();
+
+  if (repsString === "" || isNaN(parseInt(repsString, 10))) {
+    return undefined;
+  }
+
+  return parseInt(repsString, 10);
+}
+
+function convertDate(dateString, previousDate) {
+  return dateString !== "" ? dateString : previousDate;
 }

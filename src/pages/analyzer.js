@@ -27,7 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import { devLog } from "@/lib/processing-utils";
 import { SessionAnalysisCard } from "@/components/session-analysis-card";
 
-const Analyzer = () => {
+export default function Analyzer() {
   const { data: session, status } = useSession();
   const { isLoading } = useUserLiftData();
   const ssid = useReadLocalStorage("ssid");
@@ -72,10 +72,9 @@ const Analyzer = () => {
       </div>
     </div>
   );
-};
-export default Analyzer;
+}
 
-function KeyLiftCards() {
+export function KeyLiftCards() {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   const { status } = useSession();
 

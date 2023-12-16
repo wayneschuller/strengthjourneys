@@ -71,8 +71,13 @@ export function Layout({ children }) {
         description: "Google servers denied access to selected sheet.",
       });
       demoToastInit = true; // Don't run another toast below and block this one
-      // signOut(); // This gives them a chance to sign in again (in the meantime this useEffect will be retriggered for demo mode)
-      return; // Don't sign out
+
+      // FIXME: this moment is tricky - if 1 hour has expired then we just want to log them out and let them log in again
+      // However if the problem is access to google, then we ought to delete the ssid localstorage stuff so they can try another gsheet
+      // Once we solve refreshtokens, then this kind of error should do the latter - delete ssid and stay logged in.
+
+      // signOut(); // Sign out and return to demo mode (FIXME: Or some how stay logged in)
+      return;
     }
 
     let parsedData = null; // A local version for this scope only

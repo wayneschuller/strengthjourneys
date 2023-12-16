@@ -11,24 +11,17 @@ export default async function handler(req, res) {
     return;
   }
 
-  // console.log(`serverside...`);
-  // console.log(session);
-
   const { ssid } = req.query;
-
-  // console.log(`/api/readGSheet ssid: ${ssid}`);
 
   // Check that query has ssid parameter - should not happen ever.
   // Fortunately doesn't happen often.
   if (!ssid || ssid === "null") {
-    // FIXME:  this return point is not being triggered and we keep passing null ssid to google
-    // console.log(`ssid null check happening`);
     res.status(400).json({ error: "Missing ssid parameter" });
     return;
   }
 
-  const googleAPIKey = process.env.REACT_APP_GOOGLE_API_KEY;
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${googleAPIKey}`;
+  // I used to pass the API key here but it doesn't require it as long as we have a good oauth token via nextauth session
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING`;
 
   try {
     const response = await fetch(url, {
@@ -44,7 +37,6 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    // Handle the data as needed
     res.status(200).json(data);
   } catch (error) {
     console.error("/api/readGSheet API Error:");

@@ -149,7 +149,7 @@ export function processTopLiftsByTypeAndReps(parsedData, selectedLiftTypes) {
   });
 
   devLog(
-    `processWorkoutData() execution time: \x1b[1m${Math.round(
+    `processTopLiftsByTypeAndReps() execution time: \x1b[1m${Math.round(
       performance.now() - startTime,
     )}ms\x1b[0m`,
   );

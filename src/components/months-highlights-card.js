@@ -60,6 +60,7 @@ export function MonthsHighlightsCard() {
 }
 
 const getFirstHistoricalPRsInLastMonth = (parsedData) => {
+  const startTime = performance.now();
   if (!parsedData) return null;
 
   const today = new Date();
@@ -89,6 +90,10 @@ const getFirstHistoricalPRsInLastMonth = (parsedData) => {
   }
 
   const firstPRs = Array.from(firstPRsMap.values());
+  devLog(
+    `getFirstHistoricalPRsInLastMonth() execution time: ` +
+      `\x1b[1m${Math.round(performance.now() - startTime)}ms\x1b[0m`,
+  );
 
   return firstPRs;
 };

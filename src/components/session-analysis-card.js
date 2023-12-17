@@ -26,7 +26,6 @@ export function SessionAnalysisCard() {
   const { parsedData, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
   const { data: session, status } = useSession();
 
-  // Computed data for this component
   let prFound = false;
   const mostRecentDate = parsedData?.[parsedData.length - 1]?.date;
   const recentWorkouts = parsedData?.filter(
@@ -51,7 +50,8 @@ export function SessionAnalysisCard() {
           {status === "unauthenticated" && "Demo Mode: "}Recent Session Analysis
         </CardTitle>
         <CardDescription>
-          Lifting Session Date: {getReadableDateString(mostRecentDate)}
+          Lifting Session Date:{" "}
+          {groupedWorkouts && getReadableDateString(mostRecentDate)}
         </CardDescription>
       </CardHeader>
       <CardContent>

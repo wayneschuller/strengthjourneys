@@ -273,13 +273,11 @@ function generateDateRanges(startDateStr, endDateStr, intervalMonths) {
 function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
   const startTime = performance.now();
 
-  // If isDemoMode is true, return random heatmap data for each day in the range
   if (isDemoMode) {
-    let currentDate = new Date(startDate);
     const demoHeatmapData = [];
-
-    // Define the interval for the date range
-    const dateRange = { start: new Date(startDate), end: new Date(endDate) };
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
+    const oneDay = 24 * 60 * 60 * 1000; // milliseconds in a day
 
     // Function to get a random count based on specified probabilities
     const getRandomCount = () => {
@@ -290,20 +288,19 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
       return 4; // 5% chance of being 4 (note: 3 is never chosen)
     };
 
-    while (isWithinInterval(currentDate, dateRange)) {
+    for (let currentTime = start; currentTime <= end; currentTime += oneDay) {
+      const count = getRandomCount();
       demoHeatmapData.push({
-        date: format(currentDate, "yyyy-MM-dd"), // Format the date as "YYYY-MM-DD"
-        count: getRandomCount(), // Random count based on specified probabilities
-        tooltip: "Random data for demo",
+        date: new Date(currentTime).toISOString().split("T")[0],
+        count: count,
+        tooltip: "Random data for demo mode",
       });
-      currentDate = addDays(currentDate, 1); // Move to the next day
     }
 
     devLog(
-      `generateHeatmapData(${startDate} to ${endDate}) in demo mode execution time: ` +
+      `generateHeatmapData(random) execution time: ` +
         `\x1b[1m${Math.round(performance.now() - startTime)}ms\x1b[0m`,
     );
-
     return demoHeatmapData;
   }
 

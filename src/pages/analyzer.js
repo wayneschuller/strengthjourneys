@@ -40,7 +40,7 @@ export default function Analyzer() {
     );
 
   return (
-    <div className="xl:mx-20">
+    <div className="">
       <Head>
         <title>PR Analyzer (Strength Journeys)</title>
         <meta name="description" content="Strength Journeys Lift PR Analyzer" />

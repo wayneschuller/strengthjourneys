@@ -15,6 +15,7 @@ import { useIsClient, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { useUserLiftData } from "@/lib/use-userlift-data";
 import { Skeleton } from "./ui/skeleton";
+import { addDays, isWithinInterval, format } from "date-fns";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
@@ -85,7 +86,7 @@ export function ActivityHeatmapsCard() {
         )}
       </CardHeader>
       <CardContent>
-        {/* {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />} */}
+        {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
         {intervals &&
           intervals.map((interval, index) => {
             return (
@@ -130,11 +131,17 @@ export function ActivityHeatmapsCard() {
 
 function Heatmap({ parsedData, startDate, endDate, isMobile }) {
   const { theme } = useTheme();
+  const { status } = useSession();
   const [heatmapData, setHeatmapData] = useState(null);
 
   useEffect(() => {
     if (!parsedData) return;
-    const heatmapData = generateHeatmapData(parsedData, startDate, endDate);
+    const heatmapData = generateHeatmapData(
+      parsedData,
+      startDate,
+      endDate,
+      status === "unauthenticated", // This is a clue we have sample data and we will fake the heatmap to impress shallow people
+    );
     setHeatmapData(heatmapData);
   }, [parsedData, startDate, endDate]);
 
@@ -263,8 +270,44 @@ function generateDateRanges(startDateStr, endDateStr, intervalMonths) {
 // If the historicalPR is a coreLift we set: {date: lift.date, count: 4}
 // We also set some tooltips.
 // The heatmap can take colors 0..4
-export const generateHeatmapData = (parsedData, startDate, endDate) => {
+function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
   const startTime = performance.now();
+
+  // If isDemoMode is true, return random heatmap data for each day in the range
+  if (isDemoMode) {
+    let currentDate = new Date(startDate);
+    const demoHeatmapData = [];
+
+    // Define the interval for the date range
+    const dateRange = { start: new Date(startDate), end: new Date(endDate) };
+
+    // Function to get a random count based on specified probabilities
+    const getRandomCount = () => {
+      const rand = Math.random();
+      if (rand < 0.6) return 0; // 60% chance of being 0
+      if (rand < 0.8) return 1; // 30% chance of being 1
+      if (rand < 0.95) return 2; // 15% chance of being 2
+      return 4; // 5% chance of being 4 (note: 3 is never chosen)
+    };
+
+    while (isWithinInterval(currentDate, dateRange)) {
+      demoHeatmapData.push({
+        date: format(currentDate, "yyyy-MM-dd"), // Format the date as "YYYY-MM-DD"
+        count: getRandomCount(), // Random count based on specified probabilities
+        tooltip: "Random data for demo",
+      });
+      currentDate = addDays(currentDate, 1); // Move to the next day
+    }
+
+    devLog(
+      `generateHeatmapData(${startDate} to ${endDate}) in demo mode execution time: ` +
+        `\x1b[1m${Math.round(performance.now() - startTime)}ms\x1b[0m`,
+    );
+
+    return demoHeatmapData;
+  }
+
+  // Normal heatmap data generation logic
 
   // Filter data based on the date range (assumes "YYYY-MM-DD" strings)
   const filteredData = parsedData.filter(
@@ -315,7 +358,7 @@ export const generateHeatmapData = (parsedData, startDate, endDate) => {
   );
 
   return heatmapData;
-};
+}
 
 // Helper function to get tooltip for historical PRs on a specific date
 function getHistoricalPrTooltip(data, currentDate) {

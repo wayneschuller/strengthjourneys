@@ -41,15 +41,15 @@ const Visualizer = () => {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="">
-        <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
+      <div className="flex flex-col justify-center">
+        <h1 className="text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           Strength Visualizer
         </h1>
         <div
           style={{
             position: "relative",
             height: "80vh",
-            width: "92vw",
+            width: "90vw",
           }}
         >
           <DynamicHeaderVisualizerChart />

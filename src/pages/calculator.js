@@ -246,7 +246,7 @@ export default function E1RMCalculator() {
   };
 
   return (
-    <>
+    <div className="flex justify-center">
       <Head>
         <title>E1RM Calculator (Strength Journeys)</title>
         <meta
@@ -431,7 +431,7 @@ export default function E1RMCalculator() {
             )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

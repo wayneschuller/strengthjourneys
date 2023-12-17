@@ -216,7 +216,7 @@ export function Layout({ children }) {
     <>
       <NavBar />
       {/* Below is where we set global x margins for all pages */}
-      <main className="mx-4 mt-4 flex justify-center xl:mx-20">{children}</main>
+      <main className="mx-4 mt-4 lg:mx-20">{children}</main>
       <Footer />
     </>
   );

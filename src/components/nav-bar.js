@@ -35,7 +35,7 @@ export function NavBar() {
     <div className="mx-3 flex items-center xl:mx-16">
       <DesktopNav />
       <MobileNav />
-      <div className="mt-2 flex flex-1 items-center justify-end gap-3">
+      <div className="ml-2 mt-3 flex flex-1 items-center justify-end gap-3">
         {(pathname === "/analyzer" || pathname === "/visualizer") && (
           <SidePanelSelectLiftsButton isIconMode={true} />
         )}

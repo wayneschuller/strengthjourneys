@@ -55,7 +55,7 @@ export function SessionAnalysisCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {!groupedWorkouts && <Skeleton className="flex h-[60vh] flex-1" />}
+        {!groupedWorkouts && <Skeleton className="h-[50vh]" />}
         {groupedWorkouts &&
           (Object.keys(groupedWorkouts).length > 0 ? (
             <ul>

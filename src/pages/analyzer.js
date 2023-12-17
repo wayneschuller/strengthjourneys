@@ -50,7 +50,7 @@ export default function Analyzer() {
         <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           PR Analyzer
         </h1>
-        <div className="mt-4 grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           <div className="grid xl:col-span-2">
             <SessionAnalysisCard />
           </div>

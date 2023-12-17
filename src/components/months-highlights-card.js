@@ -37,7 +37,7 @@ export function MonthsHighlightsCard() {
       </CardHeader>
       <CardContent className="flex flex-1 flex-col">
         <ul>
-          {!historicalPRs && <Skeleton className="flex h-[50vh] flex-1" />}
+          {!historicalPRs && <Skeleton className="h-[50vh]" />}
           {historicalPRs &&
             historicalPRs.map((record) => (
               <li key={`${record.liftType}-${record.reps}-${record.date}`}>

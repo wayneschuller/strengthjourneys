@@ -15,7 +15,6 @@ import { useIsClient, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { useUserLiftData } from "@/lib/use-userlift-data";
 import { Skeleton } from "./ui/skeleton";
-import { addDays, isWithinInterval, format } from "date-fns";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";

@@ -100,15 +100,22 @@ export function getReadableDateString(ISOdate) {
 }
 
 // This is run once at init in the <Layout /> useEffect
-// Loop through the data once and collect top 20 lifts for each lift, reps 1..10
+// Loop through the data once and collect top PRs for each lift, reps 1..10
 // Only do so for selectedLiftTypes
 // This info will likely be used by both Analyzer and Visualizer components - so put in context
 //
 // The return format is: topLiftsByTypeAndReps["Back Squat"][4][17] means 18th best Back Squat 5RM ever
 //
 export function processTopLiftsByTypeAndReps(parsedData, selectedLiftTypes) {
-  const topLiftsByTypeAndReps = {};
   const startTime = performance.now();
+  const topLiftsByTypeAndReps = {};
+
+  // Check the date range using the first and last entries
+  const firstYear = new Date(parsedData[0].date).getFullYear();
+  const lastYear = new Date(
+    parsedData[parsedData.length - 1].date,
+  ).getFullYear();
+  const yearRange = lastYear - firstYear;
 
   parsedData.forEach((entry) => {
     const { liftType, reps } = entry;
@@ -130,10 +137,14 @@ export function processTopLiftsByTypeAndReps(parsedData, selectedLiftTypes) {
     let repArray = topLiftsByTypeAndReps[liftType][reps - 1];
     repArray.push(entry);
 
-    // Sort by weight in descending order and keep top 20
+    // Sort by weight in descending order
     repArray.sort((a, b) => b.weight - a.weight);
-    if (repArray.length > 20) {
-      repArray.length = 20;
+
+    // Adjust the number of top entries to keep based on the year range
+    // FIXME: maybe we don't have to do this, just let components choose how much to use?
+    const maxEntries = yearRange <= 2 ? 5 : 20;
+    if (repArray.length > maxEntries) {
+      repArray.length = maxEntries;
     }
   });
 

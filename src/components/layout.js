@@ -106,7 +106,7 @@ export function Layout({ children }) {
 
     // If there have been any problems we will switch into demo mode with sample data
     // FIXME: Logic is NQR, demo data should only be when unauthenticated
-    if (!parsedData) parsedData = transposeDatesToToday(sampleParsedData, true); // Make demo mode data be recent
+    if (!parsedData) parsedData = transposeDatesToToday(sampleParsedData, true); // Transpose demo dates to recent, add jitter
 
     // As far as possible try to get components to do their own unique processing of parsedData
     // However if there are metrics commonly needed we can do it here just once to save CPU later

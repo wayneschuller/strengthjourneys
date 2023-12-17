@@ -19,7 +19,7 @@ import {
 } from "@/lib/processing-utils";
 
 export function MonthsHighlightsCard() {
-  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
+  const { parsedData } = useContext(ParsedDataContext);
   const { status } = useSession();
   const { isLoading } = useUserLiftData();
 
@@ -31,7 +31,7 @@ export function MonthsHighlightsCard() {
       <CardHeader>
         <CardTitle>
           {status === "unauthenticated" && "Demo Mode: "}This Month{"'"}s
-          Highlights
+          Highlights For All Lifts
         </CardTitle>
         <CardDescription>Core lift types are in bold.</CardDescription>
       </CardHeader>
@@ -59,55 +59,7 @@ export function MonthsHighlightsCard() {
   );
 }
 
-// Function to get top lifts for different rep ranges for a specified lift type
-function getLiftTypePRs(parsedData, liftType) {
-  const startTime = performance.now();
-
-  // Initialize liftTypePRs array with empty arrays for each rep range (0 to 10)
-  const liftTypePRs = Array.from({ length: 11 }, () => []);
-
-  // Filter entries for the specified lift type
-  const liftTypeEntries = parsedData.filter(
-    (entry) => entry.liftType === liftType,
-  );
-
-  // Sort entries based on weight in descending order
-  const sortedEntries = liftTypeEntries.sort((a, b) => b.weight - a.weight);
-
-  // Populate liftTypePRs array for each rep range
-  for (let reps = 1; reps <= 10; reps++) {
-    const liftTypeEntriesForReps = sortedEntries.filter(
-      (entry) => entry.reps === reps,
-    );
-    liftTypePRs[reps] = liftTypeEntriesForReps.slice(0, 20);
-  }
-
-  devLog(
-    `getLiftTypePRs(${liftType}) execution time: ` +
-      `\x1b[1m${Math.round(performance.now() - startTime)}` +
-      `ms\x1b[0m`,
-  );
-  return liftTypePRs;
-}
-
-export const getHistoricalPRsInLastMonth = (parsedData) => {
-  const today = new Date();
-  const lastMonth = new Date(today);
-  lastMonth.setMonth(today.getMonth() - 1);
-
-  // Filter records that are historical PRs and fall within the last month
-  const historicalPRsInLastMonth = parsedData.filter((record) => {
-    return (
-      record.isHistoricalPR &&
-      new Date(record.date) >= lastMonth &&
-      new Date(record.date) <= today
-    );
-  });
-
-  return historicalPRsInLastMonth;
-};
-
-export const getFirstHistoricalPRsInLastMonth = (parsedData) => {
+const getFirstHistoricalPRsInLastMonth = (parsedData) => {
   if (!parsedData) return null;
 
   const today = new Date();

@@ -5,6 +5,7 @@
 
 import Head from "next/head";
 import React, { useState, useEffect } from "react";
+import { GeistMono } from "geist/font/mono";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -68,7 +69,7 @@ function Stopwatch({ time, setTime }) {
       >
         <CardContent>
           <div
-            className={`pt-6 text-center font-mono text-8xl font-bold md:text-[10rem] lg:text-[20rem] xl:text-[20rem] 2xl:text-[30rem]`}
+            className={`${GeistMono.className} pt-6 text-center font-mono text-8xl font-bold md:text-[10rem] lg:text-[20rem] xl:text-[20rem] 2xl:text-[30rem]`}
           >
             {formatTime(time)}
           </div>

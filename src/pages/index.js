@@ -35,10 +35,10 @@ export default function Home() {
         />
         <link rel="canonical" href="https://www.strengthjourneys.xyz/" />
       </Head>
-      <h1 className="flex-1 space-x-2 text-center text-4xl font-extrabold tracking-tight lg:text-5xl ">
+      <h1 className="flex-1 space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-16 lg:text-5xl ">
         Welcome to {title}
       </h1>
-      <h2 className="mt-2 scroll-m-20 text-center text-2xl tracking-tight lg:mx-20">
+      <h2 className="mt-2 scroll-m-20 text-center text-2xl tracking-tight md:my-10 lg:mx-20">
         A free{" "}
         <a
           className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"

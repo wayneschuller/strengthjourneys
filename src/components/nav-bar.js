@@ -32,10 +32,10 @@ export function NavBar() {
   const pathname = usePathname();
 
   return (
-    <div className="mx-3 flex items-center md:container">
+    <div className="mx-3 flex items-center xl:mx-16">
       <DesktopNav />
       <MobileNav />
-      <div className="mt-2 flex flex-1 items-center justify-end gap-2">
+      <div className="mt-2 flex flex-1 items-center justify-end gap-3">
         {(pathname === "/analyzer" || pathname === "/visualizer") && (
           <SidePanelSelectLiftsButton isIconMode={true} />
         )}

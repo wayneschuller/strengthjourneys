@@ -37,3 +37,6 @@ yarn-error.log*
 next-env.d.ts
 
 .vscode
+
+# WS 20231217 
+dependencies/react-google-drive-picker/node_modules

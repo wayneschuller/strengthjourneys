@@ -41,7 +41,7 @@ const Visualizer = () => {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="flex flex-col justify-center">
+      <div className="flex flex-col items-center justify-center">
         <h1 className="text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           Strength Visualizer
         </h1>

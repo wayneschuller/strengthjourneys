@@ -129,54 +129,53 @@ function parseTurnKeyData(data) {
 // We do assume that if date or lift type are blank we can infer from a previous row
 // We return parsedData that is always sorted date ascending
 // See @/lib/sample-parsed-data.js for data structure design
-function parseBespokeData(data) {
-  const startTime = performance.now(); // We measure critical processing steps
-  const columnNames = data[0];
 
+function parseBespokeData(data) {
+  const startTime = performance.now();
+  const columnNames = data[0];
   let previousDate = null;
   let previousLiftType = null;
 
-  const objectsArray = data
-    .slice(1)
-    .map((row) => {
-      const obj = {};
+  const objectsArray = [];
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const obj = {};
 
-      columnNames.forEach((columnName, index) => {
-        switch (columnName) {
-          case "Date":
-            obj["date"] = convertDate(row[index], previousDate);
-            previousDate = obj["date"];
-            break;
-          case "Lift Type":
-            // Use one camelcase word for the field
-            obj["liftType"] = row[index] !== "" ? row[index] : previousLiftType;
-            previousLiftType = obj["liftType"];
-            break;
-          case "Reps":
-            obj["reps"] = convertStringToInt(row[index]);
-            break;
-          case "Weight":
-            const { value, unitType } = convertWeightAndUnitType(row[index]);
-            obj["weight"] = value;
-            obj["unitType"] = unitType;
-            break;
-          case "Notes":
-            obj["notes"] = row[index];
-            break;
-          default:
-            obj[columnName] = row[index]; // Pass through any other user rows
-          //FIXME: Notes should become notes
-        }
-      });
+    for (let j = 0; j < columnNames.length; j++) {
+      const columnName = columnNames[j];
+      const rowData = row[j];
 
-      if (obj["reps"] === undefined || obj["weight"] === undefined) {
-        return null;
+      switch (columnName) {
+        case "Date":
+          obj["date"] = rowData !== "" ? rowData : previousDate;
+          previousDate = obj["date"];
+          break;
+        case "Lift Type":
+          obj["liftType"] = rowData !== "" ? rowData : previousLiftType;
+          previousLiftType = obj["liftType"];
+          break;
+        case "Reps":
+          obj["reps"] = convertStringToInt(rowData);
+          break;
+        case "Weight":
+          const { value, unitType } = convertWeightAndUnitType(rowData);
+          obj["weight"] = value;
+          obj["unitType"] = unitType;
+          break;
+        case "Notes":
+          obj["notes"] = rowData;
+          break;
+        default:
+          obj[columnName] = rowData;
       }
+    }
 
-      return obj;
-    })
-    .filter(Boolean)
-    .sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort by date ascending
+    if (obj["reps"] !== undefined && obj["weight"] !== undefined) {
+      objectsArray.push(obj);
+    }
+  }
+
+  objectsArray.sort((a, b) => a.date.localeCompare(b.date));
 
   devLog(
     "parseGSheetData() execution time: " +

@@ -46,8 +46,7 @@ export function ActivityHeatmapsCard() {
   const { status } = useSession();
   const { isLoading } = useUserLiftData();
   const isClient = useIsClient();
-  const theme = null;
-  const colorClass = `bg-gh-${theme || "light"}-2 rounded-full`;
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (!parsedData) return;
@@ -81,7 +80,8 @@ export function ActivityHeatmapsCard() {
             {intervalMonths} month heatmap{intervals.length > 1 && "s"} for all
             lifting sessions from {getReadableDateString(startDate)} -{" "}
             {getReadableDateString(endDate)}. Historical PRs are highlighted.
-            Core lift PRs are brighter.
+            Major barbell lift type PRs are{" "}
+            {theme === "dark" ? "brighter" : "darker"}.
           </CardDescription>
         )}
       </CardHeader>

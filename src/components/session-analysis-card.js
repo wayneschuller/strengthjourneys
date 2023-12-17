@@ -89,10 +89,10 @@ export function SessionAnalysisCard() {
       <CardFooter>
         {groupedWorkouts && (
           <div>
-            Session rating:{" "}
+            <strong>Session rating:</strong>{" "}
             {prFound
               ? "Awesome"
-              : "You beat 100% of people who stayed on the couch."}
+              : "You are beating 100% of people who won't get off the couch."}
           </div>
         )}
       </CardFooter>

@@ -72,13 +72,12 @@ export function LiftTypeFrequencyPieCard() {
       <CardHeader>
         <CardTitle>
           {status !== "authenticated" && "Demo mode: "} Your Top{" "}
-          {pieData?.length} Lifts
+          {pieData?.length > 0 ? pieData.length : ""} Lifts
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-row justify-center md:h-[40vh] xl:gap-4">
-        {(!pieChartData || !liftTypes) && (
-          <Skeleton className="flex h-[40vh] w-64 flex-1" />
-        )}
+      <CardContent className="flex max-h-full flex-1 justify-center">
+        {/* I find the Skeleton here never appears long enough to provide value */}
+        {/* {(!pieChartData || !liftTypes) && <Skeleton className="" />} */}
         {pieChartData && <Pie data={pieChartData} options={pieChartOptions} />}
       </CardContent>
     </Card>

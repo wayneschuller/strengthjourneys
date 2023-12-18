@@ -84,9 +84,17 @@ export function Layout({ children }) {
 
     if (status === "authenticated" && data?.values) {
       parsedData = parseData(data.values); // Will be sorted date ascending
-      devLog(`this is here`);
 
-      if (parsedData === null) {
+      if (parsedData !== null) {
+        // We have some good data loaded - tell the user via toast
+        loadedToastInit = true; // Don't show this again
+        const description = sheetFilename || "File name unknown";
+        toast({
+          title: "Data loaded from Google Sheets",
+          description: description,
+        });
+      } else {
+        // Parsing error. Tell the user.
         console.error(`Could not parse data. Please choose a different file.`);
         toast({
           variant: "destructive",
@@ -94,7 +102,7 @@ export function Layout({ children }) {
           description:
             "We could access the data but could not understand it. Please choose a different Google Sheet.",
         });
-        demoToastInit = true; // Don't run another toast below and block this one
+        demoToastInit = true; // Don't run another toast
 
         // Forget their chosen file, we have access but we cannot parse it
         setSsid(null);
@@ -163,7 +171,7 @@ export function Layout({ children }) {
     setParsedData(parsedData);
   }, [data, isLoading, isError, status]);
 
-  // useEffect for showing toast instructions on key state changes
+  // useEffect for reminding the user when Analyzer/Visualizer show demo data
   useEffect(() => {
     // devLog(`<Layout /> Toast useEffect`);
 
@@ -191,26 +199,7 @@ export function Layout({ children }) {
       });
       return;
     }
-
-    // Tell the user when data is loaded
-    // FIXME: if they have some PRs TODAY, show them a reward toast with confetti instead
-    if (
-      !loadedToastInit &&
-      status === "authenticated" &&
-      ssid &&
-      parsedData?.length > 0
-    ) {
-      loadedToastInit = true; // Don't show this again
-
-      const description = sheetFilename || "File name unknown";
-
-      toast({
-        title: "Data loaded from Google Sheets",
-        description: description,
-      });
-      return;
-    }
-  }, [status, parsedData, router]);
+  }, [status, router]);
 
   return (
     <>

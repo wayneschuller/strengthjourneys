@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/card";
 import { GettingStartedCard } from "@/components/instructions-cards";
 
-// Array of main feature pages
 const featurePages = [
   {
     href: "/analyzer",
@@ -60,7 +59,7 @@ export default function Home() {
       </h1>
       <PageDescription />
 
-      <div className="mx-4 my-10 grid grid-cols-1 items-stretch gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-4">
+      <div className="mx-4 my-10 grid grid-cols-1 justify-stretch gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-4">
         {featurePages.map((card, index) => (
           <FeatureCard key={index} {...card} />
         ))}

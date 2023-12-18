@@ -47,7 +47,7 @@ export function SessionAnalysisCard() {
     <Card>
       <CardHeader>
         <CardTitle>
-          {status === "unauthenticated" && "Demo Mode: "}Recent Session Analysis
+          {status !== "authenticated" && "Demo Mode: "}Recent Session Analysis
         </CardTitle>
         <CardDescription>
           Lifting Session Date:{" "}

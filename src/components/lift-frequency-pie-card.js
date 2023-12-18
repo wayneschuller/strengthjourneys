@@ -71,7 +71,7 @@ export function LiftTypeFrequencyPieCard() {
     <Card>
       <CardHeader>
         <CardTitle>
-          {status === "unauthenticated" && "Demo mode: "} Your Top{" "}
+          {status !== "authenticated" && "Demo mode: "} Your Top{" "}
           {pieData?.length} Lifts
         </CardTitle>
       </CardHeader>

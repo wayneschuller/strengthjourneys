@@ -30,7 +30,7 @@ export function MonthsHighlightsCard() {
     <Card>
       <CardHeader>
         <CardTitle>
-          {status === "unauthenticated" && "Demo Mode: "}This Month{"'"}s
+          {status !== "authenticated" && "Demo Mode: "}This Month{"'"}s
           Highlights For All Lift Types
         </CardTitle>
         <CardDescription>Core lift types are in bold.</CardDescription>

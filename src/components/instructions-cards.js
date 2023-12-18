@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
-import useDrivePicker from "../../dependencies/react-google-drive-picker/dist";
+import useDrivePicker from "react-google-drive-picker";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
@@ -27,7 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export function InstructionsCard({ session }) {
+export function ChooseSheetInstructionsCard({ session }) {
   const [openPicker, authResponse] = useDrivePicker();
 
   // We need the next 3 for the file picker button we give with instructions

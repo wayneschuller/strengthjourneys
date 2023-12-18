@@ -5,7 +5,7 @@ import Head from "next/head";
 import { useEffect, useState, useContext } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { useUserLiftData } from "@/lib/use-userlift-data";
-import { InstructionsCard } from "@/components/instructions-card";
+import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { devLog } from "@/lib/processing-utils";
 import { useReadLocalStorage } from "usehooks-ts";
 
@@ -27,7 +27,7 @@ const Visualizer = () => {
   if (!isLoading && session?.user && !ssid)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
-        <InstructionsCard session={session} />
+        <ChooseSheetInstructionsCard session={session} />
       </div>
     );
 

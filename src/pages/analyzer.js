@@ -6,7 +6,7 @@ import { useContext, useState, useEffect } from "react";
 import { ParsedDataContext } from "@/pages/_app";
 import { useUserLiftData } from "@/lib/use-userlift-data";
 import { InspirationCard } from "@/components/inspiration-card";
-import { InstructionsCard } from "@/components/instructions-card";
+import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { LiftAchievementsCard } from "@/components/lift-achievements-card";
 import { MonthsHighlightsCard } from "@/components/months-highlights-card";
 import { useReadLocalStorage } from "usehooks-ts";
@@ -35,7 +35,7 @@ export default function Analyzer() {
   if (!isLoading && status === "authenticated" && !ssid)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
-        <InstructionsCard session={session} />
+        <ChooseSheetInstructionsCard session={session} />
       </div>
     );
 

@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { GettingStartedCard } from "@/components/instructions-card";
+import { GettingStartedCard } from "@/components/instructions-cards";
 
 export default function Home() {
   // Big icon defaults to look good on the landing page cards

@@ -24,7 +24,7 @@ import {
 
 export function SessionAnalysisCard() {
   const { parsedData, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
-  const { data: session, status } = useSession();
+  const { data: session, status: authStatus } = useSession();
 
   let prFound = false;
   const mostRecentDate = parsedData?.[parsedData.length - 1]?.date;
@@ -47,7 +47,8 @@ export function SessionAnalysisCard() {
     <Card>
       <CardHeader>
         <CardTitle>
-          {status !== "authenticated" && "Demo Mode: "}Recent Session Analysis
+          {authStatus !== "authenticated" && "Demo Mode: "}Recent Session
+          Analysis
         </CardTitle>
         <CardDescription>
           Lifting Session Date:{" "}

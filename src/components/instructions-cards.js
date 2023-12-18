@@ -103,7 +103,7 @@ export function ChooseSheetInstructionsCard({ session }) {
 }
 
 export function GettingStartedCard() {
-  const { data: session, status } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const [openPicker, authResponse] = useDrivePicker();
 
   // We need the next 3 for the file picker button we give with instructions
@@ -171,7 +171,7 @@ export function GettingStartedCard() {
           />
         </div>
         <div className="">
-          {status !== "authenticated" ? (
+          {authStatus !== "authenticated" ? (
             <button
               onClick={() => signIn("google")}
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
@@ -182,7 +182,7 @@ export function GettingStartedCard() {
             "Sign in"
           )}{" "}
           and{" "}
-          {status === "authenticated" && !ssid ? (
+          {authStatus === "authenticated" && !ssid ? (
             <button
               onClick={() =>
                 handleOpenFilePicker(
@@ -200,6 +200,7 @@ export function GettingStartedCard() {
           ) : (
             "select your Google Sheet"
           )}
+          .
         </div>
         <div className="flex justify-center">
           <ArrowBigRight

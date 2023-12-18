@@ -62,7 +62,7 @@ export default function VisualizerChart() {
   const [chartData, setChartData] = useState(null);
   const [e1rmFormula, setE1rmFormula] = useState("Brzycki");
   const { isLoading } = useUserLiftData();
-  const { status } = useSession();
+  const { status: authStatus } = useSession();
 
   // Local computed/derived variables
   let firstDate = null;
@@ -234,7 +234,7 @@ export default function VisualizerChart() {
       },
     },
     title: {
-      display: status === "unauthenticated", // Show explanatory visualizer title in demo mode only
+      display: authStatus === "unauthenticated", // Show explanatory visualizer title in demo mode only
       color: theme === "dark" ? "white" : "black",
       text: isMobile
         ? "Demo mode: e1rm sample data"

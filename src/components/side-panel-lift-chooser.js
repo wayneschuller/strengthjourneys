@@ -87,7 +87,7 @@ export function SidePanelSelectLiftsButton({ isIconMode }) {
 const CheckboxLifts = ({}) => {
   const { liftTypes, selectedLiftTypes, setSelectedLiftTypes } =
     useContext(ParsedDataContext);
-  const { status } = useSession();
+  const { status: authStatus } = useSession();
 
   const handleCheckboxChange = (liftType) => {
     // Calculate updatedSelected first
@@ -109,7 +109,7 @@ const CheckboxLifts = ({}) => {
 
     // Update localStorage
     const localStorageKey = `selectedLifts${
-      status === "unauthenticated" ? "_demoMode" : ""
+      authStatus === "unauthenticated" ? "_demoMode" : ""
     }`;
     localStorage.setItem(localStorageKey, JSON.stringify(updatedSelected));
 

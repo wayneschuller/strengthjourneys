@@ -7,7 +7,12 @@ import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import Image from "next/image";
 import { useLocalStorage } from "usehooks-ts";
-import { ArrowRight, PersonStanding, Table2, TrendingUp } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowBigDown,
+  ArrowBigRight,
+} from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 
@@ -115,7 +120,7 @@ export function GettingStartedCard() {
       <CardHeader>
         <CardTitle>Getting Started</CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-7">
+      <CardContent className="grid grid-cols-1 md:grid-cols-7">
         <div className="">
           Lift progressively heavier things with a{" "}
           <a
@@ -128,7 +133,16 @@ export function GettingStartedCard() {
           . Squat, bench, deadlift. Usually inside a gym.
         </div>
         <div className="flex justify-center">
-          <ArrowRight size={arrowSize} />
+          <ArrowBigRight
+            size={arrowSize}
+            strokeWidth={0.5}
+            className="hidden md:block"
+          />
+          <ArrowBigDown
+            size={arrowSize}
+            strokeWidth={0.5}
+            className="block md:hidden"
+          />
         </div>
         <div className="">
           Record your lifting progress in Google Sheets.
@@ -145,7 +159,16 @@ export function GettingStartedCard() {
           </div>
         </div>
         <div className="flex justify-center">
-          <ArrowRight size={arrowSize} />
+          <ArrowBigRight
+            size={arrowSize}
+            strokeWidth={0.5}
+            className="hidden md:block"
+          />
+          <ArrowBigDown
+            size={arrowSize}
+            strokeWidth={0.5}
+            className="block md:hidden"
+          />
         </div>
         {/* <PersonStanding size="100" /> */}
         {/* <div className="">
@@ -193,7 +216,16 @@ export function GettingStartedCard() {
           )}
         </div>
         <div className="flex justify-center">
-          <ArrowRight size={arrowSize} />
+          <ArrowBigRight
+            size={arrowSize}
+            strokeWidth={0.5}
+            className="hidden md:block"
+          />
+          <ArrowBigDown
+            size={arrowSize}
+            strokeWidth={0.5}
+            className="block md:hidden"
+          />
         </div>
         <div className="">
           Explore the{" "}

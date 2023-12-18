@@ -116,11 +116,11 @@ export function GettingStartedCard() {
 
   const arrowSize = 75;
   return (
-    <Card className="">
+    <Card className="hover:ring-0">
       <CardHeader>
         <CardTitle>Getting Started</CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-7">
+      <CardContent className="grid grid-cols-1 lg:grid-cols-7">
         <div className="">
           Lift progressively heavier things with a{" "}
           <a
@@ -136,12 +136,12 @@ export function GettingStartedCard() {
           <ArrowBigRight
             size={arrowSize}
             strokeWidth={0.5}
-            className="hidden md:block"
+            className="hidden lg:block"
           />
           <ArrowBigDown
             size={arrowSize}
             strokeWidth={0.5}
-            className="block md:hidden"
+            className="block lg:hidden"
           />
         </div>
         <div className="">
@@ -162,12 +162,12 @@ export function GettingStartedCard() {
           <ArrowBigRight
             size={arrowSize}
             strokeWidth={0.5}
-            className="hidden md:block"
+            className="hidden lg:block"
           />
           <ArrowBigDown
             size={arrowSize}
             strokeWidth={0.5}
-            className="block md:hidden"
+            className="block lg:hidden"
           />
         </div>
         <div className="">
@@ -206,12 +206,12 @@ export function GettingStartedCard() {
           <ArrowBigRight
             size={arrowSize}
             strokeWidth={0.5}
-            className="hidden md:block"
+            className="hidden lg:block"
           />
           <ArrowBigDown
             size={arrowSize}
             strokeWidth={0.5}
-            className="block md:hidden"
+            className="block lg:hidden"
           />
         </div>
         <div className="">

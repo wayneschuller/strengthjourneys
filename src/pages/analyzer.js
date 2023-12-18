@@ -40,7 +40,7 @@ export default function Analyzer() {
     );
 
   return (
-    <div className="lg:mx-32">
+    <div className="xl:mx-32">
       <Head>
         <title>PR Analyzer (Strength Journeys)</title>
         <meta name="description" content="Strength Journeys Lift PR Analyzer" />

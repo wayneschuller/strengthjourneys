@@ -35,7 +35,7 @@ export function MonthsHighlightsCard() {
         </CardTitle>
         <CardDescription>Core lift types are in bold.</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col">
+      <CardContent className="">
         <ul>
           {!historicalPRs && <Skeleton className="h-[50vh]" />}
           {historicalPRs &&

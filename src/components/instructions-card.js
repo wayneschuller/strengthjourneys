@@ -115,10 +115,17 @@ export function GettingStartedCard() {
       <CardHeader>
         <CardTitle>Getting Started</CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-8">
+      <CardContent className="grid grid-cols-7">
         <div className="">
-          Lift progressively heavier things with a barbell. Squat, bench,
-          deadlift.
+          Lift progressively heavier things with a{" "}
+          <a
+            href="https://www.roguefitness.com/rogue-45lb-ohio-power-bar-bare-steel"
+            target="_blank"
+            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          >
+            barbell
+          </a>
+          . Squat, bench, deadlift. Usually inside a gym.
         </div>
         <div className="flex justify-center">
           <ArrowRight size={arrowSize} />

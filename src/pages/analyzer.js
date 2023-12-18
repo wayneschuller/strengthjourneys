@@ -28,11 +28,11 @@ import { devLog } from "@/lib/processing-utils";
 import { SessionAnalysisCard } from "@/components/session-analysis-card";
 
 export default function Analyzer() {
-  const { data: session, status } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const { isLoading } = useUserLiftData();
   const ssid = useReadLocalStorage("ssid");
 
-  if (!isLoading && status === "authenticated" && !ssid)
+  if (!isLoading && authStatus === "authenticated" && !ssid)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
         <ChooseSheetInstructionsCard session={session} />
@@ -76,11 +76,11 @@ export default function Analyzer() {
 
 export function KeyLiftCards() {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
-  const { status } = useSession();
+  const { status: authStatus } = useSession();
 
   return (
     <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-      {status === "unauthenticated" && (
+      {authStatus === "unauthenticated" && (
         <div className="md:col-span-2 xl:col-span-4">
           <Card>
             <CardHeader>
@@ -109,7 +109,7 @@ export function KeyLiftCards() {
         />
       ))}
 
-      {status === "authenticated" && (
+      {authStatus === "authenticated" && (
         // <div className="grid grid-cols-1">
         <div className="md:col-span-2 xl:col-span-4">
           <Card>

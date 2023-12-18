@@ -16,7 +16,7 @@ Chart.register(ArcElement, ChartDataLabels);
 
 export function LiftTypeFrequencyPieCard() {
   const { liftTypes } = useContext(ParsedDataContext);
-  const { status } = useSession();
+  const { status: authStatus } = useSession();
 
   const pieData = liftTypes
     ?.map((item) => ({
@@ -71,7 +71,7 @@ export function LiftTypeFrequencyPieCard() {
     <Card>
       <CardHeader>
         <CardTitle>
-          {status !== "authenticated" && "Demo mode: "} Your Top{" "}
+          {authStatus !== "authenticated" && "Demo mode: "} Your Top{" "}
           {pieData?.length > 0 ? pieData.length : ""} Lifts
         </CardTitle>
       </CardHeader>

@@ -20,7 +20,7 @@ const fetcher = (url, token) =>
 
 export function useUserLiftData2() {
   const ssid = useReadLocalStorage("ssid");
-  const { data: session, status } = useSession();
+  const { data: session, status: authStatus } = useSession();
 
   const shouldFetch = session?.accessToken && ssid ? true : false; // Only fetch if we have auth and ssid
 

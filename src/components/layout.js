@@ -35,7 +35,7 @@ export function Layout({ children }) {
     setSelectedLiftTypes,
     setTopLiftsByTypeAndReps,
   } = useContext(ParsedDataContext);
-  const { data: session, status } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const { data, isError, isLoading } = useUserLiftData();
   const [ssid, setSsid] = useLocalStorage("ssid", null);
   const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
@@ -52,7 +52,7 @@ export function Layout({ children }) {
   useEffect(() => {
     // devLog( `<Layout /> useEffect[data]: isLoading ${isLoading}, isError ${isError}`,);
 
-    if (status === "loading") return; // Wait for auth. Don't prematurely go into demo mode
+    if (authStatus === "loading") return; // Wait for auth. Don't prematurely go into demo mode
     if (isLoading) return; // Wait for useSWR. Don't prematurely go into demo mode
 
     // If data changes and we have isError then signOut
@@ -82,7 +82,7 @@ export function Layout({ children }) {
 
     let parsedData = null; // A local version for this scope only
 
-    if (status === "authenticated" && data?.values) {
+    if (authStatus === "authenticated" && data?.values) {
       parsedData = parseData(data.values); // Will be sorted date ascending
 
       if (parsedData !== null) {
@@ -131,7 +131,7 @@ export function Layout({ children }) {
     // When in demo mode (auth unauthenticated) we have a separate localstorage
     // FIXME: there is a bug here for a new user with only one type of lift data
     const localStorageKey = `selectedLifts${
-      status === "unauthenticated" ? "_demoMode" : ""
+      authStatus === "unauthenticated" ? "_demoMode" : ""
     }`;
     let selectedLiftTypes = localStorage.getItem(localStorageKey);
 
@@ -145,7 +145,7 @@ export function Layout({ children }) {
         .map((lift) => lift.liftType);
 
       devLog(
-        `Localstorage selectedLifts not found! (auth status is ${status}). Setting:`,
+        `Localstorage selectedLifts not found! (auth status is ${authStatus}). Setting:`,
       );
       devLog(defaultSelectedLifts);
 
@@ -169,13 +169,13 @@ export function Layout({ children }) {
     // devLog(topLiftsByTypeAndReps);
 
     setParsedData(parsedData);
-  }, [data, isLoading, isError, status]);
+  }, [data, isLoading, isError, authStatus]);
 
   // useEffect for reminding the user when Analyzer/Visualizer show demo data
   useEffect(() => {
     // devLog(`<Layout /> Toast useEffect`);
 
-    if (status === "loading") return;
+    if (authStatus === "loading") return;
 
     // Check if the current path is "/visualizer" or "/analyzer"
     const isVisualizerRoute = currentPath === "/visualizer";
@@ -184,7 +184,7 @@ export function Layout({ children }) {
     if (!isVisualizerRoute && !isAnalyzerRoute) return; // Don't show toast on generic pages like Timer
 
     // Tell the user when demo mode has started
-    if (!demoToastInit && status === "unauthenticated") {
+    if (!demoToastInit && authStatus === "unauthenticated") {
       demoToastInit = true; // Don't show this again
 
       toast({
@@ -199,7 +199,7 @@ export function Layout({ children }) {
       });
       return;
     }
-  }, [status, router]);
+  }, [authStatus, router]);
 
   return (
     <>

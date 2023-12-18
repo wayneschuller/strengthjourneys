@@ -42,7 +42,7 @@ export function ActivityHeatmapsCard() {
   const [endDate, setEndDate] = useState(null);
   const [intervals, setIntervals] = useState(null);
   const [intervalMonths, setIntervalMonths] = useState(18);
-  const { status } = useSession();
+  const { status: authStatus } = useSession();
   const { isLoading } = useUserLiftData();
   const isClient = useIsClient();
   const { theme } = useTheme();
@@ -71,8 +71,8 @@ export function ActivityHeatmapsCard() {
     <Card>
       <CardHeader>
         <CardTitle>
-          {status === "unauthenticated" && "Demo mode: "}Activity History For
-          All Lift Types
+          {authStatus === "unauthenticated" && "Demo mode: "}Activity History
+          For All Lift Types
         </CardTitle>
         {intervals && (
           <CardDescription>
@@ -104,7 +104,7 @@ export function ActivityHeatmapsCard() {
             );
           })}
       </CardContent>
-      {status === "authenticated" && intervals && (
+      {authStatus === "authenticated" && intervals && (
         <CardFooter>
           <div className="flex flex-1 flex-row justify-end">
             <TooltipProvider>
@@ -130,7 +130,7 @@ export function ActivityHeatmapsCard() {
 
 function Heatmap({ parsedData, startDate, endDate, isMobile }) {
   const { theme } = useTheme();
-  const { status } = useSession();
+  const { status: authStatus } = useSession();
   const [heatmapData, setHeatmapData] = useState(null);
 
   useEffect(() => {
@@ -139,7 +139,7 @@ function Heatmap({ parsedData, startDate, endDate, isMobile }) {
       parsedData,
       startDate,
       endDate,
-      status === "unauthenticated", // This is a clue we have sample data and we will fake the heatmap to impress shallow people
+      authStatus === "unauthenticated", // This is a clue we have sample data and we will fake the heatmap to impress shallow people
     );
     setHeatmapData(heatmapData);
   }, [parsedData, startDate, endDate]);

@@ -20,7 +20,7 @@ import {
 
 export function MonthsHighlightsCard() {
   const { parsedData } = useContext(ParsedDataContext);
-  const { status } = useSession();
+  const { status: authStatus } = useSession();
   const { isLoading } = useUserLiftData();
 
   // FIXME: these stats are rubbish - convert to the topSetsByLiftsAndReps in global context
@@ -30,7 +30,7 @@ export function MonthsHighlightsCard() {
     <Card>
       <CardHeader>
         <CardTitle>
-          {status !== "authenticated" && "Demo Mode: "}This Month{"'"}s
+          {authStatus !== "authenticated" && "Demo Mode: "}This Month{"'"}s
           Highlights For All Lift Types
         </CardTitle>
         <CardDescription>Core lift types are in bold.</CardDescription>

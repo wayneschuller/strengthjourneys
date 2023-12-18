@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import Image from "next/image";
 import { useLocalStorage } from "usehooks-ts";
+import { ArrowRight, PersonStanding, Table2, TrendingUp } from "lucide-react";
+import { useSession, signIn, signOut } from "next-auth/react";
+import Link from "next/link";
 
 import SampleImage from "../../public/sample_google_sheet_fuzzy_border.png";
 
@@ -89,6 +92,124 @@ export function InstructionsCard({ session }) {
         >
           Choose Google Sheet
         </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+export function GettingStartedCard() {
+  const { data: session, status } = useSession();
+  const [openPicker, authResponse] = useDrivePicker();
+
+  // We need the next 3 for the file picker button we give with instructions
+  const [ssid, setSsid] = useLocalStorage("ssid", null);
+  const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
+  const [sheetFilename, setSheetFilename] = useLocalStorage(
+    "sheetFilename",
+    null,
+  );
+
+  const arrowSize = 75;
+  return (
+    <Card className="">
+      <CardHeader>
+        <CardTitle>Getting Started</CardTitle>
+      </CardHeader>
+      <CardContent className="grid grid-cols-8">
+        <div className="">
+          Lift progressively heavier things with a barbell. Squat, bench,
+          deadlift.
+        </div>
+        <div className="flex justify-center">
+          <ArrowRight size={arrowSize} />
+        </div>
+        <div className="">
+          Record your lifting progress in Google Sheets.
+          <div>
+            (
+            <a
+              href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+              target="_blank"
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            >
+              sample Google Sheet
+            </a>
+            )
+          </div>
+        </div>
+        <div className="flex justify-center">
+          <ArrowRight size={arrowSize} />
+        </div>
+        {/* <PersonStanding size="100" /> */}
+        {/* <div className="">
+          <a
+            href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+            target="_blank"
+          >
+            <Image
+              className="w-5/6 md:w-1/6"
+              src={SampleImage}
+              priority={true}
+              alt="Screenshot of sample google sheet data"
+            />
+          </a>
+        </div> */}
+        <div className="">
+          {status !== "authenticated" ? (
+            <button
+              onClick={() => signIn("google")}
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            >
+              Sign in
+            </button>
+          ) : (
+            "Sign in"
+          )}{" "}
+          and{" "}
+          {status === "authenticated" && !ssid ? (
+            <button
+              onClick={() =>
+                handleOpenFilePicker(
+                  openPicker,
+                  session.accessToken,
+                  setSsid,
+                  setSheetURL,
+                  setSheetFilename,
+                )
+              }
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            >
+              select your Google Sheet
+            </button>
+          ) : (
+            "select your Google Sheet"
+          )}
+        </div>
+        <div className="flex justify-center">
+          <ArrowRight size={arrowSize} />
+        </div>
+        <div className="">
+          Explore the{" "}
+          <Link
+            href="/analyzer"
+            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          >
+            Analyzer
+          </Link>{" "}
+          or{" "}
+          <Link
+            href="/visualizer"
+            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          >
+            Visualizer
+          </Link>{" "}
+          for motivation, rewards and additional insights.
+        </div>
+      </CardContent>
+      <CardFooter className="text-muted-foreground">
+        Strength Journeys securely accesses your Google Sheet for read-only
+        purposes, ensuring your data is never altered or stored by us. Your
+        original data remains intact and solely under your control.
       </CardFooter>
     </Card>
   );

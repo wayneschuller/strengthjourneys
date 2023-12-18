@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { GettingStartedCard } from "@/components/instructions-card";
 
 export default function Home() {
   // Big icon defaults to look good on the landing page cards
@@ -110,6 +111,9 @@ export default function Home() {
             </CardContent>
           </Card>
         </Link>
+        <div className="mt-5 lg:col-span-2 2xl:col-span-4">
+          <GettingStartedCard />
+        </div>
       </div>
     </div>
   );

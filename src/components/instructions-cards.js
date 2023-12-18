@@ -170,20 +170,6 @@ export function GettingStartedCard() {
             className="block md:hidden"
           />
         </div>
-        {/* <PersonStanding size="100" /> */}
-        {/* <div className="">
-          <a
-            href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
-            target="_blank"
-          >
-            <Image
-              className="w-5/6 md:w-1/6"
-              src={SampleImage}
-              priority={true}
-              alt="Screenshot of sample google sheet data"
-            />
-          </a>
-        </div> */}
         <div className="">
           {status !== "authenticated" ? (
             <button

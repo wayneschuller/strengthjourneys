@@ -1,9 +1,11 @@
 /** @format */
 
 // A function we call on the demo data to always keep it fresh
+// Don't let it jitter the final date to keep the most recent session card fairly predictable in height
 export function transposeDatesToToday(parsedData, addJitter) {
   // Constants for jitter settings
-  const JITTER_RANGE = 2;
+  const JITTER_DATE_RANGE = 2;
+  const JITTER_REPS_RANGE = 1;
   const JITTER_PROBABILITY = 0.5; // 50% chance to apply jitter
 
   if (parsedData.length === 0) return parsedData;
@@ -14,28 +16,46 @@ export function transposeDatesToToday(parsedData, addJitter) {
     (today - lastDataDate) / (1000 * 60 * 60 * 24),
   );
 
-  let lastJitter = 0;
+  let lastDateJitter = 0;
   let lastDate = "";
 
-  const updatedData = parsedData.map((item) => {
+  const updatedData = parsedData.map((item, index) => {
     const itemDate = new Date(item.date);
 
-    // Apply jitter with a certain probability
-    if (addJitter && item.date !== lastDate) {
+    // Apply date jitter with a certain probability, but not for the last item
+    if (
+      addJitter &&
+      item.date !== lastDate &&
+      index !== parsedData.length - 1
+    ) {
       if (Math.random() < JITTER_PROBABILITY) {
-        // Apply jitter
-        lastJitter =
-          Math.floor(Math.random() * (JITTER_RANGE * 2 + 1)) - JITTER_RANGE;
+        // Apply date jitter
+        lastDateJitter =
+          Math.floor(Math.random() * (JITTER_DATE_RANGE * 2 + 1)) -
+          JITTER_DATE_RANGE;
       } else {
-        // No jitter
-        lastJitter = 0;
+        // No date jitter
+        lastDateJitter = 0;
       }
       lastDate = item.date;
     }
 
-    itemDate.setDate(itemDate.getDate() + dayDifference + lastJitter);
+    itemDate.setDate(itemDate.getDate() + dayDifference + lastDateJitter);
 
-    return { ...item, date: itemDate.toISOString().split("T")[0] };
+    // Apply reps jitter
+    let jitteredReps = item.reps;
+    if (addJitter && "reps" in item) {
+      let repsJitter =
+        Math.floor(Math.random() * (JITTER_REPS_RANGE * 2 + 1)) -
+        JITTER_REPS_RANGE;
+      jitteredReps = Math.max(item.reps + repsJitter, 0);
+    }
+
+    return {
+      ...item,
+      date: itemDate.toISOString().split("T")[0],
+      reps: jitteredReps,
+    };
   });
 
   // Sorting the updated data by date

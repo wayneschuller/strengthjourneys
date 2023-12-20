@@ -98,7 +98,7 @@ const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
     .sort((a, b) => a.entryIndex - b.entryIndex) // Sort by entryIndex in ascending order
     .slice(0, 10); // Only show 10 highlights per card
 
-  if (!recentHighlights) return null;
+  if (!recentHighlights || recentHighlights.length <= 0) return null;
 
   // FIXME: Ideally these would expand out with animation?
   return (
@@ -106,20 +106,16 @@ const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
       <div className="mt-4 font-semibold">
         Recent Highlights for {liftType}:
       </div>
-      {recentHighlights.length > 0 ? (
-        <ul>
-          {recentHighlights.map((lift, index) => (
-            <li key={index}>
-              {lift.reps}@{lift.weight}
-              {lift.unitType} ({getReadableDateString(lift.date)}),{" "}
-              {getCelebrationEmoji(lift.entryIndex)} #{lift.entryIndex + 1} best{" "}
-              {lift.reps}RM ever.
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>Unable to load highlights right now...</p>
-      )}
+      <ul>
+        {recentHighlights.map((lift, index) => (
+          <li key={index}>
+            {lift.reps}@{lift.weight}
+            {lift.unitType} ({getReadableDateString(lift.date)}),{" "}
+            {getCelebrationEmoji(lift.entryIndex)} #{lift.entryIndex + 1} best{" "}
+            {lift.reps}RM ever.
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

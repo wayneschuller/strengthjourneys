@@ -272,6 +272,7 @@ function generateDateRanges(startDateStr, endDateStr, intervalMonths) {
 function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
   const startTime = performance.now();
 
+  // Generate a full interval of random data for demo mode because it looks good
   if (isDemoMode) {
     const demoHeatmapData = [];
     const start = new Date(startDate).getTime();
@@ -360,7 +361,10 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
 function getHistoricalPrTooltip(data, currentDate) {
   const prsOnDate = data
     .filter((pr) => pr.date === currentDate && pr.isHistoricalPR)
-    .map((pr) => `${pr.liftType} PR ${pr.reps}@${pr.weight}${pr.unitType}`)
+    .map(
+      (pr) =>
+        `${pr.liftType} Historical PR ${pr.reps}@${pr.weight}${pr.unitType}`,
+    )
     .join("\n");
 
   return `Date: ${getReadableDateString(currentDate)}\n${prsOnDate}`;

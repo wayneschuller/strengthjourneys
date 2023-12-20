@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   getCelebrationEmoji,
@@ -119,23 +120,46 @@ const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
     </div>
   );
 };
-export function KeyLiftCards() {
+export function SelectedLiftsIndividualLiftCards() {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   const { status: authStatus } = useSession();
 
+  let xlGridCols = "";
+
+  // Let's do some clever col stuff for desktop xl size
+  switch (selectedLiftTypes.length) {
+    case 1:
+      xlGridCols = "1";
+      break;
+    case 2:
+      xlGridCols = "2";
+      break;
+    default:
+      xlGridCols = "4";
+  }
+
   return (
-    <div className="mt-4 grid auto-cols-max grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+    <div
+      className={`mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-${xlGridCols}`}
+    >
       {authStatus === "unauthenticated" && (
-        <div className="md:col-span-2 xl:col-auto">
+        <div className={`md:col-span-2 xl:col-span-${xlGridCols}`}>
           <Card>
             <CardHeader>
               <CardTitle>Demo Mode: Individual Lift Analysis Section</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="">
-                At any time click the dumbell icon to select other lifts for
-                analysis. The lift chooser is also in the top right corner of
-                the navigation bar.
+                Click the dumbbell icon below for selecting which lifts appear
+                in this section, or use the dumbell icon in the top navigation
+                bar. These selected lifts are also used in the{" "}
+                <Link
+                  href="/visualizer"
+                  className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+                >
+                  Visualizer
+                </Link>{" "}
+                chart.
               </div>
             </CardContent>
             <CardFooter className="flex justify-around">
@@ -155,8 +179,7 @@ export function KeyLiftCards() {
       ))}
 
       {authStatus === "authenticated" && (
-        // <div className="grid grid-cols-1">
-        <div className="md:col-span-2 xl:col-span-4">
+        <div className={`md:col-span-2 xl:col-span-${xlGridCols}`}>
           <Card>
             <CardHeader>
               <CardTitle>Analyzing Other Lifts</CardTitle>

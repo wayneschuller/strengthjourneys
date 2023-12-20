@@ -16,7 +16,7 @@ import { CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { devLog } from "@/lib/processing-utils";
 import { SessionAnalysisCard } from "@/components/session-analysis-card";
-import { KeyLiftCards } from "@/components/lift-achievements-card";
+import { SelectedLiftsIndividualLiftCards } from "@/components/lift-achievements-card";
 
 export default function Analyzer() {
   const { data: session, status: authStatus } = useSession();
@@ -59,7 +59,7 @@ export default function Analyzer() {
           </div>
           <Separator className="md:col-span-2 xl:col-span-4" />
         </div>
-        <KeyLiftCards />
+        <SelectedLiftsIndividualLiftCards />
       </div>
     </div>
   );

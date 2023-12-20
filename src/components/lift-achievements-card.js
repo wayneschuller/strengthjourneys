@@ -9,13 +9,9 @@ import {
 import { devLog } from "@/lib/processing-utils";
 import { ParsedDataContext } from "@/pages/_app";
 import { Skeleton } from "./ui/skeleton";
-import { LiftAchievementsCard } from "@/components/lift-achievements-card";
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 import { CardFooter } from "@/components/ui/card";
 import { useSession } from "next-auth/react";
-import { useSession } from "next-auth/react";
-import { LiftAchievementsCard } from "./lift-achievements-card";
-import { SidePanelSelectLiftsButton } from "./side-panel-lift-chooser";
 
 export function LiftAchievementsCard({ liftType }) {
   const { liftTypes, topLiftsByTypeAndReps } = useContext(ParsedDataContext);

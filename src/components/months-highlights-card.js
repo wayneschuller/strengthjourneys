@@ -50,7 +50,8 @@ export function MonthsHighlightsCard() {
                 >
                   {record.liftType} {record.reps}@{record.weight}
                   {record.unitType} ({getReadableDateString(record.date)})
-                </strong>
+                </strong>{" "}
+                (hi)
               </li>
             ))}
         </ul>
@@ -90,6 +91,7 @@ const getFirstHistoricalPRsInLastMonth = (parsedData) => {
   }
 
   const firstPRs = Array.from(firstPRsMap.values());
+
   devLog(
     `getFirstHistoricalPRsInLastMonth() execution time: ` +
       `\x1b[1m${Math.round(performance.now() - startTime)}ms\x1b[0m`,

@@ -1,4 +1,5 @@
 // Simple wrapper for console.log
+
 export function devLog(message) {
   // We setup this special env variable on Vercel dev and preview but NOT production builds
   // This is so non-localhost clients can see devLogs on Vercel preview builds
@@ -266,10 +267,14 @@ export function findLiftPositionInTopLifts(liftTuple, topLiftsByTypeAndReps) {
         lift.notes === liftTuple.notes &&
         lift.URL === liftTuple.URL
       ) {
-        return i; // Return the position (index) of the lift in the array
+        const prSentenceReport = `${getCelebrationEmoji(i)}  #${i + 1} best ${
+          lift.reps
+        }RM ever`;
+
+        return { prIndex: i, prSentenceReport: prSentenceReport }; // Return the position (index) of the lift in the array
       }
     }
   }
 
-  return -1; // Return -1 if the lift is not found
+  return { prIndex: -1, prSentenceReport: null }; // Return -1 if the lift is not found
 }

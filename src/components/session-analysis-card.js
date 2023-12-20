@@ -33,12 +33,19 @@ export function SessionAnalysisCard() {
   );
 
   // Group workouts by liftType
-  const groupedWorkouts = recentWorkouts?.reduce((acc, workout) => {
-    const { liftType } = workout;
+  const groupedWorkouts = recentWorkouts?.reduce((acc, entry) => {
+    const { liftType } = entry;
     acc[liftType] = acc[liftType] || [];
-    const prIndex = findLiftPositionInTopLifts(workout, topLiftsByTypeAndReps);
+    const { prIndex, prSentenceReport } = findLiftPositionInTopLifts(
+      entry,
+      topLiftsByTypeAndReps,
+    );
     if (prIndex !== -1) prFound = true;
-    acc[liftType].push({ ...workout, prIndex: prIndex });
+    acc[liftType].push({
+      ...entry,
+      prIndex: prIndex,
+      prSentenceReport: prSentenceReport,
+    });
 
     return acc;
   }, {});
@@ -72,10 +79,8 @@ export function SessionAnalysisCard() {
                         {workout.reps}@{workout.weight}
                         {workout.unitType}{" "}
                         <div className="ml-6 inline-block">
-                          {workout.prIndex !== -1 &&
-                            `${getCelebrationEmoji(workout.prIndex)}  #${
-                              workout.prIndex + 1
-                            } best ${workout.reps}RM ever`}
+                          {workout.prSentenceReport &&
+                            `${workout.prSentenceReport}`}
                         </div>
                       </li>
                     ))}

@@ -262,7 +262,9 @@ export function findLiftPositionInTopLifts(liftTuple, topLiftsByTypeAndReps) {
       if (
         lift.date === liftTuple.date &&
         lift.weight === liftTuple.weight &&
-        lift.reps === liftTuple.reps
+        lift.reps === liftTuple.reps &&
+        lift.notes === liftTuple.notes &&
+        lift.URL === liftTuple.URL
       ) {
         return i; // Return the position (index) of the lift in the array
       }

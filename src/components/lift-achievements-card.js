@@ -31,7 +31,7 @@ export function LiftAchievementsCard({ liftType }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{liftType} Achievements</CardTitle>
+        <CardTitle>{liftType}</CardTitle>
       </CardHeader>
       <CardContent>
         {!liftTypes && <Skeleton className="h-64" />}
@@ -137,6 +137,7 @@ export function SelectedLiftsIndividualLiftCards() {
     default:
       xlGridCols = "4";
   }
+  devLog(`xlcols ${xlGridCols}`);
 
   return (
     <div
@@ -197,7 +198,6 @@ export function SelectedLiftsIndividualLiftCards() {
           </Card>
         </div>
       )}
-      <div className="mt-4"></div>
     </div>
   );
 }

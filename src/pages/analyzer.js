@@ -2,30 +2,21 @@
 
 import Head from "next/head";
 import { useSession } from "next-auth/react";
-import { useContext, useState, useEffect } from "react";
-import { ParsedDataContext } from "@/pages/_app";
+import { useState, useEffect } from "react";
 import { useUserLiftData } from "@/lib/use-userlift-data";
 import { InspirationCard } from "@/components/inspiration-card";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
-import { LiftAchievementsCard } from "@/components/lift-achievements-card";
 import { MonthsHighlightsCard } from "@/components/months-highlights-card";
 import { useReadLocalStorage } from "usehooks-ts";
 import { ActivityHeatmapsCard } from "@/components/heatmaps";
-import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 import { LiftTypeFrequencyPieCard } from "@/components/lift-frequency-pie-card";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CardDescription } from "@/components/ui/card";
 
 import { Separator } from "@/components/ui/separator";
 import { devLog } from "@/lib/processing-utils";
 import { SessionAnalysisCard } from "@/components/session-analysis-card";
+import { KeyLiftCards } from "@/components/lift-achievements-card";
 
 export default function Analyzer() {
   const { data: session, status: authStatus } = useSession();
@@ -70,66 +61,6 @@ export default function Analyzer() {
         </div>
         <KeyLiftCards />
       </div>
-    </div>
-  );
-}
-
-export function KeyLiftCards() {
-  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
-  const { status: authStatus } = useSession();
-
-  return (
-    <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-      {authStatus === "unauthenticated" && (
-        <div className="md:col-span-2 xl:col-span-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Demo Mode: Individual Lift Analysis Section</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="">
-                At any time click the dumbell icon to select other lifts for
-                analysis. The lift chooser is also in the top right corner of
-                the navigation bar.
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-around">
-              <SidePanelSelectLiftsButton isIconMode={false} />
-            </CardFooter>
-          </Card>
-        </div>
-      )}
-
-      {/* Map through each of the selected lifts  */}
-      {selectedLiftTypes.map((lift) => (
-        <LiftAchievementsCard
-          key={`${lift}-card`}
-          liftType={lift}
-          parsedData={parsedData}
-        />
-      ))}
-
-      {authStatus === "authenticated" && (
-        // <div className="grid grid-cols-1">
-        <div className="md:col-span-2 xl:col-span-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Analyzing Other Lifts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="">
-                At any time click the dumbell button to select other lifts for
-                analysis. The dumbell button is also in the top right corner of
-                the navigation bar.
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-around">
-              <SidePanelSelectLiftsButton isIconMode={false} />
-            </CardFooter>
-          </Card>
-        </div>
-      )}
-      <div className="mt-4"></div>
     </div>
   );
 }

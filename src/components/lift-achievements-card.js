@@ -9,6 +9,13 @@ import {
 import { devLog } from "@/lib/processing-utils";
 import { ParsedDataContext } from "@/pages/_app";
 import { Skeleton } from "./ui/skeleton";
+import { LiftAchievementsCard } from "@/components/lift-achievements-card";
+import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
+import { CardFooter } from "@/components/ui/card";
+import { useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { LiftAchievementsCard } from "./lift-achievements-card";
+import { SidePanelSelectLiftsButton } from "./side-panel-lift-chooser";
 
 export function LiftAchievementsCard({ liftType }) {
   const { liftTypes, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
@@ -120,3 +127,62 @@ const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
     </div>
   );
 };
+export function KeyLiftCards() {
+  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
+  const { status: authStatus } = useSession();
+
+  return (
+    <div className="mt-4 grid auto-cols-max grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+      {authStatus === "unauthenticated" && (
+        <div className="md:col-span-2 xl:col-auto">
+          <Card>
+            <CardHeader>
+              <CardTitle>Demo Mode: Individual Lift Analysis Section</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="">
+                At any time click the dumbell icon to select other lifts for
+                analysis. The lift chooser is also in the top right corner of
+                the navigation bar.
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-around">
+              <SidePanelSelectLiftsButton isIconMode={false} />
+            </CardFooter>
+          </Card>
+        </div>
+      )}
+
+      {/* Map through each of the selected lifts  */}
+      {selectedLiftTypes.map((lift) => (
+        <LiftAchievementsCard
+          key={`${lift}-card`}
+          liftType={lift}
+          parsedData={parsedData}
+        />
+      ))}
+
+      {authStatus === "authenticated" && (
+        // <div className="grid grid-cols-1">
+        <div className="md:col-span-2 xl:col-span-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Analyzing Other Lifts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="">
+                At any time click the dumbell button to select other lifts for
+                analysis. The dumbell button is also in the top right corner of
+                the navigation bar.
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-around">
+              <SidePanelSelectLiftsButton isIconMode={false} />
+            </CardFooter>
+          </Card>
+        </div>
+      )}
+      <div className="mt-4"></div>
+    </div>
+  );
+}

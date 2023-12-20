@@ -102,12 +102,12 @@ export function getReadableDateString(ISOdate) {
 
 // This is run once at init in the <Layout /> useEffect
 // Loop through the data once and collect top PRs for each lift, reps 1..10
-// Only do so for selectedLiftTypes
+//
 // This info will likely be used by both Analyzer and Visualizer components - so put in context
 //
 // The return format is: topLiftsByTypeAndReps["Back Squat"][4][17] means 18th best Back Squat 5RM ever
 //
-export function processTopLiftsByTypeAndReps(parsedData, selectedLiftTypes) {
+export function processTopLiftsByTypeAndReps(parsedData) {
   const startTime = performance.now();
   const topLiftsByTypeAndReps = {};
 
@@ -120,11 +120,6 @@ export function processTopLiftsByTypeAndReps(parsedData, selectedLiftTypes) {
 
   parsedData.forEach((entry) => {
     const { liftType, reps } = entry;
-
-    // Skip processing if liftType is not in selectedLiftTypes
-    if (!selectedLiftTypes.includes(liftType)) {
-      return;
-    }
 
     // Ensure that the reps value is within the expected range
     if (reps < 1 || reps > 10) {

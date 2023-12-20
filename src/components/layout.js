@@ -161,10 +161,7 @@ export function Layout({ children }) {
     setSelectedLiftTypes(selectedLiftTypes);
 
     // Critical PR processing
-    const topLiftsByTypeAndReps = processTopLiftsByTypeAndReps(
-      parsedData,
-      selectedLiftTypes,
-    );
+    const topLiftsByTypeAndReps = processTopLiftsByTypeAndReps(parsedData);
     setTopLiftsByTypeAndReps(topLiftsByTypeAndReps);
     // devLog(topLiftsByTypeAndReps);
 

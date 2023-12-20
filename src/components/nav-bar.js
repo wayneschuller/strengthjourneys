@@ -40,8 +40,8 @@ export function NavBar() {
           <SidePanelSelectLiftsButton isIconMode={true} />
         )}
         <UserSheetIcon />
-        <DarkModeToggle />
         <AvatarDropdown />
+        <DarkModeToggle />
       </div>
     </div>
   );

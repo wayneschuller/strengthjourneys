@@ -8,13 +8,10 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Layout } from "@/components/layout";
 import { Toaster } from "@/components/ui/toaster";
-// import { Inter } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { useState, createContext } from "react";
 import { devLog } from "@/lib/processing-utils";
 import { GeistSans } from "geist/font/sans";
-
-// const inter = Inter({ subsets: ["latin"] });
 
 export const ParsedDataContext = createContext(null); // Internal SJ format of user gsheet (see sampleData.js for design)
 

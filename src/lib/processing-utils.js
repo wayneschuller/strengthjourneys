@@ -226,6 +226,8 @@ export const markHigherWeightAsHistoricalPRs = (parsedData) => {
 
   // Directly modify the objects for performance
   parsedData.forEach((record) => {
+    if (record.reps === 0) return; // Ignore fail records
+
     const key = `${record.liftType}-${record.reps}`;
 
     if (!bestRecordsMap[key] || record.weight > bestRecordsMap[key].weight) {

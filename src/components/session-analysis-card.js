@@ -72,15 +72,20 @@ export function SessionAnalysisCard() {
                   <strong>{liftType}</strong>
                   <ul className="pl-4">
                     {workouts.map((workout, index) => (
-                      <li
-                        key={index}
-                        className={workout.prIndex !== -1 ? "font-bold" : ""}
-                      >
-                        {workout.reps}@{workout.weight}
-                        {workout.unitType}{" "}
-                        <div className="ml-6 inline-block">
-                          {workout.prSentenceReport &&
-                            `${workout.prSentenceReport}`}
+                      <li key={index}>
+                        <div className="flex flex-row justify-between">
+                          <div
+                            className={
+                              workout.prIndex !== -1 ? "font-bold" : ""
+                            }
+                          >
+                            {workout.reps}@{workout.weight}
+                            {workout.unitType}{" "}
+                          </div>
+                          <div className="ml-6 inline-block">
+                            {workout.prSentenceReport &&
+                              `${workout.prSentenceReport}`}
+                          </div>
                         </div>
                       </li>
                     ))}

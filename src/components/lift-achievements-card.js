@@ -94,7 +94,7 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
 function ExpandedLiftAchievements({ liftType }) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:justify-stretch">
-      <div className="w-1/2">
+      <div className="md:w-1/2">
         <SummaryStatistics liftType={liftType} />
         <Separator orientation="horizontal" className="col-span-2 my-4" />
         <RecentLiftHighlights liftType={liftType} />
@@ -103,7 +103,7 @@ function ExpandedLiftAchievements({ liftType }) {
         <Separator orientation="vertical" className="hidden md:block" />
         <Separator orientation="horizontal" className="block md:hidden" />
       </div>
-      <div className="w-1/2">
+      <div className="md:w-1/2">
         <RepPRsAccordion liftType={liftType} />
       </div>
     </div>

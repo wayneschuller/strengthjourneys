@@ -125,7 +125,9 @@ const SummaryStatistics = ({ liftType }) => {
   const fiveRM = topLiftsByReps?.[4]?.[0];
   return (
     <div className="grid grid-cols-2">
-      <div className="text-lg font-semibold">Summary statistics:</div>
+      <div className="text-lg font-semibold">
+        {liftType} Summary Statistics:
+      </div>
       <div></div>
       <div className="font-semibold">Total Reps:</div>
       <div className="">{totalReps}</div>
@@ -169,7 +171,7 @@ const RepPRsAccordion = ({ liftType }) => {
 
   return (
     <div className="">
-      <div className="text-lg font-semibold">Rep range PRs:</div>
+      <div className="text-lg font-semibold">{liftType} Rep Range PRs:</div>
       <Accordion type="single" collapsible className="w-full px-4 md:px-0">
         {topLiftsByReps.slice(0, 10).map((repRange, index) => {
           if (repRange.length === 0) return null; // Skip if the array is empty
@@ -229,8 +231,8 @@ const RecentLiftHighlights = ({ liftType }) => {
 
   return (
     <div>
-      <div className="text-lg font-semibold">
-        Recent Highlights for {liftType}:
+      <div className="mb-2 text-lg font-semibold">
+        Recent {liftType} Highlights (Last Four Weeks):
       </div>
       <ul>
         {recentHighlights.map((lift, index) => (

@@ -2,7 +2,14 @@
 
 import { useState, useEffect, useContext } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   getCelebrationEmoji,
   getReadableDateString,
@@ -11,7 +18,6 @@ import { devLog } from "@/lib/processing-utils";
 import { ParsedDataContext } from "@/pages/_app";
 import { Skeleton } from "./ui/skeleton";
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
-import { CardFooter } from "@/components/ui/card";
 import { useSession } from "next-auth/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 
@@ -38,6 +44,10 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
     >
       <CardHeader>
         <CardTitle>{liftType}</CardTitle>
+        <CardDescription>
+          Click to{" "}
+          {isExpanded ? "reduce to summary view" : `see full lift analysis`}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {!liftTypes && <Skeleton className="h-64" />}

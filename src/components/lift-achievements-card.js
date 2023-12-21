@@ -183,33 +183,6 @@ export function SelectedLiftsIndividualLiftCards() {
       ref={parent}
       className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4"
     >
-      {authStatus === "unauthenticated" && (
-        <div className={`col-span-1 md:col-span-2 xl:col-span-4`}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Demo Mode: Individual Lift Analysis Section</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="">
-                Click the dumbbell icon below for selecting which lifts appear
-                in this section, or use the dumbell icon in the top navigation
-                bar. These selected lifts are also used in the{" "}
-                <Link
-                  href="/visualizer"
-                  className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-                >
-                  Visualizer
-                </Link>{" "}
-                chart.
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-around">
-              <SidePanelSelectLiftsButton isIconMode={false} />
-            </CardFooter>
-          </Card>
-        </div>
-      )}
-
       {expandedCardData && (
         <div className={`col-span-1 md:col-span-2 xl:col-span-4`}>
           <LiftAchievementsCard
@@ -232,25 +205,30 @@ export function SelectedLiftsIndividualLiftCards() {
         />
       ))}
 
-      {authStatus === "authenticated" && (
-        <div className={`col-span-1 md:col-span-2 xl:col-span-4`}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Analyzing Other Lifts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="">
-                At any time click the dumbell button to select other lifts for
-                analysis. The dumbell button is also in the top right corner of
-                the navigation bar.
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-around">
-              <SidePanelSelectLiftsButton isIconMode={false} />
-            </CardFooter>
-          </Card>
-        </div>
-      )}
+      <div className={`col-span-1 md:col-span-2 xl:col-span-4`}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Analyzing Other Lifts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="">
+              Click the dumbbell icon below for selecting which lifts appear in
+              this section, or use the dumbell icon in the top navigation bar.
+              These selected lifts are also used in the{" "}
+              <Link
+                href="/visualizer"
+                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              >
+                Visualizer
+              </Link>{" "}
+              chart.
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-around">
+            <SidePanelSelectLiftsButton isIconMode={false} />
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }

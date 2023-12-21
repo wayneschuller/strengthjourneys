@@ -142,36 +142,35 @@ const SummaryStatistics = ({ liftType }) => {
   const threeRM = topLiftsByReps?.[2]?.[0];
   const fiveRM = topLiftsByReps?.[4]?.[0];
   return (
-    <div className="grid grid-cols-2">
-      <div className="text-lg font-semibold">
+    <div className="grid grid-cols-3 justify-start">
+      <div className="col-span-3 text-lg font-semibold">
         {liftType} Summary Statistics:
       </div>
-      <div></div>
       <div className="font-semibold">Total Reps:</div>
-      <div className="">{totalReps}</div>
+      <div className="col-span-2">{totalReps}</div>
       <div className="font-semibold"> Total Sets: </div>
-      <div className="">{totalSets}</div>
+      <div className="col-span-2">{totalSets}</div>
       <div className="font-semibold">First lift: </div>
-      <div className="inline">{getReadableDateString(oldestDate)}</div>
+      <div className="col-span-2">{getReadableDateString(oldestDate)}</div>
       <div className="font-semibold">Most recent lift:</div>{" "}
-      <div>{getReadableDateString(newestDate)}</div>
+      <div className="col-span-2">{getReadableDateString(newestDate)}</div>
       {oneRM && <div className="font-semibold">Best single:</div>}
       {oneRM && (
-        <div>
+        <div className="col-span-2">
           {oneRM.weight}
           {oneRM.unitType} ({getReadableDateString(oneRM.date)})
         </div>
       )}
       {threeRM && <div className="font-semibold">Best triple:</div>}
       {threeRM && (
-        <div>
+        <div className="col-span-2">
           {threeRM.weight}
           {threeRM.unitType} ({getReadableDateString(threeRM.date)})
         </div>
       )}
       {fiveRM && <div className="font-semibold">Best five:</div>}
       {fiveRM && (
-        <div>
+        <div className="col-span-2">
           {fiveRM.weight}
           {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
         </div>
@@ -271,10 +270,17 @@ const RecentLiftHighlights = ({ liftType }) => {
       <ul>
         {recentHighlights.map((lift, index) => (
           <li key={index}>
-            {lift.reps}@{lift.weight}
-            {lift.unitType} ({getReadableDateString(lift.date)}),{" "}
-            {getCelebrationEmoji(lift.entryIndex)} #{lift.entryIndex + 1} best{" "}
-            {lift.reps}RM ever.
+            <div className="grid grid-cols-4">
+              <div>
+                {lift.reps}@{lift.weight}
+                {lift.unitType}
+              </div>
+              <div>{getReadableDateString(lift.date)}</div>
+              <div className="col-span-2">
+                {getCelebrationEmoji(lift.entryIndex)} #{lift.entryIndex + 1}{" "}
+                best {lift.reps}RM ever.
+              </div>
+            </div>
           </li>
         ))}
       </ul>

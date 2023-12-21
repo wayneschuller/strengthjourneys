@@ -261,6 +261,7 @@ export default function VisualizerChart() {
     },
     align: "end",
     anchor: "end",
+    offset: "10",
   };
 
   const tooltipOptions = {

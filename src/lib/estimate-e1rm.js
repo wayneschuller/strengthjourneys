@@ -14,6 +14,7 @@ export const e1rmFormulae = [
 // Return a rounded 1 rep max
 // For theory see: https://en.wikipedia.org/wiki/One-repetition_maximum
 export function estimateE1RM(reps, weight, equation) {
+  if (reps === 0) return 0; // A failure predicts nothing. :(
   if (reps === 1) return weight; // Heavy single requires no estimate!
 
   switch (equation) {

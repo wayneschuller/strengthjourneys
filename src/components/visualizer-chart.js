@@ -247,8 +247,19 @@ export default function VisualizerChart() {
 
   const dataLabelsOptions = {
     display: true,
-    formatter: (context) => {
-      return `${context.y}${context.unitType}`;
+    formatter: (context, chart) => {
+      const min = chart.chart.scales.x.ticks[0].value;
+      const max =
+        chart.chart.scales.x.ticks[chart.chart.scales.x.ticks.length - 1].value;
+      const range = max - min; // Range in milliseconds
+      const defaultRange =
+        30.44 * 24 * 60 * 60 * 1000 * (defaultRangeInMonths * 3);
+
+      if (range <= defaultRange || context.reps === 1) {
+        return `${context.y}${context.unitType}`;
+      } else {
+        return null;
+      }
     },
     font: (context) => {
       const entry = context.dataset.data[context.dataIndex]; // Our parsedData tuple

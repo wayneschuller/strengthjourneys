@@ -74,6 +74,7 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
               <div className="font-semibold">Most recent lift:</div>{" "}
               <div>{getReadableDateString(newestDate)}</div>
             </div>
+            {/* FIXME: make a new component for all the isExpanded cool stuff  */}
             {isExpanded && oneRM && (
               <div className="font-semibold">Best single:</div>
             )}
@@ -174,17 +175,7 @@ export function SelectedLiftsIndividualLiftCards() {
 
   const toggleCard = (liftType) => {
     // Collapse the current card if it's expanded
-    if (expandedCard === liftType) {
-      setExpandedCard(null);
-    } else {
-      // Collapse any expanded card first
-      setExpandedCard(null);
-
-      // Wait for moment and then expand the new card (FIXME: is this dumb?)
-      setTimeout(() => {
-        setExpandedCard(liftType);
-      }, 350);
-    }
+    setExpandedCard(expandedCard === liftType ? null : liftType);
   };
 
   // Find the expanded card

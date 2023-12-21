@@ -138,38 +138,39 @@ export function SelectedLiftsIndividualLiftCards() {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   const { status: authStatus } = useSession();
   const [expandedCard, setExpandedCard] = useState(null);
+  const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
+
+  useEffect(() => {
+    // devLog(selectedLiftTypes);
+    if (selectedLiftTypes.length === 1) setExpandedCard(selectedLiftTypes[0]);
+  }, [selectedLiftTypes]);
 
   const toggleCard = (liftType) => {
     setExpandedCard(expandedCard === liftType ? null : liftType);
   };
+
+  // Find the expanded card
+  const expandedCardData = selectedLiftTypes.find(
+    (lift) => lift === expandedCard,
+  );
+
+  // Filter out the expanded card from the list
+  const otherCards = selectedLiftTypes.filter((lift) => lift !== expandedCard);
 
   // FIXME: we need to do some engineering for mobile vs the rest.
   // For mobile a simple 1 col grid with an expanding lift card is fine and easy.
   // For desktop we want a clicked lift card to rise and go full width at the top of the lift card section
   // So expanded should mean we put it in it's own row.
   // Do this before the grid starts so we don't even have to worry about grid cols (as below).
-
-  let xlGridCols = "";
-
-  // Let's do some clever col stuff for desktop xl size
-  switch (selectedLiftTypes.length) {
-    case 1:
-      xlGridCols = "1";
-      break;
-    case 2:
-      xlGridCols = "2";
-      break;
-    default:
-      xlGridCols = "4";
-  }
-  devLog(`xlcols ${xlGridCols}`);
+  // JUst do a ismobile jsx condition for the old way and the new way
 
   return (
     <div
-      className={`mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-${xlGridCols}`}
+      ref={parent}
+      className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4"
     >
       {authStatus === "unauthenticated" && (
-        <div className={`md:col-span-2 xl:col-span-${xlGridCols}`}>
+        <div className={`col-span-1 md:col-span-2 xl:col-span-4`}>
           <Card>
             <CardHeader>
               <CardTitle>Demo Mode: Individual Lift Analysis Section</CardTitle>
@@ -195,19 +196,30 @@ export function SelectedLiftsIndividualLiftCards() {
         </div>
       )}
 
-      {/* Map through each of the selected lifts */}
-      {selectedLiftTypes.map((lift) => (
+      {expandedCardData && (
+        <div className={`col-span-1 md:col-span-2 xl:col-span-4`}>
+          <LiftAchievementsCard
+            key={`${expandedCard}-card`}
+            liftType={expandedCard}
+            parsedData={parsedData}
+            isExpanded={true}
+            onToggle={() => toggleCard(expandedCard)}
+          />
+        </div>
+      )}
+
+      {otherCards.map((lift) => (
         <LiftAchievementsCard
           key={`${lift}-card`}
           liftType={lift}
           parsedData={parsedData}
-          isExpanded={expandedCard === lift}
+          isExpanded={false}
           onToggle={() => toggleCard(lift)}
         />
       ))}
 
       {authStatus === "authenticated" && (
-        <div className={`md:col-span-2 xl:col-span-${xlGridCols}`}>
+        <div className={`col-span-1 md:col-span-2 xl:col-span-4`}>
           <Card>
             <CardHeader>
               <CardTitle>Analyzing Other Lifts</CardTitle>

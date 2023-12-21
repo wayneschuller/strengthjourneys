@@ -100,7 +100,7 @@ function parseTurnKeyData(data) {
         liftType: liftType,
         reps: lifted_reps,
         weight: lifted_weight,
-        url: liftUrl,
+        URL: liftUrl,
         unitType: unitType,
         notes: notes,
       });

@@ -221,6 +221,9 @@ const RepPRsAccordion = ({ liftType }) => {
                                 {getReadableDateString(lift.date)}
                               </a>
                             )}
+                            {!lift.URL && (
+                              <div>{getReadableDateString(lift.date)}</div>
+                            )}
                           </div>
                           <div className="col-span-2 md:col-span-4">
                             <TruncatedText text={lift.notes} />

@@ -59,7 +59,7 @@ export default function Home() {
       </h1>
       <PageDescription />
 
-      <div className="mx-4 my-10 grid grid-cols-1 justify-stretch gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-4">
+      <div className="mx-4 my-10 grid grid-cols-1  gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-4">
         {featurePages.map((card, index) => (
           <FeatureCard key={index} {...card} />
         ))}
@@ -95,8 +95,8 @@ const PageDescription = () => (
 );
 
 const FeatureCard = ({ href, title, description, IconComponent }) => (
-  <Link href={href}>
-    <Card className="shadow-lg shadow-primary-foreground ring-1 ring-black hover:ring-2 dark:ring-white">
+  <Card className="shadow-lg shadow-primary-foreground ring-1 ring-black hover:ring-2 dark:ring-white">
+    <Link href={href}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
@@ -104,6 +104,6 @@ const FeatureCard = ({ href, title, description, IconComponent }) => (
       <CardContent className="flex justify-center">
         <IconComponent size={64} strokeWidth={1.25} />
       </CardContent>
-    </Card>
-  </Link>
+    </Link>
+  </Card>
 );

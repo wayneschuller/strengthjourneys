@@ -32,7 +32,7 @@ import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser
 import { useSession } from "next-auth/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Maximize2, Minimize2 } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 import { Separator } from "./ui/separator";
 
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
@@ -187,12 +187,28 @@ const RepPRsAccordion = ({ liftType }) => {
               </AccordionTrigger>
               <AccordionContent>
                 <div>
-                  <ol className="list-decimal pl-8">
+                  <ol className="list-decimal pl-[2rem]">
                     {repRange.slice(0, 20).map((lift, liftIndex) => (
                       <li key={liftIndex}>
-                        {`${index + 1}@${lift.weight}${
-                          lift.unitType
-                        } (${getReadableDateString(lift.date)})`}
+                        <div className="grid grid-cols-4 md:grid-cols-6">
+                          <div>
+                            {`${index + 1}@${lift.weight}${lift.unitType}  `}
+                          </div>
+                          <div>
+                            {lift.URL && (
+                              <a
+                                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+                                target="_blank"
+                                href={lift.URL}
+                              >
+                                {getReadableDateString(lift.date)}
+                              </a>
+                            )}
+                          </div>
+                          <div className="col-span-2 md:col-span-4">
+                            <TruncatedText text={lift.notes} />
+                          </div>
+                        </div>
                       </li>
                     ))}
                   </ol>
@@ -340,3 +356,19 @@ export function SelectedLiftsIndividualLiftCards() {
     </div>
   );
 }
+
+const TruncatedText = ({ text }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const truncLength = 100;
+
+  if (!text) return null;
+
+  const truncatedText =
+    text.length > truncLength ? text.substring(0, truncLength) + "..." : text;
+
+  return (
+    <div className="text-pretty" onClick={() => setIsExpanded(!isExpanded)}>
+      {isExpanded ? text : truncatedText}
+    </div>
+  );
+};

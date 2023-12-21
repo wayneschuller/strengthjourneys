@@ -23,22 +23,15 @@ import { useSession } from "next-auth/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "./ui/button";
+import { Separator } from "./ui/separator";
 
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
-  // const [expand, setExpand] = useState(false);
   const { liftTypes, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
   const totalReps = lift ? lift.totalReps : null;
   const totalSets = lift ? lift.totalSets : null;
-  const newestDate = lift ? lift.newestDate : null;
-  const oldestDate = lift ? lift.oldestDate : null;
-
-  const topLiftsByReps = topLiftsByTypeAndReps?.[liftType];
-  const oneRM = topLiftsByReps?.[0]?.[0];
-  const threeRM = topLiftsByReps?.[2]?.[0];
-  const fiveRM = topLiftsByReps?.[4]?.[0];
 
   return (
     <Card
@@ -46,8 +39,6 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
       onClick={onToggle}
     >
       <CardHeader className="relative">
-        {/* <div className="flex flex-row justify-between align-top"> */}
-
         <div className="absolute right-0 top-0 p-2">
           {isExpanded ? (
             <Button variant="ghost" size="icon">
@@ -59,56 +50,24 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
             </Button>
           )}
         </div>
-        <CardTitle className="text-pretty mr-2">{liftType}</CardTitle>
+        <CardTitle className="text-pretty mr-2">
+          {liftType}
+          {isExpanded && " Detailed Analysis"}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {!liftTypes && <Skeleton className="h-64" />}
         {liftTypes && (
           <div ref={parent}>
-            <div className="grid grid-cols-2 gap-x-1">
-              <div className="font-semibold">Total reps (sets):</div>
-              <div>
-                {totalReps} ({totalSets})
-              </div>
-              <div className="font-semibold">First lift:</div>
-              <div>{getReadableDateString(oldestDate)}</div>
-              <div className="font-semibold">Most recent lift:</div>{" "}
-              <div>{getReadableDateString(newestDate)}</div>
-            </div>
-            {/* FIXME: make a new component for all the isExpanded cool stuff  */}
-            {isExpanded && oneRM && (
-              <div className="font-semibold">Best single:</div>
-            )}
-            {isExpanded && oneRM && (
-              <div>
-                {oneRM.weight}
-                {oneRM.unitType} ({getReadableDateString(oneRM.date)})
+            {!isExpanded && (
+              <div className="grid grid-cols-2 gap-x-1">
+                <div className="font-semibold">Total reps:</div>
+                <div>{totalReps}</div>
+                <div className="font-semibold">Total sets:</div>
+                <div>{totalSets}</div>
               </div>
             )}
-            {isExpanded && threeRM && (
-              <div className="font-semibold">Best triple:</div>
-            )}
-            {isExpanded && threeRM && (
-              <div>
-                {threeRM.weight}
-                {threeRM.unitType} ({getReadableDateString(threeRM.date)})
-              </div>
-            )}
-            {isExpanded && fiveRM && (
-              <div className="font-semibold">Best five:</div>
-            )}
-            {isExpanded && fiveRM && (
-              <div>
-                {fiveRM.weight}
-                {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
-              </div>
-            )}
-            {isExpanded && (
-              <RecentLiftHighlights
-                liftType={liftType}
-                topLiftsByTypeAndReps={topLiftsByTypeAndReps}
-              />
-            )}
+            {isExpanded && <ExpandedLiftAchievements liftType={liftType} />}
           </div>
         )}
       </CardContent>
@@ -119,6 +78,74 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
           : `for full ${liftType} analysis`}
       </CardFooter>
     </Card>
+  );
+}
+function ExpandedLiftAchievements({ liftType }) {
+  const { liftTypes, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
+
+  const lift = liftTypes?.find((lift) => lift.liftType === liftType);
+  const newestDate = lift ? lift.newestDate : null;
+  const oldestDate = lift ? lift.oldestDate : null;
+  const totalReps = lift ? lift.totalReps : null;
+  const totalSets = lift ? lift.totalSets : null;
+
+  const topLiftsByReps = topLiftsByTypeAndReps?.[liftType];
+  const oneRM = topLiftsByReps?.[0]?.[0];
+  const threeRM = topLiftsByReps?.[2]?.[0];
+  const fiveRM = topLiftsByReps?.[4]?.[0];
+
+  return (
+    <div>
+      <div className="flex flex-col gap-4 md:flex-row">
+        <div className="grid grid-cols-2">
+          <div className="font-semibold">Summary statistics:</div>
+          <div></div>
+          <div className="font-semibold">Total Reps:</div>
+          <div className="">{totalReps}</div>
+          <div className="font-semibold">Total Sets:</div>
+          <div className="">{totalSets}</div>
+          <div className="font-semibold">First lift:</div>
+          <div>{getReadableDateString(oldestDate)}</div>
+          <div className="font-semibold">Most recent lift:</div>{" "}
+          <div>{getReadableDateString(newestDate)}</div>
+          {oneRM && <div className="font-semibold">Best single:</div>}
+          {oneRM && (
+            <div>
+              {oneRM.weight}
+              {oneRM.unitType} ({getReadableDateString(oneRM.date)})
+            </div>
+          )}
+          {threeRM && <div className="font-semibold">Best triple:</div>}
+          {threeRM && (
+            <div>
+              {threeRM.weight}
+              {threeRM.unitType} ({getReadableDateString(threeRM.date)})
+            </div>
+          )}
+          {fiveRM && <div className="font-semibold">Best five:</div>}
+          {fiveRM && (
+            <div>
+              {fiveRM.weight}
+              {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
+            </div>
+          )}
+        </div>
+        <div>
+          <Separator orientation="vertical" />
+        </div>
+        <RecentLiftHighlights
+          liftType={liftType}
+          topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+        />
+        <div>
+          <Separator orientation="vertical" />
+        </div>
+
+        <div>
+          <div className="font-semibold">Rep range PRs:</div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -146,9 +173,7 @@ const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
 
   return (
     <div>
-      <div className="mt-4 font-semibold">
-        Recent Highlights for {liftType}:
-      </div>
+      <div className="font-semibold">Recent Highlights for {liftType}:</div>
       <ul>
         {recentHighlights.map((lift, index) => (
           <li key={index}>
@@ -224,7 +249,7 @@ export function SelectedLiftsIndividualLiftCards() {
           key={`${lift}-card`}
           liftType={lift}
           parsedData={parsedData}
-          isExpanded={isMobile ? expandedCard === lift : false}
+          isExpanded={isMobile ? expandedCard === lift : false} // Allow mobile to expand in place
           onToggle={() => toggleCard(lift)}
         />
       ))}

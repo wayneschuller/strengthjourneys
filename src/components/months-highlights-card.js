@@ -44,7 +44,7 @@ export function MonthsHighlightsCard() {
           {recentMonthHighlights &&
             recentMonthHighlights.map((record) => (
               <li key={`${record.liftType}-${record.reps}-${record.date}`}>
-                <div className="flex flex-row justify-between">
+                <div className="flex flex-col justify-between md:flex-row">
                   <div className="">
                     <strong
                       className={
@@ -57,7 +57,7 @@ export function MonthsHighlightsCard() {
                       {record.unitType} ({getReadableDateString(record.date)})
                     </strong>{" "}
                   </div>
-                  <div>
+                  <div className="ml-2">
                     {record.prSentenceReport && `${record.prSentenceReport}`}
                   </div>
                 </div>

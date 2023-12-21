@@ -94,7 +94,7 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
 function ExpandedLiftAchievements({ liftType }) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:justify-stretch">
-      <div className="grow">
+      <div className="w-1/2">
         <SummaryStatistics liftType={liftType} />
         <Separator orientation="horizontal" className="col-span-2 my-4" />
         <RecentLiftHighlights liftType={liftType} />
@@ -103,7 +103,7 @@ function ExpandedLiftAchievements({ liftType }) {
         <Separator orientation="vertical" className="hidden md:block" />
         <Separator orientation="horizontal" className="block md:hidden" />
       </div>
-      <div className="grow">
+      <div className="w-1/2">
         <RepPRsAccordion liftType={liftType} />
       </div>
     </div>
@@ -187,8 +187,8 @@ const RepPRsAccordion = ({ liftType }) => {
               </AccordionTrigger>
               <AccordionContent>
                 <div>
-                  <ol className="list-decimal pl-5">
-                    {repRange.slice(0, 5).map((lift, liftIndex) => (
+                  <ol className="list-decimal pl-8">
+                    {repRange.slice(0, 20).map((lift, liftIndex) => (
                       <li key={liftIndex}>
                         {`${index + 1}@${lift.weight}${
                           lift.unitType

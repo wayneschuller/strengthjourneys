@@ -183,7 +183,7 @@ export function SelectedLiftsIndividualLiftCards() {
       // Wait for moment and then expand the new card (FIXME: is this dumb?)
       setTimeout(() => {
         setExpandedCard(liftType);
-      }, 300);
+      }, 350);
     }
   };
 

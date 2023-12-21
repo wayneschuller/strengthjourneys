@@ -26,6 +26,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Decimation,
 } from "chart.js";
 
 import "chartjs-adapter-date-fns";
@@ -46,6 +47,7 @@ ChartJS.register(
   Legend,
   ChartDataLabels,
   zoomPlugin,
+  Decimation,
 );
 
 // Break convention and export a default function for the next.js dynamic loader
@@ -335,6 +337,11 @@ export default function VisualizerChart() {
     zoomPanEnabled = false;
   }
 
+  const decimationOptions = {
+    enabled: true, // I'm not sure this is making a difference for my 7 year data set
+    algorithm: "lttb",
+  };
+
   const zoomOptions = {
     zoom: {
       wheel: { enabled: zoomPanEnabled },
@@ -388,6 +395,7 @@ export default function VisualizerChart() {
       datalabels: dataLabelsOptions,
       tooltip: tooltipOptions,
       zoom: zoomOptions,
+      decimation: decimationOptions,
     },
   };
 

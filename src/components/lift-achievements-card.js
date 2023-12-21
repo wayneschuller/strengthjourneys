@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useContext } from "react";
 import Link from "next/link";
+
 import {
   Card,
   CardContent,
@@ -10,10 +11,19 @@ import {
   CardFooter,
   CardDescription,
 } from "@/components/ui/card";
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
 import {
   getCelebrationEmoji,
   getReadableDateString,
 } from "@/lib/processing-utils";
+
 import { devLog } from "@/lib/processing-utils";
 import { useWindowSize } from "usehooks-ts";
 import { ParsedDataContext } from "@/pages/_app";
@@ -35,22 +45,21 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
 
   return (
     <Card
-      // className={isExpanded ? "col-span-4" : "col-span-1"}
-      onClick={onToggle}
+    // onClick={onToggle}
     >
       <CardHeader className="relative">
         <div className="absolute right-0 top-0 p-2">
           {isExpanded ? (
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={onToggle}>
               <Minimize2 />
             </Button>
           ) : (
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={onToggle}>
               <Maximize2 />
             </Button>
           )}
         </div>
-        <CardTitle className="text-pretty mr-2">
+        <CardTitle className="mr-4">
           {liftType}
           {isExpanded && " Detailed Analysis"}
         </CardTitle>
@@ -72,10 +81,10 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
         )}
       </CardContent>
       <CardFooter className="text-sm font-extralight">
-        Click{" "}
-        {isExpanded
-          ? "to reduce to summary view"
-          : `for full ${liftType} analysis`}
+        {/* Click{" "} */}
+        {/* {isExpanded */}
+        {/* ? "to reduce to summary view" */}
+        {/* : `for full ${liftType} analysis`} */}
       </CardFooter>
     </Card>
   );
@@ -96,7 +105,7 @@ function ExpandedLiftAchievements({ liftType }) {
 
   return (
     <div>
-      <div className="flex flex-col gap-4 md:flex-row">
+      <div className="flex flex-col gap-4 md:flex-row md:justify-evenly">
         <div className="grid grid-cols-2">
           <div className="font-semibold">Summary statistics:</div>
           <div></div>
@@ -133,23 +142,62 @@ function ExpandedLiftAchievements({ liftType }) {
         <div>
           <Separator orientation="vertical" />
         </div>
-        <RecentLiftHighlights
-          liftType={liftType}
-          topLiftsByTypeAndReps={topLiftsByTypeAndReps}
-        />
+        <RecentLiftHighlights liftType={liftType} />
         <div>
           <Separator orientation="vertical" />
         </div>
-
-        <div>
-          <div className="font-semibold">Rep range PRs:</div>
-        </div>
+        <RepPRsAccordion liftType={liftType} />
       </div>
     </div>
   );
 }
 
-const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
+const RepPRsAccordion = ({ liftType }) => {
+  const { topLiftsByTypeAndReps } = useContext(ParsedDataContext);
+  if (!topLiftsByTypeAndReps) return null;
+
+  const topLiftsByReps = topLiftsByTypeAndReps?.[liftType];
+  if (!topLiftsByReps) return null;
+
+  return (
+    <div className="w-1/3">
+      <div className="font-semibold">Rep range PRs:</div>
+      <Accordion type="single" collapsible className="w-full">
+        {topLiftsByReps.slice(0, 5).map((repRange, index) => {
+          if (repRange.length === 0) return null; // Skip if the array is empty
+
+          return (
+            <AccordionItem
+              key={`${liftType}-${index + 1}`}
+              value={`${liftType}-${index + 1}`}
+            >
+              <AccordionTrigger>
+                {`${index + 1}RM ${repRange[0].weight}${repRange[0].unitType}`}{" "}
+                (Click to see more {`${index + 1}`}RMs)
+              </AccordionTrigger>
+              <AccordionContent>
+                <div>
+                  <ol className="list-decimal pl-5">
+                    {repRange.slice(0, 5).map((lift, liftIndex) => (
+                      <li key={liftIndex}>
+                        {`${index + 1}@${lift.weight}${
+                          lift.unitType
+                        } (${getReadableDateString(lift.date)})`}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
+    </div>
+  );
+};
+
+const RecentLiftHighlights = ({ liftType }) => {
+  const { topLiftsByTypeAndReps } = useContext(ParsedDataContext);
   if (!topLiftsByTypeAndReps) return null;
 
   // Helper function to check if a date is within the last month
@@ -190,9 +238,8 @@ const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
 
 export function SelectedLiftsIndividualLiftCards() {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
-  const { status: authStatus } = useSession();
   const [expandedCard, setExpandedCard] = useState(null);
-  const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
+  const [parent] = useAutoAnimate(/* optional config */);
   const { width } = useWindowSize();
   let isMobile = false;
 

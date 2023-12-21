@@ -107,7 +107,7 @@ function ExpandedLiftAchievements({ liftType }) {
     <div>
       <div className="flex flex-col gap-4 md:flex-row md:justify-evenly">
         <div className="grid grid-cols-2">
-          <div className="font-semibold">Summary statistics:</div>
+          <div className="text-lg font-semibold">Summary statistics:</div>
           <div></div>
           <div className="font-semibold">Total Reps:</div>
           <div className="">{totalReps}</div>
@@ -140,11 +140,13 @@ function ExpandedLiftAchievements({ liftType }) {
           )}
         </div>
         <div>
-          <Separator orientation="vertical" />
+          <Separator orientation="vertical" className="hidden md:block" />
+          <Separator orientation="horizontal" className="block md:hidden" />
         </div>
         <RecentLiftHighlights liftType={liftType} />
         <div>
-          <Separator orientation="vertical" />
+          <Separator orientation="vertical" className="hidden md:block" />
+          <Separator orientation="horizontal" className="block md:hidden" />
         </div>
         <RepPRsAccordion liftType={liftType} />
       </div>
@@ -160,10 +162,10 @@ const RepPRsAccordion = ({ liftType }) => {
   if (!topLiftsByReps) return null;
 
   return (
-    <div className="w-1/3">
-      <div className="font-semibold">Rep range PRs:</div>
-      <Accordion type="single" collapsible className="w-full">
-        {topLiftsByReps.slice(0, 5).map((repRange, index) => {
+    <div className="md:w-1/3">
+      <div className="text-lg font-semibold">Rep range PRs:</div>
+      <Accordion type="single" collapsible className="w-full px-4 md:px-0">
+        {topLiftsByReps.slice(0, 10).map((repRange, index) => {
           if (repRange.length === 0) return null; // Skip if the array is empty
 
           return (
@@ -172,7 +174,7 @@ const RepPRsAccordion = ({ liftType }) => {
               value={`${liftType}-${index + 1}`}
             >
               <AccordionTrigger>
-                {`${index + 1}RM ${repRange[0].weight}${repRange[0].unitType}`}{" "}
+                {`${index + 1}@${repRange[0].weight}${repRange[0].unitType}`}{" "}
                 (Click to see more {`${index + 1}`}RMs)
               </AccordionTrigger>
               <AccordionContent>
@@ -215,13 +217,15 @@ const RecentLiftHighlights = ({ liftType }) => {
     )
     .filter((entry) => isWithinLastMonth(entry.date))
     .sort((a, b) => a.entryIndex - b.entryIndex) // Sort by entryIndex in ascending order
-    .slice(0, 5); // Only show top n highlights per card
+    .slice(0, 10); // Only show top n highlights per card
 
   if (!recentHighlights || recentHighlights.length <= 0) return null;
 
   return (
     <div>
-      <div className="font-semibold">Recent Highlights for {liftType}:</div>
+      <div className="text-lg font-semibold">
+        Recent Highlights for {liftType}:
+      </div>
       <ul>
         {recentHighlights.map((lift, index) => (
           <li key={index}>

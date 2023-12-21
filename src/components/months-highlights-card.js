@@ -43,23 +43,24 @@ export function MonthsHighlightsCard() {
           {!recentMonthHighlights && <Skeleton className="h-[50vh]" />}
           {recentMonthHighlights &&
             recentMonthHighlights.map((record) => (
-              <li key={`${record.liftType}-${record.reps}-${record.date}`}>
-                <div className="flex flex-col justify-between md:flex-row">
-                  <div className="">
-                    <strong
-                      className={
-                        coreLiftTypes.includes(record.liftType)
-                          ? "font-bold"
-                          : "font-normal"
-                      }
-                    >
-                      {record.liftType} {record.reps}@{record.weight}
-                      {record.unitType} ({getReadableDateString(record.date)})
-                    </strong>{" "}
-                  </div>
-                  <div className="ml-2">
-                    {record.prSentenceReport && `${record.prSentenceReport}`}
-                  </div>
+              <li
+                key={`${record.liftType}-${record.reps}-${record.date}`}
+                className="flex justify-between gap-2 py-1 md:flex-row md:py-0"
+              >
+                <div className="">
+                  <strong
+                    className={
+                      coreLiftTypes.includes(record.liftType)
+                        ? "font-bold"
+                        : "font-normal"
+                    }
+                  >
+                    {record.liftType} {record.reps}@{record.weight}
+                    {record.unitType} ({getReadableDateString(record.date)})
+                  </strong>{" "}
+                </div>
+                <div className="text-right">
+                  {record.prSentenceReport && `${record.prSentenceReport}`}
                 </div>
               </li>
             ))}

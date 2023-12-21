@@ -13,6 +13,13 @@ import {
 } from "@/components/ui/card";
 
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -45,19 +52,30 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
 
   return (
     <Card
-    // onClick={onToggle}
+      onClick={() => {
+        if (!isExpanded) onToggle();
+      }}
     >
       <CardHeader className="relative">
         <div className="absolute right-0 top-0 p-2">
-          {isExpanded ? (
-            <Button variant="ghost" size="icon" onClick={onToggle}>
-              <Minimize2 />
-            </Button>
-          ) : (
-            <Button variant="ghost" size="icon" onClick={onToggle}>
-              <Maximize2 />
-            </Button>
-          )}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {isExpanded ? (
+                  <Button variant="ghost" size="icon" onClick={onToggle}>
+                    <Minimize2 />
+                  </Button>
+                ) : (
+                  <Button variant="ghost" size="icon" onClick={onToggle}>
+                    <Maximize2 />
+                  </Button>
+                )}
+              </TooltipTrigger>
+              <TooltipContent>
+                {isExpanded ? "Minimise" : "Expand to full analysis"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         <CardTitle className="mr-4">
           {liftType}

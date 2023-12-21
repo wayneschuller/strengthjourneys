@@ -104,50 +104,51 @@ function ExpandedLiftAchievements({ liftType }) {
   const fiveRM = topLiftsByReps?.[4]?.[0];
 
   return (
-    <div>
-      <div className="flex flex-col gap-4 md:flex-row md:justify-evenly">
-        <div className="grid grid-cols-2">
-          <div className="text-lg font-semibold">Summary statistics:</div>
-          <div></div>
-          <div className="font-semibold">Total Reps:</div>
-          <div className="">{totalReps}</div>
-          <div className="font-semibold">Total Sets:</div>
-          <div className="">{totalSets}</div>
-          <div className="font-semibold">First lift:</div>
-          <div>{getReadableDateString(oldestDate)}</div>
-          <div className="font-semibold">Most recent lift:</div>{" "}
-          <div>{getReadableDateString(newestDate)}</div>
-          {oneRM && <div className="font-semibold">Best single:</div>}
-          {oneRM && (
-            <div>
-              {oneRM.weight}
-              {oneRM.unitType} ({getReadableDateString(oneRM.date)})
+    <div className="flex flex-col gap-4 md:flex-row md:justify-stretch">
+      <div className="grow">
+        <div className="text-lg font-semibold">Summary statistics:</div>
+        <div></div>
+        <div className="font-semibold">
+          Total Reps: <div className="inline">{totalReps}</div>
+          <div className="font-semibold">
+            Total Sets: <div className="inline">{totalSets}</div>
+            <div className="font-semibold">
+              First lift:{" "}
+              <div className="inline">{getReadableDateString(oldestDate)}</div>
             </div>
-          )}
-          {threeRM && <div className="font-semibold">Best triple:</div>}
-          {threeRM && (
-            <div>
-              {threeRM.weight}
-              {threeRM.unitType} ({getReadableDateString(threeRM.date)})
-            </div>
-          )}
-          {fiveRM && <div className="font-semibold">Best five:</div>}
-          {fiveRM && (
-            <div>
-              {fiveRM.weight}
-              {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
-            </div>
-          )}
+            <div className="font-semibold">Most recent lift:</div>{" "}
+            <div>{getReadableDateString(newestDate)}</div>
+            {oneRM && <div className="font-semibold">Best single:</div>}
+            {oneRM && (
+              <div>
+                {oneRM.weight}
+                {oneRM.unitType} ({getReadableDateString(oneRM.date)})
+              </div>
+            )}
+            {threeRM && <div className="font-semibold">Best triple:</div>}
+            {threeRM && (
+              <div>
+                {threeRM.weight}
+                {threeRM.unitType} ({getReadableDateString(threeRM.date)})
+              </div>
+            )}
+            {fiveRM && <div className="font-semibold">Best five:</div>}
+            {fiveRM && (
+              <div>
+                {fiveRM.weight}
+                {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
+              </div>
+            )}
+            <Separator orientation="horizontal" className="col-span-2 my-4" />
+            <RecentLiftHighlights liftType={liftType} />
+          </div>
         </div>
-        <div>
-          <Separator orientation="vertical" className="hidden md:block" />
-          <Separator orientation="horizontal" className="block md:hidden" />
-        </div>
-        <RecentLiftHighlights liftType={liftType} />
-        <div>
-          <Separator orientation="vertical" className="hidden md:block" />
-          <Separator orientation="horizontal" className="block md:hidden" />
-        </div>
+      </div>
+      <div>
+        <Separator orientation="vertical" className="hidden md:block" />
+        <Separator orientation="horizontal" className="block md:hidden" />
+      </div>
+      <div className="grow">
         <RepPRsAccordion liftType={liftType} />
       </div>
     </div>
@@ -162,7 +163,7 @@ const RepPRsAccordion = ({ liftType }) => {
   if (!topLiftsByReps) return null;
 
   return (
-    <div className="md:w-1/3">
+    <div className="">
       <div className="text-lg font-semibold">Rep range PRs:</div>
       <Accordion type="single" collapsible className="w-full px-4 md:px-0">
         {topLiftsByReps.slice(0, 10).map((repRange, index) => {

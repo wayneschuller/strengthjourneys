@@ -15,8 +15,8 @@ import { CardFooter } from "@/components/ui/card";
 import { useSession } from "next-auth/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 
-export function LiftAchievementsCard({ liftType }) {
-  const [expand, setExpand] = useState(false);
+export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
+  // const [expand, setExpand] = useState(false);
   const { liftTypes, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
 
@@ -33,9 +33,8 @@ export function LiftAchievementsCard({ liftType }) {
 
   return (
     <Card
-      onClick={(event) => {
-        setExpand(!expand);
-      }}
+      // className={isExpanded ? "col-span-4" : "col-span-1"}
+      onClick={onToggle}
     >
       <CardHeader>
         <CardTitle>{liftType}</CardTitle>
@@ -53,29 +52,35 @@ export function LiftAchievementsCard({ liftType }) {
               <div>{getReadableDateString(oldestDate)}</div>
               <div className="font-semibold">Most recent lift:</div>{" "}
               <div>{getReadableDateString(newestDate)}</div>
-              {oneRM && <div className="font-semibold">Best single:</div>}
-              {oneRM && (
-                <div>
-                  {oneRM.weight}
-                  {oneRM.unitType} ({getReadableDateString(oneRM.date)})
-                </div>
-              )}
-              {threeRM && <div className="font-semibold">Best triple:</div>}
-              {threeRM && (
-                <div>
-                  {threeRM.weight}
-                  {threeRM.unitType} ({getReadableDateString(threeRM.date)})
-                </div>
-              )}
-              {fiveRM && <div className="font-semibold">Best five:</div>}
-              {fiveRM && (
-                <div>
-                  {fiveRM.weight}
-                  {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
-                </div>
-              )}
             </div>
-            {expand && (
+            {isExpanded && oneRM && (
+              <div className="font-semibold">Best single:</div>
+            )}
+            {isExpanded && oneRM && (
+              <div>
+                {oneRM.weight}
+                {oneRM.unitType} ({getReadableDateString(oneRM.date)})
+              </div>
+            )}
+            {isExpanded && threeRM && (
+              <div className="font-semibold">Best triple:</div>
+            )}
+            {isExpanded && threeRM && (
+              <div>
+                {threeRM.weight}
+                {threeRM.unitType} ({getReadableDateString(threeRM.date)})
+              </div>
+            )}
+            {isExpanded && fiveRM && (
+              <div className="font-semibold">Best five:</div>
+            )}
+            {isExpanded && fiveRM && (
+              <div>
+                {fiveRM.weight}
+                {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
+              </div>
+            )}
+            {isExpanded && (
               <RecentLiftHighlights
                 liftType={liftType}
                 topLiftsByTypeAndReps={topLiftsByTypeAndReps}
@@ -110,7 +115,6 @@ const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
 
   if (!recentHighlights || recentHighlights.length <= 0) return null;
 
-  // FIXME: Ideally these would expand out with animation?
   return (
     <div>
       <div className="mt-4 font-semibold">
@@ -133,6 +137,17 @@ const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
 export function SelectedLiftsIndividualLiftCards() {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   const { status: authStatus } = useSession();
+  const [expandedCard, setExpandedCard] = useState(null);
+
+  const toggleCard = (liftType) => {
+    setExpandedCard(expandedCard === liftType ? null : liftType);
+  };
+
+  // FIXME: we need to do some engineering for mobile vs the rest.
+  // For mobile a simple 1 col grid with an expanding lift card is fine and easy.
+  // For desktop we want a clicked lift card to rise and go full width at the top of the lift card section
+  // So expanded should mean we put it in it's own row.
+  // Do this before the grid starts so we don't even have to worry about grid cols (as below).
 
   let xlGridCols = "";
 
@@ -186,6 +201,8 @@ export function SelectedLiftsIndividualLiftCards() {
           key={`${lift}-card`}
           liftType={lift}
           parsedData={parsedData}
+          isExpanded={expandedCard === lift}
+          onToggle={() => toggleCard(lift)}
         />
       ))}
 

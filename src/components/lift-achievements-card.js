@@ -21,6 +21,7 @@ import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser
 import { useSession } from "next-auth/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Maximize2, Minimize2 } from "lucide-react";
+import { Button } from "./ui/button";
 
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
   // const [expand, setExpand] = useState(false);
@@ -43,15 +44,21 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
       // className={isExpanded ? "col-span-4" : "col-span-1"}
       onClick={onToggle}
     >
-      <CardHeader>
-        <div className="flex justify-between">
-          <CardTitle>{liftType}</CardTitle>
-          {isExpanded ? <Minimize2 /> : <Maximize2 />}
+      <CardHeader className="relative">
+        {/* <div className="flex flex-row justify-between align-top"> */}
+
+        <div className="absolute right-0 top-0 p-2">
+          {isExpanded ? (
+            <Button variant="ghost" size="icon">
+              <Minimize2 />
+            </Button>
+          ) : (
+            <Button variant="ghost" size="icon">
+              <Maximize2 />
+            </Button>
+          )}
         </div>
-        <CardDescription>
-          Click to{" "}
-          {isExpanded ? "reduce to summary view" : `see full lift analysis`}
-        </CardDescription>
+        <CardTitle className="text-pretty mr-2">{liftType}</CardTitle>
       </CardHeader>
       <CardContent>
         {!liftTypes && <Skeleton className="h-64" />}
@@ -103,6 +110,12 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
           </div>
         )}
       </CardContent>
+      <CardFooter className="text-sm font-extralight">
+        Click{" "}
+        {isExpanded
+          ? "to reduce to summary view"
+          : `for full ${liftType} analysis`}
+      </CardFooter>
     </Card>
   );
 }
@@ -160,7 +173,18 @@ export function SelectedLiftsIndividualLiftCards() {
   }, [selectedLiftTypes]);
 
   const toggleCard = (liftType) => {
-    setExpandedCard(expandedCard === liftType ? null : liftType);
+    // Collapse the current card if it's expanded
+    if (expandedCard === liftType) {
+      setExpandedCard(null);
+    } else {
+      // Collapse any expanded card first
+      setExpandedCard(null);
+
+      // Wait for moment and then expand the new card (FIXME: is this dumb?)
+      setTimeout(() => {
+        setExpandedCard(liftType);
+      }, 300);
+    }
   };
 
   // Find the expanded card

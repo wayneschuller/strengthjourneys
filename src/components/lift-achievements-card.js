@@ -20,6 +20,7 @@ import { Skeleton } from "./ui/skeleton";
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 import { useSession } from "next-auth/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Maximize2, Minimize2 } from "lucide-react";
 
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
   // const [expand, setExpand] = useState(false);
@@ -43,7 +44,10 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
       onClick={onToggle}
     >
       <CardHeader>
-        <CardTitle>{liftType}</CardTitle>
+        <div className="flex justify-between">
+          <CardTitle>{liftType}</CardTitle>
+          {isExpanded ? <Minimize2 /> : <Maximize2 />}
+        </div>
         <CardDescription>
           Click to{" "}
           {isExpanded ? "reduce to summary view" : `see full lift analysis`}

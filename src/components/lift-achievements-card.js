@@ -89,7 +89,28 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
     </Card>
   );
 }
+
+// A big card telling the user good stuff about a particular lift type
 function ExpandedLiftAchievements({ liftType }) {
+  return (
+    <div className="flex flex-col gap-4 md:flex-row md:justify-stretch">
+      <div className="grow">
+        <SummaryStatistics liftType={liftType} />
+        <Separator orientation="horizontal" className="col-span-2 my-4" />
+        <RecentLiftHighlights liftType={liftType} />
+      </div>
+      <div>
+        <Separator orientation="vertical" className="hidden md:block" />
+        <Separator orientation="horizontal" className="block md:hidden" />
+      </div>
+      <div className="grow">
+        <RepPRsAccordion liftType={liftType} />
+      </div>
+    </div>
+  );
+}
+
+const SummaryStatistics = ({ liftType }) => {
   const { liftTypes, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
@@ -102,58 +123,42 @@ function ExpandedLiftAchievements({ liftType }) {
   const oneRM = topLiftsByReps?.[0]?.[0];
   const threeRM = topLiftsByReps?.[2]?.[0];
   const fiveRM = topLiftsByReps?.[4]?.[0];
-
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:justify-stretch">
-      <div className="grow">
-        <div className="text-lg font-semibold">Summary statistics:</div>
-        <div></div>
-        <div className="font-semibold">
-          Total Reps: <div className="inline">{totalReps}</div>
-          <div className="font-semibold">
-            Total Sets: <div className="inline">{totalSets}</div>
-            <div className="font-semibold">
-              First lift:{" "}
-              <div className="inline">{getReadableDateString(oldestDate)}</div>
-            </div>
-            <div className="font-semibold">Most recent lift:</div>{" "}
-            <div>{getReadableDateString(newestDate)}</div>
-            {oneRM && <div className="font-semibold">Best single:</div>}
-            {oneRM && (
-              <div>
-                {oneRM.weight}
-                {oneRM.unitType} ({getReadableDateString(oneRM.date)})
-              </div>
-            )}
-            {threeRM && <div className="font-semibold">Best triple:</div>}
-            {threeRM && (
-              <div>
-                {threeRM.weight}
-                {threeRM.unitType} ({getReadableDateString(threeRM.date)})
-              </div>
-            )}
-            {fiveRM && <div className="font-semibold">Best five:</div>}
-            {fiveRM && (
-              <div>
-                {fiveRM.weight}
-                {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
-              </div>
-            )}
-            <Separator orientation="horizontal" className="col-span-2 my-4" />
-            <RecentLiftHighlights liftType={liftType} />
-          </div>
+    <div className="grid grid-cols-2">
+      <div className="text-lg font-semibold">Summary statistics:</div>
+      <div></div>
+      <div className="font-semibold">Total Reps:</div>
+      <div className="">{totalReps}</div>
+      <div className="font-semibold"> Total Sets: </div>
+      <div className="">{totalSets}</div>
+      <div className="font-semibold">First lift: </div>
+      <div className="inline">{getReadableDateString(oldestDate)}</div>
+      <div className="font-semibold">Most recent lift:</div>{" "}
+      <div>{getReadableDateString(newestDate)}</div>
+      {oneRM && <div className="font-semibold">Best single:</div>}
+      {oneRM && (
+        <div>
+          {oneRM.weight}
+          {oneRM.unitType} ({getReadableDateString(oneRM.date)})
         </div>
-      </div>
-      <div>
-        <Separator orientation="vertical" className="hidden md:block" />
-        <Separator orientation="horizontal" className="block md:hidden" />
-      </div>
-      <div className="grow">
-        <RepPRsAccordion liftType={liftType} />
-      </div>
+      )}
+      {threeRM && <div className="font-semibold">Best triple:</div>}
+      {threeRM && (
+        <div>
+          {threeRM.weight}
+          {threeRM.unitType} ({getReadableDateString(threeRM.date)})
+        </div>
+      )}
+      {fiveRM && <div className="font-semibold">Best five:</div>}
+      {fiveRM && (
+        <div>
+          {fiveRM.weight}
+          {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
+        </div>
+      )}
     </div>
   );
-}
+};
 
 const RepPRsAccordion = ({ liftType }) => {
   const { topLiftsByTypeAndReps } = useContext(ParsedDataContext);

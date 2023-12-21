@@ -15,6 +15,7 @@ import {
   getReadableDateString,
 } from "@/lib/processing-utils";
 import { devLog } from "@/lib/processing-utils";
+import { useWindowSize } from "usehooks-ts";
 import { ParsedDataContext } from "@/pages/_app";
 import { Skeleton } from "./ui/skeleton";
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
@@ -167,11 +168,17 @@ export function SelectedLiftsIndividualLiftCards() {
   const { status: authStatus } = useSession();
   const [expandedCard, setExpandedCard] = useState(null);
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
+  const { width } = useWindowSize();
+  let isMobile = false;
 
   useEffect(() => {
     // devLog(selectedLiftTypes);
     if (selectedLiftTypes.length === 1) setExpandedCard(selectedLiftTypes[0]);
   }, [selectedLiftTypes]);
+
+  if (width <= 768) {
+    isMobile = true;
+  }
 
   const toggleCard = (liftType) => {
     // Collapse the current card if it's expanded
@@ -184,7 +191,9 @@ export function SelectedLiftsIndividualLiftCards() {
   );
 
   // Filter out the expanded card from the list
-  const otherCards = selectedLiftTypes.filter((lift) => lift !== expandedCard);
+  let otherCards = selectedLiftTypes;
+  if (!isMobile)
+    otherCards = selectedLiftTypes.filter((lift) => lift !== expandedCard);
 
   // FIXME: we need to do some engineering for mobile vs the rest.
   // For mobile a simple 1 col grid with an expanding lift card is fine and easy.
@@ -198,7 +207,7 @@ export function SelectedLiftsIndividualLiftCards() {
       ref={parent}
       className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4"
     >
-      {expandedCardData && (
+      {!isMobile && expandedCardData && (
         <div className={`col-span-1 md:col-span-2 xl:col-span-4`}>
           <LiftAchievementsCard
             key={`${expandedCard}-card`}
@@ -215,7 +224,7 @@ export function SelectedLiftsIndividualLiftCards() {
           key={`${lift}-card`}
           liftType={lift}
           parsedData={parsedData}
-          isExpanded={false}
+          isExpanded={isMobile ? expandedCard === lift : false}
           onToggle={() => toggleCard(lift)}
         />
       ))}

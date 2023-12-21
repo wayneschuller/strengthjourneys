@@ -37,7 +37,7 @@ export default function Analyzer() {
         <meta name="description" content="Strength Journeys Lift PR Analyzer" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="">
+      <div className="mb-8">
         <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           PR Analyzer
         </h1>

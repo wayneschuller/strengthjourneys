@@ -13,9 +13,12 @@ import { Skeleton } from "./ui/skeleton";
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 import { CardFooter } from "@/components/ui/card";
 import { useSession } from "next-auth/react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 export function LiftAchievementsCard({ liftType }) {
+  const [expand, setExpand] = useState(false);
   const { liftTypes, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
+  const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
   const totalReps = lift ? lift.totalReps : null;
@@ -29,14 +32,18 @@ export function LiftAchievementsCard({ liftType }) {
   const fiveRM = topLiftsByReps?.[4]?.[0];
 
   return (
-    <Card>
+    <Card
+      onClick={(event) => {
+        setExpand(!expand);
+      }}
+    >
       <CardHeader>
         <CardTitle>{liftType}</CardTitle>
       </CardHeader>
       <CardContent>
         {!liftTypes && <Skeleton className="h-64" />}
         {liftTypes && (
-          <div>
+          <div ref={parent}>
             <div className="grid grid-cols-2 gap-x-1">
               <div className="font-semibold">Total reps (sets):</div>
               <div>
@@ -68,10 +75,12 @@ export function LiftAchievementsCard({ liftType }) {
                 </div>
               )}
             </div>
-            <RecentLiftHighlights
-              liftType={liftType}
-              topLiftsByTypeAndReps={topLiftsByTypeAndReps}
-            />
+            {expand && (
+              <RecentLiftHighlights
+                liftType={liftType}
+                topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+              />
+            )}
           </div>
         )}
       </CardContent>
@@ -120,6 +129,7 @@ const RecentLiftHighlights = ({ liftType, topLiftsByTypeAndReps }) => {
     </div>
   );
 };
+
 export function SelectedLiftsIndividualLiftCards() {
   const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
   const { status: authStatus } = useSession();
@@ -170,7 +180,7 @@ export function SelectedLiftsIndividualLiftCards() {
         </div>
       )}
 
-      {/* Map through each of the selected lifts  */}
+      {/* Map through each of the selected lifts */}
       {selectedLiftTypes.map((lift) => (
         <LiftAchievementsCard
           key={`${lift}-card`}

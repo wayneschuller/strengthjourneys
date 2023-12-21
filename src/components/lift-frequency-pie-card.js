@@ -50,6 +50,9 @@ export function LiftTypeFrequencyPieCard() {
       weight: "bold",
     },
     plugins: {
+      legend: {
+        display: false,
+      },
       datalabels: {
         backgroundColor: function (context) {
           return context.dataset.backgroundColor; // Follow lift background color

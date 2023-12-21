@@ -182,8 +182,8 @@ const RepPRsAccordion = ({ liftType }) => {
               value={`${liftType}-${index + 1}`}
             >
               <AccordionTrigger>
-                {`${index + 1}@${repRange[0].weight}${repRange[0].unitType}`}{" "}
-                (Click to see more {`${index + 1}`}RMs)
+                {`${index + 1}@${repRange[0].weight}${repRange[0].unitType}`},{" "}
+                {getReadableDateString(repRange[0].date)}.
               </AccordionTrigger>
               <AccordionContent>
                 <div>

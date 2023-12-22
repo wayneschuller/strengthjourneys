@@ -21,7 +21,7 @@ import {
 
 export function AvatarDropdown() {
   const { setTheme } = useTheme();
-  const { data: session } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const [openPicker, authResponse] = useDrivePicker();
   const [ssid, setSsid] = useLocalStorage("ssid", null);
   const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
@@ -30,7 +30,7 @@ export function AvatarDropdown() {
     null,
   );
 
-  if (!session)
+  if (authStatus === "unauthenticated")
     return (
       <Button variant="outline" onClick={() => signIn("google")}>
         Sign in to personalize

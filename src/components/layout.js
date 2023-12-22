@@ -87,6 +87,9 @@ export function Layout({ children }) {
 
       if (parsedData !== null) {
         // We have some good data loaded - tell the user via toast
+        // FIXME: why don't we check against the old parsedData.length or some other fast compare?
+        // Sometimes the user does a minor change to a gsheet (add a line or an empty row) and it doesn't
+        // deserve having the toast interrupt them.
         loadedToastInit = true; // Don't show this again
         const description = sheetFilename || "File name unknown";
         toast({
@@ -114,6 +117,7 @@ export function Layout({ children }) {
 
     // If there have been any problems we will switch into demo mode with sample data
     // FIXME: Logic is NQR, demo data should only be when unauthenticated
+    // FIXME: if we are committing to demo mode then do the demo toast here and not in a separate useEffect
     if (!parsedData) parsedData = transposeDatesToToday(sampleParsedData, true); // Transpose demo dates to recent, add jitter
 
     // As far as possible try to get components to do their own unique processing of parsedData
@@ -169,6 +173,7 @@ export function Layout({ children }) {
   }, [data, isLoading, isError, authStatus]);
 
   // useEffect for reminding the user when Analyzer/Visualizer show demo data
+  // FIXME: this could be integrated into the main useEffect above
   useEffect(() => {
     // devLog(`<Layout /> Toast useEffect`);
 

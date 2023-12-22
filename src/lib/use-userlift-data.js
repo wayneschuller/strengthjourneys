@@ -13,6 +13,8 @@ export function useUserLiftData() {
   const ssid = useReadLocalStorage("ssid");
   const { data: session, status: authStatus } = useSession();
 
+  devLog(session);
+
   const shouldFetch = authStatus === "authenticated" && ssid ? true : false; // Only fetch if we have auth and ssid
 
   const { data, isLoading } = useSWR(

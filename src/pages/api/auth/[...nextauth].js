@@ -14,7 +14,7 @@ const scopes = [
  * returns the old token and an error property
  */
 async function refreshAccessToken(token) {
-  devLog(`refreshAccessToken() called:`);
+  devLog(`refreshAccessToken()...`);
 
   try {
     const url =
@@ -35,17 +35,16 @@ async function refreshAccessToken(token) {
 
     const refreshedTokens = await response.json();
 
-    devLog(`here is the response from Google:`);
-    devLog(refreshedTokens);
-
     if (!response.ok) {
       throw refreshedTokens;
     }
 
+    devLog(`... Google happily issued a refreshed token!`);
+
     return {
       ...token,
       accessToken: refreshedTokens.access_token,
-      accessTokenExpires: Date.now() + 60 * 58 * 1000, // WS modified - just calculate one hour
+      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000, // Google will normally give us: {expires_in: 3599}
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
     };
   } catch (error) {
@@ -76,33 +75,35 @@ export default NextAuth({
   ],
   callbacks: {
     async jwt({ token, user, account }) {
-      // devLog(`Our nextauth JWT token`);
-      // devLog(token);
-
       // account && user will be active on first time log in only
       // See: https://next-auth.js.org/configuration/callbacks
       if (account && user) {
-        devLog(`FRESH login to google detected...`);
+        devLog(`Next-auth JWT callback: Fresh login to Google detected...`);
         devLog(account);
 
-        // Return the key JWT information that next-auth will store in an encrypted cookie
+        // Return the key JWT information that next-auth stores in an encrypted cookie
         return {
           accessToken: account.access_token,
-          accessTokenExpires: Date.now() + 60 * 58 * 1000, // WS modified - just add one hour minus 2 minutes
+
+          // Ok - Google servers seem not to give us expires_in field on first login.
+          // So we are just going to calculate an expiry of 1 hour (or 58 minutes)
+          // Note - Google API will return a weird and irrelevant "expires_at" field
+          accessTokenExpires: Date.now() + 60 * 58 * 1000,
+
           refreshToken: account.refresh_token,
           user,
         };
       }
 
       devLog(
-        `token.accessTokenExpires: ${token.accessTokenExpires} ${new Date(
+        `Next-auth JWT callback: token.accessTokenExpires = ${new Date(
           token.accessTokenExpires,
         ).toLocaleString()}`,
       );
 
       // Return previous JWT token if the access token has not expired yet
       if (Date.now() < token.accessTokenExpires) {
-        devLog(`Not expired yet phew. I'll give you our secret JWT token`);
+        // devLog(`Not expired yet phew. I'll give you our secret JWT token`);
         return token;
       }
 
@@ -112,14 +113,9 @@ export default NextAuth({
 
     async session({ session, token }) {
       // devLog(token);
-
       session.user = token.user;
       session.accessToken = token.accessToken;
       session.error = token.error;
-
-      // FIXME: nextauth somehow inserts session.expires somewhere which is just +60minutes.
-      // We could put in the real session.expires from token.accessTokenExpires ?
-      // session.expires = new Date(token.accessTokenExpires).toISOString(); // WS: If we don't pass this then next-auth just gives 60 minutes from now - it doesn't matter but it annoys me otherwise
 
       return session;
     },

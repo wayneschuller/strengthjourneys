@@ -35,7 +35,7 @@ export function Layout({ children }) {
     setSelectedLiftTypes,
     setTopLiftsByTypeAndReps,
   } = useContext(ParsedDataContext);
-  const { data: session, status: authStatus } = useSession();
+  const { data: session, status: authStatus, signIn } = useSession();
   const { data, isError, isLoading } = useUserLiftData();
   const [ssid, setSsid] = useLocalStorage("ssid", null);
   const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
@@ -66,17 +66,21 @@ export function Layout({ children }) {
 
       devLog(data);
       toast({
-        variant: "destructive",
-        title: "Google Server Error",
-        description: "Google servers denied access to selected sheet.",
+        // variant: "destructive",
+        title: "Auth token - signing you in again",
+        description: "Just relax Google loves you",
       });
-      demoToastInit = true; // Don't run another toast below and block this one
+      // demoToastInit = true; // Don't run another toast below and block this one
 
       // FIXME: this moment is tricky - if 1 hour has expired then we just want to log them out and let them log in again
       // However if the problem is access to google, then we ought to delete the ssid localstorage stuff so they can try another gsheet
       // Once we solve refreshtokens, then this kind of error should do the latter - delete ssid and stay logged in.
 
       // signOut(); // Sign out and return to demo mode (FIXME: Or some how stay logged in)
+
+      // FIXME: the below is just for testing - if next auth can refresh before we see SWR isError here, then don't do this.
+      // Once refresh tokens are 100%, then this code path can handle other kinds of google server error responses
+      signIn(); // Hopefully this will refresh the token and trigger a full data load in this useEffect again
       return;
     }
 

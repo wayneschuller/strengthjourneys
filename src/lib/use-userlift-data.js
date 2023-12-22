@@ -11,12 +11,14 @@ const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generi
 
 export function useUserLiftData() {
   const ssid = useReadLocalStorage("ssid");
-  const { status: authStatus } = useSession();
+  const { data: session, status: authStatus } = useSession();
 
   const shouldFetch = authStatus === "authenticated" && ssid ? true : false; // Only fetch if we have auth and ssid
 
   const { data, isLoading } = useSWR(
-    shouldFetch ? `/api/readGSheet?ssid=${ssid}` : null,
+    shouldFetch
+      ? `/api/readGSheet?ssid=${ssid}&token=${session.accessToken}`
+      : null,
     fetcher,
     {
       // SWR options

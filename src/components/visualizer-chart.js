@@ -149,7 +149,7 @@ export default function VisualizerChart() {
   let xPaddingInDays = 10; // Desktop default
   if (isMobile) {
     defaultRangeInMonths = 1; // Mobile default
-    xPaddingInDays = 2; // Mobile default
+    xPaddingInDays = 3; // Mobile default
   }
 
   const defaultRangeMilliseconds =
@@ -564,7 +564,6 @@ function processVisualizerData(
         data: new Map(), // Using Map for efficient lookups
         backgroundColor: getLiftColor(liftTypeKey),
         borderColor: theme === "dark" ? "#EEEEEE" : "#111111",
-        // borderWidth: theme === "dark" ? 1 : 2, // Aesthetical
         borderWidth: 1,
         pointStyle: "circle",
         radius: 3,

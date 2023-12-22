@@ -176,7 +176,9 @@ export default function VisualizerChart() {
   const scalesOptions = {
     x: {
       type: "time",
-      offset: true, // Prevents some clipping of points (not as good as my default padding)
+      // clip: false,
+      // offset: false,
+      // bounds: "data",
       min: xScaleMin,
       max: xScaleMax,
       // These don't work the way I want
@@ -248,7 +250,20 @@ export default function VisualizerChart() {
   };
 
   const dataLabelsOptions = {
-    display: "auto",
+    display: (context) => {
+      const entry = context.dataset.data[context.dataIndex]; // Our parsedData tuple
+
+      // Get today's date and subtract 7 days to get the date for one week ago
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      // Format the date to "YYYY-MM-DD"
+      const oneWeekAgoStr = oneWeekAgo.toISOString().split("T")[0];
+
+      // Check if entry.date is within the last week and if entry.reps is 1
+      if (entry.reps === 1 && entry.date >= oneWeekAgoStr) return "true";
+      else return "auto";
+    },
     formatter: (context) => {
       return `${context.y}${context.unitType}`;
     },

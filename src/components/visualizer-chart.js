@@ -564,8 +564,8 @@ function processVisualizerData(
         data: new Map(), // Using Map for efficient lookups
         backgroundColor: getLiftColor(liftTypeKey),
         borderColor: theme === "dark" ? "#EEEEEE" : "#111111",
-        // borderWidth: theme === "dark" ? 1 : 2, // Aesthetical
-        borderWidth: 1, // Aesthetical
+        borderWidth: theme === "dark" ? 1 : 2, // Aesthetical
+        // borderWidth: 1, // Aesthetical
         pointStyle: "circle",
         radius: 3,
         hitRadius: 15,

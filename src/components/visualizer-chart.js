@@ -567,9 +567,9 @@ function processVisualizerData(
         borderWidth: theme === "dark" ? 1 : 2, // Aesthetical
         // borderWidth: 1, // Aesthetical
         pointStyle: "circle",
-        radius: 3,
-        hitRadius: 15,
-        hoverRadius: 8,
+        radius: 4,
+        hitRadius: 20,
+        hoverRadius: 10,
         cubicInterpolationMode: "monotone",
       };
     }

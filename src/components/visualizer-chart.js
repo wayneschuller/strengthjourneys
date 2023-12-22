@@ -276,6 +276,7 @@ export default function VisualizerChart() {
 
   const tooltipOptions = {
     enabled: true,
+    usePointStyle: true,
     callbacks: {
       title: (context) => {
         const d = new Date(context[0].parsed.x);
@@ -286,6 +287,8 @@ export default function VisualizerChart() {
         });
         return formattedDate;
       },
+      beforeLabel: (context) =>
+        context.raw.isHistoricalPR ? "Historical PR" : null,
       label: (context) => {
         if (!context) return;
         const entry = context.raw;
@@ -320,8 +323,7 @@ export default function VisualizerChart() {
       },
       footer: (context) => {
         if (!context) return;
-        // devLog(context);
-        const entry = context[0].raw;
+        const entry = context[0].raw; // Because the footer context is a different format to label
         const url = entry.URL;
         if (url && !isMobile) return `Click to open ${url.substring(0, 15)}...`; // Tooltip reminder they can click to open video
       },
@@ -575,8 +577,9 @@ function processVisualizerData(
         backgroundColor: getLiftColor(liftTypeKey),
         borderColor: theme === "dark" ? "#EEEEEE" : "#111111",
         borderWidth: 1,
-        pointStyle: "circle",
-        radius: 3,
+        pointStyle: (context) =>
+          context.raw.isHistoricalPR ? "circle" : "cross",
+        radius: (context) => (context.raw.isHistoricalPR ? 3 : 3),
         hitRadius: 15,
         hoverRadius: 8,
         cubicInterpolationMode: "monotone",
@@ -588,9 +591,9 @@ function processVisualizerData(
 
     if (!currentData || currentData.y < oneRepMax) {
       datasets[liftTypeKey].data.set(entry.date, {
-        ...entry,
         x: entry.date,
         y: oneRepMax,
+        ...entry,
       });
     }
   });

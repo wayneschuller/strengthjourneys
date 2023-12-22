@@ -77,7 +77,7 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
             </Tooltip>
           </TooltipProvider>
         </div>
-        <CardTitle className="mr-4">
+        <CardTitle className="mr-5 text-pretty">
           {liftType}
           {isExpanded && " Detailed Analysis"}
         </CardTitle>

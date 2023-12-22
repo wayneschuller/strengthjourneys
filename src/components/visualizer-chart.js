@@ -252,16 +252,7 @@ export default function VisualizerChart() {
   const dataLabelsOptions = {
     display: (context) => {
       const entry = context.dataset.data[context.dataIndex]; // Our parsedData tuple
-
-      // Get today's date and subtract 7 days to get the date for one week ago
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-      // Format the date to "YYYY-MM-DD"
-      const oneWeekAgoStr = oneWeekAgo.toISOString().split("T")[0];
-
-      // Check if entry.date is within the last week and if entry.reps is 1
-      if (entry.reps === 1 && entry.date >= oneWeekAgoStr) return "true";
+      if (entry.isHistoricalPR) return "true";
       else return "auto";
     },
     formatter: (context) => {
@@ -270,7 +261,11 @@ export default function VisualizerChart() {
     font: (context) => {
       const entry = context.dataset.data[context.dataIndex]; // Our parsedData tuple
       // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
+
       const liftSingle = entry.reps === 1;
+
+      // FIXME: do something special for entry.isHistoricalPR here
+
       if (liftSingle) return { weight: "bold", size: 13 };
       else return { style: "italic", size: 12 };
     },

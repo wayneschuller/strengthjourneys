@@ -18,9 +18,7 @@ export function useUserLiftData() {
   const shouldFetch = authStatus === "authenticated" && ssid ? true : false; // Only fetch if we have auth and ssid
 
   const { data, isLoading } = useSWR(
-    shouldFetch
-      ? `/api/readGSheet?ssid=${ssid}&token=${session.accessToken}`
-      : null,
+    shouldFetch ? `/api/readGSheet?ssid=${ssid}` : null,
     fetcher,
     {
       // SWR options

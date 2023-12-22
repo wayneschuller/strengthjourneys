@@ -30,7 +30,7 @@ export function AvatarDropdown() {
     null,
   );
 
-  if (authStatus === "unauthenticated")
+  if (authStatus !== "authenticated")
     return (
       <Button variant="outline" onClick={() => signIn("google")}>
         Sign in to personalize

@@ -45,13 +45,20 @@ const featurePages = [
 
 export default function Home() {
   const title = "Strength Journeys";
+  const URL = "https://www.strengthjourneys.xyz/";
+  const description =
+    "Strength Journeys is a free opensource web app to visualise your barbell lifting data from Google Sheets.";
 
   return (
     <div className="mx-4 md:mx-[5vw]">
       <Head>
         <title>{title}</title>
-        {/* Other meta tags */}
-        <link rel="canonical" href="https://www.strengthjourneys.xyz/" />
+        <meta name="description" content="Strength Journeys" />
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="canonical" href={URL} />
+        <meta property="og:title" content={title} key="title" />
+        <meta name="og:description" content={description} />
+        <meta property="og:url" content={URL} />
       </Head>
 
       <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl ">

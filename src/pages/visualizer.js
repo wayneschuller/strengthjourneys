@@ -36,8 +36,8 @@ const Visualizer = () => {
       <Head>
         <title>Strength Visualizer (Strength Journeys)</title>
         <meta
+          content="Strength Journeys Strength E1RM Visualizer"
           name="description"
-          content="Strength Journeys Strength Analyzer"
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>

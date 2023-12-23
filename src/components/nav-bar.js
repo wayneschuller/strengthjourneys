@@ -144,7 +144,7 @@ export function UserSheetIcon() {
             >
               {!isValidating && <Table2 className="h-[1.2rem] w-[1.2rem]" />}
               {isValidating && (
-                <Loader2 className="h-[1.2rem] w-[1.2rem] animate-spin" />
+                <Table2 className="h-[1.2rem] w-[1.2rem] animate-pulse" />
               )}
             </Button>
           </TooltipTrigger>

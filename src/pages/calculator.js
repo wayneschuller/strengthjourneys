@@ -246,7 +246,7 @@ export default function E1RMCalculator() {
   };
 
   return (
-    <div className="flex justify-center">
+    <div className="mx-4 md:mx-[5vw]">
       <Head>
         <title>E1RM Calculator (Strength Journeys)</title>
         <meta
@@ -255,7 +255,7 @@ export default function E1RMCalculator() {
         />
       </Head>
 
-      <div className="w-11/12 rounded-xl border-2 border-background bg-muted/50 p-4 md:w-4/5 md:p-6">
+      <div className="rounded-xl border-2 border-background bg-muted/50 p-4 md:p-6">
         <div className="flex flex-row gap-1 md:gap-2">
           <h1 className="flex-1 scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl ">
             One Rep Max Calculator

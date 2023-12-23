@@ -47,7 +47,7 @@ export default function Home() {
   const title = "Strength Journeys";
 
   return (
-    <div className="">
+    <div className="mx-4 md:mx-[5vw]">
       <Head>
         <title>{title}</title>
         {/* Other meta tags */}
@@ -59,7 +59,7 @@ export default function Home() {
       </h1>
       <PageDescription />
 
-      <div className="mx-4 my-10 grid grid-cols-1  gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-4">
+      <div className="my-10 grid grid-cols-1  gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-4">
         {featurePages.map((card, index) => (
           <FeatureCard key={index} {...card} />
         ))}

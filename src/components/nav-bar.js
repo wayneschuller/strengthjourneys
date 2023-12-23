@@ -32,7 +32,7 @@ export function NavBar() {
   const pathname = usePathname();
 
   return (
-    <div className="mx-3 my-2 flex flex-row justify-between align-middle  xl:mx-16">
+    <div className="mx-3 my-2 flex flex-row justify-between align-middle md:mx-[10vw]">
       <div className="flex items-center">
         <DesktopNav />
         <MobileNav />

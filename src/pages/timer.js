@@ -14,7 +14,7 @@ const Timer = () => {
   const [time, setTime] = useState(1);
 
   return (
-    <>
+    <div className="mx-4 md:mx-[5vw]">
       <Head>
         <title>{formatTime(time) + " (Lifting Timer)"}</title>
         <meta name="description" content="Lifing Set Timer App" />
@@ -27,7 +27,7 @@ const Timer = () => {
         </h1>
         <Stopwatch time={time} setTime={setTime} />
       </div>
-    </>
+    </div>
   );
 };
 export default Timer;
@@ -62,14 +62,14 @@ function Stopwatch({ time, setTime }) {
   };
 
   return (
-    <>
+    <div className="flex flex-col items-center">
       <Card
-        className="my-10 bg-muted ring-4 hover:bg-muted/80 hover:ring-blue-900 md:my-5"
+        className="my-10 flex-1 bg-muted ring-4 hover:bg-muted/80 hover:ring-blue-900 md:my-5"
         onClick={handleRestart}
       >
         <CardContent>
           <div
-            className={`${GeistMono.className} pt-6 text-center font-mono text-8xl font-bold md:text-[10rem] lg:text-[20rem] xl:text-[20rem] 2xl:text-[30rem]`}
+            className={`${GeistMono.className} pt-6 text-center font-mono text-9xl font-bold md:text-[15rem] lg:text-[20rem] xl:text-[25rem] 2xl:text-[30rem]`}
           >
             {formatTime(time)}
           </div>
@@ -96,7 +96,7 @@ function Stopwatch({ time, setTime }) {
           Reset
         </button>
       </div>
-    </>
+    </div>
   );
 }
 

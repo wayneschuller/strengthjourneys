@@ -203,7 +203,7 @@ export function Layout({ children }) {
 
   return (
     <>
-      <NavBar className="fixed top-0 z-10" />
+      <NavBar className="fixed top-0" />
       <main className="mx-4">{children}</main>
       <Footer />
     </>

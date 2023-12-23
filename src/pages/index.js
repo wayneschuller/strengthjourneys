@@ -47,7 +47,7 @@ export default function Home() {
   const title = "Strength Journeys";
   const URL = "https://www.strengthjourneys.xyz/";
   const description =
-    "Strength Journeys is a free web app to visualize your barbell lifting data from Google Sheets.";
+    "Strength Journeys is a free web app to visualize your barbell lifting data from Google Sheets. Fully open source. Chalk not included.";
 
   return (
     <div className="mx-4 md:mx-[5vw]">

@@ -40,8 +40,11 @@ export default async function handler(req, res) {
     const data = await response.json();
     res.status(200).json(data);
   } catch (error) {
-    console.error("/api/readGSheet API Error:");
+    const date = new Date().toLocaleString();
+
+    console.error(`/api/readGSheet API Error: Time is: ${date}...`);
     console.log(error);
+
     res.status(400).json({ error: error.message });
   }
 }

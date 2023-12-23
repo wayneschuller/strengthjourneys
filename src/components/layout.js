@@ -35,7 +35,7 @@ export function Layout({ children }) {
     setSelectedLiftTypes,
     setTopLiftsByTypeAndReps,
   } = useContext(ParsedDataContext);
-  const { data: session, status: authStatus, signIn } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const { data, isError, isLoading } = useUserLiftData();
   const [ssid, setSsid] = useLocalStorage("ssid", null);
   const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
@@ -80,7 +80,7 @@ export function Layout({ children }) {
 
       // FIXME: the below is just for testing - if next auth can refresh before we see SWR isError here, then don't do this.
       // Once refresh tokens are 100%, then this code path can handle other kinds of google server error responses
-      signIn(); // Hopefully this will refresh the token and trigger a full data load in this useEffect again
+      signIn("google"); // Hopefully this will refresh the token and trigger a full data load in this useEffect again
       return;
     }
 

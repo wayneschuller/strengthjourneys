@@ -13,12 +13,11 @@ export function useUserLiftData() {
   const ssid = useReadLocalStorage("ssid");
   const { data: session, status: authStatus } = useSession();
 
-  devLog(session);
-  // FIXME: can we check for token expiry here? Would it help?
+  // devLog(session);
 
   const shouldFetch = authStatus === "authenticated" && ssid ? true : false; // Only fetch if we have auth and ssid
 
-  const { data, isLoading } = useSWR(
+  const { data, isLoading, isValidating } = useSWR(
     shouldFetch ? `/api/readGSheet?ssid=${ssid}` : null,
     fetcher,
     {
@@ -30,6 +29,7 @@ export function useUserLiftData() {
   return {
     data,
     isLoading,
+    isValidating,
     isError: data?.error ? true : false,
   };
 }

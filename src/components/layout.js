@@ -91,7 +91,7 @@ export function Layout({ children }) {
         loadedToastInit = true; // Don't show this again
         const description = sheetFilename || "File name unknown";
         toast({
-          title: "Data loaded from Google Sheets",
+          title: "Data updated from Google Sheets",
           description: description,
         });
       } else {

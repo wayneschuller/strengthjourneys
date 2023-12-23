@@ -5,7 +5,7 @@
 import * as React from "react";
 import { useState, useEffect, useContext } from "react";
 import { useSession, signIn, sgnOut } from "next-auth/react";
-import { useReadLocalStorage } from "usehooks-ts";
+import { useLocalStorage } from "usehooks-ts";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,7 @@ import { DarkModeToggle } from "@/components/dark-mode-toggle";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
 import { useUserLiftData } from "@/lib/use-userlift-data";
-import { Table2 } from "lucide-react";
+import { Table2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 
@@ -117,15 +117,19 @@ export function DesktopNav() {
 }
 
 // When user is logged in with data, give a link to their google sheet
+// This is also a subtle spot to indicate when we are trying to look for new data from google
 export function UserSheetIcon() {
-  const sheetFilename = useReadLocalStorage("sheetFilename");
-  const ssid = useReadLocalStorage("ssid");
-  const sheetURL = decodeURIComponent(useReadLocalStorage("sheetURL"));
-  const { data: session } = useSession();
-  const { data, isError, isLoading } = useUserLiftData();
+  // We need the next 3 for the file picker button
+  const [ssid, setSsid] = useLocalStorage("ssid", null);
+  const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
+  const [sheetFilename, setSheetFilename] = useLocalStorage(
+    "sheetFilename",
+    null,
+  );
+  const { data: session, status: authStatus } = useSession();
+  const { data, isError, isLoading, isValidating } = useUserLiftData();
 
   return (
-    !isLoading &&
     session?.user &&
     ssid &&
     sheetURL &&
@@ -140,7 +144,10 @@ export function UserSheetIcon() {
                 window.open(sheetURL);
               }}
             >
-              <Table2 className="h-[1.2rem] w-[1.2rem]" />
+              {!isValidating && <Table2 className="h-[1.2rem] w-[1.2rem]" />}
+              {isValidating && (
+                <Loader2 className="h-[1.2rem] w-[1.2rem] animate-spin" />
+              )}
             </Button>
           </TooltipTrigger>
           <TooltipContent>Click to open {sheetFilename} </TooltipContent>

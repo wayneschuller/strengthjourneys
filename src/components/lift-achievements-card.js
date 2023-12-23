@@ -128,6 +128,13 @@ function ExpandedLiftAchievements({ liftType }) {
   );
 }
 
+// Show some good overview summary statistics for this liftType.
+//
+// FIXME: be creative, could we show them progress to the next milestone that we calculate?
+// e.g.: next plate milestone, next round number milestone (in either units)
+// Also reward them for what milestones they have, by the same formula
+// So create a milestones function.
+// Visually showing progress to the next milestone would be good - progress bar.
 const SummaryStatistics = ({ liftType }) => {
   const { liftTypes, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
 

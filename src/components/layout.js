@@ -204,7 +204,7 @@ export function Layout({ children }) {
   return (
     <>
       <NavBar className="fixed top-0 z-10" />
-      <main className="mb-4 mt-10">{children}</main>
+      <main className="mx-4">{children}</main>
       <Footer />
     </>
   );

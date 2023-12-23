@@ -50,37 +50,35 @@ export function Layout({ children }) {
   // When userUserLiftData (useSWR) gives new Google sheet data, parse it
   // useSWR can ping google and cache it and it won't trigger here until data changes
   useEffect(() => {
-    // devLog( `<Layout /> useEffect[data]: isLoading ${isLoading}, isError ${isError}`,);
+    devLog(
+      `<Layout /> useEffect[data]: authStatus: ${authStatus}, isLoading ${isLoading}, isError ${isError}, data ${
+        data ? "IS" : "is NOT"
+      } ready.`,
+    );
 
     if (authStatus === "loading") return; // Wait for auth. Don't prematurely go into demo mode
     if (isLoading) return; // Wait for useSWR. Don't prematurely go into demo mode
 
-    // If data changes and we have isError then signOut
-    // This is usually because our token has expired
-    // FIXME: get Google refreshtokens working
-
+    // isError happens when Google decides they don't love us
     if (isError) {
-      console.error(
-        "Couldn't speak to Google. This is normally because it is more than one hour since you logged in. Automatically signing out. This will be fixed in a future version using refresh tokens",
-      );
-
+      console.error("Google doesn't love us today");
       devLog(data);
       toast({
-        // variant: "destructive",
-        title: "Auth token - signing you in again",
+        title: "Data request isError event",
         description: "Just relax Google loves you",
       });
-      // demoToastInit = true; // Don't run another toast below and block this one
 
-      // FIXME: this moment is tricky - if 1 hour has expired then we just want to log them out and let them log in again
-      // However if the problem is access to google, then we ought to delete the ssid localstorage stuff so they can try another gsheet
-      // Once we solve refreshtokens, then this kind of error should do the latter - delete ssid and stay logged in.
+      // This moment is tricky because if the problem is access to google,
+      // then we ought to delete the ssid localstorage stuff so they can try another gsheet
 
-      // signOut(); // Sign out and return to demo mode (FIXME: Or some how stay logged in)
+      setSsid(null);
+      setSheetFilename(null);
+      setSheetURL(null);
+      signOut(); // Sign out and return to demo mode. User has a chance to sign in again and try a new sheet.
 
       // FIXME: the below is just for testing - if next auth can refresh before we see SWR isError here, then don't do this.
       // Once refresh tokens are 100%, then this code path can handle other kinds of google server error responses
-      signIn("google"); // Hopefully this will refresh the token and trigger a full data load in this useEffect again
+      // signIn("google"); // Hopefully this will refresh the token and trigger a full data load in this useEffect again
       return;
     }
 

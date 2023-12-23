@@ -14,6 +14,7 @@ export function useUserLiftData() {
   const { data: session, status: authStatus } = useSession();
 
   devLog(session);
+  // FIXME: can we check for token expiry here? Would it help?
 
   const shouldFetch = authStatus === "authenticated" && ssid ? true : false; // Only fetch if we have auth and ssid
 

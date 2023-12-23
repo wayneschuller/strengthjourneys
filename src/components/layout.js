@@ -64,22 +64,18 @@ export function Layout({ children }) {
       console.error("Google doesn't love us today");
       devLog(data);
       toast({
-        title: "Data request isError event",
-        description: "Just relax Google loves you",
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "Lift some weights and come back later.",
       });
 
-      // This moment is tricky because if the problem is access to google,
-      // then we ought to delete the ssid localstorage stuff so they can try another gsheet
-
+      // The problem might not be the particular ssid, but let's delete it all and let them try again.
       setSsid(null);
       setSheetFilename(null);
       setSheetURL(null);
-      signOut(); // Sign out and return to demo mode. User has a chance to sign in again and try a new sheet.
 
-      // FIXME: the below is just for testing - if next auth can refresh before we see SWR isError here, then don't do this.
-      // Once refresh tokens are 100%, then this code path can handle other kinds of google server error responses
-      // signIn("google"); // Hopefully this will refresh the token and trigger a full data load in this useEffect again
-      return;
+      // Maybe better to let the user decide if they want to try to log out and log in again.
+      // signOut(); // Sign out and return to demo mode. User has a chance to sign in again and try a new sheet.
     }
 
     let parsedData = null; // A local version for this scope only

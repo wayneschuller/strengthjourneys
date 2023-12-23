@@ -14,6 +14,8 @@ export default async function handler(req, res) {
 
   const { ssid } = req.query;
 
+  // res.status(400).json({ error: "Fake failure for testing purposes" });
+
   // Check that query has ssid parameter - should not happen ever.
   // Fortunately doesn't happen often.
   if (!ssid || ssid === "null") {

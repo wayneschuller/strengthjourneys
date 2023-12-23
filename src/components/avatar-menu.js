@@ -39,7 +39,10 @@ export function AvatarDropdown() {
 
   // I don't know how we could be authenticated and not have session.user.image but it happens occasionally
   // Possibly due to stale next-auth JWT token
-  if (!session || !session.user || !session.user.image) return null;
+  if (!session || !session.user || !session.user.image) {
+    signOut();
+    return null;
+  }
 
   return (
     <DropdownMenu>

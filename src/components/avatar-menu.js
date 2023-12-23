@@ -49,7 +49,7 @@ export function AvatarDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Avatar className="h-8 w-8 hover:ring-4">
+        <Avatar className="h-8 w-8 ring-muted-foreground hover:ring-2">
           <AvatarImage src={session.user.image} />
           <AvatarFallback>session.user.name</AvatarFallback>
           <span className="sr-only">Logged in user menu</span>

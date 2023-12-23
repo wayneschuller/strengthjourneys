@@ -32,10 +32,12 @@ export function NavBar() {
   const pathname = usePathname();
 
   return (
-    <div className="mx-3 flex items-center xl:mx-16">
-      <DesktopNav />
-      <MobileNav />
-      <div className="ml-2 mt-3 flex flex-1 items-center justify-end gap-3">
+    <div className="mx-3 my-2 flex flex-row justify-between align-middle  xl:mx-16">
+      <div className="flex items-center">
+        <DesktopNav />
+        <MobileNav />
+      </div>
+      <div className="ml-2 flex items-center gap-3">
         {(pathname === "/analyzer" || pathname === "/visualizer") && (
           <SidePanelSelectLiftsButton isIconMode={true} />
         )}
@@ -47,52 +49,49 @@ export function NavBar() {
   );
 }
 
-// FIXME: make the menu nav options an array and reuse in MobileNav
+// FIXME: use the featurePages array in index.js
 
 export function DesktopNav() {
   const pathname = usePathname();
   return (
-    <>
-      <div className="ml-4 hidden md:flex">
-        <Link href="/" className="mr-6 flex items-center space-x-2">
-          {/* <Image src={Logo} className="h-10 w-10" alt="Logo" /> */}
-          <span className="inline-block font-bold">Strength Journeys</span>
+    <div className="hidden align-middle md:flex">
+      <Link href="/" className="mr-6 flex items-center space-x-2">
+        {/* <Image src={Logo} className="h-10 w-10" alt="Logo" /> */}
+        <span className="inline-block font-bold">Strength Journeys</span>
+      </Link>
+      <nav className="flex flex-1 items-center space-x-2 text-sm font-medium md:space-x-6">
+        <Link
+          href="/analyzer"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname === "/analyzer" ? "text-foreground" : "text-foreground/60",
+          )}
+        >
+          PR Analyzer
         </Link>
-        <nav className="flex flex-1 items-center space-x-2 text-sm font-medium md:space-x-6">
-          <Link
-            href="/analyzer"
-            className={cn(
-              "transition-colors hover:text-foreground/80",
-              pathname === "/analyzer"
-                ? "text-foreground"
-                : "text-foreground/60",
-            )}
-          >
-            PR Analyzer
-          </Link>
-          <Link
-            href="/visualizer"
-            className={cn(
-              "transition-colors hover:text-foreground/80",
-              pathname === "/visualizer"
-                ? "text-foreground"
-                : "text-foreground/60",
-            )}
-          >
-            Strength Visualizer
-          </Link>
-          <Link
-            href="/calculator"
-            className={cn(
-              "transition-colors hover:text-foreground/80",
-              pathname === "/calculator"
-                ? "text-foreground"
-                : "text-foreground/60",
-            )}
-          >
-            One Rep Max Calculator
-          </Link>
-          {/* <Link
+        <Link
+          href="/visualizer"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname === "/visualizer"
+              ? "text-foreground"
+              : "text-foreground/60",
+          )}
+        >
+          Strength Visualizer
+        </Link>
+        <Link
+          href="/calculator"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname === "/calculator"
+              ? "text-foreground"
+              : "text-foreground/60",
+          )}
+        >
+          One Rep Max Calculator
+        </Link>
+        {/* <Link
             href="/warmups"
             className={cn(
               "transition-colors hover:text-foreground/80",
@@ -101,18 +100,17 @@ export function DesktopNav() {
           >
             Warm Up Sets
           </Link> */}
-          <Link
-            href="/timer"
-            className={cn(
-              "transition-colors hover:text-foreground/80",
-              pathname === "/timer" ? "text-foreground" : "text-foreground/60",
-            )}
-          >
-            Lifting Set Timer
-          </Link>
-        </nav>
-      </div>
-    </>
+        <Link
+          href="/timer"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname === "/timer" ? "text-foreground" : "text-foreground/60",
+          )}
+        >
+          Lifting Set Timer
+        </Link>
+      </nav>
+    </div>
   );
 }
 

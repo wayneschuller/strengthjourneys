@@ -203,9 +203,9 @@ export function Layout({ children }) {
 
   return (
     <>
-      <NavBar />
+      <NavBar className="fixed top-0 z-10" />
       {/* Below is where we set global x margins for all pages */}
-      <main className="mx-4 mt-4 lg:mx-20">{children}</main>
+      <main className="my-4 mt-10 lg:mx-20">{children}</main>
       <Footer />
     </>
   );

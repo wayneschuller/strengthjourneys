@@ -47,7 +47,7 @@ export default function Home() {
   const title = "Strength Journeys";
   const URL = "https://www.strengthjourneys.xyz/";
   const description =
-    "Strength Journeys is a free opensource web app to visualise your barbell lifting data from Google Sheets.";
+    "Strength Journeys is a free web app to visualize your barbell lifting data from Google Sheets.";
 
   return (
     <div className="mx-4 md:mx-[5vw]">
@@ -59,6 +59,10 @@ export default function Home() {
         <meta property="og:title" content={title} key="title" />
         <meta name="og:description" content={description} />
         <meta property="og:url" content={URL} />
+        <meta
+          property="og:image"
+          content="/public/StrengthJourneysOGimage.png"
+        />
       </Head>
 
       <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl ">

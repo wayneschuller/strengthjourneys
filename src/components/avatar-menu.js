@@ -39,7 +39,9 @@ export function AvatarDropdown() {
 
   // I don't know how we could be authenticated and not have session.user.image but it happens occasionally
   // Possibly due to stale next-auth JWT token
-  if (!session || !session.user || !session.user.image) {
+  // Forced signOut() seems to reset everything
+  if (authStatus === "authenticated" && !session?.user?.image) {
+    console.error(`Next-auth being a silly-billy again.`);
     signOut();
     return null;
   }

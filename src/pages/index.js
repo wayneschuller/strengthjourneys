@@ -61,7 +61,7 @@ export default function Home() {
         <meta property="og:url" content={URL} />
         <meta
           property="og:image"
-          content="/public/StrengthJourneysOGimage.png"
+          content="https://www.strengthjourneys.xyz/StrengthJourneysOGimage.png"
         />
       </Head>
 

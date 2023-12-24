@@ -203,8 +203,8 @@ export function Layout({ children }) {
 
   return (
     <div className="">
-      <NavBar className="" />
-      <main className="">{children}</main>
+      <NavBar />
+      <main>{children}</main>
       <Footer />
     </div>
   );

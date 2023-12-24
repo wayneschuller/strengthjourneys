@@ -139,7 +139,8 @@ export function UserSheetIcon() {
               variant="outline"
               size="icon"
               onClick={() => {
-                window.open(sheetURL);
+                devLog(sheetURL);
+                window.open(decodeURIComponent(sheetURL));
               }}
             >
               {!isValidating && <Table2 className="h-[1.2rem] w-[1.2rem]" />}

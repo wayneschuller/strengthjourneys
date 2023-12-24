@@ -84,7 +84,7 @@ export default function Home() {
 }
 
 const PageDescription = () => (
-  <h2 className="mt-2 scroll-m-20 text-center text-2xl tracking-tight lg:mx-20">
+  <h2 className="mt-2 text-center text-2xl tracking-tight lg:mx-20">
     A free{" "}
     <a
       className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"

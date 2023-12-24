@@ -202,10 +202,10 @@ export function Layout({ children }) {
   }, [authStatus, router]);
 
   return (
-    <>
-      <NavBar className="fixed top-0" />
-      <main className="mt-4">{children}</main>
+    <div className="">
+      <NavBar className="" />
+      <main className="">{children}</main>
       <Footer />
-    </>
+    </div>
   );
 }

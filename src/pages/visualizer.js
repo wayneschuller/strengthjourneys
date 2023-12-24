@@ -50,7 +50,7 @@ const Visualizer = () => {
             position: "relative",
             // Try to maximise chart size across all screen sizes
             height: "88vh",
-            width: "97vw",
+            width: "95vw",
           }}
         >
           <DynamicHeaderVisualizerChart />

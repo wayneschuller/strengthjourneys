@@ -49,7 +49,7 @@ const Visualizer = () => {
           style={{
             position: "relative",
             // Try to maximise chart size across all screen sizes
-            height: "88vh",
+            height: "85vh",
             width: "95vw",
           }}
         >

@@ -50,7 +50,7 @@ export default function Home() {
     "Strength Journeys is a free web app to visualize your barbell lifting data from Google Sheets. Fully open source. Chalk not included.";
 
   return (
-    <div className="mx-4 md:mx-[5vw]">
+    <div className="mx-4 mb-4 md:mx-[5vw]">
       <Head>
         <title>{title}</title>
         <meta name="description" content="Strength Journeys" />

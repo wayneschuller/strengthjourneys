@@ -355,7 +355,6 @@ export default function E1RMCalculator() {
         </div>
 
         {/* Grid of other formulae cards ordered by estimate ascending */}
-        {/* <h3 className="mt-5 hidden flex-1 scroll-m-20 text-xl tracking-tight md:mb-8 md:block md:text-2xl"> */}
         <h4 className="mt-10 scroll-m-20 text-xl font-semibold tracking-tight">
           Citatations and background for these exercise science formulae are
           found in this{" "}

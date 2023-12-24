@@ -45,9 +45,7 @@ export default function App({ Component, pageProps, session }) {
               setTopLiftsByTypeAndReps,
             }}
           >
-            <div
-              className={`min-h-screen bg-background ${GeistSans.className}`}
-            >
+            <div className={`bg-background ${GeistSans.className}`}>
               <Layout>
                 <Component {...pageProps} />
               </Layout>

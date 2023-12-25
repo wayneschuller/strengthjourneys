@@ -213,29 +213,28 @@ const RepPRsAccordion = ({ liftType }) => {
                 <div>
                   <ol className="list-decimal pl-[2rem]">
                     {repRange.slice(0, 20).map((lift, liftIndex) => (
-                      <li
-                        key={liftIndex}
-                        className="grid grid-cols-4 even:bg-accent-foreground/20 md:grid-cols-6 dark:even:bg-muted/40"
-                      >
-                        <div>
-                          {`${index + 1}@${lift.weight}${lift.unitType}  `}
-                        </div>
-                        <div>
-                          {lift.URL && (
-                            <a
-                              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-                              target="_blank"
-                              href={lift.URL}
-                            >
-                              {getReadableDateString(lift.date)}
-                            </a>
-                          )}
-                          {!lift.URL && (
-                            <div>{getReadableDateString(lift.date)}</div>
-                          )}
-                        </div>
-                        <div className="col-span-2 md:col-span-4">
-                          <TruncatedText text={lift.notes} />
+                      <li key={liftIndex}>
+                        <div className="grid grid-cols-4 even:bg-accent-foreground/20 md:grid-cols-6 dark:even:bg-muted/40">
+                          <div>
+                            {`${index + 1}@${lift.weight}${lift.unitType}  `}
+                          </div>
+                          <div>
+                            {lift.URL && (
+                              <a
+                                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+                                target="_blank"
+                                href={lift.URL}
+                              >
+                                {getReadableDateString(lift.date)}
+                              </a>
+                            )}
+                            {!lift.URL && (
+                              <div>{getReadableDateString(lift.date)}</div>
+                            )}
+                          </div>
+                          <div className="col-span-2 md:col-span-4">
+                            <TruncatedText text={lift.notes} />
+                          </div>
                         </div>
                       </li>
                     ))}

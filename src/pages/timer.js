@@ -10,7 +10,7 @@ import { GeistMono } from "geist/font/mono";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-const Timer = () => {
+export default function Timer() {
   const [time, setTime] = useState(1);
 
   return (
@@ -29,8 +29,7 @@ const Timer = () => {
       </div>
     </div>
   );
-};
-export default Timer;
+}
 
 function Stopwatch({ time, setTime }) {
   const [isRunning, setIsRunning] = useState(true);

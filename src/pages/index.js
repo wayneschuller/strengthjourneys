@@ -106,7 +106,7 @@ const PageDescription = () => (
 );
 
 const FeatureCard = ({ href, title, description, IconComponent }) => (
-  <Card className="shadow-lg shadow-primary-foreground ring-1 ring-black hover:ring-2 dark:ring-white">
+  <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
     <Link href={href}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>

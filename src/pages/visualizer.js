@@ -18,7 +18,7 @@ const DynamicHeaderVisualizerChart = dynamic(
   },
 );
 
-export function Visualizer() {
+export default function Visualizer() {
   const { data: session } = useSession();
   const { isLoading } = useUserLiftData();
   const ssid = useReadLocalStorage("ssid");

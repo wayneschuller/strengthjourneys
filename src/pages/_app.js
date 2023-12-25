@@ -11,7 +11,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from "next-auth/react";
 import { useState, createContext } from "react";
 import { devLog } from "@/lib/processing-utils";
-import { GeistSans } from "geist/font/sans";
 
 export const ParsedDataContext = createContext(null); // Internal SJ format of user gsheet (see sampleData.js for design)
 
@@ -45,12 +44,10 @@ export default function App({ Component, pageProps, session }) {
               setTopLiftsByTypeAndReps,
             }}
           >
-            <div className={`bg-background ${GeistSans.className}`}>
-              <Layout>
-                <Component {...pageProps} />
-              </Layout>
+            <Layout>
+              <Component {...pageProps} />
               <Toaster />
-            </div>
+            </Layout>
           </ParsedDataContext.Provider>
         </SessionProvider>
       </ThemeProvider>

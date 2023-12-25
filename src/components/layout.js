@@ -22,6 +22,7 @@ import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 import { useRouter } from "next/router";
 import { useLocalStorage } from "usehooks-ts";
+import { GeistSans } from "geist/font/sans";
 
 // We use these to only trigger toast announcements once
 let demoToastInit = false;
@@ -202,7 +203,7 @@ export function Layout({ children }) {
   }, [authStatus, router]);
 
   return (
-    <div className="">
+    <div className={`bg-background ${GeistSans.className}`}>
       <NavBar />
       <main>{children}</main>
       <Footer />

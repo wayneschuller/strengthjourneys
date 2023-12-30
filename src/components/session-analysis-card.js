@@ -54,7 +54,7 @@ export function SessionAnalysisCard() {
     <Card className="flex-1">
       <CardHeader>
         <CardTitle>
-          {authStatus !== "authenticated" && "Demo Mode: "}Recent Session
+          {authStatus === "unauthenticated" && "Demo Mode: "}Recent Session
           Analysis
         </CardTitle>
         <CardDescription>

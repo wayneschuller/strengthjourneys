@@ -54,7 +54,7 @@ export function InspirationCard({}) {
         <CardTitle>Inspirational Quote</CardTitle>
       </CardHeader>
       <CardContent className="grid flex-1 content-around">
-        <div className="text-xl italic md:text-3xl">
+        <div className="text-xl italic md:text-2xl">
           &ldquo;{quote.quote}&rdquo;
           <div className="mt-2 text-right text-lg md:text-xl">
             {quote.author}

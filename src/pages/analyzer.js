@@ -41,23 +41,25 @@ export default function Analyzer() {
         <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           PR Analyzer
         </h1>
-        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <div className="grid xl:col-span-2">
+        <div className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
+          <div className="">
             <SessionAnalysisCard />
           </div>
-          <div className="grid xl:col-span-2">
+          <div className="">
             <MonthsHighlightsCard />
           </div>
-          <div className="grid xl:col-span-2">
-            <InspirationCard />
+          <div className="grid gap-6 xl:grid-cols-1">
+            <div className="">
+              <InspirationCard />
+            </div>
+            <div className="">
+              <LiftTypeFrequencyPieCard />
+            </div>
           </div>
-          <div className="grid xl:col-span-2">
-            <LiftTypeFrequencyPieCard />
-          </div>
-          <div className="md:col-span-2 xl:col-span-4">
+          <div className="col-span-full">
             <ActivityHeatmapsCard />
           </div>
-          <Separator className="md:col-span-2 xl:col-span-4" />
+          <Separator className="col-span-full" />
         </div>
         <SelectedLiftsIndividualLiftCards />
       </div>

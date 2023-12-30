@@ -1,5 +1,4 @@
 // Simple wrapper for console.log
-
 export function devLog(message) {
   // We setup this special env variable on Vercel dev and preview but NOT production builds
   // This is so non-localhost clients can see devLogs on Vercel preview builds

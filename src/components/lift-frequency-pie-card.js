@@ -8,7 +8,7 @@ import { Skeleton } from "./ui/skeleton";
 import { useSession } from "next-auth/react";
 
 import { Chart, ArcElement } from "chart.js";
-import { Pie } from "react-chartjs-2";
+import { Pie, Doughnut } from "react-chartjs-2";
 import { getLiftColor } from "@/lib/get-lift-color";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
@@ -71,18 +71,68 @@ export function LiftTypeFrequencyPieCard() {
   };
 
   return (
-    <Card className="flex-1">
+    <Card className="flex-1 justify-center">
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo mode: "} Your Top{" "}
           {pieData?.length > 0 ? pieData.length : ""} Lifts
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex max-h-full flex-1 justify-center 2xl:mx-[7vw]">
+      <CardContent className="">
         {/* I find the Skeleton here never appears long enough to provide value */}
         {/* {(!pieChartData || !liftTypes) && <Skeleton className="" />} */}
         {pieChartData && <Pie data={pieChartData} options={pieChartOptions} />}
+        {/* <CircularProgressWithLetter progress={97} letter="F" /> */}
       </CardContent>
     </Card>
+  );
+}
+
+function CircularProgressWithLetter({ progress, letter }) {
+  // Determine color based on progress value
+  let color;
+  if (progress < 40) {
+    color = "#ff2222"; // Red
+  } else if (progress >= 40 && progress <= 60) {
+    color = "#ffa500"; // Orange
+  } else {
+    color = "#00bb00"; // Green
+  }
+
+  const data = {
+    datasets: [
+      {
+        data: [progress, 100 - progress], // progress is your dynamic value
+        backgroundColor: [color, "#ebedef"],
+        borderWidth: 0,
+        cutout: "70%",
+      },
+    ],
+  };
+
+  const options = {
+    maintainAspectRatio: false,
+    plugins: {
+      tooltip: {
+        enabled: false,
+      },
+    },
+  };
+
+  return (
+    <div style={{ position: "relative" }}>
+      <Doughnut data={data} options={options} />
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          fontSize: "3em",
+        }}
+      >
+        {letter}
+      </div>
+    </div>
   );
 }

@@ -5,7 +5,7 @@
 export function transposeDatesToToday(parsedData, addJitter) {
   // Constants for jitter settings
   const JITTER_DATE_RANGE = 2;
-  const JITTER_REPS_RANGE = 1;
+  const JITTER_REPS_RANGE = 2;
   const JITTER_PROBABILITY = 0.5; // 50% chance to apply jitter
 
   if (parsedData.length === 0) return parsedData;

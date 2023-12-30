@@ -48,7 +48,7 @@ export default function Analyzer() {
           <div className="">
             <MonthsHighlightsCard />
           </div>
-          <div className="grid gap-6 xl:grid-cols-1">
+          <div className="grid gap-6 xl:grid-cols-1 xl:gap-0">
             <div className="">
               <InspirationCard />
             </div>

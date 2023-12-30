@@ -29,9 +29,11 @@ export default function App({ Component, pageProps, session }) {
 
   useEffect(() => {
     const handleRouteChange = (url) => {
+      let fullURL = `https://www.strengthjourneys.xyz${url}`;
       window.gtag("config", `${GA_MEASUREMENT_ID}`, {
-        page_location: url,
+        page_location: fullURL,
       });
+      devLog(`gtagged url: ${fullURL}`);
     };
 
     // Add the event listeners

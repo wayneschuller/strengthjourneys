@@ -30,7 +30,7 @@ export function MonthsHighlightsCard() {
   );
 
   return (
-    <Card>
+    <Card className="flex-1">
       <CardHeader>
         <CardTitle>
           {authStatus !== "authenticated" && "Demo Mode: "}This Month{"'"}s

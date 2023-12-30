@@ -42,17 +42,17 @@ export default function Analyzer() {
           PR Analyzer
         </h1>
         <div className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <div className="">
+          <div className="flex h-full flex-col">
             <SessionAnalysisCard />
           </div>
-          <div className="">
+          <div className="flex h-full flex-col">
             <MonthsHighlightsCard />
           </div>
-          <div className="grid gap-6 xl:grid-cols-1 xl:gap-0">
+          <div className="grid h-full gap-6">
             <div className="">
               <InspirationCard />
             </div>
-            <div className="">
+            <div className="flex h-full flex-col">
               <LiftTypeFrequencyPieCard />
             </div>
           </div>

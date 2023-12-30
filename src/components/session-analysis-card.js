@@ -51,7 +51,7 @@ export function SessionAnalysisCard() {
   }, {});
 
   return (
-    <Card>
+    <Card className="flex-1">
       <CardHeader>
         <CardTitle>
           {authStatus !== "authenticated" && "Demo Mode: "}Recent Session

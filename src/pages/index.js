@@ -4,6 +4,8 @@
 
 import Link from "next/link";
 import Head from "next/head";
+import Script from "next/script";
+
 import { Calculator, Timer, LineChart, Trophy } from "lucide-react";
 
 import {
@@ -49,6 +51,8 @@ export default function Home() {
   const description =
     "Strength Journeys is a free web app to visualize your barbell lifting data from Google Sheets. Fully open source. Chalk not included.";
 
+  const GA_MEASUREMENT_ID = "G-QY30BZTN53";
+
   return (
     <div className="mx-4 mb-4 md:mx-[5vw]">
       <Head>
@@ -64,6 +68,19 @@ export default function Home() {
           content="https://www.strengthjourneys.xyz/StrengthJourneysOGimage.png"
         />
       </Head>
+
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+      />
+      <Script id="google-analytics">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+ 
+          gtag('config', '${GA_MEASUREMENT_ID}');
+        `}
+      </Script>
 
       <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl ">
         Welcome to {title}

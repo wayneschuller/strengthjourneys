@@ -51,7 +51,7 @@ export default function Home() {
   const description =
     "Strength Journeys is a free web app to visualize your barbell lifting data from Google Sheets. Fully open source. Chalk not included.";
 
-  const GA_MEASUREMENT_ID = "G-QY30BZTN53";
+  const GA_MEASUREMENT_ID = "G-VEBJ5L69C2";
 
   return (
     <div className="mx-4 mb-4 md:mx-[5vw]">

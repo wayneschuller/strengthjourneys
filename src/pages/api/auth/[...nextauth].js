@@ -74,6 +74,14 @@ export const authOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account, profile, email, credentials }) {
+      if (typeof window !== "undefined") {
+        window.gtag("event", "login", {
+          method: account.provider,
+        });
+      }
+      return true;
+    },
     async jwt({ token, user, account }) {
       // account && user will be active on first time log in only
       // See: https://next-auth.js.org/configuration/callbacks

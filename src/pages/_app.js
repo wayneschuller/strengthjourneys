@@ -30,7 +30,7 @@ export default function App({ Component, pageProps, session }) {
   useEffect(() => {
     const handleRouteChange = (url) => {
       window.gtag("config", `${GA_MEASUREMENT_ID}`, {
-        page_path: url,
+        page_location: url,
       });
     };
 

@@ -51,8 +51,6 @@ export default function Home() {
   const description =
     "Strength Journeys is a free web app to visualize your barbell lifting data from Google Sheets. Strength progress tracking, one rep max calculator, gym timer and more. Fully open source. Chalk not included.";
 
-  const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
-
   return (
     <div className="mx-4 mb-4 md:mx-[5vw]">
       <Head>
@@ -68,19 +66,6 @@ export default function Home() {
           content="https://www.strengthjourneys.xyz/StrengthJourneysOGimage.png"
         />
       </Head>
-
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-      />
-      <Script id="google-analytics">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
- 
-          gtag('config', '${GA_MEASUREMENT_ID}');
-        `}
-      </Script>
 
       <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl ">
         Welcome to {title}

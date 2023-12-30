@@ -97,9 +97,7 @@ export function Layout({ children }) {
         });
 
         if (typeof window !== "undefined") {
-          window.gtag("event", "gSheetDataUpdated", {
-            method: account.provider,
-          });
+          window.gtag("event", "gSheetDataUpdated");
         }
       } else {
         // Parsing error. Tell the user.

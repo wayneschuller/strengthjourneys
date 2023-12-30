@@ -95,6 +95,12 @@ export function Layout({ children }) {
           title: "Data updated from Google Sheets",
           description: description,
         });
+
+        if (typeof window !== "undefined") {
+          window.gtag("event", "gSheetDataUpdated", {
+            method: account.provider,
+          });
+        }
       } else {
         // Parsing error. Tell the user.
         console.error(`Could not parse data. Please choose a different file.`);

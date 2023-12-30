@@ -31,6 +31,18 @@ const inspirationalQuotes = [
     author: "Arnold Schwarzenegger",
     URL: null,
   },
+  {
+    quote:
+      "I have my own therapy. I will choose the iron to feel what most other people only feel when someone else tells them to. Those that use the iron as therapy and as an escape really get it, because the mind and body are one – working, thriving, and alive,",
+    author: "Jim Steel",
+    URL: null,
+  },
+  {
+    quote:
+      "Life in the weight room is like working on a building that is always under construction. Work is never complete, so learn to fall in love with the process.",
+    author: "Dr. Aaron Horschig (Squat University)",
+    URL: null,
+  },
 ];
 
 const getRandomQuote = () => {

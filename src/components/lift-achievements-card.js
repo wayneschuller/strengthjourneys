@@ -330,12 +330,10 @@ export function SelectedLiftsIndividualLiftCards() {
   if (!isMobile)
     otherCards = selectedLiftTypes.filter((lift) => lift !== expandedCard);
 
-  // FIXME: we need to do some engineering for mobile vs the rest.
   // For mobile a simple 1 col grid with an expanding lift card is fine and easy.
   // For desktop we want a clicked lift card to rise and go full width at the top of the lift card section
   // So expanded should mean we put it in it's own row.
-  // Do this before the grid starts so we don't even have to worry about grid cols (as below).
-  // JUst do a ismobile jsx condition for the old way and the new way
+  // Do this before the grid starts so we don't even have to worry about grid cols.
 
   return (
     <div

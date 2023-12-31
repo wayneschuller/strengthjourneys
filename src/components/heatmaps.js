@@ -1,6 +1,6 @@
 "use client";
 
-import { cloneElement, useState, useEffect, useContext } from "react";
+import { cloneElement, useState, useEffect, useContext, useRef } from "react";
 import { ParsedDataContext } from "@/pages/_app";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
@@ -15,6 +15,7 @@ import { useIsClient, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { useUserLiftData } from "@/lib/use-userlift-data";
 import { Skeleton } from "./ui/skeleton";
+import html2canvas from "html2canvas";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
@@ -46,6 +47,7 @@ export function ActivityHeatmapsCard() {
   const { isLoading } = useUserLiftData();
   const isClient = useIsClient();
   const { theme } = useTheme();
+  const shareRef = useRef(null);
 
   useEffect(() => {
     if (!parsedData) return;
@@ -67,8 +69,20 @@ export function ActivityHeatmapsCard() {
 
   if (!isClient) return null; // Heatmaps only work on client
 
+  const handleShare = async () => {
+    if (shareRef.current) {
+      const canvas = await html2canvas(shareRef.current);
+      canvas.toBlob((blob) => {
+        navigator.clipboard
+          .write([new ClipboardItem({ "image/png": blob })])
+          .then(() => console.log("Heatmap copied to clipboard"))
+          .catch((err) => console.error("Error in copying heatmap: ", err));
+      }, "image/png");
+    }
+  };
+
   return (
-    <Card>
+    <Card ref={shareRef}>
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo mode: "}Activity History
@@ -111,11 +125,7 @@ export function ActivityHeatmapsCard() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="outline">
-                    <Share2
-                      onClick={() => {
-                        devLog(`FIXME: implement sharing of heatmap images`);
-                      }}
-                    />
+                    <Share2 onClick={handleShare} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Share heatmaps to clipboard</TooltipContent>

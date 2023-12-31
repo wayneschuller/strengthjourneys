@@ -70,15 +70,26 @@ export function ActivityHeatmapsCard() {
   if (!isClient) return null; // Heatmaps only work on client
 
   const handleShare = async () => {
+    const startTime = performance.now();
+
     if (shareRef.current) {
       const canvas = await html2canvas(shareRef.current);
+
       canvas.toBlob((blob) => {
         navigator.clipboard
           .write([new ClipboardItem({ "image/png": blob })])
-          .then(() => console.log("Heatmap copied to clipboard"))
+          .then(() => {
+            console.log("Heatmap copied to clipboard");
+            // FIXME: toast update here
+          })
           .catch((err) => console.error("Error in copying heatmap: ", err));
       }, "image/png");
     }
+
+    devLog(
+      `generate html2canvas execution time: ` +
+        `\x1b[1m${Math.round(performance.now() - startTime)}ms\x1b[0m`,
+    );
   };
 
   return (

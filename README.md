@@ -1,13 +1,12 @@
 <!-- @format -->
-# Strength Journeys
-## https://www.strengthjourneys.xyz
-### Interactive strength progress visualisations for barbell and other gym lifts
+# Strength Journeys https://www.strengthjourneys.xyz
+## Interactive strength progress visualisations for barbell and other gym lifts
 Strength Journeys is a free web app to visualize your barbell lifting data from Google Sheets. Strength progress tracking, one rep max calculator, gym timer and more. Fully open source. Chalk not included.
 
 ![image](https://user-images.githubusercontent.com/1592295/212287626-21d46619-5f57-4869-9a6d-384f7ac4bbcb.png)
 ![image](https://user-images.githubusercontent.com/1592295/212287995-7f3e6694-5aaa-4a68-bf08-e51c48936025.png)
 
-### Google Sheet as data source
+### Google Sheets as data source
 Requires user data in a Google Sheet. The app will ask for read-only access of your specific lifting spreadsheet. (this can be revoked at any time)
 
 ![sample_google_sheet_fuzzy_border](https://github.com/wayneschuller/strengthjourneys/assets/1592295/16f8f5c5-efa8-4a9b-93ab-2ef8f3af816e)
@@ -16,7 +15,7 @@ Open our [sample data format in Google Sheets](https://docs.google.com/spreadshe
 
 ### Tech stack
 - Javascript
-- [Next.js](https://nextjs.org/)
+- [Next.js](https://nextjs.org/) (pages router)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [chart.js](https://www.chartjs.org/) (via [react-chartjs-2](https://react-chartjs-2.js.org/))
 - [Shadcn/ui](https://ui.shadcn.com/) components

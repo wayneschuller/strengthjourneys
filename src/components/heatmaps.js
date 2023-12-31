@@ -73,7 +73,9 @@ export function ActivityHeatmapsCard() {
     const startTime = performance.now();
 
     if (shareRef.current) {
-      const canvas = await html2canvas(shareRef.current);
+      const canvas = await html2canvas(shareRef.current, {
+        ignoreElements: (element) => element.id === "ignoreCopy",
+      });
 
       canvas.toBlob((blob) => {
         navigator.clipboard
@@ -129,8 +131,8 @@ export function ActivityHeatmapsCard() {
             );
           })}
       </CardContent>
-      {authStatus === "authenticated" && intervals && (
-        <CardFooter>
+      {intervals && (
+        <CardFooter id="ignoreCopy">
           <div className="flex flex-1 flex-row justify-end">
             <TooltipProvider>
               <Tooltip>

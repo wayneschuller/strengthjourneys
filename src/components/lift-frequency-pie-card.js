@@ -71,7 +71,7 @@ export function LiftTypeFrequencyPieCard() {
   };
 
   return (
-    <Card className="flex-1 justify-center">
+    <Card className="flex-1">
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo mode: "} Your Top{" "}

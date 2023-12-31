@@ -1,5 +1,5 @@
 <!-- @format -->
-# Strength Journeys https://www.strengthjourneys.xyz
+# Strength Journeys ([strengthjourneys.xyz](https://www.strengthjourneys.xyz))
 ## Interactive strength progress visualisations for barbell and other gym lifts
 Strength Journeys is a free web app to visualize your barbell lifting data from Google Sheets. Strength progress tracking, one rep max calculator, gym timer and more. Fully open source. Chalk not included.
 

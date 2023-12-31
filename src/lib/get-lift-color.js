@@ -22,6 +22,7 @@ export function getLiftColor(liftType) {
     case "Bench Press":
       color = "#94D2BD";
       break;
+    case "Press":
     case "Strict Press":
     case "Overhead Press":
       color = "#544B3D";

@@ -42,6 +42,8 @@ import { Maximize2, Minimize2 } from "lucide-react";
 import { Button, buttonVariants } from "./ui/button";
 import { Separator } from "./ui/separator";
 
+// FIXME: could we put the lift color as a thick bar under the name of the lift?
+
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
   const { liftTypes, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
@@ -109,6 +111,7 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
 }
 
 // A big card telling the user good stuff about a particular lift type
+// FIXME: this would be a great place to make the color for this lift type configurable
 function ExpandedLiftAchievements({ liftType }) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:justify-stretch">

@@ -78,7 +78,7 @@ export function LiftTypeFrequencyPieCard() {
           {pieData?.length > 0 ? pieData.length : ""} Lifts
         </CardTitle>
       </CardHeader>
-      <CardContent className="">
+      <CardContent className="flex justify-center xl:max-h-[30vh]">
         {/* I find the Skeleton here never appears long enough to provide value */}
         {/* {(!pieChartData || !liftTypes) && <Skeleton className="" />} */}
         {pieChartData && <Pie data={pieChartData} options={pieChartOptions} />}
@@ -112,6 +112,7 @@ function CircularProgressWithLetter({ progress, letter }) {
 
   const options = {
     maintainAspectRatio: false,
+    responsive: true,
     plugins: {
       tooltip: {
         enabled: false,

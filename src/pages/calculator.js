@@ -356,8 +356,8 @@ export default function E1RMCalculator() {
 
         {/* Grid of other formulae cards ordered by estimate ascending */}
         <h4 className="mt-10 scroll-m-20 text-xl font-semibold tracking-tight">
-          Citatations and background for these exercise science formulae are
-          found in this{" "}
+          Citations and background for these exercise science formulae are found
+          in this{" "}
           <a
             className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             href="https://en.wikipedia.org/wiki/One-repetition_maximum"

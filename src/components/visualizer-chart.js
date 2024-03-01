@@ -511,6 +511,7 @@ function fadeHslColor(originalHsl, fadeAmount, isDarkMode) {
 function getFirstLastDatesMaxWeightFromChartData(chartData) {
   if (!Array.isArray(chartData) || chartData.length === 0) {
     console.log(`Error: Invalid or empty chartData.`);
+    console.log(chartData);
     return null;
   }
 

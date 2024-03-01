@@ -115,6 +115,10 @@ export function Layout({ children }) {
         setSheetFilename(null);
         setSheetURL(null);
         // Don't sign out, just go gracefully into demo mode below.
+
+        if (typeof window !== "undefined") {
+          window.gtag("event", "gSheetReadRejected");
+        }
       }
     }
 

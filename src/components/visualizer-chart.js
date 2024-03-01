@@ -124,7 +124,12 @@ export default function VisualizerChart() {
   }, [theme]);
 
   // Show skeleton until chartData state is ready to go
-  if (isLoading || !chartData) {
+  if (
+    isLoading ||
+    !chartData ||
+    !Array.isArray(chartData) ||
+    chartData.length === 0
+  ) {
     return <Skeleton className="mt-4 h-[80vh] w-[90vw]"></Skeleton>;
   }
 

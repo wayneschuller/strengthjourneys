@@ -44,7 +44,7 @@ export default async function handler(req, res) {
 
     if (response.statusText !== "OK") {
       throw new Error(
-        `Non-OK reponse during readGSheet API. Status: ${resonse.statusText} (${response.status}) (ssid: ${ssid})`,
+        `Non-OK reponse during readGSheet API. Status: ${response.statusText} (${response.status}) (ssid: ${ssid})`,
       );
     }
 

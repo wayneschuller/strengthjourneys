@@ -23,6 +23,11 @@ export default async function handler(req, res) {
     return;
   }
 
+  if (!session.accessToken) {
+    res.status(400).json({ error: "Auth missing accessToken" });
+    return;
+  }
+
   // I used to pass the API key here but it doesn't require it as long as we have a good oauth access token
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING`;
 

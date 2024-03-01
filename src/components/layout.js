@@ -140,32 +140,54 @@ export function Layout({ children }) {
 
     // Check if selectedLifts exists in localStorage
     // When in demo mode (auth unauthenticated) we have a separate localstorage
-    // FIXME: there is a bug here for a new user with only one type of lift data
     const localStorageKey = `selectedLifts${
       authStatus === "unauthenticated" ? "_demoMode" : ""
     }`;
     let selectedLiftTypes = localStorage.getItem(localStorageKey);
 
-    if (selectedLiftTypes !== null) {
-      selectedLiftTypes = JSON.parse(selectedLiftTypes);
-    } else {
-      // Select a number of lift types as default, minimum of 4 or the length of liftTypes (we just calculated above)
-      const numberOfDefaultLifts = Math.min(4, liftTypes.length);
-      const defaultSelectedLifts = liftTypes
-        .slice(0, numberOfDefaultLifts)
+    // Attempt to parse selectedLiftTypes from localStorage, or fall back to null if unavailable
+    selectedLiftTypes = selectedLiftTypes
+      ? JSON.parse(selectedLiftTypes)
+      : null;
+
+    // Check if selectedLiftTypes is not null and has elements after filtering; otherwise, set defaults
+    if (!selectedLiftTypes || !selectedLiftTypes.length) {
+      // Define the number of default lift types to select, with a minimum of 4 or the total number available
+      const defaultSelectionCount = Math.min(4, liftTypes.length);
+      // Select default lift types based on the calculated liftTypes array
+      selectedLiftTypes = liftTypes
+        .slice(0, defaultSelectionCount)
         .map((lift) => lift.liftType);
 
+      // Log and update localStorage with the default selected lift types
       devLog(
-        `Localstorage selectedLifts not found! (auth status is ${authStatus}). Setting:`,
+        `Localstorage selectedLifts not found or invalid! Setting defaults for auth status ${authStatus}:`,
+        selectedLiftTypes,
       );
-      devLog(defaultSelectedLifts);
+      localStorage.setItem(localStorageKey, JSON.stringify(selectedLiftTypes));
+    } else {
+      // Filter existing selectedLiftTypes to ensure they are all valid based on the current liftTypes data
+      selectedLiftTypes = selectedLiftTypes.filter((selectedLift) =>
+        liftTypes.some((lift) => lift.liftType === selectedLift),
+      );
 
-      // Set the new default selected lifts in localStorage
-      localStorage.setItem(
-        localStorageKey,
-        JSON.stringify(defaultSelectedLifts),
-      );
-      selectedLiftTypes = defaultSelectedLifts;
+      // If filtering removes all items, revert to default selection logic
+      if (selectedLiftTypes.length === 0) {
+        const defaultSelectionCount = Math.min(4, liftTypes.length);
+        selectedLiftTypes = liftTypes
+          .slice(0, defaultSelectionCount)
+          .map((lift) => lift.liftType);
+
+        // Log and update localStorage with the default selected lift types
+        devLog(
+          `Filtered selectedLifts resulted in an empty array. Setting defaults for auth status ${authStatus}:`,
+          selectedLiftTypes,
+        );
+        localStorage.setItem(
+          localStorageKey,
+          JSON.stringify(selectedLiftTypes),
+        );
+      }
     }
 
     // Now set it in state for useContext usage throughout the components

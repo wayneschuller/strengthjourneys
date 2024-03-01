@@ -35,13 +35,13 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // devLog(data);
+    devLog(response);
 
-    if (response.statusText !== "OK") {
-      throw new Error(
-        `Non-OK reponse during readGSheet API. Status: ${response.status}`,
-      );
-    }
+    // if (response.statusText !== "OK") {
+    //   throw new Error(
+    //     `Non-OK reponse during readGSheet API. Status: ${response.status}`,
+    //   );
+    // }
 
     res.status(200).json(data);
   } catch (error) {

@@ -42,11 +42,11 @@ export default async function handler(req, res) {
 
     devLog(response);
 
-    // if (response.statusText !== "OK") {
-    //   throw new Error(
-    //     `Non-OK reponse during readGSheet API. Status: ${response.status}`,
-    //   );
-    // }
+    if (response.statusText !== "OK") {
+      throw new Error(
+        `Non-OK reponse during readGSheet API. Status: ${resonse.statusText} (${response.status}) (ssid: ${ssid})`,
+      );
+    }
 
     res.status(200).json(data);
   } catch (error) {

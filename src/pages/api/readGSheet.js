@@ -33,13 +33,14 @@ export default async function handler(req, res) {
       },
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
       throw new Error(
         `HTTP error in readGSheet API! Status: ${response.status}`,
       );
     }
 
-    const data = await response.json();
     res.status(200).json(data);
   } catch (error) {
     const date = new Date().toLocaleString();

@@ -233,9 +233,17 @@ export function GettingStartedCard() {
         </div>
       </CardContent>
       <CardFooter className="text-muted-foreground">
-        Strength Journeys securely accesses your Google Sheet for read-only
-        purposes, ensuring your data is never altered or stored by us. Your
-        original data remains intact and solely under your control.
+        <div>
+          Strength Journeys securely accesses your Google Sheet for read-only
+          purposes, ensuring your data is never altered or stored by us. Your
+          original data remains intact and solely under your control. {` `}
+          <Link
+            href="/privacy-policy.html"
+            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          >
+            (Privacy Policy)
+          </Link>
+        </div>
       </CardFooter>
     </Card>
   );

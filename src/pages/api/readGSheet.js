@@ -43,7 +43,7 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    devLog(response);
+    // devLog(response);
 
     if (response.statusText !== "OK") {
       throw new Error(
@@ -55,8 +55,8 @@ export default async function handler(req, res) {
   } catch (error) {
     const date = new Date().toLocaleString();
 
-    console.error(`/api/readGSheet API Error: Time is: ${date}...`);
-    console.log(error);
+    // console.error(`/api/readGSheet API Error: Time is: ${date}...`);
+    // console.log(error);
 
     res.status(400).json({ error: error.message });
   }

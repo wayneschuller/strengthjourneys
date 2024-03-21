@@ -55,7 +55,7 @@ export function useUserLiftDataDirect() {
 
   const shouldFetch = session?.accessToken && ssid ? true : false; // Only fetch if we have auth and ssid
 
-  const googleAPIKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+  const googleAPIKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY; // NOTE: this key was already exposed to client for the file picker
   // const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${googleAPIKey}`;
   const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING`;
   const accessToken = session?.accessToken;

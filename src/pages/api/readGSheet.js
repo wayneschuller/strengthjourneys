@@ -55,9 +55,14 @@ export default async function handler(req, res) {
   } catch (error) {
     const date = new Date().toLocaleString();
 
-    // console.error(`/api/readGSheet API Error: Time is: ${date}...`);
+    console.error(error.message);
     // console.log(error);
 
-    res.status(400).json({ error: error.message });
+    // If Google gives 404 we propogate to client. All other errors will be sent back to client as 400.
+    if (response.status === "404") {
+      res.status(404).json({ error: error.message });
+    } else {
+      res.status(400).json({ error: error.message });
+    }
   }
 }

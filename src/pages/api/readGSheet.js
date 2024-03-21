@@ -33,6 +33,7 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(url, {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${session.accessToken}`,
       },

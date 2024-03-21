@@ -45,7 +45,7 @@ export default async function handler(req, res) {
 
     if (response.statusText !== "OK") {
       throw new Error(
-        `Non-OK response from Google API: ${response.statusText} (${response.status}) (ssid: ${ssid})`,
+        `Non-OK response from Google API: ${response.statusText} (${response.status}) (ssid: ${ssid}). Error: ${response.error}`,
       );
     }
 

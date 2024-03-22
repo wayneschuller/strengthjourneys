@@ -10,7 +10,7 @@ import { initGapiClient } from "./gapi-client";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
-export function useUserLiftDataOLD() {
+export function useUserLiftData() {
   const ssid = useReadLocalStorage("ssid");
   const { data: session, status: authStatus } = useSession();
 
@@ -36,7 +36,7 @@ export function useUserLiftDataOLD() {
 }
 
 // Use GAPI client as SWR fetcher function
-export function useUserLiftData() {
+export function useUserLiftDataGAPI() {
   const ssid = useReadLocalStorage("ssid");
   const { data: session, status: authStatus } = useSession();
 

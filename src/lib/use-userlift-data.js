@@ -9,6 +9,9 @@ import { devLog } from "@/lib/processing-utils";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
+// ----------------------------------------------------------------------------------------------------------
+// Our original SWR wrapper that used a next.js API route to fetch the gsheet data
+// ----------------------------------------------------------------------------------------------------------
 export function useUserLiftDataAPIROUTE() {
   const ssid = useReadLocalStorage("ssid");
   const { data: session, status: authStatus } = useSession();
@@ -35,11 +38,8 @@ export function useUserLiftDataAPIROUTE() {
 }
 
 // ----------------------------------------------------------------------------------------------------------
-//
-// FIXME: Some experimental code to try to get gsheet data from pure client without a Next.js API route
-// FIXME: Could not get the token stuff to work yet.
+// Some code to get gsheet data from pure client without a Next.js API route
 // Modified fetcher to include the access token in the headers
-//
 // ----------------------------------------------------------------------------------------------------------
 async function fetcherWithToken(url, token) {
   try {
@@ -49,14 +49,6 @@ async function fetcherWithToken(url, token) {
         "Content-Type": "application/json",
       },
     });
-
-    // const response = await fetch(url, {
-    // method: "GET", // Explicitly setting the method for clarity
-    // headers: new Headers({
-    // Authorization: `Bearer ${token}`,
-    // "Content-Type": "application/json",
-    // }),
-    // });
 
     if (!response.ok) {
       // This will capture HTTP errors such as 401, 403, 404, etc.
@@ -78,15 +70,16 @@ export function useUserLiftData() {
   const shouldFetch = !!session?.accessToken && !!ssid;
 
   const accessToken = session?.accessToken;
-  const apiURL = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
+  const googleAPIKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY; // Use the non public env var
+
+  // const apiURL = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
+  const apiURL = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING&key=${googleAPIKey}`;
 
   // I tried putting the token in but it's rejected by Google servers. Don't put key or tokens in URI
   // const apiURL = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&token=${accessToken}`;
   // const apiURL = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&token=${accessToken}`;
 
-  devLog(
-    shouldFetch && `Local fetching GSheet values with token ${accessToken}`,
-  );
+  // devLog( shouldFetch && `Local fetching GSheet values with token ${accessToken}`);
 
   const fetcher = (url, token) => fetcherWithToken(url, token);
 
@@ -96,11 +89,6 @@ export function useUserLiftData() {
     shouldFetch ? apiURL : null,
     (url) => fetcherWithToken(url, accessToken), // Directly pass accessToken here
   );
-
-  // const { data, error, isLoading } = useSWR(
-  // shouldFetch ? [apiURL, accessToken] : null,
-  // fetcherWithToken,
-  // );
 
   // if (error) devLog(`Local fetch to GSheet servers error: ${error}`);
 

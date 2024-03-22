@@ -9,7 +9,7 @@ import { devLog } from "@/lib/processing-utils";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
-export function useUserLiftData() {
+export function useUserLiftDataOLD() {
   const ssid = useReadLocalStorage("ssid");
   const { data: session, status: authStatus } = useSession();
 
@@ -45,32 +45,32 @@ const fetcherWithToken = (url, token) =>
   fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
-      // "Content-Type": "application/json",
+      "Content-Type": "application/json",
     },
   }).then((res) => res.json());
 
-export function useUserLiftDataDirect() {
+export function useUserLiftData() {
   const ssid = useReadLocalStorage("ssid");
   const { data: session, status: authStatus } = useSession();
 
-  const shouldFetch = session?.accessToken && ssid ? true : false; // Only fetch if we have auth and ssid
+  const shouldFetch = !!session?.accessToken && !!ssid;
 
-  const googleAPIKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY; // NOTE: this key was already exposed to client for the file picker
-  // const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING&key=${googleAPIKey}`;
-  const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A%3AZ?dateTimeRenderOption=FORMATTED_STRING`;
   const accessToken = session?.accessToken;
+  // const apiURL = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
+  const apiURL = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING&token=${accessToken}`;
 
-  devLog(shouldFetch && `Fetching with token ${accessToken}`);
+  devLog(
+    shouldFetch && `Local fetching GSheet values with token ${accessToken}`,
+  );
 
-  const { data, isLoading } = useSWR(
+  const { data, error, isLoading } = useSWR(
     shouldFetch ? [apiURL, accessToken] : null,
-    (url, token) => fetcherWithToken(url, token),
-    {},
+    fetcherWithToken,
   );
 
   return {
     data,
     isLoading,
-    isError: data?.error ? true : false,
+    isError: !!error,
   };
 }

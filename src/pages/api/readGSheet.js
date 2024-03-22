@@ -55,8 +55,7 @@ export default async function handler(req, res) {
   } catch (error) {
     const date = new Date().toLocaleString();
 
-    console.error(error.message);
-    // console.log(error);
+    console.log(error);
 
     // If Google gives 404 we propogate to client. All other errors will be sent back to client as 400.
     if (response.status === "404") {

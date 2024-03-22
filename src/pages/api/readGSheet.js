@@ -58,7 +58,7 @@ export default async function handler(req, res) {
     console.log(error);
 
     // If Google gives 404 we propogate to client. All other errors will be sent back to client as 400.
-    if (response.status === "404") {
+    if (response && response.status === "404") {
       res.status(404).json({ error: error.message });
     } else {
       res.status(400).json({ error: error.message });

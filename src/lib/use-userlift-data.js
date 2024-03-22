@@ -10,7 +10,7 @@ import { initGapiClient } from "./gapi-client";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
-export function useUserLiftData() {
+export function useUserLiftDataOLD() {
   const ssid = useReadLocalStorage("ssid");
   const { data: session, status: authStatus } = useSession();
 
@@ -36,19 +36,17 @@ export function useUserLiftData() {
 }
 
 // Use GAPI client as SWR fetcher function
-export function useUserLiftDataGAPI() {
+export function useUserLiftData() {
   const ssid = useReadLocalStorage("ssid");
   const { data: session, status: authStatus } = useSession();
 
   const shouldFetch = authStatus === "authenticated" && ssid;
 
-  devLog(`gapi fetch incoming. Token: ${session?.accessToken}`);
-
   const { data, error, isValidating } = useSWR(
     shouldFetch ? [{ token: session.accessToken, ssid }] : null,
     fetchFromSheetsWithToken,
     {
-      // SWR options can be adjusted as needed
+      // SWR options
     },
   );
 
@@ -61,12 +59,16 @@ export function useUserLiftDataGAPI() {
 }
 
 const fetchFromSheetsWithToken = async ({ token, ssid }) => {
+  devLog(`gapi fetch incoming. Token: ${session?.accessToken}`);
+
   // Check if the GAPI client is already loaded before initializing
   if (!window.gapi || !window.gapi.client) {
-    await initGapiClient();
+    devLog(`no gapi found...`);
+    // await initGapiClient();
   }
 
   // Set the token for the GAPI client
+  devLog(`setting gapi token`);
   window.gapi.client.setToken({ access_token: token });
 
   // Make the request to Google Sheets

@@ -62,8 +62,6 @@ export function Layout({ children }) {
 
     // isError happens when Google decides they don't love us
     if (isError) {
-      console.error("Google doesn't love us today");
-      devLog(data);
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",

@@ -30,7 +30,7 @@ export default async function handler(req, res) {
 
   // I used to pass the API key here but it doesn't require it as long as we have a good oauth access token
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
-  // const googleAPIKey = process.env.REACT_APP_GOOGLE_API_KEY; // Use the non public env var
+  // const googleAPIKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY; // Use the non public env var
   // const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING&key=${googleAPIKey}`;
 
   // Tried putting the token in here - broke everything

@@ -4,6 +4,7 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 import { devLog } from "@/lib/processing-utils";
 
+// MARCH 2024 - WE NO LONGER USE THIS - all fetching is purely from the browser
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
 

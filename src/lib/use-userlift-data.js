@@ -7,36 +7,6 @@ import useSWRImmutable from "swr/immutable";
 import { useReadLocalStorage } from "usehooks-ts";
 import { devLog } from "@/lib/processing-utils";
 
-const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
-
-// ----------------------------------------------------------------------------------------------------------
-// Our original SWR wrapper that used a next.js API route to fetch the gsheet data
-// ----------------------------------------------------------------------------------------------------------
-export function useUserLiftDataAPIROUTE() {
-  const ssid = useReadLocalStorage("ssid");
-  const { data: session, status: authStatus } = useSession();
-
-  // devLog(session);
-
-  const shouldFetch = authStatus === "authenticated" && ssid ? true : false; // Only fetch if we have auth and ssid
-
-  const { data, isLoading, isValidating } = useSWR(
-    shouldFetch ? `/api/readGSheet?ssid=${ssid}` : null,
-    fetcher,
-    {
-      // SWR options
-      // Don't need any because the defaults are awesome
-    },
-  );
-
-  return {
-    data,
-    isLoading,
-    isValidating,
-    isError: data?.error ? true : false,
-  };
-}
-
 // ----------------------------------------------------------------------------------------------------------
 // Some code to get gsheet data from pure client without a Next.js API route
 // Modified fetcher to include the access token in the headers

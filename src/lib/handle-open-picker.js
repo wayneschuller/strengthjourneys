@@ -28,6 +28,7 @@ export function handleOpenFilePicker(
         return;
       }
       devLog(data);
+      devLog(process.env.NEXT_PUBLIC_GOOGLE_APP_ID);
       if (data.docs && data.docs[0]) {
         const newSsid = data.docs[0].id;
         const newFilename = data.docs[0].name;

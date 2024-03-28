@@ -20,7 +20,7 @@ async function refreshAccessToken(token) {
     const url =
       "https://oauth2.googleapis.com/token?" +
       new URLSearchParams({
-        clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID, // Should not be public but we expose it for the picker anyway
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
         grant_type: "refresh_token",
         refresh_token: token.refreshToken,
@@ -61,7 +61,7 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
     GoogleProvider({
-      clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       authorization: {
         params: {

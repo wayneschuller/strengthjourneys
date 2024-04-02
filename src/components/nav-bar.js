@@ -115,7 +115,7 @@ export function DesktopNav() {
 }
 
 // When user is logged in with data, give a link to their google sheet
-// This is also a subtle spot to indicate when we are trying to look for new data from google
+// Also we have a subtle pulse animation when we are trying to look for new data from google (via useSWR isLoading)
 export function UserSheetIcon() {
   // We need the next 3 for the file picker button
   const [ssid, setSsid] = useLocalStorage("ssid", null);

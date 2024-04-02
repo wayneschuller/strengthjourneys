@@ -110,7 +110,10 @@ export function MiniTimer() {
   if (!isRunning) return null; // Don't show if not running
 
   return (
-    <div className={`${GeistMono.className} text-center font-mono `}>
+    <div
+      className={`${GeistMono.className} cursor-pointer text-center font-mono `}
+      onClick={() => handleRestart()}
+    >
       {formatTime(time)}
     </div>
   );

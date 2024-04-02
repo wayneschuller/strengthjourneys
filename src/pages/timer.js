@@ -107,7 +107,11 @@ export function MiniTimer() {
     handleRestart,
   } = useTimer();
 
-  if (time === 1) return null; // Don't show if not running
+  if (!isRunning) return null; // Don't show if not running
 
-  return <div>{time}</div>;
+  return (
+    <div className={`${GeistMono.className} text-center font-mono `}>
+      {formatTime(time)}
+    </div>
+  );
 }

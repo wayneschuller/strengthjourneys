@@ -43,6 +43,11 @@ function LargeTimer() {
     handleRestart,
   } = useTimer();
 
+  useEffect(() => {
+    // Start the timer on first mount
+    setIsRunning(true);
+  }, []); // The empty array ensures this effect runs only once on mount
+
   return (
     <div className="flex flex-col items-center">
       <Card

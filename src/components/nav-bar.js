@@ -16,6 +16,7 @@ import { useUserLiftData } from "@/lib/use-userlift-data";
 import { Table2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
+import { MiniTimer } from "@/pages/timer";
 
 import {
   Tooltip,
@@ -41,6 +42,7 @@ export function NavBar() {
         {(pathname === "/analyzer" || pathname === "/visualizer") && (
           <SidePanelSelectLiftsButton isIconMode={true} />
         )}
+        <MiniTimer />
         <UserSheetIcon />
         <AvatarDropdown />
         <DarkModeToggle />

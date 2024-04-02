@@ -9,11 +9,10 @@ import { GeistMono } from "geist/font/mono"; // Monospace font for stopwatch fix
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { TimerContext } from "@/pages/_app";
+import { useTimer } from "@/lib/timer-context";
 
 export default function Timer() {
-  // const [time, setTime] = useState(1);
-  const { time, setTime } = useContext(TimerContext);
+  const { time } = useTimer();
 
   return (
     <div className="mx-4 md:mx-[5vw]">
@@ -27,40 +26,22 @@ export default function Timer() {
         <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
           Lifting Set Timer
         </h1>
-        <Stopwatch time={time} setTime={setTime} />
+        <LargeTimer />
       </div>
     </div>
   );
 }
 
-function Stopwatch({ time, setTime }) {
-  const [isRunning, setIsRunning] = useState(true);
-
-  useEffect(() => {
-    let interval;
-
-    if (isRunning) {
-      interval = setInterval(() => {
-        setTime((prevTime) => prevTime + 1); // Add 1 second
-      }, 1000);
-    }
-
-    return () => clearInterval(interval);
-  }, [isRunning, setTime]);
-
-  const handleStartStop = () => {
-    setIsRunning((prevIsRunning) => !prevIsRunning);
-  };
-
-  const handleReset = () => {
-    setIsRunning(false);
-    setTime(0);
-  };
-
-  const handleRestart = () => {
-    setIsRunning(true);
-    setTime(0);
-  };
+function LargeTimer() {
+  const {
+    time,
+    setTime,
+    isRunning,
+    setIsRunning,
+    handleStartStop,
+    handleReset,
+    handleRestart,
+  } = useTimer();
 
   return (
     <div className="flex flex-col items-center">
@@ -109,3 +90,19 @@ const formatTime = (totalSeconds) => {
 
   return `${formattedMinutes}:${formattedSeconds}`;
 };
+
+export function MiniTimer() {
+  const {
+    time,
+    setTime,
+    isRunning,
+    setIsRunning,
+    handleStartStop,
+    handleReset,
+    handleRestart,
+  } = useTimer();
+
+  if (time === 1) return null; // Don't show if not running
+
+  return <div>{time}</div>;
+}

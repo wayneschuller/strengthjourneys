@@ -4,14 +4,16 @@
 "use client";
 
 import Head from "next/head";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { GeistMono } from "geist/font/mono"; // Monospace font for stopwatch fixed width
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { TimerContext } from "@/pages/_app";
 
 export default function Timer() {
-  const [time, setTime] = useState(1);
+  // const [time, setTime] = useState(1);
+  const { time, setTime } = useContext(TimerContext);
 
   return (
     <div className="mx-4 md:mx-[5vw]">

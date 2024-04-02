@@ -14,6 +14,7 @@ import Script from "next/script";
 import { devLog } from "@/lib/processing-utils";
 
 export const ParsedDataContext = createContext(null); // Internal SJ format of user gsheet (see sampleData.js for design)
+export const TimerContext = createContext(null);
 
 export default function App({ Component, pageProps, session }) {
   // These are our key global state variables.
@@ -23,6 +24,8 @@ export default function App({ Component, pageProps, session }) {
   const [selectedLiftTypes, setSelectedLiftTypes] = useState([]); // see Layout useEffect for how we create this
   const [parsedData, setParsedData] = useState(null); // see @/lib/sample-parsed-data.js for data structure design
   const [topLiftsByTypeAndReps, setTopLiftsByTypeAndReps] = useState(null); // see @/lib/processing-utils.js for data structure design
+  const [time, setTime] = useState(1);
+
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
 
   const router = useRouter();
@@ -66,10 +69,12 @@ export default function App({ Component, pageProps, session }) {
               setTopLiftsByTypeAndReps,
             }}
           >
-            <Layout>
-              <Component {...pageProps} />
-              <Toaster />
-            </Layout>
+            <TimerContext.Provider value={{ time, setTime }}>
+              <Layout>
+                <Component {...pageProps} />
+                <Toaster />
+              </Layout>
+            </TimerContext.Provider>
           </ParsedDataContext.Provider>
         </SessionProvider>
       </ThemeProvider>

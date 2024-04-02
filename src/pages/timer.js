@@ -5,7 +5,7 @@
 
 import Head from "next/head";
 import React, { useState, useEffect } from "react";
-import { GeistMono } from "geist/font/mono";
+import { GeistMono } from "geist/font/mono"; // Monospace font for stopwatch fixed width
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -75,7 +75,6 @@ function Stopwatch({ time, setTime }) {
         </CardContent>
       </Card>
       <Button
-        // className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 mx-2 rounded"
         className="my-2 text-xl tracking-tight hover:ring md:px-6 md:py-8 md:text-3xl lg:text-6xl xl:my-4 xl:px-10 xl:py-20 xl:text-9xl"
         onClick={handleRestart}
       >
@@ -100,13 +99,11 @@ function Stopwatch({ time, setTime }) {
 }
 
 const formatTime = (totalSeconds) => {
-  // const totalSeconds = Math.floor(milliseconds / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const remainingSeconds = totalSeconds % 60;
 
   const formattedMinutes = String(minutes).padStart(2, "0");
   const formattedSeconds = String(remainingSeconds).padStart(2, "0");
 
-  // Use a monospaced font to maintain consistent width
   return `${formattedMinutes}:${formattedSeconds}`;
 };

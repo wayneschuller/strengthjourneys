@@ -62,6 +62,8 @@ export function Layout({ children }) {
 
     // isError happens when Google decides they don't love us
     if (isError) {
+      devLog(`useSWR isError from google...`);
+
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",

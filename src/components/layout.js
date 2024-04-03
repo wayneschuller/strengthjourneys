@@ -61,7 +61,8 @@ export function Layout({ children }) {
     if (isLoading) return; // Wait for useSWR. Don't prematurely go into demo mode
 
     // isError happens when Google decides they don't love us
-    if (isError) {
+    // There is an edge case where we have error but we have the data
+    if (isError && !data) {
       devLog(`useSWR isError from google...`);
 
       toast({

@@ -127,7 +127,7 @@ export function UserSheetIcon() {
     null,
   );
   const { data: session, status: authStatus } = useSession();
-  const { data, isError, isLoading, isValidating } = useUserLiftData();
+  const { isValidating } = useUserLiftData();
 
   return (
     session?.user &&

@@ -54,6 +54,6 @@ export function useUserLiftData() {
   return {
     data,
     isLoading,
-    isError: !!error,
+    isError: !!error, // FIXME: there is some edge case where this wrongly returns true
   };
 }

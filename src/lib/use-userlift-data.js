@@ -40,20 +40,9 @@ export function useUserLiftData() {
   const shouldFetch = !!session?.accessToken && !!ssid;
 
   const accessToken = session?.accessToken;
-  const googleAPIKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY; // Use the non public env var
 
+  // Note: Don't put key or tokens in URI
   const apiURL = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
-
-  // I tried putting the token in but it's rejected by Google servers. Don't put key or tokens in URI
-  // const apiURL = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING&key=${googleAPIKey}`;
-  // const apiURL = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&token=${accessToken}`;
-  // const apiURL = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&token=${accessToken}`;
-
-  // devLog( shouldFetch && `Local fetching GSheet values with token ${accessToken}`);
-
-  const fetcher = (url, token) => fetcherWithToken(url, token);
-
-  // const { data, error, isLoading } = useSWR(apiURL, fetcher);
 
   const { data, error, isLoading } = useSWR(
     shouldFetch ? apiURL : null,

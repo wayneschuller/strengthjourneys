@@ -37,6 +37,8 @@ export function useUserLiftData() {
   const ssid = useReadLocalStorage("ssid");
   const { data: session, status: authStatus } = useSession();
 
+  devLog(`useUserLiftData authStatus: ${authStatus}`);
+
   const shouldFetch = !!session?.accessToken && !!ssid;
 
   const accessToken = session?.accessToken;

@@ -3,7 +3,7 @@
 import Head from "next/head";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
-import { useUserLiftData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { InspirationCard } from "@/components/inspiration-card";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { MonthsHighlightsCard } from "@/components/months-highlights-card";
@@ -20,7 +20,7 @@ import { SelectedLiftsIndividualLiftCards } from "@/components/lift-achievements
 
 export default function Analyzer() {
   const { data: session, status: authStatus } = useSession();
-  const { isLoading } = useUserLiftData();
+  const { isLoading } = useUserLiftingData();
   const ssid = useReadLocalStorage("ssid");
 
   if (!isLoading && authStatus === "authenticated" && !ssid)

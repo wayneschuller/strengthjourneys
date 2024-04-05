@@ -13,7 +13,7 @@ import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsClient, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
-import { useUserLiftData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { Skeleton } from "./ui/skeleton";
 import html2canvas from "html2canvas";
 
@@ -37,14 +37,13 @@ import {
 } from "@/components/ui/tooltip";
 
 export function ActivityHeatmapsCard() {
-  const { parsedData } = useContext(ParsedDataContext);
+  const { parsedData } = useUserLiftingData;
   const { width } = useWindowSize();
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [intervals, setIntervals] = useState(null);
   const [intervalMonths, setIntervalMonths] = useState(18);
   const { status: authStatus } = useSession();
-  const { isLoading } = useUserLiftData();
   const isClient = useIsClient();
   const { theme } = useTheme();
   const shareRef = useRef(null);

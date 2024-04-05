@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Head from "next/head";
 import { useEffect, useState, useContext } from "react";
 import { useSession, signIn } from "next-auth/react";
-import { useUserLiftData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { devLog } from "@/lib/processing-utils";
 import { useReadLocalStorage } from "usehooks-ts";
@@ -20,7 +20,7 @@ const DynamicHeaderVisualizerChart = dynamic(
 
 export default function Visualizer() {
   const { data: session } = useSession();
-  const { isLoading } = useUserLiftData();
+  const { isLoading } = useUserLiftingData();
   const ssid = useReadLocalStorage("ssid");
 
   // devLog(`Visualizer render: `);

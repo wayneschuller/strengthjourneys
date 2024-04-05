@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useContext, useRef } from "react";
-import { useUserLiftData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useTheme } from "next-themes";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { Line } from "react-chartjs-2";
@@ -57,13 +57,12 @@ export default function VisualizerChart() {
   const [mutedColor, setMutedColor] = useState(null);
   const [mutedForegroundColor, setMutedForegroundColor] = useState(null);
   const [gridColor, setGridColor] = useState(null);
-  const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } =
-    useContext(ParsedDataContext);
+  const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
+    useUserLiftingData();
   const chartRef = useRef(null);
   const { width } = useWindowSize();
   const [chartData, setChartData] = useState(null);
   const [e1rmFormula, setE1rmFormula] = useState("Brzycki");
-  const { isLoading } = useUserLiftData();
   const { status: authStatus } = useSession();
 
   // Local computed/derived variables

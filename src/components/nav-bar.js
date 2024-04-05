@@ -12,11 +12,11 @@ import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/dark-mode-toggle";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
-import { useUserLiftData } from "@/lib/use-userlift-data";
 import { Table2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
 
 import {
   Tooltip,
@@ -127,7 +127,7 @@ export function UserSheetIcon() {
     null,
   );
   const { data: session, status: authStatus } = useSession();
-  const { isValidating } = useUserLiftData();
+  const { isValidating } = useUserLiftingData();
 
   return (
     session?.user &&

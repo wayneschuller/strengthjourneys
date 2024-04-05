@@ -30,7 +30,7 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
 
 export const UserLiftingDataProvider = ({ children }) => {
   // These are our key global state variables.
-  // Keep this as minimal as possible. Don't put things here that components could derive quickly
+  // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
   // We do keep liftTypes (lift names and frequency) here as an exception to save processing it too often
   const [parsedData, setParsedData] = useState(null); // see @/lib/sample-parsed-data.js for data structure design
   const [liftTypes, setLiftTypes] = useState([]); // see @/lib/processing-utils.js for data structure design
@@ -53,15 +53,14 @@ export const UserLiftingDataProvider = ({ children }) => {
   const accessToken = session?.accessToken;
   // Note: Don't put key or tokens in URI
   const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
-  const { data, error, isLoading } = useSWR(
+  const { data, error, isLoading, isValidating } = useSWR(
     shouldFetch ? apiURL : null,
     (url) => fetcherWithToken(url, accessToken), // Directly pass accessToken here
   );
   // if (error) devLog(`Local fetch to GSheet servers error: ${error}`);
   const isError = !!error; // FIXME: We could send back error details
 
-  // When userUserLiftData (useSWR) gives new Google sheet data, parse it
-  // useSWR can ping google and cache it and it won't trigger here until data changes
+  // When useSWR (just above) gives new Google sheet data, parse it
   useEffect(() => {
     devLog(
       `<Layout /> useEffect[data]: authStatus: ${authStatus}, isLoading ${isLoading}, isError ${isError}, data ${
@@ -246,8 +245,10 @@ export const UserLiftingDataProvider = ({ children }) => {
   return (
     <UserLiftingDataContext.Provider
       value={{
+        // FIXME: audit these and only export the ones that are used by components
         isLoading,
         isError,
+        isValidating,
         liftTypes,
         selectedLiftTypes,
         setSelectedLiftTypes,

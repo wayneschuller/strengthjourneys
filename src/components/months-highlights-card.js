@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
-import { ParsedDataContext } from "@/pages/_app";
 import { useSession } from "next-auth/react";
-import { useUserLiftData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { Skeleton } from "./ui/skeleton";
 import { findLiftPositionInTopLifts } from "@/lib/processing-utils";
 import {
@@ -20,9 +19,8 @@ import {
 } from "@/lib/processing-utils";
 
 export function MonthsHighlightsCard() {
-  const { parsedData, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
+  const { parsedData, topLiftsByTypeAndReps } = useUserLiftingData();
   const { status: authStatus } = useSession();
-  const { isLoading } = useUserLiftData();
 
   const recentMonthHighlights = getFirstHistoricalPRsInLastMonth(
     parsedData,

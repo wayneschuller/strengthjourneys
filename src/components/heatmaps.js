@@ -1,7 +1,6 @@
 "use client";
 
 import { cloneElement, useState, useEffect, useContext, useRef } from "react";
-import { ParsedDataContext } from "@/pages/_app";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
 import {

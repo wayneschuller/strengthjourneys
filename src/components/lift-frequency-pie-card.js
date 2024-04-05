@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useContext, useState, useEffect } from "react";
 import { devLog } from "@/lib/processing-utils";
-import { ParsedDataContext } from "@/pages/_app";
 import { Skeleton } from "./ui/skeleton";
 import { useSession } from "next-auth/react";
 
@@ -11,11 +10,12 @@ import { Chart, ArcElement } from "chart.js";
 import { Pie, Doughnut } from "react-chartjs-2";
 import { getLiftColor } from "@/lib/get-lift-color";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
 
 Chart.register(ArcElement, ChartDataLabels);
 
 export function LiftTypeFrequencyPieCard() {
-  const { liftTypes } = useContext(ParsedDataContext);
+  const { liftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
   const pieData = liftTypes

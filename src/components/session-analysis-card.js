@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useContext } from "react";
 import { devLog } from "@/lib/processing-utils";
-import { ParsedDataContext } from "@/pages/_app";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { Skeleton } from "./ui/skeleton";
@@ -23,7 +22,6 @@ import {
 } from "@/lib/processing-utils";
 
 export function SessionAnalysisCard() {
-  // const { parsedData, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
   const { parsedData, topLiftsByTypeAndReps } = useUserLiftingData();
   const { status: authStatus } = useSession();
 

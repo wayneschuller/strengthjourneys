@@ -5,7 +5,6 @@ import { useState, useEffect, useContext } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
-import { ParsedDataContext } from "@/pages/_app";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Dumbbell } from "lucide-react";
 
@@ -26,6 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
 
 // FIXME: is there any way to detect when the sheet is closed?
 // On mobile we could do the final selectedLift change here
@@ -86,7 +86,7 @@ export function SidePanelSelectLiftsButton({ isIconMode }) {
 
 const CheckboxLifts = ({}) => {
   const { liftTypes, selectedLiftTypes, setSelectedLiftTypes } =
-    useContext(ParsedDataContext);
+    useUserLiftingData();
   const { status: authStatus } = useSession();
 
   const handleCheckboxChange = (liftType) => {

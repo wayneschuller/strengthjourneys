@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 import {
@@ -33,7 +33,6 @@ import {
 
 import { devLog } from "@/lib/processing-utils";
 import { useWindowSize } from "usehooks-ts";
-import { ParsedDataContext } from "@/pages/_app";
 import { Skeleton } from "./ui/skeleton";
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 import { useSession } from "next-auth/react";
@@ -41,11 +40,12 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { Button, buttonVariants } from "./ui/button";
 import { Separator } from "./ui/separator";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
 
 // FIXME: could we put the lift color as a thick bar under the name of the lift?
 
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
-  const { liftTypes, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
+  const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
@@ -139,7 +139,7 @@ function ExpandedLiftAchievements({ liftType }) {
 // So create a milestones function.
 // Visually showing progress to the next milestone would be good - progress bar.
 const SummaryStatistics = ({ liftType }) => {
-  const { liftTypes, topLiftsByTypeAndReps } = useContext(ParsedDataContext);
+  const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
   const newestDate = lift ? lift.newestDate : null;
@@ -190,7 +190,7 @@ const SummaryStatistics = ({ liftType }) => {
 };
 
 const RepPRsAccordion = ({ liftType }) => {
-  const { topLiftsByTypeAndReps } = useContext(ParsedDataContext);
+  const { topLiftsByTypeAndReps } = useUserLiftingData();
   if (!topLiftsByTypeAndReps) return null;
 
   const topLiftsByReps = topLiftsByTypeAndReps?.[liftType];
@@ -253,7 +253,7 @@ const RepPRsAccordion = ({ liftType }) => {
 };
 
 const RecentLiftHighlights = ({ liftType }) => {
-  const { topLiftsByTypeAndReps } = useContext(ParsedDataContext);
+  const { topLiftsByTypeAndReps } = useUserLiftingData();
   if (!topLiftsByTypeAndReps) return null;
 
   // Helper function to check if a date is within the last month
@@ -303,7 +303,7 @@ const RecentLiftHighlights = ({ liftType }) => {
 };
 
 export function SelectedLiftsIndividualLiftCards() {
-  const { parsedData, selectedLiftTypes } = useContext(ParsedDataContext);
+  const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const [expandedCard, setExpandedCard] = useState(null);
   const [parent] = useAutoAnimate(/* optional config */);
   const { width } = useWindowSize();

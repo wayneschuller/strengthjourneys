@@ -5,7 +5,6 @@ import { useTheme } from "next-themes";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { Line } from "react-chartjs-2";
 import { useSession } from "next-auth/react";
-import { ParsedDataContext } from "@/pages/_app";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";

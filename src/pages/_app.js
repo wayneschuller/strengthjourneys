@@ -13,20 +13,10 @@ import { useRouter } from "next/router";
 import Script from "next/script";
 import { devLog } from "@/lib/processing-utils";
 import { TimerProvider } from "@/lib/timer-context";
-
-export const ParsedDataContext = createContext(null); // Internal SJ format of user gsheet (see sampleData.js for design)
+import { UserLiftingDataProvider } from "@/lib/use-userlift-data";
 
 export default function App({ Component, pageProps, session }) {
-  // These are our key global state variables.
-  // Keep this as minimal as possible. Don't put things here that can be derived.
-  // We do keep liftTypes (lift names and frequency) here as an exception to save processing it too often
-  const [liftTypes, setLiftTypes] = useState([]); // see @/lib/processing-utils.js for data structure design
-  const [selectedLiftTypes, setSelectedLiftTypes] = useState([]); // see Layout useEffect for how we create this
-  const [parsedData, setParsedData] = useState(null); // see @/lib/sample-parsed-data.js for data structure design
-  const [topLiftsByTypeAndReps, setTopLiftsByTypeAndReps] = useState(null); // see @/lib/processing-utils.js for data structure design
-
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
-
   const router = useRouter();
 
   useEffect(() => {
@@ -56,25 +46,14 @@ export default function App({ Component, pageProps, session }) {
         disableTransitionOnChange
       >
         <SessionProvider session={session}>
-          <ParsedDataContext.Provider
-            value={{
-              parsedData,
-              setParsedData,
-              liftTypes,
-              setLiftTypes,
-              selectedLiftTypes,
-              setSelectedLiftTypes,
-              topLiftsByTypeAndReps,
-              setTopLiftsByTypeAndReps,
-            }}
-          >
+          <UserLiftingDataProvider>
             <TimerProvider>
               <Layout>
                 <Component {...pageProps} />
                 <Toaster />
               </Layout>
             </TimerProvider>
-          </ParsedDataContext.Provider>
+          </UserLiftingDataProvider>
         </SessionProvider>
       </ThemeProvider>
       <SpeedInsights />

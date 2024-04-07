@@ -14,9 +14,9 @@ export function handleOpenFilePicker(
     clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
     appId: process.env.NEXT_PUBLIC_GOOGLE_APP_ID, // This is needed for drive.file Google API access (MAKE SURE IT IS ON DEPLOYMENT)
     token: accessToken, // The picker will use whatever scopes are associated with this oauth token
-    developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
+    // developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
     customScopes: ["https://www.googleapis.com/auth/drive.file"],
-    // developerKey: "", // You may not need the key if your accessToken is good?
+    developerKey: "", // You may not need the key if your accessToken is good?
     viewId: "SPREADSHEETS",
     showUploadView: true,
     showUploadFolders: true,

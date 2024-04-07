@@ -284,9 +284,10 @@ async function fetcherWithToken(url, token) {
 
   try {
     const response = await fetch(url, {
+      method: "GET", // Explicitly state the method for clarity
       headers: {
         Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+        // "Content-Type": "application/json",
       },
     });
 

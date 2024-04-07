@@ -59,7 +59,8 @@ export const UserLiftingDataProvider = ({ children }) => {
   const accessToken = session?.accessToken;
 
   // Note: Don't put key or tokens in URI
-  const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
+  // const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
+  const apiURL = `/api/read-gsheet`;
 
   // -----------------------------------------------------------------------------------------------
   // Call gsheets API from the browser client using useSWR

@@ -18,7 +18,8 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useLocalStorage } from "usehooks-ts";
 import { ToastAction } from "@/components/ui/toast";
-import { useIsClient, useWindowSize } from "usehooks-ts";
+
+const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
 // We use these to only trigger toast announcements once
 let demoToastInit = false;
@@ -48,18 +49,10 @@ export const UserLiftingDataProvider = ({ children }) => {
   const { toast } = useToast();
   const router = useRouter();
   const currentPath = router.asPath;
-  const isClient = useIsClient();
 
   const shouldFetch =
-    isClient &&
-    authStatus === "authenticated" &&
-    !!session?.accessToken &&
-    !!ssid;
+    authStatus === "authenticated" && !!session?.accessToken && !!ssid;
 
-  const accessToken = session?.accessToken;
-
-  // Note: Don't put key or tokens in URI
-  // const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
   const apiURL = `/api/read-gsheet?ssid=${ssid}`;
 
   // -----------------------------------------------------------------------------------------------
@@ -68,7 +61,11 @@ export const UserLiftingDataProvider = ({ children }) => {
   // -----------------------------------------------------------------------------------------------
   const { data, error, isLoading, isValidating } = useSWR(
     shouldFetch ? apiURL : null,
-    (url) => fetcherWithToken(url, accessToken), // Directly pass accessToken here
+    fetcher,
+    {
+      // SWR options
+      // Don't need any because the defaults are awesome
+    },
   );
 
   if (error) devLog(`Local fetch to GSheet servers error: ${error}`);

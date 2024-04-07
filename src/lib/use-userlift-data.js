@@ -48,7 +48,8 @@ export const UserLiftingDataProvider = ({ children }) => {
   const router = useRouter();
   const currentPath = router.asPath;
 
-  const shouldFetch = !!session?.accessToken && !!ssid;
+  const shouldFetch =
+    authStatus === "authenticated" && !!session?.accessToken && !!ssid;
   const accessToken = session?.accessToken;
   // Note: Don't put key or tokens in URI
   const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
@@ -56,7 +57,8 @@ export const UserLiftingDataProvider = ({ children }) => {
     shouldFetch ? apiURL : null,
     (url) => fetcherWithToken(url, accessToken), // Directly pass accessToken here
   );
-  // if (error) devLog(`Local fetch to GSheet servers error: ${error}`);
+
+  if (error) devLog(`Local fetch to GSheet servers error: ${error}`);
   const isError = !!error; // FIXME: We could send back error details
 
   // When useSWR (just above) gives new Google sheet data, parse it
@@ -242,9 +244,9 @@ export const UserLiftingDataProvider = ({ children }) => {
   }, [authStatus, router]);
 
   return (
+    // FIXME: audit these and only export the ones that are used by components
     <UserLiftingDataContext.Provider
       value={{
-        // FIXME: audit these and only export the ones that are used by components
         isLoading,
         isError,
         isValidating,

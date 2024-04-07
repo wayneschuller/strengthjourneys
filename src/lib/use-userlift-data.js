@@ -58,8 +58,6 @@ export const UserLiftingDataProvider = ({ children }) => {
 
   const accessToken = session?.accessToken;
 
-  // devLog(`accessToken: ${accessToken}`);
-
   // Note: Don't put key or tokens in URI
   const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
 

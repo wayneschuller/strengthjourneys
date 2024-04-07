@@ -53,10 +53,14 @@ export const UserLiftingDataProvider = ({ children }) => {
 
   const accessToken = session?.accessToken;
 
+  // devLog(`accessToken: ${accessToken}`);
+
   // Note: Don't put key or tokens in URI
   const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
 
+  // -----------------------------------------------------------------------------------------------
   // Call gsheets API from the browser client
+  // -----------------------------------------------------------------------------------------------
   const { data, error, isLoading, isValidating } = useSWR(
     shouldFetch ? apiURL : null,
     (url) => fetcherWithToken(url, accessToken), // Directly pass accessToken here
@@ -65,7 +69,9 @@ export const UserLiftingDataProvider = ({ children }) => {
   if (error) devLog(`Local fetch to GSheet servers error: ${error}`);
   const isError = !!error; // FIXME: We could send back error details
 
+  // -----------------------------------------------------------------------------------------------
   // When useSWR (just above) gives new Google sheet data, parse it
+  // -----------------------------------------------------------------------------------------------
   useEffect(() => {
     const loadingMessage = isLoading ? "isLoading, " : "";
     const errorMessage = isError ? "isError, " : "";
@@ -274,6 +280,8 @@ export const UserLiftingDataProvider = ({ children }) => {
 // Modified fetcher to include the access token in the headers
 // ----------------------------------------------------------------------------------------------------------
 async function fetcherWithToken(url, token) {
+  devLog(`fetcherWithToken: ${url}. Token: ${token}`);
+
   try {
     const response = await fetch(url, {
       headers: {

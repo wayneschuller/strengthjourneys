@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export function ActivityHeatmapsCard() {
-  const { parsedData } = useUserLiftingData;
+  const { parsedData, isLoading } = useUserLiftingData();
   const { width } = useWindowSize();
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -48,6 +48,7 @@ export function ActivityHeatmapsCard() {
   const shareRef = useRef(null);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!parsedData) return;
 
     // Generate heatmap stuff
@@ -55,15 +56,19 @@ export function ActivityHeatmapsCard() {
     setStartDate(startDate);
     setEndDate(endDate);
 
-    // devLog(`Width changing to ${width}`);
+    // devLog(`Heatmaps: Width changing to ${width}`);
     let intervalMonths = 12;
     if (width > 768 && width <= 1536) intervalMonths = 24;
     else if (width > 1536) intervalMonths = 32;
     setIntervalMonths(intervalMonths);
 
     const intervals = generateDateRanges(startDate, endDate, intervalMonths);
+
+    // devLog(`Heatmaps: setting intervals:`);
+    devLog(intervals);
+
     setIntervals(intervals); // intervals is the trigger for showing the heatmaps
-  }, [parsedData, width]);
+  }, [isLoading, parsedData, width]);
 
   if (!isClient) return null; // Heatmaps only work on client
 

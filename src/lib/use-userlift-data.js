@@ -77,7 +77,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   useEffect(() => {
     const loadingMessage = isLoading ? "isLoading, " : "";
     const errorMessage = isError ? "isError, " : "";
-    const dataMessage = `gsheet ${data ? "loaded" : "NOT received yet"}`;
+    const dataMessage = `gsheet ${data ? "LOADED" : "NOT received yet"}`;
 
     devLog(
       `useUserLiftingData useEffect: authStatus: ${authStatus}, ${loadingMessage}${errorMessage}${dataMessage}`,

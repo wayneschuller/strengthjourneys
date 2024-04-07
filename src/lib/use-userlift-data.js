@@ -50,9 +50,13 @@ export const UserLiftingDataProvider = ({ children }) => {
 
   const shouldFetch =
     authStatus === "authenticated" && !!session?.accessToken && !!ssid;
+
   const accessToken = session?.accessToken;
+
   // Note: Don't put key or tokens in URI
   const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
+
+  // Call gsheets API from the browser client
   const { data, error, isLoading, isValidating } = useSWR(
     shouldFetch ? apiURL : null,
     (url) => fetcherWithToken(url, accessToken), // Directly pass accessToken here
@@ -63,10 +67,12 @@ export const UserLiftingDataProvider = ({ children }) => {
 
   // When useSWR (just above) gives new Google sheet data, parse it
   useEffect(() => {
+    const loadingMessage = isLoading ? "isLoading, " : "";
+    const errorMessage = isError ? "isError, " : "";
+    const dataMessage = `gsheet ${data ? "loaded" : "NOT received yet"}`;
+
     devLog(
-      `<Layout /> useEffect[data]: authStatus: ${authStatus}, isLoading ${isLoading}, isError ${isError}, data ${
-        data ? "IS" : "is NOT"
-      } ready.`,
+      `useUserLiftingData useEffect: authStatus: ${authStatus}, ${loadingMessage}${errorMessage}${dataMessage}`,
     );
 
     if (authStatus === "loading") return; // Wait for auth. Don't prematurely go into demo mode
@@ -76,7 +82,7 @@ export const UserLiftingDataProvider = ({ children }) => {
     // There is an edge case where it will ping during token refresh and get a 401 error once
     // Checking for !data tends to step over this error
     if (isError && !data) {
-      devLog(`useSWR isError from google...`);
+      // devLog(`useSWR isError from google...`);
 
       toast({
         variant: "destructive",
@@ -84,10 +90,11 @@ export const UserLiftingDataProvider = ({ children }) => {
         description: "Lift some weights and come back later.",
       });
 
-      // Clear selected gsheet so they can try again
-      setSsid(null);
-      setSheetFilename(null);
-      setSheetURL(null);
+      // FIXME: Clear selected gsheet so they can try again
+      // FIXME: temp turned off so I can hack around
+      // setSsid(null);
+      // setSheetFilename(null);
+      // setSheetURL(null);
     }
 
     let parsedData = null; // A local version for this scope only

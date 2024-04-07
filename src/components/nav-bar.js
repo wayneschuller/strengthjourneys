@@ -127,10 +127,15 @@ export function UserSheetIcon() {
     null,
   );
   const { data: session, status: authStatus } = useSession();
-  const { isValidating } = useUserLiftingData();
+  const { parsedData, isLoading, isValidating, isError } = useUserLiftingData();
+
+  // devLog( `<UserSheetIcon /> isLoading: ${isLoading}, isValidating ${isValidating}, isError: ${isError}, authStatus: ${authStatus}`,);
+
+  // Some guard rails
+  if (authStatus !== "authenticated") return null;
+  if (isLoading) return null;
 
   return (
-    session?.user &&
     ssid &&
     sheetURL &&
     sheetFilename && (

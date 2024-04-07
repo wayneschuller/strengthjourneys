@@ -60,10 +60,11 @@ export const UserLiftingDataProvider = ({ children }) => {
 
   // Note: Don't put key or tokens in URI
   // const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
-  const apiURL = `/api/read-gsheet`;
+  const apiURL = `/api/read-gsheet?ssid=${ssid}`;
 
   // -----------------------------------------------------------------------------------------------
-  // Call gsheets API from the browser client using useSWR
+  // Call gsheets API via our backend api route
+  // (we used to do from client but got intermittent CORS problems)
   // -----------------------------------------------------------------------------------------------
   const { data, error, isLoading, isValidating } = useSWR(
     shouldFetch ? apiURL : null,
@@ -100,11 +101,10 @@ export const UserLiftingDataProvider = ({ children }) => {
         description: "Lift some weights and come back later.",
       });
 
-      // FIXME: Clear selected gsheet so they can try again
-      // FIXME: temp turned off so I can hack around
-      // setSsid(null);
-      // setSheetFilename(null);
-      // setSheetURL(null);
+      // Clear selected gsheet so they can try again
+      setSsid(null);
+      setSheetFilename(null);
+      setSheetURL(null);
     }
 
     let parsedData = null; // A local version for this scope only

@@ -66,6 +66,10 @@ export function LiftTypeFrequencyPieCard() {
           size: "11",
         },
         padding: 10,
+        formatter: function (value, context) {
+          devLog(value);
+          return `${value.value} sets`; // Append 'sets' to the value
+        },
       },
     },
   };

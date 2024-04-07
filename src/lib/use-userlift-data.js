@@ -18,6 +18,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useLocalStorage } from "usehooks-ts";
 import { ToastAction } from "@/components/ui/toast";
+import { useIsClient, useWindowSize } from "usehooks-ts";
 
 // We use these to only trigger toast announcements once
 let demoToastInit = false;
@@ -47,9 +48,13 @@ export const UserLiftingDataProvider = ({ children }) => {
   const { toast } = useToast();
   const router = useRouter();
   const currentPath = router.asPath;
+  const isClient = useIsClient();
 
   const shouldFetch =
-    authStatus === "authenticated" && !!session?.accessToken && !!ssid;
+    isClient &&
+    authStatus === "authenticated" &&
+    !!session?.accessToken &&
+    !!ssid;
 
   const accessToken = session?.accessToken;
 

@@ -62,7 +62,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   const apiURL = `https://sheets.googleapis.com/v3/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
 
   // -----------------------------------------------------------------------------------------------
-  // Call gsheets API from the browser client
+  // Call gsheets API from the browser client using useSWR
   // -----------------------------------------------------------------------------------------------
   const { data, error, isLoading, isValidating } = useSWR(
     shouldFetch ? apiURL : null,

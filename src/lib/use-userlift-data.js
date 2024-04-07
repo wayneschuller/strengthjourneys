@@ -275,32 +275,3 @@ export const UserLiftingDataProvider = ({ children }) => {
     </UserLiftingDataContext.Provider>
   );
 };
-
-// ----------------------------------------------------------------------------------------------------------
-// Some code to fetch gsheet API from pure client without a Next.js API route
-// Modified fetcher to include the access token in the headers
-// ----------------------------------------------------------------------------------------------------------
-async function fetcherWithToken(url, token) {
-  devLog(`fetcherWithToken: ${url}. Token: ${token}`);
-
-  try {
-    const response = await fetch(url, {
-      method: "GET", // Explicitly state the method for clarity
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      // This will capture HTTP errors such as 400, 403, 404, etc.
-      throw new Error(`Failed to fetch: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    // Here, we catch both network errors and the errors thrown above for HTTP status checks
-    throw error;
-  }
-}

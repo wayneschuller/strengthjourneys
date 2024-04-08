@@ -30,7 +30,9 @@ export function handleOpenFilePicker(
         console.log("User clicked cancel/close button");
         return;
       }
-      devLog(data);
+
+      // devLog(data);
+
       if (data.docs && data.docs[0]) {
         const newSsid = data.docs[0].id;
         const newFilename = data.docs[0].name;

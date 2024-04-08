@@ -65,7 +65,7 @@ export function ActivityHeatmapsCard() {
     const intervals = generateDateRanges(startDate, endDate, intervalMonths);
 
     // devLog(`Heatmaps: setting intervals:`);
-    devLog(intervals);
+    // devLog(intervals);
 
     setIntervals(intervals); // intervals is the trigger for showing the heatmaps
   }, [isLoading, parsedData, width]);

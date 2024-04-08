@@ -231,6 +231,10 @@ export default function E1RMCalculator() {
       description: "Result copied to clipboard.",
     });
 
+    if (typeof window !== "undefined") {
+      window.gtag("event", "calc_share_clipboard");
+    }
+
     // This fails in React - but it's the new API
     // if (navigator?.clipboard?.writeText) {
     //   try {

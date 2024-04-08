@@ -43,18 +43,18 @@ import { Button, buttonVariants } from "./ui/button";
 import { Separator } from "./ui/separator";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { getLiftColor } from "@/lib/get-lift-color";
+import { TwitterPicker } from "react-color";
 
 // FIXME: could we put the lift color as a thick bar under the name of the lift?
 
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
   const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
+  const [color, setColor] = useState(getLiftColor(liftType));
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
   const totalReps = lift ? lift.totalReps : null;
   const totalSets = lift ? lift.totalSets : null;
-  const color = getLiftColor(liftType);
-  devLog(color);
 
   return (
     <Card
@@ -107,6 +107,13 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
               </div>
             )}
             {isExpanded && <ExpandedLiftAchievements liftType={liftType} />}
+            {isExpanded && (
+              <ColorChangeButton
+                liftType={liftType}
+                color={color}
+                setColor={setColor}
+              />
+            )}
           </div>
         )}
       </CardContent>
@@ -416,5 +423,24 @@ const TruncatedText = ({ text }) => {
     <div className="text-pretty" onClick={() => setIsExpanded(!isExpanded)}>
       {isExpanded ? text : truncatedText}
     </div>
+  );
+};
+
+const ColorChangeButton = ({ liftType, color, setColor }) => {
+  // Define the localStorage key using the liftType
+  const storageKey = `SJ_${liftType}_color`;
+
+  const handleClose = () => {
+    setDisplayColorPicker(false);
+  };
+
+  const handleChangeComplete = (color) => {
+    // devLog(`${liftType} color changed to ${color.hex}`);
+    setColor(color.hex);
+    localStorage.setItem(storageKey, color.hex);
+  };
+
+  return (
+    <TwitterPicker color={color} onChangeComplete={handleChangeComplete} />
   );
 };

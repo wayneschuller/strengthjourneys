@@ -577,13 +577,13 @@ function processVisualizerData(
     // Lazy initialization of dataset for the lift type
     if (!datasets[liftTypeKey]) {
       const color = getLiftColor(liftTypeKey);
-      const brightColor = brightenHexColor(color, 1.5);
+      const brightColor = brightenHexColor(color, 1.1);
 
       datasets[liftTypeKey] = {
         label: liftTypeKey,
         data: new Map(), // Using Map for efficient lookups
-        backgroundColor: brightColor,
-        borderColor: color,
+        backgroundColor: color,
+        borderColor: brightColor,
         // borderColor: theme === "dark" ? "#EEEEEE" : "#111111", // Simple light/dark lines
         borderWidth: 1,
         pointStyle: (context) =>

@@ -45,11 +45,10 @@ import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { CompactPicker, SliderPicker, TwitterPicker } from "react-color";
 
-// FIXME: could we put the lift color as a thick bar under the name of the lift?
-
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
   const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
+  // FIXME: lift this higher so that it's shared with other analyzer components that show lift colors
   const [color, setColor] = useState(getLiftColor(liftType));
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);

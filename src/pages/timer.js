@@ -48,6 +48,25 @@ function LargeTimer() {
     setIsRunning(true);
   }, []); // The empty array ensures this effect runs only once on mount
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Check if the pressed key is 'Space'
+      if (event.code === "Space") {
+        // Prevent the default action to avoid scrolling the page
+        event.preventDefault();
+        handleRestart();
+      }
+    };
+
+    // Add event listener for 'keydown' on window
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup function to remove the event listener
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [setIsRunning, handleRestart]); // The empty array ensures this effect runs only once on mount
+
   return (
     <div className="flex flex-col items-center">
       <Card

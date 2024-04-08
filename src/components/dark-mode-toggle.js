@@ -25,7 +25,15 @@ export function DarkModeToggle() {
             variant="outline"
             size="icon"
             onClick={() => {
-              theme === "dark" ? setTheme("light") : setTheme("dark");
+              const newTheme = theme === "dark" ? "light" : "dark";
+              setTheme(newTheme);
+
+              if (typeof window !== "undefined") {
+                window.gtag("event", "theme_changed", {
+                  event_category: "User Preferences",
+                  event_label: `Theme changed to ${newTheme}`,
+                });
+              }
             }}
           >
             <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 import {
   Card,
@@ -41,6 +42,7 @@ import { Maximize2, Minimize2 } from "lucide-react";
 import { Button, buttonVariants } from "./ui/button";
 import { Separator } from "./ui/separator";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { getLiftColor } from "@/lib/get-lift-color";
 
 // FIXME: could we put the lift color as a thick bar under the name of the lift?
 
@@ -51,6 +53,8 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
   const totalReps = lift ? lift.totalReps : null;
   const totalSets = lift ? lift.totalSets : null;
+  const color = getLiftColor(liftType);
+  devLog(color);
 
   return (
     <Card
@@ -79,7 +83,13 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
             </Tooltip>
           </TooltipProvider>
         </div>
-        <CardTitle className="mr-5 text-pretty">
+        <CardTitle
+          className={cn("mr-5 text-pretty", isExpanded && "text-3xl")}
+          style={{
+            textDecoration: "underline",
+            textDecorationColor: `${color}`,
+          }}
+        >
           {liftType}
           {isExpanded && " Detailed Analysis"}
         </CardTitle>

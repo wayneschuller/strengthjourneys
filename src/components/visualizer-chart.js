@@ -579,7 +579,8 @@ function processVisualizerData(
         label: liftTypeKey,
         data: new Map(), // Using Map for efficient lookups
         backgroundColor: getLiftColor(liftTypeKey),
-        borderColor: theme === "dark" ? "#EEEEEE" : "#111111",
+        borderColor: getLiftColor(liftTypeKey),
+        // borderColor: theme === "dark" ? "#EEEEEE" : "#111111",
         borderWidth: 1,
         pointStyle: (context) =>
           context.raw.isHistoricalPR ? "circle" : "cross",

@@ -43,7 +43,7 @@ import { Button, buttonVariants } from "./ui/button";
 import { Separator } from "./ui/separator";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { getLiftColor } from "@/lib/get-lift-color";
-import { TwitterPicker } from "react-color";
+import { CompactPicker, SliderPicker, TwitterPicker } from "react-color";
 
 // FIXME: could we put the lift color as a thick bar under the name of the lift?
 
@@ -107,13 +107,6 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
               </div>
             )}
             {isExpanded && <ExpandedLiftAchievements liftType={liftType} />}
-            {isExpanded && (
-              <ColorChangeButton
-                liftType={liftType}
-                color={color}
-                setColor={setColor}
-              />
-            )}
           </div>
         )}
       </CardContent>
@@ -122,6 +115,13 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
         {/* {isExpanded */}
         {/* ? "to reduce to summary view" */}
         {/* : `for full ${liftType} analysis`} */}
+        {isExpanded && (
+          <ColorChangeButton
+            liftType={liftType}
+            color={color}
+            setColor={setColor}
+          />
+        )}
       </CardFooter>
     </Card>
   );
@@ -438,9 +438,13 @@ const ColorChangeButton = ({ liftType, color, setColor }) => {
     // devLog(`${liftType} color changed to ${color.hex}`);
     setColor(color.hex);
     localStorage.setItem(storageKey, color.hex);
+
+    // FIXME: it would be good if this triggered a rerender of the pie chart
   };
 
   return (
-    <TwitterPicker color={color} onChangeComplete={handleChangeComplete} />
+    <div className="w-96">
+      <SliderPicker color={color} onChangeComplete={handleChangeComplete} />
+    </div>
   );
 };

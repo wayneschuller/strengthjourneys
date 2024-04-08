@@ -95,6 +95,10 @@ export function ActivityHeatmapsCard() {
       `generate html2canvas execution time: ` +
         `\x1b[1m${Math.round(performance.now() - startTime)}ms\x1b[0m`,
     );
+
+    if (typeof window !== "undefined") {
+      window.gtag("event", "heatmap_share_clipboard");
+    }
   };
 
   return (

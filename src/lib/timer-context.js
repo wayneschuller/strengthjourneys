@@ -32,6 +32,10 @@ export const TimerProvider = ({ children }) => {
   const handleRestart = () => {
     setIsRunning(true);
     setTime(0);
+
+    if (typeof window !== "undefined") {
+      window.gtag("event", "timer_restarted");
+    }
   };
 
   return (

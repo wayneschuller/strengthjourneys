@@ -7,34 +7,38 @@ import { devLog } from "./processing-utils";
 
 // Provide good defaults for popular barbell lifts
 export function getLiftColor(liftType) {
-  let color;
+  const storageKey = `SJ_${liftType}_color`; // Use a namespaced key for localStorage
+  let color = localStorage.getItem(storageKey);
 
   // devLog(`getLiftColor called for ${liftType}`);
 
-  switch (liftType) {
-    case "Back Squat":
-    case "Squat":
-      color = "#9B2226";
-      break;
-    case "Deadlift":
-      color = "#005F73";
-      break;
-    case "Bench Press":
-      color = "#94D2BD";
-      break;
-    case "Press":
-    case "Strict Press":
-    case "Overhead Press":
-      color = "#544B3D";
-      break;
-    case "Front Squat":
-      color = "#0A9396";
-      break;
-    case "Romanian Deadlift":
-      color = "#EE9B00";
-      break;
-    default:
-      color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+  if (!color) {
+    switch (liftType) {
+      case "Back Squat":
+      case "Squat":
+        color = "#9B2226";
+        break;
+      case "Deadlift":
+        color = "#005F73";
+        break;
+      case "Bench Press":
+        color = "#94D2BD";
+        break;
+      case "Press":
+      case "Strict Press":
+      case "Overhead Press":
+        color = "#544B3D";
+        break;
+      case "Front Squat":
+        color = "#0A9396";
+        break;
+      case "Romanian Deadlift":
+        color = "#EE9B00";
+        break;
+      default:
+        color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+    }
+    localStorage.setItem(storageKey, color);
   }
 
   return color;

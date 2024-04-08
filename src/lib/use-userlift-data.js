@@ -87,7 +87,7 @@ export const UserLiftingDataProvider = ({ children }) => {
     if (isLoading) return; // Wait for useSWR. Don't prematurely go into demo mode
 
     // isError happens when Google decides they don't love us
-    // There is an edge case where it will ping during token refresh and get a 401 error once
+    // There was an edge case where it will ping during token refresh and get a 401 error once
     // Checking for !data tends to step over this error
     if (isError && !data) {
       // devLog(`useSWR isError from google...`);
@@ -97,6 +97,10 @@ export const UserLiftingDataProvider = ({ children }) => {
         title: "Uh oh! Something went wrong.",
         description: "Lift some weights and come back later.",
       });
+
+      if (typeof window !== "undefined") {
+        window.gtag("event", "gSheetAPIError");
+      }
 
       // Clear selected gsheet so they can try again
       setSsid(null);

@@ -22,6 +22,10 @@ export function handleOpenFilePicker(
     supportDrives: true,
     multiselect: false,
     callbackFunction: (data) => {
+      if (typeof window !== "undefined") {
+        window.gtag("event", "gdrive_picker_opened");
+      }
+
       if (data.action === "cancel") {
         console.log("User clicked cancel/close button");
         return;

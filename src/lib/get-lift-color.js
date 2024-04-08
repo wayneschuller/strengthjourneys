@@ -43,3 +43,22 @@ export function getLiftColor(liftType) {
 // Current color palette inspired from:
 // https://coolors.co/palette/001219-005f73-0a9396-94d2bd-e9d8a6-ee9b00-ca6702-bb3e03-ae2012-9b2226
 // {"Rich Black FOGRA 29":"001219","Blue Sapphire":"005f73","Viridian Green":"0a9396","Middle Blue Green":"94d2bd","Medium Champagne":"e9d8a6","Gamboge":"ee9b00","Alloy Orange":"ca6702","Rust":"bb3e03","Rufous":"ae2012","Ruby Red":"9b2226"}
+
+export function brightenHexColor(hex, factor) {
+  // Convert hex to RGB
+  let r = parseInt(hex.slice(1, 3), 16);
+  let g = parseInt(hex.slice(3, 5), 16);
+  let b = parseInt(hex.slice(5, 7), 16);
+
+  // Brighten the color
+  r = Math.min(255, Math.floor(r * factor));
+  g = Math.min(255, Math.floor(g * factor));
+  b = Math.min(255, Math.floor(b * factor));
+
+  // Convert back to hex
+  r = r.toString(16).padStart(2, "0");
+  g = g.toString(16).padStart(2, "0");
+  b = b.toString(16).padStart(2, "0");
+
+  return `#${r}${g}${b}`;
+}

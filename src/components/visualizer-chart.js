@@ -11,6 +11,7 @@ import { devLog } from "@/lib/processing-utils";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWindowSize, useLocalStorage } from "usehooks-ts";
+import { brightenHexColor } from "@/lib/get-lift-color";
 
 import {
   defaults as chartDefaults,
@@ -576,10 +577,12 @@ function processVisualizerData(
     // Lazy initialization of dataset for the lift type
     if (!datasets[liftTypeKey]) {
       const color = getLiftColor(liftTypeKey);
+      const brightColor = brightenHexColor(color, 1.5);
+
       datasets[liftTypeKey] = {
         label: liftTypeKey,
         data: new Map(), // Using Map for efficient lookups
-        backgroundColor: color,
+        backgroundColor: brightColor,
         borderColor: color,
         // borderColor: theme === "dark" ? "#EEEEEE" : "#111111", // Simple light/dark lines
         borderWidth: 1,

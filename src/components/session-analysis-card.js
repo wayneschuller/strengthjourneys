@@ -5,6 +5,7 @@ import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { Skeleton } from "./ui/skeleton";
+import { getLiftColor } from "@/lib/get-lift-color";
 
 import {
   Card,
@@ -68,7 +69,14 @@ export function SessionAnalysisCard() {
             <ul>
               {Object.entries(groupedWorkouts).map(([liftType, workouts]) => (
                 <li key={liftType} className="pb-2">
-                  <strong>{liftType}</strong>
+                  <strong
+                    style={{
+                      textDecoration: "underline",
+                      textDecorationColor: getLiftColor(liftType),
+                    }}
+                  >
+                    {liftType}
+                  </strong>
                   <ul className="pl-4">
                     {workouts.map((workout, index) => (
                       <li key={index}>

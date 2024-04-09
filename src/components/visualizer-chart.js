@@ -12,6 +12,7 @@ import { ZoomIn, ZoomOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWindowSize, useLocalStorage } from "usehooks-ts";
 import { brightenHexColor } from "@/lib/get-lift-color";
+import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 
 import {
   defaults as chartDefaults,
@@ -422,7 +423,7 @@ export default function VisualizerChart() {
               }
             }}
           >
-            Show All
+            Show All Time
           </Button>
           <Button
             variant="outline"
@@ -462,6 +463,7 @@ export default function VisualizerChart() {
           >
             <ZoomIn />
           </Button>
+          <SidePanelSelectLiftsButton />
         </div>
       )}
     </>

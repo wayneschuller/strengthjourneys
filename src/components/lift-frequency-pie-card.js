@@ -53,6 +53,22 @@ export function LiftTypeFrequencyPieCard() {
       legend: {
         display: false,
       },
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          label: function (context) {
+            let label = context.label || "";
+            if (label) {
+              label += ": ";
+            }
+            if (context.formattedValue !== undefined) {
+              devLog(context);
+              label += context.formattedValue + " sets";
+            }
+            return label;
+          },
+        },
+      },
       datalabels: {
         backgroundColor: function (context) {
           return context.dataset.backgroundColor; // Follow lift background color

@@ -35,14 +35,10 @@ import zoomPlugin from "chartjs-plugin-zoom";
 import { endOfDay } from "date-fns";
 
 ChartJS.register(
-  Colors,
   TimeScale,
-  TimeSeriesScale,
-  CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
-  Title,
   Tooltip,
   Legend,
   ChartDataLabels,

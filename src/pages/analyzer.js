@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { devLog } from "@/lib/processing-utils";
 import { SessionAnalysisCard } from "@/components/session-analysis-card";
 import { SelectedLiftsIndividualLiftCards } from "@/components/lift-achievements-card";
+import { ConsistencyCard } from "@/components/consistency-card";
 
 export default function Analyzer() {
   const { data: session, status: authStatus } = useSession();
@@ -45,7 +46,8 @@ export default function Analyzer() {
           <div className="flex h-full flex-col">
             <SessionAnalysisCard />
           </div>
-          <div className="flex h-full flex-col">
+          <div className="flex h-full flex-col gap-6">
+            <ConsistencyCard />
             <MonthsHighlightsCard />
           </div>
           <div className="grid h-full gap-6">

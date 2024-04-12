@@ -224,7 +224,7 @@ const periodTargets = [
   },
   {
     label: "3 Month",
-    days: 31,
+    days: 93,
   },
   {
     label: "Half Year",

@@ -196,7 +196,7 @@ function processConsistency(parsedData) {
     return {
       label: period.label,
       percentage: consistencyPercentage,
-      tooltip: `Acheived ${actualWorkouts} sessions (needed ${totalWorkoutsExpected} to reach 3 per week on average for this period)`,
+      tooltip: `Acheived ${actualWorkouts} sessions (get ${totalWorkoutsExpected} to reach 3 per week on average for this period)`,
     };
   });
 

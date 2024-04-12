@@ -27,8 +27,10 @@ import {
 Chart.register(ArcElement);
 
 export function ConsistencyCard() {
-  const { parsedData } = useUserLiftingData();
+  const { parsedData, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
+
+  if (isLoading) return null;
 
   const consistency = processConsistency(parsedData);
 
@@ -179,6 +181,7 @@ function processConsistency(parsedData) {
     const relevantDates = new Set(); // To store unique workout dates for this period
 
     // Loop through parsed data to find relevant dates within the period
+    // FIXME: doing this loop for each periodTarget is inefficient on large datasets
     parsedData.forEach((entry) => {
       const entryDate = parseISO(entry.date);
       if (entryDate >= startDate && entryDate <= today) {

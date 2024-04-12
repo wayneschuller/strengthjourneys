@@ -83,7 +83,7 @@ const thresholds = [
   { minProgress: 100, grade: "A+", hue: HUE_GREEN },
   { minProgress: 90, grade: "A", hue: HUE_GREEN },
   { minProgress: 80, grade: "A-", hue: HUE_GREEN },
-  { minProgress: 67, grade: "B+", hue: HUE_YELLOW },
+  { minProgress: 70, grade: "B+", hue: HUE_YELLOW },
   { minProgress: 59, grade: "B", hue: HUE_YELLOW },
   { minProgress: 50, grade: "B-", hue: HUE_YELLOW },
   { minProgress: 42, grade: "C+", hue: HUE_ORANGE },
@@ -108,7 +108,7 @@ function CircularProgressWithLetter({ progress }) {
   // Determine color based on progress value
   const { grade, color } = getGradeAndColor(progress);
 
-  devLog(color);
+  // devLog(color);
 
   const data = {
     datasets: [
@@ -211,6 +211,11 @@ function processConsistency(parsedData) {
     const rawPercentage = (actualWorkouts / totalWorkoutsExpected) * 100;
     const consistencyPercentage = Math.min(Math.round(rawPercentage), 100); // Cap the percentage at 100
 
+    const totalWorkoutsGradeJump = calculateGradeJump(
+      actualWorkouts,
+      totalWorkoutsExpected,
+    );
+
     let tooltip = "";
     switch (true) {
       case actualWorkouts > totalWorkoutsExpected:
@@ -222,7 +227,10 @@ function processConsistency(parsedData) {
         tooltip = `Achieved exactly the required # of sessions for 3 per week average. You can stop lifting now.`;
         break;
       case actualWorkouts < totalWorkoutsExpected:
-        tooltip = `Achieved ${actualWorkouts} sessions (get ${totalWorkoutsExpected} total to reach 3 per week on average for this period)`;
+        tooltip = `Achieved ${actualWorkouts} sessions (get ${calculateGradeJump(
+          actualWorkouts,
+          totalWorkoutsExpected,
+        )} more in this period to improve your grade)`;
         break;
     }
 
@@ -279,3 +287,27 @@ const periodTargets = [
     days: 365 * 10 + 2,
   },
 ];
+
+// Function to calculate how many more workouts needed to reach the next grade
+// FIXME: this is NQR
+function calculateGradeJump(actualWorkouts, totalWorkoutsExpected) {
+  let currentProgress = (actualWorkouts / totalWorkoutsExpected) * 100;
+
+  // Find the first threshold that is greater than the current progress
+  const nextThreshold = thresholds.find(
+    (threshold) => threshold.minProgress > currentProgress,
+  );
+
+  // If there's no higher threshold, return 0 as no more workouts can improve the grade
+  if (!nextThreshold) {
+    return 0;
+  }
+
+  // Calculate the exact number of workouts needed to reach the next threshold
+  const requiredProgressToNextGrade = nextThreshold.minProgress;
+  const workoutsNeeded =
+    Math.ceil((requiredProgressToNextGrade * totalWorkoutsExpected) / 100) -
+    actualWorkouts;
+
+  return workoutsNeeded;
+}

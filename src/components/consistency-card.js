@@ -35,20 +35,22 @@ export function ConsistencyCard() {
           Analysis{" "}
         </CardTitle>
       </CardHeader>
-      <CardContent className="xl:XXmax-h-[30vh] flex justify-center">
+      <CardContent className="flex justify-center">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {consistency.map((item) => (
             <TooltipProvider key={item.label}>
               <Tooltip>
                 <TooltipTrigger>
                   <div className="flex-col text-center">
-                    <CircularProgressWithLetter progress={item.percentage} />
+                    <div className="">
+                      <CircularProgressWithLetter progress={item.percentage} />
+                    </div>
                     <div>{item.label}</div>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className="w-40">
-                    <div className="text-center text-2xl text-white">
+                    <div className="text-center text-2xl">
                       {item.percentage}%
                     </div>
                     <div>{item.tooltip}</div>
@@ -140,11 +142,7 @@ export function CircularProgressWithLetter({ progress }) {
 }
 
 function processConsistency(parsedData) {
-  let consistency;
-
   if (!parsedData) return []; // FIXME: need a skeleton to avoid CLS
-
-  consistency = consistencySampleData;
 
   const startTime = performance.now();
 
@@ -223,56 +221,5 @@ const periodTargets = [
   {
     label: "Decade",
     days: 365 * 10,
-  },
-];
-
-const consistencySampleData = [
-  {
-    label: "Week",
-    percentage: 97,
-    tooltip:
-      "Lift 2 times a week for n more weeks to advance to the next grade",
-  },
-  {
-    label: "Month",
-    percentage: 90,
-    tooltip:
-      "Lift 2 times a week for n more weeks to advance to the next grade",
-  },
-  {
-    label: "2 Month",
-    percentage: 83,
-    tooltip:
-      "Lift 2 times a week for n more weeks to advance to the next grade",
-  },
-  {
-    label: "Half Year",
-    percentage: 73,
-    tooltip:
-      "Lift 2 times a week for n more weeks to advance to the next grade",
-  },
-  {
-    label: "Year",
-    percentage: 71,
-    tooltip:
-      "Lift 2 times a week for n more weeks to advance to the next grade",
-  },
-  {
-    label: "23 Month",
-    percentage: 60,
-    tooltip:
-      "Lift 2 times a week for n more weeks to advance to the next grade",
-  },
-  {
-    label: "4 Year",
-    percentage: 33,
-    tooltip:
-      "Lift 2 times a week for n more weeks to advance to the next grade",
-  },
-  {
-    label: "Decade",
-    percentage: 20,
-    tooltip:
-      "Lift 2 times a week for n more weeks to advance to the next grade",
   },
 ];

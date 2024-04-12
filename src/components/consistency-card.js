@@ -6,11 +6,17 @@ import { devLog } from "@/lib/processing-utils";
 import { Skeleton } from "./ui/skeleton";
 import { useSession } from "next-auth/react";
 
-import { Chart, ArcElement, Tooltip } from "chart.js";
+import { Chart, ArcElement } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useTheme } from "next-themes";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 Chart.register(ArcElement);
 
@@ -31,10 +37,20 @@ export function ConsistencyCard() {
       <CardContent className="xl:XXmax-h-[30vh] flex justify-center">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {consistency.map((item) => (
-            <div className="flex-col text-center">
-              <CircularProgressWithLetter progress={item.percentage} />
-              <div>{item.label}</div>
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className="flex-col text-center">
+                    <CircularProgressWithLetter progress={item.percentage} />
+                    <div>{item.label}</div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="text-lg">{item.percentage}%</div>
+                  {/* <p>{item.tooltip}</p> */}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ))}
         </div>
       </CardContent>

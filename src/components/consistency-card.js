@@ -47,8 +47,12 @@ export function ConsistencyCard() {
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <div className="text-lg">{item.percentage}%</div>
-                  {/* <p>{item.tooltip}</p> */}
+                  <div className="w-40">
+                    <div className="text-center text-2xl text-white">
+                      {item.percentage}%
+                    </div>
+                    <div>{item.tooltip}</div>
+                  </div>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -161,14 +165,16 @@ function processConsistency(parsedData) {
     });
 
     // Calculate the consistency
-    const totalWorkoutsExpected = (period.days / 7) * 3; // Number of workouts expected to achieve the target of 3 weekly average
+    const totalWorkoutsExpected = Math.round((period.days / 7) * 3); // Number of workouts expected to achieve the target of 3 weekly average
     const actualWorkouts = relevantDates.size; // Number of actual unique workout days
-    const consistencyPercentage =
-      (actualWorkouts / totalWorkoutsExpected) * 100; // Calculate the percentage
+    const consistencyPercentage = Math.round(
+      (actualWorkouts / totalWorkoutsExpected) * 100,
+    );
 
     return {
       label: period.label,
-      percentage: consistencyPercentage.toFixed(2), // Format the percentage
+      percentage: consistencyPercentage,
+      tooltip: `Acheived ${actualWorkouts} sessions (needed ${totalWorkoutsExpected} to reach 3 per week on average for this period)`,
     };
   });
 

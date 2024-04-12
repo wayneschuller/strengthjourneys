@@ -211,8 +211,9 @@ function processConsistency(parsedData) {
   return results;
 }
 
-// FIXME: with small data we could do a simplified version
-// FIXME: or even only have the next cycle.
+// These are the full period targets we will analyse for consistency.
+// However if the user only has limited data it will choose the smallest cycle plus one extra
+// So as the user lifts over time they should unlock new consistency arc charts
 const periodTargets = [
   {
     label: "Week",

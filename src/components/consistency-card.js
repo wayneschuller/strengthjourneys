@@ -148,67 +148,85 @@ export function CircularProgressWithLetter({ progress }) {
   );
 }
 
+function subtractDays(dateStr, days) {
+  const date = parseISO(dateStr);
+  return subDays(date, days).toISOString().slice(0, 10);
+}
+
 function processConsistency(parsedData) {
-  if (!parsedData) return []; // FIXME: need a skeleton to avoid CLS
+  if (!parsedData || !parsedData.length) {
+    devLog("No data provided");
+    return [];
+  }
 
   const startTime = performance.now();
+  const today = new Date().toISOString().slice(0, 10); // Format today's date as "YYYY-MM-DD"
 
-  const today = new Date();
-
-  // Identify the oldest date in the dataset
-  const oldestDate = parseISO(parsedData[0].date);
-  const workoutRangeDays = differenceInCalendarDays(today, oldestDate);
-
-  devLog(
-    `today: ${today}, oldestDate: ${oldestDate}, workoutRangeDays: ${workoutRangeDays} `,
+  const workoutRangeDays = differenceInCalendarDays(
+    parseISO(today),
+    parseISO(parsedData[0].date),
   );
 
-  // Filter periodTargets to include those within the range and one additional period
-  let found = false;
-  const relevantPeriods = periodTargets.filter((period) => {
-    if (period.days <= workoutRangeDays) return true;
-    if (!found) {
-      found = true; // Include the first period that goes beyond the workoutRangeDays
-      return true;
+  // Determine the relevant periods
+  const relevantPeriods = [];
+  for (let i = 0; i < periodTargets.length; i++) {
+    relevantPeriods.push(periodTargets[i]);
+    if (periodTargets[i].days > workoutRangeDays) {
+      break; // Include the first period beyond the workout range days
     }
-    return false;
-  });
+  }
 
-  devLog(relevantPeriods);
+  // Compute start dates for each period, for easier comparison
+  const periodStartDates = relevantPeriods.map((period) => ({
+    label: period.label,
+    startDate: subtractDays(today, period.days - 1),
+  }));
+
+  // devLog(periodStartDates);
+
+  const periodDates = relevantPeriods.reduce((acc, period) => {
+    acc[period.label] = new Set();
+    return acc;
+  }, {});
+
+  // Loop backwards through the parsed data
+  for (let i = parsedData.length - 1; i >= 0; i--) {
+    const entryDate = parsedData[i].date; // Directly use the date string
+
+    // Loop backwards through the period start dates
+    for (let j = periodStartDates.length - 1; j >= 0; j--) {
+      if (entryDate < periodStartDates[j].startDate) {
+        break; // Since we're moving backwards, if the date is before the start date, skip this and further earlier periods
+      }
+      periodDates[periodStartDates[j].label].add(entryDate); // Record an entry for this unique session date in this period
+    }
+  }
+
+  // devLog(periodDates);
 
   const results = relevantPeriods.map((period) => {
-    const startDate = subDays(today, period.days - 1); // Start date of the period
-    const relevantDates = new Set(); // To store unique workout dates for this period
+    const actualWorkouts = periodDates[period.label].size;
+    const totalWorkoutsExpected = Math.round((period.days / 7) * 3);
+    const rawPercentage = (actualWorkouts / totalWorkoutsExpected) * 100;
+    const consistencyPercentage = Math.min(Math.round(rawPercentage), 100); // Cap the percentage at 100
 
-    // Loop through parsed data to find relevant dates within the period
-    // FIXME: doing this loop for each periodTarget is inefficient on large datasets
-    parsedData.forEach((entry) => {
-      const entryDate = parseISO(entry.date);
-      if (entryDate >= startDate && entryDate <= today) {
-        relevantDates.add(entry.date);
-      }
-    });
-
-    // Calculate the consistency
-    const totalWorkoutsExpected = Math.round((period.days / 7) * 3); // Number of workouts expected to achieve the target of 3 weekly average
-    const actualWorkouts = relevantDates.size; // Number of actual unique workout days
-    const consistencyPercentage = Math.round(
-      (actualWorkouts / totalWorkoutsExpected) * 100,
-    );
+    let tooltip =
+      actualWorkouts >= totalWorkoutsExpected
+        ? `Achieved ${
+            actualWorkouts - totalWorkoutsExpected
+          } more than the minimum # of sessions required for 3 per week average`
+        : `Achieved ${actualWorkouts} sessions (get ${totalWorkoutsExpected} total to reach 3 per week on average for this period)`;
 
     return {
       label: period.label,
       percentage: consistencyPercentage,
-      tooltip: `Acheived ${actualWorkouts} sessions (get ${totalWorkoutsExpected} to reach 3 per week on average for this period)`,
+      tooltip: tooltip,
     };
   });
 
-  devLog(results);
-
   devLog(
     "processConsistency execution time: " +
-      `\x1b[1m${Math.round(performance.now() - startTime)}` +
-      `ms\x1b[0m`,
+      `${Math.round(performance.now() - startTime)}ms`,
   );
 
   return results;
@@ -217,6 +235,7 @@ function processConsistency(parsedData) {
 // These are the full period targets we will analyse for consistency.
 // However if the user only has limited data it will choose the smallest cycle plus one extra
 // So as the user lifts over time they should unlock new consistency arc charts
+// The algorithm assumes each period is longer than the next
 const periodTargets = [
   {
     label: "Week",
@@ -248,6 +267,6 @@ const periodTargets = [
   },
   {
     label: "Decade",
-    days: 365 * 10,
+    days: 365 * 10 + 2,
   },
 ];

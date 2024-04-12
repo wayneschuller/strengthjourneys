@@ -77,13 +77,13 @@ export function CircularProgressWithLetter({ progress }) {
   let color;
   let grade;
 
-  if (progress >= 92) {
+  if (progress >= 100) {
     grade = "A+";
     color = "#33dd00"; // Green
-  } else if (progress >= 84) {
+  } else if (progress >= 90) {
     grade = "A";
     color = "#33dd00"; // Green
-  } else if (progress >= 75) {
+  } else if (progress >= 80) {
     grade = "A-";
     color = "#33dd00"; // Green
   } else if (progress >= 67) {
@@ -206,16 +206,24 @@ function processConsistency(parsedData) {
 
   const results = relevantPeriods.map((period) => {
     const actualWorkouts = periodDates[period.label].size;
-    const totalWorkoutsExpected = Math.round((period.days / 7) * 3);
+    const totalWorkoutsExpected = Math.round((period.days / 7) * 3); // Expecation is 3 per week on average
     const rawPercentage = (actualWorkouts / totalWorkoutsExpected) * 100;
     const consistencyPercentage = Math.min(Math.round(rawPercentage), 100); // Cap the percentage at 100
 
-    let tooltip =
-      actualWorkouts >= totalWorkoutsExpected
-        ? `Achieved ${
-            actualWorkouts - totalWorkoutsExpected
-          } more than the minimum # of sessions required for 3 per week average`
-        : `Achieved ${actualWorkouts} sessions (get ${totalWorkoutsExpected} total to reach 3 per week on average for this period)`;
+    let tooltip = "";
+    switch (true) {
+      case actualWorkouts > totalWorkoutsExpected:
+        tooltip = `Achieved ${
+          actualWorkouts - totalWorkoutsExpected
+        } more than the minimum # of sessions required for 3 per week average`;
+        break;
+      case actualWorkouts === totalWorkoutsExpected:
+        tooltip = `Achieved exactly the required # of sessions for 3 per week average. You can stop lifting now.`;
+        break;
+      case actualWorkouts < totalWorkoutsExpected:
+        tooltip = `Achieved ${actualWorkouts} sessions (get ${totalWorkoutsExpected} total to reach 3 per week on average for this period)`;
+        break;
+    }
 
     return {
       label: period.label,
@@ -243,11 +251,11 @@ const periodTargets = [
   },
   {
     label: "Month",
-    days: 31,
+    days: 30, // Approximate is good enough
   },
   {
     label: "3 Month",
-    days: 93,
+    days: 91,
   },
   {
     label: "Half Year",

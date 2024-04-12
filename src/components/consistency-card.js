@@ -5,7 +5,12 @@ import { useContext, useState, useEffect } from "react";
 import { devLog } from "@/lib/processing-utils";
 import { Skeleton } from "./ui/skeleton";
 import { useSession } from "next-auth/react";
-import { parseISO, subDays, formatISO } from "date-fns";
+import {
+  parseISO,
+  subDays,
+  differenceInCalendarDays,
+  formatISO,
+} from "date-fns";
 
 import { Chart, ArcElement } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
@@ -146,18 +151,37 @@ function processConsistency(parsedData) {
 
   const startTime = performance.now();
 
-  const fromDate = new Date();
+  const today = new Date();
 
-  const periods = periodTargets;
+  // Identify the oldest date in the dataset
+  const oldestDate = parseISO(parsedData[0].date);
+  const workoutRangeDays = differenceInCalendarDays(today, oldestDate);
 
-  const results = periods.map((period) => {
-    const startDate = subDays(fromDate, period.days - 1); // Start date of the period
+  devLog(
+    `today: ${today}, oldestDate: ${oldestDate}, workoutRangeDays: ${workoutRangeDays} `,
+  );
+
+  // Filter periodTargets to include those within the range and one additional period
+  let found = false;
+  const relevantPeriods = periodTargets.filter((period) => {
+    if (period.days <= workoutRangeDays) return true;
+    if (!found) {
+      found = true; // Include the first period that goes beyond the workoutRangeDays
+      return true;
+    }
+    return false;
+  });
+
+  devLog(relevantPeriods);
+
+  const results = relevantPeriods.map((period) => {
+    const startDate = subDays(today, period.days - 1); // Start date of the period
     const relevantDates = new Set(); // To store unique workout dates for this period
 
     // Loop through parsed data to find relevant dates within the period
     parsedData.forEach((entry) => {
       const entryDate = parseISO(entry.date);
-      if (entryDate >= startDate && entryDate <= fromDate) {
+      if (entryDate >= startDate && entryDate <= today) {
         relevantDates.add(entry.date);
       }
     });

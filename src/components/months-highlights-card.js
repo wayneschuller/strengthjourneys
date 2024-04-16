@@ -70,8 +70,8 @@ export function MonthsHighlightsCard() {
 
 // Return a list of entries from the last month that are marked as historical PRs.
 function getFirstHistoricalPRsInLastMonth(parsedData, topLiftsByTypeAndReps) {
-  const startTime = performance.now();
   if (!parsedData) return null;
+  const startTime = performance.now();
 
   const today = new Date();
   const lastMonth = new Date(today);

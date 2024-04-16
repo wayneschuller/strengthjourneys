@@ -27,10 +27,8 @@ import {
 Chart.register(ArcElement);
 
 export function ConsistencyCard() {
-  const { parsedData, isLoading } = useUserLiftingData();
+  const { parsedData } = useUserLiftingData();
   const { status: authStatus } = useSession();
-
-  if (isLoading) return null;
 
   const consistency = processConsistency(parsedData);
 
@@ -43,30 +41,36 @@ export function ConsistencyCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex justify-center">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {consistency.map((item) => (
-            <TooltipProvider key={item.label}>
-              <Tooltip>
-                <TooltipTrigger>
-                  <div className="flex-col text-center">
-                    <div className="">
-                      <CircularProgressWithLetter progress={item.percentage} />
+        {!consistency ? (
+          <Skeleton className="h-[40vh]" />
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+            {consistency.map((item) => (
+              <TooltipProvider key={item.label}>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <div className="flex-col text-center">
+                      <div className="">
+                        <CircularProgressWithLetter
+                          progress={item.percentage}
+                        />
+                      </div>
+                      <div>{item.label}</div>
                     </div>
-                    <div>{item.label}</div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <div className="w-40">
-                    <div className="text-center text-2xl">
-                      {item.percentage}%
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="w-40">
+                      <div className="text-center text-2xl">
+                        {item.percentage}%
+                      </div>
+                      <div>{item.tooltip}</div>
                     </div>
-                    <div>{item.tooltip}</div>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ))}
-        </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -155,10 +159,7 @@ function subtractDays(dateStr, days) {
 }
 
 function processConsistency(parsedData) {
-  if (!parsedData || !parsedData.length) {
-    devLog("No data provided");
-    return [];
-  }
+  if (!parsedData) return null;
 
   const startTime = performance.now();
   const today = new Date().toISOString().slice(0, 10); // Format today's date as "YYYY-MM-DD"

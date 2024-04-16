@@ -43,6 +43,17 @@ const inspirationalQuotes = [
     author: "Dr. Aaron Horschig (Squat University)",
     URL: null,
   },
+  {
+    quote:
+      "I hated every minute of training, but I said, 'Don't quit. Suffer now and live the rest of your life as a champion.'",
+    author: "Muhammad Ali",
+    URL: null,
+  },
+  {
+    quote: "Slowly is the fastest way to get to where you want to be.",
+    author: "André De Shields",
+    URL: null,
+  },
 ];
 
 const getRandomQuote = () => {

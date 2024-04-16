@@ -107,7 +107,7 @@ function getFirstHistoricalPRsInLastMonth(parsedData, topLiftsByTypeAndReps) {
     }
   }
 
-  const firstPRs = Array.from(firstPRsMap.values());
+  const firstPRs = Array.from(firstPRsMap.values()).slice(0, 10); // Grab the first 10 only
 
   devLog(
     `getFirstHistoricalPRsInLastMonth() execution time: ` +

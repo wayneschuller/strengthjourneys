@@ -70,6 +70,7 @@ export function MonthsHighlightsCard() {
 
 // Return a list of (up to 10) entries from the last month that are marked as historical PRs.
 // FIXME: this could more intelligently select the top 10 highlights - prioritise reps 1, 3, 5, 10 if needed
+// FIXME: include URL hyperlinks if we have them
 function getFirstHistoricalPRsInLastMonth(parsedData, topLiftsByTypeAndReps) {
   if (!parsedData) return null;
   const startTime = performance.now();

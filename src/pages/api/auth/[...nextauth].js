@@ -20,7 +20,7 @@ async function refreshAccessToken(token) {
     const url =
       "https://oauth2.googleapis.com/token?" +
       new URLSearchParams({
-        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID, // Should not be public but we expose it for the picker anyway
+        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
         grant_type: "refresh_token",
         refresh_token: token.refreshToken,

@@ -75,6 +75,7 @@ export const authOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
+      // FIXME: This gtag won't work here in the backend
       if (typeof window !== "undefined") {
         window.gtag("event", "login", {
           method: account.provider,

@@ -572,6 +572,9 @@ function processVisualizerData(
       return;
     }
 
+    // Skip if it is a goal/target entry
+    if (entry.isGoal) return;
+
     // Lazy initialization of dataset for the lift type
     if (!datasets[liftTypeKey]) {
       const color = getLiftColor(liftTypeKey);

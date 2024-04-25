@@ -14,6 +14,8 @@ export function parseData(data) {
     parsedData = parseBespokeData(data);
   }
 
+  devLog(parsedData);
+
   return parsedData;
 }
 
@@ -139,7 +141,7 @@ function parseBespokeData(data) {
   const objectsArray = [];
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    const obj = {};
+    const obj = {}; // We build the object as we parse each column in the row
 
     for (let j = 0; j < columnNames.length; j++) {
       const columnName = columnNames[j];
@@ -164,6 +166,9 @@ function parseBespokeData(data) {
           break;
         case "Notes":
           obj["notes"] = rowData;
+          break;
+        case "isGoal":
+          obj["isGoal"] = rowData === "TRUE"; // Will default to false if blank
           break;
         default:
           obj[columnName] = rowData;

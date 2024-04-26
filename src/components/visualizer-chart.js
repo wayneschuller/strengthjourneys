@@ -135,6 +135,7 @@ export default function VisualizerChart() {
 
   // Set sensible default range for desktop and mobile
   // If user has less data than range, then their data is the range (with less padding)
+
   // Get sensible padded boundaries from the user data
   // firstDate, lastDate and scaleMin will all be Unix timestamps
   ({ firstDate, lastDate, roundedMaxWeightValue } =
@@ -145,7 +146,7 @@ export default function VisualizerChart() {
   }
 
   let defaultRangeInMonths = 6; // Desktop default
-  let xPaddingInDays = 10; // Desktop default
+  let xPaddingInDays = 15; // Desktop default
   if (isMobile) {
     defaultRangeInMonths = 1; // Mobile default
     xPaddingInDays = 3; // Mobile default
@@ -375,7 +376,8 @@ export default function VisualizerChart() {
     limits: {
       x: {
         min: firstDate,
-        max: lastDate,
+        // max: lastDate,
+        max: xScaleMax, // xScaleMax is lastDate with padding
         minRange: minRange,
       },
     },
@@ -418,7 +420,8 @@ export default function VisualizerChart() {
                   "x",
                   {
                     min: firstDate,
-                    max: lastDate,
+                    // max: lastDate,
+                    max: xScaleMax, // xScaleMax is lastDate with padding
                   },
                   "default",
                 );

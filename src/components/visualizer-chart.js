@@ -693,14 +693,16 @@ function createGoalDatasets(
     }
 
     if (!goalDatasets[liftTypeKey]) {
+      const color = getLiftColor(liftTypeKey);
+      const brightColor = brightenHexColor(color, 1.1);
+
       goalDatasets[liftTypeKey] = {
         label: `${liftTypeKey} Goal`,
         data: new Map(),
-        borderColor: "rgba(255, 99, 132, 0.5)",
+        borderColor: brightColor,
         borderDash: [5, 5],
         borderWidth: 1,
         pointRadius: 5,
-        pointBackgroundColor: "rgb(255, 99, 132)",
         fill: false,
       };
     }

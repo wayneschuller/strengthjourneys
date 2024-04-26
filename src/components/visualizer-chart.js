@@ -722,18 +722,5 @@ function createGoalDatasets(
     });
   });
 
-  // Linking each goal dataset to the most recent actual lift we have
-  Object.keys(goalDatasets).forEach((liftType) => {
-    if (datasets[liftType] && datasets[liftType].data.size > 0) {
-      const mostRecentDate = Array.from(datasets[liftType].data.keys()).pop(); // assuming the dates are already sorted
-      const mostRecentData = datasets[liftType].data.get(mostRecentDate);
-
-      goalDatasets[liftType].data = new Map([
-        [mostRecentDate, mostRecentData],
-        ...goalDatasets[liftType].data,
-      ]);
-    }
-  });
-
   return goalDatasets;
 }

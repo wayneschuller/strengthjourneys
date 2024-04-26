@@ -606,20 +606,21 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
   });
 
   // Filter out low outliers per lift type
-  Object.keys(datasets).forEach((liftType) => {
-    const liftData = Array.from(datasets[liftType].data.values());
-    liftData.sort((a, b) => a.y - b.y);
-    const q1 = liftData[Math.floor(liftData.length / 4)].y;
-    const iqr = liftData[Math.floor(liftData.length * 0.75)].y - q1;
-    const lowerBound = Math.max(0, q1 - 1.5 * iqr); // Ensuring lowerBound is not negative
+  // FIXME: Make this optional in UI
+  // Object.keys(datasets).forEach((liftType) => {
+  //   const liftData = Array.from(datasets[liftType].data.values());
+  //   liftData.sort((a, b) => a.y - b.y);
+  //   const q1 = liftData[Math.floor(liftData.length / 4)].y;
+  //   const iqr = liftData[Math.floor(liftData.length * 0.75)].y - q1;
+  //   const lowerBound = Math.max(0, q1 - 1.5 * iqr); // Ensuring lowerBound is not negative
 
-    // Apply filtering based on the lower bound
-    datasets[liftType].data = new Map(
-      Array.from(datasets[liftType].data.entries()).filter(
-        ([_, data]) => data.y >= lowerBound,
-      ),
-    );
-  });
+  //   // Apply filtering based on the lower bound
+  //   datasets[liftType].data = new Map(
+  //     Array.from(datasets[liftType].data.entries()).filter(
+  //       ([_, data]) => data.y >= lowerBound,
+  //     ),
+  //   );
+  // });
 
   // Generate goal datasets
   const goalDatasets = createGoalDatasets(

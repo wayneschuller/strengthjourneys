@@ -82,16 +82,14 @@ export default function VisualizerChart() {
       JSON.parse(localStorage.getItem("e1rmFormula")) || "Brzycki";
     setE1rmFormula(e1rmFormula);
 
-    // FIXME: we pass theme here so this causes a reprocessing of data on theme change - not ideal
     const chartData = processVisualizerData(
       parsedData,
       selectedLiftTypes,
-      theme,
       e1rmFormula,
     );
 
     setChartData(chartData); // This should trigger everything
-  }, [parsedData, selectedLiftTypes, theme]);
+  }, [parsedData, selectedLiftTypes]);
 
   useEffect(() => {
     // Accessing the HSL color variables
@@ -550,19 +548,15 @@ function getFirstLastDatesMaxWeightFromChartData(chartData) {
 
 // This function uniquely processes the parsed Data for the Visualizer
 // So it lives here in the <VisualizerChart /> component
-function processVisualizerData(
-  parsedData,
-  selectedLiftTypes,
-  theme,
-  e1rmFormula,
-) {
+function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
   if (parsedData === null) {
     console.log(`Error: visualizerProcessParsedData passed null.`);
     return;
   }
 
   const startTime = performance.now();
-  const datasets = {};
+
+  const datasets = {}; // We build chart.js datasets with the lift type as the object key
 
   parsedData.forEach((entry) => {
     const liftTypeKey = entry.liftType;
@@ -585,7 +579,6 @@ function processVisualizerData(
         data: new Map(), // Using Map for efficient lookups
         backgroundColor: color,
         borderColor: brightColor,
-        // borderColor: theme === "dark" ? "#EEEEEE" : "#111111", // Simple light/dark lines
         borderWidth: 1,
         pointStyle: (context) =>
           context.raw.isHistoricalPR ? "circle" : "cross",
@@ -608,11 +601,27 @@ function processVisualizerData(
     }
   });
 
+  // Generate goal datasets
+  const goalDatasets = createGoalDatasets(
+    parsedData,
+    datasets,
+    e1rmFormula,
+    selectedLiftTypes,
+  );
+
+  // Merge regular and goal datasets
+  const sortedDatasets = Object.values(datasets)
+    .concat(Object.values(goalDatasets))
+    .map((dataset) => ({
+      ...dataset,
+      data: Array.from(dataset.data.values()),
+    }));
+
   // Convert Map back to array and optionally sort
-  const sortedDatasets = Object.values(datasets).map((dataset) => ({
-    ...dataset,
-    data: Array.from(dataset.data.values()), // no sorting needed
-  }));
+  // const sortedDatasets = Object.values(datasets).map((dataset) => ({
+  // ...dataset,
+  // data: Array.from(dataset.data.values()), // no sorting needed
+  // }));
 
   devLog(
     "processVisualizerData execution time: " +
@@ -663,4 +672,59 @@ function generateLiftLabelsForDateAndType(
   }
 
   return labels; // Return the array of labels
+}
+
+function createGoalDatasets(
+  parsedData,
+  datasets,
+  e1rmFormula,
+  selectedLiftTypes,
+) {
+  const goalDatasets = {};
+
+  parsedData.forEach((entry) => {
+    if (!entry.isGoal) return; // Skip non-goal entries
+
+    const liftTypeKey = entry.liftType;
+
+    // Skip if the lift type is not in the selected list
+    if (selectedLiftTypes && !selectedLiftTypes.includes(liftTypeKey)) {
+      return;
+    }
+
+    if (!goalDatasets[liftTypeKey]) {
+      goalDatasets[liftTypeKey] = {
+        label: `${liftTypeKey} Goal`,
+        data: new Map(),
+        borderColor: "rgba(255, 99, 132, 0.5)",
+        borderDash: [5, 5],
+        borderWidth: 1,
+        pointRadius: 5,
+        pointBackgroundColor: "rgb(255, 99, 132)",
+        fill: false,
+      };
+    }
+
+    const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
+    goalDatasets[liftTypeKey].data.set(entry.date, {
+      x: entry.date,
+      y: oneRepMax,
+      ...entry,
+    });
+  });
+
+  // Linking each goal dataset to the most recent actual lift we have
+  Object.keys(goalDatasets).forEach((liftType) => {
+    if (datasets[liftType] && datasets[liftType].data.size > 0) {
+      const mostRecentDate = Array.from(datasets[liftType].data.keys()).pop(); // assuming the dates are already sorted
+      const mostRecentData = datasets[liftType].data.get(mostRecentDate);
+
+      goalDatasets[liftType].data = new Map([
+        [mostRecentDate, mostRecentData],
+        ...goalDatasets[liftType].data,
+      ]);
+    }
+  });
+
+  return goalDatasets;
 }

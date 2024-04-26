@@ -17,6 +17,9 @@ export function estimateE1RM(reps, weight, equation) {
   if (reps === 0) return 0; // A failure predicts nothing. :(
   if (reps === 1) return weight; // Heavy single requires no estimate!
 
+  // Cap the repetitions at 20 for calculating estimated 1RM
+  reps = Math.min(reps, 20);
+
   switch (equation) {
     case "Epley":
       return Math.round(weight * (1 + reps / 30));

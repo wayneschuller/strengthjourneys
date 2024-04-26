@@ -562,6 +562,8 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
 
   const datasets = {}; // We build chart.js datasets with the lift type as the object key
 
+  const all1RMs = []; // Collect values for smoothing the low outliers
+
   parsedData.forEach((entry) => {
     const liftTypeKey = entry.liftType;
 
@@ -594,6 +596,8 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
     }
 
     const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
+    all1RMs.push(oneRepMax);
+
     const currentData = datasets[liftTypeKey].data.get(entry.date);
 
     if (!currentData || currentData.y < oneRepMax) {
@@ -603,6 +607,24 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
         ...entry,
       });
     }
+  });
+
+  // Calculating lower bound for outlier removal
+  all1RMs.sort((a, b) => a - b);
+  devLog(all1RMs);
+  const q1 = all1RMs[Math.floor(all1RMs.length / 4)];
+  const iqr = all1RMs[Math.floor(all1RMs.length * 0.75)] - q1;
+  const lowerBound = q1 - 1.5 * iqr;
+
+  devLog(`lowerbound: ${lowerBound}`);
+
+  // Filtering datasets
+  Object.keys(datasets).forEach((key) => {
+    datasets[key].data = new Map(
+      Array.from(datasets[key].data.entries()).filter(
+        ([_, data]) => data.y >= lowerBound,
+      ),
+    );
   });
 
   // Generate goal datasets
@@ -620,12 +642,6 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
       ...dataset,
       data: Array.from(dataset.data.values()),
     }));
-
-  // Convert Map back to array and optionally sort
-  // const sortedDatasets = Object.values(datasets).map((dataset) => ({
-  // ...dataset,
-  // data: Array.from(dataset.data.values()), // no sorting needed
-  // }));
 
   devLog(
     "processVisualizerData execution time: " +

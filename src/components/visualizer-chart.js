@@ -261,11 +261,8 @@ export default function VisualizerChart() {
     font: (context) => {
       const entry = context.dataset.data[context.dataIndex]; // Our parsedData tuple
       // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
-
       const liftSingle = entry.reps === 1;
-
       // FIXME: do something special for entry.isHistoricalPR here
-
       if (liftSingle) return { weight: "bold", size: 13 };
       else return { style: "italic", size: 12 };
     },

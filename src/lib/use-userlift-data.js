@@ -90,8 +90,6 @@ export const UserLiftingDataProvider = ({ children }) => {
     // There was an edge case where it will ping during token refresh and get a 401 error once
     // Checking for !data tends to step over this error
     if (isError && !data) {
-      // devLog(`useSWR isError from google...`);
-
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
@@ -103,6 +101,9 @@ export const UserLiftingDataProvider = ({ children }) => {
       }
 
       // Clear selected gsheet so they can try again
+      devLog(
+        `useSWR isError from google - deleting gsheet details from localstorage.`,
+      );
       setSsid(null);
       setSheetFilename(null);
       setSheetURL(null);
@@ -140,6 +141,9 @@ export const UserLiftingDataProvider = ({ children }) => {
         demoToastInit = true; // Don't run another toast
 
         // Forget their chosen file, we have access but we cannot parse it
+        devLog(
+          `Could not parse data - deleting gsheet details from localstorage.`,
+        );
         setSsid(null);
         setSheetFilename(null);
         setSheetURL(null);

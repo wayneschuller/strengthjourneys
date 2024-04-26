@@ -195,6 +195,8 @@ function processConsistency(parsedData) {
   for (let i = parsedData.length - 1; i >= 0; i--) {
     const entryDate = parsedData[i].date; // Directly use the date string
 
+    // if (parsedData.isGoal) break; // Don't count entries that are just dreams
+
     // Loop backwards through the period start dates
     for (let j = periodStartDates.length - 1; j >= 0; j--) {
       if (entryDate < periodStartDates[j].startDate) {

@@ -562,8 +562,6 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
 
   const datasets = {}; // We build chart.js datasets with the lift type as the object key
 
-  const all1RMs = []; // Collect values for smoothing the low outliers
-
   parsedData.forEach((entry) => {
     const liftTypeKey = entry.liftType;
 
@@ -596,8 +594,6 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
     }
 
     const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
-    all1RMs.push(oneRepMax);
-
     const currentData = datasets[liftTypeKey].data.get(entry.date);
 
     if (!currentData || currentData.y < oneRepMax) {
@@ -609,19 +605,17 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
     }
   });
 
-  // Calculating lower bound for outlier removal
-  all1RMs.sort((a, b) => a - b);
-  devLog(all1RMs);
-  const q1 = all1RMs[Math.floor(all1RMs.length / 4)];
-  const iqr = all1RMs[Math.floor(all1RMs.length * 0.75)] - q1;
-  const lowerBound = q1 - 1.5 * iqr;
+  // Filter out low outliers per lift type
+  Object.keys(datasets).forEach((liftType) => {
+    const liftData = Array.from(datasets[liftType].data.values());
+    liftData.sort((a, b) => a.y - b.y);
+    const q1 = liftData[Math.floor(liftData.length / 4)].y;
+    const iqr = liftData[Math.floor(liftData.length * 0.75)].y - q1;
+    const lowerBound = Math.max(0, q1 - 1.5 * iqr); // Ensuring lowerBound is not negative
 
-  devLog(`lowerbound: ${lowerBound}`);
-
-  // Filtering datasets
-  Object.keys(datasets).forEach((key) => {
-    datasets[key].data = new Map(
-      Array.from(datasets[key].data.entries()).filter(
+    // Apply filtering based on the lower bound
+    datasets[liftType].data = new Map(
+      Array.from(datasets[liftType].data.entries()).filter(
         ([_, data]) => data.y >= lowerBound,
       ),
     );

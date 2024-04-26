@@ -295,11 +295,15 @@ export default function VisualizerChart() {
         let label = [];
 
         if (entry.reps === 1) {
-          label.push(`Lifted ${entry.reps}@${entry.weight}${entry.unitType}.`);
+          label.push(
+            `${entry.isGoal ? "Dreaming of" : "Lifted"} ${entry.reps}@${
+              entry.weight
+            }${entry.unitType}.`,
+          );
         } else {
           const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
           label.push(
-            `Potential 1@${oneRepMax}${entry.unitType} from ${entry.reps}@${entry.weight}${entry.unitType} (${e1rmFormula} formula)`,
+            `Potential 1@${oneRepMax}${entry.unitType} from lifting ${entry.reps}@${entry.weight}${entry.unitType} (${e1rmFormula} formula)`,
           );
         }
         if (entry.notes) {

@@ -23,11 +23,23 @@ import {
 } from "@/lib/processing-utils";
 
 export function SessionAnalysisCard() {
-  const { parsedData, topLiftsByTypeAndReps } = useUserLiftingData();
+  const { parsedData, topLiftsByTypeAndReps, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
   let prFound = false;
-  const mostRecentDate = parsedData?.[parsedData.length - 1]?.date;
+
+  // Find the most recent lifting session date (with non-goal data)
+  // const mostRecentDate = parsedData?.[parsedData.length - 1]?.date;
+  let mostRecentDate = "";
+
+  // Iterate backwards to find the most recent non-goal entry date
+  for (let i = parsedData?.length - 1; i >= 0; i--) {
+    if (!parsedData[i].isGoal) {
+      mostRecentDate = parsedData[i].date;
+      break; // Stop as soon as we find the most recent non-goal entry
+    }
+  }
+
   const recentWorkouts = parsedData?.filter(
     (workout) => workout.date === mostRecentDate,
   );

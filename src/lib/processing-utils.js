@@ -99,7 +99,6 @@ export function getReadableDateString(ISOdate) {
   return dateString;
 }
 
-// This is run once at init in the <Layout /> useEffect
 // Loop through the data once and collect top PRs for each lift, reps 1..10
 //
 // This info will likely be used by both Analyzer and Visualizer components - so put in context
@@ -119,6 +118,8 @@ export function processTopLiftsByTypeAndReps(parsedData) {
 
   parsedData.forEach((entry) => {
     const { liftType, reps } = entry;
+
+    if (entry.isGoal) return; // Dreams do not count
 
     // Ensure that the reps value is within the expected range
     if (reps < 1 || reps > 10) {
@@ -151,7 +152,6 @@ export function processTopLiftsByTypeAndReps(parsedData) {
   return topLiftsByTypeAndReps;
 }
 
-// This is run once at init in the <Layout /> useEffect
 // liftTypes is in our global context state
 // It is an array sorted by lift set frequency descending of these objects:
 // {
@@ -172,6 +172,8 @@ export function calculateLiftTypes(parsedData) {
   devLog(`calculateLiftTypes length: ${parsedData.length}`);
   const liftTypeStats = {};
   parsedData.forEach((lift) => {
+    if (lift.isGoal) return; // Don't include goals here
+
     const liftType = lift.liftType;
     if (!liftTypeStats[liftType]) {
       liftTypeStats[liftType] = {
@@ -221,6 +223,7 @@ export const markHigherWeightAsHistoricalPRs = (parsedData) => {
   // Directly modify the objects for performance
   parsedData.forEach((record) => {
     if (record.reps === 0) return; // Ignore fail records
+    if (record.isGoal) return; // Don't include goals here
 
     const key = `${record.liftType}-${record.reps}`;
 

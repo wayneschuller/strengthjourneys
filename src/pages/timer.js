@@ -10,9 +10,13 @@ import { GeistMono } from "geist/font/mono"; // Monospace font for stopwatch fix
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTimer } from "@/lib/timer-context";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { devLog } from "@/lib/processing-utils";
 
 export default function Timer() {
   const { time } = useTimer();
+
+  // devLog(`<Timer /> rendering...`);
 
   return (
     <div className="mx-4 md:mx-[5vw]">

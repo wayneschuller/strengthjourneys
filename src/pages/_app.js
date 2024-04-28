@@ -46,14 +46,14 @@ export default function App({ Component, pageProps, session }) {
         disableTransitionOnChange
       >
         <SessionProvider session={session}>
-          <TimerProvider>
-            <UserLiftingDataProvider>
+          <UserLiftingDataProvider>
+            <TimerProvider>
               <Layout>
                 <Component {...pageProps} />
                 <Toaster />
               </Layout>
-            </UserLiftingDataProvider>
-          </TimerProvider>
+            </TimerProvider>
+          </UserLiftingDataProvider>
         </SessionProvider>
       </ThemeProvider>
       <SpeedInsights />

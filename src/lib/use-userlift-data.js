@@ -65,6 +65,7 @@ export const UserLiftingDataProvider = ({ children }) => {
     {
       // SWR options
       // Don't need any because the defaults are awesome
+      // refreshInterval: 5000, // Polling interval in milliseconds (e.g., 5000 for every 5 seconds)
     },
   );
 

@@ -22,7 +22,7 @@ export const TimerProvider = ({ children }) => {
 
     if (newEntriesForToday > entriesForToday) {
       // devLog(`A new object was added today (${todayString}).`);
-      setIsRunning(true);
+      // setIsRunning(true);
       setTime(0);
     }
 

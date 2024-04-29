@@ -48,7 +48,7 @@ function LargeTimer() {
   } = useTimer();
 
   useEffect(() => {
-    // Start the timer on first mount
+    // Start the timer on first mount of this page
     setIsRunning(true);
   }, []); // The empty array ensures this effect runs only once on mount
 

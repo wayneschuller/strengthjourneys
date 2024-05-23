@@ -56,7 +56,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   const apiURL = `/api/read-gsheet?ssid=${ssid}`;
 
   // -----------------------------------------------------------------------------------------------
-  // Call gsheets API via our backend api route
+  // Call gsheets API via our backend api route using useSWR
   // (we used to do from client but got intermittent CORS problems)
   // -----------------------------------------------------------------------------------------------
   const { data, error, isLoading, isValidating } = useSWR(

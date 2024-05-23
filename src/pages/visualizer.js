@@ -46,8 +46,10 @@ export default function Visualizer() {
           Strength Visualizer
         </h1>
         <div
+          className="rounded-lg bg-white p-2 dark:bg-black"
           style={{
             position: "relative",
+            // zIndex: "20",
             // Try to maximise chart size across all screen sizes
             height: "82vh",
             width: "95vw",

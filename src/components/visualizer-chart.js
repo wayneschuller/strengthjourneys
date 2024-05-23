@@ -385,6 +385,8 @@ export default function VisualizerChart() {
     responsive: true,
     // resizeDelay: 20,
     scales: scalesOptions,
+    // backgroundColor: `#FFFFFF`,
+    // backgroundColor: `#000`,
     onClick: (event, item) => {
       // Used to detect a click on a graph point and open URL in the data.
       if (isMobile) return; // Clicking on mobile is for viewing the tooltip

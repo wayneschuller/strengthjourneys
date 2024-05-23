@@ -131,7 +131,6 @@ function parseTurnKeyData(data) {
 // We do assume that if date or lift type are blank we can infer from a previous row
 // We return parsedData that is always sorted date ascending
 // See @/lib/sample-parsed-data.js for data structure design
-
 function parseBespokeData(data) {
   const startTime = performance.now();
   const columnNames = data[0];
@@ -145,7 +144,17 @@ function parseBespokeData(data) {
 
     for (let j = 0; j < columnNames.length; j++) {
       const columnName = columnNames[j];
-      const rowData = row[j];
+      let rowData = row[j];
+
+      // If rowData is not defined or is an empty string, continue to the next iteration
+      if (!rowData) {
+        continue;
+      }
+
+      // Trim the rowData string if it is a string
+      if (typeof rowData === "string") {
+        rowData = rowData.trim();
+      }
 
       switch (columnName) {
         case "Date":

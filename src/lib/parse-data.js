@@ -146,11 +146,6 @@ function parseBespokeData(data) {
       const columnName = columnNames[j];
       let rowData = row[j];
 
-      // If rowData is not defined or is an empty string, continue to the next iteration
-      if (!rowData) {
-        continue;
-      }
-
       // Trim the rowData string if it is a string
       if (typeof rowData === "string") {
         rowData = rowData.trim();
@@ -158,12 +153,20 @@ function parseBespokeData(data) {
 
       switch (columnName) {
         case "Date":
-          obj["date"] = rowData !== "" ? rowData : previousDate;
-          previousDate = obj["date"];
+          if (rowData) {
+            obj["date"] = rowData;
+            previousDate = rowData;
+          } else {
+            obj["date"] = previousDate;
+          }
           break;
         case "Lift Type":
-          obj["liftType"] = rowData !== "" ? rowData : previousLiftType;
-          previousLiftType = obj["liftType"];
+          if (rowData) {
+            obj["liftType"] = rowData;
+            previousLiftType = rowData;
+          } else {
+            obj["liftType"] = previousLiftType;
+          }
           break;
         case "Reps":
           obj["reps"] = convertStringToInt(rowData);

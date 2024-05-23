@@ -211,7 +211,7 @@ function convertWeightAndUnitType(weightString) {
   }
 
   const value = parseFloat(weightString);
-  const unitType = weightString.includes("kg") ? "kg" : "lb";
+  const unitType = weightString.toLowerCase().includes("kg") ? "kg" : "lb";
 
   return { value, unitType };
 }

@@ -55,7 +55,7 @@ export function ConsistencyCard() {
                           progress={item.percentage}
                         />
                       </div>
-                      <div>{item.label}</div>
+                      <div className="text-nowrap">{item.label}</div>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>

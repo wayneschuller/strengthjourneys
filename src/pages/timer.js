@@ -74,7 +74,7 @@ function LargeTimer() {
   return (
     <div className="flex flex-col items-center">
       <Card
-        className="my-10 flex-1 bg-muted ring-4 hover:bg-muted/80 hover:ring-blue-900 md:my-5"
+        className="my-10 flex-1 bg-muted ring-4 hover:cursor-pointer hover:ring-blue-900 md:my-5"
         onClick={handleRestart}
       >
         <CardContent>

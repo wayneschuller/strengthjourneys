@@ -259,7 +259,7 @@ export default function E1RMCalculator() {
         />
       </Head>
 
-      <div className="rounded-xl border-2 border-background bg-muted/50 p-4 md:p-6">
+      <div className="rounded-xl border-2 border-background bg-muted/80 p-4 md:p-6">
         <div className="flex flex-row gap-1 md:gap-2">
           <h1 className="flex-1 scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl ">
             One Rep Max Calculator

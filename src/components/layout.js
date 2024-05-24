@@ -20,10 +20,15 @@ export function Layout({ children }) {
           squares={[
             [0, 3],
             [4, 5],
-            [6, 7],
             [10, 6],
+            [6, 7],
+            [22, 7],
             [1, 8],
-            [13, 3],
+            [16, 10],
+            [0, 11],
+            [3, 14],
+            [8, 15],
+            [14, 16],
           ]}
           className={cn(
             "pointer-events-none absolute inset-0 h-full w-full fill-gray-400/30 stroke-gray-800/30 dark:stroke-gray-200/30",

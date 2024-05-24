@@ -32,39 +32,39 @@ export default function Analyzer() {
     );
 
   return (
-    <div className="mx-4 md:mx-[5vw]">
+    <div className="mx-4 mb-4 md:mx-[5vw]">
       <Head>
         <title>PR Analyzer (Strength Journeys)</title>
         <meta name="description" content="Strength Journeys Lift PR Analyzer" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="mb-8">
-        <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
-          PR Analyzer
-        </h1>
-        <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-          <div className="flex h-full flex-col">
-            <SessionAnalysisCard />
-          </div>
-          <div className="flex h-full flex-col gap-6">
-            <ConsistencyCard />
-            <MonthsHighlightsCard />
-          </div>
-          <div className="grid h-full gap-6">
-            <div className="">
-              <InspirationCard />
-            </div>
-            <div className="flex h-full flex-col">
-              <LiftTypeFrequencyPieCard />
-            </div>
-          </div>
-          <div className="col-span-full">
-            <ActivityHeatmapsCard />
-          </div>
-          <Separator className="col-span-full" />
+
+      <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
+        PR Analyzer
+      </h1>
+
+      <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+        <div className="flex h-full flex-col">
+          <SessionAnalysisCard />
         </div>
-        <SelectedLiftsIndividualLiftCards />
+        <div className="flex h-full flex-col gap-6">
+          <ConsistencyCard />
+          <MonthsHighlightsCard />
+        </div>
+        <div className="grid h-full gap-6">
+          <div className="">
+            <InspirationCard />
+          </div>
+          <div className="flex h-full flex-col">
+            <LiftTypeFrequencyPieCard />
+          </div>
+        </div>
+        <div className="col-span-full">
+          <ActivityHeatmapsCard />
+        </div>
+        <Separator className="col-span-full" />
       </div>
+      <SelectedLiftsIndividualLiftCards />
     </div>
   );
 }

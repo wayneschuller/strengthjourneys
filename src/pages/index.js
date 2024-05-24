@@ -4,11 +4,8 @@
 
 import Link from "next/link";
 import Head from "next/head";
-import Script from "next/script";
 
 import { Calculator, Timer, LineChart, Trophy } from "lucide-react";
-
-import { cn } from "@/lib/utils";
 
 import {
   Card,
@@ -19,8 +16,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { GettingStartedCard } from "@/components/instructions-cards";
-
-import GridPattern from "@/components/magicui/grid-pattern";
 
 const featurePages = [
   {
@@ -74,6 +69,7 @@ export default function Home() {
       <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl ">
         Welcome to {title}
       </h1>
+
       <PageDescription />
 
       <div className="my-10 grid grid-cols-1  gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-4">
@@ -124,27 +120,3 @@ const FeatureCard = ({ href, title, description, IconComponent }) => (
     </Link>
   </Card>
 );
-
-const GridPatternDemo = () => {
-  return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-lg border bg-background p-20 md:shadow-xl">
-      <p className="z-10 whitespace-pre-wrap text-center text-5xl font-medium tracking-tighter text-black dark:text-white">
-        Grid Pattern
-      </p>
-      <GridPattern
-        squares={[
-          [4, 4],
-          [5, 1],
-          [8, 2],
-          [6, 6],
-          [10, 5],
-          [13, 3],
-        ]}
-        className={cn(
-          "[mask-image:radial-gradient(300px_circle_at_center,white,transparent)]",
-          "inset-x-0 inset-y-[-30%] h-[200%] skew-y-12",
-        )}
-      />
-    </div>
-  );
-};

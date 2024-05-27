@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/dark-mode-toggle";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
-import { Table2, Loader2 } from "lucide-react";
+import { Table2, Loader2, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
@@ -24,6 +24,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 
 // import Logo from "../../public/logo_transparent.png";
@@ -45,6 +46,7 @@ export function NavBar() {
         <MiniTimer />
         <UserSheetIcon />
         <AvatarDropdown />
+        <GitHubButton />
         <DarkModeToggle />
       </div>
     </div>
@@ -160,5 +162,30 @@ export function UserSheetIcon() {
         </Tooltip>
       </TooltipProvider>
     )
+  );
+}
+
+export function GitHubButton() {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              window.open(
+                decodeURIComponent(
+                  "https://github.com/wayneschuller/strengthjourneys",
+                ),
+              );
+            }}
+          >
+            <Github className="h-[1.2rem] w-[1.2rem]" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>View source code on Github</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

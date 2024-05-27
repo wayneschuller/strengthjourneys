@@ -44,11 +44,19 @@ export const TimerProvider = ({ children }) => {
 
   const handleStartStop = () => {
     setIsRunning((prevIsRunning) => !prevIsRunning);
+
+    if (typeof window !== "undefined") {
+      window.gtag("event", "timer_start_stop_toggle");
+    }
   };
 
   const handleReset = () => {
     setIsRunning(false);
     setTime(0);
+
+    if (typeof window !== "undefined") {
+      window.gtag("event", "timer_reset");
+    }
   };
 
   const handleRestart = () => {

@@ -552,7 +552,7 @@ function getFirstLastDatesMaxWeightFromChartData(chartData) {
   };
 }
 
-// This function uniquely processes the parsed Data for the Visualizer
+// This function uniquely processes the parsed data for the Visualizer
 // So it lives here in the <VisualizerChart /> component
 function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
   if (parsedData === null) {

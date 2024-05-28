@@ -102,58 +102,7 @@ export function LiftTypeFrequencyPieCard() {
         {/* I find the Skeleton here never appears long enough to provide value */}
         {/* {(!pieChartData || !liftTypes) && <Skeleton className="" />} */}
         {pieChartData && <Pie data={pieChartData} options={pieChartOptions} />}
-        {/* <CircularProgressWithLetter progress={97} letter="F" /> */}
       </CardContent>
     </Card>
-  );
-}
-
-function CircularProgressWithLetter({ progress, letter }) {
-  // Determine color based on progress value
-  let color;
-  if (progress < 40) {
-    color = "#ff2222"; // Red
-  } else if (progress >= 40 && progress <= 60) {
-    color = "#ffa500"; // Orange
-  } else {
-    color = "#00bb00"; // Green
-  }
-
-  const data = {
-    datasets: [
-      {
-        data: [progress, 100 - progress], // progress is your dynamic value
-        backgroundColor: [color, "#ebedef"],
-        borderWidth: 0,
-        cutout: "70%",
-      },
-    ],
-  };
-
-  const options = {
-    maintainAspectRatio: false,
-    responsive: true,
-    plugins: {
-      tooltip: {
-        enabled: false,
-      },
-    },
-  };
-
-  return (
-    <div style={{ position: "relative" }}>
-      <Doughnut data={data} options={options} />
-      <div
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          fontSize: "3em",
-        }}
-      >
-        {letter}
-      </div>
-    </div>
   );
 }

@@ -15,7 +15,7 @@ import { SelectedLiftsIndividualLiftCards } from "@/components/analyzer/lift-ach
 import { ConsistencyCard } from "@/components/analyzer/consistency-card";
 import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-pie-card";
 import { MonthsHighlightsCard } from "@/components/analyzer/months-highlights-card";
-import { ActivityHeatmapsCard } from "@/components/analyzer/heatmaps";
+import { ActivityHeatmapsCard } from "@/components/analyzer/heatmap-card";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
 
 export default function Analyzer() {

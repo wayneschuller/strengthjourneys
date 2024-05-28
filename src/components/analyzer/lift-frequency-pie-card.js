@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useContext, useState, useEffect } from "react";
 import { devLog } from "@/lib/processing-utils";
-import { Skeleton } from "./ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 
 import { Chart, ArcElement } from "chart.js";

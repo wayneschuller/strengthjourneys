@@ -34,13 +34,13 @@ import {
 
 import { devLog } from "@/lib/processing-utils";
 import { useWindowSize } from "usehooks-ts";
-import { Skeleton } from "./ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 import { useSession } from "next-auth/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Maximize2, Minimize2 } from "lucide-react";
-import { Button, buttonVariants } from "./ui/button";
-import { Separator } from "./ui/separator";
+import { Button, buttonVariants } from "../ui/button";
+import { Separator } from "../ui/separator";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { CompactPicker, SliderPicker, TwitterPicker } from "react-color";

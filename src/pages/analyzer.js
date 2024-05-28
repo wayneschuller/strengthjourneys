@@ -4,20 +4,19 @@ import Head from "next/head";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
-import { InspirationCard } from "@/components/inspiration-card";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
-import { MonthsHighlightsCard } from "@/components/months-highlights-card";
 import { useReadLocalStorage } from "usehooks-ts";
-import { ActivityHeatmapsCard } from "@/components/heatmaps";
-import { LiftTypeFrequencyPieCard } from "@/components/lift-frequency-pie-card";
-
-import { CardDescription } from "@/components/ui/card";
-
 import { Separator } from "@/components/ui/separator";
 import { devLog } from "@/lib/processing-utils";
-import { SessionAnalysisCard } from "@/components/session-analysis-card";
-import { SelectedLiftsIndividualLiftCards } from "@/components/lift-achievements-card";
-import { ConsistencyCard } from "@/components/consistency-card";
+
+// Here are the analyzer dashboard cards
+import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
+import { SelectedLiftsIndividualLiftCards } from "@/components/analyzer/lift-achievements-card";
+import { ConsistencyCard } from "@/components/analyzer/consistency-card";
+import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-pie-card";
+import { MonthsHighlightsCard } from "@/components/analyzer/months-highlights-card";
+import { ActivityHeatmapsCard } from "@/components/analyzer/heatmaps";
+import { InspirationCard } from "@/components/analyzer/inspiration-card";
 
 export default function Analyzer() {
   const { data: session, status: authStatus } = useSession();

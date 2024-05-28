@@ -4,7 +4,7 @@ import { useState, useEffect, useContext } from "react";
 import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
-import { Skeleton } from "./ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getLiftColor } from "@/lib/get-lift-color";
 
 import {

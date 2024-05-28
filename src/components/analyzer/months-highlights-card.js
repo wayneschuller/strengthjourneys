@@ -3,7 +3,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
-import { Skeleton } from "./ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { findLiftPositionInTopLifts } from "@/lib/processing-utils";
 import {
   Card,

@@ -27,7 +27,6 @@ import {
   Title,
   Tooltip,
   Legend,
-  Decimation,
 } from "chart.js";
 
 import "chartjs-adapter-date-fns";
@@ -44,7 +43,6 @@ ChartJS.register(
   Legend,
   ChartDataLabels,
   zoomPlugin,
-  Decimation,
 );
 
 // Break convention and export a default function for the next.js dynamic loader
@@ -69,6 +67,7 @@ export default function VisualizerChart() {
   let xScaleMin = null;
   let xScaleMax = null;
   let isMobile = false;
+  let zoomPanEnabled = true; // We will set to false if we don't have much data
 
   // Main useEffect - wait for parsedData process component specfic data
   useEffect(() => {
@@ -334,16 +333,10 @@ export default function VisualizerChart() {
   // Min zoom-in time range in is normally 60 days. Unless the data is less than 60 days...
   const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000; // Used for zoom config limits
   let minRange = sixtyDaysInMilliseconds;
-  let zoomPanEnabled = true;
   if (sixtyDaysInMilliseconds > lastDate - firstDate) {
     minRange = lastDate - firstDate;
     zoomPanEnabled = false;
   }
-
-  const decimationOptions = {
-    enabled: true, // I'm not sure this is making a difference for my 7 year data set
-    algorithm: "lttb",
-  };
 
   const zoomOptions = {
     zoom: {
@@ -401,7 +394,6 @@ export default function VisualizerChart() {
       datalabels: dataLabelsOptions,
       tooltip: tooltipOptions,
       zoom: zoomOptions,
-      decimation: decimationOptions,
     },
   };
 
@@ -616,13 +608,12 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
       const recentDate = new Date(recentLifts[liftTypeKey].date);
       const dayDiff = (currentDate - recentDate) / (1000 * 60 * 60 * 24);
 
-      // Check the time difference and performance criteria
+      // Check if we already have a much better lift in the data decimation window
       if (
         dayDiff <= decimationDaysWindow &&
         oneRepMax <= recentLifts[liftTypeKey].oneRepMax * 0.95
       ) {
-        // Current entry is close enough and not significantly worse, skip it
-        return;
+        return; // Skip this entry
       }
     }
 

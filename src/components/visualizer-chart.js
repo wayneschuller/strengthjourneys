@@ -59,7 +59,7 @@ export default function VisualizerChart() {
   const chartRef = useRef(null);
   const { width } = useWindowSize();
   const [chartData, setChartData] = useState(null);
-  const [e1rmFormula, setE1rmFormula] = useState("Brzycki");
+  const [e1rmFormula, setE1rmFormula] = useState("Brzycki"); // FIXME: use the hook for this?
   const { status: authStatus } = useSession();
 
   // Local computed/derived variables
@@ -560,9 +560,12 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
     return;
   }
 
+  const decimationDaysWindow = 7; // Only chart the best e1rm in the N day window
+
   const startTime = performance.now();
 
   const datasets = {}; // We build chart.js datasets with the lift type as the object key
+  const recentLifts = {}; // To track the most recent lift entry for each type
 
   parsedData.forEach((entry) => {
     const liftTypeKey = entry.liftType;
@@ -593,59 +596,48 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
         hoverRadius: 8,
         cubicInterpolationMode: "monotone",
       };
+
+      recentLifts[liftTypeKey] = null;
     }
 
     const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
-    const currentData = datasets[liftTypeKey].data.get(entry.date);
+    const currentDate = new Date(entry.date);
 
-    if (!currentData || currentData.y < oneRepMax) {
-      datasets[liftTypeKey].data.set(entry.date, {
-        x: entry.date,
-        y: oneRepMax,
-        ...entry,
-      });
-    }
-  });
-
-  // Second parse: filter data by maximum per week
-  Object.keys(datasets).forEach((liftTypeKey) => {
-    const dataMap = datasets[liftTypeKey].data;
-    const weeklyMaxes = new Map();
-
-    dataMap.forEach((value, key) => {
-      const week = getWeekFromDate(key); // Define this function to calculate the week number from the date
-      if (!weeklyMaxes.has(week) || weeklyMaxes.get(week).y < value.y) {
-        weeklyMaxes.set(week, value);
+    // Check if the current date already has a better E1RM
+    if (datasets[liftTypeKey].data.has(entry.date)) {
+      const currentData = datasets[liftTypeKey].data.get(entry.date);
+      if (currentData.y >= oneRepMax) {
+        return; // Skip update if the existing E1RM is greater or equal
       }
-    });
+    }
 
-    // Replace original data with filtered weekly maximums
-    // datasets[liftTypeKey].data = new Map( [...weeklyMaxes.values()].map((entry) => [entry.x, entry]),);
+    // Data decimation - skip lower lifts if there was something bigger the last N day window
+    if (recentLifts[liftTypeKey]) {
+      const recentDate = new Date(recentLifts[liftTypeKey].date);
+      const dayDiff = (currentDate - recentDate) / (1000 * 60 * 60 * 24);
 
-    // Replace original data with filtered weekly maximums, then sort by date
-    datasets[liftTypeKey].data = new Map(
-      [...weeklyMaxes.values()]
-        .sort((a, b) => new Date(a.x) - new Date(b.x)) // Sort by date
-        .map((entry) => [entry.x, entry]),
-    );
+      // Check the time difference and performance criteria
+      if (
+        dayDiff <= decimationDaysWindow &&
+        oneRepMax <= recentLifts[liftTypeKey].oneRepMax * 0.95
+      ) {
+        // Current entry is close enough and not significantly worse, skip it
+        return;
+      }
+    }
+
+    // Prepare the full entry data
+    const fullEntry = {
+      ...entry, // Spread the original entry to include all properties
+      x: entry.date, // Chart.js specific x-value
+      y: oneRepMax, // Chart.js specific y-value
+      oneRepMax, // Include oneRepMax explicitly for easy access
+    };
+
+    // Update the dataset and the tracking structure
+    datasets[liftTypeKey].data.set(entry.date, fullEntry);
+    recentLifts[liftTypeKey] = fullEntry; // Store the full entry for future comparisons
   });
-
-  // Filter out low outliers per lift type
-  // FIXME: Make this optional in UI
-  // Object.keys(datasets).forEach((liftType) => {
-  //   const liftData = Array.from(datasets[liftType].data.values());
-  //   liftData.sort((a, b) => a.y - b.y);
-  //   const q1 = liftData[Math.floor(liftData.length / 4)].y;
-  //   const iqr = liftData[Math.floor(liftData.length * 0.75)].y - q1;
-  //   const lowerBound = Math.max(0, q1 - 1.5 * iqr); // Ensuring lowerBound is not negative
-
-  //   // Apply filtering based on the lower bound
-  //   datasets[liftType].data = new Map(
-  //     Array.from(datasets[liftType].data.entries()).filter(
-  //       ([_, data]) => data.y >= lowerBound,
-  //     ),
-  //   );
-  // });
 
   // Generate goal datasets
   const goalDatasets = createGoalDatasets(

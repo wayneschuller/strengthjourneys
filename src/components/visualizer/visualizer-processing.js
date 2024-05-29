@@ -3,7 +3,6 @@ import { getLiftColor } from "@/lib/get-lift-color";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { devLog } from "@/lib/processing-utils";
 import { brightenHexColor } from "@/lib/get-lift-color";
-import { createGoalDatasets } from "./visualizer-chart";
 
 // This function uniquely processes the parsed data for the Visualizer
 // So it lives here in the <VisualizerChart /> component
@@ -118,4 +117,47 @@ export function processVisualizerData(
   );
 
   return sortedDatasets;
+}
+export function createGoalDatasets(
+  parsedData,
+  datasets,
+  e1rmFormula,
+  selectedLiftTypes,
+) {
+  const goalDatasets = {};
+
+  parsedData.forEach((entry) => {
+    if (!entry.isGoal) return; // Skip non-goal entries
+
+    const liftTypeKey = entry.liftType;
+
+    // Skip if the lift type is not in the selected list
+    if (selectedLiftTypes && !selectedLiftTypes.includes(liftTypeKey)) {
+      return;
+    }
+
+    if (!goalDatasets[liftTypeKey]) {
+      const color = getLiftColor(liftTypeKey);
+      const brightColor = brightenHexColor(color, 1.1);
+
+      goalDatasets[liftTypeKey] = {
+        label: `${liftTypeKey} Goal`,
+        data: new Map(),
+        borderColor: brightColor,
+        borderDash: [5, 5],
+        borderWidth: 1,
+        pointRadius: 5,
+        fill: false,
+      };
+    }
+
+    const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
+    goalDatasets[liftTypeKey].data.set(entry.date, {
+      x: entry.date,
+      y: oneRepMax,
+      ...entry,
+    });
+  });
+
+  return goalDatasets;
 }

@@ -2,7 +2,6 @@
 import { useState, useEffect, useContext, useRef } from "react";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useTheme } from "next-themes";
-import { getLiftColor } from "@/lib/get-lift-color";
 import { Line } from "react-chartjs-2";
 import { useSession } from "next-auth/react";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
@@ -10,16 +9,12 @@ import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWindowSize, useLocalStorage } from "usehooks-ts";
-import { brightenHexColor } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 
 import {
   defaults as chartDefaults,
   Chart as ChartJS,
-  Colors,
   TimeScale,
-  TimeSeriesScale,
-  CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
@@ -584,57 +579,4 @@ function generateLiftLabelsForDateAndType(
   }
 
   return labels; // Return the array of labels
-}
-
-export function createGoalDatasets(
-  parsedData,
-  datasets,
-  e1rmFormula,
-  selectedLiftTypes,
-) {
-  const goalDatasets = {};
-
-  parsedData.forEach((entry) => {
-    if (!entry.isGoal) return; // Skip non-goal entries
-
-    const liftTypeKey = entry.liftType;
-
-    // Skip if the lift type is not in the selected list
-    if (selectedLiftTypes && !selectedLiftTypes.includes(liftTypeKey)) {
-      return;
-    }
-
-    if (!goalDatasets[liftTypeKey]) {
-      const color = getLiftColor(liftTypeKey);
-      const brightColor = brightenHexColor(color, 1.1);
-
-      goalDatasets[liftTypeKey] = {
-        label: `${liftTypeKey} Goal`,
-        data: new Map(),
-        borderColor: brightColor,
-        borderDash: [5, 5],
-        borderWidth: 1,
-        pointRadius: 5,
-        fill: false,
-      };
-    }
-
-    const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
-    goalDatasets[liftTypeKey].data.set(entry.date, {
-      x: entry.date,
-      y: oneRepMax,
-      ...entry,
-    });
-  });
-
-  return goalDatasets;
-}
-
-function getWeekFromDate(dateString) {
-  const date = new Date(dateString);
-  const startOfYear = new Date(date.getFullYear(), 0, 1);
-  const days =
-    Math.floor((date - startOfYear) / (24 * 60 * 60 * 1000)) +
-    startOfYear.getDay();
-  return Math.ceil(days / 7);
 }

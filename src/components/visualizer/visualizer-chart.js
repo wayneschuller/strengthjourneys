@@ -10,6 +10,7 @@ import { ZoomIn, ZoomOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWindowSize, useLocalStorage } from "usehooks-ts";
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
+import { devLog } from "@/lib/processing-utils";
 
 import {
   defaults as chartDefaults,
@@ -26,7 +27,6 @@ import {
 import "chartjs-adapter-date-fns";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import zoomPlugin from "chartjs-plugin-zoom";
-import { endOfDay } from "date-fns";
 import { processVisualizerData } from "./visualizer-processing";
 
 ChartJS.register(

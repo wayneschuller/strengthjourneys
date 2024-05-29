@@ -15,7 +15,7 @@ export function parseData(data) {
     parsedData = parseBespokeData(data); // Default to Strength Journeys bespoke format
   }
 
-  devLog(parsedData);
+  // devLog(parsedData);
 
   return parsedData;
 }

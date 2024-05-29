@@ -29,6 +29,7 @@ import zoomPlugin from "chartjs-plugin-zoom";
 import { processVisualizerData } from "./visualizer-processing";
 import { getFirstLastDatesMaxWeightFromChartData } from "./visualizer-processing";
 import {
+  getDataLabelsOptions,
   getTooltipOptions,
   getZoomOptions,
 } from "./visualizer-chart-config-options";
@@ -246,30 +247,8 @@ export default function VisualizerChart() {
     },
   };
 
-  const dataLabelsOptions = {
-    display: (context) => {
-      const entry = context.dataset.data[context.dataIndex]; // Our parsedData tuple
-      if (entry.isHistoricalPR) return "true";
-      else return "auto";
-    },
-    formatter: (context) => {
-      return `${context.y}${context.unitType}`;
-    },
-    font: (context) => {
-      const entry = context.dataset.data[context.dataIndex]; // Our parsedData tuple
-      // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
-      const liftSingle = entry.reps === 1;
-      // FIXME: do something special for entry.isHistoricalPR here
-      if (liftSingle) return { weight: "bold", size: 13 };
-      else return { style: "italic", size: 12 };
-    },
-    align: "end",
-    anchor: "end",
-    offset: "10",
-  };
-
+  const dataLabelsOptions = getDataLabelsOptions();
   const zoomOptions = getZoomOptions(firstDate, lastDate, xScaleMax);
-
   const tooltipOptions = getTooltipOptions(
     topLiftsByTypeAndReps,
     isMobile,

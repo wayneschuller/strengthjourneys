@@ -1,5 +1,29 @@
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 
+export const getDataLabelsOptions = () => {
+  return {
+    display: (context) => {
+      const entry = context.dataset.data[context.dataIndex]; // Our parsedData tuple
+      if (entry.isHistoricalPR) return "true";
+      else return "auto";
+    },
+    formatter: (context) => {
+      return `${context.y}${context.unitType}`;
+    },
+    font: (context) => {
+      const entry = context.dataset.data[context.dataIndex]; // Our parsedData tuple
+      // Mark heavy singles in bold data labels, and the e1rm estimate data labels as italic
+      const liftSingle = entry.reps === 1;
+      // FIXME: do something special for entry.isHistoricalPR here
+      if (liftSingle) return { weight: "bold", size: 13 };
+      else return { style: "italic", size: 12 };
+    },
+    align: "end",
+    anchor: "end",
+    offset: "10",
+  };
+};
+
 export const getZoomOptions = (firstDate, lastDate, xScaleMax) => {
   // Zoom and pan are  enabled by default.
   // However we will turn it off if the data is 60 days or less

@@ -29,6 +29,7 @@ import zoomPlugin from "chartjs-plugin-zoom";
 import { processVisualizerData } from "./visualizer-processing";
 import { getFirstLastDatesMaxWeightFromChartData } from "./visualizer-processing";
 import {
+  getLegendOptions,
   getDataLabelsOptions,
   getTooltipOptions,
   getZoomOptions,
@@ -223,30 +224,7 @@ export default function VisualizerChart() {
     display: false,
   };
 
-  const legendOptions = {
-    display: true,
-    position: "top",
-    labels: {
-      color: theme === "dark" ? "white" : "black",
-      // color: primaryForegroundColor,
-      font: {
-        size: 16,
-        // family: "'Inter', 'Sans'",
-        // family: "'Arial'",
-      },
-    },
-    title: {
-      display: authStatus === "unauthenticated", // Show explanatory visualizer title in demo mode only
-      color: theme === "dark" ? "white" : "black",
-      text: isMobile
-        ? "Demo mode: e1rm sample data"
-        : "Visualizer Demo mode: One rep max estimations of different rep schemes per lift over time",
-      font: {
-        size: isMobile ? 19 : 22,
-      },
-    },
-  };
-
+  const legendOptions = getLegendOptions(theme, isMobile, authStatus);
   const dataLabelsOptions = getDataLabelsOptions();
   const zoomOptions = getZoomOptions(firstDate, lastDate, xScaleMax);
   const tooltipOptions = getTooltipOptions(

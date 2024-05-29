@@ -1,5 +1,31 @@
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 
+export const getLegendOptions = (theme, isMobile, authStatus) => {
+  return {
+    display: true,
+    position: "top",
+    labels: {
+      color: theme === "dark" ? "white" : "black",
+      // color: primaryForegroundColor,
+      font: {
+        size: 16,
+        // family: "'Inter', 'Sans'",
+        // family: "'Arial'",
+      },
+    },
+    title: {
+      display: authStatus === "unauthenticated", // Show explanatory visualizer title in demo mode only
+      color: theme === "dark" ? "white" : "black",
+      text: isMobile
+        ? "Demo mode: e1rm sample data"
+        : "Visualizer Demo mode: One rep max estimations of different rep schemes per lift over time",
+      font: {
+        size: isMobile ? 19 : 22,
+      },
+    },
+  };
+};
+
 export const getDataLabelsOptions = () => {
   return {
     display: (context) => {

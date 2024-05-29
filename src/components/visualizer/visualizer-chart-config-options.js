@@ -1,5 +1,61 @@
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 
+export const getScalesOptions = (
+  theme,
+  xScaleMax,
+  xScaleMin,
+  gridColor,
+  roundedMaxWeightValue,
+) => {
+  return {
+    x: {
+      type: "time",
+      // clip: false,
+      // offset: false,
+      // bounds: "data",
+      min: xScaleMin,
+      max: xScaleMax,
+      // These don't work the way I want
+      // suggestedMin: xScaleMin,
+      // suggestedMax: xScaleMax,
+      time: {
+        minUnit: "day",
+      },
+      ticks: {
+        // font: { family: "Catamaran", size: 15 },
+        // font: { size: 15 },
+        // color: mutedForegroundColor,
+        display: true,
+        // color: "red",
+        // maxRotation: 0, // This causes layout shift on mobile but now I'm used to it.
+      },
+      grid: {
+        // color: mutedColor,
+        color: gridColor,
+        display: true,
+        tickColor: theme === "dark" ? "white" : "black",
+      },
+    },
+    y: {
+      suggestedMin: 0,
+      suggestedMax: roundedMaxWeightValue,
+      ticks: {
+        display: false,
+
+        // font: { family: "Catamaran", size: 15 },
+        // color: mutedForegroundColor,
+        callback: (value) => {
+          return `${value}`; // FIXME: insert unitType from data
+        },
+      },
+      grid: {
+        display: false,
+        color: gridColor,
+      },
+    },
+  };
+};
+
 export const getLegendOptions = (theme, isMobile, authStatus) => {
   return {
     display: true,

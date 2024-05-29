@@ -563,7 +563,6 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
   const startTime = performance.now();
 
   const datasets = {}; // We build chart.js datasets with the lift type as the object key
-  const dateThreshold = 6; // days to look back
 
   parsedData.forEach((entry) => {
     const liftTypeKey = entry.liftType;
@@ -599,29 +598,36 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
     const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
     const currentData = datasets[liftTypeKey].data.get(entry.date);
 
-    let allowEntry = true;
-
-    // Get the most recent data for this lift type
-    const entries = Array.from(datasets[liftTypeKey].data.values());
-    if (entries.length > 0) {
-      const mostRecentEntry = entries[entries.length - 1];
-      const dateDiff =
-        (new Date(entry.date) - new Date(mostRecentEntry.x)) /
-        (1000 * 60 * 60 * 24);
-      // Check if within 6 days and more than 5% decrease
-      if (dateDiff <= 7 && oneRepMax < mostRecentEntry.y * 0.95) {
-        allowEntry = false;
-        // devLog(`excluding some...`);
-      }
-    }
-
-    if (allowEntry && (!currentData || currentData.y < oneRepMax)) {
+    if (!currentData || currentData.y < oneRepMax) {
       datasets[liftTypeKey].data.set(entry.date, {
         x: entry.date,
         y: oneRepMax,
         ...entry,
       });
     }
+  });
+
+  // Second parse: filter data by maximum per week
+  Object.keys(datasets).forEach((liftTypeKey) => {
+    const dataMap = datasets[liftTypeKey].data;
+    const weeklyMaxes = new Map();
+
+    dataMap.forEach((value, key) => {
+      const week = getWeekFromDate(key); // Define this function to calculate the week number from the date
+      if (!weeklyMaxes.has(week) || weeklyMaxes.get(week).y < value.y) {
+        weeklyMaxes.set(week, value);
+      }
+    });
+
+    // Replace original data with filtered weekly maximums
+    // datasets[liftTypeKey].data = new Map( [...weeklyMaxes.values()].map((entry) => [entry.x, entry]),);
+
+    // Replace original data with filtered weekly maximums, then sort by date
+    datasets[liftTypeKey].data = new Map(
+      [...weeklyMaxes.values()]
+        .sort((a, b) => new Date(a.x) - new Date(b.x)) // Sort by date
+        .map((entry) => [entry.x, entry]),
+    );
   });
 
   // Filter out low outliers per lift type
@@ -750,4 +756,13 @@ function createGoalDatasets(
   });
 
   return goalDatasets;
+}
+
+function getWeekFromDate(dateString) {
+  const date = new Date(dateString);
+  const startOfYear = new Date(date.getFullYear(), 0, 1);
+  const days =
+    Math.floor((date - startOfYear) / (24 * 60 * 60 * 1000)) +
+    startOfYear.getDay();
+  return Math.ceil(days / 7);
 }

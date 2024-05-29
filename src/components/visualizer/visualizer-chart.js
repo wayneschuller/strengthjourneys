@@ -4,11 +4,8 @@ import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useTheme } from "next-themes";
 import { Line } from "react-chartjs-2";
 import { useSession } from "next-auth/react";
-import { Button } from "@/components/ui/button";
-import { ZoomIn, ZoomOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWindowSize, useLocalStorage } from "usehooks-ts";
-import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 import { devLog } from "@/lib/processing-utils";
 
 import {
@@ -35,6 +32,7 @@ import {
   getZoomOptions,
   getScalesOptions,
 } from "./visualizer-chart-config-options";
+import { VisualizerChartControls } from "./visualizer-chart-controls";
 
 ChartJS.register(
   TimeScale,
@@ -193,7 +191,7 @@ export default function VisualizerChart() {
     e1rmFormula,
   );
 
-  const options = {
+  const chartOptions = {
     maintainAspectRatio: false,
     responsive: true,
     // resizeDelay: 20,
@@ -219,68 +217,18 @@ export default function VisualizerChart() {
 
   return (
     <>
-      <Line ref={chartRef} options={options} data={{ datasets: chartData }} />
+      <Line
+        ref={chartRef}
+        options={chartOptions}
+        data={{ datasets: chartData }}
+      />
       {zoomPanEnabled && (
-        <div className="hidden flex-row gap-4 md:flex">
-          <Button
-            variant="outline"
-            onClick={(e) => {
-              const chart = chartRef.current;
-              if (chart) {
-                chart.zoomScale(
-                  "x",
-                  {
-                    min: firstDate,
-                    // max: lastDate,
-                    max: xScaleMax, // xScaleMax is lastDate with padding
-                  },
-                  "default",
-                );
-              }
-            }}
-          >
-            Show All Time
-          </Button>
-          <Button
-            variant="outline"
-            onClick={(e) => {
-              const chart = chartRef.current;
-              if (chart) {
-                chart.zoomScale(
-                  "x",
-                  {
-                    min: xScaleMin,
-                    max: xScaleMax,
-                  },
-                  "default",
-                );
-              }
-            }}
-          >
-            Show Recent
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={(e) => {
-              const chart = chartRef.current;
-              if (chart) chart.zoom(0.5, "default");
-            }}
-          >
-            <ZoomOut />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={(e) => {
-              const chart = chartRef.current;
-              if (chart) chart.zoom(1.5, "default");
-            }}
-          >
-            <ZoomIn />
-          </Button>
-          <SidePanelSelectLiftsButton />
-        </div>
+        <VisualizerChartControls
+          chartRef={chartRef}
+          xScaleMin={xScaleMin}
+          xScaleMax={xScaleMax}
+          firstDate={firstDate}
+        />
       )}
     </>
   );

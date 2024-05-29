@@ -164,3 +164,40 @@ export function createGoalDatasets(
 
   return goalDatasets;
 }
+export function getFirstLastDatesMaxWeightFromChartData(chartData) {
+  if (!Array.isArray(chartData) || chartData.length === 0) {
+    console.log(`Error: Invalid or empty chartData.`);
+    console.log(chartData);
+    return null;
+  }
+
+  let maxWeightValue = -Infinity; // Initialize with a very small value
+
+  // FIXME: we can get the first/last date from the LiftTypes global context now
+  // So this can be optimised I'm sure
+  const allDates = chartData.reduce((dates, dataset) => {
+    dataset.data.forEach((point) => {
+      const date = new Date(point.x);
+      dates.push(date);
+
+      // Update maxWeightValue if the current y value is higher
+      if (point.y > maxWeightValue) {
+        maxWeightValue = point.y;
+      }
+    });
+    return dates;
+  }, []);
+
+  const firstDate = new Date(Math.min(...allDates)).getTime(); // Convert to Unix timestamp
+  const lastDate = new Date(Math.max(...allDates)).getTime(); // Convert to Unix timestamp
+
+  // Round maxWeightValue up to the next multiple of 50
+  const roundedMaxWeightValue = Math.ceil(maxWeightValue / 50) * 50;
+
+  // return { firstDate, lastDate };
+  return {
+    firstDate: firstDate,
+    lastDate: lastDate,
+    roundedMaxWeightValue,
+  };
+}

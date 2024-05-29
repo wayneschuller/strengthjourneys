@@ -28,6 +28,7 @@ import "chartjs-adapter-date-fns";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import zoomPlugin from "chartjs-plugin-zoom";
 import { processVisualizerData } from "./visualizer-processing";
+import { getFirstLastDatesMaxWeightFromChartData } from "./visualizer-processing";
 
 ChartJS.register(
   TimeScale,
@@ -309,7 +310,7 @@ export default function VisualizerChart() {
         if (!context) return;
         // Show any top 20 lifts they did today topLiftsByTypeAndReps
         const entry = context.raw;
-        let label = generateLiftLabelsForDateAndType(
+        let label = generateTopLiftLabelsForDateAndType(
           entry.date,
           entry.liftType,
           topLiftsByTypeAndReps,
@@ -501,44 +502,7 @@ function fadeHslColor(originalHsl, fadeAmount, isDarkMode) {
   return fadedHsl;
 }
 
-function getFirstLastDatesMaxWeightFromChartData(chartData) {
-  if (!Array.isArray(chartData) || chartData.length === 0) {
-    console.log(`Error: Invalid or empty chartData.`);
-    console.log(chartData);
-    return null;
-  }
-
-  let maxWeightValue = -Infinity; // Initialize with a very small value
-
-  // FIXME: we can get the first/last date from the LiftTypes global context now
-  // So this can be optimised I'm sure
-  const allDates = chartData.reduce((dates, dataset) => {
-    dataset.data.forEach((point) => {
-      const date = new Date(point.x);
-      dates.push(date);
-
-      // Update maxWeightValue if the current y value is higher
-      if (point.y > maxWeightValue) {
-        maxWeightValue = point.y;
-      }
-    });
-    return dates;
-  }, []);
-
-  const firstDate = new Date(Math.min(...allDates)).getTime(); // Convert to Unix timestamp
-  const lastDate = new Date(Math.max(...allDates)).getTime(); // Convert to Unix timestamp
-
-  // Round maxWeightValue up to the next multiple of 50
-  const roundedMaxWeightValue = Math.ceil(maxWeightValue / 50) * 50;
-
-  // return { firstDate, lastDate };
-  return {
-    firstDate: firstDate,
-    lastDate: lastDate,
-    roundedMaxWeightValue,
-  };
-}
-
+// Helper function to split lines for tooltip labels
 function splitIntoChunks(text, maxChunkSize) {
   let chunks = [];
   let startIndex = 0;
@@ -553,7 +517,8 @@ function splitIntoChunks(text, maxChunkSize) {
   return chunks;
 }
 
-function generateLiftLabelsForDateAndType(
+// Helper function to list any top lifts in the tooltip label
+function generateTopLiftLabelsForDateAndType(
   date,
   liftType,
   topLiftsByTypeAndReps,

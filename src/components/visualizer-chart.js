@@ -563,6 +563,7 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
   const startTime = performance.now();
 
   const datasets = {}; // We build chart.js datasets with the lift type as the object key
+  const dateThreshold = 6; // days to look back
 
   parsedData.forEach((entry) => {
     const liftTypeKey = entry.liftType;
@@ -598,7 +599,23 @@ function processVisualizerData(parsedData, selectedLiftTypes, e1rmFormula) {
     const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
     const currentData = datasets[liftTypeKey].data.get(entry.date);
 
-    if (!currentData || currentData.y < oneRepMax) {
+    let allowEntry = true;
+
+    // Get the most recent data for this lift type
+    const entries = Array.from(datasets[liftTypeKey].data.values());
+    if (entries.length > 0) {
+      const mostRecentEntry = entries[entries.length - 1];
+      const dateDiff =
+        (new Date(entry.date) - new Date(mostRecentEntry.x)) /
+        (1000 * 60 * 60 * 24);
+      // Check if within 6 days and more than 5% decrease
+      if (dateDiff <= 7 && oneRepMax < mostRecentEntry.y * 0.95) {
+        allowEntry = false;
+        // devLog(`excluding some...`);
+      }
+    }
+
+    if (allowEntry && (!currentData || currentData.y < oneRepMax)) {
       datasets[liftTypeKey].data.set(entry.date, {
         x: entry.date,
         y: oneRepMax,

@@ -5,7 +5,6 @@ import { devLog } from "@/lib/processing-utils";
 import { brightenHexColor } from "@/lib/get-lift-color";
 
 // This function uniquely processes the parsed data for the Visualizer
-// So it lives here in the <VisualizerChart /> component
 export function processVisualizerData(
   parsedData,
   selectedLiftTypes,
@@ -118,6 +117,10 @@ export function processVisualizerData(
 
   return sortedDatasets;
 }
+
+// Create dashed lines for goal points set by the google sheet isGoal column
+// We do a second pass of the data here. It could be included in the main parse loop
+// but it is fairly quick.
 export function createGoalDatasets(
   parsedData,
   datasets,
@@ -144,7 +147,7 @@ export function createGoalDatasets(
         label: `${liftTypeKey} Goal`,
         data: new Map(),
         borderColor: brightColor,
-        borderDash: [5, 5],
+        borderDash: [5, 5], // Nice dashed line
         borderWidth: 1,
         pointRadius: 5,
         fill: false,

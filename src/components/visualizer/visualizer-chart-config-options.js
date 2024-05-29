@@ -1,5 +1,52 @@
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 
+export const getZoomOptions = (firstDate, lastDate, xScaleMax) => {
+  // Zoom and pan are  enabled by default.
+  // However we will turn it off if the data is 60 days or less
+  let zoomPanEnabled = true;
+  const sixtyDaysInMilliseconds = 60 * 24 * 60 * 60 * 1000; // Used for zoom config limits
+  let minRange = sixtyDaysInMilliseconds;
+  if (sixtyDaysInMilliseconds > lastDate - firstDate) {
+    minRange = lastDate - firstDate;
+    zoomPanEnabled = false;
+  }
+
+  return {
+    zoom: {
+      wheel: { enabled: zoomPanEnabled },
+      mode: "x",
+      pinch: { enabled: zoomPanEnabled },
+    },
+    pan: {
+      enabled: zoomPanEnabled,
+      mode: "x",
+      // onPanComplete: (chart) => {
+      //   return; // FIXME: couldn't get this to work well.
+
+      //   if (!chart?.chart?.scales?.x?.ticks) return;
+      //   let ticks = chart.chart.scales.x.ticks;
+      //   devLog(ticks);
+      //   let xScaleMin = ticks[0].value;
+      //   let xScaleMax = ticks[ticks.length - 1].value;
+
+      //   if (xScaleMin && xScaleMax) {
+      //     devLog(`onPanComplete: xMin ${xScaleMin}, xMax ${xScaleMax}`);
+      //     setXScaleMin(xScaleMin);
+      //     setXScaleMax(xScaleMax);
+      //   }
+      // },
+    },
+    limits: {
+      x: {
+        min: firstDate,
+        // max: lastDate,
+        max: xScaleMax, // xScaleMax is lastDate with padding. FIXME: Could we just compute it here locally?
+        minRange: minRange,
+      },
+    },
+  };
+};
+
 export const getTooltipOptions = (
   topLiftsByTypeAndReps,
   isMobile,

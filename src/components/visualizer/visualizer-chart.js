@@ -59,7 +59,7 @@ export default function VisualizerChart() {
   const [chartData, setChartData] = useState(null);
   const [e1rmFormula, setE1rmFormula] = useState("Brzycki"); // FIXME: use the hook for this?
   const { status: authStatus } = useSession();
-  const xZoomPan = useReadLocalStorage("SJ_chartZoomPanRange");
+  const [xZoomPan, setXZoomPan] = useState(null);
 
   devLog(xZoomPan);
 
@@ -184,10 +184,17 @@ export default function VisualizerChart() {
     xScaleMin,
     gridColor,
     roundedMaxWeightValue,
+    xZoomPan,
+    setXZoomPan,
   );
   const legendOptions = getLegendOptions(theme, isMobile, authStatus);
   const dataLabelsOptions = getDataLabelsOptions();
-  const zoomOptions = getZoomOptions(firstDate, lastDate, xScaleMax);
+  const zoomOptions = getZoomOptions(
+    firstDate,
+    lastDate,
+    xScaleMax,
+    setXZoomPan,
+  );
   const tooltipOptions = getTooltipOptions(
     topLiftsByTypeAndReps,
     isMobile,

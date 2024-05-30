@@ -7,6 +7,7 @@ export const getScalesOptions = (
   xScaleMin,
   gridColor,
   roundedMaxWeightValue,
+  xZoomPan,
 ) => {
   return {
     x: {
@@ -14,8 +15,10 @@ export const getScalesOptions = (
       // clip: false,
       // offset: false,
       // bounds: "data",
-      min: xScaleMin,
-      max: xScaleMax,
+      // min: xScaleMin,
+      // max: xScaleMax,
+      min: xZoomPan?.xMin,
+      max: xZoomPan?.xMax,
       // These don't work the way I want
       // suggestedMin: xScaleMin,
       // suggestedMax: xScaleMax,
@@ -107,7 +110,7 @@ export const getDataLabelsOptions = () => {
   };
 };
 
-export const getZoomOptions = (firstDate, lastDate, xScaleMax) => {
+export const getZoomOptions = (firstDate, lastDate, xScaleMax, setXZoomPan) => {
   // Zoom and pan are  enabled by default.
   // However we will turn it off if the data is 60 days or less
   let zoomPanEnabled = true;
@@ -135,7 +138,8 @@ export const getZoomOptions = (firstDate, lastDate, xScaleMax) => {
           xMax: x.max,
         };
         // devLog(settings);
-        localStorage.setItem("SJ_chartZoomPanRange", JSON.stringify(settings));
+        setXZoomPan(settings);
+        // localStorage.setItem("SJ_chartZoomPanRange", JSON.stringify(settings));
       },
     },
     pan: {
@@ -153,7 +157,8 @@ export const getZoomOptions = (firstDate, lastDate, xScaleMax) => {
           xMax: x.max,
         };
         // devLog(settings);
-        localStorage.setItem("SJ_chartZoomPanRange", JSON.stringify(settings));
+        setXZoomPan(settings);
+        // localStorage.setItem("SJ_chartZoomPanRange", JSON.stringify(settings));
       },
       // onPanComplete: (chart) => {
       //   return; // FIXME: couldn't get this to work well.

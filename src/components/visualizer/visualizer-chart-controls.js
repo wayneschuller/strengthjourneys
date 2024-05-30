@@ -7,6 +7,8 @@ export function VisualizerChartControls({
   xScaleMin,
   xScaleMax,
   firstDate,
+  xZoomPan,
+  setXZoomPan,
 }) {
   return (
     <div className="hidden flex-row gap-4 md:flex">
@@ -15,6 +17,8 @@ export function VisualizerChartControls({
         onClick={(e) => {
           const chart = chartRef.current;
           if (chart) {
+            if (setXZoomPan) setXZoomPan({ xMin: firstDate, xMax: xScaleMax });
+
             chart.zoomScale(
               "x",
               {

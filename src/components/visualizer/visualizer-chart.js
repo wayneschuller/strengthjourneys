@@ -238,6 +238,8 @@ export default function VisualizerChart() {
           xScaleMin={xScaleMin}
           xScaleMax={xScaleMax}
           firstDate={firstDate}
+          xZoomPan={xZoomPan}
+          setXZoomPan={setXZoomPan}
         />
       )}
     </>

@@ -149,7 +149,7 @@ export default function VisualizerChart() {
   let defaultRangeInMonths = 6; // Desktop default
   let xPaddingInDays = 15; // Desktop default
   if (isMobile) {
-    defaultRangeInMonths = 2; // Mobile default
+    defaultRangeInMonths = 1; // Mobile default
     xPaddingInDays = 3; // Mobile default
   }
 

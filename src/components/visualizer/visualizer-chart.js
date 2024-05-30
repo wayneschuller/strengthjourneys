@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 import { Line } from "react-chartjs-2";
 import { useSession } from "next-auth/react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useWindowSize, useLocalStorage } from "usehooks-ts";
+import { useWindowSize, useReadLocalStorage } from "usehooks-ts";
 import { devLog } from "@/lib/processing-utils";
 
 import {
@@ -59,6 +59,9 @@ export default function VisualizerChart() {
   const [chartData, setChartData] = useState(null);
   const [e1rmFormula, setE1rmFormula] = useState("Brzycki"); // FIXME: use the hook for this?
   const { status: authStatus } = useSession();
+  const xZoomPan = useReadLocalStorage("SJ_chartZoomPanRange");
+
+  devLog(xZoomPan);
 
   // Local computed/derived variables
   let firstDate = null;

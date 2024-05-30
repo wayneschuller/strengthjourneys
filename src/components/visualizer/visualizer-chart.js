@@ -64,12 +64,7 @@ export default function VisualizerChart() {
   devLog(xZoomPan);
 
   // Local computed/derived variables
-  let firstDate = null;
-  let lastDate = null;
   let roundedMaxWeightValue = null;
-  let xScaleMin = null;
-  let xScaleMax = null;
-  let isMobile = false;
   let zoomPanEnabled = true; // We will set to false if we don't have much data
 
   // Main useEffect - wait for parsedData process component specfic data
@@ -136,43 +131,62 @@ export default function VisualizerChart() {
 
   // Set sensible default range for desktop and mobile
   // If user has less data than range, then their data is the range (with less padding)
+  // 20240530 FIXME: this refactored code changes vertical height on zoom, not right
+  const { firstDate, lastDate } =
+    getFirstLastDatesMaxWeightFromChartData(chartData);
+  const isMobile = width <= 768;
 
-  // Get sensible padded boundaries from the user data
-  // firstDate, lastDate and scaleMin will all be Unix timestamps
-  ({ firstDate, lastDate, roundedMaxWeightValue } =
-    getFirstLastDatesMaxWeightFromChartData(chartData));
-
-  if (width <= 768) {
-    isMobile = true;
-  }
-
-  let defaultRangeInMonths = 6; // Desktop default
-  let xPaddingInDays = 15; // Desktop default
-  if (isMobile) {
-    defaultRangeInMonths = 1; // Mobile default
-    xPaddingInDays = 3; // Mobile default
-  }
+  const defaultRangeInMonths = isMobile ? 1 : 6;
+  const xPaddingInDays = isMobile ? 3 : 15;
 
   const defaultRangeMilliseconds =
-    1000 * 60 * 60 * 24 * 30 * defaultRangeInMonths;
+    defaultRangeInMonths * 30 * 24 * 60 * 60 * 1000;
   let xPaddingInMilliseconds = xPaddingInDays * 24 * 60 * 60 * 1000;
 
   if (lastDate - firstDate < defaultRangeMilliseconds) {
-    xPaddingInDays = 1; // Small padding with small data
-    xPaddingInMilliseconds = xPaddingInDays * 24 * 60 * 60 * 1000;
-
-    // Set xScaleMin to be just before the first entry on the chart
-    // xScaleMin = firstDate - xPaddingInMilliseconds;
-    xScaleMin = firstDate - xPaddingInMilliseconds;
-  } else {
-    // Set xScaleMin to just before the preferred time range on the chart
-    // xScaleMin = lastDate - defaultRangeMilliseconds - xPaddingInMilliseconds;
-    xScaleMin = lastDate - defaultRangeMilliseconds - xPaddingInMilliseconds;
+    xPaddingInMilliseconds = 24 * 60 * 60 * 1000; // Smaller padding for smaller data range
   }
 
-  // set xScaleMax to preferred padding at right end of chart
+  const xScaleMin =
+    lastDate - defaultRangeMilliseconds - xPaddingInMilliseconds;
+  const xScaleMax = lastDate + xPaddingInMilliseconds;
+
+  // // Get sensible padded boundaries from the user data
+  // // firstDate, lastDate and scaleMin will all be Unix timestamps
+  // ({ firstDate, lastDate, roundedMaxWeightValue } =
+  //   getFirstLastDatesMaxWeightFromChartData(chartData));
+
+  // if (width <= 768) {
+  //   isMobile = true;
+  // }
+
+  // let defaultRangeInMonths = 6; // Desktop default
+  // let xPaddingInDays = 15; // Desktop default
+  // if (isMobile) {
+  //   defaultRangeInMonths = 1; // Mobile default
+  //   xPaddingInDays = 3; // Mobile default
+  // }
+
+  // const defaultRangeMilliseconds =
+  //   1000 * 60 * 60 * 24 * 30 * defaultRangeInMonths;
+  // let xPaddingInMilliseconds = xPaddingInDays * 24 * 60 * 60 * 1000;
+
+  // if (lastDate - firstDate < defaultRangeMilliseconds) {
+  //   xPaddingInDays = 1; // Small padding with small data
+  //   xPaddingInMilliseconds = xPaddingInDays * 24 * 60 * 60 * 1000;
+
+  //   // Set xScaleMin to be just before the first entry on the chart
+  //   // xScaleMin = firstDate - xPaddingInMilliseconds;
+  //   xScaleMin = firstDate - xPaddingInMilliseconds;
+  // } else {
+  //   // Set xScaleMin to just before the preferred time range on the chart
+  //   // xScaleMin = lastDate - defaultRangeMilliseconds - xPaddingInMilliseconds;
+  //   xScaleMin = lastDate - defaultRangeMilliseconds - xPaddingInMilliseconds;
+  // }
+
+  // // set xScaleMax to preferred padding at right end of chart
+  // // xScaleMax = lastDate + xPaddingInMilliseconds;
   // xScaleMax = lastDate + xPaddingInMilliseconds;
-  xScaleMax = lastDate + xPaddingInMilliseconds;
 
   const titleOptions = {
     display: false,

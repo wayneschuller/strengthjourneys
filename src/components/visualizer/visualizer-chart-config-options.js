@@ -1,4 +1,5 @@
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { devLog } from "@/lib/processing-utils";
 
 export const getScalesOptions = (
   theme,
@@ -122,10 +123,38 @@ export const getZoomOptions = (firstDate, lastDate, xScaleMax) => {
       wheel: { enabled: zoomPanEnabled },
       mode: "x",
       pinch: { enabled: zoomPanEnabled },
+      onZoomComplete: (chart) => {
+        // devLog(`onZoomComplete:`);
+        // devLog(chart);
+        if (!chart.chart?.scales?.x) {
+          return;
+        }
+        const { x } = chart.chart.scales;
+        const settings = {
+          xMin: x.min,
+          xMax: x.max,
+        };
+        // devLog(settings);
+        localStorage.setItem("SJ_chartZoomPanRange", JSON.stringify(settings));
+      },
     },
     pan: {
       enabled: zoomPanEnabled,
       mode: "x",
+      onPanComplete: (chart) => {
+        // devLog(`onZoomComplete:`);
+        // devLog(chart);
+        if (!chart.chart?.scales?.x) {
+          return;
+        }
+        const { x } = chart.chart.scales;
+        const settings = {
+          xMin: x.min,
+          xMax: x.max,
+        };
+        // devLog(settings);
+        localStorage.setItem("SJ_chartZoomPanRange", JSON.stringify(settings));
+      },
       // onPanComplete: (chart) => {
       //   return; // FIXME: couldn't get this to work well.
 

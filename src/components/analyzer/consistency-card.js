@@ -214,11 +214,6 @@ function processConsistency(parsedData) {
     const rawPercentage = (actualWorkouts / totalWorkoutsExpected) * 100;
     const consistencyPercentage = Math.min(Math.round(rawPercentage), 100); // Cap the percentage at 100
 
-    const totalWorkoutsGradeJump = calculateGradeJump(
-      actualWorkouts,
-      totalWorkoutsExpected,
-    );
-
     let tooltip = "";
     switch (true) {
       case actualWorkouts > totalWorkoutsExpected:
@@ -275,19 +270,19 @@ const periodTargets = [
   },
   {
     label: "Year",
-    days: 365,
+    days: 345, // Lower to allow some rest days
   },
   {
     label: "24 Month",
-    days: 365 * 2,
+    days: 350 * 2, // Lower to allow some rest days
   },
   {
     label: "5 Year",
-    days: 365 * 5,
+    days: 350 * 5,
   },
   {
     label: "Decade",
-    days: 365 * 10 + 2,
+    days: 350 * 10,
   },
 ];
 

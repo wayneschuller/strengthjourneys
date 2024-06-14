@@ -6,7 +6,7 @@ const inspirationalQuotes = [
   {
     quote:
       "Strong people are harder to kill than weak people and more useful in general. A weak man is not as happy as that same man would be if he were strong.",
-    author: "Mark Rippetoe",
+    author: "Mark Rippetoe, Starting Strength",
     URL: null,
   },
   {
@@ -52,6 +52,12 @@ const inspirationalQuotes = [
   {
     quote: "Slowly is the fastest way to get to where you want to be.",
     author: "André De Shields",
+    URL: null,
+  },
+  {
+    quote:
+      "The weight room is a place where the trials never end. It is the place where we test ourselves continuously - we struggle to reach one goal, and, as soon as we reach it, there is another and more difficult one to meet.",
+    author: "Dave Tate, EliteFTS",
     URL: null,
   },
 ];

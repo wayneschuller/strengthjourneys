@@ -6,13 +6,13 @@ import { devLog } from "@/lib/processing-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 
-import { Chart, ArcElement } from "chart.js";
+import { Chart, ArcElement, Tooltip } from "chart.js";
 import { Pie, Doughnut } from "react-chartjs-2";
 import { getLiftColor } from "@/lib/get-lift-color";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 
-Chart.register(ArcElement, ChartDataLabels);
+Chart.register(ArcElement, ChartDataLabels, Tooltip);
 
 export function LiftTypeFrequencyPieCard() {
   const { liftTypes, isLoading } = useUserLiftingData();

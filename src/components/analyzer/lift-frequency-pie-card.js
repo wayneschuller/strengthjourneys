@@ -15,7 +15,7 @@ import { useUserLiftingData } from "@/lib/use-userlift-data";
 Chart.register(ArcElement, ChartDataLabels);
 
 export function LiftTypeFrequencyPieCard() {
-  const { liftTypes } = useUserLiftingData();
+  const { liftTypes, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
   const pieData = liftTypes
@@ -90,6 +90,8 @@ export function LiftTypeFrequencyPieCard() {
     },
   };
 
+  devLog(`rendering piechart`);
+
   return (
     <Card className="flex-1">
       <CardHeader>
@@ -98,7 +100,8 @@ export function LiftTypeFrequencyPieCard() {
           {pieData?.length > 0 ? pieData.length : ""} Lifts
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex justify-center xl:max-h-[30vh]">
+      <CardContent>
+        {(isLoading || !pieChartData) && <Skeleton className="h-full w-full" />}
         {pieChartData && <Pie data={pieChartData} options={pieChartOptions} />}
       </CardContent>
     </Card>

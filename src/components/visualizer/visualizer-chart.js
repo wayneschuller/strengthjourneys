@@ -116,6 +116,7 @@ export default function VisualizerChart() {
   // Show skeleton until chartData state is ready to go
   if (
     isLoading ||
+    authStatus !== "authenticated" ||
     !chartData ||
     !Array.isArray(chartData) ||
     chartData.length === 0
@@ -260,6 +261,7 @@ export default function VisualizerChart() {
   );
 }
 
+// Small helper functions we could park elsewhere.
 function convertToHslFormat(originalHsl) {
   // Split the original HSL string into individual components
   const [hue, saturation, lightness] = originalHsl.split(" ");

@@ -55,11 +55,11 @@ export default function VisualizerChart() {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
     useUserLiftingData();
   const chartRef = useRef(null);
-  const { width } = useWindowSize();
-  const [chartData, setChartData] = useState(null);
-  const [e1rmFormula, setE1rmFormula] = useState("Brzycki"); // FIXME: use the hook for this?
   const { status: authStatus } = useSession();
-  const [xZoomPan, setXZoomPan] = useState(null);
+  const { width } = useWindowSize();
+  const [chartData, setChartData] = useState(null); // We generate the visualizer data inside this component
+  const [e1rmFormula, setE1rmFormula] = useState("Brzycki"); // FIXME: use the userUserLiftingData hook to remember formula?
+  const [xZoomPan, setXZoomPan] = useState(null); // Remember xZoomPan.xMin/.XMax in this state
 
   devLog(xZoomPan);
 

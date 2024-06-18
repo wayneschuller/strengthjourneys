@@ -116,7 +116,6 @@ export default function VisualizerChart() {
   // Show skeleton until chartData state is ready to go
   if (
     isLoading ||
-    authStatus !== "authenticated" ||
     !chartData ||
     !Array.isArray(chartData) ||
     chartData.length === 0

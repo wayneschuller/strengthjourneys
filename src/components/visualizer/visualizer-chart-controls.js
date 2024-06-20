@@ -38,6 +38,8 @@ export function VisualizerChartControls({
         onClick={(e) => {
           const chart = chartRef.current;
           if (chart) {
+            if (setXZoomPan) setXZoomPan({ xMin: xScaleMin, xMax: xScaleMax });
+
             chart.zoomScale(
               "x",
               {

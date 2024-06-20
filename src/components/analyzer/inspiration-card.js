@@ -61,8 +61,7 @@ const inspirationalQuotes = [
     URL: null,
   },
   {
-    quote:
-      "Your health will likely run out before your money. Invest proportionally.",
+    quote: "Your health will likely run out before your money. Invest proportionally.",
     author: "Source unknown.",
     URL: null,
   },

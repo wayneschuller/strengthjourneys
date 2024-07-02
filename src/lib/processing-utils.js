@@ -102,7 +102,6 @@ export function getReadableDateString(ISOdate) {
 // Loop through the data once and collect top PRs for each lift, reps 1..10
 // This info will likely be used by both Analyzer and Visualizer components
 // The return format: topLiftsByTypeAndReps["Back Squat"][4][17] = lift tuple of 18th best Back Squat 5RM ever
-//
 export function processTopLiftsByTypeAndReps(parsedData) {
   const startTime = performance.now();
   const topLiftsByTypeAndReps = {};

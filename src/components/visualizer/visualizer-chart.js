@@ -64,7 +64,7 @@ export default function VisualizerChart() {
   devLog(xZoomPan);
 
   // Local computed/derived variables
-  let roundedMaxWeightValue = null;
+  // let roundedMaxWeightValue = null;
   let zoomPanEnabled = true; // We will set to false if we don't have much data
 
   // Main useEffect - wait for parsedData process component specfic data
@@ -132,7 +132,7 @@ export default function VisualizerChart() {
   // Set sensible default range for desktop and mobile
   // If user has less data than range, then their data is the range (with less padding)
   // 20240530 FIXME: this refactored code changes vertical height on zoom, not right
-  const { firstDate, lastDate } =
+  const { firstDate, lastDate, roundedMaxWeightValue } =
     getFirstLastDatesMaxWeightFromChartData(chartData);
   const isMobile = width <= 768;
 

@@ -235,6 +235,7 @@ export const getTooltipOptions = (
       afterLabel: (context) => {
         if (!context) return;
         // Show any top 20 lifts they did today topLiftsByTypeAndReps
+        // FIXME: could show "#x top xRM of the last year" type results (see the session-analysis-card for example code)
         const entry = context.raw;
         let label = generateTopLiftLabelsForDateAndType(
           entry.date,

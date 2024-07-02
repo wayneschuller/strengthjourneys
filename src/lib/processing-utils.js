@@ -209,13 +209,8 @@ export function calculateLiftTypes(parsedData) {
   return sortedLiftTypes;
 }
 
-// Usage example:
-// const parsedData = [...]; // your data here
-// const liftTypes = calculateLiftStats(parsedData);
-// setLiftTypes(liftTypes); // if you're using this in a React component
-
-// This is run once at init in the <Layout /> useEffect
-// Assumes parsedData is sorted.
+// This is run once when data is imported
+// Assumes parsedData is sorted chronologically.
 export const markHigherWeightAsHistoricalPRs = (parsedData) => {
   const startTime = performance.now();
   const bestRecordsMap = {};

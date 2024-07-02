@@ -102,8 +102,15 @@ export function SessionAnalysisCard() {
                             {workout.unitType}{" "}
                           </div>
                           <div className="ml-6 inline-block">
-                            {workout.prSentenceReport &&
-                              `${workout.prSentenceReport}`}
+                            {workout.prSentenceReport
+                              ? `${workout.prSentenceReport}`
+                              : `${getYearlyLiftRanking(
+                                  parsedData,
+                                  workout.liftType,
+                                  workout.reps,
+                                  workout.weight,
+                                  workout.date,
+                                )}`}
                           </div>
                         </div>
                       </li>
@@ -128,4 +135,54 @@ export function SessionAnalysisCard() {
       </CardFooter>
     </Card>
   );
+}
+
+function getYearlyLiftRanking(parsedData, liftType, reps, weight, date) {
+  const startTime = performance.now();
+
+  const twelveMonthsAgo = new Date(date);
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+  const twelveMonthsAgoString = twelveMonthsAgo.toISOString().split("T")[0];
+
+  // Filter lifts for the specific lift type and rep scheme within the last 12 months
+  const relevantLifts = parsedData.filter(
+    (lift) =>
+      lift.liftType === liftType &&
+      lift.reps === reps &&
+      lift.date > twelveMonthsAgoString &&
+      lift.date <= date,
+  );
+
+  // devLog(relevantLifts);
+
+  // Sort the relevant lifts by weight in descending order, then by date in ascending order
+  relevantLifts.sort((a, b) => {
+    if (b.weight !== a.weight) {
+      return b.weight - a.weight;
+    }
+    return a.date.localeCompare(b.date);
+  });
+
+  // Find the rank of the current lift
+  const rank = relevantLifts.findIndex(
+    (lift) =>
+      lift.weight < weight || (lift.weight === weight && lift.date > date),
+  );
+
+  // If the lift doesn't rank in the top 10, return null
+  if (rank >= 10 || rank === -1) {
+    return "";
+  }
+
+  // Construct the ranking string
+  const rankString = `#${rank} best`;
+  const repString = reps === 1 ? "single" : `${reps}rm`;
+
+  devLog(
+    `getYearlyLiftRanking() execution time: ` +
+      `\x1b[1m${Math.round(performance.now() - startTime)}` +
+      `ms\x1b[0m`,
+  );
+
+  return `${rankString} ${repString} in the last year`;
 }

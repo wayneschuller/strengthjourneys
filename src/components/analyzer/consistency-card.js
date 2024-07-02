@@ -60,7 +60,7 @@ export function ConsistencyCard() {
                   </TooltipTrigger>
                   <TooltipContent>
                     <div className="w-40">
-                      <div className="text-center text-2xl">
+                      <div className="text-center text-2xl sm:text-2xl lg:text-lg">
                         {item.percentage}%
                       </div>
                       <div>{item.tooltip}</div>

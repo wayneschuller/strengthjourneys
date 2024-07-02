@@ -90,8 +90,6 @@ export function LiftTypeFrequencyPieCard() {
     },
   };
 
-  devLog(`rendering piechart`);
-
   return (
     <Card className="flex-1">
       <CardHeader>

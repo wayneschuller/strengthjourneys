@@ -152,8 +152,7 @@ export function processTopLiftsByTypeAndReps(parsedData) {
   return topLiftsByTypeAndReps;
 }
 
-// liftTypes is in our global context state
-// It is an array sorted by lift set frequency descending of these objects:
+// liftTypes is an array sorted by lift set frequency descending of these objects:
 // {
 // "liftType": "Back Squat",
 // "totalSets": 78,
@@ -161,7 +160,6 @@ export function processTopLiftsByTypeAndReps(parsedData) {
 // "newestDate": "2023-12-11",
 // "oldestDate": "2023-11-18"
 // }
-//
 //
 // FIXME: should liftTypes just be big object like topLiftsBySetsandReps? Merge into topLiftsBySetsAndReps?
 // So far it is only 3ms on slow PC with my biggest dataset.

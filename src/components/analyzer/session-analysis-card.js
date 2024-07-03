@@ -140,6 +140,8 @@ export function SessionAnalysisCard() {
 function getYearlyLiftRanking(parsedData, liftType, reps, weight, date) {
   const startTime = performance.now();
 
+  if (reps < 1) return "";
+
   const twelveMonthsAgo = new Date(date);
   twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
   const twelveMonthsAgoString = twelveMonthsAgo.toISOString().split("T")[0];

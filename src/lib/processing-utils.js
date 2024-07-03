@@ -124,6 +124,7 @@ export function processTopLiftsByTypeAndReps(parsedData) {
     }
 
     if (!topLiftsByTypeAndReps[liftType]) {
+      // Initialise empty array representing rep records for up to 10 reps for this lift type
       topLiftsByTypeAndReps[liftType] = Array.from({ length: 10 }, () => []);
     }
 

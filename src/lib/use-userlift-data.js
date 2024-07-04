@@ -36,6 +36,10 @@ export const UserLiftingDataProvider = ({ children }) => {
   const [parsedData, setParsedData] = useState(null); // see @/lib/sample-parsed-data.js for data structure design
   const [liftTypes, setLiftTypes] = useState([]); // see @/lib/processing-utils.js for data structure design
   const [topLiftsByTypeAndReps, setTopLiftsByTypeAndReps] = useState(null); // see @/lib/processing-utils.js for data structure design
+  const [
+    topLiftsByTypeAndRepsLast12Months,
+    setTopLiftsByTypeAndRepsLast12Months,
+  ] = useState(null); // see @/lib/processing-utils.js for data structure design
   const [selectedLiftTypes, setSelectedLiftTypes] = useState([]);
 
   const { data: session, status: authStatus } = useSession();
@@ -227,9 +231,13 @@ export const UserLiftingDataProvider = ({ children }) => {
     setSelectedLiftTypes(selectedLiftTypes);
 
     // Critical PR processing
-    const topLiftsByTypeAndReps = processTopLiftsByTypeAndReps(parsedData);
+    const { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months } =
+      processTopLiftsByTypeAndReps(parsedData);
+
     setTopLiftsByTypeAndReps(topLiftsByTypeAndReps);
+    setTopLiftsByTypeAndRepsLast12Months(topLiftsByTypeAndRepsLast12Months);
     // devLog(topLiftsByTypeAndReps);
+    // devLog(topLiftsByTypeAndRepsLast12Months);
 
     setParsedData(parsedData);
   }, [data, isLoading, isError, authStatus]);
@@ -277,6 +285,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         setSelectedLiftTypes,
         parsedData,
         topLiftsByTypeAndReps,
+        topLiftsByTypeAndRepsLast12Months,
       }}
     >
       {children}

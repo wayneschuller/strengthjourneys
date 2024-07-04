@@ -105,6 +105,81 @@ export function getReadableDateString(ISOdate) {
 export function processTopLiftsByTypeAndReps(parsedData) {
   const startTime = performance.now();
   const topLiftsByTypeAndReps = {};
+  const topLiftsByTypeAndRepsLast12Months = {};
+
+  const now = new Date();
+  const last12Months = new Date(now.setFullYear(now.getFullYear() - 1));
+
+  // Check the date range using the first and last entries
+  const firstYear = new Date(parsedData[0].date).getFullYear();
+  const lastYear = new Date(
+    parsedData[parsedData.length - 1].date,
+  ).getFullYear();
+  const yearRange = lastYear - firstYear;
+
+  parsedData.forEach((entry) => {
+    const { liftType, reps, date } = entry;
+
+    if (entry.isGoal) return; // Dreams do not count
+
+    // Ensure that the reps value is within the expected range
+    if (reps < 1 || reps > 10) {
+      return;
+    }
+
+    if (!topLiftsByTypeAndReps[liftType]) {
+      topLiftsByTypeAndReps[liftType] = Array.from({ length: 10 }, () => []);
+    }
+
+    let repArray = topLiftsByTypeAndReps[liftType][reps - 1];
+    repArray.push(entry);
+
+    // Collect best lifts of the last 12 months
+    const entryDate = new Date(date);
+    if (entryDate >= last12Months) {
+      if (!topLiftsByTypeAndRepsLast12Months[liftType]) {
+        topLiftsByTypeAndRepsLast12Months[liftType] = Array.from(
+          { length: 10 },
+          () => [],
+        );
+      }
+
+      let last12MonthsRepArray =
+        topLiftsByTypeAndRepsLast12Months[liftType][reps - 1];
+      last12MonthsRepArray.push(entry);
+    }
+  });
+
+  // Calculate the maximum number of entries to keep
+  const maxEntries = yearRange <= 2 ? 5 : 20;
+
+  // Function to sort and trim arrays
+  const sortAndTrimArrays = (dataStructure, maxEntries) => {
+    Object.keys(dataStructure).forEach((liftType) => {
+      dataStructure[liftType].forEach((repArray) => {
+        repArray.sort((a, b) => b.weight - a.weight);
+        if (repArray.length > maxEntries) {
+          repArray.length = maxEntries;
+        }
+      });
+    });
+  };
+
+  sortAndTrimArrays(topLiftsByTypeAndReps, maxEntries);
+  sortAndTrimArrays(topLiftsByTypeAndRepsLast12Months, maxEntries);
+
+  devLog(
+    `processTopLiftsByTypeAndReps() execution time: \x1b[1m${Math.round(
+      performance.now() - startTime,
+    )}ms\x1b[0m`,
+  );
+
+  return { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months };
+}
+
+export function processTopLiftsByTypeAndRepsOLD(parsedData) {
+  const startTime = performance.now();
+  const topLiftsByTypeAndReps = {};
 
   // Check the date range using the first and last entries
   const firstYear = new Date(parsedData[0].date).getFullYear();

@@ -135,6 +135,7 @@ export function SessionAnalysisCard() {
   );
 }
 
+// FIXME: we actually have topLiftsByTypeAndRepsLast12Months now - we could simply lookup from this cache (see monthly card code)
 function getYearlyLiftRanking(parsedData, liftType, reps, weight, date) {
   const startTime = performance.now();
 

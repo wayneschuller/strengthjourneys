@@ -332,6 +332,7 @@ export function findLiftPositionInTopLifts(liftTuple, topLiftsByTypeAndReps) {
         lift.notes === liftTuple.notes &&
         lift.URL === liftTuple.URL
       ) {
+        // FIXME: this annotation stuff could simply just go in JSX
         const prSentenceReport = `${getCelebrationEmoji(i)}  #${i + 1} best ${
           lift.reps
         }RM`;
@@ -341,5 +342,5 @@ export function findLiftPositionInTopLifts(liftTuple, topLiftsByTypeAndReps) {
     }
   }
 
-  return { prIndex: -1, prSentenceReport: null }; // Return -1 if the lift is not found
+  return { rank: -1, annotation: null }; // Return -1 if the lift is not found
 }

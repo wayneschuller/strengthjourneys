@@ -26,11 +26,6 @@ export function MonthsHighlightsCard() {
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
-  const recentMonthHighlightsOLD = getFirstHistoricalPRsInLastMonth(
-    parsedData,
-    topLiftsByTypeAndReps,
-  );
-
   const recentMonthHighlights = getRecentMonthHighlights(
     parsedData,
     topLiftsByTypeAndReps,
@@ -88,60 +83,10 @@ export function MonthsHighlightsCard() {
   );
 }
 
-// Return a list of (up to 10) entries from the last month that are marked as historical PRs.
-// FIXME: this could more intelligently select the top 10 highlights - prioritise reps 1, 3, 5, 10 if needed
-// FIXME: include URL hyperlinks if we have them
-// FIXME: This could be rewritten to include yearly PRs as well as lifetime PRs (see the getYearlyLiftRanking() in session-analysis-card.js)
-function getFirstHistoricalPRsInLastMonth(parsedData, topLiftsByTypeAndReps) {
-  if (!parsedData) return null;
-  const startTime = performance.now();
-
-  const today = new Date().toISOString().split("T")[0]; // Convert to "YYYY-MM-DD" string format
-  const lastMonth = new Date();
-  lastMonth.setMonth(lastMonth.getMonth() - 1);
-  const lastMonthStr = lastMonth.toISOString().split("T")[0]; // Convert to "YYYY-MM-DD" string format
-
-  // Filter records that are historical PRs and fall within the last month
-  const historicalPRsInLastMonth = parsedData.filter(
-    ({ isHistoricalPR, date }) => {
-      return isHistoricalPR && date >= lastMonthStr && date <= today;
-    },
-  );
-
-  devLog(`historical PRs in last month: ${historicalPRsInLastMonth.length}`);
-  // Create a map to store the first historical PR for each lift type and reps combination
-  const firstPRsMap = new Map();
-
-  for (let i = historicalPRsInLastMonth.length - 1; i >= 0; i--) {
-    let entry = historicalPRsInLastMonth[i];
-    const key = `${entry.liftType}-${entry.reps}`;
-
-    // Grab our little emoji report if it was a top lift
-    const { prIndex, prSentenceReport } = findLiftPositionInTopLifts(
-      entry,
-      topLiftsByTypeAndReps,
-    );
-
-    entry = { ...entry, prIndex: prIndex, prSentenceReport: prSentenceReport };
-
-    // If no record for this combination, store it as the first historical PR
-    if (!firstPRsMap.has(key)) {
-      firstPRsMap.set(key, entry);
-    }
-  }
-
-  const firstPRs = Array.from(firstPRsMap.values()).slice(0, 10); // Grab the first 10 only
-
-  devLog(
-    `getFirstHistoricalPRsInLastMonth() execution time: ` +
-      `\x1b[1m${Math.round(performance.now() - startTime)}ms\x1b[0m`,
-  );
-
-  return firstPRs;
-}
-
 // Return a mappable array of lift tuples with extra ranking and annotation highlights
 // FIXME: don't do yearly highlights with small datasets
+// FIXME: this could more intelligently select the top 10 highlights - prioritise reps 1, 3, 5, 10 if needed
+// FIXME: include URL hyperlinks if we have them
 function getRecentMonthHighlights(
   parsedData,
   topLiftsByTypeAndReps,

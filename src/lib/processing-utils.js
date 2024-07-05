@@ -177,54 +177,6 @@ export function processTopLiftsByTypeAndReps(parsedData) {
   return { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months };
 }
 
-export function processTopLiftsByTypeAndRepsOLD(parsedData) {
-  const startTime = performance.now();
-  const topLiftsByTypeAndReps = {};
-
-  // Check the date range using the first and last entries
-  const firstYear = new Date(parsedData[0].date).getFullYear();
-  const lastYear = new Date(
-    parsedData[parsedData.length - 1].date,
-  ).getFullYear();
-  const yearRange = lastYear - firstYear;
-
-  parsedData.forEach((entry) => {
-    const { liftType, reps } = entry;
-
-    if (entry.isGoal) return; // Dreams do not count
-
-    // Ensure that the reps value is within the expected range
-    if (reps < 1 || reps > 10) {
-      return;
-    }
-
-    if (!topLiftsByTypeAndReps[liftType]) {
-      // Initialise empty array representing rep records for up to 10 reps for this lift type
-      topLiftsByTypeAndReps[liftType] = Array.from({ length: 10 }, () => []);
-    }
-
-    let repArray = topLiftsByTypeAndReps[liftType][reps - 1];
-    repArray.push(entry);
-
-    // Sort by weight in descending order
-    repArray.sort((a, b) => b.weight - a.weight);
-
-    // Adjust the number of top entries to keep based on the year range
-    // FIXME: maybe we don't have to do this, just let components choose how much to use?
-    const maxEntries = yearRange <= 2 ? 5 : 20;
-    if (repArray.length > maxEntries) {
-      repArray.length = maxEntries;
-    }
-  });
-
-  devLog(
-    `processTopLiftsByTypeAndReps() execution time: \x1b[1m${Math.round(
-      performance.now() - startTime,
-    )}ms\x1b[0m`,
-  );
-  return topLiftsByTypeAndReps;
-}
-
 // liftTypes is an array sorted by lift set frequency descending of these objects:
 // {
 // "liftType": "Back Squat",

@@ -142,6 +142,9 @@ function getRecentMonthHighlights(
 
   // Sort by lifetimeRanking and then yearlyRanking
   recentMonthHighlights.sort((a, b) => {
+    if (a.reps !== b.reps) {
+      return a.reps - b.reps; // Sort by reps ascending
+    }
     if (a.lifetimeRanking === undefined && b.lifetimeRanking !== undefined) {
       return 1; // `a` should come after `b`
     }

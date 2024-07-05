@@ -84,6 +84,7 @@ export function MonthsHighlightsCard() {
                       <br />
                     </>
                   )}
+                  {/* Show yearly PRs  (except when it is a #1 lifetime ranking)  */}
                   {(record.lifetimeRanking === undefined ||
                     record.lifetimeRanking > 0) &&
                     record.yearlySignificanceAnnotation && (
@@ -101,7 +102,6 @@ export function MonthsHighlightsCard() {
 // Return a mappable array of lift tuples with extra ranking and annotation highlights
 // FIXME: don't do yearly highlights with small datasets
 // FIXME: this could more intelligently select the top 10 highlights - prioritise reps 1, 3, 5, 10 if needed
-// FIXME: include URL hyperlinks if we have them
 function getRecentMonthHighlights(
   parsedData,
   topLiftsByTypeAndReps,

@@ -1,10 +1,10 @@
 // Simple wrapper for console.log
-export function devLog(message) {
+export function devLog(...messages) {
   // We setup this special env variable on Vercel dev and preview but NOT production builds
   // This is so non-localhost clients can see devLogs on Vercel preview builds
   // Development machines should add this to their .env or .env.local
   if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development") {
-    console.log(message);
+    console.log(...messages);
   }
 }
 
@@ -334,9 +334,9 @@ export function findLiftPositionInTopLifts(liftTuple, topLiftsByTypeAndReps) {
       ) {
         const prSentenceReport = `${getCelebrationEmoji(i)}  #${i + 1} best ${
           lift.reps
-        }RM ever`;
+        }RM`;
 
-        return { prIndex: i, prSentenceReport: prSentenceReport }; // Return the position (index) of the lift in the array
+        return { rank: i, annotation: prSentenceReport }; // Return the position (index) of the lift in the array
       }
     }
   }

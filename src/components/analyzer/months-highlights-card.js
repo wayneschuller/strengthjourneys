@@ -19,12 +19,22 @@ import {
 } from "@/lib/processing-utils";
 
 export function MonthsHighlightsCard() {
-  const { parsedData, topLiftsByTypeAndReps } = useUserLiftingData();
-  const { status: authStatus } = useSession();
-
-  const recentMonthHighlights = getFirstHistoricalPRsInLastMonth(
+  const {
     parsedData,
     topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+  } = useUserLiftingData();
+  const { status: authStatus } = useSession();
+
+  const recentMonthHighlightsOLD = getFirstHistoricalPRsInLastMonth(
+    parsedData,
+    topLiftsByTypeAndReps,
+  );
+
+  const recentMonthHighlights = getRecentMonthHighlights(
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
   );
 
   return (
@@ -58,7 +68,17 @@ export function MonthsHighlightsCard() {
                   </strong>{" "}
                 </div>
                 <div className="text-right">
-                  {record.prSentenceReport && `${record.prSentenceReport}`}
+                  {record.lifetimeSignificanceAnnotation && (
+                    <>
+                      {record.lifetimeSignificanceAnnotation}
+                      <br />
+                    </>
+                  )}
+                  {/* FIXME: put a new line here */}
+                  {record.lifetimeRanking > 0 &&
+                    record.yearlySignificanceAnnotation && (
+                      <>{record.yearlySignificanceAnnotation}</>
+                    )}
                 </div>
               </li>
             ))}
@@ -76,19 +96,19 @@ function getFirstHistoricalPRsInLastMonth(parsedData, topLiftsByTypeAndReps) {
   if (!parsedData) return null;
   const startTime = performance.now();
 
-  const today = new Date();
-  const lastMonth = new Date(today);
-  lastMonth.setMonth(today.getMonth() - 1);
+  const today = new Date().toISOString().split("T")[0]; // Convert to "YYYY-MM-DD" string format
+  const lastMonth = new Date();
+  lastMonth.setMonth(lastMonth.getMonth() - 1);
+  const lastMonthStr = lastMonth.toISOString().split("T")[0]; // Convert to "YYYY-MM-DD" string format
 
   // Filter records that are historical PRs and fall within the last month
-  const historicalPRsInLastMonth = parsedData.filter((entry) => {
-    return (
-      entry.isHistoricalPR &&
-      new Date(entry.date) >= lastMonth &&
-      new Date(entry.date) <= today
-    );
-  });
+  const historicalPRsInLastMonth = parsedData.filter(
+    ({ isHistoricalPR, date }) => {
+      return isHistoricalPR && date >= lastMonthStr && date <= today;
+    },
+  );
 
+  devLog(`historical PRs in last month: ${historicalPRsInLastMonth.length}`);
   // Create a map to store the first historical PR for each lift type and reps combination
   const firstPRsMap = new Map();
 
@@ -118,4 +138,87 @@ function getFirstHistoricalPRsInLastMonth(parsedData, topLiftsByTypeAndReps) {
   );
 
   return firstPRs;
+}
+
+// Return a mappable array of lift tuples with extra ranking and annotation highlights
+// FIXME: don't do yearly highlights with small datasets
+function getRecentMonthHighlights(
+  parsedData,
+  topLiftsByTypeAndReps,
+  topLiftsByTypeAndRepsLast12Months,
+) {
+  if (!parsedData) return null;
+  const startTime = performance.now();
+
+  const lastMonth = new Date();
+  lastMonth.setMonth(lastMonth.getMonth() - 1);
+  const lastMonthStr = lastMonth.toISOString().split("T")[0]; // Convert to "YYYY-MM-DD" string format
+
+  var recentMonthHighlights = [];
+
+  parsedData.forEach((entry) => {
+    if (entry.date < lastMonthStr) return; // Skip entries older than one month
+
+    if (entry.isGoal) return; // Dreams do not count
+
+    // Ensure that the reps value is within the expected range
+    if (entry.reps < 1 || entry.reps > 20) {
+      return;
+    }
+
+    // Grab our little emoji report if it was a top lift
+    const { rank: yearlyRanking, annotation: yearlySignificanceAnnotation } =
+      findLiftPositionInTopLifts(entry, topLiftsByTypeAndRepsLast12Months);
+
+    const {
+      rank: lifetimeRanking,
+      annotation: lifetimeSignificanceAnnotation,
+    } = findLiftPositionInTopLifts(entry, topLiftsByTypeAndReps);
+
+    // For yearly ranking we only want the top 10.
+    if (yearlyRanking !== -1 && yearlyRanking < 10) {
+      const highlight = {
+        ...entry,
+        yearlySignificanceAnnotation:
+          yearlySignificanceAnnotation + " of the year",
+        yearlyRanking: yearlyRanking,
+      };
+
+      // If this was a lifetime PR add that info as well
+      if (lifetimeRanking !== -1 && lifetimeSignificanceAnnotation) {
+        highlight.lifetimeSignificanceAnnotation =
+          lifetimeSignificanceAnnotation + " ever";
+        highlight.lifetimeRanking = lifetimeRanking;
+      }
+
+      recentMonthHighlights.push(highlight);
+    }
+  });
+
+  // Sort by lifetimeRanking and then yearlyRanking
+  recentMonthHighlights.sort((a, b) => {
+    if (a.lifetimeRanking === undefined && b.lifetimeRanking !== undefined) {
+      return 1; // `a` should come after `b`
+    }
+    if (a.lifetimeRanking !== undefined && b.lifetimeRanking === undefined) {
+      return -1; // `a` should come before `b`
+    }
+    if (a.lifetimeRanking !== undefined && b.lifetimeRanking !== undefined) {
+      if (a.lifetimeRanking !== b.lifetimeRanking) {
+        return a.lifetimeRanking - b.lifetimeRanking;
+      }
+    }
+    return a.yearlyRanking - b.yearlyRanking;
+  });
+
+  devLog(
+    `getRecentMonthHighlights() execution time: ` +
+      `\x1b[1m${Math.round(performance.now() - startTime)}ms\x1b[0m`,
+  );
+
+  // devLog(recentMonthHighlights);
+
+  recentMonthHighlights.length = 15; // Cap at top 15 entries
+
+  return recentMonthHighlights;
 }

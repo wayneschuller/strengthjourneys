@@ -48,10 +48,8 @@ export function SessionAnalysisCard() {
   const groupedWorkouts = recentWorkouts?.reduce((acc, entry) => {
     const { liftType } = entry;
     acc[liftType] = acc[liftType] || [];
-    const { prIndex, prSentenceReport } = findLiftPositionInTopLifts(
-      entry,
-      topLiftsByTypeAndReps,
-    );
+    const { rank: prIndex, annotation: prSentenceReport } =
+      findLiftPositionInTopLifts(entry, topLiftsByTypeAndReps);
     if (prIndex !== -1) prFound = true;
     acc[liftType].push({
       ...entry,

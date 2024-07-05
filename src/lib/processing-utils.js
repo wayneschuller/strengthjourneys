@@ -117,6 +117,9 @@ export function processTopLiftsByTypeAndReps(parsedData) {
   ).getFullYear();
   const yearRange = lastYear - firstYear;
 
+  // Calculate the maximum number of entries to keep
+  const maxEntries = yearRange <= 2 ? 5 : 20;
+
   parsedData.forEach((entry) => {
     const { liftType, reps, date } = entry;
 
@@ -149,9 +152,6 @@ export function processTopLiftsByTypeAndReps(parsedData) {
       last12MonthsRepArray.push(entry);
     }
   });
-
-  // Calculate the maximum number of entries to keep
-  const maxEntries = yearRange <= 2 ? 5 : 20;
 
   // Function to sort and trim arrays
   const sortAndTrimArrays = (dataStructure, maxEntries) => {

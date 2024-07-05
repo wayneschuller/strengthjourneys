@@ -74,8 +74,8 @@ export function MonthsHighlightsCard() {
                       <br />
                     </>
                   )}
-                  {/* FIXME: put a new line here */}
-                  {record.lifetimeRanking > 0 &&
+                  {(record.lifetimeRanking === undefined ||
+                    record.lifetimeRanking > 0) &&
                     record.yearlySignificanceAnnotation && (
                       <>{record.yearlySignificanceAnnotation}</>
                     )}

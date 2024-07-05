@@ -232,7 +232,7 @@ export const UserLiftingDataProvider = ({ children }) => {
 
     // Critical PR processing
     const { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months } =
-      processTopLiftsByTypeAndReps(parsedData);
+      processTopLiftsByTypeAndReps(parsedData, liftTypes);
 
     setTopLiftsByTypeAndReps(topLiftsByTypeAndReps);
     setTopLiftsByTypeAndRepsLast12Months(topLiftsByTypeAndRepsLast12Months);

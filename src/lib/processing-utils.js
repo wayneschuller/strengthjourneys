@@ -102,13 +102,23 @@ export function getReadableDateString(ISOdate) {
 // Loop through the data once and collect top PRs for each lift, reps 1..10
 // This info will likely be used by both Analyzer and Visualizer components
 // The return format: topLiftsByTypeAndReps["Back Squat"][4][17] = lift tuple of 18th best Back Squat 5RM ever
-export function processTopLiftsByTypeAndReps(parsedData) {
+export function processTopLiftsByTypeAndReps(parsedData, liftTypes) {
   const startTime = performance.now();
   const topLiftsByTypeAndReps = {};
   const topLiftsByTypeAndRepsLast12Months = {};
 
   const now = new Date();
   const last12Months = new Date(now.setFullYear(now.getFullYear() - 1));
+  const last12MonthsStr = last12Months.toISOString().split("T")[0]; // Convert to "YYYY-MM-DD"
+
+  // Precreate the data structures for each lift type
+  liftTypes.forEach((type) => {
+    topLiftsByTypeAndReps[type.liftType] = Array.from({ length: 10 }, () => []);
+    topLiftsByTypeAndRepsLast12Months[type.liftType] = Array.from(
+      { length: 10 },
+      () => [],
+    );
+  });
 
   // Check the date range using the first and last entries
   const firstYear = new Date(parsedData[0].date).getFullYear();
@@ -130,22 +140,10 @@ export function processTopLiftsByTypeAndReps(parsedData) {
       return;
     }
 
-    if (!topLiftsByTypeAndReps[liftType]) {
-      topLiftsByTypeAndReps[liftType] = Array.from({ length: 10 }, () => []);
-    }
-
     topLiftsByTypeAndReps[liftType][reps - 1].push(entry);
 
     // Collect best lifts of the last 12 months
-    const entryDate = new Date(date);
-    if (entryDate >= last12Months) {
-      if (!topLiftsByTypeAndRepsLast12Months[liftType]) {
-        topLiftsByTypeAndRepsLast12Months[liftType] = Array.from(
-          { length: 10 },
-          () => [],
-        );
-      }
-
+    if (date >= last12MonthsStr) {
       topLiftsByTypeAndRepsLast12Months[liftType][reps - 1].push(entry);
     }
   });

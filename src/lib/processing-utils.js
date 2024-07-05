@@ -134,8 +134,7 @@ export function processTopLiftsByTypeAndReps(parsedData) {
       topLiftsByTypeAndReps[liftType] = Array.from({ length: 10 }, () => []);
     }
 
-    let repArray = topLiftsByTypeAndReps[liftType][reps - 1];
-    repArray.push(entry);
+    topLiftsByTypeAndReps[liftType][reps - 1].push(entry);
 
     // Collect best lifts of the last 12 months
     const entryDate = new Date(date);
@@ -147,9 +146,7 @@ export function processTopLiftsByTypeAndReps(parsedData) {
         );
       }
 
-      let last12MonthsRepArray =
-        topLiftsByTypeAndRepsLast12Months[liftType][reps - 1];
-      last12MonthsRepArray.push(entry);
+      topLiftsByTypeAndRepsLast12Months[liftType][reps - 1].push(entry);
     }
   });
 

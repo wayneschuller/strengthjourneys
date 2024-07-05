@@ -47,7 +47,7 @@ export function MonthsHighlightsCard() {
           {recentMonthHighlights &&
             recentMonthHighlights.map((record) => (
               <li
-                key={`${record.liftType}-${record.reps}-${record.date}`}
+                key={`${record.liftType}-${record.reps}-${record.weight}-${record.date}`}
                 className="flex justify-between gap-2 py-1 md:flex-row md:py-0"
               >
                 <div className="">
@@ -179,9 +179,8 @@ function getRecentMonthHighlights(
       `\x1b[1m${Math.round(performance.now() - startTime)}ms\x1b[0m`,
   );
 
-  // devLog(recentMonthHighlights);
-
   recentMonthHighlights.length = 15; // Cap at top 15 entries
+  // devLog(recentMonthHighlights);
 
   return recentMonthHighlights;
 }

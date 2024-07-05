@@ -58,8 +58,23 @@ export function MonthsHighlightsCard() {
                         : "font-normal"
                     }
                   >
-                    {record.liftType} {record.reps}@{record.weight}
-                    {record.unitType} ({getReadableDateString(record.date)})
+                    {record.URL ? (
+                      <a
+                        href={record.URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline"
+                      >
+                        {record.liftType} {record.reps}@{record.weight}
+                        {record.unitType}
+                      </a>
+                    ) : (
+                      <>
+                        {record.liftType} {record.reps}@{record.weight}
+                        {record.unitType}
+                      </>
+                    )}{" "}
+                    ({getReadableDateString(record.date)})
                   </strong>{" "}
                 </div>
                 <div className="text-right">

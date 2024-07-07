@@ -50,7 +50,7 @@ export function SidePanelSelectLiftsButton({ isIconMode }) {
                     </Button>
                   )}
                   {!isIconMode && (
-                    <Button variant="outline">
+                    <Button className="font-normal" variant="outline">
                       <Dumbbell className="mr-3" /> Choose Lifts
                     </Button>
                   )}

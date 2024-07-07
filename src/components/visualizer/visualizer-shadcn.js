@@ -100,26 +100,10 @@ export function VisualizerShadcn({
             {getTimeRangeDescription(timeRange, parsedData)}
           </CardDescription>
         </div>
-        <SidePanelSelectLiftsButton />
-        <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger
-            className="w-[160px] rounded-lg sm:ml-auto"
-            aria-label="Select a value"
-          >
-            <SelectValue placeholder="Last 3 months" />
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            <SelectItem value="All" className="rounded-lg">
-              All time
-            </SelectItem>
-            <SelectItem value="Year" className="rounded-lg">
-              Last year
-            </SelectItem>
-            <SelectItem value="Quarter" className="rounded-lg">
-              Last 3 months
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="grid grid-cols-2 space-x-1">
+          <SidePanelSelectLiftsButton />
+          <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
+        </div>
       </CardHeader>
 
       <CardContent>
@@ -214,6 +198,30 @@ export function VisualizerShadcn({
         </div>
       </CardFooter>
     </Card>
+  );
+}
+
+function TimeRangeSelect({ timeRange, setTimeRange }) {
+  return (
+    <Select value={timeRange} onValueChange={setTimeRange}>
+      <SelectTrigger
+        className="w-[160px] rounded-lg sm:ml-auto"
+        aria-label="Select a value"
+      >
+        <SelectValue placeholder="Last 3 months" />
+      </SelectTrigger>
+      <SelectContent className="rounded-xl">
+        <SelectItem value="All" className="rounded-lg">
+          All time
+        </SelectItem>
+        <SelectItem value="Year" className="rounded-lg">
+          Last year
+        </SelectItem>
+        <SelectItem value="Quarter" className="rounded-lg">
+          Last 3 months
+        </SelectItem>
+      </SelectContent>
+    </Select>
   );
 }
 

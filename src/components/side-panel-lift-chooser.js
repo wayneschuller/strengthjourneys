@@ -27,14 +27,6 @@ import {
 } from "@/components/ui/tooltip";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 
-// FIXME: is there any way to detect when the sheet is closed?
-// On mobile we could do the final selectedLift change here
-// rather than when checkboxes are ticked which is CPU expensive
-const handleOnClose = (context) => {
-  devLog(`sheet closed:`);
-  devLog(context);
-};
-
 export function SidePanelSelectLiftsButton({ isIconMode }) {
   return (
     <Sheet>
@@ -71,14 +63,7 @@ export function SidePanelSelectLiftsButton({ isIconMode }) {
             Choose what lifts to analyze and visualize (sets)
           </SheetDescription>
         </SheetHeader>
-        {/* This is our sheet content here */}
         <CheckboxLifts />
-        {/* Sheet content ends */}
-        <SheetFooter>
-          <SheetClose asChild>
-            {/* <Button type="submit">Save changes</Button> */}
-          </SheetClose>
-        </SheetFooter>
       </SheetContent>
     </Sheet>
   );

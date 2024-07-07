@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { TrendingUp } from "lucide-react";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import { getLiftColor } from "@/lib/get-lift-color";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { devLog } from "@/lib/processing-utils";
@@ -21,6 +22,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+
+import { ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 
 import {
   Select,
@@ -50,14 +53,17 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
 
   const e1rmFormula = "Brzycki"; // FIXME: uselocalstorage state
 
-  const processedData = processVisualizerData(
+  if (isLoading) return;
+  if (!parsedData) return;
+
+  const lineData = processVisualizerData(
     parsedData,
     e1rmFormula,
-    "Back Squat",
+    selectedLiftTypes,
     timeRange,
   );
 
-  // devLog(processedData);
+  devLog(lineData);
 
   return (
     <Card>
@@ -91,7 +97,6 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
         <ChartContainer config={chartConfig}>
           <LineChart
             accessibilityLayer
-            data={processedData}
             margin={{
               left: 12,
               right: 12,
@@ -110,10 +115,7 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
               content={
                 <ChartTooltipContent
                   indicator="line"
-                  labelFormatter={(value, payload) => {
-                    const tuple = payload[0].payload;
-                    return `${formatXAxisDateString(tuple.date)}`;
-                  }}
+                  // labelFormatter={(value, payload) => { const tuple = payload[0].payload; return `${formatXAxisDateString(tuple.date)}`; }}
                   formatter={(value, name, entry) => {
                     const tuple = entry.payload;
                     const oneRepMax = estimateE1RM(
@@ -135,13 +137,19 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
                 />
               }
             />
-            <Line
-              dataKey="y"
-              type="monotone"
-              stroke="var(--color-liftType)"
-              strokeWidth={2}
-              dot={false}
-            />
+            {lineData.map((line, index) => (
+              <Line
+                key={line.label}
+                type="monotone"
+                data={line.data}
+                dataKey="y"
+                stroke={line.color}
+                name={line.label}
+                strokeWidth={2}
+                dot={false}
+              />
+            ))}
+            <ChartLegend content={<ChartLegendContent />} />
           </LineChart>
         </ChartContainer>
       </CardContent>
@@ -153,7 +161,7 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
 export function processVisualizerData(
   parsedData,
   e1rmFormula,
-  liftType,
+  selectedLiftTypes,
   timeRange,
 ) {
   if (parsedData === null) {
@@ -165,19 +173,38 @@ export function processVisualizerData(
 
   const startDateStr = timeRangetoDateSTR(timeRange);
 
-  const liftE1RMsByDate = {}; // Use entry.date as the key, holding the best e1rm for that date
+  const datasets = {}; // We build chart.js datasets with the lift type as the object key
 
   // Loop through the data and find the best E1RM on each date for this liftType
   parsedData.forEach((entry) => {
-    if (entry.date < startDateStr) return;
-    if (entry.liftType !== liftType) return;
-    if (entry.isGoal) return;
+    const liftTypeKey = entry.liftType;
+
+    if (entry.date < startDateStr) return; // Skip if date out of range of chart
+
+    // Skip if the lift type is not selected
+    if (selectedLiftTypes && !selectedLiftTypes.includes(liftTypeKey)) {
+      return;
+    }
+
+    if (entry.isGoal) return; // FIXME: implement goal dashed lines at some point
+
+    // Lazy initialization of dataset for the lift type
+    if (!datasets[liftTypeKey]) {
+      // const brightColor = brightenHexColor(color, 1.1);
+      datasets[liftTypeKey] = {
+        label: liftTypeKey,
+        data: new Map(), // Using Map for efficient lookups
+        color: getLiftColor(liftTypeKey),
+      };
+    }
 
     const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
+    const currentDate = new Date(entry.date);
 
     // Check if the current date already has a better E1RM
-    if (liftE1RMsByDate[entry.date]) {
-      if (liftE1RMsByDate[entry.date].y >= oneRepMax) {
+    if (datasets[liftTypeKey].data.has(entry.date)) {
+      const currentData = datasets[liftTypeKey].data.get(entry.date);
+      if (currentData.y >= oneRepMax) {
         return; // Skip update if the existing E1RM is greater or equal
       }
     }
@@ -191,17 +218,17 @@ export function processVisualizerData(
     };
 
     // Record this new best e1rm on this date
-    liftE1RMsByDate[entry.date] = fullEntry;
+    datasets[liftTypeKey].data.set(entry.date, fullEntry);
   });
 
   // Convert object into an array of objects with the date included
-  const entries = Object.entries(liftE1RMsByDate).map(([date, entry]) => ({
-    date,
-    ...entry,
+  const sortedDatasets = Object.values(datasets).map((dataset) => ({
+    ...dataset,
+    data: Array.from(dataset.data.values()),
   }));
 
   // Sort the array by date using simple string comparison
-  entries.sort((a, b) => (a.date > b.date ? 1 : -1));
+  // entries.sort((a, b) => (a.date > b.date ? 1 : -1));
 
   devLog(
     "processVisualizerDataSHAD execution time: " +
@@ -209,7 +236,7 @@ export function processVisualizerData(
       `ms\x1b[0m`,
   );
 
-  return entries;
+  return sortedDatasets;
 }
 
 // Return a start date ("YYYY-MM-DD" format) based on timeRange ("All", "Year", "Quarter") relative to today's date

@@ -135,7 +135,13 @@ export function VisualizerShadcn({
             <XAxis
               dataKey="x"
               type="number"
-              domain={("auto", "auto")}
+              // domain={("auto", "auto")}
+              domain={[
+                (dataMin) =>
+                  new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),
+                (dataMax) =>
+                  new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
+              ]}
               tickFormatter={formatXAxisDateString}
               scale="time"
             />
@@ -281,9 +287,6 @@ export function processVisualizerData(
     ...dataset,
     data: Array.from(dataset.data.values()),
   }));
-
-  // Sort the array by date using simple string comparison
-  // entries.sort((a, b) => (a.date > b.date ? 1 : -1));
 
   devLog(
     "processVisualizerDataSHAD execution time: " +

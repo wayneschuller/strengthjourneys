@@ -1,0 +1,39 @@
+"use client";
+
+import Head from "next/head";
+import { useEffect, useState, useContext } from "react";
+import { useSession, signIn } from "next-auth/react";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
+import { devLog } from "@/lib/processing-utils";
+import { useReadLocalStorage } from "usehooks-ts";
+import { VisualizerShadcn } from "@/components/visualizer/visualizer-shadcn";
+
+export default function Visualizer2() {
+  const { data: session, status: authStatus } = useSession();
+  const { isLoading } = useUserLiftingData();
+  const ssid = useReadLocalStorage("ssid");
+
+  if (!isLoading && authStatus === "authenticated" && !ssid)
+    return (
+      <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
+        <ChooseSheetInstructionsCard session={session} />
+      </div>
+    );
+
+  return (
+    <div className="mx-4 mb-4 md:mx-[5vw]">
+      <Head>
+        <title>PR Analyzer (Strength Journeys)</title>
+        <meta name="description" content="Strength Journeys Lift PR Analyzer" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl">
+        PR Analyzer
+      </h1>
+
+      <VisualizerShadcn />
+    </div>
+  );
+}

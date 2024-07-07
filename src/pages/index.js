@@ -25,7 +25,7 @@ const featurePages = [
     IconComponent: Trophy,
   },
   {
-    href: "/visualizer",
+    href: "/visualizer2",
     title: "Strength Visualizer",
     description: "Interactive lifetime charts of all lifts.",
     IconComponent: LineChart,
@@ -66,13 +66,13 @@ export default function Home() {
         />
       </Head>
 
-      <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl ">
+      <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
         Welcome to {title}
       </h1>
 
       <PageDescription />
 
-      <div className="my-10 grid grid-cols-1  gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-4">
+      <div className="my-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-4">
         {featurePages.map((card, index) => (
           <FeatureCard key={index} {...card} />
         ))}

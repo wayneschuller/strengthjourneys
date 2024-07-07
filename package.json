@@ -46,6 +46,7 @@
     "react-color": "^2.19.3",
     "react-dom": "^18",
     "react-google-drive-picker": "file:dependencies/react-google-drive-picker",
+    "recharts": "^2.12.7",
     "swr": "^2.2.4",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",

@@ -72,7 +72,14 @@ export function VisualizerShadcn() {
             />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent labelKey="liftType" />}
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(value, entry) => {
+                    devLog(entry);
+                    return `${formatXAxisDateString(entry[0].payload.date)}`;
+                  }}
+                />
+              }
             />
             <Line
               dataKey="y"

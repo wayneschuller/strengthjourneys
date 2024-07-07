@@ -34,14 +34,14 @@ export default function Visualizer2() {
       <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl">
         PR Analyzer
       </h1>
-      <div class="flex flex-col gap-5 md:flex-row">
-        <div class="w-full lg:w-1/2 xl:w-3/4">
+      <div className="flex flex-col gap-5 md:flex-row">
+        <div className="w-full lg:w-1/2 xl:w-3/4">
           <VisualizerShadcn
             highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}
           />
         </div>
-        <div class="w-full lg:w-1/2 xl:w-1/4">
+        <div className="w-full lg:w-1/2 xl:w-1/4">
           <SessionAnalysisCard
             highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}

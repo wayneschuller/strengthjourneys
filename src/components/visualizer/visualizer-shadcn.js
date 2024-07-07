@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { TrendingUp } from "lucide-react";
-import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import { CartesianGrid, LabelList, Line, LineChart, XAxis } from "recharts";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
@@ -39,13 +39,6 @@ const formatXAxisDateString = (tickItem) => {
   return date.toLocaleString("en-US", { month: "short", day: "numeric" });
 };
 
-const chartConfig = {
-  liftType: {
-    label: "Back Squat",
-    color: "hsl(var(--chart-1))",
-  },
-};
-
 export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
     useUserLiftingData();
@@ -63,7 +56,27 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
     timeRange,
   );
 
-  devLog(lineData);
+  // FIXME: this chartConfig is hacky - shad expects it for colors but I want to dynamically find colors
+  const chartConfig = {
+    desktop: {
+      label: "Desktop",
+      color: "#2563eb",
+    },
+    mobile: {
+      label: "Mobile",
+      color: "#60a5fa",
+    },
+  };
+
+  // FIXME: Not using this yet - just starting
+  const CustomLabel = (props) => {
+    const { x, y, value, payload } = props;
+    return (
+      <text x={x} y={y} dy={-4} fill="#666" fontSize={14} textAnchor="middle">
+        {`${value} ${payload.unitType}`}
+      </text>
+    );
+  };
 
   return (
     <Card>
@@ -114,12 +127,14 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
             />
             <ChartTooltip
               cursor={false}
+              // labelKey=""
               content={
                 <ChartTooltipContent
                   indicator="line"
                   // labelFormatter={(value, payload) => { const tuple = payload[0].payload; return `${formatXAxisDateString(tuple.date)}`; }}
                   formatter={(value, name, entry) => {
                     const tuple = entry.payload;
+
                     const oneRepMax = estimateE1RM(
                       tuple.reps,
                       tuple.weight,
@@ -141,7 +156,7 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
             />
             {lineData.map((line, index) => (
               <Line
-                key={line.label}
+                key={`${line.label}-${index}`}
                 type="monotone"
                 data={line.data}
                 dataKey="y"
@@ -149,7 +164,14 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
                 name={line.label}
                 strokeWidth={2}
                 dot={false}
-              />
+              >
+                <LabelList
+                  position="top"
+                  offset={12}
+                  className="fill-foreground"
+                  fontSize={12}
+                />
+              </Line>
             ))}
             {lineData.length > 1 && (
               <ChartLegend content={<ChartLegendContent />} />

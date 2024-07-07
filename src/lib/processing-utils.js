@@ -51,7 +51,53 @@ export function getCelebrationEmoji(position) {
 }
 
 // Convert ISO "YYYY-MM-DD" to readable date string
-export function getReadableDateString(ISOdate) {
+export function getReadableDateString(ISOdate, includeDayOfWeek = false) {
+  const date = new Date(ISOdate);
+
+  const dayNames = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const dayOfWeek = dayNames[date.getDay()];
+  const dayOfMonth = date.getDate();
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+
+  let dateString = includeDayOfWeek
+    ? `${dayOfWeek}, ${month} ${dayOfMonth}`
+    : `${month} ${dayOfMonth}`;
+  const currentYear = new Date().getFullYear();
+
+  // Include the year only if it's not the current year
+  if (year !== currentYear) {
+    dateString += `, ${year}`;
+  }
+
+  return dateString;
+}
+
+export function getReadableDateString2(ISOdate) {
   let date = new Date(ISOdate);
 
   const monthNames = [

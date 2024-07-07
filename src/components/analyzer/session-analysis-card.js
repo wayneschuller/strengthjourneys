@@ -65,7 +65,7 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo Mode: "}
-          {groupedWorkouts && getReadableDateString(sessionDate)} Session
+          {groupedWorkouts && getReadableDateString(sessionDate, true)} Session
         </CardTitle>
         <CardDescription>Session overview and analysis</CardDescription>
       </CardHeader>

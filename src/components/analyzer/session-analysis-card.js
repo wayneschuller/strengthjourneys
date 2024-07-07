@@ -22,26 +22,26 @@ import {
   getReadableDateString,
 } from "@/lib/processing-utils";
 
-export function SessionAnalysisCard() {
+export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
   const { parsedData, topLiftsByTypeAndReps, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
   let prFound = false;
 
-  // Find the most recent lifting session date (with non-goal data)
-  // const mostRecentDate = parsedData?.[parsedData.length - 1]?.date;
-  let mostRecentDate = "";
+  let sessionDate = highlightDate;
 
-  // Iterate backwards to find the most recent non-goal entry date
-  for (let i = parsedData?.length - 1; i >= 0; i--) {
-    if (!parsedData[i].isGoal) {
-      mostRecentDate = parsedData[i].date;
-      break; // Stop as soon as we find the most recent non-goal entry
+  if (!sessionDate) {
+    // Iterate backwards to find the most recent non-goal entry date
+    for (let i = parsedData?.length - 1; i >= 0; i--) {
+      if (!parsedData[i].isGoal) {
+        sessionDate = parsedData[i].date;
+        break; // Stop as soon as we find the most recent non-goal entry
+      }
     }
   }
 
   const recentWorkouts = parsedData?.filter(
-    (workout) => workout.date === mostRecentDate,
+    (workout) => workout.date === sessionDate,
   );
 
   // Group workouts by liftType
@@ -64,12 +64,11 @@ export function SessionAnalysisCard() {
     <Card className="flex-1">
       <CardHeader>
         <CardTitle>
-          {authStatus === "unauthenticated" && "Demo Mode: "}Recent Session
-          Analysis
+          {authStatus === "unauthenticated" && "Demo Mode: "}Session Analysis
         </CardTitle>
         <CardDescription>
           Lifting Session Date:{" "}
-          {groupedWorkouts && getReadableDateString(mostRecentDate)}
+          {groupedWorkouts && getReadableDateString(sessionDate)}
         </CardDescription>
       </CardHeader>
       <CardContent>

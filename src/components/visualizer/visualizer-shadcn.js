@@ -43,11 +43,10 @@ const chartConfig = {
   },
 };
 
-export function VisualizerShadcn() {
+export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
     useUserLiftingData();
   const [timeRange, setTimeRange] = useState("Quarter"); // Options: "All", "Year", "Quarter"
-  const [highlightDate, setHighlightDate] = useState(null);
 
   const e1rmFormula = "Brzycki"; // FIXME: uselocalstorage state
 

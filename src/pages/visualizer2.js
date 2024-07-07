@@ -8,11 +8,13 @@ import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { devLog } from "@/lib/processing-utils";
 import { useReadLocalStorage } from "usehooks-ts";
 import { VisualizerShadcn } from "@/components/visualizer/visualizer-shadcn";
+import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
 
 export default function Visualizer2() {
   const { data: session, status: authStatus } = useSession();
   const { isLoading } = useUserLiftingData();
   const ssid = useReadLocalStorage("ssid");
+  const [highlightDate, setHighlightDate] = useState(null);
 
   if (!isLoading && authStatus === "authenticated" && !ssid)
     return (
@@ -32,8 +34,20 @@ export default function Visualizer2() {
       <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl">
         PR Analyzer
       </h1>
-
-      <VisualizerShadcn />
+      <div class="flex flex-col gap-5 md:flex-row">
+        <div class="w-full md:w-3/4">
+          <VisualizerShadcn
+            highlightDate={highlightDate}
+            setHighlightDate={setHighlightDate}
+          />
+        </div>
+        <div class="w-full md:w-1/4">
+          <SessionAnalysisCard
+            highlightDate={highlightDate}
+            setHighlightDate={setHighlightDate}
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { TrendingUp } from "lucide-react";
 import { CartesianGrid, LabelList, Line, LineChart, XAxis } from "recharts";
 import { getLiftColor } from "@/lib/get-lift-color";
+import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { devLog } from "@/lib/processing-utils";
@@ -99,6 +100,7 @@ export function VisualizerShadcn({
             {getTimeRangeDescription(timeRange, parsedData)}
           </CardDescription>
         </div>
+        <SidePanelSelectLiftsButton />
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger
             className="w-[160px] rounded-lg sm:ml-auto"

@@ -70,7 +70,9 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <CardTitle>Estimated One Rep Maxes</CardTitle>
-          <CardDescription>January - July 2024</CardDescription>
+          <CardDescription>
+            {getTimeRangeDescription(timeRange, parsedData)}
+          </CardDescription>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger
@@ -269,3 +271,47 @@ function timeRangetoDateSTR(timeRange) {
 
   return startDateStr;
 }
+
+const getTimeRangeDescription = (timeRange, parsedData) => {
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth(); // 0-based index, January is 0
+
+  const lastYear = currentYear - 1;
+
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  switch (timeRange) {
+    case "All":
+      if (parsedData.length === 0) return ""; // Ensure there's data to work with
+      const firstDate = new Date(parsedData[0].date);
+      const firstMonth = firstDate.getMonth();
+      const firstYear = firstDate.getFullYear();
+      return `${monthNames[firstMonth]} ${firstYear} - ${monthNames[currentMonth]} ${currentYear}`;
+
+    case "Year":
+      // From the current month last year to the same month this year
+      return `${monthNames[currentMonth]} ${lastYear} - ${monthNames[currentMonth]} ${currentYear}`;
+
+    case "Quarter":
+      const startMonthIndex = (currentMonth - 3 + 12) % 12; // Adjusting for negative month indices
+      const startMonthYear =
+        startMonthIndex > currentMonth ? currentYear - 1 : currentYear; // Adjust year if month index wrapped around
+      return `${monthNames[startMonthIndex]} ${startMonthYear} - ${monthNames[currentMonth]} ${currentYear}`;
+
+    default:
+      return "Time Range Not Specified";
+  }
+};

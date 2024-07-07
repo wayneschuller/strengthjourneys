@@ -149,7 +149,9 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
                 dot={false}
               />
             ))}
-            <ChartLegend content={<ChartLegendContent />} />
+            {lineData.length > 1 && (
+              <ChartLegend content={<ChartLegendContent />} />
+            )}
           </LineChart>
         </ChartContainer>
       </CardContent>

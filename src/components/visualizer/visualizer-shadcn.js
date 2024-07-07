@@ -163,29 +163,7 @@ export function processVisualizerData(
 
   const startTime = performance.now();
 
-  let startDateStr = "1900-01-01";
-  const today = new Date();
-
-  // Get the date 3 months ago
-  const threeMonthsAgo = new Date(today);
-  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-  const formattedThreeMonthsAgo = `${threeMonthsAgo.getFullYear()}-${(threeMonthsAgo.getMonth() + 1).toString().padStart(2, "0")}-${threeMonthsAgo.getDate().toString().padStart(2, "0")}`;
-
-  // Get the date 1 year ago
-  const oneYearAgo = new Date(today);
-  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-  const formattedOneYearAgo = `${oneYearAgo.getFullYear()}-${(oneYearAgo.getMonth() + 1).toString().padStart(2, "0")}-${oneYearAgo.getDate().toString().padStart(2, "0")}`;
-
-  switch (timeRange) {
-    case "Year":
-      startDateStr = formattedOneYearAgo;
-      break;
-    case "Quarter":
-      startDateStr = formattedThreeMonthsAgo;
-      break;
-    default:
-    // Nothing to do
-  }
+  const startDateStr = timeRangetoDateSTR(timeRange);
 
   const liftE1RMsByDate = {}; // Use entry.date as the key, holding the best e1rm for that date
 
@@ -232,4 +210,33 @@ export function processVisualizerData(
   );
 
   return entries;
+}
+
+// Return a start date ("YYYY-MM-DD" format) based on timeRange ("All", "Year", "Quarter") relative to today's date
+function timeRangetoDateSTR(timeRange) {
+  let startDateStr = "1900-01-01";
+  const today = new Date();
+
+  // Get the date 3 months ago
+  const threeMonthsAgo = new Date(today);
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  const formattedThreeMonthsAgo = `${threeMonthsAgo.getFullYear()}-${(threeMonthsAgo.getMonth() + 1).toString().padStart(2, "0")}-${threeMonthsAgo.getDate().toString().padStart(2, "0")}`;
+
+  // Get the date 1 year ago
+  const oneYearAgo = new Date(today);
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  const formattedOneYearAgo = `${oneYearAgo.getFullYear()}-${(oneYearAgo.getMonth() + 1).toString().padStart(2, "0")}-${oneYearAgo.getDate().toString().padStart(2, "0")}`;
+
+  switch (timeRange) {
+    case "Year":
+      startDateStr = formattedOneYearAgo;
+      break;
+    case "Quarter":
+      startDateStr = formattedThreeMonthsAgo;
+      break;
+    default:
+    // Nothing to do
+  }
+
+  return startDateStr;
 }

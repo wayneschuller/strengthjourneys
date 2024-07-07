@@ -2,6 +2,9 @@
 
 import { TrendingUp } from "lucide-react";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { devLog } from "@/lib/processing-utils";
 
 import {
   Card,
@@ -18,63 +21,63 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-];
+const formatXAxisDateString = (tickItem) => {
+  const date = new Date(tickItem);
+  return date.toLocaleString("en-US", { month: "short", day: "numeric" });
+};
 
 const chartConfig = {
-  desktop: {
-    label: "Desktop",
+  liftType: {
+    label: "Back Squat",
     color: "hsl(var(--chart-1))",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "hsl(var(--chart-2))",
   },
 };
 
 export function VisualizerShadcn() {
+  const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
+    useUserLiftingData();
+
+  const processedData = processVisualizerData(
+    parsedData,
+    "Brzycki",
+    "Back Squat",
+    "2024-03-01",
+  );
+
+  devLog(processedData);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Line Chart - Multiple</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>Back Squat Estimated One Rep Max</CardTitle>
+        <CardDescription>January - July 2024</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
           <LineChart
             accessibilityLayer
-            data={chartData}
+            data={processedData}
             margin={{
               left: 12,
               right: 12,
             }}
           >
-            <CartesianGrid vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" />
             <XAxis
-              dataKey="month"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
+              dataKey="x"
+              type="number"
+              domain={("auto", "auto")}
+              tickFormatter={formatXAxisDateString}
+              scale="time"
             />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <Line
-              dataKey="desktop"
-              type="monotone"
-              stroke="var(--color-desktop)"
-              strokeWidth={2}
-              dot={false}
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent labelKey="liftType" />}
             />
             <Line
-              dataKey="mobile"
+              dataKey="y"
               type="monotone"
-              stroke="var(--color-mobile)"
+              stroke="var(--color-liftType)"
               strokeWidth={2}
               dot={false}
             />
@@ -95,4 +98,65 @@ export function VisualizerShadcn() {
       </CardFooter>
     </Card>
   );
+}
+
+// This function uniquely processes the parsed data for the Visualizer
+export function processVisualizerData(
+  parsedData,
+  e1rmFormula,
+  liftType,
+  startDateStr,
+) {
+  if (parsedData === null) {
+    console.log(`Error: visualizerProcessParsedData passed null.`);
+    return;
+  }
+
+  const startTime = performance.now();
+
+  const liftE1RMsByDate = {}; // Use entry.date as the key, holding the best e1rm for that date
+
+  // Loop through the data and find the best E1RM on each date for this liftType
+  parsedData.forEach((entry) => {
+    if (entry.date < startDateStr) return;
+    if (entry.liftType !== liftType) return;
+    if (entry.isGoal) return;
+
+    const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
+
+    // Check if the current date already has a better E1RM
+    if (liftE1RMsByDate[entry.date]) {
+      if (liftE1RMsByDate[entry.date].y >= oneRepMax) {
+        return; // Skip update if the existing E1RM is greater or equal
+      }
+    }
+
+    const timeStamp = new Date(entry.date).getTime(); // Convert to Unix timestamp for x-axis
+
+    const fullEntry = {
+      ...entry, // Spread the original entry to include all properties
+      x: timeStamp,
+      y: oneRepMax,
+    };
+
+    // Record this new best e1rm on this date
+    liftE1RMsByDate[entry.date] = fullEntry;
+  });
+
+  // Convert object into an array of objects with the date included
+  const entries = Object.entries(liftE1RMsByDate).map(([date, entry]) => ({
+    date,
+    ...entry,
+  }));
+
+  // Sort the array by date using simple string comparison
+  entries.sort((a, b) => (a.date > b.date ? 1 : -1));
+
+  devLog(
+    "processVisualizerDataSHAD execution time: " +
+      `\x1b[1m${Math.round(performance.now() - startTime)}` +
+      `ms\x1b[0m`,
+  );
+
+  return entries;
 }

@@ -8,6 +8,9 @@ import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { devLog } from "@/lib/processing-utils";
 
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+
 import {
   Card,
   CardContent,
@@ -47,6 +50,7 @@ export function VisualizerShadcn({
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
     useUserLiftingData();
   const [timeRange, setTimeRange] = useState("Quarter"); // Options: "All", "Year", "Quarter"
+  const [showLabelValues, setShowLabelValues] = useState(false);
 
   const e1rmFormula = "Brzycki"; // FIXME: uselocalstorage state
 
@@ -70,6 +74,10 @@ export function VisualizerShadcn({
       label: "Mobile",
       color: "#60a5fa",
     },
+  };
+
+  const changeShowLabelValues = (show) => {
+    setShowLabelValues(show);
   };
 
   // FIXME: Not using this yet - just starting
@@ -170,12 +178,14 @@ export function VisualizerShadcn({
                 dot={false}
                 onMouseOver={(event, payload) => onDataHover(event)}
               >
-                <LabelList
-                  position="top"
-                  offset={12}
-                  className="fill-foreground"
-                  fontSize={12}
-                />
+                {showLabelValues && (
+                  <LabelList
+                    position="top"
+                    offset={12}
+                    className="fill-foreground"
+                    fontSize={12}
+                  />
+                )}
               </Line>
             ))}
             {lineData.length > 1 && (
@@ -184,6 +194,18 @@ export function VisualizerShadcn({
           </LineChart>
         </ChartContainer>
       </CardContent>
+      <CardFooter>
+        <div className="flex items-center space-x-2">
+          <Label className="font-light" htmlFor="show-values">
+            Show Values
+          </Label>
+          <Switch
+            id="airplane-mode"
+            value={showLabelValues}
+            onCheckedChange={changeShowLabelValues}
+          />
+        </div>
+      </CardFooter>
     </Card>
   );
 }

@@ -45,13 +45,13 @@ const chartConfig = {
 export function VisualizerShadcn() {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
     useUserLiftingData();
-  const [timeRange, setTimeRange] = useState("90d");
+  const [timeRange, setTimeRange] = useState("Quarter"); // Options: "All", "Year", "Quarter"
 
   const processedData = processVisualizerData(
     parsedData,
     "Brzycki",
     "Back Squat",
-    "2024-03-01",
+    timeRange,
   );
 
   devLog(processedData);
@@ -71,13 +71,13 @@ export function VisualizerShadcn() {
             <SelectValue placeholder="Last 3 months" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="90d" className="rounded-lg">
-              Last 12 months
+            <SelectItem value="All" className="rounded-lg">
+              All time
             </SelectItem>
-            <SelectItem value="30d" className="rounded-lg">
-              Last 6 months
+            <SelectItem value="Year" className="rounded-lg">
+              Last year
             </SelectItem>
-            <SelectItem value="7d" className="rounded-lg">
+            <SelectItem value="Quarter" className="rounded-lg">
               Last 3 months
             </SelectItem>
           </SelectContent>
@@ -144,7 +144,7 @@ export function processVisualizerData(
   parsedData,
   e1rmFormula,
   liftType,
-  startDateStr,
+  timeRange,
 ) {
   if (parsedData === null) {
     console.log(`Error: visualizerProcessParsedData passed null.`);
@@ -152,6 +152,19 @@ export function processVisualizerData(
   }
 
   const startTime = performance.now();
+
+  let startDateStr = "1900-01-01";
+
+  switch (timeRange) {
+    case "Year":
+      startDateStr = "2023-07-01";
+      break;
+    case "Quarter":
+      startDateStr = "2024-03-01";
+      break;
+    default:
+    // Nothing to do
+  }
 
   const liftE1RMsByDate = {}; // Use entry.date as the key, holding the best e1rm for that date
 

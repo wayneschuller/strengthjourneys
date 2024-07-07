@@ -22,7 +22,7 @@ export default function Visualizer2() {
     );
 
   return (
-    <div className="mx-4 mb-4 md:mx-[5vw]">
+    <div className="mx-4 mb-4 md:mx-[5vw] 2xl:mx-[15vw]">
       <Head>
         <title>PR Analyzer (Strength Journeys)</title>
         <meta name="description" content="Strength Journeys Lift PR Analyzer" />

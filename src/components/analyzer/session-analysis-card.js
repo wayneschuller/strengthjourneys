@@ -64,12 +64,10 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
     <Card className="flex-1">
       <CardHeader>
         <CardTitle>
-          {authStatus === "unauthenticated" && "Demo Mode: "}Session Analysis
+          {authStatus === "unauthenticated" && "Demo Mode: "}
+          {groupedWorkouts && getReadableDateString(sessionDate)} Session
         </CardTitle>
-        <CardDescription>
-          Lifting Session Date:{" "}
-          {groupedWorkouts && getReadableDateString(sessionDate)}
-        </CardDescription>
+        <CardDescription>Session overview and analysis</CardDescription>
       </CardHeader>
       <CardContent>
         {!groupedWorkouts && <Skeleton className="h-[50vh]" />}

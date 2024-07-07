@@ -135,7 +135,6 @@ export function VisualizerShadcn({
             <XAxis
               dataKey="x"
               type="number"
-              // domain={("auto", "auto")}
               domain={[
                 (dataMin) =>
                   new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),

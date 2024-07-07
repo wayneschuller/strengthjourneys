@@ -152,7 +152,7 @@ export function VisualizerShadcn({
                     } else {
                       label = `Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
                     }
-                    // setHighlightDate(tuple.date);
+                    setHighlightDate(tuple.date);
                     return label;
                   }}
                 />

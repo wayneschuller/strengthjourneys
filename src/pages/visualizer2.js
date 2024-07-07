@@ -41,7 +41,6 @@ export default function Visualizer2() {
       <div className="flex flex-col gap-5 md:flex-row">
         <div className="w-full lg:w-1/2 xl:w-3/4">
           <VisualizerShadcn
-            highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}
             onDataHover={handleDataHover}
           />

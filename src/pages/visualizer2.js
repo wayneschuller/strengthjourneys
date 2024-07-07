@@ -24,7 +24,7 @@ export default function Visualizer2() {
     );
 
   return (
-    <div className="mx-4 mb-4 md:mx-[5vw] 2xl:mx-[15vw]">
+    <div className="mx-4 mb-4 md:mx-[5vw]">
       <Head>
         <title>PR Analyzer (Strength Journeys)</title>
         <meta name="description" content="Strength Journeys Lift PR Analyzer" />
@@ -35,13 +35,13 @@ export default function Visualizer2() {
         PR Analyzer
       </h1>
       <div class="flex flex-col gap-5 md:flex-row">
-        <div class="w-full md:w-3/4">
+        <div class="w-full lg:w-1/2 xl:w-3/4">
           <VisualizerShadcn
             highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}
           />
         </div>
-        <div class="w-full md:w-1/4">
+        <div class="w-full lg:w-1/2 xl:w-1/4">
           <SessionAnalysisCard
             highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}

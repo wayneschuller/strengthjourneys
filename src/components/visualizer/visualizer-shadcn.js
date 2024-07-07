@@ -63,7 +63,7 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
-          <CardTitle>Back Squat Estimated One Rep Max</CardTitle>
+          <CardTitle>Estimated One Rep Maxes</CardTitle>
           <CardDescription>January - July 2024</CardDescription>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
@@ -111,21 +111,18 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
                 <ChartTooltipContent
                   indicator="line"
                   labelFormatter={(value, payload) => {
-                    devLog(payload);
                     const tuple = payload[0].payload;
                     return `${formatXAxisDateString(tuple.date)}`;
                   }}
                   formatter={(value, name, entry) => {
-                    // devLog(entry);
                     const tuple = entry.payload;
-                    // devLog(tuple);
                     const oneRepMax = estimateE1RM(
                       tuple.reps,
                       tuple.weight,
                       e1rmFormula,
                     );
 
-                    // FIXME: add nice date and shadlike design
+                    // FIXME: add color line and shadlike design
                     let label = "";
                     if (tuple.reps === 1) {
                       label = `Lifted ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
@@ -148,19 +145,6 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
           </LineChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter>
-        <div className="flex w-full items-start gap-2 text-sm">
-          <div className="grid gap-2">
-            <div className="flex items-center gap-2 font-medium leading-none">
-              {highlightDate} Trending up by 5.2% this month{" "}
-              <TrendingUp className="h-4 w-4" />
-            </div>
-            <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              Showing total visitors for the last 6 months
-            </div>
-          </div>
-        </div>
-      </CardFooter>
     </Card>
   );
 }

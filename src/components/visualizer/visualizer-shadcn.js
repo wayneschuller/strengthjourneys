@@ -47,6 +47,7 @@ export function VisualizerShadcn() {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
     useUserLiftingData();
   const [timeRange, setTimeRange] = useState("Quarter"); // Options: "All", "Year", "Quarter"
+  const [highlightDate, setHighlightDate] = useState(null);
 
   const e1rmFormula = "Brzycki"; // FIXME: uselocalstorage state
 
@@ -110,20 +111,29 @@ export function VisualizerShadcn() {
               content={
                 <ChartTooltipContent
                   indicator="line"
-                  labelFormatter={(value, entry) => {
-                    // devLog(entry);
-                    return `${formatXAxisDateString(entry[0].payload.date)}`;
+                  labelFormatter={(value, payload) => {
+                    devLog(payload);
+                    const tuple = payload[0].payload;
+                    return `${formatXAxisDateString(tuple.date)}`;
                   }}
                   formatter={(value, name, entry) => {
-                    devLog(entry);
+                    // devLog(entry);
                     const tuple = entry.payload;
-                    devLog(tuple);
+                    // devLog(tuple);
                     const oneRepMax = estimateE1RM(
                       tuple.reps,
                       tuple.weight,
                       e1rmFormula,
                     );
-                    const label = `Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType} (${e1rmFormula} formula)`;
+
+                    // FIXME: add nice date and shadlike design
+                    let label = "";
+                    if (tuple.reps === 1) {
+                      label = `Lifted ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
+                    } else {
+                      label = `Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
+                    }
+                    setHighlightDate(tuple.date);
                     return label;
                   }}
                 />
@@ -143,7 +153,8 @@ export function VisualizerShadcn() {
         <div className="flex w-full items-start gap-2 text-sm">
           <div className="grid gap-2">
             <div className="flex items-center gap-2 font-medium leading-none">
-              Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+              {highlightDate} Trending up by 5.2% this month{" "}
+              <TrendingUp className="h-4 w-4" />
             </div>
             <div className="flex items-center gap-2 leading-none text-muted-foreground">
               Showing total visitors for the last 6 months

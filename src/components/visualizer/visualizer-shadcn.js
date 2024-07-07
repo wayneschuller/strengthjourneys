@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// FIXME: I have a function to do this which removes current year
 const formatXAxisDateString = (tickItem) => {
   const date = new Date(tickItem);
   return date.toLocaleString("en-US", { month: "short", day: "numeric" });
@@ -47,9 +48,11 @@ export function VisualizerShadcn() {
     useUserLiftingData();
   const [timeRange, setTimeRange] = useState("Quarter"); // Options: "All", "Year", "Quarter"
 
+  const e1rmFormula = "Brzycki"; // FIXME: uselocalstorage state
+
   const processedData = processVisualizerData(
     parsedData,
-    "Brzycki",
+    e1rmFormula,
     "Back Squat",
     timeRange,
   );
@@ -106,9 +109,22 @@ export function VisualizerShadcn() {
               cursor={false}
               content={
                 <ChartTooltipContent
+                  indicator="line"
                   labelFormatter={(value, entry) => {
                     // devLog(entry);
                     return `${formatXAxisDateString(entry[0].payload.date)}`;
+                  }}
+                  formatter={(value, name, entry) => {
+                    devLog(entry);
+                    const tuple = entry.payload;
+                    devLog(tuple);
+                    const oneRepMax = estimateE1RM(
+                      tuple.reps,
+                      tuple.weight,
+                      e1rmFormula,
+                    );
+                    const label = `Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType} (${e1rmFormula} formula)`;
+                    return label;
                   }}
                 />
               }

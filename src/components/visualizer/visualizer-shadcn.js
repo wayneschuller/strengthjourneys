@@ -39,7 +39,11 @@ const formatXAxisDateString = (tickItem) => {
   return date.toLocaleString("en-US", { month: "short", day: "numeric" });
 };
 
-export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
+export function VisualizerShadcn({
+  highlightDate,
+  setHighlightDate,
+  onDataHover,
+}) {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
     useUserLiftingData();
   const [timeRange, setTimeRange] = useState("Quarter"); // Options: "All", "Year", "Quarter"
@@ -148,7 +152,7 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
                     } else {
                       label = `Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
                     }
-                    setHighlightDate(tuple.date);
+                    // setHighlightDate(tuple.date);
                     return label;
                   }}
                 />
@@ -164,6 +168,7 @@ export function VisualizerShadcn({ highlightDate, setHighlightDate }) {
                 name={line.label}
                 strokeWidth={2}
                 dot={false}
+                onMouseOver={(event, payload) => onDataHover(event)}
               >
                 <LabelList
                   position="top"

@@ -60,6 +60,7 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
   const [showLabelValues, setShowLabelValues] = useState(false);
   const [showAllData, setShowAllData] = useState(false); // Show weekly bests or all data
   const [activeDate, setActiveDate] = useState(null); // Used for dynamic vertical reference dashed line
+  const [tooltipX, setToolTipX] = useState(0); // Used for dynamic vertical reference dashed line
 
   const e1rmFormula = "Brzycki"; // FIXME: uselocalstorage state
 
@@ -125,6 +126,7 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
       // devLog(event);
       setActiveDate(event.activeLabel);
       setHighlightDate(event.activePayload[0].payload.date);
+      setToolTipX(event.chartX);
     }
   };
 
@@ -221,6 +223,7 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
                     }}
                   />
                 }
+                position={{ x: tooltipX - 100, y: 10 }}
               />
             )}
             <defs>

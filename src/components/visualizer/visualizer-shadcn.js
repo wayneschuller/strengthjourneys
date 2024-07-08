@@ -213,8 +213,10 @@ export function VisualizerShadcn({ setHighlightDate }) {
             {activeDateRef.current && (
               <ReferenceLine
                 x={activeDateRef.current}
-                stroke="red"
-                strokeDasharray="5 5"
+                // stroke="red" // FIXME: Doesn't seem to apply?
+                // stroke="var(--color-foreground)" // FIXME: Doesn't work either
+                strokeDasharray="5 6"
+                strokeWidth={3}
                 // label={activeDate}
               />
             )}
@@ -281,13 +283,11 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 key={`${line.label}-${index}`}
                 type="monotone"
                 dataKey={`y_${line.label}`}
-                // dataKey="y"
                 data={line.data}
                 stroke={line.color}
                 name={line.label}
                 strokeWidth={2}
-                // type="natural"
-                // fill={`url(#fill${line.label})`}
+                // fill={`url(#fill${line.label})`} // FIXME: dynamic fill does not work yet
                 fill="url(#fillSquat)"
                 fillOpacity={0.4}
                 dot={false}

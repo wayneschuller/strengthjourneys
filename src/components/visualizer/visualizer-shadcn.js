@@ -18,6 +18,7 @@ import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { devLog } from "@/lib/processing-utils";
+import { useLocalStorage } from "usehooks-ts";
 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -56,9 +57,15 @@ const formatXAxisDateString = (tickItem) => {
 export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
     useUserLiftingData();
-  const [timeRange, setTimeRange] = useState("Quarter"); // Options: "All", "Year", "Quarter"
-  const [showLabelValues, setShowLabelValues] = useState(false);
-  const [showAllData, setShowAllData] = useState(false); // Show weekly bests or all data
+  const [timeRange, setTimeRange] = useLocalStorage("SJ_timeRange", "Quarter"); // Options: "All", "Year", "Quarter"
+  const [showLabelValues, setShowLabelValues] = useLocalStorage(
+    "SJ_showLabelValues",
+    false,
+  );
+  const [showAllData, setShowAllData] = useLocalStorage(
+    "SJ_showAllData",
+    false,
+  ); // Show weekly bests or all data
   const [activeDate, setActiveDate] = useState(null); // Used for dynamic vertical reference dashed line
   const [tooltipX, setToolTipX] = useState(0); // Used for dynamic vertical reference dashed line
 
@@ -82,11 +89,14 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
   // setChartData(processedData);
   // devLog(selectedLiftTypes);
 
-  // Calculate the maximum weight and add 50 kg
-  const firstLiftData = processedData[0].data;
-  const maxWeightValue = Math.max(
-    ...firstLiftData.map((item) => item.oneRepMax),
+  // const firstLiftData = processedData[0].data;
+  // const maxWeightValue = Math.max( ...firstLiftData.map((item) => item.oneRepMax),);
+
+  const maxWeightValues = processedData.map((entry) =>
+    Math.max(...entry.data.map((item) => item.oneRepMax)),
   );
+
+  const maxWeightValue = Math.max(...maxWeightValues);
 
   // Round maxWeightValue up to the next multiple of 50
   // const roundedMaxWeightValue = Math.ceil(maxWeightValue / 50) * 50;
@@ -287,11 +297,12 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
         <div className="flex w-full justify-between">
           <div className="flex items-center space-x-2">
             <Label className="font-light" htmlFor="show-values">
-              Show Values
+              Show All Values
             </Label>
             <Switch
               id="show-values"
               value={showLabelValues}
+              checked={showLabelValues}
               onCheckedChange={(show) => setShowLabelValues(show)}
             />
           </div>
@@ -302,6 +313,7 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
             <Switch
               id="all-data"
               value={showAllData}
+              checked={showAllData}
               onCheckedChange={(show) => setShowAllData(show)}
             />
             <Label className="font-light" htmlFor="show-values">

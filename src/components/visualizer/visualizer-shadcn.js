@@ -569,7 +569,8 @@ function TimeRangeSelect({ timeRange, setTimeRange }) {
   // Manually push "All Time" option
   validSelectTimeDomains.push({
     label: "All time",
-    timeRangeThreshold: firstDateStr,
+    // timeRangeThreshold: firstDateStr,
+    timeRangeThreshold: "1900-01-01",
   });
 
   // devLog(validSelectTimeDomains);

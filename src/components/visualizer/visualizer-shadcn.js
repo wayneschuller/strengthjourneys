@@ -99,7 +99,7 @@ export function VisualizerShadcn({
     setShowLabelValues(show);
   };
   const handleMouseEnter = (data) => {
-    if (data && data.payload) {
+    if (data && data.payload && data.payload.date !== highlightDate) {
       setHighlightDate(data.payload.date);
     }
   };
@@ -162,6 +162,7 @@ export function VisualizerShadcn({
                     indicator="line"
                     // labelFormatter={(value, payload) => { const tuple = payload[0].payload; return `${formatXAxisDateString(tuple.date)}`; }}
                     formatter={(value, name, entry) => {
+                      devLog(value);
                       const tuple = entry.payload;
 
                       const oneRepMax = estimateE1RM(

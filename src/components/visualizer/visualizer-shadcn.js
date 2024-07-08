@@ -131,10 +131,6 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
     }
   };
 
-  const handleMouseLeave = () => {
-    // setActiveDate(null);
-  };
-
   // FIXME: Not using this yet - just starting
   const CustomLabel = (props) => {
     const { x, y, value, payload } = props;

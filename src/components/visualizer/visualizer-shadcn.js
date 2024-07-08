@@ -170,7 +170,6 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
               right: 12,
             }}
             onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
           >
             <CartesianGrid vertical={false} />
 

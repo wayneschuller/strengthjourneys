@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { TrendingUp } from "lucide-react";
 import {
   CartesianGrid,

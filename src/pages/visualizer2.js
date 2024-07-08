@@ -35,10 +35,10 @@ export default function Visualizer2() {
         PR Analyzer
       </h1>
       <div className="flex flex-col gap-5 md:flex-row">
-        <div className="w-full lg:w-1/2 xl:w-3/4">
+        <div className="w-full lg:w-1/2 xl:w-2/3">
           <VisualizerShadcn setHighlightDate={setHighlightDate} />
         </div>
-        <div className="w-full lg:w-1/2 xl:w-1/4">
+        <div className="w-full lg:w-1/2 xl:w-1/3">
           <SessionAnalysisCard highlightDate={highlightDate} />
         </div>
       </div>

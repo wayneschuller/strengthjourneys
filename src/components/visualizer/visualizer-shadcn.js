@@ -584,7 +584,11 @@ function TimeRangeSelect({ timeRange, setTimeRange }) {
       </SelectTrigger>
       <SelectContent className="rounded-xl">
         {validSelectTimeDomains.map((period) => (
-          <SelectItem value={period.timeRangeThreshold} className="rounded-lg">
+          <SelectItem
+            key={`${period.label}-${period.timeRangeThreshold}`}
+            value={period.timeRangeThreshold}
+            className="rounded-lg"
+          >
             {period.label}
           </SelectItem>
         ))}

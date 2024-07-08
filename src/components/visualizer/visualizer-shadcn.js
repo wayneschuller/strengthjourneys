@@ -474,11 +474,10 @@ function timeRangetoDateStr(timeRange) {
   return startDateStr;
 }
 
+// Used in the chart card description
 const getTimeRangeDescription = (timeRange, parsedData) => {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth(); // 0-based index, January is 0
-
-  const lastYear = currentYear - 1;
 
   const monthNames = [
     "January",
@@ -495,27 +494,16 @@ const getTimeRangeDescription = (timeRange, parsedData) => {
     "December",
   ];
 
-  switch (timeRange) {
-    case "All":
-      if (parsedData.length === 0) return ""; // Ensure there's data to work with
-      const firstDate = new Date(parsedData[0].date);
-      const firstMonth = firstDate.getMonth();
-      const firstYear = firstDate.getFullYear();
-      return `${monthNames[firstMonth]} ${firstYear} - ${monthNames[currentMonth]} ${currentYear}`;
-
-    case "Year":
-      // From the current month last year to the same month this year
-      return `${monthNames[currentMonth]} ${lastYear} - ${monthNames[currentMonth]} ${currentYear}`;
-
-    case "Quarter":
-      const startMonthIndex = (currentMonth - 3 + 12) % 12; // Adjusting for negative month indices
-      const startMonthYear =
-        startMonthIndex > currentMonth ? currentYear - 1 : currentYear; // Adjust year if month index wrapped around
-      return `${monthNames[startMonthIndex]} ${startMonthYear} - ${monthNames[currentMonth]} ${currentYear}`;
-
-    default:
-      return "Time Range Not Specified";
+  let timeRangeDate = new Date(timeRange);
+  if (timeRange === "1900-01-01") {
+    // Special case for the "All Time" category
+    timeRangeDate = new Date(parsedData[0].date); // Use first user data date for "All Time" option
   }
+
+  let month = timeRangeDate.getMonth();
+  let year = timeRangeDate.getFullYear();
+
+  return `${monthNames[month]} ${year !== currentYear ? `${year}` : ""} - ${monthNames[currentMonth]} ${currentYear}`;
 };
 
 // These are the full period targets we will use for Visualizer chart time domains
@@ -569,7 +557,6 @@ function TimeRangeSelect({ timeRange, setTimeRange }) {
   // Manually push "All Time" option
   validSelectTimeDomains.push({
     label: "All time",
-    // timeRangeThreshold: firstDateStr,
     timeRangeThreshold: "1900-01-01",
   });
 

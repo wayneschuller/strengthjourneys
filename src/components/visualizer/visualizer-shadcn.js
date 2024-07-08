@@ -414,7 +414,7 @@ function processVisualizerData(
     // Check if the current date already has a better E1RM
     if (datasets[liftTypeKey].data.has(entry.date)) {
       const currentData = datasets[liftTypeKey].data.get(entry.date);
-      if (currentData.y >= oneRepMax) {
+      if (currentData.oneRepMax >= oneRepMax) {
         return; // Skip update if the existing E1RM is greater or equal
       }
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { subMonths } from "date-fns";
 import { TrendingUp } from "lucide-react";
 import {
   CartesianGrid,
@@ -57,7 +58,10 @@ const formatXAxisDateString = (tickItem) => {
 export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
     useUserLiftingData();
-  const [timeRange, setTimeRange] = useLocalStorage("SJ_timeRange", "Quarter"); // Options: "All", "Year", "Quarter"
+  const [timeRange, setTimeRange] = useLocalStorage(
+    "SJ_timeRange",
+    "1900-01-01", // The start date threshold for inclusion in the chart
+  );
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
     "SJ_showLabelValues",
     false,
@@ -341,30 +345,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
   );
 }
 
-function TimeRangeSelect({ timeRange, setTimeRange }) {
-  return (
-    <Select value={timeRange} onValueChange={setTimeRange}>
-      <SelectTrigger
-        className="w-[160px] rounded-lg sm:ml-auto"
-        aria-label="Select a value"
-      >
-        <SelectValue placeholder="Last 3 months" />
-      </SelectTrigger>
-      <SelectContent className="rounded-xl">
-        <SelectItem value="All" className="rounded-lg">
-          All time
-        </SelectItem>
-        <SelectItem value="Year" className="rounded-lg">
-          Last year
-        </SelectItem>
-        <SelectItem value="Quarter" className="rounded-lg">
-          Last 3 months
-        </SelectItem>
-      </SelectContent>
-    </Select>
-  );
-}
-
 function processVisualizerData(
   parsedData,
   e1rmFormula,
@@ -379,7 +359,8 @@ function processVisualizerData(
 
   const startTime = performance.now();
 
-  const startDateStr = timeRangetoDateStr(timeRange);
+  // const startDateStr = timeRangetoDateStr(timeRange);
+  const startDateStr = timeRange;
 
   const datasets = {}; // We build chart.js datasets with the lift type as the object key
   const recentLifts = {}; // Used for weekly bests data decimation
@@ -536,3 +517,78 @@ const getTimeRangeDescription = (timeRange, parsedData) => {
       return "Time Range Not Specified";
   }
 };
+
+// These are the full period targets we will use for Visualizer chart time domains
+// This allows us to offer time domains on the visualizer that match the user data
+// The algorithm assumes each period is longer than the next
+const periodTargets = [
+  {
+    label: "Last 3 months",
+    months: 3,
+  },
+  {
+    label: "Last 6 months",
+    months: 6,
+  },
+  {
+    label: "Last year",
+    months: 12,
+  },
+  {
+    label: "Last 2 years",
+    months: 12 * 2,
+  },
+  {
+    label: "Last 5 years",
+    months: 12 * 5,
+  },
+  // All Time option will be pushed manually
+];
+
+function TimeRangeSelect({ timeRange, setTimeRange }) {
+  const { parsedData } = useUserLiftingData();
+
+  const firstDateStr = parsedData[0].date; // This is the first date in "YYYY-MM-DD" format
+
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  let validSelectTimeDomains = [];
+
+  periodTargets.forEach((period) => {
+    const dateMonthsAgo = subMonths(new Date(), period.months);
+    const thresholdDateStr = dateMonthsAgo.toISOString().split("T")[0];
+
+    if (firstDateStr < thresholdDateStr) {
+      validSelectTimeDomains.push({
+        label: period.label,
+        timeRangeThreshold: thresholdDateStr,
+      });
+    }
+  });
+
+  // Manually push "All Time" option
+  validSelectTimeDomains.push({
+    label: "All time",
+    timeRangeThreshold: firstDateStr,
+  });
+
+  // devLog(validSelectTimeDomains);
+
+  return (
+    <Select value={timeRange} onValueChange={setTimeRange}>
+      <SelectTrigger
+        className="w-[160px] rounded-lg sm:ml-auto"
+        aria-label="Select a value"
+      >
+        <SelectValue placeholder="All time" />
+      </SelectTrigger>
+      <SelectContent className="rounded-xl">
+        {validSelectTimeDomains.map((period) => (
+          <SelectItem value={period.timeRangeThreshold} className="rounded-lg">
+            {period.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}

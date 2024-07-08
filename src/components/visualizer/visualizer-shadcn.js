@@ -13,7 +13,7 @@ import {
   YAxis,
   ReferenceLine,
 } from "recharts";
-import { getLiftColor } from "@/lib/get-lift-color";
+import { getLiftColor, brightenHexColor } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
@@ -400,11 +400,13 @@ function processVisualizerData(
 
     // Lazy initialization of dataset for the lift type
     if (!datasets[liftTypeKey]) {
-      // const brightColor = brightenHexColor(color, 1.1);
+      const color = getLiftColor(liftTypeKey);
+      const brightColor = brightenHexColor(color, 1.1);
       datasets[liftTypeKey] = {
         label: liftTypeKey,
         data: new Map(), // Using Map for efficient lookups
-        color: getLiftColor(liftTypeKey),
+        color: color,
+        brightColor: brightColor,
       };
     }
 

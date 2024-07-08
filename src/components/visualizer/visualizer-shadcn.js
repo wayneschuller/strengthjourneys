@@ -153,6 +153,24 @@ export function VisualizerShadcn({ setHighlightDate }) {
     }
   };
 
+  // FIXME: unfinished attempt to have dynamic consistent ticks
+  const xAxisTickFormatter = (tick, index, dataLength) => {
+    devLog(dataLength);
+    if (timeRange < "2020-01-01") {
+      // If data spans more than a year
+      return new Date(tick).getFullYear();
+    } else if (dataLength > 30) {
+      // If data spans more than a month
+      return new Date(tick).toLocaleDateString("default", {
+        month: "short",
+        year: "numeric",
+      });
+    } else {
+      // If data spans days or less than a month
+      return new Date(tick).toLocaleDateString();
+    }
+  };
+
   // FIXME: Not using this yet - just starting
   const CustomLabel = (props) => {
     const { x, y, value, payload } = props;
@@ -201,7 +219,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 (dataMax) =>
                   new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
               ]}
-              tickFormatter={formatXAxisDateString}
+              // tickFormatter={formatXAxisDateString}
+              tickFormatter={xAxisTickFormatter}
             />
             <YAxis
               domain={[0, roundedMaxWeightValue]}

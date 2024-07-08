@@ -58,8 +58,8 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
     useUserLiftingData();
   const [timeRange, setTimeRange] = useState("Quarter"); // Options: "All", "Year", "Quarter"
   const [showLabelValues, setShowLabelValues] = useState(false);
+  const [showAllData, setShowAllData] = useState(false); // Show weekly bests or all data
   const [activeDate, setActiveDate] = useState(null); // Used for dynamic vertical reference dashed line
-  // const [chartData, setChartData] = useState([]);
 
   const e1rmFormula = "Brzycki"; // FIXME: uselocalstorage state
 
@@ -71,6 +71,7 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
     e1rmFormula,
     selectedLiftTypes,
     timeRange,
+    showAllData,
   );
 
   devLog(processedData);
@@ -116,10 +117,6 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
       label: "Mobile",
       color: "#60a5fa",
     },
-  };
-
-  const changeShowLabelValues = (show) => {
-    setShowLabelValues(show);
   };
 
   const handleMouseMove = (event) => {
@@ -284,15 +281,30 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
         </ChartContainer>
       </CardContent>
       <CardFooter>
-        <div className="flex items-center space-x-2">
-          <Label className="font-light" htmlFor="show-values">
-            Show Values
-          </Label>
-          <Switch
-            id="airplane-mode"
-            value={showLabelValues}
-            onCheckedChange={changeShowLabelValues}
-          />
+        <div className="flex w-full justify-between">
+          <div className="flex items-center space-x-2">
+            <Label className="font-light" htmlFor="show-values">
+              Show Values
+            </Label>
+            <Switch
+              id="show-values"
+              value={showLabelValues}
+              onCheckedChange={(show) => setShowLabelValues(show)}
+            />
+          </div>
+          <div className="flex items-center space-x-1">
+            <Label className="font-light" htmlFor="show-values">
+              Weekly Bests
+            </Label>
+            <Switch
+              id="all-data"
+              value={showAllData}
+              onCheckedChange={(show) => setShowAllData(show)}
+            />
+            <Label className="font-light" htmlFor="show-values">
+              All Data
+            </Label>
+          </div>
         </div>
       </CardFooter>
     </Card>
@@ -328,6 +340,7 @@ function processVisualizerData(
   e1rmFormula,
   selectedLiftTypes,
   timeRange,
+  showAllData = false,
 ) {
   if (parsedData === null) {
     console.log(`Error: visualizerProcessParsedData passed null.`);

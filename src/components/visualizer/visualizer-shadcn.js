@@ -153,7 +153,7 @@ export function VisualizerShadcn({
               ]}
               tickFormatter={formatXAxisDateString}
             />
-            {false && (
+            {true && (
               <ChartTooltip
                 cursor={false}
                 // labelKey=""

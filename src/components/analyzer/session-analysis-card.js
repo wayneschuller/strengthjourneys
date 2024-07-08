@@ -93,8 +93,22 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
                               workout.prIndex !== -1 ? "font-bold" : ""
                             }
                           >
-                            {workout.reps}@{workout.weight}
-                            {workout.unitType}{" "}
+                            {workout.URL ? (
+                              <a
+                                href={workout.URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline"
+                              >
+                                {workout.reps}@{workout.weight}
+                                {workout.unitType}{" "}
+                              </a>
+                            ) : (
+                              <>
+                                {workout.reps}@{workout.weight}
+                                {workout.unitType}{" "}
+                              </>
+                            )}
                           </div>
                           <div className="ml-6 inline-block">
                             {workout.prSentenceReport

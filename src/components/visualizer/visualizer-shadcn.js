@@ -352,6 +352,8 @@ function processVisualizerData(
   const startDateStr = timeRangetoDateStr(timeRange);
 
   const datasets = {}; // We build chart.js datasets with the lift type as the object key
+  const recentLifts = {}; // Used for weekly bests data decimation
+  const decimationDaysWindow = 7; // Only chart the best e1rm in the N day window
 
   // Loop through the data and find the best E1RM on each date for this liftType
   parsedData.forEach((entry) => {
@@ -387,6 +389,20 @@ function processVisualizerData(
       }
     }
 
+    // Data decimation - skip lower lifts if there was something bigger the last N day window
+    if (!showAllData && recentLifts[liftTypeKey]) {
+      const recentDate = new Date(recentLifts[liftTypeKey].date);
+      const dayDiff = (currentDate - recentDate) / (1000 * 60 * 60 * 24);
+
+      // Check if we already have a much better lift in the data decimation window
+      if (
+        dayDiff <= decimationDaysWindow &&
+        oneRepMax <= recentLifts[liftTypeKey].oneRepMax * 0.95
+      ) {
+        return; // Skip this entry
+      }
+    }
+
     const timeStamp = new Date(entry.date).getTime(); // Convert to Unix timestamp for x-axis
 
     const fullEntry = {
@@ -398,6 +414,7 @@ function processVisualizerData(
 
     // Record this new best e1rm on this date
     datasets[liftTypeKey].data.set(entry.date, fullEntry);
+    recentLifts[liftTypeKey] = fullEntry; // Store the full entry for future comparisons
   });
 
   // Convert object into an array of objects with the date included

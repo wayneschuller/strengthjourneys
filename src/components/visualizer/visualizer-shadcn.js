@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { TrendingUp } from "lucide-react";
-import { CartesianGrid, LabelList, Line, LineChart, XAxis } from "recharts";
+import {
+  CartesianGrid,
+  LabelList,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
@@ -65,8 +72,19 @@ export function VisualizerShadcn({
     timeRange,
   );
 
-  // devLog(chartData);
+  devLog(chartData);
   // devLog(selectedLiftTypes);
+
+  // Calculate the maximum weight and add 50 kg
+  const firstLiftData = chartData[0].data;
+  const maxWeightValue = Math.max(
+    ...firstLiftData.map((item) => item.oneRepMax),
+  );
+
+  // Round maxWeightValue up to the next multiple of 50
+  // const roundedMaxWeightValue = Math.ceil(maxWeightValue / 50) * 50;
+  const roundedMaxWeightValue = maxWeightValue * 1.1;
+  // devLog(maxValue);
 
   // FIXME: this chartConfig is hacky - shad expects it for colors but I want to dynamically find colors
   const chartConfigMEH = {
@@ -153,6 +171,12 @@ export function VisualizerShadcn({
               ]}
               tickFormatter={formatXAxisDateString}
             />
+            <YAxis
+              domain={[0, roundedMaxWeightValue]}
+              hide={true}
+              allowDataOverflow
+            />
+
             {true && (
               <ChartTooltip
                 cursor={false}
@@ -162,7 +186,7 @@ export function VisualizerShadcn({
                     indicator="line"
                     // labelFormatter={(value, payload) => { const tuple = payload[0].payload; return `${formatXAxisDateString(tuple.date)}`; }}
                     formatter={(value, name, entry) => {
-                      devLog(value);
+                      // devLog(value);
                       const tuple = entry.payload;
 
                       const oneRepMax = estimateE1RM(
@@ -188,7 +212,8 @@ export function VisualizerShadcn({
               <Line
                 key={`${line.label}-${index}`}
                 type="monotone"
-                dataKey="y"
+                dataKey={`y_${line.label}`}
+                // dataKey="y"
                 data={line.data}
                 stroke={line.color}
                 name={line.label}
@@ -198,7 +223,7 @@ export function VisualizerShadcn({
                   onMouseEnter: handleMouseEnter,
                   fill: "rgba(0, 0, 0, 0)", // Making the dot transparent
                   stroke: "rgba(0, 0, 0, 0)", // Making the border of the dot transparent
-                  r: 10, // Increasing the radius for a larger interactive area
+                  r: 20, // Increasing the radius for a larger interactive area
                 }}
               >
                 {showLabelValues && (
@@ -313,7 +338,8 @@ function processVisualizerData(
     const fullEntry = {
       ...entry, // Spread the original entry to include all properties
       x: timeStamp,
-      y: oneRepMax,
+      oneRepMax: oneRepMax,
+      [`y_${liftTypeKey}`]: oneRepMax,
     };
 
     // Record this new best e1rm on this date

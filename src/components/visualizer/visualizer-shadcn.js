@@ -54,7 +54,7 @@ const formatXAxisDateString = (tickItem) => {
   return date.toLocaleString("en-US", { month: "short", day: "numeric" });
 };
 
-export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
+export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
     useUserLiftingData();
   const [timeRange, setTimeRange] = useLocalStorage("SJ_timeRange", "Quarter"); // Options: "All", "Year", "Quarter"
@@ -66,8 +66,13 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
     "SJ_showAllData",
     false,
   ); // Show weekly bests or all data
-  const [activeDate, setActiveDate] = useState(null); // Used for dynamic vertical reference dashed line
-  const [tooltipX, setToolTipX] = useState(0); // Used for dynamic vertical reference dashed line
+
+  // Use useRef for variables that don't require re-render
+  const activeDateRef = useRef(null);
+  const tooltipXRef = useRef(0);
+
+  // const [activeDate, setActiveDate] = useState(null); // Used for dynamic vertical reference dashed line
+  // const [tooltipX, setToolTipX] = useState(0); // Used for dynamic vertical reference dashed line
 
   const e1rmFormula = "Brzycki"; // FIXME: uselocalstorage state
 
@@ -135,9 +140,12 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
     if (event && event.activePayload) {
       const activeIndex = event.activeTooltipIndex;
       // devLog(event);
-      setActiveDate(event.activeLabel);
+      // setActiveDate(event.activeLabel);
+      // setToolTipX(event.chartX);
+      activeDateRef.current = event.activeLabel;
+      tooltipXRef.current = event.chartX;
+
       setHighlightDate(event.activePayload[0].payload.date);
-      setToolTipX(event.chartX);
     }
   };
 
@@ -202,9 +210,9 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
               )}
               allowDataOverflow
             />
-            {activeDate && (
+            {activeDateRef.current && (
               <ReferenceLine
-                x={activeDate}
+                x={activeDateRef.current}
                 stroke="red"
                 strokeDasharray="5 5"
                 // label={activeDate}
@@ -240,7 +248,7 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
                     }}
                   />
                 }
-                position={{ x: tooltipX - 100, y: 10 }}
+                position={{ x: tooltipXRef.current - 100, y: 10 }}
               />
             )}
             <defs>

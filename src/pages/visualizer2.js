@@ -23,10 +23,6 @@ export default function Visualizer2() {
       </div>
     );
 
-  const handleDataHover = (data) => {
-    devLog(data);
-  };
-
   return (
     <div className="mx-4 mb-4 md:mx-[5vw]">
       <Head>
@@ -40,10 +36,7 @@ export default function Visualizer2() {
       </h1>
       <div className="flex flex-col gap-5 md:flex-row">
         <div className="w-full lg:w-1/2 xl:w-3/4">
-          <VisualizerShadcn
-            setHighlightDate={setHighlightDate}
-            onDataHover={handleDataHover}
-          />
+          <VisualizerShadcn setHighlightDate={setHighlightDate} />
         </div>
         <div className="w-full lg:w-1/2 xl:w-1/4">
           <SessionAnalysisCard highlightDate={highlightDate} />

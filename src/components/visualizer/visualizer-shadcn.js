@@ -4,11 +4,14 @@ import { useState } from "react";
 import { TrendingUp } from "lucide-react";
 import {
   CartesianGrid,
+  Area,
+  AreaChart,
   LabelList,
   Line,
   LineChart,
   XAxis,
   YAxis,
+  ReferenceLine,
 } from "recharts";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
@@ -50,40 +53,42 @@ const formatXAxisDateString = (tickItem) => {
   return date.toLocaleString("en-US", { month: "short", day: "numeric" });
 };
 
-export function VisualizerShadcn({
-  highlightDate,
-  setHighlightDate,
-  onDataHover,
-}) {
+export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
     useUserLiftingData();
   const [timeRange, setTimeRange] = useState("Quarter"); // Options: "All", "Year", "Quarter"
   const [showLabelValues, setShowLabelValues] = useState(false);
+  const [activeDate, setActiveDate] = useState(null); // Used for dynamic vertical reference dashed line
+  // const [chartData, setChartData] = useState([]);
 
   const e1rmFormula = "Brzycki"; // FIXME: uselocalstorage state
 
   if (isLoading) return;
   if (!parsedData) return;
 
-  const chartData = processVisualizerData(
+  const processedData = processVisualizerData(
     parsedData,
     e1rmFormula,
     selectedLiftTypes,
     timeRange,
   );
 
-  devLog(chartData);
+  devLog(processedData);
+
+  const chartData = processedData;
+
+  // setChartData(processedData);
   // devLog(selectedLiftTypes);
 
   // Calculate the maximum weight and add 50 kg
-  const firstLiftData = chartData[0].data;
+  const firstLiftData = processedData[0].data;
   const maxWeightValue = Math.max(
     ...firstLiftData.map((item) => item.oneRepMax),
   );
 
   // Round maxWeightValue up to the next multiple of 50
   // const roundedMaxWeightValue = Math.ceil(maxWeightValue / 50) * 50;
-  const roundedMaxWeightValue = maxWeightValue * 1.1;
+  const roundedMaxWeightValue = maxWeightValue * 1.2;
   // devLog(maxValue);
 
   // FIXME: this chartConfig is hacky - shad expects it for colors but I want to dynamically find colors
@@ -116,10 +121,18 @@ export function VisualizerShadcn({
   const changeShowLabelValues = (show) => {
     setShowLabelValues(show);
   };
-  const handleMouseEnter = (data) => {
-    if (data && data.payload && data.payload.date !== highlightDate) {
-      setHighlightDate(data.payload.date);
+
+  const handleMouseMove = (event) => {
+    if (event && event.activePayload) {
+      const activeIndex = event.activeTooltipIndex;
+      // devLog(event);
+      setActiveDate(event.activeLabel);
+      setHighlightDate(event.activePayload[0].payload.date);
     }
+  };
+
+  const handleMouseLeave = () => {
+    // setActiveDate(null);
   };
 
   // FIXME: Not using this yet - just starting
@@ -136,7 +149,7 @@ export function VisualizerShadcn({
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
-          <CardTitle>Estimated One Rep Maxes</CardTitle>
+          <CardTitle>{selectedLiftTypes[0]} Estimated One Rep Maxes</CardTitle>
           <CardDescription>
             {getTimeRangeDescription(timeRange, parsedData)}
           </CardDescription>
@@ -149,13 +162,15 @@ export function VisualizerShadcn({
 
       <CardContent>
         <ChartContainer config={chartConfig}>
-          <LineChart
+          <AreaChart
             accessibilityLayer
             // data={chartData}
             margin={{
               left: 12,
               right: 12,
             }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
           >
             <CartesianGrid vertical={false} />
 
@@ -176,6 +191,14 @@ export function VisualizerShadcn({
               hide={true}
               allowDataOverflow
             />
+            {activeDate && (
+              <ReferenceLine
+                x={activeDate}
+                stroke="red"
+                strokeDasharray="5 5"
+                // label={activeDate}
+              />
+            )}
 
             {true && (
               <ChartTooltip
@@ -208,8 +231,33 @@ export function VisualizerShadcn({
                 }
               />
             )}
+            <defs>
+              {chartData.map((line, index) => (
+                <linearGradient
+                  id={`fillSquat`}
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                  key={index} // Add a unique key for React rendering
+                >
+                  <stop
+                    offset="5%"
+                    // stopColor="var(--color-desktop)"
+                    stopColor={line.color}
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="50%"
+                    // stopColor="var(--color-desktop)"
+                    stopColor={line.color}
+                    stopOpacity={0.05}
+                  />
+                </linearGradient>
+              ))}
+            </defs>
             {chartData.map((line, index) => (
-              <Line
+              <Area
                 key={`${line.label}-${index}`}
                 type="monotone"
                 dataKey={`y_${line.label}`}
@@ -218,13 +266,11 @@ export function VisualizerShadcn({
                 stroke={line.color}
                 name={line.label}
                 strokeWidth={2}
-                // dot={false}
-                dot={{
-                  onMouseEnter: handleMouseEnter,
-                  fill: "rgba(0, 0, 0, 0)", // Making the dot transparent
-                  stroke: "rgba(0, 0, 0, 0)", // Making the border of the dot transparent
-                  r: 20, // Increasing the radius for a larger interactive area
-                }}
+                // type="natural"
+                // fill={`url(#fill${line.label})`}
+                fill="url(#fillSquat)"
+                fillOpacity={0.4}
+                dot={false}
               >
                 {showLabelValues && (
                   <LabelList
@@ -234,12 +280,12 @@ export function VisualizerShadcn({
                     fontSize={12}
                   />
                 )}
-              </Line>
+              </Area>
             ))}
             {chartData.length > 1 && (
               <ChartLegend content={<ChartLegendContent />} />
             )}
-          </LineChart>
+          </AreaChart>
         </ChartContainer>
       </CardContent>
       <CardFooter>

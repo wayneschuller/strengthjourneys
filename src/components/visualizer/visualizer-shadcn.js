@@ -58,12 +58,30 @@ export function VisualizerShadcn({
   if (isLoading) return;
   if (!parsedData) return;
 
-  const lineData = processVisualizerData(
+  const chartData = processVisualizerData(
     parsedData,
     e1rmFormula,
     selectedLiftTypes,
     timeRange,
   );
+
+  // devLog(chartData);
+  // devLog(selectedLiftTypes);
+
+  // FIXME: this chartConfig is hacky - shad expects it for colors but I want to dynamically find colors
+  const chartConfigMEH = {
+    "Back Squat": {
+      label: "Back Squat",
+      color: "hsl(var(--chart-1))",
+    },
+    Deadlift: {
+      label: "Deadlift",
+      color: "hsl(var(--chart-2))",
+    },
+    "Bench Press": {
+      label: "Bench Press",
+    },
+  };
 
   // FIXME: this chartConfig is hacky - shad expects it for colors but I want to dynamically find colors
   const chartConfig = {
@@ -79,6 +97,11 @@ export function VisualizerShadcn({
 
   const changeShowLabelValues = (show) => {
     setShowLabelValues(show);
+  };
+  const handleMouseEnter = (data) => {
+    if (data && data.payload) {
+      setHighlightDate(data.payload.date);
+    }
   };
 
   // FIXME: Not using this yet - just starting
@@ -110,15 +133,18 @@ export function VisualizerShadcn({
         <ChartContainer config={chartConfig}>
           <LineChart
             accessibilityLayer
+            // data={chartData}
             margin={{
               left: 12,
               right: 12,
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid vertical={false} />
+
             <XAxis
               dataKey="x"
               type="number"
+              scale="time"
               domain={[
                 (dataMin) =>
                   new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),
@@ -126,48 +152,53 @@ export function VisualizerShadcn({
                   new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
               ]}
               tickFormatter={formatXAxisDateString}
-              scale="time"
             />
-            <ChartTooltip
-              cursor={false}
-              // labelKey=""
-              content={
-                <ChartTooltipContent
-                  indicator="line"
-                  // labelFormatter={(value, payload) => { const tuple = payload[0].payload; return `${formatXAxisDateString(tuple.date)}`; }}
-                  formatter={(value, name, entry) => {
-                    const tuple = entry.payload;
+            {false && (
+              <ChartTooltip
+                cursor={false}
+                // labelKey=""
+                content={
+                  <ChartTooltipContent
+                    indicator="line"
+                    // labelFormatter={(value, payload) => { const tuple = payload[0].payload; return `${formatXAxisDateString(tuple.date)}`; }}
+                    formatter={(value, name, entry) => {
+                      const tuple = entry.payload;
 
-                    const oneRepMax = estimateE1RM(
-                      tuple.reps,
-                      tuple.weight,
-                      e1rmFormula,
-                    );
+                      const oneRepMax = estimateE1RM(
+                        tuple.reps,
+                        tuple.weight,
+                        e1rmFormula,
+                      );
 
-                    // FIXME: add color line and shadlike design
-                    let label = "";
-                    if (tuple.reps === 1) {
-                      label = `Lifted ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
-                    } else {
-                      label = `Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
-                    }
-                    setHighlightDate(tuple.date);
-                    return label;
-                  }}
-                />
-              }
-            />
-            {lineData.map((line, index) => (
+                      // FIXME: add color line and shadlike design
+                      let label = "";
+                      if (tuple.reps === 1) {
+                        label = `Lifted ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
+                      } else {
+                        label = `Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
+                      }
+                      return label;
+                    }}
+                  />
+                }
+              />
+            )}
+            {chartData.map((line, index) => (
               <Line
                 key={`${line.label}-${index}`}
                 type="monotone"
-                data={line.data}
                 dataKey="y"
+                data={line.data}
                 stroke={line.color}
                 name={line.label}
                 strokeWidth={2}
-                dot={false}
-                onMouseOver={(event, payload) => onDataHover(event)}
+                // dot={false}
+                dot={{
+                  onMouseEnter: handleMouseEnter,
+                  fill: "rgba(0, 0, 0, 0)", // Making the dot transparent
+                  stroke: "rgba(0, 0, 0, 0)", // Making the border of the dot transparent
+                  r: 10, // Increasing the radius for a larger interactive area
+                }}
               >
                 {showLabelValues && (
                   <LabelList
@@ -179,7 +210,7 @@ export function VisualizerShadcn({
                 )}
               </Line>
             ))}
-            {lineData.length > 1 && (
+            {chartData.length > 1 && (
               <ChartLegend content={<ChartLegendContent />} />
             )}
           </LineChart>
@@ -225,8 +256,7 @@ function TimeRangeSelect({ timeRange, setTimeRange }) {
   );
 }
 
-// This function uniquely processes the parsed data for the Visualizer
-export function processVisualizerData(
+function processVisualizerData(
   parsedData,
   e1rmFormula,
   selectedLiftTypes,
@@ -239,7 +269,7 @@ export function processVisualizerData(
 
   const startTime = performance.now();
 
-  const startDateStr = timeRangetoDateSTR(timeRange);
+  const startDateStr = timeRangetoDateStr(timeRange);
 
   const datasets = {}; // We build chart.js datasets with the lift type as the object key
 
@@ -305,7 +335,7 @@ export function processVisualizerData(
 }
 
 // Return a start date ("YYYY-MM-DD" format) based on timeRange ("All", "Year", "Quarter") relative to today's date
-function timeRangetoDateSTR(timeRange) {
+function timeRangetoDateStr(timeRange) {
   let startDateStr = "1900-01-01";
   const today = new Date();
 

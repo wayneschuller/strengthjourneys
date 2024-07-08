@@ -90,7 +90,7 @@ export function VisualizerShadcn({ setHighlightDate, onDataHover }) {
 
   // Round maxWeightValue up to the next multiple of 50
   // const roundedMaxWeightValue = Math.ceil(maxWeightValue / 50) * 50;
-  const roundedMaxWeightValue = maxWeightValue * 1.2;
+  const roundedMaxWeightValue = maxWeightValue * 1.3;
   // devLog(maxValue);
 
   // FIXME: this chartConfig is hacky - shad expects it for colors but I want to dynamically find colors

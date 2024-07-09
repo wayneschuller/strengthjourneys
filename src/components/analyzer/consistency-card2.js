@@ -1,6 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useSession } from "next-auth/react";
+import { devLog } from "@/lib/processing-utils";
+
 import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart } from "recharts";
 
@@ -18,6 +22,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { processConsistency } from "./consistency-card";
 const chartData = [
   { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
   { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
@@ -53,6 +58,19 @@ const chartConfig = {
 };
 
 export function ConsistencyCard2() {
+  const { parsedData } = useUserLiftingData();
+  const { status: authStatus } = useSession();
+
+  const consistencyData = processConsistency(parsedData);
+
+  devLog(consistencyData);
+
+  const chartConfig2 = {
+    label: {
+      label: "",
+    },
+  };
+
   const totalVisitors = React.useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
   }, []);
@@ -60,8 +78,8 @@ export function ConsistencyCard2() {
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Pie Chart - Donut with Text</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>Consistency Chart - Donut with Text</CardTitle>
+        {/* <CardDescription>January - June 2024</CardDescription> */}
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer

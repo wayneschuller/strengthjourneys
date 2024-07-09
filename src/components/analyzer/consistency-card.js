@@ -158,7 +158,7 @@ function subtractDays(dateStr, days) {
   return subDays(date, days).toISOString().slice(0, 10);
 }
 
-function processConsistency(parsedData) {
+export function processConsistency(parsedData) {
   if (!parsedData) return null;
 
   const startTime = performance.now();

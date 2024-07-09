@@ -17,6 +17,7 @@ import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-p
 import { MonthsHighlightsCard } from "@/components/analyzer/months-highlights-card";
 import { ActivityHeatmapsCard } from "@/components/analyzer/heatmap-card";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
+import { ConsistencyCard2 } from "@/components/analyzer/consistency-card2";
 
 export default function Analyzer() {
   const { data: session, status: authStatus } = useSession();
@@ -38,7 +39,7 @@ export default function Analyzer() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
+      <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl">
         PR Analyzer
       </h1>
 
@@ -48,6 +49,7 @@ export default function Analyzer() {
         </div>
         <div className="flex h-full flex-col gap-6">
           <ConsistencyCard />
+          <ConsistencyCard2 />
           <MonthsHighlightsCard />
         </div>
         <div className="grid h-full gap-6">

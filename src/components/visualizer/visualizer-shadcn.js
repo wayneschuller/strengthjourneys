@@ -77,11 +77,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
   );
 
   // Use useRef for variables that don't require re-render
-  const activeDateRef = useRef(null);
+  const activeDateRef = useRef(null); // FIXME: no longer needed now that we just chart on the string version
   const tooltipXRef = useRef(0);
-
-  // const [activeDate, setActiveDate] = useState(null); // Used for dynamic vertical reference dashed line
-  // const [tooltipX, setToolTipX] = useState(0); // Used for dynamic vertical reference dashed line
 
   const referenceLine = useMemo(() => {
     if (activeDateRef.current) {
@@ -111,50 +108,21 @@ export function VisualizerShadcn({ setHighlightDate }) {
     showAllData,
   );
 
-  // devLog(processedData);
-
-  // setChartData(processedData);
-  // devLog(selectedLiftTypes);
-
-  // const firstLiftData = processedData[0].data;
-  // const maxWeightValue = Math.max( ...firstLiftData.map((item) => item.oneRepMax),);
-
-  // const maxWeightValues = processedData.map((entry) => Math.max(...entry.data.map((item) => item.oneRepMax)),);
-  // const maxWeightValue = Math.max(...maxWeightValues);
-
   // Round maxWeightValue up to the next multiple of 50
   // const roundedMaxWeightValue = Math.ceil(maxWeightValue / 50) * 50;
   const roundedMaxWeightValue = weightMax * 1.3;
   // const roundedMaxWeightValue = Math.ceil((maxWeightValue * 1.3) / 50) * 50; // rounding to nearest 50
   // devLog(maxValue);
-  // const roundedMaxWeightValue = 250;
 
-  // FIXME: this chartConfig is hacky - shad expects it for colors but I want to dynamically find colors
-  const chartConfig = {
-    "Back Squat": {
-      label: "Back Squat",
-      color: "hsl(var(--chart-1))",
-    },
-    Deadlift: {
-      label: "Deadlift",
-      color: "hsl(var(--chart-2))",
-    },
-    "Bench Press": {
-      label: "Bench Press",
-    },
-  };
-
-  // FIXME: this chartConfig is hacky - shad expects it for colors but I want to dynamically find colors
-  const chartConfigMEH = {
-    desktop: {
-      label: "Desktop",
-      color: "#2563eb",
-    },
-    mobile: {
-      label: "Mobile",
-      color: "#60a5fa",
-    },
-  };
+  // Not sure why recharts needs this, but no legend without it
+  const chartConfig = Object.fromEntries(
+    selectedLiftTypes.map((liftType, index) => [
+      liftType,
+      {
+        label: liftType,
+      },
+    ]),
+  );
 
   const handleMouseMove = (event) => {
     if (event && event.activePayload) {
@@ -170,7 +138,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   };
 
   let tickJump = 100; // 100 for pound jumps on y-Axis.
-  if (chartData[0].unitType === "kg") tickJump = 50;
+  if (chartData[0].unitType === "kg") tickJump = 50; // 50 for kg jumps on y-Axis
 
   // -----------------------------------------------------------------------------
   // CustomToolTipContent
@@ -270,17 +238,15 @@ export function VisualizerShadcn({ setHighlightDate }) {
               dataKey="date"
               // type="number"
               // scale="time"
-              domain={[
-                (dataMin) =>
-                  new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),
-                (dataMax) =>
-                  new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
-              ]}
+              // domain={[ (dataMin) => new Date(dataMin).setDate(new Date(dataMin).getDate() - 2), (dataMax) => new Date(dataMax).setDate(new Date(dataMax).getDate() + 2), ]}
               tickFormatter={formatXAxisDateString}
               // interval="equidistantPreserveStart"
             />
             <YAxis
-              domain={[Math.floor(weightMin / 50) * 50, roundedMaxWeightValue]}
+              domain={[
+                Math.floor(weightMin / tickJump) * tickJump,
+                roundedMaxWeightValue,
+              ]}
               // hide={true}
               axisLine={false}
               tickFormatter={(value, index) =>

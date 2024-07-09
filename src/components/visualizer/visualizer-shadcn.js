@@ -20,6 +20,7 @@ import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { devLog } from "@/lib/processing-utils";
 import { useLocalStorage } from "usehooks-ts";
+import { getReadableDateString } from "@/lib/processing-utils";
 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -199,14 +200,10 @@ export function VisualizerShadcn({ setHighlightDate }) {
               type="number"
               scale="time"
               domain={[
-                (dataMin) => {
-                  const secondsInADay = 86400; // 24 * 60 * 60
-                  return dataMin + secondsInADay * 20;
-
-                  // return new Date(dataMin).setDate( new Date(dataMin).getDate() - 2,);
-                },
-                (dataMax) => dataMax + 86400 * 10,
-                // new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
+                (dataMin) =>
+                  new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),
+                (dataMax) =>
+                  new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
               ]}
               tickFormatter={formatXAxisDateString}
               // interval="equidistantPreserveStart"
@@ -255,9 +252,9 @@ export function VisualizerShadcn({ setHighlightDate }) {
                       // FIXME: add color line and shadlike design
                       let label = "";
                       if (tuple.reps === 1) {
-                        label = `Lifted ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
+                        label = `${getReadableDateString(tuple.date)}: Lifted ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
                       } else {
-                        label = `Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
+                        label = `${getReadableDateString(tuple.date)}: Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
                       }
                       return label;
                     }}

@@ -3,6 +3,7 @@
 import { useState, useRef, useMemo } from "react";
 import { subMonths } from "date-fns";
 import { TrendingUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   CartesianGrid,
   Area,
@@ -13,6 +14,7 @@ import {
   XAxis,
   YAxis,
   ReferenceLine,
+  Tooltip,
 } from "recharts";
 import { getLiftColor, brightenHexColor } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
@@ -167,6 +169,48 @@ export function VisualizerShadcn({ setHighlightDate }) {
     }
   };
 
+  const CustomTooltip = ({ active, payload, label }) => {
+    devLog(payload);
+    if (active && payload && payload.length) {
+      const tuple = payload[0].payload;
+      const oneRepMax = estimateE1RM(tuple.reps, tuple.weight, e1rmFormula);
+      const dateLabel = getReadableDateString(tuple.date);
+
+      let labelContent = "";
+      if (tuple.reps === 1) {
+        labelContent = `Lifted ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
+      } else {
+        labelContent = `Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
+      }
+
+      const color = getLiftColor(tuple.liftType);
+      devLog(color);
+      // devLog(tuple);
+      return (
+        <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 px-2.5 py-1.5 text-xs shadow-xl">
+          <p className="font-bold">{dateLabel}</p>
+          <div className="flex flex-row items-center">
+            <div
+              className={cn(
+                "mr-1 shrink-0 rounded-[2px] border-[--color-border] bg-[#4043bf]",
+                // `bg-[${color}]`,
+                "h-2.5 w-2.5",
+              )}
+              style={{
+                "--color-bg": tuple.color,
+                // "--color-border": indicatorColor,
+              }}
+            />
+
+            {labelContent}
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
@@ -230,8 +274,12 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 // label={activeDate}
               />
             )}
+            <Tooltip
+              content={<CustomTooltip />}
+              position={{ x: tooltipXRef.current - 100, y: 10 }}
+            />
 
-            {true && (
+            {false && (
               <ChartTooltip
                 cursor={false}
                 // labelKey=""

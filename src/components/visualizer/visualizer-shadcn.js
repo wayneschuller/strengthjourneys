@@ -188,8 +188,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
       return (
         <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
           <p className="font-bold">{dateLabel}</p>
-          {tooltipsPerLift.map(({ liftType, label, color, reps }) => (
-            <div>
+          {tooltipsPerLift.map(({ liftType, label, color, reps, index }) => (
+            <div key={liftType}>
               <div className="flex flex-row items-center">
                 <div
                   className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"

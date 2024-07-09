@@ -279,54 +279,62 @@ export function VisualizerShadcn({ setHighlightDate }) {
               position={{ x: tooltipXRef.current - 100, y: 10 }}
             />
             <defs>
-              {chartData.map((line, index) => (
-                <linearGradient
-                  id={`fill${line.label}`}
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                  key={`${line.label}-${index}`} // Add a unique key for React rendering
-                >
-                  <stop
-                    offset="5%"
-                    // stopColor="var(--color-desktop)"
-                    stopColor={line.color}
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="50%"
-                    // stopColor="var(--color-desktop)"
-                    stopColor={line.color}
-                    stopOpacity={0.05}
-                  />
-                </linearGradient>
-              ))}
+              {chartData.map((line, index) => {
+                devLog(line);
+                const gradientId = `fill${line.label.split(" ").join("_")}`;
+
+                return (
+                  <linearGradient
+                    id={`fill${gradientId}`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                    key={`${line.label}-${index}`} // Add a unique key for React rendering
+                  >
+                    <stop
+                      offset="5%"
+                      // stopColor="var(--color-desktop)"
+                      stopColor={line.color}
+                      stopOpacity={0.8}
+                    />
+                    <stop
+                      offset="50%"
+                      // stopColor="var(--color-desktop)"
+                      stopColor={line.color}
+                      stopOpacity={0.05}
+                    />
+                  </linearGradient>
+                );
+              })}
             </defs>
-            {chartData.map((line, index) => (
-              <Area
-                key={`${line.label}-${index}`}
-                type="monotone"
-                dataKey={`y_${line.label}`}
-                data={line.data}
-                stroke={line.color}
-                name={line.label}
-                strokeWidth={2}
-                fill={`url(#fill${line.label})`} // FIXME: dynamic fill does not work yet
-                // fill="url(#fillSquat)"
-                fillOpacity={0.4}
-                dot={false}
-              >
-                {showLabelValues && (
-                  <LabelList
-                    position="top"
-                    offset={12}
-                    className="fill-foreground"
-                    fontSize={12}
-                  />
-                )}
-              </Area>
-            ))}
+            {chartData.map((line, index) => {
+              const gradientId = `fill${line.label.split(" ").join("_")}`;
+              return (
+                <Area
+                  key={`${line.label}-${index}`}
+                  type="monotone"
+                  dataKey={`y_${line.label}`}
+                  data={line.data}
+                  stroke={line.color}
+                  name={line.label}
+                  strokeWidth={2}
+                  fill={`url(#fill${gradientId})`} // FIXME: dynamic fill does not work yet
+                  // fill="url(#fillSquat)"
+                  fillOpacity={0.4}
+                  dot={false}
+                >
+                  {showLabelValues && (
+                    <LabelList
+                      position="top"
+                      offset={12}
+                      className="fill-foreground"
+                      fontSize={12}
+                    />
+                  )}
+                </Area>
+              );
+            })}
             {chartData.length > 1 && (
               <ChartLegend content={<ChartLegendContent />} />
             )}

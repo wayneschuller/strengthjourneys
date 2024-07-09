@@ -107,7 +107,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
     showAllData,
   );
 
-  devLog(processedData);
+  // devLog(processedData);
 
   const chartData = processedData;
 
@@ -117,20 +117,18 @@ export function VisualizerShadcn({ setHighlightDate }) {
   // const firstLiftData = processedData[0].data;
   // const maxWeightValue = Math.max( ...firstLiftData.map((item) => item.oneRepMax),);
 
-  const maxWeightValues = processedData.map((entry) =>
-    Math.max(...entry.data.map((item) => item.oneRepMax)),
-  );
-
-  const maxWeightValue = Math.max(...maxWeightValues);
+  // const maxWeightValues = processedData.map((entry) => Math.max(...entry.data.map((item) => item.oneRepMax)),);
+  // const maxWeightValue = Math.max(...maxWeightValues);
 
   // Round maxWeightValue up to the next multiple of 50
   // const roundedMaxWeightValue = Math.ceil(maxWeightValue / 50) * 50;
-  const roundedMaxWeightValue = maxWeightValue * 1.3;
+  // const roundedMaxWeightValue = maxWeightValue * 1.3;
   // const roundedMaxWeightValue = Math.ceil((maxWeightValue * 1.3) / 50) * 50; // rounding to nearest 50
   // devLog(maxValue);
+  const roundedMaxWeightValue = 250;
 
   // FIXME: this chartConfig is hacky - shad expects it for colors but I want to dynamically find colors
-  const chartConfigMEH = {
+  const chartConfig = {
     "Back Squat": {
       label: "Back Squat",
       color: "hsl(var(--chart-1))",
@@ -145,7 +143,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   };
 
   // FIXME: this chartConfig is hacky - shad expects it for colors but I want to dynamically find colors
-  const chartConfig = {
+  const chartConfigMEH = {
     desktop: {
       label: "Desktop",
       color: "#2563eb",
@@ -173,38 +171,40 @@ export function VisualizerShadcn({ setHighlightDate }) {
     // devLog(payload);
     if (active && payload && payload.length) {
       if (payload.length > 1) {
-        devLog(`multipayload!`);
-        devLog(payload);
+        // devLog(`multipayload!`);
+        // devLog(payload);
       }
 
       // FIXME: we could map the payloads, or simply lookup the date in parseddata and do our own analysis or old code toplifts
 
       const tuple = payload[0].payload;
-      // const oneRepMax = estimateE1RM(tuple.reps, tuple.weight, e1rmFormula);
-      const oneRepMax = tuple.oneRepMax;
       const dateLabel = getReadableDateString(tuple.date);
+      // const oneRepMax = estimateE1RM(tuple.reps, tuple.weight, e1rmFormula);
+      // const oneRepMax = tuple.oneRepMax;
 
-      let labelContent = "";
-      if (tuple.reps === 1) {
-        labelContent = `Lifted ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
-      } else {
-        labelContent = `Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
-      }
+      // let labelContent = "";
+      // if (tuple.reps === 1) {
+      //   labelContent = `Lifted ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
+      // } else {
+      //   labelContent = `Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
+      // }
 
-      const color = getLiftColor(tuple.liftType);
+      // const color = getLiftColor(tuple.liftType);
       // devLog(`${tuple.liftType} color: ${color}`);
       // devLog(tuple);
 
       return (
         <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
           <p className="font-bold">{dateLabel}</p>
-          <div className="flex flex-row items-center">
-            <div
-              className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
-              style={{ backgroundColor: color }} // Use css style because tailwind is picky
-            />
-            {labelContent}
-          </div>
+          {false && (
+            <div className="flex flex-row items-center">
+              <div
+                className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                style={{ backgroundColor: color }} // Use css style because tailwind is picky
+              />
+              {labelContent}
+            </div>
+          )}
         </div>
       );
     }
@@ -234,21 +234,16 @@ export function VisualizerShadcn({ setHighlightDate }) {
         <ChartContainer config={chartConfig}>
           <AreaChart
             accessibilityLayer
-            // data={chartData}
+            data={chartData}
             // margin={{ left: 5, right: 5, }}
             onMouseMove={handleMouseMove}
           >
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="x"
-              type="number"
-              scale="time"
-              domain={[
-                (dataMin) =>
-                  new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),
-                (dataMax) =>
-                  new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
-              ]}
+              dataKey="date"
+              // type="number"
+              // scale="time"
+              // domain={[ (dataMin) => new Date(dataMin).setDate(new Date(dataMin).getDate() - 2), (dataMax) => new Date(dataMax).setDate(new Date(dataMax).getDate() + 2), ]}
               tickFormatter={formatXAxisDateString}
               // interval="equidistantPreserveStart"
             />
@@ -276,11 +271,11 @@ export function VisualizerShadcn({ setHighlightDate }) {
             )}
             <Tooltip
               content={<CustomTooltipContent />}
-              position={{ x: tooltipXRef.current - 100, y: 10 }}
+              position={{ x: tooltipXRef.current - 80, y: 10 }}
             />
             <defs>
-              {chartData.map((line, index) => {
-                const gradientId = `fill${line.label.split(" ").join("_")}`; // SVG id requires no spaces in life type label
+              {selectedLiftTypes.map((liftType, index) => {
+                const gradientId = `fill${liftType.split(" ").join("_")}`; // SVG id requires no spaces in life type label
                 return (
                   <linearGradient
                     id={`fill${gradientId}`}
@@ -288,36 +283,38 @@ export function VisualizerShadcn({ setHighlightDate }) {
                     y1="0"
                     x2="0"
                     y2="1"
-                    key={`${line.label}-${index}`} // Add a unique key for React rendering
+                    key={`${liftType}-${index}`} // Add a unique key for React rendering
                   >
                     <stop
                       offset="5%"
-                      stopColor={line.color}
+                      stopColor={getLiftColor(liftType)}
                       stopOpacity={0.8}
                     />
                     <stop
                       offset="50%"
-                      stopColor={line.color}
+                      stopColor={getLiftColor(liftType)}
                       stopOpacity={0.05}
                     />
                   </linearGradient>
                 );
               })}
             </defs>
-            {chartData.map((line, index) => {
-              const gradientId = `fill${line.label.split(" ").join("_")}`; // SVG id requires no spaces in life type label
+            {selectedLiftTypes.map((liftType, index) => {
+              const gradientId = `fill${liftType.split(" ").join("_")}`; // SVG id requires no spaces in life type label
               return (
                 <Area
-                  key={`${line.label}-${index}`}
+                  key={liftType}
                   type="monotone"
-                  dataKey={`y_${line.label}`}
-                  data={line.data}
-                  stroke={line.color}
-                  name={line.label}
+                  // dataKey={`y_${line.label}`}
+                  dataKey={liftType}
+                  // data={line.data}
+                  stroke={getLiftColor(liftType)}
+                  name={liftType}
                   strokeWidth={2}
                   fill={`url(#fill${gradientId})`}
                   fillOpacity={0.4}
                   dot={false}
+                  connectNulls
                 >
                   {showLabelValues && (
                     <LabelList
@@ -330,9 +327,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 </Area>
               );
             })}
-            {chartData.length > 1 && (
-              <ChartLegend content={<ChartLegendContent />} />
-            )}
+            <ChartLegend content={<ChartLegendContent />} />
           </AreaChart>
         </ChartContainer>
       </CardContent>
@@ -376,6 +371,55 @@ export function VisualizerShadcn({ setHighlightDate }) {
 }
 
 function processVisualizerData(
+  parsedData,
+  e1rmFormula,
+  selectedLiftTypes,
+  timeRange,
+  showAllData = false,
+) {
+  const startTime = performance.now();
+
+  const dataMap = new Map();
+
+  parsedData.forEach(({ date, liftType, reps, weight, isGoal }) => {
+    if (date < timeRange) return; // Skip if date out of range of chart
+
+    if (isGoal) return; // FIXME: implement goal dashed lines at some point
+
+    // Skip if the lift type is not selected
+    if (selectedLiftTypes && !selectedLiftTypes.includes(liftType)) {
+      return;
+    }
+
+    const oneRepMax = estimateE1RM(reps, weight, e1rmFormula);
+    if (!dataMap.has(date)) {
+      dataMap.set(date, {});
+    }
+    const liftData = dataMap.get(date);
+
+    if (!liftData[liftType] || oneRepMax > liftData[liftType]) {
+      liftData[liftType] = oneRepMax;
+      const timeStamp = new Date(date).getTime(); // Convert to Unix timestamp for x-axis
+      liftData.x = timeStamp;
+    }
+  });
+
+  const dataset = [];
+  dataMap.forEach((lifts, date) => {
+    dataset.push({ date, ...lifts });
+  });
+
+  devLog(
+    "processVisualizerDataCHAD execution time: " +
+      `\x1b[1m${Math.round(performance.now() - startTime)}` +
+      `ms\x1b[0m`,
+  );
+
+  return dataset;
+}
+
+// This is the version that does an array of objects with an array of line data per lift
+function processVisualizerDataOLD(
   parsedData,
   e1rmFormula,
   selectedLiftTypes,
@@ -534,7 +578,9 @@ const periodTargets = [
 function TimeRangeSelect({ timeRange, setTimeRange }) {
   const { parsedData } = useUserLiftingData();
 
-  const firstDateStr = parsedData[0].date; // This is the first date in "YYYY-MM-DD" format
+  // This is the first date in "YYYY-MM-DD" format
+  // FIXME: Should we find the first date for selected lifts only?
+  const firstDateStr = parsedData[0].date;
 
   const todayStr = new Date().toISOString().split("T")[0];
 

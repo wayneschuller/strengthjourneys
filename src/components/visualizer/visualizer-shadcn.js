@@ -169,11 +169,19 @@ export function VisualizerShadcn({ setHighlightDate }) {
     }
   };
 
-  const CustomTooltip = ({ active, payload, label }) => {
-    devLog(payload);
+  const CustomTooltipContent = ({ active, payload, label }) => {
+    // devLog(payload);
     if (active && payload && payload.length) {
+      if (payload.length > 1) {
+        devLog(`multipayload!`);
+        devLog(payload);
+      }
+
+      // FIXME: we could map the payloads, or simply lookup the date in parseddata and do our own analysis or old code toplifts
+
       const tuple = payload[0].payload;
-      const oneRepMax = estimateE1RM(tuple.reps, tuple.weight, e1rmFormula);
+      // const oneRepMax = estimateE1RM(tuple.reps, tuple.weight, e1rmFormula);
+      const oneRepMax = tuple.oneRepMax;
       const dateLabel = getReadableDateString(tuple.date);
 
       let labelContent = "";
@@ -184,9 +192,9 @@ export function VisualizerShadcn({ setHighlightDate }) {
       }
 
       const color = getLiftColor(tuple.liftType);
-      devLog(`${tuple.liftType} color: ${color}`);
-
+      // devLog(`${tuple.liftType} color: ${color}`);
       // devLog(tuple);
+
       return (
         <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
           <p className="font-bold">{dateLabel}</p>
@@ -268,7 +276,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
               />
             )}
             <Tooltip
-              content={<CustomTooltip />}
+              content={<CustomTooltipContent />}
               position={{ x: tooltipXRef.current - 100, y: 10 }}
             />
 

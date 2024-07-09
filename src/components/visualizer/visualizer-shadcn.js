@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { subMonths } from "date-fns";
 import { TrendingUp } from "lucide-react";
 import {
@@ -78,6 +78,19 @@ export function VisualizerShadcn({ setHighlightDate }) {
   // const [activeDate, setActiveDate] = useState(null); // Used for dynamic vertical reference dashed line
   // const [tooltipX, setToolTipX] = useState(0); // Used for dynamic vertical reference dashed line
 
+  const referenceLine = useMemo(() => {
+    if (activeDateRef.current) {
+      return (
+        <ReferenceLine
+          x={activeDateRef.current}
+          strokeDasharray="5 6"
+          strokeWidth={3}
+        />
+      );
+    }
+    return null;
+  }, [activeDateRef.current]);
+
   const e1rmFormula = "Brzycki"; // FIXME: uselocalstorage state
 
   if (isLoading) return;
@@ -153,34 +166,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
     }
   };
 
-  // FIXME: unfinished attempt to have dynamic consistent ticks
-  const xAxisTickFormatter = (tick, index, dataLength) => {
-    devLog(dataLength);
-    if (timeRange < "2020-01-01") {
-      // If data spans more than a year
-      return new Date(tick).getFullYear();
-    } else if (dataLength > 30) {
-      // If data spans more than a month
-      return new Date(tick).toLocaleDateString("default", {
-        month: "short",
-        year: "numeric",
-      });
-    } else {
-      // If data spans days or less than a month
-      return new Date(tick).toLocaleDateString();
-    }
-  };
-
-  // FIXME: Not using this yet - just starting
-  const CustomLabel = (props) => {
-    const { x, y, value, payload } = props;
-    return (
-      <text x={x} y={y} dy={-4} fill="#666" fontSize={14} textAnchor="middle">
-        {`${value} ${payload.unitType}`}
-      </text>
-    );
-  };
-
   return (
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
@@ -214,13 +199,17 @@ export function VisualizerShadcn({ setHighlightDate }) {
               type="number"
               scale="time"
               domain={[
-                (dataMin) =>
-                  new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),
-                (dataMax) =>
-                  new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
+                (dataMin) => {
+                  const secondsInADay = 86400; // 24 * 60 * 60
+                  return dataMin + secondsInADay * 20;
+
+                  // return new Date(dataMin).setDate( new Date(dataMin).getDate() - 2,);
+                },
+                (dataMax) => dataMax + 86400 * 10,
+                // new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
               ]}
-              // tickFormatter={formatXAxisDateString}
-              tickFormatter={xAxisTickFormatter}
+              tickFormatter={formatXAxisDateString}
+              // interval="equidistantPreserveStart"
             />
             <YAxis
               domain={[0, roundedMaxWeightValue]}
@@ -233,7 +222,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
               )}
               allowDataOverflow
             />
-            {activeDateRef.current && (
+            {referenceLine}
+            {false && activeDateRef.current && (
               <ReferenceLine
                 x={activeDateRef.current}
                 // stroke="red" // FIXME: Doesn't seem to apply?

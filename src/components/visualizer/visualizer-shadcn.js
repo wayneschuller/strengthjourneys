@@ -19,8 +19,6 @@ import {
 import { getLiftColor, brightenHexColor } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { devLog } from "@/lib/processing-utils";
 import { useLocalStorage } from "usehooks-ts";
 import { getReadableDateString } from "@/lib/processing-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
@@ -52,6 +50,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { processVisualizerData } from "./visualizer-processing";
 
 // FIXME: I have a function to do this which removes current year
 const formatXAxisDateString = (tickItem) => {
@@ -386,183 +385,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
       </CardFooter>
     </Card>
   );
-}
-
-function processVisualizerData(
-  parsedData,
-  e1rmFormula,
-  selectedLiftTypes,
-  timeRange,
-  showAllData = false,
-) {
-  const startTime = performance.now();
-
-  const dataMap = new Map();
-  const recentLifts = {}; // Used for weekly bests data decimation
-  const decimationDaysWindow = 7; // Only chart the best e1rm in the N day window
-
-  let weightMax = 0;
-  let weightMin = 1000;
-
-  parsedData.forEach(({ date, liftType, reps, weight, isGoal, unitType }) => {
-    if (date < timeRange) return; // Skip if date out of range of chart
-
-    if (isGoal) return; // FIXME: implement goal dashed lines at some point
-
-    // Skip if the lift type is not selected
-    if (selectedLiftTypes && !selectedLiftTypes.includes(liftType)) {
-      return;
-    }
-
-    const oneRepMax = estimateE1RM(reps, weight, e1rmFormula);
-
-    if (!dataMap.has(date)) {
-      dataMap.set(date, {});
-    }
-    const liftData = dataMap.get(date);
-
-    if (weightMax < oneRepMax) weightMax = oneRepMax;
-    if (weight < weightMin) weightMin = weight;
-
-    // Data decimation - skip lower lifts if there was something bigger the last N day window
-    // FIXME: this is slowing down the loop?
-    const currentDate = new Date(date);
-    if (!showAllData && recentLifts[liftType]) {
-      const recentDate = new Date(recentLifts[liftType].date);
-      const dayDiff = (currentDate - recentDate) / (1000 * 60 * 60 * 24);
-
-      // Check if we already have a much better lift in the data decimation window
-      if (
-        dayDiff <= decimationDaysWindow &&
-        oneRepMax <= recentLifts[liftType].oneRepMax * 0.95
-      ) {
-        return; // Skip this entry
-      }
-    }
-
-    if (!liftData[liftType] || oneRepMax > liftData[liftType]) {
-      liftData[liftType] = oneRepMax;
-      // const timeStamp = new Date(date).getTime(); // Convert to Unix timestamp for x-axis
-      // liftData.x = timeStamp;
-      liftData.unitType = unitType;
-      liftData[`${liftType}_reps`] = reps;
-      liftData[`${liftType}_weight`] = weight;
-    }
-
-    recentLifts[liftType] = { date: date, oneRepMax: oneRepMax }; // Store the full entry for best of week comparisons
-  });
-
-  const dataset = [];
-  dataMap.forEach((lifts, date) => {
-    dataset.push({ date, ...lifts });
-  });
-
-  devLog(
-    "processVisualizerDataCHAD execution time: " +
-      `\x1b[1m${Math.round(performance.now() - startTime)}` +
-      `ms\x1b[0m`,
-  );
-
-  return { dataset, weightMax, weightMin };
-}
-
-// This is the version that produces an array of objects per lift each with an array of line data
-// But we found the tooltips work better for multiline if you have one dataset of chartData per date with whatever lifts happened on that date
-function processVisualizerDataOLD(
-  parsedData,
-  e1rmFormula,
-  selectedLiftTypes,
-  timeRange,
-  showAllData = false,
-) {
-  if (parsedData === null) {
-    console.log(`Error: visualizerProcessParsedData passed null.`);
-    return;
-  }
-
-  const startTime = performance.now();
-
-  const datasets = {}; // We build chart.js datasets with the lift type as the object key
-  const recentLifts = {}; // Used for weekly bests data decimation
-  const decimationDaysWindow = 7; // Only chart the best e1rm in the N day window
-
-  // Loop through the data and find the best E1RM on each date for this liftType
-  parsedData.forEach((entry) => {
-    const liftTypeKey = entry.liftType;
-
-    if (entry.date < timeRange) return; // Skip if date out of range of chart
-
-    // Skip if the lift type is not selected
-    if (selectedLiftTypes && !selectedLiftTypes.includes(liftTypeKey)) {
-      return;
-    }
-
-    if (entry.isGoal) return; // FIXME: implement goal dashed lines at some point
-
-    // Lazy initialization of dataset for the lift type
-    if (!datasets[liftTypeKey]) {
-      const color = getLiftColor(liftTypeKey);
-      const brightColor = brightenHexColor(color, 1.1);
-      datasets[liftTypeKey] = {
-        label: liftTypeKey,
-        data: new Map(), // Using Map for efficient lookups
-        color: color,
-        brightColor: brightColor,
-      };
-    }
-
-    const oneRepMax = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
-    const currentDate = new Date(entry.date);
-
-    // Check if the current date already has a better E1RM
-    if (datasets[liftTypeKey].data.has(entry.date)) {
-      const currentData = datasets[liftTypeKey].data.get(entry.date);
-      if (currentData.oneRepMax >= oneRepMax) {
-        return; // Skip update if the existing E1RM is greater or equal
-      }
-    }
-
-    // Data decimation - skip lower lifts if there was something bigger the last N day window
-    if (!showAllData && recentLifts[liftTypeKey]) {
-      const recentDate = new Date(recentLifts[liftTypeKey].date);
-      const dayDiff = (currentDate - recentDate) / (1000 * 60 * 60 * 24);
-
-      // Check if we already have a much better lift in the data decimation window
-      if (
-        dayDiff <= decimationDaysWindow &&
-        oneRepMax <= recentLifts[liftTypeKey].oneRepMax * 0.95
-      ) {
-        return; // Skip this entry
-      }
-    }
-
-    const timeStamp = new Date(entry.date).getTime(); // Convert to Unix timestamp for x-axis
-
-    const fullEntry = {
-      ...entry, // Spread the original entry to include all properties
-      x: timeStamp,
-      oneRepMax: oneRepMax,
-      [`y_${liftTypeKey}`]: oneRepMax,
-    };
-
-    // Record this new best e1rm on this date
-    datasets[liftTypeKey].data.set(entry.date, fullEntry);
-    recentLifts[liftTypeKey] = fullEntry; // Store the full entry for future comparisons
-  });
-
-  // Convert object into an array of objects with the date included
-  const sortedDatasets = Object.values(datasets).map((dataset) => ({
-    ...dataset,
-    data: Array.from(dataset.data.values()),
-  }));
-
-  devLog(
-    "processVisualizerDataSHAD execution time: " +
-      `\x1b[1m${Math.round(performance.now() - startTime)}` +
-      `ms\x1b[0m`,
-  );
-
-  return sortedDatasets;
 }
 
 // Used in the chart card description

@@ -167,7 +167,15 @@ export function VisualizerShadcn({ setHighlightDate }) {
     }
   };
 
-  const CustomTooltipContent = ({ active, payload, label }) => {
+  // -----------------------------------------------------------------------------
+  // CustomToolTipContent
+  // -----------------------------------------------------------------------------
+  const CustomTooltipContent = ({
+    active,
+    payload,
+    label,
+    selectedLiftTypes,
+  }) => {
     // devLog(payload);
     if (active && payload && payload.length) {
       if (payload.length > 1) {
@@ -178,33 +186,53 @@ export function VisualizerShadcn({ setHighlightDate }) {
       // FIXME: we could map the payloads, or simply lookup the date in parseddata and do our own analysis or old code toplifts
 
       const tuple = payload[0].payload;
+
+      devLog(tuple);
+
       const dateLabel = getReadableDateString(tuple.date);
-      // const oneRepMax = estimateE1RM(tuple.reps, tuple.weight, e1rmFormula);
-      // const oneRepMax = tuple.oneRepMax;
 
-      // let labelContent = "";
-      // if (tuple.reps === 1) {
-      //   labelContent = `Lifted ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
-      // } else {
-      //   labelContent = `Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
-      // }
+      const liftLabels = [];
 
-      // const color = getLiftColor(tuple.liftType);
-      // devLog(`${tuple.liftType} color: ${color}`);
-      // devLog(tuple);
+      selectedLiftTypes.forEach((liftType) => {
+        const reps = tuple[`${liftType}_reps`];
+        const weight = tuple[`${liftType}_weight`];
+        const oneRepMax = tuple[`${liftType}`];
+        const unitType = tuple.unitType;
+
+        if (reps && weight && oneRepMax) {
+          let labelContent = "";
+          if (reps === 1) {
+            labelContent = `Lifted ${reps}@${weight}${unitType}`;
+          } else {
+            labelContent = `Potential 1@${oneRepMax}@${unitType} from lifting ${reps}@${weight}${unitType}`;
+          }
+
+          const color = getLiftColor(liftType);
+          liftLabels.push({
+            liftType: liftType,
+            label: labelContent,
+            color: color,
+          });
+        }
+      });
+
+      // devLog(liftLabels);
 
       return (
         <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
           <p className="font-bold">{dateLabel}</p>
-          {false && (
-            <div className="flex flex-row items-center">
-              <div
-                className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                style={{ backgroundColor: color }} // Use css style because tailwind is picky
-              />
-              {labelContent}
+          {liftLabels.map(({ liftType, label, color }) => (
+            <div>
+              <div className="flex flex-row items-center">
+                <div
+                  className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                  style={{ backgroundColor: color }} // Use css style because tailwind is picky
+                />
+                {liftType}
+              </div>
+              {label}
             </div>
-          )}
+          ))}
         </div>
       );
     }
@@ -270,7 +298,9 @@ export function VisualizerShadcn({ setHighlightDate }) {
               />
             )}
             <Tooltip
-              content={<CustomTooltipContent />}
+              content={
+                <CustomTooltipContent selectedLiftTypes={selectedLiftTypes} />
+              }
               position={{ x: tooltipXRef.current - 80, y: 10 }}
             />
             <defs>
@@ -381,7 +411,7 @@ function processVisualizerData(
 
   const dataMap = new Map();
 
-  parsedData.forEach(({ date, liftType, reps, weight, isGoal }) => {
+  parsedData.forEach(({ date, liftType, reps, weight, isGoal, unitType }) => {
     if (date < timeRange) return; // Skip if date out of range of chart
 
     if (isGoal) return; // FIXME: implement goal dashed lines at some point
@@ -401,6 +431,9 @@ function processVisualizerData(
       liftData[liftType] = oneRepMax;
       const timeStamp = new Date(date).getTime(); // Convert to Unix timestamp for x-axis
       liftData.x = timeStamp;
+      liftData.unitType = unitType;
+      liftData[`${liftType}_reps`] = reps;
+      liftData[`${liftType}_weight`] = weight;
     }
   });
 

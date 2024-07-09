@@ -239,7 +239,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
             onMouseMove={handleMouseMove}
           >
             <CartesianGrid vertical={false} />
-
             <XAxis
               dataKey="x"
               type="number"
@@ -279,48 +278,15 @@ export function VisualizerShadcn({ setHighlightDate }) {
               content={<CustomTooltipContent />}
               position={{ x: tooltipXRef.current - 100, y: 10 }}
             />
-
-            {false && (
-              <ChartTooltip
-                cursor={false}
-                // labelKey=""
-                content={
-                  <ChartTooltipContent
-                    indicator="line"
-                    // labelFormatter={(value, payload) => { const tuple = payload[0].payload; return `${formatXAxisDateString(tuple.date)}`; }}
-                    formatter={(value, name, entry) => {
-                      // devLog(value);
-                      const tuple = entry.payload;
-
-                      const oneRepMax = estimateE1RM(
-                        tuple.reps,
-                        tuple.weight,
-                        e1rmFormula,
-                      );
-
-                      // FIXME: add color line and shadlike design
-                      let label = "";
-                      if (tuple.reps === 1) {
-                        label = `${getReadableDateString(tuple.date)}: Lifted ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
-                      } else {
-                        label = `${getReadableDateString(tuple.date)}: Potential 1@${oneRepMax}@${tuple.unitType} from lifting ${tuple.reps}@${tuple.weight}${tuple.unitType}`;
-                      }
-                      return label;
-                    }}
-                  />
-                }
-                position={{ x: tooltipXRef.current - 100, y: 10 }}
-              />
-            )}
             <defs>
               {chartData.map((line, index) => (
                 <linearGradient
-                  id={`fillSquat`}
+                  id={`fill${line.label}`}
                   x1="0"
                   y1="0"
                   x2="0"
                   y2="1"
-                  key={index} // Add a unique key for React rendering
+                  key={`${line.label}-${index}`} // Add a unique key for React rendering
                 >
                   <stop
                     offset="5%"
@@ -346,8 +312,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 stroke={line.color}
                 name={line.label}
                 strokeWidth={2}
-                // fill={`url(#fill${line.label})`} // FIXME: dynamic fill does not work yet
-                fill="url(#fillSquat)"
+                fill={`url(#fill${line.label})`} // FIXME: dynamic fill does not work yet
+                // fill="url(#fillSquat)"
                 fillOpacity={0.4}
                 dot={false}
               >

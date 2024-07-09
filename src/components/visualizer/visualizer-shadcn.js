@@ -280,9 +280,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
             />
             <defs>
               {chartData.map((line, index) => {
-                devLog(line);
-                const gradientId = `fill${line.label.split(" ").join("_")}`;
-
+                const gradientId = `fill${line.label.split(" ").join("_")}`; // SVG id requires no spaces in life type label
                 return (
                   <linearGradient
                     id={`fill${gradientId}`}
@@ -294,13 +292,11 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   >
                     <stop
                       offset="5%"
-                      // stopColor="var(--color-desktop)"
                       stopColor={line.color}
                       stopOpacity={0.8}
                     />
                     <stop
                       offset="50%"
-                      // stopColor="var(--color-desktop)"
                       stopColor={line.color}
                       stopOpacity={0.05}
                     />
@@ -309,7 +305,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
               })}
             </defs>
             {chartData.map((line, index) => {
-              const gradientId = `fill${line.label.split(" ").join("_")}`;
+              const gradientId = `fill${line.label.split(" ").join("_")}`; // SVG id requires no spaces in life type label
               return (
                 <Area
                   key={`${line.label}-${index}`}
@@ -319,8 +315,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   stroke={line.color}
                   name={line.label}
                   strokeWidth={2}
-                  fill={`url(#fill${gradientId})`} // FIXME: dynamic fill does not work yet
-                  // fill="url(#fillSquat)"
+                  fill={`url(#fill${gradientId})`}
                   fillOpacity={0.4}
                   dot={false}
                 >

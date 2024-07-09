@@ -277,7 +277,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
               // interval="equidistantPreserveStart"
             />
             <YAxis
-              domain={[0, roundedMaxWeightValue]}
+              domain={[Math.floor(weightMin / 50) * 50, roundedMaxWeightValue]}
               // hide={true}
               axisLine={false}
               // tickFormatter={(value) => Math.ceil(value / 50) * 50}
@@ -304,6 +304,9 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   selectedLiftTypes={selectedLiftTypes}
                   e1rmFormula={e1rmFormula}
                 />
+              }
+              formatter={(value, name, props) =>
+                `${value} ${props.payload.unitType}`
               }
               position={{ x: tooltipXRef.current - 80, y: 10 }}
             />
@@ -355,7 +358,17 @@ export function VisualizerShadcn({ setHighlightDate }) {
                       position="top"
                       offset={12}
                       className="fill-foreground"
-                      fontSize={12}
+                      content={({ x, y, value, index }) => (
+                        <text
+                          x={x}
+                          y={y}
+                          dy={-10}
+                          fontSize={12}
+                          textAnchor="middle"
+                        >
+                          {`${value}${chartData[index].unitType}`}
+                        </text>
+                      )}
                     />
                   )}
                 </Area>

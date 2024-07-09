@@ -191,7 +191,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
 
       const dateLabel = getReadableDateString(tuple.date);
 
-      const liftLabels = [];
+      const tooltipsPerLift = [];
 
       selectedLiftTypes.forEach((liftType) => {
         const reps = tuple[`${liftType}_reps`];
@@ -208,10 +208,11 @@ export function VisualizerShadcn({ setHighlightDate }) {
           }
 
           const color = getLiftColor(liftType);
-          liftLabels.push({
+          tooltipsPerLift.push({
             liftType: liftType,
             label: labelContent,
             color: color,
+            reps: reps,
           });
         }
       });
@@ -221,16 +222,16 @@ export function VisualizerShadcn({ setHighlightDate }) {
       return (
         <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
           <p className="font-bold">{dateLabel}</p>
-          {liftLabels.map(({ liftType, label, color }) => (
+          {tooltipsPerLift.map(({ liftType, label, color, reps }) => (
             <div>
               <div className="flex flex-row items-center">
                 <div
                   className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
                   style={{ backgroundColor: color }} // Use css style because tailwind is picky
                 />
-                {liftType}
+                <div className="font-semibold">{liftType}</div>
               </div>
-              {label}
+              <div className="">{label}</div>
             </div>
           ))}
         </div>
@@ -299,7 +300,10 @@ export function VisualizerShadcn({ setHighlightDate }) {
             )}
             <Tooltip
               content={
-                <CustomTooltipContent selectedLiftTypes={selectedLiftTypes} />
+                <CustomTooltipContent
+                  selectedLiftTypes={selectedLiftTypes}
+                  e1rmFormula={e1rmFormula}
+                />
               }
               position={{ x: tooltipXRef.current - 80, y: 10 }}
             />

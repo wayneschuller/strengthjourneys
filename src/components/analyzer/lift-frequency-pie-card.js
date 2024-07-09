@@ -6,89 +6,53 @@ import { devLog } from "@/lib/processing-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 
-import { Chart, ArcElement, Tooltip } from "chart.js";
-import { Pie, Doughnut } from "react-chartjs-2";
 import { getLiftColor } from "@/lib/get-lift-color";
-import ChartDataLabels from "chartjs-plugin-datalabels";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 
-Chart.register(ArcElement, ChartDataLabels, Tooltip);
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
+
+import { LabelList, Pie, PieChart } from "recharts";
 
 export function LiftTypeFrequencyPieCard() {
   const { liftTypes, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
+  if (isLoading) return;
+  if (!liftTypes || liftTypes.length < 1) return;
+
   const pieData = liftTypes
     ?.map((item) => ({
-      label: item.liftType,
-      value: item.totalSets,
+      liftType: item.liftType,
+      sets: item.totalSets,
+      color: getLiftColor(item.liftType),
+      fill: getLiftColor(item.liftType),
     }))
     .slice(0, 5); // Up to 5 lifts
 
-  const backgroundColors = pieData?.map((item) => getLiftColor(item.label));
+  // devLog(liftTypes);
+  // devLog(pieData);
 
-  const pieChartData = {
-    labels: pieData?.map((item) => item.label),
-    datasets: [
-      {
-        // label: "Total Sets:",
-        data: pieData,
-        backgroundColor: backgroundColors,
-        borderWidth: 3,
-        hoverOffset: 5,
-        hoverBorderColor: "#222222",
-      },
-    ],
+  const chartConfig = {
+    sets: {
+      label: "Sets",
+    },
+    ...pieData.reduce((config, lift) => {
+      config[lift.liftType] = {
+        label: lift.liftType,
+        color: getLiftColor(lift.liftType),
+      };
+      return config;
+    }, {}),
   };
 
-  let pieChartOptions = {
-    type: "pie",
-    responsive: true,
-    font: {
-      family: "Catamaran",
-      size: 20,
-      weight: "bold",
-    },
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        enabled: true,
-        callbacks: {
-          label: function (context) {
-            let label = context.label || "";
-            if (label) {
-              label += ": ";
-            }
-            if (context.formattedValue !== undefined) {
-              devLog(context);
-              label += context.formattedValue + " sets";
-            }
-            return label;
-          },
-        },
-      },
-      datalabels: {
-        backgroundColor: function (context) {
-          return context.dataset.backgroundColor; // Follow lift background color
-        },
-        borderColor: "white",
-        borderRadius: 25,
-        borderWidth: 2,
-        color: "white",
-        font: {
-          weight: "bold",
-          size: "11",
-        },
-        padding: 10,
-        formatter: function (value, context) {
-          // devLog(value);
-          return `${value.label}`; // Append 'sets' to the value
-        },
-      },
-    },
-  };
+  const chartData = pieData;
 
   return (
     <Card className="flex-1">
@@ -99,8 +63,21 @@ export function LiftTypeFrequencyPieCard() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {(isLoading || !pieChartData) && <Skeleton className="h-full w-full" />}
-        {pieChartData && <Pie data={pieChartData} options={pieChartOptions} />}
+        <ChartContainer
+          config={chartConfig}
+          // className="Xaspect-square Xmax-h-[250px] mx-auto"
+        >
+          <PieChart>
+            <ChartTooltip
+              content={<ChartTooltipContent nameKey="liftType" />}
+            />
+            <Pie data={chartData} dataKey="sets" label nameKey="liftType" />
+            <ChartLegend
+              content={<ChartLegendContent nameKey="liftType" />}
+              className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+            />
+          </PieChart>
+        </ChartContainer>
       </CardContent>
     </Card>
   );

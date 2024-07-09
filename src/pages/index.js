@@ -25,7 +25,7 @@ const featurePages = [
     IconComponent: Trophy,
   },
   {
-    href: "/visualizer2",
+    href: "/visualizer",
     title: "Strength Visualizer",
     description: "Interactive lifetime charts of all lifts.",
     IconComponent: LineChart,

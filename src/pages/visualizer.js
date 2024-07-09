@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Head from "next/head";
 import { useEffect, useState, useContext } from "react";
 import { useSession, signIn } from "next-auth/react";
@@ -8,23 +7,16 @@ import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { devLog } from "@/lib/processing-utils";
 import { useReadLocalStorage } from "usehooks-ts";
+import { VisualizerShadcn } from "@/components/visualizer/visualizer-shadcn";
+import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
 
-// Hack needed to get zoom/pan to work for next.js client
-// https://github.com/chartjs/chartjs-plugin-zoom/issues/742
-const DynamicHeaderVisualizerChart = dynamic(
-  () => import("../components/visualizer/visualizer-chart"),
-  {
-    ssr: false,
-  },
-);
-
-export default function Visualizer() {
-  const { data: session } = useSession();
+export default function Visualizer2() {
+  const { data: session, status: authStatus } = useSession();
   const { isLoading } = useUserLiftingData();
   const ssid = useReadLocalStorage("ssid");
+  const [highlightDate, setHighlightDate] = useState(null);
 
-  // devLog(`Visualizer render: `);
-  if (!isLoading && session?.user && !ssid)
+  if (!isLoading && authStatus === "authenticated" && !ssid)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
         <ChooseSheetInstructionsCard session={session} />
@@ -32,32 +24,24 @@ export default function Visualizer() {
     );
 
   return (
-    <>
+    <div className="mx-4 mb-4 md:mx-[5vw]">
       <Head>
-        <title>Strength Visualizer (Strength Journeys)</title>
-        <meta
-          content="Strength Journeys Strength E1RM Visualizer"
-          name="description"
-        />
+        <title>PR Analyzer (Strength Journeys)</title>
+        <meta name="description" content="Strength Journeys Lift PR Analyzer" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="flex flex-col items-center justify-center">
-        <h1 className="text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
-          Strength Visualizer
-        </h1>
-        <div
-          className="rounded-lg bg-white p-2 dark:bg-black"
-          style={{
-            position: "relative",
-            // zIndex: "20",
-            // Try to maximise chart size across all screen sizes
-            height: "82vh",
-            width: "95vw",
-          }}
-        >
-          <DynamicHeaderVisualizerChart />
+
+      <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl">
+        PR Analyzer
+      </h1>
+      <div className="flex flex-col gap-5 md:flex-row">
+        <div className="w-full lg:w-1/2 xl:w-2/3">
+          <VisualizerShadcn setHighlightDate={setHighlightDate} />
+        </div>
+        <div className="w-full lg:w-1/2 xl:w-1/3">
+          <SessionAnalysisCard highlightDate={highlightDate} />
         </div>
       </div>
-    </>
+    </div>
   );
 }

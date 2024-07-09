@@ -3,6 +3,8 @@
 ## Interactive strength progress visualisations for barbell and other gym lifts
 Strength Journeys is a free web app to visualize your barbell lifting data from Google Sheets. Strength progress tracking, one rep max calculator, gym timer and more. Fully open source. Chalk not included.
 
+# 202407 This is an archive of the original v2 with chart.js based Visualizer before we moved to shadcn/recharts.
+
 ![image](https://user-images.githubusercontent.com/1592295/212287626-21d46619-5f57-4869-9a6d-384f7ac4bbcb.png)
 ![image](https://user-images.githubusercontent.com/1592295/212287995-7f3e6694-5aaa-4a68-bf08-e51c48936025.png)
 

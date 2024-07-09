@@ -2,13 +2,13 @@
 
 // FIXME: add more formulae from the Wikipedia article?
 export const e1rmFormulae = [
+  "Brzycki",
   "Epley",
   "McGlothin",
   "Lombardi",
   "Mayhew",
   "OConner",
   "Wathan",
-  "Brzycki",
 ];
 
 // Return a rounded 1 rep max

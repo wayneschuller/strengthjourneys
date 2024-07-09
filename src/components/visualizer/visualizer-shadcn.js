@@ -23,6 +23,7 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { devLog } from "@/lib/processing-utils";
 import { useLocalStorage } from "usehooks-ts";
 import { getReadableDateString } from "@/lib/processing-utils";
+import { e1rmFormulae } from "@/lib/estimate-e1rm";
 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -70,6 +71,10 @@ export function VisualizerShadcn({ setHighlightDate }) {
     false,
   );
   const [showAllData, setShowAllData] = useLocalStorage("SJ_showAllData", true); // Show weekly bests or all data
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage(
+    "e1rmFormula",
+    "Brzycki",
+  );
 
   // Use useRef for variables that don't require re-render
   const activeDateRef = useRef(null);
@@ -90,8 +95,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
     }
     return null;
   }, [activeDateRef.current]);
-
-  const e1rmFormula = "Brzycki"; // FIXME: uselocalstorage state
 
   if (isLoading) return;
   if (!parsedData) return;
@@ -227,15 +230,12 @@ export function VisualizerShadcn({ setHighlightDate }) {
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="pl-0 pr-2">
         <ChartContainer config={chartConfig}>
           <AreaChart
             accessibilityLayer
             // data={chartData}
-            margin={{
-              left: 12,
-              right: 12,
-            }}
+            // margin={{ left: 5, right: 5, }}
             onMouseMove={handleMouseMove}
           >
             <CartesianGrid vertical={false} />
@@ -363,6 +363,12 @@ export function VisualizerShadcn({ setHighlightDate }) {
               All Data
             </Label>
           </div>
+          <div>
+            <E1RMFormulaSelect
+              e1rmFormula={e1rmFormula}
+              setE1rmFormula={setE1rmFormula}
+            />
+          </div>
         </div>
       </CardFooter>
     </Card>
@@ -383,9 +389,6 @@ function processVisualizerData(
 
   const startTime = performance.now();
 
-  // const startDateStr = timeRangetoDateStr(timeRange);
-  const startDateStr = timeRange;
-
   const datasets = {}; // We build chart.js datasets with the lift type as the object key
   const recentLifts = {}; // Used for weekly bests data decimation
   const decimationDaysWindow = 7; // Only chart the best e1rm in the N day window
@@ -394,7 +397,7 @@ function processVisualizerData(
   parsedData.forEach((entry) => {
     const liftTypeKey = entry.liftType;
 
-    if (entry.date < startDateStr) return; // Skip if date out of range of chart
+    if (entry.date < timeRange) return; // Skip if date out of range of chart
 
     // Skip if the lift type is not selected
     if (selectedLiftTypes && !selectedLiftTypes.includes(liftTypeKey)) {
@@ -467,35 +470,6 @@ function processVisualizerData(
   );
 
   return sortedDatasets;
-}
-
-// Return a start date ("YYYY-MM-DD" format) based on timeRange ("All", "Year", "Quarter") relative to today's date
-function timeRangetoDateStr(timeRange) {
-  let startDateStr = "1900-01-01";
-  const today = new Date();
-
-  // Get the date 3 months ago
-  const threeMonthsAgo = new Date(today);
-  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-  const formattedThreeMonthsAgo = `${threeMonthsAgo.getFullYear()}-${(threeMonthsAgo.getMonth() + 1).toString().padStart(2, "0")}-${threeMonthsAgo.getDate().toString().padStart(2, "0")}`;
-
-  // Get the date 1 year ago
-  const oneYearAgo = new Date(today);
-  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-  const formattedOneYearAgo = `${oneYearAgo.getFullYear()}-${(oneYearAgo.getMonth() + 1).toString().padStart(2, "0")}-${oneYearAgo.getDate().toString().padStart(2, "0")}`;
-
-  switch (timeRange) {
-    case "Year":
-      startDateStr = formattedOneYearAgo;
-      break;
-    case "Quarter":
-      startDateStr = formattedThreeMonthsAgo;
-      break;
-    default:
-    // Nothing to do
-  }
-
-  return startDateStr;
 }
 
 // Used in the chart card description
@@ -606,5 +580,28 @@ function TimeRangeSelect({ timeRange, setTimeRange }) {
         ))}
       </SelectContent>
     </Select>
+  );
+}
+
+function E1RMFormulaSelect({ e1rmFormula, setE1rmFormula }) {
+  return (
+    <div className="flex flex-row items-center space-x-2">
+      <div className="text-sm font-light">E1RM Algorithm</div>
+      <Select value={e1rmFormula} onValueChange={setE1rmFormula}>
+        <SelectTrigger
+          className="w-[160px] rounded-lg sm:ml-auto"
+          aria-label="Select a value"
+        >
+          <SelectValue placeholder="Brzycki" />
+        </SelectTrigger>
+        <SelectContent className="rounded-xl">
+          {e1rmFormulae.map((formula) => (
+            <SelectItem key={formula} value={formula} className="rounded-lg">
+              {formula}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }

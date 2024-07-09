@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { e1rmFormulae } from "../lib/estimate-e1rm";
+import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";
@@ -261,7 +261,7 @@ export default function E1RMCalculator() {
 
       <div className="rounded-xl border-2 border-background bg-muted/80 p-4 md:p-6">
         <div className="flex flex-row gap-1 md:gap-2">
-          <h1 className="flex-1 scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl ">
+          <h1 className="flex-1 scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
             One Rep Max Calculator
           </h1>
           <div className="flex flex-col gap-1 md:flex-row">

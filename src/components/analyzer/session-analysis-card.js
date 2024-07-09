@@ -76,14 +76,13 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
             <ul>
               {Object.entries(groupedWorkouts).map(([liftType, workouts]) => (
                 <li key={liftType} className="pb-2">
-                  <strong
-                    style={{
-                      textDecoration: "underline",
-                      textDecorationColor: getLiftColor(liftType),
-                    }}
-                  >
-                    {liftType}
-                  </strong>
+                  <div className="flex flex-row items-center">
+                    <div
+                      className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                      style={{ backgroundColor: getLiftColor(liftType) }} // Use css style because tailwind is picky
+                    />
+                    <div className="font-bold">{liftType}</div>
+                  </div>
                   <ul className="pl-4">
                     {workouts.map((workout, index) => (
                       <li key={index}>

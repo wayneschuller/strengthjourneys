@@ -482,7 +482,8 @@ function processVisualizerData(
   return { dataset, weightMax, weightMin };
 }
 
-// This is the version that does an array of objects with an array of line data per lift
+// This is the version that produces an array of objects per lift each with an array of line data
+// But we found the tooltips work better for multiline if you have one dataset of chartData per date with whatever lifts happened on that date
 function processVisualizerDataOLD(
   parsedData,
   e1rmFormula,

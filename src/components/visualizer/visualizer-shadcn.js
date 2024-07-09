@@ -321,6 +321,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   fill={`url(#fill${gradientId})`}
                   fillOpacity={0.4}
                   dot={false}
+                  connectNulls
                 >
                   {showLabelValues && (
                     <LabelList

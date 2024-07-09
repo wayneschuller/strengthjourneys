@@ -184,24 +184,17 @@ export function VisualizerShadcn({ setHighlightDate }) {
       }
 
       const color = getLiftColor(tuple.liftType);
-      devLog(color);
+      devLog(`${tuple.liftType} color: ${color}`);
+
       // devLog(tuple);
       return (
         <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 px-2.5 py-1.5 text-xs shadow-xl">
           <p className="font-bold">{dateLabel}</p>
           <div className="flex flex-row items-center">
             <div
-              className={cn(
-                "mr-1 shrink-0 rounded-[2px] border-[--color-border] bg-[#4043bf]",
-                // `bg-[${color}]`,
-                "h-2.5 w-2.5",
-              )}
-              style={{
-                "--color-bg": tuple.color,
-                // "--color-border": indicatorColor,
-              }}
+              className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+              style={{ backgroundColor: color }} // Use css style because tailwind is picky
             />
-
             {labelContent}
           </div>
         </div>

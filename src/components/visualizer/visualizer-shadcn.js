@@ -169,6 +169,9 @@ export function VisualizerShadcn({ setHighlightDate }) {
     }
   };
 
+  let tickJump = 100; // 100 for pound jumps on y-Axis.
+  if (chartData[0].unitType === "kg") tickJump = 50;
+
   // -----------------------------------------------------------------------------
   // CustomToolTipContent
   // -----------------------------------------------------------------------------
@@ -280,10 +283,12 @@ export function VisualizerShadcn({ setHighlightDate }) {
               domain={[Math.floor(weightMin / 50) * 50, roundedMaxWeightValue]}
               // hide={true}
               axisLine={false}
-              // tickFormatter={(value) => Math.ceil(value / 50) * 50}
+              tickFormatter={(value, index) =>
+                `${value}${chartData[index].unitType}`
+              }
               ticks={Array.from(
-                { length: Math.ceil(roundedMaxWeightValue / 50) },
-                (v, i) => i * 50,
+                { length: Math.ceil(roundedMaxWeightValue / tickJump) },
+                (v, i) => i * tickJump,
               )}
               allowDataOverflow
             />

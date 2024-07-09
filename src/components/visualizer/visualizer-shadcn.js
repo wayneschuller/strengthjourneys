@@ -337,7 +337,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
         </ChartContainer>
       </CardContent>
       <CardFooter>
-        <div className="flex w-full justify-between">
+        <div className="flex w-full flex-col justify-between gap-2 md:flex-row">
           <div className="flex items-center space-x-2">
             <Label className="font-light" htmlFor="show-values">
               Show All Values

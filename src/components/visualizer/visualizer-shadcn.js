@@ -69,10 +69,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
     "SJ_showLabelValues",
     false,
   );
-  const [showAllData, setShowAllData] = useLocalStorage(
-    "SJ_showAllData",
-    false,
-  ); // Show weekly bests or all data
+  const [showAllData, setShowAllData] = useLocalStorage("SJ_showAllData", true); // Show weekly bests or all data
 
   // Use useRef for variables that don't require re-render
   const activeDateRef = useRef(null);

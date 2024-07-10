@@ -1,27 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { useUserLiftingData } from "@/lib/use-userlift-data";
-import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
-import {
-  parseISO,
-  subDays,
-  differenceInCalendarDays,
-  formatISO,
-} from "date-fns";
 
-import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart } from "recharts";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
@@ -29,7 +12,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-export function CircularProgressWithLetter2({ progress = 90 }) {
+export function CircularProgressWithLetter({ progress = 90 }) {
   // Determine color based on progress value
   const { grade, color } = getGradeAndColor(progress);
 

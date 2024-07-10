@@ -12,9 +12,6 @@ import {
   formatISO,
 } from "date-fns";
 
-import { Chart, ArcElement } from "chart.js";
-import { Doughnut } from "react-chartjs-2";
-import { getLiftColor } from "@/lib/get-lift-color";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useTheme } from "next-themes";
 import {
@@ -23,9 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CircularProgressWithLetter2 } from "./circular-progress-with-letter";
-
-Chart.register(ArcElement);
+import { CircularProgressWithLetter } from "./circular-progress-with-letter";
 
 export function ConsistencyCard() {
   const { parsedData } = useUserLiftingData();
@@ -54,7 +49,7 @@ export function ConsistencyCard() {
                   <TooltipTrigger>
                     <div className="flex-col text-center">
                       <div className="">
-                        <CircularProgressWithLetter2
+                        <CircularProgressWithLetter
                           progress={item.percentage}
                         />
                       </div>

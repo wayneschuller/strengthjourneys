@@ -65,13 +65,13 @@ export function LiftTypeFrequencyPieCard() {
       <CardContent>
         <ChartContainer
           config={chartConfig}
-          // className="Xaspect-square Xmax-h-[250px] mx-auto"
+          className="mx-auto aspect-square min-h-[250px]"
         >
           <PieChart>
             <ChartTooltip
               content={<ChartTooltipContent nameKey="liftType" />}
             />
-            <Pie data={chartData} dataKey="sets" label nameKey="liftType" />
+            <Pie data={chartData} dataKey="sets" />
             <ChartLegend
               content={<ChartLegendContent nameKey="liftType" />}
               className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"

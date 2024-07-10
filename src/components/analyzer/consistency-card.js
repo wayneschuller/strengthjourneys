@@ -13,7 +13,6 @@ import {
 } from "date-fns";
 
 import { useUserLiftingData } from "@/lib/use-userlift-data";
-import { useTheme } from "next-themes";
 import {
   Tooltip,
   TooltipContent,

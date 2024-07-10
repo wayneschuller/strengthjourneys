@@ -74,7 +74,8 @@ export function LiftTypeFrequencyPieCard() {
             <Pie data={chartData} dataKey="sets" />
             <ChartLegend
               content={<ChartLegendContent nameKey="liftType" />}
-              className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+              className="-translate-y-2 flex-wrap gap-2 text-base [&>*]:basis-1/4 [&>*]:justify-center"
+              verticalAlign="top"
             />
           </PieChart>
         </ChartContainer>

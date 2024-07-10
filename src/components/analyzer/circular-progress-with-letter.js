@@ -90,6 +90,7 @@ const thresholds = [
 ];
 
 // Function to determine grade and HSL color based on progress
+// FIXME: 202407 with the shadcn charts the hue color is not working?
 const getGradeAndColor = (progress) => {
   for (let i = 0; i < thresholds.length; i++) {
     if (progress >= thresholds[i].minProgress) {

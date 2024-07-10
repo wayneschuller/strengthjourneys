@@ -107,13 +107,9 @@ export function VisualizerShadcn({ setHighlightDate }) {
     showAllData,
   );
 
-  // Round maxWeightValue up to the next multiple of 50
-  // const roundedMaxWeightValue = Math.ceil(maxWeightValue / 50) * 50;
   const roundedMaxWeightValue = weightMax * 1.3;
-  // const roundedMaxWeightValue = Math.ceil((maxWeightValue * 1.3) / 50) * 50; // rounding to nearest 50
-  // devLog(maxValue);
 
-  // Not sure why recharts needs this, but no legend without it
+  // Shadcn charts needs this for theming but we just do custom colors anyway
   const chartConfig = Object.fromEntries(
     selectedLiftTypes.map((liftType, index) => [
       liftType,

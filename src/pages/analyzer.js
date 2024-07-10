@@ -17,7 +17,7 @@ import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-p
 import { MonthsHighlightsCard } from "@/components/analyzer/months-highlights-card";
 import { ActivityHeatmapsCard } from "@/components/analyzer/heatmap-card";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
-import { ConsistencyCard2 } from "@/components/analyzer/consistency-card2";
+import { ConsistencyCard2 } from "@/components/analyzer/circular-progress-with-letter";
 
 export default function Analyzer() {
   const { data: session, status: authStatus } = useSession();
@@ -49,7 +49,6 @@ export default function Analyzer() {
         </div>
         <div className="flex h-full flex-col gap-6">
           <ConsistencyCard />
-          <ConsistencyCard2 />
           <MonthsHighlightsCard />
         </div>
         <div className="grid h-full gap-6">

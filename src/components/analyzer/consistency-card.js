@@ -23,6 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { CircularProgressWithLetter2 } from "./circular-progress-with-letter";
 
 Chart.register(ArcElement);
 
@@ -31,6 +32,8 @@ export function ConsistencyCard() {
   const { status: authStatus } = useSession();
 
   const consistency = processConsistency(parsedData);
+
+  // devLog(consistency);
 
   return (
     <Card className="flex-1">
@@ -51,7 +54,7 @@ export function ConsistencyCard() {
                   <TooltipTrigger>
                     <div className="flex-col text-center">
                       <div className="">
-                        <CircularProgressWithLetter
+                        <CircularProgressWithLetter2
                           progress={item.percentage}
                         />
                       </div>
@@ -95,63 +98,6 @@ const thresholds = [
   { minProgress: 30, grade: "C-", hue: HUE_ORANGE },
   { minProgress: 0, grade: ".", hue: HUE_RED }, // Red for low progress
 ];
-
-// Function to determine grade and HSL color based on progress
-const getGradeAndColor = (progress) => {
-  for (let i = 0; i < thresholds.length; i++) {
-    if (progress >= thresholds[i].minProgress) {
-      const saturation = 90;
-      const lightness = 10 + progress / 2; // Increase lightness as progress increases
-      const color = `hsl(${thresholds[i].hue}, ${saturation}%, ${lightness}%)`;
-      return { grade: thresholds[i].grade, color };
-    }
-  }
-};
-
-function CircularProgressWithLetter({ progress }) {
-  // Determine color based on progress value
-  const { grade, color } = getGradeAndColor(progress);
-
-  // devLog(color);
-
-  const data = {
-    datasets: [
-      {
-        data: [progress, 100 - progress], // progress is your dynamic value
-        backgroundColor: [color, "transparent"],
-        borderWidth: 0,
-        cutout: "70%",
-      },
-    ],
-  };
-
-  const options = {
-    maintainAspectRatio: false,
-    responsive: true,
-    plugins: {
-      datalabels: {
-        display: false,
-      },
-    },
-  };
-
-  return (
-    <div style={{ position: "relative" }}>
-      <Doughnut data={data} options={options} />
-      <div
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          fontSize: "2em",
-        }}
-      >
-        {grade}
-      </div>
-    </div>
-  );
-}
 
 function subtractDays(dateStr, days) {
   const date = parseISO(dateStr);

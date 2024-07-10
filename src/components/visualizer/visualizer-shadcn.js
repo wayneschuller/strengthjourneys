@@ -25,6 +25,7 @@ import { e1rmFormulae } from "@/lib/estimate-e1rm";
 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { devLog } from "@/lib/processing-utils";
 
 import {
   Card,
@@ -79,19 +80,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
   const activeDateRef = useRef(null); // FIXME: no longer needed now that we just chart on the string version
   const tooltipXRef = useRef(0);
 
-  const referenceLine = useMemo(() => {
-    if (activeDateRef.current) {
-      return (
-        <ReferenceLine
-          x={activeDateRef.current}
-          strokeDasharray="5 6"
-          strokeWidth={3}
-        />
-      );
-    }
-    return null;
-  }, [activeDateRef.current]);
-
   if (isLoading) return;
   if (!parsedData) return;
 
@@ -123,12 +111,11 @@ export function VisualizerShadcn({ setHighlightDate }) {
     if (event && event.activePayload) {
       const activeIndex = event.activeTooltipIndex;
       // devLog(event);
-      // setActiveDate(event.activeLabel);
-      // setToolTipX(event.chartX);
-      activeDateRef.current = event.activeLabel;
       tooltipXRef.current = event.chartX;
+      activeDateRef.current = event.activeLabel;
 
-      setHighlightDate(event.activePayload[0].payload.date);
+      // setHighlightDate(event.activePayload[0].payload.date);
+      setHighlightDate(event.activeLabel);
     }
   };
 
@@ -253,15 +240,12 @@ export function VisualizerShadcn({ setHighlightDate }) {
               )}
               allowDataOverflow
             />
-            {referenceLine}
-            {false && activeDateRef.current && (
+            {/* {referenceLine} */}
+            {activeDateRef.current && (
               <ReferenceLine
                 x={activeDateRef.current}
-                // stroke="red" // FIXME: Doesn't seem to apply?
-                // stroke="var(--color-foreground)" // FIXME: Doesn't work either
                 strokeDasharray="5 6"
                 strokeWidth={3}
-                // label={activeDate}
               />
             )}
             <Tooltip

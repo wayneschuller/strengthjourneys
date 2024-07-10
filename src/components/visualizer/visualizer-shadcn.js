@@ -111,7 +111,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
     if (event && event.activePayload) {
       const activeIndex = event.activeTooltipIndex;
       // devLog(event);
-      tooltipXRef.current = event.chartX;
+      // tooltipXRef.current = event.chartX;
       activeDateRef.current = event.activeLabel;
 
       // setHighlightDate(event.activePayload[0].payload.date);
@@ -133,8 +133,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   }) => {
     // devLog(payload);
     if (active && payload && payload.length) {
-      // FIXME: we could map the payloads, or simply lookup the date in parseddata and do our own analysis or old code toplifts
-
+      // Right now we have put key info into the chartData paylod. But we could simply lookup the date in parsedData for full info
       const tuple = payload[0].payload;
 
       // devLog(tuple);
@@ -240,14 +239,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
               )}
               allowDataOverflow
             />
-            {/* {referenceLine} */}
-            {activeDateRef.current && (
-              <ReferenceLine
-                x={activeDateRef.current}
-                strokeDasharray="5 6"
-                strokeWidth={3}
-              />
-            )}
             <Tooltip
               content={
                 <CustomTooltipContent
@@ -258,7 +249,12 @@ export function VisualizerShadcn({ setHighlightDate }) {
               formatter={(value, name, props) =>
                 `${value} ${props.payload.unitType}`
               }
-              position={{ x: tooltipXRef.current - 80, y: 10 }}
+              position={{ y: 10 }}
+              cursor={{
+                stroke: "#8884d8",
+                strokeWidth: 2,
+                strokeDasharray: "5 5",
+              }} // Recharts tooltip cursor is the vertical reference line
             />
             <defs>
               {selectedLiftTypes.map((liftType, index) => {

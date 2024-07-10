@@ -1,6 +1,6 @@
 {
-  "name": "one-rep-max-calculator",
-  "version": "2.0.1",
+  "name": "strength-journeys",
+  "version": "3.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

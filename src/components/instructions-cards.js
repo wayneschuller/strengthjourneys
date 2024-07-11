@@ -179,7 +179,7 @@ export function GettingStartedCard() {
               Sign in
             </button>
           ) : (
-            "Sign in"
+            "Sign in via Google"
           )}{" "}
           and{" "}
           {authStatus === "authenticated" && !ssid ? (

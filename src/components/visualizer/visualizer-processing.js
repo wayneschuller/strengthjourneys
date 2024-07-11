@@ -81,5 +81,6 @@ export function processVisualizerData(
       `ms\x1b[0m`,
   );
 
+  devLog(`${dataset.length} points of chart data`);
   return { dataset, weightMax, weightMin };
 }

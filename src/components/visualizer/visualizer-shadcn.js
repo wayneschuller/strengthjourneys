@@ -98,18 +98,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
   // devLog("Rendering <VisualizerShadcn />...");
   if (!parsedData) return;
 
-  // const {
-  //   dataset: chartData,
-  //   weightMax,
-  //   weightMin,
-  // } = processVisualizerData(
-  //   parsedData,
-  //   e1rmFormula,
-  //   selectedLiftTypes,
-  //   timeRange,
-  //   showAllData,
-  // );
-
   const roundedMaxWeightValue = weightMax * 1.3;
 
   // Shadcn charts needs this for theming but we just do custom colors anyway

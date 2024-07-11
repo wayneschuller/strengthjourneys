@@ -110,15 +110,8 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
                             )}
                           </div>
                           <div className="ml-6 inline-block">
-                            {workout.prSentenceReport
-                              ? `${workout.prSentenceReport}`
-                              : `${getYearlyLiftRanking(
-                                  parsedData,
-                                  workout.liftType,
-                                  workout.reps,
-                                  workout.weight,
-                                  workout.date,
-                                )}`}
+                            {workout.prSentenceReport &&
+                              `${workout.prSentenceReport}`}
                           </div>
                         </div>
                       </li>
@@ -148,6 +141,7 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
 // FIXME: we actually have topLiftsByTypeAndRepsLast12Months now - we could simply lookup from this cache (see monthly card code)
 function getYearlyLiftRanking(parsedData, liftType, reps, weight, date) {
   const startTime = performance.now();
+  return "";
 
   if (reps < 1) return "";
 

@@ -195,7 +195,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   return (
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <div className="grid flex-1 gap-1 text-center sm:text-left">
+        <div className="grid flex-1 gap-1 text-pretty">
           <CardTitle>
             {selectedLiftTypes.length === 1 && selectedLiftTypes[0]} Estimated
             One Rep Maxes

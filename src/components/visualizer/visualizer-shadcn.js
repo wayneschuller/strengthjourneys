@@ -19,7 +19,7 @@ import {
 import { getLiftColor, brightenHexColor } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
-import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { getReadableDateString } from "@/lib/processing-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 
@@ -74,6 +74,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
     "e1rmFormula",
     "Brzycki",
   );
+  const { width } = useWindowSize();
 
   // Use useRef for variables that don't require re-render
   const activeDateRef = useRef(null); // FIXME: no longer needed now that we just chart on the string version
@@ -226,22 +227,24 @@ export function VisualizerShadcn({ setHighlightDate }) {
               tickFormatter={formatXAxisDateString}
               // interval="equidistantPreserveStart"
             />
-            <YAxis
-              domain={[
-                Math.floor(weightMin / tickJump) * tickJump,
-                roundedMaxWeightValue,
-              ]}
-              // hide={true}
-              axisLine={false}
-              tickFormatter={(value, index) =>
-                `${value}${chartData[index].unitType}`
-              }
-              ticks={Array.from(
-                { length: Math.ceil(roundedMaxWeightValue / tickJump) },
-                (v, i) => i * tickJump,
-              )}
-              allowDataOverflow
-            />
+            {width > 1280 && (
+              <YAxis
+                domain={[
+                  Math.floor(weightMin / tickJump) * tickJump,
+                  roundedMaxWeightValue,
+                ]}
+                // hide={true}
+                axisLine={false}
+                tickFormatter={(value, index) =>
+                  `${value}${chartData[index].unitType}`
+                }
+                ticks={Array.from(
+                  { length: Math.ceil(roundedMaxWeightValue / tickJump) },
+                  (v, i) => i * tickJump,
+                )}
+                allowDataOverflow
+              />
+            )}
             <Tooltip
               content={
                 <CustomTooltipContent

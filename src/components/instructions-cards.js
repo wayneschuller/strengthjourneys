@@ -155,7 +155,7 @@ export function GettingStartedCard() {
             >
               sample Google Sheet
             </a>
-            )
+            ). Use "lb" or "kg" with weight values.
           </div>
         </div>
         <div className="flex justify-center">

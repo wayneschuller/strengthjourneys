@@ -11,6 +11,8 @@ export function processVisualizerData(
   timeRange,
   showAllData = false,
 ) {
+  if (!parsedData) return {};
+
   const startTime = performance.now();
 
   const dataMap = new Map();

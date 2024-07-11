@@ -75,13 +75,9 @@ export function VisualizerShadcn({ setHighlightDate }) {
     "Brzycki",
   );
 
-  devLog("Rendering <VisualizerShadcn />...");
-
   // Use useRef for variables that don't require re-render
   const activeDateRef = useRef(null); // FIXME: no longer needed now that we just chart on the string version
   const tooltipXRef = useRef(0);
-
-  if (!parsedData) return;
 
   const {
     dataset: chartData,
@@ -98,6 +94,9 @@ export function VisualizerShadcn({ setHighlightDate }) {
       ),
     [parsedData, e1rmFormula, selectedLiftTypes, timeRange, showAllData],
   );
+
+  devLog("Rendering <VisualizerShadcn />...");
+  if (!parsedData) return;
 
   // const {
   //   dataset: chartData,

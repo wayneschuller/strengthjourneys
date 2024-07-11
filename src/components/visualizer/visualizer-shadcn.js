@@ -155,7 +155,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
           if (reps === 1) {
             labelContent = `Lifted ${reps}@${weight}${unitType}`;
           } else {
-            labelContent = `Potential 1@${oneRepMax}@${unitType} from lifting ${reps}@${weight}${unitType}`;
+            labelContent = `Potential 1@${oneRepMax}${unitType} from lifting ${reps}@${weight}${unitType}`;
           }
 
           const color = getLiftColor(liftType);

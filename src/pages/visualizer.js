@@ -10,7 +10,7 @@ import { useReadLocalStorage } from "usehooks-ts";
 import { VisualizerShadcn } from "@/components/visualizer/visualizer-shadcn";
 import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
 
-export default function Visualizer2() {
+export default function Visualizer() {
   const { data: session, status: authStatus } = useSession();
   const { isLoading } = useUserLiftingData();
   const ssid = useReadLocalStorage("ssid");

@@ -60,8 +60,7 @@ const formatXAxisDateString = (tickItem) => {
 };
 
 export function VisualizerShadcn({ setHighlightDate }) {
-  const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps, isLoading } =
-    useUserLiftingData();
+  const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const [timeRange, setTimeRange] = useLocalStorage(
     "SJ_timeRange",
     "1900-01-01", // The start date threshold for inclusion in the chart
@@ -76,24 +75,41 @@ export function VisualizerShadcn({ setHighlightDate }) {
     "Brzycki",
   );
 
+  devLog("Rendering <VisualizerShadcn />...");
+
   // Use useRef for variables that don't require re-render
   const activeDateRef = useRef(null); // FIXME: no longer needed now that we just chart on the string version
   const tooltipXRef = useRef(0);
 
-  if (isLoading) return;
   if (!parsedData) return;
 
   const {
     dataset: chartData,
     weightMax,
     weightMin,
-  } = processVisualizerData(
-    parsedData,
-    e1rmFormula,
-    selectedLiftTypes,
-    timeRange,
-    showAllData,
+  } = useMemo(
+    () =>
+      processVisualizerData(
+        parsedData,
+        e1rmFormula,
+        selectedLiftTypes,
+        timeRange,
+        showAllData,
+      ),
+    [parsedData, e1rmFormula, selectedLiftTypes, timeRange, showAllData],
   );
+
+  // const {
+  //   dataset: chartData,
+  //   weightMax,
+  //   weightMin,
+  // } = processVisualizerData(
+  //   parsedData,
+  //   e1rmFormula,
+  //   selectedLiftTypes,
+  //   timeRange,
+  //   showAllData,
+  // );
 
   const roundedMaxWeightValue = weightMax * 1.3;
 

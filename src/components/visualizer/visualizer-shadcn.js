@@ -95,7 +95,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
     [parsedData, e1rmFormula, selectedLiftTypes, timeRange, showAllData],
   );
 
-  devLog("Rendering <VisualizerShadcn />...");
+  // devLog("Rendering <VisualizerShadcn />...");
   if (!parsedData) return;
 
   // const {

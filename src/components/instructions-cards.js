@@ -176,7 +176,7 @@ export function GettingStartedCard() {
               onClick={() => signIn("google")}
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
-              Sign in
+              Sign in via Google
             </button>
           ) : (
             "Sign in via Google"

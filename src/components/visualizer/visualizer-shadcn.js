@@ -210,7 +210,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">
-        <ChartContainer config={chartConfig} className="min-h-[300px]">
+        <ChartContainer config={chartConfig} className="min-h-[200px]">
           <AreaChart
             accessibilityLayer
             data={chartData}

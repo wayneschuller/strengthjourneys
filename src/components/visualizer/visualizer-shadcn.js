@@ -2,18 +2,13 @@
 
 import { useState, useRef, useMemo } from "react";
 import { subMonths } from "date-fns";
-import { TrendingUp } from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
   CartesianGrid,
   Area,
   AreaChart,
   LabelList,
-  Line,
-  LineChart,
   XAxis,
   YAxis,
-  ReferenceLine,
   Tooltip,
 } from "recharts";
 import { getLiftColor, brightenHexColor } from "@/lib/get-lift-color";
@@ -38,11 +33,9 @@ import {
 
 import {
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
 } from "@/components/ui/chart";
-
-import { ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 
 import {
   Select,
@@ -51,9 +44,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import { processVisualizerData } from "./visualizer-processing";
 
-// FIXME: I have a function to do this which removes current year
+// FIXME: We need more dynamic x-axis ticks
 const formatXAxisDateString = (tickItem) => {
   const date = new Date(tickItem);
   return date.toLocaleString("en-US", { month: "short", day: "numeric" });
@@ -61,6 +55,7 @@ const formatXAxisDateString = (tickItem) => {
 
 export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
+
   const [timeRange, setTimeRange] = useLocalStorage(
     "SJ_timeRange",
     "1900-01-01", // The start date threshold for inclusion in the chart
@@ -74,11 +69,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
     "e1rmFormula",
     "Brzycki",
   );
-  const { width } = useWindowSize();
 
-  // Use useRef for variables that don't require re-render
-  const activeDateRef = useRef(null); // FIXME: no longer needed now that we just chart on the string version
-  const tooltipXRef = useRef(0);
+  const { width } = useWindowSize();
 
   const {
     dataset: chartData,
@@ -115,10 +107,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
     if (event && event.activePayload) {
       const activeIndex = event.activeTooltipIndex;
       // devLog(event);
-      // tooltipXRef.current = event.chartX;
-      activeDateRef.current = event.activeLabel;
-
-      // setHighlightDate(event.activePayload[0].payload.date);
       setHighlightDate(event.activeLabel);
     }
   };

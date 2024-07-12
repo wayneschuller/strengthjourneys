@@ -13,7 +13,7 @@ export function processVisualizerData(
 
   const startTime = performance.now();
 
-  const dataMap = new Map();
+  const dataMap = new Map(); // A per date mapping of the best lift per lifttype on that date
   const recentLifts = {}; // Used for weekly bests data decimation
   const decimationDaysWindow = 7; // Only chart the best e1rm in the N day window
 
@@ -41,7 +41,6 @@ export function processVisualizerData(
     if (weight < weightMin) weightMin = weight;
 
     // Data decimation - skip lower lifts if there was something much bigger the last N day window
-    // FIXME: this is slowing down the loop?
     if (!showAllData && recentLifts[liftType]) {
       const recentDate = new Date(recentLifts[liftType].date);
       const currentDate = new Date(date);
@@ -59,8 +58,6 @@ export function processVisualizerData(
     // Check if this is the best lift oneRepMax for this date and if so store it
     if (!liftData[liftType] || oneRepMax > liftData[liftType]) {
       liftData[liftType] = oneRepMax;
-      // const timeStamp = new Date(date).getTime(); // Convert to Unix timestamp for x-axis
-      // liftData.x = timeStamp;
       liftData.unitType = unitType;
       liftData[`${liftType}_reps`] = reps;
       liftData[`${liftType}_weight`] = weight;
@@ -69,10 +66,12 @@ export function processVisualizerData(
     recentLifts[liftType] = { date: date, oneRepMax: oneRepMax }; // Remember this for best of week comparisons
   });
 
+  // Convert to recharts date oriented array of data tuples
   const dataset = [];
   dataMap.forEach((lifts, date) => {
     dataset.push({ date, ...lifts });
   });
+  // devLog(`${dataset.length} points of chart data`);
 
   devLog(
     "processVisualizerData execution time: " +
@@ -80,6 +79,5 @@ export function processVisualizerData(
       `ms\x1b[0m`,
   );
 
-  devLog(`${dataset.length} points of chart data`);
   return { dataset, weightMax, weightMin };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useMemo } from "react";
 import { subMonths } from "date-fns";
 import {
   CartesianGrid,
@@ -116,6 +116,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
 
   // -----------------------------------------------------------------------------
   // CustomToolTipContent
+  // Out tooltip is modelled on the shadcnui layout but customised for our needs
   // -----------------------------------------------------------------------------
   const CustomTooltipContent = ({
     active,
@@ -203,7 +204,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
           <AreaChart
             accessibilityLayer
             data={chartData}
-            // margin={{ left: 5, right: 5, }}
+            margin={{ left: 5, right: 5 }}
             onMouseMove={handleMouseMove}
           >
             <CartesianGrid vertical={false} />

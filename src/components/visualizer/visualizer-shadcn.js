@@ -64,7 +64,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
     "Brzycki",
   );
 
-  const { width } = useWindowSize();
+  const { width } = useWindowSize(); // Used to hide the y-axis on smaller screens
 
   const {
     dataset: chartData,
@@ -125,7 +125,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   }) => {
     // devLog(payload);
     if (active && payload && payload.length) {
-      // Right now we have put key info into the chartData paylod. But we could simply lookup the date in parsedData for full info
+      // Right now we have put key info into the chartData paylod. But we could simply lookup the date in parsedData/topLifts for info
       const tuple = payload[0].payload;
 
       // devLog(tuple);
@@ -248,7 +248,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 stroke: "#8884d8",
                 strokeWidth: 2,
                 strokeDasharray: "5 5",
-              }} // Recharts tooltip cursor is the vertical reference line
+              }} // Recharts tooltip cursor is the vertical reference line that follows the mouse
             />
             <defs>
               {selectedLiftTypes.map((liftType, index) => {
@@ -282,9 +282,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 <Area
                   key={liftType}
                   type="monotone"
-                  // dataKey={`y_${line.label}`}
                   dataKey={liftType}
-                  // data={line.data}
                   stroke={getLiftColor(liftType)}
                   name={liftType}
                   strokeWidth={2}

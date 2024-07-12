@@ -40,11 +40,11 @@ export function processVisualizerData(
     if (weightMax < oneRepMax) weightMax = oneRepMax;
     if (weight < weightMin) weightMin = weight;
 
-    // Data decimation - skip lower lifts if there was something bigger the last N day window
+    // Data decimation - skip lower lifts if there was something much bigger the last N day window
     // FIXME: this is slowing down the loop?
-    const currentDate = new Date(date);
     if (!showAllData && recentLifts[liftType]) {
       const recentDate = new Date(recentLifts[liftType].date);
+      const currentDate = new Date(date);
       const dayDiff = (currentDate - recentDate) / (1000 * 60 * 60 * 24);
 
       // Check if we already have a much better lift in the data decimation window

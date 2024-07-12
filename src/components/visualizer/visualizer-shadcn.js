@@ -47,12 +47,6 @@ import {
 
 import { processVisualizerData } from "./visualizer-processing";
 
-// FIXME: We need more dynamic x-axis ticks
-const formatXAxisDateString = (tickItem) => {
-  const date = new Date(tickItem);
-  return date.toLocaleString("en-US", { month: "short", day: "numeric" });
-};
-
 export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
 
@@ -113,6 +107,12 @@ export function VisualizerShadcn({ setHighlightDate }) {
 
   let tickJump = 100; // 100 for pound jumps on y-Axis.
   if (chartData[0].unitType === "kg") tickJump = 50; // 50 for kg jumps on y-Axis
+
+  // FIXME: We need more dynamic x-axis ticks
+  const formatXAxisDateString = (tickItem) => {
+    const date = new Date(tickItem);
+    return date.toLocaleString("en-US", { month: "short", day: "numeric" });
+  };
 
   // -----------------------------------------------------------------------------
   // CustomToolTipContent

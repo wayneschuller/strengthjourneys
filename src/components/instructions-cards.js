@@ -56,8 +56,8 @@ export function ChooseSheetInstructionsCard({ session }) {
           >
             sample Google Sheet
           </a>{" "}
-          format is intuitive and easy to update. (make a copy and start
-          entering your lifts)
+          format is intuitive and easy to update. Make a copy and start entering
+          your lifts. (You can use {`"kg"`} or {`"lb"`})
         </div>
         <div className="">
           <a

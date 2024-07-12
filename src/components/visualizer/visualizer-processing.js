@@ -56,6 +56,7 @@ export function processVisualizerData(
       }
     }
 
+    // Check if this is the best lift oneRepMax for this date and if so store it
     if (!liftData[liftType] || oneRepMax > liftData[liftType]) {
       liftData[liftType] = oneRepMax;
       // const timeStamp = new Date(date).getTime(); // Convert to Unix timestamp for x-axis
@@ -65,7 +66,7 @@ export function processVisualizerData(
       liftData[`${liftType}_weight`] = weight;
     }
 
-    recentLifts[liftType] = { date: date, oneRepMax: oneRepMax }; // Store the full entry for best of week comparisons
+    recentLifts[liftType] = { date: date, oneRepMax: oneRepMax }; // Remember this for best of week comparisons
   });
 
   const dataset = [];

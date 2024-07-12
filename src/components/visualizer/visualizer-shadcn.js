@@ -408,22 +408,27 @@ const periodTargets = [
   {
     label: "Last 3 months",
     months: 3,
+    shortLabel: "3M",
   },
   {
     label: "Last 6 months",
     months: 6,
+    shortLabel: "6M",
   },
   {
     label: "Last year",
     months: 12,
+    shortLabel: "1Y",
   },
   {
     label: "Last 2 years",
     months: 12 * 2,
+    shortLabel: "2Y",
   },
   {
     label: "Last 5 years",
     months: 12 * 5,
+    shortLabel: "5Y",
   },
   // All Time option will be pushed manually
 ];
@@ -455,6 +460,7 @@ function TimeRangeSelect({ timeRange, setTimeRange }) {
   validSelectTimeDomains.push({
     label: "All time",
     timeRangeThreshold: "1900-01-01",
+    shortLabel: "MAX",
   });
 
   // devLog(validSelectTimeDomains);

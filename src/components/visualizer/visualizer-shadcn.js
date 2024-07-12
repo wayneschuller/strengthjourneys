@@ -1,26 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
-import { subMonths } from "date-fns";
-import {
-  CartesianGrid,
-  Area,
-  AreaChart,
-  LabelList,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
-import { getLiftColor, brightenHexColor } from "@/lib/get-lift-color";
+import { getLiftColor } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
-import { getReadableDateString } from "@/lib/processing-utils";
+import { devLog, getReadableDateString } from "@/lib/processing-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
-
+import { subMonths } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { devLog } from "@/lib/processing-utils";
 
 import {
   Card,
@@ -44,6 +33,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+import {
+  CartesianGrid,
+  Area,
+  AreaChart,
+  LabelList,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
 
 import { processVisualizerData } from "./visualizer-processing";
 

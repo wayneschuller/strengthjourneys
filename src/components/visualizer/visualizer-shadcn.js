@@ -295,7 +295,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
                     <LabelList
                       position="top"
                       offset={12}
-                      className="fill-foreground"
                       content={({ x, y, value, index }) => (
                         <text
                           x={x}
@@ -303,6 +302,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                           dy={-10}
                           fontSize={12}
                           textAnchor="middle"
+                          className="fill-foreground"
                         >
                           {`${value}${chartData[index].unitType}`}
                         </text>

@@ -203,7 +203,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
           <AreaChart
             accessibilityLayer
             data={chartData}
-            margin={{ left: 5, right: 5 }}
+            margin={{ left: 5, right: 20 }}
             onMouseMove={handleMouseMove}
           >
             <CartesianGrid vertical={false} />

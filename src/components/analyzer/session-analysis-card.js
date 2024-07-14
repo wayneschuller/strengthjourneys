@@ -41,7 +41,7 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
   }
 
   const recentWorkouts = parsedData?.filter(
-    (workout) => workout.date === sessionDate,
+    (workout) => workout.date === sessionDate && workout.isGoal !== true,
   );
 
   // Group workouts by liftType

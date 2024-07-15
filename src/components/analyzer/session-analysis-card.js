@@ -190,9 +190,9 @@ function getCreativeSessionRating(workouts) {
   // Give some feedback from worst session to best
 
   // Some randomising to make the feedback appear to be artificially intelligent
-  let mehIndex = Math.floor(Math.random() * mehEncouragements.length - 1);
-  let victorIndex = Math.floor(Math.random() * victoriousNouns.length - 1);
-  let treatIndex = Math.floor(Math.random() * celebrationTreat.length - 1);
+  let mehIndex = Math.floor(Math.random() * mehEncouragements.length);
+  let victorIndex = Math.floor(Math.random() * victoriousNouns.length);
+  let treatIndex = Math.floor(Math.random() * celebrationTreat.length);
 
   if (totalPRs === 0 && totalYearlyPRs === 0)
     return mehEncouragements[mehIndex];
@@ -219,6 +219,7 @@ const mehEncouragements = [
   "Arnold would be proud of you right now",
   "You are doing better than you think",
   "Now go get some protein",
+  "Don't worry, you'll get there",
 ];
 
 const victoriousNouns = [

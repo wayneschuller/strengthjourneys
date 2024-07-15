@@ -51,7 +51,7 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
     (workout) => workout.date === sessionDate && workout.isGoal !== true,
   );
 
-  // Group workouts by liftType
+  // Group workouts by liftType and check if they are liftime or yearly PRs
   const groupedWorkouts = recentWorkouts?.reduce((acc, entry) => {
     const { liftType } = entry;
     acc[liftType] = acc[liftType] || [];

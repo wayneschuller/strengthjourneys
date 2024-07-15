@@ -54,8 +54,6 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
   const groupedWorkouts = recentWorkouts?.reduce((acc, entry) => {
     const { liftType } = entry;
     acc[liftType] = acc[liftType] || [];
-    const { rank: prIndex, annotation: prSentenceReport } =
-      findLiftPositionInTopLifts(entry, topLiftsByTypeAndReps);
 
     const {
       rank: lifetimeRanking,
@@ -71,8 +69,6 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
 
     acc[liftType].push({
       ...entry,
-      prIndex: lifetimeRanking,
-      prSentenceReport: lifetimeSignificanceAnnotation,
       lifetimeRanking: lifetimeRanking,
       lifetimeSignificanceAnnotation: lifetimeSignificanceAnnotation,
       yearlyRanking: yearlyRanking,
@@ -111,7 +107,7 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
                         <div className="flex flex-row justify-between">
                           <div
                             className={
-                              workout.prIndex !== -1 ? "font-bold" : ""
+                              workout.lifetimeRanking !== -1 ? "font-bold" : ""
                             }
                           >
                             {workout.URL ? (

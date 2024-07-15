@@ -159,9 +159,7 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
         {groupedWorkouts && (
           <div>
             <strong>Session rating:</strong>{" "}
-            {lifetimePRFound
-              ? "Awesome"
-              : "You are beating 100% of people who won't get off the couch."}
+            {getCreativeSessionRating(groupedWorkouts)}
           </div>
         )}
       </CardFooter>
@@ -169,56 +167,92 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
   );
 }
 
-// FIXME: we actually have topLiftsByTypeAndRepsLast12Months now - we could simply lookup from this cache (see monthly card code)
-function getYearlyLiftRanking(parsedData, liftType, reps, weight, date) {
-  const startTime = performance.now();
-  return "";
+function getCreativeSessionRating(workouts) {
+  if (!workouts) return "";
 
-  if (reps < 1) return "";
-
-  const twelveMonthsAgo = new Date(date);
-  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
-  const twelveMonthsAgoString = twelveMonthsAgo.toISOString().split("T")[0];
-
-  // Filter lifts for the specific lift type and rep scheme within the last 12 months
-  const relevantLifts = parsedData.filter(
-    (lift) =>
-      lift.liftType === liftType &&
-      lift.reps === reps &&
-      lift.date > twelveMonthsAgoString &&
-      lift.date <= date,
-  );
-
-  // devLog(relevantLifts);
-
-  // Sort the relevant lifts by weight in descending order, then by date in ascending order
-  relevantLifts.sort((a, b) => {
-    if (b.weight !== a.weight) {
-      return b.weight - a.weight;
-    }
-    return a.date.localeCompare(b.date);
+  // Loop through workouts and count how many lifetimeRanking or yearlyRanking are not -1
+  let totalPRs = 0;
+  let totalYearlyPRs = 0;
+  let lifetimePRFound = false;
+  let yearlyPRFound = false;
+  Object.values(workouts).forEach((lifts) => {
+    lifts.forEach((lift) => {
+      if (lift.lifetimeRanking !== -1) totalPRs++;
+      if (lift.yearlyRanking !== -1) totalYearlyPRs++;
+      if (lift.lifetimeRanking === 0) lifetimePRFound = true;
+      if (lift.yearlyRanking === 0) yearlyPRFound = true;
+    });
   });
 
-  // Find the rank of the current lift
-  const rank = relevantLifts.findIndex(
-    (lift) =>
-      lift.weight < weight || (lift.weight === weight && lift.date > date),
-  );
+  // devLog("totalPRs", totalPRs);
+  // devLog("totalYearlyPRs", totalYearlyPRs);
 
-  // If the lift doesn't rank in the top 10, return null
-  if (rank >= 10 || rank === -1) {
-    return "";
-  }
+  // Give some feedback from worst session to best
 
-  // Construct the ranking string
-  const rankString = `#${rank} best`;
-  const repString = reps === 1 ? "single" : `${reps}rm`;
+  // Some randomising to make the feedback appear to be artificially intelligent
+  let mehIndex = Math.floor(Math.random() * mehEncouragements.length - 1);
+  let victorIndex = Math.floor(Math.random() * victoriousNouns.length - 1);
+  let treatIndex = Math.floor(Math.random() * celebrationTreat.length - 1);
 
-  devLog(
-    `getYearlyLiftRanking() execution time: ` +
-      `\x1b[1m${Math.round(performance.now() - startTime)}` +
-      `ms\x1b[0m`,
-  );
+  if (totalPRs === 0 && totalYearlyPRs === 0)
+    return mehEncouragements[mehIndex];
 
-  return `${rankString} ${repString} in the last year`;
+  // If they get a yearly #1
+  if (yearlyPRFound)
+    return `Look at the ${victoriousNouns[victorIndex]} over here getting the lift of the year.`;
+
+  // No lifetime PRs but some yearly non-#1 PRs
+  if (totalPRs === 0 && totalYearlyPRs > 0)
+    return `Just watching the ${victoriousNouns[victorIndex]} hitting some of the best lifts of the year.`;
+
+  // If they get a lifetime #1
+  // This is the biggest reward.
+  if (lifetimePRFound)
+    return `Someone get this ${victoriousNouns[victorIndex]} some ${celebrationTreat[treatIndex]}. Lifetime PR today!`;
+
+  // If they get a lifetime non-#1 PR (e.g.: top 20 lifetime)
+  return `You truly are the ${victoriousNouns[victorIndex]} with a lifetime top 20 today.`;
 }
+
+const mehEncouragements = [
+  "You are beating 100% of people who won't get off the couch.",
+  "Arnold would be proud of you right now",
+  "You are doing better than you think",
+  "Now go get some protein",
+];
+
+const victoriousNouns = [
+  "champion",
+  "winner",
+  "hero",
+  "conqueror",
+  "victor",
+  "master",
+  "overcomer",
+  "triumphator",
+  "subduer",
+  "vanquisher",
+  "top dog",
+  "lord of the rings",
+  "king of the hill",
+  "ruler of the roost",
+  "top banana",
+  "big cheese",
+  "big enchilada",
+  "big fish",
+  "big kahuna",
+  "big wheel",
+  "bigshot",
+  "bigwig",
+  "boss",
+];
+
+const celebrationTreat = [
+  "beers",
+  "champagne",
+  "cocktails",
+  "coffee",
+  "cigars",
+  "grass-fed steak",
+  "mouldy cheese",
+];

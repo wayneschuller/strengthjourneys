@@ -23,10 +23,16 @@ import {
 } from "@/lib/processing-utils";
 
 export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
-  const { parsedData, topLiftsByTypeAndReps, isLoading } = useUserLiftingData();
+  const {
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+    isLoading,
+  } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
-  let prFound = false;
+  let lifetimePRFound = false;
+  let yearlyPRFound = false;
 
   let sessionDate = highlightDate;
 
@@ -50,11 +56,27 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
     acc[liftType] = acc[liftType] || [];
     const { rank: prIndex, annotation: prSentenceReport } =
       findLiftPositionInTopLifts(entry, topLiftsByTypeAndReps);
-    if (prIndex !== -1) prFound = true;
+
+    const {
+      rank: lifetimeRanking,
+      annotation: lifetimeSignificanceAnnotation,
+    } = findLiftPositionInTopLifts(entry, topLiftsByTypeAndReps);
+
+    if (lifetimeRanking !== -1) lifetimePRFound = true;
+
+    const { rank: yearlyRanking, annotation: yearlySignificanceAnnotation } =
+      findLiftPositionInTopLifts(entry, topLiftsByTypeAndRepsLast12Months);
+
+    if (yearlyRanking !== -1) yearlyPRFound = true;
+
     acc[liftType].push({
       ...entry,
-      prIndex: prIndex,
-      prSentenceReport: prSentenceReport,
+      prIndex: lifetimeRanking,
+      prSentenceReport: lifetimeSignificanceAnnotation,
+      lifetimeRanking: lifetimeRanking,
+      lifetimeSignificanceAnnotation: lifetimeSignificanceAnnotation,
+      yearlyRanking: yearlyRanking,
+      yearlySignificanceAnnotation: yearlySignificanceAnnotation,
     });
 
     return acc;
@@ -110,8 +132,14 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
                             )}
                           </div>
                           <div className="ml-6 inline-block">
-                            {workout.prSentenceReport &&
-                              `${workout.prSentenceReport}`}
+                            {/* If both exist they should be separated by a comma */}
+                            {workout.lifetimeSignificanceAnnotation &&
+                              `${workout.lifetimeSignificanceAnnotation}`}
+                            {workout.lifetimeSignificanceAnnotation &&
+                              workout.yearlySignificanceAnnotation &&
+                              ", "}
+                            {workout.yearlySignificanceAnnotation &&
+                              `${workout.yearlySignificanceAnnotation} of the year`}
                           </div>
                         </div>
                       </li>
@@ -128,7 +156,7 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
         {groupedWorkouts && (
           <div>
             <strong>Session rating:</strong>{" "}
-            {prFound
+            {lifetimePRFound
               ? "Awesome"
               : "You are beating 100% of people who won't get off the couch."}
           </div>

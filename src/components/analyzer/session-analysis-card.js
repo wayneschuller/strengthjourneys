@@ -208,7 +208,7 @@ function getCreativeSessionRating(workouts) {
   // If they get a lifetime #1
   // This is the biggest reward.
   if (lifetimePRFound)
-    return `Someone get this ${victoriousNouns[victorIndex]} some ${celebrationTreat[treatIndex]}. Lifetime PR today!`;
+    return `Someone get this ${victoriousNouns[victorIndex]} some ${celebrationTreat[treatIndex]}. Lifetime PR today.`;
 
   // If they get a lifetime non-#1 PR (e.g.: top 20 lifetime)
   return `You truly are the ${victoriousNouns[victorIndex]} with a lifetime top 20 today.`;
@@ -216,11 +216,12 @@ function getCreativeSessionRating(workouts) {
 
 const mehEncouragements = [
   "You are beating 100% of people who won't get off the couch.",
-  "Arnold would be proud of you right now",
-  "You are doing better than you think",
-  "Now go get some protein",
-  "Don't worry, you'll get there",
-  "Maybe try ordering some Captain America underpants",
+  "Arnold would be proud of you right now.",
+  "You are doing better than you think.",
+  "Now go get some protein.",
+  "Don't worry, you'll get there.",
+  "Maybe try ordering some Captain America underpants.",
+  "At least you are not a marathon runner",
 ];
 
 const victoriousNouns = [
@@ -231,9 +232,9 @@ const victoriousNouns = [
   "baddie",
   "top dog",
   "lord of the rings",
-  "top banana",
+  "top banana (or other fruit)",
   "big cheese",
-  "big enchilada",
+  "big low-carb enchilada",
   "big kahuna",
   "big wheel",
   "bigshot",
@@ -251,4 +252,5 @@ const celebrationTreat = [
   "grass-fed steak",
   "mouldy cheese",
   "whey protein of an unusually pleasant flavouring",
+  "fresh mountain air",
 ];

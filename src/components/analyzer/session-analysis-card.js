@@ -63,10 +63,16 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
 
     if (lifetimeRanking !== -1) lifetimePRFound = true;
 
-    const { rank: yearlyRanking, annotation: yearlySignificanceAnnotation } =
+    let { rank: yearlyRanking, annotation: yearlySignificanceAnnotation } =
       findLiftPositionInTopLifts(entry, topLiftsByTypeAndRepsLast12Months);
 
     if (yearlyRanking !== -1) yearlyPRFound = true;
+
+    // If the yearly ranking is not better than an existing lifetime ranking, don't show it
+    if (lifetimeRanking !== -1 && yearlyRanking >= lifetimeRanking) {
+      yearlyRanking = null;
+      yearlySignificanceAnnotation = null;
+    }
 
     acc[liftType].push({
       ...entry,

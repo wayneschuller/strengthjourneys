@@ -222,6 +222,9 @@ const mehEncouragements = [
   "Don't worry, you'll get there.",
   "Maybe try ordering some Captain America underpants.",
   "At least you are not a marathon runner",
+  "INSERT AI GENERATED FEIGNED COMPLIMENT",
+  "No top lifts today. Maybe next time.",
+  "Another day at the office for this `athlete`.",
 ];
 
 const victoriousNouns = [
@@ -231,7 +234,7 @@ const victoriousNouns = [
   "savage",
   "baddie",
   "top dog",
-  "lord of the rings",
+  "professional",
   "top banana (or other fruit)",
   "big cheese",
   "big low-carb enchilada",
@@ -247,10 +250,11 @@ const celebrationTreat = [
   "champagne",
   "cocktails",
   "cocktail sausages",
-  "coffee",
+  "freshly brewed coffee",
   "cigars",
   "grass-fed steak",
   "mouldy cheese",
+  "milk by the gallon",
   "whey protein of an unusually pleasant flavouring",
   "fresh mountain air",
 ];

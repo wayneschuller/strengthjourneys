@@ -39,49 +39,50 @@ function parseBespokeData(data) {
     const row = data[i];
     const obj = {}; // We build the object as we parse each column in the row
 
+    // Loop through each column in the row and parse each cell
     for (let j = 0; j < columnNames.length; j++) {
       // FIXME: could we assume some sane defaults if the columnnames are missing?
       const columnName = columnNames[j];
-      let rowData = row[j];
+      let cellData = row[j]; // Grab the cell from this row and column combo
 
       // Trim the rowData string if it is a string
-      if (typeof rowData === "string") {
-        rowData = rowData.trim();
+      if (typeof cellData === "string") {
+        cellData = cellData.trim();
       }
 
       switch (columnName) {
         case "Date":
-          if (rowData) {
-            obj["date"] = rowData;
-            previousDate = rowData;
+          if (cellData) {
+            obj["date"] = cellData;
+            previousDate = cellData;
           } else {
             obj["date"] = previousDate;
           }
           break;
         case "Lift Type":
-          if (rowData) {
-            obj["liftType"] = rowData;
-            previousLiftType = rowData;
+          if (cellData) {
+            obj["liftType"] = cellData;
+            previousLiftType = cellData;
           } else {
             obj["liftType"] = previousLiftType;
           }
           break;
         case "Reps":
-          obj["reps"] = convertStringToInt(rowData);
+          obj["reps"] = convertStringToInt(cellData);
           break;
         case "Weight":
-          const { value, unitType } = convertWeightAndUnitType(rowData);
+          const { value, unitType } = convertWeightAndUnitType(cellData);
           obj["weight"] = value;
           obj["unitType"] = unitType;
           break;
         case "Notes":
-          obj["notes"] = rowData;
+          obj["notes"] = cellData;
           break;
         case "isGoal":
-          obj["isGoal"] = rowData === "TRUE"; // Will default to false if blank
+          obj["isGoal"] = cellData === "TRUE"; // Will default to false if blank
           break;
         default:
-          obj[columnName] = rowData;
+          obj[columnName] = cellData; // Kind of a hack to store any extra columns - we don't use this.
       }
     }
 

@@ -25,6 +25,10 @@ export function ConsistencyCard() {
   const { parsedData } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
+  if (!parsedData || parsedData.length === 0) {
+    return null;
+  }
+
   const consistency = processConsistency(parsedData);
 
   // devLog(consistency);

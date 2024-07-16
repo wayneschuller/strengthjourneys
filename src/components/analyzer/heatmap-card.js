@@ -49,7 +49,7 @@ export function ActivityHeatmapsCard() {
 
   useEffect(() => {
     if (isLoading) return;
-    if (!parsedData) return;
+    if (!parsedData || parsedData.length === 0) return;
 
     // Generate heatmap stuff
     const { startDate, endDate } = findStartEndDates(parsedData);
@@ -69,6 +69,10 @@ export function ActivityHeatmapsCard() {
 
     setIntervals(intervals); // intervals is the trigger for showing the heatmaps
   }, [isLoading, parsedData, width]);
+
+  if (!parsedData || parsedData.length === 0) {
+    return null;
+  }
 
   if (!isClient) return null; // Heatmaps only work on client
 

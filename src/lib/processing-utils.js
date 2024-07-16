@@ -153,7 +153,7 @@ export function processTopLiftsByTypeAndReps(parsedData, liftTypes) {
   const topLiftsByTypeAndReps = {};
   const topLiftsByTypeAndRepsLast12Months = {};
 
-  if (!parsedData) {
+  if (!parsedData || parsedData.length === 0) {
     return { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months };
   }
 
@@ -172,6 +172,9 @@ export function processTopLiftsByTypeAndReps(parsedData, liftTypes) {
 
   // Check the date range using the first and last entries
   // FIXME: code fails if .date is not there
+  if (!parsedData[0]?.date || !parsedData[parsedData.length - 1]?.date) {
+    return { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months };
+  }
   const firstYear = new Date(parsedData[0].date).getFullYear();
   const lastYear = new Date(
     parsedData[parsedData.length - 1].date,

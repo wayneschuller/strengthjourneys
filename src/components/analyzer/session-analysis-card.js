@@ -36,6 +36,10 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
 
   let sessionDate = highlightDate;
 
+  if (!parsedData || parsedData.length === 0) {
+    return null;
+  }
+
   // The PR Analyzer will call this component without a highlight date, so find the most recent session
   if (!sessionDate) {
     // Iterate backwards to find the most recent non-goal entry date

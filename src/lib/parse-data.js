@@ -30,7 +30,7 @@ export function parseData(data) {
 // See @/lib/sample-parsed-data.js for data structure design
 function parseBespokeData(data) {
   const startTime = performance.now();
-  const columnNames = data[0];
+  const columnNames = data[0]; // We assume the column names are in the first row of data
   let previousDate = null;
   let previousLiftType = null;
 
@@ -40,6 +40,7 @@ function parseBespokeData(data) {
     const obj = {}; // We build the object as we parse each column in the row
 
     for (let j = 0; j < columnNames.length; j++) {
+      // FIXME: could we assume some sane defaults if the columnnames are missing?
       const columnName = columnNames[j];
       let rowData = row[j];
 

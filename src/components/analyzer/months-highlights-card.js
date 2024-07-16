@@ -45,9 +45,9 @@ export function MonthsHighlightsCard() {
         <ul>
           {!recentMonthHighlights && <Skeleton className="h-[50vh]" />}
           {recentMonthHighlights &&
-            recentMonthHighlights.map((record) => (
+            recentMonthHighlights.map((record, index) => (
               <li
-                key={`${record.liftType}-${record.reps}-${record.weight}-${record.date}`}
+                key={`${record.liftType}-${record.reps}-${index}`}
                 className="flex justify-between gap-2 py-1 md:flex-row md:py-0"
               >
                 <div className="">

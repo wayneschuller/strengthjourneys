@@ -31,7 +31,11 @@ export function SessionAnalysisCard({ highlightDate }) {
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
-  const sessionRatingRef = useRef(null);
+  const sessionRatingRef = useRef(null); // Used to avoid randomised rating changes on rerenders
+
+  useEffect(() => {
+    sessionRatingRef.current = null; // Reset the session rating when the highlight date changes
+  }, [highlightDate]);
 
   let sessionDate = highlightDate;
 
@@ -62,12 +66,8 @@ export function SessionAnalysisCard({ highlightDate }) {
       annotation: lifetimeSignificanceAnnotation,
     } = findLiftPositionInTopLifts(entry, topLiftsByTypeAndReps);
 
-    // if (lifetimeRanking !== -1) lifetimePRFound = true;
-
     let { rank: yearlyRanking, annotation: yearlySignificanceAnnotation } =
       findLiftPositionInTopLifts(entry, topLiftsByTypeAndRepsLast12Months);
-
-    // if (yearlyRanking !== -1) yearlyPRFound = true;
 
     // If the yearly ranking is not better than an existing lifetime ranking, don't show it
     if (lifetimeRanking !== -1 && yearlyRanking >= lifetimeRanking) {
@@ -85,6 +85,10 @@ export function SessionAnalysisCard({ highlightDate }) {
 
     return acc;
   }, {});
+
+  if (groupedWorkouts && !sessionRatingRef.current) {
+    sessionRatingRef.current = getCreativeSessionRating(groupedWorkouts);
+  }
 
   return (
     <Card className="flex-1">
@@ -159,8 +163,7 @@ export function SessionAnalysisCard({ highlightDate }) {
       <CardFooter>
         {groupedWorkouts && (
           <div>
-            <strong>Session rating:</strong>{" "}
-            {getCreativeSessionRating(groupedWorkouts)}
+            <strong>Session rating:</strong> {sessionRatingRef.current}
           </div>
         )}
       </CardFooter>
@@ -176,6 +179,8 @@ function getCreativeSessionRating(workouts) {
   let totalYearlyPRs = 0;
   let lifetimePRFound = false;
   let yearlyPRFound = false;
+
+  // Gather some statistics on this session
   Object.values(workouts).forEach((lifts) => {
     lifts.forEach((lift) => {
       if (lift.lifetimeRanking !== -1) totalPRs++;

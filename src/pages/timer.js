@@ -27,7 +27,7 @@ export default function Timer() {
       </Head>
 
       <div className="flex flex-col items-center">
-        <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl ">
+        <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl">
           Lifting Set Timer
         </h1>
         <LargeTimer />
@@ -79,7 +79,8 @@ function LargeTimer() {
       >
         <CardContent>
           <div
-            className={`${GeistMono.className} pt-6 text-center font-mono text-9xl font-bold md:text-[15rem] lg:text-[20rem] xl:text-[25rem] 2xl:text-[30rem]`}
+            // className={`${GeistMono.className} pt-6 text-center font-mono text-9xl font-bold md:text-[15rem] lg:text-[20rem] xl:text-[25rem] 2xl:text-[30rem]`}
+            className={`pt-6 text-center text-9xl font-bold tabular-nums md:text-[15rem] lg:text-[20rem] xl:text-[25rem] 2xl:text-[30rem]`}
           >
             {formatTime(time)}
           </div>
@@ -134,7 +135,7 @@ export function MiniTimer() {
 
   return (
     <div
-      className={`${GeistMono.className} cursor-pointer text-center font-mono `}
+      className={`${GeistMono.className} cursor-pointer text-center font-mono`}
       onClick={() => handleRestart()}
     >
       {formatTime(time)}

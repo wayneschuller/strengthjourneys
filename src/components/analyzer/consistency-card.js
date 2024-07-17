@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useContext, useState, useEffect } from "react";
 import { devLog } from "@/lib/processing-utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,6 +46,9 @@ export function ConsistencyCard() {
           {authStatus === "unauthenticated" && "Demo mode: "} Consistency
           Analysis{" "}
         </CardTitle>
+        <CardDescription>
+          Benchmark is three sessions per week, with some rest weeks per year.
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex justify-center">
         {!consistency ? (

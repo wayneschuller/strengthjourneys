@@ -191,12 +191,23 @@ function getCreativeSessionRating(workouts) {
   // devLog("totalPRs", totalPRs);
   // devLog("totalYearlyPRs", totalYearlyPRs);
 
-  // Give some feedback from worst session to best
+  // FIXME: detect if they do a single in all of squat/bench/deadlift in one session - autodetect powerlifting meet
+
+  // Give some feedback from least impressive session to best
 
   // Some randomising to make the feedback appear to be artificially intelligent
   let mehIndex = Math.floor(Math.random() * mehEncouragements.length);
   let victorIndex = Math.floor(Math.random() * victoriousNouns.length);
   let treatIndex = Math.floor(Math.random() * celebrationTreat.length);
+
+  const totalSetCount = Object.values(workouts).reduce(
+    (sum, lifts) => sum + lifts.length,
+    0,
+  );
+
+  // 5 or less sets, they may have the app open during a session.
+  if (!yearlyPRFound && !lifetimePRFound && totalSetCount <= 5)
+    return `Good start. Now do more sets to become the ${victoriousNouns[victorIndex]}.`;
 
   if (totalPRs === 0 && totalYearlyPRs === 0)
     return mehEncouragements[mehIndex];
@@ -215,7 +226,7 @@ function getCreativeSessionRating(workouts) {
     return `Someone get this ${victoriousNouns[victorIndex]} some ${celebrationTreat[treatIndex]}. Lifetime PR today.`;
 
   // If they get a lifetime non-#1 PR (e.g.: top 20 lifetime)
-  return `You truly are the ${victoriousNouns[victorIndex]} with a lifetime top 20 today.`;
+  return `You truly are the ${victoriousNouns[victorIndex]} with a lifetime top 20 in this session.`;
 }
 
 const mehEncouragements = [

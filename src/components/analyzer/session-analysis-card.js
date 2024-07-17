@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useContext } from "react";
+import { useRef, useState, useEffect, useContext } from "react";
 import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
@@ -22,7 +22,7 @@ import {
   getReadableDateString,
 } from "@/lib/processing-utils";
 
-export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
+export function SessionAnalysisCard({ highlightDate }) {
   const {
     parsedData,
     topLiftsByTypeAndReps,
@@ -31,14 +31,11 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
-  let lifetimePRFound = false;
-  let yearlyPRFound = false;
+  const sessionRatingRef = useRef(null);
 
   let sessionDate = highlightDate;
 
-  if (!parsedData || parsedData.length === 0) {
-    return null;
-  }
+  // if (!parsedData || parsedData.length === 0) { return null; }
 
   // The PR Analyzer will call this component without a highlight date, so find the most recent session
   if (!sessionDate) {
@@ -65,12 +62,12 @@ export function SessionAnalysisCard({ highlightDate, SetHighlightDate }) {
       annotation: lifetimeSignificanceAnnotation,
     } = findLiftPositionInTopLifts(entry, topLiftsByTypeAndReps);
 
-    if (lifetimeRanking !== -1) lifetimePRFound = true;
+    // if (lifetimeRanking !== -1) lifetimePRFound = true;
 
     let { rank: yearlyRanking, annotation: yearlySignificanceAnnotation } =
       findLiftPositionInTopLifts(entry, topLiftsByTypeAndRepsLast12Months);
 
-    if (yearlyRanking !== -1) yearlyPRFound = true;
+    // if (yearlyRanking !== -1) yearlyPRFound = true;
 
     // If the yearly ranking is not better than an existing lifetime ranking, don't show it
     if (lifetimeRanking !== -1 && yearlyRanking >= lifetimeRanking) {

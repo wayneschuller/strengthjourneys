@@ -82,6 +82,13 @@ export function AvatarDropdown() {
               )}
               {ssid && (
                 <DropdownMenuItem
+                  onClick={() => window.open(decodeURIComponent(sheetURL))}
+                >
+                  Open Google Sheet in new tab
+                </DropdownMenuItem>
+              )}
+              {ssid && (
+                <DropdownMenuItem
                   onClick={() =>
                     handleOpenFilePicker(
                       openPicker,
@@ -136,7 +143,7 @@ export function AvatarDropdown() {
           </DropdownMenu>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Open User Menu</p>
+          <p>Open user menu</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

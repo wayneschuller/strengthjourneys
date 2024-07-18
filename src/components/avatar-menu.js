@@ -18,6 +18,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 export function AvatarDropdown() {
   const { setTheme } = useTheme();
   const { data: session, status: authStatus } = useSession();
@@ -46,83 +53,92 @@ export function AvatarDropdown() {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Avatar className="h-8 w-8 ring-muted-foreground hover:ring-2">
-          <AvatarImage src={session.user.image} />
-          <AvatarFallback>session.user.name</AvatarFallback>
-          <span className="sr-only">Logged in user menu</span>
-        </Avatar>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {!ssid && (
-          <DropdownMenuItem
-            onClick={() =>
-              handleOpenFilePicker(
-                openPicker,
-                session.accessToken,
-                setSsid,
-                setSheetURL,
-                setSheetFilename,
-              )
-            }
-          >
-            Choose Google Sheet
-          </DropdownMenuItem>
-        )}
-        {ssid && (
-          <DropdownMenuItem
-            onClick={() =>
-              handleOpenFilePicker(
-                openPicker,
-                session.accessToken,
-                setSsid,
-                setSheetURL,
-                setSheetFilename,
-              )
-            }
-          >
-            Choose New Google Sheet
-          </DropdownMenuItem>
-        )}
-        {ssid && (
-          <DropdownMenuItem
-            onClick={() => {
-              setSheetURL(null);
-              setSheetFilename(null);
-              setSsid(null);
-            }}
-          >
-            Forget Google Sheet
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem
-          onClick={() =>
-            window.open(
-              "https://github.com/wayneschuller/strengthjourneys/issues",
-            )
-          }
-        >
-          Report Issue
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() =>
-            window.open(
-              "mailto:info@strengthjourneys.xyz?subject=Thank you for Strength Journeys it is the best!",
-            )
-          }
-        >
-          Email Author
-        </DropdownMenuItem>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Avatar className="h-8 w-8 ring-muted-foreground hover:ring-2">
+                <AvatarImage src={session.user.image} />
+                <AvatarFallback>session.user.name</AvatarFallback>
+                <span className="sr-only">Logged in user menu</span>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {!ssid && (
+                <DropdownMenuItem
+                  onClick={() =>
+                    handleOpenFilePicker(
+                      openPicker,
+                      session.accessToken,
+                      setSsid,
+                      setSheetURL,
+                      setSheetFilename,
+                    )
+                  }
+                >
+                  Choose Google Sheet
+                </DropdownMenuItem>
+              )}
+              {ssid && (
+                <DropdownMenuItem
+                  onClick={() =>
+                    handleOpenFilePicker(
+                      openPicker,
+                      session.accessToken,
+                      setSsid,
+                      setSheetURL,
+                      setSheetFilename,
+                    )
+                  }
+                >
+                  Choose New Google Sheet
+                </DropdownMenuItem>
+              )}
+              {ssid && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSheetURL(null);
+                    setSheetFilename(null);
+                    setSsid(null);
+                  }}
+                >
+                  Forget Google Sheet
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                onClick={() =>
+                  window.open(
+                    "https://github.com/wayneschuller/strengthjourneys/issues",
+                  )
+                }
+              >
+                Report Issue
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  window.open(
+                    "mailto:info@strengthjourneys.xyz?subject=Thank you for Strength Journeys it is the best!",
+                  )
+                }
+              >
+                Email Author
+              </DropdownMenuItem>
 
-        <DropdownMenuItem
-          onClick={() => {
-            signOut();
-          }}
-        >
-          Sign Out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+              <DropdownMenuItem
+                onClick={() => {
+                  signOut();
+                }}
+              >
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Open User Menu</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

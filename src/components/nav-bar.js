@@ -1,7 +1,7 @@
 /** @format */
 
 "use client";
-
+import Image from "next/image";
 import * as React from "react";
 import { useState, useEffect, useContext } from "react";
 import { useSession, signIn, sgnOut } from "next-auth/react";
@@ -61,9 +61,18 @@ export function DesktopNav() {
   const pathname = usePathname();
   return (
     <div className="hidden align-middle md:flex">
-      <Link href="/" className="mr-6 flex items-center space-x-2">
+      <Link href="/" className="mr-10 flex items-center space-x-2">
         {/* <Image src={Logo} className="h-10 w-10" alt="Logo" /> */}
-        <span className="inline-block font-bold">Strength Journeys</span>
+        <Image
+          // src="/Artboard 2-100.jpg"
+          src="/Artboard 2-100.jpg"
+          width={200}
+          height={200}
+          alt="logo"
+          className="inline-block"
+        />
+
+        {/* <span className="inline-block font-bold">Strength Journeys</span> */}
       </Link>
       <nav className="flex flex-1 items-center space-x-2 text-sm font-medium md:space-x-6">
         <Link

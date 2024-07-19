@@ -4,6 +4,7 @@
 
 import Link from "next/link";
 import Head from "next/head";
+import Image from "next/image";
 
 import { Calculator, Timer, LineChart, Trophy } from "lucide-react";
 
@@ -65,6 +66,8 @@ export default function Home() {
           content="https://www.strengthjourneys.xyz/StrengthJourneysOGimage.png"
         />
       </Head>
+
+      {/* <Image src="/new_logo.png" width={100} height={100} alt="logo" /> */}
 
       <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
         Welcome to {title}

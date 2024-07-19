@@ -65,9 +65,9 @@ export function DesktopNav() {
         {/* <Image src={Logo} className="h-10 w-10" alt="Logo" /> */}
         <Image
           // src="/Artboard 2-100.jpg"
-          src="/Artboard 2-100.jpg"
-          width={200}
-          height={200}
+          src="/new_logo.png"
+          width={100}
+          height={80}
           alt="logo"
           className="inline-block"
         />

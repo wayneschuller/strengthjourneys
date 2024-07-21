@@ -29,6 +29,14 @@ Sentry.init({
     Sentry.feedbackIntegration({
       // Additional SDK configuration goes in here, for example:
       colorScheme: "system",
+      triggerLabel: "Give fast feedback",
+      formTitle: "Fast Feedback",
+      nameLabel: "Name (optional)",
+      emailLabel: "Email (optional)",
+      messagePlaceholder:
+        "What features do you need? Is there a bug? What can we improve?",
+      submitButtonLabel: "Send Feedback",
+      successMessageText: "Thanks for your feedback!",
     }),
   ],
 });

@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Layout } from "@/components/layout";
 import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from "next-auth/react";
-import { useState, useEffect, createContext } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
 import Script from "next/script";
 import { devLog } from "@/lib/processing-utils";

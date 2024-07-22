@@ -63,16 +63,9 @@ export function DesktopNav() {
     <div className="hidden align-middle md:flex">
       <Link href="/" className="mr-10 flex items-center space-x-2">
         {/* <Image src={Logo} className="h-10 w-10" alt="Logo" /> */}
-        <Image
-          // src="/Artboard 2-100.jpg"
-          src="/new_logo.png"
-          width={100}
-          height={80}
-          alt="logo"
-          className="inline-block"
-        />
+        {/* <Image // src="/Artboard 2-100.jpg" src="/new_logo.png" width={100} height={80} alt="logo" className="inline-block" /> */}
 
-        {/* <span className="inline-block font-bold">Strength Journeys</span> */}
+        <span className="inline-block font-bold">Strength Journeys</span>
       </Link>
       <nav className="flex flex-1 items-center space-x-2 text-sm font-medium md:space-x-6">
         <Link

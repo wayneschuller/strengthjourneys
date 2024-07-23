@@ -41,9 +41,7 @@ export function NavBar() {
         <MobileNav />
       </div>
       <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-3">
-        {(pathname === "/analyzer" ||
-          pathname === "/visualizer" ||
-          pathname === "/visualizer2") && (
+        {(pathname === "/analyzer" || pathname === "/visualizer") && (
           <SidePanelSelectLiftsButton isIconMode={true} />
         )}
         <MiniTimer />

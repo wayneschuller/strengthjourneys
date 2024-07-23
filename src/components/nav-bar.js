@@ -27,6 +27,7 @@ import {
 
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 
+// Note: designer providing new logo and favicon files soon
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
 

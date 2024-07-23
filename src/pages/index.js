@@ -70,6 +70,8 @@ export default function Home() {
         <meta property="og:title" content={title} key="title" />
         <meta property="og:description" content={description} />
         <meta property="og:url" content={URL} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Strength Journeys" />
         <meta
           property="og:image"
           content="https://www.strengthjourneys.xyz/StrengthJourneysOGimage.png"

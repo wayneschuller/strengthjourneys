@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { GettingStartedCard } from "@/components/instructions-cards";
 
+//
 const featurePages = [
   {
     href: "/analyzer",
@@ -56,7 +57,15 @@ export default function Home() {
       <Head>
         <title>{title}</title>
         <meta name="description" content="Strength Journeys" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="48x48"
+          href="/favicon-48x48.png"
+        />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
         <link rel="canonical" href={URL} />
         <meta property="og:title" content={title} key="title" />
         <meta name="og:description" content={description} />

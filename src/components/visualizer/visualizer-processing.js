@@ -16,6 +16,7 @@ export function processVisualizerData(
   const dataMap = new Map(); // A per date mapping of the best lift per lifttype on that date
   const recentLifts = {}; // Used for weekly bests data decimation
   const decimationDaysWindow = 7; // Only chart the best e1rm in the N day window
+  let mostRecentDate = parsedData[parsedData.length - 1].date; // The most recent session date (assumes parsedData chronologically sorted)
 
   let weightMax = 0;
   let weightMin = 1000;
@@ -41,7 +42,8 @@ export function processVisualizerData(
     if (weight < weightMin) weightMin = weight;
 
     // Data decimation - skip lower lifts if there was something much bigger the last N day window
-    if (!showAllData && recentLifts[liftType]) {
+    // Don't decimate the most recent session because it's confusing to the user
+    if (!showAllData && date !== mostRecentDate && recentLifts[liftType]) {
       const recentDate = new Date(recentLifts[liftType].date);
       const currentDate = new Date(date);
       const dayDiff = (currentDate - recentDate) / (1000 * 60 * 60 * 24);

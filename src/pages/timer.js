@@ -5,12 +5,10 @@
 
 import Head from "next/head";
 import React, { useState, useEffect, useContext } from "react";
-import { GeistMono } from "geist/font/mono"; // Monospace font for stopwatch fixed width
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTimer } from "@/lib/timer-context";
-import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
 
 export default function Timer() {
@@ -79,7 +77,6 @@ function LargeTimer() {
       >
         <CardContent>
           <div
-            // className={`${GeistMono.className} pt-6 text-center font-mono text-9xl font-bold md:text-[15rem] lg:text-[20rem] xl:text-[25rem] 2xl:text-[30rem]`}
             className={`pt-6 text-center text-9xl font-bold tabular-nums md:text-[15rem] lg:text-[20rem] xl:text-[25rem] 2xl:text-[30rem]`}
           >
             {formatTime(time)}
@@ -135,7 +132,7 @@ export function MiniTimer() {
 
   return (
     <div
-      className={`${GeistMono.className} cursor-pointer text-center font-mono`}
+      className={`cursor-pointer tabular-nums tracking-wide`}
       onClick={() => handleRestart()}
     >
       {formatTime(time)}

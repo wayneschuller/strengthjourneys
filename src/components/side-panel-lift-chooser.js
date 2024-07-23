@@ -38,12 +38,13 @@ export function SidePanelSelectLiftsButton({ isIconMode }) {
                 <div>
                   {isIconMode && (
                     <Button variant="outline" size="icon">
-                      <Dumbbell />
+                      <Dumbbell strokeWidth={1.25} />
                     </Button>
                   )}
                   {!isIconMode && (
                     <Button className="font-normal" variant="outline">
-                      <Dumbbell className="mr-3" /> Choose Lifts
+                      <Dumbbell strokeWidth={1.25} className="mr-3" /> Choose
+                      Lifts
                     </Button>
                   )}
                   <span className="sr-only">

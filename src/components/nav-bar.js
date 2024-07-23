@@ -41,6 +41,7 @@ export function NavBar() {
         <MobileNav />
       </div>
       <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-3">
+        {/* Only show the select lifts button on the analyzer and visualizer pages */}
         {(pathname === "/analyzer" || pathname === "/visualizer") && (
           <SidePanelSelectLiftsButton isIconMode={true} />
         )}

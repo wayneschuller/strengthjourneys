@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useTheme } from "next-themes";
 
 import {
   Tooltip,
@@ -59,14 +60,24 @@ export function NavBar() {
 
 export function DesktopNav() {
   const pathname = usePathname();
+  const { theme } = useTheme();
+
+  const nav_logo =
+    theme === "dark" ? "/nav_logo_light.png" : "/nav_logo_dark.png";
+
   return (
     <div className="hidden align-middle md:flex">
       <Link href="/" className="mr-10 flex items-center space-x-2">
-        {/* <Image src={Logo} className="h-10 w-10" alt="Logo" /> */}
-        {/* <Image // src="/Artboard 2-100.jpg" src="/new_logo.png" width={100} height={80} alt="logo" className="inline-block" /> */}
-
-        <span className="inline-block font-bold">Strength Journeys</span>
+        <Image
+          src={nav_logo}
+          width={100}
+          height={80}
+          alt="logo"
+          className="inline-block"
+        />
+        {/* <span className="inline-block font-bold">Strength Journeys</span> */}
       </Link>
+      {/* FIXME: we should loop over the feature pages array from the index here */}
       <nav className="flex flex-1 items-center space-x-2 text-sm font-medium md:space-x-6">
         <Link
           href="/analyzer"

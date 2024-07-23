@@ -68,7 +68,7 @@ export default function Home() {
 
         <link rel="canonical" href={URL} />
         <meta property="og:title" content={title} key="title" />
-        <meta name="og:description" content={description} />
+        <meta property="og:description" content={description} />
         <meta property="og:url" content={URL} />
         <meta
           property="og:image"

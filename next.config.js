@@ -1,13 +1,18 @@
 /** @type {import('next').NextConfig} */
+
+const withMDX = require("@next/mdx")(); // https://nextjs.org/docs/pages/building-your-application/configuring/mdx
+
 const nextConfig = {
   reactStrictMode: true,
+  pageExtensions: ["js", "jsx", "mdx"],
   transpilePackages: ["geist"],
 };
 
-module.exports = nextConfig;
+module.exports = withMDX(nextConfig);
 
+// -------------------------------------------------------------------------
 // Injected content via Sentry wizard below
-
+// -------------------------------------------------------------------------
 const { withSentryConfig } = require("@sentry/nextjs");
 
 module.exports = withSentryConfig(module.exports, {
@@ -15,7 +20,7 @@ module.exports = withSentryConfig(module.exports, {
   // https://github.com/getsentry/sentry-webpack-plugin#options
 
   org: "wayne-schuller",
- // project: "javascript-nextjs",
+  // project: "javascript-nextjs",
   project: "strength-journeys",
 
   // Only print logs for uploading source maps in CI

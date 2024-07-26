@@ -47,7 +47,7 @@ const featurePages = [
   {
     href: "/articles/own-your-lifting-data",
     title: "The Power of Owning Your Lifting Data",
-    description: "Why we recommend Google Sheets tracking.",
+    description: "A short article on why recommend Google Sheets for lifters.",
     IconComponent: Newspaper,
   },
   {

@@ -6,7 +6,7 @@ import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
 
-import { Calculator, Timer, LineChart, Trophy } from "lucide-react";
+import { Calculator, Timer, LineChart, Trophy, Newspaper } from "lucide-react";
 
 import {
   Card,
@@ -43,6 +43,21 @@ const featurePages = [
     title: "Lifting Set Timer",
     description: "Set timer for phones or large gym screens.",
     IconComponent: Timer,
+  },
+  {
+    href: "/articles/henry-rollins-the-iron-and-the-soul",
+    title: "The Iron and the Soul",
+    description: "The classic article by Henry Rollins.",
+    IconComponent: Newspaper,
+  },
+];
+
+const featureArticles = [
+  {
+    href: "/articles/henry-rollins-the-iron-and-the-soul",
+    title: "The Iron and the Soul",
+    description: "The classic article by Henry Rollins.",
+    IconComponent: Newspaper,
   },
 ];
 

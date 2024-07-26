@@ -44,8 +44,10 @@ function ArticleContent() {
         As lifters we invest countless hours in the gym, pushing our limits and
         striving for progress. But are we giving the same attention to our
         lifting data? Here’s why owning your strength journey matters and how{" "}
-        <a href={googleSheetSampleURL}>Google Sheets</a> can be your ultimate
-        workout companion.
+        <a href={googleSheetSampleURL} target="_blank">
+          Google Sheets
+        </a>{" "}
+        can be your ultimate workout companion.
       </p>
 
       <h2>1. Lifting: A Lifelong Journey</h2>

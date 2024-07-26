@@ -49,23 +49,21 @@ function ArticleContent() {
         a shame to lose that narrative?
       </p>
 
-      <h2>2. Beyond Fitness Apps</h2>
+      <h2>2. Beyond Fitness Apps and Data Silos</h2>
       <p>
         While fitness apps and services are convenient, relying solely on them
         can be risky. What if the app shuts down or changes its features? By
         keeping your own copy of your lifting history, you ensure that your data
         remains accessible, no matter what.
       </p>
-
-      <h2>3. Break Free from Data Silos</h2>
       <p>
-        Don't let your hard-earned progress get trapped in a proprietary app. By
-        maintaining your own records, you retain control over your data and can
-        easily switch between different tracking methods without losing your
-        history.
+        If you have a preferred fitness app we recommend dual recording into a
+        Google Sheet. By maintaining your own records, you retain control over
+        your data and can easily switch between different tracking methods
+        without losing your history.
       </p>
 
-      <h2>4. Google Sheets: Your Personal Gym Log</h2>
+      <h2>3. Google Sheets: Your Personal Gym Log</h2>
       <p>
         Enter Google Sheets—a powerful, yet simple tool for tracking your lifts.
         It's fast, works seamlessly on mobile devices, can be accessed anywhere,
@@ -73,7 +71,7 @@ function ArticleContent() {
         logging your latest PR, Google Sheets has you covered. We recommend a
         simple journal style format:
       </p>
-      <div className="">
+      <figure>
         <a
           href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
           target="_blank"
@@ -85,9 +83,10 @@ function ArticleContent() {
             alt="Screenshot of sample google sheet data"
           />
         </a>
-      </div>
+        <figcaption>Click image to open our sample data template</figcaption>
+      </figure>
 
-      <h2>5. Celebrate Your Progress</h2>
+      <h2>4. Celebrate Your Progress</h2>
       <p>
         While obsessing over numbers isn't necessary, having a record of your
         journey can be incredibly motivating. It's easy to forget how far you've

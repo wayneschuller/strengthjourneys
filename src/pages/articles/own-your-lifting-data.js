@@ -13,6 +13,10 @@ import SampleImage from "/public/sample_google_sheet_fuzzy_border.png";
 const googleSheetSampleURL =
   "https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0";
 
+const StrengthJourneys = () => (
+  <a href="https://www.strengthjourneys.xyz/">Strength Journeys</a>
+);
+
 export default function Article() {
   return (
     <div className="mx-4 flex items-center justify-center">
@@ -31,7 +35,9 @@ function ArticleContent() {
     <article className="prose prose-orange dark:prose-invert">
       <header>
         <h1>The Power of Owning Your Lifting Data with Google Sheets</h1>
-        <h3>by Strength Journeys Staff</h3>
+        <h3>
+          by <StrengthJourneys /> Staff
+        </h3>
       </header>
 
       <p>
@@ -57,9 +63,9 @@ function ArticleContent() {
         remains accessible, no matter what.
       </p>
       <p>
-        If you have a preferred fitness app we recommend dual recording into a
-        Google Sheet. By maintaining your own records, you retain control over
-        your data and can easily switch between different tracking methods
+        If you have a preferred fitness app we recommend dual recording into
+        your own system. By maintaining your own records, you retain control
+        over your data and can easily switch between different tracking methods
         without losing your history.
       </p>
 
@@ -67,9 +73,7 @@ function ArticleContent() {
       <p>
         Enter Google Sheets—a powerful, yet simple tool for tracking your lifts.
         It's fast, works seamlessly on mobile devices, can be accessed anywhere,
-        and it works offline. Whether you're planning your next workout or
-        logging your latest PR, Google Sheets has you covered. We recommend a
-        simple journal style format:
+        and it works offline. We recommend a simple journal style format:
       </p>
       <figure>
         <a
@@ -101,10 +105,8 @@ function ArticleContent() {
         Owning your lifting data isn't just about numbers—it's about taking
         control of your fitness narrative. By using Google Sheets, you create a
         lasting record of your strength journey. You can use the{" "}
-        <a href="https://www.strengthjourneys.xyz/">
-          Strength Journeys web app
-        </a>{" "}
-        to analyze and see your milestones over time.
+        <StrengthJourneys /> web app to analyze and see your milestones over
+        time.
       </p>
     </article>
   );

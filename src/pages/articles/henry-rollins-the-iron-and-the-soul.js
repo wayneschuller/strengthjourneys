@@ -208,7 +208,7 @@ function IronAndTheSoul() {
         pounds is always two hundred pounds.
       </p>
       <footer>
-        <i>This article originally appeared in Details Magazine.</i>
+        <i>This article originally appeared in Details Magazine in 1994.</i>
         <p>
           <a href="https://www.henryrollins.com/">
             Henry Rollins official website.

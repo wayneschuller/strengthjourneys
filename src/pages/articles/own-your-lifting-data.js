@@ -43,15 +43,15 @@ function ArticleContent() {
       <p>
         As lifters we invest countless hours in the gym, pushing our limits and
         striving for progress. But are we giving the same attention to our
-        lifting data? Here's why owning your strength journey matters and how{" "}
+        lifting data? Here’s why owning your strength journey matters and how{" "}
         <a href={googleSheetSampleURL}>Google Sheets</a> can be your ultimate
         workout companion.
       </p>
 
       <h2>1. Lifting: A Lifelong Journey</h2>
       <p>
-        For many of us, lifting isn't just a hobby—it's a lifelong passion. Each
-        rep, set, and PR tells a story of dedication and growth. Wouldn't it be
+        For many of us, lifting isn’t just a hobby—it’s a lifelong passion. Each
+        rep, set, and PR tells a story of dedication and growth. Wouldn’t it be
         a shame to lose that narrative?
       </p>
 
@@ -72,7 +72,7 @@ function ArticleContent() {
       <h2>3. Google Sheets: Your Personal Gym Log</h2>
       <p>
         Enter Google Sheets—a powerful, yet simple tool for tracking your lifts.
-        It's fast, works seamlessly on mobile devices, can be accessed anywhere,
+        It’s fast, works seamlessly on mobile devices, can be accessed anywhere,
         and it works offline. We recommend a simple journal style format:
       </p>
       <figure>
@@ -92,8 +92,8 @@ function ArticleContent() {
 
       <h2>4. Celebrate Your Progress</h2>
       <p>
-        While obsessing over numbers isn't necessary, having a record of your
-        journey can be incredibly motivating. It's easy to forget how far you've
+        While obsessing over numbers isn’t necessary, having a record of your
+        journey can be incredibly motivating. It’s easy to forget how far you’ve
         come, but with your personal lifting log, you can look back and be
         thankful for past achievements. A full history of your lifting data
         helps you celebrate not just personal records, but also your
@@ -102,7 +102,7 @@ function ArticleContent() {
 
       <h2>Conclusion</h2>
       <p>
-        Owning your lifting data isn't just about numbers—it's about taking
+        Owning your lifting data isn’t just about numbers—it’s about taking
         control of your fitness narrative. By using Google Sheets, you create a
         lasting record of your strength journey. You can use the{" "}
         <StrengthJourneys /> web app to analyze and see your milestones over

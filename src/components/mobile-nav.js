@@ -6,9 +6,9 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ViewVerticalIcon } from "@radix-ui/react-icons";
-import { useRouter } from "next/router";
-
 import { featurePages } from "@/pages";
+import Image from "next/image";
+import { useTheme } from "next-themes";
 
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
@@ -25,9 +25,13 @@ import {
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
+  const { theme } = useTheme();
   const pathname = usePathname();
   const iconSize = 16;
   const iconStrokeWidth = 1.25;
+
+  const nav_logo =
+    theme === "light" ? "/nav_logo_dark.png" : "/nav_logo_light.png";
 
   const NavLink = ({ href, title, IconComponent }) => (
     <SheetClose asChild>
@@ -58,10 +62,16 @@ export function MobileNav() {
       <SheetContent side="left" className="pr-0">
         <div className="flex flex-col">
           <SheetClose asChild>
-            <Link href="/" className="mb-6 flex gap-4">
-              {/* <Image src={Logo} className="h-10 w-10" alt="Logo" /> */}
-              <span className="inline-block text-xl font-bold">
-                Strength Journeys
+            <Link href="/" className="flex flex-col">
+              <Image
+                src={nav_logo}
+                width={100}
+                height={80}
+                alt="logo"
+                className="inline-block"
+              />
+              <span className="mb-6 inline-block text-xl font-bold">
+                Strength Journeys Home
               </span>
             </Link>
           </SheetClose>

@@ -28,10 +28,6 @@ import {
 
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 
-// Note: designer providing new logo and favicon files soon
-// import Logo from "../../public/logo_transparent.png";
-// import Image from "next/image";
-
 export function NavBar() {
   const pathname = usePathname();
 
@@ -63,7 +59,7 @@ export function DesktopNav() {
   const { theme } = useTheme();
 
   const nav_logo =
-    theme === "dark" ? "/nav_logo_light.png" : "/nav_logo_dark.png";
+    theme === "light" ? "/nav_logo_dark.png" : "/nav_logo_light.png";
 
   return (
     <div className="hidden align-middle md:flex">

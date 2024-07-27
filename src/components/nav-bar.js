@@ -26,6 +26,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import darkModeLogo from "/public/nav_logo_light.png";
+import lightModeLogo from "/public/nav_logo_dark.png";
+
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 
 export function NavBar() {
@@ -56,10 +59,11 @@ export function NavBar() {
 
 export function DesktopNav() {
   const pathname = usePathname();
-  const { theme } = useTheme();
+  const { theme, resolvedTheme } = useTheme();
 
-  const nav_logo =
-    theme === "light" ? "/nav_logo_dark.png" : "/nav_logo_light.png";
+  // devLog(theme);
+
+  const nav_logo = resolvedTheme === "dark" ? darkModeLogo : lightModeLogo;
 
   return (
     <div className="hidden align-middle md:flex">
@@ -67,7 +71,7 @@ export function DesktopNav() {
         <Image
           src={nav_logo}
           width={100}
-          height={80}
+          height="auto"
           alt="logo"
           className="inline-block"
         />

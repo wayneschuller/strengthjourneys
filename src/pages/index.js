@@ -19,7 +19,7 @@ import {
 import { GettingStartedCard } from "@/components/instructions-cards";
 
 //
-const featurePages = [
+export const featurePages = [
   {
     href: "/analyzer",
     title: "PR Analyzer",

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ViewVerticalIcon } from "@radix-ui/react-icons";
 import { useRouter } from "next/router";
 
+import { featurePages } from "@/pages";
+
 // import Logo from "../../public/logo_transparent.png";
 // import Image from "next/image";
 
@@ -26,6 +28,21 @@ export function MobileNav() {
   const pathname = usePathname();
   const iconSize = 16;
   const iconStrokeWidth = 1.25;
+
+  const NavLink = ({ href, title, IconComponent }) => (
+    <SheetClose asChild>
+      <Link
+        href={href}
+        className={cn(
+          "flex flex-row items-center gap-3 transition-colors hover:text-foreground/80",
+          pathname === href ? "text-foreground" : "text-foreground/60",
+        )}
+      >
+        <IconComponent size={24} strokeWidth={1} />
+        {title}
+      </Link>
+    </SheetClose>
+  );
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -48,64 +65,10 @@ export function MobileNav() {
               </span>
             </Link>
           </SheetClose>
-
-          <div className="flex flex-1 flex-col  gap-4 text-lg font-medium">
-            <SheetClose asChild>
-              <Link
-                href="/analyzer"
-                className={cn(
-                  "transition-colors hover:text-foreground/80",
-                  pathname === "/analyzer"
-                    ? "text-foreground"
-                    : "text-foreground/60",
-                )}
-              >
-                PR Analyzer
-              </Link>
-            </SheetClose>
-
-            <SheetClose asChild>
-              <Link
-                href="/visualizer"
-                onOpenChange={setOpen}
-                className={cn(
-                  "transition-colors hover:text-foreground/80",
-                  pathname === "/visualizer"
-                    ? "text-foreground"
-                    : "text-foreground/60",
-                )}
-              >
-                Strength Visualizer
-              </Link>
-            </SheetClose>
-
-            <SheetClose asChild>
-              <Link
-                href="/calculator"
-                className={cn(
-                  "transition-colors hover:text-foreground/80",
-                  pathname === "/calculator"
-                    ? "text-foreground"
-                    : "text-foreground/60",
-                )}
-              >
-                One Rep Max Calculator
-              </Link>
-            </SheetClose>
-
-            <SheetClose asChild>
-              <Link
-                href="/timer"
-                className={cn(
-                  "transition-colors hover:text-foreground/80",
-                  pathname === "/timer"
-                    ? "text-foreground"
-                    : "text-foreground/60",
-                )}
-              >
-                Lifting Set Timer
-              </Link>
-            </SheetClose>
+          <div className="flex flex-1 flex-col gap-4 text-lg font-medium">
+            {featurePages.map((item) => (
+              <NavLink key={item.href} {...item} />
+            ))}
           </div>
         </div>
       </SheetContent>

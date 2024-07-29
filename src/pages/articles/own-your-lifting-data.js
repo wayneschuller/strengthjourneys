@@ -65,10 +65,12 @@ function ArticleContent() {
         remains accessible, no matter what.
       </p>
       <p>
-        If you have a preferred fitness app we recommend dual recording into
-        your own system. By maintaining your own records, you retain control
-        over your data and can easily switch between different tracking methods
-        without losing your history.
+        If you have a preferred fitness app, that is great! We recommend dual
+        recording into both your preferred app and also your own personal
+        system. Over the years most lifters will likely change fitness apps from
+        time to time. By maintaining your own records, you retain control over
+        your data in the long term. (note: we are working on importers to help
+        read data from popular fitness apps into a more general CSV format)
       </p>
 
       <h2>3. Google Sheets: Your Personal Gym Log</h2>

@@ -61,7 +61,7 @@ function ArticleContent() {
       <h2>1. Lifting For Life</h2>
       <p>
         Remember this: Lifting is a lifelong journey. When we start lifting,
-        imagining where we will be in 5, 10, or even 20 years of exercise isn't
+        imagining where we will be in 5, 10, or even 20 years of exercise isn’t
         easy. Lifting begins as just a hobby and then grows into a lifelong
         passion. In the second half of life, lifting becomes a key to thriving.
         Each rep, set, and PR tells a story of dedication and growth. We
@@ -70,7 +70,7 @@ function ArticleContent() {
 
       <h2>2. Beyond Fitness Apps and Data Silos</h2>
       <p>
-        While fitness apps and services are convenient, it's important to be
+        While fitness apps and services are convenient, it’s important to be
         aware of the potential risks of relying solely on them. What if the app
         shuts down or changes its features? These are valid concerns that could
         affect your lifting journey. By keeping your own copy of your lifting

@@ -22,7 +22,7 @@ const StrengthJourneys = () => (
 
 export default function Article() {
   return (
-    <div className="mx-4 flex items-center justify-center">
+    <div className="mx-4 mb-10 flex items-center justify-center">
       <Head>
         <title>{title}</title>
         <meta name="description" content={title} />
@@ -48,43 +48,53 @@ function ArticleContent() {
       </header>
 
       <p>
-        As lifters we invest countless hours in the gym, pushing our limits and
+        As lifters, we invest countless hours in the gym, pushing our limits and
         striving for progress. But are we giving the same attention to our
-        lifting data? Here’s why owning your strength journey matters and how{" "}
+        lifting data? Here’s why taking ownership of your strength journey
+        matters and how{" "}
         <a href={googleSheetSampleURL} target="_blank">
           Google Sheets
         </a>{" "}
-        can be your ultimate workout companion.
+        can empower you as your ultimate workout companion.
       </p>
 
-      <h2>1. Lifting: A Lifelong Journey</h2>
+      <h2>1. Lifting For Life</h2>
       <p>
-        For many of us, lifting isn’t just a hobby—it’s a lifelong passion. Each
-        rep, set, and PR tells a story of dedication and growth. Wouldn’t it be
-        a shame to lose that narrative?
+        Remember this: Lifting is a lifelong journey. When we start lifting,
+        imagining where we will be in 5, 10, or even 20 years of exercise isn't
+        easy. Lifting begins as just a hobby and then grows into a lifelong
+        passion. In the second half of life, lifting becomes a key to thriving.
+        Each rep, set, and PR tells a story of dedication and growth. We
+        shouldn’t let go of that story.
       </p>
 
       <h2>2. Beyond Fitness Apps and Data Silos</h2>
       <p>
-        While fitness apps and services are convenient, relying solely on them
-        can be risky. What if the app shuts down or changes its features? By
-        keeping your own copy of your lifting history, you ensure that your data
-        remains accessible, no matter what.
+        While fitness apps and services are convenient, it's important to be
+        aware of the potential risks of relying solely on them. What if the app
+        shuts down or changes its features? These are valid concerns that could
+        affect your lifting journey. By keeping your own copy of your lifting
+        history, you ensure that your data remains secure and accessible, no
+        matter what.
       </p>
       <p>
         If you have a preferred fitness app, that is great! We recommend dual
-        recording into both your preferred app and also your own personal
-        system. Over the years most lifters will likely change fitness apps from
-        time to time. By maintaining your own records, you retain control over
-        your data in the long term. (note: we are working on importers to help
-        read data from popular fitness apps into a more general CSV format)
+        recording into both your preferred app and also your system. Over the
+        years, most lifters will likely change fitness apps occasionally. By
+        maintaining your own records, you retain control over your data in the
+        long term.
+      </p>
+      <p>
+        (Note: we are working on importers to help read data from popular
+        fitness apps into a more general CSV format)
       </p>
 
       <h2>3. Google Sheets: Your Personal Gym Log</h2>
       <p>
-        Enter Google Sheets—a powerful, yet simple tool for tracking your lifts.
+        Enter Google Sheets—a powerful yet simple tool for tracking your lifts.
         It’s fast, works seamlessly on mobile devices, can be accessed anywhere,
-        and it works offline. We recommend a simple journal style format:
+        and works offline, making it a convenient and comfortable choice for
+        your lifting journey. We recommend a simple journal-style format:
       </p>
       <figure>
         <a
@@ -105,19 +115,17 @@ function ArticleContent() {
       <p>
         While obsessing over numbers isn’t necessary, having a record of your
         journey can be incredibly motivating. It’s easy to forget how far you’ve
-        come, but with your personal lifting log, you can look back and be
-        thankful for past achievements. A full history of your lifting data
-        helps you celebrate not just personal records, but also your
-        consistency.
+        come, but with your lifting log, you can look back and be thankful for
+        past achievements. A complete history of your lifting data helps you
+        celebrate consistency as well as memorable barbell moments.
       </p>
 
       <h2>Conclusion</h2>
       <p>
         Owning your lifting data isn’t just about numbers—it’s about taking
-        control of your fitness narrative. By using Google Sheets, you create a
-        lasting record of your strength journey. You can use the{" "}
-        <StrengthJourneys /> web app to analyze and see your milestones over
-        time.
+        control of your fitness narrative. Using Google Sheets, you create a
+        lasting record of your strength journey. The <StrengthJourneys /> web
+        app instantly enables you to analyze and track this progress over time.
       </p>
     </article>
   );

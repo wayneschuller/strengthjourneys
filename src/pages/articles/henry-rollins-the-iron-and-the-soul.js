@@ -15,7 +15,7 @@ const title = "The Iron and the Soul";
 
 export default function Article() {
   return (
-    <div className="mx-4 flex items-center justify-center">
+    <div className="mx-4 mb-10 flex items-center justify-center">
       <Head>
         <title>{title}</title>
         <meta name="description" content={title} />

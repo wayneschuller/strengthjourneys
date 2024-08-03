@@ -7,8 +7,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import Head from "next/head";
 import Image from "next/image";
 import SampleImage from "/public/sample_google_sheet_fuzzy_border.png";
+
+const title = "The Power of Owning Your Lifting Data with Google Sheets";
 
 const googleSheetSampleURL =
   "https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0";
@@ -20,6 +23,10 @@ const StrengthJourneys = () => (
 export default function Article() {
   return (
     <div className="mx-4 flex items-center justify-center">
+      <Head>
+        <title>{title}</title>
+        <meta name="description" content={title} />
+      </Head>
       <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
         <CardHeader></CardHeader>
         <CardContent>
@@ -34,7 +41,7 @@ function ArticleContent() {
   return (
     <article className="prose prose-orange dark:prose-invert">
       <header>
-        <h1>The Power of Owning Your Lifting Data with Google Sheets</h1>
+        <h1>{title}s</h1>
         <h3>
           by <StrengthJourneys /> Staff
         </h3>

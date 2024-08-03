@@ -10,10 +10,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Head from "next/head";
+const title = "The Iron and the Soul";
 
 export default function Article() {
   return (
     <div className="mx-4 flex items-center justify-center">
+      <Head>
+        <title>{title}</title>
+        <meta name="description" content={title} />
+      </Head>
       <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
         <CardHeader></CardHeader>
         <CardContent>
@@ -28,7 +34,7 @@ function IronAndTheSoul() {
   return (
     <article className="prose prose-orange dark:prose-invert">
       <header>
-        <h1>The Iron and the Soul</h1>
+        <h1>{title}</h1>
         <h2>
           by <a href="https://www.henryrollins.com/">Henry Rollins</a>
         </h2>

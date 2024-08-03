@@ -46,13 +46,13 @@ export const featurePages = [
   },
   {
     href: "/articles/own-your-lifting-data",
-    title: "The Power of Owning Your Lifting Data",
+    title: "Article: The Power of Owning Your Lifting Data",
     description: "A short article on why recommend Google Sheets for lifters.",
     IconComponent: Newspaper,
   },
   {
     href: "/articles/henry-rollins-the-iron-and-the-soul",
-    title: "The Iron and the Soul",
+    title: "Article: The Iron and the Soul",
     description: "The classic article by Henry Rollins.",
     IconComponent: Newspaper,
   },

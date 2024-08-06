@@ -41,7 +41,7 @@ export default function App({ Component, pageProps, session }) {
     <>
       <ThemeProvider
         attribute="class"
-        defaultTheme="light"
+        //defaultTheme="light"
         // enableSystem
         disableTransitionOnChange
       >

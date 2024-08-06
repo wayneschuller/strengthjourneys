@@ -55,27 +55,28 @@ export function NavBar() {
   );
 }
 
-// FIXME: use the featurePages array in index.js
+// FIXME: use the featurePages array in index.js?
 
 export function DesktopNav() {
   const pathname = usePathname();
-  const { theme, resolvedTheme } = useTheme();
-
-  // devLog(theme);
-
-  const nav_logo = resolvedTheme === "dark" ? darkModeLogo : lightModeLogo;
 
   return (
     <div className="hidden align-middle md:flex">
-      <Link href="/" className="mr-10 flex items-center space-x-2">
+      <Link href="/" className="mr-10 flex items-center">
         <Image
-          src={nav_logo}
+          src={lightModeLogo}
           width={100}
           height="auto"
           alt="logo"
-          className="inline-block"
+          className="inline-block dark:hidden"
         />
-        {/* <span className="inline-block font-bold">Strength Journeys</span> */}
+        <Image
+          src={darkModeLogo}
+          width={100}
+          height="auto"
+          alt="logo"
+          className="hidden dark:inline-block"
+        />
       </Link>
       {/* FIXME: we should loop over the feature pages array from the index here */}
       <nav className="flex flex-1 items-center space-x-2 text-sm font-medium md:space-x-6">

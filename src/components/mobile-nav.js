@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import { ViewVerticalIcon } from "@radix-ui/react-icons";
 import { featurePages } from "@/pages";
 import Image from "next/image";
-import { useTheme } from "next-themes";
 
-// import Logo from "../../public/logo_transparent.png";
-// import Image from "next/image";
+import darkModeLogo from "/public/nav_logo_light.png";
+import lightModeLogo from "/public/nav_logo_dark.png";
 
 import {
   Sheet,
@@ -25,13 +24,8 @@ import {
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
-  const { theme } = useTheme();
   const pathname = usePathname();
-  const iconSize = 16;
-  const iconStrokeWidth = 1.25;
-
-  const nav_logo =
-    theme === "light" ? "/nav_logo_dark.png" : "/nav_logo_light.png";
+  const logoWidth = 150;
 
   const NavLink = ({ href, title, IconComponent }) => (
     <SheetClose asChild>
@@ -64,11 +58,18 @@ export function MobileNav() {
           <SheetClose asChild>
             <Link href="/" className="flex flex-col">
               <Image
-                src={nav_logo}
-                width={100}
-                height={80}
+                src={lightModeLogo}
+                width={logoWidth}
+                height="auto"
                 alt="logo"
-                className="inline-block"
+                className="inline-block dark:hidden"
+              />
+              <Image
+                src={darkModeLogo}
+                width={logoWidth}
+                height="auto"
+                alt="logo"
+                className="hidden dark:inline-block"
               />
               <span className="mb-6 inline-block text-xl font-bold">
                 Strength Journeys Home

@@ -48,6 +48,14 @@ function ArticleContent() {
       <iframe
         width="560"
         height="315"
+        src="https://www.youtube.com/embed/watch?v=C_VtOYc6j5c"
+        title="YouTube video player"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+      ></iframe>
+      <iframe
+        width="560"
+        height="315"
         src="https://www.youtube.com/embed/jyopTyOjXb0"
         title="YouTube video player"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

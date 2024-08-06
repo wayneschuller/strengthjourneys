@@ -315,7 +315,10 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 </Area>
               );
             })}
-            <ChartLegend content={<ChartLegendContent />} />
+            <ChartLegend
+              content={<ChartLegendContent />}
+              className="tracking-tight md:text-lg"
+            />
           </AreaChart>
         </ChartContainer>
       </CardContent>

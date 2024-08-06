@@ -41,7 +41,7 @@ function ArticleContent() {
   return (
     <article className="prose prose-orange dark:prose-invert">
       <header>
-        <h1>{title}s</h1>
+        <h1>{title}</h1>
         <h3>
           by <StrengthJourneys /> Staff
         </h3>

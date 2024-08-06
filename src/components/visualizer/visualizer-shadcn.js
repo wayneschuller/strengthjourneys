@@ -5,6 +5,7 @@ import { getLiftColor } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
+import { useSession } from "next-auth/react";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { subMonths } from "date-fns";
@@ -48,6 +49,7 @@ import { processVisualizerData } from "./visualizer-processing";
 
 export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
+  const { status: authStatus } = useSession();
 
   const [timeRange, setTimeRange] = useLocalStorage(
     "SJ_timeRange",
@@ -185,6 +187,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-pretty">
           <CardTitle>
+            {authStatus === "unauthenticated" && "Demo Mode: "}
             {selectedLiftTypes.length === 1 && selectedLiftTypes[0]} Estimated
             One Rep Maxes
           </CardTitle>

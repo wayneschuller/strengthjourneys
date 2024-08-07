@@ -31,11 +31,12 @@ export default function Article() {
       <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
         {title}
       </h1>
-      <h3 className="prose prose-orange flex justify-center dark:prose-invert">
+      <h2 className="flex justify-center text-2xl">
         Resources collated by <StrengthJourneys /> Staff
-      </h3>
+      </h2>
 
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+        <HowStrong />
         <QuotesCard />
         <VideoCard />
       </div>
@@ -43,6 +44,29 @@ export default function Article() {
   );
 }
 
+function HowStrong() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>How Strong Should Is My Barbell Squat?</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p>
+          The barbell squat is one of the most effective exercises for building
+          strength and muscle mass. The amount of weight you should be able to
+          squat depends on your body weight, fitness level, and experience with
+          the exercise.
+        </p>
+        <p>
+          As a general guideline, a beginner should be able to squat their body
+          weight for 5 reps, an intermediate lifter should be able to squat 1.5
+          times their body weight for 5 reps, and an advanced lifter should be
+          able to squat 2 times their body weight for 5 reps.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
 function QuotesCard() {
   return (
     <Card>

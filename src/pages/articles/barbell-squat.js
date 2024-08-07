@@ -16,7 +16,9 @@ const googleSheetSampleURL =
   "https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0";
 
 const StrengthJourneys = () => (
-  <a href="https://www.strengthjourneys.xyz/">Strength Journeys</a>
+  <span className="mx-1 text-blue-600 underline visited:text-purple-600 hover:text-blue-800">
+    <a href="https://www.strengthjourneys.xyz/">Strength Journeys</a>
+  </span>
 );
 
 export default function Article() {
@@ -28,11 +30,11 @@ export default function Article() {
         <meta name="description" content={title} />
       </Head>
 
-      <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
+      <h1 className="mb-4 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
         {title}
       </h1>
       <h2 className="flex justify-center text-2xl">
-        Resources collated by <StrengthJourneys /> Staff
+        Resources collated by <StrengthJourneys /> staff
       </h2>
 
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">

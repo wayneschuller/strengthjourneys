@@ -104,13 +104,12 @@ export const UserLiftingDataProvider = ({ children }) => {
         window.gtag("event", "gSheetAPIError");
       }
 
-      // Clear selected gsheet so they can try again
-      devLog(
-        `useSWR isError from google - deleting gsheet details from localstorage.`,
-      );
-      setSsid(null);
-      setSheetFilename(null);
-      setSheetURL(null);
+      devLog(`useSWR isError from google`);
+
+      // FIXME: We used to clear the ssid but it happened too often. There are occasional weird errors (wifi loading etc)
+      // setSsid(null);
+      // setSheetFilename(null);
+      // setSheetURL(null);
     }
 
     let parsedData = null; // A local version for this scope only

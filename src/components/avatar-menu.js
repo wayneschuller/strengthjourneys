@@ -83,10 +83,14 @@ export function AvatarDropdown() {
                   <p className="pl-2 text-xs leading-none text-muted-foreground">
                     {session.user.email}
                   </p>
-                  <p className="font-bold">Data source loaded: </p>
-                  <p className="pl-2 text-xs leading-none text-muted-foreground">
-                    {sheetFilename}
-                  </p>
+                  {sheetFilename && (
+                    <>
+                      <p className="font-bold">Data source loaded: </p>
+                      <p className="pl-2 text-xs leading-none text-muted-foreground">
+                        {sheetFilename}
+                      </p>
+                    </>
+                  )}
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

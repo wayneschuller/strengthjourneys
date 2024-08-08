@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
@@ -51,6 +51,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
+  // FIXME: This design is terrible. We should be storing the periodTarget options in local storage
+  // If we just store the date then the next day onward we won't know the range they wanted
   const [timeRange, setTimeRange] = useLocalStorage(
     "SJ_timeRange",
     "1900-01-01", // The start date threshold for inclusion in the chart
@@ -448,7 +450,7 @@ function TimeRangeSelect({ timeRange, setTimeRange }) {
     }
   });
 
-  // Manually push "All Time" option
+  // Manually push "All Time" option every time
   validSelectTimeDomains.push({
     label: "All time",
     timeRangeThreshold: "1900-01-01",

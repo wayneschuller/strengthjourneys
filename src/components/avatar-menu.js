@@ -107,6 +107,7 @@ export function AvatarDropdown() {
                       )
                     }
                   >
+                    <FolderOpenDot className="mr-2 h-4 w-4" />
                     Choose Google Sheet
                   </DropdownMenuItem>
                 )}

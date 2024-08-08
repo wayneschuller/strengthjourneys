@@ -111,6 +111,17 @@ export function DesktopNav() {
         >
           One Rep Max Calculator
         </Link>
+        <Link
+          href="/strength-level-calculator"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname === "/calculator"
+              ? "text-foreground"
+              : "text-foreground/60",
+          )}
+        >
+          Strength Level Calculator
+        </Link>
         {/* <Link
             href="/warmups"
             className={cn(

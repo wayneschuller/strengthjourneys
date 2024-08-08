@@ -3,19 +3,30 @@
 import * as React from "react";
 import { useContext, useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useTheme } from "next-themes";
 import { useSession, signIn, signOut } from "next-auth/react";
 import useDrivePicker from "../../dependencies/react-google-drive-picker/dist";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { useLocalStorage } from "usehooks-ts";
 import { devLog } from "@/lib/processing-utils";
 import { Button } from "@/components/ui/button";
+import {
+  FolderX,
+  LogOut,
+  Table2,
+  FolderOpenDot,
+  Mail,
+  Bug,
+} from "lucide-react";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 
 import {
@@ -26,7 +37,6 @@ import {
 } from "@/components/ui/tooltip";
 
 export function AvatarDropdown() {
-  const { setTheme } = useTheme();
   const { data: session, status: authStatus } = useSession();
   const [openPicker, authResponse] = useDrivePicker();
   const [ssid, setSsid] = useLocalStorage("ssid", null);
@@ -35,6 +45,7 @@ export function AvatarDropdown() {
     "sheetFilename",
     null,
   );
+  const { parsedData, isLoading, isValidating, isError } = useUserLiftingData();
 
   if (authStatus !== "authenticated")
     return (
@@ -58,87 +69,110 @@ export function AvatarDropdown() {
         <TooltipTrigger>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Avatar className="h-8 w-8 ring-muted-foreground hover:ring-2">
+              <Avatar className="ml-2 h-8 w-8 ring-muted-foreground hover:ring-2">
                 <AvatarImage src={session.user.image} />
                 <AvatarFallback>session.user.name</AvatarFallback>
                 <span className="sr-only">Logged in user menu</span>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {!ssid && (
+            <DropdownMenuContent className="w-56" align="end">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="font-bold">Athlete: </p>
+                  {/* <p className="flex-row text-sm font-medium leading-none"> {session.user.name} </p> */}
+                  <p className="pl-2 text-xs leading-none text-muted-foreground">
+                    {session.user.email}
+                  </p>
+                  <p className="font-bold">Data source loaded: </p>
+                  <p className="pl-2 text-xs leading-none text-muted-foreground">
+                    {sheetFilename}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                {!ssid && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      handleOpenFilePicker(
+                        openPicker,
+                        session.accessToken,
+                        setSsid,
+                        setSheetURL,
+                        setSheetFilename,
+                      )
+                    }
+                  >
+                    Choose Google Sheet
+                  </DropdownMenuItem>
+                )}
+                {ssid && (
+                  <DropdownMenuItem
+                    onClick={() => window.open(decodeURIComponent(sheetURL))}
+                  >
+                    <Table2 className="mr-2 h-4 w-4" />
+                    Open Google Sheet
+                  </DropdownMenuItem>
+                )}
+                {ssid && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      handleOpenFilePicker(
+                        openPicker,
+                        session.accessToken,
+                        setSsid,
+                        setSheetURL,
+                        setSheetFilename,
+                      )
+                    }
+                  >
+                    <FolderOpenDot className="mr-2 h-4 w-4" />
+                    Choose New Google Sheet
+                  </DropdownMenuItem>
+                )}
+                {/* Not sure about the next option - false for now */}
+                {false && ssid && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setSheetURL(null);
+                      setSheetFilename(null);
+                      setSsid(null);
+                    }}
+                  >
+                    <FolderX className="mr-2 h-4 w-4" />
+                    <span>Forget Google Sheet</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={() =>
-                    handleOpenFilePicker(
-                      openPicker,
-                      session.accessToken,
-                      setSsid,
-                      setSheetURL,
-                      setSheetFilename,
+                    window.open(
+                      "https://github.com/wayneschuller/strengthjourneys/issues",
                     )
                   }
                 >
-                  Choose Google Sheet
+                  <Bug className="mr-2 h-4 w-4" />
+                  Report Issue
                 </DropdownMenuItem>
-              )}
-              {ssid && (
-                <DropdownMenuItem
-                  onClick={() => window.open(decodeURIComponent(sheetURL))}
-                >
-                  Open Google Sheet in new tab
-                </DropdownMenuItem>
-              )}
-              {ssid && (
                 <DropdownMenuItem
                   onClick={() =>
-                    handleOpenFilePicker(
-                      openPicker,
-                      session.accessToken,
-                      setSsid,
-                      setSheetURL,
-                      setSheetFilename,
+                    window.open(
+                      "mailto:info@strengthjourneys.xyz?subject=Thank you for Strength Journeys it is the best!",
                     )
                   }
                 >
-                  Choose New Google Sheet
+                  <Mail className="mr-2 h-4 w-4" />
+                  Email Feedback
                 </DropdownMenuItem>
-              )}
-              {ssid && (
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
-                    setSheetURL(null);
-                    setSheetFilename(null);
-                    setSsid(null);
+                    signOut();
                   }}
                 >
-                  Forget Google Sheet
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign out</span>
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                onClick={() =>
-                  window.open(
-                    "https://github.com/wayneschuller/strengthjourneys/issues",
-                  )
-                }
-              >
-                Report Issue
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  window.open(
-                    "mailto:info@strengthjourneys.xyz?subject=Thank you for Strength Journeys it is the best!",
-                  )
-                }
-              >
-                Email Author
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                onClick={() => {
-                  signOut();
-                }}
-              >
-                Sign Out
-              </DropdownMenuItem>
+              </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
         </TooltipTrigger>

@@ -40,16 +40,16 @@ export function NavBar() {
         <DesktopNav />
         <MobileNav />
       </div>
-      <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-3">
+      <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2">
         {/* Only show the select lifts button on the analyzer and visualizer pages */}
         {(pathname === "/analyzer" || pathname === "/visualizer") && (
           <SidePanelSelectLiftsButton isIconMode={true} />
         )}
         <MiniTimer />
-        <UserSheetIcon />
-        <AvatarDropdown />
+        {/* <UserSheetIcon /> */}
         <GitHubButton />
         <DarkModeToggle />
+        <AvatarDropdown />
       </div>
     </div>
   );

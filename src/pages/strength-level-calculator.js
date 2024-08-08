@@ -38,7 +38,7 @@ import {
 
 export default function StrengthLevelCalculator() {
   return (
-    <div className="mx-4 md:mx-[5vw]">
+    <div className="mx-4 flex flex-row items-center md:mx-[5vw]">
       <Head>
         <title>E1RM Calculator (Strength Journeys)</title>
         <meta
@@ -47,7 +47,7 @@ export default function StrengthLevelCalculator() {
         />
       </Head>
 
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full max-w-5xl">
         <CardHeader>
           <CardTitle>Strength Level Calculator</CardTitle>
           <CardDescription>
@@ -55,14 +55,20 @@ export default function StrengthLevelCalculator() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
+          <div className="flex flex-col items-center justify-between gap-8 md:flex-row md:justify-stretch">
+            <div className="flex items-center space-x-2">
               <Label htmlFor="age">Age</Label>
-              <Input id="age" type="number" placeholder="Enter your age" />
+              <Input
+                id="age"
+                type="number"
+                defaultValue={30}
+                placeholder="Enter your age"
+                className="w-20"
+              />
             </div>
-            <div className="space-y-2">
+            <div className="flex items-center space-x-2">
               <Label htmlFor="gender">Gender</Label>
-              <Select id="gender">
+              <Select id="gender" defaultValue="male" className="min-w-52">
                 <SelectTrigger>
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
@@ -72,12 +78,16 @@ export default function StrengthLevelCalculator() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="weight">Bodyweight (lbs)</Label>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="weight" className="">
+                Bodyweight
+              </Label>
               <Input
                 id="weight"
                 type="number"
                 placeholder="Enter your weight"
+                defaultValue={200}
+                className="w-24"
               />
             </div>
           </div>

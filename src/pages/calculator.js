@@ -203,6 +203,8 @@ export default function E1RMCalculator() {
     // Save in localStorage for this browser device
     localStorage.setItem("calcIsMetric", JSON.stringify(isMetric));
     localStorage.setItem("weight", JSON.stringify(newWeight));
+
+    // FIXME: update the body weight in localstorage so it's consistent with the unit change
   };
 
   const handleCopyToClipboard = async () => {

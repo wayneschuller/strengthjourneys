@@ -165,8 +165,6 @@ export default function StrengthLevelCalculator() {
               />
             </div>
           </div>
-        </CardContent>
-        <CardFooter>
           <div className="flex flex-col gap-4">
             {liftNames.map((liftType) => (
               <div key={liftType} className="">
@@ -202,6 +200,19 @@ export default function StrengthLevelCalculator() {
               </div>
             ))}
           </div>
+        </CardContent>
+        <CardFooter className="text-sm">
+          <p className="">
+            Our data model is a derivation of the excellent research of{" "}
+            <a
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              target="_blank"
+              href="https://lonkilgore.com/"
+            >
+              Professor Lon Kilgore
+            </a>
+            .
+          </p>
         </CardFooter>
       </Card>
     </div>

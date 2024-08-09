@@ -98,10 +98,10 @@ export default function StrengthLevelCalculator() {
   return (
     <div className="mx-4 flex flex-row items-center md:mx-[5vw]">
       <Head>
-        <title>E1RM Calculator (Strength Journeys)</title>
+        <title>Free Strength Level Calculator (Strength Journeys)</title>
         <meta
           name="description"
-          content="E1RM One Rep Max Calculator App (Strength Journeys)"
+          content="Free Strength Level Calculator Web App (Strength Journeys)"
         />
       </Head>
 

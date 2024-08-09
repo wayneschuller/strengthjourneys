@@ -138,7 +138,7 @@ export default function StrengthLevelCalculator() {
                 onValueChange={(value) => setGender(value)}
                 className="min-w-52 text-xl"
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label="Select gender">
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>

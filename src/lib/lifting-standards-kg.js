@@ -4,59 +4,158 @@
 // Use the kg data and convert to elsewhere when needed
 // prettier-ignore
 export const LiftingStandardsKG = [
-  // Age 15-19 Squat Standards we mark as age 18 and interpolate
-  { age: 18, liftType: "Back Squat", gender: "male", bodyWeight: 57, physicallyActive: 34, beginner: 59, intermediate: 78, advanced: 107, elite: 136, },
-  { age: 18, liftType: "Back Squat", gender: "male", bodyWeight: 68, physicallyActive: 38, beginner: 65, intermediate: 87, advanced: 120, elite: 158, },
-  { age: 18, liftType: "Back Squat", gender: "male", bodyWeight: 79, physicallyActive: 46, beginner: 80, intermediate: 106, advanced: 146, elite: 192, },
-  { age: 18, liftType: "Back Squat", gender: "male", bodyWeight: 91, physicallyActive: 49, beginner: 85, intermediate: 113, advanced: 155, elite: 205, },
-  { age: 18, liftType: "Back Squat", gender: "male", bodyWeight: 102, physicallyActive: 52, beginner: 89, intermediate: 118, advanced: 162, elite: 209, },
-  { age: 18, liftType: "Back Squat", gender: "male", bodyWeight: 113, physicallyActive: 53, beginner: 90, intermediate: 120, advanced: 165, elite: 213, },
-  { age: 18, liftType: "Back Squat", gender: "male", bodyWeight: 136, physicallyActive: 56, beginner: 97, intermediate: 129, advanced: 177, elite: 219, },
-  { age: 18, liftType: "Back Squat", gender: "female", bodyWeight: 57, physicallyActive: 23, beginner: 32, intermediate: 44, advanced: 61, elite: 84 },
-  { age: 18, liftType: "Back Squat", gender: "female", bodyWeight: 68, physicallyActive: 29, beginner: 41, intermediate: 56, advanced: 77, elite: 106 },
-  { age: 18, liftType: "Back Squat", gender: "female", bodyWeight: 79, physicallyActive: 32, beginner: 44, intermediate: 61, advanced: 84, elite: 116 },
-  { age: 18, liftType: "Back Squat", gender: "female", bodyWeight: 91, physicallyActive: 35, beginner: 48, intermediate: 66, advanced: 91, elite: 126 },
-  { age: 18, liftType: "Back Squat", gender: "female", bodyWeight: 102, physicallyActive: 35, beginner: 48, intermediate: 66, advanced: 91, elite: 125 },
-  { age: 18, liftType: "Back Squat", gender: "female", bodyWeight: 113, physicallyActive: 36, beginner: 49, intermediate: 68, advanced: 94, elite: 130 },
-  { age: 18, liftType: "Back Squat", gender: "female", bodyWeight: 136, physicallyActive: 53, beginner: 73, intermediate: 100, advanced: 138, elite: 190 },
-  // Age 80-89 Squat Standards we mark as age 85 and interpolate
-  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 57, physicallyActive: 18, beginner: 30, intermediate: 40, advanced: 55, elite: 73, },
-  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 68, physicallyActive: 24, beginner: 40, intermediate: 54, advanced: 74, elite: 97, },
-  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 79, physicallyActive: 26, beginner: 44, intermediate: 59, advanced: 81, elite: 107, },
-  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 91, physicallyActive: 27, beginner: 46, intermediate: 62, advanced: 85, elite: 112, },
-  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 102, physicallyActive: 28, beginner: 46, intermediate: 62, advanced: 86, elite: 113, },
-  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 113, physicallyActive: 28, beginner: 47, intermediate: 63, advanced: 87, elite: 115, },
-  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 136, physicallyActive: 28, beginner: 49, intermediate: 65, advanced: 89, elite: 117, },
-  { age: 85, liftType: "Back Squat", gender: "female", bodyWeight: 57, physicallyActive: 11, beginner: 19, intermediate: 25, advanced: 35, elite: 46 },
-  { age: 85, liftType: "Back Squat", gender: "female", bodyWeight: 68, physicallyActive: 11, beginner: 20, intermediate: 26, advanced: 36, elite: 48 },
-  { age: 85, liftType: "Back Squat", gender: "female", bodyWeight: 79, physicallyActive: 12, beginner: 21, intermediate: 28, advanced: 39, elite: 52 },
-  { age: 85, liftType: "Back Squat", gender: "female", bodyWeight: 91, physicallyActive: 13, beginner: 23, intermediate: 30, advanced: 41, elite: 54 },
-  { age: 85, liftType: "Back Squat", gender: "female", bodyWeight: 102, physicallyActive: 13, beginner: 23, intermediate: 31, advanced: 42, elite: 56 },
-  { age: 85, liftType: "Back Squat", gender: "female", bodyWeight: 113, physicallyActive: 14, beginner: 24, intermediate: 32, advanced: 43, elite: 57 },
-  { age: 85, liftType: "Back Squat", gender: "female", bodyWeight: 136, physicallyActive: 14, beginner: 24, intermediate: 32, advanced: 43, elite: 57 },
+  // Back Squat Male Section
+  // Age 15-19 (midpoint 17)
+  { age: 17, liftType: "Back Squat", gender: "male", bodyWeight: 57, physicallyActive: 34, beginner: 59, intermediate: 78, advanced: 107, elite: 136 },
+  { age: 17, liftType: "Back Squat", gender: "male", bodyWeight: 68, physicallyActive: 38, beginner: 65, intermediate: 87, advanced: 120, elite: 158 },
+  { age: 17, liftType: "Back Squat", gender: "male", bodyWeight: 79, physicallyActive: 46, beginner: 80, intermediate: 106, advanced: 146, elite: 192 },
+  { age: 17, liftType: "Back Squat", gender: "male", bodyWeight: 91, physicallyActive: 49, beginner: 85, intermediate: 113, advanced: 155, elite: 205 },
+  { age: 17, liftType: "Back Squat", gender: "male", bodyWeight: 102, physicallyActive: 52, beginner: 89, intermediate: 118, advanced: 162, elite: 209 },
+  { age: 17, liftType: "Back Squat", gender: "male", bodyWeight: 113, physicallyActive: 53, beginner: 90, intermediate: 120, advanced: 165, elite: 213 },
+  { age: 17, liftType: "Back Squat", gender: "male", bodyWeight: 136, physicallyActive: 56, beginner: 97, intermediate: 129, advanced: 177, elite: 219 },
+  
+  // Age 20-29 (midpoint 25)
+  { age: 25, liftType: "Back Squat", gender: "male", bodyWeight: 57, physicallyActive: 38, beginner: 65, intermediate: 87, advanced: 120, elite: 153 },
+  { age: 25, liftType: "Back Squat", gender: "male", bodyWeight: 68, physicallyActive: 46, beginner: 78, intermediate: 104, advanced: 143, elite: 189 },
+  { age: 25, liftType: "Back Squat", gender: "male", bodyWeight: 79, physicallyActive: 51, beginner: 87, intermediate: 116, advanced: 160, elite: 210 },
+  { age: 25, liftType: "Back Squat", gender: "male", bodyWeight: 91, physicallyActive: 58, beginner: 98, intermediate: 130, advanced: 179, elite: 236 },
+  { age: 25, liftType: "Back Squat", gender: "male", bodyWeight: 102, physicallyActive: 57, beginner: 98, intermediate: 131, advanced: 180, elite: 232 },
+  { age: 25, liftType: "Back Squat", gender: "male", bodyWeight: 113, physicallyActive: 70, beginner: 120, intermediate: 160, advanced: 220, elite: 285 },
+  { age: 25, liftType: "Back Squat", gender: "male", bodyWeight: 136, physicallyActive: 68, beginner: 116, intermediate: 164, advanced: 226, elite: 282 },
+  
+  // Age 30-39 (midpoint 35)
+  { age: 35, liftType: "Back Squat", gender: "male", bodyWeight: 57, physicallyActive: 40, beginner: 68, intermediate: 91, advanced: 125, elite: 159 },
+  { age: 35, liftType: "Back Squat", gender: "male", bodyWeight: 68, physicallyActive: 48, beginner: 82, intermediate: 110, advanced: 151, elite: 199 },
+  { age: 35, liftType: "Back Squat", gender: "male", bodyWeight: 79, physicallyActive: 53, beginner: 91, intermediate: 122, advanced: 167, elite: 220 },
+  { age: 35, liftType: "Back Squat", gender: "male", bodyWeight: 91, physicallyActive: 58, beginner: 99, intermediate: 132, advanced: 181, elite: 238 },
+  { age: 35, liftType: "Back Squat", gender: "male", bodyWeight: 102, physicallyActive: 62, beginner: 106, intermediate: 142, advanced: 195, elite: 252 },
+  { age: 35, liftType: "Back Squat", gender: "male", bodyWeight: 113, physicallyActive: 66, beginner: 113, intermediate: 150, advanced: 206, elite: 267 },
+  { age: 35, liftType: "Back Squat", gender: "male", bodyWeight: 136, physicallyActive: 74, beginner: 127, intermediate: 169, advanced: 232, elite: 291 },
+  
+  // Age 40-49 (midpoint 45)
+  { age: 45, liftType: "Back Squat", gender: "male", bodyWeight: 57, physicallyActive: 38, beginner: 65, intermediate: 86, advanced: 118, elite: 142 },
+  { age: 45, liftType: "Back Squat", gender: "male", bodyWeight: 68, physicallyActive: 43, beginner: 73, intermediate: 98, advanced: 134, elite: 161 },
+  { age: 45, liftType: "Back Squat", gender: "male", bodyWeight: 79, physicallyActive: 46, beginner: 79, intermediate: 105, advanced: 144, elite: 173 },
+  { age: 45, liftType: "Back Squat", gender: "male", bodyWeight: 91, physicallyActive: 54, beginner: 92, intermediate: 123, advanced: 169, elite: 203 },
+  { age: 45, liftType: "Back Squat", gender: "male", bodyWeight: 102, physicallyActive: 56, beginner: 97, intermediate: 129, advanced: 177, elite: 213 },
+  { age: 45, liftType: "Back Squat", gender: "male", bodyWeight: 113, physicallyActive: 61, beginner: 104, intermediate: 139, advanced: 191, elite: 229 },
+  { age: 45, liftType: "Back Squat", gender: "male", bodyWeight: 136, physicallyActive: 66, beginner: 113, intermediate: 150, advanced: 206, elite: 248 },
+  
+  // Age 50-59 (midpoint 55)
+  { age: 55, liftType: "Back Squat", gender: "male", bodyWeight: 57, physicallyActive: 32, beginner: 55, intermediate: 73, advanced: 100, elite: 132 },
+  { age: 55, liftType: "Back Squat", gender: "male", bodyWeight: 68, physicallyActive: 37, beginner: 64, intermediate: 85, advanced: 117, elite: 154 },
+  { age: 55, liftType: "Back Squat", gender: "male", bodyWeight: 79, physicallyActive: 42, beginner: 71, intermediate: 95, advanced: 131, elite: 172 },
+  { age: 55, liftType: "Back Squat", gender: "male", bodyWeight: 91, physicallyActive: 46, beginner: 80, intermediate: 106, advanced: 146, elite: 192 },
+  { age: 55, liftType: "Back Squat", gender: "male", bodyWeight: 102, physicallyActive: 50, beginner: 86, intermediate: 114, advanced: 157, elite: 207 },
+  { age: 55, liftType: "Back Squat", gender: "male", bodyWeight: 113, physicallyActive: 53, beginner: 90, intermediate: 120, advanced: 165, elite: 218 },
+  { age: 55, liftType: "Back Squat", gender: "male", bodyWeight: 136, physicallyActive: 54, beginner: 93, intermediate: 124, advanced: 171, elite: 225 },
+  
+  // Age 60-69 (midpoint 65)
+  { age: 65, liftType: "Back Squat", gender: "male", bodyWeight: 57, physicallyActive: 23, beginner: 40, intermediate: 53, advanced: 73, elite: 96 },
+  { age: 65, liftType: "Back Squat", gender: "male", bodyWeight: 68, physicallyActive: 33, beginner: 57, intermediate: 76, advanced: 105, elite: 138 },
+  { age: 65, liftType: "Back Squat", gender: "male", bodyWeight: 79, physicallyActive: 40, beginner: 68, intermediate: 91, advanced: 125, elite: 165 },
+  { age: 65, liftType: "Back Squat", gender: "male", bodyWeight: 91, physicallyActive: 43, beginner: 74, intermediate: 98, advanced: 135, elite: 178 },
+  { age: 65, liftType: "Back Squat", gender: "male", bodyWeight: 102, physicallyActive: 47, beginner: 80, intermediate: 107, advanced: 147, elite: 194 },
+  { age: 65, liftType: "Back Squat", gender: "male", bodyWeight: 113, physicallyActive: 48, beginner: 83, intermediate: 110, advanced: 151, elite: 199 },
+  { age: 65, liftType: "Back Squat", gender: "male", bodyWeight: 136, physicallyActive: 50, beginner: 86, intermediate: 115, advanced: 158, elite: 208 },
+  
+  // Age 70-79 (midpoint 75)
+  { age: 75, liftType: "Back Squat", gender: "male", bodyWeight: 57, physicallyActive: 22, beginner: 38, intermediate: 51, advanced: 70, elite: 92 },
+  { age: 75, liftType: "Back Squat", gender: "male", bodyWeight: 68, physicallyActive: 30, beginner: 51, intermediate: 68, advanced: 94, elite: 123 },
+  { age: 75, liftType: "Back Squat", gender: "male", bodyWeight: 79, physicallyActive: 33, beginner: 56, intermediate: 75, advanced: 103, elite: 136 },
+  { age: 75, liftType: "Back Squat", gender: "male", bodyWeight: 91, physicallyActive: 34, beginner: 59, intermediate: 78, advanced: 107, elite: 141 },
+  { age: 75, liftType: "Back Squat", gender: "male", bodyWeight: 102, physicallyActive: 35, beginner: 59, intermediate: 79, advanced: 109, elite: 143 },
+  { age: 75, liftType: "Back Squat", gender: "male", bodyWeight: 113, physicallyActive: 35, beginner: 60, intermediate: 80, advanced: 110, elite: 145 },
+  { age: 75, liftType: "Back Squat", gender: "male", bodyWeight: 136, physicallyActive: 36, beginner: 62, intermediate: 82, advanced: 113, elite: 149 },
+  
+  // Age 80-89 (midpoint 85)
+  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 57, physicallyActive: 18, beginner: 30, intermediate: 40, advanced: 55, elite: 73 },
+  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 68, physicallyActive: 24, beginner: 40, intermediate: 54, advanced: 74, elite: 97 },
+  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 79, physicallyActive: 26, beginner: 44, intermediate: 59, advanced: 81, elite: 107 },
+  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 91, physicallyActive: 27, beginner: 46, intermediate: 62, advanced: 85, elite: 112 },
+  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 102, physicallyActive: 28, beginner: 46, intermediate: 62, advanced: 86, elite: 113 },
+  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 113, physicallyActive: 28, beginner: 47, intermediate: 63, advanced: 87, elite: 115 },
+  { age: 85, liftType: "Back Squat", gender: "male", bodyWeight: 136, physicallyActive: 28, beginner: 49, intermediate: 65, advanced: 89, elite: 117 },
+
+  // Back Squat Female Section
+
+
 
   // Bench Press Male Section
-  // Age 15-19 Bench Press Standards we mark as age 18 and interpolate
-  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 57, physicallyActive: 34, beginner: 47, intermediate: 61, advanced: 74, elite: 85, },
-  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 68, physicallyActive: 42, beginner: 59, intermediate: 75, advanced: 92, elite: 107, },
-  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 79, physicallyActive: 43, beginner: 60, intermediate: 77, advanced: 94, elite: 110, },
-  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 90, physicallyActive: 50, beginner: 71, intermediate: 91, advanced: 111, elite: 132, },
-  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 102, physicallyActive: 53, beginner: 74, intermediate: 95, advanced: 116, elite: 134, },
-  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 53, beginner: 74, intermediate: 96, advanced: 117, elite: 137, },
-  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 53, beginner: 74, intermediate: 95, advanced: 116, elite: 138, },
+  // Age 15-19 (midpoint 17)
+  { age: 17, liftType: "Bench Press", gender: "male", bodyWeight: 57, physicallyActive: 34, beginner: 47, intermediate: 61, advanced: 74, elite: 85 },
+  { age: 17, liftType: "Bench Press", gender: "male", bodyWeight: 68, physicallyActive: 42, beginner: 59, intermediate: 76, advanced: 92, elite: 107 },
+  { age: 17, liftType: "Bench Press", gender: "male", bodyWeight: 79, physicallyActive: 43, beginner: 60, intermediate: 77, advanced: 94, elite: 110 },
+  { age: 17, liftType: "Bench Press", gender: "male", bodyWeight: 91, physicallyActive: 51, beginner: 71, intermediate: 91, advanced: 111, elite: 132 },
+  { age: 17, liftType: "Bench Press", gender: "male", bodyWeight: 102, physicallyActive: 53, beginner: 74, intermediate: 95, advanced: 116, elite: 134 },
+  { age: 17, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 53, beginner: 74, intermediate: 96, advanced: 117, elite: 137 },
+  { age: 17, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 53, beginner: 74, intermediate: 95, advanced: 116, elite: 138 },
 
-  // Age 80-89 Bench Press Standards we mark as age 85 and interpolate
-  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 57, physicallyActive: 16, beginner: 22, intermediate: 28, advanced: 34, elite: 41, },
-  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 68, physicallyActive: 20, beginner: 28, intermediate: 36, advanced: 44, elite: 54, },
-  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 79, physicallyActive: 22, beginner: 31, intermediate: 40, advanced: 49, elite: 61, },
-  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 91, physicallyActive: 24, beginner: 33, intermediate: 43, advanced: 52, elite: 65, },
-  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 102, physicallyActive: 25, beginner: 35, intermediate: 45, advanced: 55, elite: 69, },
-  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 30, beginner: 42, intermediate: 54, advanced: 66, elite: 83, },
-  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 33, beginner: 46, intermediate: 59, advanced: 72, elite: 91, },
+  // Age 20-29 (midpoint 25)
+  { age: 25, liftType: "Bench Press", gender: "male", bodyWeight: 57, physicallyActive: 36, beginner: 51, intermediate: 65, advanced: 80, elite: 92 },
+  { age: 25, liftType: "Bench Press", gender: "male", bodyWeight: 68, physicallyActive: 50, beginner: 70, intermediate: 90, advanced: 110, elite: 130 },
+  { age: 25, liftType: "Bench Press", gender: "male", bodyWeight: 79, physicallyActive: 50, beginner: 70, intermediate: 90, advanced: 110, elite: 150 },
+  { age: 25, liftType: "Bench Press", gender: "male", bodyWeight: 91, physicallyActive: 52, beginner: 73, intermediate: 93, advanced: 114, elite: 161 },
+  { age: 25, liftType: "Bench Press", gender: "male", bodyWeight: 102, physicallyActive: 55, beginner: 77, intermediate: 99, advanced: 121, elite: 170 },
+  { age: 25, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 59, beginner: 82, intermediate: 106, advanced: 129, elite: 181 },
+  { age: 25, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 61, beginner: 85, intermediate: 109, advanced: 133, elite: 182 },
 
+  // Age 30-39 (midpoint 35)
+  { age: 35, liftType: "Bench Press", gender: "male", bodyWeight: 57, physicallyActive: 39, beginner: 55, intermediate: 71, advanced: 87, elite: 114 },
+  { age: 35, liftType: "Bench Press", gender: "male", bodyWeight: 68, physicallyActive: 53, beginner: 75, intermediate: 96, advanced: 117, elite: 155 },
+  { age: 35, liftType: "Bench Press", gender: "male", bodyWeight: 79, physicallyActive: 54, beginner: 75, intermediate: 97, advanced: 119, elite: 156 },
+  { age: 35, liftType: "Bench Press", gender: "male", bodyWeight: 91, physicallyActive: 59, beginner: 83, intermediate: 107, advanced: 131, elite: 173 },
+  { age: 35, liftType: "Bench Press", gender: "male", bodyWeight: 102, physicallyActive: 61, beginner: 84, intermediate: 108, advanced: 135, elite: 176 },
+  { age: 35, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 62, beginner: 85, intermediate: 110, advanced: 139, elite: 177 },
+  { age: 35, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 67, beginner: 94, intermediate: 121, advanced: 148, elite: 195 },
+
+  // Age 40-49 (midpoint 45)
+  { age: 45, liftType: "Bench Press", gender: "male", bodyWeight: 57, physicallyActive: 37, beginner: 52, intermediate: 66, advanced: 81, elite: 105 },
+  { age: 45, liftType: "Bench Press", gender: "male", bodyWeight: 68, physicallyActive: 41, beginner: 57, intermediate: 73, advanced: 89, elite: 116 },
+  { age: 45, liftType: "Bench Press", gender: "male", bodyWeight: 79, physicallyActive: 48, beginner: 67, intermediate: 86, advanced: 105, elite: 135 },
+  { age: 45, liftType: "Bench Press", gender: "male", bodyWeight: 91, physicallyActive: 54, beginner: 75, intermediate: 97, advanced: 118, elite: 143 },
+  { age: 45, liftType: "Bench Press", gender: "male", bodyWeight: 102, physicallyActive: 56, beginner: 78, intermediate: 100, advanced: 122, elite: 154 },
+  { age: 45, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 58, beginner: 81, intermediate: 104, advanced: 127, elite: 164 },
+  { age: 45, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 62, beginner: 87, intermediate: 111, advanced: 136, elite: 166 },
+
+  // Age 50-59 (midpoint 55)
+  { age: 55, liftType: "Bench Press", gender: "male", bodyWeight: 57, physicallyActive: 29, beginner: 41, intermediate: 53, advanced: 65, elite: 74 },
+  { age: 55, liftType: "Bench Press", gender: "male", bodyWeight: 68, physicallyActive: 40, beginner: 56, intermediate: 72, advanced: 88, elite: 104 },
+  { age: 55, liftType: "Bench Press", gender: "male", bodyWeight: 79, physicallyActive: 43, beginner: 60, intermediate: 77, advanced: 94, elite: 111 },
+  { age: 55, liftType: "Bench Press", gender: "male", bodyWeight: 91, physicallyActive: 49, beginner: 68, intermediate: 88, advanced: 107, elite: 129 },
+  { age: 55, liftType: "Bench Press", gender: "male", bodyWeight: 102, physicallyActive: 53, beginner: 74, intermediate: 95, advanced: 116, elite: 140 },
+  { age: 55, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 54, beginner: 75, intermediate: 97, advanced: 118, elite: 143 },
+  { age: 55, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 54, beginner: 76, intermediate: 98, advanced: 120, elite: 145 },
+
+  // Age 60-69 (midpoint 65)
+  { age: 65, liftType: "Bench Press", gender: "male", bodyWeight: 57, physicallyActive: 25, beginner: 35, intermediate: 45, advanced: 55, elite: 68 },
+  { age: 65, liftType: "Bench Press", gender: "male", bodyWeight: 68, physicallyActive: 32, beginner: 45, intermediate: 57, advanced: 70, elite: 88 },
+  { age: 65, liftType: "Bench Press", gender: "male", bodyWeight: 79, physicallyActive: 36, beginner: 50, intermediate: 64, advanced: 78, elite: 99 },
+  { age: 65, liftType: "Bench Press", gender: "male", bodyWeight: 91, physicallyActive: 47, beginner: 66, intermediate: 84, advanced: 103, elite: 131 },
+  { age: 65, liftType: "Bench Press", gender: "male", bodyWeight: 102, physicallyActive: 48, beginner: 67, intermediate: 87, advanced: 106, elite: 134 },
+  { age: 65, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 49, beginner: 68, intermediate: 88, advanced: 107, elite: 136 },
+  { age: 65, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 50, beginner: 69, intermediate: 89, advanced: 109, elite: 138 },
+
+  // Age 70-79 (midpoint 75)
+  { age: 75, liftType: "Bench Press", gender: "male", bodyWeight: 57, physicallyActive: 23, beginner: 32, intermediate: 41, advanced: 50, elite: 60 },
+  { age: 75, liftType: "Bench Press", gender: "male", bodyWeight: 68, physicallyActive: 29, beginner: 40, intermediate: 52, advanced: 63, elite: 78 },
+  { age: 75, liftType: "Bench Press", gender: "male", bodyWeight: 79, physicallyActive: 33, beginner: 46, intermediate: 59, advanced: 72, elite: 89 },
+  { age: 75, liftType: "Bench Press", gender: "male", bodyWeight: 91, physicallyActive: 34, beginner: 48, intermediate: 62, advanced: 76, elite: 94 },
+  { age: 75, liftType: "Bench Press", gender: "male", bodyWeight: 102, physicallyActive: 36, beginner: 51, intermediate: 65, advanced: 80, elite: 99 },
+  { age: 75, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 44, beginner: 61, intermediate: 79, advanced: 96, elite: 121 },
+  { age: 75, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 48, beginner: 67, intermediate: 86, advanced: 105, elite: 131 },
+
+  // Age 80-89 (midpoint 85)
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 57, physicallyActive: 16, beginner: 22, intermediate: 28, advanced: 34, elite: 41 },
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 68, physicallyActive: 20, beginner: 28, intermediate: 36, advanced: 44, elite: 54 },
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 79, physicallyActive: 22, beginner: 31, intermediate: 40, advanced: 49, elite: 61 },
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 91, physicallyActive: 24, beginner: 33, intermediate: 43, advanced: 52, elite: 65 },
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 102, physicallyActive: 25, beginner: 35, intermediate: 45, advanced: 55, elite: 69 },
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 30, beginner: 42, intermediate: 54, advanced: 66, elite: 83 },
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 33, beginner: 46, intermediate: 59, advanced: 72, elite: 91 },
  
- // Bench Press Female Section
- // Age 15-19 (midpoint 17)
+  // Bench Press Female Section
+  // Age 15-19 (midpoint 17)
   { age: 17, liftType: "Bench Press", gender: "female", bodyWeight: 57, physicallyActive: 14, beginner: 19, intermediate: 27, advanced: 37, elite: 51 },
   { age: 17, liftType: "Bench Press", gender: "female", bodyWeight: 68, physicallyActive: 17, beginner: 23, intermediate: 32, advanced: 44, elite: 61 },
   { age: 17, liftType: "Bench Press", gender: "female", bodyWeight: 79, physicallyActive: 19, beginner: 27, intermediate: 37, advanced: 51, elite: 70 },
@@ -128,20 +227,78 @@ export const LiftingStandardsKG = [
   { age: 85, liftType: "Bench Press", gender: "female", bodyWeight: 113, physicallyActive: 15, beginner: 19, intermediate: 26, advanced: 34, elite: 46 },
   { age: 85, liftType: "Bench Press", gender: "female", bodyWeight: 136, physicallyActive: 15, beginner: 20, intermediate: 27, advanced: 36, elite: 48 },
 
-  // Age 15-19 Deadlift Standards we mark as age 18 and interpolate
-  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 57, physicallyActive: 45, beginner: 74, intermediate: 93, advanced: 103, elite: 115 },
-  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 68, physicallyActive: 58, beginner: 97, intermediate: 121, advanced: 134, elite: 149 },
-  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 79, physicallyActive: 73, beginner: 122, intermediate: 152, advanced: 169, elite: 188 },
-  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 91, physicallyActive: 77, beginner: 129, intermediate: 161, advanced: 179, elite: 199 },
-  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 102, physicallyActive: 81, beginner: 135, intermediate: 169, advanced: 188, elite: 209 },
-  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 113, physicallyActive: 82, beginner: 137, intermediate: 172, advanced: 191, elite: 212 },
-  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 136, physicallyActive: 84, beginner: 139, intermediate: 174, advanced: 194, elite: 215 },
-  // Age 80-89 Deadlift Standards we mark as age 85 and interpolate
+  // Deadlift Male Section
+  // Age 15-19 (midpoint 17)
+  { age: 17, liftType: "Deadlift", gender: "male", bodyWeight: 57, physicallyActive: 45, beginner: 74, intermediate: 93, advanced: 103, elite: 115 },
+  { age: 17, liftType: "Deadlift", gender: "male", bodyWeight: 68, physicallyActive: 58, beginner: 97, intermediate: 121, advanced: 134, elite: 149 },
+  { age: 17, liftType: "Deadlift", gender: "male", bodyWeight: 79, physicallyActive: 73, beginner: 122, intermediate: 152, advanced: 169, elite: 188 },
+  { age: 17, liftType: "Deadlift", gender: "male", bodyWeight: 91, physicallyActive: 77, beginner: 129, intermediate: 161, advanced: 179, elite: 199 },
+  { age: 17, liftType: "Deadlift", gender: "male", bodyWeight: 102, physicallyActive: 81, beginner: 135, intermediate: 169, advanced: 188, elite: 209 },
+  { age: 17, liftType: "Deadlift", gender: "male", bodyWeight: 113, physicallyActive: 82, beginner: 137, intermediate: 172, advanced: 191, elite: 212 },
+  { age: 17, liftType: "Deadlift", gender: "male", bodyWeight: 136, physicallyActive: 84, beginner: 139, intermediate: 174, advanced: 194, elite: 215 },
+
+  // Age 20-29 (midpoint 25)
+  { age: 25, liftType: "Deadlift", gender: "male", bodyWeight: 57, physicallyActive: 47, beginner: 81, intermediate: 101, advanced: 127, elite: 141 },
+  { age: 25, liftType: "Deadlift", gender: "male", bodyWeight: 68, physicallyActive: 64, beginner: 112, intermediate: 139, advanced: 186, elite: 207 },
+  { age: 25, liftType: "Deadlift", gender: "male", bodyWeight: 79, physicallyActive: 76, beginner: 131, intermediate: 164, advanced: 219, elite: 243 },
+  { age: 25, liftType: "Deadlift", gender: "male", bodyWeight: 91, physicallyActive: 83, beginner: 144, intermediate: 180, advanced: 240, elite: 266 },
+  { age: 25, liftType: "Deadlift", gender: "male", bodyWeight: 102, physicallyActive: 84, beginner: 146, intermediate: 182, advanced: 243, elite: 270 },
+  { age: 25, liftType: "Deadlift", gender: "male", bodyWeight: 113, physicallyActive: 85, beginner: 147, intermediate: 184, advanced: 245, elite: 273 },
+  { age: 25, liftType: "Deadlift", gender: "male", bodyWeight: 136, physicallyActive: 86, beginner: 149, intermediate: 187, advanced: 249, elite: 276 },
+
+  // Age 30-39 (midpoint 35)
+  { age: 35, liftType: "Deadlift", gender: "male", bodyWeight: 57, physicallyActive: 51, beginner: 89, intermediate: 112, advanced: 149, elite: 175 },
+  { age: 35, liftType: "Deadlift", gender: "male", bodyWeight: 68, physicallyActive: 64, beginner: 112, intermediate: 140, advanced: 186, elite: 219 },
+  { age: 35, liftType: "Deadlift", gender: "male", bodyWeight: 79, physicallyActive: 76, beginner: 132, intermediate: 165, advanced: 220, elite: 259 },
+  { age: 35, liftType: "Deadlift", gender: "male", bodyWeight: 91, physicallyActive: 81, beginner: 142, intermediate: 177, advanced: 236, elite: 278 },
+  { age: 35, liftType: "Deadlift", gender: "male", bodyWeight: 102, physicallyActive: 83, beginner: 145, intermediate: 181, advanced: 242, elite: 284 },
+  { age: 35, liftType: "Deadlift", gender: "male", bodyWeight: 113, physicallyActive: 84, beginner: 146, intermediate: 183, advanced: 244, elite: 287 },
+  { age: 35, liftType: "Deadlift", gender: "male", bodyWeight: 136, physicallyActive: 89, beginner: 154, intermediate: 192, advanced: 257, elite: 302 },
+
+  // Age 40-49 (midpoint 45)
+  { age: 45, liftType: "Deadlift", gender: "male", bodyWeight: 57, physicallyActive: 46, beginner: 80, intermediate: 100, advanced: 118, elite: 131 },
+  { age: 45, liftType: "Deadlift", gender: "male", bodyWeight: 68, physicallyActive: 53, beginner: 92, intermediate: 115, advanced: 154, elite: 181 },
+  { age: 45, liftType: "Deadlift", gender: "male", bodyWeight: 79, physicallyActive: 63, beginner: 109, intermediate: 137, advanced: 182, elite: 214 },
+  { age: 45, liftType: "Deadlift", gender: "male", bodyWeight: 91, physicallyActive: 65, beginner: 113, intermediate: 141, advanced: 188, elite: 222 },
+  { age: 45, liftType: "Deadlift", gender: "male", bodyWeight: 102, physicallyActive: 71, beginner: 124, intermediate: 154, advanced: 206, elite: 242 },
+  { age: 45, liftType: "Deadlift", gender: "male", bodyWeight: 113, physicallyActive: 75, beginner: 130, intermediate: 162, advanced: 217, elite: 255 },
+  { age: 45, liftType: "Deadlift", gender: "male", bodyWeight: 136, physicallyActive: 76, beginner: 133, intermediate: 166, advanced: 221, elite: 260 },
+
+  // Age 50-59 (midpoint 55)
+  { age: 55, liftType: "Deadlift", gender: "male", bodyWeight: 57, physicallyActive: 40, beginner: 69, intermediate: 86, advanced: 102, elite: 113 },
+  { age: 55, liftType: "Deadlift", gender: "male", bodyWeight: 68, physicallyActive: 48, beginner: 84, intermediate: 105, advanced: 140, elite: 164 },
+  { age: 55, liftType: "Deadlift", gender: "male", bodyWeight: 79, physicallyActive: 56, beginner: 97, intermediate: 121, advanced: 161, elite: 190 },
+  { age: 55, liftType: "Deadlift", gender: "male", bodyWeight: 91, physicallyActive: 60, beginner: 104, intermediate: 130, advanced: 173, elite: 204 },
+  { age: 55, liftType: "Deadlift", gender: "male", bodyWeight: 102, physicallyActive: 63, beginner: 110, intermediate: 138, advanced: 183, elite: 216 },
+  { age: 55, liftType: "Deadlift", gender: "male", bodyWeight: 113, physicallyActive: 64, beginner: 111, intermediate: 139, advanced: 185, elite: 218 },
+  { age: 55, liftType: "Deadlift", gender: "male", bodyWeight: 136, physicallyActive: 65, beginner: 114, intermediate: 142, advanced: 190, elite: 223 },
+
+  // Age 60-69 (midpoint 65)
+  { age: 65, liftType: "Deadlift", gender: "male", bodyWeight: 57, physicallyActive: 35, beginner: 61, intermediate: 79, advanced: 95, elite: 109 },
+  { age: 65, liftType: "Deadlift", gender: "male", bodyWeight: 68, physicallyActive: 46, beginner: 79, intermediate: 103, advanced: 124, elite: 142 },
+  { age: 65, liftType: "Deadlift", gender: "male", bodyWeight: 79, physicallyActive: 52, beginner: 90, intermediate: 117, advanced: 141, elite: 162 },
+  { age: 65, liftType: "Deadlift", gender: "male", bodyWeight: 91, physicallyActive: 57, beginner: 98, intermediate: 128, advanced: 155, elite: 177 },
+  { age: 65, liftType: "Deadlift", gender: "male", bodyWeight: 102, physicallyActive: 61, beginner: 107, intermediate: 138, advanced: 167, elite: 191 },
+  { age: 65, liftType: "Deadlift", gender: "male", bodyWeight: 113, physicallyActive: 62, beginner: 109, intermediate: 140, advanced: 170, elite: 194 },
+  { age: 65, liftType: "Deadlift", gender: "male", bodyWeight: 136, physicallyActive: 64, beginner: 112, intermediate: 144, advanced: 175, elite: 200 },
+
+  // Age 70-79 (midpoint 75)
+  { age: 75, liftType: "Deadlift", gender: "male", bodyWeight: 57, physicallyActive: 29, beginner: 51, intermediate: 68, advanced: 85, elite: 98 },
+  { age: 75, liftType: "Deadlift", gender: "male", bodyWeight: 68, physicallyActive: 36, beginner: 62, intermediate: 82, advanced: 103, elite: 121 },
+  { age: 75, liftType: "Deadlift", gender: "male", bodyWeight: 79, physicallyActive: 42, beginner: 74, intermediate: 98, advanced: 123, elite: 144 },
+  { age: 75, liftType: "Deadlift", gender: "male", bodyWeight: 91, physicallyActive: 45, beginner: 79, intermediate: 105, advanced: 131, elite: 155 },
+  { age: 75, liftType: "Deadlift", gender: "male", bodyWeight: 102, physicallyActive: 49, beginner: 86, intermediate: 114, advanced: 143, elite: 168 },
+  { age: 75, liftType: "Deadlift", gender: "male", bodyWeight: 113, physicallyActive: 50, beginner: 87, intermediate: 116, advanced: 145, elite: 170 },
+  { age: 75, liftType: "Deadlift", gender: "male", bodyWeight: 136, physicallyActive: 52, beginner: 90, intermediate: 120, advanced: 150, elite: 176 },
+
+  // Age 80-89 (midpoint 85)
   { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 57, physicallyActive: 21, beginner: 36, intermediate: 48, advanced: 60, elite: 68 },
   { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 68, physicallyActive: 25, beginner: 43, intermediate: 58, advanced: 72, elite: 85 },
   { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 79, physicallyActive: 30, beginner: 51, intermediate: 69, advanced: 86, elite: 101 },
   { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 91, physicallyActive: 32, beginner: 55, intermediate: 74, advanced: 92, elite: 108 },
   { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 102, physicallyActive: 35, beginner: 60, intermediate: 80, advanced: 100, elite: 118 },
-  { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 113, physicallyActive: 35, beginner: 60, intermediate: 81, advanced: 101, elite: 119 },
+  { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 113, physicallyActive: 35, beginner: 61, intermediate: 81, advanced: 101, elite: 119 },
   { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 136, physicallyActive: 36, beginner: 63, intermediate: 84, advanced: 105, elite: 123 },
+
+  // Deadlift Female Section
 ];

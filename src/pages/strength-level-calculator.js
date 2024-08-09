@@ -50,28 +50,35 @@ export default function StrengthLevelCalculator() {
       ? bodyWeight
       : Math.round(bodyWeight / 2.2046);
 
-    const standard = interpolateStandard(
-      age,
-      bodyWeightKG,
-      gender,
-      "Squat",
-      LiftingStandardsKG,
+    const uniqueLiftNames = Array.from(
+      new Set(LiftingStandardsKG.map((item) => item.liftType)),
     );
+    const newStandards = {};
 
-    devLog(standard);
-    if (isMetric) {
-      setStandards(standard || {});
-    } else {
-      // Convert standard to lb
-      const standardLB = {
-        physicallyActive: Math.round(standard.physicallyActive * 2.2046),
-        beginner: Math.round(standard.beginner * 2.2046),
-        intermediate: Math.round(standard.intermediate * 2.2046),
-        advanced: Math.round(standard.advanced * 2.2046),
-        elite: Math.round(standard.elite * 2.2046),
-      };
-      setStandards(standardLB || {});
-    }
+    uniqueLiftNames.forEach((liftType) => {
+      const standard = interpolateStandard(
+        age,
+        bodyWeightKG,
+        gender,
+        liftType,
+        LiftingStandardsKG,
+      );
+
+      if (isMetric) {
+        newStandards[liftType] = standard || {};
+      } else {
+        // Convert standard to lb
+        newStandards[liftType] = {
+          physicallyActive: Math.round(standard?.physicallyActive * 2.2046),
+          beginner: Math.round(standard?.beginner * 2.2046),
+          intermediate: Math.round(standard?.intermediate * 2.2046),
+          advanced: Math.round(standard?.advanced * 2.2046),
+          elite: Math.round(standard?.elite * 2.2046),
+        };
+      }
+    });
+
+    setStandards(newStandards);
   }, [age, gender, bodyWeight, isMetric]);
 
   const toggleIsMetric = (isMetric) => {
@@ -91,6 +98,8 @@ export default function StrengthLevelCalculator() {
   };
 
   const unitType = isMetric ? "kg" : "lb";
+
+  const liftNames = Object.keys(standards);
 
   return (
     <div className="mx-4 flex flex-row items-center md:mx-[5vw]">
@@ -160,28 +169,28 @@ export default function StrengthLevelCalculator() {
           </div>
         </CardContent>
         <CardFooter>
-          <div>
-            <h2 className="font-bold">Squat Standards:</h2>
-            <p>
-              Physically Active: {standards.physicallyActive}
-              {unitType}
-            </p>
-            <p>
-              Beginner: {standards.beginner}
-              {unitType}
-            </p>
-            <p>
-              Intermediate: {standards.intermediate}
-              {unitType}
-            </p>
-            <p>
-              Advanced: {standards.advanced}
-              {unitType}
-            </p>
-            <p>
-              Elite: {standards.elite}
-              {unitType}
-            </p>
+          <div className="flex flex-col gap-4">
+            {liftNames.map((liftType) => (
+              <div key={liftType} className="">
+                <h2 className="font-bold">{liftType} Standards:</h2>
+                <p>
+                  Physically Active: {standards[liftType]?.physicallyActive}{" "}
+                  {unitType}
+                </p>
+                <p>
+                  Beginner: {standards[liftType]?.beginner} {unitType}
+                </p>
+                <p>
+                  Intermediate: {standards[liftType]?.intermediate} {unitType}
+                </p>
+                <p>
+                  Advanced: {standards[liftType]?.advanced} {unitType}
+                </p>
+                <p>
+                  Elite: {standards[liftType]?.elite} {unitType}
+                </p>
+              </div>
+            ))}
           </div>
         </CardFooter>
       </Card>
@@ -191,10 +200,8 @@ export default function StrengthLevelCalculator() {
 
 // Take the standards data and interpolate the standards for the given body weight
 // FIXME: it needs to work when age or weight exceed the dataset
-const interpolateStandard = (age, weight, gender, liftType, standards) => {
-  devLog(
-    `interpolateStandard. age: ${age}, weight: ${weight}, gender: ${gender}, liftType: ${liftType}`,
-  );
+const interpolateStandard = (age, weightKG, gender, liftType, standards) => {
+  // devLog( `interpolateStandard. age: ${age}, weight: ${weight}, gender: ${gender}, liftType: ${liftType}`,);
   // Filter the dataset based on gender and liftType
   const filteredStandards = standards.filter(
     (item) => item.gender === gender && item.liftType === liftType,
@@ -226,7 +233,7 @@ const interpolateStandard = (age, weight, gender, liftType, standards) => {
     return null; // Handle edge cases
   }
 
-  devLog(`ageLower: ${ageLower.age}, ageUpper: ${ageUpper.age}`);
+  // devLog(`ageLower: ${ageLower.age}, ageUpper: ${ageUpper.age}`);
 
   // Interpolate between bodyweight values within the lower and upper age ranges
   const interpolateByBodyWeight = (agePoint) => {
@@ -238,8 +245,8 @@ const interpolateStandard = (age, weight, gender, liftType, standards) => {
 
       if (
         current.age === agePoint &&
-        weight >= current.bodyWeight &&
-        weight <= next.bodyWeight
+        weightKG >= current.bodyWeight &&
+        weightKG <= next.bodyWeight
       ) {
         weightLower = current;
         weightUpper = next;
@@ -255,7 +262,7 @@ const interpolateStandard = (age, weight, gender, liftType, standards) => {
     }
 
     const weightRatio =
-      (weight - weightLower.bodyWeight) /
+      (weightKG - weightLower.bodyWeight) /
       (weightUpper.bodyWeight - weightLower.bodyWeight);
     return {
       physicallyActive: Math.round(
@@ -287,9 +294,7 @@ const interpolateStandard = (age, weight, gender, liftType, standards) => {
   const upperValues = interpolateByBodyWeight(ageUpper.age);
 
   if (!lowerValues || !upperValues) {
-    devLog(
-      `could not interpolate values: lowerValues: ${lowerValues}, upperValues: ${upperValues}`,
-    );
+    // devLog( `could not interpolate values: lowerValues: ${lowerValues}, upperValues: ${upperValues}`,);
     return null; // Handle edge cases
   }
 
@@ -320,41 +325,6 @@ const interpolateStandard = (age, weight, gender, liftType, standards) => {
   };
 };
 
-const interpolateStandardOLD = (weight, standards) => {
-  // Sort the standards by bodyWeight
-  standards.sort((a, b) => a.bodyWeight - b.bodyWeight);
-
-  // Find the two nearest points in the standards data
-  for (let i = 0; i < standards.length - 1; i++) {
-    const low = standards[i];
-    const high = standards[i + 1];
-
-    if (weight >= low.bodyWeight && weight <= high.bodyWeight) {
-      const ratio =
-        (weight - low.bodyWeight) / (high.bodyWeight - low.bodyWeight);
-      return {
-        physicallyActive: Math.round(
-          low.physicallyActive +
-            ratio * (high.physicallyActive - low.physicallyActive),
-        ),
-        beginner: Math.round(
-          low.beginner + ratio * (high.beginner - low.beginner),
-        ),
-        intermediate: Math.round(
-          low.intermediate + ratio * (high.intermediate - low.intermediate),
-        ),
-        advanced: Math.round(
-          low.advanced + ratio * (high.advanced - low.advanced),
-        ),
-        elite: Math.round(low.elite + ratio * (high.elite - low.elite)),
-      };
-    }
-  }
-
-  // If weight is out of range, return null or handle accordingly
-  return null;
-};
-
 // Data for lifting standards is based on the research of Professor Lon Kilgore
 // https://lonkilgore.com/
 // Use the kg data and convert to elsewhere when needed
@@ -376,4 +346,20 @@ const LiftingStandardsKG = [
   { age: 85, liftType: "Squat", gender: "male", bodyWeight: 102, physicallyActive: 28, beginner: 46, intermediate: 62, advanced: 86, elite: 113, },
   { age: 85, liftType: "Squat", gender: "male", bodyWeight: 113, physicallyActive: 28, beginner: 47, intermediate: 63, advanced: 87, elite: 115, },
   { age: 85, liftType: "Squat", gender: "male", bodyWeight: 136, physicallyActive: 28, beginner: 49, intermediate: 65, advanced: 89, elite: 117, },
+  // Age 15-19 Bench Press Standards we mark as age 18 and interpolate
+  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 57, physicallyActive: 34, beginner: 47, intermediate: 61, advanced: 74, elite: 85, },
+  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 68, physicallyActive: 42, beginner: 59, intermediate: 75, advanced: 92, elite: 107, },
+  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 79, physicallyActive: 43, beginner: 60, intermediate: 77, advanced: 94, elite: 110, },
+  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 90, physicallyActive: 50, beginner: 71, intermediate: 91, advanced: 111, elite: 132, },
+  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 102, physicallyActive: 53, beginner: 74, intermediate: 95, advanced: 116, elite: 134, },
+  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 53, beginner: 74, intermediate: 96, advanced: 117, elite: 137, },
+  { age: 18, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 53, beginner: 74, intermediate: 95, advanced: 116, elite: 138, },
+  // Age 80-89 Bench Press Standards we mark as age 85 and interpolate
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 57, physicallyActive: 16, beginner: 22, intermediate: 28, advanced: 34, elite: 41, },
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 68, physicallyActive: 20, beginner: 28, intermediate: 36, advanced: 44, elite: 54, },
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 79, physicallyActive: 22, beginner: 31, intermediate: 40, advanced: 49, elite: 61, },
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 91, physicallyActive: 24, beginner: 33, intermediate: 43, advanced: 52, elite: 65, },
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 102, physicallyActive: 25, beginner: 35, intermediate: 45, advanced: 55, elite: 69, },
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 30, beginner: 42, intermediate: 54, advanced: 66, elite: 83, },
+  { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 33, beginner: 46, intermediate: 59, advanced: 72, elite: 91, },
 ];

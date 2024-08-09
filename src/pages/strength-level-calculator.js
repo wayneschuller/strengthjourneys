@@ -211,7 +211,7 @@ export default function StrengthLevelCalculator() {
             >
               Professor Lon Kilgore
             </a>
-            .
+            . Any errors are our own.
           </p>
         </CardFooter>
       </Card>

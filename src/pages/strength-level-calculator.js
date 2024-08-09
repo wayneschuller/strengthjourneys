@@ -32,31 +32,28 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { useLocalStorage } from "usehooks-ts";
 
 export default function StrengthLevelCalculator() {
-  const [age, setAge] = useState(30);
-  const [gender, setGender] = useState("male");
-  const [weight, setWeight] = useState(200);
-  const [isMetric, setIsMetric] = useState(false);
+  const [age, setAge] = useLocalStorage("SJ_AthleteAge", 30);
+  const [gender, setGender] = useLocalStorage("SJ_AthleteGender", "male");
+  const [bodyWeight, setBodyWeight] = useLocalStorage("SJ_AthleteWeight", 200);
+  const [isMetric, setIsMetric] = useLocalStorage("calcIsMetric", false);
 
   const toggleIsMetric = (isMetric) => {
-    let newWeight;
+    let newBodyWeight;
 
     if (!isMetric) {
       // Going from kg to lb
-      newWeight = Math.round(weight * 2.2046);
+      newBodyWeight = Math.round(bodyWeight * 2.2046);
       setIsMetric(false);
     } else {
       // Going from lb to kg
-      newWeight = Math.round(weight / 2.2046);
+      newBodyWeight = Math.round(bodyWeight / 2.2046);
       setIsMetric(true);
     }
 
-    setWeight(newWeight);
-
-    // Save in localStorage for this browser device
-    localStorage.setItem("calcIsMetric", JSON.stringify(isMetric));
-    // localStorage.setItem("weight", JSON.stringify(newWeight));
+    setBodyWeight(newBodyWeight);
   };
 
   return (
@@ -114,8 +111,8 @@ export default function StrengthLevelCalculator() {
                 id="weight"
                 type="number"
                 placeholder="Enter your weight"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
+                value={bodyWeight}
+                onChange={(e) => setBodyWeight(e.target.value)}
                 className="w-24"
               />
               <UnitChooser

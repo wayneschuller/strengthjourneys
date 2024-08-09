@@ -96,7 +96,7 @@ export default function StrengthLevelCalculator() {
   const liftNames = Object.keys(standards);
 
   return (
-    <div className="mx-4 flex flex-row items-center md:mx-[5vw]">
+    <div className="mx-4 flex flex-row items-center md:mx-[10vw] xl:mx-[20vw]">
       <Head>
         <title>Free Strength Level Calculator (Strength Journeys)</title>
         <meta

@@ -69,6 +69,7 @@ export function DesktopNav() {
           height="auto"
           alt="logo"
           className="inline-block dark:hidden"
+          priority={true}
         />
         <Image
           src={darkModeLogo}
@@ -76,6 +77,7 @@ export function DesktopNav() {
           height="auto"
           alt="logo"
           className="hidden dark:inline-block"
+          priority={true}
         />
       </Link>
       {/* FIXME: we should loop over the feature pages array from the index here */}

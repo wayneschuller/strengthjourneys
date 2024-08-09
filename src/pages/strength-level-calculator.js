@@ -363,5 +363,19 @@ const LiftingStandardsKG = [
   { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 30, beginner: 42, intermediate: 54, advanced: 66, elite: 83, },
   { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 33, beginner: 46, intermediate: 59, advanced: 72, elite: 91, },
   // Age 15-19 Deadlift Standards we mark as age 18 and interpolate
-
+  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 57, physicallyActive: 45, beginner: 74, intermediate: 93, advanced: 103, elite: 115 },
+  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 68, physicallyActive: 58, beginner: 97, intermediate: 121, advanced: 134, elite: 149 },
+  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 79, physicallyActive: 73, beginner: 122, intermediate: 152, advanced: 169, elite: 188 },
+  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 91, physicallyActive: 77, beginner: 129, intermediate: 161, advanced: 179, elite: 199 },
+  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 102, physicallyActive: 81, beginner: 135, intermediate: 169, advanced: 188, elite: 209 },
+  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 113, physicallyActive: 82, beginner: 137, intermediate: 172, advanced: 191, elite: 212 },
+  { age: 18, liftType: "Deadlift", gender: "male", bodyWeight: 136, physicallyActive: 84, beginner: 139, intermediate: 174, advanced: 194, elite: 215 },
+  // Age 80-89 Deadlift Standards we mark as age 85 and interpolate
+  { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 57, physicallyActive: 21, beginner: 36, intermediate: 48, advanced: 60, elite: 68 },
+  { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 68, physicallyActive: 25, beginner: 43, intermediate: 58, advanced: 72, elite: 85 },
+  { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 79, physicallyActive: 30, beginner: 51, intermediate: 69, advanced: 86, elite: 101 },
+  { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 91, physicallyActive: 32, beginner: 55, intermediate: 74, advanced: 92, elite: 108 },
+  { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 102, physicallyActive: 35, beginner: 60, intermediate: 80, advanced: 100, elite: 118 },
+  { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 113, physicallyActive: 35, beginner: 60, intermediate: 81, advanced: 101, elite: 119 },
+  { age: 85, liftType: "Deadlift", gender: "male", bodyWeight: 136, physicallyActive: 36, beginner: 63, intermediate: 84, advanced: 105, elite: 123 },
 ];

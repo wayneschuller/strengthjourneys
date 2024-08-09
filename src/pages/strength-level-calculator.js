@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useLocalStorage } from "usehooks-ts";
 import { LiftingStandardsKG } from "@/lib/lifting-standards-kg";
+import { Separator } from "@/components/ui/separator";
 
 // Strength Level Calculator
 export default function StrengthLevelCalculator() {
@@ -165,23 +166,35 @@ export default function StrengthLevelCalculator() {
           <div className="flex flex-col gap-4">
             {liftNames.map((liftType) => (
               <div key={liftType} className="">
-                <h2 className="font-bold">{liftType} Standards:</h2>
-                <p>
-                  Physically Active: {standards[liftType]?.physicallyActive}{" "}
-                  {unitType}
-                </p>
-                <p>
-                  Beginner: {standards[liftType]?.beginner} {unitType}
-                </p>
-                <p>
-                  Intermediate: {standards[liftType]?.intermediate} {unitType}
-                </p>
-                <p>
-                  Advanced: {standards[liftType]?.advanced} {unitType}
-                </p>
-                <p>
-                  Elite: {standards[liftType]?.elite} {unitType}
-                </p>
+                <h2 className="text-lg font-bold">{liftType} Standards:</h2>
+                <div className="grid grid-cols-3 md:grid-cols-5">
+                  <MiniCard
+                    levelString="Physically Active"
+                    weight={standards[liftType]?.physicallyActive}
+                    unitType={unitType}
+                  />
+                  <MiniCard
+                    levelString="Beginner"
+                    weight={standards[liftType]?.beginner}
+                    unitType={unitType}
+                  />
+                  <MiniCard
+                    levelString="Intermediate"
+                    weight={standards[liftType]?.intermediate}
+                    unitType={unitType}
+                  />
+                  <MiniCard
+                    levelString="Advanced"
+                    weight={standards[liftType]?.advanced}
+                    unitType={unitType}
+                  />
+                  <MiniCard
+                    levelString="Elite"
+                    weight={standards[liftType]?.elite}
+                    unitType={unitType}
+                  />
+                </div>
+                <Separator />
               </div>
             ))}
           </div>
@@ -190,6 +203,16 @@ export default function StrengthLevelCalculator() {
     </div>
   );
 }
+
+const MiniCard = ({ levelString, weight, unitType }) => (
+  <div className="flex-1 rounded-lg bg-card p-4">
+    <h3 className="mb-2 text-sm font-medium">{levelString}</h3>
+    <div className="text-2xl font-bold">
+      {weight}
+      {unitType}
+    </div>
+  </div>
+);
 
 // Take the standards data and interpolate the standards for the given body weight
 // FIXME: it needs to work when age or weight exceed the dataset

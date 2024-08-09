@@ -362,4 +362,6 @@ const LiftingStandardsKG = [
   { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 102, physicallyActive: 25, beginner: 35, intermediate: 45, advanced: 55, elite: 69, },
   { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 113, physicallyActive: 30, beginner: 42, intermediate: 54, advanced: 66, elite: 83, },
   { age: 85, liftType: "Bench Press", gender: "male", bodyWeight: 136, physicallyActive: 33, beginner: 46, intermediate: 59, advanced: 72, elite: 91, },
+  // Age 15-19 Deadlift Standards we mark as age 18 and interpolate
+
 ];

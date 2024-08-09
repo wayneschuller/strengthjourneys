@@ -116,23 +116,27 @@ export default function StrengthLevelCalculator() {
         <CardContent className="space-y-6">
           <div className="flex flex-col items-center justify-between gap-8 md:flex-row md:justify-stretch">
             <div className="flex items-center space-x-2">
-              <Label htmlFor="age">Age</Label>
+              <Label htmlFor="age" className="text-xl">
+                Age
+              </Label>
               <Input
                 id="age"
                 type="number"
                 placeholder="Enter your age"
-                className="w-20"
+                className="w-20 text-xl"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
               />
             </div>
             <div className="flex items-center space-x-2">
-              <Label htmlFor="gender">Gender</Label>
+              <Label htmlFor="gender" className="text-xl">
+                Gender
+              </Label>
               <Select
                 id="gender"
                 value={gender}
                 onValueChange={(value) => setGender(value)}
-                className="min-w-52"
+                className="min-w-52 text-xl"
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select gender" />
@@ -144,7 +148,7 @@ export default function StrengthLevelCalculator() {
               </Select>
             </div>
             <div className="flex items-center space-x-2">
-              <Label htmlFor="weight" className="">
+              <Label htmlFor="weight" className="text-xl">
                 Bodyweight
               </Label>
               <Input
@@ -153,7 +157,7 @@ export default function StrengthLevelCalculator() {
                 placeholder="Enter your weight"
                 value={bodyWeight}
                 onChange={(e) => setBodyWeight(e.target.value)}
-                className="w-24"
+                className="w-24 text-xl"
               />
               <UnitChooser
                 isMetric={isMetric}

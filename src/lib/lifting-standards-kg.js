@@ -444,8 +444,149 @@ export const LiftingStandardsKG = [
     { age: 85, liftType: "Deadlift", gender: "female", bodyWeight: 136, physicallyActive: 17, beginner: 39, intermediate: 50, advanced: 65, elite: 77 },
 
   // Strict Press Male Section
+  // Age 15-19 (midpoint 17)
+  { age: 17, liftType: "Strict Press", gender: "male", bodyWeight: 57, physicallyActive: 18, beginner: 26, intermediate: 33, advanced: 41, elite: 53 },
+  { age: 17, liftType: "Strict Press", gender: "male", bodyWeight: 68, physicallyActive: 22, beginner: 31, intermediate: 40, advanced: 49, elite: 64 },
+  { age: 17, liftType: "Strict Press", gender: "male", bodyWeight: 79, physicallyActive: 24, beginner: 34, intermediate: 44, advanced: 54, elite: 70 },
+  { age: 17, liftType: "Strict Press", gender: "male", bodyWeight: 91, physicallyActive: 28, beginner: 39, intermediate: 50, advanced: 61, elite: 80 },
+  { age: 17, liftType: "Strict Press", gender: "male", bodyWeight: 102, physicallyActive: 29, beginner: 40, intermediate: 51, advanced: 63, elite: 83 },
+  { age: 17, liftType: "Strict Press", gender: "male", bodyWeight: 113, physicallyActive: 29, beginner: 41, intermediate: 53, advanced: 65, elite: 85 },
+  { age: 17, liftType: "Strict Press", gender: "male", bodyWeight: 136, physicallyActive: 31, beginner: 43, intermediate: 56, advanced: 69, elite: 90 },
 
+    // Age 20-29 (midpoint 25)
+    { age: 25, liftType: "Strict Press", gender: "male", bodyWeight: 57, physicallyActive: 23, beginner: 32, intermediate: 42, advanced: 51, elite: 67 },
+    { age: 25, liftType: "Strict Press", gender: "male", bodyWeight: 68, physicallyActive: 28, beginner: 39, intermediate: 51, advanced: 62, elite: 82 },
+    { age: 25, liftType: "Strict Press", gender: "male", bodyWeight: 79, physicallyActive: 31, beginner: 43, intermediate: 55, advanced: 68, elite: 89 },
+    { age: 25, liftType: "Strict Press", gender: "male", bodyWeight: 91, physicallyActive: 35, beginner: 49, intermediate: 63, advanced: 78, elite: 102 },
+    { age: 25, liftType: "Strict Press", gender: "male", bodyWeight: 102, physicallyActive: 36, beginner: 50, intermediate: 65, advanced: 80, elite: 105 },
+    { age: 25, liftType: "Strict Press", gender: "male", bodyWeight: 113, physicallyActive: 37, beginner: 52, intermediate: 67, advanced: 82, elite: 108 },
+    { age: 25, liftType: "Strict Press", gender: "male", bodyWeight: 136, physicallyActive: 39, beginner: 55, intermediate: 70, advanced: 87, elite: 114 },
+  
+    // Age 30-39 (midpoint 35)
+    { age: 35, liftType: "Strict Press", gender: "male", bodyWeight: 57, physicallyActive: 25, beginner: 35, intermediate: 45, advanced: 55, elite: 72 },
+    { age: 35, liftType: "Strict Press", gender: "male", bodyWeight: 68, physicallyActive: 30, beginner: 42, intermediate: 54, advanced: 67, elite: 88 },
+    { age: 35, liftType: "Strict Press", gender: "male", bodyWeight: 79, physicallyActive: 33, beginner: 46, intermediate: 59, advanced: 73, elite: 96 },
+    { age: 35, liftType: "Strict Press", gender: "male", bodyWeight: 91, physicallyActive: 38, beginner: 53, intermediate: 68, advanced: 84, elite: 109 },
+    { age: 35, liftType: "Strict Press", gender: "male", bodyWeight: 102, physicallyActive: 39, beginner: 54, intermediate: 70, advanced: 86, elite: 112 },
+    { age: 35, liftType: "Strict Press", gender: "male", bodyWeight: 113, physicallyActive: 40, beginner: 56, intermediate: 72, advanced: 89, elite: 116 },
+    { age: 35, liftType: "Strict Press", gender: "male", bodyWeight: 136, physicallyActive: 42, beginner: 59, intermediate: 76, advanced: 93, elite: 122 },
+  
+    // Age 40-49 (midpoint 45)
+    { age: 45, liftType: "Strict Press", gender: "male", bodyWeight: 57, physicallyActive: 21, beginner: 30, intermediate: 38, advanced: 47, elite: 62 },
+    { age: 45, liftType: "Strict Press", gender: "male", bodyWeight: 68, physicallyActive: 26, beginner: 36, intermediate: 47, advanced: 58, elite: 75 },
+    { age: 45, liftType: "Strict Press", gender: "male", bodyWeight: 79, physicallyActive: 28, beginner: 40, intermediate: 51, advanced: 63, elite: 82 },
+    { age: 45, liftType: "Strict Press", gender: "male", bodyWeight: 91, physicallyActive: 32, beginner: 45, intermediate: 58, advanced: 72, elite: 94 },
+    { age: 45, liftType: "Strict Press", gender: "male", bodyWeight: 102, physicallyActive: 33, beginner: 47, intermediate: 60, advanced: 74, elite: 97 },
+    { age: 45, liftType: "Strict Press", gender: "male", bodyWeight: 113, physicallyActive: 34, beginner: 48, intermediate: 62, advanced: 76, elite: 100 },
+    { age: 45, liftType: "Strict Press", gender: "male", bodyWeight: 136, physicallyActive: 36, beginner: 51, intermediate: 65, advanced: 80, elite: 105 },
+  
+    // Age 50-59 (midpoint 55)
+    { age: 55, liftType: "Strict Press", gender: "male", bodyWeight: 57, physicallyActive: 18, beginner: 26, intermediate: 33, advanced: 41, elite: 53 },
+    { age: 55, liftType: "Strict Press", gender: "male", bodyWeight: 68, physicallyActive: 22, beginner: 31, intermediate: 40, advanced: 50, elite: 65 },
+    { age: 55, liftType: "Strict Press", gender: "male", bodyWeight: 79, physicallyActive: 24, beginner: 34, intermediate: 44, advanced: 54, elite: 71 },
+    { age: 55, liftType: "Strict Press", gender: "male", bodyWeight: 91, physicallyActive: 28, beginner: 39, intermediate: 50, advanced: 62, elite: 81 },
+    { age: 55, liftType: "Strict Press", gender: "male", bodyWeight: 102, physicallyActive: 29, beginner: 40, intermediate: 51, advanced: 63, elite: 83 },
+    { age: 55, liftType: "Strict Press", gender: "male", bodyWeight: 113, physicallyActive: 30, beginner: 41, intermediate: 53, advanced: 65, elite: 86 },
+    { age: 55, liftType: "Strict Press", gender: "male", bodyWeight: 136, physicallyActive: 31, beginner: 44, intermediate: 56, advanced: 69, elite: 90 },
+  
+    // Age 60-69 (midpoint 65)
+    { age: 65, liftType: "Strict Press", gender: "male", bodyWeight: 57, physicallyActive: 17, beginner: 24, intermediate: 31, advanced: 38, elite: 50 },
+    { age: 65, liftType: "Strict Press", gender: "male", bodyWeight: 68, physicallyActive: 21, beginner: 29, intermediate: 38, advanced: 46, elite: 61 },
+    { age: 65, liftType: "Strict Press", gender: "male", bodyWeight: 79, physicallyActive: 23, beginner: 32, intermediate: 41, advanced: 51, elite: 66 },
+    { age: 65, liftType: "Strict Press", gender: "male", bodyWeight: 91, physicallyActive: 26, beginner: 36, intermediate: 47, advanced: 58, elite: 76 },
+    { age: 65, liftType: "Strict Press", gender: "male", bodyWeight: 102, physicallyActive: 27, beginner: 38, intermediate: 48, advanced: 60, elite: 78 },
+    { age: 65, liftType: "Strict Press", gender: "male", bodyWeight: 113, physicallyActive: 28, beginner: 39, intermediate: 50, advanced: 61, elite: 80 },
+    { age: 65, liftType: "Strict Press", gender: "male", bodyWeight: 136, physicallyActive: 29, beginner: 41, intermediate: 53, advanced: 65, elite: 85 },
+  
+    // Age 70-79 (midpoint 75)
+    { age: 75, liftType: "Strict Press", gender: "male", bodyWeight: 57, physicallyActive: 15, beginner: 20, intermediate: 26, advanced: 32, elite: 42 },
+    { age: 75, liftType: "Strict Press", gender: "male", bodyWeight: 68, physicallyActive: 18, beginner: 25, intermediate: 32, advanced: 39, elite: 51 },
+    { age: 75, liftType: "Strict Press", gender: "male", bodyWeight: 79, physicallyActive: 19, beginner: 27, intermediate: 35, advanced: 43, elite: 56 },
+    { age: 75, liftType: "Strict Press", gender: "male", bodyWeight: 91, physicallyActive: 22, beginner: 31, intermediate: 40, advanced: 49, elite: 64 },
+    { age: 75, liftType: "Strict Press", gender: "male", bodyWeight: 102, physicallyActive: 23, beginner: 32, intermediate: 41, advanced: 50, elite: 66 },
+    { age: 75, liftType: "Strict Press", gender: "male", bodyWeight: 113, physicallyActive: 24, beginner: 33, intermediate: 42, advanced: 52, elite: 68 },
+    { age: 75, liftType: "Strict Press", gender: "male", bodyWeight: 136, physicallyActive: 25, beginner: 35, intermediate: 44, advanced: 55, elite: 72 },
+  
+    // Age 80-89 (midpoint 85)
+    { age: 85, liftType: "Strict Press", gender: "male", bodyWeight: 57, physicallyActive: 10, beginner: 14, intermediate: 18, advanced: 22, elite: 29 },
+    { age: 85, liftType: "Strict Press", gender: "male", bodyWeight: 68, physicallyActive: 12, beginner: 17, intermediate: 22, advanced: 27, elite: 36 },
+    { age: 85, liftType: "Strict Press", gender: "male", bodyWeight: 79, physicallyActive: 13, beginner: 19, intermediate: 24, advanced: 30, elite: 39 },
+    { age: 85, liftType: "Strict Press", gender: "male", bodyWeight: 91, physicallyActive: 15, beginner: 21, intermediate: 27, advanced: 34, elite: 44 },
+    { age: 85, liftType: "Strict Press", gender: "male", bodyWeight: 102, physicallyActive: 16, beginner: 22, intermediate: 28, advanced: 35, elite: 46 },
+    { age: 85, liftType: "Strict Press", gender: "male", bodyWeight: 113, physicallyActive: 16, beginner: 23, intermediate: 29, advanced: 36, elite: 47 },
+    { age: 85, liftType: "Strict Press", gender: "male", bodyWeight: 136, physicallyActive: 17, beginner: 24, intermediate: 31, advanced: 38, elite: 50 },
 
 
   // Strict Press Female Section
+  // Age 15-19 (midpoint 17)
+  { age: 17, liftType: "Strict Press", gender: "female", bodyWeight: 57, physicallyActive: 11, beginner: 14, intermediate: 18, advanced: 23, elite: 31 },
+  { age: 17, liftType: "Strict Press", gender: "female", bodyWeight: 68, physicallyActive: 13, beginner: 17, intermediate: 20, advanced: 27, elite: 37 },
+  { age: 17, liftType: "Strict Press", gender: "female", bodyWeight: 79, physicallyActive: 14, beginner: 18, intermediate: 22, advanced: 29, elite: 40 },
+  { age: 17, liftType: "Strict Press", gender: "female", bodyWeight: 91, physicallyActive: 15, beginner: 21, intermediate: 24, advanced: 32, elite: 43 },
+  { age: 17, liftType: "Strict Press", gender: "female", bodyWeight: 102, physicallyActive: 16, beginner: 22, intermediate: 26, advanced: 35, elite: 46 },
+  { age: 17, liftType: "Strict Press", gender: "female", bodyWeight: 113, physicallyActive: 17, beginner: 24, intermediate: 28, advanced: 37, elite: 48 },
+  { age: 17, liftType: "Strict Press", gender: "female", bodyWeight: 136, physicallyActive: 19, beginner: 27, intermediate: 31, advanced: 41, elite: 52 },
+  
+    // Age 20-29 (midpoint 25)
+    { age: 25, liftType: "Strict Press", gender: "female", bodyWeight: 57, physicallyActive: 14, beginner: 18, intermediate: 22, advanced: 29, elite: 39 },
+    { age: 25, liftType: "Strict Press", gender: "female", bodyWeight: 68, physicallyActive: 16, beginner: 21, intermediate: 26, advanced: 34, elite: 47 },
+    { age: 25, liftType: "Strict Press", gender: "female", bodyWeight: 79, physicallyActive: 18, beginner: 23, intermediate: 28, advanced: 37, elite: 50 },
+    { age: 25, liftType: "Strict Press", gender: "female", bodyWeight: 91, physicallyActive: 19, beginner: 26, intermediate: 31, advanced: 40, elite: 54 },
+    { age: 25, liftType: "Strict Press", gender: "female", bodyWeight: 102, physicallyActive: 20, beginner: 28, intermediate: 33, advanced: 45, elite: 59 },
+    { age: 25, liftType: "Strict Press", gender: "female", bodyWeight: 113, physicallyActive: 21, beginner: 31, intermediate: 35, advanced: 47, elite: 60 },
+    { age: 25, liftType: "Strict Press", gender: "female", bodyWeight: 136, physicallyActive: 25, beginner: 34, intermediate: 39, advanced: 52, elite: 66 },
+  
+    // Age 30-39 (midpoint 35)
+    { age: 35, liftType: "Strict Press", gender: "female", bodyWeight: 57, physicallyActive: 15, beginner: 19, intermediate: 24, advanced: 32, elite: 42 },
+    { age: 35, liftType: "Strict Press", gender: "female", bodyWeight: 68, physicallyActive: 18, beginner: 23, intermediate: 28, advanced: 37, elite: 50 },
+    { age: 35, liftType: "Strict Press", gender: "female", bodyWeight: 79, physicallyActive: 19, beginner: 25, intermediate: 30, advanced: 40, elite: 54 },
+    { age: 35, liftType: "Strict Press", gender: "female", bodyWeight: 91, physicallyActive: 20, beginner: 28, intermediate: 33, advanced: 43, elite: 58 },
+    { age: 35, liftType: "Strict Press", gender: "female", bodyWeight: 102, physicallyActive: 22, beginner: 30, intermediate: 35, advanced: 48, elite: 63 },
+    { age: 35, liftType: "Strict Press", gender: "female", bodyWeight: 113, physicallyActive: 23, beginner: 33, intermediate: 38, advanced: 50, elite: 65 },
+    { age: 35, liftType: "Strict Press", gender: "female", bodyWeight: 136, physicallyActive: 27, beginner: 37, intermediate: 42, advanced: 56, elite: 71 },
+  
+    // Age 40-49 (midpoint 45)
+    { age: 45, liftType: "Strict Press", gender: "female", bodyWeight: 57, physicallyActive: 13, beginner: 16, intermediate: 21, advanced: 27, elite: 36 },
+    { age: 45, liftType: "Strict Press", gender: "female", bodyWeight: 68, physicallyActive: 15, beginner: 19, intermediate: 24, advanced: 31, elite: 43 },
+    { age: 45, liftType: "Strict Press", gender: "female", bodyWeight: 79, physicallyActive: 16, beginner: 21, intermediate: 26, advanced: 34, elite: 46 },
+    { age: 45, liftType: "Strict Press", gender: "female", bodyWeight: 91, physicallyActive: 17, beginner: 24, intermediate: 28, advanced: 37, elite: 50 },
+    { age: 45, liftType: "Strict Press", gender: "female", bodyWeight: 102, physicallyActive: 19, beginner: 26, intermediate: 30, advanced: 41, elite: 54 },
+    { age: 45, liftType: "Strict Press", gender: "female", bodyWeight: 113, physicallyActive: 20, beginner: 28, intermediate: 33, advanced: 43, elite: 56 },
+    { age: 45, liftType: "Strict Press", gender: "female", bodyWeight: 136, physicallyActive: 23, beginner: 31, intermediate: 36, advanced: 48, elite: 61 },
+  
+    // Age 50-59 (midpoint 55)
+    { age: 55, liftType: "Strict Press", gender: "female", bodyWeight: 57, physicallyActive: 11, beginner: 14, intermediate: 18, advanced: 23, elite: 31 },
+    { age: 55, liftType: "Strict Press", gender: "female", bodyWeight: 68, physicallyActive: 13, beginner: 17, intermediate: 20, advanced: 27, elite: 37 },
+    { age: 55, liftType: "Strict Press", gender: "female", bodyWeight: 79, physicallyActive: 14, beginner: 18, intermediate: 22, advanced: 30, elite: 40 },
+    { age: 55, liftType: "Strict Press", gender: "female", bodyWeight: 91, physicallyActive: 15, beginner: 21, intermediate: 24, advanced: 32, elite: 43 },
+    { age: 55, liftType: "Strict Press", gender: "female", bodyWeight: 102, physicallyActive: 16, beginner: 22, intermediate: 26, advanced: 35, elite: 47 },
+    { age: 55, liftType: "Strict Press", gender: "female", bodyWeight: 113, physicallyActive: 17, beginner: 24, intermediate: 28, advanced: 37, elite: 48 },
+    { age: 55, liftType: "Strict Press", gender: "female", bodyWeight: 136, physicallyActive: 20, beginner: 27, intermediate: 31, advanced: 41, elite: 52 },
+  
+    // Age 60-69 (midpoint 65)
+    { age: 65, liftType: "Strict Press", gender: "female", bodyWeight: 57, physicallyActive: 11, beginner: 13, intermediate: 17, advanced: 22, elite: 29 },
+    { age: 65, liftType: "Strict Press", gender: "female", bodyWeight: 68, physicallyActive: 12, beginner: 15, intermediate: 19, advanced: 25, elite: 35 },
+    { age: 65, liftType: "Strict Press", gender: "female", bodyWeight: 79, physicallyActive: 13, beginner: 17, intermediate: 21, advanced: 28, elite: 37 },
+    { age: 65, liftType: "Strict Press", gender: "female", bodyWeight: 91, physicallyActive: 14, beginner: 19, intermediate: 23, advanced: 30, elite: 40 },
+    { age: 65, liftType: "Strict Press", gender: "female", bodyWeight: 102, physicallyActive: 15, beginner: 21, intermediate: 24, advanced: 33, elite: 44 },
+    { age: 65, liftType: "Strict Press", gender: "female", bodyWeight: 113, physicallyActive: 16, beginner: 23, intermediate: 26, advanced: 35, elite: 45 },
+    { age: 65, liftType: "Strict Press", gender: "female", bodyWeight: 136, physicallyActive: 18, beginner: 25, intermediate: 29, advanced: 38, elite: 49 },
+  
+    // Age 70-79 (midpoint 75)
+    { age: 75, liftType: "Strict Press", gender: "female", bodyWeight: 57, physicallyActive: 9, beginner: 11, intermediate: 14, advanced: 18, elite: 25 },
+    { age: 75, liftType: "Strict Press", gender: "female", bodyWeight: 68, physicallyActive: 10, beginner: 13, intermediate: 16, advanced: 21, elite: 29 },
+    { age: 75, liftType: "Strict Press", gender: "female", bodyWeight: 79, physicallyActive: 11, beginner: 15, intermediate: 18, advanced: 23, elite: 32 },
+    { age: 75, liftType: "Strict Press", gender: "female", bodyWeight: 91, physicallyActive: 12, beginner: 16, intermediate: 19, advanced: 25, elite: 34 },
+    { age: 75, liftType: "Strict Press", gender: "female", bodyWeight: 102, physicallyActive: 13, beginner: 18, intermediate: 21, advanced: 28, elite: 37 },
+    { age: 75, liftType: "Strict Press", gender: "female", bodyWeight: 113, physicallyActive: 14, beginner: 19, intermediate: 22, advanced: 29, elite: 38 },
+    { age: 75, liftType: "Strict Press", gender: "female", bodyWeight: 136, physicallyActive: 16, beginner: 21, intermediate: 24, advanced: 33, elite: 41 },
+  
+    // Age 80-89 (midpoint 85)
+    { age: 85, liftType: "Strict Press", gender: "female", bodyWeight: 57, physicallyActive: 6, beginner: 8, intermediate: 10, advanced: 13, elite: 17 },
+    { age: 85, liftType: "Strict Press", gender: "female", bodyWeight: 68, physicallyActive: 7, beginner: 9, intermediate: 11, advanced: 15, elite: 20 },
+    { age: 85, liftType: "Strict Press", gender: "female", bodyWeight: 79, physicallyActive: 8, beginner: 10, intermediate: 12, advanced: 16, elite: 22 },
+    { age: 85, liftType: "Strict Press", gender: "female", bodyWeight: 91, physicallyActive: 8, beginner: 11, intermediate: 13, advanced: 17, elite: 23 },
+    { age: 85, liftType: "Strict Press", gender: "female", bodyWeight: 102, physicallyActive: 9, beginner: 12, intermediate: 14, advanced: 19, elite: 26 },
+    { age: 85, liftType: "Strict Press", gender: "female", bodyWeight: 113, physicallyActive: 9, beginner: 13, intermediate: 15, advanced: 20, elite: 26 },
+    { age: 85, liftType: "Strict Press", gender: "female", bodyWeight: 136, physicallyActive: 11, beginner: 15, intermediate: 17, advanced: 22, elite: 29 },
 ];

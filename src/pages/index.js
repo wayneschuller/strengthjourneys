@@ -6,7 +6,14 @@ import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
 
-import { Calculator, Timer, LineChart, Trophy, Newspaper } from "lucide-react";
+import {
+  Calculator,
+  Timer,
+  LineChart,
+  Trophy,
+  Newspaper,
+  BicepsFlexed,
+} from "lucide-react";
 
 import {
   Card,
@@ -37,6 +44,12 @@ export const featurePages = [
     title: "One Rep Max Calculator",
     description: "Multi-formula one rep max calculations.",
     IconComponent: Calculator,
+  },
+  {
+    href: "/strength-level-calculator",
+    title: "Strength Level Calculator",
+    description: "Assess your relative strength by age, gender and lift type.",
+    IconComponent: BicepsFlexed,
   },
   {
     href: "/timer",

@@ -117,7 +117,7 @@ export function DesktopNav() {
           href="/strength-level-calculator"
           className={cn(
             "transition-colors hover:text-foreground/80",
-            pathname === "/calculator"
+            pathname === "/strength-level-calculator"
               ? "text-foreground"
               : "text-foreground/60",
           )}

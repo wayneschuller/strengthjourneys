@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Head from "next/head";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import {
@@ -26,67 +24,27 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
 
 export default function E1RMCalculator() {
-  const router = useRouter();
   const { toast } = useToast();
-  const [reps, setReps] = useState(5);
-  const [weight, setWeight] = useState(225);
-  const [isMetric, setIsMetric] = useState(false);
-  const [e1rmFormula, setE1rmFormula] = useState("Brzycki");
+  const [reps, setReps] = useStateFromQueryOrLocalStorage("reps", 5); // Will be a string
+  const [weight, setWeight] = useStateFromQueryOrLocalStorage("weight", 225); // Will be a string
+  const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
+    "calcIsMetric",
+    false,
+  ); // Will be a string
+  const [e1rmFormula, setE1rmFormula] = useStateFromQueryOrLocalStorage(
+    "formula",
+    "Brzycki",
+  );
 
-  // State is mostly from URL query but we do fallback to isMetric and formula in localStorage
-  useEffect(() => {
-    let initIsMetric;
-    if (router?.query?.isMetric === "false") {
-      initIsMetric = false;
-    } else if (router?.query?.isMetric === "true") {
-      initIsMetric = true;
-    } else {
-      // The URL has no guidance. So check localStorage then default to false (pounds)
-      initIsMetric = JSON.parse(localStorage.getItem("calcIsMetric")) || false;
-    }
-
-    let initReps;
-
-    if (router?.query?.reps) {
-      initReps = router.query.reps;
-    } else {
-      initReps = JSON.parse(localStorage.getItem("reps")) || 5;
-    }
-
-    let initWeight;
-    if (router?.query?.weight) {
-      initWeight = router.query.weight;
-    } else if (initIsMetric) {
-      initWeight = JSON.parse(localStorage.getItem("weight")) || 100;
-      devLog(initWeight);
-    } else {
-      initWeight = JSON.parse(localStorage.getItem("weight")) || 225;
-    }
-
-    let initE1rmFormula;
-    if (router?.query?.formula) {
-      initE1rmFormula = router.query.formula;
-    } else {
-      // The URL has no guidance. So check localStorage then default to Brzycki
-      initE1rmFormula =
-        JSON.parse(localStorage.getItem("e1rmFormula")) || "Brzycki";
-    }
-
-    // Update state if query is now different to state values
-    // This could be on first load
-    // Or could be if user clicks back/forward browser button
-    if (initReps !== reps) setReps(initReps);
-    if (initWeight !== weight) setWeight(initWeight);
-    if (initIsMetric !== isMetric) setIsMetric(initIsMetric);
-    if (initE1rmFormula != e1rmFormula) setE1rmFormula(initE1rmFormula);
-  }, [router.query]);
-
+  // FIXME: put inline
   const handleRepsSliderChange = (value) => {
     setReps(value[0]);
   };
 
+  // FIXME: put inline
   const handleWeightSliderChange = (value) => {
     let newWeight = value[0];
 
@@ -99,65 +57,9 @@ export default function E1RMCalculator() {
     setWeight(newWeight);
   };
 
-  // When user lets go of weight slider, update the URL params
-  // onCommit means we won't flood the browser with URL changes
-  const handleWeightSliderCommit = (value) => {
-    const newWeight = value;
-
-    router.push(
-      {
-        pathname: router.pathname,
-        query: {
-          reps: reps,
-          weight: newWeight,
-          isMetric: isMetric,
-          formula: e1rmFormula,
-        },
-      },
-      undefined,
-      { scroll: false },
-    );
-
-    localStorage.setItem("weight", JSON.stringify(newWeight));
-  };
-
-  // When user lets go of reps slider, update the URL params
-  // onCommit means we won't flood the browser with URL changes
-  const handleRepsSliderCommit = (value) => {
-    const newReps = value;
-
-    router.push(
-      {
-        pathname: router.pathname,
-        query: {
-          reps: newReps,
-          weight: weight,
-          isMetric: isMetric,
-          formula: e1rmFormula,
-        },
-      },
-      undefined,
-      { scroll: false },
-    );
-    localStorage.setItem("reps", JSON.stringify(newReps));
-  };
-
+  // FIXME: put inline
   const handleEntryWeightChange = (event) => {
-    const newWeight = event.target.value;
-
-    setWeight(newWeight);
-
-    // Update the browser URL instantly
-    router.push({
-      pathname: router.pathname,
-      query: {
-        reps: reps,
-        weight: newWeight,
-        isMetric: isMetric,
-        formula: e1rmFormula,
-      },
-    });
-    localStorage.setItem("weight", JSON.stringify(newWeight));
+    setWeight(event.target.value);
   };
 
   const handleKeyPress = (event) => {
@@ -180,29 +82,13 @@ export default function E1RMCalculator() {
     if (!isMetric) {
       // Going from kg to lb
       newWeight = Math.round(weight * 2.2046);
-      setIsMetric(false);
     } else {
       // Going from lb to kg
       newWeight = Math.round(weight / 2.2046);
-      setIsMetric(true);
     }
 
     setWeight(newWeight);
-
-    // Update the browser URL instantly
-    router.push({
-      pathname: router.pathname,
-      query: {
-        reps: reps,
-        weight: newWeight,
-        isMetric: isMetric,
-        formula: e1rmFormula,
-      },
-    });
-
-    // Save in localStorage for this browser device
-    localStorage.setItem("calcIsMetric", JSON.stringify(isMetric));
-    localStorage.setItem("weight", JSON.stringify(newWeight));
+    setIsMetric(isMetric);
 
     // FIXME: update the body weight in localstorage so it's consistent with the unit change
   };
@@ -212,7 +98,7 @@ export default function E1RMCalculator() {
       isMetric ? "kg" : "lb"
     } indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${
       isMetric ? "kg" : "lb"
-    } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?reps=${reps}&weight=${weight}&isMetric=${isMetric}&formula=${e1rmFormula})`;
+    } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?reps=${reps}&weight=${weight}&isMetric=${isMetric}&formula=${formula})`;
 
     // Create a temporary textarea element
     const textarea = document.createElement("textarea");
@@ -286,7 +172,6 @@ export default function E1RMCalculator() {
             max={20}
             step={1}
             onValueChange={handleRepsSliderChange}
-            onValueCommit={handleRepsSliderCommit}
           />
           <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
             {reps} reps
@@ -313,7 +198,6 @@ export default function E1RMCalculator() {
             min={1}
             max={isMetric ? 250 : 600}
             onValueChange={handleWeightSliderChange}
-            onValueCommit={handleWeightSliderCommit}
           />
           <div className="ml-1 hidden w-[7rem] justify-self-center md:block md:justify-self-start">
             <div className="flex items-center gap-1">
@@ -393,24 +277,6 @@ export default function E1RMCalculator() {
                           className="hover:ring-1"
                           onClick={() => {
                             setE1rmFormula(formula);
-                            router.push(
-                              {
-                                pathname: router.pathname,
-                                query: {
-                                  reps: reps,
-                                  weight: weight,
-                                  isMetric: isMetric,
-                                  formula: formula,
-                                },
-                              },
-                              undefined,
-                              { scroll: false },
-                            );
-                            // Save in localStorage for this browser device
-                            localStorage.setItem(
-                              "e1rmFormula",
-                              JSON.stringify(formula),
-                            );
                           }}
                         >
                           <CardHeader>

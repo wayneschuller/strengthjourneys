@@ -82,13 +82,14 @@ export default function E1RMCalculator() {
     if (!isMetric) {
       // Going from kg to lb
       newWeight = Math.round(weight * 2.2046);
+      setIsMetric(false);
     } else {
       // Going from lb to kg
       newWeight = Math.round(weight / 2.2046);
+      setIsMetric(true);
     }
 
     setWeight(newWeight);
-    setIsMetric(isMetric);
 
     // FIXME: update the body weight in localstorage so it's consistent with the unit change
   };

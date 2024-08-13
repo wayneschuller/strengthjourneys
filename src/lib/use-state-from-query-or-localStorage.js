@@ -8,14 +8,22 @@ export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
   const router = useRouter();
   const isClient = typeof window !== "undefined";
 
+  // Convert query params and localStorage to original types
+  // We assume only options are: boolean, number then default to string.
+  const parseValue = (value) => {
+    if (value === "true" || value === "false") return value === "true";
+    if (!isNaN(value)) return Number(value);
+    return value;
+  };
+
   const getInitialState = () => {
     if (!isClient) return defaultValue;
 
     const queryValue = router.query[key];
-    if (queryValue !== undefined) return queryValue;
+    if (queryValue !== undefined) return parseValue(queryValue);
 
     const localStorageValue = localStorage.getItem(key);
-    if (localStorageValue !== null) return localStorageValue;
+    if (localStorageValue !== null) return parseValue(localStorageValue);
 
     return defaultValue;
   };
@@ -27,7 +35,8 @@ export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
 
     const queryValue = router.query[key];
     if (queryValue !== undefined) {
-      setState(queryValue);
+      const parsedValue = parseValue(queryValue);
+      setState(parsedValue);
       localStorage.setItem(key, queryValue);
     }
   }, [router.isReady]);

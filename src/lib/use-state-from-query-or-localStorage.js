@@ -4,11 +4,23 @@ import { useState, useEffect } from "react";
 
 // This hook will provide state from the query params first and localstorage second and defaultValue third.
 // Setting will update both query params and localstorage.
-
 export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
   const router = useRouter();
-  const [state, setState] = useState(defaultValue);
   const isClient = typeof window !== "undefined";
+
+  const getInitialState = () => {
+    if (!isClient) return defaultValue;
+
+    const queryValue = router.query[key];
+    if (queryValue !== undefined) return queryValue;
+
+    const localStorageValue = localStorage.getItem(key);
+    if (localStorageValue !== null) return localStorageValue;
+
+    return defaultValue;
+  };
+
+  const [state, setState] = useState(getInitialState);
 
   useEffect(() => {
     if (!isClient || !router.isReady) return;
@@ -17,11 +29,6 @@ export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
     if (queryValue !== undefined) {
       setState(queryValue);
       localStorage.setItem(key, queryValue);
-    } else {
-      const localStorageValue = localStorage.getItem(key);
-      if (localStorageValue !== null) {
-        setState(localStorageValue);
-      }
     }
   }, [router.isReady]);
 
@@ -30,7 +37,6 @@ export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
 
     const newQueryParams = { ...router.query, [key]: state };
 
-    // Always keep the key in the query params, even if it matches the default value
     router.replace(
       {
         pathname: router.pathname,

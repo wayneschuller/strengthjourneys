@@ -100,7 +100,7 @@ export default function E1RMCalculator() {
       isMetric ? "kg" : "lb"
     } indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${
       isMetric ? "kg" : "lb"
-    } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?reps=${reps}&weight=${weight}&isMetric=${isMetric}&formula=${formula})`;
+    } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?reps=${reps}&weight=${weight}&isMetric=${isMetric}&formula=${e1rmFormula})`;
 
     // Create a temporary textarea element
     const textarea = document.createElement("textarea");

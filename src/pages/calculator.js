@@ -38,6 +38,7 @@ export default function E1RMCalculator() {
     "formula",
     "Brzycki",
   );
+  const isClient = typeof window !== "undefined";
 
   // FIXME: put inline
   const handleRepsSliderChange = (value) => {

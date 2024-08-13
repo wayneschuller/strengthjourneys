@@ -4,45 +4,44 @@ import { useState, useEffect } from "react";
 
 // This hook will provide state from the query params first and localstorage second and defaultValue third.
 // Setting will update both query params and localstorage.
+
 export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
   const router = useRouter();
-  const isClient = typeof window !== "undefined";
+  const [state, setState] = useState(defaultValue);
+  const [isInitialized, setIsInitialized] = useState(false); // Hack needed to avoid Next.js hydration mismatches
 
-  // Convert query params and localStorage to original types
-  // We assume only options are: boolean, number then default to string.
   const parseValue = (value) => {
     if (value === "true" || value === "false") return value === "true";
     if (!isNaN(value)) return Number(value);
     return value;
   };
 
-  const getInitialState = () => {
-    if (!isClient) return defaultValue;
-
-    const queryValue = router.query[key];
-    if (queryValue !== undefined) return parseValue(queryValue);
-
-    const localStorageValue = localStorage.getItem(key);
-    if (localStorageValue !== null) return parseValue(localStorageValue);
-
-    return defaultValue;
-  };
-
-  const [state, setState] = useState(getInitialState);
-
   useEffect(() => {
-    if (!isClient || !router.isReady) return;
+    if (!router.isReady) return;
 
-    const queryValue = router.query[key];
-    if (queryValue !== undefined) {
-      const parsedValue = parseValue(queryValue);
-      setState(parsedValue);
-      localStorage.setItem(key, queryValue);
+    const getInitialState = () => {
+      const queryValue = router.query[key];
+      if (queryValue !== undefined) return parseValue(queryValue);
+
+      if (typeof window !== "undefined") {
+        const localStorageValue = localStorage.getItem(key);
+        if (localStorageValue !== null) return parseValue(localStorageValue);
+      }
+
+      return defaultValue;
+    };
+
+    const initialState = getInitialState();
+    setState(initialState);
+    setIsInitialized(true);
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(key, initialState);
     }
-  }, [router.isReady]);
+  }, [router.isReady, key, defaultValue]);
 
   useEffect(() => {
-    if (!isClient) return;
+    if (!isInitialized) return;
 
     const newQueryParams = { ...router.query, [key]: state };
 
@@ -55,8 +54,10 @@ export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
       { shallow: true },
     );
 
-    localStorage.setItem(key, state);
-  }, [state]);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(key, state);
+    }
+  }, [state, isInitialized]);
 
   return [state, setState];
 };

@@ -80,6 +80,8 @@ export default function E1RMCalculator() {
   const toggleIsMetric = (isMetric) => {
     let newWeight;
 
+    devLog(`toggle is metric running...`);
+
     if (!isMetric) {
       // Going from kg to lb
       newWeight = Math.round(weight * 2.2046);

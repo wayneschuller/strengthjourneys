@@ -24,6 +24,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
 import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
 
 export default function E1RMCalculator() {
@@ -38,7 +50,6 @@ export default function E1RMCalculator() {
     "formula",
     "Brzycki",
   );
-  const isClient = typeof window !== "undefined";
 
   // FIXME: put inline
   const handleRepsSliderChange = (value) => {
@@ -141,6 +152,8 @@ export default function E1RMCalculator() {
     // }
   };
 
+  const sortedFormulae = getSortedFormulae(reps, weight);
+
   return (
     <div className="mx-4 md:mx-[5vw]">
       <Head>
@@ -224,8 +237,8 @@ export default function E1RMCalculator() {
           </div>
 
           {/* Center E1RM card */}
-          <div className="mt-8 flex flex-1 justify-center gap-4">
-            <Card className="hover:ring-1">
+          <div className="mt-8 flex flex-1 flex-col items-center justify-center gap-8 md:flex-row">
+            <Card className="">
               <CardHeader>
                 <CardTitle>Estimated One Rep Max</CardTitle>
               </CardHeader>
@@ -245,13 +258,19 @@ export default function E1RMCalculator() {
                 </div>
               </CardFooter>
             </Card>
+            <E1RMFormulaRadioGroup
+              formulae={sortedFormulae}
+              e1rmFormula={e1rmFormula}
+              setE1rmFormula={setE1rmFormula}
+              reps={reps}
+              weight={weight}
+            />
           </div>
-          <div className="mt-4 flex justify-center">
+          <div className="mt-4 flex justify-center gap-4">
             <ShareButton onClick={handleCopyToClipboard} />
           </div>
 
-          {/* Grid of other formulae cards ordered by estimate ascending */}
-          <h4 className="mt-10 scroll-m-20 text-xl font-semibold tracking-tight">
+          {/* <h4 className="mt-10 scroll-m-20 text-xl font-semibold tracking-tight">
             Citations and background for these exercise science formulae are
             found in this{" "}
             <a
@@ -261,57 +280,20 @@ export default function E1RMCalculator() {
             >
               Wikipedia article
             </a>
-          </h4>
-          <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {e1rmFormulae
-              .slice() // Create a shallow copy to avoid mutating the original array
-              .sort((a, b) => {
-                // Calculate estimated 1RM for both formulas
-                const e1rmA = estimateE1RM(reps, weight, a);
-                const e1rmB = estimateE1RM(reps, weight, b);
-
-                // Sort in ascending order
-                return e1rmA - e1rmB;
-              })
-              .map((formula, index) =>
-                formula === e1rmFormula ? null : (
-                  <div key={index} className="card">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Card
-                            className="hover:ring-1"
-                            onClick={() => {
-                              setE1rmFormula(formula);
-                            }}
-                          >
-                            <CardHeader>
-                              <CardTitle className="text-xl text-muted-foreground">
-                                {formula}
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <p className="text-xl font-bold tracking-tight md:text-2xl">
-                                {estimateE1RM(reps, weight, formula)}
-                                {isMetric ? "kg" : "lb"}
-                              </p>
-                            </CardContent>
-                          </Card>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          Click to make {formula} your preferred e1rm formula
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                ),
-              )}
-          </div>
+          </h4> */}
         </CardContent>
       </Card>
     </div>
   );
 }
+
+const getSortedFormulae = (reps, weight) => {
+  return e1rmFormulae.slice().sort((a, b) => {
+    const e1rmA = estimateE1RM(reps, weight, a);
+    const e1rmB = estimateE1RM(reps, weight, b);
+    return e1rmA - e1rmB;
+  });
+};
 
 const ShareButton = ({ onClick }) => {
   return (
@@ -342,3 +324,64 @@ const ShareIcon = () => {
     </svg>
   );
 };
+
+function E1RMFormulaRadioGroup({
+  formulae,
+  e1rmFormula,
+  setE1rmFormula,
+  reps,
+  weight,
+}) {
+  return (
+    <div className="flex flex-col space-y-2">
+      <Label className="text-sm font-light">E1RM Algorithm</Label>
+      <RadioGroup
+        value={e1rmFormula}
+        onValueChange={setE1rmFormula}
+        className="flex flex-col space-y-1"
+      >
+        {formulae.map((formula) => (
+          <div key={formula} className="flex items-center space-x-2">
+            <RadioGroupItem value={formula} id={formula} />
+            <Label htmlFor={formula} className="text-sm">
+              {formula} ({estimateE1RM(reps, weight, formula)})
+            </Label>
+          </div>
+        ))}
+      </RadioGroup>
+    </div>
+  );
+}
+
+function E1RMFormulaSelect({
+  formulae,
+  e1rmFormula,
+  setE1rmFormula,
+  reps,
+  weight,
+}) {
+  return (
+    <div className="flex flex-row items-center space-x-2">
+      <div className="text-sm font-light">E1RM Algorithm</div>
+      <Select value={e1rmFormula} onValueChange={setE1rmFormula}>
+        <SelectTrigger
+          className="w-[160px] rounded-lg sm:ml-auto"
+          aria-label="Select a value"
+        >
+          <SelectValue placeholder="Brzycki" />
+        </SelectTrigger>
+        <SelectContent className="rounded-xl">
+          {formulae.map((formula) => (
+            <SelectItem
+              key={formula}
+              value={formula}
+              className="rounded-lg text-sm"
+            >
+              {formula} ({estimateE1RM(reps, weight, formula)})
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}

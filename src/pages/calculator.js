@@ -176,7 +176,7 @@ export default function E1RMCalculator() {
             <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
               {reps} reps
             </div>
-            <div className="ml-2 mt-6 w-[8rem] justify-self-center md:hidden">
+            <div className="ml-2 mt-6 w-[9rem] justify-self-center md:hidden">
               <div className="flex items-center gap-1 text-2xl">
                 <Input
                   className="text-2xl"
@@ -202,7 +202,7 @@ export default function E1RMCalculator() {
               max={isMetric ? 250 : 600}
               onValueChange={handleWeightSliderChange}
             />
-            <div className="ml-1 hidden w-[7rem] justify-self-center md:block md:justify-self-start">
+            <div className="ml-1 hidden w-[8rem] justify-self-center md:block md:justify-self-start">
               <div className="flex items-center gap-1">
                 <Input
                   className="text-lg"

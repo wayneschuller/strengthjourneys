@@ -183,7 +183,7 @@ export default function E1RMCalculator() {
                   step="1"
                   id="weightInput"
                   value={weight}
-                  onChange={handleEntryWeightChange}
+                  onChange={(event) => setWeight(event.target.value)}
                   onKeyPress={handleKeyPress}
                   onKeyDown={handleKeyDown}
                 />
@@ -209,7 +209,7 @@ export default function E1RMCalculator() {
                   step="1"
                   id="weightInput"
                   value={weight}
-                  onChange={handleEntryWeightChange}
+                  onChange={(event) => setWeight(event.target.value)}
                   onKeyPress={handleKeyPress}
                   onKeyDown={handleKeyDown}
                 />

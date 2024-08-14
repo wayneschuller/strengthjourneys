@@ -237,34 +237,41 @@ export default function E1RMCalculator() {
           </div>
 
           {/* Center E1RM card */}
-          <div className="mt-8 flex flex-1 flex-col items-center justify-center gap-8 md:flex-row">
-            <Card className="">
-              <CardHeader>
-                <CardTitle>Estimated One Rep Max</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center">
-                  {reps}@{weight}
-                  {isMetric ? "kg" : "lb"}
-                </div>
-                <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
-                  {estimateE1RM(reps, weight, e1rmFormula)}
-                  {isMetric ? "kg" : "lb"}
-                </div>
-              </CardContent>
-              <CardFooter className="text-muted-foreground">
-                <div className="flex-1 text-center">
-                  Using the <strong>{e1rmFormula}</strong> formula
-                </div>
-              </CardFooter>
-            </Card>
-            <E1RMFormulaRadioGroup
-              formulae={sortedFormulae}
-              e1rmFormula={e1rmFormula}
-              setE1rmFormula={setE1rmFormula}
-              reps={reps}
-              weight={weight}
-            />
+          <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
+            <div className="hidden md:block">{/* Empty first column */}</div>
+            <div className="flex items-center justify-center">
+              <Card className="">
+                <CardHeader>
+                  <CardTitle className="text-3xl">
+                    Estimated One Rep Max
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    {reps}@{weight}
+                    {isMetric ? "kg" : "lb"}
+                  </div>
+                  <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
+                    {estimateE1RM(reps, weight, e1rmFormula)}
+                    {isMetric ? "kg" : "lb"}
+                  </div>
+                </CardContent>
+                <CardFooter className="text-muted-foreground">
+                  <div className="flex-1 text-center">
+                    Using the <strong>{e1rmFormula}</strong> formula
+                  </div>
+                </CardFooter>
+              </Card>
+            </div>
+            <div className="">
+              <E1RMFormulaRadioGroup
+                formulae={sortedFormulae}
+                e1rmFormula={e1rmFormula}
+                setE1rmFormula={setE1rmFormula}
+                reps={reps}
+                weight={weight}
+              />
+            </div>
           </div>
           <div className="mt-4 flex justify-center gap-4">
             <ShareButton onClick={handleCopyToClipboard} />

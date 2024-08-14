@@ -242,7 +242,7 @@ export default function E1RMCalculator() {
             <div className="flex items-center justify-center">
               <Card className="">
                 <CardHeader>
-                  <CardTitle className="text-3xl">
+                  <CardTitle className="md:text-3xl">
                     Estimated One Rep Max
                   </CardTitle>
                 </CardHeader>
@@ -270,6 +270,7 @@ export default function E1RMCalculator() {
                 setE1rmFormula={setE1rmFormula}
                 reps={reps}
                 weight={weight}
+                isMetric={isMetric}
               />
             </div>
           </div>
@@ -338,6 +339,7 @@ function E1RMFormulaRadioGroup({
   setE1rmFormula,
   reps,
   weight,
+  isMetric,
 }) {
   return (
     <div className="flex flex-col space-y-2">
@@ -350,45 +352,13 @@ function E1RMFormulaRadioGroup({
         {formulae.map((formula) => (
           <div key={formula} className="flex items-center space-x-2">
             <RadioGroupItem value={formula} id={formula} />
-            <Label htmlFor={formula} className="text-sm">
-              {formula} ({estimateE1RM(reps, weight, formula)})
+            <Label htmlFor={formula} className="">
+              {formula} ({estimateE1RM(reps, weight, formula)}
+              {isMetric ? "kg" : "lb"})
             </Label>
           </div>
         ))}
       </RadioGroup>
-    </div>
-  );
-}
-
-function E1RMFormulaSelect({
-  formulae,
-  e1rmFormula,
-  setE1rmFormula,
-  reps,
-  weight,
-}) {
-  return (
-    <div className="flex flex-row items-center space-x-2">
-      <div className="text-sm font-light">E1RM Algorithm</div>
-      <Select value={e1rmFormula} onValueChange={setE1rmFormula}>
-        <SelectTrigger
-          className="w-[160px] rounded-lg sm:ml-auto"
-          aria-label="Select a value"
-        >
-          <SelectValue placeholder="Brzycki" />
-        </SelectTrigger>
-        <SelectContent className="rounded-xl">
-          {formulae.map((formula) => (
-            <SelectItem
-              key={formula}
-              value={formula}
-              className="rounded-lg text-sm"
-            >
-              {formula} ({estimateE1RM(reps, weight, formula)})
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
     </div>
   );
 }

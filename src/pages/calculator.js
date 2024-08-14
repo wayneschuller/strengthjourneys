@@ -216,43 +216,23 @@ export default function E1RMCalculator() {
             </div>
           </div>
 
-          {/* Center E1RM card */}
-          <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
+          <div className="my-8 grid grid-cols-1 place-items-center gap-6 lg:grid-cols-3">
             <div className="hidden md:block">{/* Empty first column */}</div>
-            <div className="flex items-center justify-center">
-              <Card className="">
-                <CardHeader>
-                  <CardTitle className="md:text-3xl">
-                    Estimated One Rep Max
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    {reps}@{weight}
-                    {isMetric ? "kg" : "lb"}
-                  </div>
-                  <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
-                    {estimateE1RM(reps, weight, e1rmFormula)}
-                    {isMetric ? "kg" : "lb"}
-                  </div>
-                </CardContent>
-                <CardFooter className="text-muted-foreground">
-                  <div className="flex-1 text-center">
-                    Using the <strong>{e1rmFormula}</strong> formula
-                  </div>
-                </CardFooter>
-              </Card>
-            </div>
-            <div className="">
-              <E1RMFormulaRadioGroup
-                formulae={sortedFormulae}
-                e1rmFormula={e1rmFormula}
-                setE1rmFormula={setE1rmFormula}
-                reps={reps}
-                weight={weight}
-                isMetric={isMetric}
-              />
-            </div>
+            <E1RMSummaryCard
+              reps={reps}
+              weight={weight}
+              isMetric={isMetric}
+              e1rmFormula={e1rmFormula}
+              estimateE1RM={estimateE1RM}
+            />
+            <E1RMFormulaRadioGroup
+              formulae={sortedFormulae}
+              e1rmFormula={e1rmFormula}
+              setE1rmFormula={setE1rmFormula}
+              reps={reps}
+              weight={weight}
+              isMetric={isMetric}
+            />
           </div>
           <div className="mt-4 flex justify-center gap-4">
             <ShareButton onClick={handleCopyToClipboard} />
@@ -281,6 +261,37 @@ const getSortedFormulae = (reps, weight) => {
     const e1rmB = estimateE1RM(reps, weight, b);
     return e1rmA - e1rmB;
   });
+};
+
+const E1RMSummaryCard = ({
+  reps,
+  weight,
+  isMetric,
+  e1rmFormula,
+  estimateE1RM,
+}) => {
+  return (
+    <Card className="border-4">
+      <CardHeader>
+        <CardTitle className="md:text-3xl">Estimated One Rep Max</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-center">
+          {reps}@{weight}
+          {isMetric ? "kg" : "lb"}
+        </div>
+        <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
+          {estimateE1RM(reps, weight, e1rmFormula)}
+          {isMetric ? "kg" : "lb"}
+        </div>
+      </CardContent>
+      <CardFooter className="text-muted-foreground">
+        <div className="flex-1 text-center">
+          Using the <strong>{e1rmFormula}</strong> formula
+        </div>
+      </CardFooter>
+    </Card>
+  );
 };
 
 const ShareButton = ({ onClick }) => {

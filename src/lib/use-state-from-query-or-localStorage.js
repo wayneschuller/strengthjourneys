@@ -8,12 +8,18 @@ import { useState, useEffect } from "react";
 export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
   const router = useRouter();
   const [state, setState] = useState(defaultValue);
-  const [isInitialized, setIsInitialized] = useState(false); // Hack needed to avoid Next.js hydration mismatches
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const parseValue = (value) => {
-    if (value === "true" || value === "false") return value === "true";
-    if (!isNaN(value)) return Number(value);
-    return value;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  };
+
+  const stringifyValue = (value) => {
+    return JSON.stringify(value);
   };
 
   useEffect(() => {
@@ -36,7 +42,7 @@ export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
     setIsInitialized(true);
 
     if (typeof window !== "undefined") {
-      localStorage.setItem(key, initialState);
+      localStorage.setItem(key, stringifyValue(initialState));
     }
   }, [router.isReady, key, defaultValue]);
 
@@ -55,7 +61,7 @@ export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
     );
 
     if (typeof window !== "undefined") {
-      localStorage.setItem(key, state);
+      localStorage.setItem(key, stringifyValue(state));
     }
   }, [state, isInitialized]);
 

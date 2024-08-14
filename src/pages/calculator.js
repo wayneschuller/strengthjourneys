@@ -54,11 +54,6 @@ export default function E1RMCalculator() {
     setWeight(newWeight);
   };
 
-  // FIXME: put inline
-  const handleEntryWeightChange = (event) => {
-    setWeight(event.target.value);
-  };
-
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
       // Defocus the input by removing focus
@@ -76,7 +71,7 @@ export default function E1RMCalculator() {
   const toggleIsMetric = (isMetric) => {
     let newWeight;
 
-    devLog(`toggle is metric running...`);
+    // devLog(`toggle is metric running...`);
 
     if (!isMetric) {
       // Going from kg to lb

@@ -151,161 +151,164 @@ export default function E1RMCalculator() {
         />
       </Head>
 
-      <div className="rounded-xl border-2 border-background bg-muted/80 p-4 md:p-6">
-        <div className="flex flex-row gap-1 md:gap-2">
-          <h1 className="flex-1 scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            One Rep Max Calculator
-          </h1>
-          <div className="flex flex-col gap-1 md:flex-row">
-            <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
-          </div>
-        </div>
-        <h3 className="mb-10 mt-2 hidden flex-1 scroll-m-20 text-xl tracking-tight md:mb-8 md:block md:text-2xl">
-          Estimate your max single based on reps and weight
-        </h3>
+      <Card>
+        <CardHeader>
+          <CardTitle>One Rep Max Calculator</CardTitle>
+          <CardDescription>
+            Estimate your max single based on reps and weight
+          </CardDescription>
+        </CardHeader>
 
-        {/* Two main sliders */}
-        <div className="mt-4 grid grid-cols-1 items-center gap-6 md:grid-cols-6 md:gap-4">
-          <div className="ml-2 justify-self-center text-2xl md:hidden">
-            {reps} reps
-          </div>
-          <Slider
-            className="md:col-span-5"
-            value={[reps]}
-            min={1}
-            max={20}
-            step={1}
-            onValueChange={handleRepsSliderChange}
-          />
-          <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
-            {reps} reps
-          </div>
-          <div className="ml-2 mt-6 w-[8rem] justify-self-center md:hidden">
-            <div className="flex items-center gap-1 text-2xl">
-              <Input
-                className="text-2xl"
-                type="number"
-                min="1"
-                step="1"
-                id="weightInput"
-                value={weight}
-                onChange={handleEntryWeightChange}
-                onKeyPress={handleKeyPress}
-                onKeyDown={handleKeyDown}
-              />
-              {isMetric ? "kg" : "lb"}
+        <CardContent>
+          {/* Two main sliders */}
+          <div className="mt-4 grid grid-cols-1 items-center gap-6 md:grid-cols-6 md:gap-4">
+            <div className="ml-2 justify-self-center text-2xl md:hidden">
+              {reps} reps
+            </div>
+            <Slider
+              className="md:col-span-5"
+              value={[reps]}
+              min={1}
+              max={20}
+              step={1}
+              onValueChange={handleRepsSliderChange}
+            />
+            <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
+              {reps} reps
+            </div>
+            <div className="ml-2 mt-6 w-[8rem] justify-self-center md:hidden">
+              <div className="flex items-center gap-1 text-2xl">
+                <Input
+                  className="text-2xl"
+                  type="number"
+                  min="1"
+                  step="1"
+                  id="weightInput"
+                  value={weight}
+                  onChange={handleEntryWeightChange}
+                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
+                />
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={toggleIsMetric}
+                />
+              </div>
+            </div>
+            <Slider
+              className="md:col-span-5"
+              value={[weight]}
+              min={1}
+              max={isMetric ? 250 : 600}
+              onValueChange={handleWeightSliderChange}
+            />
+            <div className="ml-1 hidden w-[7rem] justify-self-center md:block md:justify-self-start">
+              <div className="flex items-center gap-1">
+                <Input
+                  className="text-lg"
+                  type="number"
+                  min="1"
+                  step="1"
+                  id="weightInput"
+                  value={weight}
+                  onChange={handleEntryWeightChange}
+                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
+                />
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={toggleIsMetric}
+                />
+              </div>
             </div>
           </div>
-          <Slider
-            className="md:col-span-5"
-            value={[weight]}
-            min={1}
-            max={isMetric ? 250 : 600}
-            onValueChange={handleWeightSliderChange}
-          />
-          <div className="ml-1 hidden w-[7rem] justify-self-center md:block md:justify-self-start">
-            <div className="flex items-center gap-1">
-              <Input
-                className="text-lg"
-                type="number"
-                min="1"
-                step="1"
-                id="weightInput"
-                value={weight}
-                onChange={handleEntryWeightChange}
-                onKeyPress={handleKeyPress}
-                onKeyDown={handleKeyDown}
-              />
-              {isMetric ? "kg" : "lb"}
-            </div>
-          </div>
-        </div>
 
-        {/* Center E1RM card */}
-        <div className="mt-8 flex flex-1 justify-center gap-4">
-          <Card className="hover:ring-1">
-            <CardHeader>
-              <CardTitle>Estimated One Rep Max</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center">
-                {reps}@{weight}
-                {isMetric ? "kg" : "lb"}
-              </div>
-              <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
-                {estimateE1RM(reps, weight, e1rmFormula)}
-                {isMetric ? "kg" : "lb"}
-              </div>
-            </CardContent>
-            <CardFooter className="text-muted-foreground">
-              <div className="flex-1 text-center">
-                Using the <strong>{e1rmFormula}</strong> formula
-              </div>
-            </CardFooter>
-          </Card>
-        </div>
-        <div className="mt-4 flex justify-center">
-          <ShareButton onClick={handleCopyToClipboard} />
-        </div>
-
-        {/* Grid of other formulae cards ordered by estimate ascending */}
-        <h4 className="mt-10 scroll-m-20 text-xl font-semibold tracking-tight">
-          Citations and background for these exercise science formulae are found
-          in this{" "}
-          <a
-            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-            href="https://en.wikipedia.org/wiki/One-repetition_maximum"
-            target="_blank"
-          >
-            Wikipedia article
-          </a>
-        </h4>
-        <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {e1rmFormulae
-            .slice() // Create a shallow copy to avoid mutating the original array
-            .sort((a, b) => {
-              // Calculate estimated 1RM for both formulas
-              const e1rmA = estimateE1RM(reps, weight, a);
-              const e1rmB = estimateE1RM(reps, weight, b);
-
-              // Sort in ascending order
-              return e1rmA - e1rmB;
-            })
-            .map((formula, index) =>
-              formula === e1rmFormula ? null : (
-                <div key={index} className="card">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Card
-                          className="hover:ring-1"
-                          onClick={() => {
-                            setE1rmFormula(formula);
-                          }}
-                        >
-                          <CardHeader>
-                            <CardTitle className="text-xl text-muted-foreground">
-                              {formula}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-xl font-bold tracking-tight md:text-2xl">
-                              {estimateE1RM(reps, weight, formula)}
-                              {isMetric ? "kg" : "lb"}
-                            </p>
-                          </CardContent>
-                        </Card>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Click to make {formula} your preferred e1rm formula
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+          {/* Center E1RM card */}
+          <div className="mt-8 flex flex-1 justify-center gap-4">
+            <Card className="hover:ring-1">
+              <CardHeader>
+                <CardTitle>Estimated One Rep Max</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center">
+                  {reps}@{weight}
+                  {isMetric ? "kg" : "lb"}
                 </div>
-              ),
-            )}
-        </div>
-      </div>
+                <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
+                  {estimateE1RM(reps, weight, e1rmFormula)}
+                  {isMetric ? "kg" : "lb"}
+                </div>
+              </CardContent>
+              <CardFooter className="text-muted-foreground">
+                <div className="flex-1 text-center">
+                  Using the <strong>{e1rmFormula}</strong> formula
+                </div>
+              </CardFooter>
+            </Card>
+          </div>
+          <div className="mt-4 flex justify-center">
+            <ShareButton onClick={handleCopyToClipboard} />
+          </div>
+
+          {/* Grid of other formulae cards ordered by estimate ascending */}
+          <h4 className="mt-10 scroll-m-20 text-xl font-semibold tracking-tight">
+            Citations and background for these exercise science formulae are
+            found in this{" "}
+            <a
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              href="https://en.wikipedia.org/wiki/One-repetition_maximum"
+              target="_blank"
+            >
+              Wikipedia article
+            </a>
+          </h4>
+          <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+            {e1rmFormulae
+              .slice() // Create a shallow copy to avoid mutating the original array
+              .sort((a, b) => {
+                // Calculate estimated 1RM for both formulas
+                const e1rmA = estimateE1RM(reps, weight, a);
+                const e1rmB = estimateE1RM(reps, weight, b);
+
+                // Sort in ascending order
+                return e1rmA - e1rmB;
+              })
+              .map((formula, index) =>
+                formula === e1rmFormula ? null : (
+                  <div key={index} className="card">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Card
+                            className="hover:ring-1"
+                            onClick={() => {
+                              setE1rmFormula(formula);
+                            }}
+                          >
+                            <CardHeader>
+                              <CardTitle className="text-xl text-muted-foreground">
+                                {formula}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <p className="text-xl font-bold tracking-tight md:text-2xl">
+                                {estimateE1RM(reps, weight, formula)}
+                                {isMetric ? "kg" : "lb"}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Click to make {formula} your preferred e1rm formula
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                ),
+              )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

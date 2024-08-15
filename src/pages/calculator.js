@@ -219,7 +219,7 @@ export default function E1RMCalculator() {
           </div>
 
           <div className="my-8 grid grid-cols-1 place-items-center gap-6 lg:grid-cols-3">
-            <div className="h-full">
+            <div className="order-3 h-full md:order-1">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="advanced"
@@ -237,21 +237,25 @@ export default function E1RMCalculator() {
                 <OptionalAtheleBioData isMetric={isMetric} />
               )}
             </div>
-            <E1RMSummaryCard
-              reps={reps}
-              weight={weight}
-              isMetric={isMetric}
-              e1rmFormula={e1rmFormula}
-              estimateE1RM={estimateE1RM}
-            />
-            <E1RMFormulaRadioGroup
-              formulae={sortedFormulae}
-              e1rmFormula={e1rmFormula}
-              setE1rmFormula={setE1rmFormula}
-              reps={reps}
-              weight={weight}
-              isMetric={isMetric}
-            />
+            <div className="order-1 md:order-2">
+              <E1RMSummaryCard
+                reps={reps}
+                weight={weight}
+                isMetric={isMetric}
+                e1rmFormula={e1rmFormula}
+                estimateE1RM={estimateE1RM}
+              />
+            </div>
+            <div className="order-2 md:order-3">
+              <E1RMFormulaRadioGroup
+                formulae={sortedFormulae}
+                e1rmFormula={e1rmFormula}
+                setE1rmFormula={setE1rmFormula}
+                reps={reps}
+                weight={weight}
+                isMetric={isMetric}
+              />
+            </div>
           </div>
           <div className="mt-4 flex justify-center gap-4">
             <ShareButton onClick={handleCopyToClipboard} />
@@ -407,7 +411,7 @@ function OptionalAtheleBioData({ isMetric }) {
           value={sex}
           onValueChange={setSex}
           // orientation="horizontal"
-          className="flex space-x-4" // Add this line
+          className="flex space-x-4" // Really makes it horizontal
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="male" id="male" />

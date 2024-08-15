@@ -217,7 +217,7 @@ export default function E1RMCalculator() {
           </div>
 
           <div className="my-8 grid grid-cols-1 place-items-center gap-6 lg:grid-cols-3">
-            <div className="hidden md:block">{/* Empty first column */}</div>
+            <AgeGenderWeightLiftSliders />
             <E1RMSummaryCard
               reps={reps}
               weight={weight}

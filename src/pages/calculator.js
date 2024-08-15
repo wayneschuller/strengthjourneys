@@ -219,20 +219,18 @@ export default function E1RMCalculator() {
           </div>
 
           <div className="my-8 grid grid-cols-1 place-items-center gap-6 lg:grid-cols-3">
-            <div className="order-3 h-full md:order-1">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="advanced"
-                  checked={isAdvancedAnalysis}
-                  onCheckedChange={setIsAdvancedAnalysis}
-                />
-                <label
-                  htmlFor="advanced"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Advanced Analysis
-                </label>
-              </div>
+            <div className="order-3 md:order-1">
+              <Checkbox
+                id="advanced"
+                checked={isAdvancedAnalysis}
+                onCheckedChange={setIsAdvancedAnalysis}
+              />
+              <label
+                htmlFor="advanced"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Advanced Analysis
+              </label>
               {isAdvancedAnalysis && (
                 <OptionalAtheleBioData isMetric={isMetric} />
               )}

@@ -38,11 +38,7 @@ export default function E1RMCalculator() {
     "formula",
     "Brzycki",
   );
-
-  // FIXME: put inline
-  const handleRepsSliderChange = (value) => {
-    setReps(value[0]);
-  };
+  const [isAdvancedAnalysis, setIsAdvancedAnalysis] = useState(false);
 
   // FIXME: put inline
   const handleWeightSliderChange = (value) => {
@@ -167,7 +163,7 @@ export default function E1RMCalculator() {
               min={1}
               max={20}
               step={1}
-              onValueChange={handleRepsSliderChange}
+              onValueChange={(values) => setReps(values[0])}
             />
             <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
               {reps} reps
@@ -220,7 +216,21 @@ export default function E1RMCalculator() {
           </div>
 
           <div className="my-8 grid grid-cols-1 place-items-center gap-6 lg:grid-cols-3">
-            <OptionalAtheleBioData isMetric={isMetric} />
+            <div>
+              <Button
+                variant="ghost"
+                className="flex w-full items-center justify-between"
+                onClick={() => setIsAdvancedAnalysis(!isAdvancedAnalysis)}
+              >
+                <span>Optional Athlete Bio Data</span>
+                {isAdvancedAnalysis ? (
+                  <ChevronUp className="h-5 w-4" />
+                ) : (
+                  <ChevronDown className="h-5 w-4" />
+                )}
+              </Button>
+              <OptionalAtheleBioData isMetric={isMetric} />
+            </div>
             <E1RMSummaryCard
               reps={reps}
               weight={weight}
@@ -358,8 +368,6 @@ function E1RMFormulaRadioGroup({
 }
 
 function OptionalAtheleBioData({ isMetric }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   const [bodyWeight, setBodyWeight] = useStateFromQueryOrLocalStorage(
     "AtheleteBodyWeight",
     200,
@@ -375,73 +383,56 @@ function OptionalAtheleBioData({ isMetric }) {
   );
 
   return (
-    <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-      <Button
-        variant="ghost"
-        className="flex w-full items-center justify-between"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <span>Optional Athlete Bio Data</span>
-        {isExpanded ? (
-          <ChevronUp className="h-4 w-4" />
-        ) : (
-          <ChevronDown className="h-4 w-4" />
-        )}
-      </Button>
-
-      {isExpanded && (
-        <div className="flex w-48 flex-col space-y-2">
-          <div className="flex flex-row gap-2">
-            <Label>Age: {age} </Label>
+    <div className="flex w-48 flex-col space-y-2">
+      <div className="flex flex-row gap-2">
+        <Label>Age: {age} </Label>
+      </div>
+      <Slider
+        min={1}
+        max={100}
+        step={1}
+        value={[age]}
+        onValueChange={(values) => setAge(values[0])}
+        className="flex-1"
+      />
+      <div>
+        <Label>Sex: </Label>
+        <RadioGroup value={sex} onValueChange={setSex}>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="male" id="male" />
+            <Label htmlFor="male">Male</Label>
           </div>
-          <Slider
-            min={1}
-            max={100}
-            step={1}
-            value={[age]}
-            onValueChange={(values) => setAge(values[0])}
-            className="flex-1"
-          />
-          <div>
-            <Label>Sex: </Label>
-            <RadioGroup value={sex} onValueChange={setSex}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="male" id="male" />
-                <Label htmlFor="male">Male</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="female" id="female" />
-                <Label htmlFor="female">Female</Label>
-              </div>
-            </RadioGroup>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="female" id="female" />
+            <Label htmlFor="female">Female</Label>
           </div>
-          <div className="flex flex-row gap-2">
-            <Label>
-              Bodyweight: {bodyWeight}
-              {isMetric ? "kg" : "lb"}
-            </Label>
-          </div>
-          <Slider
-            min={1}
-            max={300}
-            step={1}
-            value={[bodyWeight]}
-            onValueChange={(values) => setBodyWeight(values[0])}
-            className="flex-1"
-          />
-          <div>
-            <Label>Lift Type:</Label>
-            <RadioGroup value={liftType} onValueChange={setLiftType}>
-              {uniqueLiftNames.map((lift) => (
-                <div key={lift} className="flex items-center space-x-2">
-                  <RadioGroupItem value={lift} id={lift} />
-                  <Label htmlFor={lift}>{lift}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-        </div>
-      )}
+        </RadioGroup>
+      </div>
+      <div className="flex flex-row gap-2">
+        <Label>
+          Bodyweight: {bodyWeight}
+          {isMetric ? "kg" : "lb"}
+        </Label>
+      </div>
+      <Slider
+        min={1}
+        max={300}
+        step={1}
+        value={[bodyWeight]}
+        onValueChange={(values) => setBodyWeight(values[0])}
+        className="flex-1"
+      />
+      <div>
+        <Label>Lift Type:</Label>
+        <RadioGroup value={liftType} onValueChange={setLiftType}>
+          {uniqueLiftNames.map((lift) => (
+            <div key={lift} className="flex items-center space-x-2">
+              <RadioGroupItem value={lift} id={lift} />
+              <Label htmlFor={lift}>{lift}</Label>
+            </div>
+          ))}
+        </RadioGroup>
+      </div>
     </div>
   );
 }

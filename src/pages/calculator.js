@@ -242,7 +242,7 @@ export default function E1RMCalculator() {
                 <OptionalAtheleBioData isMetric={isMetric} />
               )}
             </div>
-            <div className="order-1 lg:order-2">
+            <div className="order-1 place-self-center lg:order-2">
               <E1RMSummaryCard
                 reps={reps}
                 weight={weight}
@@ -398,19 +398,21 @@ function OptionalAtheleBioData({ isMetric }) {
   );
 
   return (
-    <div className="flex flex-col space-y-2 px-4">
-      <div className="flex flex-row gap-2">
-        <Label>Age: {age} </Label>
-      </div>
-      <Slider
-        min={1}
-        max={100}
-        step={1}
-        value={[age]}
-        onValueChange={(values) => setAge(values[0])}
-        className="flex-1"
-      />
+    <div className="flex flex-col gap-4 px-4">
       <div>
+        <div className="flex flex-row gap-2">
+          <Label>Age: {age} </Label>
+        </div>
+        <Slider
+          min={1}
+          max={100}
+          step={1}
+          value={[age]}
+          onValueChange={(values) => setAge(values[0])}
+          className="mt-2 flex-1"
+        />
+      </div>
+      <div className="mt-1 flex flex-row gap-4">
         <Label>Sex: </Label>
         <RadioGroup
           value={sex}
@@ -428,20 +430,22 @@ function OptionalAtheleBioData({ isMetric }) {
           </div>
         </RadioGroup>
       </div>
-      <div className="flex flex-row gap-2">
-        <Label>
-          Bodyweight: {bodyWeight}
-          {isMetric ? "kg" : "lb"}
-        </Label>
+      <div>
+        <div className="flex flex-row gap-2">
+          <Label>
+            Bodyweight: {bodyWeight}
+            {isMetric ? "kg" : "lb"}
+          </Label>
+        </div>
+        <Slider
+          min={1}
+          max={300}
+          step={1}
+          value={[bodyWeight]}
+          onValueChange={(values) => setBodyWeight(values[0])}
+          className="mt-2 flex-1"
+        />
       </div>
-      <Slider
-        min={1}
-        max={300}
-        step={1}
-        value={[bodyWeight]}
-        onValueChange={(values) => setBodyWeight(values[0])}
-        className="flex-1"
-      />
       <div>
         <Label>Lift Type:</Label>
         <RadioGroup value={liftType} onValueChange={setLiftType}>

@@ -17,7 +17,6 @@ import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-p
 import { MonthsHighlightsCard } from "@/components/analyzer/months-highlights-card";
 import { ActivityHeatmapsCard } from "@/components/analyzer/heatmap-card";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
-import { ConsistencyCard2 } from "@/components/analyzer/circular-progress-with-letter";
 
 export default function Analyzer() {
   const { data: session, status: authStatus } = useSession();

@@ -22,6 +22,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";
 import { devLog } from "@/lib/processing-utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -42,6 +43,7 @@ export default function E1RMCalculator() {
     "Brzycki",
   );
   const [isAdvancedAnalysis, setIsAdvancedAnalysis] = useState(false);
+  const [parent] = useAutoAnimate(/* optional config */);
 
   // FIXME: put inline
   const handleWeightSliderChange = (value) => {
@@ -218,19 +220,21 @@ export default function E1RMCalculator() {
             </div>
           </div>
 
-          <div className="my-8 grid grid-cols-1 place-items-center gap-6 lg:grid-cols-3">
-            <div className="order-3 md:order-1">
-              <Checkbox
-                id="advanced"
-                checked={isAdvancedAnalysis}
-                onCheckedChange={setIsAdvancedAnalysis}
-              />
-              <label
-                htmlFor="advanced"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Advanced Analysis
-              </label>
+          <div className="my-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="order-3 md:order-1" ref={parent}>
+              <div class="mb-4 flex items-start gap-1">
+                <Checkbox
+                  id="advanced"
+                  checked={isAdvancedAnalysis}
+                  onCheckedChange={setIsAdvancedAnalysis}
+                />
+                <label
+                  htmlFor="advanced"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Advanced Analysis
+                </label>
+              </div>
               {isAdvancedAnalysis && (
                 <OptionalAtheleBioData isMetric={isMetric} />
               )}
@@ -244,7 +248,7 @@ export default function E1RMCalculator() {
                 estimateE1RM={estimateE1RM}
               />
             </div>
-            <div className="order-2 md:order-3">
+            <div className="order-2 place-self-center md:order-3 md:place-self-auto md:pl-4">
               <E1RMFormulaRadioGroup
                 formulae={sortedFormulae}
                 e1rmFormula={e1rmFormula}

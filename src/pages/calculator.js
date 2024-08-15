@@ -20,6 +20,7 @@ import { devLog } from "@/lib/processing-utils";
 
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { LiftingStandardsKG } from "@/lib/lifting-standards-kg";
 
 import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
 
@@ -361,6 +362,13 @@ function AgeGenderWeightLiftSliders({ isMetric }) {
   );
   const [age, setAge] = useStateFromQueryOrLocalStorage("AthleteAge", 30);
   const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
+  const [liftType, setLiftType] = useStateFromQueryOrLocalStorage(
+    "AthleteLiftType",
+    "",
+  );
+  const uniqueLiftNames = Array.from(
+    new Set(LiftingStandardsKG.map((item) => item.liftType)),
+  );
 
   return (
     <div className="flex w-48 flex-col space-y-2">
@@ -403,7 +411,15 @@ function AgeGenderWeightLiftSliders({ isMetric }) {
         className="flex-1"
       />
       <div>
-        <Label>Lift Type: </Label>
+        <Label>Lift Type:</Label>
+        <RadioGroup value={liftType} onValueChange={setLiftType}>
+          {uniqueLiftNames.map((lift) => (
+            <div key={lift} className="flex items-center space-x-2">
+              <RadioGroupItem value={lift} id={lift} />
+              <Label htmlFor={lift}>{lift}</Label>
+            </div>
+          ))}
+        </RadioGroup>
       </div>
     </div>
   );

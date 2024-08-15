@@ -42,13 +42,14 @@ export const featurePages = [
   {
     href: "/calculator",
     title: "One Rep Max Calculator",
-    description: "Multi-formula one rep max calculations.",
+    description: "The greatest e1rm multi-formula one rep max calculations.",
     IconComponent: Calculator,
   },
   {
     href: "/strength-level-calculator",
     title: "Strength Level Calculator",
-    description: "Assess your relative strength by age, gender and lift type.",
+    description:
+      "How strong are you? Assess your relative strength by age, gender and lift type.",
     IconComponent: BicepsFlexed,
   },
   {
@@ -60,7 +61,8 @@ export const featurePages = [
   {
     href: "/articles/own-your-lifting-data",
     title: "Article: The Power of Owning Your Lifting Data",
-    description: "A short article on why recommend Google Sheets for lifters.",
+    description:
+      "A short article on why we recommend Google Sheets for lifters.",
     IconComponent: Newspaper,
   },
   {
@@ -159,8 +161,8 @@ const FeatureCard = ({ href, title, description, IconComponent }) => (
   <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
     <Link href={href}>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardTitle className="">{title}</CardTitle>
+        <CardDescription className="">{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex justify-center">
         <IconComponent size={64} strokeWidth={1.25} />

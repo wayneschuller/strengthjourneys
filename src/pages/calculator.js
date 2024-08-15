@@ -21,8 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";
 import { devLog } from "@/lib/processing-utils";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { cn } from "@/lib/utils";
 
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -221,8 +221,8 @@ export default function E1RMCalculator() {
           </div>
 
           <div className="my-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="order-3 md:order-1" ref={parent}>
-              <div class="mb-4 flex items-start gap-1">
+            <div className="order-3 lg:order-1" ref={parent}>
+              <div class="mb-4 flex gap-1">
                 <Checkbox
                   id="advanced"
                   checked={isAdvancedAnalysis}
@@ -230,7 +230,10 @@ export default function E1RMCalculator() {
                 />
                 <label
                   htmlFor="advanced"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  className={cn(
+                    "text-sm font-medium leading-none",
+                    isAdvancedAnalysis ? "opacity-100" : "opacity-50",
+                  )}
                 >
                   Advanced Analysis
                 </label>
@@ -239,7 +242,7 @@ export default function E1RMCalculator() {
                 <OptionalAtheleBioData isMetric={isMetric} />
               )}
             </div>
-            <div className="order-1 md:order-2">
+            <div className="order-1 lg:order-2">
               <E1RMSummaryCard
                 reps={reps}
                 weight={weight}
@@ -248,7 +251,7 @@ export default function E1RMCalculator() {
                 estimateE1RM={estimateE1RM}
               />
             </div>
-            <div className="order-2 place-self-center md:order-3 md:place-self-auto md:pl-4">
+            <div className="order-2 place-self-center md:pl-4 lg:order-3 lg:place-self-auto">
               <E1RMFormulaRadioGroup
                 formulae={sortedFormulae}
                 e1rmFormula={e1rmFormula}
@@ -395,7 +398,7 @@ function OptionalAtheleBioData({ isMetric }) {
   );
 
   return (
-    <div className="flex w-48 flex-col space-y-2">
+    <div className="flex flex-col space-y-2 px-4">
       <div className="flex flex-row gap-2">
         <Label>Age: {age} </Label>
       </div>

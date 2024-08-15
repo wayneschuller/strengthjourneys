@@ -375,14 +375,13 @@ function OptionalAtheleBioData({ isMetric }) {
   );
 
   return (
-    <div className="flex w-48 flex-col space-y-2">
+    <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
       <Button
         variant="ghost"
         className="flex w-full items-center justify-between"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <span>Optional Athlete Bio Data</span>
-        <ChevronDown />
         {isExpanded ? (
           <ChevronUp className="h-4 w-4" />
         ) : (
@@ -391,7 +390,7 @@ function OptionalAtheleBioData({ isMetric }) {
       </Button>
 
       {isExpanded && (
-        <div>
+        <div className="flex w-48 flex-col space-y-2">
           <div className="flex flex-row gap-2">
             <Label>Age: {age} </Label>
           </div>

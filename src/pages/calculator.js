@@ -47,6 +47,10 @@ export default function E1RMCalculator() {
     "SJ_E1RMAdvancedAnalysis",
     false,
   );
+  const [bodyWeight, setBodyWeight] = useStateFromQueryOrLocalStorage(
+    "AtheleteBodyWeight",
+    200,
+  );
   const [parent] = useAutoAnimate(/* optional config */);
 
   // FIXME: put inline
@@ -78,22 +82,24 @@ export default function E1RMCalculator() {
 
   const toggleIsMetric = (isMetric) => {
     let newWeight;
+    let newBodyWeight;
 
     // devLog(`toggle is metric running...`);
 
     if (!isMetric) {
       // Going from kg to lb
       newWeight = Math.round(weight * 2.2046);
+      newBodyWeight = Math.round(bodyWeight * 2.2046);
       setIsMetric(false);
     } else {
       // Going from lb to kg
       newWeight = Math.round(weight / 2.2046);
+      newBodyWeight = Math.round(bodyWeight / 2.2046);
       setIsMetric(true);
     }
 
     setWeight(newWeight);
-
-    // FIXME: update the body weight in localstorage so it's consistent with the unit change
+    setBodyWeight(newBodyWeight);
   };
 
   const handleCopyToClipboard = async () => {
@@ -243,7 +249,11 @@ export default function E1RMCalculator() {
                 </label>
               </div>
               {isAdvancedAnalysis && (
-                <OptionalAtheleBioData isMetric={isMetric} />
+                <OptionalAtheleBioData
+                  isMetric={isMetric}
+                  bodyWeight={bodyWeight}
+                  setBodyWeight={setBodyWeight}
+                />
               )}
             </div>
             <div className="order-1 place-self-center lg:order-2">
@@ -386,11 +396,7 @@ function E1RMFormulaRadioGroup({
   );
 }
 
-function OptionalAtheleBioData({ isMetric }) {
-  const [bodyWeight, setBodyWeight] = useStateFromQueryOrLocalStorage(
-    "AtheleteBodyWeight",
-    200,
-  );
+function OptionalAtheleBioData({ isMetric, bodyWeight, setBodyWeight }) {
   const [age, setAge] = useStateFromQueryOrLocalStorage("AthleteAge", 30);
   const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
   const [liftType, setLiftType] = useStateFromQueryOrLocalStorage(

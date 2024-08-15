@@ -13,6 +13,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+import { Checkbox } from "@/components/ui/checkbox";
+
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -216,20 +219,23 @@ export default function E1RMCalculator() {
           </div>
 
           <div className="my-8 grid grid-cols-1 place-items-center gap-6 lg:grid-cols-3">
-            <div>
-              <Button
-                variant="ghost"
-                className="flex w-full items-center justify-between"
-                onClick={() => setIsAdvancedAnalysis(!isAdvancedAnalysis)}
-              >
-                <span>Optional Athlete Bio Data</span>
-                {isAdvancedAnalysis ? (
-                  <ChevronUp className="h-5 w-4" />
-                ) : (
-                  <ChevronDown className="h-5 w-4" />
-                )}
-              </Button>
-              <OptionalAtheleBioData isMetric={isMetric} />
+            <div className="h-full">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="advanced"
+                  checked={isAdvancedAnalysis}
+                  onCheckedChange={setIsAdvancedAnalysis}
+                />
+                <label
+                  htmlFor="advanced"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Advanced Analysis
+                </label>
+              </div>
+              {isAdvancedAnalysis && (
+                <OptionalAtheleBioData isMetric={isMetric} />
+              )}
             </div>
             <E1RMSummaryCard
               reps={reps}
@@ -397,7 +403,12 @@ function OptionalAtheleBioData({ isMetric }) {
       />
       <div>
         <Label>Sex: </Label>
-        <RadioGroup value={sex} onValueChange={setSex}>
+        <RadioGroup
+          value={sex}
+          onValueChange={setSex}
+          // orientation="horizontal"
+          className="flex space-x-4" // Add this line
+        >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="male" id="male" />
             <Label htmlFor="male">Male</Label>

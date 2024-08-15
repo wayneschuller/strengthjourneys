@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { LiftingStandardsKG } from "@/lib/lifting-standards-kg";
+import { useLocalStorage } from "usehooks-ts";
 
 import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
 
@@ -42,7 +43,10 @@ export default function E1RMCalculator() {
     "formula",
     "Brzycki",
   );
-  const [isAdvancedAnalysis, setIsAdvancedAnalysis] = useState(false);
+  const [isAdvancedAnalysis, setIsAdvancedAnalysis] = useLocalStorage(
+    "SJ_E1RMAdvancedAnalysis",
+    false,
+  );
   const [parent] = useAutoAnimate(/* optional config */);
 
   // FIXME: put inline

@@ -28,13 +28,13 @@ import { Separator } from "@/components/ui/separator";
 
 // Strength Level Calculator
 export default function StrengthLevelCalculator() {
-  const [age, setAge] = useLocalStorage("SJ_AthleteAge", 30);
+  const [age, setAge] = useLocalStorage("AthleteAge", 30);
   const [isMetric, setIsMetric] = useLocalStorage("calcIsMetric", false, {
     initializeWithValue: false,
   });
-  const [gender, setGender] = useLocalStorage("SJ_AthleteGender", "male");
+  const [sex, setSex] = useLocalStorage("AthleteSex", "male");
   const [bodyWeight, setBodyWeight] = useLocalStorage(
-    "SJ_AtheleteBodyWeight",
+    "AtheleteBodyWeight",
     200,
   );
   const [standards, setStandards] = useState({});
@@ -53,7 +53,7 @@ export default function StrengthLevelCalculator() {
       const standard = interpolateStandard(
         age,
         bodyWeightKG,
-        gender,
+        sex,
         liftType,
         LiftingStandardsKG,
       );
@@ -73,7 +73,7 @@ export default function StrengthLevelCalculator() {
     });
 
     setStandards(newStandards);
-  }, [age, gender, bodyWeight, isMetric]);
+  }, [age, sex, bodyWeight, isMetric]);
 
   const toggleIsMetric = (isMetric) => {
     let newBodyWeight;
@@ -134,8 +134,8 @@ export default function StrengthLevelCalculator() {
               </Label>
               <Select
                 id="gender"
-                value={gender}
-                onValueChange={(value) => setGender(value)}
+                value={sex}
+                onValueChange={(value) => setSex(value)}
                 className="min-w-52 text-xl"
               >
                 <SelectTrigger aria-label="Select gender">

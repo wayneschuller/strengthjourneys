@@ -217,7 +217,7 @@ export default function E1RMCalculator() {
           </div>
 
           <div className="my-8 grid grid-cols-1 place-items-center gap-6 lg:grid-cols-3">
-            <AgeGenderWeightLiftSliders />
+            <AgeGenderWeightLiftSliders isMetric={isMetric} />
             <E1RMSummaryCard
               reps={reps}
               weight={weight}
@@ -354,44 +354,54 @@ function E1RMFormulaRadioGroup({
   );
 }
 
-function AgeGenderWeightLiftSliders({}) {
+function AgeGenderWeightLiftSliders({ isMetric }) {
+  const [bodyWeight, setBodyWeight] = useStateFromQueryOrLocalStorage(
+    "AtheleteBodyWeight",
+    200,
+  );
+  const [age, setAge] = useStateFromQueryOrLocalStorage("AthleteAge", 30);
+  const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
+
   return (
-    <div className="flex w-32 flex-col space-y-2">
+    <div className="flex w-48 flex-col space-y-2">
       <div className="flex flex-row gap-2">
-        <Label>Age: </Label>
-        <Slider
-          // value={}
-          min={1}
-          max={100}
-          step={1}
-          // onValueChange={handleRepsSliderChange}
-          className="flex-1"
-        />
+        <Label>Age: {age} </Label>
       </div>
+      <Slider
+        min={1}
+        max={100}
+        step={1}
+        value={[age]}
+        onValueChange={(values) => setAge(values[0])}
+        className="flex-1"
+      />
       <div>
         <Label>Sex: </Label>
-        <RadioGroup defaultValue="male">
+        <RadioGroup value={sex} onValueChange={setSex}>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="default" id="r1" />
-            <Label htmlFor="r1">Male</Label>
+            <RadioGroupItem value="male" id="male" />
+            <Label htmlFor="male">Male</Label>
           </div>
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="comfortable" id="r2" />
-            <Label htmlFor="r2">Female</Label>
+            <RadioGroupItem value="female" id="female" />
+            <Label htmlFor="female">Female</Label>
           </div>
         </RadioGroup>
       </div>
       <div className="flex flex-row gap-2">
-        <Label>Bodyweight: </Label>
-        <Slider
-          // value={}
-          min={1}
-          max={100}
-          step={1}
-          // onValueChange={handleRepsSliderChange}
-          className="flex-1"
-        />
+        <Label>
+          Bodyweight: {bodyWeight}
+          {isMetric ? "kg" : "lb"}
+        </Label>
       </div>
+      <Slider
+        min={1}
+        max={300}
+        step={1}
+        value={[bodyWeight]}
+        onValueChange={(values) => setBodyWeight(values[0])}
+        className="flex-1"
+      />
       <div>
         <Label>Lift Type: </Label>
       </div>

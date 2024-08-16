@@ -245,9 +245,11 @@ export default function E1RMCalculator() {
 
       <Card>
         <CardHeader>
-          <CardTitle>One Rep Max Calculator</CardTitle>
+          <CardTitle>
+            <h1>One Rep Max Calculator</h1>
+          </CardTitle>
           <CardDescription>
-            Estimate your max single based on reps and weight
+            <h2>Estimate your max single based on reps and weight</h2>
           </CardDescription>
         </CardHeader>
 

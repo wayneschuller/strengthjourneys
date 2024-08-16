@@ -103,10 +103,12 @@ export default function StrengthLevelCalculator() {
   return (
     <div className="mx-4 flex flex-row items-center md:mx-[10vw] xl:mx-[20vw]">
       <Head>
-        <title>Free Strength Level Calculator (Strength Journeys)</title>
+        <title>
+          Strength Level Test: Free Calculator for Lifters | Strength Journeys
+        </title>
         <meta
           name="description"
-          content="Free Strength Level Calculator Web App (Strength Journeys)"
+          content="Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys."
         />
       </Head>
 

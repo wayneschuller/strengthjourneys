@@ -603,20 +603,23 @@ export const interpolateStandard = (
   liftType,
   standards,
 ) => {
-  // devLog( `interpolateStandard. age: ${age}, weight: ${weight}, gender: ${gender}, liftType: ${liftType}`,);
+  devLog(
+    `interpolateStandard. age: ${age}, weight: ${weightKG}, gender: ${gender}, liftType: ${liftType}`,
+  );
   // Filter the dataset based on gender and liftType
+  // devLog(`standards:`); devLog(standards);
   const filteredStandards = standards.filter(
     (item) => item.gender === gender && item.liftType === liftType,
   );
 
-  if (filteredStandards.length === 0) return null; // Handle edge case
+  if (filteredStandards.length === 0) return null; // Should not happen
 
-  // devLog(filteredStandards);
+  // devLog(`filteredStandards:`); devLog(filteredStandards);
 
   // Find the two closest points for age
   let ageLower, ageUpper;
   const ageArray = [...new Set(filteredStandards.map((obj) => obj.age))];
-  devLog(ageArray);
+  // devLog(ageArray);
 
   if (age < ageArray[0]) {
     // If age is smaller than the first entry, use the first two entries
@@ -644,25 +647,52 @@ export const interpolateStandard = (
 
   devLog(`ageLower: ${ageLower}, ageUpper: ${ageUpper}`);
 
-  // Interpolate between bodyweight values within the lower and upper age ranges
-  const interpolateByBodyWeight = (agePoint) => {
-    let weightLower, weightUpper;
+  // Interpolate between bodyweight values within a lower and upper age range point for an arbitrary bodyweight in KG
+  // We assume the agePoint is an exact match for an age point in the data model set
+  // Return an object with the interpolated values for each rating level
+  const interpolateByBodyWeight = (
+    agePoint,
+    bodyWeightKG,
+    filteredStandards,
+  ) => {
+    let ageFilteredStandards = filteredStandards.filter(
+      (item) => item.age === agePoint,
+    );
 
-    for (let i = 0; i < filteredStandards.length - 1; i++) {
-      const current = filteredStandards[i];
-      const next = filteredStandards[i + 1];
+    devLog(`ageFilteredStandards: (agePoint: ${agePoint})`);
+    devLog(ageFilteredStandards);
 
-      if (
-        current.age === agePoint &&
-        weightKG >= current.bodyWeight &&
-        weightKG <= next.bodyWeight
-      ) {
-        weightLower = current;
-        weightUpper = next;
-        break;
+    let lower, upper;
+    const weightArray = [
+      ...new Set(ageFilteredStandards.map((obj) => obj.bodyWeight)),
+    ];
+    devLog(weightArray);
+
+    // Find the two nearest weights in our data
+    if (bodyWeightKG < weightArray[0]) {
+      // If weight is smaller than the first entry, use the first two entries
+      lower = weightArray[0];
+      upper = weightArray[1];
+    } else if (bodyWeightKG > weightArray[weightArray.length - 1]) {
+      // If weight is higher than the last entry, use the last two entries
+      lower = weightArray[weightArray.length - 2];
+      upper = weightArray[weightArray.length - 1];
+    } else {
+      // Normal case, find the surrounding weights
+      for (let i = 0; i < weightArray.length; i++) {
+        if (weightArray[i] >= bodyWeightKG) {
+          upper = weightArray[i];
+          lower = weightArray[i - 1];
+          break;
+        }
       }
     }
 
+    let weightLower, weightUpper;
+    weightUpper = filteredStandards.find((item) => item.bodyWeight === upper);
+    weightLower = filteredStandards.find((item) => item.bodyWeight === lower);
+
+    devLog(`weightUpper: ${weightUpper}, weightLower: ${weightLower}`);
     if (!weightLower || !weightUpper) {
       devLog(
         `could not interpolate weight: weightLower: ${weightLower}, weightUpper: ${weightUpper}`,
@@ -670,9 +700,12 @@ export const interpolateStandard = (
       return null; // Handle edge cases
     }
 
-    const weightRatio =
-      (weightKG - weightLower.bodyWeight) /
-      (weightUpper.bodyWeight - weightLower.bodyWeight);
+    let weightRatio = (bodyWeightKG - lower) / (upper - lower);
+    if (weightRatio < 0) weightRatio = 0;
+    if (weightRatio > 1) weightRatio = 1;
+
+    devLog(`weightRatio: ${weightRatio}`);
+
     return {
       physicallyActive: Math.round(
         weightLower.physicallyActive +
@@ -699,9 +732,19 @@ export const interpolateStandard = (
   };
 
   // Interpolate by bodyweight within the lower and upper age points
-  const lowerValues = interpolateByBodyWeight(ageLower);
-  const upperValues = interpolateByBodyWeight(ageUpper);
+  const lowerValues = interpolateByBodyWeight(
+    ageLower,
+    weightKG,
+    filteredStandards,
+  );
+  const upperValues = interpolateByBodyWeight(
+    ageUpper,
+    weightKG,
+    filteredStandards,
+  );
 
+  devLog(upperValues);
+  devLog(lowerValues);
   if (!lowerValues || !upperValues) {
     // devLog( `could not interpolate values: lowerValues: ${lowerValues}, upperValues: ${upperValues}`,);
     return null; // Handle edge cases
@@ -711,7 +754,7 @@ export const interpolateStandard = (
   let ageRatio = (age - ageLower) / (ageUpper - ageLower);
   if (ageRatio < 0) ageRatio = 0;
   if (ageRatio > 1) ageRatio = 1;
-  devLog(ageRatio);
+  devLog(`ageRatio: ${ageRatio}`);
 
   return {
     physicallyActive: Math.round(

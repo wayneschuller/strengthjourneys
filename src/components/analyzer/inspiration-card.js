@@ -61,9 +61,16 @@ const inspirationalQuotes = [
     URL: null,
   },
   {
-    quote: "Your health will likely run out before your money. Invest proportionally.",
+    quote:
+      "Your health will likely run out before your money. Invest proportionally.",
     author: "Source unknown.",
     URL: null,
+  },
+  {
+    quote:
+      "Ask yourself: What can I take away from today that was a win? Even if it was just turning up at the gym, going out on a walk, or doing one little thing that was positive.",
+    author: "Craig Richey",
+    URL: "https://youtu.be/HEqMMGon2zc?si=ddr2b32gdVD1JkGh&t=1393",
   },
 ];
 

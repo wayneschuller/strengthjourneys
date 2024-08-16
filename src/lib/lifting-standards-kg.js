@@ -674,21 +674,15 @@ const interpolateByBodyWeight = (agePoint, bodyWeightKG, filteredStandards) => {
 // Linearly interpolate between two sets of strength standards based on a ratio
 //---------------------------------------------------------------------------------------------------------------------------
 const interpolateStandardsValues = (lower, upper, ratio) => {
+  const interpolate = (key) =>
+    Math.round(lower[key] + (upper[key] - lower[key]) * ratio);
+
   return {
-    physicallyActive: Math.round(
-      lower.physicallyActive +
-        (upper.physicallyActive - lower.physicallyActive) * ratio,
-    ),
-    beginner: Math.round(
-      lower.beginner + (upper.beginner - lower.beginner) * ratio,
-    ),
-    intermediate: Math.round(
-      lower.intermediate + (upper.intermediate - lower.intermediate) * ratio,
-    ),
-    advanced: Math.round(
-      lower.advanced + (upper.advanced - lower.advanced) * ratio,
-    ),
-    elite: Math.round(lower.elite + (upper.elite - lower.elite) * ratio),
+    physicallyActive: interpolate("physicallyActive"),
+    beginner: interpolate("beginner"),
+    intermediate: interpolate("intermediate"),
+    advanced: interpolate("advanced"),
+    elite: interpolate("elite"),
   };
 };
 

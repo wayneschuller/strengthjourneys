@@ -34,6 +34,8 @@ import { useLocalStorage } from "usehooks-ts";
 
 import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
 
+const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
+
 export default function E1RMCalculator() {
   const { toast } = useToast();
   const [reps, setReps] = useStateFromQueryOrLocalStorage("reps", 5); // Will be a string
@@ -113,20 +115,49 @@ export default function E1RMCalculator() {
   };
 
   const handleCopyToClipboard = async () => {
+    const encodeQueryParam = (param) => encodeURIComponent(param);
+
+    const createQueryString = (params) => {
+      return Object.entries(params)
+        .map(
+          ([key, value]) =>
+            `${encodeQueryParam(key)}=${encodeQueryParam(value)}`,
+        )
+        .join("&");
+    };
+
     let sentenceToCopy;
 
     if (!isAdvancedAnalysis) {
+      const queryString = createQueryString({
+        reps: reps,
+        weight: weight,
+        isMetric: isMetric,
+        formula: e1rmFormula,
+      });
+
       sentenceToCopy = `Lifting ${reps}@${weight}${
         isMetric ? "kg" : "lb"
       } indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${
         isMetric ? "kg" : "lb"
-      } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?reps=${reps}&weight=${weight}&isMetric=${isMetric}&formula=${e1rmFormula})`;
+      } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?${queryString})`;
     } else {
+      const queryString = createQueryString({
+        reps: reps,
+        weight: weight,
+        isMetric: isMetric,
+        formula: e1rmFormula,
+        AthleteAge: age,
+        AthleteBodyWeight: bodyWeight,
+        AthleteSex: sex,
+        AthleteLiftType: liftType,
+      });
+
       sentenceToCopy = `Lifting ${reps}@${weight}${
         isMetric ? "kg" : "lb"
       } indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${
         isMetric ? "kg" : "lb"
-      } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?reps=${reps}&weight=${weight}&isMetric=${isMetric}&formula=${e1rmFormula})`;
+      } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?${queryString})`;
     }
 
     // Create a temporary textarea element
@@ -435,12 +466,12 @@ function E1RMFormulaRadioGroup({
   isMetric,
 }) {
   return (
-    <div className="flex flex-col space-y-2">
-      <Label className="text-sm font-light">E1RM Algorithm</Label>
+    <div className="">
+      <Label className="text-sm font-light">E1RM Algorithm:</Label>
       <RadioGroup
         value={e1rmFormula}
         onValueChange={setE1rmFormula}
-        className="flex flex-col space-y-1"
+        className="mt-2 grid grid-cols-2 space-y-1 md:grid-cols-1"
       >
         {formulae.map((formula) => (
           <div key={formula} className="flex items-center space-x-2">

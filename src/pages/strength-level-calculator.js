@@ -12,7 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { devLog } from "@/lib/processing-utils";
 
 import { Label } from "@/components/ui/label";
 import {
@@ -23,7 +22,10 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useLocalStorage } from "usehooks-ts";
-import { LiftingStandardsKG } from "@/lib/lifting-standards-kg";
+import {
+  interpolateStandard,
+  LiftingStandardsKG,
+} from "@/lib/lifting-standards-kg";
 import { Separator } from "@/components/ui/separator";
 
 // Strength Level Calculator
@@ -228,130 +230,3 @@ const MiniCard = ({ levelString, weight, unitType }) => (
     </div>
   </div>
 );
-
-// Take the standards data and interpolate the standards for the given body weight
-// FIXME: it needs to work when age or weight exceed the dataset
-const interpolateStandard = (age, weightKG, gender, liftType, standards) => {
-  // devLog( `interpolateStandard. age: ${age}, weight: ${weight}, gender: ${gender}, liftType: ${liftType}`,);
-  // Filter the dataset based on gender and liftType
-  const filteredStandards = standards.filter(
-    (item) => item.gender === gender && item.liftType === liftType,
-  );
-
-  if (filteredStandards.length === 0) return null; // Handle edge case
-
-  // Sort the filtered dataset by age and bodyWeight
-  filteredStandards.sort(
-    (a, b) => a.age - b.age || a.bodyWeight - b.bodyWeight,
-  );
-
-  // Find the two closest points for age
-  let ageLower, ageUpper;
-
-  for (let i = 0; i < filteredStandards.length - 1; i++) {
-    const current = filteredStandards[i];
-    const next = filteredStandards[i + 1];
-
-    if (age >= current.age && age <= next.age) {
-      ageLower = current;
-      ageUpper = next;
-      break;
-    }
-  }
-
-  if (!ageLower || !ageUpper) {
-    devLog(`could not interpolate age`);
-    return null; // Handle edge cases
-  }
-
-  // devLog(`ageLower: ${ageLower.age}, ageUpper: ${ageUpper.age}`);
-
-  // Interpolate between bodyweight values within the lower and upper age ranges
-  const interpolateByBodyWeight = (agePoint) => {
-    let weightLower, weightUpper;
-
-    for (let i = 0; i < filteredStandards.length - 1; i++) {
-      const current = filteredStandards[i];
-      const next = filteredStandards[i + 1];
-
-      if (
-        current.age === agePoint &&
-        weightKG >= current.bodyWeight &&
-        weightKG <= next.bodyWeight
-      ) {
-        weightLower = current;
-        weightUpper = next;
-        break;
-      }
-    }
-
-    if (!weightLower || !weightUpper) {
-      devLog(
-        `could not interpolate weight: weightLower: ${weightLower}, weightUpper: ${weightUpper}`,
-      );
-      return null; // Handle edge cases
-    }
-
-    const weightRatio =
-      (weightKG - weightLower.bodyWeight) /
-      (weightUpper.bodyWeight - weightLower.bodyWeight);
-    return {
-      physicallyActive: Math.round(
-        weightLower.physicallyActive +
-          (weightUpper.physicallyActive - weightLower.physicallyActive) *
-            weightRatio,
-      ),
-      beginner: Math.round(
-        weightLower.beginner +
-          (weightUpper.beginner - weightLower.beginner) * weightRatio,
-      ),
-      intermediate: Math.round(
-        weightLower.intermediate +
-          (weightUpper.intermediate - weightLower.intermediate) * weightRatio,
-      ),
-      advanced: Math.round(
-        weightLower.advanced +
-          (weightUpper.advanced - weightLower.advanced) * weightRatio,
-      ),
-      elite: Math.round(
-        weightLower.elite +
-          (weightUpper.elite - weightLower.elite) * weightRatio,
-      ),
-    };
-  };
-
-  // Interpolate by bodyweight within the lower and upper age points
-  const lowerValues = interpolateByBodyWeight(ageLower.age);
-  const upperValues = interpolateByBodyWeight(ageUpper.age);
-
-  if (!lowerValues || !upperValues) {
-    // devLog( `could not interpolate values: lowerValues: ${lowerValues}, upperValues: ${upperValues}`,);
-    return null; // Handle edge cases
-  }
-
-  // Interpolate between the values obtained for lower and upper ages
-  const ageRatio = (age - ageLower.age) / (ageUpper.age - ageLower.age);
-
-  return {
-    physicallyActive: Math.round(
-      lowerValues.physicallyActive +
-        (upperValues.physicallyActive - lowerValues.physicallyActive) *
-          ageRatio,
-    ),
-    beginner: Math.round(
-      lowerValues.beginner +
-        (upperValues.beginner - lowerValues.beginner) * ageRatio,
-    ),
-    intermediate: Math.round(
-      lowerValues.intermediate +
-        (upperValues.intermediate - lowerValues.intermediate) * ageRatio,
-    ),
-    advanced: Math.round(
-      lowerValues.advanced +
-        (upperValues.advanced - lowerValues.advanced) * ageRatio,
-    ),
-    elite: Math.round(
-      lowerValues.elite + (upperValues.elite - lowerValues.elite) * ageRatio,
-    ),
-  };
-};

@@ -21,6 +21,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { useLocalStorage } from "usehooks-ts";
 import {
   interpolateStandard,
@@ -117,19 +118,17 @@ export default function StrengthLevelCalculator() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-col items-center justify-between gap-8 md:flex-row md:justify-stretch">
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="age" className="text-xl">
-                Age
-              </Label>
-              <Input
-                id="age"
-                type="number"
-                placeholder="Enter your age"
-                className="w-20 text-xl"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-              />
-            </div>
+            <Label htmlFor="age" className="text-xl">
+              Age: {age}
+            </Label>
+            <Slider
+              min={13}
+              max={100}
+              step={1}
+              value={[age]}
+              onValueChange={(values) => setAge(values[0])}
+              className="mt-2 flex-1"
+            />
             <div className="flex items-center space-x-2">
               <Label htmlFor="gender" className="text-xl">
                 Gender
@@ -164,6 +163,14 @@ export default function StrengthLevelCalculator() {
               <UnitChooser
                 isMetric={isMetric}
                 onSwitchChange={toggleIsMetric}
+              />
+              <Slider
+                min={isMetric ? 40 : 100}
+                max={isMetric ? 230 : 500}
+                step={1}
+                value={[bodyWeight]}
+                onValueChange={(values) => setBodyWeight(values[0])}
+                className="mt-2 min-w-40 flex-1"
               />
             </div>
           </div>

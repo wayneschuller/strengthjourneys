@@ -113,11 +113,21 @@ export default function E1RMCalculator() {
   };
 
   const handleCopyToClipboard = async () => {
-    const sentenceToCopy = `Lifting ${reps}@${weight}${
-      isMetric ? "kg" : "lb"
-    } indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${
-      isMetric ? "kg" : "lb"
-    } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?reps=${reps}&weight=${weight}&isMetric=${isMetric}&formula=${e1rmFormula})`;
+    let sentenceToCopy;
+
+    if (!isAdvancedAnalysis) {
+      sentenceToCopy = `Lifting ${reps}@${weight}${
+        isMetric ? "kg" : "lb"
+      } indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${
+        isMetric ? "kg" : "lb"
+      } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?reps=${reps}&weight=${weight}&isMetric=${isMetric}&formula=${e1rmFormula})`;
+    } else {
+      sentenceToCopy = `Lifting ${reps}@${weight}${
+        isMetric ? "kg" : "lb"
+      } indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${
+        isMetric ? "kg" : "lb"
+      } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?reps=${reps}&weight=${weight}&isMetric=${isMetric}&formula=${e1rmFormula})`;
+    }
 
     // Create a temporary textarea element
     const textarea = document.createElement("textarea");

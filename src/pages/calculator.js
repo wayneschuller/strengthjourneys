@@ -128,6 +128,8 @@ export default function E1RMCalculator() {
 
     let sentenceToCopy;
 
+    const unit = getUnitSuffix(isMetric);
+
     if (!isAdvancedAnalysis) {
       const queryString = createQueryString({
         reps: reps,
@@ -136,11 +138,10 @@ export default function E1RMCalculator() {
         formula: e1rmFormula,
       });
 
-      sentenceToCopy = `Lifting ${reps}@${weight}${
-        isMetric ? "kg" : "lb"
-      } indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${
-        isMetric ? "kg" : "lb"
-      } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?${queryString})`;
+      sentenceToCopy =
+        `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${unit}, ` +
+        `using the ${e1rmFormula} algorithm.` +
+        `\n(Source: https://strengthjourneys.xyz/calculator?${queryString})`;
     } else {
       const queryString = createQueryString({
         reps: reps,
@@ -153,11 +154,11 @@ export default function E1RMCalculator() {
         AthleteLiftType: liftType,
       });
 
-      sentenceToCopy = `${liftType} ${reps}@${weight}${
-        isMetric ? "kg" : "lb"
-      } indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${
-        isMetric ? "kg" : "lb"
-      } using the ${e1rmFormula} algorithm.\nLift Strength Rating: ${liftRating}\n(Source: https://strengthjourneys.xyz/calculator?${queryString})`;
+      sentenceToCopy =
+        `${liftType} ${reps}@${weight}${unit} indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${unit}, ` +
+        `using the ${e1rmFormula} algorithm.\n` +
+        `Lift Strength Rating: ${liftRating}\n` +
+        `(Source: https://strengthjourneys.xyz/calculator?${queryString})`;
     }
 
     // Create a temporary textarea element

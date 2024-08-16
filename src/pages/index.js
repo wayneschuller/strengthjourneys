@@ -83,16 +83,17 @@ const featureArticles = [
 ];
 
 export default function Home() {
-  const title = "Strength Journeys";
+  const title =
+    "Strength Journeys | Free Barbell Lifting Progress Tracker and Analysis Tools";
   const URL = "https://www.strengthjourneys.xyz/";
   const description =
-    "Strength Journeys is a free web app to visualize your barbell lifting data from Google Sheets. Strength progress tracking, one rep max calculator, gym timer and more. Fully open source. Chalk not included.";
+    "Track and analyze your barbell lifting progress with Strength Journeys. Free tools include PR analyzer, strength visualizer, 1RM calculator, and more. Integrate with Google Sheets for easy data management. Open source and perfect for powerlifters and strength athletes.";
 
   return (
     <div className="mx-4 mb-4 md:mx-[5vw]">
       <Head>
         <title>{title}</title>
-        <meta name="description" content="Strength Journeys" />
+        <meta name="description" content={description} />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link
           rel="icon"
@@ -114,10 +115,8 @@ export default function Home() {
         />
       </Head>
 
-      {/* <Image src="/new_logo.png" width={100} height={100} alt="logo" /> */}
-
       <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
-        Welcome to {title}
+        Welcome to Strength Journeys
       </h1>
 
       <PageDescription />

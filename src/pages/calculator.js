@@ -51,6 +51,10 @@ export default function E1RMCalculator() {
     "AtheleteBodyWeight",
     200,
   );
+  const [liftType, setLiftType] = useStateFromQueryOrLocalStorage(
+    "AthleteLiftType",
+    "",
+  );
   const [parent] = useAutoAnimate(/* optional config */);
 
   // FIXME: put inline
@@ -253,6 +257,8 @@ export default function E1RMCalculator() {
                   isMetric={isMetric}
                   bodyWeight={bodyWeight}
                   setBodyWeight={setBodyWeight}
+                  liftType={liftType}
+                  setLiftType={setLiftType}
                 />
               )}
             </div>
@@ -263,6 +269,8 @@ export default function E1RMCalculator() {
                 isMetric={isMetric}
                 e1rmFormula={e1rmFormula}
                 estimateE1RM={estimateE1RM}
+                isAdvancedAnalysis={isAdvancedAnalysis}
+                liftType={liftType}
               />
             </div>
             <div className="order-2 place-self-center md:pl-4 lg:order-3 lg:place-self-auto">
@@ -311,6 +319,8 @@ const E1RMSummaryCard = ({
   isMetric,
   e1rmFormula,
   estimateE1RM,
+  isAdvancedAnalysis,
+  liftType,
 }) => {
   return (
     <Card className="border-4">
@@ -319,6 +329,7 @@ const E1RMSummaryCard = ({
       </CardHeader>
       <CardContent>
         <div className="text-center">
+          {isAdvancedAnalysis && `${liftType} `}
           {reps}@{weight}
           {isMetric ? "kg" : "lb"}
         </div>
@@ -396,13 +407,15 @@ function E1RMFormulaRadioGroup({
   );
 }
 
-function OptionalAtheleBioData({ isMetric, bodyWeight, setBodyWeight }) {
+function OptionalAtheleBioData({
+  isMetric,
+  bodyWeight,
+  setBodyWeight,
+  liftType,
+  setLiftType,
+}) {
   const [age, setAge] = useStateFromQueryOrLocalStorage("AthleteAge", 30);
   const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
-  const [liftType, setLiftType] = useStateFromQueryOrLocalStorage(
-    "AthleteLiftType",
-    "",
-  );
   const uniqueLiftNames = Array.from(
     new Set(LiftingStandardsKG.map((item) => item.liftType)),
   );

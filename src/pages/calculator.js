@@ -2,6 +2,8 @@
 
 import Head from "next/head";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { Button } from "@/components/ui/button";
 import { UnitChooser } from "@/components/unit-type-chooser";
@@ -37,6 +39,8 @@ import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-
 const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 
 export default function E1RMCalculator() {
+  const router = useRouter();
+
   const { toast } = useToast();
   const [reps, setReps] = useStateFromQueryOrLocalStorage("reps", 5); // Will be a string
   const [weight, setWeight] = useStateFromQueryOrLocalStorage("weight", 225); // Will be a string
@@ -64,6 +68,16 @@ export default function E1RMCalculator() {
   const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
   const [parent] = useAutoAnimate(/* optional config */);
   const isClient = useIsClient();
+
+  useEffect(() => {
+    if (router.isReady) {
+      const { AthleteLiftType, AthleteSex, AtheleteBodyWeight, AthleteAge } =
+        router.query;
+      if (AthleteLiftType && AthleteSex && AtheleteBodyWeight && AthleteAge) {
+        setIsAdvancedAnalysis(true);
+      }
+    }
+  }, [router.isReady, router.query]);
 
   if (!isClient) return null; // Bypass Next.js hydration drama
 

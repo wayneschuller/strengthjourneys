@@ -703,30 +703,7 @@ export const interpolateStandard = (
     if (weightRatio > 1) weightRatio = 1;
 
     // devLog( `weightRatio: ${weightRatio} (weight: ${bodyWeightKG}, data range: ${lower}-${upper})`,);
-
-    return {
-      physicallyActive: Math.round(
-        weightLower.physicallyActive +
-          (weightUpper.physicallyActive - weightLower.physicallyActive) *
-            weightRatio,
-      ),
-      beginner: Math.round(
-        weightLower.beginner +
-          (weightUpper.beginner - weightLower.beginner) * weightRatio,
-      ),
-      intermediate: Math.round(
-        weightLower.intermediate +
-          (weightUpper.intermediate - weightLower.intermediate) * weightRatio,
-      ),
-      advanced: Math.round(
-        weightLower.advanced +
-          (weightUpper.advanced - weightLower.advanced) * weightRatio,
-      ),
-      elite: Math.round(
-        weightLower.elite +
-          (weightUpper.elite - weightLower.elite) * weightRatio,
-      ),
-    };
+    return interpolateStandardsValues(weightLower, weightUpper, weightRatio);
   };
 
   // Interpolate by bodyweight within the lower and upper age points
@@ -755,26 +732,25 @@ export const interpolateStandard = (
   if (ageRatio > 1) ageRatio = 1;
   // devLog(`ageRatio: ${ageRatio} (Age: ${age} range: ${ageLower}-${ageUpper})`);
 
+  return interpolateStandardsValues(lowerValues, upperValues, ageRatio);
+};
+
+// Linearly interpolate between two sets of strength standards based on a ratio
+const interpolateStandardsValues = (lower, upper, ratio) => {
   return {
     physicallyActive: Math.round(
-      lowerValues.physicallyActive +
-        (upperValues.physicallyActive - lowerValues.physicallyActive) *
-          ageRatio,
+      lower.physicallyActive +
+        (upper.physicallyActive - lower.physicallyActive) * ratio,
     ),
     beginner: Math.round(
-      lowerValues.beginner +
-        (upperValues.beginner - lowerValues.beginner) * ageRatio,
+      lower.beginner + (upper.beginner - lower.beginner) * ratio,
     ),
     intermediate: Math.round(
-      lowerValues.intermediate +
-        (upperValues.intermediate - lowerValues.intermediate) * ageRatio,
+      lower.intermediate + (upper.intermediate - lower.intermediate) * ratio,
     ),
     advanced: Math.round(
-      lowerValues.advanced +
-        (upperValues.advanced - lowerValues.advanced) * ageRatio,
+      lower.advanced + (upper.advanced - lower.advanced) * ratio,
     ),
-    elite: Math.round(
-      lowerValues.elite + (upperValues.elite - lowerValues.elite) * ageRatio,
-    ),
+    elite: Math.round(lower.elite + (upper.elite - lower.elite) * ratio),
   };
 };

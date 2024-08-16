@@ -611,22 +611,29 @@ export const interpolateStandard = (
 
   if (filteredStandards.length === 0) return null; // Handle edge case
 
-  // Sort the filtered dataset by age and bodyWeight
-  filteredStandards.sort(
-    (a, b) => a.age - b.age || a.bodyWeight - b.bodyWeight,
-  );
+  // devLog(filteredStandards);
 
   // Find the two closest points for age
   let ageLower, ageUpper;
+  const ageArray = [...new Set(filteredStandards.map((obj) => obj.age))];
+  devLog(ageArray);
 
-  for (let i = 0; i < filteredStandards.length - 1; i++) {
-    const current = filteredStandards[i];
-    const next = filteredStandards[i + 1];
-
-    if (age >= current.age && age <= next.age) {
-      ageLower = current;
-      ageUpper = next;
-      break;
+  if (age < ageArray[0]) {
+    // If age is smaller than the first entry, use the first two entries
+    ageLower = ageArray[0];
+    ageUpper = ageArray[1];
+  } else if (age > ageArray[ageArray.length - 1]) {
+    // If age is higher than the last entry, use the last two entries
+    ageLower = ageArray[ageArray.length - 2];
+    ageUpper = ageArray[ageArray.length - 1];
+  } else {
+    // Normal case, find the surrounding ages
+    for (let i = 0; i < ageArray.length; i++) {
+      if (ageArray[i] >= age) {
+        ageUpper = ageArray[i];
+        ageLower = ageArray[i - 1];
+        break;
+      }
     }
   }
 
@@ -635,7 +642,8 @@ export const interpolateStandard = (
     return null; // Handle edge cases
   }
 
-  // devLog(`ageLower: ${ageLower.age}, ageUpper: ${ageUpper.age}`);
+  devLog(`ageLower: ${ageLower}, ageUpper: ${ageUpper}`);
+
   // Interpolate between bodyweight values within the lower and upper age ranges
   const interpolateByBodyWeight = (agePoint) => {
     let weightLower, weightUpper;
@@ -691,8 +699,8 @@ export const interpolateStandard = (
   };
 
   // Interpolate by bodyweight within the lower and upper age points
-  const lowerValues = interpolateByBodyWeight(ageLower.age);
-  const upperValues = interpolateByBodyWeight(ageUpper.age);
+  const lowerValues = interpolateByBodyWeight(ageLower);
+  const upperValues = interpolateByBodyWeight(ageUpper);
 
   if (!lowerValues || !upperValues) {
     // devLog( `could not interpolate values: lowerValues: ${lowerValues}, upperValues: ${upperValues}`,);
@@ -700,7 +708,10 @@ export const interpolateStandard = (
   }
 
   // Interpolate between the values obtained for lower and upper ages
-  const ageRatio = (age - ageLower.age) / (ageUpper.age - ageLower.age);
+  let ageRatio = (age - ageLower) / (ageUpper - ageLower);
+  if (ageRatio < 0) ageRatio = 0;
+  if (ageRatio > 1) ageRatio = 1;
+  devLog(ageRatio);
 
   return {
     physicallyActive: Math.round(

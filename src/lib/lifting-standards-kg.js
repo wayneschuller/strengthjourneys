@@ -603,9 +603,7 @@ export const interpolateStandard = (
   liftType,
   standards,
 ) => {
-  devLog(
-    `interpolateStandard. age: ${age}, weight: ${weightKG}, gender: ${gender}, liftType: ${liftType}`,
-  );
+  // devLog( `interpolateStandard. age: ${age}, weight: ${weightKG}, gender: ${gender}, liftType: ${liftType}`,);
   // Filter the dataset based on gender and liftType
   // devLog(`standards:`); devLog(standards);
   const filteredStandards = standards.filter(
@@ -621,7 +619,7 @@ export const interpolateStandard = (
   const ageArray = [...new Set(filteredStandards.map((obj) => obj.age))];
   // devLog(ageArray);
 
-  if (age < ageArray[0]) {
+  if (age <= ageArray[0]) {
     // If age is smaller than the first entry, use the first two entries
     ageLower = ageArray[0];
     ageUpper = ageArray[1];
@@ -645,8 +643,6 @@ export const interpolateStandard = (
     return null; // Handle edge cases
   }
 
-  devLog(`ageLower: ${ageLower}, ageUpper: ${ageUpper}`);
-
   // Interpolate between bodyweight values within a lower and upper age range point for an arbitrary bodyweight in KG
   // We assume the agePoint is an exact match for an age point in the data model set
   // Return an object with the interpolated values for each rating level
@@ -659,17 +655,15 @@ export const interpolateStandard = (
       (item) => item.age === agePoint,
     );
 
-    devLog(`ageFilteredStandards: (agePoint: ${agePoint})`);
-    devLog(ageFilteredStandards);
+    // devLog(`ageFilteredStandards: (agePoint: ${agePoint})`); devLog(ageFilteredStandards);
 
     let lower, upper;
     const weightArray = [
       ...new Set(ageFilteredStandards.map((obj) => obj.bodyWeight)),
     ];
-    devLog(weightArray);
 
     // Find the two nearest weights in our data
-    if (bodyWeightKG < weightArray[0]) {
+    if (bodyWeightKG <= weightArray[0]) {
       // If weight is smaller than the first entry, use the first two entries
       lower = weightArray[0];
       upper = weightArray[1];
@@ -689,10 +683,14 @@ export const interpolateStandard = (
     }
 
     let weightLower, weightUpper;
-    weightUpper = filteredStandards.find((item) => item.bodyWeight === upper);
-    weightLower = filteredStandards.find((item) => item.bodyWeight === lower);
+    weightUpper = ageFilteredStandards.find(
+      (item) => item.bodyWeight === upper,
+    );
+    weightLower = ageFilteredStandards.find(
+      (item) => item.bodyWeight === lower,
+    );
 
-    devLog(`weightUpper: ${weightUpper}, weightLower: ${weightLower}`);
+    // devLog( `weightUpper: ${JSON.stringify(weightUpper)}, weightLower: ${JSON.stringify(weightLower)}`,);
     if (!weightLower || !weightUpper) {
       devLog(
         `could not interpolate weight: weightLower: ${weightLower}, weightUpper: ${weightUpper}`,
@@ -704,7 +702,7 @@ export const interpolateStandard = (
     if (weightRatio < 0) weightRatio = 0;
     if (weightRatio > 1) weightRatio = 1;
 
-    devLog(`weightRatio: ${weightRatio}`);
+    // devLog( `weightRatio: ${weightRatio} (weight: ${bodyWeightKG}, data range: ${lower}-${upper})`,);
 
     return {
       physicallyActive: Math.round(
@@ -737,14 +735,15 @@ export const interpolateStandard = (
     weightKG,
     filteredStandards,
   );
+  // devLog(`interpolate by weight: age ${ageLower}, weight: ${weightKG} `); devLog(lowerValues);
+
   const upperValues = interpolateByBodyWeight(
     ageUpper,
     weightKG,
     filteredStandards,
   );
+  // devLog(`interpolate by weight: age ${ageUpper}, weight: ${weightKG} `); devLog(upperValues);
 
-  devLog(upperValues);
-  devLog(lowerValues);
   if (!lowerValues || !upperValues) {
     // devLog( `could not interpolate values: lowerValues: ${lowerValues}, upperValues: ${upperValues}`,);
     return null; // Handle edge cases
@@ -754,7 +753,7 @@ export const interpolateStandard = (
   let ageRatio = (age - ageLower) / (ageUpper - ageLower);
   if (ageRatio < 0) ageRatio = 0;
   if (ageRatio > 1) ageRatio = 1;
-  devLog(`ageRatio: ${ageRatio}`);
+  // devLog(`ageRatio: ${ageRatio} (Age: ${age} range: ${ageLower}-${ageUpper})`);
 
   return {
     physicallyActive: Math.round(

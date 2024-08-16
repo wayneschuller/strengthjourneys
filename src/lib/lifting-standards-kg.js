@@ -692,19 +692,17 @@ const interpolateStandardsValues = (lower, upper, ratio) => {
 // If value is higher than the highest point return the last two
 //---------------------------------------------------------------------------------------------------------------------------
 const findNearestPoints = (value, sortedArray) => {
-  if (value <= sortedArray[0]) {
-    return { lower: sortedArray[0], upper: sortedArray[1] };
-  } else if (value > sortedArray[sortedArray.length - 1]) {
-    return {
-      lower: sortedArray[sortedArray.length - 2],
-      upper: sortedArray[sortedArray.length - 1],
-    };
-  } else {
-    for (let i = 0; i < sortedArray.length; i++) {
-      if (sortedArray[i] >= value) {
-        return { lower: sortedArray[i - 1], upper: sortedArray[i] };
-      }
+  const [first, second] = sortedArray;
+  const [secondLast, last] = sortedArray.slice(-2);
+
+  if (value <= first) return { lower: first, upper: second };
+  if (value > last) return { lower: secondLast, upper: last };
+
+  for (let i = 0; i < sortedArray.length; i++) {
+    if (sortedArray[i] >= value) {
+      return { lower: sortedArray[i - 1], upper: sortedArray[i] };
     }
   }
+
   return { lower: null, upper: null };
 };

@@ -140,8 +140,8 @@ export default function E1RMCalculator() {
 
       sentenceToCopy =
         `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${unit}, ` +
-        `using the ${e1rmFormula} algorithm.` +
-        `\n(Source: https://strengthjourneys.xyz/calculator?${queryString})`;
+        `using the ${e1rmFormula} algorithm.\n` +
+        `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
     } else {
       const queryString = createQueryString({
         reps: reps,
@@ -158,7 +158,7 @@ export default function E1RMCalculator() {
         `${liftType} ${reps}@${weight}${unit} indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${unit}, ` +
         `using the ${e1rmFormula} algorithm.\n` +
         `Lift Strength Rating: ${liftRating}\n` +
-        `(Source: https://strengthjourneys.xyz/calculator?${queryString})`;
+        `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
     }
 
     // Create a temporary textarea element
@@ -213,8 +213,6 @@ export default function E1RMCalculator() {
       isMetric,
       e1rmFormula,
     );
-
-  if (!liftRating) liftRating = "";
 
   return (
     <div className="mx-4 md:mx-[5vw]">
@@ -339,9 +337,6 @@ export default function E1RMCalculator() {
                 estimateE1RM={estimateE1RM}
                 isAdvancedAnalysis={isAdvancedAnalysis}
                 liftType={liftType}
-                age={age}
-                bodyWeight={bodyWeight}
-                sex={sex}
                 liftRating={liftRating}
               />
             </div>
@@ -394,11 +389,8 @@ const E1RMSummaryCard = ({
   isAdvancedAnalysis,
   liftRating,
   liftType,
-  bodyWeight,
-  age,
-  sex,
 }) => {
-  devLog(`liftRaing: ${liftRating}`);
+  devLog(`liftRating: ${liftRating}`);
 
   return (
     <Card className="border-4">
@@ -507,7 +499,7 @@ function OptionalAtheleBioData({
     <div className="flex flex-col gap-4 px-4">
       <div>
         <div className="flex flex-row gap-2">
-          <Label>Age: {age} </Label>
+          <Label>Age: {age}</Label>
         </div>
         <Slider
           min={13}

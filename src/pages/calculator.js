@@ -232,7 +232,7 @@ export default function E1RMCalculator() {
 
           <div className="my-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="order-3 lg:order-1" ref={parent}>
-              <div class="mb-4 flex gap-1">
+              <div class="mb-4 flex flex-row gap-2">
                 <Checkbox
                   id="advanced"
                   checked={isAdvancedAnalysis}

@@ -594,8 +594,8 @@ export const LiftingStandardsKG = [
     { age: 85, liftType: "Strict Press", gender: "female", bodyWeight: 136, physicallyActive: 11, beginner: 15, intermediate: 17, advanced: 22, elite: 29 },
 ];
 
-// Take the standards data and interpolate the standards for the given body weight
-// FIXME: it needs to work when age or weight exceed the dataset
+// Take the standards data and interpolate the standards for a unique age and body weight
+// The user is then given a custom set of 5 standards
 export const interpolateStandard = (
   age,
   weightKG,

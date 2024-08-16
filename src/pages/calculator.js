@@ -168,6 +168,22 @@ export default function E1RMCalculator() {
 
   const sortedFormulae = getSortedFormulae(reps, weight);
 
+  let liftRating = "";
+
+  if (isAdvancedAnalysis)
+    liftRating = getStandardRatingString(
+      age,
+      bodyWeight,
+      sex,
+      reps,
+      weight,
+      liftType,
+      isMetric,
+      e1rmFormula,
+    );
+
+  if (!liftRating) liftRating = "";
+
   return (
     <div className="mx-4 md:mx-[5vw]">
       <Head>
@@ -294,6 +310,7 @@ export default function E1RMCalculator() {
                 age={age}
                 bodyWeight={bodyWeight}
                 sex={sex}
+                liftRating={liftRating}
               />
             </div>
             <div className="order-2 place-self-center md:pl-4 lg:order-3 lg:place-self-auto">
@@ -343,42 +360,13 @@ const E1RMSummaryCard = ({
   e1rmFormula,
   estimateE1RM,
   isAdvancedAnalysis,
+  liftRating,
   liftType,
   bodyWeight,
   age,
   sex,
 }) => {
-  const bodyWeightKG = isMetric ? bodyWeight : bodyWeight * 2.204;
-  const standard = interpolateStandard(
-    age,
-    bodyWeightKG,
-    sex,
-    liftType,
-    LiftingStandardsKG,
-  );
-
-  let liftRating;
-
-  const oneRepMax = estimateE1RM(reps, weight, e1rmFormula);
-
-  if (standard) {
-    const { physicallyActive, beginner, intermediate, advanced, elite } =
-      standard;
-
-    if (oneRepMax < physicallyActive) {
-      liftRating = "Below Physically Active";
-    } else if (oneRepMax < beginner) {
-      liftRating = "Physically Active";
-    } else if (oneRepMax < intermediate) {
-      liftRating = "Beginner";
-    } else if (oneRepMax < advanced) {
-      liftRating = "Intermediate";
-    } else if (oneRepMax < elite) {
-      liftRating = "Advanced";
-    } else {
-      liftRating = "Elite";
-    }
-  }
+  devLog(`liftRaing: ${liftRating}`);
 
   return (
     <Card className="border-4">
@@ -395,7 +383,7 @@ const E1RMSummaryCard = ({
           {estimateE1RM(reps, weight, e1rmFormula)}
           {isMetric ? "kg" : "lb"}
         </div>
-        {isAdvancedAnalysis && standard && (
+        {isAdvancedAnalysis && liftRating && (
           <div className="text-center text-xl">{liftRating}</div>
         )}
       </CardContent>
@@ -524,7 +512,7 @@ function OptionalAtheleBioData({
           </Label>
         </div>
         <Slider
-          min={1}
+          min={55}
           max={300}
           step={1}
           value={[bodyWeight]}
@@ -546,3 +534,48 @@ function OptionalAtheleBioData({
     </div>
   );
 }
+
+export const getStandardRatingString = (
+  age,
+  bodyWeight,
+  sex,
+  reps,
+  weight,
+  liftType,
+  isMetric,
+  e1rmFormula,
+) => {
+  const bodyWeightKG = isMetric ? bodyWeight : bodyWeight * 2.204;
+  const standard = interpolateStandard(
+    age,
+    bodyWeightKG,
+    sex,
+    liftType,
+    LiftingStandardsKG,
+  );
+
+  let liftRating;
+
+  const oneRepMax = estimateE1RM(reps, weight, e1rmFormula);
+
+  if (standard) {
+    const { physicallyActive, beginner, intermediate, advanced, elite } =
+      standard;
+
+    if (oneRepMax < physicallyActive) {
+      liftRating = "Below Physically Active";
+    } else if (oneRepMax < beginner) {
+      liftRating = "Physically Active";
+    } else if (oneRepMax < intermediate) {
+      liftRating = "Beginner";
+    } else if (oneRepMax < advanced) {
+      liftRating = "Intermediate";
+    } else if (oneRepMax < elite) {
+      liftRating = "Advanced";
+    } else {
+      liftRating = "Elite";
+    }
+  }
+
+  return liftRating;
+};

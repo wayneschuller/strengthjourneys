@@ -596,6 +596,7 @@ export const LiftingStandardsKG = [
 
 // Take the standards data and interpolate the standards for a unique age and body weight
 // The user is then given a custom set of 5 standards
+// Warning: Multidimensional interpolation ahead.
 export const interpolateStandard = (
   age,
   weightKG,
@@ -614,7 +615,7 @@ export const interpolateStandard = (
   const ageArray = [...new Set(filteredStandards.map((obj) => obj.age))];
   const { lower: ageLower, upper: ageUpper } = findNearestPoints(age, ageArray);
 
-  // Interpolate by bodyweight within the lower and upper nearest age points
+  // Now we have two valid age points in the data, for each one get the interpolated version based on unique bodyweight
   const lowerValues = interpolateByBodyWeight(
     ageLower,
     weightKG,
@@ -634,9 +635,8 @@ export const interpolateStandard = (
 
   // Interpolate between the values obtained for lower and upper ages
   let ageRatio = (age - ageLower) / (ageUpper - ageLower);
-  if (ageRatio < 0) ageRatio = 0;
-  if (ageRatio > 1) ageRatio = 1;
-  // devLog(`ageRatio: ${ageRatio} (Age: ${age} range: ${ageLower}-${ageUpper})`);
+  if (ageRatio < 0) ageRatio = 0; // Younguns cannot go below the lowest age standard
+  if (ageRatio > 1) ageRatio = 1; // Oldies will simply get results for the highest age standard
 
   return interpolateStandardsValues(lowerValues, upperValues, ageRatio);
 };

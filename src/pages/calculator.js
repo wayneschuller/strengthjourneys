@@ -233,10 +233,13 @@ export default function E1RMCalculator() {
   return (
     <div className="mx-4 md:mx-[5vw]">
       <Head>
-        <title>E1RM Calculator (Strength Journeys)</title>
+        <title>
+          One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for
+          Strength Athletes
+        </title>
         <meta
           name="description"
-          content="E1RM One Rep Max Calculator App (Strength Journeys)"
+          content="Calculate your one-rep max (1RM) instantly with our free E1RM calculator. Perfect for weightlifters, powerlifters, and strength athletes of all levels. Get accurate estimates using multiple formulas, track your progress, and optimize your training. Try our advanced analysis for personalized insights based on age, weight, and lift type. Trusted by thousands of lifters to set new PRs and achieve strength goals."
         />
       </Head>
 

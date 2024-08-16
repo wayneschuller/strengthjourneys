@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage, useIsClient } from "usehooks-ts";
 
 import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
 
@@ -62,8 +62,10 @@ export default function E1RMCalculator() {
   );
   const [age, setAge] = useStateFromQueryOrLocalStorage("AthleteAge", 30);
   const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
-
   const [parent] = useAutoAnimate(/* optional config */);
+  const isClient = useIsClient();
+
+  if (!isClient) return null; // Bypass Next.js hydration drama
 
   // FIXME: put inline
   const handleWeightSliderChange = (value) => {
@@ -298,7 +300,7 @@ export default function E1RMCalculator() {
 
           <div className="my-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="order-3 lg:order-1" ref={parent}>
-              <div class="mb-4 flex flex-row gap-2">
+              <div className="mb-4 flex flex-row gap-2">
                 <Checkbox
                   id="advanced"
                   checked={isAdvancedAnalysis}

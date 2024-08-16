@@ -28,9 +28,11 @@ import {
   LiftingStandardsKG,
 } from "@/lib/lifting-standards-kg";
 import { Separator } from "@/components/ui/separator";
+import { useIsClient } from "usehooks-ts";
 
 // Strength Level Calculator
 export default function StrengthLevelCalculator() {
+  const isClient = useIsClient();
   const [age, setAge] = useLocalStorage("AthleteAge", 30);
   const [isMetric, setIsMetric] = useLocalStorage("calcIsMetric", false, {
     initializeWithValue: false,
@@ -77,6 +79,8 @@ export default function StrengthLevelCalculator() {
 
     setStandards(newStandards);
   }, [age, sex, bodyWeight, isMetric]);
+
+  if (!isClient) return null; // Bypass Next.js hydration drama
 
   const toggleIsMetric = (isMetric) => {
     let newBodyWeight;

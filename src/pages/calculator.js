@@ -153,11 +153,11 @@ export default function E1RMCalculator() {
         AthleteLiftType: liftType,
       });
 
-      sentenceToCopy = `Lifting ${reps}@${weight}${
+      sentenceToCopy = `${liftType} ${reps}@${weight}${
         isMetric ? "kg" : "lb"
       } indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${
         isMetric ? "kg" : "lb"
-      } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?${queryString})`;
+      } using the ${e1rmFormula} algorithm.\nLift Strength Rating: ${liftRating}\n(Source: https://strengthjourneys.xyz/calculator?${queryString})`;
     }
 
     // Create a temporary textarea element

@@ -509,7 +509,7 @@ function OptionalAtheleBioData({
           <Label>Age: {age} </Label>
         </div>
         <Slider
-          min={1}
+          min={13}
           max={100}
           step={1}
           value={[age]}

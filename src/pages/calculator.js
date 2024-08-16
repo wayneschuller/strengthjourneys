@@ -538,8 +538,8 @@ function OptionalAtheleBioData({
           </Label>
         </div>
         <Slider
-          min={55}
-          max={300}
+          min={isMetric ? 40 : 100}
+          max={isMetric ? 230 : 500}
           step={1}
           value={[bodyWeight]}
           onValueChange={(values) => setBodyWeight(values[0])}

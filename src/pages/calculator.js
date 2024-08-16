@@ -15,6 +15,10 @@ import {
 } from "@/components/ui/card";
 
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  interpolateStandard,
+  LiftingStandardsKG,
+} from "@/lib/lifting-standards-kg";
 
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { Input } from "@/components/ui/input";
@@ -26,7 +30,6 @@ import { cn } from "@/lib/utils";
 
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { LiftingStandardsKG } from "@/lib/lifting-standards-kg";
 import { useLocalStorage } from "usehooks-ts";
 
 import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
@@ -55,6 +58,9 @@ export default function E1RMCalculator() {
     "AthleteLiftType",
     "",
   );
+  const [age, setAge] = useStateFromQueryOrLocalStorage("AthleteAge", 30);
+  const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
+
   const [parent] = useAutoAnimate(/* optional config */);
 
   // FIXME: put inline
@@ -259,6 +265,10 @@ export default function E1RMCalculator() {
                   setBodyWeight={setBodyWeight}
                   liftType={liftType}
                   setLiftType={setLiftType}
+                  age={age}
+                  setAge={setAge}
+                  sex={sex}
+                  setSex={setSex}
                 />
               )}
             </div>
@@ -271,6 +281,9 @@ export default function E1RMCalculator() {
                 estimateE1RM={estimateE1RM}
                 isAdvancedAnalysis={isAdvancedAnalysis}
                 liftType={liftType}
+                age={age}
+                bodyWeight={bodyWeight}
+                sex={sex}
               />
             </div>
             <div className="order-2 place-self-center md:pl-4 lg:order-3 lg:place-self-auto">
@@ -321,7 +334,42 @@ const E1RMSummaryCard = ({
   estimateE1RM,
   isAdvancedAnalysis,
   liftType,
+  bodyWeight,
+  age,
+  sex,
 }) => {
+  const bodyWeightKG = isMetric ? bodyWeight : bodyWeight * 2.204;
+  const standard = interpolateStandard(
+    age,
+    bodyWeightKG,
+    sex,
+    liftType,
+    LiftingStandardsKG,
+  );
+
+  let liftRating;
+
+  const oneRepMax = estimateE1RM(reps, weight, e1rmFormula);
+
+  if (standard) {
+    const { physicallyActive, beginner, intermediate, advanced, elite } =
+      standard;
+
+    if (oneRepMax < physicallyActive) {
+      liftRating = "Below Physically Active";
+    } else if (oneRepMax < beginner) {
+      liftRating = "Physically Active";
+    } else if (oneRepMax < intermediate) {
+      liftRating = "Beginner";
+    } else if (oneRepMax < advanced) {
+      liftRating = "Intermediate";
+    } else if (oneRepMax < elite) {
+      liftRating = "Advanced";
+    } else {
+      liftRating = "Elite";
+    }
+  }
+
   return (
     <Card className="border-4">
       <CardHeader>
@@ -337,6 +385,9 @@ const E1RMSummaryCard = ({
           {estimateE1RM(reps, weight, e1rmFormula)}
           {isMetric ? "kg" : "lb"}
         </div>
+        {isAdvancedAnalysis && standard && (
+          <div className="text-center text-xl">{liftRating}</div>
+        )}
       </CardContent>
       <CardFooter className="text-muted-foreground">
         <div className="flex-1 text-center">
@@ -413,9 +464,11 @@ function OptionalAtheleBioData({
   setBodyWeight,
   liftType,
   setLiftType,
+  age,
+  setAge,
+  sex,
+  setSex,
 }) {
-  const [age, setAge] = useStateFromQueryOrLocalStorage("AthleteAge", 30);
-  const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
   const uniqueLiftNames = Array.from(
     new Set(LiftingStandardsKG.map((item) => item.liftType)),
   );

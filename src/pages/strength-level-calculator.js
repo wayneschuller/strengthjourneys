@@ -11,8 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -100,7 +98,7 @@ export default function StrengthLevelCalculator() {
 
   const unitType = isMetric ? "kg" : "lb";
 
-  const liftNames = Object.keys(standards);
+  const liftTypesFromStandards = Object.keys(standards);
 
   return (
     <div className="mx-4 flex flex-row items-center md:mx-[10vw] xl:mx-[20vw]">
@@ -171,7 +169,7 @@ export default function StrengthLevelCalculator() {
             </div>
           </div>
           <div className="flex flex-col gap-4">
-            {liftNames.map((liftType) => (
+            {liftTypesFromStandards.map((liftType) => (
               <div key={liftType} className="">
                 <h2 className="text-lg font-bold">{liftType} Standards:</h2>
                 <div className="grid grid-cols-3 md:grid-cols-5">

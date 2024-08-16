@@ -588,9 +588,8 @@ export const getStandardRatingString = (
     const { physicallyActive, beginner, intermediate, advanced, elite } =
       standard;
 
-    if (oneRepMax < physicallyActive) {
-      liftRating = "Below Physically Active";
-    } else if (oneRepMax < beginner) {
+    // We don't give anything below "Physically Active" although data may be below the model
+    if (oneRepMax < beginner) {
       liftRating = "Physically Active";
     } else if (oneRepMax < intermediate) {
       liftRating = "Beginner";

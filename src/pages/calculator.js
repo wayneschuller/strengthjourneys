@@ -150,7 +150,7 @@ export default function E1RMCalculator() {
       const queryString = createQueryString({
         reps: reps,
         weight: weight,
-        isMetric: isMetric,
+        calcIsMetric: isMetric,
         formula: e1rmFormula,
       });
 
@@ -162,7 +162,7 @@ export default function E1RMCalculator() {
       const queryString = createQueryString({
         reps: reps,
         weight: weight,
-        isMetric: isMetric,
+        calcIsMetric: isMetric,
         formula: e1rmFormula,
         AthleteAge: age,
         AthleteBodyWeight: bodyWeight,

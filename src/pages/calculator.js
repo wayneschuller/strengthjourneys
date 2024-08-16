@@ -471,7 +471,7 @@ function E1RMFormulaRadioGroup({
       <RadioGroup
         value={e1rmFormula}
         onValueChange={setE1rmFormula}
-        className="mt-2 grid grid-cols-2 space-y-1 md:grid-cols-1"
+        className="mt-2 grid grid-cols-2 space-y-1 lg:grid-cols-1"
       >
         {formulae.map((formula) => (
           <div key={formula} className="flex items-center space-x-2">

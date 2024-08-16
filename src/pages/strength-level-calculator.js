@@ -150,16 +150,8 @@ export default function StrengthLevelCalculator() {
             </div>
             <div className="flex items-center space-x-2">
               <Label htmlFor="weight" className="text-xl">
-                Bodyweight
+                Bodyweight: {bodyWeight}
               </Label>
-              <Input
-                id="weight"
-                type="number"
-                placeholder="Enter your weight"
-                value={bodyWeight}
-                onChange={(e) => setBodyWeight(e.target.value)}
-                className="w-24 text-xl"
-              />
               <UnitChooser
                 isMetric={isMetric}
                 onSwitchChange={toggleIsMetric}

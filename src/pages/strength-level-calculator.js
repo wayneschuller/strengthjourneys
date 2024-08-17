@@ -136,6 +136,7 @@ export default function StrengthLevelCalculator() {
               value={[age]}
               onValueChange={(values) => setAge(values[0])}
               className="mt-2 flex-1"
+              aria-label="Age"
             />
             <div className="flex items-center space-x-2">
               <Label htmlFor="gender" className="text-xl">
@@ -171,6 +172,7 @@ export default function StrengthLevelCalculator() {
                 value={[bodyWeight]}
                 onValueChange={(values) => setBodyWeight(values[0])}
                 className="mt-2 min-w-40 flex-1"
+                aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
               />
             </div>
           </div>

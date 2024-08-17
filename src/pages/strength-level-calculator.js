@@ -114,10 +114,14 @@ export default function StrengthLevelCalculator() {
 
       <Card className="w-full max-w-5xl">
         <CardHeader>
-          <CardTitle>Strength Level Calculator</CardTitle>
+          <CardTitle>
+            <h1>Strength Level Calculator</h1>
+          </CardTitle>
           <CardDescription>
-            How strong am I? Estimate your strength level based on age, gender,
-            and bodyweight.
+            <h2>
+              How strong am I? Estimate your strength level based on age,
+              gender, and bodyweight.
+            </h2>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

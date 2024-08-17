@@ -483,12 +483,15 @@ function E1RMFormulaRadioGroup({
   isMetric,
 }) {
   return (
-    <div className="">
-      <Label className="text-sm font-light">E1RM Algorithm:</Label>
+    <fieldset className="">
+      <legend>
+        <Label>E1RM Algorithm:</Label>
+      </legend>
       <RadioGroup
         value={e1rmFormula}
         onValueChange={setE1rmFormula}
         className="mt-2 grid grid-cols-2 space-y-1 lg:grid-cols-1"
+        aria-label="Select E1RM Algorithm"
       >
         {formulae.map((formula) => (
           <div key={formula} className="flex items-center space-x-2">
@@ -500,7 +503,7 @@ function E1RMFormulaRadioGroup({
           </div>
         ))}
       </RadioGroup>
-    </div>
+    </fieldset>
   );
 }
 

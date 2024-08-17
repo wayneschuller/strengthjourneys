@@ -529,6 +529,7 @@ function OptionalAtheleBioData({
           value={[age]}
           onValueChange={(values) => setAge(values[0])}
           className="mt-2 flex-1"
+          aria-label="Number of repetitions"
         />
       </div>
       <div className="mt-1 flex flex-row gap-4">
@@ -563,6 +564,7 @@ function OptionalAtheleBioData({
           value={[bodyWeight]}
           onValueChange={(values) => setBodyWeight(values[0])}
           className="mt-2 flex-1"
+          aria-label={`Weight in ${isMetric ? "kilograms" : "pounds"}`}
         />
       </div>
       <div>

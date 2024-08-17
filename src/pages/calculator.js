@@ -269,6 +269,7 @@ export default function E1RMCalculator() {
               max={20}
               step={1}
               onValueChange={(values) => setReps(values[0])}
+              aria-label="Reps"
             />
             <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
               {reps} reps
@@ -285,6 +286,7 @@ export default function E1RMCalculator() {
                   onChange={(event) => setWeight(event.target.value)}
                   onKeyPress={handleKeyPress}
                   onKeyDown={handleKeyDown}
+                  aria-label="Weight"
                 />
                 <UnitChooser
                   isMetric={isMetric}
@@ -311,6 +313,7 @@ export default function E1RMCalculator() {
                   onChange={(event) => setWeight(event.target.value)}
                   onKeyPress={handleKeyPress}
                   onKeyDown={handleKeyDown}
+                  aria-label="Weight"
                 />
                 <UnitChooser
                   isMetric={isMetric}

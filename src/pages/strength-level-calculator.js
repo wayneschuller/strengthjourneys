@@ -137,10 +137,11 @@ export default function StrengthLevelCalculator() {
               onValueChange={(values) => setAge(values[0])}
               className="mt-2 flex-1"
               aria-label="Age"
+              aria-labelledby="age"
             />
             <div className="flex items-center space-x-2">
-              <Label htmlFor="gender" className="text-xl">
-                Gender
+              <Label htmlFor="sex" className="text-xl">
+                Sex
               </Label>
               <Select
                 id="gender"
@@ -148,8 +149,8 @@ export default function StrengthLevelCalculator() {
                 onValueChange={(value) => setSex(value)}
                 className="min-w-52 text-xl"
               >
-                <SelectTrigger aria-label="Select gender">
-                  <SelectValue placeholder="Select gender" />
+                <SelectTrigger aria-label="Select sex">
+                  <SelectValue placeholder="Select sex" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="male">Male</SelectItem>

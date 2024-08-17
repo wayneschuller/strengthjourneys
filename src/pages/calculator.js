@@ -489,8 +489,8 @@ function E1RMFormulaRadioGroup({
       >
         {formulae.map((formula) => (
           <div key={formula} className="flex items-center space-x-2">
-            <RadioGroupItem value={formula} id={formula} />
-            <Label htmlFor={formula} className="">
+            <RadioGroupItem value={formula} id={`e1rm-formula-${formula}`} />
+            <Label htmlFor={`e1rm-formula-${formula}`} className="">
               {formula} ({estimateE1RM(reps, weight, formula)}
               {isMetric ? "kg" : "lb"})
             </Label>

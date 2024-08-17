@@ -163,7 +163,6 @@ export default function StrengthLevelCalculator() {
               <UnitChooser
                 isMetric={isMetric}
                 onSwitchChange={toggleIsMetric}
-                aria-label={`Switch to ${isMetric ? "imperial" : "metric"} units`}
               />
               <Slider
                 min={isMetric ? 40 : 100}

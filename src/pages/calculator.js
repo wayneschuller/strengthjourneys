@@ -249,7 +249,10 @@ export default function E1RMCalculator() {
             <h1>One Rep Max Calculator</h1>
           </CardTitle>
           <CardDescription>
-            <h2>Estimate your max single based on reps and weight</h2>
+            <h2>
+              Estimate your max single based on reps and weight. Click{" "}
+              <b>Advanced Analysis</b> for set specific strength ratings.
+            </h2>
           </CardDescription>
         </CardHeader>
 

@@ -125,8 +125,8 @@ export default function StrengthLevelCalculator() {
           </CardDescription>
         </CardHeader>
         <CardContent className="">
-          <div className="mb-10 flex flex-col items-center gap-4 md:flex-row md:gap-8">
-            <div className="flex flex-1 flex-col">
+          <div className="mb-10 flex flex-col items-center gap-4 md:mr-10 md:flex-row md:gap-8">
+            <div className="flex h-[4rem] flex-1 flex-col justify-between">
               <Label htmlFor="age" className="text-xl">
                 Age: {age}
               </Label>
@@ -141,7 +141,7 @@ export default function StrengthLevelCalculator() {
                 aria-labelledby="age"
               />
             </div>
-            <div className="flex grow flex-col">
+            <div className="flex h-[4rem] flex-1 flex-col justify-between">
               <div className="w-64">
                 <Label htmlFor="weight" className="mr-2 text-xl">
                   Bodyweight: {bodyWeight}
@@ -181,7 +181,7 @@ export default function StrengthLevelCalculator() {
               </Select>
             </div>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 md:ml-4">
             {liftTypesFromStandards.map((liftType) => (
               <div key={liftType} className="">
                 <h2 className="text-lg font-bold">{liftType} Standards:</h2>

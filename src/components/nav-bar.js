@@ -59,10 +59,17 @@ export function NavBar() {
 
 export function DesktopNav() {
   const pathname = usePathname();
+  const { isValidating } = useUserLiftingData();
 
   return (
     <div className="hidden align-middle md:flex">
-      <Link href="/" className="mr-10 flex items-center">
+      <Link
+        href="/"
+        className={cn(
+          "mr-10 flex items-center",
+          isValidating && "animate-pulse",
+        )}
+      >
         <Image
           src={lightModeLogo}
           width={100}

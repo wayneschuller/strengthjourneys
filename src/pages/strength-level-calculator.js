@@ -101,7 +101,7 @@ export default function StrengthLevelCalculator() {
   const liftTypesFromStandards = Object.keys(standards);
 
   return (
-    <div className="mx-4 flex flex-row items-center md:mx-[10vw] xl:mx-[20vw]">
+    <div className="xl:Xmx-[20vw] mx-4 flex flex-row items-center md:mx-[5vw]">
       <Head>
         <title>
           Strength Level Test: Free Calculator for Lifters | Strength Journeys
@@ -112,7 +112,7 @@ export default function StrengthLevelCalculator() {
         />
       </Head>
 
-      <Card className="w-full max-w-5xl">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>
             <h1>Strength Level Calculator</h1>
@@ -124,22 +124,24 @@ export default function StrengthLevelCalculator() {
             </h2>
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex flex-col items-center justify-between gap-8 md:flex-row md:justify-stretch">
-            <Label htmlFor="age" className="text-xl">
-              Age: {age}
-            </Label>
-            <Slider
-              min={13}
-              max={100}
-              step={1}
-              value={[age]}
-              onValueChange={(values) => setAge(values[0])}
-              className="mt-2 flex-1"
-              aria-label="Age"
-              aria-labelledby="age"
-            />
-            <div className="flex items-center space-x-2">
+        <CardContent className="">
+          <div className="mb-10 grid grid-cols-1 items-center gap-8 md:grid-cols-3 md:flex-row">
+            <div className="flex-1">
+              <Label htmlFor="age" className="text-xl">
+                Age: {age}
+              </Label>
+              <Slider
+                min={13}
+                max={100}
+                step={1}
+                value={[age]}
+                onValueChange={(values) => setAge(values[0])}
+                className="mt-2 flex-1"
+                aria-label="Age"
+                aria-labelledby="age"
+              />
+            </div>
+            <div className="flex w-40 items-center space-x-2">
               <Label htmlFor="sex" className="text-xl">
                 Sex
               </Label>

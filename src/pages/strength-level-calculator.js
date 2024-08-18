@@ -125,8 +125,8 @@ export default function StrengthLevelCalculator() {
           </CardDescription>
         </CardHeader>
         <CardContent className="">
-          <div className="mb-10 grid grid-cols-1 items-center gap-8 md:grid-cols-3 md:flex-row">
-            <div className="flex-1">
+          <div className="mb-10 flex flex-col items-center gap-4 md:flex-row md:gap-8">
+            <div className="flex flex-1 flex-col">
               <Label htmlFor="age" className="text-xl">
                 Age: {age}
               </Label>
@@ -136,12 +136,32 @@ export default function StrengthLevelCalculator() {
                 step={1}
                 value={[age]}
                 onValueChange={(values) => setAge(values[0])}
-                className="mt-2 flex-1"
+                className="mt-2 min-w-40 flex-1"
                 aria-label="Age"
                 aria-labelledby="age"
               />
             </div>
-            <div className="flex w-40 items-center space-x-2">
+            <div className="flex grow flex-col">
+              <div className="w-64">
+                <Label htmlFor="weight" className="mr-2 text-xl">
+                  Bodyweight: {bodyWeight}
+                </Label>
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={toggleIsMetric}
+                />
+              </div>
+              <Slider
+                min={isMetric ? 40 : 100}
+                max={isMetric ? 230 : 500}
+                step={1}
+                value={[bodyWeight]}
+                onValueChange={(values) => setBodyWeight(values[0])}
+                className="mt-2 min-w-40 flex-1"
+                aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
+              />
+            </div>
+            <div className="flex w-40 grow-0 items-center space-x-2">
               <Label htmlFor="sex" className="text-xl">
                 Sex
               </Label>
@@ -159,24 +179,6 @@ export default function StrengthLevelCalculator() {
                   <SelectItem value="female">Female</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="weight" className="text-xl">
-                Bodyweight: {bodyWeight}
-              </Label>
-              <UnitChooser
-                isMetric={isMetric}
-                onSwitchChange={toggleIsMetric}
-              />
-              <Slider
-                min={isMetric ? 40 : 100}
-                max={isMetric ? 230 : 500}
-                step={1}
-                value={[bodyWeight]}
-                onValueChange={(values) => setBodyWeight(values[0])}
-                className="mt-2 min-w-40 flex-1"
-                aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
-              />
             </div>
           </div>
           <div className="flex flex-col gap-4">

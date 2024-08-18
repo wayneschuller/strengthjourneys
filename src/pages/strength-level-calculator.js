@@ -125,11 +125,13 @@ export default function StrengthLevelCalculator() {
           </CardDescription>
         </CardHeader>
         <CardContent className="">
-          <div className="mb-10 flex flex-col items-center gap-4 md:mr-10 md:flex-row md:gap-8">
-            <div className="flex h-[4rem] flex-1 flex-col justify-between">
-              <Label htmlFor="age" className="text-xl">
-                Age: {age}
-              </Label>
+          <div className="mb-10 flex flex-col items-start gap-4 md:mr-10 md:flex-row md:gap-8">
+            <div className="flex flex-1 flex-col justify-between">
+              <div className="py-2">
+                <Label htmlFor="age" className="text-xl">
+                  Age: {age}
+                </Label>
+              </div>
               <Slider
                 min={13}
                 max={100}
@@ -161,7 +163,7 @@ export default function StrengthLevelCalculator() {
                 aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
               />
             </div>
-            <div className="flex w-40 grow-0 items-center space-x-2">
+            <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
               <Label htmlFor="sex" className="text-xl">
                 Sex
               </Label>

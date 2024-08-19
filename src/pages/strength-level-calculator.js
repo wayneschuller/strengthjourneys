@@ -126,7 +126,7 @@ export default function StrengthLevelCalculator() {
         </CardHeader>
         <CardContent className="">
           <div className="mb-10 flex flex-col items-start gap-4 md:mr-10 md:flex-row md:gap-8">
-            <div className="flex flex-1 flex-col justify-between">
+            <div className="flex w-full flex-col md:w-2/5">
               <div className="py-2">
                 <Label htmlFor="age" className="text-xl">
                   Age: {age}
@@ -143,7 +143,7 @@ export default function StrengthLevelCalculator() {
                 aria-labelledby="age"
               />
             </div>
-            <div className="flex h-[4rem] flex-1 flex-col justify-between">
+            <div className="flex h-[4rem] w-full flex-col justify-between md:w-3/5">
               <div className="w-64">
                 <Label htmlFor="weight" className="mr-2 text-xl">
                   Bodyweight: {bodyWeight}
@@ -165,7 +165,7 @@ export default function StrengthLevelCalculator() {
             </div>
             <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
               <Label htmlFor="sex" className="text-xl">
-                Sex
+                Sex:
               </Label>
               <Select
                 id="gender"

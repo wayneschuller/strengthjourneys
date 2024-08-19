@@ -365,6 +365,7 @@ export default function E1RMCalculator() {
                 isAdvancedAnalysis={isAdvancedAnalysis}
                 liftType={liftType}
                 liftRating={liftRating}
+                bodyWeight={bodyWeight}
               />
             </div>
             <div className="order-2 place-self-center md:pl-4 lg:order-3 lg:place-self-auto">
@@ -416,8 +417,11 @@ const E1RMSummaryCard = ({
   isAdvancedAnalysis,
   liftRating,
   liftType,
+  bodyWeight,
 }) => {
   devLog(`liftRating: ${liftRating}`);
+
+  const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
 
   return (
     <Card className="border-4">
@@ -431,9 +435,14 @@ const E1RMSummaryCard = ({
           {isMetric ? "kg" : "lb"}
         </div>
         <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
-          {estimateE1RM(reps, weight, e1rmFormula)}
+          {e1rmWeight}
           {isMetric ? "kg" : "lb"}
         </div>
+        {isAdvancedAnalysis && (
+          <div className="text-center text-lg">
+            {(e1rmWeight / bodyWeight).toFixed(2)}x bodyweight
+          </div>
+        )}
         {isAdvancedAnalysis && liftRating && (
           <div className="text-center text-xl">{liftRating}</div>
         )}

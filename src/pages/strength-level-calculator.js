@@ -144,9 +144,15 @@ export default function StrengthLevelCalculator() {
               />
             </div>
             <div className="flex h-[4rem] w-full flex-col justify-between md:w-3/5">
-              <div className="w-64">
+              <div className="flex flex-row items-center">
                 <Label htmlFor="weight" className="mr-2 text-xl">
-                  Bodyweight: {bodyWeight}
+                  Bodyweight:
+                </Label>
+                <Label
+                  htmlFor="weight"
+                  className="mr-2 w-[3rem] text-right text-xl"
+                >
+                  {bodyWeight}
                 </Label>
                 <UnitChooser
                   isMetric={isMetric}

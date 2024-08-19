@@ -230,15 +230,15 @@ export default function StrengthLevelCalculator() {
           <div className="flex flex-col">
             <p className="">
               {" "}
-              To see a strength rating for a particular set, e.g.: Squat
-              3x5@225lb, then use our{" "}
+              To see a strength rating for a particular set, e.g.: Squat 3x5
+              {"@"}225lb, then use our{" "}
               <Link
                 href="/calculator"
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
                 One Rep Max Calculator
               </Link>{" "}
-              and click "Advanced Analysis".
+              and click {`"`}Advanced Analysis{`"`}.
             </p>
             <p className="">
               Our data model is a derivation of the excellent research of{" "}

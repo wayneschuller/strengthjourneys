@@ -11,7 +11,13 @@ import Head from "next/head";
 import Image from "next/image";
 import SampleImage from "/public/sample_google_sheet_fuzzy_border.png";
 
-const title = "The Power of Owning Your Lifting Data with Google Sheets";
+const articleTitle = "The Power of Owning Your Lifting Data with Google Sheets";
+const headTitle = `${articleTitle} | Strength Journeys`;
+
+const description =
+  "Discover why owning your lifting data is crucial for long-term fitness success. Learn how to use Google Sheets as your ultimate workout companion and take control of your strength journey.";
+const url =
+  "https://www.strengthjourneys.xyz/articles/power-of-owning-lifting-data-google-sheets";
 
 const googleSheetSampleURL =
   "https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0";
@@ -24,8 +30,14 @@ export default function Article() {
   return (
     <div className="mx-4 mb-10 flex items-center justify-center">
       <Head>
-        <title>{title}</title>
-        <meta name="description" content={title} />
+        <title>{headTitle}</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={url} />
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={url} />
+        <meta property="og:title" content={headTitle} />
+        <meta property="og:description" content={description} />
       </Head>
       <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
         <CardHeader></CardHeader>
@@ -41,7 +53,7 @@ function ArticleContent() {
   return (
     <article className="prose prose-orange dark:prose-invert">
       <header>
-        <h1>{title}s</h1>
+        <h1>{articleTitle}</h1>
         <h3>
           by <StrengthJourneys /> Staff
         </h3>

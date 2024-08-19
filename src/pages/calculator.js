@@ -146,6 +146,8 @@ export default function E1RMCalculator() {
 
     const unit = getUnitSuffix(isMetric);
 
+    const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
+
     if (!isAdvancedAnalysis) {
       const queryString = createQueryString({
         reps: reps,
@@ -155,7 +157,7 @@ export default function E1RMCalculator() {
       });
 
       sentenceToCopy =
-        `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${unit}, ` +
+        `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
         `using the ${e1rmFormula} algorithm.\n` +
         `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
     } else {
@@ -170,9 +172,12 @@ export default function E1RMCalculator() {
         AthleteLiftType: liftType,
       });
 
+      const bodyWeightMultiplier = (e1rmWeight / bodyWeight).toFixed(2);
+
       sentenceToCopy =
-        `${liftType} ${reps}@${weight}${unit} indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${unit}, ` +
+        `${liftType} ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
         `using the ${e1rmFormula} algorithm.\n` +
+        `${bodyWeightMultiplier}x bodyweight.\n` +
         `Lift Strength Rating: ${liftRating}\n` +
         `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
     }
@@ -444,7 +449,7 @@ const E1RMSummaryCard = ({
           </div>
         )}
         {isAdvancedAnalysis && liftRating && (
-          <div className="text-center text-xl">{liftRating}</div>
+          <div className="text-center text-xl font-semibold">{liftRating}</div>
         )}
       </CardContent>
       <CardFooter className="text-muted-foreground">

@@ -224,29 +224,37 @@ export default function GymPlaylistLeaderboard() {
   return (
     <div className="container mx-auto max-w-2xl p-4">
       <h1 className="mb-6 text-center text-3xl font-bold">
-        Gym Music Playlist Leaderboard
+        Gym Music Playlist Global Leaderboard
       </h1>
 
-      {/* Simplified Category Filter */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {categories.map((category) => (
-          <Badge
-            key={category}
-            variant={
-              selectedCategories.includes(category) ? "default" : "outline"
-            }
-            className="cursor-pointer"
-            onClick={() => toggleCategory(category)}
-          >
-            {category}
-          </Badge>
-        ))}
+      {/* Side-by-Side Layout for Category Filter and Add Playlist Button */}
+      <div className="mb-6 flex items-center">
+        <div className="flex-grow pr-4">
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <Badge
+                key={category}
+                variant={
+                  selectedCategories.includes(category)
+                    ? "default"
+                    : "secondary"
+                }
+                className="cursor-pointer"
+                onClick={() => toggleCategory(category)}
+              >
+                {category}
+              </Badge>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center justify-center">
+          <Button onClick={() => setIsDialogOpen(true)} className="w-full">
+            Suggest New Playlist
+          </Button>
+        </div>
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button className="mb-6">Add Playlist</Button>
-        </DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Playlist</DialogTitle>

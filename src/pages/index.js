@@ -62,7 +62,7 @@ export const featurePages = [
   {
     href: "/gym-playlist-leaderboard",
     title: "Gym Music Playlist Leaderboard",
-    description: "Discover and share new motivation music.",
+    description: "Discover and share new motivational music.",
     IconComponent: Music,
   },
   {

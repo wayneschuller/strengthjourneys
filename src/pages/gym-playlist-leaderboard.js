@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useLocalStorage } from "usehooks-ts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -14,6 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+
 import {
   ArrowBigUp,
   ArrowBigDown,
@@ -33,6 +35,7 @@ const initialPlaylists = [
     url: "https://example.com/playlist1",
     votes: 10,
     timestamp: Date.now() - 100000,
+    categories: ["rock", "pop"],
   },
   {
     id: 2,
@@ -41,6 +44,7 @@ const initialPlaylists = [
     url: "https://example.com/playlist2",
     votes: 8,
     timestamp: Date.now() - 200000,
+    categories: ["techno", "house"],
   },
   {
     id: 3,
@@ -49,6 +53,7 @@ const initialPlaylists = [
     url: "https://example.com/playlist3",
     votes: 12,
     timestamp: Date.now() - 300000,
+    categories: ["rock", "metal"],
   },
 ];
 
@@ -58,11 +63,14 @@ export default function GymPlaylistLeaderboard() {
     title: "",
     description: "",
     url: "",
+    categories: [],
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [votes, setVotes] = useLocalStorage("SJ_playlistVotes", {});
 
-  devLog(votes);
+  const categories = ["rock", "techno", "house", "pop", "metal"];
+
+  // devLog(votes);
 
   const handleVote = (id, isUpvote) => {
     setVotes((prevVotes) => {
@@ -106,9 +114,18 @@ export default function GymPlaylistLeaderboard() {
         timestamp: Date.now(),
       };
       setPlaylists([...playlists, addedPlaylist]);
-      setNewPlaylist({ title: "", description: "", url: "" });
+      setNewPlaylist({ title: "", description: "", url: "", categories: [] });
       setIsDialogOpen(false);
     }
+  };
+
+  const toggleCategory = (category) => {
+    setNewPlaylist((prev) => ({
+      ...prev,
+      categories: prev.categories.includes(category)
+        ? prev.categories.filter((c) => c !== category)
+        : [...prev.categories, category],
+    }));
   };
 
   const sortedPlaylists = {
@@ -183,6 +200,25 @@ export default function GymPlaylistLeaderboard() {
                 setNewPlaylist({ ...newPlaylist, url: e.target.value })
               }
             />
+            <div>
+              <p className="mb-2 text-sm font-medium">Categories:</p>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((category) => (
+                  <Badge
+                    key={category}
+                    variant={
+                      newPlaylist.categories.includes(category)
+                        ? "default"
+                        : "outline"
+                    }
+                    className="cursor-pointer"
+                    onClick={() => toggleCategory(category)}
+                  >
+                    {category}
+                  </Badge>
+                ))}
+              </div>
+            </div>
             <Button type="submit">Add Playlist</Button>
           </form>
         </DialogContent>
@@ -236,6 +272,11 @@ export default function GymPlaylistLeaderboard() {
                   <p className="mt-1 text-sm text-muted-foreground">
                     {playlist.description}
                   </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {playlist.categories.map((category) => (
+                      <Badge key={category}>{category}</Badge>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex flex-col items-center space-y-1">
                   <VoteButton

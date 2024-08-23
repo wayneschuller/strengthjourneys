@@ -110,7 +110,26 @@ export default function GymPlaylistLeaderboard() {
 
   const [parent] = useAutoAnimate();
 
-  const categories = ["rock", "techno", "house", "pop", "metal"];
+  const categories = [
+    // Genres
+    "rock",
+    "pop",
+    "hip-hop",
+    "electronic",
+    "r&b",
+    "metal",
+    // Descriptive/Mood
+    "upbeat",
+    "intense",
+    "chill",
+    "motivational",
+    // Workout-specific
+    "cardio",
+    "strength",
+    "warm-up",
+    "retro",
+    "weird",
+  ];
 
   // devLog(votes);
 
@@ -205,7 +224,7 @@ export default function GymPlaylistLeaderboard() {
       onClick={onClick}
       aria-label={isUpvote ? "Upvote" : "Downvote"}
       className={cn(
-        "transition-all",
+        "transition-all hover:outline",
         isVoted
           ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
           : "hover:bg-accent hover:text-accent-foreground",

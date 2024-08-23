@@ -37,7 +37,7 @@ const initialPlaylists = [
     url: "https://example.com/playlist1",
     votes: 10,
     timestamp: Date.now() - 100000,
-    categories: ["rock", "pop"],
+    categories: ["rock", "pop", "warm-up"],
   },
   {
     id: 2,
@@ -46,7 +46,7 @@ const initialPlaylists = [
     url: "https://example.com/playlist2",
     votes: 8,
     timestamp: Date.now() - 200000,
-    categories: ["techno", "house"],
+    categories: ["techno", "house", "cardio"],
   },
   {
     id: 3,
@@ -64,7 +64,7 @@ const initialPlaylists = [
     url: "https://example.com/playlist4",
     votes: 15,
     timestamp: Date.now() - 50000,
-    categories: ["ambient", "electronic"],
+    categories: ["ambient", "electronic", "cardio"],
   },
   {
     id: 5,
@@ -73,7 +73,7 @@ const initialPlaylists = [
     url: "https://example.com/playlist5",
     votes: 7,
     timestamp: Date.now() - 150000,
-    categories: ["electronic", "techno"],
+    categories: ["electronic", "techno", "weird"],
   },
   {
     id: 6,
@@ -82,7 +82,7 @@ const initialPlaylists = [
     url: "https://example.com/playlist6",
     votes: 9,
     timestamp: Date.now() - 250000,
-    categories: ["classical", "jazz"],
+    categories: ["classical", "jazz", "warm-up"],
   },
   {
     id: 7,
@@ -91,7 +91,7 @@ const initialPlaylists = [
     url: "https://example.com/playlist7",
     votes: 11,
     timestamp: Date.now() - 180000,
-    categories: ["rock", "metal"],
+    categories: ["rock", "metal", "weird"],
   },
 ];
 
@@ -181,9 +181,9 @@ export default function GymPlaylistLeaderboard() {
         votes: 0,
         timestamp: Date.now(),
       };
-      setPlaylists([...playlists, addedPlaylist]);
+      setPlaylists((prevPlaylists) => [...prevPlaylists, addedPlaylist]);
       setNewPlaylist({ title: "", description: "", url: "", categories: [] });
-      setIsDialogOpen(false);
+      setIsDialogOpen(false); // Close the dialog after successful submission
     }
   };
 
@@ -193,6 +193,16 @@ export default function GymPlaylistLeaderboard() {
         ? prev.filter((c) => c !== category)
         : [...prev, category],
     );
+  };
+
+  // Used in the dialog for suggesting a new playlist
+  const toggleNewPlaylistCategory = (category) => {
+    setNewPlaylist((prev) => ({
+      ...prev,
+      categories: prev.categories.includes(category)
+        ? prev.categories.filter((c) => c !== category)
+        : [...prev.categories, category],
+    }));
   };
 
   const sortFunctions = {
@@ -247,7 +257,7 @@ export default function GymPlaylistLeaderboard() {
       </h1>
 
       {/* Side-by-Side Layout for Category Filter and Add Playlist Button */}
-      <div className="mb-6 flex items-center">
+      <div className="mb-6 flex flex-col items-center gap-4 md:flex-row md:gap-1">
         <div className="flex-grow pr-4">
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => (
@@ -315,7 +325,7 @@ export default function GymPlaylistLeaderboard() {
                         : "outline"
                     }
                     className="cursor-pointer"
-                    onClick={() => toggleCategory(category)}
+                    onClick={() => toggleNewPlaylistCategory(category)}
                   >
                     {category}
                   </Badge>

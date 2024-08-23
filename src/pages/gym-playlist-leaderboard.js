@@ -57,6 +57,42 @@ const initialPlaylists = [
     timestamp: Date.now() - 300000,
     categories: ["rock", "metal"],
   },
+  {
+    id: 4,
+    title: "Yoga Flow Vibes",
+    description: "Calm and soothing tracks for yoga sessions",
+    url: "https://example.com/playlist4",
+    votes: 15,
+    timestamp: Date.now() - 50000,
+    categories: ["ambient", "electronic"],
+  },
+  {
+    id: 5,
+    title: "HIIT Intensity",
+    description: "Fast-paced music for high-intensity interval training",
+    url: "https://example.com/playlist5",
+    votes: 7,
+    timestamp: Date.now() - 150000,
+    categories: ["electronic", "techno"],
+  },
+  {
+    id: 6,
+    title: "Cool Down Classics",
+    description: "Relaxing tunes for post-workout stretching",
+    url: "https://example.com/playlist6",
+    votes: 9,
+    timestamp: Date.now() - 250000,
+    categories: ["classical", "jazz"],
+  },
+  {
+    id: 7,
+    title: "Powerlifting Anthems",
+    description: "Motivational rock and metal for heavy lifting",
+    url: "https://example.com/playlist7",
+    votes: 11,
+    timestamp: Date.now() - 180000,
+    categories: ["rock", "metal"],
+  },
 ];
 
 export default function GymPlaylistLeaderboard() {
@@ -70,6 +106,7 @@ export default function GymPlaylistLeaderboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [votes, setVotes] = useLocalStorage("SJ_playlistVotes", {});
   const [currentTab, setCurrentTab] = useState("top");
+  const [selectedCategories, setSelectedCategories] = useState([]);
 
   const [parent] = useAutoAnimate();
 
@@ -88,7 +125,6 @@ export default function GymPlaylistLeaderboard() {
         newVotes[id] = isUpvote ? "up" : "down";
       }
 
-      // Update playlists based on the new vote state
       // Update playlists based on the new vote state
       setPlaylists((prevPlaylists) =>
         prevPlaylists.map((playlist) => {
@@ -133,12 +169,11 @@ export default function GymPlaylistLeaderboard() {
   };
 
   const toggleCategory = (category) => {
-    setNewPlaylist((prev) => ({
-      ...prev,
-      categories: prev.categories.includes(category)
-        ? prev.categories.filter((c) => c !== category)
-        : [...prev.categories, category],
-    }));
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category],
+    );
   };
 
   const sortFunctions = {
@@ -148,6 +183,14 @@ export default function GymPlaylistLeaderboard() {
       b.votes / (Date.now() - b.timestamp) -
       a.votes / (Date.now() - a.timestamp),
   };
+
+  const filteredAndSortedPlaylists = [...playlists]
+    .filter(
+      (playlist) =>
+        selectedCategories.length === 0 ||
+        playlist.categories.some((cat) => selectedCategories.includes(cat)),
+    )
+    .sort(sortFunctions[currentTab]);
 
   const sortedPlaylists = [...playlists].sort(sortFunctions[currentTab]);
 
@@ -183,6 +226,22 @@ export default function GymPlaylistLeaderboard() {
       <h1 className="mb-6 text-center text-3xl font-bold">
         Gym Music Playlist Leaderboard
       </h1>
+
+      {/* Simplified Category Filter */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {categories.map((category) => (
+          <Badge
+            key={category}
+            variant={
+              selectedCategories.includes(category) ? "default" : "outline"
+            }
+            className="cursor-pointer"
+            onClick={() => toggleCategory(category)}
+          >
+            {category}
+          </Badge>
+        ))}
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
@@ -271,7 +330,7 @@ export default function GymPlaylistLeaderboard() {
         </TabsList>
         <TabsContent value={currentTab} className="space-y-4">
           <div ref={parent}>
-            {sortedPlaylists.map((playlist) => (
+            {filteredAndSortedPlaylists.map((playlist) => (
               <div
                 key={playlist.id}
                 className="mb-4 flex items-start justify-between rounded-lg bg-muted p-4"

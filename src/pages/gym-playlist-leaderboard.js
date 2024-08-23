@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import { useLocalStorage } from "usehooks-ts";
@@ -25,6 +25,8 @@ import {
   Clock,
   Flame,
 } from "lucide-react";
+
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 // Dummy data
 const initialPlaylists = [
@@ -67,6 +69,9 @@ export default function GymPlaylistLeaderboard() {
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [votes, setVotes] = useLocalStorage("SJ_playlistVotes", {});
+  const [currentTab, setCurrentTab] = useState("top");
+
+  const [parent] = useAutoAnimate();
 
   const categories = ["rock", "techno", "house", "pop", "metal"];
 
@@ -136,15 +141,19 @@ export default function GymPlaylistLeaderboard() {
     }));
   };
 
-  const sortedPlaylists = {
-    top: [...playlists].sort((a, b) => b.votes - a.votes),
-    new: [...playlists].sort((a, b) => b.timestamp - a.timestamp),
-    rising: [...playlists].sort(
-      (a, b) =>
-        b.votes / (Date.now() - b.timestamp) -
-        a.votes / (Date.now() - a.timestamp),
-    ),
+  const sortFunctions = {
+    top: (a, b) => b.votes - a.votes,
+    new: (a, b) => b.timestamp - a.timestamp,
+    rising: (a, b) =>
+      b.votes / (Date.now() - b.timestamp) -
+      a.votes / (Date.now() - a.timestamp),
   };
+
+  const sortedPlaylists = [...playlists].sort(sortFunctions[currentTab]);
+
+  const handleTabChange = useCallback((value) => {
+    setCurrentTab(value);
+  }, []);
 
   const VoteButton = ({ isUpvote, isVoted, onClick, className }) => (
     <Button
@@ -232,7 +241,11 @@ export default function GymPlaylistLeaderboard() {
         </DialogContent>
       </Dialog>
 
-      <Tabs defaultValue="top" className="w-full">
+      <Tabs
+        value={currentTab}
+        onValueChange={handleTabChange}
+        className="w-full"
+      >
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger
             value="top"
@@ -256,12 +269,12 @@ export default function GymPlaylistLeaderboard() {
             <span>Rising</span>
           </TabsTrigger>
         </TabsList>
-        {Object.entries(sortedPlaylists).map(([key, value]) => (
-          <TabsContent key={key} value={key} className="space-y-4">
-            {value.map((playlist) => (
+        <TabsContent value={currentTab} className="space-y-4">
+          <div ref={parent}>
+            {sortedPlaylists.map((playlist) => (
               <div
                 key={playlist.id}
-                className="flex items-start justify-between rounded-lg bg-muted p-4"
+                className="mb-4 flex items-start justify-between rounded-lg bg-muted p-4"
               >
                 <div className="mr-4 flex-grow">
                   <div className="flex items-center space-x-2">
@@ -301,8 +314,8 @@ export default function GymPlaylistLeaderboard() {
                 </div>
               </div>
             ))}
-          </TabsContent>
-        ))}
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   );

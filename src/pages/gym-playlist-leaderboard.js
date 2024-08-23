@@ -13,7 +13,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ArrowBigUp, ArrowBigDown, Music, ExternalLink } from "lucide-react";
+import {
+  ArrowBigUp,
+  ArrowBigDown,
+  Music,
+  ExternalLink,
+  TrendingUp,
+  Clock,
+  Flame,
+} from "lucide-react";
 
 // Dummy data
 const initialPlaylists = [
@@ -178,9 +186,27 @@ export default function GymPlaylistLeaderboard() {
 
       <Tabs defaultValue="top" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="top">Top</TabsTrigger>
-          <TabsTrigger value="new">New</TabsTrigger>
-          <TabsTrigger value="rising">Rising</TabsTrigger>
+          <TabsTrigger
+            value="top"
+            className="flex items-center justify-center space-x-2"
+          >
+            <TrendingUp className="h-4 w-4" />
+            <span>Top</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="new"
+            className="flex items-center justify-center space-x-2"
+          >
+            <Clock className="h-4 w-4" />
+            <span>New</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="rising"
+            className="flex items-center justify-center space-x-2"
+          >
+            <Flame className="h-4 w-4" />
+            <span>Rising</span>
+          </TabsTrigger>
         </TabsList>
         {Object.entries(sortedPlaylists).map(([key, value]) => (
           <TabsContent key={key} value={key} className="space-y-4">

@@ -149,6 +149,17 @@ export function DesktopNav() {
         >
           Lifting Set Timer
         </Link>
+        <Link
+          href="/gym-playlist-leaderboard"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname === "/gym-playlist-leaderboard"
+              ? "text-foreground"
+              : "text-foreground/60",
+          )}
+        >
+          Music
+        </Link>
       </nav>
     </div>
   );

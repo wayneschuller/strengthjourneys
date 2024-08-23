@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import { useLocalStorage } from "usehooks-ts";
+import { useSession, signIn } from "next-auth/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -96,6 +97,7 @@ const initialPlaylists = [
 ];
 
 export default function GymPlaylistLeaderboard() {
+  const { data: session, status: authStatus } = useSession();
   const [playlists, setPlaylists] = useState(initialPlaylists);
   const [newPlaylist, setNewPlaylist] = useState({
     title: "",
@@ -255,6 +257,28 @@ export default function GymPlaylistLeaderboard() {
       <h1 className="mb-6 text-center text-3xl font-bold">
         Gym Music Playlist Global Leaderboard
       </h1>
+      <h2 className="mb-6 text-left text-sm text-muted-foreground">
+        Elevate your lifting experience with music playlists curated by the
+        fitness community.
+        {/* FIXME: consider checking for ssid and loaded data and prompt them here for more vote power */}
+        {authStatus !== "authenticated" ? (
+          <div>
+            Vote for your favorites, with extra weighting for athletes who are{" "}
+            <button
+              onClick={() => signIn("google")}
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            >
+              signed in via Google.
+            </button>
+          </div>
+        ) : (
+          <div>
+            As a signed in athlete, your votes will get extra weighting
+            proportional to the quantity of gym sessions in your Google Sheet
+            data.
+          </div>
+        )}
+      </h2>
 
       {/* Side-by-Side Layout for Category Filter and Add Playlist Button */}
       <div className="mb-6 flex flex-col items-center gap-4 md:flex-row md:gap-1">

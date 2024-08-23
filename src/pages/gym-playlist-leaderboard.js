@@ -10,6 +10,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -156,6 +157,9 @@ export default function GymPlaylistLeaderboard() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Playlist</DialogTitle>
+            <DialogDescription>
+              Fill out the form below to add a new playlist to the leaderboard.
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={addPlaylist} className="space-y-4">
             <Input

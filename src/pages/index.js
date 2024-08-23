@@ -13,6 +13,7 @@ import {
   Trophy,
   Newspaper,
   BicepsFlexed,
+  Music,
 } from "lucide-react";
 
 import {
@@ -57,6 +58,12 @@ export const featurePages = [
     title: "Lifting Set Timer",
     description: "Set timer for phones or large gym screens.",
     IconComponent: Timer,
+  },
+  {
+    href: "/gym-playlist-leaderboard",
+    title: "Gym Music Playlist Leaderboard",
+    description: "Discover and share new motivation music.",
+    IconComponent: Music,
   },
   {
     href: "/articles/own-your-lifting-data",

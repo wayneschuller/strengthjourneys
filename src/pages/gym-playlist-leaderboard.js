@@ -84,16 +84,24 @@ export default function GymPlaylistLeaderboard() {
       }
 
       // Update playlists based on the new vote state
+      // Update playlists based on the new vote state
       setPlaylists((prevPlaylists) =>
         prevPlaylists.map((playlist) => {
           if (playlist.id === id) {
             let voteChange = 0;
-            if (prevVotes[id] === "up" && newVotes[id] !== "up")
-              voteChange = -1;
-            else if (prevVotes[id] === "down" && newVotes[id] !== "down")
-              voteChange = 1;
-            else if (newVotes[id] === "up") voteChange = 1;
-            else if (newVotes[id] === "down") voteChange = -1;
+            if (prevVotes[id] === "up" && newVotes[id] === "down") {
+              voteChange = -2; // Changed from upvote to downvote
+            } else if (prevVotes[id] === "down" && newVotes[id] === "up") {
+              voteChange = 2; // Changed from downvote to upvote
+            } else if (prevVotes[id] === "up" && !newVotes[id]) {
+              voteChange = -1; // Removed upvote
+            } else if (prevVotes[id] === "down" && !newVotes[id]) {
+              voteChange = 1; // Removed downvote
+            } else if (newVotes[id] === "up") {
+              voteChange = 1; // New upvote
+            } else if (newVotes[id] === "down") {
+              voteChange = -1; // New downvote
+            }
             return { ...playlist, votes: playlist.votes + voteChange };
           }
           return playlist;

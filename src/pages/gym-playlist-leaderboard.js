@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
+import shortUUID from "short-uuid";
 import { useLocalStorage } from "usehooks-ts";
 import { useSession, signIn } from "next-auth/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+
 import {
   Dialog,
   DialogContent,
@@ -28,9 +31,12 @@ import {
 } from "lucide-react";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
+
+// Create a translator object
+const translator = shortUUID();
 
 // Dummy data
 const initialPlaylists = [
@@ -101,9 +107,8 @@ const initialPlaylists = [
 
 export default function GymPlaylistLeaderboard() {
   const { data: session, status: authStatus } = useSession();
-  const { data: playlists, error } = useSWR("/api/playlists", fetcher);
-
-  // const [playlists, setPlaylists] = useState(initialPlaylists);
+  const { data: playlistsData, error } = useSWR("/api/playlists", fetcher);
+  const [playlists, setPlaylists] = useState([]);
 
   const [newPlaylist, setNewPlaylist] = useState({
     title: "",
@@ -116,7 +121,25 @@ export default function GymPlaylistLeaderboard() {
   const [currentTab, setCurrentTab] = useState("top");
   const [selectedCategories, setSelectedCategories] = useState([]);
 
+  const { toast } = useToast();
   const [parent] = useAutoAnimate();
+
+  useEffect(() => {
+    if (
+      playlistsData &&
+      typeof playlistsData === "object" &&
+      !Array.isArray(playlistsData)
+    ) {
+      // Convert object of objects to array
+      const playlistsArray = Object.entries(playlistsData).map(
+        ([id, playlist]) => ({
+          ...playlist,
+          id,
+        }),
+      );
+      setPlaylists(playlistsArray);
+    }
+  }, [playlistsData]);
 
   if (error || playlists?.error) {
     if (error) devLog(error);
@@ -124,6 +147,8 @@ export default function GymPlaylistLeaderboard() {
     return <div>Failed to load playlists</div>;
   }
   if (!playlists) return <div>Loading...</div>;
+
+  if (!playlists.length) return <div>Loading...</div>;
 
   const categories = [
     // Genres
@@ -188,18 +213,61 @@ export default function GymPlaylistLeaderboard() {
     });
   };
 
-  const addPlaylist = (e) => {
+  const addPlaylist = async (e) => {
     e.preventDefault();
+    const formData = new FormData(e.target);
+    const newPlaylist = {
+      title: formData.get("title"),
+      description: formData.get("description"),
+      url: formData.get("url"),
+      categories: formData.getAll("categories"),
+    };
+
     if (newPlaylist.title && newPlaylist.description && newPlaylist.url) {
-      const addedPlaylist = {
-        id: playlists.length + 1,
+      const newPlaylistId = shortUUID.generate();
+      const playlistToAdd = {
+        id: newPlaylistId,
         ...newPlaylist,
         votes: 0,
         timestamp: Date.now(),
       };
-      // setPlaylists((prevPlaylists) => [...prevPlaylists, addedPlaylist]);
-      setNewPlaylist({ title: "", description: "", url: "", categories: [] });
-      setIsDialogOpen(false); // Close the dialog after successful submission
+
+      try {
+        const response = await fetch("/api/playlists", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(playlistToAdd),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to add playlist");
+        }
+
+        // Update the local state with the new playlist
+        setPlaylists((prevPlaylists) => [...prevPlaylists, playlistToAdd]);
+
+        // Close the dialog
+        setIsDialogOpen(false);
+
+        // Optionally, revalidate the SWR cache
+        mutate("/api/playlists");
+
+        // Show a success message
+        toast({
+          title: "Success",
+          description: "New playlist added successfully!",
+        });
+      } catch (error) {
+        console.error("Error adding playlist:", error);
+        // Show an error message
+        toast({
+          title: "Error",
+          description: "Failed to add playlist. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -334,43 +402,26 @@ export default function GymPlaylistLeaderboard() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={addPlaylist} className="space-y-4">
-            <Input
-              placeholder="Playlist Title"
-              value={newPlaylist.title}
-              onChange={(e) =>
-                setNewPlaylist({ ...newPlaylist, title: e.target.value })
-              }
-            />
+            <Input name="title" placeholder="Playlist Title" required />
             <Textarea
+              name="description"
               placeholder="Playlist Description"
-              value={newPlaylist.description}
-              onChange={(e) =>
-                setNewPlaylist({ ...newPlaylist, description: e.target.value })
-              }
+              required
             />
-            <Input
-              placeholder="Playlist URL"
-              value={newPlaylist.url}
-              onChange={(e) =>
-                setNewPlaylist({ ...newPlaylist, url: e.target.value })
-              }
-            />
+            <Input name="url" placeholder="Playlist URL" required />
             <div>
               <p className="mb-2 text-sm font-medium">Categories:</p>
               <div className="flex flex-wrap gap-2">
                 {categories.map((category) => (
-                  <Badge
-                    key={category}
-                    variant={
-                      newPlaylist.categories.includes(category)
-                        ? "default"
-                        : "outline"
-                    }
-                    className="cursor-pointer"
-                    onClick={() => toggleNewPlaylistCategory(category)}
-                  >
-                    {category}
-                  </Badge>
+                  <label key={category} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      name="categories"
+                      value={category}
+                      className="form-checkbox"
+                    />
+                    <span>{category}</span>
+                  </label>
                 ))}
               </div>
             </div>

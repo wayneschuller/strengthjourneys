@@ -28,6 +28,9 @@ import {
 } from "lucide-react";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import useSWR from "swr";
+
+const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 // Dummy data
 const initialPlaylists = [
@@ -98,7 +101,10 @@ const initialPlaylists = [
 
 export default function GymPlaylistLeaderboard() {
   const { data: session, status: authStatus } = useSession();
-  const [playlists, setPlaylists] = useState(initialPlaylists);
+  const { data: playlists, error } = useSWR("/api/playlists", fetcher);
+
+  // const [playlists, setPlaylists] = useState(initialPlaylists);
+
   const [newPlaylist, setNewPlaylist] = useState({
     title: "",
     description: "",
@@ -111,6 +117,13 @@ export default function GymPlaylistLeaderboard() {
   const [selectedCategories, setSelectedCategories] = useState([]);
 
   const [parent] = useAutoAnimate();
+
+  if (error || playlists?.error) {
+    if (error) devLog(error);
+    if (playlists?.error) devLog(playlists);
+    return <div>Failed to load playlists</div>;
+  }
+  if (!playlists) return <div>Loading...</div>;
 
   const categories = [
     // Genres
@@ -147,6 +160,7 @@ export default function GymPlaylistLeaderboard() {
       }
 
       // Update playlists based on the new vote state
+      return newVotes;
       setPlaylists((prevPlaylists) =>
         prevPlaylists.map((playlist) => {
           if (playlist.id === id) {
@@ -183,7 +197,7 @@ export default function GymPlaylistLeaderboard() {
         votes: 0,
         timestamp: Date.now(),
       };
-      setPlaylists((prevPlaylists) => [...prevPlaylists, addedPlaylist]);
+      // setPlaylists((prevPlaylists) => [...prevPlaylists, addedPlaylist]);
       setNewPlaylist({ title: "", description: "", url: "", categories: [] });
       setIsDialogOpen(false); // Close the dialog after successful submission
     }
@@ -215,19 +229,23 @@ export default function GymPlaylistLeaderboard() {
       a.votes / (Date.now() - a.timestamp),
   };
 
-  const filteredAndSortedPlaylists = [...playlists]
-    .filter(
-      (playlist) =>
-        selectedCategories.length === 0 ||
-        playlist.categories.some((cat) => selectedCategories.includes(cat)),
-    )
-    .sort(sortFunctions[currentTab]);
+  devLog(playlists);
+
+  const filteredAndSortedPlaylists = playlists
+    ? playlists
+        .filter(
+          (playlist) =>
+            selectedCategories.length === 0 ||
+            playlist.categories.some((cat) => selectedCategories.includes(cat)),
+        )
+        .sort(sortFunctions[currentTab])
+    : [];
 
   const sortedPlaylists = [...playlists].sort(sortFunctions[currentTab]);
 
-  const handleTabChange = useCallback((value) => {
+  const handleTabChange = (value) => {
     setCurrentTab(value);
-  }, []);
+  };
 
   const VoteButton = ({ isUpvote, isVoted, onClick, className }) => (
     <Button
@@ -414,8 +432,8 @@ export default function GymPlaylistLeaderboard() {
                     {playlist.description}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {playlist.categories.map((category) => (
-                      <Badge key={category}>{category}</Badge>
+                    {playlist?.categories?.map((category) => (
+                      <Badge key={`playlist_${category}`}>{category}</Badge>
                     ))}
                   </div>
                 </div>

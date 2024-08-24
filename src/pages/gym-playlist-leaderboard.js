@@ -38,73 +38,6 @@ const fetcher = (...args) => fetch(...args).then((res) => res.json());
 // Create a translator object
 const translator = shortUUID();
 
-// Dummy data
-const initialPlaylists = [
-  {
-    id: 1,
-    title: "Ultimate Workout Mix",
-    description: "High-energy tracks for intense workouts",
-    url: "https://example.com/playlist1",
-    votes: 10,
-    timestamp: Date.now() - 100000,
-    categories: ["rock", "pop", "warm-up"],
-  },
-  {
-    id: 2,
-    title: "Cardio Boost",
-    description: "Perfect for running and cardio sessions",
-    url: "https://example.com/playlist2",
-    votes: 8,
-    timestamp: Date.now() - 200000,
-    categories: ["techno", "house", "cardio"],
-  },
-  {
-    id: 3,
-    title: "Strength Training Beats",
-    description: "Heavy beats for lifting heavy weights",
-    url: "https://example.com/playlist3",
-    votes: 12,
-    timestamp: Date.now() - 300000,
-    categories: ["rock", "metal"],
-  },
-  {
-    id: 4,
-    title: "Yoga Flow Vibes",
-    description: "Calm and soothing tracks for yoga sessions",
-    url: "https://example.com/playlist4",
-    votes: 15,
-    timestamp: Date.now() - 50000,
-    categories: ["ambient", "electronic", "cardio"],
-  },
-  {
-    id: 5,
-    title: "HIIT Intensity",
-    description: "Fast-paced music for high-intensity interval training",
-    url: "https://example.com/playlist5",
-    votes: 7,
-    timestamp: Date.now() - 150000,
-    categories: ["electronic", "techno", "weird"],
-  },
-  {
-    id: 6,
-    title: "Cool Down Classics",
-    description: "Relaxing tunes for post-workout stretching",
-    url: "https://example.com/playlist6",
-    votes: 9,
-    timestamp: Date.now() - 250000,
-    categories: ["classical", "jazz", "warm-up"],
-  },
-  {
-    id: 7,
-    title: "Powerlifting Anthems",
-    description: "Motivational rock and metal for heavy lifting",
-    url: "https://example.com/playlist7",
-    votes: 11,
-    timestamp: Date.now() - 180000,
-    categories: ["rock", "metal", "weird"],
-  },
-];
-
 export default function GymPlaylistLeaderboard() {
   const { data: session, status: authStatus } = useSession();
   const { data: playlistsData, error } = useSWR("/api/playlists", fetcher);
@@ -115,6 +48,7 @@ export default function GymPlaylistLeaderboard() {
     description: "",
     url: "",
     categories: [],
+    //FIXME: add timestamp
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [votes, setVotes] = useLocalStorage("SJ_playlistVotes", {});

@@ -213,6 +213,40 @@ export default function GymPlaylistLeaderboard() {
     }
   };
 
+  const deletePlaylist = async (id) => {
+    try {
+      const response = await fetch(`/api/playlists?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete playlist");
+      }
+      // Update the local state by removing the deleted playlist
+      setPlaylists((prevPlaylists) =>
+        prevPlaylists.filter((playlist) => playlist.id !== id),
+      );
+
+      // Revalidate the SWR cache
+      mutate("/api/playlists");
+
+      // Show a success message
+      toast({
+        title: "Success",
+        description: "Playlist deleted successfully!",
+      });
+    } catch (error) {
+      console.error("Error deleting playlist:", error);
+      // Show an error message
+      toast({
+        title: "Error",
+        description: "Failed to delete playlist. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const toggleCategory = (category) => {
     setSelectedCategories((prev) =>
       prev.includes(category)
@@ -409,6 +443,7 @@ export default function GymPlaylistLeaderboard() {
                 votes={votes}
                 handleVote={handleVote}
                 isAdmin={isAdmin}
+                onDelete={deletePlaylist}
               />
             ))}
           </div>

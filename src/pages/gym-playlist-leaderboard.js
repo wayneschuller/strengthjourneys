@@ -28,6 +28,8 @@ import {
   TrendingUp,
   Clock,
   Flame,
+  Edit,
+  Trash,
 } from "lucide-react";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -416,8 +418,14 @@ export default function GymPlaylistLeaderboard() {
   );
 }
 
-// Playlist Card Component
-const PlaylistCard = ({ playlist, votes, handleVote, isAdmin }) => {
+const PlaylistCard = ({
+  playlist,
+  votes,
+  handleVote,
+  isAdmin,
+  onDelete,
+  onEdit,
+}) => {
   const VoteButton = ({ isUpvote, isVoted, onClick, className }) => (
     <Button
       variant="ghost"
@@ -442,50 +450,67 @@ const PlaylistCard = ({ playlist, votes, handleVote, isAdmin }) => {
   );
 
   return (
-    <div className="mb-4 flex items-start justify-between rounded-lg bg-muted p-4">
-      <div className="mr-4 flex-grow">
-        <div className="flex items-center space-x-2">
-          <Music className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">{playlist.title}</h3>
-        </div>
-        <a
-          href={playlist.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-1 flex items-center text-sm text-muted-foreground hover:underline"
-        >
-          {playlist.url}
-          <ExternalLink className="ml-1 h-3 w-3" />
-        </a>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {playlist.description}
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {playlist?.categories?.map((category) => (
-            <Badge key={`playlist_${category}`}>{category}</Badge>
-          ))}
-        </div>
-      </div>
-      <div className="flex flex-col items-center space-y-1">
-        <VoteButton
-          isUpvote={true}
-          isVoted={votes[playlist.id] === "up"}
-          onClick={() => handleVote(playlist.id, true)}
-        />
-        <span className="font-bold">{playlist.votes}</span>
-        <VoteButton
-          isUpvote={false}
-          isVoted={votes[playlist.id] === "down"}
-          onClick={() => handleVote(playlist.id, false)}
-        />
-      </div>
-      <div>
-        {isAdmin && (
-          <div>
-            <Button> Delete</Button>
+    <div className="mb-4 rounded-lg bg-muted p-4">
+      <div className="flex items-start justify-between">
+        <div className="mr-4 flex-grow">
+          <div className="flex items-center space-x-2">
+            <Music className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">{playlist.title}</h3>
           </div>
-        )}
+          <a
+            href={playlist.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 flex items-center text-sm text-muted-foreground hover:underline"
+          >
+            {playlist.url}
+            <ExternalLink className="ml-1 h-3 w-3" />
+          </a>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {playlist.description}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {playlist?.categories?.map((category) => (
+              <Badge key={`playlist_${category}`}>{category}</Badge>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-col items-center space-y-1">
+          <VoteButton
+            isUpvote={true}
+            isVoted={votes[playlist.id] === "up"}
+            onClick={() => handleVote(playlist.id, true)}
+          />
+          <span className="font-bold">{playlist.votes}</span>
+          <VoteButton
+            isUpvote={false}
+            isVoted={votes[playlist.id] === "down"}
+            onClick={() => handleVote(playlist.id, false)}
+          />
+        </div>
       </div>
+      {isAdmin && (
+        <div className="mt-4 flex justify-end space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onEdit(playlist.id)}
+            className="flex items-center"
+          >
+            <Edit className="mr-1 h-4 w-4" />
+            Edit
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => onDelete(playlist.id)}
+            className="flex items-center"
+          >
+            <Trash className="mr-1 h-4 w-4" />
+            Delete
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

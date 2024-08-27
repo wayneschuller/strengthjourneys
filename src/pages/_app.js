@@ -70,8 +70,6 @@ export default function App({ Component, pageProps, session }) {
           gtag('config', '${GA_MEASUREMENT_ID}');
         `}
       </Script>
-        <script defer data-domain="strengthjourneys.xyz" src="https://plausible.io/js/script.js"></script>
-
     </>
   );
 }

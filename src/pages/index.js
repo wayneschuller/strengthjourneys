@@ -68,8 +68,7 @@ export const featurePages = [
   {
     href: "/articles/own-your-lifting-data",
     title: "Article: The Power of Owning Your Lifting Data",
-    description:
-      "A short article on why we recommend Google Sheets for lifters.",
+    description: "Why we recommend Google Sheets for lifters.",
     IconComponent: Newspaper,
   },
   {
@@ -128,7 +127,7 @@ export default function Home() {
 
       <PageDescription />
 
-      <div className="my-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-4">
+      <div className="my-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-3 2xl:grid-cols-4">
         {featurePages.map((card, index) => (
           <FeatureCard key={index} {...card} />
         ))}
@@ -166,7 +165,7 @@ const PageDescription = () => (
 const FeatureCard = ({ href, title, description, IconComponent }) => (
   <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
     <Link href={href}>
-      <CardHeader>
+      <CardHeader className="min-h-28">
         <CardTitle className="">{title}</CardTitle>
         <CardDescription className="">{description}</CardDescription>
       </CardHeader>

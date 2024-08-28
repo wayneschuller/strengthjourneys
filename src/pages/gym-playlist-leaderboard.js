@@ -45,14 +45,15 @@ export default function GymPlaylistLeaderboard() {
   const { data: playlistsData, error } = useSWR("/api/playlists", fetcher);
   const [playlists, setPlaylists] = useState([]);
 
-  const [newPlaylist, setNewPlaylist] = useState({
+  const [currentPlaylist, setCurrentPlaylist] = useState({
+    id: "",
     title: "",
     description: "",
     url: "",
     categories: [],
-    //FIXME: add timestamp
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [votes, setVotes] = useLocalStorage("SJ_playlistVotes", {});
   const [currentTab, setCurrentTab] = useState("top");
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -115,6 +116,24 @@ export default function GymPlaylistLeaderboard() {
 
   // devLog(votes);
 
+  const openAddDialog = () => {
+    setIsEditMode(false);
+    setCurrentPlaylist({
+      id: "",
+      title: "",
+      description: "",
+      url: "",
+      categories: [],
+    });
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (playlist) => {
+    setIsEditMode(true);
+    setCurrentPlaylist(playlist);
+    setIsDialogOpen(true);
+  };
+
   const handleVote = (id, isUpvote) => {
     setVotes((prevVotes) => {
       const newVotes = { ...prevVotes };
@@ -155,58 +174,80 @@ export default function GymPlaylistLeaderboard() {
     });
   };
 
-  const addPlaylist = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const newPlaylist = {
-      title: formData.get("title"),
-      description: formData.get("description"),
-      url: formData.get("url"),
-      categories: formData.getAll("categories"),
-    };
-
-    if (newPlaylist.title && newPlaylist.description && newPlaylist.url) {
-      const newPlaylistId = shortUUID.generate();
-      const playlistToAdd = {
-        id: newPlaylistId,
-        ...newPlaylist,
-        votes: 0,
-        timestamp: Date.now(),
-      };
-
+  const handlePlaylistAction = async (playlistData) => {
+    if (playlistData.title && playlistData.description && playlistData.url) {
       try {
-        const response = await fetch("/api/playlists", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(playlistToAdd),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to add playlist");
+        let response;
+        if (isEditMode) {
+          response = await fetch(`/api/playlists?id=${currentPlaylist.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(playlistData),
+          });
+        } else {
+          const newPlaylistId = shortUUID.generate();
+          const playlistToAdd = {
+            id: newPlaylistId,
+            ...playlistData,
+            votes: 0,
+            timestamp: Date.now(),
+          };
+          response = await fetch("/api/playlists", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(playlistToAdd),
+          });
         }
 
-        // Update the local state with the new playlist
-        setPlaylists((prevPlaylists) => [...prevPlaylists, playlistToAdd]);
+        if (!response.ok) {
+          throw new Error(
+            isEditMode ? "Failed to update playlist" : "Failed to add playlist",
+          );
+        }
 
-        // Close the dialog
+        setPlaylists((prevPlaylists) => {
+          if (isEditMode) {
+            return prevPlaylists.map((playlist) =>
+              playlist.id === currentPlaylist.id
+                ? { ...playlist, ...playlistData }
+                : playlist,
+            );
+          } else {
+            return [
+              ...prevPlaylists,
+              {
+                id: newPlaylistId,
+                ...playlistData,
+                votes: 0,
+                timestamp: Date.now(),
+              },
+            ];
+          }
+        });
+
         setIsDialogOpen(false);
-
-        // Optionally, revalidate the SWR cache
         mutate("/api/playlists");
 
-        // Show a success message
         toast({
           title: "Success",
-          description: "New playlist added successfully!",
+          description: isEditMode
+            ? "Playlist updated successfully!"
+            : "New playlist added successfully!",
         });
       } catch (error) {
-        console.error("Error adding playlist:", error);
-        // Show an error message
+        console.error(
+          isEditMode ? "Error updating playlist:" : "Error adding playlist:",
+          error,
+        );
         toast({
           title: "Error",
-          description: "Failed to add playlist. Please try again.",
+          description: isEditMode
+            ? "Failed to update playlist. Please try again."
+            : "Failed to add playlist. Please try again.",
           variant: "destructive",
         });
       }
@@ -363,48 +404,20 @@ export default function GymPlaylistLeaderboard() {
           </div>
         </div>
         <div className="flex items-center justify-center">
-          <Button onClick={() => setIsDialogOpen(true)} className="w-full">
+          <Button onClick={openAddDialog} className="w-full">
             Suggest New Playlist
           </Button>
         </div>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Playlist</DialogTitle>
-            <DialogDescription>
-              Fill out the form below to add a new playlist to the leaderboard.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={addPlaylist} className="space-y-4">
-            <Input name="title" placeholder="Playlist Title" required />
-            <Textarea
-              name="description"
-              placeholder="Playlist Description"
-              required
-            />
-            <Input name="url" placeholder="Playlist URL" required />
-            <div>
-              <p className="mb-2 text-sm font-medium">Categories:</p>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category) => (
-                  <label key={category} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      name="categories"
-                      value={category}
-                      className="form-checkbox"
-                    />
-                    <span>{category}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <Button type="submit">Add Playlist</Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <PlaylistDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        isEditMode={isEditMode}
+        currentPlaylist={currentPlaylist}
+        onSubmit={handlePlaylistAction}
+        categories={categories}
+      />
 
       <Tabs
         value={currentTab}
@@ -444,6 +457,7 @@ export default function GymPlaylistLeaderboard() {
                 handleVote={handleVote}
                 isAdmin={isAdmin}
                 onDelete={deletePlaylist}
+                onEdit={openEditDialog}
               />
             ))}
           </div>
@@ -453,6 +467,9 @@ export default function GymPlaylistLeaderboard() {
   );
 }
 
+// ---------------------------------------------------------------------------------------------------
+// <PlaylistCard /> - Upvotable info card about a good gym music playlist
+// ---------------------------------------------------------------------------------------------------
 const PlaylistCard = ({
   playlist,
   votes,
@@ -529,7 +546,7 @@ const PlaylistCard = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onEdit(playlist.id)}
+            onClick={() => onEdit(playlist)}
             className="flex items-center"
           >
             <Edit className="mr-1 h-4 w-4" />
@@ -547,5 +564,90 @@ const PlaylistCard = ({
         </div>
       )}
     </div>
+  );
+};
+
+// ---------------------------------------------------------------------------------------------------
+// <PlaylistDialog /> - Create/Edit a playlist for the leaderboard
+// ---------------------------------------------------------------------------------------------------
+const PlaylistDialog = ({
+  isOpen,
+  onOpenChange,
+  isEditMode,
+  currentPlaylist,
+  onSubmit,
+  categories,
+}) => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const playlistData = {
+      title: formData.get("title"),
+      description: formData.get("description"),
+      url: formData.get("url"),
+      categories: formData.getAll("categories"),
+    };
+    onSubmit(playlistData);
+  };
+
+  devLog(currentPlaylist);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {isEditMode ? "Edit Playlist" : "Add New Playlist"}
+          </DialogTitle>
+          <DialogDescription>
+            {isEditMode
+              ? "Edit the playlist details below."
+              : "Fill out the form below to add a new playlist to the leaderboard."}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            name="title"
+            placeholder="Playlist Title"
+            required
+            defaultValue={currentPlaylist.title}
+          />
+          <Textarea
+            name="description"
+            placeholder="Playlist Description"
+            required
+            defaultValue={currentPlaylist.description}
+          />
+          <Input
+            name="url"
+            placeholder="Playlist URL"
+            required
+            defaultValue={currentPlaylist.url}
+          />
+          <div>
+            <p className="mb-2 text-sm font-medium">Categories:</p>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category) => (
+                <label key={category} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="categories"
+                    value={category}
+                    className="form-checkbox"
+                    defaultChecked={
+                      currentPlaylist?.categories?.includes(category) || false
+                    }
+                  />
+                  <span>{category}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <Button type="submit">
+            {isEditMode ? "Update Playlist" : "Add Playlist"}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };

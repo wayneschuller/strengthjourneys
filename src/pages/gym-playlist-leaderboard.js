@@ -590,6 +590,10 @@ const PlaylistDialog = ({
     onSubmit(playlistData);
   };
 
+  const handleCancel = () => {
+    onOpenChange(false);
+  };
+
   devLog(currentPlaylist);
 
   return (
@@ -643,9 +647,14 @@ const PlaylistDialog = ({
               ))}
             </div>
           </div>
-          <Button type="submit">
-            {isEditMode ? "Update Playlist" : "Add Playlist"}
-          </Button>
+          <div className="flex justify-between space-x-2 pt-5">
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              {isEditMode ? "Update Playlist" : "Add Playlist"}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

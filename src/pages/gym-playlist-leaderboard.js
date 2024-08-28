@@ -174,83 +174,80 @@ export default function GymPlaylistLeaderboard() {
     });
   };
 
+  // --------------------------------------------------------------------------
+  // Form handler for Add/Edit playlist dialog
+  // --------------------------------------------------------------------------
   const handlePlaylistAction = async (playlistData) => {
-    if (playlistData.title && playlistData.description && playlistData.url) {
-      try {
-        let response;
-        if (isEditMode) {
-          response = await fetch(`/api/playlists?id=${currentPlaylist.id}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(playlistData),
-          });
-        } else {
-          const newPlaylistId = shortUUID.generate();
-          const playlistToAdd = {
-            id: newPlaylistId,
-            ...playlistData,
-            votes: 0,
-            timestamp: Date.now(),
-          };
-          response = await fetch("/api/playlists", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(playlistToAdd),
-          });
-        }
+    devLog(`handlePlaylistAction dialog activity:`);
+    devLog(playlistData);
 
-        if (!response.ok) {
-          throw new Error(
-            isEditMode ? "Failed to update playlist" : "Failed to add playlist",
-          );
-        }
+    let playlistToAdd;
 
-        setPlaylists((prevPlaylists) => {
-          if (isEditMode) {
-            return prevPlaylists.map((playlist) =>
-              playlist.id === currentPlaylist.id
-                ? { ...playlist, ...playlistData }
-                : playlist,
-            );
-          } else {
-            return [
-              ...prevPlaylists,
-              {
-                id: newPlaylistId,
-                ...playlistData,
-                votes: 0,
-                timestamp: Date.now(),
-              },
-            ];
-          }
+    try {
+      let response;
+      if (isEditMode) {
+        response = await fetch(`/api/playlists?id=${currentPlaylist.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(playlistData),
         });
-
-        setIsDialogOpen(false);
-        mutate("/api/playlists");
-
-        toast({
-          title: "Success",
-          description: isEditMode
-            ? "Playlist updated successfully!"
-            : "New playlist added successfully!",
-        });
-      } catch (error) {
-        console.error(
-          isEditMode ? "Error updating playlist:" : "Error adding playlist:",
-          error,
-        );
-        toast({
-          title: "Error",
-          description: isEditMode
-            ? "Failed to update playlist. Please try again."
-            : "Failed to add playlist. Please try again.",
-          variant: "destructive",
+      } else {
+        playlistToAdd = {
+          id: shortUUID.generate(),
+          ...playlistData,
+          votes: 0,
+          timestamp: Date.now(),
+        };
+        response = await fetch("/api/playlists", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(playlistToAdd),
         });
       }
+
+      if (!response.ok) {
+        throw new Error(
+          isEditMode ? "Failed to update playlist" : "Failed to add playlist",
+        );
+      }
+
+      setPlaylists((prevPlaylists) => {
+        if (isEditMode) {
+          return prevPlaylists.map((playlist) =>
+            playlist.id === currentPlaylist.id
+              ? { ...playlist, ...playlistData }
+              : playlist,
+          );
+        } else {
+          return [...prevPlaylists, playlistToAdd];
+        }
+      });
+
+      setIsDialogOpen(false);
+      mutate("/api/playlists");
+
+      toast({
+        title: "Success",
+        description: isEditMode
+          ? "Playlist updated successfully!"
+          : "New playlist added successfully!",
+      });
+    } catch (error) {
+      console.error(
+        isEditMode ? "Error updating playlist:" : "Error adding playlist:",
+        error,
+      );
+      toast({
+        title: "Error",
+        description: isEditMode
+          ? "Failed to update playlist. Please try again."
+          : "Failed to add playlist. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

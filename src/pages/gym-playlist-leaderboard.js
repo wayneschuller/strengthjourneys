@@ -145,40 +145,58 @@ export default function GymPlaylistLeaderboard() {
   // --------------------------------------------------------------------------
   // handleVote - process votes in localstorage (optimistic UI) and API point
   // --------------------------------------------------------------------------
-  const handleVote = (id, isUpvote) => {
+
+  const handleVote = async (id, isUpvote) => {
     setVotes((prevVotes) => {
       const newVotes = { ...prevVotes };
-      if (newVotes[id] === (isUpvote ? "up" : "down")) {
+      const newVoteState = isUpvote ? "upVote" : "downVote";
+      const currentVote = newVotes[id];
+
+      // Determine whether to undo the vote or set a new one
+      if (currentVote === newVoteState) {
         // Undo the vote if clicking the same button
         delete newVotes[id];
       } else {
         // Set new vote
-        newVotes[id] = isUpvote ? "up" : "down";
+        newVotes[id] = newVoteState;
       }
 
-      // Update playlists based on the new vote state
-      setPlaylists((prevPlaylists) =>
-        prevPlaylists.map((playlist) => {
-          if (playlist.id === id) {
-            let voteChange = 0;
-            if (prevVotes[id] === "up" && newVotes[id] === "down") {
-              voteChange = -2; // Changed from upvote to downvote
-            } else if (prevVotes[id] === "down" && newVotes[id] === "up") {
-              voteChange = 2; // Changed from downvote to upvote
-            } else if (prevVotes[id] === "up" && !newVotes[id]) {
-              voteChange = -1; // Removed upvote
-            } else if (prevVotes[id] === "down" && !newVotes[id]) {
-              voteChange = 1; // Removed downvote
-            } else if (newVotes[id] === "up") {
-              voteChange = 1; // New upvote
-            } else if (newVotes[id] === "down") {
-              voteChange = -1; // New downvote
-            }
-            return { ...playlist, votes: playlist.votes + voteChange };
-          }
-          return playlist;
-        }),
-      );
+      // Send the vote to the server
+      const action = currentVote === newVoteState ? "decrement" : "increment";
+      const voteType = newVoteState;
+
+      sendVote(id, voteType, action)
+        .then(() => {
+          // Update playlists based on the new vote state
+          setPlaylists((prevPlaylists) =>
+            prevPlaylists.map((playlist) => {
+              if (playlist.id === id) {
+                // Directly modify the field impacted by the voteType
+                const upVotesChange = isUpvote
+                  ? currentVote === "up"
+                    ? -1
+                    : 1
+                  : 0;
+                const downVotesChange = !isUpvote
+                  ? currentVote === "down"
+                    ? -1
+                    : 1
+                  : 0;
+
+                return {
+                  ...playlist,
+                  upVotes: playlist.upVotes + upVotesChange,
+                  downVotes: playlist.downVotes + downVotesChange,
+                };
+              }
+              return playlist;
+            }),
+          );
+        })
+        .catch((error) => {
+          console.error("Error sending vote:", error);
+          // Handle error (e.g., revert state, show an error message)
+        });
 
       return newVotes;
     });
@@ -526,7 +544,9 @@ const PlaylistCard = ({
             isVoted={votes[playlist.id] === "up"}
             onClick={() => handleVote(playlist.id, true)}
           />
-          <span className="font-bold">{playlist.votes}</span>
+          <span className="font-bold">
+            {playlist.upVotes - playlist.downVotes}
+          </span>
           <VoteButton
             isUpvote={false}
             isVoted={votes[playlist.id] === "down"}
@@ -580,7 +600,8 @@ const PlaylistDialog = ({
       url: formData.get("url"),
       categories: formData.getAll("categories"),
       id: currentPlaylist.id,
-      votes: currentPlaylist.votes || 0,
+      upVotes: currentPlaylist.upVotes || 0,
+      downVotes: currentPlaylist.downVotes || 0,
     };
     onSubmit(playlistData);
   };
@@ -653,3 +674,33 @@ const PlaylistDialog = ({
     </Dialog>
   );
 };
+
+export async function sendVote(id, voteType, action) {
+  if (voteType !== "upVote" && voteType !== "downVote") {
+    throw new Error('Invalid voteType. Must be "upvote" or "downvote".');
+  }
+
+  if (action !== "increment" && action !== "decrement") {
+    throw new Error('Invalid action. Must be "increment" or "decrement".');
+  }
+
+  try {
+    const response = await fetch(
+      `/api/vote-playlist?id=${id}&voteType=${voteType}&action=${action}`,
+      {
+        method: "POST",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to send vote");
+    }
+
+    const result = await response.json();
+    devLog(`Vote successful: ${JSON.stringify(result)}`);
+    return result;
+  } catch (error) {
+    devLog(`Error: ${error.message}`);
+    throw error;
+  }
+}

@@ -135,8 +135,8 @@ export default function GymPlaylistLeaderboard() {
     setVotes((prevVotes) => {
       const newVotes = { ...prevVotes };
       const newVoteState = isUpvote ? "upVote" : "downVote";
-      // const currentVote = newVotes[id];
-      const currentVote = null;
+      const currentVote = newVotes[id];
+      // const currentVote = null;
 
       // Determine whether to undo the vote or set a new one
       if (currentVote === newVoteState) {
@@ -148,8 +148,8 @@ export default function GymPlaylistLeaderboard() {
       }
 
       // Send the vote to the server
-      // const action = currentVote === newVoteState ? "decrement" : "increment";
-      const action = "increment";
+      const action = currentVote === newVoteState ? "decrement" : "increment";
+      // const action = "increment";
       const voteType = newVoteState;
 
       sendVote(id, voteType, action)
@@ -548,7 +548,7 @@ const PlaylistCard = ({
         <div className="flex flex-col items-center space-y-1">
           <VoteButton
             isUpvote={true}
-            // isVoted={votes[playlist.id] === "upVote"}
+            isVoted={votes[playlist.id] === "upVote"}
             onClick={() => handleVote(playlist.id, true)}
           />
           <span className="font-bold">
@@ -556,7 +556,7 @@ const PlaylistCard = ({
           </span>
           <VoteButton
             isUpvote={false}
-            // isVoted={votes[playlist.id] === "downVote"}
+            isVoted={votes[playlist.id] === "downVote"}
             onClick={() => handleVote(playlist.id, false)}
           />
         </div>

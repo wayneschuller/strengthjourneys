@@ -299,16 +299,6 @@ export default function GymPlaylistLeaderboard() {
     );
   };
 
-  // Used in the dialog for suggesting a new playlist
-  const toggleNewPlaylistCategory = (category) => {
-    setNewPlaylist((prev) => ({
-      ...prev,
-      categories: prev.categories.includes(category)
-        ? prev.categories.filter((c) => c !== category)
-        : [...prev.categories, category],
-    }));
-  };
-
   const sortFunctions = {
     top: (a, b) => b.votes - a.votes,
     new: (a, b) => b.timestamp - a.timestamp,
@@ -326,8 +316,6 @@ export default function GymPlaylistLeaderboard() {
         )
         .sort(sortFunctions[currentTab])
     : [];
-
-  const sortedPlaylists = [...playlists].sort(sortFunctions[currentTab]);
 
   const handleTabChange = (value) => {
     setCurrentTab(value);
@@ -605,7 +593,7 @@ const PlaylistDialog = ({
       url: formData.get("url"),
       categories: formData.getAll("categories"),
       id: currentPlaylist.id,
-      votes: currentPlaylist.votes,
+      votes: currentPlaylist.votes || 0,
     };
     onSubmit(playlistData);
   };

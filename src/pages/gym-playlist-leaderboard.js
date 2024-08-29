@@ -140,6 +140,9 @@ export default function GymPlaylistLeaderboard() {
     setIsDialogOpen(true);
   };
 
+  // --------------------------------------------------------------------------
+  // handleVote - process votes in localstorage (optimistic UI) and API point
+  // --------------------------------------------------------------------------
   const handleVote = (id, isUpvote) => {
     setVotes((prevVotes) => {
       const newVotes = { ...prevVotes };

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import Head from "next/head";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import shortUUID from "short-uuid";
@@ -356,6 +357,14 @@ export default function GymPlaylistLeaderboard() {
 
   return (
     <div className="container mx-auto max-w-2xl p-4">
+      <Head>
+        <title>Gym Music Playlist Leaderboard</title>
+        <meta
+          name="description"
+          content="Discover the best gym music for lifting barbells. Upvote and submit your playlists for other strength barbell lifters"
+        />
+      </Head>
+
       <h1 className="mb-6 text-center text-3xl font-bold">
         Gym Music Playlist Global Leaderboard
       </h1>

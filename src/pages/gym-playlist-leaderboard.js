@@ -91,11 +91,13 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
     if (playlistsData) setPlaylists(playlistsData);
   }, [playlistsData]);
 
-  if (error || playlists?.error) {
-    if (error) devLog(error);
-    if (playlists?.error) devLog(playlists);
-    return <div>Failed to load playlists</div>;
-  }
+  // FIXME: don't do this because if useSWR has any error we want to fall back to static props initialPlaylists
+  // if (error || playlists?.error) {
+  // if (error) devLog(error);
+  // if (playlists?.error) devLog(playlists);
+  // return <div>Failed to load playlists</div>;
+  // }
+
   if (!playlists) return <div>Loading...</div>;
 
   const categories = [

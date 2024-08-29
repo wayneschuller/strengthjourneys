@@ -358,7 +358,7 @@ export default function GymPlaylistLeaderboard() {
 
   return (
     // <div className="container mx-auto max-w-2xl p-4">
-    <div className="mx-4 flex flex-col items-center md:mx-[10vw]">
+    <div className="mx-4 flex flex-col md:mx-10 md:items-center xl:mx-[25vw]">
       <Head>
         <title>Gym Music Playlist Leaderboard</title>
         <meta
@@ -458,7 +458,7 @@ export default function GymPlaylistLeaderboard() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value={currentTab} className="space-y-4">
-          <div ref={parent}>
+          <div ref={parent} className="flex flex-col gap-5">
             {filteredAndSortedPlaylists.map((playlist) => (
               <PlaylistCard
                 key={playlist.id}
@@ -517,33 +517,40 @@ const PlaylistCard = ({
   );
 
   return (
-    <div className="mb-4 rounded-lg bg-muted/30 p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col">
-          <div className="flex items-center space-x-2">
+    <Card className="flex flex-row gap-2 bg-muted/30">
+      <div className="flex-1">
+        <CardHeader className="">
+          <CardTitle className="flex items-center justify-start gap-2 text-lg">
             <Music className="h-5 w-5 text-primary" />
             <h3 className="font-semibold">
               <a
                 href={playlist.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:underline"
+                className="text-wrap hover:underline"
               >
                 {playlist.title}
               </a>
             </h3>
-          </div>
-          <a
-            href={playlist.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-1 flex items-center truncate text-sm text-muted-foreground hover:underline"
-          >
-            {playlist.url}
-            <ExternalLink className="ml-1 h-3 w-3 flex-shrink-0" />
-          </a>
+          </CardTitle>
+          <CardDescription>
+            <a
+              href={playlist.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 flex items-center truncate text-sm text-muted-foreground hover:underline"
+            >
+              {playlist.url}
+              <ExternalLink className="ml-1 h-3 w-3 flex-shrink-0" />
+            </a>
+          </CardDescription>
+          <div></div>
+        </CardHeader>
+        <CardContent>
           <p className="mt-1 text-sm">{playlist.description}</p>
-          <div className="mt-2 flex flex-wrap gap-2">
+        </CardContent>
+        <CardFooter className="flex flex-1 flex-row justify-between">
+          <div className="mt-2 flex flex-1 flex-wrap gap-2">
             {playlist?.categories?.map((category) => (
               <Badge
                 key={`playlist_${category}`}
@@ -554,46 +561,49 @@ const PlaylistCard = ({
               </Badge>
             ))}
           </div>
-        </div>
-        <div className="flex flex-col items-center space-y-1">
-          <VoteButton
-            isUpvote={true}
-            isVoted={votes[playlist.id] === "upVote"}
-            onClick={() => handleVote(playlist.id, true)}
-          />
-          <span className="font-bold">
-            {playlist.upVotes - playlist.downVotes}
-          </span>
-          <VoteButton
-            isUpvote={false}
-            isVoted={votes[playlist.id] === "downVote"}
-            onClick={() => handleVote(playlist.id, false)}
-          />
-        </div>
+          <div>
+            {isAdmin && (
+              <div className="mt-4 flex items-center justify-end space-x-2">
+                <div>Admin Tools: </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(playlist)}
+                  className="flex items-center"
+                >
+                  <Edit className="mr-1 h-4 w-4" />
+                  Edit
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => onDelete(playlist.id)}
+                  className="flex items-center"
+                >
+                  <Trash className="mr-1 h-4 w-4" />
+                  Delete
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardFooter>
       </div>
-      {isAdmin && (
-        <div className="mt-4 flex justify-end space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit(playlist)}
-            className="flex items-center"
-          >
-            <Edit className="mr-1 h-4 w-4" />
-            Edit
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => onDelete(playlist.id)}
-            className="flex items-center"
-          >
-            <Trash className="mr-1 h-4 w-4" />
-            Delete
-          </Button>
-        </div>
-      )}
-    </div>
+      <div className="flex flex-col items-center space-y-1 pr-4 pt-6">
+        <VoteButton
+          isUpvote={true}
+          isVoted={votes[playlist.id] === "upVote"}
+          onClick={() => handleVote(playlist.id, true)}
+        />
+        <span className="font-bold">
+          {playlist.upVotes - playlist.downVotes}
+        </span>
+        <VoteButton
+          isUpvote={false}
+          isVoted={votes[playlist.id] === "downVote"}
+          onClick={() => handleVote(playlist.id, false)}
+        />
+      </div>
+    </Card>
   );
 };
 

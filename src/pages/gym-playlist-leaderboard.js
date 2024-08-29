@@ -198,8 +198,8 @@ export default function GymPlaylistLeaderboard() {
         });
       } else {
         playlistToAdd = {
-          id: shortUUID.generate(),
           ...playlistData,
+          id: shortUUID.generate(),
           votes: 0,
           timestamp: Date.now(),
         };

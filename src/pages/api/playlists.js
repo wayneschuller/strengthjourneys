@@ -41,7 +41,7 @@ export default async function handler(req, res) {
       // POST logic for creating a new playlist - any user can do
       try {
         const newPlaylist = req.body;
-        if (!newPlaylist.id || !newPlaylist.title) {
+        if (!newPlaylist.id || !newPlaylist.title || !newPlaylist.url) {
           return res.status(400).json({ error: "Invalid playlist data" });
         }
         await kv.hset("playlists", {

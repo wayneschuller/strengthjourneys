@@ -315,8 +315,6 @@ export default function GymPlaylistLeaderboard() {
       a.votes / (Date.now() - a.timestamp),
   };
 
-  devLog(playlists);
-
   const filteredAndSortedPlaylists = playlists
     ? playlists
         .filter(
@@ -612,8 +610,6 @@ const PlaylistDialog = ({
   const handleCancel = () => {
     onOpenChange(false);
   };
-
-  devLog(currentPlaylist);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

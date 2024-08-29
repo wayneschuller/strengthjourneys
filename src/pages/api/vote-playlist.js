@@ -1,4 +1,5 @@
 import { kv } from "@vercel/kv";
+import { devLog } from "@/lib/processing-utils";
 
 export default async function handler(req, res) {
   const { id, voteType, action } = req.query;
@@ -25,6 +26,7 @@ export default async function handler(req, res) {
 
     // Update the votes count in Redis
     const newVotes = await kv.hincrby(`playlists:${id}`, field, incrementValue);
+    devLog(`kv.hincrby: playlists:${id}`, field, incrementValue);
 
     res.status(200).json({ id, [field]: newVotes });
   } catch (error) {

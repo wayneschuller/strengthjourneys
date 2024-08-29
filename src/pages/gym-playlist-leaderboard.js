@@ -118,7 +118,8 @@ export default function GymPlaylistLeaderboard() {
     "weird",
   ];
 
-  // devLog(votes);
+  devLog(votes);
+  devLog(playlistsData);
 
   const openAddDialog = () => {
     setIsEditMode(false);
@@ -128,6 +129,7 @@ export default function GymPlaylistLeaderboard() {
       description: "",
       url: "",
       categories: [],
+      votes: 0,
     });
     setIsDialogOpen(true);
   };
@@ -150,7 +152,6 @@ export default function GymPlaylistLeaderboard() {
       }
 
       // Update playlists based on the new vote state
-      return newVotes;
       setPlaylists((prevPlaylists) =>
         prevPlaylists.map((playlist) => {
           if (playlist.id === id) {

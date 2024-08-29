@@ -39,7 +39,6 @@ export async function fetchPlaylists(id = null) {
         }),
       );
 
-      console.log(playlistsWithVotes);
       return playlistsWithVotes;
     }
   } catch (error) {

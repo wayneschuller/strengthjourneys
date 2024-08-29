@@ -2,6 +2,7 @@ import { kv } from "@vercel/kv";
 import { devLog } from "@/lib/processing-utils";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
+import { fetchPlaylists } from "@/lib/playlist-utils";
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
@@ -19,43 +20,9 @@ export default async function handler(req, res) {
       // GET logic for fetching all playlists or a specific playlist - any user can do
       try {
         const { id } = req.query;
-        if (id) {
-          // Fetch a specific playlist
-          const playlist = await kv.hget("playlists", id);
-          if (!playlist) {
-            return res.status(404).json({ error: "Playlist not found" });
-          }
-          res.status(200).json(JSON.parse(playlist));
-        } else {
-          // Fetch all playlists
-          const playlists = await kv.hgetall("playlists");
-
-          // Map through all the playlists and add in the upvotes/downvotes
-          const playlistsWithVotes = await Promise.all(
-            Object.entries(playlists).map(async ([id, playlist]) => {
-              const votes = await kv.hmget(
-                `playlists:${id}`,
-                "upVotes",
-                "downVotes",
-              );
-              devLog(votes);
-              // If kv.hmget returns null, initialize counts to 0
-              const upVotes = parseInt(votes?.upVotes) || 0;
-              const downVotes = parseInt(votes?.downVotes) || 0;
-
-              return {
-                ...playlist,
-                upVotes: upVotes,
-                downVotes: downVotes,
-              };
-            }),
-          );
-
-          // devLog(playlists);
-          // devLog(playlistsWithVotes);
-          res.status(200).json(playlistsWithVotes);
-          // res.status(200).json(playlists);
-        }
+        const result = await fetchPlaylists(id);
+        // devLog(result);
+        res.status(200).json(result);
       } catch (error) {
         console.error("Error fetching playlist(s):", error);
         res.status(500).json({ error: "Error fetching playlist(s)" });

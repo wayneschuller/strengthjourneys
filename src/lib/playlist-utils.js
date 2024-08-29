@@ -6,7 +6,8 @@ import { devLog } from "@/lib/processing-utils";
 export async function fetchPlaylists(id = null) {
   try {
     if (id) {
-      // Fetch a specific playlist
+      // Fetch a specific playlist - we don't use this FIXME DELETE path?
+      // FIXME: needs to incorporate the votes
       const playlist = await kv.hget("playlists", id);
       if (!playlist) {
         throw new Error("Playlist not found");
@@ -24,13 +25,13 @@ export async function fetchPlaylists(id = null) {
             "upVotes",
             "downVotes",
           );
-          devLog(votes);
+          // devLog(votes);
           // If kv.hmget returns null, initialize counts to 0
           const upVotes = parseInt(votes?.upVotes) || 0;
           const downVotes = parseInt(votes?.downVotes) || 0;
 
           return {
-            ...JSON.parse(playlist),
+            ...playlist,
             upVotes: upVotes,
             downVotes: downVotes,
           };

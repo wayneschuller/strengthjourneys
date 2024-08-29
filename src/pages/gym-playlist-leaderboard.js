@@ -53,9 +53,7 @@ const translator = shortUUID();
 
 export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   const { data: session, status: authStatus } = useSession();
-  const { data: playlistsData, error } = useSWR("/api/playlists", fetcher, {
-    fallbackData: initialPlaylists,
-  });
+  const { data: playlistsData, error } = useSWR("/api/playlists", fetcher);
   const [playlists, setPlaylists] = useState([]);
 
   const [currentPlaylist, setCurrentPlaylist] = useState({
@@ -737,8 +735,21 @@ export async function sendVote(id, voteType, action) {
 // ISR - Incremental Static Regeneration on Next.js
 // ---------------------------------------------------------------------------------------------------
 export async function getStaticProps() {
+  let baseUrl;
+
+  if (process.env.VERCEL_URL) {
+    // Running on Vercel, use the deployment URL
+    baseUrl = `https://${process.env.VERCEL_URL}`;
+  } else if (process.env.NEXT_PUBLIC_BASE_URL) {
+    // Use custom environment variable if set
+    baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  } else {
+    // Fallback for local development
+    baseUrl = "http://localhost:3000";
+  }
+
   try {
-    const response = await fetch("/api/playlists");
+    const response = await fetch(`${baseUrl}/api/playlists`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

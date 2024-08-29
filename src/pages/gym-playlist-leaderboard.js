@@ -744,7 +744,6 @@ export async function getStaticProps() {
     console.log(
       `getStaticProps caching initialPlaylists (length: ${initialPlaylists.length}) `,
     );
-    // console.log(initialPlaylists);
     return {
       props: { initialPlaylists },
       revalidate: 3600, // Revalidate every 1 hour (3600 seconds)

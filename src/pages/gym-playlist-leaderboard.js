@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Head from "next/head";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchPlaylists } from "@/lib/playlist-utils";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import useSWR, { mutate } from "swr";
+import { Separator } from "@/components/ui/separator";
+const fetcher = (...args) => fetch(...args).then((res) => res.json());
+const translator = shortUUID();
 
 import {
   Card,
@@ -43,21 +48,16 @@ import {
   Trash,
 } from "lucide-react";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import useSWR, { mutate } from "swr";
-import { Separator } from "@/components/ui/separator";
-
-const fetcher = (...args) => fetch(...args).then((res) => res.json());
-
-// Create a translator object
-const translator = shortUUID();
-
+// ---------------------------------------------------------------------------------------------------
+// <GymPlaylistLeaderboard /> - World's best source of lifting music
+// ---------------------------------------------------------------------------------------------------
 export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   const { data: session, status: authStatus } = useSession();
   const { data: playlistsData, error } = useSWR("/api/playlists", fetcher, {
     fallbackData: initialPlaylists,
   });
-  const [playlists, setPlaylists] = useState([]);
+  // const [playlists, setPlaylists] = useState([]);
+  const [playlists, setPlaylists] = useState(initialPlaylists);
 
   const [currentPlaylist, setCurrentPlaylist] = useState({
     id: "",

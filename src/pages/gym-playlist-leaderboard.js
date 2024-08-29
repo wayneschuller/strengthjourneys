@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { fetchPlaylists } from "@/lib/playlist-utils";
 
 import {
   Card,
@@ -53,7 +54,9 @@ const translator = shortUUID();
 
 export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   const { data: session, status: authStatus } = useSession();
-  const { data: playlistsData, error } = useSWR("/api/playlists", fetcher);
+  const { data: playlistsData, error } = useSWR("/api/playlists", fetcher, {
+    fallbackData: initialPlaylists,
+  });
   const [playlists, setPlaylists] = useState([]);
 
   const [currentPlaylist, setCurrentPlaylist] = useState({
@@ -733,43 +736,20 @@ export async function sendVote(id, voteType, action) {
 
 // ---------------------------------------------------------------------------------------------------
 // ISR - Incremental Static Regeneration on Next.js
+// Doesn't run on dev but on Vercel it will access the kv store directly to pre-cache page at build
 // ---------------------------------------------------------------------------------------------------
 export async function getStaticProps() {
-  let baseUrl;
-
-  if (process.env.VERCEL_URL) {
-    // Running on Vercel, use the deployment URL
-    baseUrl = `https://${process.env.VERCEL_URL}`;
-  } else if (process.env.NEXT_PUBLIC_BASE_URL) {
-    // Use custom environment variable if set
-    baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-  } else {
-    // Fallback for local development
-    baseUrl = "http://localhost:3000";
-  }
-
   try {
-    const response = await fetch(`${baseUrl}/api/playlists`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const playlists = await response.json();
-
+    const initialPlaylists = await fetchPlaylists();
     return {
-      props: {
-        playlists,
-      },
-      revalidate: 3600, // Revalidate every hour (3600 seconds)
+      props: { initialPlaylists },
+      revalidate: 60, // Revalidate every 60 seconds
     };
   } catch (error) {
     console.error("Error fetching playlists:", error);
     return {
-      props: {
-        playlists: [],
-      },
-      revalidate: 60, // Retry after 1 minute if there was an error
+      props: { playlists: [] },
+      revalidate: 60,
     };
   }
 }

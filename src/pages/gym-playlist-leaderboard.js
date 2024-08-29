@@ -52,7 +52,8 @@ export default function GymPlaylistLeaderboard() {
     description: "",
     url: "",
     categories: [],
-    votes: 0,
+    upVotes: 0,
+    downVotes: 0,
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -129,7 +130,8 @@ export default function GymPlaylistLeaderboard() {
       description: "",
       url: "",
       categories: [],
-      votes: 0,
+      upVotes: 0,
+      downVotes: 0,
     });
     setIsDialogOpen(true);
   };
@@ -205,7 +207,8 @@ export default function GymPlaylistLeaderboard() {
         playlistToAdd = {
           ...playlistData,
           id: shortUUID.generate(),
-          votes: 0,
+          upVotes: 0,
+          downVotes: 0,
           timestamp: Date.now(),
         };
         response = await fetch("/api/playlists", {
@@ -303,11 +306,13 @@ export default function GymPlaylistLeaderboard() {
   };
 
   const sortFunctions = {
-    top: (a, b) => b.votes - a.votes,
+    top: (a, b) => b.upVotes - b.downVotes - (a.upVotes - a.downVotes),
     new: (a, b) => b.timestamp - a.timestamp,
-    rising: (a, b) =>
-      b.votes / (Date.now() - b.timestamp) -
-      a.votes / (Date.now() - a.timestamp),
+    rising: (a, b) => {
+      const scoreA = (a.upVotes - a.downVotes) / (Date.now() - a.timestamp);
+      const scoreB = (b.upVotes - b.downVotes) / (Date.now() - b.timestamp);
+      return scoreB - scoreA;
+    },
   };
 
   const filteredAndSortedPlaylists = playlists
@@ -319,33 +324,6 @@ export default function GymPlaylistLeaderboard() {
         )
         .sort(sortFunctions[currentTab])
     : [];
-
-  const handleTabChange = (value) => {
-    setCurrentTab(value);
-  };
-
-  const VoteButton = ({ isUpvote, isVoted, onClick, className }) => (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={onClick}
-      aria-label={isUpvote ? "Upvote" : "Downvote"}
-      className={cn(
-        "transition-all hover:outline",
-        isVoted
-          ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
-          : "hover:bg-accent hover:text-accent-foreground",
-        isVoted && "scale-110",
-        className,
-      )}
-    >
-      {isUpvote ? (
-        <ArrowBigUp className="h-6 w-6" />
-      ) : (
-        <ArrowBigDown className="h-6 w-6" />
-      )}
-    </Button>
-  );
 
   return (
     <div className="container mx-auto max-w-2xl p-4">
@@ -421,7 +399,7 @@ export default function GymPlaylistLeaderboard() {
 
       <Tabs
         value={currentTab}
-        onValueChange={handleTabChange}
+        onValueChange={(value) => setCurrentTab(value)}
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-3">

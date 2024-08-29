@@ -545,10 +545,7 @@ const PlaylistCard = ({
           </CardDescription>
           <div></div>
         </CardHeader>
-        <CardContent>
-          {/* <p className="mt-1 text-sm">{playlist.description}</p> */}
-          {playlist.description}
-        </CardContent>
+        <CardContent>{playlist.description}</CardContent>
         <CardFooter className="flex flex-1 flex-row justify-between">
           <div className="mt-2 flex flex-1 flex-wrap gap-2">
             {playlist?.categories?.map((category) => (

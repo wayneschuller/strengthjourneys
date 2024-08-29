@@ -516,7 +516,16 @@ const PlaylistCard = ({
         <div className="mr-4 flex-grow">
           <div className="flex items-center space-x-2">
             <Music className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">{playlist.title}</h3>
+            <h3 className="font-semibold">
+              <a
+                href={playlist.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
+                {playlist.title}
+              </a>
+            </h3>
           </div>
           <a
             href={playlist.url}

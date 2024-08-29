@@ -55,6 +55,8 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   const { data: session, status: authStatus } = useSession();
   const { data: playlistsData, error } = useSWR("/api/playlists", fetcher, {
     fallbackData: initialPlaylists,
+    refreshInterval: 300000, // 5 minutes
+    dedupingInterval: 60000, // 1 minute
   });
   // const [playlists, setPlaylists] = useState([]);
   const [playlists, setPlaylists] = useState(initialPlaylists);

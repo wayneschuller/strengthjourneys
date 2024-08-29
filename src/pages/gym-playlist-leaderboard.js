@@ -51,9 +51,11 @@ const fetcher = (...args) => fetch(...args).then((res) => res.json());
 // Create a translator object
 const translator = shortUUID();
 
-export default function GymPlaylistLeaderboard() {
+export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   const { data: session, status: authStatus } = useSession();
-  const { data: playlistsData, error } = useSWR("/api/playlists", fetcher);
+  const { data: playlistsData, error } = useSWR("/api/playlists", fetcher, {
+    fallbackData: initialPlaylists,
+  });
   const [playlists, setPlaylists] = useState([]);
 
   const [currentPlaylist, setCurrentPlaylist] = useState({
@@ -196,7 +198,7 @@ export default function GymPlaylistLeaderboard() {
 
       return newVotes;
     });
-    mutate("/api/playlists");
+    mutate("/api/playlists", false);
   };
 
   // --------------------------------------------------------------------------
@@ -254,7 +256,7 @@ export default function GymPlaylistLeaderboard() {
       });
 
       setIsDialogOpen(false);
-      mutate("/api/playlists");
+      mutate("/api/playlists", false);
 
       toast({
         title: "Success",
@@ -293,7 +295,7 @@ export default function GymPlaylistLeaderboard() {
       );
 
       // Revalidate the SWR cache
-      mutate("/api/playlists");
+      mutate("/api/playlists", false);
 
       // Show a success message
       // FIXME: Undo button would be nice
@@ -358,7 +360,7 @@ export default function GymPlaylistLeaderboard() {
 
   return (
     // <div className="container mx-auto max-w-2xl p-4">
-    <div className="mx-4 md:mx-10 md:items-center xl:mx-[25vw]">
+    <div className="mx-4 md:mx-10 md:items-center lg:mx-[15vw] xl:mx-[25vw]">
       <Head>
         <title>Gym Music Playlist Leaderboard</title>
         <meta
@@ -728,5 +730,35 @@ export async function sendVote(id, voteType, action) {
   } catch (error) {
     devLog(`Error: ${error.message}`);
     throw error;
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------
+// ISR - Incremental Static Regeneration on Next.js
+// ---------------------------------------------------------------------------------------------------
+export async function getStaticProps() {
+  try {
+    const response = await fetch("/api/playlists");
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const playlists = await response.json();
+
+    return {
+      props: {
+        playlists,
+      },
+      revalidate: 3600, // Revalidate every hour (3600 seconds)
+    };
+  } catch (error) {
+    console.error("Error fetching playlists:", error);
+    return {
+      props: {
+        playlists: [],
+      },
+      revalidate: 60, // Retry after 1 minute if there was an error
+    };
   }
 }

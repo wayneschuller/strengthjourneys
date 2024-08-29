@@ -13,6 +13,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -348,7 +357,8 @@ export default function GymPlaylistLeaderboard() {
   devLog(filteredAndSortedPlaylists);
 
   return (
-    <div className="container mx-auto max-w-2xl p-4">
+    // <div className="container mx-auto max-w-2xl p-4">
+    <div className="mx-4 flex flex-col items-center md:mx-[10vw]">
       <Head>
         <title>Gym Music Playlist Leaderboard</title>
         <meta
@@ -507,9 +517,9 @@ const PlaylistCard = ({
   );
 
   return (
-    <div className="mb-4 rounded-lg bg-muted p-4">
-      <div className="flex items-start justify-between">
-        <div className="mr-8 flex-grow">
+    <div className="mb-4 rounded-lg bg-muted/30 p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col">
           <div className="flex items-center space-x-2">
             <Music className="h-5 w-5 text-primary" />
             <h3 className="font-semibold">
@@ -527,10 +537,10 @@ const PlaylistCard = ({
             href={playlist.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-1 flex items-center text-sm text-muted-foreground hover:underline"
+            className="mt-1 flex items-center truncate text-sm text-muted-foreground hover:underline"
           >
             {playlist.url}
-            <ExternalLink className="ml-1 h-3 w-3" />
+            <ExternalLink className="ml-1 h-3 w-3 flex-shrink-0" />
           </a>
           <p className="mt-1 text-sm">{playlist.description}</p>
           <div className="mt-2 flex flex-wrap gap-2">

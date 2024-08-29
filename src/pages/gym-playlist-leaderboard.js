@@ -101,6 +101,7 @@ export default function GymPlaylistLeaderboard() {
     "electronic",
     "r&b",
     "metal",
+    "house",
     // Descriptive/Mood
     "upbeat",
     "intense",
@@ -111,6 +112,7 @@ export default function GymPlaylistLeaderboard() {
     "strength",
     "warm-up",
     "retro",
+    "podcast",
     "weird",
   ];
 

@@ -17,7 +17,6 @@ export async function fetchPlaylists(id = null) {
       // Fetch all playlists
       console.log(`Getting kvstore data for getStaticProps`);
       const playlists = await kv.hgetall("playlists");
-      console.log(playlists);
 
       // Map through all the playlists and add in the upvotes/downvotes
       const playlistsWithVotes = await Promise.all(
@@ -40,6 +39,7 @@ export async function fetchPlaylists(id = null) {
         }),
       );
 
+      console.log(playlistsWithVotes);
       return playlistsWithVotes;
     }
   } catch (error) {

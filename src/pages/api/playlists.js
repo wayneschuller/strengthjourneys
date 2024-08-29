@@ -66,23 +66,34 @@ export default async function handler(req, res) {
           .json({ error: "Not authenticated - only admins can edit" });
 
       try {
-        const { id, ...updateData } = req.body;
-        const existingPlaylist = await kv.hget("playlists", id);
+        const updatedPlaylist = req.body;
+
+        if (!updatedPlaylist || !updatedPlaylist.id) {
+          return res
+            .status(400)
+            .json({ error: "Invalid playlist data or missing ID" });
+        }
+
+        // Check if the playlist exists
+        const existingPlaylist = await kv.hget("playlists", updatedPlaylist.id);
         if (!existingPlaylist) {
           return res.status(404).json({ error: "Playlist not found" });
         }
-        const updatedPlaylist = {
-          ...JSON.parse(existingPlaylist),
-          ...updateData,
-        };
-        await kv.hset("playlists", { [id]: JSON.stringify(updatedPlaylist) });
+
+        // Overwrite the playlist with the entire new object
+        await kv.hset("playlists", {
+          [updatedPlaylist.id]: JSON.stringify(updatedPlaylist),
+        });
+
         res.status(200).json({
           message: "Playlist updated successfully",
           playlist: updatedPlaylist,
         });
       } catch (error) {
         console.error("Error updating playlist:", error);
-        res.status(500).json({ error: "Error updating playlist" });
+        res
+          .status(500)
+          .json({ error: "Error updating playlist", details: error.message });
       }
       break;
 

@@ -583,6 +583,7 @@ const PlaylistDialog = ({
       description: formData.get("description"),
       url: formData.get("url"),
       categories: formData.getAll("categories"),
+      id: currentPlaylist.id,
     };
     onSubmit(playlistData);
   };

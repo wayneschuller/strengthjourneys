@@ -273,6 +273,7 @@ export default function GymPlaylistLeaderboard() {
       mutate("/api/playlists");
 
       // Show a success message
+      // FIXME: Undo button would be nice
       toast({
         title: "Success",
         description: "Playlist deleted successfully!",

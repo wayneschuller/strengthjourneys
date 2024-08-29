@@ -392,7 +392,7 @@ export default function GymPlaylistLeaderboard() {
                     ? "default"
                     : "secondary"
                 }
-                className="cursor-pointer"
+                className="cursor-pointer hover:ring-2"
                 onClick={() => toggleCategory(category)}
               >
                 {category}
@@ -529,7 +529,13 @@ const PlaylistCard = ({
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {playlist?.categories?.map((category) => (
-              <Badge key={`playlist_${category}`}>{category}</Badge>
+              <Badge
+                key={`playlist_${category}`}
+                className="cursor-default"
+                variant="outline"
+              >
+                {category}
+              </Badge>
             ))}
           </div>
         </div>

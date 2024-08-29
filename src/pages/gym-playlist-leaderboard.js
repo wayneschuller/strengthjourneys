@@ -366,112 +366,114 @@ export default function GymPlaylistLeaderboard() {
           content="Discover the best gym music for lifting barbells. Upvote and submit your playlists for other strength barbell lifters"
         />
       </Head>
-      <h1 className="mb-6 text-center text-3xl font-bold">
-        Gym Music Playlist Global Leaderboard
-      </h1>
-      <h2 className="mb-6 text-left text-sm text-muted-foreground">
-        Elevate your lifting experience with music playlists curated by the
-        fitness community.
-        {/* FIXME: consider checking for ssid and loaded data and prompt them here for more vote power */}
-        {authStatus !== "authenticated" ? (
-          <div>
-            Vote for your favorites, with extra weighting for athletes who are{" "}
-            <button
-              onClick={() => signIn("google")}
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-            >
-              signed in via Google.
-            </button>
-          </div>
-        ) : (
-          <div>
-            As a signed in athlete, your votes will get extra weighting
-            proportional to the quantity of gym sessions in your Google Sheet
-            data.
-          </div>
-        )}
-      </h2>
-
-      {/* Side-by-Side Layout for Category Filter and Add Playlist Button */}
-      <div className="mb-6 flex flex-col items-center gap-4 md:flex-row md:gap-1">
-        <div className="flex-grow pr-4">
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <Badge
-                key={category}
-                variant={
-                  selectedCategories.includes(category)
-                    ? "default"
-                    : "secondary"
-                }
-                className="cursor-pointer hover:ring-2"
-                onClick={() => toggleCategory(category)}
+      <div>
+        <h1 className="mb-6 text-center text-3xl font-bold">
+          Gym Music Playlist Global Leaderboard
+        </h1>
+        <h2 className="mb-6 text-left text-sm text-muted-foreground">
+          Elevate your lifting experience with music playlists curated by the
+          fitness community.
+          {/* FIXME: consider checking for ssid and loaded data and prompt them here for more vote power */}
+          {authStatus !== "authenticated" ? (
+            <div>
+              Vote for your favorites, with extra weighting for athletes who are{" "}
+              <button
+                onClick={() => signIn("google")}
+                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
-                {category}
-              </Badge>
-            ))}
+                signed in via Google.
+              </button>
+            </div>
+          ) : (
+            <div>
+              As a signed in athlete, your votes will get extra weighting
+              proportional to the quantity of gym sessions in your Google Sheet
+              data.
+            </div>
+          )}
+        </h2>
+
+        {/* Side-by-Side Layout for Category Filter and Add Playlist Button */}
+        <div className="mb-6 flex flex-col items-center gap-4 md:flex-row md:gap-1">
+          <div className="flex-grow pr-4">
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category) => (
+                <Badge
+                  key={category}
+                  variant={
+                    selectedCategories.includes(category)
+                      ? "default"
+                      : "secondary"
+                  }
+                  className="cursor-pointer hover:ring-2"
+                  onClick={() => toggleCategory(category)}
+                >
+                  {category}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center justify-center">
+            <Button onClick={openAddDialog} className="w-full">
+              Suggest New Playlist
+            </Button>
           </div>
         </div>
-        <div className="flex items-center justify-center">
-          <Button onClick={openAddDialog} className="w-full">
-            Suggest New Playlist
-          </Button>
-        </div>
+
+        <PlaylistDialog
+          isOpen={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          isEditMode={isEditMode}
+          currentPlaylist={currentPlaylist}
+          onSubmit={handlePlaylistAction}
+          categories={categories}
+        />
+
+        <Tabs
+          value={currentTab}
+          onValueChange={(value) => setCurrentTab(value)}
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger
+              value="top"
+              className="flex items-center justify-center space-x-2"
+            >
+              <TrendingUp className="h-4 w-4" />
+              <span>Top</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="new"
+              className="flex items-center justify-center space-x-2"
+            >
+              <Clock className="h-4 w-4" />
+              <span>New</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="rising"
+              className="flex items-center justify-center space-x-2"
+            >
+              <Flame className="h-4 w-4" />
+              <span>Rising</span>
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value={currentTab} className="space-y-4">
+            <div ref={parent} className="flex flex-col gap-5">
+              {filteredAndSortedPlaylists.map((playlist) => (
+                <PlaylistCard
+                  key={playlist.id}
+                  playlist={playlist}
+                  votes={votes}
+                  handleVote={handleVote}
+                  isAdmin={isAdmin}
+                  onDelete={deletePlaylist}
+                  onEdit={openEditDialog}
+                />
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <PlaylistDialog
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        isEditMode={isEditMode}
-        currentPlaylist={currentPlaylist}
-        onSubmit={handlePlaylistAction}
-        categories={categories}
-      />
-
-      <Tabs
-        value={currentTab}
-        onValueChange={(value) => setCurrentTab(value)}
-        className="w-full"
-      >
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger
-            value="top"
-            className="flex items-center justify-center space-x-2"
-          >
-            <TrendingUp className="h-4 w-4" />
-            <span>Top</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="new"
-            className="flex items-center justify-center space-x-2"
-          >
-            <Clock className="h-4 w-4" />
-            <span>New</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="rising"
-            className="flex items-center justify-center space-x-2"
-          >
-            <Flame className="h-4 w-4" />
-            <span>Rising</span>
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value={currentTab} className="space-y-4">
-          <div ref={parent} className="flex flex-col gap-5">
-            {filteredAndSortedPlaylists.map((playlist) => (
-              <PlaylistCard
-                key={playlist.id}
-                playlist={playlist}
-                votes={votes}
-                handleVote={handleVote}
-                isAdmin={isAdmin}
-                onDelete={deletePlaylist}
-                onEdit={openEditDialog}
-              />
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

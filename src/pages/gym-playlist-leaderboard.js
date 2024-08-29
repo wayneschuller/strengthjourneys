@@ -741,17 +741,18 @@ export async function sendVote(id, voteType, action) {
 export async function getStaticProps() {
   try {
     const initialPlaylists = await fetchPlaylists();
-    console.log(`getStaticProps, initialPlaylists:`);
-    console.log(initialPlaylists);
+    console.log(
+      `getStaticProps caching initialPlaylists (length: ${initialPlaylists.length}) `,
+    );
+    // console.log(initialPlaylists);
     return {
       props: { initialPlaylists },
-      revalidate: 60, // Revalidate every 60 seconds
+      revalidate: 3600, // Revalidate every 1 hour (3600 seconds)
     };
   } catch (error) {
     console.error("Error fetching playlists:", error);
     return {
       props: { initialPlaylists: [] },
-      revalidate: 60,
     };
   }
 }

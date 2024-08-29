@@ -157,7 +157,7 @@ export default function GymPlaylistLeaderboard() {
         // Undo the vote if clicking the same button
         delete newVotes[id];
       } else {
-        // Set new vote
+        // We don't have a vote for this id so set new vote
         newVotes[id] = newVoteState;
       }
 
@@ -173,12 +173,12 @@ export default function GymPlaylistLeaderboard() {
               if (playlist.id === id) {
                 // Directly modify the field impacted by the voteType
                 const upVotesChange = isUpvote
-                  ? currentVote === "up"
+                  ? currentVote === "upVote"
                     ? -1
                     : 1
                   : 0;
                 const downVotesChange = !isUpvote
-                  ? currentVote === "down"
+                  ? currentVote === "downVote"
                     ? -1
                     : 1
                   : 0;
@@ -542,7 +542,7 @@ const PlaylistCard = ({
         <div className="flex flex-col items-center space-y-1">
           <VoteButton
             isUpvote={true}
-            isVoted={votes[playlist.id] === "up"}
+            isVoted={votes[playlist.id] === "upVote"}
             onClick={() => handleVote(playlist.id, true)}
           />
           <span className="font-bold">
@@ -550,7 +550,7 @@ const PlaylistCard = ({
           </span>
           <VoteButton
             isUpvote={false}
-            isVoted={votes[playlist.id] === "down"}
+            isVoted={votes[playlist.id] === "downVote"}
             onClick={() => handleVote(playlist.id, false)}
           />
         </div>

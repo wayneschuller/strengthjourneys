@@ -26,7 +26,9 @@ export default async function handler(req, res) {
 
     // Update the votes count in Redis
     const newVotes = await kv.hincrby(`playlists:${id}`, field, incrementValue);
-    devLog(`kv.hincrby: playlists:${id}`, field, incrementValue);
+    devLog(
+      `kv.hincrby: field ${field}, incrementValue: ${incrementValue}, newVotes: ${newVotes}`,
+    );
 
     res.status(200).json({ id, [field]: newVotes });
   } catch (error) {

@@ -29,7 +29,32 @@ export default async function handler(req, res) {
         } else {
           // Fetch all playlists
           const playlists = await kv.hgetall("playlists");
-          res.status(200).json(playlists);
+
+          // Map through all the playlists and add in the upvotes/downvotes
+          const playlistsWithVotes = await Promise.all(
+            Object.entries(playlists).map(async ([id, playlist]) => {
+              const votes = await kv.hmget(
+                `playlists:${id}`,
+                "upVotes",
+                "downVotes",
+              );
+              devLog(votes);
+              // If kv.hmget returns null, initialize counts to 0
+              const upVotes = parseInt(votes?.upVotes) || 0;
+              const downVotes = parseInt(votes?.downVotes) || 0;
+
+              return {
+                ...playlist,
+                upVotes: upVotes,
+                downVotes: downVotes,
+              };
+            }),
+          );
+
+          // devLog(playlists);
+          // devLog(playlistsWithVotes);
+          res.status(200).json(playlistsWithVotes);
+          // res.status(200).json(playlists);
         }
       } catch (error) {
         console.error("Error fetching playlist(s):", error);

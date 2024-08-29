@@ -35,6 +35,7 @@ import {
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import useSWR, { mutate } from "swr";
+import { Separator } from "@/components/ui/separator";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
@@ -70,21 +71,10 @@ export default function GymPlaylistLeaderboard() {
 
   const isAdmin = adminEmails.includes(session?.user?.email);
 
+  // Set playlists on useSWR load
+  // We put in local state so we can do optimised UI - review at some point
   useEffect(() => {
-    if (
-      playlistsData &&
-      typeof playlistsData === "object" &&
-      !Array.isArray(playlistsData)
-    ) {
-      // Convert object of objects to array
-      const playlistsArray = Object.entries(playlistsData).map(
-        ([id, playlist]) => ({
-          ...playlist,
-          id,
-        }),
-      );
-      setPlaylists(playlistsArray);
-    }
+    if (playlistsData) setPlaylists(playlistsData);
   }, [playlistsData]);
 
   if (error || playlists?.error) {
@@ -93,8 +83,6 @@ export default function GymPlaylistLeaderboard() {
     return <div>Failed to load playlists</div>;
   }
   if (!playlists) return <div>Loading...</div>;
-
-  if (!playlists.length) return <div>Loading...</div>;
 
   const categories = [
     // Genres
@@ -118,9 +106,6 @@ export default function GymPlaylistLeaderboard() {
     "podcast",
     "weird",
   ];
-
-  devLog(votes);
-  devLog(playlistsData);
 
   const openAddDialog = () => {
     setIsEditMode(false);
@@ -150,7 +135,8 @@ export default function GymPlaylistLeaderboard() {
     setVotes((prevVotes) => {
       const newVotes = { ...prevVotes };
       const newVoteState = isUpvote ? "upVote" : "downVote";
-      const currentVote = newVotes[id];
+      // const currentVote = newVotes[id];
+      const currentVote = null;
 
       // Determine whether to undo the vote or set a new one
       if (currentVote === newVoteState) {
@@ -162,7 +148,8 @@ export default function GymPlaylistLeaderboard() {
       }
 
       // Send the vote to the server
-      const action = currentVote === newVoteState ? "decrement" : "increment";
+      // const action = currentVote === newVoteState ? "decrement" : "increment";
+      const action = "increment";
       const voteType = newVoteState;
 
       sendVote(id, voteType, action)
@@ -200,7 +187,7 @@ export default function GymPlaylistLeaderboard() {
 
       return newVotes;
     });
-    // mutate("/api/playlists");
+    mutate("/api/playlists");
   };
 
   // --------------------------------------------------------------------------
@@ -325,12 +312,24 @@ export default function GymPlaylistLeaderboard() {
   };
 
   const sortFunctions = {
-    top: (a, b) => b.upVotes - b.downVotes - (a.upVotes - a.downVotes),
-    new: (a, b) => b.timestamp - a.timestamp,
-    rising: (a, b) => {
-      const scoreA = (a.upVotes - a.downVotes) / (Date.now() - a.timestamp);
-      const scoreB = (b.upVotes - b.downVotes) / (Date.now() - b.timestamp);
+    top: (a, b) => {
+      const scoreA = a.upVotes - a.downVotes;
+      const scoreB = b.upVotes - b.downVotes;
       return scoreB - scoreA;
+    },
+    new: (a, b) => {
+      if (a.timestamp && b.timestamp) {
+        return b.timestamp - a.timestamp;
+      }
+      return 0;
+    },
+    rising: (a, b) => {
+      if (a.timestamp && b.timestamp) {
+        const scoreA = (a.upVotes - a.downVotes) / (Date.now() - a.timestamp);
+        const scoreB = (b.upVotes - b.downVotes) / (Date.now() - b.timestamp);
+        return scoreB - scoreA;
+      }
+      return b.upVotes - b.downVotes - (a.upVotes - a.downVotes);
     },
   };
 
@@ -341,8 +340,12 @@ export default function GymPlaylistLeaderboard() {
             selectedCategories.length === 0 ||
             playlist.categories.some((cat) => selectedCategories.includes(cat)),
         )
-        .sort(sortFunctions[currentTab])
+        .sort(sortFunctions[currentTab] || sortFunctions.top)
     : [];
+
+  // devLog(votes);
+  devLog(playlists);
+  devLog(filteredAndSortedPlaylists);
 
   return (
     <div className="container mx-auto max-w-2xl p-4">
@@ -475,7 +478,12 @@ const PlaylistCard = ({
   onDelete,
   onEdit,
 }) => {
-  const VoteButton = ({ isUpvote, isVoted, onClick, className }) => (
+  const VoteButton = ({
+    isUpvote = true,
+    isVoted = false,
+    onClick,
+    className,
+  }) => (
     <Button
       variant="ghost"
       size="icon"
@@ -501,7 +509,7 @@ const PlaylistCard = ({
   return (
     <div className="mb-4 rounded-lg bg-muted p-4">
       <div className="flex items-start justify-between">
-        <div className="mr-4 flex-grow">
+        <div className="mr-8 flex-grow">
           <div className="flex items-center space-x-2">
             <Music className="h-5 w-5 text-primary" />
             <h3 className="font-semibold">
@@ -524,9 +532,7 @@ const PlaylistCard = ({
             {playlist.url}
             <ExternalLink className="ml-1 h-3 w-3" />
           </a>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {playlist.description}
-          </p>
+          <p className="mt-1 text-sm">{playlist.description}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {playlist?.categories?.map((category) => (
               <Badge
@@ -542,7 +548,7 @@ const PlaylistCard = ({
         <div className="flex flex-col items-center space-y-1">
           <VoteButton
             isUpvote={true}
-            isVoted={votes[playlist.id] === "upVote"}
+            // isVoted={votes[playlist.id] === "upVote"}
             onClick={() => handleVote(playlist.id, true)}
           />
           <span className="font-bold">
@@ -550,7 +556,7 @@ const PlaylistCard = ({
           </span>
           <VoteButton
             isUpvote={false}
-            isVoted={votes[playlist.id] === "downVote"}
+            // isVoted={votes[playlist.id] === "downVote"}
             onClick={() => handleVote(playlist.id, false)}
           />
         </div>

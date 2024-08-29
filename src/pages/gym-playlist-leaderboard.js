@@ -52,6 +52,7 @@ export default function GymPlaylistLeaderboard() {
     description: "",
     url: "",
     categories: [],
+    votes: 0,
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -603,6 +604,7 @@ const PlaylistDialog = ({
       url: formData.get("url"),
       categories: formData.getAll("categories"),
       id: currentPlaylist.id,
+      votes: currentPlaylist.votes,
     };
     onSubmit(playlistData);
   };

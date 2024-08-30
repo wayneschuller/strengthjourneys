@@ -94,7 +94,11 @@ export function PlaylistCard({
           </CardDescription>
           <div></div>
         </CardHeader>
-        <CardContent>{playlist.description}</CardContent>
+        <CardContent>
+          <div className="line-clamp-4 overflow-hidden text-ellipsis">
+            {playlist.description}
+          </div>
+        </CardContent>
         <CardFooter className="flex flex-col">
           <div className="mt-2 flex flex-1 flex-wrap gap-2">
             {playlist?.categories?.map((category) => (

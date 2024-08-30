@@ -332,7 +332,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
         <h1 className="mb-6 text-center text-3xl font-bold">
           Gym Music Playlist Global Leaderboard
         </h1>
-        <h2 className="mb-6 text-left text-sm text-muted-foreground">
+        <h2 className="mb-6 text-sm text-muted-foreground">
           Elevate your lifting experience with music playlists curated by the
           fitness community.
           {/* FIXME: consider checking for ssid and loaded data and prompt them here for more vote power */}

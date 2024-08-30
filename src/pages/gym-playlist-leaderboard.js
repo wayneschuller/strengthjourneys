@@ -237,9 +237,8 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
       }
 
       if (!response.ok) {
-        throw new Error(
-          isEditMode ? "Failed to update playlist" : "Failed to add playlist",
-        );
+        const errorData = await response.json();
+        throw new Error(errorData.error || "An unknown error occurred");
       }
 
       setPlaylists((prevPlaylists) => {
@@ -254,8 +253,6 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
         }
       });
 
-      setIsDialogOpen(false);
-
       toast({
         title: "Success",
         description: isEditMode
@@ -264,17 +261,20 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
       });
     } catch (error) {
       console.error(
-        isEditMode ? "Error updating playlist:" : "Error adding playlist:",
+        isEditMode ? "Error updating playlist:" : "Error adding playlist",
         error,
       );
       toast({
         title: "Error",
-        description: isEditMode
-          ? "Failed to update playlist. Please try again."
-          : "Failed to add playlist. Please try again.",
+        description:
+          error.message ||
+          (isEditMode
+            ? "Failed to update playlist. Please try again."
+            : "Failed to add playlist. Try again later"),
         variant: "destructive",
       });
     }
+    setIsDialogOpen(false);
   };
 
   const deletePlaylist = async (id) => {

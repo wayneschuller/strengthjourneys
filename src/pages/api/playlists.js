@@ -33,6 +33,17 @@ export default async function handler(req, res) {
 
     case "POST":
       // POST logic for creating a new playlist - any user can do
+
+      // Add IP-based throttling for POST method
+      const clientIp =
+        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+      if (await isThrottled(clientIp)) {
+        return res
+          .status(429)
+          .json({ error: "Too many requests. Please try again later." });
+      }
+
       try {
         const newPlaylist = req.body;
         if (!newPlaylist.id || !newPlaylist.title || !newPlaylist.url) {
@@ -116,4 +127,20 @@ export default async function handler(req, res) {
       res.setHeader("Allow", ["GET", "POST", "PUT", "DELETE"]);
       res.status(405).end(`Method ${method} Not Allowed`);
   }
+}
+
+const THROTTLE_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+async function isThrottled(ip) {
+  const lastRequestTime = await kv.get(`throttle:${ip}`);
+  const currentTime = Date.now();
+
+  if (lastRequestTime && currentTime - lastRequestTime < THROTTLE_TIME) {
+    return true;
+  }
+
+  await kv.set(`throttle:${ip}`, currentTime, {
+    ex: Math.floor(THROTTLE_TIME / 1000),
+  });
+  return false;
 }

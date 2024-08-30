@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +11,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+// New imports for URL validation and sanitization
+import validator from "validator";
+import { sanitizeUrl } from "@braintree/sanitize-url";
+import normalizeUrl from "normalize-url";
+
 // ---------------------------------------------------------------------------------------------------
 // <PlaylistCreateEditDialog /> - Create/Edit a playlist for the leaderboard
 // ---------------------------------------------------------------------------------------------------
@@ -21,13 +27,40 @@ export function PlaylistCreateEditDialog({
   onSubmit,
   categories,
 }) {
+  const [urlError, setUrlError] = useState("");
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    const submittedUrl = formData.get("url");
+
+    // Reset error state
+    setUrlError("");
+
+    // URL validation
+    if (
+      !validator.isURL(submittedUrl, {
+        protocols: ["http", "https"],
+        require_protocol: true,
+      })
+    ) {
+      setUrlError("Please enter a valid HTTP or HTTPS URL");
+
+      return;
+    }
+
+    // URL sanitization and normalization
+    const sanitizedUrl = sanitizeUrl(submittedUrl);
+    const normalizedUrl = normalizeUrl(sanitizedUrl, {
+      defaultProtocol: "https:",
+      stripAuthentication: true,
+      stripWWW: true,
+    });
+
     const playlistData = {
       title: formData.get("title"),
       description: formData.get("description"),
-      url: formData.get("url"),
+      url: normalizedUrl,
       categories: formData.getAll("categories"),
       id: currentPlaylist.id,
       upVotes: currentPlaylist.upVotes || 0,
@@ -53,8 +86,16 @@ export function PlaylistCreateEditDialog({
     onSubmit(playlistData);
   };
 
+  const handleUrlChange = (e) => {
+    // Clear error when user starts typing
+    if (urlError) {
+      setUrlError("");
+    }
+  };
+
   const handleCancel = () => {
     onOpenChange(false);
+    setUrlError("");
   };
 
   return (
@@ -89,7 +130,10 @@ export function PlaylistCreateEditDialog({
             placeholder="Playlist URL"
             required
             defaultValue={currentPlaylist.url}
+            onChange={handleUrlChange}
           />
+          {urlError && <p className="mt-1 text-sm text-red-500">{urlError}</p>}
+
           <div>
             <p className="mb-2 text-sm font-medium">Categories:</p>
             <div className="flex flex-wrap gap-2">

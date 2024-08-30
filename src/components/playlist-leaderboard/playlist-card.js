@@ -75,7 +75,7 @@ export function PlaylistCard({
                 rel="noopener noreferrer"
                 className="text-wrap hover:underline"
               >
-                {playlist.title}
+                <div className="break-words">{playlist.title}</div>
               </a>
             </div>
           </CardTitle>

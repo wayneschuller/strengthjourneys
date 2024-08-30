@@ -102,7 +102,7 @@ export default function StrengthLevelCalculator() {
   const liftTypesFromStandards = Object.keys(standards);
 
   return (
-    <div className="xl:Xmx-[20vw] mx-4 flex flex-row items-center md:mx-[5vw]">
+    <div className="mx-4 flex flex-row items-center md:mx-[5vw]">
       <Head>
         <title>
           Strength Level Test: Free Calculator for Lifters | Strength Journeys

@@ -13,7 +13,7 @@ import { fetchPlaylists } from "@/components/playlist-leaderboard/playlist-utils
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
 import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/playlist-create-edit";
-import { TrendingUp, Clock, Flame } from "lucide-react";
+import { TrendingUp, Clock, Flame, Bookmark } from "lucide-react";
 const translator = shortUUID();
 
 // ---------------------------------------------------------------------------------------------------
@@ -298,14 +298,21 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
       }
       return 0;
     },
-    rising: (a, b) => {
-      if (a.timestamp && b.timestamp) {
-        const scoreA = (a.upVotes - a.downVotes) / (Date.now() - a.timestamp);
-        const scoreB = (b.upVotes - b.downVotes) / (Date.now() - b.timestamp);
-        return scoreB - scoreA;
-      }
-      return b.upVotes - b.downVotes - (a.upVotes - a.downVotes);
+    saved: (a, b) => {
+      const scoreA = a.upVotes - a.downVotes;
+      const scoreB = b.upVotes - b.downVotes;
+      return scoreB - scoreA;
     },
+  };
+
+  const toggleSavePlaylist = (playlistId) => {
+    setSavedPlaylists((prev) => {
+      if (prev.includes(playlistId)) {
+        return prev.filter((id) => id !== playlistId);
+      } else {
+        return [...prev, playlistId];
+      }
+    });
   };
 
   const filteredAndSortedPlaylists = playlists
@@ -315,6 +322,12 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
             selectedCategories.length === 0 ||
             playlist.categories.some((cat) => selectedCategories.includes(cat)),
         )
+        .filter((playlist) => {
+          if (currentTab === "saved") {
+            return savedPlaylists.includes(playlist.id);
+          }
+          return true;
+        })
         .sort(sortFunctions[currentTab] || sortFunctions.top)
     : [];
 
@@ -415,11 +428,11 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
               <span>New</span>
             </TabsTrigger>
             <TabsTrigger
-              value="rising"
+              value="saved"
               className="flex items-center justify-center space-x-2"
             >
-              <Flame className="h-4 w-4" />
-              <span>Rising</span>
+              <Bookmark className="h-4 w-4" />
+              <span>Saved</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value={currentTab} className="space-y-4">

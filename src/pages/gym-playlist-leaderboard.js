@@ -424,7 +424,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
           </div>
         </div>
 
-        <PlaylistDialog
+        <PlaylistCreateEditDialog
           isOpen={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           isEditMode={isEditMode}
@@ -595,9 +595,9 @@ const PlaylistCard = ({
 };
 
 // ---------------------------------------------------------------------------------------------------
-// <PlaylistDialog /> - Create/Edit a playlist for the leaderboard
+// <PlaylistCreateEditDialog /> - Create/Edit a playlist for the leaderboard
 // ---------------------------------------------------------------------------------------------------
-const PlaylistDialog = ({
+const PlaylistCreateEditDialog = ({
   isOpen,
   onOpenChange,
   isEditMode,

@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Bookmark,
   BookmarkCheck,
+  Heart,
 } from "lucide-react";
 
 import { useIsClient } from "usehooks-ts";
@@ -132,14 +133,14 @@ export function PlaylistCard({
       <div className="flex flex-row items-center justify-center gap-1 py-2 md:flex-col md:justify-start md:pr-4 md:pt-6">
         <Button
           variant="ghost"
-          size="sm"
+          size="lg"
           onClick={() => onSave(playlist.id)}
           title={isSaved ? "Unsave playlist" : "Save playlist"}
         >
           {isSaved ? (
-            <BookmarkCheck className="h-5 w-5" />
+            <Heart className="fill-yellow-400" />
           ) : (
-            <Bookmark className="h-5 w-5" />
+            <Heart className="" />
           )}
         </Button>
         <div className="mr-2 md:hidden">Good vibes? Vote for it!</div>

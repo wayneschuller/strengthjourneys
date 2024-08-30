@@ -13,7 +13,7 @@ import { fetchPlaylists } from "@/components/playlist-leaderboard/playlist-utils
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
 import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/playlist-create-edit";
-import { TrendingUp, Clock, Flame, Bookmark } from "lucide-react";
+import { TrendingUp, Clock, Flame, Bookmark, Heart } from "lucide-react";
 const translator = shortUUID();
 
 // ---------------------------------------------------------------------------------------------------
@@ -431,7 +431,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
               value="saved"
               className="flex items-center justify-center space-x-2"
             >
-              <Bookmark className="h-4 w-4" />
+              <Heart className="h-4 w-4" />
               <span>Saved</span>
             </TabsTrigger>
           </TabsList>

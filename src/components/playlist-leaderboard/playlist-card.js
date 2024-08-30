@@ -68,20 +68,20 @@ export function PlaylistCard({
     >
       <div className="flex-1">
         <CardHeader className="">
-          <CardTitle className="flex items-center justify-start gap-2 text-lg">
-            <Music className="h-5 w-5 text-primary" />
-            <div className="font-semibold">
+          <CardTitle className="">
+            <div className="flex flex-row items-center gap-2 font-semibold">
+              <Music className="h-5 w-5 text-primary" />
               <a
                 href={playlist.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-wrap hover:underline"
+                className="line-clamp-2 text-balance text-lg hover:underline"
               >
-                <div className="break-words">{playlist.title}</div>
+                {playlist.title}
               </a>
             </div>
           </CardTitle>
-          <CardDescription className="flex items-center">
+          <CardDescription className="">
             <a
               href={playlist.url}
               target="_blank"

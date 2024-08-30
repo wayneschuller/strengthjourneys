@@ -63,7 +63,9 @@ export function PlaylistCard({
   };
 
   return (
-    <Card className={cn("flex flex-row gap-2 bg-muted/30", className)}>
+    <Card
+      className={cn("flex flex-col gap-2 bg-muted/30 md:flex-row", className)}
+    >
       <div className="flex-1">
         <CardHeader className="">
           <CardTitle className="flex items-center justify-start gap-2 text-lg">
@@ -116,7 +118,8 @@ export function PlaylistCard({
           </div>
         </CardFooter>
       </div>
-      <div className="flex flex-col items-center space-y-1 pr-4 pt-6">
+      <div className="flex flex-row items-center justify-center gap-1 py-2 md:flex-col md:justify-start md:pr-4 md:pt-6">
+        <div className="mr-2 md:hidden">Good vibes? Vote for it!</div>
         <VoteButton
           isUpvote={true}
           onClick={() => handleVote(playlist.id, true)}

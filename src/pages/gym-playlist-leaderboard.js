@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchPlaylists } from "@/lib/playlist-utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import useSWR, { mutate } from "swr";
+import useSWR from "swr";
 import { Separator } from "@/components/ui/separator";
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 const translator = shortUUID();
@@ -57,6 +57,8 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
     "/api/playlists",
     fetcher,
     {
+      // So the idea here is we do not call swr mutate - we just update local optimistically
+      // And swr will update every 5 minutes
       fallbackData: initialPlaylists,
       refreshInterval: 300000, // 5 minutes
       dedupingInterval: 60000, // 1 minute
@@ -218,7 +220,6 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
 
       return newVotes;
     });
-    mutate("/api/playlists", false);
   };
 
   // --------------------------------------------------------------------------
@@ -276,7 +277,6 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
       });
 
       setIsDialogOpen(false);
-      mutate("/api/playlists", false);
 
       toast({
         title: "Success",
@@ -313,9 +313,6 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
       setPlaylists((prevPlaylists) =>
         prevPlaylists.filter((playlist) => playlist.id !== id),
       );
-
-      // Revalidate the SWR cache
-      mutate("/api/playlists", false);
 
       // Show a success message
       // FIXME: Undo button would be nice

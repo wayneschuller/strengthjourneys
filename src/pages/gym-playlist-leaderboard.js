@@ -431,7 +431,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
                   isAdmin={isAdmin}
                   onDelete={deletePlaylist}
                   onEdit={openEditDialog}
-                  className=""
+                  className="w-full max-w-full overflow-hidden" // FIXME be careful
                 />
               ))}
             </div>

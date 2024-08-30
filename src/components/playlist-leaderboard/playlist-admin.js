@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { Edit, Trash, FolderSync } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------------------------------
 // <PlaylistAdminTools /> stuff for maintenance. To use: add a Google email to .env or Vercel env settings
 // ---------------------------------------------------------------------------------------------------
-export function PlaylistAdminTools({ playlist, onEdit, onDelete }) {
+export function PlaylistAdminTools({ playlist, onEdit, onDelete, className }) {
   const [isRevalidating, setIsRevalidating] = useState(false);
 
   const handleRevalidate = async () => {
@@ -37,9 +38,9 @@ export function PlaylistAdminTools({ playlist, onEdit, onDelete }) {
   };
 
   return (
-    <div className="mt-4">
+    <div className={cn("mt-4", className)}>
       <Separator />
-      <div className="mt-2 flex items-center justify-end space-x-2">
+      <div className="mt-2 flex flex-wrap items-center gap-2 md:justify-end">
         <div>Admin Tools: </div>
         <Button
           variant="outline"

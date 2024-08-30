@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@braintree/sanitize-url": "^7.1.0",
     "@formkit/auto-animate": "^0.8.2",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-avatar": "^1.1.0",
@@ -43,6 +44,7 @@
     "next": "^14.2.5",
     "next-auth": "^4.24.7",
     "next-themes": "^0.3.0",
+    "normalize-url": "^8.0.1",
     "react": "^18",
     "react-calendar-heatmap": "^1.9.0",
     "react-chartjs-2": "^5.2.0",
@@ -55,7 +57,8 @@
     "swr": "^2.2.5",
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
-    "usehooks-ts": "^3.1.0"
+    "usehooks-ts": "^3.1.0",
+    "validator": "^13.12.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.19",

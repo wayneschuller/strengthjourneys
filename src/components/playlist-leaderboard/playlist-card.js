@@ -86,7 +86,7 @@ export function PlaylistCard({
               href={playlist.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="truncate text-sm text-muted-foreground hover:underline"
+              className="line-clamp-1 text-sm text-muted-foreground hover:underline"
             >
               {playlist.url}
             </a>
@@ -95,9 +95,7 @@ export function PlaylistCard({
           <div></div>
         </CardHeader>
         <CardContent>
-          <div className="line-clamp-4 overflow-hidden text-ellipsis">
-            {playlist.description}
-          </div>
+          <div className="line-clamp-4">{playlist.description}</div>
         </CardContent>
         <CardFooter className="flex flex-col">
           <div className="mt-2 flex flex-1 flex-wrap gap-2">

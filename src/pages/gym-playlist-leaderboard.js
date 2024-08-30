@@ -319,8 +319,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   // devLog(filteredAndSortedPlaylists);
 
   return (
-    // <div className="container mx-auto max-w-2xl p-4">
-    <div className="mx-4 md:mx-10 md:items-center lg:mx-[15vw] xl:mx-[25vw]">
+    <div className="mx-4 md:mx-10 md:items-center lg:mx-[15vw] xl:mx-[20vw]">
       <Head>
         <title>Gym Music Playlist Leaderboard</title>
         <meta

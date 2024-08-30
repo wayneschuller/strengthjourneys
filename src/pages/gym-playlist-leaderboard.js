@@ -350,7 +350,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
     : [];
 
   // devLog(votes);
-  // devLog(playlists);
+  devLog(playlists);
   // devLog(filteredAndSortedPlaylists);
 
   return (
@@ -615,7 +615,24 @@ const PlaylistCreateEditDialog = ({
       id: currentPlaylist.id,
       upVotes: currentPlaylist.upVotes || 0,
       downVotes: currentPlaylist.downVotes || 0,
+      // timestamp: Date.now(), // Add timestamp for new playlists (but not in edit mode)
     };
+
+    // Handle timestamp logic
+    if (!isEditMode) {
+      // Adding a new playlist
+      playlistData.timestamp = Date.now();
+    } else {
+      // Editing an existing playlist
+      if (currentPlaylist.timestamp) {
+        // Keep the old timestamp if it exists
+        playlistData.timestamp = currentPlaylist.timestamp;
+      } else {
+        // Add a new timestamp if it doesn't exist (for backwards compatibility)
+        playlistData.timestamp = Date.now();
+      }
+    }
+
     onSubmit(playlistData);
   };
 

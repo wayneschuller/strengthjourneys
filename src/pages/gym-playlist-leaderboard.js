@@ -81,7 +81,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [votes, setVotes] = useLocalStorage("SJ_playlistVotes", {});
+  const [clientVotes, setClientVotes] = useLocalStorage("SJ_playlistVotes", {}); // Track user votes in client local storage
   const [currentTab, setCurrentTab] = useState("top");
   const [selectedCategories, setSelectedCategories] = useState([]);
 
@@ -165,8 +165,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   // handleVote - process votes in localstorage (optimistic UI) and API point
   // --------------------------------------------------------------------------
   const handleVote = async (id, isUpvote) => {
-    // Read current state
-    const currentVotes = { ...votes };
+    const currentVotes = { ...clientVotes };
     const currentPlaylist = playlists.find((playlist) => playlist.id === id);
 
     if (!currentPlaylist) return;
@@ -196,8 +195,8 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
       });
 
       // Set the new state
-      if (!isAdmin) setVotes(currentVotes);
-      if (isAdmin) setVotes([]); // Just clear votes so UI doesn't get set
+      if (!isAdmin) setClientVotes(currentVotes);
+      if (isAdmin) setClientVotes([]); // Just clear votes so UI doesn't get set
 
       setPlaylists(updatedPlaylists);
     } catch (error) {
@@ -466,7 +465,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
                 <PlaylistCard
                   key={playlist.id}
                   playlist={playlist}
-                  votes={votes}
+                  votes={clientVotes}
                   handleVote={handleVote}
                   isAdmin={isAdmin}
                   onDelete={deletePlaylist}

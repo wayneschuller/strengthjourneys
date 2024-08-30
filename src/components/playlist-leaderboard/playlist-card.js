@@ -59,7 +59,7 @@ export function PlaylistCard({
 
   return (
     <Card
-      className={cn("flex flex-col gap-2 bg-muted/30 md:flex-row", className)}
+      className={cn("flex flex-col gap-2 bg-muted/60 md:flex-row", className)}
     >
       <div className="flex-1">
         <CardHeader className="">

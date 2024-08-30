@@ -35,6 +35,10 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [clientVotes, setClientVotes] = useLocalStorage("SJ_playlistVotes", {}); // Track user votes in client local storage
+  const [savedPlaylists, setSavedPlaylists] = useLocalStorage(
+    "SJ_savedPlaylists",
+    [],
+  );
   const [currentTab, setCurrentTab] = useState("top");
   const [selectedCategories, setSelectedCategories] = useState([]);
 

@@ -59,9 +59,10 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
     {
       // So the idea here is we do not call swr mutate - we just update local optimistically
       // And swr will update every 5 minutes
+      // So we stay within Vercel KV daily usage tiers
       fallbackData: initialPlaylists,
       refreshInterval: 300000, // 5 minutes
-      dedupingInterval: 60000, // 1 minute
+      dedupingInterval: 300000, // 5 minutes
       revalidateOnFocus: false, // Disable revalidation on focus
       revalidateOnReconnect: false, // Disable revalidation on reconnect
     },

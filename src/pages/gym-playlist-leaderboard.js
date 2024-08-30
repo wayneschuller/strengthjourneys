@@ -501,6 +501,23 @@ const calculateVoteChange = (playlist, isUpvote, currentVote) => {
 // Doesn't run on dev but on Vercel it will access the kv store directly to pre-cache page at build
 // ---------------------------------------------------------------------------------------------------
 export async function getStaticProps() {
+  const vercelProPlan = false; // We can dream
+
+  // Dev mode use dummy data to protect my tiny Vercel quota of KV reads
+  if (
+    !vercelProPlan &&
+    process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development"
+  ) {
+    console.log(
+      "Development mode detected: Using dummy data instead of KV store",
+    );
+    return {
+      props: { initialPlaylists: dummyPlaylists },
+    };
+  }
+
+  // If KV quota is full, just let this fail so that the Vercel deploy won't build
+  // Then it keeps the last previous working build running for the public
   try {
     // Use console.log here not devLog - so we can see this in the Vercel build logs
     console.log(`getStaticProps: reading kvstore data`);
@@ -519,3 +536,101 @@ export async function getStaticProps() {
     };
   }
 }
+
+// Snapsnot taken 20240831
+const dummyPlaylists = [
+  {
+    title: "Powerlifting Rage Music",
+    description: "Motivational lifting openers then some metal",
+    url: "https://www.youtube.com/playlist?list=PLZVm1XlK9BkSd5twQN4uDY-y8FUbxkXPM",
+    categories: ["rock", "metal", "intense", "motivational", "podcast"],
+    id: "eVDDfyth59mHnWWVBFdnZE",
+    upVotes: 34,
+    downVotes: 16,
+    timestamp: 1725006025882,
+  },
+  {
+    title: "Hype - Trap and Bass",
+    description: "Aggressive trap and bass for the gym",
+    url: "https://open.spotify.com/playlist/37i9dQZF1DX4eRPd9frC1m?si=ce782b11fefc412b",
+    categories: ["electronic", "upbeat", "intense", "strength"],
+    id: "f8T1QFW9A9bscNjni1G33g",
+    upVotes: 1,
+    downVotes: 0,
+    timestamp: 1725006060415,
+  },
+  {
+    title: "Racconti d'Estate - Original Motion Picture Soundtrack",
+    description:
+      "There are few World film composers that can boast the prolificacy of Piero Piccioni. ",
+    url: "https://music.youtube.com/playlist?list=OLAK5uy_myfYEMJZdnomOl5IBtp2W6AFZIxkF3mxw",
+    categories: ["chill", "warm-up", "retro", "weird"],
+    id: "rubaiAp7YsB7DK36X5tTbw",
+    upVotes: 0,
+    downVotes: 0,
+    timestamp: 1725011360464,
+  },
+  {
+    title: "Chill the **** Out - Relaxing Vibes",
+    description:
+      "Just chill the **** out to our mix of relaxing hits. Tune in for tracks from Billie Eilish, Olivia Rodrigo, Taylor Swift and many many more! Chill Pop | Relaxing Pop | Chill Vibes | Lazy Sundays | Chilled Mix \n",
+    url: "https://open.spotify.com/playlist/1jelEUwXFe9YeEjdAR3aC8",
+    categories: ["pop", "chill"],
+    id: "fHtWSBU8i5eUc9pjhnMcu9",
+    upVotes: 139,
+    downVotes: 35,
+    timestamp: 1725005615635,
+  },
+  {
+    title: "new edit",
+    description: "sdf",
+    url: "sdf",
+    categories: [],
+    id: "u2mCRXdNprNx1BhQBPhmJQ",
+    upVotes: 0,
+    downVotes: 0,
+    timestamp: 1725006835566,
+  },
+  {
+    title: "2024 Fire after the Jungle",
+    description: "Some cool tracks that I like right now ",
+    url: "https://music.youtube.com/playlist?list=PLG42MLa3uF3GjSjREOqUhFg786CQKQzhj",
+    categories: ["hip-hop", "motivational", "strength", "retro"],
+    id: "rXCuYT88sgzo3CAiiK6FMm",
+    upVotes: 32,
+    downVotes: 7,
+    timestamp: 1725005977710,
+  },
+  {
+    title: "Flavour Trip - House Music with Flavour",
+    description:
+      "'Where spicy grooves and tasty food set the mood' \n\nHi, we're Amii and Jimmi, two slow living DJ's catching as many flavours as possible on our trip.\n\nWe are premiering a new house mix from a different location every 4 weeks on Wednesday at 8pm CEST.",
+    url: "https://www.youtube.com/playlist?list=PLfntQsWZoky36OX3Z9-Qy1D9BnwVqWNq9",
+    categories: ["electronic", "house", "intense", "warm-up"],
+    id: "rkPQLpwp2XUcGDeubzczJE",
+    upVotes: 28,
+    downVotes: 9,
+    timestamp: 1725005984755,
+  },
+  {
+    title: "Lord Of The Rings | Rohan | Ambience & Music | 3 Hours",
+    description:
+      "Greetings, fellow Middle Earth enthusiasts! This channel is dedicated to showcasing the awe-inspiring beauty of this magical world. Through our carefully crafted videos and immersive soundscapes, I strive to bring you the most captivating visuals and audio edits that capture the essence of Middle Earth.",
+    url: "https://youtu.be/OmDPKojNNrg?si=H6OUaZX-4hk48xb7",
+    categories: ["motivational", "strength", "warm-up", "weird"],
+    id: "vDiTUcgcM2PpPNY83VDSMJ",
+    upVotes: 20,
+    downVotes: 0,
+    timestamp: 1725005713972,
+  },
+  {
+    title: "BeastMode Playlist",
+    description: "Get your beast mode on!\n",
+    url: "https://open.spotify.com/playlist/37i9dQZF1DX76Wlfdnj7AP?si=28f1d75a5eb042f4",
+    categories: ["pop", "hip-hop", "upbeat", "intense", "cardio", "strength"],
+    id: "vB2E15w9AaFg735QSL3ks3",
+    upVotes: 20,
+    downVotes: 0,
+    timestamp: 1725005592377,
+  },
+];

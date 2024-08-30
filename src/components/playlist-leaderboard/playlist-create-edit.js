@@ -40,11 +40,11 @@ export function PlaylistCreateEditDialog({
     // URL validation
     if (
       !validator.isURL(submittedUrl, {
-        protocols: ["http", "https"],
+        protocols: ["https"],
         require_protocol: true,
       })
     ) {
-      setUrlError("Please enter a valid HTTP or HTTPS URL");
+      setUrlError("Please enter a valid URL");
 
       return;
     }

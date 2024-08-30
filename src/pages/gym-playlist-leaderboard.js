@@ -431,6 +431,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
                   isAdmin={isAdmin}
                   onDelete={deletePlaylist}
                   onEdit={openEditDialog}
+                  className=""
                 />
               ))}
             </div>

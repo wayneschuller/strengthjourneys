@@ -24,6 +24,7 @@ export function PlaylistCard({
   isAdmin,
   onDelete,
   onEdit,
+  className, // We put this at the top level div last, so the parent can override defaults
 }) {
   const inTimeout = isAdmin ? false : checkTimeout(votes, playlist.id);
   const userVote = votes[playlist.id]?.vote;
@@ -62,7 +63,7 @@ export function PlaylistCard({
   };
 
   return (
-    <Card className="flex flex-row gap-2 bg-muted/30">
+    <Card className={cn("flex flex-row gap-2 bg-muted/30", className)}>
       <div className="flex-1">
         <CardHeader className="">
           <CardTitle className="flex items-center justify-start gap-2 text-lg">

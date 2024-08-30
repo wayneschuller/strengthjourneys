@@ -46,6 +46,7 @@ import {
   Flame,
   Edit,
   Trash,
+  FolderSync,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------------------------------
@@ -551,7 +552,7 @@ const PlaylistCard = ({
           <div></div>
         </CardHeader>
         <CardContent>{playlist.description}</CardContent>
-        <CardFooter className="flex flex-1 flex-row justify-between">
+        <CardFooter className="flex flex-col">
           <div className="mt-2 flex flex-1 flex-wrap gap-2">
             {playlist?.categories?.map((category) => (
               <Badge
@@ -565,27 +566,11 @@ const PlaylistCard = ({
           </div>
           <div>
             {isAdmin && (
-              <div className="mt-4 flex items-center justify-end space-x-2">
-                <div>Admin Tools: </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEdit(playlist)}
-                  className="flex items-center"
-                >
-                  <Edit className="mr-1 h-4 w-4" />
-                  Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => onDelete(playlist.id)}
-                  className="flex items-center"
-                >
-                  <Trash className="mr-1 h-4 w-4" />
-                  Delete
-                </Button>
-              </div>
+              <AdminTools
+                playlist={playlist}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             )}
           </div>
         </CardFooter>
@@ -757,6 +742,108 @@ const calculateVoteChange = (playlist, isUpvote, currentVote) => {
     upVotes: playlist.upVotes + upVotesChange,
     downVotes: playlist.downVotes + downVotesChange,
   };
+};
+
+// ---------------------------------------------------------------------------------------------------
+// <AdminTools /> stuff for maintenance. To use: add a Google email to .env or Vercel env settings
+// ---------------------------------------------------------------------------------------------------
+const AdminTools = ({ playlist, onEdit, onDelete }) => {
+  const [isRevalidating, setIsRevalidating] = useState(false);
+
+  const handleRevalidate = async () => {
+    setIsRevalidating(true);
+    try {
+      const response = await fetch("/api/revalidate-leaderboard", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token: process.env.NEXT_PUBLIC_REVALIDATION_TOKEN,
+        }),
+      });
+
+      if (response.ok) {
+        alert("Revalidation successful");
+      } else {
+        alert("Revalidation failed");
+      }
+    } catch (error) {
+      console.error("Error during revalidation:", error);
+      alert("Revalidation failed");
+    } finally {
+      setIsRevalidating(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 flex items-center justify-end space-x-2">
+      <div>Admin Tools: </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleRevalidate}
+        disabled={isRevalidating}
+        className="flex items-center"
+      >
+        <FolderSync className="mr-1 h-4 w-4" />
+        {isRevalidating ? "Revalidating..." : "Revalidate Static Props"}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onEdit(playlist)}
+        className="flex items-center"
+      >
+        <Edit className="mr-1 h-4 w-4" />
+        Edit Playlist
+      </Button>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={() => onDelete(playlist.id)}
+        className="flex items-center"
+      >
+        <Trash className="mr-1 h-4 w-4" />
+        Delete Playlist
+      </Button>
+    </div>
+  );
+};
+
+const AdminTools2 = ({ playlist, onEdit, onDelete }) => {
+  return (
+    <div className="mt-4 flex items-center justify-end space-x-2">
+      <div>Admin Tools: </div>
+      <Button
+        variant="outline"
+        size="sm"
+        // onClick={}
+        className="flex items-center"
+      >
+        <FolderSync className="mr-1 h-4 w-4" />
+        Revalidate Static Props
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onEdit(playlist)}
+        className="flex items-center"
+      >
+        <Edit className="mr-1 h-4 w-4" />
+        Edit Playlist
+      </Button>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={() => onDelete(playlist.id)}
+        className="flex items-center"
+      >
+        <Trash className="mr-1 h-4 w-4" />
+        Delete Playlist
+      </Button>
+    </div>
+  );
 };
 
 // ---------------------------------------------------------------------------------------------------

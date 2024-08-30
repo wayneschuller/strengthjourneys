@@ -165,23 +165,27 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   // handleVote - process votes in localstorage (optimistic UI) and API point
   // --------------------------------------------------------------------------
   const handleVote = async (id, isUpvote) => {
-    const currentVotes = { ...clientVotes };
+    const updatedClientVotes = { ...clientVotes };
     const currentPlaylist = playlists.find((playlist) => playlist.id === id);
 
     if (!currentPlaylist) return;
 
     const newVoteState = isUpvote ? "upVote" : "downVote";
-    const currentVote = currentVotes[id];
+    const currentVote = updatedClientVotes[id];
 
     // Update vote state
     if (currentVote === newVoteState) {
-      delete currentVotes[id];
+      delete updatedClientVotes[id];
     } else {
-      currentVotes[id] = newVoteState;
+      updatedClientVotes[id] = newVoteState;
     }
 
     const action = currentVote === newVoteState ? "decrement" : "increment";
     const voteType = newVoteState;
+
+    // Set the new state optimistally before the API call
+    if (!isAdmin) setClientVotes(updatedClientVotes);
+    if (isAdmin) setClientVotes({}); // Just clear votes so UI doesn't get set
 
     try {
       await sendVote(id, voteType, action);
@@ -193,10 +197,6 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
         }
         return playlist;
       });
-
-      // Set the new state
-      if (!isAdmin) setClientVotes(currentVotes);
-      if (isAdmin) setClientVotes([]); // Just clear votes so UI doesn't get set
 
       setPlaylists(updatedPlaylists);
     } catch (error) {

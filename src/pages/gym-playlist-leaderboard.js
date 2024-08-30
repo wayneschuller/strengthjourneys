@@ -13,9 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchPlaylists } from "@/lib/playlist-utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import useSWR from "swr";
 import { Separator } from "@/components/ui/separator";
-const fetcher = (...args) => fetch(...args).then((res) => res.json());
 const translator = shortUUID();
 
 import {
@@ -54,20 +52,6 @@ import {
 // ---------------------------------------------------------------------------------------------------
 export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   const { data: session, status: authStatus } = useSession();
-  // const { data: SWRplaylistsData, SWRerror } = useSWR(
-  //   "/api/playlists",
-  //   fetcher,
-  //   {
-  //     // So the idea here is we do not call swr mutate - we just update local optimistically
-  //     // And swr will update every 5 minutes
-  //     // So we stay within Vercel KV daily usage tiers
-  //     fallbackData: initialPlaylists,
-  //     refreshInterval: 300000, // 5 minutes
-  //     dedupingInterval: 300000, // 5 minutes
-  //     revalidateOnFocus: false, // Disable revalidation on focus
-  //     revalidateOnReconnect: false, // Disable revalidation on reconnect
-  //   },
-  // );
   const [playlists, setPlaylists] = useState(initialPlaylists);
 
   const [currentPlaylist, setCurrentPlaylist] = useState({
@@ -114,31 +98,6 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
       setClientVotes(updatedVotes);
     }
   }, []);
-
-  // FIXME: Let's try NO SWR - NO CLIENT ACCESS TO THE DB LIVE
-  // Set playlists on useSWR load
-  // We put in local state so we can do optimised UI - review at some point
-  // useEffect(() => {
-  //   // Anticipating hitting Vercel KV read limits - in which case just use the static props
-  //   if (SWRerror) {
-  //     setPlaylists(initialPlaylists);
-  //     return;
-  //   }
-  //   if (SWRplaylistsData) {
-  //     setPlaylists(SWRplaylistsData);
-  //     return;
-  //   }
-  // }, [SWRplaylistsData, SWRerror]);
-
-  // Don't do this because if useSWR has any error we want to fall back to static props initialPlaylists
-  // if (error || playlists?.error) {
-  // if (error) devLog(error);
-  // if (playlists?.error) devLog(playlists);
-  // return <div>Failed to load playlists</div>;
-  // }
-
-  // There should be no loading phase with staticProps - so don't do below
-  // if (!playlists) return <div>Loading...</div>;
 
   const categories = [
     // Genres

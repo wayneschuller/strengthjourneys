@@ -266,11 +266,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
       );
       toast({
         title: "Error",
-        description:
-          error.message ||
-          (isEditMode
-            ? "Failed to update playlist. Please try again."
-            : "Failed to add playlist. Try again later"),
+        description: error.message,
         variant: "destructive",
       });
     }

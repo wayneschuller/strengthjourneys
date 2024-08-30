@@ -592,14 +592,14 @@ const PlaylistCard = ({
 // ---------------------------------------------------------------------------------------------------
 // <PlaylistCreateEditDialog /> - Create/Edit a playlist for the leaderboard
 // ---------------------------------------------------------------------------------------------------
-const PlaylistCreateEditDialog = ({
+function PlaylistCreateEditDialog({
   isOpen,
   onOpenChange,
   isEditMode,
   currentPlaylist,
   onSubmit,
   categories,
-}) => {
+}) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -699,7 +699,7 @@ const PlaylistCreateEditDialog = ({
       </DialogContent>
     </Dialog>
   );
-};
+}
 
 export async function sendVote(id, voteType, action) {
   if (voteType !== "upVote" && voteType !== "downVote") {

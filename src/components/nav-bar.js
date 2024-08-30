@@ -47,7 +47,9 @@ export function NavBar() {
         )}
         <MiniTimer />
         {/* <UserSheetIcon /> */}
-        <GitHubButton />
+        <div className="hidden md:block">
+          <GitHubButton />
+        </div>
         <DarkModeToggle />
         <AvatarDropdown />
       </div>

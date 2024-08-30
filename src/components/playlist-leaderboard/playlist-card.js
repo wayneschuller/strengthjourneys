@@ -54,6 +54,7 @@ export function PlaylistCard({
         disabled={inTimeout}
         onClick={onClick}
         aria-label={isUpvote ? "Upvote" : "Downvote"}
+        title={isUpvote ? "Love this!" : "Doesn't vibe"}
         className={cn(
           "relative transition-all",
           isUserVote && "bg-primary/20 hover:bg-primary/30",

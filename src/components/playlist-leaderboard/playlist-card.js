@@ -12,7 +12,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import { ArrowBigUp, ArrowBigDown, Music, ExternalLink } from "lucide-react";
+import {
+  ArrowBigUp,
+  ArrowBigDown,
+  Music,
+  ExternalLink,
+  Bookmark,
+  BookmarkCheck,
+} from "lucide-react";
+
+import { useIsClient } from "usehooks-ts";
 
 // ---------------------------------------------------------------------------------------------------
 // <PlaylistCard /> - Upvotable info card about a good gym music playlist
@@ -24,10 +33,13 @@ export function PlaylistCard({
   isAdmin,
   onDelete,
   onEdit,
+  onSave,
+  isSaved,
   className, // We put this at the top level div last, so the parent can override defaults
 }) {
   const inTimeout = isAdmin ? false : checkTimeout(votes, playlist.id);
   const userVote = votes[playlist.id]?.vote;
+  const isClient = useIsClient();
 
   const VoteButton = ({ isUpvote = true, onClick, className }) => {
     const isUserVote =
@@ -45,7 +57,7 @@ export function PlaylistCard({
           "relative transition-all",
           isUserVote && "bg-primary/20 hover:bg-primary/30",
           inTimeout && "opacity-50",
-          className,
+          className, // Here it is - so parent can override
         )}
       >
         {isUpvote ? (
@@ -56,6 +68,8 @@ export function PlaylistCard({
       </Button>
     );
   };
+
+  if (!isClient) return; // Workaround because of hydration mismatch on localstorage isSaved
 
   return (
     <Card
@@ -116,6 +130,18 @@ export function PlaylistCard({
         </CardFooter>
       </div>
       <div className="flex flex-row items-center justify-center gap-1 py-2 md:flex-col md:justify-start md:pr-4 md:pt-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onSave(playlist.id)}
+          title={isSaved ? "Unsave playlist" : "Save playlist"}
+        >
+          {isSaved ? (
+            <BookmarkCheck className="h-5 w-5" />
+          ) : (
+            <Bookmark className="h-5 w-5" />
+          )}
+        </Button>
         <div className="mr-2 md:hidden">Good vibes? Vote for it!</div>
         <VoteButton
           isUpvote={true}

@@ -447,6 +447,8 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
                   isAdmin={isAdmin}
                   onDelete={deletePlaylist}
                   onEdit={openEditDialog}
+                  onSave={toggleSavePlaylist}
+                  isSaved={savedPlaylists.includes(playlist.id)}
                   className=""
                 />
               ))}

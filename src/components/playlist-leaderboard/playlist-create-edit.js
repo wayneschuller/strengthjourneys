@@ -80,6 +80,7 @@ export function PlaylistCreateEditDialog({
           <Textarea
             name="description"
             placeholder="Playlist Description"
+            maxlength={500}
             required
             defaultValue={currentPlaylist.description}
           />

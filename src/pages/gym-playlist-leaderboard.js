@@ -218,6 +218,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
 
     try {
       await sendVote(id, voteType, action);
+      // FIXME: the server sends us the latest vote count - use it here in the playlists state
 
       // Update playlists based on the new vote state
       const updatedPlaylists = playlists.map((playlist) => {

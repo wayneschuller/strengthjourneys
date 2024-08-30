@@ -421,6 +421,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
           </TabsList>
           <TabsContent value={currentTab} className="space-y-4">
             <div ref={parent} className="flex flex-col gap-5">
+              {/* <div ref={parent} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" > */}
               {filteredAndSortedPlaylists.map((playlist) => (
                 <PlaylistCard
                   key={playlist.id}

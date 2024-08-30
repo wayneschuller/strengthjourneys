@@ -538,16 +538,16 @@ const PlaylistCard = ({
               </a>
             </div>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="flex w-96 items-center">
             <a
               href={playlist.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 flex items-center truncate text-sm text-muted-foreground hover:underline"
+              className="truncate text-sm text-muted-foreground hover:underline"
             >
               {playlist.url}
-              <ExternalLink className="ml-1 h-3 w-3 flex-shrink-0" />
             </a>
+            <ExternalLink className="ml-1 h-3 w-3 flex-shrink-0" />
           </CardDescription>
           <div></div>
         </CardHeader>

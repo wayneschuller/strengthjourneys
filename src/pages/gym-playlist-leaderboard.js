@@ -164,63 +164,46 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   // --------------------------------------------------------------------------
   // handleVote - process votes in localstorage (optimistic UI) and API point
   // --------------------------------------------------------------------------
-
   const handleVote = async (id, isUpvote) => {
-    setVotes((prevVotes) => {
-      const newVotes = { ...prevVotes };
-      const newVoteState = isUpvote ? "upVote" : "downVote";
-      const currentVote = newVotes[id];
-      // const currentVote = null;
+    // Read current state
+    const currentVotes = { ...votes };
+    const currentPlaylist = playlists.find((playlist) => playlist.id === id);
 
-      // Determine whether to undo the vote or set a new one
-      if (currentVote === newVoteState) {
-        // Undo the vote if clicking the same button
-        delete newVotes[id];
-      } else {
-        // We don't have a vote for this id so set new vote
-        newVotes[id] = newVoteState;
-      }
+    if (!currentPlaylist) return;
 
-      // Send the vote to the server
-      const action = currentVote === newVoteState ? "decrement" : "increment";
-      // const action = "increment";
-      const voteType = newVoteState;
+    const newVoteState = isUpvote ? "upVote" : "downVote";
+    const currentVote = currentVotes[id];
 
-      sendVote(id, voteType, action)
-        .then(() => {
-          // Update playlists based on the new vote state
-          setPlaylists((prevPlaylists) =>
-            prevPlaylists.map((playlist) => {
-              if (playlist.id === id) {
-                // Directly modify the field impacted by the voteType
-                const upVotesChange = isUpvote
-                  ? currentVote === "upVote"
-                    ? -1
-                    : 1
-                  : 0;
-                const downVotesChange = !isUpvote
-                  ? currentVote === "downVote"
-                    ? -1
-                    : 1
-                  : 0;
+    // Update vote state
+    if (currentVote === newVoteState) {
+      delete currentVotes[id];
+    } else {
+      currentVotes[id] = newVoteState;
+    }
 
-                return {
-                  ...playlist,
-                  upVotes: playlist.upVotes + upVotesChange,
-                  downVotes: playlist.downVotes + downVotesChange,
-                };
-              }
-              return playlist;
-            }),
-          );
-        })
-        .catch((error) => {
-          console.error("Error sending vote:", error);
-          // Handle error (e.g., revert state, show an error message)
-        });
+    const action = currentVote === newVoteState ? "decrement" : "increment";
+    const voteType = newVoteState;
 
-      return newVotes;
-    });
+    try {
+      await sendVote(id, voteType, action);
+
+      // Update playlists based on the new vote state
+      const updatedPlaylists = playlists.map((playlist) => {
+        if (playlist.id === id) {
+          return calculateVoteChange(playlist, isUpvote, currentVote);
+        }
+        return playlist;
+      });
+
+      // Set the new state
+      if (!isAdmin) setVotes(currentVotes);
+      if (isAdmin) setVotes([]); // Just clear votes so UI doesn't get set
+
+      setPlaylists(updatedPlaylists);
+    } catch (error) {
+      console.error("Error sending vote:", error);
+      // Handle error (e.g., revert state, show an error message)
+    }
   };
 
   // --------------------------------------------------------------------------
@@ -750,6 +733,17 @@ export async function sendVote(id, voteType, action) {
     throw error;
   }
 }
+
+const calculateVoteChange = (playlist, isUpvote, currentVote) => {
+  const upVotesChange = isUpvote ? (currentVote === "upVote" ? -1 : 1) : 0;
+  const downVotesChange = !isUpvote ? (currentVote === "downVote" ? -1 : 1) : 0;
+
+  return {
+    ...playlist,
+    upVotes: playlist.upVotes + upVotesChange,
+    downVotes: playlist.downVotes + downVotesChange,
+  };
+};
 
 // ---------------------------------------------------------------------------------------------------
 // ISR - Incremental Static Regeneration on Next.js

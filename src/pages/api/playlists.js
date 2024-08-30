@@ -18,6 +18,9 @@ export default async function handler(req, res) {
   switch (method) {
     case "GET":
       // GET logic for fetching all playlists or a specific playlist - any user can do
+      // Used to be used with useSWR in clients, but we moved to static props to save usage
+      return res.status(400).json({ error: "Not available to the hoi polloi" });
+
       try {
         const result = await fetchPlaylists();
         // devLog(result);

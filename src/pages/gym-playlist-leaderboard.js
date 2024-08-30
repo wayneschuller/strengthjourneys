@@ -185,44 +185,50 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
 
   // --------------------------------------------------------------------------
   // handleVote - process votes in localstorage (optimistic UI) and API point
+  // The api is made to allow withdrawing of votes. e.g.: decrement an upvote
+  // But it's too annoying to let people undo votes.
   // --------------------------------------------------------------------------
-
   const handleVote = async (id, isUpvote) => {
     const updatedClientVotes = { ...clientVotes };
     const currentPlaylist = playlists.find((playlist) => playlist.id === id);
 
     if (!currentPlaylist) return;
 
-    const newVoteState = isUpvote ? "upVote" : "downVote";
+    const voteType = isUpvote ? "upVote" : "downVote";
     const currentVote = updatedClientVotes[id]?.vote;
 
-    // Update vote state
-    if (currentVote === newVoteState) {
-      delete updatedClientVotes[id];
-    } else {
-      // updatedClientVotes[id] = newVoteState; // This is the OLD way of doing things
+    // Update vote state with playlist id, vote, and the timestamp
+    updatedClientVotes[id] = {
+      vote: voteType,
+      timestamp: Date.now(),
+    };
 
-      // Store the playlist id vote and the timestamp
-      updatedClientVotes[id] = {
-        vote: newVoteState,
-        timestamp: Date.now(),
-      };
-    }
-
-    const action = currentVote === newVoteState ? "decrement" : "increment";
-    const voteType = newVoteState;
+    const action = "increment"; // In the API you can send decrements, but we are not doing this anymore
 
     // Set the new state optimistally before the API call
     if (!isAdmin) setClientVotes(updatedClientVotes);
     if (isAdmin) setClientVotes({}); // Just clear votes so UI doesn't get set
 
     try {
-      await sendVote(id, voteType, action);
-      // FIXME: the server sends us the latest vote count - use it here in the playlists state
+      const result = await sendVote(id, voteType, action);
+      devLog(result);
 
       // Update playlists based on the new vote state
       const updatedPlaylists = playlists.map((playlist) => {
         if (playlist.id === id) {
+          if (result.upVotes)
+            return {
+              ...playlist,
+              upVotes: result.upVotes,
+            };
+
+          if (result.downVotes)
+            return {
+              ...playlist,
+              downVotes: result.downVotes,
+            };
+
+          // Should not happen - but just in case
           return calculateVoteChange(playlist, isUpvote, currentVote);
         }
         return playlist;
@@ -523,12 +529,7 @@ const PlaylistCard = ({
 }) => {
   const inTimeout = isAdmin ? false : checkTimeout(votes, playlist.id);
 
-  const VoteButton = ({
-    isUpvote = true,
-    isVoted = false,
-    onClick,
-    className,
-  }) => (
+  const VoteButton = ({ isUpvote = true, onClick, className }) => (
     <Button
       variant="ghost"
       size="icon"
@@ -536,11 +537,7 @@ const PlaylistCard = ({
       onClick={onClick}
       aria-label={isUpvote ? "Upvote" : "Downvote"}
       className={cn(
-        "transition-all hover:outline",
-        isVoted
-          ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
-          : "hover:bg-accent hover:text-accent-foreground",
-        isVoted && "scale-110",
+        "transition-all hover:bg-accent hover:text-accent-foreground hover:outline",
         className,
       )}
     >
@@ -609,7 +606,6 @@ const PlaylistCard = ({
       <div className="flex flex-col items-center space-y-1 pr-4 pt-6">
         <VoteButton
           isUpvote={true}
-          isVoted={votes[playlist.id]?.vote === "upVote"}
           onClick={() => handleVote(playlist.id, true)}
         />
         <span className="font-bold">
@@ -617,7 +613,6 @@ const PlaylistCard = ({
         </span>
         <VoteButton
           isUpvote={false}
-          isVoted={votes[playlist.id]?.vote === "downVote"}
           onClick={() => handleVote(playlist.id, false)}
         />
       </div>

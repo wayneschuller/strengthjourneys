@@ -164,6 +164,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   // --------------------------------------------------------------------------
   // handleVote - process votes in localstorage (optimistic UI) and API point
   // --------------------------------------------------------------------------
+
   const handleVote = async (id, isUpvote) => {
     const updatedClientVotes = { ...clientVotes };
     const currentPlaylist = playlists.find((playlist) => playlist.id === id);
@@ -734,8 +735,22 @@ export async function sendVote(id, voteType, action) {
 }
 
 const calculateVoteChange = (playlist, isUpvote, currentVote) => {
-  const upVotesChange = isUpvote ? (currentVote === "upVote" ? -1 : 1) : 0;
-  const downVotesChange = !isUpvote ? (currentVote === "downVote" ? -1 : 1) : 0;
+  let upVotesChange = 0;
+  let downVotesChange = 0;
+
+  if (isUpvote) {
+    if (currentVote === "upVote") {
+      upVotesChange = -1; // Undo previous upvote
+    } else {
+      upVotesChange = 1; // New upvote
+    }
+  } else {
+    if (currentVote === "downVote") {
+      downVotesChange = -1; // Undo previous downvote
+    } else {
+      downVotesChange = 1; // New downvote
+    }
+  }
 
   return {
     ...playlist,

@@ -82,15 +82,17 @@ export function PlaylistCard({
             </div>
           </CardTitle>
           <CardDescription className="">
-            <a
-              href={playlist.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="line-clamp-1 text-sm text-muted-foreground hover:underline"
-            >
-              {playlist.url}
-            </a>
-            <ExternalLink className="ml-1 h-3 w-3 flex-shrink-0" />
+            <div className="flex flex-row items-center gap-1">
+              <a
+                href={playlist.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="line-clamp-1 break-all text-sm text-muted-foreground hover:underline"
+              >
+                {playlist.url}
+              </a>
+              <ExternalLink className="ml-1 h-3 w-3 flex-shrink-0" />
+            </div>
           </CardDescription>
           <div></div>
         </CardHeader>

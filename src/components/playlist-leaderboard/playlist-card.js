@@ -78,7 +78,7 @@ export function PlaylistCard({
               </a>
             </div>
           </CardTitle>
-          <CardDescription className="flex w-64 items-center md:w-96">
+          <CardDescription className="flex items-center">
             <a
               href={playlist.url}
               target="_blank"

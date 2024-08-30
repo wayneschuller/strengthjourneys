@@ -11,9 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { fetchPlaylists } from "@/lib/playlist-utils";
+import { fetchPlaylists } from "@/components/playlist-leaderboard/playlist-utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { PlaylistCard } from "@/components/leaderboard/playlist-card";
+import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
 const translator = shortUUID();
 
 import {

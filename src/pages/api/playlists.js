@@ -2,7 +2,7 @@ import { kv } from "@vercel/kv";
 import { devLog } from "@/lib/processing-utils";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
-import { fetchPlaylists } from "@/lib/playlist-utils";
+import { fetchPlaylists } from "@/components/playlist-leaderboard/playlist-utils";
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);

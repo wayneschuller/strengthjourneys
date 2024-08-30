@@ -793,6 +793,7 @@ const PlaylistAdminTools = ({ playlist, onEdit, onDelete }) => {
   const handleRevalidate = async () => {
     setIsRevalidating(true);
     try {
+      // This api route will check server side for an admin auth account
       const response = await fetch("/api/revalidate-leaderboard", {
         method: "POST",
         headers: {

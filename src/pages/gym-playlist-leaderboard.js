@@ -758,10 +758,10 @@ export async function sendVote(id, voteType, action) {
 export async function getStaticProps() {
   try {
     // Use console.log here not devLog - so we can see this in the Vercel build logs
-    console.log(`Getting kvstore data (possibly for getStaticProps)`);
+    console.log(`getStaticProps: reading kvstore data`);
     const initialPlaylists = await fetchPlaylists();
     console.log(
-      `getStaticProps caching initialPlaylists (length: ${initialPlaylists.length}) `,
+      `getStaticProps: caching initialPlaylists (length: ${initialPlaylists.length}) `,
     );
     return {
       props: { initialPlaylists },

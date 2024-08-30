@@ -54,21 +54,20 @@ import {
 // ---------------------------------------------------------------------------------------------------
 export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   const { data: session, status: authStatus } = useSession();
-  const { data: SWRplaylistsData, SWRerror } = useSWR(
-    "/api/playlists",
-    fetcher,
-    {
-      // So the idea here is we do not call swr mutate - we just update local optimistically
-      // And swr will update every 5 minutes
-      // So we stay within Vercel KV daily usage tiers
-      fallbackData: initialPlaylists,
-      refreshInterval: 300000, // 5 minutes
-      dedupingInterval: 300000, // 5 minutes
-      revalidateOnFocus: false, // Disable revalidation on focus
-      revalidateOnReconnect: false, // Disable revalidation on reconnect
-    },
-  );
-  // const [playlists, setPlaylists] = useState([]);
+  // const { data: SWRplaylistsData, SWRerror } = useSWR(
+  //   "/api/playlists",
+  //   fetcher,
+  //   {
+  //     // So the idea here is we do not call swr mutate - we just update local optimistically
+  //     // And swr will update every 5 minutes
+  //     // So we stay within Vercel KV daily usage tiers
+  //     fallbackData: initialPlaylists,
+  //     refreshInterval: 300000, // 5 minutes
+  //     dedupingInterval: 300000, // 5 minutes
+  //     revalidateOnFocus: false, // Disable revalidation on focus
+  //     revalidateOnReconnect: false, // Disable revalidation on reconnect
+  //   },
+  // );
   const [playlists, setPlaylists] = useState(initialPlaylists);
 
   const [currentPlaylist, setCurrentPlaylist] = useState({
@@ -95,19 +94,20 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
 
   const isAdmin = adminEmails.includes(session?.user?.email);
 
+  // FIXME: Let's try NO SWR - NO CLIENT ACCESS TO THE DB LIVE
   // Set playlists on useSWR load
   // We put in local state so we can do optimised UI - review at some point
-  useEffect(() => {
-    // Anticipating hitting Vercel KV read limits - in which case just use the static props
-    if (SWRerror) {
-      setPlaylists(initialPlaylists);
-      return;
-    }
-    if (SWRplaylistsData) {
-      setPlaylists(SWRplaylistsData);
-      return;
-    }
-  }, [SWRplaylistsData, SWRerror]);
+  // useEffect(() => {
+  //   // Anticipating hitting Vercel KV read limits - in which case just use the static props
+  //   if (SWRerror) {
+  //     setPlaylists(initialPlaylists);
+  //     return;
+  //   }
+  //   if (SWRplaylistsData) {
+  //     setPlaylists(SWRplaylistsData);
+  //     return;
+  //   }
+  // }, [SWRplaylistsData, SWRerror]);
 
   // Don't do this because if useSWR has any error we want to fall back to static props initialPlaylists
   // if (error || playlists?.error) {
@@ -566,7 +566,7 @@ const PlaylistCard = ({
           </div>
           <div>
             {isAdmin && (
-              <AdminTools
+              <PlaylistAdminTools
                 playlist={playlist}
                 onEdit={onEdit}
                 onDelete={onDelete}
@@ -745,9 +745,9 @@ const calculateVoteChange = (playlist, isUpvote, currentVote) => {
 };
 
 // ---------------------------------------------------------------------------------------------------
-// <AdminTools /> stuff for maintenance. To use: add a Google email to .env or Vercel env settings
+// <PlaylistAdminTools /> stuff for maintenance. To use: add a Google email to .env or Vercel env settings
 // ---------------------------------------------------------------------------------------------------
-const AdminTools = ({ playlist, onEdit, onDelete }) => {
+const PlaylistAdminTools = ({ playlist, onEdit, onDelete }) => {
   const [isRevalidating, setIsRevalidating] = useState(false);
 
   const handleRevalidate = async () => {
@@ -811,41 +811,6 @@ const AdminTools = ({ playlist, onEdit, onDelete }) => {
   );
 };
 
-const AdminTools2 = ({ playlist, onEdit, onDelete }) => {
-  return (
-    <div className="mt-4 flex items-center justify-end space-x-2">
-      <div>Admin Tools: </div>
-      <Button
-        variant="outline"
-        size="sm"
-        // onClick={}
-        className="flex items-center"
-      >
-        <FolderSync className="mr-1 h-4 w-4" />
-        Revalidate Static Props
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onEdit(playlist)}
-        className="flex items-center"
-      >
-        <Edit className="mr-1 h-4 w-4" />
-        Edit Playlist
-      </Button>
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={() => onDelete(playlist.id)}
-        className="flex items-center"
-      >
-        <Trash className="mr-1 h-4 w-4" />
-        Delete Playlist
-      </Button>
-    </div>
-  );
-};
-
 // ---------------------------------------------------------------------------------------------------
 // ISR - Incremental Static Regeneration on Next.js
 // Doesn't run on dev but on Vercel it will access the kv store directly to pre-cache page at build
@@ -860,7 +825,7 @@ export async function getStaticProps() {
     );
     return {
       props: { initialPlaylists },
-      revalidate: 3600, // Revalidate every 1 hour (3600 seconds)
+      revalidate: 600, // Revalidate for everyone every 10 minutes
     };
   } catch (error) {
     console.error("Error fetching playlists:", error);

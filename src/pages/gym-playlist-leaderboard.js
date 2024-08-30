@@ -94,6 +94,27 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
 
   const isAdmin = adminEmails.includes(session?.user?.email);
 
+  // On mount - delete all the localstorage votes older than 10 minutes so the user can vote again
+  // FIXME: implement the 10 minute timeout on the server using IP throttling
+  useEffect(() => {
+    const currentTime = Date.now();
+    const tenMinutesInMs = 10 * 60 * 1000;
+    const updatedVotes = { ...clientVotes };
+    let hasChanges = false;
+
+    Object.keys(updatedVotes).forEach((playlistId) => {
+      const vote = updatedVotes[playlistId];
+      if (!vote.timestamp || currentTime - vote.timestamp > tenMinutesInMs) {
+        delete updatedVotes[playlistId];
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      setClientVotes(updatedVotes);
+    }
+  }, []);
+
   // FIXME: Let's try NO SWR - NO CLIENT ACCESS TO THE DB LIVE
   // Set playlists on useSWR load
   // We put in local state so we can do optimised UI - review at some point
@@ -173,13 +194,19 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
     if (!currentPlaylist) return;
 
     const newVoteState = isUpvote ? "upVote" : "downVote";
-    const currentVote = updatedClientVotes[id];
+    const currentVote = updatedClientVotes[id]?.vote;
 
     // Update vote state
     if (currentVote === newVoteState) {
       delete updatedClientVotes[id];
     } else {
-      updatedClientVotes[id] = newVoteState;
+      // updatedClientVotes[id] = newVoteState; // This is the OLD way of doing things
+
+      // Store the playlist id vote and the timestamp
+      updatedClientVotes[id] = {
+        vote: newVoteState,
+        timestamp: Date.now(),
+      };
     }
 
     const action = currentVote === newVoteState ? "decrement" : "increment";
@@ -493,6 +520,8 @@ const PlaylistCard = ({
   onDelete,
   onEdit,
 }) => {
+  const inTimeout = isAdmin ? false : checkTimeout(votes, playlist.id);
+
   const VoteButton = ({
     isUpvote = true,
     isVoted = false,
@@ -502,6 +531,7 @@ const PlaylistCard = ({
     <Button
       variant="ghost"
       size="icon"
+      disabled={inTimeout}
       onClick={onClick}
       aria-label={isUpvote ? "Upvote" : "Downvote"}
       className={cn(
@@ -578,7 +608,7 @@ const PlaylistCard = ({
       <div className="flex flex-col items-center space-y-1 pr-4 pt-6">
         <VoteButton
           isUpvote={true}
-          isVoted={votes[playlist.id] === "upVote"}
+          isVoted={votes[playlist.id]?.vote === "upVote"}
           onClick={() => handleVote(playlist.id, true)}
         />
         <span className="font-bold">
@@ -586,7 +616,7 @@ const PlaylistCard = ({
         </span>
         <VoteButton
           isUpvote={false}
-          isVoted={votes[playlist.id] === "downVote"}
+          isVoted={votes[playlist.id]?.vote === "downVote"}
           onClick={() => handleVote(playlist.id, false)}
         />
       </div>
@@ -813,6 +843,18 @@ const PlaylistAdminTools = ({ playlist, onEdit, onDelete }) => {
     </div>
   );
 };
+
+// Helper function to see if we are in the 10 minute timeout
+function checkTimeout(clientVotes, id) {
+  const TEN_MINUTES_IN_MS = 1 * 60 * 1000;
+  const vote = clientVotes[id];
+  if (!vote || !vote.timestamp) {
+    return false;
+  }
+
+  const currentTime = Date.now();
+  return currentTime - vote.timestamp < TEN_MINUTES_IN_MS;
+}
 
 // ---------------------------------------------------------------------------------------------------
 // ISR - Incremental Static Regeneration on Next.js

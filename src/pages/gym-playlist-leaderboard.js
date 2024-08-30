@@ -528,26 +528,40 @@ const PlaylistCard = ({
   onEdit,
 }) => {
   const inTimeout = isAdmin ? false : checkTimeout(votes, playlist.id);
+  const userVote = votes[playlist.id]?.vote;
 
-  const VoteButton = ({ isUpvote = true, onClick, className }) => (
-    <Button
-      variant="ghost"
-      size="icon"
-      disabled={inTimeout}
-      onClick={onClick}
-      aria-label={isUpvote ? "Upvote" : "Downvote"}
-      className={cn(
-        "transition-all hover:bg-accent hover:text-accent-foreground hover:outline",
-        className,
-      )}
-    >
-      {isUpvote ? (
-        <ArrowBigUp className="h-6 w-6" />
-      ) : (
-        <ArrowBigDown className="h-6 w-6" />
-      )}
-    </Button>
-  );
+  const VoteButton = ({ isUpvote = true, onClick, className }) => {
+    const isUserVote =
+      (isUpvote && userVote === "upVote") ||
+      (!isUpvote && userVote === "downVote");
+
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        disabled={inTimeout}
+        onClick={onClick}
+        aria-label={isUpvote ? "Upvote" : "Downvote"}
+        XXclassName={cn(
+          "transition-all hover:bg-accent hover:text-accent-foreground hover:outline",
+          inTimeout && isUserVote && "ring-2 ring-primary",
+          className,
+        )}
+        className={cn(
+          "relative transition-all",
+          isUserVote && "bg-primary/20 hover:bg-primary/30",
+          inTimeout && "opacity-50",
+          className,
+        )}
+      >
+        {isUpvote ? (
+          <ArrowBigUp className="h-6 w-6" />
+        ) : (
+          <ArrowBigDown className="h-6 w-6" />
+        )}
+      </Button>
+    );
+  };
 
   return (
     <Card className="flex flex-row gap-2 bg-muted/30">
@@ -608,7 +622,7 @@ const PlaylistCard = ({
           isUpvote={true}
           onClick={() => handleVote(playlist.id, true)}
         />
-        <span className="font-bold">
+        <span className="cursor-default font-bold">
           {playlist.upVotes - playlist.downVotes}
         </span>
         <VoteButton
@@ -842,7 +856,7 @@ const PlaylistAdminTools = ({ playlist, onEdit, onDelete }) => {
 
 // Helper function to see if we are in the 10 minute timeout
 function checkTimeout(clientVotes, id) {
-  const TEN_MINUTES_IN_MS = 1 * 60 * 1000;
+  const TEN_MINUTES_IN_MS = 10 * 60 * 1000;
   const vote = clientVotes[id];
   if (!vote || !vote.timestamp) {
     return false;

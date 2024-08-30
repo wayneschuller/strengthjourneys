@@ -53,11 +53,17 @@ import {
 // ---------------------------------------------------------------------------------------------------
 export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   const { data: session, status: authStatus } = useSession();
-  const { data: playlistsData, error } = useSWR("/api/playlists", fetcher, {
-    fallbackData: initialPlaylists,
-    refreshInterval: 300000, // 5 minutes
-    dedupingInterval: 60000, // 1 minute
-  });
+  const { data: SWRplaylistsData, SWRerror } = useSWR(
+    "/api/playlists",
+    fetcher,
+    {
+      fallbackData: initialPlaylists,
+      refreshInterval: 300000, // 5 minutes
+      dedupingInterval: 60000, // 1 minute
+      revalidateOnFocus: false, // Disable revalidation on focus
+      revalidateOnReconnect: false, // Disable revalidation on reconnect
+    },
+  );
   // const [playlists, setPlaylists] = useState([]);
   const [playlists, setPlaylists] = useState(initialPlaylists);
 
@@ -88,17 +94,26 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   // Set playlists on useSWR load
   // We put in local state so we can do optimised UI - review at some point
   useEffect(() => {
-    if (playlistsData) setPlaylists(playlistsData);
-  }, [playlistsData]);
+    // Anticipating hitting Vercel KV read limits - in which case just use the static props
+    if (SWRerror) {
+      setPlaylists(initialPlaylists);
+      return;
+    }
+    if (SWRplaylistsData) {
+      setPlaylists(SWRplaylistsData);
+      return;
+    }
+  }, [SWRplaylistsData, SWRerror]);
 
-  // FIXME: don't do this because if useSWR has any error we want to fall back to static props initialPlaylists
+  // Don't do this because if useSWR has any error we want to fall back to static props initialPlaylists
   // if (error || playlists?.error) {
   // if (error) devLog(error);
   // if (playlists?.error) devLog(playlists);
   // return <div>Failed to load playlists</div>;
   // }
 
-  if (!playlists) return <div>Loading...</div>;
+  // There should be no loading phase with staticProps - so don't do below
+  // if (!playlists) return <div>Loading...</div>;
 
   const categories = [
     // Genres

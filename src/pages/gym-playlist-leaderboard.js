@@ -358,7 +358,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
         {/* Side-by-Side Layout for Category Filter and Add Playlist Button */}
         <div className="mb-6 flex flex-col items-center gap-4 md:flex-row md:gap-1">
           <div className="flex-grow pr-4">
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-4 md:gap-2">
               {categories.map((category) => (
                 <Badge
                   key={category}

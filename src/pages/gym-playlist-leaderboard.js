@@ -538,7 +538,7 @@ const PlaylistCard = ({
               </a>
             </div>
           </CardTitle>
-          <CardDescription className="flex w-96 items-center">
+          <CardDescription className="flex w-64 items-center md:w-96">
             <a
               href={playlist.url}
               target="_blank"
@@ -777,36 +777,39 @@ const PlaylistAdminTools = ({ playlist, onEdit, onDelete }) => {
   };
 
   return (
-    <div className="mt-4 flex items-center justify-end space-x-2">
-      <div>Admin Tools: </div>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleRevalidate}
-        disabled={isRevalidating}
-        className="flex items-center"
-      >
-        <FolderSync className="mr-1 h-4 w-4" />
-        {isRevalidating ? "Revalidating..." : "Revalidate Static Props"}
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onEdit(playlist)}
-        className="flex items-center"
-      >
-        <Edit className="mr-1 h-4 w-4" />
-        Edit Playlist
-      </Button>
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={() => onDelete(playlist.id)}
-        className="flex items-center"
-      >
-        <Trash className="mr-1 h-4 w-4" />
-        Delete Playlist
-      </Button>
+    <div className="mt-4">
+      <Separator />
+      <div className="mt-2 flex items-center justify-end space-x-2">
+        <div>Admin Tools: </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRevalidate}
+          disabled={isRevalidating}
+          className="flex items-center"
+        >
+          <FolderSync className="mr-1 h-4 w-4" />
+          {isRevalidating ? "Revalidating..." : "Revalidate Static Props"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onEdit(playlist)}
+          className="flex items-center"
+        >
+          <Edit className="mr-1 h-4 w-4" />
+          Edit Playlist
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => onDelete(playlist.id)}
+          className="flex items-center"
+        >
+          <Trash className="mr-1 h-4 w-4" />
+          Delete Playlist
+        </Button>
+      </div>
     </div>
   );
 };

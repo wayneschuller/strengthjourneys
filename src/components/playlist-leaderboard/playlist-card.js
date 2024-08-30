@@ -41,11 +41,6 @@ export function PlaylistCard({
         disabled={inTimeout}
         onClick={onClick}
         aria-label={isUpvote ? "Upvote" : "Downvote"}
-        XXclassName={cn(
-          "transition-all hover:bg-accent hover:text-accent-foreground hover:outline",
-          inTimeout && isUserVote && "ring-2 ring-primary",
-          className,
-        )}
         className={cn(
           "relative transition-all",
           isUserVote && "bg-primary/20 hover:bg-primary/30",
@@ -81,18 +76,16 @@ export function PlaylistCard({
               </a>
             </div>
           </CardTitle>
-          <CardDescription className="">
-            <div className="flex flex-row items-center gap-1">
-              <a
-                href={playlist.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="line-clamp-1 break-all text-sm text-muted-foreground hover:underline"
-              >
-                {playlist.url}
-              </a>
-              <ExternalLink className="ml-1 h-3 w-3 flex-shrink-0" />
-            </div>
+          <CardDescription className="flex flex-row items-center gap-1">
+            <a
+              href={playlist.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="line-clamp-1 break-all text-sm text-muted-foreground hover:underline"
+            >
+              {playlist.url}
+            </a>
+            <ExternalLink className="ml-1 h-3 w-3 flex-shrink-0" />
           </CardDescription>
           <div></div>
         </CardHeader>

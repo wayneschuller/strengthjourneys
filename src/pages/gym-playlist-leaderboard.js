@@ -526,7 +526,7 @@ const PlaylistCard = ({
         <CardHeader className="">
           <CardTitle className="flex items-center justify-start gap-2 text-lg">
             <Music className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">
+            <div className="font-semibold">
               <a
                 href={playlist.url}
                 target="_blank"
@@ -535,7 +535,7 @@ const PlaylistCard = ({
               >
                 {playlist.title}
               </a>
-            </h3>
+            </div>
           </CardTitle>
           <CardDescription>
             <a

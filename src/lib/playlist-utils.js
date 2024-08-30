@@ -15,7 +15,6 @@ export async function fetchPlaylists(id = null) {
       return JSON.parse(playlist);
     } else {
       // Fetch all playlists
-      console.log(`Getting kvstore data for getStaticProps`);
       const playlists = await kv.hgetall("playlists");
 
       // Map through all the playlists and add in the upvotes/downvotes

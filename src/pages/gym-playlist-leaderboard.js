@@ -373,8 +373,8 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
     : [];
 
   // devLog(votes);
-  devLog(playlists);
-  devLog(filteredAndSortedPlaylists);
+  // devLog(playlists);
+  // devLog(filteredAndSortedPlaylists);
 
   return (
     // <div className="container mx-auto max-w-2xl p-4">
@@ -757,6 +757,8 @@ export async function sendVote(id, voteType, action) {
 // ---------------------------------------------------------------------------------------------------
 export async function getStaticProps() {
   try {
+    // Use console.log here not devLog - so we can see this in the Vercel build logs
+    console.log(`Getting kvstore data (possibly for getStaticProps)`);
     const initialPlaylists = await fetchPlaylists();
     console.log(
       `getStaticProps caching initialPlaylists (length: ${initialPlaylists.length}) `,

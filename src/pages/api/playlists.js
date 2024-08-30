@@ -19,8 +19,7 @@ export default async function handler(req, res) {
     case "GET":
       // GET logic for fetching all playlists or a specific playlist - any user can do
       try {
-        const { id } = req.query;
-        const result = await fetchPlaylists(id);
+        const result = await fetchPlaylists();
         // devLog(result);
         res.status(200).json(result);
       } catch (error) {

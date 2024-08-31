@@ -359,10 +359,48 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   return (
     <div className="mx-4 md:mx-10 md:items-center lg:mx-[15vw] xl:mx-[20vw]">
       <Head>
-        <title>Gym Music Playlist Leaderboard</title>
+        <title>Top Gym Playlists: Barbell Lifting Music Leaderboard</title>
         <meta
           name="description"
-          content="Discover the best gym music for lifting barbells. Upvote and submit your playlists for other strength barbell lifters"
+          content="Elevate your workouts with top-rated gym playlists. Vote, submit, and discover the best music for weightlifting, powerlifting, and strength training. Join the fitness community!"
+        />
+
+        <meta
+          name="keywords"
+          content="gym playlists, workout music, lifting songs, powerlifting soundtrack, fitness motivation, strength training music"
+        />
+        <meta name="robots" content="index, follow" />
+
+        <meta
+          property="og:title"
+          content="Top Gym Playlists: Barbell Lifting Music Leaderboard"
+        />
+        <meta
+          property="og:description"
+          content="Elevate your workouts with top-rated gym playlists. Vote, submit, and discover the best music for weightlifting, powerlifting, and strength training. Join the fitness community!"
+        />
+        <meta property="og:type" content="website" />
+        <meta
+          property="og:url"
+          content="https://www.strengthjourneys.xyz/gym-playlist-leaderboard"
+        />
+        <meta
+          property="og:image"
+          content="https://www.strengthjourneys.xyz/strength-journeys-playlist-leaderboard.png"
+        />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content="Top Gym Playlists: Barbell Lifting Music Leaderboard"
+        />
+        <meta
+          name="twitter:description"
+          content="Elevate your workouts with top-rated gym playlists. Vote, submit, and discover the best music for weightlifting, powerlifting, and strength training. Join the fitness community!"
+        />
+        <meta
+          name="twitter:image"
+          content="https://www.strengthjourneys.xyz/strength-journeys-playlist-leaderboard.png"
         />
       </Head>
       <div>

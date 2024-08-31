@@ -16,12 +16,15 @@ import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/play
 import { TrendingUp, Clock, Flame, Bookmark, Heart } from "lucide-react";
 const translator = shortUUID();
 
+const ITEMS_PER_PAGE = 5;
+
 // ---------------------------------------------------------------------------------------------------
 // <GymPlaylistLeaderboard /> - World's best source of lifting music
 // ---------------------------------------------------------------------------------------------------
 export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   const { data: session, status: authStatus } = useSession();
   const [playlists, setPlaylists] = useState(initialPlaylists);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [currentPlaylist, setCurrentPlaylist] = useState({
     id: "",
@@ -71,6 +74,11 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
       setClientVotes(updatedVotes);
     }
   }, []);
+
+  // Reset to first page when changing tabs or applying filters
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [currentTab, selectedCategories]);
 
   const categories = [
     // Genres
@@ -331,6 +339,19 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
         .sort(sortFunctions[currentTab] || sortFunctions.top)
     : [];
 
+  const totalPages = Math.ceil(
+    filteredAndSortedPlaylists.length / ITEMS_PER_PAGE,
+  );
+
+  const paginatedPlaylists = filteredAndSortedPlaylists.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
   // devLog(votes);
   devLog(playlists);
   // devLog(filteredAndSortedPlaylists);
@@ -438,7 +459,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
           <TabsContent value={currentTab} className="space-y-4">
             <div ref={parent} className="flex flex-col gap-5">
               {/* <div ref={parent} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2" > */}
-              {filteredAndSortedPlaylists.map((playlist) => (
+              {paginatedPlaylists.map((playlist) => (
                 <PlaylistCard
                   key={playlist.id}
                   playlist={playlist}
@@ -453,6 +474,11 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
                 />
               ))}
             </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </TabsContent>
         </Tabs>
       </div>
@@ -652,3 +678,23 @@ const dummyPlaylists = [
     timestamp: 1725005592377,
   },
 ];
+
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  return (
+    <div className="mt-4 flex items-center justify-center space-x-2">
+      <Button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        Previous
+      </Button>
+      <span>{`Page ${currentPage} of ${totalPages}`}</span>
+      <Button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        Next
+      </Button>
+    </div>
+  );
+};

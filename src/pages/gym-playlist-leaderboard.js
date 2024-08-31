@@ -522,11 +522,10 @@ const calculateVoteChange = (playlist, isUpvote, currentVote) => {
 export async function getStaticProps() {
   const vercelProPlan = false; // We can dream
 
+  const isLocalDev = !process.env.VERCEL;
+
   // Dev mode use dummy data to protect my tiny Vercel quota of KV reads
-  if (
-    !vercelProPlan &&
-    process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development"
-  ) {
+  if (!vercelProPlan && isLocalDev) {
     console.log(
       "Development mode detected: Using dummy data instead of KV store",
     );

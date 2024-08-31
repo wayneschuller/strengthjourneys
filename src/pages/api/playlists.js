@@ -48,7 +48,8 @@ export default async function handler(req, res) {
       const clientIp =
         req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
-      if (await isThrottled(clientIp)) {
+      // IP throttle the hoi polloi
+      if (!isAdmin && (await isThrottled(clientIp))) {
         return res
           .status(429)
           .json({ error: "Too many requests. Please try again later." });

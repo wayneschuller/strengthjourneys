@@ -3,6 +3,15 @@ import { devLog } from "@/lib/processing-utils";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 import { fetchPlaylists } from "@/components/playlist-leaderboard/playlist-utils";
+import { RegExpMatcher, englishDataset } from "obscenity";
+
+// Initialize obscenity matcher
+const matcher = new RegExpMatcher({ ...englishDataset.build() });
+
+// Helper function to check for profanity
+function containsProfanity(text) {
+  return matcher.hasMatch(text);
+}
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
@@ -33,6 +42,7 @@ export default async function handler(req, res) {
 
     case "POST":
       // POST logic for creating a new playlist - any user can do
+      const newPlaylist = req.body;
 
       // Add IP-based throttling for POST method
       const clientIp =
@@ -45,10 +55,28 @@ export default async function handler(req, res) {
       }
 
       try {
-        const newPlaylist = req.body;
         if (!newPlaylist.id || !newPlaylist.title || !newPlaylist.url) {
           return res.status(400).json({ error: "Invalid playlist data" });
         }
+
+        // Check for profanity in title and description
+        if (
+          containsProfanity(newPlaylist.title) ||
+          containsProfanity(newPlaylist.description)
+        ) {
+          // Silently reject the submission without adding to the database
+          console.log(
+            `Profanity detected in new playlist submission. ID: ${newPlaylist.id} (IP: ${clientIp})`,
+          );
+
+          // Return a success response to the client
+          return res.status(201).json({
+            message: "Playlist added successfully",
+            playlist: newPlaylist,
+          });
+        }
+
+        // Normal case - good playlist gets added to the KV store.
         await kv.hset("playlists", {
           [newPlaylist.id]: JSON.stringify(newPlaylist),
         });

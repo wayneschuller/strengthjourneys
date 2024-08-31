@@ -15,6 +15,7 @@ import {
 import validator from "validator";
 import { sanitizeUrl } from "@braintree/sanitize-url";
 import normalizeUrl from "normalize-url";
+import DOMPurify from "dompurify";
 
 // Whitelist of acceptable music sites
 const WHITELISTED_SITES = [
@@ -85,15 +86,22 @@ export function PlaylistCreateEditDialog({
       return;
     }
 
+    const sanitizedTitle = DOMPurify.sanitize(formData.get("title"), {
+      ALLOWED_TAGS: [],
+    });
+    const sanitizedDescription = DOMPurify.sanitize(
+      formData.get("description"),
+      { ALLOWED_TAGS: [] },
+    );
+
     const playlistData = {
-      title: formData.get("title"),
-      description: formData.get("description"),
+      title: sanitizedTitle,
+      description: sanitizedDescription,
       url: normalizedUrl,
       categories: formData.getAll("categories"),
       id: currentPlaylist.id,
       upVotes: currentPlaylist.upVotes || 0,
       downVotes: currentPlaylist.downVotes || 0,
-      // timestamp: Date.now(), // Add timestamp for new playlists (but not in edit mode)
     };
 
     // Handle timestamp logic

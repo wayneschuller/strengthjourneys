@@ -1,5 +1,9 @@
 import { kv } from "@vercel/kv";
 import { devLog } from "@/lib/processing-utils";
+import validator from "validator";
+import { sanitizeUrl } from "@braintree/sanitize-url";
+import normalizeUrl from "normalize-url";
+import DOMPurify from "dompurify";
 
 // Fetch playlists and merge in separate vote data along the way.
 // Abstracted to use in both api route and also in ISR getStaticProps build step
@@ -65,3 +69,68 @@ export const WHITELISTED_SITES = [
   "iheartradio.com", // Streaming radio and custom playlists
   "boomplay.com", // African music streaming service
 ];
+
+// Shared functions for playlist validation and sanitization
+
+export function validateUrl(url) {
+  return validator.isURL(url, {
+    protocols: ["https"],
+    require_protocol: true,
+  });
+}
+
+export function sanitizeAndNormalizeUrl(url) {
+  const sanitizedUrl = sanitizeUrl(url);
+  return normalizeUrl(sanitizedUrl, {
+    defaultProtocol: "https:",
+    stripAuthentication: true,
+    stripWWW: true,
+  });
+}
+
+export function isWhitelistedUrl(url) {
+  try {
+    const hostname = new URL(url).hostname;
+    return WHITELISTED_SITES.some((site) => hostname.endsWith(site));
+  } catch {
+    return false;
+  }
+}
+
+export function sanitizeText(text) {
+  return DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
+}
+
+export function validateAndProcessPlaylist(playlistData) {
+  const errors = [];
+
+  if (!playlistData.title || !playlistData.description || !playlistData.url) {
+    errors.push("Missing required fields");
+  }
+
+  if (!validateUrl(playlistData.url)) {
+    errors.push("Invalid URL");
+  }
+
+  const normalizedUrl = sanitizeAndNormalizeUrl(playlistData.url);
+
+  if (!isWhitelistedUrl(normalizedUrl)) {
+    errors.push("URL is not from an approved music streaming platform");
+  }
+
+  const sanitizedTitle = sanitizeText(playlistData.title);
+  const sanitizedDescription = sanitizeText(playlistData.description);
+
+  if (errors.length > 0) {
+    return { errors };
+  }
+
+  return {
+    validatedPlaylist: {
+      ...playlistData,
+      title: sanitizedTitle,
+      description: sanitizedDescription,
+      url: normalizedUrl,
+    },
+  };
+}

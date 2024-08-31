@@ -17,6 +17,7 @@ import { sanitizeUrl } from "@braintree/sanitize-url";
 import normalizeUrl from "normalize-url";
 import DOMPurify from "dompurify";
 import { WHITELISTED_SITES } from "./playlist-utils";
+import { validateAndProcessPlaylist } from "./playlist-utils";
 
 // ---------------------------------------------------------------------------------------------------
 // <PlaylistCreateEditDialog /> - Create/Edit a playlist for the leaderboard
@@ -29,90 +30,46 @@ export function PlaylistCreateEditDialog({
   onSubmit,
   categories,
 }) {
-  const [urlError, setUrlError] = useState("");
+  const [errors, setErrors] = useState([]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const submittedUrl = formData.get("url");
-
-    // Reset error state
-    setUrlError("");
-
-    // URL validation
-    if (
-      !validator.isURL(submittedUrl, {
-        protocols: ["https"],
-        require_protocol: true,
-      })
-    ) {
-      setUrlError("Please enter a valid URL");
-
-      return;
-    }
-
-    // URL sanitization and normalization
-    const sanitizedUrl = sanitizeUrl(submittedUrl);
-    const normalizedUrl = normalizeUrl(sanitizedUrl, {
-      defaultProtocol: "https:",
-      stripAuthentication: true,
-      stripWWW: true,
-    });
-
-    // Check if the normalized URL is from a whitelisted site
-    if (!isWhitelistedUrl(normalizedUrl)) {
-      setUrlError(
-        "Please enter a URL from an approved music streaming platform",
-      );
-      return;
-    }
-
-    const sanitizedTitle = DOMPurify.sanitize(formData.get("title"), {
-      ALLOWED_TAGS: [],
-    });
-    const sanitizedDescription = DOMPurify.sanitize(
-      formData.get("description"),
-      { ALLOWED_TAGS: [] },
-    );
 
     const playlistData = {
-      title: sanitizedTitle,
-      description: sanitizedDescription,
-      url: normalizedUrl,
+      title: formData.get("title"),
+      description: formData.get("description"),
+      url: formData.get("url"),
       categories: formData.getAll("categories"),
       id: currentPlaylist.id,
       upVotes: currentPlaylist.upVotes || 0,
       downVotes: currentPlaylist.downVotes || 0,
     };
 
+    // Validate and process the playlist data (including whitelisting)
+    const { errors, validatedPlaylist } =
+      validateAndProcessPlaylist(playlistData);
+
+    if (errors) {
+      setErrors(errors);
+      return;
+    }
     // Handle timestamp logic
     if (!isEditMode) {
       // Adding a new playlist
-      playlistData.timestamp = Date.now();
+      validatedPlaylist.timestamp = Date.now();
     } else {
       // Editing an existing playlist
-      if (currentPlaylist.timestamp) {
-        // Keep the old timestamp if it exists
-        playlistData.timestamp = currentPlaylist.timestamp;
-      } else {
-        // Add a new timestamp if it doesn't exist (for backwards compatibility)
-        playlistData.timestamp = Date.now();
-      }
+      validatedPlaylist.timestamp = currentPlaylist.timestamp || Date.now();
     }
 
-    onSubmit(playlistData);
-  };
-
-  const handleUrlChange = (e) => {
-    // Clear error when user starts typing
-    if (urlError) {
-      setUrlError("");
-    }
+    onSubmit(validatedPlaylist);
+    setErrors([]);
   };
 
   const handleCancel = () => {
     onOpenChange(false);
-    setUrlError("");
+    setErrors([]);
   };
 
   return (
@@ -147,9 +104,15 @@ export function PlaylistCreateEditDialog({
             placeholder="Playlist URL"
             required
             defaultValue={currentPlaylist.url}
-            onChange={handleUrlChange}
           />
-          {urlError && <p className="mt-1 text-sm text-red-500">{urlError}</p>}
+
+          {errors.length > 0 && (
+            <div className="mt-1 text-sm text-red-500">
+              {errors.map((error, index) => (
+                <p key={index}>{error}</p>
+              ))}
+            </div>
+          )}
 
           <div>
             <p className="mb-2 text-sm font-medium">Categories:</p>

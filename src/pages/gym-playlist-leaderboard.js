@@ -527,7 +527,7 @@ export async function getStaticProps() {
   // Dev mode use dummy data to protect my tiny Vercel quota of KV reads
   if (!vercelProPlan && isLocalDev) {
     console.log(
-      "Development mode detected: Using dummy data instead of KV store",
+      "Local (non-Vercel) mode detected: Using dummy data instead of KV store",
     );
     return {
       props: { initialPlaylists: dummyPlaylists },

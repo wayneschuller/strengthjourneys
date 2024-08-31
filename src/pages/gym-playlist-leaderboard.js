@@ -238,7 +238,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
         title: "Success",
         description: isEditMode
           ? "Playlist updated successfully!"
-          : "New playlist added successfully!",
+          : "New playlist added successfully! Thanks for contributing - please click `Give fast feedback` to help more.",
       });
     } catch (error) {
       console.error(

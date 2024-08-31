@@ -353,7 +353,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   };
 
   // devLog(votes);
-  devLog(playlists);
+  // devLog(playlists);
   // devLog(filteredAndSortedPlaylists);
 
   return (

@@ -16,6 +16,19 @@ import validator from "validator";
 import { sanitizeUrl } from "@braintree/sanitize-url";
 import normalizeUrl from "normalize-url";
 
+// Whitelist of acceptable music sites
+const WHITELISTED_SITES = [
+  "spotify.com",
+  "music.apple.com",
+  "music.youtube.com",
+  "youtube.com",
+  "soundcloud.com",
+  "tidal.com",
+  "deezer.com",
+  "pandora.com",
+  "mixcloud.com",
+];
+
 // ---------------------------------------------------------------------------------------------------
 // <PlaylistCreateEditDialog /> - Create/Edit a playlist for the leaderboard
 // ---------------------------------------------------------------------------------------------------
@@ -56,6 +69,14 @@ export function PlaylistCreateEditDialog({
       stripAuthentication: true,
       stripWWW: true,
     });
+
+    // Check if the normalized URL is from a whitelisted site
+    if (!isWhitelistedUrl(normalizedUrl)) {
+      setUrlError(
+        "Please enter a URL from an approved music streaming platform",
+      );
+      return;
+    }
 
     const playlistData = {
       title: formData.get("title"),
@@ -166,3 +187,13 @@ export function PlaylistCreateEditDialog({
     </Dialog>
   );
 }
+
+// Function to check if a URL is from a whitelisted site
+const isWhitelistedUrl = (url) => {
+  try {
+    const hostname = new URL(url).hostname;
+    return WHITELISTED_SITES.some((site) => hostname.endsWith(site));
+  } catch {
+    return false;
+  }
+};

@@ -71,7 +71,7 @@ export function PlaylistCard({
     );
   };
 
-  if (!isClient) return; // Workaround because of hydration mismatch on localstorage isSaved
+  // if (!isClient) return; // Workaround because of hydration mismatch on localstorage isSaved
 
   return (
     <Card

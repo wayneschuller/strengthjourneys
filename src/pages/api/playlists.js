@@ -2,7 +2,10 @@ import { kv } from "@vercel/kv";
 import { devLog } from "@/lib/processing-utils";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
-import { fetchPlaylists } from "@/components/playlist-leaderboard/playlist-utils";
+import {
+  fetchPlaylists,
+  validateAndProcessPlaylist,
+} from "@/components/playlist-leaderboard/playlist-utils";
 import { RegExpMatcher, englishDataset } from "obscenity";
 
 // Initialize obscenity matcher
@@ -56,34 +59,43 @@ export default async function handler(req, res) {
       }
 
       try {
-        if (!newPlaylist.id || !newPlaylist.title || !newPlaylist.url) {
-          return res.status(400).json({ error: "Invalid playlist data" });
+        // Validate and process the new playlist
+        const { errors, validatedPlaylist } = validateAndProcessPlaylist(
+          newPlaylist,
+          true,
+        );
+
+        if (errors) {
+          return res.status(400).json({ errors });
         }
 
         // Check for profanity in title and description
         if (
-          containsProfanity(newPlaylist.title) ||
-          containsProfanity(newPlaylist.description)
+          containsProfanity(validatedPlaylist.title) ||
+          containsProfanity(validatedPlaylist.description)
         ) {
           // Silently reject the submission without adding to the database
           console.log(
-            `Profanity detected in new playlist submission. ID: ${newPlaylist.id} (IP: ${clientIp})`,
+            `Profanity detected in new playlist submission. ID: ${validatedPlaylist.id} (IP: ${clientIp})`,
           );
 
           // Return a success response to the client
           return res.status(201).json({
             message: "Playlist added successfully",
-            playlist: newPlaylist,
+            playlist: validatedPlaylist,
           });
         }
 
+        // Add timestamp
+        validatedPlaylist.timestamp = Date.now();
+
         // Normal case - good playlist gets added to the KV store.
         await kv.hset("playlists", {
-          [newPlaylist.id]: JSON.stringify(newPlaylist),
+          [validatedPlaylist.id]: JSON.stringify(validatedPlaylist),
         });
         res.status(201).json({
           message: "Playlist added successfully",
-          playlist: newPlaylist,
+          playlist: validatedPlaylist,
         });
       } catch (error) {
         console.error("Error adding new playlist:", error);

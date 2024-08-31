@@ -3,7 +3,12 @@ import { devLog } from "@/lib/processing-utils";
 import validator from "validator";
 import { sanitizeUrl } from "@braintree/sanitize-url";
 import normalizeUrl from "normalize-url";
-import DOMPurify from "dompurify";
+
+// Only import DOMPurify in client-side environment
+let DOMPurify;
+if (typeof window !== "undefined") {
+  DOMPurify = require("dompurify");
+}
 
 // Fetch playlists and merge in separate vote data along the way.
 // Abstracted to use in both api route and also in ISR getStaticProps build step
@@ -97,11 +102,32 @@ export function isWhitelistedUrl(url) {
   }
 }
 
-export function sanitizeText(text) {
-  return DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
+export function sanitizeText(text, isServer = false) {
+  if (isServer) {
+    // Simple server-side sanitization
+    return text.replace(/[<>&'"]/g, (char) => {
+      switch (char) {
+        case "<":
+          return "&lt;";
+        case ">":
+          return "&gt;";
+        case "&":
+          return "&amp;";
+        case "'":
+          return "&#39;";
+        case '"':
+          return "&quot;";
+        default:
+          return char;
+      }
+    });
+  } else {
+    // Client-side sanitization using DOMPurify
+    return DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
+  }
 }
 
-export function validateAndProcessPlaylist(playlistData) {
+export function validateAndProcessPlaylist(playlistData, isServer = false) {
   const errors = [];
 
   if (!playlistData.title || !playlistData.description || !playlistData.url) {
@@ -118,8 +144,8 @@ export function validateAndProcessPlaylist(playlistData) {
     errors.push("URL is not from an approved music streaming platform");
   }
 
-  const sanitizedTitle = sanitizeText(playlistData.title);
-  const sanitizedDescription = sanitizeText(playlistData.description);
+  const sanitizedTitle = sanitizeText(playlistData.title, isServer);
+  const sanitizedDescription = sanitizeText(playlistData.description, isServer);
 
   if (errors.length > 0) {
     return { errors };

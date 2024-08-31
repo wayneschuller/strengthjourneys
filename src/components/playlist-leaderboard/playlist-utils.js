@@ -45,3 +45,23 @@ export async function fetchPlaylists(id = null) {
     throw new Error("Error fetching playlist(s)");
   }
 }
+// Whitelist of acceptable music sites
+
+export const WHITELISTED_SITES = [
+  "spotify.com", // Leading music streaming platform
+  "music.apple.com", // Apple Music service
+  "music.youtube.com", // YouTube Music
+  "youtube.com", // YouTube platform
+  "soundcloud.com", // Independent music sharing
+  "tidal.com", // High-fidelity music streaming
+  "deezer.com", // Music streaming service
+  "pandora.com", // Internet radio and music streaming
+  "mixcloud.com", // DJ mixes and radio shows
+  "bandcamp.com", // Independent artists' platform
+  "audiomack.com", // Free music streaming for artists
+  "reverbnation.com", // Music promotion and sharing
+  "napster.com", // Online music streaming service
+  "last.fm", // Music discovery and streaming
+  "iheartradio.com", // Streaming radio and custom playlists
+  "boomplay.com", // African music streaming service
+];

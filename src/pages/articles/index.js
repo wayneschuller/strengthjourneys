@@ -7,6 +7,8 @@ import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
 
 const pageTitle = "Strength and Lifting Articles Library";
 const siteName = "Strength Journeys";
+const description = `Browse our collection of strength, lifting and fitness articles on various topics. Updated regularly with the latest insights and information.`;
+const canonicalUrl = "https://www.strengthjourneys.xyz/articles";
 
 export default function ArticleListingPage({ articles }) {
   const fullTitle = `${pageTitle} | ${siteName}`;
@@ -16,13 +18,31 @@ export default function ArticleListingPage({ articles }) {
     <div className="mx-4 mb-4 md:mx-[5vw]">
       <Head>
         <title>{fullTitle}</title>
-        <meta
-          name="description"
-          content={`Browse our collection of articles on ${pageTitle.toLowerCase()}.`}
-        />
-        <link rel="canonical" href="https://yourdomain.com/articles" />
+        <meta name="description" content={description} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:title" content={fullTitle} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:type" content="website" />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            mainEntity: {
+              "@type": "ItemList",
+              itemListElement: articles.map((article, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                url: `${canonicalUrl}/${article.slug}`,
+              })),
+            },
+            name: pageTitle,
+            description: description,
+            url: canonicalUrl,
+          })}
+        </script>
       </Head>
-      <h1 className="my-8 text-3xl font-bold">{pageTitle}</h1>
+      <h1 className="mb-6 text-center text-3xl font-bold">{pageTitle}</h1>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {articles.map((article) => (
           <Card key={article.slug} className="">

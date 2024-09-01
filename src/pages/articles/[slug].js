@@ -4,6 +4,7 @@ import Image from "next/image";
 import Head from "next/head";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import imageUrlBuilder from "@sanity/image-url";
+import { devLog } from "@/lib/processing-utils";
 
 const client = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -74,6 +75,8 @@ export async function getStaticPaths() {
   const paths = await client.fetch(
     `*[_type == "post" && defined(slug.current) && publishedAt < now() && defined(body)][].slug.current`,
   );
+
+  devLog(paths);
 
   return {
     paths: paths.map((slug) => ({ params: { slug } })),

@@ -1,7 +1,13 @@
 import { PortableText } from "@portabletext/react";
 import Image from "next/image";
 import Head from "next/head";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardFooter,
+} from "@/components/ui/card";
 import { devLog } from "@/lib/processing-utils";
 
 import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
@@ -92,6 +98,13 @@ export default function ArticlePost({ article }) {
             )}
           </article>
         </CardContent>
+        <CardFooter>
+          <div className="mt-8 text-center">
+            <Link href="/articles" className="text-blue-600 hover:underline">
+              ← Back to the Strength and Lifting Articles Library
+            </Link>
+          </div>
+        </CardFooter>
       </Card>
     </div>
   );

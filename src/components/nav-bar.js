@@ -162,6 +162,15 @@ export function DesktopNav() {
         >
           Music
         </Link>
+        <Link
+          href="/articles"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname === "/articles" ? "text-foreground" : "text-foreground/60",
+          )}
+        >
+          Articles
+        </Link>
       </nav>
     </div>
   );

@@ -125,7 +125,7 @@ export async function getStaticProps({ params }) {
     { slug },
   );
 
-  devLog(article);
+  // devLog(article);
 
   if (!article) {
     return { notFound: true };

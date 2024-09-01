@@ -14,6 +14,7 @@ import {
   Newspaper,
   BicepsFlexed,
   Music,
+  LibraryBig,
 } from "lucide-react";
 
 import {
@@ -66,10 +67,11 @@ export const featurePages = [
     IconComponent: Music,
   },
   {
-    href: "/articles/the-power-of-owning-your-lifting-data-with-google-sheets",
-    title: "Article: The Power of Owning Your Lifting Data",
-    description: "Why we recommend Google Sheets for lifters.",
-    IconComponent: Newspaper,
+    href: "/articles",
+    title: "Strength Articles Library",
+    description:
+      "A collection of our articles, common questions, plus curated lifting content.",
+    IconComponent: LibraryBig,
   },
   {
     href: "/articles/the-iron-and-the-soul-author-henry-rollins",

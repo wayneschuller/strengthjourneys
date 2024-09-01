@@ -1,23 +1,10 @@
-import { createClient } from "@sanity/client";
 import { PortableText } from "@portabletext/react";
 import Image from "next/image";
 import Head from "next/head";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import imageUrlBuilder from "@sanity/image-url";
 import { devLog } from "@/lib/processing-utils";
 
-const client = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET,
-  useCdn: false, // Keep false because we only read at build time on Vercel
-  apiVersion: "2023-05-03",
-});
-
-const builder = imageUrlBuilder(client);
-
-function urlFor(source) {
-  return builder.image(source);
-}
+import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
 
 const components = {
   types: {
@@ -40,12 +27,49 @@ const components = {
 };
 
 export default function ArticlePost({ article }) {
+  const canonicalUrl = `https://strengthjourneys.xyz/articles/${article.slug}`;
+  const publishDate = new Date(article.publishedAt).toISOString();
+
   return (
     <div className="mx-4 mb-10 flex items-center justify-center">
       <Head>
         <title>{article.title}</title>
         <meta name="description" content={article.title} />
+        <link rel="canonical" href={canonicalUrl} />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={article.title} />
+        <meta property="article:published_time" content={publishDate} />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content={canonicalUrl} />
+        <meta name="twitter:title" content={article.title} />
+        <meta name="twitter:description" content={article.title} />
+
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: article.title,
+            datePublished: publishDate,
+            url: canonicalUrl,
+            // "author": {
+            //   "@type": "Person",
+            //   "name": "Author Name"
+            // },
+            // "publisher": {
+            //   "@type": "Organization",
+            //   "name": "Your Organization Name"
+            // }
+          })}
+        </script>
       </Head>
+
       <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
         <CardHeader></CardHeader>
         <CardContent>
@@ -74,7 +98,7 @@ export default function ArticlePost({ article }) {
 }
 
 export async function getStaticPaths() {
-  const paths = await client.fetch(
+  const paths = await sanityIOClient.fetch(
     `*[_type == "post" && defined(slug.current) && publishedAt < now() && defined(body)][].slug.current`,
   );
 
@@ -89,7 +113,7 @@ export async function getStaticPaths() {
 export async function getStaticProps({ params }) {
   const { slug } = params;
 
-  const article = await client.fetch(
+  const article = await sanityIOClient.fetch(
     `*[_type == "post" && slug.current == $slug && publishedAt < now() && defined(body)][0]{
       title,
       body,
@@ -100,6 +124,8 @@ export async function getStaticProps({ params }) {
     }`,
     { slug },
   );
+
+  devLog(article);
 
   if (!article) {
     return { notFound: true };

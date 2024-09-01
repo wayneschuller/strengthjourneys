@@ -11,6 +11,7 @@
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.0",
     "@formkit/auto-animate": "^0.8.2",
+    "@portabletext/react": "^3.1.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-checkbox": "^1.1.1",
@@ -30,6 +31,7 @@
     "@radix-ui/react-toggle": "^1.1.0",
     "@radix-ui/react-toggle-group": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.2",
+    "@sanity/client": "^6.21.3",
     "@sentry/nextjs": "^8.19.0",
     "@tailwindcss/typography": "^0.5.13",
     "@vercel/kv": "^2.0.0",

@@ -2,6 +2,17 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["geist"],
+
+  // Added by WS 20240901
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.sanity.io",
+        pathname: "/**",
+      },
+    ],
+  },
 };
 
 module.exports = nextConfig;
@@ -15,7 +26,7 @@ module.exports = withSentryConfig(module.exports, {
   // https://github.com/getsentry/sentry-webpack-plugin#options
 
   org: "wayne-schuller",
- // project: "javascript-nextjs",
+  // project: "javascript-nextjs",
   project: "strength-journeys",
 
   // Only print logs for uploading source maps in CI

@@ -1,15 +1,42 @@
 import { createClient } from "@sanity/client";
 import { PortableText } from "@portabletext/react";
+import Image from "next/image";
 import Head from "next/head";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import imageUrlBuilder from "@sanity/image-url";
 
 const client = createClient({
-  projectId: process.env.SANITY_PROJECT_ID,
-  dataset: process.env.SANITY_DATASET,
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET,
   useCdn: false,
-  apiVersion: "2021-03-25",
-  token: process.env.SANITY_API_TOKEN,
+  apiVersion: "2023-05-03",
 });
+
+const builder = imageUrlBuilder(client);
+
+function urlFor(source) {
+  return builder.image(source);
+}
+
+const components = {
+  types: {
+    image: ({ value }) => {
+      if (!value?.asset?._ref) {
+        return null;
+      }
+      return (
+        <div className="relative my-8 h-96 w-full">
+          <Image
+            src={urlFor(value).url()}
+            alt={value.alt || " "}
+            fill
+            style={{ objectFit: "contain" }}
+          />
+        </div>
+      );
+    },
+  },
+};
 
 export default function ArticlePost({ article }) {
   return (
@@ -30,10 +57,10 @@ export default function ArticlePost({ article }) {
                 </h2>
               )}
             </header>
-            <PortableText value={article.body} />
+            <PortableText value={article.body} components={components} />
             {article.footer && (
               <footer>
-                <PortableText value={article.footer} />
+                <PortableText value={article.footer} components={components} />
               </footer>
             )}
           </article>
@@ -75,6 +102,5 @@ export async function getStaticProps({ params }) {
 
   return {
     props: { article },
-    revalidate: 60,
   };
 }

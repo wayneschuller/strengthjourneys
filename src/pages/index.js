@@ -66,13 +66,13 @@ export const featurePages = [
     IconComponent: Music,
   },
   {
-    href: "/articles/own-your-lifting-data",
+    href: "/articles/the-power-of-owning-your-lifting-data-with-google-sheets",
     title: "Article: The Power of Owning Your Lifting Data",
     description: "Why we recommend Google Sheets for lifters.",
     IconComponent: Newspaper,
   },
   {
-    href: "/articles/henry-rollins-the-iron-and-the-soul",
+    href: "/articles/the-iron-and-the-soul-author-henry-rollins",
     title: "Article: The Iron and the Soul",
     description: "The classic article by Henry Rollins.",
     IconComponent: Newspaper,

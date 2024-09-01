@@ -52,7 +52,9 @@ export default function ArticlePost({ article }) {
           <article className="prose prose-orange dark:prose-invert">
             <header>
               <h1>{article.title}</h1>
-              {article.author && (
+
+              {/* Let's leave out the article author for now */}
+              {false && article.author && (
                 <h2>
                   by <a href={article.author.url}>{article.author.name}</a>
                 </h2>

@@ -106,7 +106,10 @@ export async function getStaticPaths() {
 
   return {
     paths: paths.map((slug) => ({ params: { slug } })),
-    fallback: false,
+    // 'blocking' means Next.js will server-render the page on-demand if it's not
+    // generated yet. Once rendered, the result is cached for future requests.
+    // This ensures new articles are accessible without showing a loading state.
+    fallback: "blocking",
   };
 }
 
@@ -133,5 +136,6 @@ export async function getStaticProps({ params }) {
 
   return {
     props: { article },
+    revalidate: 60 * 60, // Revalidate every hour, matching the listing page
   };
 }

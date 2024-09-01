@@ -73,8 +73,8 @@ export const featurePages = [
   },
   {
     href: "/articles/the-iron-and-the-soul-author-henry-rollins",
-    title: "Article: The Iron and the Soul",
-    description: "The classic article by Henry Rollins.",
+    title: "Feature Article: The Iron and the Soul",
+    description: "The classic inspirational lifting essay by Henry Rollins.",
     IconComponent: Newspaper,
   },
 ];

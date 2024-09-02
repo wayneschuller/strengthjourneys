@@ -78,6 +78,7 @@ export default function E1RMCalculator() {
           },
         ]}
       />
+      {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
       <E1RMCalculatorMain />
     </>
   );
@@ -111,7 +112,6 @@ function E1RMCalculatorMain() {
   const [age, setAge] = useStateFromQueryOrLocalStorage("AthleteAge", 30);
   const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
   const [parent] = useAutoAnimate(/* optional config */);
-  const isClient = useIsClient();
 
   useEffect(() => {
     if (router.isReady) {
@@ -122,8 +122,6 @@ function E1RMCalculatorMain() {
       }
     }
   }, [router.isReady, router.query]);
-
-  // if (!isClient) return null; // Bypass Next.js hydration drama
 
   // FIXME: put inline
   const handleWeightSliderChange = (value) => {

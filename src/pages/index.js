@@ -5,6 +5,7 @@
 import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
+import { TitleSEOHead } from "@/components/title-seo";
 
 import {
   Calculator,
@@ -99,29 +100,11 @@ export default function Home() {
 
   return (
     <div className="mx-4 mb-4 md:mx-[5vw]">
-      <Head>
-        <title>{title}</title>
-        <meta name="description" content={description} />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="48x48"
-          href="/favicon-48x48.png"
-        />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-
-        <link rel="canonical" href={URL} />
-        <meta property="og:title" content={title} key="title" />
-        <meta property="og:description" content={description} />
-        <meta property="og:url" content={URL} />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="Strength Journeys" />
-        <meta
-          property="og:image"
-          content="https://www.strengthjourneys.xyz/StrengthJourneysOGimage.png"
-        />
-      </Head>
+      <TitleSEOHead
+        title={title}
+        description={description}
+        canonicalURL={URL}
+      />
 
       <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
         Welcome to Strength Journeys

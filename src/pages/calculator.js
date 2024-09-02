@@ -77,7 +77,7 @@ export default function E1RMCalculator() {
     }
   }, [router.isReady, router.query]);
 
-  if (!isClient) return null; // Bypass Next.js hydration drama
+  // if (!isClient) return null; // Bypass Next.js hydration drama
 
   // FIXME: put inline
   const handleWeightSliderChange = (value) => {
@@ -677,9 +677,3 @@ export const getStandardRatingString = (
 
   return liftRating;
 };
-
-export async function getStaticProps() {
-  return {
-    props: {}, // will be passed to the page component as props
-  };
-}

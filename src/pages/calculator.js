@@ -238,24 +238,11 @@ export default function E1RMCalculator({ initialProps }) {
 
   return (
     <>
-      <NextSeo
-        title={title}
-        description={description}
-        canonical={URL}
-        openGraph={{
-          url: URL,
-          title: title,
-          description: description,
-          images: [
-            {
-              url: ogImage,
-              width: 1200,
-              height: 630,
-              alt: "Strength Journeys One Rep Max Calculator",
-            },
-          ],
-        }}
-      />
+      <Head>
+        <title>{title}</title>
+        <meta name="description" content={description} />
+      </Head>
+
       <main className="mx-4 md:mx-[5vw]">
         <Card>
           <CardHeader>

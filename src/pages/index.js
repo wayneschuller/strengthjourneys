@@ -5,7 +5,7 @@
 import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
-import { TitleSEOHead } from "@/components/title-seo";
+import { NextSeo } from "next-seo";
 
 import {
   Calculator,
@@ -94,16 +94,41 @@ const featureArticles = [
 export default function Home() {
   const title =
     "Strength Journeys | Free Barbell Lifting Progress Tracker and Analysis Tools";
-  const URL = "https://www.strengthjourneys.xyz/";
+  const canonicalURL = "https://www.strengthjourneys.xyz/";
   const description =
     "Track and analyze your barbell lifting progress with Strength Journeys. Free tools include PR analyzer, strength visualizer, 1RM calculator, and more. Integrate with Google Sheets for easy data management. Open source and perfect for powerlifters and strength athletes.";
+  const keywords = "";
+  const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
 
   return (
     <>
-      <TitleSEOHead
+      <NextSeo
         title={title}
         description={description}
-        canonicalURL={URL}
+        canonical={canonicalURL}
+        openGraph={{
+          url: canonicalURL,
+          title: title,
+          description: description,
+          images: [
+            {
+              url: ogImageURL,
+              alt: "Strength Journeys PR Analyzer",
+            },
+          ],
+          site_name: "Strength Journeys",
+        }}
+        twitter={{
+          handle: "@wayneschuller",
+          site: "@wayneschuller",
+          cardType: "summary_large_image",
+        }}
+        additionalMetaTags={[
+          {
+            name: "keywords",
+            content: keywords,
+          },
+        ]}
       />
       <main className="mx-4 mb-4 md:mx-[5vw]">
         <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">

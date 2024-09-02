@@ -26,7 +26,7 @@ export default function Analyzer() {
   const title = "PR Analyzer - Strength Progress Reports | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/analyzer";
   const ogImageURL =
-    "https://www.strengthjourneys.xyz/strength_journeys_strength_levels_analyzer_og.png";
+    "https://www.strengthjourneys.xyz/strength_journeys_analyzer_og.png";
   const keywords =
     "strength training, PR analyzer, workout progress, consistency tracking, monthly highlights, lifting journey, strength gains, personal records, workout heatmap, lift frequency analysis, strength progress reports, fitness data visualization";
 

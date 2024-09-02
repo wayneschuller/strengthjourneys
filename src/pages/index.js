@@ -99,29 +99,30 @@ export default function Home() {
     "Track and analyze your barbell lifting progress with Strength Journeys. Free tools include PR analyzer, strength visualizer, 1RM calculator, and more. Integrate with Google Sheets for easy data management. Open source and perfect for powerlifters and strength athletes.";
 
   return (
-    <div className="mx-4 mb-4 md:mx-[5vw]">
+    <>
       <TitleSEOHead
         title={title}
         description={description}
         canonicalURL={URL}
       />
+      <main className="mx-4 mb-4 md:mx-[5vw]">
+        <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
+          Welcome to Strength Journeys
+        </h1>
 
-      <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
-        Welcome to Strength Journeys
-      </h1>
+        <PageDescription />
 
-      <PageDescription />
+        <div className="my-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-3 2xl:grid-cols-4">
+          {featurePages.map((card, index) => (
+            <FeatureCard key={index} {...card} />
+          ))}
+        </div>
 
-      <div className="my-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-3 2xl:grid-cols-4">
-        {featurePages.map((card, index) => (
-          <FeatureCard key={index} {...card} />
-        ))}
-      </div>
-
-      <div className="mx-4 md:mx-20">
-        <GettingStartedCard />
-      </div>
-    </div>
+        <div className="mx-4 md:mx-20">
+          <GettingStartedCard />
+        </div>
+      </main>
+    </>
   );
 }
 

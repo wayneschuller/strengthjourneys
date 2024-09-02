@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { TitleSEOHead } from "@/components/title-seo";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import {
   Card,
@@ -107,162 +108,161 @@ export default function StrengthLevelCalculator() {
     "Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys.";
   const title =
     "Strength Level Test: Free Calculator for Lifters | Strength Journeys";
+  const ogImage =
+    "https://www.strengthjourneys.xyz/strength_journeys_strength_levels_calculator_og.png";
 
   return (
-    <div className="mx-4 flex flex-row items-center md:mx-[5vw]">
-      <Head>
-        <title>{title}</title>
-        <meta name="description" content={description} />
-        <link rel="canonical" href={URL} />
-        <meta property="og:title" content={title} key="title" />
-        <meta property="og:description" content={description} />
-        <meta property="og:url" content={URL} />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="Strength Journeys" />
-      </Head>
-
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>
-            <h1>Strength Level Calculator</h1>
-          </CardTitle>
-          <CardDescription>
-            <h2>
-              How strong am I? Estimate your strength level based on age,
-              gender, and bodyweight.
-            </h2>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="">
-          <div className="mb-10 flex flex-col items-start gap-4 md:mr-10 md:flex-row md:gap-8">
-            <div className="flex w-full flex-col md:w-2/5">
-              <div className="py-2">
-                <Label htmlFor="age" className="text-xl">
-                  Age: {age}
-                </Label>
-              </div>
-              <Slider
-                min={13}
-                max={100}
-                step={1}
-                value={[age]}
-                onValueChange={(values) => setAge(values[0])}
-                className="mt-2 min-w-40 flex-1"
-                aria-label="Age"
-                aria-labelledby="age"
-              />
-            </div>
-            <div className="flex h-[4rem] w-full flex-col justify-between md:w-3/5">
-              <div className="flex flex-row items-center">
-                <Label htmlFor="weight" className="mr-2 text-xl">
-                  Bodyweight:
-                </Label>
-                <Label
-                  htmlFor="weight"
-                  className="mr-2 w-[3rem] text-right text-xl"
-                >
-                  {bodyWeight}
-                </Label>
-                <UnitChooser
-                  isMetric={isMetric}
-                  onSwitchChange={toggleIsMetric}
+    <>
+      <TitleSEOHead
+        title={title}
+        description={description}
+        canonicalURL={URL}
+        ogImage={ogImage}
+      />
+      <main className="mx-4 flex flex-row items-center md:mx-[5vw]">
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>
+              <h1>Strength Level Calculator</h1>
+            </CardTitle>
+            <CardDescription>
+              <h2>
+                How strong am I? Estimate your strength level based on age,
+                gender, and bodyweight.
+              </h2>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="">
+            <div className="mb-10 flex flex-col items-start gap-4 md:mr-10 md:flex-row md:gap-8">
+              <div className="flex w-full flex-col md:w-2/5">
+                <div className="py-2">
+                  <Label htmlFor="age" className="text-xl">
+                    Age: {age}
+                  </Label>
+                </div>
+                <Slider
+                  min={13}
+                  max={100}
+                  step={1}
+                  value={[age]}
+                  onValueChange={(values) => setAge(values[0])}
+                  className="mt-2 min-w-40 flex-1"
+                  aria-label="Age"
+                  aria-labelledby="age"
                 />
               </div>
-              <Slider
-                min={isMetric ? 40 : 100}
-                max={isMetric ? 230 : 500}
-                step={1}
-                value={[bodyWeight]}
-                onValueChange={(values) => setBodyWeight(values[0])}
-                className="mt-2 min-w-40 flex-1"
-                aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
-              />
-            </div>
-            <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
-              <Label htmlFor="sex" className="text-xl">
-                Sex:
-              </Label>
-              <Select
-                id="gender"
-                value={sex}
-                onValueChange={(value) => setSex(value)}
-                className="min-w-52 text-xl"
-              >
-                <SelectTrigger aria-label="Select sex">
-                  <SelectValue placeholder="Select sex" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex flex-col gap-4 md:ml-4">
-            {liftTypesFromStandards.map((liftType) => (
-              <div key={liftType} className="">
-                <h2 className="text-lg font-bold">{liftType} Standards:</h2>
-                <div className="grid grid-cols-3 md:grid-cols-5">
-                  <MiniCard
-                    levelString="Physically Active"
-                    weight={standards[liftType]?.physicallyActive}
-                    unitType={unitType}
-                  />
-                  <MiniCard
-                    levelString="Beginner"
-                    weight={standards[liftType]?.beginner}
-                    unitType={unitType}
-                  />
-                  <MiniCard
-                    levelString="Intermediate"
-                    weight={standards[liftType]?.intermediate}
-                    unitType={unitType}
-                  />
-                  <MiniCard
-                    levelString="Advanced"
-                    weight={standards[liftType]?.advanced}
-                    unitType={unitType}
-                  />
-                  <MiniCard
-                    levelString="Elite"
-                    weight={standards[liftType]?.elite}
-                    unitType={unitType}
+              <div className="flex h-[4rem] w-full flex-col justify-between md:w-3/5">
+                <div className="flex flex-row items-center">
+                  <Label htmlFor="weight" className="mr-2 text-xl">
+                    Bodyweight:
+                  </Label>
+                  <Label
+                    htmlFor="weight"
+                    className="mr-2 w-[3rem] text-right text-xl"
+                  >
+                    {bodyWeight}
+                  </Label>
+                  <UnitChooser
+                    isMetric={isMetric}
+                    onSwitchChange={toggleIsMetric}
                   />
                 </div>
-                <Separator />
+                <Slider
+                  min={isMetric ? 40 : 100}
+                  max={isMetric ? 230 : 500}
+                  step={1}
+                  value={[bodyWeight]}
+                  onValueChange={(values) => setBodyWeight(values[0])}
+                  className="mt-2 min-w-40 flex-1"
+                  aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
+                />
               </div>
-            ))}
-          </div>
-        </CardContent>
-        <CardFooter className="text-sm">
-          <div className="flex flex-col">
-            <p className="">
-              {" "}
-              To see a strength rating for a particular set, e.g.: Squat 3x5
-              {"@"}225lb, then use our{" "}
-              <Link
-                href="/calculator"
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                One Rep Max Calculator
-              </Link>{" "}
-              and click {`"`}Advanced Analysis{`"`}.
-            </p>
-            <p className="">
-              Our data model is a derivation of the excellent research of{" "}
-              <a
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-                target="_blank"
-                href="https://lonkilgore.com/"
-              >
-                Professor Lon Kilgore
-              </a>
-              . Any errors are our own.
-            </p>
-          </div>
-        </CardFooter>
-      </Card>
-    </div>
+              <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
+                <Label htmlFor="sex" className="text-xl">
+                  Sex:
+                </Label>
+                <Select
+                  id="gender"
+                  value={sex}
+                  onValueChange={(value) => setSex(value)}
+                  className="min-w-52 text-xl"
+                >
+                  <SelectTrigger aria-label="Select sex">
+                    <SelectValue placeholder="Select sex" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex flex-col gap-4 md:ml-4">
+              {liftTypesFromStandards.map((liftType) => (
+                <div key={liftType} className="">
+                  <h2 className="text-lg font-bold">{liftType} Standards:</h2>
+                  <div className="grid grid-cols-3 md:grid-cols-5">
+                    <MiniCard
+                      levelString="Physically Active"
+                      weight={standards[liftType]?.physicallyActive}
+                      unitType={unitType}
+                    />
+                    <MiniCard
+                      levelString="Beginner"
+                      weight={standards[liftType]?.beginner}
+                      unitType={unitType}
+                    />
+                    <MiniCard
+                      levelString="Intermediate"
+                      weight={standards[liftType]?.intermediate}
+                      unitType={unitType}
+                    />
+                    <MiniCard
+                      levelString="Advanced"
+                      weight={standards[liftType]?.advanced}
+                      unitType={unitType}
+                    />
+                    <MiniCard
+                      levelString="Elite"
+                      weight={standards[liftType]?.elite}
+                      unitType={unitType}
+                    />
+                  </div>
+                  <Separator />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+          <CardFooter className="text-sm">
+            <div className="flex flex-col">
+              <p className="">
+                {" "}
+                To see a strength rating for a particular set, e.g.: Squat 3x5
+                {"@"}225lb, then use our{" "}
+                <Link
+                  href="/calculator"
+                  className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+                >
+                  One Rep Max Calculator
+                </Link>{" "}
+                and click {`"`}Advanced Analysis{`"`}.
+              </p>
+              <p className="">
+                Our data model is a derivation of the excellent research of{" "}
+                <a
+                  className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+                  target="_blank"
+                  href="https://lonkilgore.com/"
+                >
+                  Professor Lon Kilgore
+                </a>
+                . Any errors are our own.
+              </p>
+            </div>
+          </CardFooter>
+        </Card>
+      </main>
+    </>
   );
 }
 

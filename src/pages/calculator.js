@@ -3,6 +3,7 @@
 import Head from "next/head";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import { TitleSEOHead } from "@/components/title-seo";
 
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { Button } from "@/components/ui/button";
@@ -240,7 +241,8 @@ export default function E1RMCalculator() {
     "One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for Strength Athletes";
   const description =
     "Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys.";
-  const ogImage = "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";
+  const ogImage =
+    "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";
 
   return (
     <>

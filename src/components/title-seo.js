@@ -18,8 +18,7 @@ export const TitleSEOHead = ({
     "Track and analyze your barbell lifting progress with Strength Journeys. Free tools include PR analyzer, strength visualizer, 1RM calculator, and more. Integrate with Google Sheets for easy data management. Open source and perfect for powerlifters and strength athletes.";
   const defaultURL = "https://www.strengthjourneys.xyz/";
 
-  const defaultOGImage =
-    "https://www.strengthjourneys.xyz/public/202409-og-image.png";
+  const defaultOGImage = "https://www.strengthjourneys.xyz/202409-og-image.png";
 
   const fullTitle = title ? `${title} | ${siteName}` : defaultTitle;
   const finalOGImage = ogImage || defaultOGImage;

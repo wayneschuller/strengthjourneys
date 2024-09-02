@@ -22,7 +22,6 @@ import { TitleSEOHead } from "@/components/title-seo";
 
 export default function Analyzer() {
   // OG Meta Tags
-  const URL = "https://www.strengthjourneys.xyz/strength-level-calculator";
   const description =
     "Unlock insights into your strength training progress with our PR Analyzer. Track consistency, view monthly highlights, and visualize your lifting journey. Get personalized analysis and inspiration to fuel your strength gains.";
   const title = "PR Analyzer - Strength Progress Reports | Strength Journeys";

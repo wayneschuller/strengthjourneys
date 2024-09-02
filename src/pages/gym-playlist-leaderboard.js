@@ -369,6 +369,11 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
           name="keywords"
           content="gym playlists, workout music, lifting songs, powerlifting soundtrack, fitness motivation, strength training music"
         />
+        <link
+          rel="canonical"
+          href="https://www.strengthjourneys.xyz/gym-playlist-leaderboard"
+        />
+
         <meta name="robots" content="index, follow" />
 
         <meta

@@ -37,11 +37,8 @@ import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-
 
 const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 
-export default function E1RMCalculator({ initialProps }) {
+export default function E1RMCalculator() {
   const router = useRouter();
-  // Use initialProps for SEO data
-  const { URL, title, description, ogImage } = initialProps;
-
   const { toast } = useToast();
   const [reps, setReps] = useStateFromQueryOrLocalStorage("reps", 5); // Will be a string
   const [weight, setWeight] = useStateFromQueryOrLocalStorage("weight", 225); // Will be a string
@@ -239,8 +236,43 @@ export default function E1RMCalculator({ initialProps }) {
   return (
     <>
       <Head>
-        <title>{title}</title>
-        <meta name="description" content={description} />
+        <title>
+          One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for
+          Strength Athletes
+        </title>
+        <meta
+          key="description"
+          name="description"
+          content="Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys."
+        />
+        <meta
+          name="keywords"
+          content="One rep max calculator, Barbell strength calculator, 1RM estimation tool, Weightlifting max calculator, Powerlifting 1RM calculator, Max lift predictor, Barbell training tool, Strength level estimator, Gym performance calculator, e1RM calculator, Max weight calculator, Barbell load calculator"
+        />
+
+        <link
+          rel="canonical"
+          href="https://www.strengthjourneys.xyz/calculator"
+        />
+        <meta name="robots" content="index, follow" />
+
+        <meta
+          property="og:title"
+          content="One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for Strength Athletes"
+        />
+        <meta
+          property="og:description"
+          content="Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys."
+        />
+        <meta property="og:type" content="website" />
+        <meta
+          property="og:url"
+          content="https://www.strengthjourneys.xyz/calculator"
+        />
+        <meta
+          property="og:image"
+          content="https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png"
+        />
       </Head>
 
       <main className="mx-4 md:mx-[5vw]">
@@ -645,25 +677,3 @@ export const getStandardRatingString = (
 
   return liftRating;
 };
-
-export async function getStaticProps() {
-  // These values are now defined server-side
-  const URL = "https://www.strengthjourneys.xyz/calculator";
-  const title =
-    "One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for Strength Athletes";
-  const description =
-    "Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys.";
-  const ogImage =
-    "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";
-
-  return {
-    props: {
-      initialProps: {
-        URL,
-        title,
-        description,
-        ogImage,
-      },
-    },
-  };
-}

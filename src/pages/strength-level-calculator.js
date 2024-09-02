@@ -102,7 +102,7 @@ export default function StrengthLevelCalculator() {
   const liftTypesFromStandards = Object.keys(standards);
 
   // OG Meta Tags
-  const URL = "https://www.strengthjourneys.xyz/calculator";
+  const URL = "https://www.strengthjourneys.xyz/strength-level-calculator";
   const description =
     "Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys.";
   const title =
@@ -111,7 +111,7 @@ export default function StrengthLevelCalculator() {
   return (
     <div className="mx-4 flex flex-row items-center md:mx-[5vw]">
       <Head>
-        <title>{title} </title>
+        <title>{title}</title>
         <meta name="description" content={description} />
         <link rel="canonical" href={URL} />
         <meta property="og:title" content={title} key="title" />

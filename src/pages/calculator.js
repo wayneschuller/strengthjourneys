@@ -234,18 +234,24 @@ export default function E1RMCalculator() {
       isMetric,
       e1rmFormula,
     );
+  // OG Meta Tags
+  const URL = "https://www.strengthjourneys.xyz/calculator";
+  const title =
+    "One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for Strength Athletes";
+  const description =
+    "Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys.";
 
   return (
     <div className="mx-4 md:mx-[5vw]">
       <Head>
-        <title>
-          One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for
-          Strength Athletes
-        </title>
-        <meta
-          name="description"
-          content="Calculate your one-rep max (1RM) instantly with our free E1RM calculator. Perfect for weightlifters, powerlifters, and strength athletes of all levels. Get accurate estimates using multiple formulas, track your progress, and optimize your training. Try our advanced analysis for personalized insights based on age, weight, and lift type. Trusted by thousands of lifters to set new PRs and achieve strength goals."
-        />
+        <title>{title}</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={URL} />
+        <meta property="og:title" content={title} key="title" />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={URL} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Strength Journeys" />
       </Head>
 
       <Card>

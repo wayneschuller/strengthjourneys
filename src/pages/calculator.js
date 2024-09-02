@@ -41,7 +41,7 @@ export default function E1RMCalculator() {
   const title =
     "One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for Strength Athletes";
   const description =
-    "Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys.";
+    "Estimate your one-rep max with our advanced calculator. Features multiple algorithms, metric/imperial units, and personalized strength ratings based on age, sex, and body weight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results and optimize your training today.";
   const keywords =
     "One rep max calculator, Barbell strength calculator, 1RM estimation tool, Weightlifting max calculator, Powerlifting 1RM calculator, Max lift predictor, Barbell training tool, Strength level estimator, Gym performance calculator, e1RM calculator, Max weight calculator, Barbell load calculator";
   const canonicalURL = "https://www.strengthjourneys.xyz/calculator";
@@ -61,12 +61,15 @@ export default function E1RMCalculator() {
           images: [
             {
               url: ogImageURL,
-              width: 1200,
-              height: 630,
               alt: "Strength Journeys One Rep Max Calculator",
             },
           ],
           site_name: "Strength Journeys",
+        }}
+        twitter={{
+          handle: "@wayneschuller",
+          site: "@wayneschuller",
+          cardType: "summary_large_image",
         }}
         additionalMetaTags={[
           {

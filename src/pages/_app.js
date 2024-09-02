@@ -57,7 +57,6 @@ export default function App({ Component, pageProps, session }) {
         </SessionProvider>
       </ThemeProvider>
       <SpeedInsights />
-
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
         strategy="afterInteractive"
@@ -70,6 +69,11 @@ export default function App({ Component, pageProps, session }) {
           gtag('config', '${GA_MEASUREMENT_ID}');
         `}
       </Script>
+      <Script
+        strategy="lazyOnload"
+        data-domain="strengthjourneys.xyz"
+        src="https://plausible.io/js/script.js"
+      />
     </>
   );
 }

@@ -246,12 +246,12 @@ export default function E1RMCalculator() {
 
   return (
     <>
-      <TitleSEOHead
-        title={title}
-        description={description}
-        canonicalURL={URL}
-        ogImage={ogImage}
-      />
+      <Head>
+        <title key="title">{title}</title>
+        <meta name="description" content={description} key="description" />
+        <link rel="canonical" href={URL} key="canonical" />
+        <meta property="og:image" content={ogImage} key="og:image" />
+      </Head>
       <main className="mx-4 md:mx-[5vw]">
         <Card>
           <CardHeader>

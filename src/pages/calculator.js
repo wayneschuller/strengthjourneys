@@ -1,9 +1,7 @@
-"use client";
-
 import Head from "next/head";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { TitleSEOHead } from "@/components/title-seo";
+import { NextSeo } from "next-seo";
 
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { Button } from "@/components/ui/button";
@@ -39,8 +37,10 @@ import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-
 
 const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 
-export default function E1RMCalculator() {
+export default function E1RMCalculator({ initialProps }) {
   const router = useRouter();
+  // Use initialProps for SEO data
+  const { URL, title, description, ogImage } = initialProps;
 
   const { toast } = useToast();
   const [reps, setReps] = useStateFromQueryOrLocalStorage("reps", 5); // Will be a string
@@ -235,23 +235,27 @@ export default function E1RMCalculator() {
       isMetric,
       e1rmFormula,
     );
-  // OG Meta Tags
-  const URL = "https://www.strengthjourneys.xyz/calculator";
-  const title =
-    "One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for Strength Athletes";
-  const description =
-    "Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys.";
-  const ogImage =
-    "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";
 
   return (
     <>
-      <Head>
-        <title key="title">{title}</title>
-        <meta name="description" content={description} key="description" />
-        <link rel="canonical" href={URL} key="canonical" />
-        <meta property="og:image" content={ogImage} key="og:image" />
-      </Head>
+      <NextSeo
+        title={title}
+        description={description}
+        canonical={URL}
+        openGraph={{
+          url: URL,
+          title: title,
+          description: description,
+          images: [
+            {
+              url: ogImage,
+              width: 1200,
+              height: 630,
+              alt: "Strength Journeys One Rep Max Calculator",
+            },
+          ],
+        }}
+      />
       <main className="mx-4 md:mx-[5vw]">
         <Card>
           <CardHeader>
@@ -654,3 +658,25 @@ export const getStandardRatingString = (
 
   return liftRating;
 };
+
+export async function getStaticProps() {
+  // These values are now defined server-side
+  const URL = "https://www.strengthjourneys.xyz/calculator";
+  const title =
+    "One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for Strength Athletes";
+  const description =
+    "Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys.";
+  const ogImage =
+    "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";
+
+  return {
+    props: {
+      initialProps: {
+        URL,
+        title,
+        description,
+        ogImage,
+      },
+    },
+  };
+}

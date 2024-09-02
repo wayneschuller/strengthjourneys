@@ -47,6 +47,7 @@
     "lucide-react": "^0.414.0",
     "next": "^14.2.5",
     "next-auth": "^4.24.7",
+    "next-seo": "^6.6.0",
     "next-themes": "^0.3.0",
     "normalize-url": "^8.0.1",
     "obscenity": "^0.4.0",

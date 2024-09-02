@@ -38,6 +38,49 @@ import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-
 const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 
 export default function E1RMCalculator() {
+  const title =
+    "One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for Strength Athletes";
+  const description =
+    "Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys.";
+  const keywords =
+    "One rep max calculator, Barbell strength calculator, 1RM estimation tool, Weightlifting max calculator, Powerlifting 1RM calculator, Max lift predictor, Barbell training tool, Strength level estimator, Gym performance calculator, e1RM calculator, Max weight calculator, Barbell load calculator";
+  const canonicalURL = "https://www.strengthjourneys.xyz/calculator";
+  const ogImageURL =
+    "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";
+
+  return (
+    <>
+      <NextSeo
+        title={title}
+        description={description}
+        canonical={canonicalURL}
+        openGraph={{
+          url: canonicalURL,
+          title: title,
+          description: description,
+          images: [
+            {
+              url: ogImageURL,
+              width: 1200,
+              height: 630,
+              alt: "Strength Journeys One Rep Max Calculator",
+            },
+          ],
+          site_name: "Strength Journeys",
+        }}
+        additionalMetaTags={[
+          {
+            name: "keywords",
+            content: keywords,
+          },
+        ]}
+      />
+      <E1RMCalculatorMain />
+    </>
+  );
+}
+
+function E1RMCalculatorMain() {
   const router = useRouter();
   const { toast } = useToast();
   const [reps, setReps] = useStateFromQueryOrLocalStorage("reps", 5); // Will be a string

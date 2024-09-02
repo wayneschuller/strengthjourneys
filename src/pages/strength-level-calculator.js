@@ -101,16 +101,24 @@ export default function StrengthLevelCalculator() {
 
   const liftTypesFromStandards = Object.keys(standards);
 
+  // OG Meta Tags
+  const URL = "https://www.strengthjourneys.xyz/calculator";
+  const description =
+    "Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys.";
+  const title =
+    "Strength Level Test: Free Calculator for Lifters | Strength Journeys";
+
   return (
     <div className="mx-4 flex flex-row items-center md:mx-[5vw]">
       <Head>
-        <title>
-          Strength Level Test: Free Calculator for Lifters | Strength Journeys
-        </title>
-        <meta
-          name="description"
-          content="Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys."
-        />
+        <title>{title} </title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={URL} />
+        <meta property="og:title" content={title} key="title" />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={URL} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Strength Journeys" />
       </Head>
 
       <Card className="w-full">

@@ -18,7 +18,6 @@ import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-p
 import { MonthsHighlightsCard } from "@/components/analyzer/months-highlights-card";
 import { ActivityHeatmapsCard } from "@/components/analyzer/heatmap-card";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
-import { TitleSEOHead } from "@/components/title-seo";
 
 export default function Analyzer() {
   // OG Meta Tags

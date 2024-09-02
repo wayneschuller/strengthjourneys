@@ -25,41 +25,49 @@ export const TitleSEOHead = ({
 
   return (
     <Head>
-      <title>{fullTitle}</title>
-      <meta name="description" content={description || defaultDescription} />
-      {canonicalURL && <link rel="canonical" href={canonicalURL} />}
-
-      <link rel="icon" href="/favicon.ico" sizes="any" />
-      <link
-        rel="icon"
-        type="image/png"
-        sizes="48x48"
-        href="/favicon-48x48.png"
+      <title key="title">{fullTitle}</title>
+      <meta
+        name="description"
+        content={description || defaultDescription}
+        key="description"
       />
-      <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <meta name="robots" content="index, follow" />
-
-      <meta property="og:type" content={ogType} />
-      <meta property="og:site_name" content={siteName} />
-      <meta property="og:title" content={fullTitle} />
+      {canonicalURL && (
+        <link rel="canonical" href={canonicalURL} key="canonical" />
+      )}
+      <meta property="og:type" content={ogType} key="og:type" />
+      <meta property="og:site_name" content={siteName} key="og:site_name" />
+      <meta property="og:title" content={fullTitle} key="og:title" />
       <meta
         property="og:description"
         content={description || defaultDescription}
+        key="og:description"
       />
-      {canonicalURL && <meta property="og:url" content={canonicalURL} />}
-      <meta property="og:image" content={finalOGImage} />
-      {ogImageAlt && <meta property="og:image:alt" content={ogImageAlt} />}
-
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={fullTitle} />
+      {canonicalURL && (
+        <meta property="og:url" content={canonicalURL} key="og:url" />
+      )}
+      <meta property="og:image" content={finalOGImage} key="og:image" />
+      {ogImageAlt && (
+        <meta property="og:image:alt" content={ogImageAlt} key="og:image:alt" />
+      )}
+      <meta
+        name="twitter:card"
+        content="summary_large_image"
+        key="twitter:card"
+      />
+      <meta name="twitter:title" content={fullTitle} key="twitter:title" />
       <meta
         name="twitter:description"
         content={description || defaultDescription}
+        key="twitter:description"
       />
-      <meta name="twitter:image" content={finalOGImage} />
-      {ogImageAlt && <meta name="twitter:image:alt" content={ogImageAlt} />}
+      <meta name="twitter:image" content={finalOGImage} key="twitter:image" />
+      {ogImageAlt && (
+        <meta
+          name="twitter:image:alt"
+          content={ogImageAlt}
+          key="twitter:image:alt"
+        />
+      )}
     </Head>
   );
 };

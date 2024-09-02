@@ -30,8 +30,55 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useIsClient } from "usehooks-ts";
 
-// Strength Level Calculator
 export default function StrengthLevelCalculator() {
+  const title =
+    "One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for Strength Athletes";
+  const description =
+    "Estimate your one-rep max with our advanced calculator. Features multiple algorithms, metric/imperial units, and personalized strength ratings based on age, sex, and body weight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results and optimize your training today.";
+  const keywords =
+    "One rep max calculator, Barbell strength calculator, 1RM estimation tool, Weightlifting max calculator, Powerlifting 1RM calculator, Max lift predictor, Barbell training tool, Strength level estimator, Gym performance calculator, e1RM calculator, Max weight calculator, Barbell load calculator";
+  const canonicalURL = "https://www.strengthjourneys.xyz/calculator";
+  const ogImageURL =
+    "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";
+
+  return (
+    <>
+      <NextSeo
+        title={title}
+        description={description}
+        canonical={canonicalURL}
+        openGraph={{
+          url: canonicalURL,
+          title: title,
+          description: description,
+          images: [
+            {
+              url: ogImageURL,
+              alt: "Strength Journeys Strength Level Calculator",
+            },
+          ],
+          site_name: "Strength Journeys",
+        }}
+        twitter={{
+          handle: "@wayneschuller",
+          site: "@wayneschuller",
+          cardType: "summary_large_image",
+        }}
+        additionalMetaTags={[
+          {
+            name: "keywords",
+            content: keywords,
+          },
+        ]}
+      />
+      {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
+      <StrengthLevelCalculatorMain />
+    </>
+  );
+}
+
+// Strength Level Calculator
+function StrengthLevelCalculatorMain() {
   const isClient = useIsClient();
   const [age, setAge] = useLocalStorage("AthleteAge", 30);
   const [isMetric, setIsMetric] = useLocalStorage("calcIsMetric", false, {

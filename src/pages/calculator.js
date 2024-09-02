@@ -278,189 +278,148 @@ function E1RMCalculatorMain() {
     );
 
   return (
-    <>
-      <Head>
-        <title>
-          One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for
-          Strength Athletes
-        </title>
-        <meta
-          key="description"
-          name="description"
-          content="Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys."
-        />
-        <meta
-          name="keywords"
-          content="One rep max calculator, Barbell strength calculator, 1RM estimation tool, Weightlifting max calculator, Powerlifting 1RM calculator, Max lift predictor, Barbell training tool, Strength level estimator, Gym performance calculator, e1RM calculator, Max weight calculator, Barbell load calculator"
-        />
+    <main className="mx-4 md:mx-[5vw]">
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <h1>One Rep Max Calculator</h1>
+          </CardTitle>
+          <CardDescription>
+            <h2>
+              Estimate your max single based on reps and weight. Click{" "}
+              <b>Advanced Analysis</b> for set specific strength ratings.
+            </h2>
+          </CardDescription>
+        </CardHeader>
 
-        <link
-          rel="canonical"
-          href="https://www.strengthjourneys.xyz/calculator"
-        />
-        <meta name="robots" content="index, follow" />
-
-        <meta
-          property="og:title"
-          content="One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for Strength Athletes"
-        />
-        <meta
-          property="og:description"
-          content="Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys."
-        />
-        <meta property="og:type" content="website" />
-        <meta
-          property="og:url"
-          content="https://www.strengthjourneys.xyz/calculator"
-        />
-        <meta
-          property="og:image"
-          content="https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png"
-        />
-      </Head>
-
-      <main className="mx-4 md:mx-[5vw]">
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <h1>One Rep Max Calculator</h1>
-            </CardTitle>
-            <CardDescription>
-              <h2>
-                Estimate your max single based on reps and weight. Click{" "}
-                <b>Advanced Analysis</b> for set specific strength ratings.
-              </h2>
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent>
-            {/* Two main sliders */}
-            <div className="mt-4 grid grid-cols-1 items-center gap-6 md:grid-cols-6 md:gap-4">
-              <div className="ml-2 justify-self-center text-2xl md:hidden">
-                {reps} reps
-              </div>
-              <Slider
-                className="md:col-span-5"
-                value={[reps]}
-                min={1}
-                max={20}
-                step={1}
-                onValueChange={(values) => setReps(values[0])}
-                aria-label="Reps"
-              />
-              <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
-                {reps} reps
-              </div>
-              <div className="ml-2 mt-6 w-[9rem] justify-self-center md:hidden">
-                <div className="flex items-center gap-1 text-2xl">
-                  <Input
-                    className="text-2xl"
-                    type="number"
-                    min="1"
-                    step="1"
-                    id="weightInput"
-                    value={weight}
-                    onChange={(event) => setWeight(event.target.value)}
-                    onKeyPress={handleKeyPress}
-                    onKeyDown={handleKeyDown}
-                    aria-label="Weight"
-                  />
-                  <UnitChooser
-                    isMetric={isMetric}
-                    onSwitchChange={toggleIsMetric}
-                  />
-                </div>
-              </div>
-              <Slider
-                className="md:col-span-5"
-                value={[weight]}
-                min={1}
-                max={isMetric ? 250 : 600}
-                onValueChange={handleWeightSliderChange}
-              />
-              <div className="ml-1 hidden w-[8rem] justify-self-center md:block md:justify-self-start">
-                <div className="flex items-center gap-1">
-                  <Input
-                    className="text-lg"
-                    type="number"
-                    min="1"
-                    step="1"
-                    id="weightInput"
-                    value={weight}
-                    onChange={(event) => setWeight(event.target.value)}
-                    onKeyPress={handleKeyPress}
-                    onKeyDown={handleKeyDown}
-                    aria-label="Weight"
-                  />
-                  <UnitChooser
-                    isMetric={isMetric}
-                    onSwitchChange={toggleIsMetric}
-                  />
-                </div>
+        <CardContent>
+          {/* Two main sliders */}
+          <div className="mt-4 grid grid-cols-1 items-center gap-6 md:grid-cols-6 md:gap-4">
+            <div className="ml-2 justify-self-center text-2xl md:hidden">
+              {reps} reps
+            </div>
+            <Slider
+              className="md:col-span-5"
+              value={[reps]}
+              min={1}
+              max={20}
+              step={1}
+              onValueChange={(values) => setReps(values[0])}
+              aria-label="Reps"
+            />
+            <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
+              {reps} reps
+            </div>
+            <div className="ml-2 mt-6 w-[9rem] justify-self-center md:hidden">
+              <div className="flex items-center gap-1 text-2xl">
+                <Input
+                  className="text-2xl"
+                  type="number"
+                  min="1"
+                  step="1"
+                  id="weightInput"
+                  value={weight}
+                  onChange={(event) => setWeight(event.target.value)}
+                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
+                  aria-label="Weight"
+                />
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={toggleIsMetric}
+                />
               </div>
             </div>
-
-            <div className="my-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="order-3 lg:order-1" ref={parent}>
-                <div className="mb-4 flex flex-row gap-2">
-                  <Checkbox
-                    id="advanced"
-                    checked={isAdvancedAnalysis}
-                    onCheckedChange={setIsAdvancedAnalysis}
-                  />
-                  <label
-                    htmlFor="advanced"
-                    className={cn(
-                      "text-sm font-medium leading-none",
-                      isAdvancedAnalysis ? "opacity-100" : "opacity-50",
-                    )}
-                  >
-                    Advanced Analysis
-                  </label>
-                </div>
-                {isAdvancedAnalysis && (
-                  <OptionalAtheleBioData
-                    isMetric={isMetric}
-                    bodyWeight={bodyWeight}
-                    setBodyWeight={setBodyWeight}
-                    liftType={liftType}
-                    setLiftType={setLiftType}
-                    age={age}
-                    setAge={setAge}
-                    sex={sex}
-                    setSex={setSex}
-                  />
-                )}
-              </div>
-              <div className="order-1 place-self-center lg:order-2">
-                <E1RMSummaryCard
-                  reps={reps}
-                  weight={weight}
+            <Slider
+              className="md:col-span-5"
+              value={[weight]}
+              min={1}
+              max={isMetric ? 250 : 600}
+              onValueChange={handleWeightSliderChange}
+            />
+            <div className="ml-1 hidden w-[8rem] justify-self-center md:block md:justify-self-start">
+              <div className="flex items-center gap-1">
+                <Input
+                  className="text-lg"
+                  type="number"
+                  min="1"
+                  step="1"
+                  id="weightInput"
+                  value={weight}
+                  onChange={(event) => setWeight(event.target.value)}
+                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
+                  aria-label="Weight"
+                />
+                <UnitChooser
                   isMetric={isMetric}
-                  e1rmFormula={e1rmFormula}
-                  estimateE1RM={estimateE1RM}
-                  isAdvancedAnalysis={isAdvancedAnalysis}
-                  liftType={liftType}
-                  liftRating={liftRating}
+                  onSwitchChange={toggleIsMetric}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="my-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="order-3 lg:order-1" ref={parent}>
+              <div className="mb-4 flex flex-row gap-2">
+                <Checkbox
+                  id="advanced"
+                  checked={isAdvancedAnalysis}
+                  onCheckedChange={setIsAdvancedAnalysis}
+                />
+                <label
+                  htmlFor="advanced"
+                  className={cn(
+                    "text-sm font-medium leading-none",
+                    isAdvancedAnalysis ? "opacity-100" : "opacity-50",
+                  )}
+                >
+                  Advanced Analysis
+                </label>
+              </div>
+              {isAdvancedAnalysis && (
+                <OptionalAtheleBioData
+                  isMetric={isMetric}
                   bodyWeight={bodyWeight}
+                  setBodyWeight={setBodyWeight}
+                  liftType={liftType}
+                  setLiftType={setLiftType}
+                  age={age}
+                  setAge={setAge}
+                  sex={sex}
+                  setSex={setSex}
                 />
-              </div>
-              <div className="order-2 place-self-center md:pl-4 lg:order-3 lg:place-self-auto">
-                <E1RMFormulaRadioGroup
-                  formulae={sortedFormulae}
-                  e1rmFormula={e1rmFormula}
-                  setE1rmFormula={setE1rmFormula}
-                  reps={reps}
-                  weight={weight}
-                  isMetric={isMetric}
-                />
-              </div>
+              )}
             </div>
-            <div className="mt-4 flex justify-center gap-4">
-              <ShareButton onClick={handleCopyToClipboard} />
+            <div className="order-1 place-self-center lg:order-2">
+              <E1RMSummaryCard
+                reps={reps}
+                weight={weight}
+                isMetric={isMetric}
+                e1rmFormula={e1rmFormula}
+                estimateE1RM={estimateE1RM}
+                isAdvancedAnalysis={isAdvancedAnalysis}
+                liftType={liftType}
+                liftRating={liftRating}
+                bodyWeight={bodyWeight}
+              />
             </div>
+            <div className="order-2 place-self-center md:pl-4 lg:order-3 lg:place-self-auto">
+              <E1RMFormulaRadioGroup
+                formulae={sortedFormulae}
+                e1rmFormula={e1rmFormula}
+                setE1rmFormula={setE1rmFormula}
+                reps={reps}
+                weight={weight}
+                isMetric={isMetric}
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex justify-center gap-4">
+            <ShareButton onClick={handleCopyToClipboard} />
+          </div>
 
-            {/* <h4 className="mt-10 scroll-m-20 text-xl font-semibold tracking-tight">
+          {/* <h4 className="mt-10 scroll-m-20 text-xl font-semibold tracking-tight">
             Citations and background for these exercise science formulae are
             found in this{" "}
             <a
@@ -471,10 +430,9 @@ function E1RMCalculatorMain() {
               Wikipedia article
             </a>
           </h4> */}
-          </CardContent>
-        </Card>
-      </main>
-    </>
+        </CardContent>
+      </Card>
+    </main>
   );
 }
 

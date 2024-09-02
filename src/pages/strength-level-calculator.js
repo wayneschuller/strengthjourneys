@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Head from "next/head";
 import Link from "next/link";
+import { NextSeo } from "next-seo";
 import { TitleSEOHead } from "@/components/title-seo";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import {
@@ -31,15 +31,17 @@ import { Separator } from "@/components/ui/separator";
 import { useIsClient } from "usehooks-ts";
 
 export default function StrengthLevelCalculator() {
-  const title =
-    "One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for Strength Athletes";
+  // OG Meta Tags
+  const canonicalURL =
+    "https://www.strengthjourneys.xyz/strength-level-calculator";
   const description =
-    "Estimate your one-rep max with our advanced calculator. Features multiple algorithms, metric/imperial units, and personalized strength ratings based on age, sex, and body weight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results and optimize your training today.";
+    "Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys.";
+  const title =
+    "Strength Level Test: Free Calculator for Lifters | Strength Journeys";
   const keywords =
-    "One rep max calculator, Barbell strength calculator, 1RM estimation tool, Weightlifting max calculator, Powerlifting 1RM calculator, Max lift predictor, Barbell training tool, Strength level estimator, Gym performance calculator, e1RM calculator, Max weight calculator, Barbell load calculator";
-  const canonicalURL = "https://www.strengthjourneys.xyz/calculator";
+    "Strength level calculator, strength test, strength standards, powerlifting benchmarks, weightlifting performance, how strong am I, one-rep max (1RM), squat rating, bench press rating, deadlift rating, overhead press rating, strength comparison, bodyweight ratio, age-adjusted strength, gender-specific strength levels, beginner to elite lifter, strength training progress, fitness assessment tool, weightlifting goals, strength sports";
   const ogImageURL =
-    "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";
+    "https://www.strengthjourneys.xyz/strength_journeys_strength_levels_calculator_og.png";
 
   return (
     <>

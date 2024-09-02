@@ -357,7 +357,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   // devLog(filteredAndSortedPlaylists);
 
   return (
-    <div className="mx-4 md:mx-10 md:items-center lg:mx-[15vw] xl:mx-[20vw]">
+    <>
       <Head>
         <title>Top Gym Playlists: Barbell Lifting Music Leaderboard</title>
         <meta
@@ -403,124 +403,127 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
           content="https://www.strengthjourneys.xyz/strength-journeys-playlist-leaderboard.png"
         />
       </Head>
-      <div>
-        <h1 className="mb-6 text-center text-3xl font-bold">
-          Gym Music Playlist Global Leaderboard
-        </h1>
-        <h2 className="mb-6 text-sm text-muted-foreground">
-          Elevate your lifting experience with music playlists curated by the
-          fitness community.
-          {/* FIXME: consider checking for ssid and loaded data and prompt them here for more vote power */}
-          {authStatus !== "authenticated" ? (
-            <div>
-              Vote for your favorites, with extra weighting for athletes who are{" "}
-              <button
-                onClick={() => signIn("google")}
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                signed in via Google.
-              </button>
-            </div>
-          ) : (
-            <div>
-              As a signed in athlete, your votes will get extra weighting
-              proportional to the quantity of gym sessions in your Google Sheet
-              data.
-            </div>
-          )}
-        </h2>
-
-        {/* Side-by-Side Layout for Category Filter and Add Playlist Button */}
-        <div className="mb-6 flex flex-col items-center gap-4 md:flex-row md:gap-1">
-          <div className="flex-grow pr-4">
-            <div className="flex flex-wrap gap-4 md:gap-2">
-              {categories.map((category) => (
-                <Badge
-                  key={category}
-                  variant={
-                    selectedCategories.includes(category)
-                      ? "default"
-                      : "secondary"
-                  }
-                  className="cursor-pointer hover:ring-2"
-                  onClick={() => toggleCategory(category)}
+      <main className="mx-4 md:mx-10 md:items-center lg:mx-[15vw] xl:mx-[20vw]">
+        <div>
+          <h1 className="mb-6 text-center text-3xl font-bold">
+            Gym Music Playlist Global Leaderboard
+          </h1>
+          <h2 className="mb-6 text-sm text-muted-foreground">
+            Elevate your lifting experience with music playlists curated by the
+            fitness community.
+            {/* FIXME: consider checking for ssid and loaded data and prompt them here for more vote power */}
+            {authStatus !== "authenticated" ? (
+              <div>
+                Vote for your favorites, with extra weighting for athletes who
+                are{" "}
+                <button
+                  onClick={() => signIn("google")}
+                  className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
                 >
-                  {category}
-                </Badge>
-              ))}
+                  signed in via Google.
+                </button>
+              </div>
+            ) : (
+              <div>
+                As a signed in athlete, your votes will get extra weighting
+                proportional to the quantity of gym sessions in your Google
+                Sheet data.
+              </div>
+            )}
+          </h2>
+
+          {/* Side-by-Side Layout for Category Filter and Add Playlist Button */}
+          <div className="mb-6 flex flex-col items-center gap-4 md:flex-row md:gap-1">
+            <div className="flex-grow pr-4">
+              <div className="flex flex-wrap gap-4 md:gap-2">
+                {categories.map((category) => (
+                  <Badge
+                    key={category}
+                    variant={
+                      selectedCategories.includes(category)
+                        ? "default"
+                        : "secondary"
+                    }
+                    className="cursor-pointer hover:ring-2"
+                    onClick={() => toggleCategory(category)}
+                  >
+                    {category}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-center">
+              <Button onClick={openAddDialog} className="w-full">
+                Suggest New Playlist
+              </Button>
             </div>
           </div>
-          <div className="flex items-center justify-center">
-            <Button onClick={openAddDialog} className="w-full">
-              Suggest New Playlist
-            </Button>
-          </div>
+
+          <PlaylistCreateEditDialog
+            isOpen={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            isEditMode={isEditMode}
+            currentPlaylist={currentPlaylist}
+            onSubmit={handlePlaylistAction}
+            categories={categories}
+          />
+
+          <Tabs
+            value={currentTab}
+            onValueChange={(value) => setCurrentTab(value)}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger
+                value="top"
+                className="flex items-center justify-center space-x-2"
+              >
+                <TrendingUp className="h-4 w-4" />
+                <span>Top</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="new"
+                className="flex items-center justify-center space-x-2"
+              >
+                <Clock className="h-4 w-4" />
+                <span>New</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="saved"
+                className="flex items-center justify-center space-x-2"
+              >
+                <Heart className="h-4 w-4" />
+                <span>Saved</span>
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value={currentTab} className="space-y-4">
+              <div ref={parent} className="flex flex-col gap-5">
+                {/* <div ref={parent} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2" > */}
+                {paginatedPlaylists.map((playlist) => (
+                  <PlaylistCard
+                    key={playlist.id}
+                    playlist={playlist}
+                    votes={clientVotes}
+                    handleVote={handleVote}
+                    isAdmin={isAdmin}
+                    onDelete={deletePlaylist}
+                    onEdit={openEditDialog}
+                    onSave={toggleSavePlaylist}
+                    isSaved={savedPlaylists.includes(playlist.id)}
+                    className=""
+                  />
+                ))}
+              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
-
-        <PlaylistCreateEditDialog
-          isOpen={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          isEditMode={isEditMode}
-          currentPlaylist={currentPlaylist}
-          onSubmit={handlePlaylistAction}
-          categories={categories}
-        />
-
-        <Tabs
-          value={currentTab}
-          onValueChange={(value) => setCurrentTab(value)}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger
-              value="top"
-              className="flex items-center justify-center space-x-2"
-            >
-              <TrendingUp className="h-4 w-4" />
-              <span>Top</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="new"
-              className="flex items-center justify-center space-x-2"
-            >
-              <Clock className="h-4 w-4" />
-              <span>New</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="saved"
-              className="flex items-center justify-center space-x-2"
-            >
-              <Heart className="h-4 w-4" />
-              <span>Saved</span>
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value={currentTab} className="space-y-4">
-            <div ref={parent} className="flex flex-col gap-5">
-              {/* <div ref={parent} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2" > */}
-              {paginatedPlaylists.map((playlist) => (
-                <PlaylistCard
-                  key={playlist.id}
-                  playlist={playlist}
-                  votes={clientVotes}
-                  handleVote={handleVote}
-                  isAdmin={isAdmin}
-                  onDelete={deletePlaylist}
-                  onEdit={openEditDialog}
-                  onSave={toggleSavePlaylist}
-                  isSaved={savedPlaylists.includes(playlist.id)}
-                  className=""
-                />
-              ))}
-            </div>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+      </main>
+    </>
   );
 }
 

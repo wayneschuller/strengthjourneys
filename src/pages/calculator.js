@@ -101,6 +101,7 @@ function E1RMCalculatorMain() {
   const [isAdvancedAnalysis, setIsAdvancedAnalysis] = useLocalStorage(
     "SJ_E1RMAdvancedAnalysis",
     false,
+    { initializeWithValue: false },
   );
   const [bodyWeight, setBodyWeight] = useStateFromQueryOrLocalStorage(
     "AtheleteBodyWeight",
@@ -562,10 +563,6 @@ function OptionalAtheleBioData({
   sex,
   setSex,
 }) {
-  const isClient = useIsClient();
-
-  // if (!isClient) return null;
-
   const uniqueLiftNames = Array.from(
     new Set(LiftingStandardsKG.map((item) => item.liftType)),
   );

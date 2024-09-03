@@ -657,6 +657,7 @@ export const getStandardRatingString = (
     LiftingStandardsKG,
   );
 
+  // If the user wants lb units we should convert back into lb units now
   if (!isMetric && standard) {
     standard = {
       physicallyActive: Math.round(standard.physicallyActive * 2.204),

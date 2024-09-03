@@ -35,6 +35,7 @@ export default function Timer() {
           url: canonicalURL,
           title: title,
           description: description,
+          type: "website",
           images: [
             {
               url: ogImageURL,

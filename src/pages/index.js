@@ -111,6 +111,8 @@ export default function Home() {
           url: canonicalURL,
           title: title,
           description: description,
+          type: "website", // Add this line
+
           images: [
             {
               url: ogImageURL,

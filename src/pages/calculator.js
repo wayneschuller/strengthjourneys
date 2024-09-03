@@ -58,6 +58,7 @@ export default function E1RMCalculator() {
           url: canonicalURL,
           title: title,
           description: description,
+          type: "website",
           images: [
             {
               url: ogImageURL,

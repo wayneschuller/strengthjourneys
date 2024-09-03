@@ -52,6 +52,7 @@ export default function StrengthLevelCalculator() {
           url: canonicalURL,
           title: title,
           description: description,
+          type: "website",
           images: [
             {
               url: ogImageURL,

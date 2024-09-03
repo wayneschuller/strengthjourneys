@@ -597,7 +597,9 @@ export const LiftingStandardsKG = [
 // Take the standards data and interpolate the standards for a unique age and body weight
 // The user is then given a custom set of 5 standards
 // Warning: Multidimensional interpolation ahead.
-export const interpolateStandard = (
+// This function uses inputs and outputs in KG.
+// If you need freedom units, convert them going in, and convert what comes out.
+export const interpolateStandardKG = (
   age,
   weightKG,
   gender,

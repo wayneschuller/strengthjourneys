@@ -17,7 +17,7 @@ import {
 
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  interpolateStandard,
+  interpolateStandardKG,
   LiftingStandardsKG,
 } from "@/lib/lifting-standards-kg";
 
@@ -649,13 +649,23 @@ export const getStandardRatingString = (
 ) => {
   const bodyWeightKG = isMetric ? bodyWeight : Math.round(bodyWeight / 2.204);
 
-  const standard = interpolateStandard(
+  let standard = interpolateStandardKG(
     age,
     bodyWeightKG,
     sex,
     liftType,
     LiftingStandardsKG,
   );
+
+  if (!isMetric && standard) {
+    standard = {
+      physicallyActive: Math.round(standard.physicallyActive * 2.204),
+      beginner: Math.round(standard.beginner * 2.204),
+      intermediate: Math.round(standard.intermediate * 2.204),
+      advanced: Math.round(standard.advanced * 2.204),
+      elite: Math.round(standard.elite * 2.204),
+    };
+  }
 
   let liftRating;
 

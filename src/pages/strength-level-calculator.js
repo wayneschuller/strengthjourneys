@@ -23,7 +23,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { useLocalStorage } from "usehooks-ts";
 import {
-  interpolateStandard,
+  interpolateStandardKG,
   LiftingStandardsKG,
 } from "@/lib/lifting-standards-kg";
 import { Separator } from "@/components/ui/separator";
@@ -104,7 +104,7 @@ function StrengthLevelCalculatorMain() {
     const newStandards = {};
 
     uniqueLiftNames.forEach((liftType) => {
-      const standard = interpolateStandard(
+      const standard = interpolateStandardKG(
         age,
         bodyWeightKG,
         sex,

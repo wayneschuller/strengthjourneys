@@ -54,7 +54,7 @@ function parseBespokeData(data) {
     if (weightColumnIndex === -1) missingColumns.push("Weight");
 
     throw new Error(
-      `Missing required columns: ${missingColumns.join(", ")}. Please ensure your Google Sheet first row includes missing column headers.`,
+      `Missing required columns: ${missingColumns.join(", ")}. Please ensure your Google Sheet first row includes missing column headers. Click the feedback button below if you need help!`,
     );
   }
 

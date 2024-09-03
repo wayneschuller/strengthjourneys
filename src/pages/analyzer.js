@@ -22,7 +22,7 @@ import { InspirationCard } from "@/components/analyzer/inspiration-card";
 export default function Analyzer() {
   // OG Meta Tags
   const description =
-    "Unlock insights into your strength training progress with our PR Analyzer. Track consistency, view monthly highlights, and visualize your lifting journey. Get personalized analysis and inspiration to fuel your strength gains.";
+    "Unlock insights into your strength training with our PR Analyzer. Track PRs, consistency and detailed squat/bench/deadlift analysis.";
   const title = "PR Analyzer - Strength Progress Reports | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/analyzer";
   const ogImageURL =

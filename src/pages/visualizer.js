@@ -18,7 +18,7 @@ export default function Analyzer() {
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_visualizer_og.png";
   const description =
-    "Visualize your strength journey with Strength Journeys' interactive Lift Strength Visualizer. Track and analyze your weightlifting progress over time, identify trends, and celebrate personal records. Perfect for powerlifters, bodybuilders, and fitness enthusiasts committed to long-term strength gains.";
+    "Big picture visualization of your strength journey. Charted E1RMs for each lift to identify trends and show your overall progress.";
   const keywords =
     "strength visualizer, lift strength tracker, weightlifting progress, strength journey, personal record tracker, powerlifting analytics, bodybuilding progress, fitness data visualization, strength gains over time, workout progress tracker";
 

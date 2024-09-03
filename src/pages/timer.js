@@ -21,7 +21,7 @@ export default function Timer() {
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_timer_og.png";
   const description =
-    "World's greatest gym timer app. Perfect for tracking lifting sets, rest periods, and overall workout duration. Featuring a large, easy-to-read display and convenient controls, this timer helps optimize your strength training sessions. Boost your fitness routine with precision timing and user-friendly functionality.";
+    "World's greatest gym timer app. Perfect for tracking lifting sets, rest periods, and overall workout duration. Hulk lift big. Hulk smash timer space bar.";
   const keywords =
     "gym timer, workout timer, lifting set timer, rest period tracker, strength training app, fitness timer, exercise timer, workout management, interval timer, weight lifting timer, strength journeys, fitness app";
 

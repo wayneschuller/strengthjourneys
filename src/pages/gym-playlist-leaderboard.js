@@ -362,7 +362,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
         <title>Top Gym Playlists: Barbell Lifting Music Leaderboard</title>
         <meta
           name="description"
-          content="Elevate your workouts with top-rated gym playlists. Vote, submit, and discover the best music for weightlifting, powerlifting, and strength training. Join the fitness community!"
+          content="Elevate your workouts with top-rated gym playlists. Discover and share the best music for weightlifting, powerlifting, and strength training. Vote early, vote often."
         />
 
         <meta

@@ -115,13 +115,10 @@ export const UserLiftingDataProvider = ({ children }) => {
     let parsedData = null; // A local version for this scope only
 
     if (authStatus === "authenticated" && data?.values) {
-      parsedData = parseData(data.values); // Will be sorted date ascending
+      try {
+        parsedData = parseData(data.values); // Will be sorted date ascending
 
-      if (parsedData !== null) {
-        // We have some good data loaded - tell the user via toast
-        // FIXME: why don't we check against the old parsedData.length or some other fast compare?
-        // Sometimes the user does a minor change to a gsheet (add a line or an empty row) and it doesn't
-        // deserve having the toast interrupt them.
+        // We have some good new data loaded - tell the user via toast
         loadedToastInit = true; // Don't show this again
         const description = sheetFilename || "File name unknown";
         toast({
@@ -132,15 +129,15 @@ export const UserLiftingDataProvider = ({ children }) => {
         if (typeof window !== "undefined") {
           window.gtag("event", "gSheetDataUpdated");
         }
-      } else {
+      } catch (error) {
         // Parsing error. Tell the user.
-        console.error(`Could not parse data. Please choose a different file.`);
+        console.error("Data parsing error:", error.message);
         toast({
           variant: "destructive",
           title: "Data Parsing Error",
-          description:
-            "We could access the data but could not understand it. Please choose a different Google Sheet.",
+          description: error.message,
         });
+
         demoToastInit = true; // Don't run another toast
 
         // Forget their chosen file, we have access but we cannot parse it

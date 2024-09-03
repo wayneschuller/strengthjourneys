@@ -34,6 +34,30 @@ function parseBespokeData(data) {
   let previousDate = null;
   let previousLiftType = null;
 
+  // Before we loop through the data, let's make sure we have the critical column names
+  let dateColumnIndex = columnNames.indexOf("Date");
+  let liftTypeColumnIndex = columnNames.indexOf("Lift Type");
+  let repsColumnIndex = columnNames.indexOf("Reps");
+  let weightColumnIndex = columnNames.indexOf("Weight");
+
+  // Check if we have the minimum required columns
+  if (
+    dateColumnIndex === -1 ||
+    liftTypeColumnIndex === -1 ||
+    repsColumnIndex === -1 ||
+    weightColumnIndex === -1
+  ) {
+    const missingColumns = [];
+    if (dateColumnIndex === -1) missingColumns.push("Date");
+    if (liftTypeColumnIndex === -1) missingColumns.push("Lift Type");
+    if (repsColumnIndex === -1) missingColumns.push("Reps");
+    if (weightColumnIndex === -1) missingColumns.push("Weight");
+
+    throw new Error(
+      `Missing required columns: ${missingColumns.join(", ")}. Please ensure your Google Sheet first row includes these column names.`,
+    );
+  }
+
   const objectsArray = [];
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
@@ -91,7 +115,13 @@ function parseBespokeData(data) {
     }
   }
 
-  objectsArray.sort((a, b) => a.date.localeCompare(b.date));
+  // objectsArray.sort((a, b) => a.date.localeCompare(b.date));
+  objectsArray.sort((a, b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return a.date.localeCompare(b.date);
+  });
 
   devLog(
     "parseGSheetData() execution time: " +

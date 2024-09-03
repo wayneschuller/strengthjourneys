@@ -115,7 +115,9 @@ function parseBespokeData(data) {
     }
   }
 
-  // objectsArray.sort((a, b) => a.date.localeCompare(b.date));
+  // FIXME: if there are no entries we could throw an error to prompt them to sheet docs article?
+
+  // Safe array sort
   objectsArray.sort((a, b) => {
     if (!a.date && !b.date) return 0;
     if (!a.date) return 1;

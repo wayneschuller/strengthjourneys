@@ -10,19 +10,51 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTimer } from "@/lib/timer-context";
 import { devLog } from "@/lib/processing-utils";
+import { NextSeo } from "next-seo";
 
 export default function Timer() {
-  const { time } = useTimer();
+  // const { time } = useTimer();
 
-  // devLog(`<Timer /> rendering...`);
+  // OG Meta Tags
+  const canonicalURL = "https://www.strengthjourneys.xyz/timer";
+  const title = "Gym Timer | Strength Journeys";
+  const ogImageURL =
+    "https://www.strengthjourneys.xyz/strength_journeys_timer_og.png";
+  const description =
+    "World's greatest gym timer app. Perfect for tracking lifting sets, rest periods, and overall workout duration. Featuring a large, easy-to-read display and convenient controls, this timer helps optimize your strength training sessions. Boost your fitness routine with precision timing and user-friendly functionality.";
+  const keywords =
+    "gym timer, workout timer, lifting set timer, rest period tracker, strength training app, fitness timer, exercise timer, workout management, interval timer, weight lifting timer, strength journeys, fitness app";
 
   return (
     <div className="mx-4 md:mx-[5vw]">
-      <Head>
-        <title>{formatTime(time) + " (Lifting Timer)"}</title>
-        <meta name="description" content="Lifing Set Timer App" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+      <NextSeo
+        title={title}
+        description={description}
+        canonical={canonicalURL}
+        openGraph={{
+          url: canonicalURL,
+          title: title,
+          description: description,
+          images: [
+            {
+              url: ogImageURL,
+              alt: "Strength Journeys Strength Level Calculator",
+            },
+          ],
+          site_name: "Strength Journeys",
+        }}
+        twitter={{
+          handle: "@wayneschuller",
+          site: "@wayneschuller",
+          cardType: "summary_large_image",
+        }}
+        additionalMetaTags={[
+          {
+            name: "keywords",
+            content: keywords,
+          },
+        ]}
+      />
 
       <div className="flex flex-col items-center">
         <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl">

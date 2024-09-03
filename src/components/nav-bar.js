@@ -109,7 +109,10 @@ export function DesktopNav() {
               : "text-foreground/60",
           )}
         >
-          Strength Visualizer
+          {/* Short title on small screens */}
+          <span className="hidden md:block xl:hidden">Visualizer</span>
+          {/* Full title on larger screens */}
+          <span className="hidden xl:block">Strength Visualizer</span>
         </Link>
         <Link
           href="/calculator"
@@ -120,7 +123,10 @@ export function DesktopNav() {
               : "text-foreground/60",
           )}
         >
-          One Rep Max Calculator
+          {/* Short title on small screens */}
+          <span className="hidden md:block xl:hidden">E1RM Calc</span>
+          {/* Full title on larger screens */}
+          <span className="hidden xl:block">One Rep Max Calculator</span>
         </Link>
         <Link
           href="/strength-level-calculator"
@@ -131,7 +137,10 @@ export function DesktopNav() {
               : "text-foreground/60",
           )}
         >
-          Strength Level Calculator
+          {/* Short title on small screens */}
+          <span className="hidden md:block xl:hidden">Strength Calc</span>
+          {/* Full title on larger screens */}
+          <span className="hidden xl:block">Strength Level Calculator </span>
         </Link>
         {/* <Link
             href="/warmups"
@@ -147,9 +156,13 @@ export function DesktopNav() {
           className={cn(
             "transition-colors hover:text-foreground/80",
             pathname === "/timer" ? "text-foreground" : "text-foreground/60",
+            "hidden md:block",
           )}
         >
-          Lifting Set Timer
+          {/* Short title on small screens */}
+          <span className="hidden md:block xl:hidden">Timer</span>
+          {/* Full title on larger screens */}
+          <span className="hidden xl:block">Lifting Set Timer</span>
         </Link>
         <Link
           href="/gym-playlist-leaderboard"

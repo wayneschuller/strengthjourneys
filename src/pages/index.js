@@ -92,8 +92,7 @@ const featureArticles = [
 ];
 
 export default function Home() {
-  const title =
-    "Strength Journeys | Free Barbell Lifting Progress Tracker and Analysis Tools";
+  const title = "Strength Journeys | Free Barbell Lifting Analysis Tools";
   const canonicalURL = "https://www.strengthjourneys.xyz/";
   const description =
     "Track and analyze your barbell lifting with Strength Journeys. Free PR analyzer, 1RM calculator, and more. Integrates with Google Sheets. Open source.";

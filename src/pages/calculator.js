@@ -38,8 +38,7 @@ import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-
 const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 
 export default function E1RMCalculator() {
-  const title =
-    "One Rep Max Calculator | Advanced Multi-Algorithm E1RM Calculator for Strength Athletes";
+  const title = "One Rep Max Calculator | Advanced Multi-Algorithm E1RMs";
   const description =
     "The worlds greatest one-rep max calculator. Use multiple algorithms, units, and personalized strength ratings. Ideal for powerlifters, strength athletes and other fat thumbed atheletes. Mobile friendly UI.";
   const keywords =

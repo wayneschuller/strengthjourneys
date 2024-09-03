@@ -647,7 +647,7 @@ export const getStandardRatingString = (
   isMetric,
   e1rmFormula,
 ) => {
-  const bodyWeightKG = isMetric ? bodyWeight : bodyWeight * 2.204;
+  const bodyWeightKG = isMetric ? bodyWeight : bodyWeight / 2.204;
   const standard = interpolateStandard(
     age,
     bodyWeightKG,

@@ -648,6 +648,7 @@ export const getStandardRatingString = (
   e1rmFormula,
 ) => {
   const bodyWeightKG = isMetric ? bodyWeight : bodyWeight / 2.204;
+
   const standard = interpolateStandard(
     age,
     bodyWeightKG,
@@ -660,10 +661,13 @@ export const getStandardRatingString = (
 
   const oneRepMax = estimateE1RM(reps, weight, e1rmFormula);
 
+  // devLog(`lifttype: ${liftType}, oneRepMax: ${oneRepMax} (${e1rmFormula})`);
+
   if (standard) {
     const { physicallyActive, beginner, intermediate, advanced, elite } =
       standard;
 
+    devLog(standard);
     // We don't give anything below "Physically Active" although data may be below the model
     if (oneRepMax < beginner) {
       liftRating = "Physically Active";

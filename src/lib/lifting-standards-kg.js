@@ -611,6 +611,10 @@ export const interpolateStandard = (
 
   if (filteredStandards.length === 0) return null; // Should not happen
 
+  devLog(
+    `age: ${age}, weightKG: ${weightKG}, gender: ${gender}, liftType: ${liftType}`,
+  );
+
   // Find the two closest age points from the standards
   const ageArray = [...new Set(filteredStandards.map((obj) => obj.age))];
   const { lower: ageLower, upper: ageUpper } = findNearestPoints(age, ageArray);

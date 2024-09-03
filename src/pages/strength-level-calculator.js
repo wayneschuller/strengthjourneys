@@ -136,8 +136,6 @@ function StrengthLevelCalculatorMain() {
     setStandards(newStandards);
   }, [age, sex, bodyWeight, isMetric]);
 
-  if (!isClient) return null; // Bypass Next.js hydration drama
-
   const toggleIsMetric = (isMetric) => {
     let newBodyWeight;
 
@@ -171,14 +169,10 @@ function StrengthLevelCalculatorMain() {
     <main className="mx-4 flex flex-row items-center md:mx-[5vw]">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>
-            <h1>Strength Level Calculator</h1>
-          </CardTitle>
+          <CardTitle>Strength Level Calculator</CardTitle>
           <CardDescription>
-            <h2>
-              How strong am I? Estimate your strength level based on age,
-              gender, and bodyweight.
-            </h2>
+            How strong am I? Estimate your strength level based on age, gender,
+            and bodyweight.
           </CardDescription>
         </CardHeader>
         <CardContent className="">

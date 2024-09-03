@@ -59,6 +59,7 @@ export default function E1RMCalculator() {
           description: description,
           type: "website",
           images: [
+            // FIXME: ahrefs suggests you need just singular 'image' tag?
             {
               url: ogImageURL,
               alt: "Strength Journeys One Rep Max Calculator",

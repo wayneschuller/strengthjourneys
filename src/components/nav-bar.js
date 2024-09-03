@@ -158,6 +158,7 @@ export function DesktopNav() {
             pathname === "/gym-playlist-leaderboard"
               ? "text-foreground"
               : "text-foreground/60",
+            "hidden xl:block", // Only show music on XL
           )}
         >
           Music
@@ -169,6 +170,7 @@ export function DesktopNav() {
             pathname.startsWith("/articles")
               ? "text-foreground"
               : "text-foreground/60",
+            "hidden 2xl:block", // Only show articles on 2XL
           )}
         >
           Articles

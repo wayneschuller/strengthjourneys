@@ -82,14 +82,21 @@ export default function StrengthLevelCalculator() {
 // Strength Level Calculator
 function StrengthLevelCalculatorMain() {
   const isClient = useIsClient();
-  const [age, setAge] = useLocalStorage("AthleteAge", 30);
+  const [age, setAge] = useLocalStorage("AthleteAge", 30, {
+    initializeWithValue: false,
+  });
   const [isMetric, setIsMetric] = useLocalStorage("calcIsMetric", false, {
     initializeWithValue: false,
   });
-  const [sex, setSex] = useLocalStorage("AthleteSex", "male");
+  const [sex, setSex] = useLocalStorage("AthleteSex", "male", {
+    initializeWithValue: false,
+  });
   const [bodyWeight, setBodyWeight] = useLocalStorage(
     "AtheleteBodyWeight",
     200,
+    {
+      initializeWithValue: false,
+    },
   );
   const [standards, setStandards] = useState({});
 

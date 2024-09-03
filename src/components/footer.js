@@ -45,6 +45,15 @@ export function Footer() {
           </a>
           .
         </p>
+        <p className="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
+          <a
+            data-canny-link
+            className="font-medium underline underline-offset-4"
+            href="https://strengthjourneys.canny.io"
+          >
+            Give feedback
+          </a>
+        </p>
       </div>
     </footer>
   );

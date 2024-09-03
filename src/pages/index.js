@@ -132,6 +132,9 @@ export default function Home() {
         ]}
       />
       <main className="mx-4 mb-4 md:mx-[5vw]">
+        <h2 className="text-center text-3xl tracking-tighter text-amber-600 dark:text-amber-400">
+          Lift for yourself. Build strength, not comparisons.
+        </h2>
         <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
           Welcome to Strength Journeys
         </h1>

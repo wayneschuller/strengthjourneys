@@ -282,14 +282,10 @@ function E1RMCalculatorMain() {
     <main className="mx-4 md:mx-[5vw]">
       <Card>
         <CardHeader>
-          <CardTitle>
-            <h1>One Rep Max Calculator</h1>
-          </CardTitle>
+          <CardTitle>One Rep Max Calculator</CardTitle>
           <CardDescription>
-            <h2>
-              Estimate your max single based on reps and weight. Click{" "}
-              <b>Advanced Analysis</b> for set specific strength ratings.
-            </h2>
+            Estimate your max single based on reps and weight. Click{" "}
+            <b>Advanced Analysis</b> for set specific strength ratings.
           </CardDescription>
         </CardHeader>
 

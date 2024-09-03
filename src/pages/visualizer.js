@@ -73,15 +73,6 @@ function VisualizerMain() {
 
   return (
     <div className="mx-4 mb-4 md:mx-[5vw]">
-      <Head>
-        <title>Visualizer (Strength Journeys)</title>
-        <meta
-          name="description"
-          content="Strength Journeys Lift Strength Visualizer"
-        />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
       <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl">
         Strength Visualizer
       </h1>

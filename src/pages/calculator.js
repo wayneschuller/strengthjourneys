@@ -113,6 +113,7 @@ function E1RMCalculatorMain() {
   const [age, setAge] = useStateFromQueryOrLocalStorage("AthleteAge", 30);
   const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
   const [parent] = useAutoAnimate(/* optional config */);
+  const isClient = useIsClient();
 
   useEffect(() => {
     if (router.isReady) {
@@ -452,8 +453,6 @@ const E1RMSummaryCard = ({
   liftType,
   bodyWeight,
 }) => {
-  devLog(`liftRating: ${liftRating}`);
-
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
 
   return (
@@ -563,6 +562,10 @@ function OptionalAtheleBioData({
   sex,
   setSex,
 }) {
+  const isClient = useIsClient();
+
+  // if (!isClient) return null;
+
   const uniqueLiftNames = Array.from(
     new Set(LiftingStandardsKG.map((item) => item.liftType)),
   );

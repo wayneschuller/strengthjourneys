@@ -2,6 +2,7 @@
 
 "use client";
 import Image from "next/image";
+import Script from "next/script";
 import * as React from "react";
 import { useState, useEffect, useContext } from "react";
 import { useSession, signIn, sgnOut } from "next-auth/react";
@@ -33,6 +34,17 @@ import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser
 
 export function NavBar() {
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (window?.Canny) {
+      window.Canny("initChangelog", {
+        appID: "65ae4d4c921071bb0aae99c3",
+        position: "bottom",
+        align: "left",
+        theme: "dark",
+      });
+    }
+  }, []);
 
   return (
     <div className="m-2 flex md:ml-10 md:max-w-[90vw] xl:ml-24">
@@ -188,6 +200,12 @@ export function DesktopNav() {
         >
           Articles
         </Link>
+        <button
+          data-canny-changelog
+          className="text-muted-foreground hover:text-foreground/80"
+        >
+          Changelog
+        </button>
       </nav>
     </div>
   );

@@ -72,7 +72,7 @@ function VisualizerMain() {
     );
 
   return (
-    <div className="mx-4 mb-4 md:mx-[5vw]">
+    <main className="mx-4 mb-4 md:mx-[5vw]">
       <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl">
         Strength Visualizer
       </h1>
@@ -84,6 +84,6 @@ function VisualizerMain() {
           <SessionAnalysisCard highlightDate={highlightDate} />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

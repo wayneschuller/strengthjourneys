@@ -33,7 +33,7 @@ const components = {
 };
 
 export default function ArticlePost({ article }) {
-  const canonicalUrl = `https://strengthjourneys.xyz/articles/${article.slug}`;
+  const canonicalUrl = `https://www.strengthjourneys.xyz/articles/${article.slug}`;
   const publishDate = new Date(article.publishedAt).toISOString();
 
   return (

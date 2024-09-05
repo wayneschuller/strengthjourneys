@@ -61,7 +61,7 @@ export function Footer() {
             rel="noreferrer"
             className="font-medium underline underline-offset-4"
           >
-            Changelog
+            Full Changelog
           </a>
         </p>
       </div>

@@ -36,15 +36,19 @@ export function NavBar() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (window?.Canny) {
-      window.Canny("initChangelog", {
-        appID: "65ae4d4c921071bb0aae99c3",
-        position: "bottom",
-        align: "left",
-        theme: "dark",
-      });
-    }
-  }, []);
+    const timer = setTimeout(() => {
+      if (window?.Canny) {
+        window.Canny("initChangelog", {
+          appID: "65ae4d4c921071bb0aae99c3",
+          position: "bottom",
+          align: "left",
+          theme: "dark",
+        });
+      }
+    }, 2000); // 2 seconds timeout
+
+    return () => clearTimeout(timer); // Cleanup timeout on unmount
+  }, [pathname]);
 
   return (
     <div className="m-2 flex md:ml-10 md:max-w-[90vw] xl:ml-24">

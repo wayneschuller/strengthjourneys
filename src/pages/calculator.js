@@ -47,7 +47,7 @@ export default function E1RMCalculator({ relatedArticles }) {
   const description =
     "The worlds greatest one-rep max calculator. Use multiple algorithms, units, and personalized strength ratings. Ideal for powerlifters, strength athletes and other fat thumbed atheletes. Mobile friendly UI.";
   const keywords =
-    "One rep max calculator, Barbell strength calculator, 1RM estimation tool, Weightlifting max calculator, Powerlifting 1RM calculator, Max lift predictor, orm calculator, Strength level estimator, Gym performance calculator, e1RM calculator, Max weight calculator, Barbell load calculator";
+    "One rep max calculator, orm calcaultor, ORM calcaultor, Barbell strength calculator, 1RM estimation tool, Weightlifting max calculator, Powerlifting 1RM calculator, Max lift predictor, orm calculator, Strength level estimator, Gym performance calculator, e1RM calculator, Max weight calculator, Barbell load calculator";
   const canonicalURL = "https://www.strengthjourneys.xyz/calculator";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Head from "next/head";
 import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
 import { ArticleSummaryCard } from "@/components/article-cards";
@@ -83,7 +82,7 @@ export async function getStaticProps() {
     }
   `);
 
-  devLog(articles);
+  // devLog(articles);
 
   const featuredArticles = articles?.filter((article) =>
     article.categories?.some(

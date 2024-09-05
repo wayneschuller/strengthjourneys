@@ -23,3 +23,27 @@ export function ArticleSummaryCard({ article }) {
     </Card>
   );
 }
+
+export function RelatedArticles({ articles }) {
+  return (
+    <Card className="mt-8">
+      <CardHeader>
+        <CardTitle>Related Articles</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-2">
+          {articles.map((article) => (
+            <li key={article.slug}>
+              <Link
+                href={`/articles/${article.slug}`}
+                className="hover:underline"
+              >
+                {article.title}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}

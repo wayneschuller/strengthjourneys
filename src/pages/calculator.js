@@ -3,6 +3,9 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
+import { sanityIOClient } from "@/lib/sanity-io.js";
+
+import { RelatedArticles } from "@/components/article-cards";
 
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { Button } from "@/components/ui/button";
@@ -37,8 +40,9 @@ import { useLocalStorage, useIsClient } from "usehooks-ts";
 import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
 
 const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
+const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
 
-export default function E1RMCalculator() {
+export default function E1RMCalculator({ relatedArticles }) {
   const title = "One Rep Max Calculator | Advanced Multi-Algorithm E1RMs";
   const description =
     "The worlds greatest one-rep max calculator. Use multiple algorithms, units, and personalized strength ratings. Ideal for powerlifters, strength athletes and other fat thumbed atheletes. Mobile friendly UI.";
@@ -81,12 +85,12 @@ export default function E1RMCalculator() {
         ]}
       />
       {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
-      <E1RMCalculatorMain />
+      <E1RMCalculatorMain relatedArticles={relatedArticles} />
     </>
   );
 }
 
-function E1RMCalculatorMain() {
+function E1RMCalculatorMain({ relatedArticles }) {
   const router = useRouter();
   const { toast } = useToast();
   const [reps, setReps] = useStateFromQueryOrLocalStorage("reps", 5); // Will be a string
@@ -432,6 +436,7 @@ function E1RMCalculatorMain() {
           </h4> */}
         </CardContent>
       </Card>
+      <RelatedArticles articles={relatedArticles} />
     </main>
   );
 }
@@ -704,3 +709,36 @@ export const getStandardRatingString = (
 
   return liftRating;
 };
+
+export async function getStaticProps() {
+  try {
+    const relatedArticles = await sanityIOClient.fetch(
+      `
+      *[_type == "post" && $category in categories[]->title] | order(publishedAt desc) {
+        title,
+        "slug": slug.current,
+        publishedAt,
+        categories[]-> {
+          title
+        },
+      }
+    `,
+      { category: RELATED_ARTICLES_CATEGORY },
+    );
+
+    return {
+      props: {
+        relatedArticles: relatedArticles || [],
+      },
+      revalidate: 60 * 60, // Revalidate every hour
+    };
+  } catch (error) {
+    console.error("Error fetching related articles:", error);
+    return {
+      props: {
+        relatedArticles: [],
+      },
+      revalidate: 60 * 60,
+    };
+  }
+}

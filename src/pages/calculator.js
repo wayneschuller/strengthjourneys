@@ -374,7 +374,7 @@ function E1RMCalculatorMain() {
                     isAdvancedAnalysis ? "opacity-100" : "opacity-50",
                   )}
                 >
-                  Advanced Analysis
+                  Strength Level Insights
                 </label>
               </div>
               {isAdvancedAnalysis && (

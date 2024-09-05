@@ -9,6 +9,8 @@ import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { useReadLocalStorage } from "usehooks-ts";
 import { Separator } from "@/components/ui/separator";
 import { devLog } from "@/lib/processing-utils";
+import { sanityIOClient } from "@/lib/sanity-io.js";
+import { RelatedArticles } from "@/components/article-cards";
 
 // Here are the analyzer dashboard cards
 import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
@@ -19,7 +21,9 @@ import { MonthsHighlightsCard } from "@/components/analyzer/months-highlights-ca
 import { ActivityHeatmapsCard } from "@/components/analyzer/heatmap-card";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
 
-export default function Analyzer() {
+const RELATED_ARTICLES_CATEGORY = "Personal Record Analyzer";
+
+export default function Analyzer({ relatedArticles }) {
   // OG Meta Tags
   const description =
     "Unlock insights into your strength training with our PR Analyzer. Track PRs, consistency and detailed squat/bench/deadlift analysis.";
@@ -62,12 +66,12 @@ export default function Analyzer() {
         ]}
       />
       {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
-      <AnalyzerMain />
+      <AnalyzerMain relatedArticles={relatedArticles} />
     </>
   );
 }
 
-function AnalyzerMain() {
+function AnalyzerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { isLoading } = useUserLiftingData();
   const ssid = useReadLocalStorage("ssid");
@@ -107,6 +111,40 @@ function AnalyzerMain() {
         <Separator className="col-span-full" />
       </div>
       <SelectedLiftsIndividualLiftCards />
+      <RelatedArticles articles={relatedArticles} />
     </main>
   );
+}
+
+export async function getStaticProps() {
+  try {
+    const relatedArticles = await sanityIOClient.fetch(
+      `
+      *[_type == "post" && publishedAt < now() && $category in categories[]->title] | order(publishedAt desc) {
+        title,
+        "slug": slug.current,
+        publishedAt,
+        categories[]-> {
+          title
+        },
+      }
+    `,
+      { category: RELATED_ARTICLES_CATEGORY },
+    );
+
+    return {
+      props: {
+        relatedArticles: relatedArticles || [],
+      },
+      revalidate: 60 * 60, // Revalidate every hour
+    };
+  } catch (error) {
+    console.error("Error fetching related articles:", error);
+    return {
+      props: {
+        relatedArticles: [],
+      },
+      revalidate: 60 * 60,
+    };
+  }
 }

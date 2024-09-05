@@ -26,6 +26,9 @@ export function ArticleSummaryCard({ article }) {
 }
 
 export function RelatedArticles({ articles }) {
+  devLog(articles);
+  if (!articles) return null;
+
   return (
     <Card className="mt-8">
       <CardHeader>

@@ -36,6 +36,7 @@ export function NavBar() {
   const pathname = usePathname();
 
   useEffect(() => {
+    // Not proud of putting this in a timer but it makes it work
     const timer = setTimeout(() => {
       if (window?.Canny) {
         window.Canny("initChangelog", {
@@ -45,7 +46,7 @@ export function NavBar() {
           theme: "dark",
         });
       }
-    }, 2000); // 2 seconds timeout
+    }, 1000); // 1 second timeout
 
     return () => clearTimeout(timer); // Cleanup timeout on unmount
   }, [pathname]);

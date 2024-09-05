@@ -212,7 +212,7 @@ export function DesktopNav() {
             "hidden 2xl:block", // Only show articles on 2XL
           )}
         >
-          What's New
+          What&apos;s New
         </button>
       </nav>
     </div>

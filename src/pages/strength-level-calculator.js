@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
+import { sanityIOClient } from "@/lib/sanity-io.js";
+import { RelatedArticles } from "@/components/article-cards";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import {
   Card,
@@ -29,7 +31,9 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useIsClient } from "usehooks-ts";
 
-export default function StrengthLevelCalculator() {
+const RELATED_ARTICLES_CATEGORY = "Strength Calculator";
+
+export default function StrengthLevelCalculator({ relatedArticles }) {
   // OG Meta Tags
   const canonicalURL =
     "https://www.strengthjourneys.xyz/strength-level-calculator";
@@ -74,13 +78,13 @@ export default function StrengthLevelCalculator() {
         ]}
       />
       {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
-      <StrengthLevelCalculatorMain />
+      <StrengthLevelCalculatorMain relatedArticles={relatedArticles} />
     </>
   );
 }
 
 // Strength Level Calculator
-function StrengthLevelCalculatorMain() {
+function StrengthLevelCalculatorMain({ relatedArticles }) {
   const isClient = useIsClient();
   const [age, setAge] = useLocalStorage("AthleteAge", 30, {
     initializeWithValue: false,
@@ -166,7 +170,8 @@ function StrengthLevelCalculatorMain() {
     "https://www.strengthjourneys.xyz/strength_journeys_strength_levels_calculator_og.png";
 
   return (
-    <main className="mx-4 flex flex-row items-center md:mx-[5vw]">
+    // <main className="mx-4 flex flex-col items-center md:mx-[5vw]">
+    <main className="mx-4 md:mx-[5vw]">
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Strength Level Calculator</CardTitle>
@@ -304,6 +309,7 @@ function StrengthLevelCalculatorMain() {
           </div>
         </CardFooter>
       </Card>
+      <RelatedArticles articles={relatedArticles} />
     </main>
   );
 }
@@ -317,3 +323,36 @@ const MiniCard = ({ levelString, weight, unitType }) => (
     </div>
   </div>
 );
+
+export async function getStaticProps() {
+  try {
+    const relatedArticles = await sanityIOClient.fetch(
+      `
+      *[_type == "post" && publishedAt < now() && $category in categories[]->title] | order(publishedAt desc) {
+        title,
+        "slug": slug.current,
+        publishedAt,
+        categories[]-> {
+          title
+        },
+      }
+    `,
+      { category: RELATED_ARTICLES_CATEGORY },
+    );
+
+    return {
+      props: {
+        relatedArticles: relatedArticles || [],
+      },
+      revalidate: 60 * 60, // Revalidate every hour
+    };
+  } catch (error) {
+    console.error("Error fetching related articles:", error);
+    return {
+      props: {
+        relatedArticles: [],
+      },
+      revalidate: 60 * 60,
+    };
+  }
+}

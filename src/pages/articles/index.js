@@ -55,7 +55,7 @@ export default function ArticleListingPage({
           {/* <h2 className="mb-4 text-2xl font-semibold">Featured Articles</h2> */}
           <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
             {featuredArticles.map((article) => (
-              <ArticleCard key={article.slug} article={article} />
+              <ArticleSummaryCard key={article.slug} article={article} />
             ))}
           </div>
         </>
@@ -63,14 +63,14 @@ export default function ArticleListingPage({
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {regularArticles.map((article) => (
-          <ArticleCard key={article.slug} article={article} />
+          <ArticleSummaryCard key={article.slug} article={article} />
         ))}
       </div>
     </div>
   );
 }
 
-function ArticleCard({ article }) {
+function ArticleSummaryCard({ article }) {
   return (
     <Card className="">
       <CardHeader>

@@ -155,9 +155,9 @@ export function DesktopNav() {
           )}
         >
           {/* Short title on small screens */}
-          <span className="hidden md:block xl:hidden">Strength Calc</span>
+          <span className="hidden md:block lg:hidden">Strength Calc</span>
           {/* Full title on larger screens */}
-          <span className="hidden xl:block">Strength Level Calculator </span>
+          <span className="hidden lg:block">Strength Level Calculator </span>
         </Link>
         {/* <Link
             href="/warmups"
@@ -177,9 +177,9 @@ export function DesktopNav() {
           )}
         >
           {/* Short title on small screens */}
-          <span className="hidden md:block xl:hidden">Timer</span>
+          <span className="hidden md:block lg:hidden">Timer</span>
           {/* Full title on larger screens */}
-          <span className="hidden xl:block">Lifting Set Timer</span>
+          <span className="hidden lg:block">Lifting Set Timer</span>
         </Link>
         <Link
           href="/gym-playlist-leaderboard"
@@ -188,7 +188,7 @@ export function DesktopNav() {
             pathname === "/gym-playlist-leaderboard"
               ? "text-foreground"
               : "text-foreground/60",
-            "hidden xl:block", // Only show music on XL
+            "hidden md:block",
           )}
         >
           Music
@@ -200,16 +200,19 @@ export function DesktopNav() {
             pathname.startsWith("/articles")
               ? "text-foreground"
               : "text-foreground/60",
-            "hidden 2xl:block", // Only show articles on 2XL
+            "hidden lg:block", // Only show articles on LG
           )}
         >
           Articles
         </Link>
         <button
           data-canny-changelog
-          className="text-muted-foreground hover:text-foreground/80"
+          className={cn(
+            "text-muted-foreground hover:text-foreground/80",
+            "hidden 2xl:block", // Only show articles on 2XL
+          )}
         >
-          Changelog
+          What's New
         </button>
       </nav>
     </div>

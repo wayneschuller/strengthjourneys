@@ -714,7 +714,7 @@ export async function getStaticProps() {
   try {
     const relatedArticles = await sanityIOClient.fetch(
       `
-      *[_type == "post" && $category in categories[]->title] | order(publishedAt desc) {
+      *[_type == "post" && publishedAt < now() && $category in categories[]->title] | order(publishedAt desc) {
         title,
         "slug": slug.current,
         publishedAt,

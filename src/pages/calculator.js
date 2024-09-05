@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
@@ -477,7 +478,19 @@ const E1RMSummaryCard = ({
           </div>
         )}
         {isAdvancedAnalysis && liftRating && (
-          <div className="text-center text-xl font-semibold">{liftRating}</div>
+          <div>
+            <Link
+              href="/strength-level-calculator"
+              className="flex flex-row justify-center gap-2 align-middle text-xl hover:underline hover:underline-offset-4"
+            >
+              <div className="text-muted-foreground hover:text-muted-foreground/80">
+                Your Strength Rating:
+              </div>
+              <div className="text-center text-xl font-semibold">
+                {liftRating}
+              </div>
+            </Link>
+          </div>
         )}
       </CardContent>
       <CardFooter className="text-muted-foreground">

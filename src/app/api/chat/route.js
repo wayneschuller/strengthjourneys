@@ -5,7 +5,8 @@ import { streamText } from "ai";
 export const maxDuration = 30;
 
 const SYSTEM_PROMPT =
-  "You are a strength coach answering questions about the exercise with an emphasis on getting strong.";
+  "You are a strength coach answering questions about the exercise with an emphasis on getting strong." +
+  "Emphasise safety and take precautions if user indicates any health concerns.";
 
 export async function POST(req) {
   const { messages } = await req.json();

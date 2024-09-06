@@ -198,17 +198,6 @@ const defaultMessages = [
 
 function AILiftingAssistantCard() {
   const { messages, input, handleInputChange, handleSubmit } = useChat();
-
-  const renderDefaultMessages = () => (
-    <div className="flex h-full flex-col items-center justify-center space-y-2 text-center">
-      {defaultMessages.map((message, index) => (
-        <p key={index} className="italic text-muted-foreground">
-          {message}
-        </p>
-      ))}
-    </div>
-  );
-
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {

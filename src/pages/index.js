@@ -16,6 +16,7 @@ import {
   BicepsFlexed,
   Music,
   LibraryBig,
+  Bot,
 } from "lucide-react";
 
 import {
@@ -30,6 +31,12 @@ import { GettingStartedCard } from "@/components/instructions-cards";
 
 //
 export const featurePages = [
+  {
+    href: "/ai-lifting-assistant",
+    title: "AI Lifting Assistant",
+    description: "Ask questions of your lifting data.",
+    IconComponent: Bot,
+  },
   {
     href: "/analyzer",
     title: "PR Analyzer",
@@ -78,15 +85,6 @@ export const featurePages = [
     href: "/articles/the-iron-and-the-soul-author-henry-rollins",
     title: "Feature Article: The Iron and the Soul",
     description: "The classic inspirational lifting essay by Henry Rollins.",
-    IconComponent: Newspaper,
-  },
-];
-
-const featureArticles = [
-  {
-    href: "/articles/henry-rollins-the-iron-and-the-soul",
-    title: "The Iron and the Soul",
-    description: "The classic article by Henry Rollins.",
     IconComponent: Newspaper,
   },
 ];

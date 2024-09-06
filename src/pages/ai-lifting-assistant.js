@@ -109,6 +109,14 @@ function AILiftingAssistantMain({ relatedArticles }) {
   const [standards, setStandards] = useState({});
   const [shareBioDetails, setShareBioDetails] = useState(false);
 
+  let userProvidedProfileData = "";
+  if (shareBioDetails) {
+    userProvidedProfileData =
+      `Some background information:` +
+      `I am a ${age} year old ${sex}, my weight is ${bodyWeight}${isMetric ? "kg" : "lb"},` +
+      `I prefer to use ${isMetric ? "metric units" : "lb units"}`;
+  }
+
   useEffect(() => {
     const bodyWeightKG = isMetric
       ? bodyWeight
@@ -172,11 +180,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
       <div className="flex flex-col gap-5 lg:flex-row">
         <div className="flex-1 lg:flex lg:flex-col">
           <AILiftingAssistantCard
-            age={age}
-            bodyWeight={bodyWeight}
-            isMetric={isMetric}
-            sex={sex}
-            shareBioDetails={shareBioDetails}
+            userProvidedProfileData={userProvidedProfileData}
           />
         </div>
         <div className="flex flex-col gap-5">
@@ -207,13 +211,7 @@ const defaultMessages = [
   "Am I strong for my age?",
 ];
 
-function AILiftingAssistantCard({
-  age,
-  bodyWeight,
-  isMetric,
-  sex,
-  shareBioDetails,
-}) {
+function AILiftingAssistantCard({ userProvidedProfileData }) {
   const [isFirstMessage, setIsFirstMessage] = useState(true);
   const {
     messages,
@@ -234,16 +232,22 @@ function AILiftingAssistantCard({
       devLog("Received HTTP response from server:", response);
     },
     experimental_prepareRequestBody: ({ messages }) => {
-      if (isFirstMessage && messages.length > 0) {
+      devLog(messages);
+      if (
+        true ||
+        (isFirstMessage &&
+          messages.length > 0 &&
+          userProvidedProfileData.length > 0)
+      ) {
         setIsFirstMessage(false);
-        const firstMessage = messages[messages.length - 1];
+        const firstMessage = messages[0];
         if (firstMessage.role === "user") {
           return {
             messages: [
               ...messages.slice(0, -1),
               {
                 ...firstMessage,
-                content: `${firstMessage.content}\n\nUser is 45 years old and weighs 100kg`,
+                content: `${userProvidedProfileData}\n\n${firstMessage.content}`,
               },
             ],
           };
@@ -262,10 +266,6 @@ function AILiftingAssistantCard({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  devLog(`hmm len: ${messages.length}`);
-  devLog(messages);
-  devLog(shareBioDetails);
 
   return (
     <Card className="h-full max-h-full bg-background text-foreground">

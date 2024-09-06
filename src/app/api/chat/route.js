@@ -1,5 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
+import { devLog } from "@/lib/processing-utils";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -20,10 +21,12 @@ export async function POST(req) {
       role: "system",
       content: process.env.EXTENDED_AI_PROMPT,
     });
+    devLog(`Extended prompt added...`);
   }
 
   const result = await streamText({
-    model: openai("gpt-4-turbo"),
+    model: openai("gpt-4o-mini"),
+    // model: openai("gpt-4o"),
     messages: [...systemMessages, ...messages],
   });
 

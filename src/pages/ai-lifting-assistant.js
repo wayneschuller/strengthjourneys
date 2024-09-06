@@ -234,9 +234,11 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
       devLog("Received HTTP response from server:", response);
     },
     experimental_prepareRequestBody: ({ messages }) => {
-      // devLog(messages);
+      // FIXME: This is where I was trying to insert user metadata but it's not working yet
+      // Try inserting metadata as system background
+
       if (
-        true ||
+        false ||
         (isFirstMessage &&
           messages.length > 0 &&
           userProvidedProfileData.length > 0)
@@ -310,8 +312,11 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
               </div>
             ))
           )}
-          <div ref={messagesEndRef} />
-          <LoaderCircle className={cn(isLoading ? "animate-spin" : "hidden")} />
+          {/* <div key="endpoint" ref={messagesEndRef} /> */}
+          <LoaderCircle
+            ref={messagesEndRef}
+            className={cn(isLoading ? "animate-spin" : "hidden")}
+          />
         </div>
       </CardContent>
       <CardFooter className="">

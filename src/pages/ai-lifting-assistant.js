@@ -418,7 +418,7 @@ function BioDetailsCard({
               aria-labelledby="age"
             />
           </div>
-          <div className="flex h-[4rem] w-full flex-col justify-between md:w-3/5">
+          <div className="flex h-[4rem] w-full flex-col justify-between">
             <div className="flex flex-row items-center">
               <Label htmlFor="weight" className="mr-2 text-xl">
                 Bodyweight:
@@ -444,23 +444,8 @@ function BioDetailsCard({
               aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
             />
           </div>
-          <div className="flex w-full flex-col md:w-2/5">
+          <div>
             <HeightWidget />
-            <div className="py-2">
-              <Label htmlFor="age" className="text-xl">
-                Height:
-              </Label>
-            </div>
-            <Slider
-              min={13}
-              max={100}
-              step={1}
-              // value={[age]}
-              // onValueChange={(values) => setAge(values[0])}
-              className="mt-2 min-w-40 flex-1"
-              aria-label="Height"
-              aria-labelledby="Height"
-            />
           </div>
           <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
             <Label htmlFor="sex" className="text-xl">
@@ -518,23 +503,21 @@ const HeightWidget = () => {
 
   return (
     <div className="flex w-96 flex-col align-middle">
-      <Label htmlFor="height" className="text-xl">
-        Height:
-      </Label>
-      <div className="flex flex-1 gap-5">
-        <Slider
-          min={100}
-          max={250}
-          step={1}
-          value={[height]}
-          onValueChange={handleHeightChange}
-          className="flex-grow"
-        />
-        <div className="flex flex-col">
-          <p className="inline">{height}cm</p>
-          <p className="">{cmToFeetInches(height)}</p>
-        </div>
+      <div className="mb-2 flex flex-row gap-2 align-middle">
+        <Label htmlFor="height" className="flex flex-row gap-3 text-xl">
+          Height:
+          <div className="">{height}cm</div>
+          <div className="">{cmToFeetInches(height)}</div>
+        </Label>
       </div>
+      <Slider
+        min={100}
+        max={250}
+        step={1}
+        value={[height]}
+        onValueChange={handleHeightChange}
+        className="flex-grow"
+      />
     </div>
   );
 };

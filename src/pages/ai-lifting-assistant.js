@@ -167,7 +167,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
         AI Lifting Assistant
       </h1>
       <div className="flex flex-col gap-5 lg:flex-row">
-        <div className="flex-1">
+        <div className="flex-1 lg:flex lg:flex-col">
           <AILiftingAssistantCard />
         </div>
         <div className="flex flex-col gap-5">
@@ -193,7 +193,7 @@ function AILiftingAssistantCard() {
   const { messages, input, handleInputChange, handleSubmit } = useChat();
 
   return (
-    <Card>
+    <Card className="h-full max-h-full">
       <CardHeader>
         <CardTitle>Your Personal Lifting AI Assistant</CardTitle>
         <CardDescription>
@@ -201,7 +201,7 @@ function AILiftingAssistantCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 flex-grow overflow-auto rounded border p-2">
+        <div className="mb-4 max-h-96 flex-grow overflow-auto rounded border p-2">
           {messages.map((message, index) => (
             <div
               key={index}

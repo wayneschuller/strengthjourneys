@@ -401,7 +401,7 @@ function BioDetailsCard({
           </label>
         </div>
         <div className="mb-10 flex flex-col items-start gap-4 md:flex-col md:gap-8">
-          <div className="flex w-full flex-col md:w-2/5">
+          <div className="flex w-full flex-col">
             <div className="py-2">
               <Label htmlFor="age" className="text-xl">
                 Age: {age}

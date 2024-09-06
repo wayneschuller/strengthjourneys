@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { useChat } from "ai/react";
@@ -189,7 +189,98 @@ function AILiftingAssistantMain({ relatedArticles }) {
   );
 }
 
+const defaultMessages = [
+  "Ask anything about barbell lifting and fitness.",
+  "What should I do in my first gym session?",
+  "How often should I deadlift?",
+  "Am I strong for my age?",
+];
+
 function AILiftingAssistantCard() {
+  const { messages, input, handleInputChange, handleSubmit } = useChat();
+
+  const renderDefaultMessages = () => (
+    <div className="flex h-full flex-col items-center justify-center space-y-2 text-center">
+      {defaultMessages.map((message, index) => (
+        <p key={index} className="italic text-muted-foreground">
+          {message}
+        </p>
+      ))}
+    </div>
+  );
+
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  return (
+    <Card className="h-full max-h-full bg-background text-foreground">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold">
+          Your Personal Lifting AI Assistant
+        </CardTitle>
+        <CardDescription className="text-muted-foreground">
+          Discussions are shown on your device and not saved on our servers.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex h-auto flex-col justify-between">
+        <div className="mb-4 h-96 space-y-4 overflow-auto scroll-smooth rounded-lg border border-border p-4">
+          {messages.length === 0 ? (
+            <div className="flex h-80 flex-col items-center justify-center space-y-2 text-center">
+              {defaultMessages.map((message, index) => (
+                <p key={index} className="italic text-muted-foreground">
+                  {message}
+                </p>
+              ))}
+            </div>
+          ) : (
+            messages.map((message, index) => (
+              <div
+                key={index}
+                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <span
+                  className={`inline-block max-w-[80%] rounded-lg p-3 ${
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground"
+                  }`}
+                >
+                  {message.content}
+                </span>
+              </div>
+            ))
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </CardContent>
+      <CardFooter className="">
+        <div className="flex-1 flex-row">
+          <form onSubmit={handleSubmit} className="flex space-x-2">
+            <input
+              type="text"
+              value={input}
+              onChange={handleInputChange}
+              placeholder="Type your question here..."
+              className="flex-grow rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+            <Button type="submit" className="rounded-r-lg">
+              Ask
+            </Button>
+          </form>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function AILiftingAssistantCard2() {
   const { messages, input, handleInputChange, handleSubmit } = useChat();
 
   return (
@@ -278,7 +369,7 @@ function BioDetailsCard({
       <CardHeader>
         <CardTitle>Tell us about yourself</CardTitle>
         <CardDescription>
-          The AI will use this info to personalise the answer.
+          The AI will use this info to personalize answers.
         </CardDescription>
       </CardHeader>
       <CardContent className="">

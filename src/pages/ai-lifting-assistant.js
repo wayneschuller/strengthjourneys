@@ -38,6 +38,7 @@ import { useSession } from "next-auth/react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import FlickeringGrid from "@/components/magicui/flickering-grid";
 
 const RELATED_ARTICLES_CATEGORY = "AI Lifting Assistant";
 
@@ -175,7 +176,8 @@ function AILiftingAssistantMain({ relatedArticles }) {
     // <main className="mx-4 flex flex-col items-center md:mx-[5vw]">
     <main className="mx-4 md:mx-[5vw]">
       <h1 className="py-5 text-center text-xl font-bold tracking-tight md:text-3xl">
-        AI Lifting Assistant
+        {" "}
+        AI Lifting Assistant{" "}
       </h1>
       <div className="flex flex-col gap-5 lg:flex-row">
         <div className="flex-1 lg:flex lg:flex-col">
@@ -232,7 +234,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
       devLog("Received HTTP response from server:", response);
     },
     experimental_prepareRequestBody: ({ messages }) => {
-      devLog(messages);
+      // devLog(messages);
       if (
         true ||
         (isFirstMessage &&
@@ -269,13 +271,16 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
 
   return (
     <Card className="h-full max-h-full bg-background text-foreground">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold">
-          Your Personal Lifting AI Assistant
-        </CardTitle>
-        <CardDescription className="text-muted-foreground">
-          Discussions are shown on your device and not saved on our servers.
-        </CardDescription>
+      <CardHeader className="flex flex-1 flex-row">
+        <div className="flex flex-1 flex-col">
+          <CardTitle className="text-balance text-2xl font-bold">
+            Your Personal Lifting AI Assistant
+          </CardTitle>
+          <CardDescription className="text-balance text-muted-foreground">
+            Discussions are shown on your device and not saved on our servers.
+          </CardDescription>
+        </div>
+        <FlickeringGridDemo />
       </CardHeader>
       <CardContent className="flex h-auto flex-col justify-between">
         <div className="mb-4 h-96 space-y-4 overflow-auto scroll-smooth rounded-lg border border-border p-4">
@@ -377,7 +382,7 @@ function BioDetailsCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="">
-        <div className="space-x-2">
+        <div className="mb-5 flex flex-row space-x-2 align-middle">
           <Checkbox
             id="shareBioDetails"
             checked={shareBioDetails}
@@ -474,6 +479,20 @@ function BioDetailsCard({
       </CardContent>
       <CardFooter className="text-sm"></CardFooter>
     </Card>
+  );
+}
+
+function FlickeringGridDemo() {
+  return (
+    <FlickeringGrid
+      squareSize={4}
+      gridGap={6}
+      color="#6B7280"
+      maxOpacity={0.5}
+      flickerChance={0.2}
+      height={70}
+      width={70}
+    />
   );
 }
 

@@ -185,7 +185,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
             userProvidedProfileData={userProvidedProfileData}
           />
         </div>
-        <div className="flex flex-col gap-5">
+        <div className="md:max-w-2/5 flex flex-col gap-5">
           <BioDetailsCard
             age={age}
             setAge={setAge}
@@ -272,7 +272,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   }, [messages]);
 
   return (
-    <Card className="h-full max-h-full bg-background text-foreground">
+    <Card className="max-h-full bg-background text-foreground">
       <CardHeader className="flex flex-1 flex-row">
         <div className="flex flex-1 flex-col">
           <CardTitle className="text-balance text-2xl font-bold">
@@ -400,7 +400,7 @@ function BioDetailsCard({
             Share this with the AI
           </label>
         </div>
-        <div className="mb-10 flex flex-col items-start gap-4 md:mr-10 md:flex-col md:gap-8">
+        <div className="mb-10 flex flex-col items-start gap-4 md:flex-col md:gap-8">
           <div className="flex w-full flex-col md:w-2/5">
             <div className="py-2">
               <Label htmlFor="age" className="text-xl">
@@ -445,6 +445,7 @@ function BioDetailsCard({
             />
           </div>
           <div className="flex w-full flex-col md:w-2/5">
+            <HeightWidget />
             <div className="py-2">
               <Label htmlFor="age" className="text-xl">
                 Height:
@@ -500,6 +501,43 @@ function FlickeringGridDemo() {
     />
   );
 }
+
+const HeightWidget = () => {
+  const [height, setHeight] = useState(170); // Default height in cm
+
+  const handleHeightChange = (newHeight) => {
+    setHeight(newHeight[0]);
+  };
+
+  const cmToFeetInches = (cm) => {
+    const inches = cm / 2.54;
+    const feet = Math.floor(inches / 12);
+    const remainingInches = Math.round(inches % 12);
+    return `${feet}'${remainingInches}"`;
+  };
+
+  return (
+    <div className="flex w-96 flex-col align-middle">
+      <Label htmlFor="height" className="text-xl">
+        Height:
+      </Label>
+      <div className="flex flex-1 gap-5">
+        <Slider
+          min={100}
+          max={250}
+          step={1}
+          value={[height]}
+          onValueChange={handleHeightChange}
+          className="flex-grow"
+        />
+        <div className="flex flex-col">
+          <p className="inline">{height}cm</p>
+          <p className="">{cmToFeetInches(height)}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export async function getStaticProps() {
   try {

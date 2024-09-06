@@ -36,6 +36,8 @@ import { Separator } from "@/components/ui/separator";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { LoaderCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const RELATED_ARTICLES_CATEGORY = "AI Lifting Assistant";
 
@@ -105,6 +107,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
     },
   );
   const [standards, setStandards] = useState({});
+  const [shareBioDetails, setShareBioDetails] = useState(false);
 
   useEffect(() => {
     const bodyWeightKG = isMetric
@@ -168,7 +171,13 @@ function AILiftingAssistantMain({ relatedArticles }) {
       </h1>
       <div className="flex flex-col gap-5 lg:flex-row">
         <div className="flex-1 lg:flex lg:flex-col">
-          <AILiftingAssistantCard />
+          <AILiftingAssistantCard
+            age={age}
+            bodyWeight={bodyWeight}
+            isMetric={isMetric}
+            sex={sex}
+            shareBioDetails={shareBioDetails}
+          />
         </div>
         <div className="flex flex-col gap-5">
           <BioDetailsCard
@@ -180,6 +189,8 @@ function AILiftingAssistantMain({ relatedArticles }) {
             toggleIsMetric={toggleIsMetric}
             sex={sex}
             setSex={setSex}
+            shareBioDetails={shareBioDetails}
+            setShareBioDetails={setShareBioDetails}
           />
           <LiftingDataCard />
         </div>
@@ -196,8 +207,52 @@ const defaultMessages = [
   "Am I strong for my age?",
 ];
 
-function AILiftingAssistantCard() {
-  const { messages, input, handleInputChange, handleSubmit } = useChat();
+function AILiftingAssistantCard({
+  age,
+  bodyWeight,
+  isMetric,
+  sex,
+  shareBioDetails,
+}) {
+  const [isFirstMessage, setIsFirstMessage] = useState(true);
+  const {
+    messages,
+    input,
+    append,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+  } = useChat({
+    onFinish: (message, { usage, finishReason }) => {
+      // devLog("Finished streaming message:", message);
+      // devLog("Token usage:", usage);
+    },
+    onError: (error) => {
+      console.error("An error occurred:", error);
+    },
+    onResponse: (response) => {
+      devLog("Received HTTP response from server:", response);
+    },
+    experimental_prepareRequestBody: ({ messages }) => {
+      if (isFirstMessage && messages.length > 0) {
+        setIsFirstMessage(false);
+        const firstMessage = messages[messages.length - 1];
+        if (firstMessage.role === "user") {
+          return {
+            messages: [
+              ...messages.slice(0, -1),
+              {
+                ...firstMessage,
+                content: `${firstMessage.content}\n\nUser is 45 years old and weighs 100kg`,
+              },
+            ],
+          };
+        }
+      }
+      return { messages };
+    },
+  });
+
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -207,6 +262,10 @@ function AILiftingAssistantCard() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  devLog(`hmm len: ${messages.length}`);
+  devLog(messages);
+  devLog(shareBioDetails);
 
   return (
     <Card className="h-full max-h-full bg-background text-foreground">
@@ -247,6 +306,7 @@ function AILiftingAssistantCard() {
             ))
           )}
           <div ref={messagesEndRef} />
+          <LoaderCircle className={cn(isLoading ? "animate-spin" : "hidden")} />
         </div>
       </CardContent>
       <CardFooter className="">
@@ -265,53 +325,6 @@ function AILiftingAssistantCard() {
           </form>
         </div>
       </CardFooter>
-    </Card>
-  );
-}
-
-function AILiftingAssistantCard2() {
-  const { messages, input, handleInputChange, handleSubmit } = useChat();
-
-  return (
-    <Card className="h-full max-h-full">
-      <CardHeader>
-        <CardTitle>Your Personal Lifting AI Assistant</CardTitle>
-        <CardDescription>
-          Discussions are shown on your device and not saved on our servers.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4 max-h-96 flex-grow overflow-auto rounded border p-2">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`mb-2 ${message.role === "user" ? "text-right" : "text-left"}`}
-            >
-              <span
-                className={`inline-block rounded-lg p-2 ${message.role === "user" ? "bg-blue-200" : "bg-gray-200"}`}
-              >
-                {message.content}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex space-x-2">
-          <input
-            type="text"
-            value={input}
-            onChange={handleInputChange}
-            placeholder="Type your message here..."
-            className="flex-grow rounded-l border p-2"
-          />
-          <Button
-            type="submit"
-            className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            Ask
-          </Button>
-        </form>
-      </CardContent>
     </Card>
   );
 }
@@ -352,6 +365,8 @@ function BioDetailsCard({
   setBodyWeight,
   sex,
   setSex,
+  shareBioDetails,
+  setShareBioDetails,
 }) {
   return (
     <Card className="">
@@ -363,8 +378,17 @@ function BioDetailsCard({
       </CardHeader>
       <CardContent className="">
         <div className="space-x-2">
-          <Checkbox />
-          <span>Share this with the AI</span>
+          <Checkbox
+            id="shareBioDetails"
+            checked={shareBioDetails}
+            onCheckedChange={setShareBioDetails}
+          />
+          <label
+            htmlFor="shareBioDetails"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            Share this with the AI
+          </label>
         </div>
         <div className="mb-10 flex flex-col items-start gap-4 md:mr-10 md:flex-col md:gap-8">
           <div className="flex w-full flex-col md:w-2/5">
@@ -408,6 +432,23 @@ function BioDetailsCard({
               onValueChange={(values) => setBodyWeight(values[0])}
               className="mt-2 min-w-40 flex-1"
               aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
+            />
+          </div>
+          <div className="flex w-full flex-col md:w-2/5">
+            <div className="py-2">
+              <Label htmlFor="age" className="text-xl">
+                Height:
+              </Label>
+            </div>
+            <Slider
+              min={13}
+              max={100}
+              step={1}
+              // value={[age]}
+              // onValueChange={(values) => setAge(values[0])}
+              className="mt-2 min-w-40 flex-1"
+              aria-label="Height"
+              aria-labelledby="Height"
             />
           </div>
           <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">

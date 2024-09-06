@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
+import { useChat } from "ai/react";
 import { devLog } from "@/lib/processing-utils";
 import { sanityIOClient } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
@@ -189,18 +190,47 @@ function AILiftingAssistantMain({ relatedArticles }) {
 }
 
 function AILiftingAssistantCard() {
+  const { messages, input, handleInputChange, handleSubmit } = useChat();
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Your Personal Lifting AI Assistant</CardTitle>
+        <CardDescription>
+          Discussions are shown on your device and not saved on our servers.
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-8 flex items-center gap-2">
-          <Input placeholder="Ask a question here" />
-          <Button className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-1 focus:ring-primary">
+        <div className="mb-4 flex-grow overflow-auto rounded border p-2">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`mb-2 ${message.role === "user" ? "text-right" : "text-left"}`}
+            >
+              <span
+                className={`inline-block rounded-lg p-2 ${message.role === "user" ? "bg-blue-200" : "bg-gray-200"}`}
+              >
+                {message.content}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex space-x-2">
+          <input
+            type="text"
+            value={input}
+            onChange={handleInputChange}
+            placeholder="Type your message here..."
+            className="flex-grow rounded-l border p-2"
+          />
+          <Button
+            type="submit"
+            className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-1 focus:ring-primary"
+          >
             Ask
           </Button>
-        </div>
+        </form>
       </CardContent>
     </Card>
   );

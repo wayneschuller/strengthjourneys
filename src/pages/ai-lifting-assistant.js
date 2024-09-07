@@ -377,10 +377,13 @@ function LiftingDataCard() {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Checkbox
+              id="select-all-checkbox"
               checked={selectedOptions.all}
               onCheckedChange={handleSelectAll}
             />
-            <Label> {selectedOptions.all ? "Uncheck All" : "Check All"}</Label>
+            <Label htmlFor="select-all-checkbox" className="cursor-pointer">
+              {selectedOptions.all ? "Uncheck All" : "Check All"}
+            </Label>
           </div>
 
           <Separator />

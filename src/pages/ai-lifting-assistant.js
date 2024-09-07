@@ -382,7 +382,7 @@ function LiftingDataCard() {
       </CardHeader>
       <CardContent>
         <div className="mb-2 text-muted-foreground">
-          Select what you'd like to share with the AI:
+          Select what to share with the AI:
         </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2">

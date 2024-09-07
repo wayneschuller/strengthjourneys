@@ -342,6 +342,32 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
 function LiftingDataCard() {
   const { parsedData, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
+  const [selectedOptions, setSelectedOptions] = useState({
+    all: false,
+    records: false,
+    frequency: false,
+    consistency: false,
+    sessionData: false,
+  });
+
+  const handleSelectAll = () => {
+    const allChecked = !selectedOptions.all;
+    setSelectedOptions({
+      all: allChecked,
+      records: allChecked,
+      frequency: allChecked,
+      consistency: allChecked,
+      sessionData: allChecked,
+    });
+  };
+
+  const handleOptionChange = (key) => {
+    setSelectedOptions((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+      all: false, // Uncheck 'Check All' if individual option is toggled
+    }));
+  };
 
   return (
     <Card>
@@ -352,34 +378,57 @@ function LiftingDataCard() {
           {authStatus === "authenticated" &&
           parsedData &&
           parsedData.length > 0 ? (
-            <div>Data loaded.</div>
+            <div>Data successfully loaded and available.</div>
           ) : (
             <div>No data loaded</div>
           )}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <h3>Choose what data to share with the AI:</h3>
-        <div className="space-x-2">
-          <Checkbox />
-          <Label>Check All</Label>
-        </div>
+        <p className="mb-2 text-muted-foreground">
+          Select what you'd like to share with the AI:
+        </p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleSelectAll}
+              className={cn(
+                "w-full rounded-lg py-2 font-semibold",
+                "focus:outline-none",
+              )}
+            >
+              {selectedOptions.all ? "Uncheck All" : "Check All"}
+            </Button>
+          </div>
 
-        <div className="space-x-2">
-          <Checkbox />
-          <Label>Personal records, lifetime and yearly</Label>
-        </div>
-        <div className="space-x-2">
-          <Checkbox />
-          <Label>Lift frequency and timeline metadata</Label>
-        </div>
-        <div className="space-x-2">
-          <Checkbox />
-          <Label>Consistency ratings</Label>
-        </div>
-        <div className="space-x-2">
-          <Checkbox />
-          <Label>Previous two weeks detailed session data</Label>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={selectedOptions.records}
+              onCheckedChange={() => handleOptionChange("records")}
+            />
+            <Label>Personal records, lifetime and yearly</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={selectedOptions.frequency}
+              onCheckedChange={() => handleOptionChange("frequency")}
+            />
+            <Label>Lift frequency and timeline metadata</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={selectedOptions.consistency}
+              onCheckedChange={() => handleOptionChange("consistency")}
+            />
+            <Label>Consistency ratings</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={selectedOptions.sessionData}
+              onCheckedChange={() => handleOptionChange("sessionData")}
+            />
+            <Label>Previous two weeks detailed session data</Label>
+          </div>
         </div>
       </CardContent>
     </Card>

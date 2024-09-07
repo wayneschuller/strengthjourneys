@@ -10,6 +10,16 @@ const SYSTEM_PROMPT =
   "Emphasise safety and take precautions if user indicates any health concerns.";
 
 export async function POST(req) {
+  if (!process.env.OPENAI_API_KEY) {
+    return new Response(
+      JSON.stringify({ error: "OpenAI API key is not set" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+
   const { messages } = await req.json();
 
   // Initialize the system messages array

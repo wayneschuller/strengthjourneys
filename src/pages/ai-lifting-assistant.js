@@ -260,16 +260,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
       return { messages };
     },
   });
-
-  const messagesEndRef = useRef(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const scrollRef = useChatScroll(messages);
 
   return (
     <Card className="max-h-full bg-background text-foreground">
@@ -285,7 +276,10 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         <FlickeringGridDemo />
       </CardHeader>
       <CardContent className="flex h-auto flex-col justify-between">
-        <div className="mb-4 h-96 space-y-4 overflow-auto scroll-smooth rounded-lg border border-border p-4">
+        <div
+          ref={scrollRef}
+          className="mb-4 h-96 space-y-4 overflow-auto scroll-smooth rounded-lg border border-border p-4"
+        >
           {messages.length === 0 ? (
             <div className="flex h-80 flex-col items-center justify-center space-y-2 text-center">
               {defaultMessages.map((message, index) => (
@@ -312,11 +306,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
               </div>
             ))
           )}
-          {/* <div key="endpoint" ref={messagesEndRef} /> */}
-          <LoaderCircle
-            ref={messagesEndRef}
-            className={cn(isLoading ? "animate-spin" : "hidden")}
-          />
+          <LoaderCircle className={cn(isLoading ? "animate-spin" : "hidden")} />
         </div>
       </CardContent>
       <CardFooter className="">
@@ -553,6 +543,16 @@ function FlickeringGridDemo() {
       width={70}
     />
   );
+}
+
+function useChatScroll(dep) {
+  const ref = useRef();
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.scrollTop = ref.current.scrollHeight;
+    }
+  }, [dep]);
+  return ref;
 }
 
 const HeightWidget = () => {

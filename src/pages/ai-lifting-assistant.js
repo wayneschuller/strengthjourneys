@@ -375,13 +375,17 @@ function LiftingDataCard() {
           Select what to share with the AI:
         </div>
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="group flex items-center gap-2">
             <Checkbox
               id="select-all-checkbox"
               checked={selectedOptions.all}
               onCheckedChange={handleSelectAll}
+              className="group-hover:underline"
             />
-            <Label htmlFor="select-all-checkbox" className="cursor-pointer">
+            <Label
+              htmlFor="select-all-checkbox"
+              className="cursor-pointer group-hover:underline"
+            >
               {selectedOptions.all ? "Uncheck All" : "Check All"}
             </Label>
           </div>
@@ -389,31 +393,55 @@ function LiftingDataCard() {
           <Separator />
           <div className="flex items-center gap-2">
             <Checkbox
+              id="records-checkbox"
               checked={selectedOptions.records}
               onCheckedChange={() => handleOptionChange("records")}
             />
-            <Label>Personal records, lifetime and yearly</Label>
+            <Label
+              htmlFor="records-checkbox"
+              className="cursor-pointer hover:underline"
+            >
+              Personal records, lifetime and yearly
+            </Label>
           </div>
           <div className="flex items-center gap-2">
             <Checkbox
+              id="frequency-checkbox"
               checked={selectedOptions.frequency}
               onCheckedChange={() => handleOptionChange("frequency")}
             />
-            <Label>Lift frequency and timeline metadata</Label>
+            <Label
+              htmlFor="frequency-checkbox"
+              className="cursor-pointer hover:underline"
+            >
+              Lift frequency and timeline metadata
+            </Label>
           </div>
           <div className="flex items-center gap-2">
             <Checkbox
+              id="consistency-checkbox"
               checked={selectedOptions.consistency}
               onCheckedChange={() => handleOptionChange("consistency")}
             />
-            <Label>Consistency ratings</Label>
+            <Label
+              htmlFor="consistency-checkbox"
+              className="cursor-pointer hover:underline"
+            >
+              Consistency ratings
+            </Label>
           </div>
           <div className="flex items-center gap-2">
             <Checkbox
+              id="session-data-checkbox"
               checked={selectedOptions.sessionData}
               onCheckedChange={() => handleOptionChange("sessionData")}
             />
-            <Label>Previous two weeks detailed session data</Label>
+            <Label
+              htmlFor="session-data-checkbox"
+              className="cursor-pointer hover:underline"
+            >
+              Previous two weeks detailed session data
+            </Label>
           </div>
           <div>
             {/* <Link href="/privacy-policy.html" className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800" > Privacy Policy </Link> */}

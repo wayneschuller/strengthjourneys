@@ -347,20 +347,40 @@ function LiftingDataCard() {
     <Card>
       <CardHeader>
         <CardTitle>Your Lifting Data</CardTitle>
+        <CardDescription>
+          {authStatus === "unauthenticated" && "Sign in to share your data"}
+          {authStatus === "authenticated" &&
+          parsedData &&
+          parsedData.length > 0 ? (
+            <div>Data loaded.</div>
+          ) : (
+            <div>No data loaded</div>
+          )}
+        </CardDescription>
       </CardHeader>
       <CardContent>
+        <h3>Choose what data to share with the AI:</h3>
         <div className="space-x-2">
           <Checkbox />
-          <span>Share a summary of my lifting data with the AI</span>
+          <Label>Check All</Label>
         </div>
-        {authStatus === "unauthenticated" && "Sign in to share your data"}
-        {authStatus === "authenticated" &&
-        parsedData &&
-        parsedData.length > 0 ? (
-          <div>Data loaded.</div>
-        ) : (
-          <div>No data loaded</div>
-        )}
+
+        <div className="space-x-2">
+          <Checkbox />
+          <Label>Personal records, lifetime and yearly</Label>
+        </div>
+        <div className="space-x-2">
+          <Checkbox />
+          <Label>Lift frequency and timeline metadata</Label>
+        </div>
+        <div className="space-x-2">
+          <Checkbox />
+          <Label>Consistency ratings</Label>
+        </div>
+        <div className="space-x-2">
+          <Checkbox />
+          <Label>Previous two weeks detailed session data</Label>
+        </div>
       </CardContent>
     </Card>
   );

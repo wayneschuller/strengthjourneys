@@ -17,7 +17,7 @@ export async function POST(req) {
 
   // Check for the EXTENDED_AI_PROMPT environment variable
   if (process.env.EXTENDED_AI_PROMPT) {
-    systemMessages.push({
+    systemMessages.unshift({
       role: "system",
       content: process.env.EXTENDED_AI_PROMPT,
     });

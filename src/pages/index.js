@@ -32,12 +32,6 @@ import { GettingStartedCard } from "@/components/instructions-cards";
 //
 export const featurePages = [
   {
-    href: "/ai-lifting-assistant",
-    title: "AI Lifting Assistant",
-    description: "Ask questions of your lifting data.",
-    IconComponent: Bot,
-  },
-  {
     href: "/analyzer",
     title: "PR Analyzer",
     description: "See lifetime and recent personal records.",
@@ -48,6 +42,12 @@ export const featurePages = [
     title: "Strength Visualizer",
     description: "Interactive lifetime charts of all lifts.",
     IconComponent: LineChart,
+  },
+  {
+    href: "/ai-lifting-assistant",
+    title: "AI Lifting Assistant",
+    description: "Ask questions of your lifting data.",
+    IconComponent: Bot,
   },
   {
     href: "/calculator",

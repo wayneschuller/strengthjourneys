@@ -385,9 +385,9 @@ function LiftingDataCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="mb-2 text-muted-foreground">
+        <div className="mb-2 text-muted-foreground">
           Select what you'd like to share with the AI:
-        </p>
+        </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Button
@@ -428,6 +428,9 @@ function LiftingDataCard() {
               onCheckedChange={() => handleOptionChange("sessionData")}
             />
             <Label>Previous two weeks detailed session data</Label>
+          </div>
+          <div>
+            {/* <Link href="/privacy-policy.html" className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800" > Privacy Policy </Link> */}
           </div>
         </div>
       </CardContent>

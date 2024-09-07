@@ -36,7 +36,7 @@ import { Separator } from "@/components/ui/separator";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { LoaderCircle } from "lucide-react";
+import { Check, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 
@@ -376,17 +376,14 @@ function LiftingDataCard() {
         </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <Button
-              onClick={handleSelectAll}
-              className={cn(
-                "w-full rounded-lg py-2 font-semibold",
-                "focus:outline-none",
-              )}
-            >
-              {selectedOptions.all ? "Uncheck All" : "Check All"}
-            </Button>
+            <Checkbox
+              checked={selectedOptions.all}
+              onCheckedChange={handleSelectAll}
+            />
+            <Label> {selectedOptions.all ? "Uncheck All" : "Check All"}</Label>
           </div>
 
+          <Separator />
           <div className="flex items-center gap-2">
             <Checkbox
               checked={selectedOptions.records}
@@ -458,6 +455,7 @@ function BioDetailsCard({
             Share this with the AI
           </label>
         </div>
+
         <div className="mb-10 flex flex-col items-start gap-4 md:flex-col md:gap-8">
           <div className="flex w-full flex-col">
             <div className="py-2">

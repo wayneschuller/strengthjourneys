@@ -375,13 +375,9 @@ function LiftingDataCard() {
         <CardTitle>Your Lifting Data</CardTitle>
         <CardDescription>
           {authStatus === "unauthenticated" && "Sign in to share your data"}
-          {authStatus === "authenticated" &&
-          parsedData &&
-          parsedData.length > 0 ? (
-            <div>Data successfully loaded and available.</div>
-          ) : (
-            <div>No data loaded</div>
-          )}
+          {authStatus === "authenticated" && parsedData && parsedData.length > 0
+            ? "Data successfully loaded and available."
+            : "No data loaded"}
         </CardDescription>
       </CardHeader>
       <CardContent>

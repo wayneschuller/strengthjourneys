@@ -180,7 +180,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
         AI Lifting Assistant{" "}
       </h1>
       <div className="flex flex-col gap-5 lg:flex-row">
-        <div className="flex-1 lg:flex lg:flex-col">
+        <div className="h-dvh flex-1 lg:flex lg:flex-col">
           <AILiftingAssistantCard
             userProvidedProfileData={userProvidedProfileData}
           />
@@ -275,10 +275,10 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         </div>
         <FlickeringGridDemo />
       </CardHeader>
-      <CardContent className="flex h-auto flex-col justify-between">
+      <CardContent className="flex flex-col justify-between">
         <div
           ref={scrollRef}
-          className="mb-4 h-96 space-y-4 overflow-auto scroll-smooth rounded-lg border border-border p-4"
+          className="mb-4 h-[30rem] space-y-4 overflow-auto scroll-smooth rounded-lg border border-border p-4"
         >
           {messages.length === 0 ? (
             <div className="flex h-80 flex-col items-center justify-center space-y-2 text-center">

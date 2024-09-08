@@ -366,7 +366,7 @@ function LiftingDataCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your Lifting Data</CardTitle>
+        <CardTitle>Talk To Your Lifting Data</CardTitle>
         <CardDescription>
           {authStatus === "unauthenticated" && "Sign in to share your data"}
           {authStatus === "authenticated" && parsedData && parsedData.length > 0
@@ -390,7 +390,7 @@ function LiftingDataCard() {
               htmlFor="select-all-checkbox"
               className="cursor-pointer group-hover:underline"
             >
-              {selectedOptions.all ? "Uncheck All" : "Check All"}
+              {selectedOptions.all ? "Unshare All" : "Share All"}
             </Label>
           </div>
 

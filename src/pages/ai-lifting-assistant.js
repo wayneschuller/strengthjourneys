@@ -264,6 +264,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   });
   const scrollRef = useChatScroll(messages);
 
+  devLog(messages);
+
   return (
     <Card className="max-h-full bg-background text-foreground">
       <CardHeader className="flex flex-1 flex-row">
@@ -304,7 +306,9 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                       : "bg-secondary text-secondary-foreground"
                   }`}
                 >
-                  {message.content}
+                  {message.content.split("\n").map((line, lineIndex) => (
+                    <p key={lineIndex}>{line}</p>
+                  ))}
                 </span>
               </div>
             ))

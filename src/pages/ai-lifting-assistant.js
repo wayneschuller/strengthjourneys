@@ -404,7 +404,10 @@ function LiftingDataCard() {
             />
             <Label
               htmlFor="records-checkbox"
-              className="cursor-pointer hover:underline"
+              className={cn(
+                "cursor-pointer hover:underline",
+                !selectedOptions.records && "text-muted-foreground/50",
+              )}
             >
               Personal records, lifetime and yearly
             </Label>
@@ -418,7 +421,10 @@ function LiftingDataCard() {
             />
             <Label
               htmlFor="frequency-checkbox"
-              className="cursor-pointer hover:underline"
+              className={cn(
+                "cursor-pointer hover:underline",
+                !selectedOptions.frequency && "text-muted-foreground/50",
+              )}
             >
               Lift frequency and timeline metadata
             </Label>
@@ -432,7 +438,10 @@ function LiftingDataCard() {
             />
             <Label
               htmlFor="consistency-checkbox"
-              className="cursor-pointer hover:underline"
+              className={cn(
+                "cursor-pointer hover:underline",
+                !selectedOptions.consistency && "text-muted-foreground/50",
+              )}
             >
               Consistency ratings
             </Label>
@@ -446,14 +455,25 @@ function LiftingDataCard() {
             />
             <Label
               htmlFor="session-data-checkbox"
-              className="cursor-pointer hover:underline"
+              className={cn(
+                "cursor-pointer hover:underline",
+                !selectedOptions.sessionData && "text-muted-foreground/50",
+              )}
             >
               Previous two weeks detailed session data
             </Label>
           </div>
-          <div>
-            {/* <Link href="/privacy-policy.html" className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800" > Privacy Policy </Link> */}
-          </div>
+        </div>
+        <div className="mt-5 text-sm text-muted-foreground">
+          <p>
+            For more information read our{" "}
+            <Link
+              href="/privacy-policy.html"
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            >
+              Privacy Policy
+            </Link>
+          </p>
         </div>
       </CardContent>
     </Card>

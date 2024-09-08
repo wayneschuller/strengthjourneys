@@ -31,7 +31,12 @@ export async function POST(req) {
       role: "system",
       content: process.env.EXTENDED_AI_PROMPT,
     });
-    devLog(`Extended prompt added...`);
+
+    const charCount = process.env.EXTENDED_AI_PROMPT.length;
+    const wordCount = process.env.EXTENDED_AI_PROMPT.trim().split(/\s+/).length;
+    devLog(
+      `Extended prompt detected: Characters: ${charCount}, Words: ${wordCount}`,
+    );
   }
 
   const result = await streamText({

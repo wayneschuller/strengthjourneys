@@ -380,7 +380,7 @@ function LiftingDataCard() {
               id="select-all-checkbox"
               checked={selectedOptions.all}
               onCheckedChange={handleSelectAll}
-              className="group-hover:underline"
+              className="group-hover:border-blue-500"
             />
             <Label
               htmlFor="select-all-checkbox"
@@ -391,11 +391,12 @@ function LiftingDataCard() {
           </div>
 
           <Separator />
-          <div className="flex items-center gap-2">
+          <div className="group flex items-center gap-2">
             <Checkbox
               id="records-checkbox"
               checked={selectedOptions.records}
               onCheckedChange={() => handleOptionChange("records")}
+              className="group-hover:border-blue-500"
             />
             <Label
               htmlFor="records-checkbox"
@@ -404,11 +405,12 @@ function LiftingDataCard() {
               Personal records, lifetime and yearly
             </Label>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="group flex items-center gap-2">
             <Checkbox
               id="frequency-checkbox"
               checked={selectedOptions.frequency}
               onCheckedChange={() => handleOptionChange("frequency")}
+              className="group-hover:border-blue-500"
             />
             <Label
               htmlFor="frequency-checkbox"
@@ -417,11 +419,12 @@ function LiftingDataCard() {
               Lift frequency and timeline metadata
             </Label>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="group flex items-center gap-2">
             <Checkbox
               id="consistency-checkbox"
               checked={selectedOptions.consistency}
               onCheckedChange={() => handleOptionChange("consistency")}
+              className="group-hover:border-blue-500"
             />
             <Label
               htmlFor="consistency-checkbox"
@@ -430,11 +433,12 @@ function LiftingDataCard() {
               Consistency ratings
             </Label>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="group flex items-center gap-2">
             <Checkbox
               id="session-data-checkbox"
               checked={selectedOptions.sessionData}
               onCheckedChange={() => handleOptionChange("sessionData")}
+              className="group-hover:border-blue-500"
             />
             <Label
               htmlFor="session-data-checkbox"

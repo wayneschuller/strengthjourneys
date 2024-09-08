@@ -107,6 +107,8 @@ function AILiftingAssistantMain({ relatedArticles }) {
       initializeWithValue: false,
     },
   );
+  const { parsedData, isLoading, liftTypes, topLiftsByTypeAndReps } =
+    useUserLiftingData();
   const [standards, setStandards] = useState({});
   const [shareBioDetails, setShareBioDetails] = useState(false);
 
@@ -331,7 +333,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
 }
 
 function LiftingDataCard() {
-  const { parsedData, isLoading } = useUserLiftingData();
+  const { parsedData, isLoading, liftTypes, topLiftsByTypeAndReps } =
+    useUserLiftingData();
   const { status: authStatus } = useSession();
   const [selectedOptions, setSelectedOptions] = useState({
     all: false,
@@ -373,7 +376,7 @@ function LiftingDataCard() {
       </CardHeader>
       <CardContent>
         <div className="mb-2 text-muted-foreground">
-          Select what to share with the AI:
+          Select the lifting info to share with the AI:
         </div>
         <div className="space-y-2">
           <div className="group flex items-center gap-2">
@@ -474,7 +477,7 @@ function BioDetailsCard({
       <CardHeader>
         <CardTitle>Tell us about yourself</CardTitle>
         <CardDescription>
-          The AI will use this info to personalize answers.
+          Enhance answers by providing your basic details
         </CardDescription>
       </CardHeader>
       <CardContent className="">
@@ -493,7 +496,12 @@ function BioDetailsCard({
           </Label>
         </div>
 
-        <div className="mb-10 flex flex-col items-start gap-4 md:flex-col md:gap-8">
+        <div
+          className={cn(
+            "flex flex-col items-start gap-4 md:flex-col md:gap-8",
+            !shareBioDetails && "text-muted-foreground/40",
+          )}
+        >
           <div className="flex w-full flex-col">
             <div className="py-2">
               <Label htmlFor="age" className="text-xl">
@@ -561,7 +569,7 @@ function BioDetailsCard({
           </div>
         </div>
       </CardContent>
-      <CardFooter className="text-sm"></CardFooter>
+      {/* <CardFooter className="text-sm"></CardFooter> */}
     </Card>
   );
 }

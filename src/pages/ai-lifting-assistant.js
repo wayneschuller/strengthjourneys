@@ -270,7 +270,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
             Your Personal Lifting AI Assistant
           </CardTitle>
           <CardDescription className="text-balance text-muted-foreground">
-            Discussions are shown on your device and not saved on our servers.
+            Discussions are streamed to your device and not stored on our
+            servers.
           </CardDescription>
         </div>
         <FlickeringGridDemo />
@@ -477,18 +478,19 @@ function BioDetailsCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="">
-        <div className="mb-5 flex flex-row space-x-2 align-middle">
+        <div className="group mb-5 flex flex-row space-x-2 align-middle">
           <Checkbox
             id="shareBioDetails"
             checked={shareBioDetails}
             onCheckedChange={setShareBioDetails}
+            className="group-hover:border-blue-500"
           />
-          <label
+          <Label
             htmlFor="shareBioDetails"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            className="cursor-pointer text-sm font-medium leading-none group-hover:underline peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
           >
             Share this with the AI
-          </label>
+          </Label>
         </div>
 
         <div className="mb-10 flex flex-col items-start gap-4 md:flex-col md:gap-8">

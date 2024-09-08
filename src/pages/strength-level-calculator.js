@@ -40,7 +40,7 @@ export default function StrengthLevelCalculator({ relatedArticles }) {
   const description =
     "Discover your strength level with our free calculator. Compare lifts based on age, gender, and bodyweight. Instant results for multiple lifts. Optimize your training.";
   const title =
-    "Strength Level Test: Free Calculator for Lifters | Strength Journeys";
+    "Strength Level Test: Free Tool for Lifters. No login required.";
   const keywords =
     "Strength level calculator, strength test, strength standards, powerlifting benchmarks, weightlifting performance, how strong am I, one-rep max (1RM), squat rating, bench press rating, deadlift rating, overhead press rating, strength comparison, bodyweight ratio, age-adjusted strength, gender-specific strength levels, beginner to elite lifter, strength training progress, fitness assessment tool, weightlifting goals, strength sports";
   const ogImageURL =

@@ -43,7 +43,7 @@ const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
 
 export default function E1RMCalculator({ relatedArticles }) {
-  const title = "One Rep Max Calculator | Advanced Multi-Algorithm E1RMs";
+  const title = "One Rep Max Calculator | Free tool, no login required";
   const description =
     "The worlds greatest one-rep max (ORM) calculator. Use multiple algorithms, units, and personalized strength ratings. Ideal for powerlifters, strength athletes and other fat thumbed atheletes. Mobile friendly UI.";
   const keywords =

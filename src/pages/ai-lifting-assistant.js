@@ -107,6 +107,10 @@ function AILiftingAssistantMain({ relatedArticles }) {
       initializeWithValue: false,
     },
   );
+  const [height, setHeight] = useLocalStorage("AthleteHeight", 170, {
+    initializeWithValue: false,
+  }); // Default height in cm
+
   const { parsedData, isLoading, liftTypes, topLiftsByTypeAndReps } =
     useUserLiftingData();
   const [standards, setStandards] = useState({});
@@ -119,9 +123,10 @@ function AILiftingAssistantMain({ relatedArticles }) {
   let userProvidedProfileData = "";
   if (shareBioDetails) {
     userProvidedProfileData =
-      `Some background information:` +
-      `I am a ${age} year old ${sex}, my weight is ${bodyWeight}${isMetric ? "kg" : "lb"},` +
-      `I prefer to use ${isMetric ? "metric units" : "lb units"}`;
+      `Some background information: ` +
+      `I am a ${age} year old ${sex}, my weight is ${bodyWeight}${isMetric ? "kg" : "lb"}, ` +
+      `I prefer to use ${isMetric ? "metric units" : "lb units"}, ` +
+      `My height is ${height}cm`;
   }
 
   useEffect(() => {
@@ -201,6 +206,8 @@ function AILiftingAssistantMain({ relatedArticles }) {
             toggleIsMetric={toggleIsMetric}
             sex={sex}
             setSex={setSex}
+            height={height}
+            setHeight={setHeight}
             shareBioDetails={shareBioDetails}
             setShareBioDetails={setShareBioDetails}
           />
@@ -473,6 +480,8 @@ function BioDetailsCard({
   setBodyWeight,
   sex,
   setSex,
+  height,
+  setHeight,
   shareBioDetails,
   setShareBioDetails,
 }) {
@@ -550,7 +559,7 @@ function BioDetailsCard({
             />
           </div>
           <div>
-            <HeightWidget />
+            <HeightWidget height={height} setHeight={setHeight} />
           </div>
           <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
             <Label htmlFor="sex" className="text-xl">
@@ -602,9 +611,7 @@ function useChatScroll(dep) {
   return ref;
 }
 
-const HeightWidget = () => {
-  const [height, setHeight] = useState(170); // Default height in cm
-
+const HeightWidget = ({ height, setHeight }) => {
   const handleHeightChange = (newHeight) => {
     setHeight(newHeight[0]);
   };

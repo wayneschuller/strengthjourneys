@@ -122,8 +122,13 @@ function AILiftingAssistantMain({ relatedArticles }) {
     { initializeWithValue: false },
   );
 
-  const { parsedData, isLoading, liftTypes, topLiftsByTypeAndReps } =
-    useUserLiftingData();
+  const {
+    parsedData,
+    isLoading,
+    liftTypes,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+  } = useUserLiftingData();
   const [standards, setStandards] = useState({});
   const [shareBioDetails, setShareBioDetails] = useLocalStorage(
     "SJ_ShareBioDetailsAI",
@@ -194,18 +199,30 @@ function AILiftingAssistantMain({ relatedArticles }) {
   const slicedLiftTypes = liftTypes.slice(0, 10); // Just the top 10 lifts
 
   if (userLiftingMetadata.records) {
-    // devLog(topLiftsByTypeAndReps);
+    devLog(topLiftsByTypeAndReps);
     slicedLiftTypes.forEach((entry) => {
       const liftType = entry.liftType;
 
+      // Tell the AI our best single ever and last 12 months
       const single = topLiftsByTypeAndReps[liftType]?.[0]?.[0];
       if (single !== undefined) {
-        userProvidedProfileData += `My best ${liftType} single was ${single.weight}${single.unitType} on ${single.date}, `;
+        userProvidedProfileData += `My best ever ${liftType} single was ${single.weight}${single.unitType} on ${single.date}, `;
+      }
+      const singleYear = topLiftsByTypeAndRepsLast12Months[liftType]?.[0]?.[0];
+      if (singleYear !== undefined) {
+        userProvidedProfileData += `My best ${liftType} single in the last 12 months was ${singleYear.weight}${singleYear.unitType} on ${singleYear.date}, `;
       }
 
+      // FIXME: Tell the AI our best 3RM ever and last 12 months
+
+      // Tell the AI our best 5RM ever and last 12 months
       const fiveRM = topLiftsByTypeAndReps[liftType]?.[4]?.[0];
       if (fiveRM !== undefined) {
-        userProvidedProfileData += `My best ${liftType} 5RM was ${fiveRM.weight}${fiveRM.unitType} on ${fiveRM.date}, `;
+        userProvidedProfileData += `My best ever ${liftType} 5RM was ${fiveRM.weight}${fiveRM.unitType} on ${fiveRM.date}, `;
+      }
+      const fiveRMYear = topLiftsByTypeAndRepsLast12Months[liftType]?.[4]?.[0];
+      if (fiveRMYear !== undefined) {
+        userProvidedProfileData += `My best ${liftType} 5RM in the last 12 months was ${fiveRMYear.weight}${fiveRMYear.unitType} on ${fiveRMYear.date}, `;
       }
     });
   }

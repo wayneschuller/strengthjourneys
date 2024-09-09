@@ -131,46 +131,6 @@ function AILiftingAssistantMain({ relatedArticles }) {
     { initializeWithValue: false },
   );
 
-  let userProvidedProfileData = "";
-  if (shareBioDetails) {
-    userProvidedProfileData =
-      `Some background information: ` +
-      `I am a ${age} year old ${sex}, my weight is ${bodyWeight}${isMetric ? "kg" : "lb"}, ` +
-      `I prefer to use ${isMetric ? "metric units" : "lb units"}, ` +
-      `My height is ${height}cm, `;
-  }
-
-  const slicedLiftTypes = liftTypes.slice(0, 10); // Just the top 10 lifts
-
-  if (userLiftingMetadata.records) {
-    // devLog(topLiftsByTypeAndReps);
-    slicedLiftTypes.forEach((entry) => {
-      const liftType = entry.liftType;
-
-      const single = topLiftsByTypeAndReps[liftType]?.[0]?.[0];
-      if (single !== undefined) {
-        userProvidedProfileData += `My best ${liftType} single was ${single.weight}${single.unitType} on ${single.date}, `;
-      }
-
-      const fiveRM = topLiftsByTypeAndReps[liftType]?.[4]?.[0];
-      if (fiveRM !== undefined) {
-        userProvidedProfileData += `My best ${liftType} 5RM was ${fiveRM.weight}${fiveRM.unitType} on ${fiveRM.date}, `;
-      }
-    });
-  }
-
-  if (userLiftingMetadata.frequency) {
-    const formattedString = slicedLiftTypes
-      .map(
-        ({ liftType, totalSets, totalReps, newestDate, oldestDate }) =>
-          `${liftType}: ${totalSets} sets, ${totalReps} reps (from ${oldestDate} to ${newestDate})`,
-      )
-      .join("; ");
-
-    userProvidedProfileData +=
-      "Here are my statistics for each lift type: " + formattedString + ", ";
-  }
-
   useEffect(() => {
     const bodyWeightKG = isMetric
       ? bodyWeight
@@ -206,6 +166,61 @@ function AILiftingAssistantMain({ relatedArticles }) {
 
     setStandards(newStandards);
   }, [age, sex, bodyWeight, isMetric]);
+
+  let userProvidedProfileData = "";
+  if (shareBioDetails) {
+    userProvidedProfileData +=
+      `Some background information: ` +
+      `I am a ${age} year old ${sex}, my weight is ${bodyWeight}${isMetric ? "kg" : "lb"}, ` +
+      `I prefer to use ${isMetric ? "metric units" : "lb units"}, ` +
+      `My height is ${height}cm, `;
+
+    let standardsMetadata = "";
+
+    Object.entries(standards).forEach(([lift, levels]) => {
+      standardsMetadata += `For ${lift} the kg standards are:\n`;
+      Object.entries(levels).forEach(([level, weight]) => {
+        standardsMetadata += `- ${level.charAt(0).toUpperCase() + level.slice(1)}: ${weight}kg+\n`;
+      });
+      standardsMetadata += `\n`;
+    });
+
+    userProvidedProfileData +=
+      "To help you assess my progress, here are the Lon Kilgore lifting standards interpolated for my age/sex/weight: ";
+
+    userProvidedProfileData += standardsMetadata;
+  }
+
+  const slicedLiftTypes = liftTypes.slice(0, 10); // Just the top 10 lifts
+
+  if (userLiftingMetadata.records) {
+    // devLog(topLiftsByTypeAndReps);
+    slicedLiftTypes.forEach((entry) => {
+      const liftType = entry.liftType;
+
+      const single = topLiftsByTypeAndReps[liftType]?.[0]?.[0];
+      if (single !== undefined) {
+        userProvidedProfileData += `My best ${liftType} single was ${single.weight}${single.unitType} on ${single.date}, `;
+      }
+
+      const fiveRM = topLiftsByTypeAndReps[liftType]?.[4]?.[0];
+      if (fiveRM !== undefined) {
+        userProvidedProfileData += `My best ${liftType} 5RM was ${fiveRM.weight}${fiveRM.unitType} on ${fiveRM.date}, `;
+      }
+    });
+  }
+
+  if (userLiftingMetadata.frequency) {
+    const formattedString = slicedLiftTypes
+      .map(
+        ({ liftType, totalSets, totalReps, newestDate, oldestDate }) =>
+          `${liftType}: ${totalSets} sets, ${totalReps} reps (from ${oldestDate} to ${newestDate})`,
+      )
+      .join("; ");
+
+    userProvidedProfileData +=
+      "Here are my statistics for each lift type: " + formattedString + ", ";
+  }
 
   const toggleIsMetric = (isMetric) => {
     let newBodyWeight;

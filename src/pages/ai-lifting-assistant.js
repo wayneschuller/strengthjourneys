@@ -141,7 +141,6 @@ function AILiftingAssistantMain({ relatedArticles }) {
   }
 
   const slicedLiftTypes = liftTypes.slice(0, 10); // Just the top 10 lifts
-  devLog(slicedLiftTypes);
 
   if (userLiftingMetadata.records) {
     devLog(`share records...`);
@@ -149,14 +148,16 @@ function AILiftingAssistantMain({ relatedArticles }) {
     slicedLiftTypes.forEach((entry) => {
       const liftType = entry.liftType;
 
-      const value = topLiftsByTypeAndReps[liftType]?.[0]?.[0]; // Safely access prs[liftType][0][0]
-      if (value !== undefined) {
-        devLog(value);
-        userProvidedProfileData += `My best ${liftType} single was ${value.weight}${value.unitType} on ${value.date}, `;
+      const single = topLiftsByTypeAndReps[liftType]?.[0]?.[0];
+      if (single !== undefined) {
+        userProvidedProfileData += `My best ${liftType} single was ${single.weight}${single.unitType} on ${single.date}, `;
+      }
+
+      const fiveRM = topLiftsByTypeAndReps[liftType]?.[4]?.[0];
+      if (fiveRM !== undefined) {
+        userProvidedProfileData += `My best ${liftType} 5RM was ${fiveRM.weight}${fiveRM.unitType} on ${fiveRM.date}, `;
       }
     });
-
-    devLog(userProvidedProfileData);
   }
 
   if (userLiftingMetadata.frequency) {

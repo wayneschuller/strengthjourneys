@@ -132,6 +132,20 @@ export function DesktopNav() {
           <span className="hidden xl:block">Strength Visualizer</span>
         </Link>
         <Link
+          href="/ai-lifting-assistant"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname === "/ai-lifting-assistant"
+              ? "text-foreground"
+              : "text-foreground/60",
+          )}
+        >
+          {/* Short title on small screens */}
+          <span className="hidden md:block xl:hidden">AI Assist</span>
+          {/* Full title on larger screens */}
+          <span className="hidden xl:block">AI Lifting Assistant</span>
+        </Link>
+        <Link
           href="/calculator"
           className={cn(
             "transition-colors hover:text-foreground/80",

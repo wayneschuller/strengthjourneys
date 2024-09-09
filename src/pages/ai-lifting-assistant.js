@@ -186,8 +186,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
   return (
     // <main className="mx-4 flex flex-col items-center md:mx-[5vw]">
     <main className="mx-4 md:mx-[5vw]">
-      <h1 className="py-5 text-center text-xl font-bold tracking-tight md:text-3xl">
-        {" "}
+      <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight">
         AI Lifting Assistant{" "}
       </h1>
       <div className="flex flex-col gap-5 lg:flex-row">
@@ -327,13 +326,18 @@ function LiftingDataCard() {
   const { parsedData, isLoading, liftTypes, topLiftsByTypeAndReps } =
     useUserLiftingData();
   const { status: authStatus } = useSession();
-  const [selectedOptions, setSelectedOptions] = useState({
-    all: false,
-    records: false,
-    frequency: false,
-    consistency: false,
-    sessionData: false,
-  });
+
+  const [selectedOptions, setSelectedOptions] = useLocalStorage(
+    "userLiftingMetadata-selected-options",
+    {
+      all: false,
+      records: false,
+      frequency: false,
+      consistency: false,
+      sessionData: false,
+    },
+    { initializeWithValue: false },
+  );
 
   const handleSelectAll = () => {
     const allChecked = !selectedOptions.all;
@@ -490,7 +494,7 @@ function BioDetailsCard({
       <CardHeader>
         <CardTitle>Tell us about yourself</CardTitle>
         <CardDescription>
-          Enhance answers by providing your basic details
+          Enhance the AI by providing your basic details
         </CardDescription>
       </CardHeader>
       <CardContent className="">

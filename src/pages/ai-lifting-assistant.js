@@ -46,10 +46,10 @@ export default function AILiftingAssistantPage({ relatedArticles }) {
   // OG Meta Tags
   const canonicalURL = "https://www.strengthjourneys.xyz/ai-lifting-assistant";
   const description =
-    "Discover your strength level with our free calculator. Compare lifts based on age, gender, and bodyweight. Instant results for multiple lifts. Optimize your training.";
+    "Free AI Lifting Assistant. Talk to your lifting Data. Receive tailored recommendations to boost your strength training.";
   const title = "AI Lifting Assistant | Strength Journeys";
   const keywords =
-    "Strength level calculator, strength test, strength standards, powerlifting benchmarks, weightlifting performance, how strong am I, one-rep max (1RM), squat rating, bench press rating, deadlift rating, overhead press rating, strength comparison, bodyweight ratio, age-adjusted strength, gender-specific strength levels, beginner to elite lifter, strength training progress, fitness assessment tool, weightlifting goals, strength sports";
+    "AI lifting assistant, personalized lifting advice, strength training, lifting progress tracker, weightlifting analysis, barbell lifting, strength goals, fitness AI";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_ai_lifting_assistant.png";
 

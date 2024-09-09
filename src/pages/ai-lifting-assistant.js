@@ -215,6 +215,9 @@ const defaultMessages = [
   "Am I strong for my age?",
 ];
 
+// -----------------------------------------------------------------------------------------------------
+// AILiftingAssistantCard - chatbot
+// -----------------------------------------------------------------------------------------------------
 function AILiftingAssistantCard({ userProvidedProfileData }) {
   const [isFirstMessage, setIsFirstMessage] = useState(true);
   const {
@@ -235,9 +238,11 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     onResponse: (response) => {
       devLog("Received HTTP response from server:", response);
     },
+    body: { userProvidedMetadata: userProvidedProfileData },
     experimental_prepareRequestBody: ({ messages }) => {
       // FIXME: This is where I was trying to insert user metadata but it's not working yet
       // Try inserting metadata as system background
+      return;
 
       if (
         false ||

@@ -20,23 +20,29 @@ export async function POST(req) {
     );
   }
 
-  const { messages } = await req.json();
+  const { messages, userProvidedMetadata } = await req.json();
 
   // Initialize the system messages array
   let systemMessages = [{ role: "system", content: SYSTEM_PROMPT }];
 
   // Check for the EXTENDED_AI_PROMPT environment variable
   if (process.env.EXTENDED_AI_PROMPT) {
-    systemMessages.unshift({
-      role: "system",
-      content: process.env.EXTENDED_AI_PROMPT,
-    });
+    systemMessages = [
+      {
+        role: "system",
+        content: process.env.EXTENDED_AI_PROMPT,
+      },
+    ];
 
     const charCount = process.env.EXTENDED_AI_PROMPT.length;
     const wordCount = process.env.EXTENDED_AI_PROMPT.trim().split(/\s+/).length;
     devLog(
       `Extended prompt detected: Characters: ${charCount}, Words: ${wordCount}`,
     );
+  }
+
+  if (userProvidedMetadata?.length > 10) {
+    systemMessages.push({ role: "system", content: userProvidedMetadata });
   }
 
   const result = await streamText({

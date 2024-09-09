@@ -110,7 +110,11 @@ function AILiftingAssistantMain({ relatedArticles }) {
   const { parsedData, isLoading, liftTypes, topLiftsByTypeAndReps } =
     useUserLiftingData();
   const [standards, setStandards] = useState({});
-  const [shareBioDetails, setShareBioDetails] = useState(false);
+  const [shareBioDetails, setShareBioDetails] = useLocalStorage(
+    "SJ_ShareBioDetailsAI",
+    false,
+    { initializeWithValue: false },
+  );
 
   let userProvidedProfileData = "";
   if (shareBioDetails) {
@@ -238,38 +242,9 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     onResponse: (response) => {
       devLog("Received HTTP response from server:", response);
     },
-    body: { userProvidedMetadata: userProvidedProfileData },
-    experimental_prepareRequestBody: ({ messages }) => {
-      // FIXME: This is where I was trying to insert user metadata but it's not working yet
-      // Try inserting metadata as system background
-      return;
-
-      if (
-        false ||
-        (isFirstMessage &&
-          messages.length > 0 &&
-          userProvidedProfileData.length > 0)
-      ) {
-        setIsFirstMessage(false);
-        const firstMessage = messages[0];
-        if (firstMessage.role === "user") {
-          return {
-            messages: [
-              ...messages.slice(0, -1),
-              {
-                ...firstMessage,
-                content: `${userProvidedProfileData}\n\n${firstMessage.content}`,
-              },
-            ],
-          };
-        }
-      }
-      return { messages };
-    },
+    body: { userProvidedMetadata: userProvidedProfileData }, // Share the user selected metadata with the AI temporarily
   });
   const scrollRef = useChatScroll(messages);
-
-  devLog(messages);
 
   return (
     <Card className="max-h-full bg-background text-foreground">

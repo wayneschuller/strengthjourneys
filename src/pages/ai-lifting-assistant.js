@@ -110,6 +110,17 @@ function AILiftingAssistantMain({ relatedArticles }) {
   const [height, setHeight] = useLocalStorage("AthleteHeight", 170, {
     initializeWithValue: false,
   }); // Default height in cm
+  const [userLiftingMetadata, setUserLiftingMetaData] = useLocalStorage(
+    "userLiftingMetadata-selected-options",
+    {
+      all: false,
+      records: false,
+      frequency: false,
+      consistency: false,
+      sessionData: false,
+    },
+    { initializeWithValue: false },
+  );
 
   const { parsedData, isLoading, liftTypes, topLiftsByTypeAndReps } =
     useUserLiftingData();
@@ -126,7 +137,38 @@ function AILiftingAssistantMain({ relatedArticles }) {
       `Some background information: ` +
       `I am a ${age} year old ${sex}, my weight is ${bodyWeight}${isMetric ? "kg" : "lb"}, ` +
       `I prefer to use ${isMetric ? "metric units" : "lb units"}, ` +
-      `My height is ${height}cm`;
+      `My height is ${height}cm, `;
+  }
+
+  const slicedLiftTypes = liftTypes.slice(0, 10); // Just the top 10 lifts
+  devLog(slicedLiftTypes);
+
+  if (userLiftingMetadata.records) {
+    devLog(`share records...`);
+    // devLog(topLiftsByTypeAndReps);
+    slicedLiftTypes.forEach((entry) => {
+      const liftType = entry.liftType;
+
+      const value = topLiftsByTypeAndReps[liftType]?.[0]?.[0]; // Safely access prs[liftType][0][0]
+      if (value !== undefined) {
+        devLog(value);
+        userProvidedProfileData += `My best ${liftType} single was ${value.weight}${value.unitType} on ${value.date}, `;
+      }
+    });
+
+    devLog(userProvidedProfileData);
+  }
+
+  if (userLiftingMetadata.frequency) {
+    const formattedString = slicedLiftTypes
+      .map(
+        ({ liftType, totalSets, totalReps, newestDate, oldestDate }) =>
+          `${liftType}: ${totalSets} sets, ${totalReps} reps (from ${oldestDate} to ${newestDate})`,
+      )
+      .join("; ");
+
+    userProvidedProfileData +=
+      "Here are my statistics for each lift type: " + formattedString + ", ";
   }
 
   useEffect(() => {
@@ -210,7 +252,10 @@ function AILiftingAssistantMain({ relatedArticles }) {
             shareBioDetails={shareBioDetails}
             setShareBioDetails={setShareBioDetails}
           />
-          <LiftingDataCard />
+          <LiftingDataCard
+            selectedOptions={userLiftingMetadata}
+            setSelectedOptions={setUserLiftingMetaData}
+          />
         </div>
       </div>
       <RelatedArticles articles={relatedArticles} />
@@ -330,22 +375,9 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   );
 }
 
-function LiftingDataCard() {
-  const { parsedData, isLoading, liftTypes, topLiftsByTypeAndReps } =
-    useUserLiftingData();
+export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
+  const { parsedData, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
-
-  const [selectedOptions, setSelectedOptions] = useLocalStorage(
-    "userLiftingMetadata-selected-options",
-    {
-      all: false,
-      records: false,
-      frequency: false,
-      consistency: false,
-      sessionData: false,
-    },
-    { initializeWithValue: false },
-  );
 
   const handleSelectAll = () => {
     const allChecked = !selectedOptions.all;

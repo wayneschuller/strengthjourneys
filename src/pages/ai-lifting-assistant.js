@@ -51,7 +51,7 @@ export default function AILiftingAssistantPage({ relatedArticles }) {
   const keywords =
     "Strength level calculator, strength test, strength standards, powerlifting benchmarks, weightlifting performance, how strong am I, one-rep max (1RM), squat rating, bench press rating, deadlift rating, overhead press rating, strength comparison, bodyweight ratio, age-adjusted strength, gender-specific strength levels, beginner to elite lifter, strength training progress, fitness assessment tool, weightlifting goals, strength sports";
   const ogImageURL =
-    "https://www.strengthjourneys.xyz/strength_journeys_strength_levels_calculator_og.png";
+    "https://www.strengthjourneys.xyz/strength_journeys_ai_lifting_assistant.png";
 
   return (
     <>

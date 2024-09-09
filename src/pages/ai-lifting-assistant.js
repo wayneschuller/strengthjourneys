@@ -143,7 +143,6 @@ function AILiftingAssistantMain({ relatedArticles }) {
   const slicedLiftTypes = liftTypes.slice(0, 10); // Just the top 10 lifts
 
   if (userLiftingMetadata.records) {
-    devLog(`share records...`);
     // devLog(topLiftsByTypeAndReps);
     slicedLiftTypes.forEach((entry) => {
       const liftType = entry.liftType;
@@ -287,13 +286,13 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   } = useChat({
     onFinish: (message, { usage, finishReason }) => {
       // devLog("Finished streaming message:", message);
-      // devLog("Token usage:", usage);
+      devLog("Token usage:", usage);
     },
     onError: (error) => {
       console.error("An error occurred:", error);
     },
     onResponse: (response) => {
-      devLog("Received HTTP response from server:", response);
+      // devLog("Received HTTP response from server:", response);
     },
     body: { userProvidedMetadata: userProvidedProfileData }, // Share the user selected metadata with the AI temporarily
   });

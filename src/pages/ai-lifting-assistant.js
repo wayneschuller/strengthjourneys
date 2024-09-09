@@ -233,6 +233,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   const {
     messages,
     input,
+    setInput,
     append,
     handleInputChange,
     handleSubmit,
@@ -274,7 +275,14 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
           {messages.length === 0 ? (
             <div className="flex h-80 flex-col items-center justify-center space-y-2 text-center">
               {defaultMessages.map((message, index) => (
-                <p key={index} className="italic text-muted-foreground">
+                <p
+                  key={index}
+                  className="cursor-pointer italic text-muted-foreground"
+                  onClick={() => {
+                    setInput(message);
+                    // handleSubmit(); // FIXME: Get it to auto submit when they click a suggested default
+                  }}
+                >
                   {message}
                 </p>
               ))}

@@ -1,6 +1,8 @@
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { devLog } from "@/lib/processing-utils";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -10,6 +12,9 @@ const SYSTEM_PROMPT =
   "Emphasise safety and take precautions if user indicates any health concerns.";
 
 export async function POST(req) {
+  const session = await getServerSession(authOptions);
+  let isPaidUser = false;
+
   if (!process.env.OPENAI_API_KEY) {
     return new Response(
       JSON.stringify({ error: "OpenAI API key is not set" }),
@@ -19,6 +24,13 @@ export async function POST(req) {
       },
     );
   }
+
+  const paidUsers = process.env.SJ_PAID_USERS;
+  if (paidUsers) {
+    const isPaidUser = paidUsers.includes(session?.user?.email);
+  }
+
+  const AI_model = isPaidUser ? openai("gpt-4o") : openai("gpt-4o-mini");
 
   const { messages, userProvidedMetadata } = await req.json();
 
@@ -46,8 +58,9 @@ export async function POST(req) {
   }
 
   const result = await streamText({
-    // model: openai("gpt-4o-mini"),
-    model: openai("gpt-4o"),
+    // model: openai("gpt-4o-mini"), // Anyone
+    // model: openai("gpt-4o"), // Paid users only
+    model: AI_model,
     messages: [...systemMessages, ...messages],
   });
 

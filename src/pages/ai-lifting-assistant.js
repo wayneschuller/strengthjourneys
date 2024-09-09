@@ -228,10 +228,20 @@ function AILiftingAssistantMain({ relatedArticles }) {
   return (
     // <main className="mx-4 flex flex-col items-center md:mx-[5vw]">
     <main className="mx-4 md:mx-[5vw]">
-      <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight">
+      <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight">
         AI Lifting Assistant{" "}
       </h1>
-      <div className="flex flex-col gap-5 lg:flex-row">
+      <h3 className="text-center">
+        This new feature is still being tested. Please leave{" "}
+        <a
+          href="https://strengthjourneys.canny.io/"
+          className="hover:underline"
+        >
+          feedback
+        </a>
+        !
+      </h3>
+      <div className="mt-8 flex flex-col gap-5 lg:flex-row">
         <div className="h-dvh flex-1 lg:flex lg:flex-col">
           <AILiftingAssistantCard
             userProvidedProfileData={userProvidedProfileData}
@@ -478,7 +488,7 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
                 !selectedOptions.consistency && "text-muted-foreground/50",
               )}
             >
-              Consistency ratings
+              Consistency ratings (coming soon)
             </Label>
           </div>
           <div className="group flex items-center gap-2">
@@ -495,7 +505,7 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
                 !selectedOptions.sessionData && "text-muted-foreground/50",
               )}
             >
-              Previous two weeks detailed session data
+              Previous two weeks detailed session data (coming soon)
             </Label>
           </div>
         </div>

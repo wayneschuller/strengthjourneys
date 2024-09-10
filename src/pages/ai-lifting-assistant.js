@@ -355,8 +355,12 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                   key={index}
                   className="cursor-pointer italic text-muted-foreground"
                   onClick={() => {
-                    setInput(message);
+                    // setInput(message);
                     // handleSubmit(); // FIXME: Get it to auto submit when they click a suggested default
+                    append({
+                      role: "user", // or 'assistant'
+                      content: message,
+                    });
                   }}
                 >
                   {message}

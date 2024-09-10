@@ -94,7 +94,8 @@ export async function POST(req) {
 
 function isBase64(str) {
   try {
-    return btoa(atob(str)) === str;
+    const buffer = Buffer.from(str, "base64");
+    return buffer.toString("base64") === str;
   } catch {
     return false;
   }

@@ -13,7 +13,7 @@ const SYSTEM_PROMPT =
 
 export async function POST(req) {
   const session = await getServerSession(authOptions);
-  let isPaidUser = false;
+  let isAdvancedModel = false;
 
   if (!process.env.OPENAI_API_KEY) {
     return new Response(
@@ -27,10 +27,8 @@ export async function POST(req) {
 
   const paidUsers = process.env.SJ_PAID_USERS;
   if (paidUsers) {
-    const isPaidUser = paidUsers.includes(session?.user?.email);
+    isAdvancedModel = paidUsers.includes(session?.user?.email);
   }
-
-  const AI_model = isPaidUser ? openai("gpt-4o") : openai("gpt-4o-mini");
 
   const { messages, userProvidedMetadata } = await req.json();
 
@@ -66,6 +64,9 @@ export async function POST(req) {
       content: `The user's name is: ${firstName}. `,
     });
   }
+
+  isAdvancedModel = true; // While in early release, let everyone have the best model
+  const AI_model = isAdvancedModel ? openai("gpt-4o") : openai("gpt-4o-mini");
 
   const result = await streamText({
     // model: openai("gpt-4o-mini"), // Anyone

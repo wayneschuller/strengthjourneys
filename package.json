@@ -59,6 +59,7 @@
     "react-color": "^2.19.3",
     "react-dom": "^18",
     "react-google-drive-picker": "file:dependencies/react-google-drive-picker",
+    "react-markdown": "^9.0.1",
     "recharts": "^2.12.7",
     "sharp": "^0.33.4",
     "short-uuid": "^5.2.0",

@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
+import ReactMarkdown from "react-markdown";
 
 const RELATED_ARTICLES_CATEGORY = "AI Lifting Assistant";
 
@@ -381,9 +382,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                       : "bg-secondary text-secondary-foreground"
                   }`}
                 >
-                  {message.content.split("\n").map((line, lineIndex) => (
-                    <p key={lineIndex}>{line}</p>
-                  ))}
+                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                  {/* {message.content.split("\n").map((line, lineIndex) => ( <p key={lineIndex}>{line}</p>))} */}
                 </span>
               </div>
             ))

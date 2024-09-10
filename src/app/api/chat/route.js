@@ -38,18 +38,10 @@ export async function POST(req) {
   // Check for the EXTENDED_AI_PROMPT environment variable
   const envAIPrompt = process.env.EXTENDED_AI_PROMPT;
   if (envAIPrompt) {
-    let decodedPrompt;
+    let decodedPrompt = envAIPrompt;
 
-    if (isBase64(envAIPrompt)) {
-      // If it's base64, decode it
-      decodedPrompt = Buffer.from(envAIPrompt, "base64").toString("utf-8");
-    } else {
-      // If it's not base64, use it as is
-      decodedPrompt = envAIPrompt;
-    }
-
-    devLog(`Prompt detected:`);
-    devLog(decodedPrompt);
+    // FIXME: We had some half working code to optionally read base64 encoded extended prompt.
+    // if (isBase64(envAIPrompt)) { decodedPrompt = Buffer.from(envAIPrompt, "base64").toString("utf-8"); } else { decodedPrompt = envAIPrompt; }
 
     systemMessages = [
       {

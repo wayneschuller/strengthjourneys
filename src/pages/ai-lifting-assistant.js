@@ -187,7 +187,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
   const slicedLiftTypes = liftTypes.slice(0, 10); // Just the top 10 lifts
 
   if (userLiftingMetadata.records) {
-    devLog(topLiftsByTypeAndReps);
+    // devLog(topLiftsByTypeAndReps);
     slicedLiftTypes.forEach((entry) => {
       const liftType = entry.liftType;
 

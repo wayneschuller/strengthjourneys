@@ -36,16 +36,30 @@ export async function POST(req) {
   let systemMessages = [{ role: "system", content: SYSTEM_PROMPT }];
 
   // Check for the EXTENDED_AI_PROMPT environment variable
-  if (process.env.EXTENDED_AI_PROMPT) {
+  const envAIPrompt = process.env.EXTENDED_AI_PROMPT;
+  if (envAIPrompt) {
+    let decodedPrompt;
+
+    if (isBase64(envAIPrompt)) {
+      // If it's base64, decode it
+      decodedPrompt = Buffer.from(envAIPrompt, "base64").toString("utf-8");
+    } else {
+      // If it's not base64, use it as is
+      decodedPrompt = envAIPrompt;
+    }
+
+    devLog(`Prompt detected:`);
+    devLog(decodedPrompt);
+
     systemMessages = [
       {
         role: "system",
-        content: process.env.EXTENDED_AI_PROMPT,
+        content: decodedPrompt,
       },
     ];
 
-    const charCount = process.env.EXTENDED_AI_PROMPT.length;
-    const wordCount = process.env.EXTENDED_AI_PROMPT.trim().split(/\s+/).length;
+    const charCount = decodedPrompt.length;
+    const wordCount = decodedPrompt.trim().split(/\s+/).length;
     devLog(
       `Extended prompt detected: Characters: ${charCount}, Words: ${wordCount}`,
     );
@@ -76,4 +90,12 @@ export async function POST(req) {
   });
 
   return result.toDataStreamResponse();
+}
+
+function isBase64(str) {
+  try {
+    return btoa(atob(str)) === str;
+  } catch {
+    return false;
+  }
 }

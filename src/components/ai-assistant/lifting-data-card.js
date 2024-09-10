@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -6,11 +7,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "../ui/separator";
 import { cn } from "@/lib/utils";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useSession } from "next-auth/react";
 
 export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
   const { parsedData, isLoading } = useUserLiftingData();

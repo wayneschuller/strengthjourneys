@@ -1,3 +1,9 @@
-# https://www.robotstxt.org/robotstxt.html
+# *
 User-agent: *
-Disallow:
+Allow: /
+
+# Host
+Host: https://www.strengthjourneys.xyz/
+
+# Sitemaps
+Sitemap: https://www.strengthjourneys.xyz/sitemap.xml

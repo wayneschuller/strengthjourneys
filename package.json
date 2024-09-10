@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postbuild": "next-sitemap"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.56",
@@ -50,6 +51,7 @@
     "next": "^14.2.5",
     "next-auth": "^4.24.7",
     "next-seo": "^6.6.0",
+    "next-sitemap": "^4.2.3",
     "next-themes": "^0.3.0",
     "normalize-url": "^8.0.1",
     "obscenity": "^0.4.0",

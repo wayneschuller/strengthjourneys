@@ -298,6 +298,8 @@ const defaultMessages = [
   "What should I do in my first gym session?",
   "How often should I deadlift?",
   "Am I strong for my age?",
+  "How do I choose a gym?",
+  "How strong am I?",
   "Write me a motivational rap.",
 ];
 
@@ -354,11 +356,10 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                 <p
                   key={index}
                   className="cursor-pointer italic text-muted-foreground"
+                  // When user clicks one of the sample default messages, send it to the AI
                   onClick={() => {
-                    // setInput(message);
-                    // handleSubmit(); // FIXME: Get it to auto submit when they click a suggested default
                     append({
-                      role: "user", // or 'assistant'
+                      role: "user",
                       content: message,
                     });
                   }}

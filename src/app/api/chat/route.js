@@ -57,6 +57,7 @@ export async function POST(req) {
     systemMessages.push({ role: "system", content: userProvidedMetadata });
   }
 
+  // FIXME: we could put this client side (and make optional?)
   if (session?.user?.name) {
     let firstName = null;
     firstName = session.user.name.split(" ")[0] || session.user.name;

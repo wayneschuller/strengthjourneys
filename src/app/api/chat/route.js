@@ -57,6 +57,15 @@ export async function POST(req) {
     systemMessages.push({ role: "system", content: userProvidedMetadata });
   }
 
+  if (session?.user?.name) {
+    let firstName = null;
+    firstName = session.user.name.split(" ")[0] || session.user.name;
+    systemMessages.push({
+      role: "system",
+      content: `The user's name is: ${firstName}. `,
+    });
+  }
+
   const result = await streamText({
     // model: openai("gpt-4o-mini"), // Anyone
     // model: openai("gpt-4o"), // Paid users only

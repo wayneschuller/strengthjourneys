@@ -14,6 +14,7 @@ import Script from "next/script";
 import { devLog } from "@/lib/processing-utils";
 import { TimerProvider } from "@/lib/timer-context";
 import { UserLiftingDataProvider } from "@/lib/use-userlift-data";
+import { MetricalpReactProvider } from "@metricalp/react";
 
 export default function App({ Component, pageProps, session }) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
@@ -48,10 +49,12 @@ export default function App({ Component, pageProps, session }) {
         <SessionProvider session={session}>
           <UserLiftingDataProvider>
             <TimerProvider>
-              <Layout>
-                <Component {...pageProps} />
-                <Toaster />
-              </Layout>
+              <MetricalpReactProvider tid="mam203">
+                <Layout>
+                  <Component {...pageProps} />
+                  <Toaster />
+                </Layout>
+              </MetricalpReactProvider>
             </TimerProvider>
           </UserLiftingDataProvider>
         </SessionProvider>

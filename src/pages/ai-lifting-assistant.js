@@ -300,8 +300,12 @@ const defaultMessages = [
   "How often should I deadlift?",
   "Am I strong for my age?",
   "How do I choose a gym?",
-  "How strong am I?",
   "Write me a motivational rap.",
+  "Isn't deadlifting dangerous?",
+  "How strong am I?",
+  "Can I lift weights and still lose weight?",
+  "How much protein should I eat?",
+  "Should I lift every day?",
 ];
 
 // -----------------------------------------------------------------------------------------------------

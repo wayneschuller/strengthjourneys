@@ -34,19 +34,22 @@ export const featurePages = [
   {
     href: "/analyzer",
     title: "PR Analyzer",
-    description: "See lifetime and recent personal records.",
+    description:
+      "See lifetime and recent personal records. Consistency pie charts and heatmaps.",
     IconComponent: Trophy,
   },
   {
     href: "/visualizer",
     title: "Strength Visualizer",
-    description: "Interactive lifetime charts of all lifts.",
+    description:
+      "Interactive lifetime charts of all lifts. See your strength journey.",
     IconComponent: LineChart,
   },
   {
     href: "/ai-lifting-assistant",
     title: "AI Lifting Assistant",
-    description: "Ask questions of your lifting data.",
+    description:
+      "A strength expert chatbot. Talk to your lifting data. A coach who loves you.",
     IconComponent: Bot,
   },
   {
@@ -65,13 +68,13 @@ export const featurePages = [
   {
     href: "/timer",
     title: "Lifting Set Timer",
-    description: "Set timer for phones or large gym screens.",
+    description: "A set timer for phones or large gym screens.",
     IconComponent: Timer,
   },
   {
     href: "/gym-playlist-leaderboard",
-    title: "Gym Music Playlist Leaderboard",
-    description: "Discover and share new motivational music.",
+    title: "Gym Music Leaderboard",
+    description: "Discover and share new motivational music playlists.",
     IconComponent: Music,
   },
   {
@@ -180,7 +183,7 @@ const FeatureCard = ({ href, title, description, IconComponent }) => (
     <Link href={href}>
       <CardHeader className="min-h-28">
         <CardTitle className="">{title}</CardTitle>
-        <CardDescription className="">{description}</CardDescription>
+        <CardDescription className="h-[2rem]">{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex justify-center">
         <IconComponent size={64} strokeWidth={1.25} />

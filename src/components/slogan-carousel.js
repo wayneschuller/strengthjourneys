@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/carousel";
 
 export function SloganCarousel() {
-  const plugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
+  const plugin = useRef(Autoplay({ delay: 6000, stopOnInteraction: false }));
 
   const slogans = [
     "Lift for yourself. Build strength, not comparisons.",

@@ -86,6 +86,12 @@ export const featurePages = [
     IconComponent: LibraryBig,
   },
   {
+    href: "/articles/why-it-s-good-to-be-a-barbell-weirdo",
+    title: `Feature Article: Why It's Good To Be A Barbell Weirdo`,
+    description: "Embrace your inner weirdo.",
+    IconComponent: Newspaper,
+  },
+  {
     href: "/articles/the-iron-and-the-soul-author-henry-rollins",
     title: "Feature Article: The Iron and the Soul",
     description: "The classic inspirational lifting essay by Henry Rollins.",

@@ -308,6 +308,7 @@ const defaultMessages = [
   "How much protein should I eat?",
   "Should I lift every day?",
   "What are the health benefits for women who lift?",
+  "ME STRONG",
 ];
 
 // -----------------------------------------------------------------------------------------------------
@@ -354,14 +355,14 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         </div>
         <FlickeringGridDemo />
       </CardHeader>
-      <CardContent className="flex flex-col justify-between">
+      <CardContent className="flex flex-col pb-0 align-middle">
         <div
           ref={scrollRef}
-          className="mb-4 h-[30rem] space-y-4 overflow-auto scroll-smooth rounded-lg border border-border p-4"
+          className="mb-4 min-h-[30rem] overflow-auto scroll-smooth rounded-lg border border-border p-4 pb-0"
         >
           {messages.length === 0 ? (
-            <div className="flex h-80 flex-col items-center justify-center space-x-1 text-center">
-              <p className="text-muted-foreground">
+            <div className="flex flex-col items-center justify-center space-x-1 text-center">
+              <p className="mb-2 text-muted-foreground">
                 Enter your questions into the chat box below (or click a sample
                 question)
               </p>

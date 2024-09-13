@@ -88,7 +88,7 @@ const SquareImage = ({ sanityImage }) => {
   let imageUrl = null;
   if (sanityImage) {
     imageUrl = urlFor(sanityImage).url();
-    devLog(imageUrl);
+    // devLog(imageUrl);
   }
 
   if (!imageUrl) return null;
@@ -96,7 +96,13 @@ const SquareImage = ({ sanityImage }) => {
   return (
     <div className="relative h-20 w-20 transform overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-110">
       {/* Adjust height as needed */}
-      <Image src={imageUrl} alt="Banner" fill style={{ objectFit: "cover" }} />
+      <Image
+        src={imageUrl}
+        alt="Banner"
+        fill
+        style={{ objectFit: "cover" }}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw"
+      />
     </div>
   );
 };

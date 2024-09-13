@@ -124,7 +124,13 @@ export default function ArticlePost({ article }) {
 const Banner = ({ imageUrl }) => (
   <div className="relative h-32 w-full overflow-hidden rounded-lg">
     {/* Adjust height as needed */}
-    <Image src={imageUrl} alt="Banner" fill style={{ objectFit: "cover" }} />
+    <Image
+      src={imageUrl}
+      alt="Banner"
+      fill
+      style={{ objectFit: "cover" }}
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw"
+    />
   </div>
 );
 

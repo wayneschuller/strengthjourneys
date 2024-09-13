@@ -295,10 +295,11 @@ function AILiftingAssistantMain({ relatedArticles }) {
 }
 
 const defaultMessages = [
-  "What benefits will I get by lifting weights?",
+  "Why lift weights?",
   "What should I do in my first gym session?",
   "How often should I deadlift?",
   "Am I strong for my age?",
+  "I'm female, will I get bulky lifting weights?",
   "How do I choose a gym?",
   "Write me a motivational rap.",
   "Isn't deadlifting dangerous?",
@@ -306,6 +307,7 @@ const defaultMessages = [
   "Can I lift weights and still lose weight?",
   "How much protein should I eat?",
   "Should I lift every day?",
+  "What are the health benefits for women who lift?",
 ];
 
 // -----------------------------------------------------------------------------------------------------
@@ -336,6 +338,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   });
   const scrollRef = useChatScroll(messages);
 
+  devLog(messages);
+
   return (
     <Card className="max-h-full bg-background text-foreground">
       <CardHeader className="flex flex-1 flex-row">
@@ -356,7 +360,11 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
           className="mb-4 h-[30rem] space-y-4 overflow-auto scroll-smooth rounded-lg border border-border p-4"
         >
           {messages.length === 0 ? (
-            <div className="flex h-80 flex-col items-center justify-center space-y-2 text-center">
+            <div className="flex h-80 flex-col items-center justify-center space-x-1 text-center">
+              <p className="text-muted-foreground">
+                Enter your questions into the chat box below (or click a sample
+                question)
+              </p>
               {defaultMessages.map((message, index) => (
                 <p
                   key={index}
@@ -386,8 +394,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                       : "bg-secondary text-secondary-foreground"
                   }`}
                 >
-                  <ReactMarkdown>{message.content}</ReactMarkdown>
-                  {/* {message.content.split("\n").map((line, lineIndex) => ( <p key={lineIndex}>{line}</p>))} */}
+                  <MarkdownWithStyled>{message.content}</MarkdownWithStyled>
                 </span>
               </div>
             ))
@@ -438,6 +445,23 @@ function useChatScroll(dep) {
   }, [dep]);
   return ref;
 }
+
+const MarkdownWithStyled = ({ children }) => (
+  <ReactMarkdown
+    components={{
+      a: ({ node, ...props }) => (
+        <a
+          {...props}
+          className="text-blue-500 underline hover:text-blue-700"
+          target="_blank"
+          rel="noopener noreferrer"
+        />
+      ),
+    }}
+  >
+    {children}
+  </ReactMarkdown>
+);
 
 export async function getStaticProps() {
   try {

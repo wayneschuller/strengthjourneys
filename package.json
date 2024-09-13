@@ -10,7 +10,7 @@
     "postbuild": "next-sitemap"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^0.0.56",
+    "@ai-sdk/openai": "^0.0.59",
     "@braintree/sanitize-url": "^7.1.0",
     "@formkit/auto-animate": "^0.8.2",
     "@metricalp/react": "^1.0.8",
@@ -40,7 +40,7 @@
     "@tailwindcss/typography": "^0.5.13",
     "@vercel/kv": "^2.0.0",
     "@vercel/speed-insights": "^1.0.12",
-    "ai": "^3.3.27",
+    "ai": "^3.3.35",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",

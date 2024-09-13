@@ -94,7 +94,7 @@ const SquareImage = ({ sanityImage }) => {
   if (!imageUrl) return null;
 
   return (
-    <div className="relative h-20 w-20 transform overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-105">
+    <div className="relative h-20 w-20 transform overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-110">
       {/* Adjust height as needed */}
       <Image
         src={imageUrl}

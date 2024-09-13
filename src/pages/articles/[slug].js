@@ -122,6 +122,18 @@ export default function ArticlePost({ article }) {
   );
 }
 
+const Banner = ({ imageUrl }) => (
+  <div className="relative h-32 w-full overflow-hidden rounded-lg">
+    {/* Adjust height as needed */}
+    <Image
+      src={imageUrl}
+      alt="Banner"
+      layout="fill" // This makes the image cover the container
+      objectFit="cover" // Ensures the image covers the container
+    />
+  </div>
+);
+
 export async function getStaticPaths() {
   const paths = await sanityIOClient.fetch(
     `*[_type == "post" && defined(slug.current) && publishedAt < now() && defined(body)][].slug.current`,
@@ -138,17 +150,6 @@ export async function getStaticPaths() {
   };
 }
 
-const Banner = ({ imageUrl }) => (
-  <div className="relative h-32 w-full overflow-hidden rounded-lg">
-    {/* Adjust height as needed */}
-    <Image
-      src={imageUrl}
-      alt="Banner"
-      layout="fill" // This makes the image cover the container
-      objectFit="cover" // Ensures the image covers the container
-    />
-  </div>
-);
 export async function getStaticProps({ params }) {
   const { slug } = params;
 

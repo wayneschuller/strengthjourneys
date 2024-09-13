@@ -9,19 +9,32 @@ import {
 } from "@/components/ui/card";
 import { FileText, ArrowRight, Newspaper } from "lucide-react";
 import { format } from "date-fns";
+import Image from "next/image";
+import { urlFor } from "@/lib/sanity-io.js";
 
 export function ArticleSummaryCard({ article }) {
+  let imageUrl = null;
+  if (article.mainImage) {
+    imageUrl = urlFor(article.mainImage)?.url();
+  }
+
   return (
     <Card className="">
-      <CardHeader>
-        <CardTitle>
-          <Link href={`/articles/${article.slug}`} className="hover:underline">
-            {article.title}
-          </Link>
-        </CardTitle>
-        <CardDescription>
-          {format(new Date(article.publishedAt), "MMMM d, yyyy")}
-        </CardDescription>
+      <CardHeader className="flex flex-row gap-4">
+        <div>
+          <CardTitle>
+            <Link
+              href={`/articles/${article.slug}`}
+              className="hover:underline"
+            >
+              {article.title}
+            </Link>
+          </CardTitle>
+          <CardDescription>
+            {format(new Date(article.publishedAt), "MMMM d, yyyy")}
+          </CardDescription>
+        </div>
+        <SquareImage imageUrl={imageUrl} />
       </CardHeader>
       <CardContent>
         {/* <p className="text-sm text-gray-500"> Published on {new Date(article.publishedAt).toLocaleDateString()} </p> */}
@@ -78,3 +91,19 @@ export function RelatedArticles({ articles }) {
     </Card>
   );
 }
+
+const SquareImage = ({ imageUrl }) => {
+  if (!imageUrl) return null;
+
+  return (
+    <div className="relative h-20 w-20 overflow-hidden rounded-lg">
+      {/* Adjust height as needed */}
+      <Image
+        src={imageUrl}
+        alt="Banner"
+        layout="fill" // This makes the image cover the container
+        objectFit="cover" // Ensures the image covers the container
+      />
+    </div>
+  );
+};

@@ -80,6 +80,7 @@ export async function getStaticProps() {
         categories[]-> {
         title
       },
+      mainImage
     }
   `);
 

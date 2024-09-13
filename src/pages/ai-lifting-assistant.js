@@ -5,7 +5,7 @@ import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { useChat } from "ai/react";
 import { devLog } from "@/lib/processing-utils";
-import { sanityIOClient } from "@/lib/sanity-io.js";
+import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
 import {
   Card,

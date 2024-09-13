@@ -38,11 +38,12 @@ export default function ArticlePost({ article }) {
   const publishDate = new Date(article.publishedAt).toISOString();
   const formattedDate = format(new Date(article.publishedAt), "MMMM d, yyyy");
 
+  devLog(article);
+
   let imageUrl = null;
   if (article.mainImage) {
     imageUrl = urlFor(article.mainImage)?.url();
   }
-  devLog(imageUrl);
 
   return (
     <div className="mx-4 mb-10 flex items-center justify-center">
@@ -56,14 +57,20 @@ export default function ArticlePost({ article }) {
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:title" content={article.title} />
         <meta property="og:image" content={imageUrl} />
-        <meta property="og:description" content={article.title} />
+        <meta
+          property="og:description"
+          content={article.description ?? article.title}
+        />
         <meta property="article:published_time" content={publishDate} />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content={canonicalUrl} />
         <meta name="twitter:title" content={article.title} />
-        <meta name="twitter:description" content={article.title} />
+        <meta
+          name="twitter:description"
+          content={article.description ?? article.title}
+        />
         <meta name="twitter:image" content={imageUrl} />
 
         {/* Structured Data */}
@@ -163,7 +170,8 @@ export async function getStaticProps({ params }) {
       publishedAt,
       "author": author->{name, "url": website},
       footer,
-      mainImage
+      mainImage,
+      description
     }`,
     { slug },
   );

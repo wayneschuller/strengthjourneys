@@ -386,7 +386,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
             messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                className={`mb-4 flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <span
                   className={`inline-block max-w-[80%] rounded-lg p-3 ${

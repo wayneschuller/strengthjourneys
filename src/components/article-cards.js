@@ -14,32 +14,30 @@ import { urlFor } from "@/lib/sanity-io.js";
 
 export function ArticleSummaryCard({ article }) {
   return (
-    <Card className="">
-      <CardHeader className="flex flex-row gap-4">
-        <div className="flex-1">
-          <CardTitle>
-            <Link
-              href={`/articles/${article.slug}`}
-              className="text-balance hover:underline"
-            >
+    <Link href={`/articles/${article.slug}`}>
+      <Card className="group transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+        <CardHeader className="flex flex-row gap-4">
+          <div className="flex-1">
+            <CardTitle className="text-balance group-hover:underline">
               {article.title}
-            </Link>
-          </CardTitle>
-          <CardDescription>
-            {format(new Date(article.publishedAt), "MMMM d, yyyy")}
-          </CardDescription>
-        </div>
-        <SquareImage sanityImage={article.mainImage} />
-      </CardHeader>
-      <CardContent>
-        {/* <p className="text-sm text-gray-500"> Published on {new Date(article.publishedAt).toLocaleDateString()} </p> */}
-        {false && article.categories && article.categories.length > 0 && (
-          <p className="mt-2 text-sm text-gray-500">
-            Categories: {article.categories.map((cat) => cat.title).join(", ")}
-          </p>
-        )}
-      </CardContent>
-    </Card>
+            </CardTitle>
+            <CardDescription>
+              {format(new Date(article.publishedAt), "MMMM d, yyyy")}
+            </CardDescription>
+          </div>
+          <SquareImage sanityImage={article.mainImage} />
+        </CardHeader>
+        <CardContent>
+          {/* <p className="text-sm text-gray-500"> Published on {new Date(article.publishedAt).toLocaleDateString()} </p> */}
+          {false && article.categories && article.categories.length > 0 && (
+            <p className="mt-2 text-sm text-gray-500">
+              Categories:{" "}
+              {article.categories.map((cat) => cat.title).join(", ")}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 
@@ -96,7 +94,7 @@ const SquareImage = ({ sanityImage }) => {
   if (!imageUrl) return null;
 
   return (
-    <div className="relative h-20 w-20 overflow-hidden rounded-lg">
+    <div className="relative h-20 w-20 transform overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-105">
       {/* Adjust height as needed */}
       <Image
         src={imageUrl}

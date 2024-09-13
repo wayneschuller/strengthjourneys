@@ -38,11 +38,11 @@ export default function ArticlePost({ article }) {
   const publishDate = new Date(article.publishedAt).toISOString();
   const formattedDate = format(new Date(article.publishedAt), "MMMM d, yyyy");
 
-  let imageURL = null;
+  let imageUrl = null;
   if (article.mainImage) {
-    imageURL = urlFor(article.mainImage)?.url();
+    imageUrl = urlFor(article.mainImage)?.url();
   }
-  devLog(imageURL);
+  devLog(imageUrl);
 
   return (
     <div className="mx-4 mb-10 flex items-center justify-center">
@@ -55,6 +55,7 @@ export default function ArticlePost({ article }) {
         <meta property="og:type" content="article" />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:title" content={article.title} />
+        <meta property="og:image" content={imageUrl} />
         <meta property="og:description" content={article.title} />
         <meta property="article:published_time" content={publishDate} />
 
@@ -63,6 +64,7 @@ export default function ArticlePost({ article }) {
         <meta name="twitter:url" content={canonicalUrl} />
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={article.title} />
+        <meta name="twitter:image" content={imageUrl} />
 
         {/* Structured Data */}
         <script type="application/ld+json">
@@ -85,7 +87,7 @@ export default function ArticlePost({ article }) {
       </Head>
 
       <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
-        <CardHeader>{imageURL && <Banner imageUrl={imageURL} />}</CardHeader>
+        <CardHeader>{imageUrl && <Banner imageUrl={imageUrl} />}</CardHeader>
         <CardContent>
           <article className="prose prose-orange dark:prose-invert">
             <header>

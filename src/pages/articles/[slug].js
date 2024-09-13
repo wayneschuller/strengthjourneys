@@ -36,8 +36,7 @@ const components = {
 export default function ArticlePost({ article }) {
   const canonicalUrl = `https://www.strengthjourneys.xyz/articles/${article.slug}`;
   const publishDate = new Date(article.publishedAt).toISOString();
-
-  const formattedDate = format(new Date(publishDate), "MMMM d, yyyy");
+  const formattedDate = format(new Date(article.publishedAt), "MMMM d, yyyy");
 
   devLog(article);
 

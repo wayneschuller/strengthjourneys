@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { FileText, ArrowRight, Newspaper } from "lucide-react";
+import { format } from "date-fns";
 
 export function ArticleSummaryCard({ article }) {
   return (
@@ -12,6 +19,9 @@ export function ArticleSummaryCard({ article }) {
             {article.title}
           </Link>
         </CardTitle>
+        <CardDescription>
+          {format(new Date(article.publishedAt), "MMMM d, yyyy")}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {/* <p className="text-sm text-gray-500"> Published on {new Date(article.publishedAt).toLocaleDateString()} </p> */}
@@ -51,6 +61,10 @@ export function RelatedArticles({ articles }) {
                 />
                 <span className="flex-grow text-sm group-hover:text-primary">
                   {article.title}
+                  <div className="ml-3 inline-block text-muted-foreground">
+                    (Published{" "}
+                    {format(new Date(article.publishedAt), "MMMM d, yyyy")})
+                  </div>
                 </span>
                 <ArrowRight
                   className="ml-2 text-gray-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-primary"

@@ -38,7 +38,11 @@ export default function ArticlePost({ article }) {
   const publishDate = new Date(article.publishedAt).toISOString();
   const formattedDate = format(new Date(article.publishedAt), "MMMM d, yyyy");
 
-  const imageURL = urlFor(article.mainImage).url();
+  let imageURL = null;
+
+  if (article.mainImage) {
+    imageURL = urlFor(article.mainImage)?.url();
+  }
   devLog(imageURL);
 
   return (

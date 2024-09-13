@@ -96,12 +96,7 @@ const SquareImage = ({ sanityImage }) => {
   return (
     <div className="relative h-20 w-20 transform overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-110">
       {/* Adjust height as needed */}
-      <Image
-        src={imageUrl}
-        alt="Banner"
-        layout="fill" // This makes the image cover the container
-        objectFit="cover" // Ensures the image covers the container
-      />
+      <Image src={imageUrl} alt="Banner" fill style={{ objectFit: "cover" }} />
     </div>
   );
 };

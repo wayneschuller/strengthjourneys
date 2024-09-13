@@ -21,7 +21,7 @@ export function ArticleSummaryCard({ article }) {
   return (
     <Card className="">
       <CardHeader className="flex flex-row gap-4">
-        <div>
+        <div className="flex-1">
           <CardTitle>
             <Link
               href={`/articles/${article.slug}`}

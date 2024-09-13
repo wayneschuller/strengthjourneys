@@ -5,6 +5,7 @@ import { devLog } from "@/lib/processing-utils";
 import Head from "next/head";
 import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
 import { ArticleSummaryCard } from "@/components/article-cards";
+import { format } from "date-fns";
 
 const pageTitle = "Strength and Lifting Articles Library";
 const siteName = "Strength Journeys";

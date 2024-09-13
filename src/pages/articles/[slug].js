@@ -9,6 +9,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { devLog } from "@/lib/processing-utils";
+import { format } from "date-fns";
 
 import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
 
@@ -35,6 +36,10 @@ const components = {
 export default function ArticlePost({ article }) {
   const canonicalUrl = `https://www.strengthjourneys.xyz/articles/${article.slug}`;
   const publishDate = new Date(article.publishedAt).toISOString();
+
+  const formattedDate = format(new Date(publishDate), "MMMM d, yyyy");
+
+  devLog(article);
 
   return (
     <div className="mx-4 mb-10 flex items-center justify-center">
@@ -82,6 +87,9 @@ export default function ArticlePost({ article }) {
           <article className="prose prose-orange dark:prose-invert">
             <header>
               <h1>{article.title}</h1>
+              <h3 className="mt-2 text-sm font-light text-gray-600 dark:text-gray-400">
+                Published at: {formattedDate}
+              </h3>
 
               {/* Let's leave out the article author for now */}
               {false && article.author && (

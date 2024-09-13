@@ -358,10 +358,10 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
       <CardContent className="flex flex-col pb-0 align-middle">
         <div
           ref={scrollRef}
-          className="mb-4 min-h-[30rem] overflow-auto scroll-smooth rounded-lg border border-border p-4 pb-0"
+          className="mb-4 h-[30rem] overflow-auto scroll-smooth rounded-lg border border-border p-4 pb-0"
         >
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center space-x-1 text-center">
+            <div className="flex flex-col items-center justify-center space-x-1 overflow-auto text-center">
               <p className="mb-2 text-muted-foreground">
                 Enter your questions into the chat box below (or click a sample
                 question)

@@ -38,7 +38,8 @@ export default function ArticlePost({ article }) {
   const publishDate = new Date(article.publishedAt).toISOString();
   const formattedDate = format(new Date(article.publishedAt), "MMMM d, yyyy");
 
-  devLog(article);
+  const imageURL = urlFor(article.mainImage).url();
+  devLog(imageURL);
 
   return (
     <div className="mx-4 mb-10 flex items-center justify-center">
@@ -81,7 +82,7 @@ export default function ArticlePost({ article }) {
       </Head>
 
       <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
-        <CardHeader></CardHeader>
+        <CardHeader>{imageURL && <Banner imageUrl={imageURL} />}</CardHeader>
         <CardContent>
           <article className="prose prose-orange dark:prose-invert">
             <header>
@@ -133,6 +134,17 @@ export async function getStaticPaths() {
   };
 }
 
+const Banner = ({ imageUrl }) => (
+  <div className="relative h-32 w-full overflow-hidden rounded-lg">
+    {/* Adjust height as needed */}
+    <Image
+      src={imageUrl}
+      alt="Banner"
+      layout="fill" // This makes the image cover the container
+      objectFit="cover" // Ensures the image covers the container
+    />
+  </div>
+);
 export async function getStaticProps({ params }) {
   const { slug } = params;
 
@@ -143,7 +155,8 @@ export async function getStaticProps({ params }) {
       "slug": slug.current,
       publishedAt,
       "author": author->{name, "url": website},
-      footer
+      footer,
+      mainImage
     }`,
     { slug },
   );

@@ -25,7 +25,7 @@ export function ArticleSummaryCard({ article }) {
           <CardTitle>
             <Link
               href={`/articles/${article.slug}`}
-              className="hover:underline"
+              className="text-balance hover:underline"
             >
               {article.title}
             </Link>

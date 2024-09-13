@@ -13,11 +13,6 @@ import Image from "next/image";
 import { urlFor } from "@/lib/sanity-io.js";
 
 export function ArticleSummaryCard({ article }) {
-  let imageUrl = null;
-  if (article.mainImage) {
-    imageUrl = urlFor(article.mainImage)?.url();
-  }
-
   return (
     <Card className="">
       <CardHeader className="flex flex-row gap-4">
@@ -34,7 +29,7 @@ export function ArticleSummaryCard({ article }) {
             {format(new Date(article.publishedAt), "MMMM d, yyyy")}
           </CardDescription>
         </div>
-        <SquareImage imageUrl={imageUrl} />
+        <SquareImage sanityImage={article.mainImage} />
       </CardHeader>
       <CardContent>
         {/* <p className="text-sm text-gray-500"> Published on {new Date(article.publishedAt).toLocaleDateString()} </p> */}
@@ -74,11 +69,11 @@ export function RelatedArticles({ articles }) {
                 />
                 <span className="flex-grow text-sm group-hover:text-primary">
                   {article.title}
-                  <div className="ml-3 inline-block text-muted-foreground">
-                    (Published{" "}
-                    {format(new Date(article.publishedAt), "MMMM d, yyyy")})
+                  <div className="text-muted-foreground">
+                    {format(new Date(article.publishedAt), "MMMM d, yyyy")}
                   </div>
                 </span>
+                <SquareImage sanityImage={article.mainImage} />
                 <ArrowRight
                   className="ml-2 text-gray-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-primary"
                   size={16}
@@ -92,7 +87,15 @@ export function RelatedArticles({ articles }) {
   );
 }
 
-const SquareImage = ({ imageUrl }) => {
+const SquareImage = ({ sanityImage }) => {
+  if (!sanityImage) return;
+
+  let imageUrl = null;
+  if (sanityImage) {
+    imageUrl = urlFor(sanityImage).url();
+    devLog(imageUrl);
+  }
+
   if (!imageUrl) return null;
 
   return (

@@ -335,6 +335,7 @@ export async function getStaticProps() {
         categories[]-> {
           title
         },
+        mainImage,
       }
     `,
       { category: RELATED_ARTICLES_CATEGORY },

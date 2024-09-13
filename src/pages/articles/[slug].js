@@ -39,7 +39,6 @@ export default function ArticlePost({ article }) {
   const formattedDate = format(new Date(article.publishedAt), "MMMM d, yyyy");
 
   let imageURL = null;
-
   if (article.mainImage) {
     imageURL = urlFor(article.mainImage)?.url();
   }
@@ -125,12 +124,7 @@ export default function ArticlePost({ article }) {
 const Banner = ({ imageUrl }) => (
   <div className="relative h-32 w-full overflow-hidden rounded-lg">
     {/* Adjust height as needed */}
-    <Image
-      src={imageUrl}
-      alt="Banner"
-      layout="fill" // This makes the image cover the container
-      objectFit="cover" // Ensures the image covers the container
-    />
+    <Image src={imageUrl} alt="Banner" fill style={{ objectFit: "cover" }} />
   </div>
 );
 

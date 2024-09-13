@@ -56,9 +56,9 @@ export function RelatedArticles({ articles }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ul className="space-y-4">
+        <div className="grid grid-cols-4 gap-4">
           {articles.map((article) => (
-            <li key={article.slug} className="group">
+            <div key={article.slug} className="group rounded-lg border">
               <Link
                 href={`/articles/${article.slug}`}
                 className="flex items-center rounded-md p-2 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -74,14 +74,11 @@ export function RelatedArticles({ articles }) {
                   </div>
                 </span>
                 <SquareImage sanityImage={article.mainImage} />
-                <ArrowRight
-                  className="ml-2 text-gray-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-primary"
-                  size={16}
-                />
+                {/* <ArrowRight className="ml-2 text-gray-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-primary" size={16} /> */}
               </Link>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       </CardContent>
     </Card>
   );

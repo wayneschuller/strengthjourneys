@@ -20,6 +20,11 @@ import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-p
 import { MonthsHighlightsCard } from "@/components/analyzer/months-highlights-card";
 import { ActivityHeatmapsCard } from "@/components/analyzer/heatmap-card";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
+import {
+  PageHeader,
+  PageHeaderHeading,
+  PageHeaderDescription,
+} from "@/components/page-header";
 
 const RELATED_ARTICLES_CATEGORY = "Personal Record Analyzer";
 
@@ -84,12 +89,16 @@ function AnalyzerMain({ relatedArticles }) {
     );
 
   return (
-    <main className="mx-4 mb-4 md:mx-[5vw]">
-      <h1 className="mb-8 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl">
-        PR Analyzer
-      </h1>
-
-      <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+    <div className="container">
+      <PageHeader>
+        <PageHeaderHeading>PR Analyzer</PageHeaderHeading>
+        <PageHeaderDescription>
+          Unlock insights with your personalized strength dashboard. Track PRs,
+          consistency, recent highlights and detailed analysis of your squat,
+          bench, deadlift and more.
+        </PageHeaderDescription>
+      </PageHeader>
+      <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <div className="flex h-full flex-col">
           <SessionAnalysisCard />
         </div>
@@ -109,10 +118,10 @@ function AnalyzerMain({ relatedArticles }) {
           <ActivityHeatmapsCard />
         </div>
         <Separator className="col-span-full" />
-      </div>
+      </section>
       <SelectedLiftsIndividualLiftCards />
       <RelatedArticles articles={relatedArticles} />
-    </main>
+    </div>
   );
 }
 

@@ -414,7 +414,6 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
           content="https://www.strengthjourneys.xyz/strength-journeys-playlist-leaderboard.png"
         />
       </Head>
-      {/* <div className="mx-4 md:mx-10 md:items-center lg:mx-[15vw] xl:mx-[20vw]"> */}
       <div className="container">
         <PageHeader>
           <PageHeaderHeading>

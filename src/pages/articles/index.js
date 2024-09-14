@@ -6,6 +6,11 @@ import Head from "next/head";
 import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
 import { ArticleSummaryCard } from "@/components/article-cards";
 import { format } from "date-fns";
+import {
+  PageHeader,
+  PageHeaderHeading,
+  PageHeaderDescription,
+} from "@/components/page-header";
 
 const pageTitle = "Strength and Lifting Articles Library";
 const siteName = "Strength Journeys";
@@ -19,8 +24,7 @@ export default function ArticleListingPage({
   const fullTitle = `${pageTitle} | ${siteName}`;
 
   return (
-    // <div className="container mx-auto px-4">
-    <div className="mx-4 mb-4 md:mx-[5vw]">
+    <div className="container">
       <Head>
         <title>{fullTitle}</title>
         <meta name="description" content={description} />
@@ -49,7 +53,13 @@ export default function ArticleListingPage({
           })}
         </script>
       </Head>
-      <h1 className="mb-6 text-center text-3xl font-bold">{pageTitle}</h1>
+      <PageHeader>
+        <PageHeaderHeading>{pageTitle}</PageHeaderHeading>
+        <PageHeaderDescription>
+          Browse our collection of strength, lifting and fitness articles on
+          various topics.
+        </PageHeaderDescription>
+      </PageHeader>
 
       {featuredArticles.length > 0 && (
         <>

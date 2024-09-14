@@ -31,7 +31,7 @@ export function ArticleSummaryCard({ article }) {
         </CardHeader>
         <CardContent>
           {/* <p className="text-sm text-gray-500"> Published on {new Date(article.publishedAt).toLocaleDateString()} </p> */}
-          {article.description && (
+          {false && article.description && (
             <div className="text-sm text-muted-foreground">
               {article.description}
             </div>

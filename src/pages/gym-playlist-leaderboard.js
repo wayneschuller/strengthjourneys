@@ -14,6 +14,12 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
 import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/playlist-create-edit";
 import { TrendingUp, Clock, Flame, Bookmark, Heart } from "lucide-react";
+import {
+  PageHeader,
+  PageHeaderHeading,
+  PageHeaderDescription,
+} from "@/components/page-header";
+
 const translator = shortUUID();
 
 const ITEMS_PER_PAGE = 5;
@@ -408,14 +414,19 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
           content="https://www.strengthjourneys.xyz/strength-journeys-playlist-leaderboard.png"
         />
       </Head>
-      <main className="mx-4 md:mx-10 md:items-center lg:mx-[15vw] xl:mx-[20vw]">
-        <div>
-          <h1 className="mb-6 text-center text-3xl font-bold">
+      {/* <div className="mx-4 md:mx-10 md:items-center lg:mx-[15vw] xl:mx-[20vw]"> */}
+      <div className="container">
+        <PageHeader>
+          <PageHeaderHeading>
             Gym Music Playlist Global Leaderboard
-          </h1>
-          <h2 className="mb-6 text-sm text-muted-foreground">
+          </PageHeaderHeading>
+          <PageHeaderDescription>
             Elevate your lifting experience with music playlists curated by the
             fitness community.
+          </PageHeaderDescription>
+        </PageHeader>
+        <section className="mx-0 md:mx-[10vw]">
+          <h2 className="mb-6 text-sm text-muted-foreground">
             {/* FIXME: consider checking for ssid and loaded data and prompt them here for more vote power */}
             {authStatus !== "authenticated" ? (
               <div>
@@ -436,7 +447,6 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
               </div>
             )}
           </h2>
-
           {/* Side-by-Side Layout for Category Filter and Add Playlist Button */}
           <div className="mb-6 flex flex-col items-center gap-4 md:flex-row md:gap-1">
             <div className="flex-grow pr-4">
@@ -526,8 +536,8 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
               />
             </TabsContent>
           </Tabs>
-        </div>
-      </main>
+        </section>
+      </div>
     </>
   );
 }

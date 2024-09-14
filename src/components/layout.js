@@ -39,7 +39,7 @@ export function Layout({ children }) {
       </div>
       <div className="relative z-10">
         <NavBar />
-        <main>{children}</main>
+        <main className="mx-0 md:mx-[5vw]">{children}</main>
         <Footer />
       </div>
     </div>

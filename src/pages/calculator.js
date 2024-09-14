@@ -292,8 +292,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
     );
 
   return (
-    // <main className="mx-4 md:mx-[5vw]">
-    <main className="container">
+    <div className="container">
       <PageHeader>
         <PageHeaderHeading>One Rep Max Calculator</PageHeaderHeading>
         <PageHeaderDescription>
@@ -443,7 +442,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
         </CardContent>
       </Card>
       <RelatedArticles articles={relatedArticles} />
-    </main>
+    </div>
   );
 }
 

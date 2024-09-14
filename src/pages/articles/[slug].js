@@ -19,10 +19,19 @@ const components = {
       if (!value?.asset?._ref) {
         return null;
       }
+
+      const imageUrl = urlFor(value)
+        .width(1200) // Set the desired width for banners
+        .height(400) // Set a height that suits the aspect ratio of a banner
+        .fit("clip") // Fit the image within the dimensions while maintaining aspect ratio
+        .quality(80) // Reduce quality slightly for optimization
+        .auto("format") // Automatically choose the best image format (e.g., WebP if supported)
+        .url();
+
       return (
         <div className="relative my-8 h-96 w-full">
           <Image
-            src={urlFor(value).url()}
+            src={imageUrl}
             alt={value.alt || " "}
             fill
             style={{ objectFit: "contain" }}

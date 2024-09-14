@@ -19,6 +19,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import {
+  PageHeader,
+  PageHeaderHeading,
+  PageHeaderDescription,
+} from "@/components/page-header";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   interpolateStandardKG,
@@ -287,15 +293,13 @@ function E1RMCalculatorMain({ relatedArticles }) {
 
   return (
     <main className="mx-4 md:mx-[5vw]">
+      <PageHeader>
+        <PageHeaderHeading>One Rep Max Calculator</PageHeaderHeading>
+        <PageHeaderDescription>
+          Estimate your max single based on reps and weight.
+        </PageHeaderDescription>
+      </PageHeader>
       <Card>
-        <CardHeader>
-          <CardTitle>One Rep Max Calculator</CardTitle>
-          <CardDescription>
-            Estimate your max single based on reps and weight. Click{" "}
-            <b>Advanced Analysis</b> for set specific strength ratings.
-          </CardDescription>
-        </CardHeader>
-
         <CardContent>
           {/* Two main sliders */}
           <div className="mt-4 grid grid-cols-1 items-center gap-6 md:grid-cols-6 md:gap-4">

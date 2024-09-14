@@ -7,6 +7,7 @@ import { useChat } from "ai/react";
 import { devLog } from "@/lib/processing-utils";
 import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
+
 import {
   Card,
   CardContent,
@@ -15,6 +16,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+import {
+  PageHeader,
+  PageHeaderHeading,
+  PageHeaderDescription,
+} from "@/components/page-header";
+
 import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "usehooks-ts";
 import {
@@ -248,20 +256,14 @@ function AILiftingAssistantMain({ relatedArticles }) {
 
   return (
     // <main className="mx-4 flex flex-col items-center md:mx-[5vw]">
-    <main className="mx-4 md:mx-[5vw]">
-      <h1 className="flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight">
-        AI Lifting Assistant{" "}
-      </h1>
-      <h3 className="text-center">
-        This new feature is still being tested. Please leave{" "}
-        <a
-          href="https://strengthjourneys.canny.io/"
-          className="hover:underline"
-        >
-          feedback
-        </a>
-        !
-      </h3>
+    <div className="container">
+      <PageHeader>
+        <PageHeaderHeading>AI Lifting Assistant</PageHeaderHeading>
+        <PageHeaderDescription>
+          Free AI Lifting Assistant. Talk to your lifting data. The gym buddy
+          you never had.
+        </PageHeaderDescription>
+      </PageHeader>
       <div className="mt-8 flex flex-col gap-5 lg:flex-row">
         <div className="h-dvh flex-1 lg:flex lg:flex-col">
           <AILiftingAssistantCard
@@ -290,7 +292,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
         </div>
       </div>
       <RelatedArticles articles={relatedArticles} />
-    </main>
+    </div>
   );
 }
 
@@ -350,7 +352,14 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
           </CardTitle>
           <CardDescription className="text-balance text-muted-foreground">
             Discussions are streamed to your device and not stored on our
-            servers.
+            servers. Please leave{" "}
+            <a
+              href="https://strengthjourneys.canny.io/"
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            >
+              feedback
+            </a>{" "}
+            about this AI.
           </CardDescription>
         </div>
         <FlickeringGridDemo />

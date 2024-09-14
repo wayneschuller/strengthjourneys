@@ -13,6 +13,8 @@ import Image from "next/image";
 import { urlFor } from "@/lib/sanity-io.js";
 
 export function ArticleSummaryCard({ article }) {
+  devLog(article);
+
   return (
     <Link href={`/articles/${article.slug}`}>
       <Card className="group transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -29,6 +31,11 @@ export function ArticleSummaryCard({ article }) {
         </CardHeader>
         <CardContent>
           {/* <p className="text-sm text-gray-500"> Published on {new Date(article.publishedAt).toLocaleDateString()} </p> */}
+          {article.description && (
+            <div className="text-sm text-muted-foreground">
+              {article.description}
+            </div>
+          )}
           {false && article.categories && article.categories.length > 0 && (
             <p className="mt-2 text-sm text-gray-500">
               Categories:{" "}

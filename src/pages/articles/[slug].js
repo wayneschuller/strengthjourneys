@@ -38,7 +38,7 @@ export default function ArticlePost({ article }) {
   const publishDate = new Date(article.publishedAt).toISOString();
   const formattedDate = format(new Date(article.publishedAt), "MMMM d, yyyy");
 
-  devLog(article);
+  // devLog(article);
 
   let imageUrl = null;
   if (article.mainImage) {
@@ -163,6 +163,11 @@ export async function getStaticProps({ params }) {
   const { slug } = params;
 
   const article = await sanityIOClient.fetch(
+    `*[_type == "post" && slug.current == $slug && publishedAt < now() && defined(body)][0]`,
+    { slug },
+  );
+
+  const articleOLDGROQ = await sanityIOClient.fetch(
     `*[_type == "post" && slug.current == $slug && publishedAt < now() && defined(body)][0]{
       title,
       body,

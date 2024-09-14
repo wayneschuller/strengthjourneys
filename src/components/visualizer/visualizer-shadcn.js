@@ -85,7 +85,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   // devLog("Rendering <VisualizerShadcn />...");
   if (!parsedData) return;
 
-  const roundedMaxWeightValue = weightMax * 1.3;
+  const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
 
   // Shadcn charts needs this for theming but we just do custom colors anyway
   const chartConfig = Object.fromEntries(
@@ -201,7 +201,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">
-        <ChartContainer config={chartConfig} className="min-h-[200px]">
+        <ChartContainer config={chartConfig} className="Xmin-h-[200px]">
           <AreaChart
             accessibilityLayer
             data={chartData}
@@ -217,24 +217,24 @@ export function VisualizerShadcn({ setHighlightDate }) {
               tickFormatter={formatXAxisDateString}
               // interval="equidistantPreserveStart"
             />
-            {width > 1280 && (
-              <YAxis
-                domain={[
-                  Math.floor(weightMin / tickJump) * tickJump,
-                  roundedMaxWeightValue,
-                ]}
-                // hide={true}
-                axisLine={false}
-                tickFormatter={(value, index) =>
-                  `${value}${chartData[index].unitType}`
-                }
-                ticks={Array.from(
-                  { length: Math.ceil(roundedMaxWeightValue / tickJump) },
-                  (v, i) => i * tickJump,
-                )}
-                allowDataOverflow
-              />
-            )}
+            {/* { width > 1280 && ( */}
+            <YAxis
+              domain={[
+                Math.floor(weightMin / tickJump) * tickJump,
+                roundedMaxWeightValue,
+              ]}
+              hide={width < 1280}
+              axisLine={false}
+              tickFormatter={(value, index) =>
+                `${value}${chartData[index].unitType}`
+              }
+              ticks={Array.from(
+                { length: Math.ceil(roundedMaxWeightValue / tickJump) },
+                (v, i) => i * tickJump,
+              )}
+              // allowDataOverflow
+            />
+            {/* ))} */}
             <Tooltip
               content={
                 <CustomTooltipContent

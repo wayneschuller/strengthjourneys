@@ -11,6 +11,7 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
+import { LibraryBig } from "lucide-react";
 
 const pageTitle = "Strength and Lifting Articles Library";
 const siteName = "Strength Journeys";
@@ -54,7 +55,7 @@ export default function ArticleListingPage({
         </script>
       </Head>
       <PageHeader>
-        <PageHeaderHeading icon="LibraryBig">{pageTitle}</PageHeaderHeading>
+        <PageHeaderHeading icon={LibraryBig}>{pageTitle}</PageHeaderHeading>
         <PageHeaderDescription>
           Browse our collection of strength, lifting and fitness articles on
           various topics.

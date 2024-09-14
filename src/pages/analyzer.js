@@ -25,6 +25,7 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
+import { Trophy } from "lucide-react";
 
 const RELATED_ARTICLES_CATEGORY = "Personal Record Analyzer";
 
@@ -91,7 +92,7 @@ function AnalyzerMain({ relatedArticles }) {
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading icon="Trophy">PR Analyzer</PageHeaderHeading>
+        <PageHeaderHeading icon={Trophy}>PR Analyzer</PageHeaderHeading>
         <PageHeaderDescription>
           Unlock insights with your personalized strength dashboard. Track PRs,
           consistency, recent highlights and detailed analysis of your squat,

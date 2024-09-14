@@ -15,6 +15,7 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
+import { LineChart } from "lucide-react";
 
 export default function Analyzer() {
   // OG Meta Tags
@@ -80,7 +81,7 @@ function VisualizerMain() {
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading icon="LineChart">
+        <PageHeaderHeading icon={LineChart}>
           Strength Visualizer
         </PageHeaderHeading>
         <PageHeaderDescription>

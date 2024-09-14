@@ -44,6 +44,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage, useIsClient } from "usehooks-ts";
 
 import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
+import { Calculator } from "lucide-react";
 
 const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
@@ -294,7 +295,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading icon="Calculator">
+        <PageHeaderHeading icon={Calculator}>
           One Rep Max Calculator
         </PageHeaderHeading>
         <PageHeaderDescription>

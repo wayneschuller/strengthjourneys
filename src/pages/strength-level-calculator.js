@@ -37,6 +37,7 @@ import {
 } from "@/lib/lifting-standards-kg";
 import { Separator } from "@/components/ui/separator";
 import { useIsClient } from "usehooks-ts";
+import { BicepsFlexed } from "lucide-react";
 
 const RELATED_ARTICLES_CATEGORY = "Strength Calculator";
 
@@ -179,7 +180,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading icon="BicepsFlexed">
+        <PageHeaderHeading icon={BicepsFlexed}>
           Strength Level Calculator
         </PageHeaderHeading>
         <PageHeaderDescription>

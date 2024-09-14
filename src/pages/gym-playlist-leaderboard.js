@@ -13,7 +13,7 @@ import { fetchPlaylists } from "@/components/playlist-leaderboard/playlist-utils
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
 import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/playlist-create-edit";
-import { TrendingUp, Clock, Flame, Bookmark, Heart } from "lucide-react";
+import { TrendingUp, Clock, Flame, Bookmark, Heart, Music } from "lucide-react";
 import {
   PageHeader,
   PageHeaderHeading,
@@ -416,7 +416,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
       </Head>
       <div className="container">
         <PageHeader>
-          <PageHeaderHeading icon="Music">
+          <PageHeaderHeading icon={Music}>
             Gym Music Playlist Global Leaderboard
           </PageHeaderHeading>
           <PageHeaderDescription>

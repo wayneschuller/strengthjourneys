@@ -30,7 +30,7 @@ import {
   LiftingStandardsKG,
 } from "@/lib/lifting-standards-kg";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
-import { LoaderCircle } from "lucide-react";
+import { Bot, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
@@ -258,7 +258,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
     // <main className="mx-4 flex flex-col items-center md:mx-[5vw]">
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading icon="Bot">AI Lifting Assistant</PageHeaderHeading>
+        <PageHeaderHeading icon={Bot}>AI Lifting Assistant</PageHeaderHeading>
         <PageHeaderDescription>
           Free AI Lifting Assistant. Talk to your lifting data. The gym buddy
           you never had.

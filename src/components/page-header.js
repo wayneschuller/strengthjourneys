@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import * as LucideIcons from "lucide-react";
 
 export function PageHeader({ className, children, ...props }) {
   return (
@@ -16,9 +15,7 @@ export function PageHeader({ className, children, ...props }) {
   );
 }
 
-export function PageHeaderHeading({ className, icon, ...props }) {
-  const Icon = icon ? LucideIcons[icon] : null;
-
+export function PageHeaderHeading({ className, icon: Icon, ...props }) {
   return (
     <h1
       className={cn(

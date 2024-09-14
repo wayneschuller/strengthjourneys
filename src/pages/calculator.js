@@ -292,11 +292,13 @@ function E1RMCalculatorMain({ relatedArticles }) {
     );
 
   return (
-    <main className="mx-4 md:mx-[5vw]">
+    // <main className="mx-4 md:mx-[5vw]">
+    <main className="container">
       <PageHeader>
         <PageHeaderHeading>One Rep Max Calculator</PageHeaderHeading>
         <PageHeaderDescription>
-          Estimate your max single based on reps and weight.
+          Estimate your max single based on reps and weight. With optional
+          strength level insights.
         </PageHeaderDescription>
       </PageHeader>
       <Card>

@@ -14,6 +14,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+import {
+  PageHeader,
+  PageHeaderHeading,
+  PageHeaderDescription,
+} from "@/components/page-header";
+
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -170,16 +177,15 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
     "https://www.strengthjourneys.xyz/strength_journeys_strength_levels_calculator_og.png";
 
   return (
-    // <main className="mx-4 flex flex-col items-center md:mx-[5vw]">
-    <main className="mx-4 md:mx-[5vw]">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Strength Level Calculator</CardTitle>
-          <CardDescription>
-            How strong am I? Estimate your strength level based on age, gender,
-            and bodyweight.
-          </CardDescription>
-        </CardHeader>
+    <div className="container">
+      <PageHeader>
+        <PageHeaderHeading>Strength Level Calculator</PageHeaderHeading>
+        <PageHeaderDescription>
+          How strong am I? Estimate your strength level based on age, gender,
+          and bodyweight.
+        </PageHeaderDescription>
+      </PageHeader>
+      <Card className="pt-4">
         <CardContent className="">
           <div className="mb-10 flex flex-col items-start gap-4 md:mr-10 md:flex-row md:gap-8">
             <div className="flex w-full flex-col md:w-2/5">
@@ -293,7 +299,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
               >
                 One Rep Max Calculator
               </Link>{" "}
-              and click {`"`}Advanced Analysis{`"`}.
+              and click {`"`}Strength Level Insights{`"`}.
             </p>
             <p className="">
               Our data model is a derivation of the excellent research of{" "}
@@ -310,7 +316,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
         </CardFooter>
       </Card>
       <RelatedArticles articles={relatedArticles} />
-    </main>
+    </div>
   );
 }
 

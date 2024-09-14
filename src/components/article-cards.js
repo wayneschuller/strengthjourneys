@@ -13,7 +13,7 @@ import Image from "next/image";
 import { urlFor } from "@/lib/sanity-io.js";
 
 export function ArticleSummaryCard({ article }) {
-  devLog(article);
+  // devLog(article);
 
   return (
     <Link href={`/articles/${article.slug}`}>
@@ -90,13 +90,14 @@ export function RelatedArticles({ articles }) {
 }
 
 const SquareImage = ({ sanityImage }) => {
-  if (!sanityImage) return;
+  if (!sanityImage) return null;
 
-  let imageUrl = null;
-  if (sanityImage) {
-    imageUrl = urlFor(sanityImage).url();
-    // devLog(imageUrl);
-  }
+  let imageUrl = urlFor(sanityImage)
+    .width(150)
+    .height(150)
+    .fit("crop")
+    .quality(80)
+    .url();
 
   if (!imageUrl) return null;
 
@@ -106,9 +107,11 @@ const SquareImage = ({ sanityImage }) => {
       <Image
         src={imageUrl}
         alt="Banner"
-        fill
+        width={150}
+        height={150}
+        // fill
         style={{ objectFit: "cover" }}
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw"
+        // sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw"
       />
     </div>
   );

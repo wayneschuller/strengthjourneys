@@ -258,7 +258,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
     // <main className="mx-4 flex flex-col items-center md:mx-[5vw]">
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading>AI Lifting Assistant</PageHeaderHeading>
+        <PageHeaderHeading icon="Bot">AI Lifting Assistant</PageHeaderHeading>
         <PageHeaderDescription>
           Free AI Lifting Assistant. Talk to your lifting data. The gym buddy
           you never had.

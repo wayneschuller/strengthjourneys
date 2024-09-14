@@ -179,7 +179,9 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading>Strength Level Calculator</PageHeaderHeading>
+        <PageHeaderHeading icon="BicepsFlexed">
+          Strength Level Calculator
+        </PageHeaderHeading>
         <PageHeaderDescription>
           How strong am I? Estimate your strength level based on age, gender,
           and bodyweight.

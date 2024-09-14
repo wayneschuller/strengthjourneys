@@ -54,7 +54,7 @@ export default function ArticleListingPage({
         </script>
       </Head>
       <PageHeader>
-        <PageHeaderHeading>{pageTitle}</PageHeaderHeading>
+        <PageHeaderHeading icon="LibraryBig">{pageTitle}</PageHeaderHeading>
         <PageHeaderDescription>
           Browse our collection of strength, lifting and fitness articles on
           various topics.

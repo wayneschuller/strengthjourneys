@@ -416,7 +416,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
       </Head>
       <div className="container">
         <PageHeader>
-          <PageHeaderHeading>
+          <PageHeaderHeading icon="Music">
             Gym Music Playlist Global Leaderboard
           </PageHeaderHeading>
           <PageHeaderDescription>

@@ -80,7 +80,9 @@ function VisualizerMain() {
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading>Strength Visualizer</PageHeaderHeading>
+        <PageHeaderHeading icon="LineChart">
+          Strength Visualizer
+        </PageHeaderHeading>
         <PageHeaderDescription>
           Visualize your E1RM for every set and every lift. See your complete
           strength journey.

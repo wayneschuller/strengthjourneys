@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import * as LucideIcons from "lucide-react";
 
 export function PageHeader({ className, children, ...props }) {
   return (
@@ -15,15 +16,20 @@ export function PageHeader({ className, children, ...props }) {
   );
 }
 
-export function PageHeaderHeading({ className, ...props }) {
+export function PageHeaderHeading({ className, icon, ...props }) {
+  const Icon = icon ? LucideIcons[icon] : null;
+
   return (
     <h1
       className={cn(
-        "text-3xl font-bold leading-tight tracking-tighter md:text-4xl lg:leading-[1.1]",
+        "flex items-center text-3xl font-bold leading-tight tracking-tighter md:text-4xl lg:leading-[1.1]",
         className,
       )}
       {...props}
-    />
+    >
+      {Icon && <Icon className="mr-2 h-8 w-8" />}
+      {props.children}
+    </h1>
   );
 }
 

@@ -294,7 +294,9 @@ function E1RMCalculatorMain({ relatedArticles }) {
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading>One Rep Max Calculator</PageHeaderHeading>
+        <PageHeaderHeading icon="Calculator">
+          One Rep Max Calculator
+        </PageHeaderHeading>
         <PageHeaderDescription>
           Estimate your max single based on reps and weight. With optional
           strength level insights.

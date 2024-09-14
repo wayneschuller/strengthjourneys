@@ -91,7 +91,7 @@ function AnalyzerMain({ relatedArticles }) {
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading>PR Analyzer</PageHeaderHeading>
+        <PageHeaderHeading icon="Trophy">PR Analyzer</PageHeaderHeading>
         <PageHeaderDescription>
           Unlock insights with your personalized strength dashboard. Track PRs,
           consistency, recent highlights and detailed analysis of your squat,

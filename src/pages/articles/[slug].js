@@ -43,11 +43,11 @@ const components = {
 };
 
 export default function ArticlePost({ article }) {
-  const canonicalUrl = `https://www.strengthjourneys.xyz/articles/${article.slug}`;
+  const canonicalUrl = `https://www.strengthjourneys.xyz/articles/${article.slug.current}`;
   const publishDate = new Date(article.publishedAt).toISOString();
   const formattedDate = format(new Date(article.publishedAt), "MMMM d, yyyy");
 
-  // devLog(article);
+  devLog(article);
 
   let imageUrl = null;
   if (article.mainImage) {

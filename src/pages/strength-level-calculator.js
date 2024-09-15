@@ -46,7 +46,7 @@ export default function StrengthLevelCalculator({ relatedArticles }) {
   const canonicalURL =
     "https://www.strengthjourneys.xyz/strength-level-calculator";
   const description =
-    "Discover your strength level with our free calculator. Compare lifts based on age, gender, and bodyweight. Instant results for multiple lifts. Optimize your training.";
+    "Discover your strength level with our free calculator. Compare lifts based on age, gender, and bodyweight. Instant results for multiple lifts.";
   const title =
     "Strength Level Test: Free Tool for Lifters. No login required.";
   const keywords =
@@ -167,15 +167,6 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
   const unitType = isMetric ? "kg" : "lb";
 
   const liftTypesFromStandards = Object.keys(standards);
-
-  // OG Meta Tags
-  const URL = "https://www.strengthjourneys.xyz/strength-level-calculator";
-  const description =
-    "Discover your true strength level with our free, personalized calculator. Compare your lifts to standards based on age, gender, and bodyweight. Perfect for powerlifters, weightlifters, and strength athletes of all levels. Get instant results for multiple lifts and track your progress from beginner to elite. Start optimizing your training today with Strength Journeys.";
-  const title =
-    "Strength Level Test: Free Calculator for Lifters | Strength Journeys";
-  const ogImage =
-    "https://www.strengthjourneys.xyz/strength_journeys_strength_levels_calculator_og.png";
 
   return (
     <div className="container">

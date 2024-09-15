@@ -20,12 +20,13 @@ const components = {
         return null;
       }
 
+      // These will be in article images. These will be portrait landscpe so go slightly wider than higher
       const imageUrl = urlFor(value)
-        .width(600) // Set the desired width for banners
-        .height(400) // Set a height that suits the aspect ratio of a banner
-        .fit("clip") // Fit the image within the dimensions while maintaining aspect ratio
-        .quality(80) // Reduce quality slightly for optimization
-        .auto("format") // Automatically choose the best image format (e.g., WebP if supported)
+        .width(600)
+        .height(400)
+        .fit("clip")
+        .quality(80)
+        .auto("format")
         .url();
 
       return (

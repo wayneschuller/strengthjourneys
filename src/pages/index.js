@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/card";
 import { GettingStartedCard } from "@/components/instructions-cards";
 import { SloganCarousel } from "@/components/slogan-carousel";
+import { Testimonials } from "@/components/testimonials";
 
 //
 export const featurePages = [
@@ -154,6 +155,8 @@ export default function Home() {
             <FeatureCard key={index} {...card} />
           ))}
         </div>
+
+        {/* <Testimonials /> */}
 
         <div className="mx-4 md:mx-20">
           <GettingStartedCard />

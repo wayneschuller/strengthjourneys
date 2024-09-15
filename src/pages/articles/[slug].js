@@ -21,7 +21,7 @@ const components = {
       }
 
       const imageUrl = urlFor(value)
-        .width(1200) // Set the desired width for banners
+        .width(600) // Set the desired width for banners
         .height(400) // Set a height that suits the aspect ratio of a banner
         .fit("clip") // Fit the image within the dimensions while maintaining aspect ratio
         .quality(80) // Reduce quality slightly for optimization
@@ -49,9 +49,25 @@ export default function ArticlePost({ article }) {
 
   devLog(article);
 
-  let imageUrl = null;
+  let bannerImageUrl = null;
+  let ogImageUrl = null;
+
   if (article.mainImage) {
-    imageUrl = urlFor(article.mainImage)?.url();
+    bannerImageUrl = urlFor(article.mainImage)
+      .width(1200)
+      .height(400)
+      .fit("clip")
+      .quality(90)
+      .auto("format")
+      .url();
+
+    ogImageUrl = urlFor(article.mainImage)
+      .width(400)
+      .height(400)
+      .fit("clip")
+      .quality(70)
+      .auto("format")
+      .url();
   }
 
   return (
@@ -65,7 +81,7 @@ export default function ArticlePost({ article }) {
         <meta property="og:type" content="article" />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:title" content={article.title} />
-        <meta property="og:image" content={imageUrl} />
+        <meta property="og:image" content={ogImageUrl} />
         <meta
           property="og:description"
           content={article.description ?? article.title}
@@ -80,7 +96,7 @@ export default function ArticlePost({ article }) {
           name="twitter:description"
           content={article.description ?? article.title}
         />
-        <meta name="twitter:image" content={imageUrl} />
+        <meta name="twitter:image" content={ogImageUrl} />
 
         {/* Structured Data */}
         <script type="application/ld+json">
@@ -103,7 +119,9 @@ export default function ArticlePost({ article }) {
       </Head>
 
       <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
-        <CardHeader>{imageUrl && <Banner imageUrl={imageUrl} />}</CardHeader>
+        <CardHeader>
+          {bannerImageUrl && <Banner imageUrl={bannerImageUrl} />}
+        </CardHeader>
         <CardContent>
           <article className="prose prose-orange dark:prose-invert">
             <header>

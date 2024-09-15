@@ -71,11 +71,13 @@ export default function ArticlePost({ article }) {
       .url();
   }
 
+  const description = article.description ?? article.title;
+
   return (
     <div className="mx-4 mb-10 flex items-center justify-center">
       <Head>
         <title>{article.title}</title>
-        <meta name="description" content={article.title} />
+        <meta name="description" content={description} />
         <link rel="canonical" href={canonicalUrl} />
 
         {/* Open Graph / Facebook */}
@@ -83,20 +85,14 @@ export default function ArticlePost({ article }) {
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:title" content={article.title} />
         <meta property="og:image" content={ogImageUrl} />
-        <meta
-          property="og:description"
-          content={article.description ?? article.title}
-        />
+        <meta property="og:description" content={description} />
         <meta property="article:published_time" content={publishDate} />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content={canonicalUrl} />
         <meta name="twitter:title" content={article.title} />
-        <meta
-          name="twitter:description"
-          content={article.description ?? article.title}
-        />
+        <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={ogImageUrl} />
 
         {/* Structured Data */}

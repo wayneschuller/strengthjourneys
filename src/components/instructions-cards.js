@@ -118,7 +118,10 @@ export function GettingStartedCard() {
   return (
     <Card className="hover:ring-0">
       <CardHeader>
-        <CardTitle>Getting Started</CardTitle>
+        <CardTitle>
+          Getting Started: Set Up Google Sheets and Connect with Strength
+          Journeys
+        </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 lg:grid-cols-7">
         <div className="">

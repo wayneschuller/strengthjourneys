@@ -361,58 +361,37 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   // devLog(votes);
   // devLog(playlists);
   // devLog(filteredAndSortedPlaylists);
+  const canonicalURL =
+    "https://www.strengthjourneys.xyz/gym-playlist-leaderboard";
+  const title = "Top Gym Playlists: Barbell Lifting Music Leaderboard";
+  const description =
+    "Elevate your workouts with top-rated gym playlists. Discover the best music for weightlifting, powerlifting, and strength training.";
+  const keywords =
+    "gym playlists, workout music, lifting songs, powerlifting soundtrack, fitness motivation, strength training music";
+  const ogImageURL =
+    "https://www.strengthjourneys.xyz/strength-journeys-playlist-leaderboard.png";
 
   return (
     <>
       <Head>
-        <title>Top Gym Playlists: Barbell Lifting Music Leaderboard</title>
-        <meta
-          name="description"
-          content="Elevate your workouts with top-rated gym playlists. Discover and share the best music for weightlifting, powerlifting, and strength training. Vote early, vote often."
-        />
+        <title>{title}</title>
+        <meta name="description" content={description} />
 
-        <meta
-          name="keywords"
-          content="gym playlists, workout music, lifting songs, powerlifting soundtrack, fitness motivation, strength training music"
-        />
-        <link
-          rel="canonical"
-          href="https://www.strengthjourneys.xyz/gym-playlist-leaderboard"
-        />
+        <meta name="keywords" content={keywords} />
+        <link rel="canonical" href={canonicalURL} />
 
         <meta name="robots" content="index, follow" />
 
-        <meta
-          property="og:title"
-          content="Top Gym Playlists: Barbell Lifting Music Leaderboard"
-        />
-        <meta
-          property="og:description"
-          content="Elevate your workouts with top-rated gym playlists. Vote, submit, and discover the best music for weightlifting, powerlifting, and strength training. Join the fitness community!"
-        />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
         <meta property="og:type" content="website" />
-        <meta
-          property="og:url"
-          content="https://www.strengthjourneys.xyz/gym-playlist-leaderboard"
-        />
-        <meta
-          property="og:image"
-          content="https://www.strengthjourneys.xyz/strength-journeys-playlist-leaderboard.png"
-        />
+        <meta property="og:url" content={canonicalURL} />
+        <meta property="og:image" content={ogImageURL} />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta
-          name="twitter:title"
-          content="Top Gym Playlists: Barbell Lifting Music Leaderboard"
-        />
-        <meta
-          name="twitter:description"
-          content="Elevate your workouts with top-rated gym playlists. Vote, submit, and discover the best music for weightlifting, powerlifting, and strength training. Join the fitness community!"
-        />
-        <meta
-          name="twitter:image"
-          content="https://www.strengthjourneys.xyz/strength-journeys-playlist-leaderboard.png"
-        />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={ogImageURL} />
       </Head>
       <div className="container">
         <PageHeader>

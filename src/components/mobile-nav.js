@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ViewVerticalIcon } from "@radix-ui/react-icons";
+import { Menu } from "lucide-react";
 import { featurePages } from "@/pages";
 import Image from "next/image";
 
@@ -49,7 +50,7 @@ export function MobileNav() {
           variant="ghost"
           className="px-2 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
         >
-          <ViewVerticalIcon className="mr-2 h-5 w-5" />
+          <Menu className="mr-2 h-7 w-7" />
           <div className="tracking-tight">Strength Journeys</div>
           <span className="sr-only">Toggle Menu</span>
         </Button>

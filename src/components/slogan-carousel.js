@@ -13,12 +13,14 @@ export function SloganCarousel() {
   const plugin = useRef(Autoplay({ delay: 6000, stopOnInteraction: false }));
 
   const slogans = [
-    "Lift for yourself. Build strength, not comparisons.",
+    "See gains. Break records. Lift with confidence.",
+    "Effortless tracking and insights for serious lifters.",
     `"I feel like I'm getting rewarded for going to the gym." - Stacey, 32, gym enthusiast.`,
-    "Your data, our visualizations.",
+    "Free and open source.",
     `"I trust putting my data into Google Sheets over other apps." - Jake, 28, powerlifter.`,
-    "More time lifting, less time logging.",
+    "Lift for yourself. Build strength, not comparisons.",
     `"The instant visualizer is incredibly motivating." - Brian, 40, lifter.`,
+    "More time lifting, less time logging.",
     `"I've never seen my strength progress so clearly." - John, 37, lifter.`,
     "For barbell weirdos.",
   ];

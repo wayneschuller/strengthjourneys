@@ -65,4 +65,9 @@ const testimonialData = [
     description: "37, ex-runner.",
     comment: "I've never seen my strength progress so clearly.",
   },
+  {
+    name: "Hong",
+    description: "31, lifter.",
+    comment: "I finally crushed my PRs with accurate insights!.",
+  },
 ];

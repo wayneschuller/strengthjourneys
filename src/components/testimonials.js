@@ -35,6 +35,11 @@ export function Testimonials({}) {
 
 const testimonialData = [
   {
+    name: "Hong",
+    description: "31, lifter.",
+    comment: "I finally crushed my PRs with accurate insights!.",
+  },
+  {
     name: "Manny",
     description: "Online commenter, 25.",
     comment:
@@ -68,6 +73,6 @@ const testimonialData = [
   {
     name: "Hong",
     description: "31, lifter.",
-    comment: "I finally crushed my PRs with accurate insights!.",
+    comment: "The smartest lifting tool I've ever used.",
   },
 ];

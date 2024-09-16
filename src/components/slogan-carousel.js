@@ -12,11 +12,13 @@ import {
 export function SloganCarousel() {
   const plugin = useRef(Autoplay({ delay: 6000, stopOnInteraction: false }));
 
+  // FIXME: these should be on the landing somewhere not just hidden in the carousel
   const slogans = [
     "See gains. Break records. Lift with confidence.",
     "Effortless tracking and insights for serious lifters.",
     "Built by lifters, for lifters.",
     `"I feel like I'm getting rewarded for going to the gym." - Stacey, 32, gym enthusiast.`,
+    "Your lifting data, secured forever—right in your Google Sheet.",
     "Free and open source.",
     `"I trust putting my data into Google Sheets over other apps." - Jake, 28, powerlifter.`,
     "Lift for yourself. Build strength, not comparisons.",
@@ -24,6 +26,7 @@ export function SloganCarousel() {
     "More time lifting, less time logging.",
     `"I've never seen my strength progress so clearly." - John, 37, lifter.`,
     "For barbell weirdos.",
+    "Never lose your lifting data again. It's your Google Sheet",
   ];
 
   return (

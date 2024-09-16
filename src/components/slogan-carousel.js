@@ -26,7 +26,7 @@ export function SloganCarousel() {
     "More time lifting, less time logging.",
     `"I've never seen my strength progress so clearly." - John, 37, lifter.`,
     "For barbell weirdos.",
-    "Never lose your lifting data again. It's your Google Sheet",
+    "Never lose your lifting data again. It's your Google Sheet.",
   ];
 
   return (

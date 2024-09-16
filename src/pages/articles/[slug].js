@@ -74,7 +74,7 @@ export default function ArticlePost({ article }) {
   const description = article.description ?? article.title;
 
   return (
-    <div className="mx-4 mb-10 flex items-center justify-center">
+    <div className="mx-2 mb-10 flex items-center justify-center md:mx-4">
       <Head>
         <title>{article.title}</title>
         <meta name="description" content={description} />
@@ -116,10 +116,10 @@ export default function ArticlePost({ article }) {
       </Head>
 
       <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
-        <CardHeader>
+        <CardHeader className="px-3 md:px-6">
           {bannerImageUrl && <Banner imageUrl={bannerImageUrl} />}
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 md:px-6">
           <article className="prose prose-orange dark:prose-invert">
             <header>
               <h1 className="tracking-tighter">{article.title}</h1>

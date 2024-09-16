@@ -122,7 +122,7 @@ export default function ArticlePost({ article }) {
         <CardContent>
           <article className="prose prose-orange dark:prose-invert">
             <header>
-              <h1>{article.title}</h1>
+              <h1 className="tracking-tighter">{article.title}</h1>
               <h3 className="mt-2 text-sm font-light text-gray-600 dark:text-gray-400">
                 Published at: {formattedDate}
               </h3>

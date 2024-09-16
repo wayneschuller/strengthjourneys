@@ -73,7 +73,7 @@ export function MobileNav() {
                 alt="logo"
                 className="hidden dark:inline-block"
               />
-              <span className="mb-6 inline-block text-xl font-bold tracking-tighter">
+              <span className="mb-4 inline-block text-xl font-bold tracking-tighter">
                 Strength Journeys Home
               </span>
             </Link>

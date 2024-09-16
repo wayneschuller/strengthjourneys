@@ -144,7 +144,7 @@ export default function Home() {
         <div className="flex flex-row justify-center">
           <SloganCarousel />
         </div>
-        <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
+        <h1 className="my-4 space-x-2 text-balance text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
           Welcome to Strength Journeys
         </h1>
 

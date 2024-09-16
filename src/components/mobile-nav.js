@@ -49,7 +49,8 @@ export function MobileNav() {
           variant="ghost"
           className="px-2 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
         >
-          <ViewVerticalIcon className="h-5 w-5" />
+          <ViewVerticalIcon className="mr-2 h-5 w-5" />
+          <div className="tracking-tight">Strength Journeys</div>
           <span className="sr-only">Toggle Menu</span>
         </Button>
       </SheetTrigger>
@@ -71,12 +72,12 @@ export function MobileNav() {
                 alt="logo"
                 className="hidden dark:inline-block"
               />
-              <span className="mb-6 inline-block text-xl font-bold">
+              <span className="mb-6 inline-block text-xl font-bold tracking-tighter">
                 Strength Journeys Home
               </span>
             </Link>
           </SheetClose>
-          <div className="flex flex-1 flex-col gap-4 text-lg font-medium">
+          <div className="flex flex-1 flex-col gap-4 text-lg font-medium tracking-tight">
             {featurePages.map((item) => (
               <NavLink key={item.href} {...item} />
             ))}

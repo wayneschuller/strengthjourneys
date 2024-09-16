@@ -15,6 +15,7 @@ export function SloganCarousel() {
   const slogans = [
     "See gains. Break records. Lift with confidence.",
     "Effortless tracking and insights for serious lifters.",
+    "Built by lifters, for lifters.",
     `"I feel like I'm getting rewarded for going to the gym." - Stacey, 32, gym enthusiast.`,
     "Free and open source.",
     `"I trust putting my data into Google Sheets over other apps." - Jake, 28, powerlifter.`,

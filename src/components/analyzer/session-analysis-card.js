@@ -20,6 +20,7 @@ import {
   findLiftPositionInTopLifts,
   getCelebrationEmoji,
   getReadableDateString,
+  getAnalyzedSessionLifts,
 } from "@/lib/processing-utils";
 
 export function SessionAnalysisCard({ highlightDate }) {
@@ -39,6 +40,7 @@ export function SessionAnalysisCard({ highlightDate }) {
 
   let sessionDate = highlightDate;
 
+  // The Visualizer will call the function with a highlight date included.
   // The PR Analyzer will call this component without a highlight date, so find the most recent session
   if (!sessionDate) {
     // Iterate backwards to find the most recent non-goal entry date
@@ -50,42 +52,15 @@ export function SessionAnalysisCard({ highlightDate }) {
     }
   }
 
-  const recentWorkouts = parsedData?.filter(
-    (workout) => workout.date === sessionDate && workout.isGoal !== true,
+  const analyzedSessionLifts = getAnalyzedSessionLifts(
+    sessionDate,
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
   );
 
-  // Group workouts by liftType and check if they are liftime or yearly PRs
-  const groupedWorkouts = recentWorkouts?.reduce((acc, entry) => {
-    const { liftType } = entry;
-    acc[liftType] = acc[liftType] || [];
-
-    const {
-      rank: lifetimeRanking,
-      annotation: lifetimeSignificanceAnnotation,
-    } = findLiftPositionInTopLifts(entry, topLiftsByTypeAndReps);
-
-    let { rank: yearlyRanking, annotation: yearlySignificanceAnnotation } =
-      findLiftPositionInTopLifts(entry, topLiftsByTypeAndRepsLast12Months);
-
-    // If the yearly ranking is not better than an existing lifetime ranking, don't show it
-    if (lifetimeRanking !== -1 && yearlyRanking >= lifetimeRanking) {
-      yearlyRanking = null;
-      yearlySignificanceAnnotation = null;
-    }
-
-    acc[liftType].push({
-      ...entry,
-      lifetimeRanking: lifetimeRanking,
-      lifetimeSignificanceAnnotation: lifetimeSignificanceAnnotation,
-      yearlyRanking: yearlyRanking,
-      yearlySignificanceAnnotation: yearlySignificanceAnnotation,
-    });
-
-    return acc;
-  }, {});
-
-  if (groupedWorkouts && !sessionRatingRef.current) {
-    sessionRatingRef.current = getCreativeSessionRating(groupedWorkouts);
+  if (analyzedSessionLifts && !sessionRatingRef.current) {
+    sessionRatingRef.current = getCreativeSessionRating(analyzedSessionLifts);
   }
 
   return (
@@ -93,73 +68,79 @@ export function SessionAnalysisCard({ highlightDate }) {
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo Mode: "}
-          {groupedWorkouts && getReadableDateString(sessionDate, true)} Session
+          {analyzedSessionLifts &&
+            getReadableDateString(sessionDate, true)}{" "}
+          Session
         </CardTitle>
         <CardDescription>Session overview and analysis</CardDescription>
       </CardHeader>
       <CardContent>
-        {!groupedWorkouts && <Skeleton className="h-[50vh]" />}
-        {groupedWorkouts &&
-          (Object.keys(groupedWorkouts).length > 0 ? (
+        {!analyzedSessionLifts && <Skeleton className="h-[50vh]" />}
+        {analyzedSessionLifts &&
+          (Object.keys(analyzedSessionLifts).length > 0 ? (
             <ul>
-              {Object.entries(groupedWorkouts).map(([liftType, workouts]) => (
-                <li key={liftType} className="pb-2">
-                  <div className="flex flex-row items-center">
-                    <div
-                      className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                      style={{ backgroundColor: getLiftColor(liftType) }} // Use css style because tailwind is picky
-                    />
-                    <div className="font-bold">{liftType}</div>
-                  </div>
-                  <ul className="pl-4">
-                    {workouts.map((workout, index) => (
-                      <li key={index}>
-                        <div className="flex flex-row justify-between">
-                          <div
-                            className={
-                              workout.lifetimeRanking !== -1 ? "font-bold" : ""
-                            }
-                          >
-                            {workout.URL ? (
-                              <a
-                                href={workout.URL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline"
-                              >
-                                {workout.reps}@{workout.weight}
-                                {workout.unitType}{" "}
-                              </a>
-                            ) : (
-                              <>
-                                {workout.reps}@{workout.weight}
-                                {workout.unitType}{" "}
-                              </>
-                            )}
+              {Object.entries(analyzedSessionLifts).map(
+                ([liftType, workouts]) => (
+                  <li key={liftType} className="pb-2">
+                    <div className="flex flex-row items-center">
+                      <div
+                        className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                        style={{ backgroundColor: getLiftColor(liftType) }} // Use css style because tailwind is picky
+                      />
+                      <div className="font-bold">{liftType}</div>
+                    </div>
+                    <ul className="pl-4">
+                      {workouts.map((workout, index) => (
+                        <li key={index}>
+                          <div className="flex flex-row justify-between">
+                            <div
+                              className={
+                                workout.lifetimeRanking !== -1
+                                  ? "font-bold"
+                                  : ""
+                              }
+                            >
+                              {workout.URL ? (
+                                <a
+                                  href={workout.URL}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="underline"
+                                >
+                                  {workout.reps}@{workout.weight}
+                                  {workout.unitType}{" "}
+                                </a>
+                              ) : (
+                                <>
+                                  {workout.reps}@{workout.weight}
+                                  {workout.unitType}{" "}
+                                </>
+                              )}
+                            </div>
+                            <div className="ml-6 inline-block">
+                              {/* If both exist they should be separated by a comma */}
+                              {workout.lifetimeSignificanceAnnotation &&
+                                `${workout.lifetimeSignificanceAnnotation}`}
+                              {workout.lifetimeSignificanceAnnotation &&
+                                workout.yearlySignificanceAnnotation &&
+                                ", "}
+                              {workout.yearlySignificanceAnnotation &&
+                                `${workout.yearlySignificanceAnnotation} of the year`}
+                            </div>
                           </div>
-                          <div className="ml-6 inline-block">
-                            {/* If both exist they should be separated by a comma */}
-                            {workout.lifetimeSignificanceAnnotation &&
-                              `${workout.lifetimeSignificanceAnnotation}`}
-                            {workout.lifetimeSignificanceAnnotation &&
-                              workout.yearlySignificanceAnnotation &&
-                              ", "}
-                            {workout.yearlySignificanceAnnotation &&
-                              `${workout.yearlySignificanceAnnotation} of the year`}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ),
+              )}
             </ul>
           ) : (
             <p>No workouts available for the most recent date.</p>
           ))}
       </CardContent>
       <CardFooter>
-        {groupedWorkouts && (
+        {analyzedSessionLifts && (
           <div>
             <strong>Session rating:</strong> {sessionRatingRef.current}
           </div>

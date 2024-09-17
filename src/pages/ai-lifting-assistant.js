@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { useChat } from "ai/react";
-import { devLog } from "@/lib/processing-utils";
+import { devLog, getAnalyzedSessionLifts } from "@/lib/processing-utils";
 import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
 
@@ -234,6 +234,37 @@ function AILiftingAssistantMain({ relatedArticles }) {
 
     userProvidedProfileData +=
       "Here are my statistics for each lift type: " + formattedString + ", ";
+  }
+
+  // --------------------------------------------------------------------------------------------------
+  // Add in recent session data to the AI prompt
+  // --------------------------------------------------------------------------------------------------
+  if (userLiftingMetadata.sessionData) {
+    let sessionDate = null;
+    // Iterate backwards to find the most recent non-goal entry date
+    for (let i = parsedData?.length - 1; i >= 0; i--) {
+      if (!parsedData[i].isGoal) {
+        sessionDate = parsedData[i].date;
+        break; // Stop as soon as we find the most recent non-goal entry
+      }
+    }
+
+    if (!sessionDate) return; // No data to share yet
+
+    const analyzedSessionLifts = getAnalyzedSessionLifts(
+      sessionDate,
+      parsedData,
+      topLiftsByTypeAndReps,
+      topLiftsByTypeAndRepsLast12Months,
+    );
+
+    const sessionData = convertAnalyzedLiftsToLLMStrings(analyzedSessionLifts);
+    devLog(sessionData);
+
+    const today = new Date().toISOString().split("T")[0];
+
+    userProvidedProfileData += `Background info: Here is my most recent session from Google Sheets, completed ${sessionDate} (today's day is: ${today}):`;
+    userProvidedProfileData += sessionData.join(" ");
   }
 
   const toggleIsMetric = (isMetric) => {
@@ -472,6 +503,39 @@ const MarkdownWithStyled = ({ children }) => (
     {children}
   </ReactMarkdown>
 );
+
+function convertAnalyzedLiftsToLLMStrings(analyzedLifts) {
+  const sessionDescriptions = [];
+
+  Object.entries(analyzedLifts).forEach(([liftType, lifts]) => {
+    lifts.forEach((lift, index) => {
+      let description = `${liftType} set ${index + 1}: `;
+      description += `${lift.reps} reps at ${lift.weight}${lift.unitType}. `;
+
+      if (lift.notes) {
+        description += `Notes: ${lift.notes}. `;
+      }
+
+      if (lift.lifetimeRanking !== -1) {
+        description += `This is a lifetime PR, ranked #${lift.lifetimeRanking + 1}. `;
+        if (lift.lifetimeSignificanceAnnotation) {
+          description += `${lift.lifetimeSignificanceAnnotation}. `;
+        }
+      }
+
+      if (lift.yearlyRanking !== -1 && lift.yearlyRanking !== null) {
+        description += `This is a yearly PR, ranked #${lift.yearlyRanking + 1} for this year. `;
+        if (lift.yearlySignificanceAnnotation) {
+          description += `${lift.yearlySignificanceAnnotation}. `;
+        }
+      }
+
+      sessionDescriptions.push(description.trim());
+    });
+  });
+
+  return sessionDescriptions;
+}
 
 export async function getStaticProps() {
   try {

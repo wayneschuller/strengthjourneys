@@ -47,7 +47,41 @@ import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-
 import { Calculator } from "lucide-react";
 
 const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
+
 const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
+export async function getStaticProps() {
+  try {
+    const relatedArticles = await sanityIOClient.fetch(
+      `
+      *[_type == "post" && publishedAt < now() && $category in categories[]->title] | order(publishedAt desc) {
+        title,
+        "slug": slug.current,
+        publishedAt,
+        categories[]-> {
+          title
+        },
+        mainImage,
+      }
+    `,
+      { category: RELATED_ARTICLES_CATEGORY },
+    );
+
+    return {
+      props: {
+        relatedArticles: relatedArticles || [],
+      },
+      revalidate: 60 * 60, // Revalidate every hour
+    };
+  } catch (error) {
+    console.error("Error fetching related articles:", error);
+    return {
+      props: {
+        relatedArticles: [],
+      },
+      revalidate: 60 * 60,
+    };
+  }
+}
 
 export default function E1RMCalculator({ relatedArticles }) {
   const title = "One Rep Max Calculator | Free tool, no login required";
@@ -717,37 +751,3 @@ export const getStandardRatingString = (
 
   return liftRating;
 };
-
-export async function getStaticProps() {
-  try {
-    const relatedArticles = await sanityIOClient.fetch(
-      `
-      *[_type == "post" && publishedAt < now() && $category in categories[]->title] | order(publishedAt desc) {
-        title,
-        "slug": slug.current,
-        publishedAt,
-        categories[]-> {
-          title
-        },
-        mainImage,
-      }
-    `,
-      { category: RELATED_ARTICLES_CATEGORY },
-    );
-
-    return {
-      props: {
-        relatedArticles: relatedArticles || [],
-      },
-      revalidate: 60 * 60, // Revalidate every hour
-    };
-  } catch (error) {
-    console.error("Error fetching related articles:", error);
-    return {
-      props: {
-        relatedArticles: [],
-      },
-      revalidate: 60 * 60,
-    };
-  }
-}

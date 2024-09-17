@@ -517,16 +517,16 @@ function convertAnalyzedLiftsToLLMStrings(analyzedLifts) {
       }
 
       if (lift.lifetimeRanking !== -1) {
-        description += `This is a lifetime PR, ranked #${lift.lifetimeRanking + 1}. `;
+        // description += `This is a lifetime PR, ranked #${lift.lifetimeRanking + 1}. `;
         if (lift.lifetimeSignificanceAnnotation) {
-          description += `${lift.lifetimeSignificanceAnnotation}. `;
+          description += `${lift.lifetimeSignificanceAnnotation} (lifetime - very significant!). `;
         }
       }
 
       if (lift.yearlyRanking !== -1 && lift.yearlyRanking !== null) {
-        description += `This is a yearly PR, ranked #${lift.yearlyRanking + 1} for this year. `;
+        // description += `This is a yearly PR, ranked #${lift.yearlyRanking + 1} for this year. `;
         if (lift.yearlySignificanceAnnotation) {
-          description += `${lift.yearlySignificanceAnnotation}. `;
+          description += `${lift.yearlySignificanceAnnotation}. (last year - encourage me) `;
         }
       }
 

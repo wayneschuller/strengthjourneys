@@ -134,7 +134,7 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
                 !selectedOptions.sessionData && "text-muted-foreground/50",
               )}
             >
-              Previous two weeks detailed session data (coming soon)
+              Detailed data from recent sessions
             </Label>
           </div>
         </div>

@@ -23,7 +23,7 @@ import {
   getAnalyzedSessionLifts,
 } from "@/lib/processing-utils";
 
-export function SessionAnalysisCard({ highlightDate }) {
+export function SessionAnalysisCard({ highlightDate = null }) {
   const {
     parsedData,
     topLiftsByTypeAndReps,

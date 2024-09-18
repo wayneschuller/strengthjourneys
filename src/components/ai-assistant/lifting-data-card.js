@@ -117,7 +117,7 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
                 !selectedOptions.consistency && "text-muted-foreground/50",
               )}
             >
-              Consistency ratings (coming soon)
+              Consistency ratings
             </Label>
           </div>
           <div className="group flex items-center gap-2">

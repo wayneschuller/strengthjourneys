@@ -36,6 +36,7 @@ import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
 import ReactMarkdown from "react-markdown";
+import { processConsistency } from "@/components/analyzer/consistency-card";
 
 const RELATED_ARTICLES_CATEGORY = "AI Lifting Assistant";
 
@@ -207,9 +208,9 @@ function AILiftingAssistantMain({ relatedArticles }) {
   if (shareBioDetails) {
     userProvidedProfileData +=
       `Some background information: ` +
-      `I am a ${age} year old ${sex}, my weight is ${bodyWeight}${isMetric ? "kg" : "lb"}, ` +
-      `I prefer to use ${isMetric ? "metric units" : "lb units"}, ` +
-      `My height is ${height}cm, `;
+      `User is a ${age} year old ${sex}, weight is ${bodyWeight}${isMetric ? "kg" : "lb"}, ` +
+      `User prefers ${isMetric ? "metric units" : "lb units"}, ` +
+      `User height is ${height}cm, `;
 
     let standardsMetadata = "";
 
@@ -222,7 +223,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
     });
 
     userProvidedProfileData +=
-      "To help you assess my progress, here are the Lon Kilgore lifting standards interpolated for my age/sex/weight: ";
+      "To help you assess user progress, here are the Lon Kilgore lifting standards interpolated for user age/sex/weight: ";
 
     userProvidedProfileData += standardsMetadata;
   }
@@ -237,11 +238,11 @@ function AILiftingAssistantMain({ relatedArticles }) {
       // Tell the AI our best single ever and last 12 months
       const single = topLiftsByTypeAndReps[liftType]?.[0]?.[0];
       if (single !== undefined) {
-        userProvidedProfileData += `My best ever ${liftType} single was ${single.weight}${single.unitType} on ${single.date}, `;
+        userProvidedProfileData += `User best ever ${liftType} single was ${single.weight}${single.unitType} on ${single.date}, `;
       }
       const singleYear = topLiftsByTypeAndRepsLast12Months[liftType]?.[0]?.[0];
       if (singleYear !== undefined) {
-        userProvidedProfileData += `My best ${liftType} single in the last 12 months was ${singleYear.weight}${singleYear.unitType} on ${singleYear.date}, `;
+        userProvidedProfileData += `User best ${liftType} single in the last 12 months was ${singleYear.weight}${singleYear.unitType} on ${singleYear.date}, `;
       }
 
       // FIXME: Tell the AI our best 3RM ever and last 12 months
@@ -249,13 +250,19 @@ function AILiftingAssistantMain({ relatedArticles }) {
       // Tell the AI our best 5RM ever and last 12 months
       const fiveRM = topLiftsByTypeAndReps[liftType]?.[4]?.[0];
       if (fiveRM !== undefined) {
-        userProvidedProfileData += `My best ever ${liftType} 5RM was ${fiveRM.weight}${fiveRM.unitType} on ${fiveRM.date}, `;
+        userProvidedProfileData += `User best ever ${liftType} 5RM was ${fiveRM.weight}${fiveRM.unitType} on ${fiveRM.date}, `;
       }
       const fiveRMYear = topLiftsByTypeAndRepsLast12Months[liftType]?.[4]?.[0];
       if (fiveRMYear !== undefined) {
-        userProvidedProfileData += `My best ${liftType} 5RM in the last 12 months was ${fiveRMYear.weight}${fiveRMYear.unitType} on ${fiveRMYear.date}, `;
+        userProvidedProfileData += `User best ${liftType} 5RM in the last 12 months was ${fiveRMYear.weight}${fiveRMYear.unitType} on ${fiveRMYear.date}, `;
       }
     });
+  }
+
+  if (userLiftingMetadata.consistency) {
+    const consistency = processConsistency(parsedData);
+
+    devLog(consistency);
   }
 
   if (userLiftingMetadata.frequency) {
@@ -267,7 +274,9 @@ function AILiftingAssistantMain({ relatedArticles }) {
       .join("; ");
 
     userProvidedProfileData +=
-      "Here are my statistics for each lift type: " + formattedString + ", ";
+      "Here are user frequency statistics for each lift type: " +
+      formattedString +
+      ", ";
   }
 
   // --------------------------------------------------------------------------------------------------

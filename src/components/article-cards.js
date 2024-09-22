@@ -68,10 +68,7 @@ export function RelatedArticles({ articles }) {
                 href={`/articles/${article.slug}`}
                 className="flex items-center rounded-md p-2 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
-                <FileText
-                  className="mr-3 text-gray-400 group-hover:text-primary"
-                  size={20}
-                />
+                <FileText className="mr-3 w-20 text-gray-400 group-hover:text-primary" />
                 <span className="mr-3 flex-grow text-balance group-hover:text-primary">
                   {article.title}
                   <div className="text-muted-foreground">
@@ -93,8 +90,8 @@ const SquareImage = ({ sanityImage }) => {
   if (!sanityImage) return null;
 
   let imageUrl = urlFor(sanityImage)
-    .width(150)
-    .height(150)
+    .width(200)
+    .height(200)
     .fit("crop")
     .quality(80)
     .url();
@@ -102,15 +99,16 @@ const SquareImage = ({ sanityImage }) => {
   if (!imageUrl) return null;
 
   return (
-    <div className="relative h-20 w-20 transform overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-110">
-      {/* Adjust height as needed */}
+    <div className="relative aspect-square w-full transform justify-center overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-110">
       <Image
         src={imageUrl}
         alt="Banner"
-        width={150}
-        height={150}
+        width={200}
+        height={200}
         // fill
-        style={{ objectFit: "cover" }}
+        // style={{ objectFit: "cover" }}
+        className="h-full w-full object-cover"
+
         // sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw"
       />
     </div>

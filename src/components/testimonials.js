@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Marquee from "@/components/magicui/marquee";
+import { ThumbsUp } from "lucide-react";
 
 export function Testimonials({}) {
   const firstRow = testimonialData.slice(0, testimonialData.length / 2);
@@ -39,8 +40,10 @@ function TestimonialCard({ testimony }) {
       <div className="flex flex-row gap-2">
         <div className="flex flex-col items-center justify-start">
           <Avatar>
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>CN</AvatarFallback>
+            <AvatarImage src={testimony.avatarURL} />
+            <AvatarFallback>
+              <ThumbsUp />
+            </AvatarFallback>
           </Avatar>
         </div>
         <div className="flex-1">

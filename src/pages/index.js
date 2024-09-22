@@ -158,7 +158,7 @@ export default function Home() {
 
         <Testimonials />
 
-        <div className="mx-4 md:mx-20">
+        <div className="mx-4 mt-10 md:mx-10">
           <GettingStartedCard />
         </div>
       </main>

@@ -17,7 +17,22 @@ import {
 } from "@/components/page-header";
 import { LineChart } from "lucide-react";
 
-export default function Analyzer() {
+import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { RelatedArticles } from "@/components/article-cards";
+
+export async function getStaticProps() {
+  const RELATED_ARTICLES_CATEGORY = "Strength Visualizer";
+  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+
+  return {
+    props: {
+      relatedArticles,
+    },
+    revalidate: 60 * 60,
+  };
+}
+
+export default function Visualizer({ relatedArticles }) {
   // OG Meta Tags
   const title = "Strength Journeys Lift Strength Visualizer";
   const canonicalURL = "https://www.strengthjourneys.xyz/visualizer";
@@ -60,12 +75,12 @@ export default function Analyzer() {
         ]}
       />
       {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
-      <VisualizerMain />
+      <VisualizerMain relatedArticles={relatedArticles} />
     </>
   );
 }
 
-function VisualizerMain() {
+function VisualizerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { isLoading } = useUserLiftingData();
   const ssid = useReadLocalStorage("ssid");
@@ -97,6 +112,7 @@ function VisualizerMain() {
           <SessionAnalysisCard highlightDate={highlightDate} />
         </div>
       </section>
+      <RelatedArticles articles={relatedArticles} />
     </div>
   );
 }

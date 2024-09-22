@@ -39,39 +39,18 @@ import { Separator } from "@/components/ui/separator";
 import { useIsClient } from "usehooks-ts";
 import { BicepsFlexed } from "lucide-react";
 
-const RELATED_ARTICLES_CATEGORY = "Strength Calculator";
-export async function getStaticProps() {
-  try {
-    const relatedArticles = await sanityIOClient.fetch(
-      `
-      *[_type == "post" && publishedAt < now() && $category in categories[]->title] | order(publishedAt desc) {
-        title,
-        "slug": slug.current,
-        publishedAt,
-        categories[]-> {
-          title
-        },
-        mainImage,
-      }
-    `,
-      { category: RELATED_ARTICLES_CATEGORY },
-    );
+import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
-    return {
-      props: {
-        relatedArticles: relatedArticles || [],
-      },
-      revalidate: 60 * 60, // Revalidate every hour
-    };
-  } catch (error) {
-    console.error("Error fetching related articles:", error);
-    return {
-      props: {
-        relatedArticles: [],
-      },
-      revalidate: 60 * 60,
-    };
-  }
+export async function getStaticProps() {
+  const RELATED_ARTICLES_CATEGORY = "Strength Calculator";
+  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+
+  return {
+    props: {
+      relatedArticles,
+    },
+    revalidate: 60 * 60,
+  };
 }
 
 export default function StrengthLevelCalculator({ relatedArticles }) {

@@ -120,9 +120,8 @@ const testimonialData = [
   },
   {
     name: "Jerry S.",
-    description: "32, lifter.",
-    comment: "The smartest lifting tool I've ever used.",
-    icon: Smile,
+    description: "32, powerlifter.",
+    comment: "I trust putting my data into Google Sheets over other apps.",
     avatarUrl: "/avatars/avatar_jerry.jpg",
   },
 ];

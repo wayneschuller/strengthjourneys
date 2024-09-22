@@ -1,34 +1,49 @@
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Marquee from "@/components/magicui/marquee";
 
 export function Testimonials({}) {
+  const firstRow = testimonialData.slice(0, testimonialData.length / 2);
+  const secondRow = testimonialData.slice(testimonialData.length / 2);
+
   return (
-    <div className="rounded-xl px-20 py-10">
-      <div className="grid auto-cols-fr grid-flow-col grid-rows-2 gap-4">
-        {testimonialData.map((testimony, index) => (
-          <div
-            key={index}
-            className="max-w-fit rounded-2xl border-4 bg-white p-4 dark:bg-stone-950"
-          >
-            <div className="flex flex-row gap-2">
-              <div className="flex items-center justify-center align-middle">
-                <Avatar>
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>CN</AvatarFallback>
-                </Avatar>
-              </div>
-              <div className="flex-1">
-                <div className="text-lg">{testimony.name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {testimony.description}
-                </div>
-                <div className="text-pretty">{testimony.comment}</div>
-              </div>
-            </div>
-          </div>
+    <div className="relative flex w-full flex-col items-center justify-center overflow-hidden">
+      {/* <div className="grid auto-cols-fr grid-flow-col grid-rows-2 gap-4"> */}
+      <Marquee pauseOnHover className="[--duration:20s]">
+        {firstRow.map((testimony, index) => (
+          <TestimonialCard key={index} testimony={testimony} />
         ))}
-      </div>
+      </Marquee>
+      <Marquee reverse pauseOnHover className="[--duration:20s]">
+        {secondRow.map((testimony, index) => (
+          <TestimonialCard key={index} testimony={testimony} />
+        ))}
+      </Marquee>
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-white dark:from-background"></div>
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-white dark:from-background"></div>
       {/* <div>Please tell us what you think.</div> */}
+    </div>
+  );
+}
+
+function TestimonialCard({ testimony }) {
+  return (
+    <div className="max-w-fit rounded-2xl border-4 bg-white p-4 dark:bg-stone-950">
+      <div className="flex flex-row gap-2">
+        <div className="flex items-center justify-center align-middle">
+          <Avatar>
+            <AvatarImage src="https://github.com/shadcn.png" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+        </div>
+        <div className="flex-1">
+          <div className="text-lg">{testimony.name}</div>
+          <div className="text-sm text-muted-foreground">
+            {testimony.description}
+          </div>
+          <div className="text-pretty">{testimony.comment}</div>
+        </div>
+      </div>
     </div>
   );
 }

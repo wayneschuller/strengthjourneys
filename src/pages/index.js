@@ -156,7 +156,7 @@ export default function Home() {
           ))}
         </div>
 
-        {/* <Testimonials /> */}
+        <Testimonials />
 
         <div className="mx-4 md:mx-20">
           <GettingStartedCard />

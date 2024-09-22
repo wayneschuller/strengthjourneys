@@ -61,7 +61,7 @@ export function RelatedArticles({ articles }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 items-center justify-center gap-4 md:grid-cols-3 xl:grid-cols-4">
           {articles.map((article) => (
             <div key={article.slug} className="group rounded-lg border">
               <Link

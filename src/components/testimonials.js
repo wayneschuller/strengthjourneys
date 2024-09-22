@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Marquee from "@/components/magicui/marquee";
@@ -28,7 +29,13 @@ export function Testimonials({}) {
 
 function TestimonialCard({ testimony }) {
   return (
-    <div className="max-w-fit rounded-2xl border-4 bg-white p-4 dark:bg-stone-950">
+    <figure
+      className={cn(
+        "max-w-[25rem] rounded-2xl border-2 p-4",
+        "bg-white hover:bg-stone-100",
+        "dark:bg-stone-950 dark:hover:bg-stone-900",
+      )}
+    >
       <div className="flex flex-row gap-2">
         <div className="flex items-center justify-center align-middle">
           <Avatar>
@@ -37,14 +44,14 @@ function TestimonialCard({ testimony }) {
           </Avatar>
         </div>
         <div className="flex-1">
-          <div className="text-lg">{testimony.name}</div>
+          <figcaption className="text-lg">{testimony.name}</figcaption>
           <div className="text-sm text-muted-foreground">
             {testimony.description}
           </div>
-          <div className="text-pretty">{testimony.comment}</div>
+          <blockquote className="text-pretty">{testimony.comment}</blockquote>
         </div>
       </div>
-    </div>
+    </figure>
   );
 }
 

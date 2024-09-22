@@ -25,6 +25,46 @@ const translator = shortUUID();
 const ITEMS_PER_PAGE = 5;
 
 // ---------------------------------------------------------------------------------------------------
+// ISR - Incremental Static Regeneration on Next.js
+// Doesn't run on dev but on Vercel it will access the kv store directly to pre-cache page at build
+// ---------------------------------------------------------------------------------------------------
+export async function getStaticProps() {
+  const vercelProPlan = false; // We can dream
+
+  const isLocalDev = !process.env.VERCEL;
+
+  // Dev mode use dummy data to protect my tiny Vercel quota of KV reads
+  if (!vercelProPlan && isLocalDev) {
+    console.log(
+      "Local (non-Vercel) mode detected: Using dummy data instead of KV store",
+    );
+    return {
+      props: { initialPlaylists: dummyPlaylists },
+    };
+  }
+
+  // If KV quota is full, just let this fail so that the Vercel deploy won't build
+  // Then it keeps the last previous working build running for the public
+  try {
+    // Use console.log here not devLog - so we can see this in the Vercel build logs
+    console.log(`getStaticProps: reading kvstore data`);
+    const initialPlaylists = await fetchPlaylists();
+    console.log(
+      `getStaticProps: caching initialPlaylists (length: ${initialPlaylists.length}) `,
+    );
+    return {
+      props: { initialPlaylists },
+      revalidate: 600, // Revalidate for everyone every 10 minutes
+    };
+  } catch (error) {
+    console.error("Error fetching playlists:", error);
+    return {
+      props: { initialPlaylists: [] },
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------
 // <GymPlaylistLeaderboard /> - World's best source of lifting music
 // ---------------------------------------------------------------------------------------------------
 export default function GymPlaylistLeaderboard({ initialPlaylists }) {
@@ -574,46 +614,6 @@ const calculateVoteChange = (playlist, isUpvote, currentVote) => {
     downVotes: playlist.downVotes + downVotesChange,
   };
 };
-
-// ---------------------------------------------------------------------------------------------------
-// ISR - Incremental Static Regeneration on Next.js
-// Doesn't run on dev but on Vercel it will access the kv store directly to pre-cache page at build
-// ---------------------------------------------------------------------------------------------------
-export async function getStaticProps() {
-  const vercelProPlan = false; // We can dream
-
-  const isLocalDev = !process.env.VERCEL;
-
-  // Dev mode use dummy data to protect my tiny Vercel quota of KV reads
-  if (!vercelProPlan && isLocalDev) {
-    console.log(
-      "Local (non-Vercel) mode detected: Using dummy data instead of KV store",
-    );
-    return {
-      props: { initialPlaylists: dummyPlaylists },
-    };
-  }
-
-  // If KV quota is full, just let this fail so that the Vercel deploy won't build
-  // Then it keeps the last previous working build running for the public
-  try {
-    // Use console.log here not devLog - so we can see this in the Vercel build logs
-    console.log(`getStaticProps: reading kvstore data`);
-    const initialPlaylists = await fetchPlaylists();
-    console.log(
-      `getStaticProps: caching initialPlaylists (length: ${initialPlaylists.length}) `,
-    );
-    return {
-      props: { initialPlaylists },
-      revalidate: 600, // Revalidate for everyone every 10 minutes
-    };
-  } catch (error) {
-    console.error("Error fetching playlists:", error);
-    return {
-      props: { initialPlaylists: [] },
-    };
-  }
-}
 
 // Snapsnot taken 20240831
 const dummyPlaylists = [

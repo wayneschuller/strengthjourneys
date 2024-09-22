@@ -422,7 +422,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   });
   const scrollRef = useChatScroll(messages);
 
-  devLog(messages);
+  // devLog(messages);
 
   return (
     <Card className="max-h-full bg-background text-foreground">

@@ -116,7 +116,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
 
   // -----------------------------------------------------------------------------
   // CustomToolTipContent
-  // Out tooltip is modelled on the shadcnui layout but customised for our needs
+  // Out tooltip is modelled on the shadcnui chart layout but customised for our needs
   // -----------------------------------------------------------------------------
   const CustomTooltipContent = ({
     active,

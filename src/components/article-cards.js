@@ -90,8 +90,8 @@ const SquareImage = ({ sanityImage }) => {
   if (!sanityImage) return null;
 
   let imageUrl = urlFor(sanityImage)
-    .width(200)
-    .height(200)
+    .width(150)
+    .height(150)
     .fit("crop")
     .quality(80)
     .url();
@@ -99,12 +99,12 @@ const SquareImage = ({ sanityImage }) => {
   if (!imageUrl) return null;
 
   return (
-    <div className="relative aspect-square w-full transform justify-center overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-110">
+    <div className="relative aspect-square transform justify-center overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-110">
       <Image
         src={imageUrl}
         alt="Banner"
-        width={200}
-        height={200}
+        width={150}
+        height={150}
         // fill
         // style={{ objectFit: "cover" }}
         className="h-full w-full object-cover"

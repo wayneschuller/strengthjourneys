@@ -2,7 +2,18 @@ import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Marquee from "@/components/magicui/marquee";
-import { ThumbsUp } from "lucide-react";
+import {
+  ThumbsUp,
+  Star,
+  Heart,
+  Smile,
+  CheckCircle,
+  Trophy,
+  Gift,
+  Sun,
+  MessageCircle,
+  Award,
+} from "lucide-react";
 
 export function Testimonials({}) {
   const firstRow = testimonialData.slice(0, testimonialData.length / 2);
@@ -41,9 +52,10 @@ function TestimonialCard({ testimony }) {
         <div className="flex flex-col items-center justify-start">
           <Avatar>
             <AvatarImage src={testimony.avatarURL} />
-            <AvatarFallback>
-              <ThumbsUp />
-            </AvatarFallback>
+            {testimony.icon && (
+              <AvatarFallback>{<testimony.icon />}</AvatarFallback>
+            )}
+            {/* <AvatarFallback></AvatarFallback> */}
           </Avatar>
         </div>
         <div className="flex-1">
@@ -62,42 +74,50 @@ const testimonialData = [
   {
     name: "Hong",
     description: "31, lifter.",
-    comment: "I finally crushed my PRs with accurate insights!.",
+    comment: "I finally crushed my PRs with accurate insights!",
+    icon: ThumbsUp,
   },
   {
     name: "Manny",
     description: "Online commenter, 25.",
     comment:
       "Just wanted to say this is such a cool site! exactly what I was looking for and very well put together.",
+    icon: Award,
   },
   {
     name: "Alex P",
     description: "21, guy on Telegram.",
     comment: "This is sick. I love simple clean stuff like this.",
+    icon: Star,
   },
   {
     name: "Stacey",
     description: "32, gym enthusiast.",
     comment: "I feel like I'm getting rewarded for going to the gym.",
+    icon: ThumbsUp,
   },
   {
     name: "Brian",
     description: "40, lifter.",
     comment: "The instant visualizer is incredibly motivating.",
+    icon: ThumbsUp,
   },
   {
     name: "Mac",
     description: "23, novice.",
     comment: "Love this.",
+    icon: Heart,
   },
   {
     name: "John",
     description: "37, ex-runner.",
     comment: "I've never seen my strength progress so clearly.",
+    icon: Gift,
   },
   {
-    name: "Hong",
-    description: "31, lifter.",
+    name: "Jerry S.",
+    description: "32, lifter.",
     comment: "The smartest lifting tool I've ever used.",
+    icon: Smile,
   },
 ];

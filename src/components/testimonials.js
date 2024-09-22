@@ -31,13 +31,13 @@ function TestimonialCard({ testimony }) {
   return (
     <figure
       className={cn(
-        "max-w-[25rem] rounded-2xl border-2 p-4",
+        "max-w-[25rem] justify-center rounded-2xl border-2 p-4 align-middle",
         "bg-white hover:bg-stone-100",
         "dark:bg-stone-950 dark:hover:bg-stone-900",
       )}
     >
       <div className="flex flex-row gap-2">
-        <div className="flex items-center justify-center align-middle">
+        <div className="flex flex-col items-center justify-start">
           <Avatar>
             <AvatarImage src="https://github.com/shadcn.png" />
             <AvatarFallback>CN</AvatarFallback>

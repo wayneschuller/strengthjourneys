@@ -12,7 +12,22 @@ import { useTimer } from "@/lib/timer-context";
 import { devLog } from "@/lib/processing-utils";
 import { NextSeo } from "next-seo";
 
-export default function Timer() {
+import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { RelatedArticles } from "@/components/article-cards";
+
+export async function getStaticProps() {
+  const RELATED_ARTICLES_CATEGORY = "Gym Timer";
+  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+
+  return {
+    props: {
+      relatedArticles,
+    },
+    revalidate: 60 * 60,
+  };
+}
+
+export default function Timer({ relatedArticles }) {
   // const { time } = useTimer();
 
   // OG Meta Tags
@@ -26,7 +41,7 @@ export default function Timer() {
     "gym timer, workout timer, lifting set timer, rest period tracker, strength training app, fitness timer, exercise timer, workout management, interval timer, weight lifting timer, strength journeys, fitness app";
 
   return (
-    <div className="mx-4 md:mx-[5vw]">
+    <div className="container">
       <NextSeo
         title={title}
         description={description}
@@ -57,12 +72,13 @@ export default function Timer() {
         ]}
       />
 
-      <div className="flex flex-col items-center">
+      <section className="flex flex-col items-center">
         <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight md:hidden lg:text-5xl">
           Lifting Set Timer
         </h1>
         <LargeTimer />
-      </div>
+        <RelatedArticles articles={relatedArticles} />
+      </section>
     </div>
   );
 }

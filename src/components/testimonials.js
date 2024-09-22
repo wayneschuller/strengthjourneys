@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { devLog } from "@/lib/processing-utils";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Marquee from "@/components/magicui/marquee";
@@ -40,6 +41,7 @@ export function Testimonials({}) {
 }
 
 function TestimonialCard({ testimony }) {
+  devLog(testimony);
   return (
     <figure
       className={cn(
@@ -51,7 +53,7 @@ function TestimonialCard({ testimony }) {
       <div className="flex flex-row gap-2">
         <div className="flex flex-col items-center justify-start">
           <Avatar>
-            <AvatarImage src={testimony.avatarURL} />
+            <AvatarImage src={testimony.avatarUrl} />
             {testimony.icon && (
               <AvatarFallback>{<testimony.icon />}</AvatarFallback>
             )}
@@ -95,6 +97,7 @@ const testimonialData = [
     description: "32, gym enthusiast.",
     comment: "I feel like I'm getting rewarded for going to the gym.",
     icon: ThumbsUp,
+    avatarUrl: "/avatars/avatar_stacey.jpg",
   },
   {
     name: "Brian",
@@ -106,6 +109,7 @@ const testimonialData = [
     name: "Mac",
     description: "23, novice.",
     comment: "Love this.",
+    avatarUrl: "/avatars/avatar_mac.jpg",
     icon: Heart,
   },
   {
@@ -119,5 +123,6 @@ const testimonialData = [
     description: "32, lifter.",
     comment: "The smartest lifting tool I've ever used.",
     icon: Smile,
+    avatarUrl: "/avatars/avatar_jerry.jpg",
   },
 ];

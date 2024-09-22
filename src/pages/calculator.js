@@ -3,7 +3,6 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
-import { sanityIOClient } from "@/lib/sanity-io.js";
 
 import { RelatedArticles } from "@/components/article-cards";
 
@@ -486,7 +485,9 @@ const E1RMSummaryCard = ({
   return (
     <Card className="border-4">
       <CardHeader>
-        <CardTitle className="md:text-3xl">Estimated One Rep Max</CardTitle>
+        <CardTitle className="text-center md:text-3xl">
+          Estimated One Rep Max
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="text-center">

@@ -49,7 +49,7 @@ export function ArticleSummaryCard({ article }) {
 }
 
 export function RelatedArticles({ articles }) {
-  devLog(articles);
+  // devLog(articles);
   if (!articles) return null;
 
   return (

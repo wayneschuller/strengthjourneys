@@ -318,22 +318,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   {/* Special user provided labels of special events/lifts */}
                   <LabelList
                     dataKey="label"
-                    content={({ x, y, value }) => {
-                      if (!value) return null;
-                      devLog(value);
-                      return (
-                        <text
-                          x={x}
-                          y={y}
-                          dy={-40}
-                          fontsize={14}
-                          textAnchor="middle"
-                          className="fill-foreground"
-                        >
-                          {value}
-                        </text>
-                      );
-                    }}
+                    // content={<CustomSpecialLabel />}
+                    content={<HtmlLabel />}
                     position="top"
                   />
                 </Area>
@@ -526,3 +512,52 @@ function E1RMFormulaSelect({ e1rmFormula, setE1rmFormula }) {
     </div>
   );
 }
+
+export const CustomSpecialLabel = ({ x, y, value }) => {
+  if (!value) return null;
+
+  const padding = 8;
+  const borderRadius = 4;
+  const labelWidth = value.length * 10 + padding * 2; // Adjust the width dynamically
+
+  return (
+    <g>
+      {/* Add a rectangle as background with padding */}
+      <rect
+        x={x - labelWidth / 2}
+        y={y - 40 - padding}
+        width={labelWidth}
+        height={30} // Adjust height if needed
+        fill="#fff"
+        stroke="#000"
+        strokeWidth={2}
+        rx={borderRadius}
+        ry={borderRadius}
+      />
+      {/* Text inside the rectangle */}
+      <text x={x} y={y - 40} fontSize={14} textAnchor="middle" fill="#000">
+        {value}
+      </text>
+    </g>
+  );
+};
+
+export const HtmlLabel = ({ x, y, value }) => {
+  if (!value) return null;
+
+  const maxChars = 20;
+  // Trim the label if it's longer than the specified max characters
+  const trimmedValue =
+    value.length > maxChars ? value.slice(0, maxChars) + "..." : value;
+
+  return (
+    <foreignObject x={x - 50} y={y + 220} width={100} height={50}>
+      <div
+        className="rounded-md border p-2 text-center text-xs tracking-tight shadow-lg"
+        title={value}
+      >
+        {trimmedValue}
+      </div>
+    </foreignObject>
+  );
+};

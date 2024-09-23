@@ -74,6 +74,8 @@ function parseBespokeData(data) {
         cellData = cellData.trim();
       }
 
+      // FIXME: Why aren't we putting URL explicitly in this switch? Are we just getting it from the default?
+
       switch (columnName) {
         case "Date":
           if (cellData) {
@@ -100,10 +102,13 @@ function parseBespokeData(data) {
           obj["unitType"] = unitType;
           break;
         case "Notes":
-          obj["notes"] = cellData;
+          if (cellData) obj["notes"] = cellData;
           break;
         case "isGoal":
           obj["isGoal"] = cellData === "TRUE"; // Will default to false if blank
+          break;
+        case "Label":
+          if (cellData) obj["label"] = cellData;
           break;
         default:
           obj[columnName] = cellData; // Kind of a hack to store any extra columns - we don't use this.

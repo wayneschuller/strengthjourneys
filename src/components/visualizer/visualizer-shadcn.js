@@ -51,6 +51,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
+  // devLog(parsedData);
+
   // FIXME: This design is terrible. We should be storing the periodTarget options in local storage
   // If we just store the date then the next day onward we won't know the range they wanted
   const [timeRange, setTimeRange] = useLocalStorage(
@@ -84,6 +86,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
 
   // devLog("Rendering <VisualizerShadcn />...");
   if (!parsedData) return;
+
+  devLog(chartData);
 
   const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
 
@@ -311,6 +315,27 @@ export function VisualizerShadcn({ setHighlightDate }) {
                       )}
                     />
                   )}
+                  {/* Special user provided labels of special events/lifts */}
+                  <LabelList
+                    dataKey="label"
+                    content={({ x, y, value }) => {
+                      if (!value) return null;
+                      devLog(value);
+                      return (
+                        <text
+                          x={x}
+                          y={y}
+                          dy={-40}
+                          fontsize={14}
+                          textAnchor="middle"
+                          className="fill-foreground"
+                        >
+                          {value}
+                        </text>
+                      );
+                    }}
+                    position="top"
+                  />
                 </Area>
               );
             })}

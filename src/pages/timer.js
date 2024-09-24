@@ -97,7 +97,7 @@ function LargeTimer() {
   useEffect(() => {
     // Start the timer on first mount of this page
     setIsRunning(true);
-  }, []); // The empty array ensures this effect runs only once on mount
+  }, [setIsRunning]); // It only needs to run on [] mount but eslint wants the dependency put in
 
   useEffect(() => {
     const handleKeyDown = (event) => {

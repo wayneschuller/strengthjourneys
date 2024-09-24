@@ -148,7 +148,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
         setIsAdvancedAnalysis(true);
       }
     }
-  }, [router.isReady, router.query]);
+  }, [router.isReady, router.query, setIsAdvancedAnalysis]);
 
   // FIXME: put inline
   const handleWeightSliderChange = (value) => {

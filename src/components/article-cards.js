@@ -63,7 +63,7 @@ export function RelatedArticles({ articles }) {
       <CardContent>
         <div className="grid grid-cols-1 items-center justify-center gap-4 md:grid-cols-3 xl:grid-cols-4">
           {articles.map((article) => (
-            <div key={article.slug} className="group rounded-lg border">
+            <div key={article.slug} className="group h-full rounded-lg border">
               <Link
                 href={`/articles/${article.slug}`}
                 className="flex items-center rounded-md p-2 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800"

@@ -319,7 +319,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   <LabelList
                     dataKey="label"
                     // content={<CustomSpecialLabel />}
-                    content={<HtmlLabel />}
+                    content={<SpecialHtmlLabel />}
                     position="top"
                   />
                 </Area>
@@ -328,6 +328,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
             <ChartLegend
               content={<ChartLegendContent />}
               className="tracking-tight md:text-lg"
+              verticalAlign="top"
             />
           </AreaChart>
         </ChartContainer>
@@ -513,36 +514,7 @@ function E1RMFormulaSelect({ e1rmFormula, setE1rmFormula }) {
   );
 }
 
-export const CustomSpecialLabel = ({ x, y, value }) => {
-  if (!value) return null;
-
-  const padding = 8;
-  const borderRadius = 4;
-  const labelWidth = value.length * 10 + padding * 2; // Adjust the width dynamically
-
-  return (
-    <g>
-      {/* Add a rectangle as background with padding */}
-      <rect
-        x={x - labelWidth / 2}
-        y={y - 40 - padding}
-        width={labelWidth}
-        height={30} // Adjust height if needed
-        fill="#fff"
-        stroke="#000"
-        strokeWidth={2}
-        rx={borderRadius}
-        ry={borderRadius}
-      />
-      {/* Text inside the rectangle */}
-      <text x={x} y={y - 40} fontSize={14} textAnchor="middle" fill="#000">
-        {value}
-      </text>
-    </g>
-  );
-};
-
-export const HtmlLabel = ({ x, y, value }) => {
+export const SpecialHtmlLabel = ({ x, y, value }) => {
   if (!value) return null;
 
   const maxChars = 20;

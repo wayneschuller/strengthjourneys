@@ -19,7 +19,7 @@ export function ArticleSummaryCard({ article }) {
     <Link href={`/articles/${article.slug}`}>
       <Card className="group transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800">
         <CardHeader className="flex flex-row gap-4">
-          <div className="flex-1">
+          <div className="min-w-56 flex-1">
             <CardTitle className="text-balance group-hover:underline">
               {article.title}
             </CardTitle>

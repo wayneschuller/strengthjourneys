@@ -41,7 +41,7 @@ export function Testimonials({}) {
 }
 
 function TestimonialCard({ testimony }) {
-  devLog(testimony);
+  // devLog(testimony);
   return (
     <figure
       className={cn(

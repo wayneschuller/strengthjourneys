@@ -13,7 +13,7 @@ import Image from "next/image";
 import { urlFor } from "@/lib/sanity-io.js";
 
 export function ArticleSummaryCard({ article }) {
-  // devLog(article);
+  devLog(article);
 
   return (
     <Link href={`/articles/${article.slug}`}>
@@ -26,16 +26,14 @@ export function ArticleSummaryCard({ article }) {
             <CardDescription>
               {format(new Date(article.publishedAt), "MMMM d, yyyy")}
             </CardDescription>
+            {/* <p className="text-sm text-gray-500"> Published on {new Date(article.publishedAt).toLocaleDateString()} </p> */}
+            {article.description && (
+              <div className="mt-2 text-sm">{article.description}</div>
+            )}
           </div>
           <SquareImage sanityImage={article.mainImage} />
         </CardHeader>
         <CardContent>
-          {/* <p className="text-sm text-gray-500"> Published on {new Date(article.publishedAt).toLocaleDateString()} </p> */}
-          {false && article.description && (
-            <div className="text-sm text-muted-foreground">
-              {article.description}
-            </div>
-          )}
           {false && article.categories && article.categories.length > 0 && (
             <p className="mt-2 text-sm text-gray-500">
               Categories:{" "}

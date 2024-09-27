@@ -24,6 +24,7 @@ import {
   ExpandedLiftAchievements,
   LiftTypeSummaryStatistics,
   LiftTypeRepPRsAccordion,
+  LiftTypeRecentHighlights,
 } from "@/components/analyzer/lift-achievements-card";
 
 const title = "Barbell Back Squat - The King of Lifts";
@@ -64,20 +65,22 @@ export default function SquatInsightsMain() {
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <div className="col-span-3">
           <StrengthLevelsCard />
-          <ExpandedLiftAchievements liftType="Back Squat" />
         </div>
         <HowStrong />
-        <MyBackSquatOverview />
-        <MyBackSquatPRs />
-      </div>
-      <div className="col-span-3">
-        <VideoCard />
+        <MyBackSquatOverviewCard />
+        <MyBackSquatRecentHighlightsCard />
+        <div className="col-span-3">
+          <MyBackSquatPRsCard />
+        </div>
+        <div className="col-span-3">
+          <VideoCard />
+        </div>
       </div>
     </div>
   );
 }
 
-function MyBackSquatOverview() {
+function MyBackSquatOverviewCard() {
   const {
     parsedData,
     topLiftsByTypeAndReps,
@@ -100,7 +103,7 @@ function MyBackSquatOverview() {
   );
 }
 
-function MyBackSquatPRs() {
+function MyBackSquatPRsCard() {
   const {
     parsedData,
     topLiftsByTypeAndReps,
@@ -118,6 +121,29 @@ function MyBackSquatPRs() {
       </CardHeader>
       <CardContent>
         <LiftTypeRepPRsAccordion liftType="Back Squat" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function MyBackSquatRecentHighlightsCard() {
+  const {
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+  } = useUserLiftingData();
+  const { status: authStatus } = useSession();
+
+  if (authStatus !== "authenticated") return null;
+  if (!topLiftsByTypeAndReps) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>My Back Squat PRs</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <LiftTypeRecentHighlights liftType="Back Squat" />
       </CardContent>
     </Card>
   );

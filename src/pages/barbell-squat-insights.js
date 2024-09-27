@@ -9,6 +9,13 @@ import {
 
 import Head from "next/head";
 import Image from "next/image";
+import { Crown } from "lucide-react";
+
+import {
+  PageHeader,
+  PageHeaderHeading,
+  PageHeaderDescription,
+} from "@/components/page-header";
 
 const title = "Barbell Back Squat - The King of Lifts";
 
@@ -21,25 +28,30 @@ const StrengthJourneys = () => (
   </span>
 );
 
-export default function Article() {
+export default function SquatInsightsMain() {
   return (
-    // <div className="mx-4 mb-10 flex items-center justify-center">
-    <div className="mx-4 mb-4 md:mx-[5vw]">
+    <div className="container">
+      <PageHeader>
+        <PageHeaderHeading icon={Crown}>{title}</PageHeaderHeading>
+        <PageHeaderDescription className="max-w-full">
+          <div className="italic">
+            “There is simply no other exercise, and certainly no machine, that
+            produces the level of central nervous system activity, improved
+            balance and coordination, skeletal loading and bone density
+            enhancement, muscular stimulation and growth, connective tissue
+            stress and strength, psychological demand and toughness, and overall
+            systemic conditioning than the correctly performed full squat.”
+          </div>
+          <div>Mark Rippetoe, Starting Strength</div>
+        </PageHeaderDescription>
+      </PageHeader>
       <Head>
         <title>{title}</title>
         <meta name="description" content={title} />
       </Head>
 
-      <h1 className="mb-4 flex-1 scroll-m-20 text-center text-4xl font-extrabold tracking-tight lg:text-5xl">
-        {title}
-      </h1>
-      <h2 className="flex justify-center text-2xl">
-        Resources collated by <StrengthJourneys /> staff
-      </h2>
-
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <HowStrong />
-        <QuotesCard />
         <VideoCard />
       </div>
     </div>
@@ -76,13 +88,15 @@ function QuotesCard() {
         <CardTitle>Quotes on the Back Squat</CardTitle>
       </CardHeader>
       <CardContent>
-        “There is simply no other exercise, and certainly no machine, that
-        produces the level of central nervous system activity, improved balance
-        and coordination, skeletal loading and bone density enhancement,
-        muscular stimulation and growth, connective tissue stress and strength,
-        psychological demand and toughness, and overall systemic conditioning
-        than the correctly performed full squat.” ― Mark Rippetoe, Starting
-        Strength
+        <div className="italic">
+          “There is simply no other exercise, and certainly no machine, that
+          produces the level of central nervous system activity, improved
+          balance and coordination, skeletal loading and bone density
+          enhancement, muscular stimulation and growth, connective tissue stress
+          and strength, psychological demand and toughness, and overall systemic
+          conditioning than the correctly performed full squat.”
+        </div>
+        <div>Mark Rippetoe, Starting Strength</div>
       </CardContent>
     </Card>
   );

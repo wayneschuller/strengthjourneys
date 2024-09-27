@@ -21,7 +21,6 @@ import {
 } from "@/components/page-header";
 
 import {
-  ExpandedLiftAchievements,
   LiftTypeSummaryStatistics,
   LiftTypeRepPRsAccordion,
   LiftTypeRecentHighlights,
@@ -204,31 +203,40 @@ function VideoCard() {
         <CardTitle>Squat Overview Video Guides</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col justify-between gap-4 md:flex-row">
-          <iframe
-            // width="560"
-            height="315"
-            src="https://www.youtube.com/embed/C_VtOYc6j5c"
-            title="YouTube video player"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          ></iframe>
-          <iframe
-            // width="560"
-            height="315"
-            src="https://www.youtube.com/embed/jyopTyOjXb0"
-            title="YouTube video player"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          ></iframe>
-          <iframe
-            // width="560"
-            height="315"
-            src="https://www.youtube.com/embed/nhoikoUEI8U"
-            title="YouTube video player"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          ></iframe>
+        <div className="flex flex-col gap-8 md:min-h-96 md:flex-row">
+          <div className="aspect-video flex-1">
+            <iframe
+              // width="560"
+              // height="315"
+              src="https://www.youtube.com/embed/C_VtOYc6j5c"
+              title="YouTube video player"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="h-full w-full"
+            ></iframe>
+          </div>
+          <div className="aspect-video flex-1">
+            <iframe
+              // width="560"
+              // height="315"
+              src="https://www.youtube.com/embed/jyopTyOjXb0"
+              title="YouTube video player"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="h-full w-full"
+            ></iframe>
+          </div>
+          <div className="aspect-video flex-1">
+            <iframe
+              // width="560"
+              // height="315"
+              src="https://www.youtube.com/embed/nhoikoUEI8U"
+              title="YouTube video player"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="h-full w-full"
+            ></iframe>
+          </div>
         </div>
       </CardContent>
     </Card>

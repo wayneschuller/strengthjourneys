@@ -1,10 +1,13 @@
-import Head from "next/head";
 import { useEffect, useState } from "react";
+import Head from "next/head";
+import Link from "next/link";
 
 import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+
 import * as SliderPrimitive from "@radix-ui/react-slider";
 
 import {
@@ -221,15 +224,17 @@ function StrengthLevelsCard() {
         <CardDescription>
           Standards for a {age} year old {sex}, weighing {bodyWeight}
           {unitType}. Go to the{" "}
-          <a href="/strength-level-calculator">Strength Levels Calculator</a> to
-          modify bio details.
+          <Link href="/strength-level-calculator">
+            Strength Levels Calculator
+          </Link>{" "}
+          to modify bio details.
         </CardDescription>
       </CardHeader>
       <CardContent>
         {authStatus === "authenticated" && best && (
           <div className="">
             <SquatProgressSlider
-              squatLevels={squatStandards}
+              squatStandards={squatStandards}
               bestSquat={best.weight}
             />
           </div>
@@ -292,9 +297,10 @@ const header = {
   author: "Mark Rippetoe, Starting Strength",
 };
 
-const SquatProgressSlider = ({ squatLevels, bestSquat }) => {
-  const maxSquat = squatLevels.elite; // Max value of slider
+const SquatProgressSlider = ({ squatStandards, bestSquat }) => {
+  const maxSquat = squatStandards.elite; // Max value of slider
   const [sliderValue, setSliderValue] = useState(0); // Initial value of 0 for animation
+  const [parent] = useAutoAnimate(); // Initialize AutoAnimate
 
   // Animate the sliderValue from 0 to bestSquat when component mounts
   useEffect(() => {
@@ -302,7 +308,7 @@ const SquatProgressSlider = ({ squatLevels, bestSquat }) => {
   }, [bestSquat]);
 
   // Convert object keys to an array for rendering labels
-  const levelLabels = Object.keys(squatLevels);
+  const levelLabels = Object.keys(squatStandards);
 
   return (
     <div className="mx-auto w-full">
@@ -318,61 +324,13 @@ const SquatProgressSlider = ({ squatLevels, bestSquat }) => {
         max={maxSquat}
         disabled // Make it non-interactive
         className="relative flex w-full touch-none select-none items-center"
+        // ref={parent} // Attach AutoAnimate to this parent
       >
         {/* Static gradient background */}
         <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800">
           <SliderPrimitive.Range className="absolute h-full opacity-0" />{" "}
-          {/* Hide Range */}
         </SliderPrimitive.Track>
-        {/* Thumb that animates across with Tailwind transition */}
-        <SliderPrimitive.Thumb
-          className="block h-4 w-4 rotate-45 transform-gpu bg-primary transition-transform delay-500 duration-1000 ease-in"
-          style={{
-            transform: `translateX(${(sliderValue / maxSquat) * 100}%)`,
-          }} // Correctly apply the animated transform
-        />
-      </SliderPrimitive.Root>
-    </div>
-  );
-};
-
-const SquatProgressSliderOLD = ({ squatLevels, bestSquat }) => {
-  const maxSquat = squatLevels.elite; // Max value of slider
-  const [sliderValue, setSliderValue] = useState(0); // Initial value of 0 for animation
-
-  // Animate the sliderValue from 0 to bestSquat when component mounts
-  useEffect(() => {
-    const timer = setTimeout(() => setSliderValue(bestSquat), 500); // Delay to trigger the animation
-    return () => clearTimeout(timer); // Cleanup timeout
-  }, [bestSquat]);
-
-  // Convert object keys to an array for rendering labels
-  const levelLabels = Object.keys(squatLevels);
-
-  return (
-    <div className="mx-auto w-full">
-      {/* Squat level labels */}
-      <div className="mb-2 flex justify-between text-sm">
-        {levelLabels.map((level) => (
-          <span key={level}>{level}</span>
-        ))}
-      </div>
-
-      <SliderPrimitive.Root
-        value={[sliderValue]} // Use animated value
-        max={maxSquat}
-        disabled // Make it non-interactive
-        className="relative flex w-full touch-none select-none items-center"
-      >
-        {/* Static gradient background */}
-        <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-400">
-          <SliderPrimitive.Range className="absolute h-full opacity-0" />{" "}
-          {/* Hide Range */}
-        </SliderPrimitive.Track>
-
-        {/* Thumb that animates across with Tailwind transition */}
-        {/* <SliderPrimitive.Thumb className="block h-6 w-2 bg-primary transition-all duration-1000 ease-in-out" /> */}
-        <SliderPrimitive.Thumb className="block h-4 w-4 rotate-45 transform bg-primary transition-all duration-1000 ease-in-out" />
+        <SliderPrimitive.Thumb className="block h-4 w-4 rotate-45 bg-primary" />
       </SliderPrimitive.Root>
     </div>
   );

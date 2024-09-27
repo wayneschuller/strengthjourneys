@@ -320,7 +320,7 @@ const SquatProgressSlider = ({ squatLevels, bestSquat }) => {
         className="relative flex w-full touch-none select-none items-center"
       >
         {/* Static gradient background */}
-        <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-400">
+        <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800">
           <SliderPrimitive.Range className="absolute h-full opacity-0" />{" "}
           {/* Hide Range */}
         </SliderPrimitive.Track>

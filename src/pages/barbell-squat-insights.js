@@ -68,6 +68,7 @@ export default function SquatInsightsMain() {
         </div>
         <HowStrong />
         <MyBackSquatOverview />
+        <MyBackSquatPRs />
       </div>
       <div className="col-span-3">
         <VideoCard />
@@ -94,6 +95,29 @@ function MyBackSquatOverview() {
       </CardHeader>
       <CardContent>
         <LiftTypeSummaryStatistics liftType="Back Squat" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function MyBackSquatPRs() {
+  const {
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+  } = useUserLiftingData();
+  const { status: authStatus } = useSession();
+
+  if (authStatus !== "authenticated") return null;
+  if (!topLiftsByTypeAndReps) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>My Back Squat PRs</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <LiftTypeRepPRsAccordion liftType="Back Squat" />
       </CardContent>
     </Card>
   );

@@ -34,15 +34,8 @@ export default function SquatInsightsMain() {
       <PageHeader>
         <PageHeaderHeading icon={Crown}>{title}</PageHeaderHeading>
         <PageHeaderDescription className="max-w-full">
-          <div className="italic">
-            “There is simply no other exercise, and certainly no machine, that
-            produces the level of central nervous system activity, improved
-            balance and coordination, skeletal loading and bone density
-            enhancement, muscular stimulation and growth, connective tissue
-            stress and strength, psychological demand and toughness, and overall
-            systemic conditioning than the correctly performed full squat.”
-          </div>
-          <div>Mark Rippetoe, Starting Strength</div>
+          <div className="italic">{header.quote}</div>
+          <div>{header.author}</div>
         </PageHeaderDescription>
       </PageHeader>
       <Head>
@@ -81,6 +74,8 @@ function HowStrong() {
     </Card>
   );
 }
+
+// FIXME: Not using this card now that I put the quote in the page description.
 function QuotesCard() {
   return (
     <Card>
@@ -139,3 +134,9 @@ function VideoCard() {
     </Card>
   );
 }
+
+const header = {
+  quote:
+    "There is simply no other exercise, and certainly no machine, that produces the level of central nervous system activity, improved balance and coordination, skeletal loading and bone density enhancement, muscular stimulation and growth, connective tissue stress and strength, psychological demand and toughness, and overall systemic conditioning than the correctly performed full squat.",
+  author: "Mark Rippetoe, Starting Strength",
+};

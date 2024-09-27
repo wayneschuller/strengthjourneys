@@ -40,7 +40,7 @@ const googleSheetSampleURL =
 
 const StrengthJourneys = () => (
   <span className="mx-1 text-blue-600 underline visited:text-purple-600 hover:text-blue-800">
-    <a href="https://www.strengthjourneys.xyz/">Strength Journeys</a>
+    <Link href="/">Strength Journeys</Link>
   </span>
 );
 
@@ -184,38 +184,8 @@ function HowStrong() {
 }
 
 function StrengthLevelsCard() {
-  const {
-    parsedData,
-    topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
-  } = useUserLiftingData();
-  const { status: authStatus } = useSession();
-
-  const {
-    age,
-    setAge,
-    isMetric,
-    setIsMetric,
-    sex,
-    setSex,
-    bodyWeight,
-    setBodyWeight,
-    standards,
-    toggleIsMetric,
-  } = useAthleteBioData();
-
-  if (!standards) return null;
-  const squatStandards = standards["Back Squat"];
-  if (!squatStandards) return null;
-  devLog(squatStandards);
-
+  const { age, sex, bodyWeight, isMetric } = useAthleteBioData();
   const unitType = isMetric ? "kg" : "lb";
-
-  let best = undefined;
-  if (topLiftsByTypeAndReps) {
-    best = topLiftsByTypeAndReps["Back Squat"][0][0];
-  }
-  devLog(best);
 
   return (
     <Card>
@@ -231,14 +201,7 @@ function StrengthLevelsCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {authStatus === "authenticated" && best && (
-          <div className="">
-            <SquatProgressSlider
-              squatStandards={squatStandards}
-              bestSquat={best.weight}
-            />
-          </div>
-        )}
+        <SquatProgressSlider />
       </CardContent>
     </Card>
   );
@@ -297,15 +260,42 @@ const header = {
   author: "Mark Rippetoe, Starting Strength",
 };
 
-const SquatProgressSlider = ({ squatStandards, bestSquat }) => {
-  const maxSquat = squatStandards.elite; // Max value of slider
-  const [sliderValue, setSliderValue] = useState(0); // Initial value of 0 for animation
-  const [parent] = useAutoAnimate(); // Initialize AutoAnimate
+const SquatProgressSlider = () => {
+  const {
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+  } = useUserLiftingData();
+  const { status: authStatus } = useSession();
 
-  // Animate the sliderValue from 0 to bestSquat when component mounts
-  useEffect(() => {
-    setSliderValue(bestSquat); // Trigger animation by updating sliderValue
-  }, [bestSquat]);
+  const {
+    age,
+    setAge,
+    isMetric,
+    setIsMetric,
+    sex,
+    setSex,
+    bodyWeight,
+    setBodyWeight,
+    standards,
+    toggleIsMetric,
+  } = useAthleteBioData();
+  const [sliderValue, setSliderValue] = useState(0);
+
+  if (!standards) return null;
+  const squatStandards = standards["Back Squat"];
+  if (!squatStandards) return null;
+  devLog(squatStandards);
+
+  const unitType = isMetric ? "kg" : "lb";
+  const maxSquat = squatStandards.elite; // Max value of slider
+
+  let best = undefined;
+  if (topLiftsByTypeAndReps) {
+    best = topLiftsByTypeAndReps["Back Squat"][0][0];
+    // setSliderValue(best.weight);
+  }
+  devLog(best);
 
   // Convert object keys to an array for rendering labels
   const levelLabels = Object.keys(squatStandards);
@@ -324,7 +314,6 @@ const SquatProgressSlider = ({ squatStandards, bestSquat }) => {
         max={maxSquat}
         disabled // Make it non-interactive
         className="relative flex w-full touch-none select-none items-center"
-        // ref={parent} // Attach AutoAnimate to this parent
       >
         {/* Static gradient background */}
         <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800">

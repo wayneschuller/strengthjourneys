@@ -36,6 +36,7 @@ import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
 import ReactMarkdown from "react-markdown";
 import { processConsistency } from "@/components/analyzer/consistency-card";
+import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
@@ -100,25 +101,22 @@ export default function AILiftingAssistantPage({ relatedArticles }) {
 }
 
 function AILiftingAssistantMain({ relatedArticles }) {
-  const [age, setAge] = useLocalStorage("AthleteAge", 30, {
-    initializeWithValue: false,
-  });
-  const [isMetric, setIsMetric] = useLocalStorage("calcIsMetric", false, {
-    initializeWithValue: false,
-  });
-  const [sex, setSex] = useLocalStorage("AthleteSex", "male", {
-    initializeWithValue: false,
-  });
-  const [bodyWeight, setBodyWeight] = useLocalStorage(
-    "AtheleteBodyWeight",
-    200,
-    {
-      initializeWithValue: false,
-    },
-  );
+  const {
+    age,
+    setAge,
+    isMetric,
+    sex,
+    setSex,
+    bodyWeight,
+    setBodyWeight,
+    standards,
+    toggleIsMetric,
+  } = useAthleteBioData();
+
   const [height, setHeight] = useLocalStorage("AthleteHeight", 170, {
     initializeWithValue: false,
   }); // Default height in cm
+
   const [userLiftingMetadata, setUserLiftingMetaData] = useLocalStorage(
     "userLiftingMetadata-selected-options",
     {
@@ -138,48 +136,12 @@ function AILiftingAssistantMain({ relatedArticles }) {
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
-  const [standards, setStandards] = useState({});
+
   const [shareBioDetails, setShareBioDetails] = useLocalStorage(
     "SJ_ShareBioDetailsAI",
     false,
     { initializeWithValue: false },
   );
-
-  useEffect(() => {
-    const bodyWeightKG = isMetric
-      ? bodyWeight
-      : Math.round(bodyWeight / 2.2046);
-
-    const uniqueLiftNames = Array.from(
-      new Set(LiftingStandardsKG.map((item) => item.liftType)),
-    );
-    const newStandards = {};
-
-    uniqueLiftNames.forEach((liftType) => {
-      const standard = interpolateStandardKG(
-        age,
-        bodyWeightKG,
-        sex,
-        liftType,
-        LiftingStandardsKG,
-      );
-
-      if (isMetric) {
-        newStandards[liftType] = standard || {};
-      } else {
-        // Convert standard to lb
-        newStandards[liftType] = {
-          physicallyActive: Math.round(standard?.physicallyActive * 2.2046),
-          beginner: Math.round(standard?.beginner * 2.2046),
-          intermediate: Math.round(standard?.intermediate * 2.2046),
-          advanced: Math.round(standard?.advanced * 2.2046),
-          elite: Math.round(standard?.elite * 2.2046),
-        };
-      }
-    });
-
-    setStandards(newStandards);
-  }, [age, sex, bodyWeight, isMetric]);
 
   let userProvidedProfileData = "";
   if (shareBioDetails) {
@@ -293,22 +255,6 @@ function AILiftingAssistantMain({ relatedArticles }) {
     userProvidedProfileData += `Background info: Here is my most recent session from Google Sheets, completed ${sessionDate} (today's day is: ${today}):`;
     userProvidedProfileData += sessionData.join(" ");
   }
-
-  const toggleIsMetric = (isMetric) => {
-    let newBodyWeight;
-
-    if (!isMetric) {
-      // Going from kg to lb
-      newBodyWeight = Math.round(bodyWeight * 2.2046);
-      setIsMetric(false);
-    } else {
-      // Going from lb to kg
-      newBodyWeight = Math.round(bodyWeight / 2.2046);
-      setIsMetric(true);
-    }
-
-    setBodyWeight(newBodyWeight);
-  };
 
   const unitType = isMetric ? "kg" : "lb";
 

@@ -61,6 +61,23 @@ export const useAthleteBioData = () => {
     setStandards(newStandards);
   }, [age, sex, bodyWeight, isMetric]);
 
+  // Helper function - if user toggles unit type, update isMetric and bodyweight state
+  const toggleIsMetric = (isMetric) => {
+    let newBodyWeight;
+
+    if (!isMetric) {
+      // Going from kg to lb
+      newBodyWeight = Math.round(bodyWeight * 2.2046);
+      setIsMetric(false);
+    } else {
+      // Going from lb to kg
+      newBodyWeight = Math.round(bodyWeight / 2.2046);
+      setIsMetric(true);
+    }
+
+    setBodyWeight(newBodyWeight);
+  };
+
   return {
     age,
     setAge,
@@ -71,5 +88,6 @@ export const useAthleteBioData = () => {
     bodyWeight,
     setBodyWeight,
     standards,
+    toggleIsMetric,
   };
 };

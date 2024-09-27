@@ -1,3 +1,6 @@
+import Head from "next/head";
+import { useAthleteBioData } from "@/lib/use-athlete-biodata";
+
 import {
   Card,
   CardContent,
@@ -7,8 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import Head from "next/head";
-import Image from "next/image";
 import { Crown } from "lucide-react";
 
 import {
@@ -28,6 +29,8 @@ const StrengthJourneys = () => (
   </span>
 );
 
+// FIXME: do full metadata wrapper
+
 export default function SquatInsightsMain() {
   return (
     <div className="container">
@@ -44,6 +47,9 @@ export default function SquatInsightsMain() {
       </Head>
 
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+        <div>
+          <StrengthLevelsCard />
+        </div>
         <HowStrong />
         <VideoCard />
       </div>
@@ -75,24 +81,26 @@ function HowStrong() {
   );
 }
 
-// FIXME: Not using this card now that I put the quote in the page description.
-function QuotesCard() {
+function StrengthLevelsCard() {
+  const {
+    age,
+    setAge,
+    isMetric,
+    setIsMetric,
+    sex,
+    setSex,
+    bodyWeight,
+    setBodyWeight,
+    standards,
+    toggleIsMetric,
+  } = useAthleteBioData();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Quotes on the Back Squat</CardTitle>
+        <CardTitle>Back Squat Strength Standards</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="italic">
-          “There is simply no other exercise, and certainly no machine, that
-          produces the level of central nervous system activity, improved
-          balance and coordination, skeletal loading and bone density
-          enhancement, muscular stimulation and growth, connective tissue stress
-          and strength, psychological demand and toughness, and overall systemic
-          conditioning than the correctly performed full squat.”
-        </div>
-        <div>Mark Rippetoe, Starting Strength</div>
-      </CardContent>
+      <CardContent></CardContent>
     </Card>
   );
 }

@@ -36,8 +36,8 @@ import {
   LiftingStandardsKG,
 } from "@/lib/lifting-standards-kg";
 import { Separator } from "@/components/ui/separator";
-import { useIsClient } from "usehooks-ts";
 import { BicepsFlexed } from "lucide-react";
+import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
@@ -105,76 +105,18 @@ export default function StrengthLevelCalculator({ relatedArticles }) {
 
 // Strength Level Calculator
 function StrengthLevelCalculatorMain({ relatedArticles }) {
-  const isClient = useIsClient();
-  const [age, setAge] = useLocalStorage("AthleteAge", 30, {
-    initializeWithValue: false,
-  });
-  const [isMetric, setIsMetric] = useLocalStorage("calcIsMetric", false, {
-    initializeWithValue: false,
-  });
-  const [sex, setSex] = useLocalStorage("AthleteSex", "male", {
-    initializeWithValue: false,
-  });
-  const [bodyWeight, setBodyWeight] = useLocalStorage(
-    "AtheleteBodyWeight",
-    200,
-    {
-      initializeWithValue: false,
-    },
-  );
-  const [standards, setStandards] = useState({});
-
-  useEffect(() => {
-    const bodyWeightKG = isMetric
-      ? bodyWeight
-      : Math.round(bodyWeight / 2.2046);
-
-    const uniqueLiftNames = Array.from(
-      new Set(LiftingStandardsKG.map((item) => item.liftType)),
-    );
-    const newStandards = {};
-
-    uniqueLiftNames.forEach((liftType) => {
-      const standard = interpolateStandardKG(
-        age,
-        bodyWeightKG,
-        sex,
-        liftType,
-        LiftingStandardsKG,
-      );
-
-      if (isMetric) {
-        newStandards[liftType] = standard || {};
-      } else {
-        // Convert standard to lb
-        newStandards[liftType] = {
-          physicallyActive: Math.round(standard?.physicallyActive * 2.2046),
-          beginner: Math.round(standard?.beginner * 2.2046),
-          intermediate: Math.round(standard?.intermediate * 2.2046),
-          advanced: Math.round(standard?.advanced * 2.2046),
-          elite: Math.round(standard?.elite * 2.2046),
-        };
-      }
-    });
-
-    setStandards(newStandards);
-  }, [age, sex, bodyWeight, isMetric]);
-
-  const toggleIsMetric = (isMetric) => {
-    let newBodyWeight;
-
-    if (!isMetric) {
-      // Going from kg to lb
-      newBodyWeight = Math.round(bodyWeight * 2.2046);
-      setIsMetric(false);
-    } else {
-      // Going from lb to kg
-      newBodyWeight = Math.round(bodyWeight / 2.2046);
-      setIsMetric(true);
-    }
-
-    setBodyWeight(newBodyWeight);
-  };
+  const {
+    age,
+    setAge,
+    isMetric,
+    setIsMetric,
+    sex,
+    setSex,
+    bodyWeight,
+    setBodyWeight,
+    standards,
+    toggleIsMetric,
+  } = useAthleteBioData();
 
   const unitType = isMetric ? "kg" : "lb";
 

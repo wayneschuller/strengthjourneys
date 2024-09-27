@@ -1,9 +1,11 @@
 import Head from "next/head";
+import { useEffect, useState } from "react";
+
 import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
-import { Slider } from "@/components/ui/slider";
+import * as SliderPrimitive from "@radix-ui/react-slider";
 
 import {
   Card,
@@ -292,6 +294,12 @@ const header = {
 
 const SquatProgressSlider = ({ squatLevels, bestSquat }) => {
   const maxSquat = squatLevels.elite; // Max value of slider
+  const [sliderValue, setSliderValue] = useState(0); // Initial value of 0 for animation
+
+  // Animate the sliderValue from 0 to bestSquat when component mounts
+  useEffect(() => {
+    setSliderValue(bestSquat); // Trigger animation by updating sliderValue
+  }, [bestSquat]);
 
   // Convert object keys to an array for rendering labels
   const levelLabels = Object.keys(squatLevels);
@@ -305,14 +313,67 @@ const SquatProgressSlider = ({ squatLevels, bestSquat }) => {
         ))}
       </div>
 
-      {/* Slider - with pointer-events disabled */}
-      <Slider
-        value={[bestSquat]} // Lock the slider value to bestSquat
+      <SliderPrimitive.Root
+        value={[sliderValue]} // Use animated value
         max={maxSquat}
         disabled // Make it non-interactive
-        className="pointer-events-none bg-gradient-to-r from-green-300 via-yellow-400 to-red-500" // Gradient as className
-        hideThumb={true} // Hide the thumb for a progress-only visual
-      />
+        className="relative flex w-full touch-none select-none items-center"
+      >
+        {/* Static gradient background */}
+        <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-400">
+          <SliderPrimitive.Range className="absolute h-full opacity-0" />{" "}
+          {/* Hide Range */}
+        </SliderPrimitive.Track>
+        {/* Thumb that animates across with Tailwind transition */}
+        <SliderPrimitive.Thumb
+          className="block h-4 w-4 rotate-45 transform bg-primary transition-transform delay-500 duration-1000 ease-in"
+          style={{
+            transform: `translateX(${(sliderValue / maxSquat) * 100}%)`,
+          }} // Correctly apply the animated transform
+        />
+      </SliderPrimitive.Root>
+    </div>
+  );
+};
+
+const SquatProgressSliderOLD = ({ squatLevels, bestSquat }) => {
+  const maxSquat = squatLevels.elite; // Max value of slider
+  const [sliderValue, setSliderValue] = useState(0); // Initial value of 0 for animation
+
+  // Animate the sliderValue from 0 to bestSquat when component mounts
+  useEffect(() => {
+    const timer = setTimeout(() => setSliderValue(bestSquat), 500); // Delay to trigger the animation
+    return () => clearTimeout(timer); // Cleanup timeout
+  }, [bestSquat]);
+
+  // Convert object keys to an array for rendering labels
+  const levelLabels = Object.keys(squatLevels);
+
+  return (
+    <div className="mx-auto w-full">
+      {/* Squat level labels */}
+      <div className="mb-2 flex justify-between text-sm">
+        {levelLabels.map((level) => (
+          <span key={level}>{level}</span>
+        ))}
+      </div>
+
+      <SliderPrimitive.Root
+        value={[sliderValue]} // Use animated value
+        max={maxSquat}
+        disabled // Make it non-interactive
+        className="relative flex w-full touch-none select-none items-center"
+      >
+        {/* Static gradient background */}
+        <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-400">
+          <SliderPrimitive.Range className="absolute h-full opacity-0" />{" "}
+          {/* Hide Range */}
+        </SliderPrimitive.Track>
+
+        {/* Thumb that animates across with Tailwind transition */}
+        {/* <SliderPrimitive.Thumb className="block h-6 w-2 bg-primary transition-all duration-1000 ease-in-out" /> */}
+        <SliderPrimitive.Thumb className="block h-4 w-4 rotate-45 transform bg-primary transition-all duration-1000 ease-in-out" />
+      </SliderPrimitive.Root>
     </div>
   );
 };

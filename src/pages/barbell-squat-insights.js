@@ -326,7 +326,7 @@ const SquatProgressSlider = ({ squatLevels, bestSquat }) => {
         </SliderPrimitive.Track>
         {/* Thumb that animates across with Tailwind transition */}
         <SliderPrimitive.Thumb
-          className="block h-4 w-4 rotate-45 transform bg-primary transition-transform delay-500 duration-1000 ease-in"
+          className="block h-4 w-4 rotate-45 transform-gpu bg-primary transition-transform delay-500 duration-1000 ease-in"
           style={{
             transform: `translateX(${(sliderValue / maxSquat) * 100}%)`,
           }} // Correctly apply the animated transform

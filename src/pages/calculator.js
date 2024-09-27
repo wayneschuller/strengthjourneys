@@ -1,9 +1,12 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Head from "next/head";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import { NextSeo } from "next-seo";
+
+import { RelatedArticles } from "@/components/article-cards";
+
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { Button } from "@/components/ui/button";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import {
@@ -14,79 +17,140 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+import {
+  PageHeader,
+  PageHeaderHeading,
+  PageHeaderDescription,
+} from "@/components/page-header";
+
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  interpolateStandardKG,
+  LiftingStandardsKG,
+} from "@/lib/lifting-standards-kg";
+
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/use-toast";
 import { devLog } from "@/lib/processing-utils";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { cn } from "@/lib/utils";
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useLocalStorage, useIsClient } from "usehooks-ts";
 
-export default function E1RMCalculator() {
+import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
+import { Calculator } from "lucide-react";
+
+const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
+
+import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+
+export async function getStaticProps() {
+  const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
+  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+
+  return {
+    props: {
+      relatedArticles,
+    },
+    revalidate: 60 * 60,
+  };
+}
+
+export default function E1RMCalculator({ relatedArticles }) {
+  const title = "One Rep Max Calculator | Free tool, no login required";
+  const description =
+    "The worlds greatest one-rep max (ORM) calculator. With multiple algorithms, units, and personalized strength ratings. For strong fat thumbed atheletes. Mobile friendly UI.";
+  const keywords =
+    "One rep max calculator, orm calcaultor, ORM calculator, OneRM Calculator , 1RM estimation tool, Weightlifting max calculator, Powerlifting 1RM calculator, Max lift predictor, orm calculator, Strength level estimator, Gym performance calculator, e1RM calculator, Max weight calculator, Barbell load calculator";
+  const canonicalURL = "https://www.strengthjourneys.xyz/calculator";
+  const ogImageURL =
+    "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";
+
+  return (
+    <>
+      <NextSeo
+        title={title}
+        description={description}
+        canonical={canonicalURL}
+        openGraph={{
+          url: canonicalURL,
+          title: title,
+          description: description,
+          type: "website",
+          images: [
+            // FIXME: ahrefs suggests you need just singular 'image' tag?
+            {
+              url: ogImageURL,
+              alt: "Strength Journeys One Rep Max Calculator",
+            },
+          ],
+          site_name: "Strength Journeys",
+        }}
+        twitter={{
+          handle: "@wayneschuller",
+          site: "@wayneschuller",
+          cardType: "summary_large_image",
+        }}
+        additionalMetaTags={[
+          {
+            name: "keywords",
+            content: keywords,
+          },
+        ]}
+      />
+      {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
+      <E1RMCalculatorMain relatedArticles={relatedArticles} />
+    </>
+  );
+}
+
+function E1RMCalculatorMain({ relatedArticles }) {
   const router = useRouter();
   const { toast } = useToast();
-  const [reps, setReps] = useState(5);
-  const [weight, setWeight] = useState(225);
-  const [isMetric, setIsMetric] = useState(false);
-  const [e1rmFormula, setE1rmFormula] = useState("Brzycki");
+  const [reps, setReps] = useStateFromQueryOrLocalStorage("reps", 5); // Will be a string
+  const [weight, setWeight] = useStateFromQueryOrLocalStorage("weight", 225); // Will be a string
+  const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
+    "calcIsMetric",
+    false,
+  ); // Will be a string
+  const [e1rmFormula, setE1rmFormula] = useStateFromQueryOrLocalStorage(
+    "formula",
+    "Brzycki",
+  );
+  const [isAdvancedAnalysis, setIsAdvancedAnalysis] = useLocalStorage(
+    "SJ_E1RMAdvancedAnalysis",
+    false,
+    { initializeWithValue: false },
+  );
+  const [bodyWeight, setBodyWeight] = useStateFromQueryOrLocalStorage(
+    "AtheleteBodyWeight",
+    200,
+  );
+  const [liftType, setLiftType] = useStateFromQueryOrLocalStorage(
+    "AthleteLiftType",
+    "",
+  );
+  const [age, setAge] = useStateFromQueryOrLocalStorage("AthleteAge", 30);
+  const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
+  const [parent] = useAutoAnimate(/* optional config */);
+  const isClient = useIsClient();
 
-  // State is mostly from URL query but we do fallback to isMetric and formula in localStorage
   useEffect(() => {
-    let initIsMetric;
-    if (router?.query?.isMetric === "false") {
-      initIsMetric = false;
-    } else if (router?.query?.isMetric === "true") {
-      initIsMetric = true;
-    } else {
-      // The URL has no guidance. So check localStorage then default to false (pounds)
-      initIsMetric = JSON.parse(localStorage.getItem("calcIsMetric")) || false;
+    if (router.isReady) {
+      const { AthleteLiftType, AthleteSex, AtheleteBodyWeight, AthleteAge } =
+        router.query;
+      if (AthleteLiftType && AthleteSex && AtheleteBodyWeight && AthleteAge) {
+        setIsAdvancedAnalysis(true);
+      }
     }
+  }, [router.isReady, router.query, setIsAdvancedAnalysis]);
 
-    let initReps;
-
-    if (router?.query?.reps) {
-      initReps = router.query.reps;
-    } else {
-      initReps = JSON.parse(localStorage.getItem("reps")) || 5;
-    }
-
-    let initWeight;
-    if (router?.query?.weight) {
-      initWeight = router.query.weight;
-    } else if (initIsMetric) {
-      initWeight = JSON.parse(localStorage.getItem("weight")) || 100;
-      devLog(initWeight);
-    } else {
-      initWeight = JSON.parse(localStorage.getItem("weight")) || 225;
-    }
-
-    let initE1rmFormula;
-    if (router?.query?.formula) {
-      initE1rmFormula = router.query.formula;
-    } else {
-      // The URL has no guidance. So check localStorage then default to Brzycki
-      initE1rmFormula =
-        JSON.parse(localStorage.getItem("e1rmFormula")) || "Brzycki";
-    }
-
-    // Update state if query is now different to state values
-    // This could be on first load
-    // Or could be if user clicks back/forward browser button
-    if (initReps !== reps) setReps(initReps);
-    if (initWeight !== weight) setWeight(initWeight);
-    if (initIsMetric !== isMetric) setIsMetric(initIsMetric);
-    if (initE1rmFormula != e1rmFormula) setE1rmFormula(initE1rmFormula);
-  }, [router.query]);
-
-  const handleRepsSliderChange = (value) => {
-    setReps(value[0]);
-  };
-
+  // FIXME: put inline
   const handleWeightSliderChange = (value) => {
     let newWeight = value[0];
 
@@ -97,67 +161,6 @@ export default function E1RMCalculator() {
     }
 
     setWeight(newWeight);
-  };
-
-  // When user lets go of weight slider, update the URL params
-  // onCommit means we won't flood the browser with URL changes
-  const handleWeightSliderCommit = (value) => {
-    const newWeight = value;
-
-    router.push(
-      {
-        pathname: router.pathname,
-        query: {
-          reps: reps,
-          weight: newWeight,
-          isMetric: isMetric,
-          formula: e1rmFormula,
-        },
-      },
-      undefined,
-      { scroll: false },
-    );
-
-    localStorage.setItem("weight", JSON.stringify(newWeight));
-  };
-
-  // When user lets go of reps slider, update the URL params
-  // onCommit means we won't flood the browser with URL changes
-  const handleRepsSliderCommit = (value) => {
-    const newReps = value;
-
-    router.push(
-      {
-        pathname: router.pathname,
-        query: {
-          reps: newReps,
-          weight: weight,
-          isMetric: isMetric,
-          formula: e1rmFormula,
-        },
-      },
-      undefined,
-      { scroll: false },
-    );
-    localStorage.setItem("reps", JSON.stringify(newReps));
-  };
-
-  const handleEntryWeightChange = (event) => {
-    const newWeight = event.target.value;
-
-    setWeight(newWeight);
-
-    // Update the browser URL instantly
-    router.push({
-      pathname: router.pathname,
-      query: {
-        reps: reps,
-        weight: newWeight,
-        isMetric: isMetric,
-        formula: e1rmFormula,
-      },
-    });
-    localStorage.setItem("weight", JSON.stringify(newWeight));
   };
 
   const handleKeyPress = (event) => {
@@ -176,43 +179,77 @@ export default function E1RMCalculator() {
 
   const toggleIsMetric = (isMetric) => {
     let newWeight;
+    let newBodyWeight;
+
+    // devLog(`toggle is metric running...`);
 
     if (!isMetric) {
       // Going from kg to lb
       newWeight = Math.round(weight * 2.2046);
+      newBodyWeight = Math.round(bodyWeight * 2.2046);
       setIsMetric(false);
     } else {
       // Going from lb to kg
       newWeight = Math.round(weight / 2.2046);
+      newBodyWeight = Math.round(bodyWeight / 2.2046);
       setIsMetric(true);
     }
 
     setWeight(newWeight);
-
-    // Update the browser URL instantly
-    router.push({
-      pathname: router.pathname,
-      query: {
-        reps: reps,
-        weight: newWeight,
-        isMetric: isMetric,
-        formula: e1rmFormula,
-      },
-    });
-
-    // Save in localStorage for this browser device
-    localStorage.setItem("calcIsMetric", JSON.stringify(isMetric));
-    localStorage.setItem("weight", JSON.stringify(newWeight));
-
-    // FIXME: update the body weight in localstorage so it's consistent with the unit change
+    setBodyWeight(newBodyWeight);
   };
 
   const handleCopyToClipboard = async () => {
-    const sentenceToCopy = `Lifting ${reps}@${weight}${
-      isMetric ? "kg" : "lb"
-    } indicates a one rep max of ${estimateE1RM(reps, weight, e1rmFormula)}${
-      isMetric ? "kg" : "lb"
-    } using the ${e1rmFormula} algorithm.\n(Source: https://strengthjourneys.xyz/calculator?reps=${reps}&weight=${weight}&isMetric=${isMetric}&formula=${e1rmFormula})`;
+    const encodeQueryParam = (param) => encodeURIComponent(param);
+
+    const createQueryString = (params) => {
+      return Object.entries(params)
+        .map(
+          ([key, value]) =>
+            `${encodeQueryParam(key)}=${encodeQueryParam(value)}`,
+        )
+        .join("&");
+    };
+
+    let sentenceToCopy;
+
+    const unit = getUnitSuffix(isMetric);
+
+    const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
+
+    if (!isAdvancedAnalysis) {
+      const queryString = createQueryString({
+        reps: reps,
+        weight: weight,
+        calcIsMetric: isMetric,
+        formula: e1rmFormula,
+      });
+
+      sentenceToCopy =
+        `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
+        `using the ${e1rmFormula} algorithm.\n` +
+        `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
+    } else {
+      const queryString = createQueryString({
+        reps: reps,
+        weight: weight,
+        calcIsMetric: isMetric,
+        formula: e1rmFormula,
+        AthleteAge: age,
+        AthleteBodyWeight: bodyWeight,
+        AthleteSex: sex,
+        AthleteLiftType: liftType,
+      });
+
+      const bodyWeightMultiplier = (e1rmWeight / bodyWeight).toFixed(2);
+
+      sentenceToCopy =
+        `${liftType} ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
+        `using the ${e1rmFormula} algorithm.\n` +
+        `${bodyWeightMultiplier}x bodyweight.\n` +
+        `Lift Strength Rating: ${liftRating}\n` +
+        `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
+    }
 
     // Create a temporary textarea element
     const textarea = document.createElement("textarea");
@@ -251,194 +288,246 @@ export default function E1RMCalculator() {
     // }
   };
 
+  const sortedFormulae = getSortedFormulae(reps, weight);
+
+  let liftRating = "";
+
+  if (isAdvancedAnalysis)
+    liftRating = getStandardRatingString(
+      age,
+      bodyWeight,
+      sex,
+      reps,
+      weight,
+      liftType,
+      isMetric,
+      e1rmFormula,
+    );
+
   return (
-    <div className="mx-4 md:mx-[5vw]">
-      <Head>
-        <title>E1RM Calculator (Strength Journeys)</title>
-        <meta
-          name="description"
-          content="E1RM One Rep Max Calculator App (Strength Journeys)"
-        />
-      </Head>
-
-      <div className="rounded-xl border-2 border-background bg-muted/80 p-4 md:p-6">
-        <div className="flex flex-row gap-1 md:gap-2">
-          <h1 className="flex-1 scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            One Rep Max Calculator
-          </h1>
-          <div className="flex flex-col gap-1 md:flex-row">
-            <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
-          </div>
-        </div>
-        <h3 className="mb-10 mt-2 hidden flex-1 scroll-m-20 text-xl tracking-tight md:mb-8 md:block md:text-2xl">
-          Estimate your max single based on reps and weight
-        </h3>
-
-        {/* Two main sliders */}
-        <div className="mt-4 grid grid-cols-1 items-center gap-6 md:grid-cols-6 md:gap-4">
-          <div className="ml-2 justify-self-center text-2xl md:hidden">
-            {reps} reps
-          </div>
-          <Slider
-            className="md:col-span-5"
-            value={[reps]}
-            min={1}
-            max={20}
-            step={1}
-            onValueChange={handleRepsSliderChange}
-            onValueCommit={handleRepsSliderCommit}
-          />
-          <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
-            {reps} reps
-          </div>
-          <div className="ml-2 mt-6 w-[8rem] justify-self-center md:hidden">
-            <div className="flex items-center gap-1 text-2xl">
-              <Input
-                className="text-2xl"
-                type="number"
-                min="1"
-                step="1"
-                id="weightInput"
-                value={weight}
-                onChange={handleEntryWeightChange}
-                onKeyPress={handleKeyPress}
-                onKeyDown={handleKeyDown}
-              />
-              {isMetric ? "kg" : "lb"}
+    <div className="container">
+      <PageHeader>
+        <PageHeaderHeading icon={Calculator}>
+          One Rep Max Calculator
+        </PageHeaderHeading>
+        <PageHeaderDescription>
+          Estimate your max single based on reps and weight. With optional
+          strength level insights.
+        </PageHeaderDescription>
+      </PageHeader>
+      <Card>
+        <CardContent>
+          {/* Two main sliders */}
+          <div className="mt-4 grid grid-cols-1 items-center gap-6 md:grid-cols-6 md:gap-4">
+            <div className="ml-2 justify-self-center text-2xl md:hidden">
+              {reps} reps
+            </div>
+            <Slider
+              className="md:col-span-5"
+              value={[reps]}
+              min={1}
+              max={20}
+              step={1}
+              onValueChange={(values) => setReps(values[0])}
+              aria-label="Reps"
+            />
+            <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
+              {reps} reps
+            </div>
+            <div className="ml-2 mt-6 w-[9rem] justify-self-center md:hidden">
+              <div className="flex items-center gap-1 text-2xl">
+                <Input
+                  className="text-2xl"
+                  type="number"
+                  min="1"
+                  step="1"
+                  id="weightInput"
+                  value={weight}
+                  onChange={(event) => setWeight(event.target.value)}
+                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
+                  aria-label="Weight"
+                />
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={toggleIsMetric}
+                />
+              </div>
+            </div>
+            <Slider
+              className="md:col-span-5"
+              value={[weight]}
+              min={1}
+              max={isMetric ? 250 : 600}
+              onValueChange={handleWeightSliderChange}
+            />
+            <div className="ml-1 hidden w-[8rem] justify-self-center md:block md:justify-self-start">
+              <div className="flex items-center gap-1">
+                <Input
+                  className="text-lg"
+                  type="number"
+                  min="1"
+                  step="1"
+                  id="weightInput"
+                  value={weight}
+                  onChange={(event) => setWeight(event.target.value)}
+                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
+                  aria-label="Weight"
+                />
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={toggleIsMetric}
+                />
+              </div>
             </div>
           </div>
-          <Slider
-            className="md:col-span-5"
-            value={[weight]}
-            min={1}
-            max={isMetric ? 250 : 600}
-            onValueChange={handleWeightSliderChange}
-            onValueCommit={handleWeightSliderCommit}
-          />
-          <div className="ml-1 hidden w-[7rem] justify-self-center md:block md:justify-self-start">
-            <div className="flex items-center gap-1">
-              <Input
-                className="text-lg"
-                type="number"
-                min="1"
-                step="1"
-                id="weightInput"
-                value={weight}
-                onChange={handleEntryWeightChange}
-                onKeyPress={handleKeyPress}
-                onKeyDown={handleKeyDown}
+
+          <div className="my-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="order-3 lg:order-1" ref={parent}>
+              <div className="mb-4 flex flex-row gap-2">
+                <Checkbox
+                  id="advanced"
+                  checked={isAdvancedAnalysis}
+                  onCheckedChange={setIsAdvancedAnalysis}
+                />
+                <label
+                  htmlFor="advanced"
+                  className={cn(
+                    "text-sm font-medium leading-none",
+                    isAdvancedAnalysis ? "opacity-100" : "opacity-50",
+                  )}
+                >
+                  Strength Level Insights
+                </label>
+              </div>
+              {isAdvancedAnalysis && (
+                <OptionalAtheleBioData
+                  isMetric={isMetric}
+                  bodyWeight={bodyWeight}
+                  setBodyWeight={setBodyWeight}
+                  liftType={liftType}
+                  setLiftType={setLiftType}
+                  age={age}
+                  setAge={setAge}
+                  sex={sex}
+                  setSex={setSex}
+                />
+              )}
+            </div>
+            <div className="order-1 place-self-center lg:order-2">
+              <E1RMSummaryCard
+                reps={reps}
+                weight={weight}
+                isMetric={isMetric}
+                e1rmFormula={e1rmFormula}
+                estimateE1RM={estimateE1RM}
+                isAdvancedAnalysis={isAdvancedAnalysis}
+                liftType={liftType}
+                liftRating={liftRating}
+                bodyWeight={bodyWeight}
               />
-              {isMetric ? "kg" : "lb"}
+            </div>
+            <div className="order-2 place-self-center md:pl-4 lg:order-3 lg:place-self-auto">
+              <E1RMFormulaRadioGroup
+                formulae={sortedFormulae}
+                e1rmFormula={e1rmFormula}
+                setE1rmFormula={setE1rmFormula}
+                reps={reps}
+                weight={weight}
+                isMetric={isMetric}
+              />
             </div>
           </div>
-        </div>
+          <div className="mt-4 flex justify-center gap-4">
+            <ShareButton onClick={handleCopyToClipboard} />
+          </div>
 
-        {/* Center E1RM card */}
-        <div className="mt-8 flex flex-1 justify-center gap-4">
-          <Card className="hover:ring-1">
-            <CardHeader>
-              <CardTitle>Estimated One Rep Max</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center">
-                {reps}@{weight}
-                {isMetric ? "kg" : "lb"}
-              </div>
-              <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
-                {estimateE1RM(reps, weight, e1rmFormula)}
-                {isMetric ? "kg" : "lb"}
-              </div>
-            </CardContent>
-            <CardFooter className="text-muted-foreground">
-              <div className="flex-1 text-center">
-                Using the <strong>{e1rmFormula}</strong> formula
-              </div>
-            </CardFooter>
-          </Card>
-        </div>
-        <div className="mt-4 flex justify-center">
-          <ShareButton onClick={handleCopyToClipboard} />
-        </div>
-
-        {/* Grid of other formulae cards ordered by estimate ascending */}
-        <h4 className="mt-10 scroll-m-20 text-xl font-semibold tracking-tight">
-          Citations and background for these exercise science formulae are found
-          in this{" "}
-          <a
-            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-            href="https://en.wikipedia.org/wiki/One-repetition_maximum"
-            target="_blank"
-          >
-            Wikipedia article
-          </a>
-        </h4>
-        <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {e1rmFormulae
-            .slice() // Create a shallow copy to avoid mutating the original array
-            .sort((a, b) => {
-              // Calculate estimated 1RM for both formulas
-              const e1rmA = estimateE1RM(reps, weight, a);
-              const e1rmB = estimateE1RM(reps, weight, b);
-
-              // Sort in ascending order
-              return e1rmA - e1rmB;
-            })
-            .map((formula, index) =>
-              formula === e1rmFormula ? null : (
-                <div key={index} className="card">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Card
-                          className="hover:ring-1"
-                          onClick={() => {
-                            setE1rmFormula(formula);
-                            router.push(
-                              {
-                                pathname: router.pathname,
-                                query: {
-                                  reps: reps,
-                                  weight: weight,
-                                  isMetric: isMetric,
-                                  formula: formula,
-                                },
-                              },
-                              undefined,
-                              { scroll: false },
-                            );
-                            // Save in localStorage for this browser device
-                            localStorage.setItem(
-                              "e1rmFormula",
-                              JSON.stringify(formula),
-                            );
-                          }}
-                        >
-                          <CardHeader>
-                            <CardTitle className="text-xl text-muted-foreground">
-                              {formula}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-xl font-bold tracking-tight md:text-2xl">
-                              {estimateE1RM(reps, weight, formula)}
-                              {isMetric ? "kg" : "lb"}
-                            </p>
-                          </CardContent>
-                        </Card>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Click to make {formula} your preferred e1rm formula
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              ),
-            )}
-        </div>
-      </div>
+          {/* <h4 className="mt-10 scroll-m-20 text-xl font-semibold tracking-tight">
+            Citations and background for these exercise science formulae are
+            found in this{" "}
+            <a
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              href="https://en.wikipedia.org/wiki/One-repetition_maximum"
+              target="_blank"
+            >
+              Wikipedia article
+            </a>
+          </h4> */}
+        </CardContent>
+      </Card>
+      <RelatedArticles articles={relatedArticles} />
     </div>
   );
 }
+
+const getSortedFormulae = (reps, weight) => {
+  return e1rmFormulae.slice().sort((a, b) => {
+    const e1rmA = estimateE1RM(reps, weight, a);
+    const e1rmB = estimateE1RM(reps, weight, b);
+    return e1rmA - e1rmB;
+  });
+};
+
+const E1RMSummaryCard = ({
+  reps,
+  weight,
+  isMetric,
+  e1rmFormula,
+  estimateE1RM,
+  isAdvancedAnalysis,
+  liftRating,
+  liftType,
+  bodyWeight,
+}) => {
+  const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
+
+  return (
+    <Card className="border-4">
+      <CardHeader>
+        <CardTitle className="text-center md:text-3xl">
+          Estimated One Rep Max
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-center">
+          {isAdvancedAnalysis && `${liftType} `}
+          {reps}@{weight}
+          {isMetric ? "kg" : "lb"}
+        </div>
+        <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
+          {e1rmWeight}
+          {isMetric ? "kg" : "lb"}
+        </div>
+        {isAdvancedAnalysis && (
+          <div className="text-center text-lg">
+            {(e1rmWeight / bodyWeight).toFixed(2)}x bodyweight
+          </div>
+        )}
+        {isAdvancedAnalysis && liftRating && (
+          <div>
+            <Link
+              href="/strength-level-calculator"
+              className="flex flex-row justify-center gap-2 align-middle text-xl hover:underline hover:underline-offset-4"
+            >
+              <div className="text-muted-foreground hover:text-muted-foreground/80">
+                Your Strength Rating:
+              </div>
+              <div className="text-center text-xl font-semibold">
+                {liftRating}
+              </div>
+            </Link>
+          </div>
+        )}
+      </CardContent>
+      <CardFooter className="text-muted-foreground">
+        <div className="flex-1 text-center">
+          Using the <strong>{e1rmFormula}</strong> formula
+        </div>
+      </CardFooter>
+    </Card>
+  );
+};
 
 const ShareButton = ({ onClick }) => {
   return (
@@ -468,4 +557,177 @@ const ShareIcon = () => {
       />
     </svg>
   );
+};
+
+function E1RMFormulaRadioGroup({
+  formulae,
+  e1rmFormula,
+  setE1rmFormula,
+  reps,
+  weight,
+  isMetric,
+}) {
+  return (
+    <fieldset className="">
+      <legend>
+        <Label>E1RM Algorithm:</Label>
+      </legend>
+      <RadioGroup
+        value={e1rmFormula}
+        onValueChange={setE1rmFormula}
+        className="mt-2 grid grid-cols-2 space-y-1 lg:grid-cols-1"
+        aria-label="Select E1RM Algorithm"
+      >
+        {formulae.map((formula) => (
+          <div key={formula} className="flex items-center space-x-2">
+            <RadioGroupItem value={formula} id={`e1rm-formula-${formula}`} />
+            <Label htmlFor={`e1rm-formula-${formula}`} className="">
+              {formula} ({estimateE1RM(reps, weight, formula)}
+              {isMetric ? "kg" : "lb"})
+            </Label>
+          </div>
+        ))}
+      </RadioGroup>
+    </fieldset>
+  );
+}
+
+function OptionalAtheleBioData({
+  isMetric,
+  bodyWeight,
+  setBodyWeight,
+  liftType,
+  setLiftType,
+  age,
+  setAge,
+  sex,
+  setSex,
+}) {
+  const uniqueLiftNames = Array.from(
+    new Set(LiftingStandardsKG.map((item) => item.liftType)),
+  );
+
+  return (
+    <div className="flex flex-col gap-4 px-4">
+      <div>
+        <div className="flex flex-row gap-2">
+          <Label>Age: {age}</Label>
+        </div>
+        <Slider
+          min={13}
+          max={100}
+          step={1}
+          value={[age]}
+          onValueChange={(values) => setAge(values[0])}
+          className="mt-2 flex-1"
+          aria-label="Number of repetitions"
+        />
+      </div>
+      <div className="mt-1 flex flex-row gap-4">
+        <Label>Sex: </Label>
+        <RadioGroup
+          value={sex}
+          onValueChange={setSex}
+          // orientation="horizontal"
+          className="flex space-x-4" // Really makes it horizontal
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="male" id="male" />
+            <Label htmlFor="male">Male</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="female" id="female" />
+            <Label htmlFor="female">Female</Label>
+          </div>
+        </RadioGroup>
+      </div>
+      <div>
+        <div className="flex flex-row gap-2">
+          <Label>
+            Bodyweight: {bodyWeight}
+            {isMetric ? "kg" : "lb"}
+          </Label>
+        </div>
+        <Slider
+          min={isMetric ? 40 : 100}
+          max={isMetric ? 230 : 500}
+          step={1}
+          value={[bodyWeight]}
+          onValueChange={(values) => setBodyWeight(values[0])}
+          className="mt-2 flex-1"
+          aria-label={`Weight in ${isMetric ? "kilograms" : "pounds"}`}
+        />
+      </div>
+      <div>
+        <Label>Lift Type:</Label>
+        <RadioGroup value={liftType} onValueChange={setLiftType}>
+          {uniqueLiftNames.map((lift) => (
+            <div key={lift} className="flex items-center space-x-2">
+              <RadioGroupItem value={lift} id={lift} />
+              <Label htmlFor={lift}>{lift}</Label>
+            </div>
+          ))}
+        </RadioGroup>
+      </div>
+    </div>
+  );
+}
+
+export const getStandardRatingString = (
+  age,
+  bodyWeight,
+  sex,
+  reps,
+  weight,
+  liftType,
+  isMetric,
+  e1rmFormula,
+) => {
+  const bodyWeightKG = isMetric ? bodyWeight : Math.round(bodyWeight / 2.204);
+
+  let standard = interpolateStandardKG(
+    age,
+    bodyWeightKG,
+    sex,
+    liftType,
+    LiftingStandardsKG,
+  );
+
+  // If the user wants lb units we should convert back into lb units now
+  if (!isMetric && standard) {
+    standard = {
+      physicallyActive: Math.round(standard.physicallyActive * 2.204),
+      beginner: Math.round(standard.beginner * 2.204),
+      intermediate: Math.round(standard.intermediate * 2.204),
+      advanced: Math.round(standard.advanced * 2.204),
+      elite: Math.round(standard.elite * 2.204),
+    };
+  }
+
+  let liftRating;
+
+  const oneRepMax = estimateE1RM(reps, weight, e1rmFormula);
+
+  // devLog(`lifttype: ${liftType}, oneRepMax: ${oneRepMax} (${e1rmFormula})`);
+
+  if (standard) {
+    const { physicallyActive, beginner, intermediate, advanced, elite } =
+      standard;
+
+    // devLog(standard);
+    // We don't give anything below "Physically Active" although data may be below the model
+    if (oneRepMax < beginner) {
+      liftRating = "Physically Active";
+    } else if (oneRepMax < intermediate) {
+      liftRating = "Beginner";
+    } else if (oneRepMax < advanced) {
+      liftRating = "Intermediate";
+    } else if (oneRepMax < elite) {
+      liftRating = "Advanced";
+    } else {
+      liftRating = "Elite";
+    }
+  }
+
+  return liftRating;
 };

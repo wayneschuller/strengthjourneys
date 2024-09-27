@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Head from "next/head";
+import Link from "next/link";
+import { NextSeo } from "next-seo";
+import { sanityIOClient } from "@/lib/sanity-io.js";
+import { RelatedArticles } from "@/components/article-cards";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import {
   Card,
@@ -11,8 +14,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { devLog } from "@/lib/processing-utils";
+
+import {
+  PageHeader,
+  PageHeaderHeading,
+  PageHeaderDescription,
+} from "@/components/page-header";
 
 import { Label } from "@/components/ui/label";
 import {
@@ -22,20 +29,98 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { useLocalStorage } from "usehooks-ts";
-import { LiftingStandardsKG } from "@/lib/lifting-standards-kg";
+import {
+  interpolateStandardKG,
+  LiftingStandardsKG,
+} from "@/lib/lifting-standards-kg";
 import { Separator } from "@/components/ui/separator";
+import { useIsClient } from "usehooks-ts";
+import { BicepsFlexed } from "lucide-react";
+
+import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+
+export async function getStaticProps() {
+  const RELATED_ARTICLES_CATEGORY = "Strength Calculator";
+  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+
+  return {
+    props: {
+      relatedArticles,
+    },
+    revalidate: 60 * 60,
+  };
+}
+
+export default function StrengthLevelCalculator({ relatedArticles }) {
+  // OG Meta Tags
+  const canonicalURL =
+    "https://www.strengthjourneys.xyz/strength-level-calculator";
+  const description =
+    "Discover your strength level with our free calculator. Compare lifts based on age, gender, and bodyweight. Instant results for multiple lifts.";
+  const title =
+    "Strength Level Test: Free Tool for Lifters. No login required.";
+  const keywords =
+    "Strength level calculator, strength test, strength standards, powerlifting benchmarks, weightlifting performance, how strong am I, one-rep max (1RM), squat rating, bench press rating, deadlift rating, overhead press rating, strength comparison, bodyweight ratio, age-adjusted strength, gender-specific strength levels, beginner to elite lifter, strength training progress, fitness assessment tool, weightlifting goals, strength sports";
+  const ogImageURL =
+    "https://www.strengthjourneys.xyz/strength_journeys_strength_levels_calculator_og.png";
+
+  return (
+    <>
+      <NextSeo
+        title={title}
+        description={description}
+        canonical={canonicalURL}
+        openGraph={{
+          url: canonicalURL,
+          title: title,
+          description: description,
+          type: "website",
+          images: [
+            {
+              url: ogImageURL,
+              alt: "Strength Journeys Strength Level Calculator",
+            },
+          ],
+          site_name: "Strength Journeys",
+        }}
+        twitter={{
+          handle: "@wayneschuller",
+          site: "@wayneschuller",
+          cardType: "summary_large_image",
+        }}
+        additionalMetaTags={[
+          {
+            name: "keywords",
+            content: keywords,
+          },
+        ]}
+      />
+      {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
+      <StrengthLevelCalculatorMain relatedArticles={relatedArticles} />
+    </>
+  );
+}
 
 // Strength Level Calculator
-export default function StrengthLevelCalculator() {
-  const [age, setAge] = useLocalStorage("SJ_AthleteAge", 30);
+function StrengthLevelCalculatorMain({ relatedArticles }) {
+  const isClient = useIsClient();
+  const [age, setAge] = useLocalStorage("AthleteAge", 30, {
+    initializeWithValue: false,
+  });
   const [isMetric, setIsMetric] = useLocalStorage("calcIsMetric", false, {
     initializeWithValue: false,
   });
-  const [gender, setGender] = useLocalStorage("SJ_AthleteGender", "male");
+  const [sex, setSex] = useLocalStorage("AthleteSex", "male", {
+    initializeWithValue: false,
+  });
   const [bodyWeight, setBodyWeight] = useLocalStorage(
-    "SJ_AtheleteBodyWeight",
+    "AtheleteBodyWeight",
     200,
+    {
+      initializeWithValue: false,
+    },
   );
   const [standards, setStandards] = useState({});
 
@@ -50,10 +135,10 @@ export default function StrengthLevelCalculator() {
     const newStandards = {};
 
     uniqueLiftNames.forEach((liftType) => {
-      const standard = interpolateStandard(
+      const standard = interpolateStandardKG(
         age,
         bodyWeightKG,
-        gender,
+        sex,
         liftType,
         LiftingStandardsKG,
       );
@@ -73,7 +158,7 @@ export default function StrengthLevelCalculator() {
     });
 
     setStandards(newStandards);
-  }, [age, gender, bodyWeight, isMetric]);
+  }, [age, sex, bodyWeight, isMetric]);
 
   const toggleIsMetric = (isMetric) => {
     let newBodyWeight;
@@ -93,53 +178,77 @@ export default function StrengthLevelCalculator() {
 
   const unitType = isMetric ? "kg" : "lb";
 
-  const liftNames = Object.keys(standards);
+  const liftTypesFromStandards = Object.keys(standards);
 
   return (
-    <div className="mx-4 flex flex-row items-center md:mx-[5vw]">
-      <Head>
-        <title>E1RM Calculator (Strength Journeys)</title>
-        <meta
-          name="description"
-          content="E1RM One Rep Max Calculator App (Strength Journeys)"
-        />
-      </Head>
-
-      <Card className="w-full max-w-5xl">
-        <CardHeader>
-          <CardTitle>Strength Level Calculator</CardTitle>
-          <CardDescription>
-            How strong am I? Estimate your strength level based on age, gender,
-            and bodyweight.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex flex-col items-center justify-between gap-8 md:flex-row md:justify-stretch">
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="age" className="text-xl">
-                Age
-              </Label>
-              <Input
-                id="age"
-                type="number"
-                placeholder="Enter your age"
-                className="w-20 text-xl"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
+    <div className="container">
+      <PageHeader>
+        <PageHeaderHeading icon={BicepsFlexed}>
+          Strength Level Calculator
+        </PageHeaderHeading>
+        <PageHeaderDescription>
+          How strong am I? Estimate your strength level based on age, gender,
+          and bodyweight.
+        </PageHeaderDescription>
+      </PageHeader>
+      <Card className="pt-4">
+        <CardContent className="">
+          <div className="mb-10 flex flex-col items-start gap-4 md:mr-10 md:flex-row md:gap-8">
+            <div className="flex w-full flex-col md:w-2/5">
+              <div className="py-2">
+                <Label htmlFor="age" className="text-xl">
+                  Age: {age}
+                </Label>
+              </div>
+              <Slider
+                min={13}
+                max={100}
+                step={1}
+                value={[age]}
+                onValueChange={(values) => setAge(values[0])}
+                className="mt-2 min-w-40 flex-1"
+                aria-label="Age"
+                aria-labelledby="age"
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="gender" className="text-xl">
-                Gender
+            <div className="flex h-[4rem] w-full flex-col justify-between md:w-3/5">
+              <div className="flex flex-row items-center">
+                <Label htmlFor="weight" className="mr-2 text-xl">
+                  Bodyweight:
+                </Label>
+                <Label
+                  htmlFor="weight"
+                  className="mr-2 w-[3rem] text-right text-xl"
+                >
+                  {bodyWeight}
+                </Label>
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={toggleIsMetric}
+                />
+              </div>
+              <Slider
+                min={isMetric ? 40 : 100}
+                max={isMetric ? 230 : 500}
+                step={1}
+                value={[bodyWeight]}
+                onValueChange={(values) => setBodyWeight(values[0])}
+                className="mt-2 min-w-40 flex-1"
+                aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
+              />
+            </div>
+            <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
+              <Label htmlFor="sex" className="text-xl">
+                Sex:
               </Label>
               <Select
                 id="gender"
-                value={gender}
-                onValueChange={(value) => setGender(value)}
+                value={sex}
+                onValueChange={(value) => setSex(value)}
                 className="min-w-52 text-xl"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select gender" />
+                <SelectTrigger aria-label="Select sex">
+                  <SelectValue placeholder="Select sex" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="male">Male</SelectItem>
@@ -147,26 +256,9 @@ export default function StrengthLevelCalculator() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="weight" className="text-xl">
-                Bodyweight
-              </Label>
-              <Input
-                id="weight"
-                type="number"
-                placeholder="Enter your weight"
-                value={bodyWeight}
-                onChange={(e) => setBodyWeight(e.target.value)}
-                className="w-24 text-xl"
-              />
-              <UnitChooser
-                isMetric={isMetric}
-                onSwitchChange={toggleIsMetric}
-              />
-            </div>
           </div>
-          <div className="flex flex-col gap-4">
-            {liftNames.map((liftType) => (
+          <div className="flex flex-col gap-4 md:ml-4">
+            {liftTypesFromStandards.map((liftType) => (
               <div key={liftType} className="">
                 <h2 className="text-lg font-bold">{liftType} Standards:</h2>
                 <div className="grid grid-cols-3 md:grid-cols-5">
@@ -202,19 +294,34 @@ export default function StrengthLevelCalculator() {
           </div>
         </CardContent>
         <CardFooter className="text-sm">
-          <p className="">
-            Our data model is a derivation of the excellent research of{" "}
-            <a
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              target="_blank"
-              href="https://lonkilgore.com/"
-            >
-              Professor Lon Kilgore
-            </a>
-            . Any errors are our own.
-          </p>
+          <div className="flex flex-col">
+            <p className="">
+              {" "}
+              To see a strength rating for a particular set, e.g.: Squat 3x5
+              {"@"}225lb, then use our{" "}
+              <Link
+                href="/calculator"
+                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              >
+                One Rep Max Calculator
+              </Link>{" "}
+              and click {`"`}Strength Level Insights{`"`}.
+            </p>
+            <p className="">
+              Our data model is a derivation of the excellent research of{" "}
+              <a
+                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+                target="_blank"
+                href="https://lonkilgore.com/"
+              >
+                Professor Lon Kilgore
+              </a>
+              . Any errors are our own.
+            </p>
+          </div>
         </CardFooter>
       </Card>
+      <RelatedArticles articles={relatedArticles} />
     </div>
   );
 }
@@ -228,130 +335,3 @@ const MiniCard = ({ levelString, weight, unitType }) => (
     </div>
   </div>
 );
-
-// Take the standards data and interpolate the standards for the given body weight
-// FIXME: it needs to work when age or weight exceed the dataset
-const interpolateStandard = (age, weightKG, gender, liftType, standards) => {
-  // devLog( `interpolateStandard. age: ${age}, weight: ${weight}, gender: ${gender}, liftType: ${liftType}`,);
-  // Filter the dataset based on gender and liftType
-  const filteredStandards = standards.filter(
-    (item) => item.gender === gender && item.liftType === liftType,
-  );
-
-  if (filteredStandards.length === 0) return null; // Handle edge case
-
-  // Sort the filtered dataset by age and bodyWeight
-  filteredStandards.sort(
-    (a, b) => a.age - b.age || a.bodyWeight - b.bodyWeight,
-  );
-
-  // Find the two closest points for age
-  let ageLower, ageUpper;
-
-  for (let i = 0; i < filteredStandards.length - 1; i++) {
-    const current = filteredStandards[i];
-    const next = filteredStandards[i + 1];
-
-    if (age >= current.age && age <= next.age) {
-      ageLower = current;
-      ageUpper = next;
-      break;
-    }
-  }
-
-  if (!ageLower || !ageUpper) {
-    devLog(`could not interpolate age`);
-    return null; // Handle edge cases
-  }
-
-  // devLog(`ageLower: ${ageLower.age}, ageUpper: ${ageUpper.age}`);
-
-  // Interpolate between bodyweight values within the lower and upper age ranges
-  const interpolateByBodyWeight = (agePoint) => {
-    let weightLower, weightUpper;
-
-    for (let i = 0; i < filteredStandards.length - 1; i++) {
-      const current = filteredStandards[i];
-      const next = filteredStandards[i + 1];
-
-      if (
-        current.age === agePoint &&
-        weightKG >= current.bodyWeight &&
-        weightKG <= next.bodyWeight
-      ) {
-        weightLower = current;
-        weightUpper = next;
-        break;
-      }
-    }
-
-    if (!weightLower || !weightUpper) {
-      devLog(
-        `could not interpolate weight: weightLower: ${weightLower}, weightUpper: ${weightUpper}`,
-      );
-      return null; // Handle edge cases
-    }
-
-    const weightRatio =
-      (weightKG - weightLower.bodyWeight) /
-      (weightUpper.bodyWeight - weightLower.bodyWeight);
-    return {
-      physicallyActive: Math.round(
-        weightLower.physicallyActive +
-          (weightUpper.physicallyActive - weightLower.physicallyActive) *
-            weightRatio,
-      ),
-      beginner: Math.round(
-        weightLower.beginner +
-          (weightUpper.beginner - weightLower.beginner) * weightRatio,
-      ),
-      intermediate: Math.round(
-        weightLower.intermediate +
-          (weightUpper.intermediate - weightLower.intermediate) * weightRatio,
-      ),
-      advanced: Math.round(
-        weightLower.advanced +
-          (weightUpper.advanced - weightLower.advanced) * weightRatio,
-      ),
-      elite: Math.round(
-        weightLower.elite +
-          (weightUpper.elite - weightLower.elite) * weightRatio,
-      ),
-    };
-  };
-
-  // Interpolate by bodyweight within the lower and upper age points
-  const lowerValues = interpolateByBodyWeight(ageLower.age);
-  const upperValues = interpolateByBodyWeight(ageUpper.age);
-
-  if (!lowerValues || !upperValues) {
-    // devLog( `could not interpolate values: lowerValues: ${lowerValues}, upperValues: ${upperValues}`,);
-    return null; // Handle edge cases
-  }
-
-  // Interpolate between the values obtained for lower and upper ages
-  const ageRatio = (age - ageLower.age) / (ageUpper.age - ageLower.age);
-
-  return {
-    physicallyActive: Math.round(
-      lowerValues.physicallyActive +
-        (upperValues.physicallyActive - lowerValues.physicallyActive) *
-          ageRatio,
-    ),
-    beginner: Math.round(
-      lowerValues.beginner +
-        (upperValues.beginner - lowerValues.beginner) * ageRatio,
-    ),
-    intermediate: Math.round(
-      lowerValues.intermediate +
-        (upperValues.intermediate - lowerValues.intermediate) * ageRatio,
-    ),
-    advanced: Math.round(
-      lowerValues.advanced +
-        (upperValues.advanced - lowerValues.advanced) * ageRatio,
-    ),
-    elite: Math.round(
-      lowerValues.elite + (upperValues.elite - lowerValues.elite) * ageRatio,
-    ),
-  };
-};

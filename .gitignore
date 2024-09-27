@@ -43,3 +43,7 @@ dependencies/react-google-drive-picker/node_modules
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# 20240911 next-sitemap
+public/sitemap*.xml
+public/robots.txt

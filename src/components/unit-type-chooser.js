@@ -9,6 +9,7 @@ export function UnitChooser({ isMetric, onSwitchChange }) {
     <Button
       variant="outline"
       size="icon"
+      aria-label={`Switch to ${isMetric ? "imperial" : "metric"} units`}
       onClick={() => onSwitchChange(!isMetric)}
     >
       {isMetric ? "kg" : "lb"}

@@ -46,7 +46,7 @@ import { getLiftColor } from "@/lib/get-lift-color";
 import { CompactPicker, SliderPicker, TwitterPicker } from "react-color";
 
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
-  const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
+  const { liftTypes } = useUserLiftingData();
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
   // FIXME: lift this higher so that it's shared with other analyzer components that show lift colors
   const [color, setColor] = useState(getLiftColor(liftType));
@@ -233,7 +233,7 @@ const RepPRsAccordion = ({ liftType }) => {
                   <ol className="list-decimal pl-[2rem]">
                     {repRange.slice(0, 20).map((lift, liftIndex) => (
                       <li key={liftIndex}>
-                        <div className="grid grid-cols-4 even:bg-accent-foreground/20 md:grid-cols-6 dark:even:bg-muted/40">
+                        <div className="grid grid-cols-4 even:bg-accent-foreground/20 dark:even:bg-muted/40 md:grid-cols-6">
                           <div>
                             {`${index + 1}@${lift.weight}${lift.unitType}  `}
                           </div>
@@ -300,7 +300,7 @@ const RecentLiftHighlights = ({ liftType }) => {
         {recentHighlights.map((lift, index) => (
           <li
             key={index}
-            className="mb-1 grid grid-cols-4 even:bg-accent-foreground/20 md:grid-cols-6 dark:even:bg-muted/40"
+            className="mb-1 grid grid-cols-4 even:bg-accent-foreground/20 dark:even:bg-muted/40 md:grid-cols-6"
           >
             <div>
               {lift.reps}@{lift.weight}

@@ -176,7 +176,7 @@ function Heatmap({ parsedData, startDate, endDate, isMobile }) {
       authStatus === "unauthenticated", // This is a clue we have sample data and we will fake the heatmap to impress shallow people
     );
     setHeatmapData(heatmapData);
-  }, [parsedData, startDate, endDate]);
+  }, [parsedData, startDate, endDate, authStatus]);
 
   if (!heatmapData || !startDate || !endDate) {
     return <Skeleton className="h-24 flex-1" />;

@@ -5,6 +5,7 @@
 import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
+import { NextSeo } from "next-seo";
 
 import {
   Calculator,
@@ -13,6 +14,9 @@ import {
   Trophy,
   Newspaper,
   BicepsFlexed,
+  Music,
+  LibraryBig,
+  Bot,
 } from "lucide-react";
 
 import {
@@ -24,112 +28,141 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { GettingStartedCard } from "@/components/instructions-cards";
+import { SloganCarousel } from "@/components/slogan-carousel";
+import { Testimonials } from "@/components/testimonials";
 
 //
 export const featurePages = [
   {
     href: "/analyzer",
     title: "PR Analyzer",
-    description: "See lifetime and recent personal records.",
+    description:
+      "See lifetime and recent personal records. Consistency pie charts and heatmaps.",
     IconComponent: Trophy,
   },
   {
     href: "/visualizer",
     title: "Strength Visualizer",
-    description: "Interactive lifetime charts of all lifts.",
+    description:
+      "Interactive lifetime charts of all lifts. See your strength journey.",
     IconComponent: LineChart,
+  },
+  {
+    href: "/ai-lifting-assistant",
+    title: "AI Lifting Assistant",
+    description:
+      "A strength expert chatbot. Talk to your lifting data. A coach who loves you.",
+    IconComponent: Bot,
   },
   {
     href: "/calculator",
     title: "One Rep Max Calculator",
-    description: "Multi-formula one rep max calculations.",
+    description: "The greatest e1rm multi-formula one rep max calculations.",
     IconComponent: Calculator,
   },
   {
     href: "/strength-level-calculator",
     title: "Strength Level Calculator",
-    description: "Assess your relative strength by age, gender and lift type.",
+    description:
+      "How strong are you? Assess your relative strength by age, gender and lift type.",
     IconComponent: BicepsFlexed,
   },
   {
     href: "/timer",
     title: "Lifting Set Timer",
-    description: "Set timer for phones or large gym screens.",
+    description: "A set timer for phones or large gym screens.",
     IconComponent: Timer,
   },
   {
-    href: "/articles/own-your-lifting-data",
-    title: "Article: The Power of Owning Your Lifting Data",
-    description: "A short article on why recommend Google Sheets for lifters.",
+    href: "/gym-playlist-leaderboard",
+    title: "Gym Music Leaderboard",
+    description: "Discover and share new motivational music playlists.",
+    IconComponent: Music,
+  },
+  {
+    href: "/articles",
+    title: "Strength Articles Library",
+    description:
+      "A collection of our articles, common questions, plus curated lifting content.",
+    IconComponent: LibraryBig,
+  },
+  {
+    href: "/articles/why-it-s-good-to-be-a-barbell-weirdo",
+    title: `Feature Article: Why It's Good To Be A Barbell Weirdo`,
+    description: "Embrace your inner weirdo.",
     IconComponent: Newspaper,
   },
   {
-    href: "/articles/henry-rollins-the-iron-and-the-soul",
-    title: "Article: The Iron and the Soul",
-    description: "The classic article by Henry Rollins.",
-    IconComponent: Newspaper,
-  },
-];
-
-const featureArticles = [
-  {
-    href: "/articles/henry-rollins-the-iron-and-the-soul",
-    title: "The Iron and the Soul",
-    description: "The classic article by Henry Rollins.",
+    href: "/articles/the-iron-and-the-soul-author-henry-rollins",
+    title: "Feature Article: The Iron and the Soul",
+    description: "The classic inspirational lifting essay by Henry Rollins.",
     IconComponent: Newspaper,
   },
 ];
 
 export default function Home() {
-  const title = "Strength Journeys";
-  const URL = "https://www.strengthjourneys.xyz/";
+  const title = "Strength Journeys | Free Barbell Lifting Analysis Tools";
+  const canonicalURL = "https://www.strengthjourneys.xyz/";
   const description =
-    "Strength Journeys is a free web app to visualize your barbell lifting data from Google Sheets. Strength progress tracking, one rep max calculator, gym timer and more. Fully open source. Chalk not included.";
+    "Track and analyze your barbell lifting with Strength Journeys. Free PR analyzer, 1RM calculator, and more. Integrates with Google Sheets. Open source.";
+  const keywords =
+    "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
+  const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
 
   return (
-    <div className="mx-4 mb-4 md:mx-[5vw]">
-      <Head>
-        <title>{title}</title>
-        <meta name="description" content="Strength Journeys" />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="48x48"
-          href="/favicon-48x48.png"
-        />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <>
+      <NextSeo
+        title={title}
+        description={description}
+        canonical={canonicalURL}
+        openGraph={{
+          url: canonicalURL,
+          title: title,
+          description: description,
+          type: "website",
+          images: [
+            {
+              url: ogImageURL,
+              alt: "Strength Journeys PR Analyzer",
+            },
+          ],
+          site_name: "Strength Journeys",
+        }}
+        twitter={{
+          handle: "@wayneschuller",
+          site: "@wayneschuller",
+          cardType: "summary_large_image",
+        }}
+        additionalMetaTags={[
+          {
+            name: "keywords",
+            content: keywords,
+          },
+        ]}
+      />
+      <main className="mx-4 mb-4 md:mx-[5vw]">
+        <div className="flex flex-row justify-center">
+          <SloganCarousel />
+        </div>
+        <h1 className="my-4 space-x-2 text-balance text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
+          Welcome to Strength Journeys
+        </h1>
 
-        <link rel="canonical" href={URL} />
-        <meta property="og:title" content={title} key="title" />
-        <meta property="og:description" content={description} />
-        <meta property="og:url" content={URL} />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="Strength Journeys" />
-        <meta
-          property="og:image"
-          content="https://www.strengthjourneys.xyz/StrengthJourneysOGimage.png"
-        />
-      </Head>
+        <PageDescription />
 
-      {/* <Image src="/new_logo.png" width={100} height={100} alt="logo" /> */}
+        <div className="my-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-3 2xl:grid-cols-4">
+          {featurePages.map((card, index) => (
+            <FeatureCard key={index} {...card} />
+          ))}
+        </div>
 
-      <h1 className="space-x-2 text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
-        Welcome to {title}
-      </h1>
+        <Testimonials />
 
-      <PageDescription />
-
-      <div className="my-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-4">
-        {featurePages.map((card, index) => (
-          <FeatureCard key={index} {...card} />
-        ))}
-      </div>
-
-      <div className="mx-4 md:mx-20">
-        <GettingStartedCard />
-      </div>
-    </div>
+        <div className="mx-4 mt-10 md:mx-10">
+          <GettingStartedCard />
+        </div>
+      </main>
+    </>
   );
 }
 
@@ -158,9 +191,9 @@ const PageDescription = () => (
 const FeatureCard = ({ href, title, description, IconComponent }) => (
   <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
     <Link href={href}>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+      <CardHeader className="min-h-28">
+        <CardTitle className="">{title}</CardTitle>
+        <CardDescription className="h-[2rem]">{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex justify-center">
         <IconComponent size={64} strokeWidth={1.25} />

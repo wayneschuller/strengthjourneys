@@ -345,3 +345,49 @@ export function findLiftPositionInTopLifts(liftTuple, topLiftsByTypeAndReps) {
 
   return { rank: -1, annotation: null }; // Return -1 if the lift is not found
 }
+
+// Analyzes lifts for a specific session date, providing context about their significance.
+// Returns an array of their session data grouped by lift type
+// FIXME: consider making this a method provided by the userUserLiftingData hook
+export function getAnalyzedSessionLifts(
+  date,
+  parsedData,
+  topLiftsByTypeAndReps,
+  topLiftsByTypeAndRepsLast12Months,
+) {
+  // Grab all the lifts on this date (that are not goals)
+  const sessionLifts = parsedData?.filter(
+    (lift) => lift.date === date && lift.isGoal !== true,
+  );
+
+  const analyzedLifts = sessionLifts?.reduce((acc, entry) => {
+    const { liftType } = entry;
+    acc[liftType] = acc[liftType] || [];
+
+    const {
+      rank: lifetimeRanking,
+      annotation: lifetimeSignificanceAnnotation,
+    } = findLiftPositionInTopLifts(entry, topLiftsByTypeAndReps);
+
+    let { rank: yearlyRanking, annotation: yearlySignificanceAnnotation } =
+      findLiftPositionInTopLifts(entry, topLiftsByTypeAndRepsLast12Months);
+
+    // If the yearly ranking is not better than an existing lifetime ranking, don't show it
+    if (lifetimeRanking !== -1 && yearlyRanking >= lifetimeRanking) {
+      yearlyRanking = null;
+      yearlySignificanceAnnotation = null;
+    }
+
+    acc[liftType].push({
+      ...entry,
+      lifetimeRanking,
+      lifetimeSignificanceAnnotation,
+      yearlyRanking,
+      yearlySignificanceAnnotation,
+    });
+
+    return acc;
+  }, {});
+
+  return analyzedLifts;
+}

@@ -2,6 +2,7 @@
 
 "use client";
 import Image from "next/image";
+import Script from "next/script";
 import * as React from "react";
 import { useState, useEffect, useContext } from "react";
 import { useSession, signIn, sgnOut } from "next-auth/react";
@@ -34,6 +35,22 @@ import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser
 export function NavBar() {
   const pathname = usePathname();
 
+  useEffect(() => {
+    // Not proud of putting this in a timer but it makes it work
+    const timer = setTimeout(() => {
+      if (window?.Canny) {
+        window.Canny("initChangelog", {
+          appID: "65ae4d4c921071bb0aae99c3",
+          position: "bottom",
+          align: "left",
+          theme: "dark",
+        });
+      }
+    }, 1000); // 1 second timeout
+
+    return () => clearTimeout(timer); // Cleanup timeout on unmount
+  }, [pathname]);
+
   return (
     <div className="m-2 flex md:ml-10 md:max-w-[90vw] xl:ml-24">
       <div className="flex items-center">
@@ -47,7 +64,9 @@ export function NavBar() {
         )}
         <MiniTimer />
         {/* <UserSheetIcon /> */}
-        <GitHubButton />
+        <div className="hidden xl:block">
+          <GitHubButton />
+        </div>
         <DarkModeToggle />
         <AvatarDropdown />
       </div>
@@ -59,16 +78,24 @@ export function NavBar() {
 
 export function DesktopNav() {
   const pathname = usePathname();
+  const { isValidating } = useUserLiftingData();
 
   return (
     <div className="hidden align-middle md:flex">
-      <Link href="/" className="mr-10 flex items-center">
+      <Link
+        href="/"
+        className={cn(
+          "mr-10 flex items-center",
+          isValidating && "animate-pulse",
+        )}
+      >
         <Image
           src={lightModeLogo}
           width={100}
           height="auto"
           alt="logo"
           className="inline-block dark:hidden"
+          priority={true}
         />
         <Image
           src={darkModeLogo}
@@ -76,6 +103,7 @@ export function DesktopNav() {
           height="auto"
           alt="logo"
           className="hidden dark:inline-block"
+          priority={true}
         />
       </Link>
       {/* FIXME: we should loop over the feature pages array from the index here */}
@@ -98,7 +126,24 @@ export function DesktopNav() {
               : "text-foreground/60",
           )}
         >
-          Strength Visualizer
+          {/* Short title on small screens */}
+          <span className="hidden md:block xl:hidden">Visualizer</span>
+          {/* Full title on larger screens */}
+          <span className="hidden xl:block">Strength Visualizer</span>
+        </Link>
+        <Link
+          href="/ai-lifting-assistant"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname === "/ai-lifting-assistant"
+              ? "text-foreground"
+              : "text-foreground/60",
+          )}
+        >
+          {/* Short title on small screens */}
+          <span className="hidden md:block xl:hidden">AI Assist</span>
+          {/* Full title on larger screens */}
+          <span className="hidden xl:block">AI Lifting Assistant</span>
         </Link>
         <Link
           href="/calculator"
@@ -109,18 +154,24 @@ export function DesktopNav() {
               : "text-foreground/60",
           )}
         >
-          One Rep Max Calculator
+          {/* Short title on small screens */}
+          <span className="hidden md:block xl:hidden">E1RM Calc</span>
+          {/* Full title on larger screens */}
+          <span className="hidden xl:block">One Rep Max Calculator</span>
         </Link>
         <Link
           href="/strength-level-calculator"
           className={cn(
             "transition-colors hover:text-foreground/80",
-            pathname === "/calculator"
+            pathname === "/strength-level-calculator"
               ? "text-foreground"
               : "text-foreground/60",
           )}
         >
-          Strength Level Calculator
+          {/* Short title on small screens */}
+          <span className="hidden md:block lg:hidden">Strength Calc</span>
+          {/* Full title on larger screens */}
+          <span className="hidden lg:block">Strength Level Calculator </span>
         </Link>
         {/* <Link
             href="/warmups"
@@ -136,10 +187,47 @@ export function DesktopNav() {
           className={cn(
             "transition-colors hover:text-foreground/80",
             pathname === "/timer" ? "text-foreground" : "text-foreground/60",
+            "hidden md:block",
           )}
         >
-          Lifting Set Timer
+          {/* Short title on small screens */}
+          <span className="hidden md:block lg:hidden">Timer</span>
+          {/* Full title on larger screens */}
+          <span className="hidden lg:block">Lifting Set Timer</span>
         </Link>
+        <Link
+          href="/gym-playlist-leaderboard"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname === "/gym-playlist-leaderboard"
+              ? "text-foreground"
+              : "text-foreground/60",
+            "hidden md:block",
+          )}
+        >
+          Music
+        </Link>
+        <Link
+          href="/articles"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname.startsWith("/articles")
+              ? "text-foreground"
+              : "text-foreground/60",
+            "hidden lg:block", // Only show articles on LG
+          )}
+        >
+          Articles
+        </Link>
+        <button
+          data-canny-changelog
+          className={cn(
+            "text-muted-foreground hover:text-foreground/80",
+            "hidden 2xl:block", // Only show articles on 2XL
+          )}
+        >
+          What&apos;s New
+        </button>
       </nav>
     </div>
   );

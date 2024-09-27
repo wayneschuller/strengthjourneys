@@ -51,6 +51,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
+  // devLog(parsedData);
+
   // FIXME: This design is terrible. We should be storing the periodTarget options in local storage
   // If we just store the date then the next day onward we won't know the range they wanted
   const [timeRange, setTimeRange] = useLocalStorage(
@@ -62,10 +64,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
     false,
   );
   const [showAllData, setShowAllData] = useLocalStorage("SJ_showAllData", true); // Show weekly bests or all data
-  const [e1rmFormula, setE1rmFormula] = useLocalStorage(
-    "e1rmFormula",
-    "Brzycki",
-  );
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki");
 
   const { width } = useWindowSize(); // Used to hide the y-axis on smaller screens
 
@@ -88,7 +87,9 @@ export function VisualizerShadcn({ setHighlightDate }) {
   // devLog("Rendering <VisualizerShadcn />...");
   if (!parsedData) return;
 
-  const roundedMaxWeightValue = weightMax * 1.3;
+  devLog(chartData);
+
+  const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
 
   // Shadcn charts needs this for theming but we just do custom colors anyway
   const chartConfig = Object.fromEntries(
@@ -119,7 +120,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
 
   // -----------------------------------------------------------------------------
   // CustomToolTipContent
-  // Out tooltip is modelled on the shadcnui layout but customised for our needs
+  // Out tooltip is modelled on the shadcnui chart layout but customised for our needs
   // -----------------------------------------------------------------------------
   const CustomTooltipContent = ({
     active,
@@ -204,7 +205,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">
-        <ChartContainer config={chartConfig} className="min-h-[200px]">
+        <ChartContainer config={chartConfig} className="Xmin-h-[200px]">
           <AreaChart
             accessibilityLayer
             data={chartData}
@@ -220,24 +221,24 @@ export function VisualizerShadcn({ setHighlightDate }) {
               tickFormatter={formatXAxisDateString}
               // interval="equidistantPreserveStart"
             />
-            {width > 1280 && (
-              <YAxis
-                domain={[
-                  Math.floor(weightMin / tickJump) * tickJump,
-                  roundedMaxWeightValue,
-                ]}
-                // hide={true}
-                axisLine={false}
-                tickFormatter={(value, index) =>
-                  `${value}${chartData[index].unitType}`
-                }
-                ticks={Array.from(
-                  { length: Math.ceil(roundedMaxWeightValue / tickJump) },
-                  (v, i) => i * tickJump,
-                )}
-                allowDataOverflow
-              />
-            )}
+            {/* { width > 1280 && ( */}
+            <YAxis
+              domain={[
+                Math.floor(weightMin / tickJump) * tickJump,
+                roundedMaxWeightValue,
+              ]}
+              hide={width < 1280}
+              axisLine={false}
+              tickFormatter={(value, index) =>
+                `${value}${chartData[index].unitType}`
+              }
+              ticks={Array.from(
+                { length: Math.ceil(roundedMaxWeightValue / tickJump) },
+                (v, i) => i * tickJump,
+              )}
+              // allowDataOverflow
+            />
+            {/* ))} */}
             <Tooltip
               content={
                 <CustomTooltipContent
@@ -314,12 +315,20 @@ export function VisualizerShadcn({ setHighlightDate }) {
                       )}
                     />
                   )}
+                  {/* Special user provided labels of special events/lifts */}
+                  <LabelList
+                    dataKey="label"
+                    // content={<CustomSpecialLabel />}
+                    content={<SpecialHtmlLabel />}
+                    position="top"
+                  />
                 </Area>
               );
             })}
             <ChartLegend
               content={<ChartLegendContent />}
               className="tracking-tight md:text-lg"
+              verticalAlign="top"
             />
           </AreaChart>
         </ChartContainer>
@@ -504,3 +513,23 @@ function E1RMFormulaSelect({ e1rmFormula, setE1rmFormula }) {
     </div>
   );
 }
+
+export const SpecialHtmlLabel = ({ x, y, value }) => {
+  if (!value) return null;
+
+  const maxChars = 20;
+  // Trim the label if it's longer than the specified max characters
+  const trimmedValue =
+    value.length > maxChars ? value.slice(0, maxChars) + "..." : value;
+
+  return (
+    <foreignObject x={x - 50} y={y + 220} width={100} height={50}>
+      <div
+        className="rounded-md border p-2 text-center text-xs tracking-tight shadow-lg"
+        title={value}
+      >
+        {trimmedValue}
+      </div>
+    </foreignObject>
+  );
+};

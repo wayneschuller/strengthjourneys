@@ -14,12 +14,14 @@ import Script from "next/script";
 import { devLog } from "@/lib/processing-utils";
 import { TimerProvider } from "@/lib/timer-context";
 import { UserLiftingDataProvider } from "@/lib/use-userlift-data";
+import { MetricalpReactProvider } from "@metricalp/react";
 
 export default function App({ Component, pageProps, session }) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
   const router = useRouter();
 
   useEffect(() => {
+    const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS; // Repeat in local scope to please eslint dep rules
     const handleRouteChange = (url) => {
       let fullURL = `https://www.strengthjourneys.xyz${url}`;
       window.gtag("config", `${GA_MEASUREMENT_ID}`, {
@@ -48,16 +50,17 @@ export default function App({ Component, pageProps, session }) {
         <SessionProvider session={session}>
           <UserLiftingDataProvider>
             <TimerProvider>
-              <Layout>
-                <Component {...pageProps} />
-                <Toaster />
-              </Layout>
+              <MetricalpReactProvider tid="mam203">
+                <Layout>
+                  <Component {...pageProps} />
+                  <Toaster />
+                </Layout>
+              </MetricalpReactProvider>
             </TimerProvider>
           </UserLiftingDataProvider>
         </SessionProvider>
       </ThemeProvider>
       <SpeedInsights />
-
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
         strategy="afterInteractive"
@@ -69,6 +72,10 @@ export default function App({ Component, pageProps, session }) {
           gtag('js', new Date());
           gtag('config', '${GA_MEASUREMENT_ID}');
         `}
+      </Script>
+      {/* Canny */}
+      <Script id="canny" strategy="afterInteractive">
+        {`!function(w,d,i,s){function l(){if(!d.getElementById(i)){var f=d.getElementsByTagName(s)[1],e=d.createElement(s);e.type="text/javascript",e.async=!0,e.src="https://canny.io/sdk.js",f.parentNode.insertBefore(e,f)}}if("function"!=typeof w.Canny){var c=function(){c.q.push(arguments)};c.q=[],w.Canny=c,"complete"===d.readyState?l():w.attachEvent?w.attachEvent("onload",l):w.addEventListener("load",l,!1)}}(window,document,"canny-jssdk","script");`}
       </Script>
     </>
   );

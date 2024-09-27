@@ -3,6 +3,7 @@ import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
+import { Slider } from "@/components/ui/slider";
 
 import {
   Card,
@@ -157,7 +158,7 @@ function HowStrong() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>How Strong Should Is My Barbell Squat?</CardTitle>
+        <CardTitle>How Strong Should My Barbell Squat Be?</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
         <p>
@@ -201,6 +202,7 @@ function StrengthLevelsCard() {
   if (!standards) return null;
   const squatStandards = standards["Back Squat"];
   if (!squatStandards) return null;
+  devLog(squatStandards);
 
   const unitType = isMetric ? "kg" : "lb";
 
@@ -213,7 +215,7 @@ function StrengthLevelsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Back Squat Strength Standards</CardTitle>
+        <CardTitle>My Back Squat Strength Rating</CardTitle>
         <CardDescription>
           Standards for a {age} year old {sex}, weighing {bodyWeight}
           {unitType}. Go to the{" "}
@@ -222,32 +224,12 @@ function StrengthLevelsCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col justify-between gap-2 md:flex-row">
-          <div>
-            Physically Active: {squatStandards.physicallyActive}
-            {unitType}
-          </div>
-          <div>
-            Beginner: {squatStandards.beginner}
-            {unitType}
-          </div>
-          <div>
-            Intermediate: {squatStandards.intermediate}
-            {unitType}
-          </div>
-          <div>
-            Advanced: {squatStandards.advanced}
-            {unitType}
-          </div>
-          <div>
-            Elite: {squatStandards.elite}
-            {unitType}
-          </div>
-        </div>
         {authStatus === "authenticated" && best && (
-          <div>
-            Your best back squat ever is: {best.weight}
-            {best.unitType}{" "}
+          <div className="">
+            <SquatProgressSlider
+              squatLevels={squatStandards}
+              bestSquat={best.weight}
+            />
           </div>
         )}
       </CardContent>
@@ -306,4 +288,31 @@ const header = {
   quote:
     "There is simply no other exercise, and certainly no machine, that produces the level of central nervous system activity, improved balance and coordination, skeletal loading and bone density enhancement, muscular stimulation and growth, connective tissue stress and strength, psychological demand and toughness, and overall systemic conditioning than the correctly performed full squat.",
   author: "Mark Rippetoe, Starting Strength",
+};
+
+const SquatProgressSlider = ({ squatLevels, bestSquat }) => {
+  const maxSquat = squatLevels.elite; // Max value of slider
+
+  // Convert object keys to an array for rendering labels
+  const levelLabels = Object.keys(squatLevels);
+
+  return (
+    <div className="mx-auto w-full">
+      {/* Squat level labels */}
+      <div className="mb-2 flex justify-between text-sm">
+        {levelLabels.map((level) => (
+          <span key={level}>{level}</span>
+        ))}
+      </div>
+
+      {/* Slider - with pointer-events disabled */}
+      <Slider
+        value={[bestSquat]} // Lock the slider value to bestSquat
+        max={maxSquat}
+        disabled // Make it non-interactive
+        className="pointer-events-none" // Disable mouse interaction
+        hideThumb={true} // Hide the thumb for a progress-only visual
+      />
+    </div>
+  );
 };

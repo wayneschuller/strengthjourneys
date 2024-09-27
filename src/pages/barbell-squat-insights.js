@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useSession } from "next-auth/react";
+import { devLog } from "@/lib/processing-utils";
 
 import {
   Card,
@@ -186,12 +187,47 @@ function StrengthLevelsCard() {
     toggleIsMetric,
   } = useAthleteBioData();
 
+  if (!standards) return null;
+  const squatStandards = standards["Back Squat"];
+  if (!squatStandards) return null;
+
+  const unitType = isMetric ? "kg" : "lb";
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Back Squat Strength Standards</CardTitle>
+        <CardDescription>
+          Standards for a {age} year old {sex}, weighing {bodyWeight}
+          {unitType}. Go to the{" "}
+          <a href="/strength-level-calculator">Strength Levels Calculator</a> to
+          modify bio details.
+        </CardDescription>
       </CardHeader>
-      <CardContent></CardContent>
+      <CardContent>
+        <div className="flex flex-col justify-between gap-2 md:flex-row">
+          <div>
+            Physically Active: {squatStandards.physicallyActive}
+            {unitType}
+          </div>
+          <div>
+            Beginner: {squatStandards.beginner}
+            {unitType}
+          </div>
+          <div>
+            Intermediate: {squatStandards.intermediate}
+            {unitType}
+          </div>
+          <div>
+            Advanced: {squatStandards.advanced}
+            {unitType}
+          </div>
+          <div>
+            Elite: {squatStandards.elite}
+            {unitType}
+          </div>
+        </div>
+      </CardContent>
     </Card>
   );
 }

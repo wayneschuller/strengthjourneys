@@ -310,7 +310,7 @@ const SquatProgressSlider = ({ squatLevels, bestSquat }) => {
         value={[bestSquat]} // Lock the slider value to bestSquat
         max={maxSquat}
         disabled // Make it non-interactive
-        className="pointer-events-none" // Disable mouse interaction
+        className="pointer-events-none bg-gradient-to-r from-green-300 via-yellow-400 to-red-500" // Gradient as className
         hideThumb={true} // Hide the thumb for a progress-only visual
       />
     </div>

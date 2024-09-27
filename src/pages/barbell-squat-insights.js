@@ -203,7 +203,7 @@ function VideoCard() {
         <CardTitle>Squat Overview Video Guides</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-8 md:min-h-96 md:flex-row">
+        <div className="flex flex-col gap-8 lg:flex-row">
           <div className="aspect-video flex-1">
             <iframe
               // width="560"

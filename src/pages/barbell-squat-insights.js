@@ -139,7 +139,7 @@ function MyBackSquatRecentHighlightsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My Back Squat PRs</CardTitle>
+        <CardTitle>My Back Squat Recent Highlights</CardTitle>
       </CardHeader>
       <CardContent>
         <LiftTypeRecentHighlights liftType="Back Squat" />

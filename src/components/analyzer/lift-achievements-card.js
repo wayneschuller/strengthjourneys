@@ -128,7 +128,7 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
 
 // A big card telling the user good stuff about a particular lift type
 // FIXME: this would be a great place to make the color for this lift type configurable
-function ExpandedLiftAchievements({ liftType }) {
+export function ExpandedLiftAchievements({ liftType }) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:justify-stretch">
       <div className="md:w-1/2">

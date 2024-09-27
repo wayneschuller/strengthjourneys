@@ -32,7 +32,7 @@ export function PageHeaderHeading({ className, icon: Icon, ...props }) {
 
 export function PageHeaderDescription({ className, ...props }) {
   return (
-    <p
+    <div
       className={cn(
         "max-w-3xl text-balance text-lg font-light text-foreground",
         className,

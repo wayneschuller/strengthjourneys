@@ -1,5 +1,6 @@
 import Head from "next/head";
 import { useAthleteBioData } from "@/lib/use-athlete-biodata";
+import { useUserLiftingData } from "@/lib/use-userlift-data";
 
 import {
   Card,
@@ -17,6 +18,8 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
+
+import { ExpandedLiftAchievements } from "@/components/analyzer/lift-achievements-card";
 
 const title = "Barbell Back Squat - The King of Lifts";
 
@@ -47,8 +50,9 @@ export default function SquatInsightsMain() {
       </Head>
 
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        <div>
+        <div className="col-span-3">
           <StrengthLevelsCard />
+          <ExpandedLiftAchievements liftType="Back Squat" />
         </div>
         <HowStrong />
         <VideoCard />

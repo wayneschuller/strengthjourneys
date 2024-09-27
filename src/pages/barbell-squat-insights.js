@@ -66,9 +66,13 @@ export default function SquatInsightsMain() {
         <div className="col-span-3">
           <StrengthLevelsCard />
         </div>
-        <HowStrong />
-        <MyBackSquatOverviewCard />
-        <MyBackSquatRecentHighlightsCard />
+        <div className="col-span-1 flex flex-col gap-6 md:col-span-2">
+          <MyBackSquatOverviewCard />
+          <MyBackSquatRecentHighlightsCard />
+        </div>
+        <div className="col-span-1">
+          <HowStrong />
+        </div>
         <div className="col-span-3">
           <MyBackSquatPRsCard />
         </div>
@@ -155,7 +159,7 @@ function HowStrong() {
       <CardHeader>
         <CardTitle>How Strong Should Is My Barbell Squat?</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-6">
         <p>
           The barbell squat is one of the most effective exercises for building
           strength and muscle mass. The amount of weight you should be able to
@@ -175,6 +179,13 @@ function HowStrong() {
 
 function StrengthLevelsCard() {
   const {
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+  } = useUserLiftingData();
+  const { status: authStatus } = useSession();
+
+  const {
     age,
     setAge,
     isMetric,
@@ -192,6 +203,12 @@ function StrengthLevelsCard() {
   if (!squatStandards) return null;
 
   const unitType = isMetric ? "kg" : "lb";
+
+  let best = undefined;
+  if (topLiftsByTypeAndReps) {
+    best = topLiftsByTypeAndReps["Back Squat"][0][0];
+  }
+  devLog(best);
 
   return (
     <Card>
@@ -227,6 +244,12 @@ function StrengthLevelsCard() {
             {unitType}
           </div>
         </div>
+        {authStatus === "authenticated" && best && (
+          <div>
+            Your best back squat ever is: {best.weight}
+            {best.unitType}{" "}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

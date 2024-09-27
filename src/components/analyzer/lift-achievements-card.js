@@ -132,16 +132,16 @@ export function ExpandedLiftAchievements({ liftType }) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:justify-stretch">
       <div className="md:w-1/2">
-        <SummaryStatistics liftType={liftType} />
+        <LiftTypeSummaryStatistics liftType={liftType} />
         <Separator orientation="horizontal" className="col-span-2 my-4" />
-        <RecentLiftHighlights liftType={liftType} />
+        <LiftTypeRecentHighlights liftType={liftType} />
       </div>
       <div>
         <Separator orientation="vertical" className="hidden md:block" />
         <Separator orientation="horizontal" className="block md:hidden" />
       </div>
       <div className="md:w-1/2">
-        <RepPRsAccordion liftType={liftType} />
+        <LiftTypeRepPRsAccordion liftType={liftType} />
       </div>
     </div>
   );
@@ -154,7 +154,7 @@ export function ExpandedLiftAchievements({ liftType }) {
 // Also reward them for what milestones they have, by the same formula
 // So create a milestones function.
 // Visually showing progress to the next milestone would be good - progress bar.
-const SummaryStatistics = ({ liftType }) => {
+export const LiftTypeSummaryStatistics = ({ liftType }) => {
   const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
@@ -205,7 +205,7 @@ const SummaryStatistics = ({ liftType }) => {
   );
 };
 
-const RepPRsAccordion = ({ liftType }) => {
+export const LiftTypeRepPRsAccordion = ({ liftType }) => {
   const { topLiftsByTypeAndReps } = useUserLiftingData();
   if (!topLiftsByTypeAndReps) return null;
 
@@ -268,7 +268,7 @@ const RepPRsAccordion = ({ liftType }) => {
   );
 };
 
-const RecentLiftHighlights = ({ liftType }) => {
+export const LiftTypeRecentHighlights = ({ liftType }) => {
   const { topLiftsByTypeAndReps } = useUserLiftingData();
   if (!topLiftsByTypeAndReps) return null;
 

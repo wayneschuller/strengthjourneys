@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useSession } from "next-auth/react";
 
 import {
   Card,
@@ -19,7 +20,11 @@ import {
   PageHeaderDescription,
 } from "@/components/page-header";
 
-import { ExpandedLiftAchievements } from "@/components/analyzer/lift-achievements-card";
+import {
+  ExpandedLiftAchievements,
+  LiftTypeSummaryStatistics,
+  LiftTypeRepPRsAccordion,
+} from "@/components/analyzer/lift-achievements-card";
 
 const title = "Barbell Back Squat - The King of Lifts";
 
@@ -35,6 +40,13 @@ const StrengthJourneys = () => (
 // FIXME: do full metadata wrapper
 
 export default function SquatInsightsMain() {
+  const {
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+  } = useUserLiftingData();
+  const { status: authStatus } = useSession();
+
   return (
     <div className="container">
       <PageHeader>
@@ -55,9 +67,35 @@ export default function SquatInsightsMain() {
           <ExpandedLiftAchievements liftType="Back Squat" />
         </div>
         <HowStrong />
+        <MyBackSquatOverview />
+      </div>
+      <div className="col-span-3">
         <VideoCard />
       </div>
     </div>
+  );
+}
+
+function MyBackSquatOverview() {
+  const {
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+  } = useUserLiftingData();
+  const { status: authStatus } = useSession();
+
+  if (authStatus !== "authenticated") return null;
+  if (!topLiftsByTypeAndReps) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>My Back Squat Summary</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <LiftTypeSummaryStatistics liftType="Back Squat" />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -116,7 +154,7 @@ function VideoCard() {
         <CardTitle>Squat Overview Video Guides</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col justify-between gap-4 md:flex-row">
           <iframe
             // width="560"
             height="315"

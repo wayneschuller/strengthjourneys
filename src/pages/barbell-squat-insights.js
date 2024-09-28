@@ -291,8 +291,10 @@ const SquatProgressSlider = () => {
   const maxSquat = originalData.elite; // Max value of slider
 
   let best = undefined;
+  let yearlyBest = undefined;
   if (topLiftsByTypeAndReps) {
     best = topLiftsByTypeAndReps["Back Squat"][0][0];
+    yearlyBest = topLiftsByTypeAndRepsLast12Months["Back Squat"][0][0];
   }
   devLog(best);
 
@@ -315,21 +317,43 @@ const SquatProgressSlider = () => {
       </div>
 
       <SliderPrimitive.Root
-        value={[best?.weight]}
+        value={[best?.weight, yearlyBest?.weight]}
         max={maxSquat}
         disabled // Make it non-interactive
-        className="relative flex w-full touch-none select-none items-center"
+        className="relative flex w-full touch-none select-none items-center pb-5"
       >
         {/* Static gradient background */}
         <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800">
           <SliderPrimitive.Range className="absolute h-full opacity-0" />{" "}
         </SliderPrimitive.Track>
-        <SliderPrimitive.Thumb className="block h-4 w-4 rotate-45 bg-primary" />
+
+        {/* Thumb for the best PR */}
+        <SliderPrimitive.Thumb className="relative block">
+          {/* Rotated diamond inside thumb */}
+          <div className="h-4 w-4 rotate-45 bg-primary"></div>
+          {/* PR value below thumb without rotation */}
+          <span className="absolute -left-3 top-6 w-max">
+            {best?.weight}
+            {unitType}
+          </span>
+        </SliderPrimitive.Thumb>
+
+        {/* Thumb for the PR in the last 12 months */}
+        <SliderPrimitive.Thumb className="relative block">
+          {/* Different style or color for distinction */}
+          <div className="h-4 w-4 rounded-full bg-primary"></div>
+          {/* PR value below thumb without rotation */}
+          <span className="absolute -left-3 top-6 w-max">
+            {yearlyBest?.weight}
+            {unitType}
+          </span>
+        </SliderPrimitive.Thumb>
       </SliderPrimitive.Root>
     </div>
   );
 };
 
+// Helper function to convert the object member names to more readable English labels
 const convertLabels = (data) => {
   const labelMap = {
     physicallyActive: "Physically Active",

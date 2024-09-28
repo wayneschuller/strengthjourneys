@@ -157,6 +157,9 @@ export function ExpandedLiftAchievements({ liftType }) {
 export const LiftTypeSummaryStatistics = ({ liftType }) => {
   const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
 
+  if (!liftTypes) return null;
+  if (!topLiftsByTypeAndReps) return null;
+
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
   const newestDate = lift ? lift.newestDate : null;
   const oldestDate = lift ? lift.oldestDate : null;

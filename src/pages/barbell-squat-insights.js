@@ -87,16 +87,6 @@ export default function SquatInsightsMain() {
 }
 
 function MyBackSquatOverviewCard() {
-  const {
-    parsedData,
-    topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
-  } = useUserLiftingData();
-  const { status: authStatus } = useSession();
-
-  if (authStatus !== "authenticated") return null;
-  if (!topLiftsByTypeAndReps) return null;
-
   return (
     <Card>
       <CardHeader>
@@ -110,16 +100,6 @@ function MyBackSquatOverviewCard() {
 }
 
 function MyBackSquatPRsCard() {
-  const {
-    parsedData,
-    topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
-  } = useUserLiftingData();
-  const { status: authStatus } = useSession();
-
-  if (authStatus !== "authenticated") return null;
-  if (!topLiftsByTypeAndReps) return null;
-
   return (
     <Card>
       <CardHeader>

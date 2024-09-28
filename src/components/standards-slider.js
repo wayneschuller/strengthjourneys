@@ -68,31 +68,49 @@ export function StandardsSlider({ liftType, isYearly = false }) {
         ))}
         {/* <div className="block md:hidden">Rating: </div> */}
       </div>
+      <div className="relative w-full">
+        <SliderPrimitive.Root
+          value={[best]}
+          max={maxLift}
+          disabled // Make it non-interactive
+          className="relative flex w-full touch-none select-none items-center pb-10"
+        >
+          {/* Static gradient background */}
+          <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800">
+            <SliderPrimitive.Range className="absolute h-full opacity-0" />{" "}
+          </SliderPrimitive.Track>
 
-      <SliderPrimitive.Root
-        value={[best]}
-        max={maxLift}
-        disabled // Make it non-interactive
-        className="relative flex w-full touch-none select-none items-center pb-10"
-      >
-        {/* Static gradient background */}
-        <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800">
-          <SliderPrimitive.Range className="absolute h-full opacity-0" />{" "}
-        </SliderPrimitive.Track>
-
-        {/* Thumb for the best PR */}
-        <SliderPrimitive.Thumb className="relative block">
-          {/* Rotated diamond inside thumb */}
-          <div className="h-4 w-4 rotate-45 bg-primary"></div>
-          {/* PR value below thumb without rotation */}
-          {best > 0 && (
-            <span className="absolute -left-3 top-5 w-max font-bold">
-              {best}
-              {unitType}
-            </span>
-          )}
-        </SliderPrimitive.Thumb>
-      </SliderPrimitive.Root>
+          {/* Thumb for the best PR */}
+          <SliderPrimitive.Thumb className="relative block">
+            {/* Rotated diamond inside thumb */}
+            <div className="h-4 w-4 rotate-45 bg-primary"></div>
+            {/* PR value below thumb without rotation */}
+            {best > 0 && (
+              <span className="absolute -left-3 top-5 w-max font-bold">
+                {best}
+                {unitType}
+              </span>
+            )}
+          </SliderPrimitive.Thumb>
+        </SliderPrimitive.Root>
+        <div className="absolute top-0 w-full">
+          {/* 0.5x multiplier */}
+          <div
+            className="absolute h-3 w-1 bg-gray-400 opacity-50"
+            style={{ left: `${((0.5 * bodyWeight) / maxLift) * 100}%` }}
+          ></div>
+          {/* 1x multiplier */}
+          <div
+            className="absolute h-3 w-1 bg-gray-400 opacity-50"
+            style={{ left: `${((1 * bodyWeight) / maxLift) * 100}%` }}
+          ></div>
+          {/* 1.5x multiplier */}
+          <div
+            className="absolute h-3 w-1 bg-gray-400 opacity-50"
+            style={{ left: `${((1.5 * bodyWeight) / maxLift) * 100}%` }}
+          ></div>
+        </div>
+      </div>
     </div>
   );
 }

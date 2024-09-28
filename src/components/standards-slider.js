@@ -51,13 +51,14 @@ export function StandardsSlider({ liftType }) {
       <div className="mb-2 flex justify-between text-sm">
         {levelLabels.map((level) => (
           <span key={level} className="hidden md:block">
-            <div>{level}</div>
-            <div>
+            <div className="md:text-base">{level}</div>
+            <div className="md:text-lg">
               {liftTypeStandards[level]}
               {unitType}
             </div>
           </span>
         ))}
+        <div className="block md:hidden">Rating: </div>
       </div>
 
       <SliderPrimitive.Root

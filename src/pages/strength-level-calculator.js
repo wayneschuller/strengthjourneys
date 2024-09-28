@@ -30,15 +30,10 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { useLocalStorage } from "usehooks-ts";
-import {
-  interpolateStandardKG,
-  LiftingStandardsKG,
-} from "@/lib/lifting-standards-kg";
 import { Separator } from "@/components/ui/separator";
 import { BicepsFlexed } from "lucide-react";
 import { useAthleteBioData } from "@/lib/use-athlete-biodata";
-import { StandardsSlider } from "./barbell-squat-insights";
+import { StandardsSlider } from "@/components/standards-slider";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 

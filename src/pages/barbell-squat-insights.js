@@ -32,6 +32,7 @@ import {
   LiftTypeRepPRsAccordion,
   LiftTypeRecentHighlights,
 } from "@/components/analyzer/lift-achievements-card";
+import { useDarkMode } from "usehooks-ts";
 
 const title = "Barbell Back Squat - The King of Lifts";
 
@@ -72,7 +73,7 @@ export default function SquatInsightsMain() {
         <div className="col-span-3">
           <StrengthLevelsCard />
         </div>
-        <MyBackSquatOverviewCard />
+        <MyBackSquatSummaryCard />
         <MyBackSquatRecentHighlightsCard />
         <HowStrong />
         <div className="col-span-3">
@@ -86,27 +87,37 @@ export default function SquatInsightsMain() {
   );
 }
 
-function MyBackSquatOverviewCard() {
+function MyBackSquatSummaryCard() {
+  const { status: authStatus } = useSession();
   return (
     <Card>
       <CardHeader>
         <CardTitle>My Back Squat Summary</CardTitle>
       </CardHeader>
       <CardContent>
-        <LiftTypeSummaryStatistics liftType="Back Squat" />
+        {authStatus === "authenticated" ? (
+          <LiftTypeSummaryStatistics liftType="Back Squat" />
+        ) : (
+          <div>Login to see your data</div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
 function MyBackSquatPRsCard() {
+  const { status: authStatus } = useSession();
   return (
     <Card>
       <CardHeader>
         <CardTitle>My Back Squat PRs</CardTitle>
       </CardHeader>
       <CardContent>
-        <LiftTypeRepPRsAccordion liftType="Back Squat" />
+        {authStatus === "authenticated" ? (
+          <LiftTypeRepPRsAccordion liftType="Back Squat" />
+        ) : (
+          <div>Login to see your data</div>
+        )}
       </CardContent>
     </Card>
   );
@@ -120,16 +131,17 @@ function MyBackSquatRecentHighlightsCard() {
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
-  if (authStatus !== "authenticated") return null;
-  if (!topLiftsByTypeAndReps) return null;
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>My Back Squat Recent Highlights</CardTitle>
       </CardHeader>
       <CardContent>
-        <LiftTypeRecentHighlights liftType="Back Squat" />
+        {authStatus === "authenticated" ? (
+          <LiftTypeRecentHighlights liftType="Back Squat" />
+        ) : (
+          <div>Login to see your data</div>
+        )}
       </CardContent>
     </Card>
   );
@@ -268,7 +280,7 @@ const SquatProgressSlider = () => {
 
   let best = undefined;
   let yearlyBest = undefined;
-  if (topLiftsByTypeAndReps) {
+  if (topLiftsByTypeAndReps && authStatus === "authenticated") {
     best = topLiftsByTypeAndReps["Back Squat"][0][0];
     yearlyBest = topLiftsByTypeAndRepsLast12Months["Back Squat"][0][0];
   }

@@ -22,6 +22,8 @@ import {
   PageHeaderDescription,
 } from "@/components/page-header";
 
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -114,6 +116,8 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
     standards,
     toggleIsMetric,
   } = useAthleteBioData();
+  const { status: authStatus } = useSession();
+  const [isYearly, setIsYearly] = useState(false);
 
   const unitType = isMetric ? "kg" : "lb";
 
@@ -133,7 +137,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
       <Card className="pt-4">
         <CardContent className="">
           <div className="mb-10 flex flex-col items-start gap-4 md:mr-10 md:flex-row md:gap-8">
-            <div className="flex w-full flex-col md:w-2/5">
+            <div className="md:min-w-1/5 flex w-full flex-col">
               <div className="py-2">
                 <Label htmlFor="age" className="text-xl">
                   Age: {age}
@@ -150,7 +154,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
                 aria-labelledby="age"
               />
             </div>
-            <div className="flex h-[4rem] w-full flex-col justify-between md:w-3/5">
+            <div className="md:min-w-1/5 flex h-[4rem] w-full flex-col justify-between">
               <div className="flex flex-row items-center">
                 <Label htmlFor="weight" className="mr-2 text-xl">
                   Bodyweight:
@@ -195,12 +199,33 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
                 </SelectContent>
               </Select>
             </div>
+            {authStatus === "authenticated" && (
+              <div>
+                Select PR Period:
+                <div className="mt-1 flex flex-row gap-4">
+                  <RadioGroup
+                    value={isYearly ? "true" : "false"} // Set the value as string for RadioGroupItem
+                    onValueChange={(val) => setIsYearly(val === "true")} // Convert to boolean
+                    className="flex space-x-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="false" id="lifetime" />
+                      <Label htmlFor="lifetime">Lifetime</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="true" id="yearly" />
+                      <Label htmlFor="yearly">12 Months</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex flex-col gap-4 md:ml-4">
             {liftTypesFromStandards.map((liftType) => (
               <div key={liftType} className="">
                 <h2 className="text-lg font-bold">{liftType} Standards:</h2>
-                <StandardsSlider liftType={liftType} />
+                <StandardsSlider liftType={liftType} isYearly={isYearly} />
                 <Separator />
               </div>
             ))}

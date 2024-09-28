@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 
-export function StandardsSlider({ liftType }) {
+export function StandardsSlider({ liftType, isYearly = false }) {
   const {
     parsedData,
     topLiftsByTypeAndReps,
@@ -38,12 +38,12 @@ export function StandardsSlider({ liftType }) {
   const maxLift = originalData.elite; // Max value of slider
 
   let best = 0;
-  let yearlyBest = undefined;
   if (topLiftsByTypeAndReps && authStatus === "authenticated") {
-    best = topLiftsByTypeAndReps[liftType][0][0].weight;
-
-    // FIXME: Not totally happy with the yearlyBest double thumb UI so this is commented out for now
-    // yearlyBest = topLiftsByTypeAndRepsLast12Months[liftType][0][0];
+    if (isYearly) {
+      best = topLiftsByTypeAndRepsLast12Months[liftType][0][0].weight;
+    } else {
+      best = topLiftsByTypeAndReps[liftType][0][0].weight;
+    }
   }
   // devLog(best);
 
@@ -70,15 +70,10 @@ export function StandardsSlider({ liftType }) {
       </div>
 
       <SliderPrimitive.Root
-        // value={[best?.weight, yearlyBest?.weight]}
-        value={
-          yearlyBest === best
-            ? [best] // Only one thumb if they are the same
-            : [best, yearlyBest] // Two thumbs if they differ
-        }
+        value={[best]}
         max={maxLift}
         disabled // Make it non-interactive
-        className="relative flex w-full touch-none select-none items-center pb-5"
+        className="relative flex w-full touch-none select-none items-center pb-10"
       >
         {/* Static gradient background */}
         <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800">
@@ -91,22 +86,11 @@ export function StandardsSlider({ liftType }) {
           <div className="h-4 w-4 rotate-45 bg-primary"></div>
           {/* PR value below thumb without rotation */}
           {best > 0 && (
-            <span className="absolute -left-3 top-6 w-max">
+            <span className="absolute -left-3 top-6 w-max font-bold">
               {best}
               {unitType}
             </span>
           )}
-        </SliderPrimitive.Thumb>
-
-        {/* Thumb for the PR in the last 12 months */}
-        <SliderPrimitive.Thumb className="relative block">
-          {/* Different style or color for distinction */}
-          <div className="h-4 w-4 rounded-full bg-primary"></div>
-          {/* PR value below thumb without rotation */}
-          <span className="absolute -left-3 top-6 w-max">
-            {yearlyBest}
-            {unitType}
-          </span>
         </SliderPrimitive.Thumb>
       </SliderPrimitive.Root>
     </div>

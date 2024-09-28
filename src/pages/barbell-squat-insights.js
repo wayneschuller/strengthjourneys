@@ -280,20 +280,19 @@ const SquatProgressSlider = () => {
     standards,
     toggleIsMetric,
   } = useAthleteBioData();
-  const [sliderValue, setSliderValue] = useState(0);
 
   if (!standards) return null;
-  const squatStandards = standards["Back Squat"];
-  if (!squatStandards) return null;
+  const originalData = standards["Back Squat"];
+  if (!originalData) return null;
+  const squatStandards = convertLabels(originalData);
   devLog(squatStandards);
 
   const unitType = isMetric ? "kg" : "lb";
-  const maxSquat = squatStandards.elite; // Max value of slider
+  const maxSquat = originalData.elite; // Max value of slider
 
   let best = undefined;
   if (topLiftsByTypeAndReps) {
     best = topLiftsByTypeAndReps["Back Squat"][0][0];
-    // setSliderValue(best.weight);
   }
   devLog(best);
 
@@ -305,12 +304,18 @@ const SquatProgressSlider = () => {
       {/* Squat level labels */}
       <div className="mb-2 flex justify-between text-sm">
         {levelLabels.map((level) => (
-          <span key={level}>{level}</span>
+          <span key={level} className="hidden md:block">
+            <div>{level}</div>
+            <div>
+              {squatStandards[level]}
+              {unitType}
+            </div>
+          </span>
         ))}
       </div>
 
       <SliderPrimitive.Root
-        value={[sliderValue]} // Use animated value
+        value={[best?.weight]}
         max={maxSquat}
         disabled // Make it non-interactive
         className="relative flex w-full touch-none select-none items-center"
@@ -323,4 +328,23 @@ const SquatProgressSlider = () => {
       </SliderPrimitive.Root>
     </div>
   );
+};
+
+const convertLabels = (data) => {
+  const labelMap = {
+    physicallyActive: "Physically Active",
+    beginner: "Beginner",
+    intermediate: "Intermediate",
+    advanced: "Advanced",
+    elite: "Elite",
+  };
+
+  const newData = {};
+
+  for (const [key, value] of Object.entries(data)) {
+    const newKey = labelMap[key] || key; // Fallback to original key if not in labelMap
+    newData[newKey] = value;
+  }
+
+  return newData;
 };

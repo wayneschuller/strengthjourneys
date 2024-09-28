@@ -317,7 +317,12 @@ const SquatProgressSlider = () => {
       </div>
 
       <SliderPrimitive.Root
-        value={[best?.weight, yearlyBest?.weight]}
+        // value={[best?.weight, yearlyBest?.weight]}
+        value={
+          yearlyBest?.weight === best?.weight
+            ? [best?.weight] // Only one thumb if they are the same
+            : [best?.weight, yearlyBest?.weight] // Two thumbs if they differ
+        }
         max={maxSquat}
         disabled // Make it non-interactive
         className="relative flex w-full touch-none select-none items-center pb-5"

@@ -38,6 +38,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { BicepsFlexed } from "lucide-react";
 import { useAthleteBioData } from "@/lib/use-athlete-biodata";
+import { StandardsSlider } from "./barbell-squat-insights";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
@@ -203,33 +204,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
             {liftTypesFromStandards.map((liftType) => (
               <div key={liftType} className="">
                 <h2 className="text-lg font-bold">{liftType} Standards:</h2>
-                <div className="grid grid-cols-3 md:grid-cols-5">
-                  <MiniCard
-                    levelString="Physically Active"
-                    weight={standards[liftType]?.physicallyActive}
-                    unitType={unitType}
-                  />
-                  <MiniCard
-                    levelString="Beginner"
-                    weight={standards[liftType]?.beginner}
-                    unitType={unitType}
-                  />
-                  <MiniCard
-                    levelString="Intermediate"
-                    weight={standards[liftType]?.intermediate}
-                    unitType={unitType}
-                  />
-                  <MiniCard
-                    levelString="Advanced"
-                    weight={standards[liftType]?.advanced}
-                    unitType={unitType}
-                  />
-                  <MiniCard
-                    levelString="Elite"
-                    weight={standards[liftType]?.elite}
-                    unitType={unitType}
-                  />
-                </div>
+                <StandardsSlider liftType={liftType} />
                 <Separator />
               </div>
             ))}

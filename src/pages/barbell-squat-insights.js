@@ -189,7 +189,7 @@ function StrengthLevelsCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <SquatProgressSlider />
+        <StandardsSlider liftType="Back Squat" />
       </CardContent>
     </Card>
   );
@@ -248,7 +248,7 @@ const header = {
   author: "Mark Rippetoe, Starting Strength",
 };
 
-const SquatProgressSlider = () => {
+export const StandardsSlider = ({ liftType }) => {
   const {
     parsedData,
     topLiftsByTypeAndReps,
@@ -270,34 +270,34 @@ const SquatProgressSlider = () => {
   } = useAthleteBioData();
 
   if (!standards) return null;
-  const originalData = standards["Back Squat"];
+  const originalData = standards[liftType];
   if (!originalData) return null;
-  const squatStandards = convertLabels(originalData);
-  devLog(squatStandards);
+  const liftTypeStandards = convertLabels(originalData);
+  devLog(liftTypeStandards);
 
   const unitType = isMetric ? "kg" : "lb";
-  const maxSquat = originalData.elite; // Max value of slider
+  const maxLift = originalData.elite; // Max value of slider
 
   let best = undefined;
   let yearlyBest = undefined;
   if (topLiftsByTypeAndReps && authStatus === "authenticated") {
-    best = topLiftsByTypeAndReps["Back Squat"][0][0];
-    yearlyBest = topLiftsByTypeAndRepsLast12Months["Back Squat"][0][0];
+    best = topLiftsByTypeAndReps[liftType][0][0];
+    yearlyBest = topLiftsByTypeAndRepsLast12Months[liftType][0][0];
   }
   devLog(best);
 
   // Convert object keys to an array for rendering labels
-  const levelLabels = Object.keys(squatStandards);
+  const levelLabels = Object.keys(liftTypeStandards);
 
   return (
     <div className="mx-auto w-full">
-      {/* Squat level labels */}
+      {/* Lift level labels */}
       <div className="mb-2 flex justify-between text-sm">
         {levelLabels.map((level) => (
           <span key={level} className="hidden md:block">
             <div>{level}</div>
             <div>
-              {squatStandards[level]}
+              {liftTypeStandards[level]}
               {unitType}
             </div>
           </span>
@@ -311,7 +311,7 @@ const SquatProgressSlider = () => {
             ? [best?.weight] // Only one thumb if they are the same
             : [best?.weight, yearlyBest?.weight] // Two thumbs if they differ
         }
-        max={maxSquat}
+        max={maxLift}
         disabled // Make it non-interactive
         className="relative flex w-full touch-none select-none items-center pb-5"
       >

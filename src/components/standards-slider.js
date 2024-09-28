@@ -2,6 +2,7 @@ import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
+import { cn } from "@/lib/utils";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 
 export function StandardsSlider({ liftType }) {
@@ -51,8 +52,11 @@ export function StandardsSlider({ liftType }) {
     <div className="mx-auto w-full">
       {/* Lift level labels */}
       <div className="mb-2 flex justify-between text-sm">
-        {levelLabels.map((level) => (
-          <span key={level} className="hidden md:block">
+        {levelLabels.map((level, index) => (
+          <span
+            key={level}
+            className={cn(index % 2 !== 0 ? "hidden sm:block" : "block")}
+          >
             <div className="md:text-base">{level}</div>
             <div className="font-bold md:text-lg lg:text-xl">
               {liftTypeStandards[level]}

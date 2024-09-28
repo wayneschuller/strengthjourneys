@@ -86,7 +86,7 @@ export function StandardsSlider({ liftType, isYearly = false }) {
           <div className="h-4 w-4 rotate-45 bg-primary"></div>
           {/* PR value below thumb without rotation */}
           {best > 0 && (
-            <span className="absolute -left-3 top-6 w-max font-bold">
+            <span className="absolute -left-3 top-5 w-max font-bold">
               {best}
               {unitType}
             </span>

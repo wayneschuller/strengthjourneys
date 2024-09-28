@@ -38,7 +38,9 @@ export function StandardsSlider({ liftType }) {
   let yearlyBest = undefined;
   if (topLiftsByTypeAndReps && authStatus === "authenticated") {
     best = topLiftsByTypeAndReps[liftType][0][0];
-    yearlyBest = topLiftsByTypeAndRepsLast12Months[liftType][0][0];
+
+    // FIXME: Not totally happy with the yearlyBest double thumb UI so this is commented out for now
+    // yearlyBest = topLiftsByTypeAndRepsLast12Months[liftType][0][0];
   }
   devLog(best);
 
@@ -52,13 +54,13 @@ export function StandardsSlider({ liftType }) {
         {levelLabels.map((level) => (
           <span key={level} className="hidden md:block">
             <div className="md:text-base">{level}</div>
-            <div className="md:text-lg">
+            <div className="font-bold md:text-lg lg:text-xl">
               {liftTypeStandards[level]}
               {unitType}
             </div>
           </span>
         ))}
-        <div className="block md:hidden">Rating: </div>
+        {/* <div className="block md:hidden">Rating: </div> */}
       </div>
 
       <SliderPrimitive.Root

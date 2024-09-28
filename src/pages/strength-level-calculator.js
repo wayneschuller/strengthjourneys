@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession, signIn } from "next-auth/react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { sanityIOClient } from "@/lib/sanity-io.js";
@@ -126,7 +127,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
         </PageHeaderHeading>
         <PageHeaderDescription>
           How strong am I? Estimate your strength level based on age, gender,
-          and bodyweight.
+          and bodyweight. <SignInInvite />
         </PageHeaderDescription>
       </PageHeader>
       <Card className="pt-4">
@@ -247,3 +248,24 @@ const MiniCard = ({ levelString, weight, unitType }) => (
     </div>
   </div>
 );
+
+const SignInInvite = () => {
+  const { status: authStatus } = useSession();
+
+  // FIXME: add in a check for ssid and prompt for file picker if needed.
+
+  if (authStatus === "authenticated") return null;
+
+  return (
+    <div>
+      <button
+        onClick={() => signIn("google")}
+        className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+      >
+        Sign in
+      </button>{" "}
+      and link your Google Sheet lifting data to see your unique ratings for
+      each lift.
+    </div>
+  );
+};

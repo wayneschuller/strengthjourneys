@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import * as SliderPrimitive from "@radix-ui/react-slider";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 export function StandardsSlider({ liftType }) {
   const {
@@ -25,6 +26,7 @@ export function StandardsSlider({ liftType }) {
     standards,
     toggleIsMetric,
   } = useAthleteBioData();
+  const [parent] = useAutoAnimate();
 
   if (!standards) return null;
   const originalData = standards[liftType];
@@ -35,10 +37,10 @@ export function StandardsSlider({ liftType }) {
   const unitType = isMetric ? "kg" : "lb";
   const maxLift = originalData.elite; // Max value of slider
 
-  let best = undefined;
+  let best = 0;
   let yearlyBest = undefined;
   if (topLiftsByTypeAndReps && authStatus === "authenticated") {
-    best = topLiftsByTypeAndReps[liftType][0][0];
+    best = topLiftsByTypeAndReps[liftType][0][0].weight;
 
     // FIXME: Not totally happy with the yearlyBest double thumb UI so this is commented out for now
     // yearlyBest = topLiftsByTypeAndRepsLast12Months[liftType][0][0];
@@ -70,9 +72,9 @@ export function StandardsSlider({ liftType }) {
       <SliderPrimitive.Root
         // value={[best?.weight, yearlyBest?.weight]}
         value={
-          yearlyBest?.weight === best?.weight
-            ? [best?.weight] // Only one thumb if they are the same
-            : [best?.weight, yearlyBest?.weight] // Two thumbs if they differ
+          yearlyBest === best
+            ? [best] // Only one thumb if they are the same
+            : [best, yearlyBest] // Two thumbs if they differ
         }
         max={maxLift}
         disabled // Make it non-interactive
@@ -88,10 +90,12 @@ export function StandardsSlider({ liftType }) {
           {/* Rotated diamond inside thumb */}
           <div className="h-4 w-4 rotate-45 bg-primary"></div>
           {/* PR value below thumb without rotation */}
-          <span className="absolute -left-3 top-6 w-max">
-            {best?.weight}
-            {unitType}
-          </span>
+          {best > 0 && (
+            <span className="absolute -left-3 top-6 w-max">
+              {best}
+              {unitType}
+            </span>
+          )}
         </SliderPrimitive.Thumb>
 
         {/* Thumb for the PR in the last 12 months */}
@@ -100,7 +104,7 @@ export function StandardsSlider({ liftType }) {
           <div className="h-4 w-4 rounded-full bg-primary"></div>
           {/* PR value below thumb without rotation */}
           <span className="absolute -left-3 top-6 w-max">
-            {yearlyBest?.weight}
+            {yearlyBest}
             {unitType}
           </span>
         </SliderPrimitive.Thumb>

@@ -72,13 +72,9 @@ export default function SquatInsightsMain() {
         <div className="col-span-3">
           <StrengthLevelsCard />
         </div>
-        <div className="col-span-1 flex flex-col gap-6 md:col-span-2">
-          <MyBackSquatOverviewCard />
-          <MyBackSquatRecentHighlightsCard />
-        </div>
-        <div className="col-span-1">
-          <HowStrong />
-        </div>
+        <MyBackSquatOverviewCard />
+        <MyBackSquatRecentHighlightsCard />
+        <HowStrong />
         <div className="col-span-3">
           <MyBackSquatPRsCard />
         </div>

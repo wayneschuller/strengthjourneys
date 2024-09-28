@@ -34,7 +34,7 @@ export function PageHeaderDescription({ className, ...props }) {
   return (
     <div
       className={cn(
-        "max-w-3xl text-balance text-lg font-light text-foreground",
+        "max-w-4xl text-pretty text-lg font-light text-foreground",
         className,
       )}
       {...props}

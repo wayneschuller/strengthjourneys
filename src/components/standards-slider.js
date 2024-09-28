@@ -30,7 +30,7 @@ export function StandardsSlider({ liftType }) {
   const originalData = standards[liftType];
   if (!originalData) return null;
   const liftTypeStandards = convertLabels(originalData);
-  devLog(liftTypeStandards);
+  // devLog(liftTypeStandards);
 
   const unitType = isMetric ? "kg" : "lb";
   const maxLift = originalData.elite; // Max value of slider
@@ -43,7 +43,7 @@ export function StandardsSlider({ liftType }) {
     // FIXME: Not totally happy with the yearlyBest double thumb UI so this is commented out for now
     // yearlyBest = topLiftsByTypeAndRepsLast12Months[liftType][0][0];
   }
-  devLog(best);
+  // devLog(best);
 
   // Convert object keys to an array for rendering labels
   const levelLabels = Object.keys(liftTypeStandards);

@@ -37,15 +37,20 @@ export function StandardsSlider({ liftType, isYearly = false }) {
   const unitType = isMetric ? "kg" : "lb";
   const maxLift = originalData.elite; // Max value of slider
 
-  let best = 0;
-  if (topLiftsByTypeAndReps && authStatus === "authenticated") {
+  let athleteRankingWeight = 0;
+  if (authStatus === "authenticated") {
     if (isYearly) {
-      best = topLiftsByTypeAndRepsLast12Months[liftType][0][0].weight;
+      athleteRankingWeight =
+        topLiftsByTypeAndRepsLast12Months?.[liftType]?.[0]?.[0]?.weight;
     } else {
-      best = topLiftsByTypeAndReps[liftType][0][0].weight;
+      athleteRankingWeight =
+        topLiftsByTypeAndReps?.[liftType]?.[0]?.[0]?.weight;
     }
   }
   // devLog(best);
+
+  // Calculate the left percentage based on current weight relative to maxLift
+  const thumbPosition = (athleteRankingWeight / maxLift) * 100;
 
   // Convert object keys to an array for rendering labels
   const levelLabels = Object.keys(liftTypeStandards);
@@ -68,30 +73,34 @@ export function StandardsSlider({ liftType, isYearly = false }) {
         ))}
         {/* <div className="block md:hidden">Rating: </div> */}
       </div>
-      <SliderPrimitive.Root
-        value={[best]}
-        max={maxLift}
-        disabled // Make it non-interactive
-        className="relative flex w-full touch-none select-none items-center pb-10"
-      >
-        {/* Static gradient background */}
-        <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800">
-          <SliderPrimitive.Range className="absolute h-full opacity-0" />{" "}
-        </SliderPrimitive.Track>
+      <div className="relative w-full">
+        <SliderPrimitive.Root
+          value={[athleteRankingWeight]}
+          max={maxLift}
+          disabled // Make it non-interactive
+          className="relative flex w-full touch-none select-none items-center pb-10"
+        >
+          {/* Static gradient background */}
+          <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800">
+            <SliderPrimitive.Range className="absolute h-full opacity-0" />{" "}
+          </SliderPrimitive.Track>
+        </SliderPrimitive.Root>
 
-        {/* Thumb for the best PR */}
-        <SliderPrimitive.Thumb className="relative block">
-          {/* Rotated diamond inside thumb */}
-          <div className="h-4 w-4 rotate-45 bg-primary"></div>
-          {/* PR value below thumb without rotation */}
-          {best > 0 && (
-            <span className="absolute -left-3 top-5 w-max font-bold">
-              {best}
+        {/* Custom Thumb */}
+        <div
+          className="absolute -top-1 bg-primary transition-all duration-1000 ease-in"
+          style={{ left: `${thumbPosition}%` }} // Positioning based on percentage
+        >
+          <div className="h-4 w-4 rotate-45"></div>
+          {/* PR value displayed below thumb */}
+          {athleteRankingWeight > 0 && (
+            <span className="absolute -left-2 top-5 w-max font-bold">
+              {athleteRankingWeight}
               {unitType}
             </span>
           )}
-        </SliderPrimitive.Thumb>
-      </SliderPrimitive.Root>
+        </div>
+      </div>
     </div>
   );
 }

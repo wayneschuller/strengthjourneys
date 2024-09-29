@@ -4,7 +4,6 @@ import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import * as SliderPrimitive from "@radix-ui/react-slider";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 export function StandardsSlider({ liftType, isYearly = false }) {
   const {
@@ -26,7 +25,6 @@ export function StandardsSlider({ liftType, isYearly = false }) {
     standards,
     toggleIsMetric,
   } = useAthleteBioData();
-  const [parent] = useAutoAnimate();
 
   if (!standards) return null;
   const originalData = standards[liftType];

@@ -86,7 +86,7 @@ export function StandardsSlider({ liftType, isYearly = false }) {
           </SliderPrimitive.Track>
         </SliderPrimitive.Root>
 
-        {/* Custom Thumb */}
+        {/* We use a custom thumb so we can animate it. */}
         <div
           className="absolute -top-1 bg-primary transition-all duration-1000 ease-in"
           style={{ left: `${thumbPosition}%` }} // Positioning based on percentage

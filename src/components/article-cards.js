@@ -14,7 +14,7 @@ import Image from "next/image";
 import { urlFor } from "@/lib/sanity-io.js";
 
 export function ArticleSummaryCard({ article }) {
-  devLog(article);
+  // devLog(article);
 
   return (
     <Link href={`/articles/${article.slug}`}>

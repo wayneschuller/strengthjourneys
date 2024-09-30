@@ -102,7 +102,6 @@ export default function ArticleListingPage({
 
       {featuredArticles.length > 0 && (
         <>
-          {/* <h2 className="mb-4 text-2xl font-semibold">Featured Articles</h2> */}
           <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
             {featuredArticles.map((article) => (
               <ArticleSummaryCard key={article.slug} article={article} />

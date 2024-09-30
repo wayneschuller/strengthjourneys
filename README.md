@@ -23,8 +23,7 @@ Open our [sample data format in Google Sheets](https://docs.google.com/spreadshe
 - Javascript
 - [Next.js](https://nextjs.org/) (pages router)
 - [Tailwind CSS](https://tailwindcss.com/)
-- [chart.js](https://www.chartjs.org/) (via [react-chartjs-2](https://react-chartjs-2.js.org/))
-- [Shadcn/ui](https://ui.shadcn.com/) components
+- [Shadcn/ui](https://ui.shadcn.com/) components (include Recharts)
 - [NextAuth.js](https://next-auth.js.org/)
 - Deployed to [Vercel](https://vercel.com/home)
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -64,16 +65,16 @@ export function RelatedArticles({ articles }) {
             <div key={article.slug} className="group h-full rounded-lg border">
               <Link
                 href={`/articles/${article.slug}`}
-                className="flex items-center rounded-md p-2 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="flex h-full items-center justify-center rounded-md p-2 align-middle transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
-                <FileText className="mr-3 w-20 text-gray-400 group-hover:text-primary" />
-                <span className="mr-3 flex-grow text-balance group-hover:text-primary">
+                <FileText className="mr-3 h-10 text-gray-400 group-hover:text-primary" />
+                <span className="mr-3 w-2/3 flex-grow text-balance group-hover:text-primary">
                   {article.title}
                   <div className="text-muted-foreground">
                     {format(new Date(article.publishedAt), "MMMM d, yyyy")}
                   </div>
                 </span>
-                <SquareImage sanityImage={article.mainImage} />
+                <SquareImage sanityImage={article.mainImage} className="w-28" />
                 {/* <ArrowRight className="ml-2 text-gray-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-primary" size={16} /> */}
               </Link>
             </div>
@@ -84,7 +85,7 @@ export function RelatedArticles({ articles }) {
   );
 }
 
-const SquareImage = ({ sanityImage }) => {
+const SquareImage = ({ sanityImage, className }) => {
   if (!sanityImage) return null;
 
   let imageUrl = urlFor(sanityImage)
@@ -97,7 +98,12 @@ const SquareImage = ({ sanityImage }) => {
   if (!imageUrl) return null;
 
   return (
-    <div className="relative aspect-square transform justify-center overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-110">
+    <div
+      className={cn(
+        "relative aspect-square transform justify-center overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-110",
+        className,
+      )}
+    >
       <Image
         src={imageUrl}
         alt="Banner"

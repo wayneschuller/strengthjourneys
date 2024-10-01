@@ -312,7 +312,7 @@ export function VisualizerMini({ liftType }) {
         <div className="flex w-full flex-col items-center justify-between gap-2 md:flex-row">
           <div className="flex items-center space-x-2">
             <Label className="font-light" htmlFor="show-values">
-              Show All Values
+              Show Values
             </Label>
             <Switch
               id="show-values"

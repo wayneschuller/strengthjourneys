@@ -121,13 +121,11 @@ export function VisualizerMini({ liftType }) {
   // CustomToolTipContent
   // Out tooltip is modelled on the shadcnui chart layout but customised for our needs
   // -----------------------------------------------------------------------------
-  const CustomTooltipContent = ({
-    active,
-    payload,
-    label,
-    selectedLiftTypes,
-  }) => {
+  const CustomTooltipContent = ({ active, payload, label, liftType }) => {
     // devLog(payload);
+
+    const selectedLiftTypes = [liftType]; // FIXME: we can just remove the .foreach below in mini mode
+
     if (active && payload && payload.length) {
       // Right now we have put key info into the chartData paylod. But we could simply lookup the date in parsedData/topLifts for info
       const tuple = payload[0].payload;
@@ -238,6 +236,7 @@ export function VisualizerMini({ liftType }) {
               content={
                 <CustomTooltipContent
                   selectedLiftTypes={selectedLiftTypes}
+                  liftType={liftType}
                   e1rmFormula={e1rmFormula}
                 />
               }

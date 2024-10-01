@@ -84,7 +84,7 @@ export function VisualizerMini({ liftType }) {
     [parsedData, e1rmFormula, timeRange, showAllData],
   );
 
-  if (!parsedData) return;
+  // if (!parsedData) return;
 
   // devLog(chartData);
 
@@ -109,7 +109,7 @@ export function VisualizerMini({ liftType }) {
   };
 
   let tickJump = 100; // 100 for pound jumps on y-Axis.
-  if (chartData[0].unitType === "kg") tickJump = 50; // 50 for kg jumps on y-Axis
+  if (chartData?.[0]?.unitType === "kg") tickJump = 50; // 50 for kg jumps on y-Axis
 
   // FIXME: We need more dynamic x-axis ticks
   const formatXAxisDateString = (tickItem) => {
@@ -183,7 +183,7 @@ export function VisualizerMini({ liftType }) {
   };
 
   return (
-    <Card>
+    <Card className="">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-pretty">
           <CardTitle>
@@ -198,114 +198,116 @@ export function VisualizerMini({ liftType }) {
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">
-        <ChartContainer config={chartConfig} className="Xmin-h-[200px]">
-          <AreaChart
-            accessibilityLayer
-            data={chartData}
-            margin={{ left: 5, right: 20 }}
-            // onMouseMove={handleMouseMove}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              // type="number"
-              // scale="time"
-              // domain={[ (dataMin) => new Date(dataMin).setDate(new Date(dataMin).getDate() - 2), (dataMax) => new Date(dataMax).setDate(new Date(dataMax).getDate() + 2), ]}
-              tickFormatter={formatXAxisDateString}
-              // interval="equidistantPreserveStart"
-            />
-            {/* { width > 1280 && ( */}
-            <YAxis
-              domain={[
-                Math.floor(weightMin / tickJump) * tickJump,
-                roundedMaxWeightValue,
-              ]}
-              hide={width < 1280}
-              axisLine={false}
-              tickFormatter={
-                (value) => `${value}${chartData[0]?.unitType || ""}` // Default to first item's unitType
-              }
-              ticks={Array.from(
-                { length: Math.ceil(roundedMaxWeightValue / tickJump) },
-                (v, i) => i * tickJump,
-              )}
-              // allowDataOverflow
-            />
-            {/* ))} */}
-            <Tooltip
-              content={
-                <CustomTooltipContent
-                  selectedLiftTypes={selectedLiftTypes}
-                  liftType={liftType}
-                  e1rmFormula={e1rmFormula}
-                />
-              }
-              formatter={(value, name, props) =>
-                `${value} ${props.payload.unitType}`
-              }
-              position={{ y: 10 }}
-              cursor={{
-                stroke: "#8884d8",
-                strokeWidth: 2,
-                strokeDasharray: "5 5",
-              }} // Recharts tooltip cursor is the vertical reference line that follows the mouse
-            />
-            <defs>
-              <linearGradient
-                id={`fill`}
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-                key={liftType}
-              >
-                <stop
-                  offset="5%"
-                  stopColor={getLiftColor(liftType)}
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="50%"
-                  stopColor={getLiftColor(liftType)}
-                  stopOpacity={0.05}
-                />
-              </linearGradient>
-              );
-            </defs>
-            <Area
-              key={liftType}
-              type="monotone"
-              dataKey={liftType}
-              stroke={getLiftColor(liftType)}
-              name={liftType}
-              strokeWidth={2}
-              fill={`url(#fill`}
-              fillOpacity={0.4}
-              dot={false}
-              connectNulls
+        {chartData && (
+          <ChartContainer config={chartConfig} className="">
+            <AreaChart
+              accessibilityLayer
+              data={chartData}
+              margin={{ left: 5, right: 20 }}
+              // onMouseMove={handleMouseMove}
             >
-              {showLabelValues && (
-                <LabelList
-                  position="top"
-                  offset={12}
-                  content={({ x, y, value, index }) => (
-                    <text
-                      x={x}
-                      y={y}
-                      dy={-10}
-                      fontSize={12}
-                      textAnchor="middle"
-                      className="fill-foreground"
-                    >
-                      {`${value}${chartData[index].unitType}`}
-                    </text>
-                  )}
-                />
-              )}
-            </Area>
-            );
-          </AreaChart>
-        </ChartContainer>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="date"
+                // type="number"
+                // scale="time"
+                // domain={[ (dataMin) => new Date(dataMin).setDate(new Date(dataMin).getDate() - 2), (dataMax) => new Date(dataMax).setDate(new Date(dataMax).getDate() + 2), ]}
+                tickFormatter={formatXAxisDateString}
+                // interval="equidistantPreserveStart"
+              />
+              {/* { width > 1280 && ( */}
+              <YAxis
+                domain={[
+                  Math.floor(weightMin / tickJump) * tickJump,
+                  roundedMaxWeightValue,
+                ]}
+                hide={width < 1280}
+                axisLine={false}
+                tickFormatter={
+                  (value) => `${value}${chartData[0]?.unitType || ""}` // Default to first item's unitType
+                }
+                ticks={Array.from(
+                  { length: Math.ceil(roundedMaxWeightValue / tickJump) },
+                  (v, i) => i * tickJump,
+                )}
+                // allowDataOverflow
+              />
+              {/* ))} */}
+              <Tooltip
+                content={
+                  <CustomTooltipContent
+                    selectedLiftTypes={selectedLiftTypes}
+                    liftType={liftType}
+                    e1rmFormula={e1rmFormula}
+                  />
+                }
+                formatter={(value, name, props) =>
+                  `${value} ${props.payload.unitType}`
+                }
+                position={{ y: 10 }}
+                cursor={{
+                  stroke: "#8884d8",
+                  strokeWidth: 2,
+                  strokeDasharray: "5 5",
+                }} // Recharts tooltip cursor is the vertical reference line that follows the mouse
+              />
+              <defs>
+                <linearGradient
+                  id={`fill`}
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                  key={liftType}
+                >
+                  <stop
+                    offset="5%"
+                    stopColor={getLiftColor(liftType)}
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="50%"
+                    stopColor={getLiftColor(liftType)}
+                    stopOpacity={0.05}
+                  />
+                </linearGradient>
+                );
+              </defs>
+              <Area
+                key={liftType}
+                type="monotone"
+                dataKey={liftType}
+                stroke={getLiftColor(liftType)}
+                name={liftType}
+                strokeWidth={2}
+                fill={`url(#fill`}
+                fillOpacity={0.4}
+                dot={false}
+                connectNulls
+              >
+                {showLabelValues && (
+                  <LabelList
+                    position="top"
+                    offset={12}
+                    content={({ x, y, value, index }) => (
+                      <text
+                        x={x}
+                        y={y}
+                        dy={-10}
+                        fontSize={12}
+                        textAnchor="middle"
+                        className="fill-foreground"
+                      >
+                        {`${value}${chartData[index].unitType}`}
+                      </text>
+                    )}
+                  />
+                )}
+              </Area>
+              );
+            </AreaChart>
+          </ChartContainer>
+        )}
       </CardContent>
       <CardFooter>
         <div className="flex w-full flex-col items-center justify-between gap-2 md:flex-row">
@@ -348,6 +350,8 @@ export function VisualizerMini({ liftType }) {
 
 // Used in the chart card description
 const getTimeRangeDescription = (timeRange, parsedData) => {
+  if (!parsedData) return null;
+
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth(); // 0-based index, January is 0
 
@@ -412,6 +416,8 @@ const periodTargets = [
 
 function TimeRangeSelect({ timeRange, setTimeRange }) {
   const { parsedData } = useUserLiftingData();
+
+  if (!parsedData) return null;
 
   // This is the first date in "YYYY-MM-DD" format
   // FIXME: Should we find the first date for selected lifts only?

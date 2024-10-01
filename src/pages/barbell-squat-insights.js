@@ -30,7 +30,8 @@ import {
   LiftTypeRepPRsAccordion,
   LiftTypeRecentHighlights,
 } from "@/components/analyzer/lift-achievements-card";
-import { useDarkMode } from "usehooks-ts";
+
+import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
 
 const title = "Barbell Back Squat - The King of Lifts";
 
@@ -74,6 +75,9 @@ export default function SquatInsightsMain() {
         <MyBackSquatSummaryCard />
         <MyBackSquatRecentHighlightsCard />
         <HowStrong />
+        <div className="col-span-3">
+          <VisualizerMini liftType="Back Squat" />
+        </div>
         <div className="col-span-3">
           <MyBackSquatPRsCard />
         </div>

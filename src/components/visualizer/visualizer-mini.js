@@ -47,11 +47,12 @@ import {
 
 import { processVisualizerData } from "./visualizer-processing";
 
-export function VisualizerMini({ setHighlightDate }) {
+export function VisualizerMini({ liftType }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
   // devLog(parsedData);
+  devLog(selectedLiftTypes);
 
   // FIXME: This design is terrible. We should be storing the periodTarget options in local storage
   // If we just store the date then the next day onward we won't know the range they wanted
@@ -77,11 +78,11 @@ export function VisualizerMini({ setHighlightDate }) {
       processVisualizerData(
         parsedData,
         e1rmFormula,
-        selectedLiftTypes,
+        [liftType],
         timeRange,
         showAllData,
       ),
-    [parsedData, e1rmFormula, selectedLiftTypes, timeRange, showAllData],
+    [parsedData, e1rmFormula, timeRange, showAllData],
   );
 
   // devLog("Rendering <VisualizerShadcn />...");
@@ -105,7 +106,7 @@ export function VisualizerMini({ setHighlightDate }) {
     if (event && event.activePayload) {
       const activeIndex = event.activeTooltipIndex;
       // devLog(event);
-      setHighlightDate(event.activeLabel);
+      // setHighlightDate(event.activeLabel);
     }
   };
 
@@ -191,17 +192,13 @@ export function VisualizerMini({ setHighlightDate }) {
         <div className="grid flex-1 gap-1 text-pretty">
           <CardTitle>
             {authStatus === "unauthenticated" && "Demo Mode: "}
-            {selectedLiftTypes.length === 1 && selectedLiftTypes[0]} Estimated
-            One Rep Maxes
+            {liftType} Estimated One Rep Maxes
           </CardTitle>
           <CardDescription>
             {getTimeRangeDescription(timeRange, parsedData)}
           </CardDescription>
         </div>
-        <div className="grid grid-cols-2 space-x-1">
-          <SidePanelSelectLiftsButton />
-          <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
-        </div>
+        <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">
@@ -210,7 +207,7 @@ export function VisualizerMini({ setHighlightDate }) {
             accessibilityLayer
             data={chartData}
             margin={{ left: 5, right: 20 }}
-            onMouseMove={handleMouseMove}
+            // onMouseMove={handleMouseMove}
           >
             <CartesianGrid vertical={false} />
             <XAxis
@@ -257,79 +254,66 @@ export function VisualizerMini({ setHighlightDate }) {
               }} // Recharts tooltip cursor is the vertical reference line that follows the mouse
             />
             <defs>
-              {selectedLiftTypes.map((liftType, index) => {
-                const gradientId = `fill${liftType.split(" ").join("_")}`; // SVG id requires no spaces in life type label
-                return (
-                  <linearGradient
-                    id={`fill${gradientId}`}
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                    key={`${liftType}-${index}`} // Add a unique key for React rendering
-                  >
-                    <stop
-                      offset="5%"
-                      stopColor={getLiftColor(liftType)}
-                      stopOpacity={0.8}
-                    />
-                    <stop
-                      offset="50%"
-                      stopColor={getLiftColor(liftType)}
-                      stopOpacity={0.05}
-                    />
-                  </linearGradient>
-                );
-              })}
-            </defs>
-            {selectedLiftTypes.map((liftType, index) => {
-              const gradientId = `fill${liftType.split(" ").join("_")}`; // SVG id requires no spaces in life type label
-              return (
-                <Area
-                  key={liftType}
-                  type="monotone"
-                  dataKey={liftType}
-                  stroke={getLiftColor(liftType)}
-                  name={liftType}
-                  strokeWidth={2}
-                  fill={`url(#fill${gradientId})`}
-                  fillOpacity={0.4}
-                  dot={false}
-                  connectNulls
-                >
-                  {showLabelValues && (
-                    <LabelList
-                      position="top"
-                      offset={12}
-                      content={({ x, y, value, index }) => (
-                        <text
-                          x={x}
-                          y={y}
-                          dy={-10}
-                          fontSize={12}
-                          textAnchor="middle"
-                          className="fill-foreground"
-                        >
-                          {`${value}${chartData[index].unitType}`}
-                        </text>
-                      )}
-                    />
-                  )}
-                  {/* Special user provided labels of special events/lifts */}
-                  <LabelList
-                    dataKey="label"
-                    // content={<CustomSpecialLabel />}
-                    content={<SpecialHtmlLabel />}
-                    position="top"
-                  />
-                </Area>
+              <linearGradient
+                id={`fill`}
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+                key={liftType}
+              >
+                <stop
+                  offset="5%"
+                  stopColor={getLiftColor(liftType)}
+                  stopOpacity={0.8}
+                />
+                <stop
+                  offset="50%"
+                  stopColor={getLiftColor(liftType)}
+                  stopOpacity={0.05}
+                />
+              </linearGradient>
               );
-            })}
-            <ChartLegend
-              content={<ChartLegendContent />}
-              className="tracking-tight md:text-lg"
-              verticalAlign="top"
-            />
+            </defs>
+            <Area
+              key={liftType}
+              type="monotone"
+              dataKey={liftType}
+              stroke={getLiftColor(liftType)}
+              name={liftType}
+              strokeWidth={2}
+              fill={`url(#fill`}
+              fillOpacity={0.4}
+              dot={false}
+              connectNulls
+            >
+              {showLabelValues && (
+                <LabelList
+                  position="top"
+                  offset={12}
+                  content={({ x, y, value, index }) => (
+                    <text
+                      x={x}
+                      y={y}
+                      dy={-10}
+                      fontSize={12}
+                      textAnchor="middle"
+                      className="fill-foreground"
+                    >
+                      {`${value}${chartData[index].unitType}`}
+                    </text>
+                  )}
+                />
+              )}
+              {/* Special user provided labels of special events/lifts */}
+              <LabelList
+                dataKey="label"
+                // content={<CustomSpecialLabel />}
+                content={<SpecialHtmlLabel />}
+                position="top"
+              />
+            </Area>
+            );
           </AreaChart>
         </ChartContainer>
       </CardContent>

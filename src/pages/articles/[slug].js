@@ -103,14 +103,14 @@ export default function ArticlePost({ article }) {
             headline: article.title,
             datePublished: publishDate,
             url: canonicalUrl,
-            // "author": {
-            //   "@type": "Person",
-            //   "name": "Author Name"
-            // },
-            // "publisher": {
-            //   "@type": "Organization",
-            //   "name": "Your Organization Name"
-            // }
+            author: {
+              "@type": "Organization",
+              name: "Strength Journeys Staff",
+            },
+            publisher: {
+              "@type": "Organization",
+              name: "Strength Journeys",
+            },
           })}
         </script>
       </Head>

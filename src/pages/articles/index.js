@@ -72,31 +72,35 @@ export default function ArticleListingPage({
         <meta property="og:description" content={description} />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:type" content="website" />
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "CollectionPage",
-            mainEntity: {
-              "@type": "ItemList",
-              itemListElement: [...featuredArticles, ...regularArticles].map(
-                (article, index) => ({
-                  "@type": "ListItem",
-                  position: index + 1,
-                  item: {
-                    "@type": "Article", // Specifies that each item is an article
-                    url: `${canonicalUrl}/${article.slug}`,
-                    headline: article.title,
-                    author: "Strength Journeys Staff",
-                    datePublished: article.date,
-                  },
-                }),
-              ),
-            },
-            name: pageTitle,
-            description: description,
-            url: canonicalUrl,
-          })}
-        </script>
+        {/* To avoid Google Search Console complaints about quotes, we use dodgilySetInnerHTML */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "CollectionPage",
+              mainEntity: {
+                "@type": "ItemList",
+                itemListElement: [...featuredArticles, ...regularArticles].map(
+                  (article, index) => ({
+                    "@type": "ListItem",
+                    position: index + 1,
+                    item: {
+                      "@type": "Article",
+                      url: `${canonicalUrl}/${article.slug}`,
+                      headline: article.title,
+                      author: "Strength Journeys Staff",
+                      datePublished: article.date,
+                    },
+                  }),
+                ),
+              },
+              name: pageTitle,
+              description: description,
+              url: canonicalUrl,
+            }),
+          }}
+        />
       </Head>
       <PageHeader>
         <PageHeaderHeading icon={LibraryBig}>{pageTitle}</PageHeaderHeading>

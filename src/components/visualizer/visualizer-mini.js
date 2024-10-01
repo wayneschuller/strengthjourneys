@@ -52,7 +52,6 @@ export function VisualizerMini({ liftType }) {
   const { status: authStatus } = useSession();
 
   // devLog(parsedData);
-  devLog(selectedLiftTypes);
 
   // FIXME: This design is terrible. We should be storing the periodTarget options in local storage
   // If we just store the date then the next day onward we won't know the range they wanted
@@ -85,10 +84,9 @@ export function VisualizerMini({ liftType }) {
     [parsedData, e1rmFormula, timeRange, showAllData],
   );
 
-  // devLog("Rendering <VisualizerShadcn />...");
   if (!parsedData) return;
 
-  devLog(chartData);
+  // devLog(chartData);
 
   const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
 
@@ -305,13 +303,6 @@ export function VisualizerMini({ liftType }) {
                   )}
                 />
               )}
-              {/* Special user provided labels of special events/lifts */}
-              <LabelList
-                dataKey="label"
-                // content={<CustomSpecialLabel />}
-                content={<SpecialHtmlLabel />}
-                position="top"
-              />
             </Area>
             );
           </AreaChart>

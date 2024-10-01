@@ -82,7 +82,13 @@ export default function ArticleListingPage({
                 (article, index) => ({
                   "@type": "ListItem",
                   position: index + 1,
-                  url: `${canonicalUrl}/${article.slug}`,
+                  item: {
+                    "@type": "Article", // Specifies that each item is an article
+                    url: `${canonicalUrl}/${article.slug}`,
+                    headline: article.title,
+                    author: "Strength Journeys Staff",
+                    datePublished: article.date,
+                  },
                 }),
               ),
             },

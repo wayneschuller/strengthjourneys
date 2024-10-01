@@ -197,7 +197,7 @@ export function VisualizerMini({ liftType }) {
         <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
       </CardHeader>
 
-      <CardContent className="pl-0 pr-2">
+      <CardContent className="min-h-[50vh] pl-0 pr-2">
         {chartData && (
           <ChartContainer config={chartConfig} className="">
             <AreaChart

@@ -229,8 +229,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
               ]}
               hide={width < 1280}
               axisLine={false}
-              tickFormatter={(value, index) =>
-                `${value}${chartData[index].unitType}`
+              tickFormatter={
+                (value) => `${value}${chartData[0]?.unitType || ""}` // Default to first item's unitType
               }
               ticks={Array.from(
                 { length: Math.ceil(roundedMaxWeightValue / tickJump) },

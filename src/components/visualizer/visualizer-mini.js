@@ -217,10 +217,12 @@ export function VisualizerMini({ liftType }) {
         <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
       </CardHeader>
 
-      <CardContent className="min-h-[50vh] pl-0 pr-2">
+      <CardContent className="pl-0 pr-2">
         {chartData && (
           <ChartContainer config={chartConfig} className="">
             <AreaChart
+              width="100%"
+              height="100%" // Ensure it respects the parent's height
               accessibilityLayer
               data={chartData}
               margin={{ left: 5, right: 20 }}
@@ -256,6 +258,7 @@ export function VisualizerMini({ liftType }) {
                 <YAxis
                   yAxisId="right"
                   orientation="right"
+                  hide={width < 1280}
                   axisLine={false}
                   tickLine={false}
                   ticks={Object.values(strengthRanges)} // Use the strength ranges as ticks
@@ -347,7 +350,7 @@ export function VisualizerMini({ liftType }) {
                 )}
               </Area>
               {/* Reference lines on the secondary Y-axis */}
-              {strengthRanges && showStandards && (
+              {strengthRanges && showStandards && width > 1280 && (
                 <>
                   <ReferenceLine
                     y={strengthRanges.physicallyActive}

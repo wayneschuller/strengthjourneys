@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ReferenceLine, ReferenceArea } from "recharts";
 
+import { Checkbox } from "@/components/ui/checkbox";
+
 import {
   Card,
   CardContent,
@@ -81,6 +83,7 @@ export function VisualizerMini({ liftType }) {
   const [showAllData, setShowAllData] = useLocalStorage("SJ_showAllData", true); // Show weekly bests or all data
   const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki");
   const [showStandards, setShowStandards] = useState(true);
+  const [showBodyweightMultiples, setShowBodyweightMultiples] = useState(true);
 
   const { width } = useWindowSize(); // Used to hide the y-axis on smaller screens
 
@@ -214,6 +217,31 @@ export function VisualizerMini({ liftType }) {
             {getTimeRangeDescription(timeRange, parsedData)}
           </CardDescription>
         </div>
+        {width > 1280 && (
+          <div className="mr-4 flex flex-col gap-2">
+            <div className="flex items-center gap-1">
+              <Checkbox
+                id="show-standards"
+                value={showStandards}
+                checked={showStandards}
+                onCheckedChange={(show) => setShowStandards(show)}
+              />
+              <Label htmlFor="show-standards">Show Strength Standards</Label>
+            </div>
+            <div className="flex items-center gap-1">
+              <Checkbox
+                id="show-bodyweight-multiples"
+                checked={showBodyweightMultiples}
+                onCheckedChange={(checked) =>
+                  setShowBodyweightMultiples(checked)
+                }
+              />
+              <Label htmlFor="show-bodyweight-multiples">
+                Show Bodyweight Multiples
+              </Label>
+            </div>
+          </div>
+        )}
         <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
       </CardHeader>
 

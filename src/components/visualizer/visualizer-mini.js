@@ -199,6 +199,9 @@ export function VisualizerMini({ liftType }) {
     return null;
   };
 
+  const strokeWidth = 1;
+  const strokeDashArray = "5 15";
+
   return (
     <Card className="">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
@@ -232,7 +235,7 @@ export function VisualizerMini({ liftType }) {
                 tickFormatter={formatXAxisDateString}
                 // interval="equidistantPreserveStart"
               />
-              {/* { width > 1280 && ( */}
+              {/* FIXME: fix the domain height to always incorporate the height of elite standard */}
               <YAxis
                 domain={[
                   Math.floor(weightMin / tickJump) * tickJump,
@@ -249,6 +252,29 @@ export function VisualizerMini({ liftType }) {
                 )}
                 // allowDataOverflow
               />
+              {showStandards && (
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  axisLine={false}
+                  tickLine={false}
+                  ticks={Object.values(strengthRanges)} // Use the strength ranges as ticks
+                  tickFormatter={(value) => {
+                    const unitType = isMetric ? "kg" : "lb";
+                    // Map the value to the corresponding label and include the value + unitType
+                    if (value === strengthRanges.physicallyActive)
+                      return `Physically Active (${value}${unitType})`;
+                    if (value === strengthRanges.beginner)
+                      return `Beginner (${value}${unitType})`;
+                    if (value === strengthRanges.intermediate)
+                      return `Intermediate (${value}${unitType})`;
+                    if (value === strengthRanges.advanced)
+                      return `Advanced (${value}${unitType})`;
+                    if (value === strengthRanges.elite)
+                      return `Elite (${value}${unitType})`;
+                  }}
+                />
+              )}
               <Tooltip
                 content={
                   <CustomTooltipContent
@@ -325,38 +351,28 @@ export function VisualizerMini({ liftType }) {
                 <>
                   <ReferenceLine
                     y={strengthRanges.physicallyActive}
-                    // yAxisId="right"
-                    label="Physically Active"
-                    stroke="green"
-                    strokeDasharray="3 3"
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={strokeDashArray}
                   />
                   <ReferenceLine
                     y={strengthRanges.beginner}
-                    // yAxisId="right"
-                    label="Beginner"
-                    stroke="blue"
-                    strokeDasharray="3 3"
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={strokeDashArray}
                   />
                   <ReferenceLine
                     y={strengthRanges.intermediate}
-                    // yAxisId="right"
-                    label="Intermediate"
-                    stroke="yellow"
-                    strokeDasharray="3 3"
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={strokeDashArray}
                   />
                   <ReferenceLine
                     y={strengthRanges.advanced}
-                    // yAxisId="right"
-                    label="Advanced"
-                    stroke="orange"
-                    strokeDasharray="3 3"
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={strokeDashArray}
                   />
                   <ReferenceLine
                     y={strengthRanges.elite}
-                    // yAxisId="right"
-                    label="Elite"
-                    stroke="red"
-                    strokeDasharray="3 3"
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={strokeDashArray}
                   />
                 </>
               )}

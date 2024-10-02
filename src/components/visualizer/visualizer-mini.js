@@ -447,17 +447,6 @@ export function VisualizerMini({ liftType }) {
               onCheckedChange={(show) => setShowLabelValues(show)}
             />
           </div>
-          <div className="flex items-center space-x-2">
-            <Label className="font-light" htmlFor="show-standards">
-              Show Strength Standards
-            </Label>
-            <Switch
-              id="show-standards"
-              value={showStandards}
-              checked={showStandards}
-              onCheckedChange={(show) => setShowStandards(show)}
-            />
-          </div>
           <div className="flex items-center space-x-1">
             <Label className="font-light" htmlFor="show-values">
               Weekly Bests

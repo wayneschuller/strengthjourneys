@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
@@ -11,6 +12,7 @@ import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { subMonths } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ReferenceLine } from "recharts";
 
 import {
   Card,
@@ -51,6 +53,19 @@ export function VisualizerMini({ liftType }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
+  const {
+    age,
+    setAge,
+    isMetric,
+    setIsMetric,
+    sex,
+    setSex,
+    bodyWeight,
+    setBodyWeight,
+    standards,
+    toggleIsMetric,
+  } = useAthleteBioData();
+
   // devLog(parsedData);
 
   // FIXME: This design is terrible. We should be storing the periodTarget options in local storage
@@ -65,6 +80,7 @@ export function VisualizerMini({ liftType }) {
   );
   const [showAllData, setShowAllData] = useLocalStorage("SJ_showAllData", true); // Show weekly bests or all data
   const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki");
+  const [showStandards, setShowStandards] = useState(true);
 
   const { width } = useWindowSize(); // Used to hide the y-axis on smaller screens
 
@@ -87,6 +103,7 @@ export function VisualizerMini({ liftType }) {
   // if (!parsedData) return;
 
   // devLog(chartData);
+  const strengthRanges = standards?.[liftType] || {}; // Ensure it's defined
 
   const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
 
@@ -232,7 +249,6 @@ export function VisualizerMini({ liftType }) {
                 )}
                 // allowDataOverflow
               />
-              {/* ))} */}
               <Tooltip
                 content={
                   <CustomTooltipContent
@@ -304,7 +320,46 @@ export function VisualizerMini({ liftType }) {
                   />
                 )}
               </Area>
-              );
+              {/* Reference lines on the secondary Y-axis */}
+              {strengthRanges && showStandards && (
+                <>
+                  <ReferenceLine
+                    y={strengthRanges.physicallyActive}
+                    // yAxisId="right"
+                    label="Physically Active"
+                    stroke="green"
+                    strokeDasharray="3 3"
+                  />
+                  <ReferenceLine
+                    y={strengthRanges.beginner}
+                    // yAxisId="right"
+                    label="Beginner"
+                    stroke="blue"
+                    strokeDasharray="3 3"
+                  />
+                  <ReferenceLine
+                    y={strengthRanges.intermediate}
+                    // yAxisId="right"
+                    label="Intermediate"
+                    stroke="yellow"
+                    strokeDasharray="3 3"
+                  />
+                  <ReferenceLine
+                    y={strengthRanges.advanced}
+                    // yAxisId="right"
+                    label="Advanced"
+                    stroke="orange"
+                    strokeDasharray="3 3"
+                  />
+                  <ReferenceLine
+                    y={strengthRanges.elite}
+                    // yAxisId="right"
+                    label="Elite"
+                    stroke="red"
+                    strokeDasharray="3 3"
+                  />
+                </>
+              )}
             </AreaChart>
           </ChartContainer>
         )}
@@ -320,6 +375,17 @@ export function VisualizerMini({ liftType }) {
               value={showLabelValues}
               checked={showLabelValues}
               onCheckedChange={(show) => setShowLabelValues(show)}
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Label className="font-light" htmlFor="show-standards">
+              Show Strength Standards
+            </Label>
+            <Switch
+              id="show-standards"
+              value={showStandards}
+              checked={showStandards}
+              onCheckedChange={(show) => setShowStandards(show)}
             />
           </div>
           <div className="flex items-center space-x-1">

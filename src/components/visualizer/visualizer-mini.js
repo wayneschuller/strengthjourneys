@@ -82,8 +82,15 @@ export function VisualizerMini({ liftType }) {
   );
   const [showAllData, setShowAllData] = useLocalStorage("SJ_showAllData", true); // Show weekly bests or all data
   const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki");
-  const [showStandards, setShowStandards] = useState(true);
-  const [showBodyweightMultiples, setShowBodyweightMultiples] = useState(true);
+  const [showStandards, setShowStandards] = useLocalStorage(
+    "SJ_VisMiniShowStandards",
+    true,
+  );
+
+  const [showBodyweightMultiples, setShowBodyweightMultiples] = useLocalStorage(
+    "SJ_VisMiniShowBodyweightMultiples",
+    true,
+  );
 
   const { width } = useWindowSize(); // Used to hide the y-axis on smaller screens
 
@@ -303,6 +310,22 @@ export function VisualizerMini({ liftType }) {
                       return `Advanced (${value}${unitType})`;
                     if (value === strengthRanges.elite)
                       return `Elite (${value}${unitType})`;
+                  }}
+                />
+              )}
+              {/* Additional Right Y-Axis for bodyweight multiples */}
+              {showBodyweightMultiples && (
+                <YAxis
+                  yAxisId="bodyweight-multiples"
+                  orientation="right"
+                  axisLine={false}
+                  tickLine={false}
+                  ticks={[0.5, 1, 1.5, 2, 2.5, 3].map(
+                    (multiple) => multiple * bodyWeight,
+                  )} // Multiples of bodyweight
+                  tickFormatter={(value) => {
+                    const multiple = value / bodyWeight; // Calculate the multiple
+                    return `${multiple.toFixed(1)}xBW`; // Display as "0.5x Body Weight"
                   }}
                 />
               )}

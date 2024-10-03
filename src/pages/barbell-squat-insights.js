@@ -72,9 +72,12 @@ export default function SquatInsightsMain() {
         <div className="col-span-3">
           <StrengthLevelsCard />
         </div>
-        <MyBackSquatSummaryCard />
-        <MyBackSquatRecentHighlightsCard />
-        <HowStrong />
+        {/* <div className="col-span-3 flex flex-col gap-6 lg:flex-row"> */}
+        <div className="col-span-3 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <MyBackSquatSummaryCard />
+          <MyBackSquatRecentHighlightsCard />
+          <HowStrong />
+        </div>
         <div className="col-span-3">
           <VisualizerMini liftType="Back Squat" />
         </div>

@@ -113,7 +113,7 @@ export function VisualizerMini({ liftType }) {
   // if (!parsedData) return;
 
   // devLog(chartData);
-  const strengthRanges = standards?.[liftType] || {}; // Ensure it's defined
+  const strengthRanges = standards?.[liftType] || null;
 
   const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
 
@@ -289,7 +289,7 @@ export function VisualizerMini({ liftType }) {
                 )}
                 // allowDataOverflow
               />
-              {showStandards && (
+              {showStandards && strengthRanges && (
                 <YAxis
                   yAxisId="right"
                   orientation="right"

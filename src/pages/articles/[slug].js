@@ -74,7 +74,7 @@ export default function ArticlePost({ article }) {
   const description = article.description ?? article.title;
 
   return (
-    <div className="mx-2 mb-10 flex items-center justify-center md:mx-4">
+    <div className="mx-2 mb-10 flex items-center justify-center">
       <Head>
         <title>{article.title}</title>
         <meta name="description" content={description} />

@@ -28,7 +28,6 @@ export function SessionAnalysisCard({ highlightDate = null }) {
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
-    isLoading,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
 

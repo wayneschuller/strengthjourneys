@@ -25,7 +25,7 @@ export const bigFourLiftInsightData = [
     liftType: "Bench Press",
     canonicalURL:
       "https://www.strengthjourneys.xyz/barbell-bench-press-insights",
-    pageTitle: "Barbell Bench Press - The Upper Body Beast",
+    pageTitle: "Barbell Bench Press - Building Upper Body Dominance",
     pageDescription: `Barbell Bench Press insights and free tools.`,
     pageKeywords: "Barbell, bench press, upper body, strength levels",
     ogImageURL:
@@ -44,9 +44,9 @@ export const bigFourLiftInsightData = [
   {
     liftType: "Deadlift",
     canonicalURL: "https://www.strengthjourneys.xyz/barbell-deadlift-insights",
-    pageTitle: "Barbell Deadlift - The Strength Maker",
+    pageTitle: "Barbell Deadlift - Building Power from the Ground Up",
     pageDescription: `Barbell Deadlift insights and free tools.`,
-    pageKeywords: "Barbell, deadlift, strength levels",
+    pageKeywords: "Barbell, deadlift, back pain, strength levels",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_deadlift_insights.png",
     // liftIcon: Crown,
@@ -63,7 +63,7 @@ export const bigFourLiftInsightData = [
     liftType: "Strict Press",
     canonicalURL:
       "https://www.strengthjourneys.xyz/barbell-strict-press-insights",
-    pageTitle: "Barbell Strict Press - Overhead Mastery",
+    pageTitle: "Barbell Strict Press - For When Your Suitcase Just Won't Fit",
     pageDescription: `Barbell Strict Press insights and free tools.`,
     pageKeywords: "Barbell, strict press, overhead press, strength levels",
     ogImageURL:

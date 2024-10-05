@@ -66,7 +66,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
   const [showAllData, setShowAllData] = useLocalStorage("SJ_showAllData", true); // Show weekly bests or all data
   const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki");
 
-  const { width } = useWindowSize(); // Used to hide the y-axis on smaller screens
+  // Used to hide the y-axis on smaller screens
+  const { width } = useWindowSize({ initializeWithValue: false });
 
   const {
     dataset: chartData,

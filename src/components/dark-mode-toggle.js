@@ -28,7 +28,10 @@ export function DarkModeToggle() {
               const newTheme = theme === "dark" ? "light" : "dark";
               setTheme(newTheme);
 
-              if (typeof window !== "undefined") {
+              if (
+                typeof window !== "undefined" &&
+                process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
+              ) {
                 window.gtag("event", "theme_changed", {
                   event_category: "User Preferences",
                   event_label: `Theme changed to ${newTheme}`,

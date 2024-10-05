@@ -127,7 +127,7 @@ function BarbellInsightsMain({ liftInsightData }) {
           <HowStrong liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">
-          <VisualizerMini liftType="Back Squat" />
+          <VisualizerMini liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">
           <MyLiftTypePRsCard liftType={liftInsightData.liftType} />

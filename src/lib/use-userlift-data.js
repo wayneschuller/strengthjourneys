@@ -100,7 +100,10 @@ export const UserLiftingDataProvider = ({ children }) => {
         description: "Lift some weights and come back later.",
       });
 
-      if (typeof window !== "undefined") {
+      if (
+        typeof window !== "undefined" &&
+        process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
+      ) {
         window.gtag("event", "gSheetAPIError");
       }
 
@@ -126,7 +129,10 @@ export const UserLiftingDataProvider = ({ children }) => {
           description: description,
         });
 
-        if (typeof window !== "undefined") {
+        if (
+          typeof window !== "undefined" &&
+          process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
+        ) {
           window.gtag("event", "gSheetDataUpdated");
         }
       } catch (error) {
@@ -149,7 +155,10 @@ export const UserLiftingDataProvider = ({ children }) => {
         setSheetURL(null);
         // Don't sign out, just go gracefully into demo mode below.
 
-        if (typeof window !== "undefined") {
+        if (
+          typeof window !== "undefined" &&
+          process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
+        ) {
           window.gtag("event", "gSheetReadRejected");
         }
       }

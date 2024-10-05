@@ -88,7 +88,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   // devLog("Rendering <VisualizerShadcn />...");
   if (!parsedData) return;
 
-  devLog(chartData);
+  // devLog(chartData);
 
   const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
 

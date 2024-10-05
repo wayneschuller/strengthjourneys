@@ -272,7 +272,7 @@ export function VisualizerMini({ liftType }) {
         <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
       </CardHeader>
 
-      <CardContent className="py-10 pl-0 pr-2">
+      <CardContent className="pl-0 pr-2">
         {chartData && (
           <ResponsiveContainer width="100%" height={400} className="">
             <ChartContainer config={chartConfig} className="">

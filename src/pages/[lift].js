@@ -29,6 +29,7 @@ import {
 } from "@/components/analyzer/lift-achievements-card";
 
 import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
+import { RelatedArticles } from "@/components/article-cards";
 
 const googleSheetSampleURL =
   "https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0";
@@ -39,6 +40,7 @@ const StrengthJourneys = () => (
   </span>
 );
 
+import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
 export async function getStaticPaths() {
@@ -52,14 +54,23 @@ export async function getStaticProps({ params }) {
   const liftData = bigFourLiftInsightData.find(
     (lift) => lift.slug === params.lift,
   );
+
+  const RELATED_ARTICLES_CATEGORY = liftData.liftType;
+  const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
+
   return {
     props: {
       liftInsightData: liftData,
+      relatedArticles: relatedArticles,
     },
+    revalidate: 60 * 60,
   };
 }
 
-export default function BigFourBarbellInsights({ liftInsightData }) {
+export default function BigFourBarbellInsights({
+  liftInsightData,
+  relatedArticles,
+}) {
   return (
     <>
       <NextSeo
@@ -91,12 +102,15 @@ export default function BigFourBarbellInsights({ liftInsightData }) {
           },
         ]}
       />
-      <BarbellInsightsMain liftInsightData={liftInsightData} />
+      <BarbellInsightsMain
+        liftInsightData={liftInsightData}
+        relatedArticles={relatedArticles}
+      />
     </>
   );
 }
 
-function BarbellInsightsMain({ liftInsightData }) {
+function BarbellInsightsMain({ liftInsightData, relatedArticles }) {
   const {
     parsedData,
     topLiftsByTypeAndReps,
@@ -139,6 +153,7 @@ function BarbellInsightsMain({ liftInsightData }) {
           />
         </div>
       </div>
+      <RelatedArticles articles={relatedArticles} />
     </div>
   );
 }

@@ -48,8 +48,8 @@ export function ArticleSummaryCard({ article }) {
 }
 
 export function RelatedArticles({ articles }) {
-  // devLog(articles);
-  if (!articles) return null;
+  devLog(articles);
+  if (!articles || articles.length === 0) return null;
 
   return (
     <Card className="mt-8">

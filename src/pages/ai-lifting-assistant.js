@@ -24,10 +24,6 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "usehooks-ts";
-import {
-  interpolateStandardKG,
-  LiftingStandardsKG,
-} from "@/lib/lifting-standards-kg";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { Bot, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";

@@ -37,7 +37,7 @@ import {
 
 export function ActivityHeatmapsCard() {
   const { parsedData, isLoading } = useUserLiftingData();
-  const { width } = useWindowSize();
+  const { width } = useWindowSize({ initializeWithValue: false });
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [intervals, setIntervals] = useState(null);
@@ -47,6 +47,7 @@ export function ActivityHeatmapsCard() {
   const { theme } = useTheme();
   const shareRef = useRef(null);
 
+  // FIXME: I think we have the skills to not need this useEffect anymore
   useEffect(() => {
     if (isLoading) return;
     if (!parsedData || parsedData.length === 0) return;
@@ -70,11 +71,7 @@ export function ActivityHeatmapsCard() {
     setIntervals(intervals); // intervals is the trigger for showing the heatmaps
   }, [isLoading, parsedData, width]);
 
-  if (!parsedData || parsedData.length === 0) {
-    return null;
-  }
-
-  if (!isClient) return null; // Heatmaps only work on client
+  // if (!parsedData || parsedData.length === 0) { return null; }
 
   const handleShare = async () => {
     const startTime = performance.now();

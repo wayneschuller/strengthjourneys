@@ -112,7 +112,8 @@ export function VisualizerMini({ liftType }) {
     },
   );
 
-  const { width } = useWindowSize({ initializeWithValue: false }); // Used to hide the y-axis on smaller screens
+  // Used to hide the y-axis and other UI elements on smaller screens
+  const { width } = useWindowSize({ initializeWithValue: false });
 
   const {
     dataset: chartData,

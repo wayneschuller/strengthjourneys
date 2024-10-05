@@ -45,7 +45,10 @@ export const TimerProvider = ({ children }) => {
   const handleStartStop = () => {
     setIsRunning((prevIsRunning) => !prevIsRunning);
 
-    if (typeof window !== "undefined") {
+    if (
+      typeof window !== "undefined" &&
+      process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
+    ) {
       window.gtag("event", "timer_start_stop_toggle");
     }
   };
@@ -54,7 +57,10 @@ export const TimerProvider = ({ children }) => {
     setIsRunning(false);
     setTime(0);
 
-    if (typeof window !== "undefined") {
+    if (
+      typeof window !== "undefined" &&
+      process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
+    ) {
       window.gtag("event", "timer_reset");
     }
   };
@@ -63,7 +69,10 @@ export const TimerProvider = ({ children }) => {
     setIsRunning(true);
     setTime(0);
 
-    if (typeof window !== "undefined") {
+    if (
+      typeof window !== "undefined" &&
+      process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
+    ) {
       window.gtag("event", "timer_restarted");
     }
   };

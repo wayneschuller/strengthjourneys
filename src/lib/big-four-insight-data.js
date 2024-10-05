@@ -18,7 +18,8 @@ export const bigFourLiftInsightData = [
   },
   {
     liftType: "Bench Press",
-    canonicalURL: "https://www.strengthjourneys.xyz/barbell-bench-insights",
+    canonicalURL:
+      "https://www.strengthjourneys.xyz/barbell-bench-press-insights",
     pageTitle: "Barbell Bench Press - The Upper Body Beast",
     pageDescription: `Barbell Bench Press insights and free tools.`,
     pageKeywords: "Barbell, bench press, upper body, strength levels",
@@ -27,7 +28,7 @@ export const bigFourLiftInsightData = [
     // liftIcon: Crown,
     liftQuote: "The bench press is key to upper body strength.",
     liftQuoteAuthor: "Mark Rippetoe",
-    slug: "barbell-bench-insights",
+    slug: "barbell-bench-press-insights",
   },
   {
     liftType: "Deadlift",
@@ -44,7 +45,8 @@ export const bigFourLiftInsightData = [
   },
   {
     liftType: "Strict Press",
-    canonicalURL: "https://www.strengthjourneys.xyz/barbell-press-insights",
+    canonicalURL:
+      "https://www.strengthjourneys.xyz/barbell-strict-press-insights",
     pageTitle: "Barbell Strict Press - The Overhead Mastery",
     pageDescription: `Barbell Strict Press insights and free tools.`,
     pageKeywords: "Barbell, strict press, overhead press, strength levels",
@@ -53,6 +55,6 @@ export const bigFourLiftInsightData = [
     // liftIcon: Crown,
     liftQuote: "The strict press builds raw shoulder power.",
     liftQuoteAuthor: "Mark Rippetoe",
-    slug: "barbell-press-insights",
+    slug: "barbell-strict-press-insights",
   },
 ];

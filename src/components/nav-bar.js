@@ -237,12 +237,21 @@ export function DesktopNav() {
 // Also we have a subtle pulse animation when we are trying to look for new data from google (via useSWR isValidating)
 export function UserSheetIcon() {
   // We need the next 3 for the file picker button
-  const [ssid, setSsid] = useLocalStorage("ssid", null);
-  const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
+  const [ssid, setSsid] = useLocalStorage("ssid", null, {
+    initializeWithValue: false,
+  });
+  const [sheetURL, setSheetURL] = useLocalStorage(
+    "sheetURL",
+    null,
+
+    { initializeWithValue: false },
+  );
   const [sheetFilename, setSheetFilename] = useLocalStorage(
     "sheetFilename",
     null,
+    { initializeWithValue: false },
   );
+
   const { data: session, status: authStatus } = useSession();
   const { parsedData, isLoading, isValidating, isError } = useUserLiftingData();
 

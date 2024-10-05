@@ -43,11 +43,20 @@ export const UserLiftingDataProvider = ({ children }) => {
   const [selectedLiftTypes, setSelectedLiftTypes] = useState([]);
 
   const { data: session, status: authStatus } = useSession();
-  const [ssid, setSsid] = useLocalStorage("ssid", null);
-  const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
+
+  const [ssid, setSsid] = useLocalStorage("ssid", null, {
+    initializeWithValue: false,
+  });
+  const [sheetURL, setSheetURL] = useLocalStorage(
+    "sheetURL",
+    null,
+
+    { initializeWithValue: false },
+  );
   const [sheetFilename, setSheetFilename] = useLocalStorage(
     "sheetFilename",
     null,
+    { initializeWithValue: false },
   );
 
   const { toast } = useToast();

@@ -20,6 +20,13 @@ export const bigFourLiftInsightData = [
       "https://www.youtube.com/embed/jyopTyOjXb0",
       "https://www.youtube.com/embed/nhoikoUEI8U",
     ],
+    articles: [
+      {
+        title: "The Fastest Way To Blow Up Your Squat Naturally",
+        author: "Jeff Nippard",
+        url: "https://jeffnippard.com/blogs/news/the-fastest-way-to-blow-up-your-squat-naturally",
+      },
+    ],
   },
   {
     liftType: "Bench Press",
@@ -40,6 +47,13 @@ export const bigFourLiftInsightData = [
       "https://www.youtube.com/embed/t3f2L7NRRUY",
       "https://www.youtube.com/embed/A0NBCkpYatQ",
     ],
+    articles: [
+      {
+        title: "Struggling With The Bench Press",
+        author: "Jim Wendler",
+        url: "https://www.jimwendler.com/blogs/jimwendler-com/101072966-struggling-with-the-bench-press",
+      },
+    ],
   },
   {
     liftType: "Deadlift",
@@ -57,6 +71,13 @@ export const bigFourLiftInsightData = [
       "https://www.youtube.com/embed/AweC3UaM14o",
       "https://www.youtube.com/embed/p2OPUi4xGrM",
       "https://www.youtube.com/embed/3oMjoOm5O18",
+    ],
+    articles: [
+      {
+        title: "Struggling With The Bench Press",
+        author: "Jim Wendler",
+        url: "https://www.jimwendler.com/blogs/jimwendler-com/101072966-struggling-with-the-bench-press",
+      },
     ],
   },
   {
@@ -77,6 +98,13 @@ export const bigFourLiftInsightData = [
       "https://www.youtube.com/embed/8dacy5hjaE8",
       "https://www.youtube.com/embed/AhGW3XFG3M8",
       "https://www.youtube.com/embed/5yWaNOvgFCM",
+    ],
+    articles: [
+      {
+        title: "Struggling With The Bench Press",
+        author: "Jim Wendler",
+        url: "https://www.jimwendler.com/blogs/jimwendler-com/101072966-struggling-with-the-bench-press",
+      },
     ],
   },
 ];

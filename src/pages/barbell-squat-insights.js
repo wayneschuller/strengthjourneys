@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import Head from "next/head";
 import Link from "next/link";
 
 import { useAthleteBioData } from "@/lib/use-athlete-biodata";
@@ -7,6 +5,7 @@ import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
 import { StandardsSlider } from "@/components/standards-slider";
+import { NextSeo } from "next-seo";
 
 import {
   Card,
@@ -16,8 +15,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-import { Crown } from "lucide-react";
 
 import {
   PageHeader,
@@ -33,10 +30,10 @@ import {
 
 import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
 
-const title = "Barbell Back Squat - The King of Lifts";
-
 const googleSheetSampleURL =
   "https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0";
+
+import { Crown } from "lucide-react";
 
 const StrengthJourneys = () => (
   <span className="mx-1 text-blue-600 underline visited:text-purple-600 hover:text-blue-800">
@@ -44,9 +41,60 @@ const StrengthJourneys = () => (
   </span>
 );
 
-// FIXME: do full metadata wrapper
+const liftInsightData = {
+  liftType: "Back Squat",
+  canonicalURL: "https://www.strengthjourneys.xyz/barbell-squat-insights",
+  pageTitle: "Barbell Back Squat - The King of Lifts",
+  pageDescription: `Barbell Back Squat insights and free tools.`,
+  pageKeywords:
+    "Barbell, back squat, squat, high bar, low bar, strength levels, back squat performance",
+  ogImageURL:
+    "https://www.strengthjourneys.xyz/strength_journeys_squat_insights.png",
+  liftIcon: Crown,
+  liftQuote:
+    "There is simply no other exercise, and certainly no machine, that produces the level of central nervous system activity, improved balance and coordination, skeletal loading and bone density enhancement, muscular stimulation and growth, connective tissue stress and strength, psychological demand and toughness, and overall systemic conditioning than the correctly performed full squat.",
+  liftQuoteAuthor: "Mark Rippetoe, Starting Strength",
+  // FIXME: Add video array
+};
 
-export default function SquatInsightsMain() {
+export default function BigFourBarbellInsights() {
+  return (
+    <>
+      <NextSeo
+        title={liftInsightData.pageTitle}
+        description={liftInsightData.pageDescription}
+        canonical={liftInsightData.canonicalURL}
+        openGraph={{
+          url: liftInsightData.canonicalURL,
+          title: liftInsightData.pageTitle,
+          description: liftInsightData.pageDescription,
+          type: "website",
+          images: [
+            {
+              url: liftInsightData.ogImageURL,
+              alt: liftInsightData.pageTitle,
+            },
+          ],
+          site_name: "Strength Journeys",
+        }}
+        twitter={{
+          handle: "@wayneschuller",
+          site: "@wayneschuller",
+          cardType: "summary_large_image",
+        }}
+        additionalMetaTags={[
+          {
+            name: "keywords",
+            content: liftInsightData.pageKeywords,
+          },
+        ]}
+      />
+      <BarbellInsightsMain liftInsightData={liftInsightData} />
+    </>
+  );
+}
+
+function BarbellInsightsMain({ liftInsightData }) {
   const {
     parsedData,
     topLiftsByTypeAndReps,
@@ -57,51 +105,49 @@ export default function SquatInsightsMain() {
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading icon={Crown}>{title}</PageHeaderHeading>
+        <PageHeaderHeading icon={liftInsightData.liftIcon}>
+          {liftInsightData.pageTitle}
+        </PageHeaderHeading>
         <PageHeaderDescription className="max-w-full">
-          <div className="italic">{header.quote}</div>
-          <div>{header.author}</div>
+          <div className="italic">{liftInsightData.liftQuote}</div>
+          <div>{liftInsightData.liftQuoteAuthor}</div>
         </PageHeaderDescription>
       </PageHeader>
-      <Head>
-        <title>{title}</title>
-        <meta name="description" content={title} />
-      </Head>
 
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <div className="col-span-3">
-          <StrengthLevelsCard />
+          <StrengthLevelsCard liftType={liftInsightData.liftType} />
         </div>
         {/* <div className="col-span-3 flex flex-col gap-6 lg:flex-row"> */}
         <div className="col-span-3 grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <MyBackSquatSummaryCard />
-          <MyBackSquatRecentHighlightsCard />
+          <MyLiftTypeSummaryCard liftType={liftInsightData.liftType} />
+          <MyLiftTypeRecentHighlightsCard liftType={liftInsightData.liftType} />
           <HowStrong />
         </div>
         <div className="col-span-3">
           <VisualizerMini liftType="Back Squat" />
         </div>
         <div className="col-span-3">
-          <MyBackSquatPRsCard />
+          <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">
-          <VideoCard />
+          <VideoCard liftType={liftInsightData.liftType} />
         </div>
       </div>
     </div>
   );
 }
 
-function MyBackSquatSummaryCard() {
+function MyLiftTypeSummaryCard({ liftType }) {
   const { status: authStatus } = useSession();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My Back Squat Summary</CardTitle>
+        <CardTitle>My {liftType} Summary</CardTitle>
       </CardHeader>
       <CardContent>
         {authStatus === "authenticated" ? (
-          <LiftTypeSummaryStatistics liftType="Back Squat" />
+          <LiftTypeSummaryStatistics liftType={liftType} />
         ) : (
           <div>Login to see your data</div>
         )}
@@ -110,16 +156,16 @@ function MyBackSquatSummaryCard() {
   );
 }
 
-function MyBackSquatPRsCard() {
+function MyLiftTypePRsCard({ liftType }) {
   const { status: authStatus } = useSession();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My Back Squat PRs</CardTitle>
+        <CardTitle>My {liftType} PRs</CardTitle>
       </CardHeader>
       <CardContent>
         {authStatus === "authenticated" ? (
-          <LiftTypeRepPRsAccordion liftType="Back Squat" />
+          <LiftTypeRepPRsAccordion liftType={liftType} />
         ) : (
           <div>Login to see your data</div>
         )}
@@ -128,7 +174,7 @@ function MyBackSquatPRsCard() {
   );
 }
 
-function MyBackSquatRecentHighlightsCard() {
+function MyLiftTypeRecentHighlightsCard({ liftType }) {
   const {
     parsedData,
     topLiftsByTypeAndReps,
@@ -139,11 +185,11 @@ function MyBackSquatRecentHighlightsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My Back Squat Recent Highlights</CardTitle>
+        <CardTitle>My {liftType} Recent Highlights</CardTitle>
       </CardHeader>
       <CardContent>
         {authStatus === "authenticated" ? (
-          <LiftTypeRecentHighlights liftType="Back Squat" />
+          <LiftTypeRecentHighlights liftType={liftType} />
         ) : (
           <div>Login to see your data</div>
         )}
@@ -152,11 +198,11 @@ function MyBackSquatRecentHighlightsCard() {
   );
 }
 
-function HowStrong() {
+function HowStrong({ liftType }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>How Strong Should My Barbell Squat Be?</CardTitle>
+        <CardTitle>How Strong Should My {liftType} Be?</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
         <p>
@@ -181,14 +227,14 @@ function HowStrong() {
   );
 }
 
-function StrengthLevelsCard() {
+function StrengthLevelsCard({ liftType }) {
   const { age, sex, bodyWeight, isMetric } = useAthleteBioData();
   const unitType = isMetric ? "kg" : "lb";
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My Back Squat Strength Rating</CardTitle>
+        <CardTitle>My {liftType} Strength Rating</CardTitle>
         <CardDescription>
           Standards for a {age} year old {sex}, weighing {bodyWeight}
           {unitType}. Go to the{" "}
@@ -199,17 +245,17 @@ function StrengthLevelsCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <StandardsSlider liftType="Back Squat" />
+        <StandardsSlider liftType={liftType} />
       </CardContent>
     </Card>
   );
 }
 
-function VideoCard() {
+function VideoCard({ liftType }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Squat Overview Video Guides</CardTitle>
+        <CardTitle>{liftType} Video Guides</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-8 lg:flex-row">
@@ -251,9 +297,3 @@ function VideoCard() {
     </Card>
   );
 }
-
-const header = {
-  quote:
-    "There is simply no other exercise, and certainly no machine, that produces the level of central nervous system activity, improved balance and coordination, skeletal loading and bone density enhancement, muscular stimulation and growth, connective tissue stress and strength, psychological demand and toughness, and overall systemic conditioning than the correctly performed full squat.",
-  author: "Mark Rippetoe, Starting Strength",
-};

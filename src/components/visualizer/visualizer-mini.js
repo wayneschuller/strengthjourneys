@@ -12,8 +12,7 @@ import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { subMonths } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ReferenceLine, ReferenceArea } from "recharts";
-
+import { ReferenceLine, ReferenceArea, ResponsiveContainer } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import {
@@ -273,186 +272,186 @@ export function VisualizerMini({ liftType }) {
         <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
       </CardHeader>
 
-      <CardContent className="pl-0 pr-2">
+      <CardContent className="py-10 pl-0 pr-2">
         {chartData && (
-          <ChartContainer config={chartConfig} className="">
-            <AreaChart
-              width="100%"
-              height="100%" // Ensure it respects the parent's height
-              accessibilityLayer
-              data={chartData}
-              margin={{ left: 5, right: 20 }}
-              // onMouseMove={handleMouseMove}
-            >
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="date"
-                // type="number"
-                // scale="time"
-                // domain={[ (dataMin) => new Date(dataMin).setDate(new Date(dataMin).getDate() - 2), (dataMax) => new Date(dataMax).setDate(new Date(dataMax).getDate() + 2), ]}
-                tickFormatter={formatXAxisDateString}
-                // interval="equidistantPreserveStart"
-              />
-              {/* FIXME: fix the domain height to always incorporate the height of elite standard */}
-              <YAxis
-                domain={[
-                  Math.floor(weightMin / tickJump) * tickJump,
-                  roundedMaxWeightValue,
-                ]}
-                hide={width < 1280}
-                axisLine={false}
-                tickFormatter={
-                  (value) => `${value}${chartData[0]?.unitType || ""}` // Default to first item's unitType
-                }
-                ticks={Array.from(
-                  { length: Math.ceil(roundedMaxWeightValue / tickJump) },
-                  (v, i) => i * tickJump,
-                )}
-                // allowDataOverflow
-              />
-              {showStandards && strengthRanges && (
+          <ResponsiveContainer width="100%" height={400} className="">
+            <ChartContainer config={chartConfig} className="">
+              <AreaChart
+                accessibilityLayer
+                data={chartData}
+                margin={{ left: 5, right: 20 }}
+                // onMouseMove={handleMouseMove}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  // type="number"
+                  // scale="time"
+                  // domain={[ (dataMin) => new Date(dataMin).setDate(new Date(dataMin).getDate() - 2), (dataMax) => new Date(dataMax).setDate(new Date(dataMax).getDate() + 2), ]}
+                  tickFormatter={formatXAxisDateString}
+                  // interval="equidistantPreserveStart"
+                />
+                {/* FIXME: fix the domain height to always incorporate the height of elite standard */}
                 <YAxis
-                  yAxisId="right"
-                  orientation="right"
+                  domain={[
+                    Math.floor(weightMin / tickJump) * tickJump,
+                    roundedMaxWeightValue,
+                  ]}
                   hide={width < 1280}
                   axisLine={false}
-                  tickLine={false}
-                  ticks={Object.values(strengthRanges)} // Use the strength ranges as ticks
-                  tickFormatter={(value) => {
-                    const unitType = isMetric ? "kg" : "lb";
-                    // Map the value to the corresponding label and include the value + unitType
-                    if (value === strengthRanges.physicallyActive)
-                      return `Physically Active (${value}${unitType})`;
-                    if (value === strengthRanges.beginner)
-                      return `Beginner (${value}${unitType})`;
-                    if (value === strengthRanges.intermediate)
-                      return `Intermediate (${value}${unitType})`;
-                    if (value === strengthRanges.advanced)
-                      return `Advanced (${value}${unitType})`;
-                    if (value === strengthRanges.elite)
-                      return `Elite (${value}${unitType})`;
-                  }}
+                  tickFormatter={
+                    (value) => `${value}${chartData[0]?.unitType || ""}` // Default to first item's unitType
+                  }
+                  ticks={Array.from(
+                    { length: Math.ceil(roundedMaxWeightValue / tickJump) },
+                    (v, i) => i * tickJump,
+                  )}
+                  // allowDataOverflow
                 />
-              )}
-              {/* Additional Right Y-Axis for bodyweight multiples */}
-              {showBodyweightMultiples && (
-                <YAxis
-                  yAxisId="bodyweight-multiples"
-                  orientation="right"
-                  axisLine={false}
-                  tickLine={false}
-                  ticks={[0.5, 1, 1.5, 2, 2.5, 3].map(
-                    (multiple) => multiple * bodyWeight,
-                  )} // Multiples of bodyweight
-                  tickFormatter={(value) => {
-                    const multiple = value / bodyWeight; // Calculate the multiple
-                    return `${multiple.toFixed(1)}xBW`; // Display as "0.5x Body Weight"
-                  }}
-                />
-              )}
-              <Tooltip
-                content={
-                  <CustomTooltipContent
-                    selectedLiftTypes={selectedLiftTypes}
-                    liftType={liftType}
-                    e1rmFormula={e1rmFormula}
-                  />
-                }
-                formatter={(value, name, props) =>
-                  `${value} ${props.payload.unitType}`
-                }
-                position={{ y: 10 }}
-                cursor={{
-                  stroke: "#8884d8",
-                  strokeWidth: 2,
-                  strokeDasharray: "5 5",
-                }} // Recharts tooltip cursor is the vertical reference line that follows the mouse
-              />
-              <defs>
-                <linearGradient
-                  id={`fill`}
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                  key={liftType}
-                >
-                  <stop
-                    offset="5%"
-                    stopColor={getLiftColor(liftType)}
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="50%"
-                    stopColor={getLiftColor(liftType)}
-                    stopOpacity={0.05}
-                  />
-                </linearGradient>
-                );
-              </defs>
-              <Area
-                key={liftType}
-                type="monotone"
-                dataKey={liftType}
-                stroke={getLiftColor(liftType)}
-                name={liftType}
-                strokeWidth={2}
-                fill={`url(#fill`}
-                fillOpacity={0.4}
-                dot={false}
-                connectNulls
-              >
-                {showLabelValues && (
-                  <LabelList
-                    position="top"
-                    offset={12}
-                    content={({ x, y, value, index }) => (
-                      <text
-                        x={x}
-                        y={y}
-                        dy={-10}
-                        fontSize={12}
-                        textAnchor="middle"
-                        className="fill-foreground"
-                      >
-                        {`${value}${chartData[index].unitType}`}
-                      </text>
-                    )}
+                {showStandards && strengthRanges && (
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    hide={width < 1280}
+                    axisLine={false}
+                    tickLine={false}
+                    ticks={Object.values(strengthRanges)} // Use the strength ranges as ticks
+                    tickFormatter={(value) => {
+                      const unitType = isMetric ? "kg" : "lb";
+                      // Map the value to the corresponding label and include the value + unitType
+                      if (value === strengthRanges.physicallyActive)
+                        return `Physically Active (${value}${unitType})`;
+                      if (value === strengthRanges.beginner)
+                        return `Beginner (${value}${unitType})`;
+                      if (value === strengthRanges.intermediate)
+                        return `Intermediate (${value}${unitType})`;
+                      if (value === strengthRanges.advanced)
+                        return `Advanced (${value}${unitType})`;
+                      if (value === strengthRanges.elite)
+                        return `Elite (${value}${unitType})`;
+                    }}
                   />
                 )}
-              </Area>
-              {/* Reference lines on the secondary Y-axis */}
-              {strengthRanges && showStandards && width > 1280 && (
-                <>
-                  <ReferenceLine
-                    y={strengthRanges.physicallyActive}
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={strokeDashArray}
+                {/* Additional Right Y-Axis for bodyweight multiples */}
+                {width > 1280 && showBodyweightMultiples && (
+                  <YAxis
+                    yAxisId="bodyweight-multiples"
+                    orientation="right"
+                    axisLine={false}
+                    tickLine={false}
+                    ticks={[0.5, 1, 1.5, 2, 2.5, 3].map(
+                      (multiple) => multiple * bodyWeight,
+                    )} // Multiples of bodyweight
+                    tickFormatter={(value) => {
+                      const multiple = value / bodyWeight; // Calculate the multiple
+                      return `${multiple.toFixed(1)}xBW`; // Display as "0.5x Body Weight"
+                    }}
                   />
-                  <ReferenceLine
-                    y={strengthRanges.beginner}
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={strokeDashArray}
-                  />
-                  <ReferenceLine
-                    y={strengthRanges.intermediate}
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={strokeDashArray}
-                  />
-                  <ReferenceLine
-                    y={strengthRanges.advanced}
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={strokeDashArray}
-                  />
-                  <ReferenceLine
-                    y={strengthRanges.elite}
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={strokeDashArray}
-                  />
-                </>
-              )}
-            </AreaChart>
-          </ChartContainer>
+                )}
+                <Tooltip
+                  content={
+                    <CustomTooltipContent
+                      selectedLiftTypes={selectedLiftTypes}
+                      liftType={liftType}
+                      e1rmFormula={e1rmFormula}
+                    />
+                  }
+                  formatter={(value, name, props) =>
+                    `${value} ${props.payload.unitType}`
+                  }
+                  position={{ y: 10 }}
+                  cursor={{
+                    stroke: "#8884d8",
+                    strokeWidth: 2,
+                    strokeDasharray: "5 5",
+                  }} // Recharts tooltip cursor is the vertical reference line that follows the mouse
+                />
+                <defs>
+                  <linearGradient
+                    id={`fill`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                    key={liftType}
+                  >
+                    <stop
+                      offset="5%"
+                      stopColor={getLiftColor(liftType)}
+                      stopOpacity={0.8}
+                    />
+                    <stop
+                      offset="50%"
+                      stopColor={getLiftColor(liftType)}
+                      stopOpacity={0.05}
+                    />
+                  </linearGradient>
+                  );
+                </defs>
+                <Area
+                  key={liftType}
+                  type="monotone"
+                  dataKey={liftType}
+                  stroke={getLiftColor(liftType)}
+                  name={liftType}
+                  strokeWidth={2}
+                  fill={`url(#fill`}
+                  fillOpacity={0.4}
+                  dot={false}
+                  connectNulls
+                >
+                  {showLabelValues && (
+                    <LabelList
+                      position="top"
+                      offset={12}
+                      content={({ x, y, value, index }) => (
+                        <text
+                          x={x}
+                          y={y}
+                          dy={-10}
+                          fontSize={12}
+                          textAnchor="middle"
+                          className="fill-foreground"
+                        >
+                          {`${value}${chartData[index].unitType}`}
+                        </text>
+                      )}
+                    />
+                  )}
+                </Area>
+                {/* Reference lines on the secondary Y-axis */}
+                {strengthRanges && showStandards && width > 1280 && (
+                  <>
+                    <ReferenceLine
+                      y={strengthRanges.physicallyActive}
+                      strokeWidth={strokeWidth}
+                      strokeDasharray={strokeDashArray}
+                    />
+                    <ReferenceLine
+                      y={strengthRanges.beginner}
+                      strokeWidth={strokeWidth}
+                      strokeDasharray={strokeDashArray}
+                    />
+                    <ReferenceLine
+                      y={strengthRanges.intermediate}
+                      strokeWidth={strokeWidth}
+                      strokeDasharray={strokeDashArray}
+                    />
+                    <ReferenceLine
+                      y={strengthRanges.advanced}
+                      strokeWidth={strokeWidth}
+                      strokeDasharray={strokeDashArray}
+                    />
+                    <ReferenceLine
+                      y={strengthRanges.elite}
+                      strokeWidth={strokeWidth}
+                      strokeDasharray={strokeDashArray}
+                    />
+                  </>
+                )}
+              </AreaChart>
+            </ChartContainer>
+          </ResponsiveContainer>
         )}
       </CardContent>
       <CardFooter>

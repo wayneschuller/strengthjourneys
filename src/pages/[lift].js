@@ -133,7 +133,10 @@ function BarbellInsightsMain({ liftInsightData }) {
           <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">
-          <VideoCard liftType={liftInsightData.liftType} />
+          <VideoCard
+            liftType={liftInsightData.liftType}
+            videos={liftInsightData.videos}
+          />
         </div>
       </div>
     </div>
@@ -253,47 +256,25 @@ function StrengthLevelsCard({ liftType }) {
   );
 }
 
-function VideoCard({ liftType }) {
+function VideoCard({ liftType, videos }) {
   return (
-    <Card>
+    <Card className="">
       <CardHeader>
         <CardTitle>{liftType} Video Guides</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-8 lg:flex-row">
-          <div className="aspect-video flex-1">
-            <iframe
-              // width="560"
-              // height="315"
-              src="https://www.youtube.com/embed/C_VtOYc6j5c"
-              title="YouTube video player"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="h-full w-full"
-            ></iframe>
-          </div>
-          <div className="aspect-video flex-1">
-            <iframe
-              // width="560"
-              // height="315"
-              src="https://www.youtube.com/embed/jyopTyOjXb0"
-              title="YouTube video player"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="h-full w-full"
-            ></iframe>
-          </div>
-          <div className="aspect-video flex-1">
-            <iframe
-              // width="560"
-              // height="315"
-              src="https://www.youtube.com/embed/nhoikoUEI8U"
-              title="YouTube video player"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="h-full w-full"
-            ></iframe>
-          </div>
+        <div className="flex h-fit flex-col gap-8 lg:flex-row">
+          {videos.map((videoUrl, index) => (
+            <div key={index} className="aspect-video max-h-96 flex-1">
+              <iframe
+                src={videoUrl}
+                title={`YouTube video player ${index}`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="h-full w-full"
+              ></iframe>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>

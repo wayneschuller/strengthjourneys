@@ -15,6 +15,11 @@ export const bigFourLiftInsightData = [
       "There is simply no other exercise, and certainly no machine, that produces the level of central nervous system activity, improved balance and coordination, skeletal loading and bone density enhancement, muscular stimulation and growth, connective tissue stress and strength, psychological demand and toughness, and overall systemic conditioning than the correctly performed full squat.",
     liftQuoteAuthor: "Mark Rippetoe, Starting Strength",
     slug: "barbell-squat-insights",
+    videos: [
+      "https://www.youtube.com/embed/C_VtOYc6j5c",
+      "https://www.youtube.com/embed/jyopTyOjXb0",
+      "https://www.youtube.com/embed/nhoikoUEI8U",
+    ],
   },
   {
     liftType: "Bench Press",
@@ -30,6 +35,11 @@ export const bigFourLiftInsightData = [
       "The bench press, since the 1950s, has become the most widely recognized resistance exercise movement in the world, the one exercise most representative in the public mind of barbell training...",
     liftQuoteAuthor: "Mark Rippetoe",
     slug: "barbell-bench-press-insights",
+    videos: [
+      "https://www.youtube.com/embed/C_VtOYc6j5c",
+      "https://www.youtube.com/embed/jyopTyOjXb0",
+      "https://www.youtube.com/embed/nhoikoUEI8U",
+    ],
   },
   {
     liftType: "Deadlift",
@@ -43,6 +53,11 @@ export const bigFourLiftInsightData = [
     liftQuote: "There is no reason to be alive if you can't do deadlift!",
     liftQuoteAuthor: "Jón Páll Sigmarsson",
     slug: "barbell-deadlift-insights",
+    videos: [
+      "https://www.youtube.com/embed/C_VtOYc6j5c",
+      "https://www.youtube.com/embed/jyopTyOjXb0",
+      "https://www.youtube.com/embed/nhoikoUEI8U",
+    ],
   },
   {
     liftType: "Strict Press",
@@ -58,5 +73,10 @@ export const bigFourLiftInsightData = [
       "The strict press is a whole-body, multi-joint exercise that beautifully recapitulates a fundamental human movement pattern: lifting a heavy object overhead, as high as possible.",
     liftQuoteAuthor: "Jonathon M. Sullivan & Andy Baker",
     slug: "barbell-strict-press-insights",
+    videos: [
+      "https://www.youtube.com/embed/8dacy5hjaE8",
+      "https://www.youtube.com/embed/AhGW3XFG3M8",
+      "https://www.youtube.com/embed/5yWaNOvgFCM",
+    ],
   },
 ];

@@ -31,11 +31,19 @@ export function ChooseSheetInstructionsCard({ session }) {
   const [openPicker, authResponse] = useDrivePicker();
 
   // We need the next 3 for the file picker button we give with instructions
-  const [ssid, setSsid] = useLocalStorage("ssid", null);
-  const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
+  const [ssid, setSsid] = useLocalStorage("ssid", null, {
+    initializeWithValue: false,
+  });
+  const [sheetURL, setSheetURL] = useLocalStorage(
+    "sheetURL",
+    null,
+
+    { initializeWithValue: false },
+  );
   const [sheetFilename, setSheetFilename] = useLocalStorage(
     "sheetFilename",
     null,
+    { initializeWithValue: false },
   );
 
   return (
@@ -107,11 +115,19 @@ export function GettingStartedCard() {
   const [openPicker, authResponse] = useDrivePicker();
 
   // We need the next 3 for the file picker button we give with instructions
-  const [ssid, setSsid] = useLocalStorage("ssid", null);
-  const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
+  const [ssid, setSsid] = useLocalStorage("ssid", null, {
+    initializeWithValue: false,
+  });
+  const [sheetURL, setSheetURL] = useLocalStorage(
+    "sheetURL",
+    null,
+
+    { initializeWithValue: false },
+  );
   const [sheetFilename, setSheetFilename] = useLocalStorage(
     "sheetFilename",
     null,
+    { initializeWithValue: false },
   );
 
   const arrowSize = 75;

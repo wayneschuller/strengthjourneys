@@ -265,7 +265,7 @@ function VideoCard({ liftType, videos }) {
       <CardContent>
         <div className="flex h-fit flex-col gap-8 lg:flex-row">
           {videos.map((videoUrl, index) => (
-            <div key={index} className="aspect-video max-h-96 flex-1">
+            <div key={index} className="aspect-video max-h-80 flex-1">
               <iframe
                 src={videoUrl}
                 title={`YouTube video player ${index}`}

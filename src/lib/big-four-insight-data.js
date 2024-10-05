@@ -36,9 +36,9 @@ export const bigFourLiftInsightData = [
     liftQuoteAuthor: "Mark Rippetoe",
     slug: "barbell-bench-press-insights",
     videos: [
-      "https://www.youtube.com/embed/C_VtOYc6j5c",
-      "https://www.youtube.com/embed/jyopTyOjXb0",
-      "https://www.youtube.com/embed/nhoikoUEI8U",
+      "https://www.youtube.com/embed/rxD321l2svE",
+      "https://www.youtube.com/embed/t3f2L7NRRUY",
+      "https://www.youtube.com/embed/A0NBCkpYatQ",
     ],
   },
   {
@@ -54,9 +54,9 @@ export const bigFourLiftInsightData = [
     liftQuoteAuthor: "Jón Páll Sigmarsson",
     slug: "barbell-deadlift-insights",
     videos: [
-      "https://www.youtube.com/embed/C_VtOYc6j5c",
-      "https://www.youtube.com/embed/jyopTyOjXb0",
-      "https://www.youtube.com/embed/nhoikoUEI8U",
+      "https://www.youtube.com/embed/AweC3UaM14o",
+      "https://www.youtube.com/embed/p2OPUi4xGrM",
+      "https://www.youtube.com/embed/3oMjoOm5O18",
     ],
   },
   {

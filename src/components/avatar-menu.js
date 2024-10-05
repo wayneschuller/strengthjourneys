@@ -39,12 +39,22 @@ import {
 export function AvatarDropdown() {
   const { data: session, status: authStatus } = useSession();
   const [openPicker, authResponse] = useDrivePicker();
-  const [ssid, setSsid] = useLocalStorage("ssid", null);
-  const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null);
+
+  const [ssid, setSsid] = useLocalStorage("ssid", null, {
+    initializeWithValue: false,
+  });
+  const [sheetURL, setSheetURL] = useLocalStorage(
+    "sheetURL",
+    null,
+
+    { initializeWithValue: false },
+  );
   const [sheetFilename, setSheetFilename] = useLocalStorage(
     "sheetFilename",
     null,
+    { initializeWithValue: false },
   );
+
   const { parsedData, isLoading, isValidating, isError } = useUserLiftingData();
 
   if (authStatus !== "authenticated")

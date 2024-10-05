@@ -3,9 +3,8 @@
 "use client";
 
 import Link from "next/link";
-import Head from "next/head";
-import Image from "next/image";
 import { NextSeo } from "next-seo";
+import { devLog } from "@/lib/processing-utils";
 
 import {
   Calculator,
@@ -30,6 +29,7 @@ import {
 import { GettingStartedCard } from "@/components/instructions-cards";
 import { SloganCarousel } from "@/components/slogan-carousel";
 import { Testimonials } from "@/components/testimonials";
+import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
 //
 export const featurePages = [
@@ -150,6 +150,8 @@ export default function Home() {
 
         <PageDescription />
 
+        <BigFourLiftCards />
+
         <div className="my-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-3 2xl:grid-cols-4">
           {featurePages.map((card, index) => (
             <FeatureCard key={index} {...card} />
@@ -167,7 +169,7 @@ export default function Home() {
 }
 
 const PageDescription = () => (
-  <h2 className="mt-2 text-center text-2xl tracking-tight lg:mx-20">
+  <h2 className="mb-10 mt-2 text-center text-2xl tracking-tight lg:mx-20">
     A free{" "}
     <a
       className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
@@ -201,3 +203,32 @@ const FeatureCard = ({ href, title, description, IconComponent }) => (
     </Link>
   </Card>
 );
+
+function BigFourLiftCards() {
+  const lifts = bigFourLiftInsightData;
+
+  devLog(lifts);
+
+  return (
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {lifts.map((lift) => (
+        <Card
+          key={lift.slug}
+          className="flex flex-col ring-0 ring-black hover:ring-1 dark:ring-white"
+        >
+          <Link href={`/${lift.slug}`}>
+            <CardHeader>
+              <CardTitle>
+                {/* <DynamicIcon iconName={lift.liftIcon} className="mr-2" /> */}
+                {lift.liftType}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{lift.liftDescription}</p>
+            </CardContent>
+          </Link>
+        </Card>
+      ))}
+    </div>
+  );
+}

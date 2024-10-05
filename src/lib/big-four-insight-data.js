@@ -1,6 +1,6 @@
 import { Crown } from "lucide-react";
 
-export const liftInsightData = [
+export const bigFourLiftInsightData = [
   {
     liftType: "Back Squat",
     canonicalURL: "https://www.strengthjourneys.xyz/barbell-squat-insights",

@@ -39,17 +39,19 @@ const StrengthJourneys = () => (
   </span>
 );
 
-import { liftInsightData } from "@/lib/big-four-insight-data";
+import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
 export async function getStaticPaths() {
-  const paths = liftInsightData.map((lift) => ({
+  const paths = bigFourLiftInsightData.map((lift) => ({
     params: { lift: lift.slug },
   }));
   return { paths, fallback: false };
 }
 
 export async function getStaticProps({ params }) {
-  const liftData = liftInsightData.find((lift) => lift.slug === params.lift);
+  const liftData = bigFourLiftInsightData.find(
+    (lift) => lift.slug === params.lift,
+  );
   return {
     props: {
       liftInsightData: liftData,

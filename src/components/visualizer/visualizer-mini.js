@@ -75,24 +75,44 @@ export function VisualizerMini({ liftType }) {
   const [timeRange, setTimeRange] = useLocalStorage(
     "SJ_timeRange",
     "1900-01-01", // The start date threshold for inclusion in the chart
+    {
+      initializeWithValue: false,
+    },
   );
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
     "SJ_showLabelValues",
     false,
+    {
+      initializeWithValue: false,
+    },
   );
-  const [showAllData, setShowAllData] = useLocalStorage("SJ_showAllData", true); // Show weekly bests or all data
-  const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki");
+  const [showAllData, setShowAllData] = useLocalStorage(
+    "SJ_showAllData",
+    true,
+    {
+      initializeWithValue: false,
+    },
+  ); // Show weekly bests or all data
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki", {
+    initializeWithValue: false,
+  });
   const [showStandards, setShowStandards] = useLocalStorage(
     "SJ_VisMiniShowStandards",
     true,
+    {
+      initializeWithValue: false,
+    },
   );
 
   const [showBodyweightMultiples, setShowBodyweightMultiples] = useLocalStorage(
     "SJ_VisMiniShowBodyweightMultiples",
     true,
+    {
+      initializeWithValue: false,
+    },
   );
 
-  const { width } = useWindowSize(); // Used to hide the y-axis on smaller screens
+  const { width } = useWindowSize({ initializeWithValue: false }); // Used to hide the y-axis on smaller screens
 
   const {
     dataset: chartData,

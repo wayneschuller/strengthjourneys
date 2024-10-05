@@ -21,6 +21,11 @@ export default function App({ Component, pageProps, session }) {
   const router = useRouter();
 
   useEffect(() => {
+    // Don't gtag in dev
+    if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development") {
+      return;
+    }
+
     const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS; // Repeat in local scope to please eslint dep rules
     const handleRouteChange = (url) => {
       let fullURL = `https://www.strengthjourneys.xyz${url}`;

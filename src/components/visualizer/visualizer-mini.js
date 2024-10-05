@@ -132,6 +132,8 @@ export function VisualizerMini({ liftType }) {
 
   // if (!parsedData) return;
 
+  if (authStatus !== "authenticated") return; // Don't show at all for anon mode
+
   // devLog(chartData);
   const strengthRanges = standards?.[liftType] || null;
 

@@ -163,6 +163,9 @@ function MyLiftTypeSummaryCard({ liftType }) {
 
 function MyLiftTypePRsCard({ liftType }) {
   const { status: authStatus } = useSession();
+
+  if (authStatus !== "authenticated") return null;
+
   return (
     <Card>
       <CardHeader>

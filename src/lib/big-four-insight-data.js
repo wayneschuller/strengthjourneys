@@ -26,7 +26,8 @@ export const bigFourLiftInsightData = [
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_bench_insights.png",
     // liftIcon: Crown,
-    liftQuote: "The bench press is key to upper body strength.",
+    liftQuote:
+      "The bench press, since the 1950s, has become the most widely recognized resistance exercise movement in the world, the one exercise most representative in the public mind of barbell training...",
     liftQuoteAuthor: "Mark Rippetoe",
     slug: "barbell-bench-press-insights",
   },

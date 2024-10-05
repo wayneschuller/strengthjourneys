@@ -33,31 +33,31 @@ import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
 const googleSheetSampleURL =
   "https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0";
 
-import { Crown } from "lucide-react";
-
 const StrengthJourneys = () => (
   <span className="mx-1 text-blue-600 underline visited:text-purple-600 hover:text-blue-800">
     <Link href="/">Strength Journeys</Link>
   </span>
 );
 
-const liftInsightData = {
-  liftType: "Back Squat",
-  canonicalURL: "https://www.strengthjourneys.xyz/barbell-squat-insights",
-  pageTitle: "Barbell Back Squat - The King of Lifts",
-  pageDescription: `Barbell Back Squat insights and free tools.`,
-  pageKeywords:
-    "Barbell, back squat, squat, high bar, low bar, strength levels, back squat performance",
-  ogImageURL:
-    "https://www.strengthjourneys.xyz/strength_journeys_squat_insights.png",
-  liftIcon: Crown,
-  liftQuote:
-    "There is simply no other exercise, and certainly no machine, that produces the level of central nervous system activity, improved balance and coordination, skeletal loading and bone density enhancement, muscular stimulation and growth, connective tissue stress and strength, psychological demand and toughness, and overall systemic conditioning than the correctly performed full squat.",
-  liftQuoteAuthor: "Mark Rippetoe, Starting Strength",
-  // FIXME: Add video array
-};
+import { liftInsightData } from "@/lib/big-four-insight-data";
 
-export default function BigFourBarbellInsights() {
+export async function getStaticPaths() {
+  const paths = liftInsightData.map((lift) => ({
+    params: { lift: lift.slug },
+  }));
+  return { paths, fallback: false };
+}
+
+export async function getStaticProps({ params }) {
+  const liftData = liftInsightData.find((lift) => lift.slug === params.lift);
+  return {
+    props: {
+      liftInsightData: liftData,
+    },
+  };
+}
+
+export default function BigFourBarbellInsights({ liftInsightData }) {
   return (
     <>
       <NextSeo

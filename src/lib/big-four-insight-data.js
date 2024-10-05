@@ -30,7 +30,7 @@ export const bigFourLiftInsightData = [
     pageKeywords: "Barbell, bench press, upper body, strength levels",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_bench_insights.png",
-    // liftIcon: Crown,
+    // liftIcon: Dollar-Sign,
     liftQuote:
       "The bench press, since the 1950s, has become the most widely recognized resistance exercise movement in the world, the one exercise most representative in the public mind of barbell training...",
     liftQuoteAuthor: "Mark Rippetoe",
@@ -49,7 +49,7 @@ export const bigFourLiftInsightData = [
     pageKeywords: "Barbell, deadlift, back pain, strength levels",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_deadlift_insights.png",
-    // liftIcon: Crown,
+    // liftIcon: Anvil,
     liftQuote: "There is no reason to be alive if you can't do deadlift!",
     liftQuoteAuthor: "Jón Páll Sigmarsson",
     slug: "barbell-deadlift-insights",
@@ -68,7 +68,7 @@ export const bigFourLiftInsightData = [
     pageKeywords: "Barbell, strict press, overhead press, strength levels",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_press_insights.png",
-    // liftIcon: Crown,
+    // liftIcon: Luggage,
     liftQuote:
       "The strict press is a whole-body, multi-joint exercise that beautifully recapitulates a fundamental human movement pattern: lifting a heavy object overhead, as high as possible.",
     liftQuoteAuthor: "Jonathon M. Sullivan & Andy Baker",

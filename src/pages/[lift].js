@@ -218,9 +218,9 @@ function HowStrong({ liftType }) {
           able to squat 2 times their body weight for 5 reps.
         </p>
         <p>
-          On the chart below you can visualize your strength level by clicking
+          {`On the chart below you can visualize your strength level by clicking
           the checkbox for "Show Bodyweight Multiples" or "Show Strength
-          Standards"
+          Standards"`}
         </p>
       </CardContent>
     </Card>

@@ -207,8 +207,6 @@ const FeatureCard = ({ href, title, description, IconComponent }) => (
 function BigFourLiftCards() {
   const lifts = bigFourLiftInsightData;
 
-  devLog(lifts);
-
   return (
     <div className="grid grid-cols-2 gap-6 md:grid-cols-2 lg:grid-cols-4">
       {lifts.map((lift) => (

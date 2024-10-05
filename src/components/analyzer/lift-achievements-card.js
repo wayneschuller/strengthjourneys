@@ -325,7 +325,7 @@ export function SelectedLiftsIndividualLiftCards() {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const [expandedCard, setExpandedCard] = useState(null);
   const [parent] = useAutoAnimate(/* optional config */);
-  const { width } = useWindowSize();
+  const { width } = useWindowSize({ initializeWithValue: false });
   let isMobile = false;
 
   useEffect(() => {

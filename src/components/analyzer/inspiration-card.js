@@ -72,6 +72,12 @@ const inspirationalQuotes = [
     author: "Craig Richey",
     URL: "https://youtu.be/HEqMMGon2zc?si=ddr2b32gdVD1JkGh&t=1393",
   },
+  {
+    quote:
+      "When you start to treat the light weights like heavy weights, the heavy weights will go up a lot easier.",
+    author: "Ed Coan",
+    URL: null,
+  },
 ];
 
 const getRandomQuote = () => {

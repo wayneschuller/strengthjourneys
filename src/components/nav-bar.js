@@ -27,6 +27,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuIndicator,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  NavigationMenuViewport,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+
+import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+
 import darkModeLogo from "/public/nav_logo_light.png";
 import lightModeLogo from "/public/nav_logo_dark.png";
 
@@ -63,8 +77,11 @@ export function NavBar() {
           <SidePanelSelectLiftsButton isIconMode={true} />
         )}
         <MiniTimer />
+        {/* We used to show an icon to open the user google sheet */}
         {/* <UserSheetIcon /> */}
-        <div className="hidden xl:block">
+
+        {/* We used to show a github icon with xl:block*/}
+        <div className="hidden">
           <GitHubButton />
         </div>
         <DarkModeToggle />
@@ -106,6 +123,9 @@ export function DesktopNav() {
           priority={true}
         />
       </Link>
+
+      <BigFourBarbellInsightsMenu />
+
       {/* FIXME: we should loop over the feature pages array from the index here */}
       <nav className="flex flex-1 items-center space-x-2 text-sm font-medium md:space-x-6">
         <Link
@@ -312,5 +332,74 @@ export function GitHubButton() {
         <TooltipContent>View source code on Github</TooltipContent>
       </Tooltip>
     </TooltipProvider>
+  );
+}
+
+function BigFourBarbellInsightsMenu() {
+  const pathname = usePathname();
+  const lifts = bigFourLiftInsightData;
+
+  const ListItem = React.forwardRef(
+    ({ className, title, children, ...props }, ref) => {
+      return (
+        <li>
+          <NavigationMenuLink asChild>
+            <a
+              ref={ref}
+              className={cn(
+                "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                className,
+              )}
+              {...props}
+            >
+              <div className="text-sm font-medium leading-none">{title}</div>
+              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                {children}
+              </p>
+            </a>
+          </NavigationMenuLink>
+        </li>
+      );
+    },
+  );
+  ListItem.displayName = "ListItem";
+
+  return (
+    <>
+      <NavigationMenu>
+        <NavigationMenuList>
+          <NavigationMenuItem>
+            <NavigationMenuTrigger
+              className={cn(
+                "bg-transparent transition-colors hover:text-foreground/80",
+                pathname.startsWith("/barbell")
+                  ? "text-foreground"
+                  : "text-foreground/60",
+              )}
+            >
+              <>
+                {/* Short title on small screens */}
+                <span className="hidden md:block xl:hidden">Big Four</span>
+                {/* Full title on larger screens */}
+                <span className="hidden xl:block">Barbell Big Four Lifts</span>
+              </>
+            </NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                {lifts.map((lift) => (
+                  <ListItem
+                    key={lift.liftType}
+                    title={lift.liftType}
+                    href={lift.slug}
+                  >
+                    {/* {lift.pageTitle} */}
+                  </ListItem>
+                ))}
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
+    </>
   );
 }

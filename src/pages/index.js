@@ -150,7 +150,7 @@ export default function Home() {
 
         <PageDescription />
 
-        <BigFourLiftCards />
+        {/* <BigFourLiftCards /> */}
 
         <div className="my-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-3 2xl:grid-cols-4">
           {featurePages.map((card, index) => (

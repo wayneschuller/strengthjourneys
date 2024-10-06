@@ -231,6 +231,20 @@ export function VisualizerMini({ liftType }) {
     return null;
   };
 
+  // Calculate dynamic bodyweight multiples based on weightMin and roundedMaxWeightValue, only if bodyWeight is valid
+  let validBodyweightMultiples = null;
+
+  if (bodyWeight && bodyWeight > 0) {
+    // The left Y-axis starts at 0, so we only need to calculate the upper limit
+    const maxMultiple = Math.ceil(roundedMaxWeightValue / bodyWeight); // Go up to the next multiple above roundedMaxWeightValue
+
+    // Generate an array of multiples from 0 to maxMultiple
+    validBodyweightMultiples = Array.from(
+      { length: maxMultiple + 1 },
+      (_, i) => i,
+    ); // Includes 0, 0.5x, 1x, etc.
+  }
+
   const strokeWidth = 1;
   const strokeDashArray = "5 15";
 
@@ -310,6 +324,7 @@ export function VisualizerMini({ liftType }) {
                   )}
                   // allowDataOverflow
                 />
+                {/* Additional Right Y-Axis for strength levels */}
                 {showStandards && strengthRanges && (
                   <YAxis
                     yAxisId="right"
@@ -335,18 +350,19 @@ export function VisualizerMini({ liftType }) {
                   />
                 )}
                 {/* Additional Right Y-Axis for bodyweight multiples */}
-                {width > 1280 && showBodyweightMultiples && (
+                {showBodyweightMultiples && (
                   <YAxis
                     yAxisId="bodyweight-multiples"
                     orientation="right"
+                    hide={width < 1280}
                     axisLine={false}
                     tickLine={false}
-                    ticks={[0.5, 1, 1.5, 2, 2.5, 3].map(
+                    ticks={validBodyweightMultiples.map(
                       (multiple) => multiple * bodyWeight,
                     )} // Multiples of bodyweight
                     tickFormatter={(value) => {
-                      const multiple = value / bodyWeight; // Calculate the multiple
-                      return `${multiple.toFixed(1)}xBW`; // Display as "0.5x Body Weight"
+                      const multiple = value / bodyWeight;
+                      return `${multiple.toFixed(1)}xBW`;
                     }}
                   />
                 )}

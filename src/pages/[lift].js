@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
 import { StandardsSlider } from "@/components/standards-slider";
 import { NextSeo } from "next-seo";
+import { PortableText } from "@portabletext/react";
 
 import {
   Card,
@@ -40,7 +41,7 @@ const StrengthJourneys = () => (
   </span>
 );
 
-import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { fetchRelatedArticles, fetchArticleById } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
 export async function getStaticPaths() {
@@ -58,10 +59,30 @@ export async function getStaticProps({ params }) {
   const RELATED_ARTICLES_CATEGORY = liftData.liftType;
   const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
+  const articleId = liftData.introductionArticleId;
+  const resourcesId = liftData.resourcesArticleId;
+
+  devLog(`looking for ids: ${articleId}, ${resourcesId}`);
+
+  // Fetch both articles separately using the generic function
+  const introductionArticle = await fetchArticleById(articleId);
+  const resourcesArticle = await fetchArticleById(resourcesId);
+
+  // Error handling: if either article is missing, log it
+  if (!introductionArticle) {
+    console.error(`Introduction article not found for ID: ${articleId}`);
+  }
+
+  if (!resourcesArticle) {
+    console.error(`Resources article not found for ID: ${resourcesId}`);
+  }
+
   return {
     props: {
       liftInsightData: liftData,
       relatedArticles: relatedArticles,
+      introductionArticle: introductionArticle || null, // Provide null if not found
+      resourcesArticle: resourcesArticle || null, // Provide null if not found
     },
     revalidate: 60 * 60,
   };
@@ -70,7 +91,12 @@ export async function getStaticProps({ params }) {
 export default function BigFourBarbellInsights({
   liftInsightData,
   relatedArticles,
+  introductionArticle,
+  resourcesArticle,
 }) {
+  devLog(`BigFour blah:`);
+  devLog(resourcesArticle);
+
   return (
     <>
       <NextSeo
@@ -105,12 +131,19 @@ export default function BigFourBarbellInsights({
       <BarbellInsightsMain
         liftInsightData={liftInsightData}
         relatedArticles={relatedArticles}
+        introductionArticle={introductionArticle}
+        resourcesArticle={resourcesArticle}
       />
     </>
   );
 }
 
-function BarbellInsightsMain({ liftInsightData, relatedArticles }) {
+function BarbellInsightsMain({
+  liftInsightData,
+  relatedArticles,
+  introductionArticle,
+  resourcesArticle,
+}) {
   const {
     parsedData,
     topLiftsByTypeAndReps,
@@ -137,8 +170,8 @@ function BarbellInsightsMain({ liftInsightData, relatedArticles }) {
         {/* <div className="col-span-3 flex flex-col gap-6 lg:flex-row"> */}
         <div className="col-span-3 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <MyLiftTypeSummaryCard liftType={liftInsightData.liftType} />
-          <MyLiftTypeRecentHighlightsCard liftType={liftInsightData.liftType} />
-          <HowStrong liftType={liftInsightData.liftType} />
+          <SanityArticleCard article={resourcesArticle} />
+          <SanityArticleCard article={introductionArticle} />
         </div>
         <div className="col-span-3">
           <VisualizerMini liftType={liftInsightData.liftType} />
@@ -166,11 +199,14 @@ function MyLiftTypeSummaryCard({ liftType }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My {liftType} Summary</CardTitle>
+        <CardTitle>My {liftType} Journey</CardTitle>
       </CardHeader>
       <CardContent>
         {authStatus === "authenticated" ? (
-          <LiftTypeSummaryStatistics liftType={liftType} />
+          <>
+            <LiftTypeSummaryStatistics liftType={liftType} />
+            <LiftTypeRecentHighlights liftType={liftType} />
+          </>
         ) : (
           <div>Login to see your data</div>
         )}
@@ -202,25 +238,16 @@ function MyLiftTypePRsCard({ liftType }) {
   );
 }
 
-function MyLiftTypeRecentHighlightsCard({ liftType }) {
-  const {
-    parsedData,
-    topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
-  } = useUserLiftingData();
-  const { status: authStatus } = useSession();
+function SanityArticleCard({ article }) {
+  // devLog(article);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My {liftType} Recent Highlights</CardTitle>
+        <CardTitle>{article.title}</CardTitle>
       </CardHeader>
       <CardContent>
-        {authStatus === "authenticated" ? (
-          <LiftTypeRecentHighlights liftType={liftType} />
-        ) : (
-          <div>Login to see your data</div>
-        )}
+        <PortableText value={article.body} components={components} />
       </CardContent>
     </Card>
   );
@@ -303,3 +330,33 @@ function VideoCard({ liftType, videos }) {
     </Card>
   );
 }
+
+const components = {
+  types: {
+    image: ({ value }) => {
+      if (!value?.asset?._ref) {
+        return null;
+      }
+
+      // These will be in article images. These will be portrait landscpe so go slightly wider than higher
+      const imageUrl = urlFor(value)
+        .width(600)
+        .height(400)
+        .fit("clip")
+        .quality(80)
+        .auto("format")
+        .url();
+
+      return (
+        <div className="relative my-8 h-96 w-full">
+          <Image
+            src={imageUrl}
+            alt={value.alt || " "}
+            fill
+            style={{ objectFit: "contain" }}
+          />
+        </div>
+      );
+    },
+  },
+};

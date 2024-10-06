@@ -38,3 +38,26 @@ export async function fetchRelatedArticles(category) {
     return [];
   }
 }
+
+// Generic function to fetch an article by ID with error handling
+export async function fetchArticleById(articleId) {
+  try {
+    const articleQuery = `*[_id == $articleId][0] {
+      title,
+      body,
+      _id
+    }`;
+
+    const article = await sanityIOClient.fetch(articleQuery, { articleId });
+
+    if (!article) {
+      console.error(`Article with ID ${articleId} not found.`);
+      return null; // Return null if the article isn't found
+    }
+
+    return article;
+  } catch (error) {
+    console.error(`Error fetching article with ID ${articleId}:`, error);
+    return null; // Return null if there was an error fetching the article
+  }
+}

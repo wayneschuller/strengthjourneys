@@ -20,6 +20,8 @@ export const bigFourLiftInsightData = [
       "https://www.youtube.com/embed/jyopTyOjXb0",
       "https://www.youtube.com/embed/nhoikoUEI8U",
     ],
+    introductionArticleId: "1b0ff4e2-2580-441e-8084-10ba877819cc",
+    resourcesArticleId: "aee23b6e-e9fc-4a5d-b064-c37f8007e1a5",
     articles: [
       {
         title: "The Fastest Way To Blow Up Your Squat Naturally",
@@ -47,6 +49,8 @@ export const bigFourLiftInsightData = [
       "https://www.youtube.com/embed/t3f2L7NRRUY",
       "https://www.youtube.com/embed/A0NBCkpYatQ",
     ],
+    introductionArticleId: "1b0ff4e2-2580-441e-8084-10ba877819cc",
+    resourcesArticleId: "aee23b6e-e9fc-4a5d-b064-c37f8007e1a5",
     articles: [
       {
         title: "Struggling With The Bench Press",
@@ -72,6 +76,8 @@ export const bigFourLiftInsightData = [
       "https://www.youtube.com/embed/p2OPUi4xGrM",
       "https://www.youtube.com/embed/3oMjoOm5O18",
     ],
+    introductionArticleId: "1b0ff4e2-2580-441e-8084-10ba877819cc",
+    resourcesArticleId: "aee23b6e-e9fc-4a5d-b064-c37f8007e1a5",
     articles: [
       {
         title: "Struggling With The Bench Press",
@@ -99,6 +105,8 @@ export const bigFourLiftInsightData = [
       "https://www.youtube.com/embed/AhGW3XFG3M8",
       "https://www.youtube.com/embed/5yWaNOvgFCM",
     ],
+    introductionArticleId: "1b0ff4e2-2580-441e-8084-10ba877819cc",
+    resourcesArticleId: "aee23b6e-e9fc-4a5d-b064-c37f8007e1a5",
     articles: [
       {
         title: "Struggling With The Bench Press",

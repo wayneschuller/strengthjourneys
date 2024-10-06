@@ -49,15 +49,8 @@ export const bigFourLiftInsightData = [
       "https://www.youtube.com/embed/t3f2L7NRRUY",
       "https://www.youtube.com/embed/A0NBCkpYatQ",
     ],
-    introductionArticleId: "1b0ff4e2-2580-441e-8084-10ba877819cc",
-    resourcesArticleId: "aee23b6e-e9fc-4a5d-b064-c37f8007e1a5",
-    articles: [
-      {
-        title: "Struggling With The Bench Press",
-        author: "Jim Wendler",
-        url: "https://www.jimwendler.com/blogs/jimwendler-com/101072966-struggling-with-the-bench-press",
-      },
-    ],
+    introductionArticleId: "0533d1c7-687d-45f8-95a6-4165298a10ae",
+    resourcesArticleId: "7d31628b-820a-4095-ae31-1e405060f116",
   },
   {
     liftType: "Deadlift",
@@ -76,15 +69,8 @@ export const bigFourLiftInsightData = [
       "https://www.youtube.com/embed/p2OPUi4xGrM",
       "https://www.youtube.com/embed/3oMjoOm5O18",
     ],
-    introductionArticleId: "1b0ff4e2-2580-441e-8084-10ba877819cc",
-    resourcesArticleId: "aee23b6e-e9fc-4a5d-b064-c37f8007e1a5",
-    articles: [
-      {
-        title: "Struggling With The Bench Press",
-        author: "Jim Wendler",
-        url: "https://www.jimwendler.com/blogs/jimwendler-com/101072966-struggling-with-the-bench-press",
-      },
-    ],
+    introductionArticleId: "674ab504-f6f8-4331-af4b-fe44920c2f88",
+    resourcesArticleId: "10fc56f1-abcd-4b7a-a63a-8e10c4a028f0",
   },
   {
     liftType: "Strict Press",
@@ -105,14 +91,7 @@ export const bigFourLiftInsightData = [
       "https://www.youtube.com/embed/AhGW3XFG3M8",
       "https://www.youtube.com/embed/5yWaNOvgFCM",
     ],
-    introductionArticleId: "1b0ff4e2-2580-441e-8084-10ba877819cc",
-    resourcesArticleId: "aee23b6e-e9fc-4a5d-b064-c37f8007e1a5",
-    articles: [
-      {
-        title: "Struggling With The Bench Press",
-        author: "Jim Wendler",
-        url: "https://www.jimwendler.com/blogs/jimwendler-com/101072966-struggling-with-the-bench-press",
-      },
-    ],
+    introductionArticleId: "4303059c-e6f0-4da9-8709-4e71a664ba9b",
+    resourcesArticleId: "7a334076-be2a-46eb-9881-2bad267e88f8",
   },
 ];

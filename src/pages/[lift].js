@@ -170,8 +170,8 @@ function BarbellInsightsMain({
         {/* <div className="col-span-3 flex flex-col gap-6 lg:flex-row"> */}
         <div className="col-span-3 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <MyLiftTypeSummaryCard liftType={liftInsightData.liftType} />
-          <SanityArticleCard article={resourcesArticle} />
           <SanityArticleCard article={introductionArticle} />
+          <SanityArticleCard article={resourcesArticle} />
         </div>
         <div className="col-span-3">
           <VisualizerMini liftType={liftInsightData.liftType} />

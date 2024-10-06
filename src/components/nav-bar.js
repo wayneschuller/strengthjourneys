@@ -381,7 +381,7 @@ function BigFourBarbellInsightsMenu() {
                 {/* Short title on small screens */}
                 <span className="hidden md:block xl:hidden">Big Four</span>
                 {/* Full title on larger screens */}
-                <span className="hidden xl:block">Barbell Big Four Lifts</span>
+                <span className="hidden xl:block">Big Four Barbell Lifts</span>
               </>
             </NavigationMenuTrigger>
             <NavigationMenuContent>

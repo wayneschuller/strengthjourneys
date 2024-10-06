@@ -63,8 +63,6 @@ export async function getStaticProps({ params }) {
   const articleId = liftData.introductionArticleId;
   const resourcesId = liftData.resourcesArticleId;
 
-  devLog(`looking for ids: ${articleId}, ${resourcesId}`);
-
   // Fetch both articles separately using the generic function
   const introductionArticle = await fetchArticleById(articleId);
   const resourcesArticle = await fetchArticleById(resourcesId);
@@ -237,8 +235,6 @@ function MyLiftTypePRsCard({ liftType }) {
 }
 
 function SanityArticleCard({ article }) {
-  // devLog(article);
-
   return (
     <Card>
       <CardHeader>

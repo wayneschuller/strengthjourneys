@@ -309,10 +309,7 @@ export function VisualizerMini({ liftType }) {
                 />
                 {/* FIXME: fix the domain height to always incorporate the height of elite standard */}
                 <YAxis
-                  domain={[
-                    Math.floor(weightMin / tickJump) * tickJump,
-                    roundedMaxWeightValue,
-                  ]}
+                  // domain={[ // Math.floor(weightMin / tickJump) * tickJump, 0, roundedMaxWeightValue, ]}
                   hide={width < 1280}
                   axisLine={false}
                   tickFormatter={

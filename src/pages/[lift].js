@@ -1,5 +1,5 @@
 import Link from "next/link";
-
+import Image from "next/image";
 import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { useSession } from "next-auth/react";

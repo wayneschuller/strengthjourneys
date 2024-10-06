@@ -1,5 +1,3 @@
-import { Crown } from "lucide-react";
-
 export const bigFourLiftInsightData = [
   {
     liftType: "Back Squat",

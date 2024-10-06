@@ -39,6 +39,7 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 
+import { Crown, Shield, Skull, Luggage } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
 import darkModeLogo from "/public/nav_logo_light.png";
@@ -339,6 +340,13 @@ function BigFourBarbellInsightsMenu() {
   const pathname = usePathname();
   const lifts = bigFourLiftInsightData;
 
+  const icons = {
+    "Back Squat": <Crown className="h-5 w-5" />,
+    "Bench Press": <Shield className="h-5 w-5" />,
+    Deadlift: <Skull className="h-5 w-5" />,
+    "Strict Press": <Luggage className="h-5 w-5" />,
+  };
+
   const ListItem = React.forwardRef(
     ({ className, title, children, ...props }, ref) => {
       return (
@@ -352,7 +360,10 @@ function BigFourBarbellInsightsMenu() {
               )}
               {...props}
             >
-              <div className="text-sm font-medium leading-none">{title}</div>
+              <div className="flex flex-row items-center gap-2 align-middle">
+                {icons[title]} {/* Icon based on lift title */}
+                <div className="text-sm font-medium leading-none">{title}</div>
+              </div>
               <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
                 {children}
               </p>
@@ -385,7 +396,7 @@ function BigFourBarbellInsightsMenu() {
               </>
             </NavigationMenuTrigger>
             <NavigationMenuContent>
-              <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+              <ul className="grid w-[400px] gap-3 p-4 md:w-[400px] md:grid-cols-2 lg:w-[500px]">
                 {lifts.map((lift) => (
                   <ListItem
                     key={lift.liftType}

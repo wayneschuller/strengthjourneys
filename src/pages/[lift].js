@@ -8,6 +8,7 @@ import { devLog } from "@/lib/processing-utils";
 import { StandardsSlider } from "@/components/standards-slider";
 import { NextSeo } from "next-seo";
 import { PortableText } from "@portabletext/react";
+import { Crown, Shield, Skull, Luggage } from "lucide-react";
 
 import {
   Card,
@@ -146,11 +147,17 @@ function BarbellInsightsMain({
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
+  const bigFourIcons = {
+    "Back Squat": Crown,
+    "Bench Press": Shield,
+    Deadlift: Skull,
+    "Strict Press": Luggage,
+  };
 
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading icon={liftInsightData.liftIcon}>
+        <PageHeaderHeading icon={bigFourIcons[liftInsightData.liftType]}>
           {liftInsightData.pageTitle}
         </PageHeaderHeading>
         <PageHeaderDescription className="max-w-full">

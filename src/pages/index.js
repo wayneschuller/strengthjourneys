@@ -86,19 +86,19 @@ export const featurePages = [
       "A collection of our articles, common questions, plus curated lifting content.",
     IconComponent: LibraryBig,
   },
-  {
-    href: "/articles/why-it-s-good-to-be-a-barbell-weirdo",
-    title: `Feature Article: Why It's Good To Be A Barbell Weirdo`,
-    description: "Embrace your inner weirdo.",
-    IconComponent: Newspaper,
-  },
-  {
-    href: "/articles/the-iron-and-the-soul-author-henry-rollins",
-    title: "Feature Article: The Iron and the Soul",
-    description: "The classic inspirational lifting essay by Henry Rollins.",
-    IconComponent: Newspaper,
-  },
 ];
+// {
+//   href: "/articles/why-it-s-good-to-be-a-barbell-weirdo",
+//   title: `Feature Article: Why It's Good To Be A Barbell Weirdo`,
+//   description: "Embrace your inner weirdo.",
+//   IconComponent: Newspaper,
+// },
+// {
+//   href: "/articles/the-iron-and-the-soul-author-henry-rollins",
+//   title: "Feature Article: The Iron and the Soul",
+//   description: "The classic inspirational lifting essay by Henry Rollins.",
+//   IconComponent: Newspaper,
+// },
 
 export default function Home() {
   const title = "Strength Journeys | Free Barbell Lifting Analysis Tools";

@@ -160,6 +160,9 @@ function BarbellInsightsMain({ liftInsightData, relatedArticles }) {
 
 function MyLiftTypeSummaryCard({ liftType }) {
   const { status: authStatus } = useSession();
+
+  // FIXME: add a skeleton loader
+
   return (
     <Card>
       <CardHeader>
@@ -180,6 +183,8 @@ function MyLiftTypePRsCard({ liftType }) {
   const { status: authStatus } = useSession();
 
   if (authStatus !== "authenticated") return null;
+
+  // FIXME: add a skeleton loader
 
   return (
     <Card>

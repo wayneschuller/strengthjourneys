@@ -240,7 +240,7 @@ function SanityArticleCard({ article }) {
       <CardHeader>
         <CardTitle>{article.title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="prose prose-orange dark:prose-invert">
         <PortableText value={article.body} components={components} />
       </CardContent>
     </Card>

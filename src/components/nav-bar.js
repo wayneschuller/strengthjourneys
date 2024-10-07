@@ -401,7 +401,7 @@ function BigFourBarbellInsightsMenu() {
                   <ListItem
                     key={lift.liftType}
                     title={lift.liftType}
-                    href={lift.slug}
+                    href={"/" + lift.slug}
                   >
                     {/* {lift.pageTitle} */}
                   </ListItem>

@@ -235,14 +235,12 @@ export function VisualizerMini({ liftType }) {
   let validBodyweightMultiples = null;
 
   if (bodyWeight && bodyWeight > 0) {
-    // The left Y-axis starts at 0, so we only need to calculate the upper limit
-    const maxMultiple = Math.ceil(roundedMaxWeightValue / bodyWeight); // Go up to the next multiple above roundedMaxWeightValue
-
-    // Generate an array of multiples from 0 to maxMultiple
+    // Generate ticks based on the main axis tick jump
+    const numTicks = Math.ceil(roundedMaxWeightValue / tickJump);
     validBodyweightMultiples = Array.from(
-      { length: maxMultiple + 1 },
-      (_, i) => i,
-    ); // Includes 0, 0.5x, 1x, etc.
+      { length: numTicks },
+      (_, i) => (i * tickJump) / bodyWeight,
+    );
   }
 
   const strokeWidth = 1;
@@ -310,6 +308,7 @@ export function VisualizerMini({ liftType }) {
                 {/* FIXME: fix the domain height to always incorporate the height of elite standard */}
                 <YAxis
                   // domain={[ // Math.floor(weightMin / tickJump) * tickJump, 0, roundedMaxWeightValue, ]}
+                  domain={[0, roundedMaxWeightValue]}
                   hide={width < 1280}
                   axisLine={false}
                   tickFormatter={
@@ -347,13 +346,14 @@ export function VisualizerMini({ liftType }) {
                   />
                 )}
                 {/* Additional Right Y-Axis for bodyweight multiples */}
-                {showBodyweightMultiples && (
+                {showBodyweightMultiples && bodyWeight && bodyWeight > 0 && (
                   <YAxis
                     yAxisId="bodyweight-multiples"
                     orientation="right"
                     hide={width < 1280}
                     axisLine={false}
                     tickLine={false}
+                    domain={[0, roundedMaxWeightValue]}
                     ticks={validBodyweightMultiples.map(
                       (multiple) => multiple * bodyWeight,
                     )} // Multiples of bodyweight

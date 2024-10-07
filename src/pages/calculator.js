@@ -489,7 +489,7 @@ const E1RMSummaryCard = ({
           Estimated One Rep Max
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-2">
         <div className="text-center">
           {isAdvancedAnalysis && `${liftType} `}
           {reps}@{weight}
@@ -508,14 +508,12 @@ const E1RMSummaryCard = ({
           <div>
             <Link
               href="/strength-level-calculator"
-              className="flex flex-row justify-center gap-2 align-middle text-xl hover:underline hover:underline-offset-4"
+              className="flex flex-col justify-center gap-1 text-center align-middle text-xl hover:underline hover:underline-offset-4 xl:flex-row"
             >
               <div className="text-muted-foreground hover:text-muted-foreground/80">
                 Your Strength Rating:
               </div>
-              <div className="text-center text-xl font-semibold">
-                {liftRating}
-              </div>
+              <div className="text-xl font-semibold">{liftRating}</div>
             </Link>
           </div>
         )}

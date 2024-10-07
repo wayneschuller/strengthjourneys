@@ -325,6 +325,7 @@ export function VisualizerMini({ liftType }) {
                   <YAxis
                     yAxisId="right"
                     orientation="right"
+                    domain={[0, roundedMaxWeightValue]}
                     hide={width < 1280}
                     axisLine={false}
                     tickLine={false}

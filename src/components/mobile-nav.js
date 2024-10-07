@@ -68,28 +68,31 @@ export function MobileNav() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="pr-0">
+        <SheetHeader>
+          <SheetTitle>
+            <SheetClose asChild>
+              <Link href="/" className="flex flex-col">
+                {/* <span className="inline-block text-xl text-left font-bold tracking-tighter"> Strength Journeys Home </span> */}
+                <Image
+                  src={lightModeLogo}
+                  width={logoWidth}
+                  height="auto"
+                  alt="logo"
+                  className="inline-block dark:hidden"
+                />
+                <Image
+                  src={darkModeLogo}
+                  width={logoWidth}
+                  height="auto"
+                  alt="logo"
+                  className="hidden dark:inline-block"
+                />
+              </Link>
+            </SheetClose>
+          </SheetTitle>
+          <SheetDescription></SheetDescription>
+        </SheetHeader>
         <div className="flex flex-col">
-          <SheetClose asChild>
-            <Link href="/" className="flex flex-col">
-              <Image
-                src={lightModeLogo}
-                width={logoWidth}
-                height="auto"
-                alt="logo"
-                className="inline-block dark:hidden"
-              />
-              <Image
-                src={darkModeLogo}
-                width={logoWidth}
-                height="auto"
-                alt="logo"
-                className="hidden dark:inline-block"
-              />
-              <span className="mb-4 inline-block text-xl font-bold tracking-tighter">
-                Strength Journeys Home
-              </span>
-            </Link>
-          </SheetClose>
           <div className="flex flex-1 flex-col gap-4 text-lg font-medium tracking-tight">
             {featurePages.map((item) => (
               <NavLink key={item.href} {...item} />

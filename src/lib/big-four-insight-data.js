@@ -3,7 +3,7 @@ export const bigFourLiftInsightData = [
     liftType: "Back Squat",
     canonicalURL: "https://www.strengthjourneys.xyz/barbell-squat-insights",
     pageTitle: "Barbell Back Squat - The King of Lifts",
-    pageDescription: `Barbell Back Squat insights and free tools.`,
+    pageDescription: `Barbell Back Squat insights, strength levels, and free tools.`,
     pageKeywords:
       "Barbell, back squat, squat, high bar, low bar, strength levels, back squat performance",
     ogImageURL:
@@ -25,8 +25,9 @@ export const bigFourLiftInsightData = [
     canonicalURL:
       "https://www.strengthjourneys.xyz/barbell-bench-press-insights",
     pageTitle: "Barbell Bench Press - Building Upper Body Dominance",
-    pageDescription: `Barbell Bench Press insights and free tools.`,
-    pageKeywords: "Barbell, bench press, upper body, strength levels",
+    pageDescription: `Barbell Bench Press insights, strength levels and free tools.`,
+    pageKeywords:
+      "Barbell, bench press, upper body, strength levels, NFL combine test",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_bench_insights.png",
     liftQuote:
@@ -45,7 +46,7 @@ export const bigFourLiftInsightData = [
     liftType: "Deadlift",
     canonicalURL: "https://www.strengthjourneys.xyz/barbell-deadlift-insights",
     pageTitle: "Barbell Deadlift - Building Power from the Ground Up",
-    pageDescription: `Barbell Deadlift insights and free tools.`,
+    pageDescription: `Barbell Deadlift insights, strength levels and free tools.`,
     pageKeywords: "Barbell, deadlift, back pain, strength levels",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_deadlift_insights.png",
@@ -65,7 +66,7 @@ export const bigFourLiftInsightData = [
     canonicalURL:
       "https://www.strengthjourneys.xyz/barbell-strict-press-insights",
     pageTitle: "Barbell Strict Press - For When Your Suitcase Just Won't Fit",
-    pageDescription: `Barbell Strict Press insights and free tools.`,
+    pageDescription: `Barbell Strict Press insights, strength levels and free tools.`,
     pageKeywords: "Barbell, strict press, overhead press, strength levels",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_strict_press_insights.png",

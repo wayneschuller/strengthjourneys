@@ -121,6 +121,13 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
 
   const unitType = isMetric ? "kg" : "lb";
 
+  const bigFourURLs = {
+    "Back Squat": "/barbell-squat-insights",
+    "Bench Press": "/barbell-bench-press-insights",
+    Deadlift: "/barbell-deadlift-insights",
+    "Strict Press": "/barbell-strict-press-insights",
+  };
+
   const liftTypesFromStandards = Object.keys(standards);
 
   return (
@@ -224,7 +231,11 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
           <div className="flex flex-col gap-4 md:ml-4">
             {liftTypesFromStandards.map((liftType) => (
               <div key={liftType} className="">
-                <h2 className="text-lg font-bold">{liftType} Standards:</h2>
+                <Link href={bigFourURLs[liftType]}>
+                  <h2 className="text-lg font-bold hover:underline">
+                    {liftType} Standards:
+                  </h2>
+                </Link>
                 <StandardsSlider liftType={liftType} isYearly={isYearly} />
                 <Separator />
               </div>

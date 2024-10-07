@@ -155,7 +155,7 @@ function BarbellInsightsMain({
   };
   const bigFourDiagrams = {
     // "Back Squat": "/back_squat.svg",
-    "Back Squat": null,
+    "Back Squat": "/back_squat.svg",
     "Bench Press": "/bench_press.svg",
     Deadlift: "/deadlift.svg",
     "Strict Press": "/strict_press.svg",

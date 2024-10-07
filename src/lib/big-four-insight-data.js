@@ -71,7 +71,7 @@ export const bigFourLiftInsightData = [
     pageDescription: `Barbell Strict Press insights and free tools.`,
     pageKeywords: "Barbell, strict press, overhead press, strength levels",
     ogImageURL:
-      "https://www.strengthjourneys.xyz/strength_journeys_press_insights.png",
+      "https://www.strengthjourneys.xyz/strength_journeys_strict_press_insights.png",
     // liftIcon: Luggage,
     liftQuote:
       "The strict press is a whole-body, multi-joint exercise that beautifully recapitulates a fundamental human movement pattern: lifting a heavy object overhead, as high as possible.",

@@ -153,20 +153,37 @@ function BarbellInsightsMain({
     Deadlift: Skull,
     "Strict Press": Luggage,
   };
+  const bigFourDiagrams = {
+    "Back Squat": "/back_squat.svg",
+    "Bench Press": "/bench_press.svg",
+    Deadlift: "/deadlift.svg",
+    "Strict Press": "/strict_press.svg",
+  };
 
   return (
     <div className="container">
-      <PageHeader>
-        <PageHeaderHeading icon={bigFourIcons[liftInsightData.liftType]}>
-          {liftInsightData.pageTitle}
-        </PageHeaderHeading>
-        <PageHeaderDescription className="max-w-full">
-          <div className="italic">{liftInsightData.liftQuote}</div>
-          <div>{liftInsightData.liftQuoteAuthor}</div>
-        </PageHeaderDescription>
+      <PageHeader className="flex flex-col justify-center gap-2 pb-2 pr-0 md:flex-row md:gap-5">
+        <div className="flex flex-1 flex-col">
+          <PageHeaderHeading icon={bigFourIcons[liftInsightData.liftType]}>
+            {liftInsightData.pageTitle}
+          </PageHeaderHeading>
+          <PageHeaderDescription className="max-w-[70vw]">
+            <div className="italic">{liftInsightData.liftQuote}</div>
+            <div>{liftInsightData.liftQuoteAuthor}</div>
+          </PageHeaderDescription>
+        </div>
+        <div className="max-w-48 lg:max-w-[10vw]">
+          <img
+            // src="/bench_press.svg"
+            src={bigFourDiagrams[liftInsightData.liftType]}
+            // alt="Bench Press Diagram"
+            alt={`${liftInsightData.liftType} Diagram`}
+            className="mx-auto"
+          />
+        </div>
       </PageHeader>
 
-      <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <div className="col-span-3">
           <StrengthLevelsCard liftType={liftInsightData.liftType} />
         </div>

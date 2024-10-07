@@ -154,7 +154,8 @@ function BarbellInsightsMain({
     "Strict Press": Luggage,
   };
   const bigFourDiagrams = {
-    "Back Squat": "/back_squat.svg",
+    // "Back Squat": "/back_squat.svg",
+    "Back Squat": null,
     "Bench Press": "/bench_press.svg",
     Deadlift: "/deadlift.svg",
     "Strict Press": "/strict_press.svg",
@@ -172,15 +173,17 @@ function BarbellInsightsMain({
             <div>{liftInsightData.liftQuoteAuthor}</div>
           </PageHeaderDescription>
         </div>
-        <div className="max-w-48 lg:max-w-[10vw]">
-          <img
-            // src="/bench_press.svg"
-            src={bigFourDiagrams[liftInsightData.liftType]}
-            // alt="Bench Press Diagram"
-            alt={`${liftInsightData.liftType} Diagram`}
-            className="mx-auto"
-          />
-        </div>
+        {bigFourDiagrams[liftInsightData.liftType] && (
+          <div className="max-w-48 lg:max-w-[10vw]">
+            <img
+              // src="/bench_press.svg"
+              src={bigFourDiagrams[liftInsightData.liftType]}
+              // alt="Bench Press Diagram"
+              alt={`${liftInsightData.liftType} Diagram`}
+              className="mx-auto"
+            />
+          </div>
+        )}
       </PageHeader>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">

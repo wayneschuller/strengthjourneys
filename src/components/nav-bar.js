@@ -3,11 +3,11 @@
 "use client";
 import Image from "next/image";
 import Script from "next/script";
+import Link from "next/link";
 import * as React from "react";
 import { useState, useEffect, useContext } from "react";
 import { useSession, signIn, sgnOut } from "next-auth/react";
 import { useLocalStorage } from "usehooks-ts";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/dark-mode-toggle";
@@ -340,7 +340,7 @@ function BigFourBarbellInsightsMenu() {
   const pathname = usePathname();
   const lifts = bigFourLiftInsightData;
 
-  const icons = {
+  const bigFourIcons = {
     "Back Squat": <Crown className="h-5 w-5" />,
     "Bench Press": <Shield className="h-5 w-5" />,
     Deadlift: <Skull className="h-5 w-5" />,
@@ -352,7 +352,7 @@ function BigFourBarbellInsightsMenu() {
       return (
         <li>
           <NavigationMenuLink asChild>
-            <a
+            <Link
               ref={ref}
               className={cn(
                 "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
@@ -361,13 +361,13 @@ function BigFourBarbellInsightsMenu() {
               {...props}
             >
               <div className="flex flex-row items-center gap-2 align-middle">
-                {icons[title]} {/* Icon based on lift title */}
+                {bigFourIcons[title]} {/* Icon based on lift title */}
                 <div className="text-sm font-medium leading-none">{title}</div>
               </div>
               <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
                 {children}
               </p>
-            </a>
+            </Link>
           </NavigationMenuLink>
         </li>
       );

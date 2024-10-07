@@ -149,7 +149,36 @@ export function GettingStartedCard() {
           >
             barbell
           </a>
-          . Squat, bench, deadlift. Usually inside a gym.
+          . <br></br>
+          e.g.:{" "}
+          <Link
+            href="/barbell-squat-insights"
+            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          >
+            Squat
+          </Link>
+          ,{" "}
+          <Link
+            href="/barbell-bench-press-insights"
+            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          >
+            bench
+          </Link>
+          ,{" "}
+          <Link
+            href="/barbell-deadlift-insights"
+            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          >
+            deadlift
+          </Link>
+          ,{" "}
+          <Link
+            href="/barbell-strict-press-insights"
+            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          >
+            strict press
+          </Link>
+          . Usually inside a gym.
         </div>
         <div className="flex justify-center">
           <ArrowBigRight

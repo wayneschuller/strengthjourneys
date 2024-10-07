@@ -23,10 +23,22 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
+import { Crown, Shield, Skull, Luggage } from "lucide-react";
+import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const logoWidth = 150;
+
+  const lifts = bigFourLiftInsightData;
+
+  const bigFourIcons = {
+    "Back Squat": Crown,
+    "Bench Press": Shield,
+    Deadlift: Skull,
+    "Strict Press": Luggage,
+  };
 
   const NavLink = ({ href, title, IconComponent }) => (
     <SheetClose asChild>
@@ -81,6 +93,14 @@ export function MobileNav() {
           <div className="flex flex-1 flex-col gap-4 text-lg font-medium tracking-tight">
             {featurePages.map((item) => (
               <NavLink key={item.href} {...item} />
+            ))}
+            {lifts.map((lift) => (
+              <NavLink
+                key={lift.slug}
+                href={lift.slug}
+                title={`${lift.liftType} Insights`}
+                IconComponent={bigFourIcons[lift.liftType]}
+              />
             ))}
           </div>
         </div>

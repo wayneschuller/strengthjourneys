@@ -684,6 +684,7 @@ export const getStandardRatingString = (
 ) => {
   const bodyWeightKG = isMetric ? bodyWeight : Math.round(bodyWeight / 2.204);
 
+  // FIXME: We don't need to call this, we should be getting the standard from the custom AthelteBioData hook
   let standard = interpolateStandardKG(
     age,
     bodyWeightKG,

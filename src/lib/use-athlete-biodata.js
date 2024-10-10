@@ -22,7 +22,7 @@ export const useAthleteBioData = () => {
   );
   const [liftType, setLiftType] = useStateFromQueryOrLocalStorage(
     "AthleteLiftType",
-    "",
+    "Back Squat",
   );
   const [standards, setStandards] = useState({});
 

@@ -141,6 +141,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
   const [parent] = useAutoAnimate(/* optional config */);
   const isClient = useIsClient();
 
+  // Turn on advanced analysis if user has advanced variables in query string
   useEffect(() => {
     if (router.isReady) {
       const { AthleteLiftType, AthleteSex, AtheleteBodyWeight, AthleteAge } =

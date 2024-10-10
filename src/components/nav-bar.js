@@ -395,7 +395,7 @@ function BigFourBarbellInsightsMenu() {
                 <span className="hidden xl:block">Big Four Barbell Lifts</span>
               </>
             </NavigationMenuTrigger>
-            <NavigationMenuContent>
+            <NavigationMenuContent className="">
               <ul className="grid w-[400px] gap-3 p-4 md:w-[400px] md:grid-cols-2 lg:w-[500px]">
                 {lifts.map((lift) => (
                   <ListItem

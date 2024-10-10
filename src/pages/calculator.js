@@ -143,7 +143,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
 
   // Turn on advanced analysis if user has advanced variables in query string
   useEffect(() => {
-    if (router.isReady) {
+    if (router.isReady && router.query) {
       const { AthleteLiftType, AthleteSex, AthleteBodyWeight, AthleteAge } =
         router.query;
       if (AthleteLiftType && AthleteSex && AthleteBodyWeight && AthleteAge) {
@@ -183,7 +183,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
     updateAdvancedAnalysisQueryParams(checked);
   };
 
-  // FIXME: put inline
   const handleWeightSliderChange = (value) => {
     let newWeight = value[0];
 

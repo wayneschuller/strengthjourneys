@@ -239,14 +239,18 @@ function E1RMCalculatorMain({ relatedArticles }) {
       setIsMetric(true);
     }
 
-    // setWeight(newWeight);
-    // if (isAdvancedAnalysis) setBodyWeight(newBodyWeight);
-
     // Delay setting weight and bodyWeight states by 100ms
+    // This hack allows the query params to update the above isMetric value before we update other values
+    // We have race conditions with router updates and useEffects - please don't judge me, this works
     setTimeout(() => {
       setWeight(newWeight);
-      if (isAdvancedAnalysis) setBodyWeight(newBodyWeight);
     }, 100); // Adjust delay as needed
+
+    if (isAdvancedAnalysis) {
+      setTimeout(() => {
+        setBodyWeight(newBodyWeight);
+      }, 200); // Adjust delay as needed
+    }
   };
 
   const handleCopyToClipboard = async () => {

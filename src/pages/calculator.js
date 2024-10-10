@@ -239,8 +239,14 @@ function E1RMCalculatorMain({ relatedArticles }) {
       setIsMetric(true);
     }
 
-    setWeight(newWeight);
-    if (isAdvancedAnalysis) setBodyWeight(newBodyWeight);
+    // setWeight(newWeight);
+    // if (isAdvancedAnalysis) setBodyWeight(newBodyWeight);
+
+    // Delay setting weight and bodyWeight states by 100ms
+    setTimeout(() => {
+      setWeight(newWeight);
+      if (isAdvancedAnalysis) setBodyWeight(newBodyWeight);
+    }, 100); // Adjust delay as needed
   };
 
   const handleCopyToClipboard = async () => {

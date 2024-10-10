@@ -17,7 +17,7 @@ export const useAthleteBioData = () => {
   );
   const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
   const [bodyWeight, setBodyWeight] = useStateFromQueryOrLocalStorage(
-    "AtheleteBodyWeight",
+    "AthleteBodyWeight",
     200,
   );
   const [liftType, setLiftType] = useStateFromQueryOrLocalStorage(

@@ -152,6 +152,37 @@ function E1RMCalculatorMain({ relatedArticles }) {
     }
   }, [router.isReady, router.query, setIsAdvancedAnalysis]);
 
+  const updateAdvancedAnalysisQueryParams = (isEnabled) => {
+    const { query } = router;
+    const updatedQuery = { ...query };
+
+    if (isEnabled) {
+      updatedQuery.AthleteLiftType = liftType;
+      updatedQuery.AthleteSex = sex;
+      updatedQuery.AthleteBodyWeight = bodyWeight;
+      updatedQuery.AthleteAge = age;
+    } else {
+      delete updatedQuery.AthleteLiftType;
+      delete updatedQuery.AthleteSex;
+      delete updatedQuery.AthleteBodyWeight;
+      delete updatedQuery.AthleteAge;
+    }
+
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: updatedQuery,
+      },
+      undefined,
+      { shallow: true },
+    );
+  };
+
+  const handleAdvancedAnalysisChange = (checked) => {
+    setIsAdvancedAnalysis(checked);
+    updateAdvancedAnalysisQueryParams(checked);
+  };
+
   // FIXME: put inline
   const handleWeightSliderChange = (value) => {
     let newWeight = value[0];
@@ -391,7 +422,8 @@ function E1RMCalculatorMain({ relatedArticles }) {
                 <Checkbox
                   id="advanced"
                   checked={isAdvancedAnalysis}
-                  onCheckedChange={setIsAdvancedAnalysis}
+                  // onCheckedChange={setIsAdvancedAnalysis}
+                  onCheckedChange={handleAdvancedAnalysisChange}
                 />
                 <label
                   htmlFor="advanced"

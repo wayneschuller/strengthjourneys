@@ -152,6 +152,18 @@ function E1RMCalculatorMain({ relatedArticles }) {
     }
   }, [router.isReady, router.query, setIsAdvancedAnalysis]);
 
+  // Helper function
+  const updateQueryParams = (updatedParams) => {
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: { ...router.query, ...updatedParams },
+      },
+      undefined,
+      { shallow: true },
+    );
+  };
+
   const updateAdvancedAnalysisQueryParams = (isEnabled) => {
     const { query } = router;
     const updatedQuery = { ...query };
@@ -228,7 +240,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
     }
 
     setWeight(newWeight);
-    setBodyWeight(newBodyWeight);
+    if (isAdvancedAnalysis) setBodyWeight(newBodyWeight);
   };
 
   const handleCopyToClipboard = async () => {

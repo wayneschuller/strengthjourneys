@@ -144,13 +144,44 @@ function E1RMCalculatorMain({ relatedArticles }) {
   // Turn on advanced analysis if user has advanced variables in query string
   useEffect(() => {
     if (router.isReady) {
-      const { AthleteLiftType, AthleteSex, AtheleteBodyWeight, AthleteAge } =
+      const { AthleteLiftType, AthleteSex, AthleteBodyWeight, AthleteAge } =
         router.query;
-      if (AthleteLiftType && AthleteSex && AtheleteBodyWeight && AthleteAge) {
+      if (AthleteLiftType && AthleteSex && AthleteBodyWeight && AthleteAge) {
         setIsAdvancedAnalysis(true);
       }
     }
   }, [router.isReady, router.query, setIsAdvancedAnalysis]);
+
+  const updateAdvancedAnalysisQueryParams = (isEnabled) => {
+    const { query } = router;
+    const updatedQuery = { ...query };
+
+    if (isEnabled) {
+      updatedQuery.AthleteLiftType = liftType;
+      updatedQuery.AthleteSex = sex;
+      updatedQuery.AthleteBodyWeight = bodyWeight;
+      updatedQuery.AthleteAge = age;
+    } else {
+      delete updatedQuery.AthleteLiftType;
+      delete updatedQuery.AthleteSex;
+      delete updatedQuery.AthleteBodyWeight;
+      delete updatedQuery.AthleteAge;
+    }
+
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: updatedQuery,
+      },
+      undefined,
+      { shallow: true },
+    );
+  };
+
+  const handleAdvancedAnalysisChange = (checked) => {
+    setIsAdvancedAnalysis(checked);
+    updateAdvancedAnalysisQueryParams(checked);
+  };
 
   // FIXME: put inline
   const handleWeightSliderChange = (value) => {
@@ -391,7 +422,8 @@ function E1RMCalculatorMain({ relatedArticles }) {
                 <Checkbox
                   id="advanced"
                   checked={isAdvancedAnalysis}
-                  onCheckedChange={setIsAdvancedAnalysis}
+                  // onCheckedChange={setIsAdvancedAnalysis}
+                  onCheckedChange={handleAdvancedAnalysisChange}
                 />
                 <label
                   htmlFor="advanced"

@@ -143,7 +143,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
 
   // Turn on advanced analysis if user has advanced variables in query string
   useEffect(() => {
-    if (router.isReady) {
+    if (router.isReady && router.query) {
       const { AthleteLiftType, AthleteSex, AthleteBodyWeight, AthleteAge } =
         router.query;
       if (AthleteLiftType && AthleteSex && AthleteBodyWeight && AthleteAge) {
@@ -151,6 +151,18 @@ function E1RMCalculatorMain({ relatedArticles }) {
       }
     }
   }, [router.isReady, router.query, setIsAdvancedAnalysis]);
+
+  // Helper function
+  const updateQueryParams = (updatedParams) => {
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: { ...router.query, ...updatedParams },
+      },
+      undefined,
+      { shallow: true },
+    );
+  };
 
   const updateAdvancedAnalysisQueryParams = (isEnabled) => {
     const { query } = router;
@@ -183,7 +195,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
     updateAdvancedAnalysisQueryParams(checked);
   };
 
-  // FIXME: put inline
   const handleWeightSliderChange = (value) => {
     let newWeight = value[0];
 
@@ -228,8 +239,14 @@ function E1RMCalculatorMain({ relatedArticles }) {
       setIsMetric(true);
     }
 
-    setWeight(newWeight);
-    setBodyWeight(newBodyWeight);
+    // setWeight(newWeight);
+    // if (isAdvancedAnalysis) setBodyWeight(newBodyWeight);
+
+    // Delay setting weight and bodyWeight states by 100ms
+    setTimeout(() => {
+      setWeight(newWeight);
+      if (isAdvancedAnalysis) setBodyWeight(newBodyWeight);
+    }, 100); // Adjust delay as needed
   };
 
   const handleCopyToClipboard = async () => {

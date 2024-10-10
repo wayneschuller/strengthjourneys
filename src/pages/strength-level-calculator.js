@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
-import Link from "next/link";
+import { devLog } from "@/lib/processing-utils";
 import { NextSeo } from "next-seo";
 import { sanityIOClient } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
@@ -118,6 +119,8 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
   } = useAthleteBioData();
   const { status: authStatus } = useSession();
   const [isYearly, setIsYearly] = useState(false);
+
+  devLog(standards[`Back Squat`].beginner);
 
   const unitType = isMetric ? "kg" : "lb";
 

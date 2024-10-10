@@ -26,6 +26,8 @@ export const useAthleteBioData = () => {
   );
   const [standards, setStandards] = useState({});
 
+  // FIXME: It may be better to convert the standards to lb in the component rather than in the state
+
   useEffect(() => {
     const bodyWeightKG = isMetric
       ? bodyWeight

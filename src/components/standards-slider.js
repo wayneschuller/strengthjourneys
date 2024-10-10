@@ -31,6 +31,7 @@ export function StandardsSlider({ liftType, isYearly = false }) {
   if (!originalData) return null;
   const liftTypeStandards = convertLabels(originalData);
   // devLog(liftTypeStandards);
+  devLog(standards[`Back Squat`].beginner);
 
   const unitType = isMetric ? "kg" : "lb";
   const maxLift = originalData.elite; // Max value of slider

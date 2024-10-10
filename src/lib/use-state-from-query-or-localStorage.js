@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 
 // This hook will provide state from the query params first and localstorage second and defaultValue third.
 // Setting will update both query params and localstorage.
+// FIXME: try to avoid inserting defaults into the query?
 
 export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
   const router = useRouter();

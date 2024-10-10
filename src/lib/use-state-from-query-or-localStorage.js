@@ -48,7 +48,11 @@ export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
   }, [router.isReady, key, defaultValue]);
 
   useEffect(() => {
-    if (!isInitialized) return;
+    // if (!isInitialized) return;
+    // Only update the query parameter if the state differs from the default value
+    // and the initial loading process is complete. The !isInitialized check
+    // ensures we avoid unnecessary updates to the URL and localStorage during initial setup.
+    if (!isInitialized || state === defaultValue) return;
 
     const newQueryParams = { ...router.query, [key]: state };
 

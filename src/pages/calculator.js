@@ -144,9 +144,9 @@ function E1RMCalculatorMain({ relatedArticles }) {
   // Turn on advanced analysis if user has advanced variables in query string
   useEffect(() => {
     if (router.isReady) {
-      const { AthleteLiftType, AthleteSex, AtheleteBodyWeight, AthleteAge } =
+      const { AthleteLiftType, AthleteSex, AthleteBodyWeight, AthleteAge } =
         router.query;
-      if (AthleteLiftType && AthleteSex && AtheleteBodyWeight && AthleteAge) {
+      if (AthleteLiftType && AthleteSex && AthleteBodyWeight && AthleteAge) {
         setIsAdvancedAnalysis(true);
       }
     }

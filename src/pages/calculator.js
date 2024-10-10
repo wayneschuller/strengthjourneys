@@ -182,7 +182,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
     let newWeight;
     let newBodyWeight;
 
-    // devLog(`toggle is metric running...`);
+    devLog(`toggle is metric running...`);
 
     if (!isMetric) {
       // Going from kg to lb

@@ -42,6 +42,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage, useIsClient } from "usehooks-ts";
 
+import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
 import { Calculator } from "lucide-react";
 
@@ -114,10 +115,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
   const { toast } = useToast();
   const [reps, setReps] = useStateFromQueryOrLocalStorage("reps", 5); // Will be a string
   const [weight, setWeight] = useStateFromQueryOrLocalStorage("weight", 225); // Will be a string
-  const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
-    "calcIsMetric",
-    false,
-  ); // Will be a string
   const [e1rmFormula, setE1rmFormula] = useStateFromQueryOrLocalStorage(
     "formula",
     "Brzycki",
@@ -127,16 +124,20 @@ function E1RMCalculatorMain({ relatedArticles }) {
     false,
     { initializeWithValue: false },
   );
-  const [bodyWeight, setBodyWeight] = useStateFromQueryOrLocalStorage(
-    "AtheleteBodyWeight",
-    200,
-  );
-  const [liftType, setLiftType] = useStateFromQueryOrLocalStorage(
-    "AthleteLiftType",
-    "",
-  );
-  const [age, setAge] = useStateFromQueryOrLocalStorage("AthleteAge", 30);
-  const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
+  const {
+    age,
+    setAge,
+    isMetric,
+    setIsMetric,
+    sex,
+    setSex,
+    bodyWeight,
+    setBodyWeight,
+    standards,
+    liftType,
+    setLiftType,
+  } = useAthleteBioData();
+
   const [parent] = useAutoAnimate(/* optional config */);
   const isClient = useIsClient();
 
@@ -181,7 +182,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
     let newWeight;
     let newBodyWeight;
 
-    // devLog(`toggle is metric running...`);
+    devLog(`toggle is metric running...`);
 
     if (!isMetric) {
       // Going from kg to lb
@@ -683,6 +684,7 @@ export const getStandardRatingString = (
 ) => {
   const bodyWeightKG = isMetric ? bodyWeight : Math.round(bodyWeight / 2.204);
 
+  // FIXME: We don't need to call this, we should be getting the standard from the custom AthelteBioData hook
   let standard = interpolateStandardKG(
     age,
     bodyWeightKG,

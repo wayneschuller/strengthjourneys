@@ -77,7 +77,12 @@ export const useAthleteBioData = () => {
       setIsMetric(true);
     }
 
-    setBodyWeight(newBodyWeight);
+    // Delay setting bodyWeight state by 100ms
+    // This hack allows the query params to update the above isMetric value before we update other values
+    // We have race conditions with router updates and useEffects - please don't judge me, this works
+    setTimeout(() => {
+      setBodyWeight(newBodyWeight);
+    }, 100); // Adjust delay as needed
   };
 
   return {

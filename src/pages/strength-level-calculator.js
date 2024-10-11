@@ -120,7 +120,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
   const { status: authStatus } = useSession();
   const [isYearly, setIsYearly] = useState(false);
 
-  devLog(standards[`Back Squat`].beginner);
+  // devLog(standards[`Back Squat`].beginner);
 
   const unitType = isMetric ? "kg" : "lb";
 
@@ -239,7 +239,12 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
                     {liftType} Standards:
                   </h2>
                 </Link>
-                <StandardsSlider liftType={liftType} isYearly={isYearly} />
+                <StandardsSlider
+                  liftType={liftType}
+                  isYearly={isYearly}
+                  standards={standards}
+                  isMetric={isMetric}
+                />
                 <Separator />
               </div>
             ))}

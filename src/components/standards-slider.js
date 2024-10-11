@@ -5,26 +5,18 @@ import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 
-export function StandardsSlider({ liftType, isYearly = false }) {
+export function StandardsSlider({
+  liftType,
+  isYearly = false,
+  isMetric,
+  standards,
+}) {
   const {
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
-
-  const {
-    age,
-    setAge,
-    isMetric,
-    setIsMetric,
-    sex,
-    setSex,
-    bodyWeight,
-    setBodyWeight,
-    standards,
-    toggleIsMetric,
-  } = useAthleteBioData();
 
   if (!standards) return null;
   const originalData = standards[liftType];

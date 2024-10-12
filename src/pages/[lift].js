@@ -304,7 +304,7 @@ function HowStrong({ liftType }) {
 }
 
 function StrengthLevelsCard({ liftType }) {
-  const { age, sex, bodyWeight, isMetric } = useAthleteBioData();
+  const { age, sex, bodyWeight, standards, isMetric } = useAthleteBioData();
   const unitType = isMetric ? "kg" : "lb";
 
   return (
@@ -321,7 +321,12 @@ function StrengthLevelsCard({ liftType }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <StandardsSlider liftType={liftType} />
+        <StandardsSlider
+          liftType={liftType}
+          // isYearly={isYearly}
+          standards={standards}
+          isMetric={isMetric}
+        />
       </CardContent>
     </Card>
   );

@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
-import { BicepsFlexed } from "lucide-react";
+import { Anvil } from "lucide-react";
 import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 import { StandardsSlider } from "@/components/standards-slider";
 
@@ -128,83 +128,88 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     "Strict Press": "/barbell-strict-press-insights",
   };
 
+  const toKg = (lbs) => (lbs * 0.453592).toFixed(1); // Converts lbs to kg
+
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading icon={BicepsFlexed}>
-          Strength Level Calculator
+        <PageHeaderHeading icon={Anvil}>
+          1000lb Club Calculator
         </PageHeaderHeading>
         <PageHeaderDescription>
-          How strong am I? Estimate your strength level based on age, gender,
-          and bodyweight. <SignInInvite />
+          How strong am I? Am I in the 1000lb Club? Use our 1000lb Club
+          calculator to test if you have joined the hallowed order of strength.{" "}
+          <SignInInvite />
         </PageHeaderDescription>
       </PageHeader>
       <Card className="pt-4">
         <CardContent className="">
-          {/* Squat Slider */}
-          <div>
-            <label className="text-lg font-semibold">
-              Back Squat: {squat} lbs
-            </label>
-            <Slider
-              value={[squat]}
-              min={0}
-              max={500}
-              step={5}
-              onValueChange={([value]) => setSquat(value)}
-              className="mt-2"
-            />
-          </div>
+          <div className="space-y-6">
+            {/* Squat Slider */}
+            <div>
+              <label className="text-lg font-semibold">
+                Back Squat: {squat} lbs ({toKg(squat)}kg)
+              </label>
+              <Slider
+                value={[squat]}
+                min={0}
+                max={700}
+                step={5}
+                onValueChange={([value]) => setSquat(value)}
+                className="mt-2"
+              />
+            </div>
 
-          {/* Bench Slider */}
-          <div>
-            <label className="text-lg font-semibold">
-              Bench Press: {bench} lbs
-            </label>
-            <Slider
-              value={[bench]}
-              min={0}
-              max={500}
-              step={5}
-              onValueChange={([value]) => setBench(value)}
-              className="mt-2"
-            />
-          </div>
+            {/* Bench Slider */}
+            <div>
+              <label className="text-lg font-semibold">
+                Bench Press: {bench} lbs ({toKg(bench)}kg)
+              </label>
+              <Slider
+                value={[bench]}
+                min={0}
+                max={700}
+                step={5}
+                onValueChange={([value]) => setBench(value)}
+                className="mt-2"
+              />
+            </div>
 
-          {/* Deadlift Slider */}
-          <div>
-            <label className="text-lg font-semibold">
-              Deadlift: {deadlift} lbs
-            </label>
-            <Slider
-              value={[deadlift]}
-              min={0}
-              max={500}
-              step={5}
-              onValueChange={([value]) => setDeadlift(value)}
-              className="mt-2"
-            />
-          </div>
+            {/* Deadlift Slider */}
+            <div>
+              <label className="text-lg font-semibold">
+                Deadlift: {deadlift} lbs ({toKg(deadlift)}kg)
+              </label>
+              <Slider
+                value={[deadlift]}
+                min={0}
+                max={700}
+                step={5}
+                onValueChange={([value]) => setDeadlift(value)}
+                className="mt-2"
+              />
+            </div>
 
-          {/* Total Display */}
-          <div className="mt-4 text-3xl font-bold">Total: {total} lbs</div>
+            {/* Total Display */}
+            <div className="mt-4 text-3xl font-bold">Total: {total} lbs</div>
 
-          {/* 1000lb Club Indicator */}
-          <div
-            className={cn("text-lg font-semibold", {
-              "text-green-600": inClub,
-              "text-gray-500": !inClub,
-            })}
-          >
-            {inClub
-              ? "Congratulations! You're in the 1000lb Club!"
-              : "Keep lifting to reach 1000 lbs!"}
+            {/* 1000lb Club Indicator */}
+            <div
+              className={cn("text-lg font-semibold", {
+                "text-green-600": inClub,
+                "text-gray-500": !inClub,
+              })}
+            >
+              {inClub
+                ? "Congratulations! You're in the 1000lb Club!"
+                : "Keep lifting to reach 1000 lbs!"}
+            </div>
           </div>
         </CardContent>
         <CardFooter className="text-sm">
           <div className="flex flex-col">
             <p className="">
-              To see a strength level ratings per lift, see our
+              To see your strength level ratings per lift, see our{" "}
               <Link
                 href="/strength-level-calculator"
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"

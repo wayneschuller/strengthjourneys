@@ -296,3 +296,22 @@ export function GettingStartedCard() {
     </Card>
   );
 }
+export const SignInInvite = () => {
+  const { status: authStatus } = useSession();
+
+  // FIXME: add in a check for ssid and prompt for file picker if needed.
+  if (authStatus === "authenticated") return null;
+
+  return (
+    <div>
+      <button
+        onClick={() => signIn("google")}
+        className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+      >
+        Sign in
+      </button>{" "}
+      and link your Google Sheet lifting data to see your unique ratings for
+      each lift.
+    </div>
+  );
+};

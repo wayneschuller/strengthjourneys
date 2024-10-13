@@ -7,7 +7,9 @@ import { devLog } from "@/lib/processing-utils";
 import { NextSeo } from "next-seo";
 import { sanityIOClient } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
+import { cn } from "@/lib/utils";
 import { UnitChooser } from "@/components/unit-type-chooser";
+import { SignInInvite } from "@/components/instructions-cards";
 import {
   Card,
   CardContent,
@@ -97,28 +99,24 @@ export default function ThousandPoundClubCalculator({ relatedArticles }) {
         ]}
       />
       {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
-      <StrengthLevelCalculatorMain relatedArticles={relatedArticles} />
+      <ThousandPoundClubCalculatorMain relatedArticles={relatedArticles} />
     </>
   );
 }
 
 // Strength Level Calculator
 function ThousandPoundClubCalculatorMain({ relatedArticles }) {
-  const {
-    age,
-    setAge,
-    isMetric,
-    setIsMetric,
-    sex,
-    setSex,
-    bodyWeight,
-    setBodyWeight,
-    standards,
-    toggleIsMetric,
-  } = useAthleteBioData();
   const { status: authStatus } = useSession();
   const [isYearly, setIsYearly] = useState(false);
 
+  const [squat, setSquat] = useState(0);
+  const [bench, setBench] = useState(0);
+  const [deadlift, setDeadlift] = useState(0);
+
+  const total = squat + bench + deadlift;
+  const inClub = total >= 1000;
+
+  const isMetric = false;
   // devLog(standards[`Back Squat`].beginner);
 
   const unitType = isMetric ? "kg" : "lb";
@@ -129,8 +127,6 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     Deadlift: "/barbell-deadlift-insights",
     "Strict Press": "/barbell-strict-press-insights",
   };
-
-  const liftTypesFromStandards = Object.keys(standards);
 
   return (
     <div className="container">
@@ -145,134 +141,77 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       </PageHeader>
       <Card className="pt-4">
         <CardContent className="">
-          <div className="mb-10 flex flex-col items-start gap-4 md:mr-10 md:flex-row md:gap-8">
-            <div className="md:min-w-1/5 flex w-full flex-col">
-              <div className="py-2">
-                <Label htmlFor="age" className="text-xl">
-                  Age: {age}
-                </Label>
-              </div>
-              <Slider
-                min={13}
-                max={100}
-                step={1}
-                value={[age]}
-                onValueChange={(values) => setAge(values[0])}
-                className="mt-2 min-w-40 flex-1"
-                aria-label="Age"
-                aria-labelledby="age"
-              />
-            </div>
-            <div className="md:min-w-1/5 flex h-[4rem] w-full flex-col justify-between">
-              <div className="flex flex-row items-center">
-                <Label htmlFor="weight" className="mr-2 text-xl">
-                  Bodyweight:
-                </Label>
-                <Label
-                  htmlFor="weight"
-                  className="mr-2 w-[3rem] text-right text-xl"
-                >
-                  {bodyWeight}
-                </Label>
-                <UnitChooser
-                  isMetric={isMetric}
-                  onSwitchChange={toggleIsMetric}
-                />
-              </div>
-              <Slider
-                min={isMetric ? 40 : 100}
-                max={isMetric ? 230 : 500}
-                step={1}
-                value={[bodyWeight]}
-                onValueChange={(values) => setBodyWeight(values[0])}
-                className="mt-2 min-w-40 flex-1"
-                aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
-              />
-            </div>
-            <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
-              <Label htmlFor="sex" className="text-xl">
-                Sex:
-              </Label>
-              <Select
-                id="gender"
-                value={sex}
-                onValueChange={(value) => setSex(value)}
-                className="min-w-52 text-xl"
-              >
-                <SelectTrigger aria-label="Select sex">
-                  <SelectValue placeholder="Select sex" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {authStatus === "authenticated" && (
-              <div>
-                Select PR Period:
-                <div className="mt-1 flex flex-row gap-4">
-                  <RadioGroup
-                    value={isYearly ? "true" : "false"} // Set the value as string for RadioGroupItem
-                    onValueChange={(val) => setIsYearly(val === "true")} // Convert to boolean
-                    className="flex space-x-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="false" id="lifetime" />
-                      <Label htmlFor="lifetime">Lifetime</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="true" id="yearly" />
-                      <Label htmlFor="yearly">12 Months</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              </div>
-            )}
+          {/* Squat Slider */}
+          <div>
+            <label className="text-lg font-semibold">
+              Back Squat: {squat} lbs
+            </label>
+            <Slider
+              value={[squat]}
+              min={0}
+              max={500}
+              step={5}
+              onValueChange={([value]) => setSquat(value)}
+              className="mt-2"
+            />
           </div>
-          <div className="flex flex-col gap-4 md:ml-4">
-            {liftTypesFromStandards.map((liftType) => (
-              <div key={liftType} className="">
-                <Link href={bigFourURLs[liftType]}>
-                  <h2 className="text-lg font-bold hover:underline">
-                    {liftType} Standards:
-                  </h2>
-                </Link>
-                <StandardsSlider
-                  liftType={liftType}
-                  isYearly={isYearly}
-                  standards={standards}
-                  isMetric={isMetric}
-                />
-                <Separator />
-              </div>
-            ))}
+
+          {/* Bench Slider */}
+          <div>
+            <label className="text-lg font-semibold">
+              Bench Press: {bench} lbs
+            </label>
+            <Slider
+              value={[bench]}
+              min={0}
+              max={500}
+              step={5}
+              onValueChange={([value]) => setBench(value)}
+              className="mt-2"
+            />
+          </div>
+
+          {/* Deadlift Slider */}
+          <div>
+            <label className="text-lg font-semibold">
+              Deadlift: {deadlift} lbs
+            </label>
+            <Slider
+              value={[deadlift]}
+              min={0}
+              max={500}
+              step={5}
+              onValueChange={([value]) => setDeadlift(value)}
+              className="mt-2"
+            />
+          </div>
+
+          {/* Total Display */}
+          <div className="mt-4 text-3xl font-bold">Total: {total} lbs</div>
+
+          {/* 1000lb Club Indicator */}
+          <div
+            className={cn("text-lg font-semibold", {
+              "text-green-600": inClub,
+              "text-gray-500": !inClub,
+            })}
+          >
+            {inClub
+              ? "Congratulations! You're in the 1000lb Club!"
+              : "Keep lifting to reach 1000 lbs!"}
           </div>
         </CardContent>
         <CardFooter className="text-sm">
           <div className="flex flex-col">
             <p className="">
-              {" "}
-              To see a strength rating for a particular set, e.g.: Squat 3x5
-              {"@"}225lb, then use our{" "}
+              To see a strength level ratings per lift, see our
               <Link
-                href="/calculator"
+                href="/strength-level-calculator"
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
-                One Rep Max Calculator
-              </Link>{" "}
-              and click {`"`}Strength Level Insights{`"`}.
-            </p>
-            <p className="">
-              Our data model is a derivation of the excellent research of{" "}
-              <a
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-                target="_blank"
-                href="https://lonkilgore.com/"
-              >
-                Professor Lon Kilgore
-              </a>
-              . Any errors are our own.
+                Strength Level Calculator
+              </Link>
+              .
             </p>
           </div>
         </CardFooter>

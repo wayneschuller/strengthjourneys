@@ -10,6 +10,7 @@ import { RelatedArticles } from "@/components/article-cards";
 import { cn } from "@/lib/utils";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import { SignInInvite } from "@/components/instructions-cards";
+import { useLocalStorage } from "usehooks-ts";
 import {
   Card,
   CardContent,
@@ -39,7 +40,6 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Anvil } from "lucide-react";
 import { useAthleteBioData } from "@/lib/use-athlete-biodata";
-import { StandardsSlider } from "@/components/standards-slider";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
@@ -109,17 +109,20 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const { status: authStatus } = useSession();
   const [isYearly, setIsYearly] = useState(false);
 
-  const [squat, setSquat] = useState(0);
-  const [bench, setBench] = useState(0);
-  const [deadlift, setDeadlift] = useState(0);
+  const [squat, setSquat] = useLocalStorage("SJ_thousand_squat", 0, {
+    initializeWithValue: false,
+  });
+  const [bench, setBench] = useLocalStorage("SJ_thousand_bench", 0, {
+    initializeWithValue: false,
+  });
+  const [deadlift, setDeadlift] = useLocalStorage("SJ_thousand_deadlift", 0, {
+    initializeWithValue: false,
+  });
 
   const total = squat + bench + deadlift;
   const inClub = total >= 1000;
 
-  const isMetric = false;
   // devLog(standards[`Back Squat`].beginner);
-
-  const unitType = isMetric ? "kg" : "lb";
 
   const bigFourURLs = {
     "Back Squat": "/barbell-squat-insights",

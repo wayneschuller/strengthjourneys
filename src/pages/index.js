@@ -16,6 +16,7 @@ import {
   Music,
   LibraryBig,
   Bot,
+  Anvil,
 } from "lucide-react";
 
 import {
@@ -66,6 +67,13 @@ export const featurePages = [
     description:
       "How strong are you? Assess your relative strength by age, gender and lift type.",
     IconComponent: BicepsFlexed,
+  },
+  {
+    href: "/1000lb-club-calculator",
+    title: "1000lb Club Calculator",
+    description:
+      "Are you in the 1000lb club? Track your progress to this milestone.",
+    IconComponent: Anvil,
   },
   {
     href: "/timer",

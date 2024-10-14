@@ -62,6 +62,7 @@ function parseBespokeData(data) {
     "bench press": "Bench Press",
     "strict press": "Strict Press",
     "back squat": "Back Squat",
+    squat: "Back Squat",
     deadlift: "Deadlift",
   };
 

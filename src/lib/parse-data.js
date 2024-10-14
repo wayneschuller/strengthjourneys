@@ -58,6 +58,18 @@ function parseBespokeData(data) {
     );
   }
 
+  const standardLiftTypes = {
+    "bench press": "Bench Press",
+    "strict press": "Strict Press",
+    "back squat": "Back Squat",
+    deadlift: "Deadlift",
+  };
+
+  function normalizeLiftType(liftType) {
+    const key = liftType.toLowerCase();
+    return standardLiftTypes[key] || liftType; // Defaults to original if no match
+  }
+
   const objectsArray = [];
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
@@ -87,7 +99,7 @@ function parseBespokeData(data) {
           break;
         case "Lift Type":
           if (cellData) {
-            obj["liftType"] = cellData;
+            obj["liftType"] = normalizeLiftType(cellData);
             previousLiftType = cellData;
           } else {
             obj["liftType"] = previousLiftType;

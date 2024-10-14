@@ -135,6 +135,12 @@ export function VisualizerMini({ liftType }) {
   if (authStatus !== "authenticated") return; // Don't show at all for anon mode
 
   // devLog(chartData);
+
+  const formattedChartData = chartData?.map((item) => ({
+    ...item,
+    date: new Date(item.date).getTime(), // Convert date to timestamp
+  }));
+
   const strengthRanges = standards?.[liftType] || null;
 
   const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
@@ -292,16 +298,26 @@ export function VisualizerMini({ liftType }) {
             <ChartContainer config={chartConfig} className="">
               <AreaChart
                 accessibilityLayer
-                data={chartData}
+                // data={chartData}
+                data={formattedChartData}
                 margin={{ left: 5, right: 20 }}
                 // onMouseMove={handleMouseMove}
               >
                 <CartesianGrid vertical={false} />
                 <XAxis
                   dataKey="date"
-                  // type="number"
-                  // scale="time"
-                  // domain={[ (dataMin) => new Date(dataMin).setDate(new Date(dataMin).getDate() - 2), (dataMax) => new Date(dataMax).setDate(new Date(dataMax).getDate() + 2), ]}
+                  type="number"
+                  scale="time"
+                  domain={[
+                    (dataMin) =>
+                      new Date(dataMin).setDate(
+                        new Date(dataMin).getDate() - 2,
+                      ),
+                    (dataMax) =>
+                      new Date(dataMax).setDate(
+                        new Date(dataMax).getDate() + 2,
+                      ),
+                  ]}
                   tickFormatter={formatXAxisDateString}
                   // interval="equidistantPreserveStart"
                 />

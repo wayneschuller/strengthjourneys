@@ -198,7 +198,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
             {/* 1000lb Club Indicator */}
             <div
-              className={cn("text-lg font-semibold", {
+              className={cn("text-xl font-semibold", {
                 "text-green-600": inClub,
                 "text-gray-500": !inClub,
               })}

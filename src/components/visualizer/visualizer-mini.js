@@ -48,7 +48,7 @@ import {
   Tooltip,
 } from "recharts";
 
-import { processVisualizerData } from "./visualizer-processing";
+import { getYearLabels, processVisualizerData } from "./visualizer-processing";
 
 export function VisualizerMini({ liftType }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
@@ -132,6 +132,8 @@ export function VisualizerMini({ liftType }) {
 
   if (authStatus !== "authenticated") return; // Don't show at all for anon mode
   // devLog(chartData);
+
+  const yearLabels = getYearLabels(chartData);
 
   const strengthRanges = standards?.[liftType] || null;
 
@@ -441,7 +443,22 @@ export function VisualizerMini({ liftType }) {
                     />
                   )}
                 </Area>
-                {/* Reference lines on the secondary Y-axis */}
+                {/* Vertical reference lines to show year start */}
+                {yearLabels.map(({ date, label }) => (
+                  <ReferenceLine
+                    key={`label-${date}`}
+                    x={date} // Position label at January 1 of each year
+                    stroke="none" // No visible line
+                    label={{
+                      value: label,
+                      position: "insideBottom",
+                      fontSize: 14,
+                      fill: "#666",
+                    }}
+                  />
+                ))}
+
+                {/* Horizontal reference lines on the secondary Y-axis */}
                 {strengthRanges && showStandards && width > 1280 && (
                   <>
                     <ReferenceLine

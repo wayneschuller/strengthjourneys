@@ -235,11 +235,10 @@ export function VisualizerShadcn({ setHighlightDate }) {
               tickFormatter={formatXAxisDateString}
               // interval="equidistantPreserveStart"
             />
-            {/* { width > 1280 && ( */}
             <YAxis
               domain={[
                 Math.floor(weightMin / tickJump) * tickJump,
-                roundedMaxWeightValue,
+                Math.max(100, roundedMaxWeightValue),
               ]}
               hide={width < 1280}
               axisLine={false}
@@ -252,7 +251,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
               )}
               // allowDataOverflow
             />
-            {/* ))} */}
             <Tooltip
               content={
                 <CustomTooltipContent

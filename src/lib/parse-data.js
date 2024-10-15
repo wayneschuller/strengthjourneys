@@ -58,19 +58,6 @@ function parseBespokeData(data) {
     );
   }
 
-  const standardLiftTypes = {
-    "bench press": "Bench Press",
-    "strict press": "Strict Press",
-    "back squat": "Back Squat",
-    squat: "Back Squat",
-    deadlift: "Deadlift",
-  };
-
-  function normalizeLiftType(liftType) {
-    const key = liftType.toLowerCase();
-    return standardLiftTypes[key] || liftType; // Defaults to original if no match
-  }
-
   const objectsArray = [];
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
@@ -100,7 +87,7 @@ function parseBespokeData(data) {
           break;
         case "Lift Type":
           if (cellData) {
-            obj["liftType"] = normalizeLiftType(cellData);
+            obj["liftType"] = normalizeLiftTypeNames(cellData);
             previousLiftType = cellData;
           } else {
             obj["liftType"] = previousLiftType;
@@ -179,4 +166,20 @@ function convertStringToInt(repsString) {
   }
 
   return parseInt(repsString, 10);
+}
+
+// Allow variations of some lift names and capitalization but harmonize for output
+export function normalizeLiftTypeNames(liftType) {
+  const standardLiftTypes = {
+    "bench press": "Bench Press",
+    "Bench press": "Bench Press",
+    "strict press": "Strict Press",
+    "Strict press": "Strict Press",
+    "back squat": "Back Squat",
+    squat: "Back Squat",
+    deadlift: "Deadlift",
+  };
+
+  const key = liftType.toLowerCase();
+  return standardLiftTypes[key] || liftType; // Defaults to original if no match
 }

@@ -130,18 +130,8 @@ export function VisualizerMini({ liftType }) {
     [parsedData, e1rmFormula, timeRange, showAllData],
   );
 
-  // if (!parsedData) return;
-
   if (authStatus !== "authenticated") return; // Don't show at all for anon mode
-
   // devLog(chartData);
-
-  const dateFormattedChartData = useMemo(() => {
-    return chartData?.map((item) => ({
-      ...item,
-      rechartsDate: new Date(item.date).getTime(),
-    }));
-  }, [chartData]);
 
   const strengthRanges = standards?.[liftType] || null;
 
@@ -300,8 +290,7 @@ export function VisualizerMini({ liftType }) {
             <ChartContainer config={chartConfig} className="">
               <AreaChart
                 accessibilityLayer
-                // data={chartData}
-                data={dateFormattedChartData}
+                data={chartData}
                 margin={{ left: 5, right: 20 }}
                 // onMouseMove={handleMouseMove}
               >

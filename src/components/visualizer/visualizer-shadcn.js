@@ -87,15 +87,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
 
   // devLog("Rendering <VisualizerShadcn />...");
   if (!parsedData) return;
-
   // devLog(chartData);
-
-  const dateFormattedChartData = useMemo(() => {
-    return chartData?.map((item) => ({
-      ...item,
-      rechartsDate: new Date(item.date).getTime(),
-    }));
-  }, [chartData]);
 
   const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
 
@@ -217,8 +209,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
         <ChartContainer config={chartConfig} className="">
           <AreaChart
             accessibilityLayer
-            // data={chartData}
-            data={dateFormattedChartData}
+            data={chartData}
             margin={{ left: 5, right: 20 }}
             onMouseMove={handleMouseMove}
           >

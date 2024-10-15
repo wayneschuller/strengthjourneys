@@ -77,7 +77,11 @@ export function processVisualizerData(
   // Convert to recharts date oriented array of data tuples
   const dataset = [];
   dataMap.forEach((lifts, date) => {
-    dataset.push({ date, ...lifts });
+    dataset.push({
+      date,
+      ...lifts,
+      rechartsDate: new Date(date).getTime(),
+    });
   });
   // devLog(`${dataset.length} points of chart data`);
 

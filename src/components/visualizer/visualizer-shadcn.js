@@ -90,10 +90,12 @@ export function VisualizerShadcn({ setHighlightDate }) {
 
   // devLog(chartData);
 
-  const dateFormattedChartData = chartData?.map((item) => ({
-    ...item,
-    rechartsDate: new Date(item.date).getTime(), // Convert datestring to timestamp for recharts chronological x-axis
-  }));
+  const dateFormattedChartData = useMemo(() => {
+    return chartData?.map((item) => ({
+      ...item,
+      rechartsDate: new Date(item.date).getTime(),
+    }));
+  }, [chartData]);
 
   const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
 

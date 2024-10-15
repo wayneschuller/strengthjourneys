@@ -136,10 +136,12 @@ export function VisualizerMini({ liftType }) {
 
   // devLog(chartData);
 
-  const dateFormattedChartData = chartData?.map((item) => ({
-    ...item,
-    date: new Date(item.date).getTime(), // Convert datestring to timestamp for recharts chronological x-axis
-  }));
+  const dateFormattedChartData = useMemo(() => {
+    return chartData?.map((item) => ({
+      ...item,
+      rechartsDate: new Date(item.date).getTime(),
+    }));
+  }, [chartData]);
 
   const strengthRanges = standards?.[liftType] || null;
 
@@ -305,7 +307,7 @@ export function VisualizerMini({ liftType }) {
               >
                 <CartesianGrid vertical={false} />
                 <XAxis
-                  dataKey="date"
+                  dataKey="rechartsDate"
                   type="number"
                   scale="time"
                   domain={[

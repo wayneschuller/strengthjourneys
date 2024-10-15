@@ -95,6 +95,7 @@ export const featurePages = [
     IconComponent: LibraryBig,
   },
 ];
+
 // {
 //   href: "/articles/why-it-s-good-to-be-a-barbell-weirdo",
 //   title: `Feature Article: Why It's Good To Be A Barbell Weirdo`,

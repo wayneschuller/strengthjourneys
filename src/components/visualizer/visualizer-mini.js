@@ -136,9 +136,9 @@ export function VisualizerMini({ liftType }) {
 
   // devLog(chartData);
 
-  const formattedChartData = chartData?.map((item) => ({
+  const dateFormattedChartData = chartData?.map((item) => ({
     ...item,
-    date: new Date(item.date).getTime(), // Convert date to timestamp
+    date: new Date(item.date).getTime(), // Convert datestring to timestamp for recharts chronological x-axis
   }));
 
   const strengthRanges = standards?.[liftType] || null;
@@ -299,7 +299,7 @@ export function VisualizerMini({ liftType }) {
               <AreaChart
                 accessibilityLayer
                 // data={chartData}
-                data={formattedChartData}
+                data={dateFormattedChartData}
                 margin={{ left: 5, right: 20 }}
                 // onMouseMove={handleMouseMove}
               >

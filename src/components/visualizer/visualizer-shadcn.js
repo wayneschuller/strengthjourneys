@@ -90,6 +90,11 @@ export function VisualizerShadcn({ setHighlightDate }) {
 
   // devLog(chartData);
 
+  const dateFormattedChartData = chartData?.map((item) => ({
+    ...item,
+    rechartsDate: new Date(item.date).getTime(), // Convert datestring to timestamp for recharts chronological x-axis
+  }));
+
   const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
 
   // Shadcn charts needs this for theming but we just do custom colors anyway
@@ -106,7 +111,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
     if (event && event.activePayload) {
       const activeIndex = event.activeTooltipIndex;
       // devLog(event);
-      setHighlightDate(event.activeLabel);
+      // setHighlightDate(event.activeLabel);
+      setHighlightDate(event.activePayload[0]?.payload?.date); // Set the date string payload precisely
     }
   };
 
@@ -209,16 +215,23 @@ export function VisualizerShadcn({ setHighlightDate }) {
         <ChartContainer config={chartConfig} className="">
           <AreaChart
             accessibilityLayer
-            data={chartData}
+            // data={chartData}
+            data={dateFormattedChartData}
             margin={{ left: 5, right: 20 }}
             onMouseMove={handleMouseMove}
           >
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="date"
-              // type="number"
-              // scale="time"
-              // domain={[ (dataMin) => new Date(dataMin).setDate(new Date(dataMin).getDate() - 2), (dataMax) => new Date(dataMax).setDate(new Date(dataMax).getDate() + 2), ]}
+              // dataKey="date"
+              dataKey="rechartsDate"
+              type="number"
+              scale="time"
+              domain={[
+                (dataMin) =>
+                  new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),
+                (dataMax) =>
+                  new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
+              ]}
               tickFormatter={formatXAxisDateString}
               // interval="equidistantPreserveStart"
             />

@@ -11,6 +11,7 @@ import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { subMonths } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ReferenceLine } from "recharts";
 
 import {
   Card,
@@ -45,7 +46,7 @@ import {
   Tooltip,
 } from "recharts";
 
-import { processVisualizerData } from "./visualizer-processing";
+import { processVisualizerData, getYearLabels } from "./visualizer-processing";
 
 export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
@@ -88,6 +89,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
   // devLog("Rendering <VisualizerShadcn />...");
   if (!parsedData) return;
   // devLog(chartData);
+
+  const yearLabels = getYearLabels(chartData);
 
   const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
 
@@ -330,6 +333,20 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 </Area>
               );
             })}
+            {/* Year labels to show year start */}
+            {yearLabels.map(({ date, label }) => (
+              <ReferenceLine
+                key={`label-${date}`}
+                x={date} // Position label at January 1 of each year
+                stroke="none" // No visible line
+                label={{
+                  value: label,
+                  position: "insideBottom",
+                  fontSize: 14,
+                  fill: "#666",
+                }}
+              />
+            ))}
             <ChartLegend
               content={<ChartLegendContent />}
               className="tracking-tight md:text-lg"

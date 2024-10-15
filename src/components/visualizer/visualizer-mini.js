@@ -443,7 +443,7 @@ export function VisualizerMini({ liftType }) {
                     />
                   )}
                 </Area>
-                {/* Vertical reference lines to show year start */}
+                {/* Year labels to show year start */}
                 {yearLabels.map(({ date, label }) => (
                   <ReferenceLine
                     key={`label-${date}`}

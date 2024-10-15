@@ -93,3 +93,17 @@ export function processVisualizerData(
 
   return { dataset, weightMax, weightMin };
 }
+
+// Calculate January 1 of each year for label placement
+export const getYearLabels = (data) => {
+  if (!data || data.length === 0) return []; // Handle null or empty data
+  const years = [];
+  const startYear = new Date(data[0].date).getFullYear();
+  const endYear = new Date(data[data.length - 1].date).getFullYear();
+
+  for (let year = startYear; year <= endYear; year++) {
+    const yearStart = new Date(`${year}-01-01`).getTime();
+    years.push({ date: yearStart, label: year });
+  }
+  return years;
+};

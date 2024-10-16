@@ -72,6 +72,14 @@ export default function ArticleListingPage({
         <meta property="og:description" content={description} />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:type" content="website" />
+        <meta
+          property="og:image"
+          content="https://www.strengthjourneys.xyz/strength_journeys_articles_og.png"
+        />
+        <meta
+          property="og:image:alt"
+          content="Strength Journeys Article Library - Strength and Lifting Topics"
+        />
         {/* To avoid Google Search Console complaints about quotes, we use dodgilySetInnerHTML */}
         <script
           type="application/ld+json"

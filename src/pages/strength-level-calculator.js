@@ -155,7 +155,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
               <p className="text-sm">Estimate your one rep max.</p>
             </Link>
             <Link
-              href="/1000-lb-club-calculator"
+              href="/1000lb-club-calculator"
               className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
             >
               <h3 className="text-lg font-semibold">1000-lb Club Calculator</h3>

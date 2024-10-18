@@ -23,6 +23,7 @@ import {
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
+  PageHeaderRightSection,
 } from "@/components/page-header";
 
 import {
@@ -141,20 +142,14 @@ function BarbellInsightsMain({
   introductionArticle,
   resourcesArticle,
 }) {
-  const {
-    parsedData,
-    topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
-  } = useUserLiftingData();
-  const { status: authStatus } = useSession();
   const bigFourIcons = {
     "Back Squat": Crown,
     "Bench Press": Shield,
     Deadlift: Skull,
     "Strict Press": Luggage,
   };
+
   const bigFourDiagrams = {
-    // "Back Squat": "/back_squat.svg",
     "Back Squat": "/back_squat.svg",
     "Bench Press": "/bench_press.svg",
     Deadlift: "/deadlift.svg",
@@ -163,27 +158,26 @@ function BarbellInsightsMain({
 
   return (
     <div className="container">
-      <PageHeader className="flex flex-col justify-center gap-2 pb-2 pr-0 md:flex-row md:gap-5">
-        <div className="flex flex-1 flex-col">
-          <PageHeaderHeading icon={bigFourIcons[liftInsightData.liftType]}>
-            {liftInsightData.pageTitle}
-          </PageHeaderHeading>
-          <PageHeaderDescription className="max-w-[70vw]">
-            <div className="italic">{liftInsightData.liftQuote}</div>
-            <div>{liftInsightData.liftQuoteAuthor}</div>
-          </PageHeaderDescription>
-        </div>
-        {bigFourDiagrams[liftInsightData.liftType] && (
-          <div className="max-w-48 lg:max-w-[10vw]">
-            <img
-              // src="/bench_press.svg"
-              src={bigFourDiagrams[liftInsightData.liftType]}
-              // alt="Bench Press Diagram"
-              alt={`${liftInsightData.liftType} Diagram`}
-              className="mx-auto"
-            />
-          </div>
-        )}
+      <PageHeader
+        rightSection={
+          <PageHeaderRightSection>
+            <div className="w-32 md:w-auto md:max-w-[10vw]">
+              <img
+                src={bigFourDiagrams[liftInsightData.liftType]}
+                alt={`${liftInsightData.liftType} Diagram`}
+                className="mx-auto"
+              />
+            </div>
+          </PageHeaderRightSection>
+        }
+      >
+        <PageHeaderHeading icon={bigFourIcons[liftInsightData.liftType]}>
+          {liftInsightData.pageTitle}
+        </PageHeaderHeading>
+        <PageHeaderDescription>
+          <div className="italic">{liftInsightData.liftQuote}</div>
+          <div>{liftInsightData.liftQuoteAuthor}</div>
+        </PageHeaderDescription>
       </PageHeader>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">

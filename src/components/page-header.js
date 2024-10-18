@@ -1,31 +1,16 @@
 import { cn } from "@/lib/utils";
 
-export function PageHeader({ className, children, ...props }) {
+export function PageHeader({ className, children, rightSection, ...props }) {
   return (
     <section
       className={cn(
-        "mx-auto flex flex-col items-start justify-between gap-2 px-4 pb-8 md:flex-row md:items-center",
+        "mx-auto flex w-full flex-col items-start gap-4 px-4 pb-8 md:flex-row md:items-start md:justify-between md:gap-4",
         className,
       )}
       {...props}
     >
-      <div>{children}</div>
-      <PageHeaderRightSection className="mt-4 md:ml-auto md:mt-0" />
-    </section>
-  );
-}
-
-export function PageHeaderOld({ className, children, ...props }) {
-  return (
-    <section
-      className={cn(
-        "mx-auto flex flex-col items-start gap-2 px-4 pb-8",
-        // "mx-auto flex flex-col items-start gap-2 px-4 py-8 md:py-12 md:pb-8 lg:py-12 lg:pb-10",
-        className,
-      )}
-      {...props}
-    >
-      {children}
+      <div className="flex min-w-0 flex-1 flex-col gap-1">{children}</div>
+      {rightSection}
     </section>
   );
 }
@@ -57,12 +42,11 @@ export function PageHeaderDescription({ className, ...props }) {
   );
 }
 
-// Define the right section subcomponent
 export function PageHeaderRightSection({ className, children, ...props }) {
   return (
     <div
       className={cn(
-        "flex w-full items-center md:w-auto", // full width on mobile, auto on larger screens
+        "flex w-full items-center justify-center md:w-auto",
         className,
       )}
       {...props}

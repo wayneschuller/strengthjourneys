@@ -21,6 +21,7 @@ import {
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
+  PageHeaderRight,
 } from "@/components/page-header";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -144,6 +145,24 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
           How strong am I? Estimate your strength level based on age, gender,
           and bodyweight. <SignInInvite />
         </PageHeaderDescription>
+        <PageHeaderRight>
+          <div className="hidden space-x-4 text-muted-foreground md:flex">
+            <Link
+              href="/calculator"
+              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
+            >
+              <h3 className="text-lg font-semibold">E1RM Calculator</h3>
+              <p className="text-sm">Estimate your one rep max.</p>
+            </Link>
+            <Link
+              href="/1000lb-club-calculator"
+              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
+            >
+              <h3 className="text-lg font-semibold">1000-lb Club Calculator</h3>
+              <p className="text-sm">Can you hit the 1000-lb club?</p>
+            </Link>
+          </div>
+        </PageHeaderRight>
       </PageHeader>
       <Card className="pt-4">
         <CardContent className="">

@@ -1,19 +1,45 @@
 import { cn } from "@/lib/utils";
 
 export function PageHeader({ className, children, ...props }) {
+  // Find the right section if it exists
+  const rightSection = children?.find(
+    (child) => child?.type?.displayName === "PageHeaderRight",
+  );
+
+  // Get all other children
+  const content = children?.filter(
+    (child) => child?.type?.displayName !== "PageHeaderRight",
+  );
+
   return (
     <section
       className={cn(
-        "mx-auto flex flex-col items-start gap-2 px-4 pb-8",
-        // "mx-auto flex flex-col items-start gap-2 px-4 py-8 md:py-12 md:pb-8 lg:py-12 lg:pb-10",
+        "mx-auto flex w-full flex-col items-start gap-8 px-4 pb-8 md:flex-row md:items-start md:justify-between md:gap-4",
+        className,
+      )}
+      {...props}
+    >
+      <div className="flex min-w-0 flex-1 flex-col gap-1">{content}</div>
+      {rightSection}
+    </section>
+  );
+}
+
+// Use displayName to identify this component
+export function PageHeaderRight({ className, children, ...props }) {
+  return (
+    <div
+      className={cn(
+        "flex w-full items-center justify-center md:w-auto",
         className,
       )}
       {...props}
     >
       {children}
-    </section>
+    </div>
   );
 }
+PageHeaderRight.displayName = "PageHeaderRight";
 
 export function PageHeaderHeading({ className, icon: Icon, ...props }) {
   return (

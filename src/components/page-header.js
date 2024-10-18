@@ -4,6 +4,21 @@ export function PageHeader({ className, children, ...props }) {
   return (
     <section
       className={cn(
+        "mx-auto flex flex-col items-start justify-between gap-2 px-4 pb-8 md:flex-row md:items-center",
+        className,
+      )}
+      {...props}
+    >
+      <div>{children}</div>
+      <PageHeaderRightSection className="mt-4 md:ml-auto md:mt-0" />
+    </section>
+  );
+}
+
+export function PageHeaderOld({ className, children, ...props }) {
+  return (
+    <section
+      className={cn(
         "mx-auto flex flex-col items-start gap-2 px-4 pb-8",
         // "mx-auto flex flex-col items-start gap-2 px-4 py-8 md:py-12 md:pb-8 lg:py-12 lg:pb-10",
         className,
@@ -39,5 +54,20 @@ export function PageHeaderDescription({ className, ...props }) {
       )}
       {...props}
     />
+  );
+}
+
+// Define the right section subcomponent
+export function PageHeaderRightSection({ className, children, ...props }) {
+  return (
+    <div
+      className={cn(
+        "flex w-full items-center md:w-auto", // full width on mobile, auto on larger screens
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </div>
   );
 }

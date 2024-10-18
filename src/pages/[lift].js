@@ -23,7 +23,7 @@ import {
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
-  PageHeaderRightSection,
+  PageHeaderRight,
 } from "@/components/page-header";
 
 import {
@@ -158,19 +158,7 @@ function BarbellInsightsMain({
 
   return (
     <div className="container">
-      <PageHeader
-        rightSection={
-          <PageHeaderRightSection>
-            <div className="w-32 md:w-auto md:max-w-[10vw]">
-              <img
-                src={bigFourDiagrams[liftInsightData.liftType]}
-                alt={`${liftInsightData.liftType} Diagram`}
-                className="mx-auto"
-              />
-            </div>
-          </PageHeaderRightSection>
-        }
-      >
+      <PageHeader>
         <PageHeaderHeading icon={bigFourIcons[liftInsightData.liftType]}>
           {liftInsightData.pageTitle}
         </PageHeaderHeading>
@@ -178,6 +166,15 @@ function BarbellInsightsMain({
           <div className="italic">{liftInsightData.liftQuote}</div>
           <div>{liftInsightData.liftQuoteAuthor}</div>
         </PageHeaderDescription>
+        <PageHeaderRight>
+          <div className="w-32 md:w-auto md:max-w-[10vw]">
+            <img
+              src={bigFourDiagrams[liftInsightData.liftType]}
+              alt={`${liftInsightData.liftType} Diagram`}
+              className="mx-auto"
+            />
+          </div>
+        </PageHeaderRight>
       </PageHeader>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">

@@ -146,14 +146,12 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           <SignInInvite />
         </PageHeaderDescription>
         <PageHeaderRight>
-          <div className="hidden space-x-4 text-muted-foreground md:flex">
+          <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
             <Link
               href="/strength-level-calculator"
               className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
             >
-              <h3 className="text-lg font-semibold">
-                Strength Level Calculator
-              </h3>
+              <h3 className="text-lg font-semibold">Strength Level Calc</h3>
               <p className="text-sm">How strong are you?</p>
             </Link>
             <Link

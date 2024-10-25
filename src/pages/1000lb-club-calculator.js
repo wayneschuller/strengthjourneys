@@ -151,7 +151,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
               href="/strength-level-calculator"
               className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
             >
-              <h3 className="text-lg font-semibold">
+              <h3 className="text-base font-semibold">
                 Strength Level Calculator
               </h3>
               <p className="text-sm">How strong are you?</p>
@@ -160,7 +160,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
               href="/calculator"
               className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
             >
-              <h3 className="text-lg font-semibold">E1RM Calculator</h3>
+              <h3 className="text-base font-semibold">E1RM Calculator</h3>
               <p className="text-sm">Estimate your one rep max.</p>
             </Link>
           </div>

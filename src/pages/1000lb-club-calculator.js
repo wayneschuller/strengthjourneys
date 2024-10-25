@@ -24,6 +24,7 @@ import {
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
+  PageHeaderRight,
 } from "@/components/page-header";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -144,6 +145,26 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           calculator to test if you have joined the hallowed order of strength.{" "}
           <SignInInvite />
         </PageHeaderDescription>
+        <PageHeaderRight>
+          <div className="hidden space-x-4 text-muted-foreground md:flex">
+            <Link
+              href="/strength-level-calculator"
+              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
+            >
+              <h3 className="text-lg font-semibold">
+                Strength Level Calculator
+              </h3>
+              <p className="text-sm">How strong are you?</p>
+            </Link>
+            <Link
+              href="/calculator"
+              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
+            >
+              <h3 className="text-lg font-semibold">E1RM Calculator</h3>
+              <p className="text-sm">Estimate your one rep max.</p>
+            </Link>
+          </div>
+        </PageHeaderRight>
       </PageHeader>
       <Card className="pt-4">
         <CardContent className="">

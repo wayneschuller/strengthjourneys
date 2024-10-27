@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
 import { NextSeo } from "next-seo";
-import { sanityIOClient } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
 import { cn } from "@/lib/utils";
 import { UnitChooser } from "@/components/unit-type-chooser";
@@ -27,20 +26,8 @@ import {
   PageHeaderRight,
 } from "@/components/page-header";
 
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Separator } from "@/components/ui/separator";
 import { Anvil } from "lucide-react";
-import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 

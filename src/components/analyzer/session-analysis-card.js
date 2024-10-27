@@ -28,6 +28,8 @@ export function SessionAnalysisCard({ highlightDate = null }) {
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
+    isLoading,
+    isValidating,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
@@ -70,6 +72,9 @@ export function SessionAnalysisCard({ highlightDate = null }) {
           {analyzedSessionLifts &&
             getReadableDateString(sessionDate, true)}{" "}
           Session
+          {isValidating && (
+            <div className="ml-4 inline-flex h-5 w-5 animate-spin rounded-full border-b-2 border-t-2 border-gray-800"></div>
+          )}
         </CardTitle>
         <CardDescription>Session overview and analysis</CardDescription>
       </CardHeader>

@@ -22,6 +22,7 @@ import {
   getReadableDateString,
   getAnalyzedSessionLifts,
 } from "@/lib/processing-utils";
+import { LoaderCircle } from "lucide-react";
 
 export function SessionAnalysisCard({ highlightDate = null }) {
   const {
@@ -73,7 +74,7 @@ export function SessionAnalysisCard({ highlightDate = null }) {
             getReadableDateString(sessionDate, true)}{" "}
           Session
           {isValidating && (
-            <div className="ml-4 inline-flex h-5 w-5 animate-spin rounded-full border-b-2 border-t-2 border-gray-800"></div>
+            <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
           )}
         </CardTitle>
         <CardDescription>Session overview and analysis</CardDescription>

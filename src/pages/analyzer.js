@@ -43,7 +43,7 @@ export async function getStaticProps() {
 export default function Analyzer({ relatedArticles }) {
   // OG Meta Tags
   const description =
-    "Unlock insights into your strength training with our PR Analyzer. Track PRs, consistency and detailed squat/bench/deadlift analysis.";
+    "Unlock free insights into your strength training with our PR Analyzer. Track PRs, consistency and detailed squat/bench/deadlift analysis.";
   const title = "PR Analyzer - Strength Progress Reports | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/analyzer";
   const ogImageURL =

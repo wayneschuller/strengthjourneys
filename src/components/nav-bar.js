@@ -49,6 +49,7 @@ import {
   Activity,
   Timer,
   Bot,
+  Grid2x2Check,
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
@@ -359,6 +360,11 @@ function StrengthInsightsMenu() {
       title: "AI Lifting Assistant",
       href: "/ai-lifting-assistant",
       icon: <Bot className="h-5 w-5" />,
+    },
+    {
+      title: "PR Conquest Grid",
+      href: "/pr-conquest-grid",
+      icon: <Grid2x2Check className="h-5 w-5" />,
     },
   ];
 

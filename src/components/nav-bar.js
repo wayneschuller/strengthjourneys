@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { DarkModeToggle } from "@/components/dark-mode-toggle";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
-import { Table2, Loader2, Github } from "lucide-react";
+import { Table2, Loader2, Github, Trophy, LineChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
@@ -39,7 +39,17 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 
-import { Crown, Shield, Skull, Luggage } from "lucide-react";
+import {
+  Crown,
+  Shield,
+  Skull,
+  Luggage,
+  Calculator,
+  BarChart,
+  Activity,
+  Timer,
+  Bot,
+} from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
 import darkModeLogo from "/public/nav_logo_light.png";
@@ -125,97 +135,13 @@ export function DesktopNav() {
         />
       </Link>
 
-      <BigFourBarbellInsightsMenu />
-
-      {/* FIXME: we should loop over the feature pages array from the index here */}
       <nav className="flex flex-1 items-center space-x-2 text-sm font-medium md:space-x-6">
-        <Link
-          href="/analyzer"
-          className={cn(
-            "transition-colors hover:text-foreground/80",
-            pathname === "/analyzer" ? "text-foreground" : "text-foreground/60",
-          )}
-        >
-          PR Analyzer
-        </Link>
-        <Link
-          href="/visualizer"
-          className={cn(
-            "transition-colors hover:text-foreground/80",
-            pathname === "/visualizer"
-              ? "text-foreground"
-              : "text-foreground/60",
-          )}
-        >
-          {/* Short title on small screens */}
-          <span className="hidden md:block xl:hidden">Visualizer</span>
-          {/* Full title on larger screens */}
-          <span className="hidden xl:block">Strength Visualizer</span>
-        </Link>
-        <Link
-          href="/ai-lifting-assistant"
-          className={cn(
-            "transition-colors hover:text-foreground/80",
-            pathname === "/ai-lifting-assistant"
-              ? "text-foreground"
-              : "text-foreground/60",
-          )}
-        >
-          {/* Short title on small screens */}
-          <span className="hidden md:block xl:hidden">AI Assist</span>
-          {/* Full title on larger screens */}
-          <span className="hidden xl:block">AI Lifting Assistant</span>
-        </Link>
-        <Link
-          href="/calculator"
-          className={cn(
-            "transition-colors hover:text-foreground/80",
-            pathname === "/calculator"
-              ? "text-foreground"
-              : "text-foreground/60",
-          )}
-        >
-          {/* Short title on small screens */}
-          <span className="hidden md:block xl:hidden">E1RM Calc</span>
-          {/* Full title on larger screens */}
-          <span className="hidden xl:block">One Rep Max Calculator</span>
-        </Link>
-        <Link
-          href="/strength-level-calculator"
-          className={cn(
-            "transition-colors hover:text-foreground/80",
-            pathname === "/strength-level-calculator"
-              ? "text-foreground"
-              : "text-foreground/60",
-          )}
-        >
-          {/* Short title on small screens */}
-          <span className="hidden md:block lg:hidden">Strength Calc</span>
-          {/* Full title on larger screens */}
-          <span className="hidden lg:block">Strength Level Calculator </span>
-        </Link>
-        {/* <Link
-            href="/warmups"
-            className={cn(
-              "transition-colors hover:text-foreground/80",
-              pathname === "/timer" ? "text-foreground" : "text-foreground/60",
-            )}
-          >
-            Warm Up Sets
-          </Link> */}
-        <Link
-          href="/timer"
-          className={cn(
-            "transition-colors hover:text-foreground/80",
-            pathname === "/timer" ? "text-foreground" : "text-foreground/60",
-            "hidden md:block",
-          )}
-        >
-          {/* Short title on small screens */}
-          <span className="hidden md:block lg:hidden">Timer</span>
-          {/* Full title on larger screens */}
-          <span className="hidden lg:block">Lifting Set Timer</span>
-        </Link>
+        <BigFourBarbellInsightsMenu />
+
+        <StrengthInsightsMenu />
+
+        <CalculatorsMenu />
+
         <Link
           href="/gym-playlist-leaderboard"
           className={cn(
@@ -412,5 +338,185 @@ function BigFourBarbellInsightsMenu() {
         </NavigationMenuList>
       </NavigationMenu>
     </>
+  );
+}
+
+function StrengthInsightsMenu() {
+  const pathname = usePathname();
+
+  const insights = [
+    {
+      title: "PR Analyzer",
+      href: "/analyzer",
+      icon: <Trophy className="h-5 w-5" />,
+    },
+    {
+      title: "Strength Visualizer",
+      href: "/visualizer",
+      icon: <LineChart className="h-5 w-5" />,
+    },
+    {
+      title: "AI Lifting Assistant",
+      href: "/ai-lifting-assistant",
+      icon: <Bot className="h-5 w-5" />,
+    },
+  ];
+
+  const ListItem = React.forwardRef(
+    ({ className, title, children, ...props }, ref) => {
+      return (
+        <li>
+          <NavigationMenuLink asChild>
+            <Link
+              ref={ref}
+              className={cn(
+                "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                className,
+              )}
+              {...props}
+            >
+              <div className="flex flex-row items-center gap-2 align-middle">
+                {props.icon} {/* Icon based on title */}
+                <div className="text-sm font-medium leading-none">{title}</div>
+              </div>
+              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                {children}
+              </p>
+            </Link>
+          </NavigationMenuLink>
+        </li>
+      );
+    },
+  );
+  ListItem.displayName = "ListItem";
+
+  return (
+    <NavigationMenu>
+      <NavigationMenuList>
+        <NavigationMenuItem>
+          <NavigationMenuTrigger
+            className={cn(
+              "bg-transparent transition-colors hover:text-foreground/80",
+              pathname.startsWith("/analyzer") ||
+                pathname.startsWith("/visualizer") ||
+                pathname.startsWith("/ai-lifting-assistant")
+                ? "text-foreground"
+                : "text-foreground/60",
+            )}
+          >
+            <>
+              {/* Short title on small screens */}
+              <span className="hidden md:block xl:hidden">Insights</span>
+              {/* Full title on larger screens */}
+              <span className="hidden xl:block">Strength Insights</span>
+            </>
+          </NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-[400px] gap-3 p-4 md:w-[400px] md:grid-cols-2 lg:w-[500px]">
+              {insights.map((insight) => (
+                <ListItem
+                  key={insight.title}
+                  title={insight.title}
+                  href={insight.href}
+                  icon={insight.icon}
+                >
+                  {/* {insight.pageTitle} */}
+                </ListItem>
+              ))}
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
+  );
+}
+
+function CalculatorsMenu() {
+  const pathname = usePathname();
+
+  const calculators = [
+    {
+      title: "One Rep Max Calculator",
+      href: "/calculator",
+      icon: <Calculator className="h-5 w-5" />,
+    },
+    {
+      title: "Strength Level Calculator",
+      href: "/strength-level-calculator",
+      icon: <BarChart className="h-5 w-5" />,
+    },
+    {
+      title: "Lifting Set Timer",
+      href: "/timer",
+      icon: <Timer className="h-5 w-5" />,
+    },
+  ];
+
+  const ListItem = React.forwardRef(
+    ({ className, title, children, ...props }, ref) => {
+      return (
+        <li>
+          <NavigationMenuLink asChild>
+            <Link
+              ref={ref}
+              className={cn(
+                "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                className,
+              )}
+              {...props}
+            >
+              <div className="flex flex-row items-center gap-2 align-middle">
+                {props.icon} {/* Icon based on calculator title */}
+                <div className="text-sm font-medium leading-none">{title}</div>
+              </div>
+              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                {children}
+              </p>
+            </Link>
+          </NavigationMenuLink>
+        </li>
+      );
+    },
+  );
+  ListItem.displayName = "ListItem";
+
+  return (
+    <NavigationMenu>
+      <NavigationMenuList>
+        <NavigationMenuItem>
+          <NavigationMenuTrigger
+            className={cn(
+              "bg-transparent transition-colors hover:text-foreground/80",
+              pathname.startsWith("/calculator") ||
+                pathname.startsWith("/strength-level-calculator") ||
+                pathname.startsWith("/timer")
+                ? "text-foreground"
+                : "text-foreground/60",
+            )}
+          >
+            <>
+              {/* Short title on small screens */}
+              <span className="hidden md:block xl:hidden">Calculators</span>
+              {/* Full title on larger screens */}
+              <span className="hidden xl:block">Calculators</span>
+            </>
+          </NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-[400px] gap-3 p-4 md:w-[400px] md:grid-cols-2 lg:w-[500px]">
+              {calculators.map((calculator) => (
+                <ListItem
+                  key={calculator.title}
+                  title={calculator.title}
+                  href={calculator.href}
+                  icon={calculator.icon}
+                >
+                  {/* {calculator.pageTitle} */}
+                </ListItem>
+              ))}
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
   );
 }

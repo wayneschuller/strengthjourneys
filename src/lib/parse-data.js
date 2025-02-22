@@ -115,6 +115,7 @@ function parseBespokeData(data) {
       }
     }
 
+    // FIXME: Check for this earlier at beginning of the loop
     if (obj["reps"] !== undefined && obj["weight"] !== undefined) {
       objectsArray.push(obj);
     }

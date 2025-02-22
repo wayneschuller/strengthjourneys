@@ -296,6 +296,7 @@ export function GettingStartedCard() {
     </Card>
   );
 }
+
 export const SignInInvite = () => {
   const { status: authStatus } = useSession();
 

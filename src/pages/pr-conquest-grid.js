@@ -108,9 +108,9 @@ function ConquestGridMain({ relatedArticles }) {
         </PageHeaderHeading>
         <PageHeaderDescription>
           Track and conquer your barbell lifting PRs with the PR Conquest Map, a
-          precise grid visualizing e1RM data from your Google Sheets log. Dark
-          green marks achieved PRs, light green indicates guaranteed new PRs,
-          and light yellow highlights probable challenges, offering a serious,
+          precise grid visualizing your PRs at different rep schemes. Dark green
+          marks achieved PRs, light green indicates guaranteed new PRs, and
+          light yellow highlights probable challenges, offering a serious,
           data-driven approach to measure and expand your strength progress.
         </PageHeaderDescription>
       </PageHeader>

@@ -90,7 +90,12 @@ export default function ConquestGrid({ relatedArticles }) {
 
 function ConquestGridMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
-  const { isLoading } = useUserLiftingData();
+  const {
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+    isLoading,
+  } = useUserLiftingData();
   const ssid = useReadLocalStorage("ssid");
 
   if (!isLoading && authStatus === "authenticated" && !ssid)

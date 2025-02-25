@@ -140,6 +140,9 @@ function ConquestGridMain({ relatedArticles }) {
             </tr>
           ))}
         </tbody>
+
+
+
       </table>
 
       </div>)}

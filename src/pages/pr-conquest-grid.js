@@ -139,7 +139,7 @@ function ConquestGridMain({ relatedArticles }) {
               <tbody>
                 {Object.entries(weightCounts).map(([weight, count]) => (
                   <tr key={weight} className="">
-                    <td className="border px-4 py-2 text-center">{weight}</td>
+                    <td className="border px-4 py-2 text-center">{weight}kg</td>
                     <td className="border px-4 py-2 text-center">{count}</td>
                   </tr>
                 ))}

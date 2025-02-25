@@ -123,35 +123,32 @@ function ConquestGridMain({ relatedArticles }) {
           data-driven approach to measure and expand your strength progress.
         </PageHeaderDescription>
       </PageHeader>
-      {!isLoading && parsedData  && (<div> 
-      <div>Bench Press Singles Frequency Table</div>
-      <table className="table-auto mt-4">
-        <thead>
-          <tr>
-            <th className="px-4 py-2">Weight (kg)</th>
-            <th className="px-4 py-2">Frequency</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.entries(weightCounts).map(([weight, count]) => (
-            <tr key={weight}>
-              <td className="border px-4 py-2">{weight}</td>
-              <td className="border px-4 py-2">{count}</td>
-            </tr>
-          ))}
-        </tbody>
-
-
-
-      </table>
-
-      </div>)}
+      {!isLoading && parsedData && (
+        <div>
+          <div>Bench Press Singles Frequency Table</div>{" "}
+          <table className="mt-4 table-auto">
+            <thead>
+              <tr>
+                <th className="px-4 py-2">Weight (kg)</th>
+                <th className="px-4 py-2">Frequency</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(weightCounts).map(([weight, count]) => (
+                <tr key={weight}>
+                  <td className="border px-4 py-2">{weight}</td>
+                  <td className="border px-4 py-2">{count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <RelatedArticles articles={relatedArticles} />
     </div>
   );
 }
-
 
 // Process the parsedData to get the conquest grid info needed
 export function processConquestGrid(parsedData, liftType = "Bench Press") {
@@ -161,7 +158,9 @@ export function processConquestGrid(parsedData, liftType = "Bench Press") {
   const today = new Date().toISOString().slice(0, 10); // Format today's date as "YYYY-MM-DD"
   const startDate = "1900-01-01"; // FIXME: Later we will add custom start dates
 
-  const commonWeights = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150];
+  const commonWeights = [
+    20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150,
+  ];
 
   const weightCounts = commonWeights.reduce((acc, weight) => {
     acc[weight] = 0;
@@ -179,18 +178,15 @@ export function processConquestGrid(parsedData, liftType = "Bench Press") {
 
     if (parsedData[i].reps !== 1) continue; // FIXME: Generalise this later
 
-
     if (parsedData[i].liftType !== liftType) continue; // Only count the specified lift type
 
     const weight = parsedData[i].weight;
 
     if (!commonWeights.includes(weight)) continue; // Only count weights in the commonWeights array
 
-
     // devLog(parsedData[i]);
     // Increment the count for this weight
     weightCounts[weight]++;
-
   }
 
   devLog(

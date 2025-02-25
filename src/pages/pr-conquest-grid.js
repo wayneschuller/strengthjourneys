@@ -11,14 +11,14 @@ import { Separator } from "@/components/ui/separator";
 import { devLog } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 
-// Here are the analyzer dashboard cards
-import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
-import { SelectedLiftsIndividualLiftCards } from "@/components/analyzer/lift-achievements-card";
-import { ConsistencyCard } from "@/components/analyzer/consistency-card";
-import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-pie-card";
-import { MonthsHighlightsCard } from "@/components/analyzer/months-highlights-card";
-import { ActivityHeatmapsCard } from "@/components/analyzer/heatmap-card";
-import { InspirationCard } from "@/components/analyzer/inspiration-card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 import {
   PageHeader,
   PageHeaderHeading,
@@ -124,25 +124,29 @@ function ConquestGridMain({ relatedArticles }) {
         </PageHeaderDescription>
       </PageHeader>
       {!isLoading && parsedData && (
-        <div>
-          <div>Bench Press Singles Frequency Table</div>{" "}
-          <table className="mt-4 table-auto">
-            <thead>
-              <tr>
-                <th className="px-4 py-2">Weight (kg)</th>
-                <th className="px-4 py-2">Frequency</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(weightCounts).map(([weight, count]) => (
-                <tr key={weight}>
-                  <td className="border px-4 py-2">{weight}</td>
-                  <td className="border px-4 py-2">{count}</td>
+        <Card className="mt-6 shadow-lg">
+          <CardHeader>
+            <CardTitle>Bench Press Frequency Table</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <table className="mt-4 w-full table-auto border-collapse">
+              <thead>
+                <tr className="">
+                  <th className="px-4 py-2">Weight (kg)</th>
+                  <th className="px-4 py-2">Frequency</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {Object.entries(weightCounts).map(([weight, count]) => (
+                  <tr key={weight} className="">
+                    <td className="border px-4 py-2 text-center">{weight}</td>
+                    <td className="border px-4 py-2 text-center">{count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
       )}
 
       <RelatedArticles articles={relatedArticles} />

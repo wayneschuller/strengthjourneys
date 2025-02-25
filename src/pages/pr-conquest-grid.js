@@ -137,10 +137,22 @@ function ConquestGridMain({ relatedArticles }) {
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(weightCounts).map(([weight, count]) => (
+                <tr>
+                  <th className="border px-4 py-2 text-center">Weight (kg)</th>
+                  {[...Array(10).keys()].map((rep) => (
+                    <th key={rep} className="border px-4 py-2 text-center">
+                      {rep + 1} {rep + 1 === 1 ? "Rep" : "Reps"}
+                    </th>
+                  ))}
+                </tr>
+                {Object.entries(weightCounts).map(([weight, counts]) => (
                   <tr key={weight} className="">
                     <td className="border px-4 py-2 text-center">{weight}kg</td>
-                    <td className="border px-4 py-2 text-center">{count}</td>
+                    {counts.map((count, index) => (
+                      <td key={index} className="border px-4 py-2 text-center">
+                        {count}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
@@ -167,12 +179,12 @@ export function processConquestGrid(parsedData, liftType = "Bench Press") {
   ];
 
   const weightCounts = commonWeights.reduce((acc, weight) => {
-    acc[weight] = 0;
+    acc[weight] = Array(10).fill(0); // Create an array of size 10 for reps 1 to 10
     return acc;
   }, {});
 
   // Loop backwards through the parsed data
-  // Count how many times each common weight was lifted
+  // Count how many times each common weight was lifted for reps between 1 and 10
   for (let i = parsedData.length - 1; i >= 0; i--) {
     const entryDate = parsedData[i].date; // Directly use the date string
 
@@ -180,7 +192,8 @@ export function processConquestGrid(parsedData, liftType = "Bench Press") {
 
     if (parsedData[i].isGoal) continue; // Don't count entries that are just dreams
 
-    if (parsedData[i].reps !== 1) continue; // FIXME: Generalise this later
+    const reps = parsedData[i].reps;
+    if (reps < 1 || reps > 10) continue; // Only count reps between 1 and 10
 
     if (parsedData[i].liftType !== liftType) continue; // Only count the specified lift type
 
@@ -188,9 +201,8 @@ export function processConquestGrid(parsedData, liftType = "Bench Press") {
 
     if (!commonWeights.includes(weight)) continue; // Only count weights in the commonWeights array
 
-    // devLog(parsedData[i]);
-    // Increment the count for this weight
-    weightCounts[weight]++;
+    // Increment the count for this weight and rep
+    weightCounts[weight][reps - 1]++;
   }
 
   devLog(

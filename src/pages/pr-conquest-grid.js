@@ -130,12 +130,6 @@ function ConquestGridMain({ relatedArticles }) {
           </CardHeader>
           <CardContent>
             <table className="mt-4 w-full table-auto border-collapse">
-              <thead>
-                <tr className="">
-                  <th className="px-4 py-2">Weight (kg)</th>
-                  <th className="px-4 py-2">Frequency</th>
-                </tr>
-              </thead>
               <tbody>
                 <tr>
                   <th className="border px-4 py-2 text-center">Weight (kg)</th>

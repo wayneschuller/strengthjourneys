@@ -50,6 +50,7 @@ import {
   Timer,
   Bot,
   Grid2x2Check,
+  ChartColumnDecreasing,
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
@@ -362,9 +363,9 @@ function StrengthInsightsMenu() {
       icon: <Bot className="h-5 w-5" />,
     },
     {
-      title: "PR Conquest Grid",
-      href: "/pr-conquest-grid",
-      icon: <Grid2x2Check className="h-5 w-5" />,
+      title: "Barbell Strength Potential",
+      href: "/barbell-strength-potential",
+      icon: <ChartColumnDecreasing className="h-5 w-5" />,
     },
   ];
 

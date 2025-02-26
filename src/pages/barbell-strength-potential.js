@@ -34,7 +34,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-import { Trophy, Grid2x2Check } from "lucide-react";
+import { Trophy, Grid2x2Check, ChartColumnDecreasing } from "lucide-react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { parse } from "date-fns";
@@ -51,11 +51,11 @@ export async function getStaticProps() {
   };
 }
 
-export default function ConquestGrid({ relatedArticles }) {
+export default function StrengthPotential({ relatedArticles }) {
   // OG Meta Tags
   const description =
     "Unlock free insights into your strength training with our PR Analyzer. Track PRs, consistency and detailed squat/bench/deadlift analysis.";
-  const title = "PR Conquest Grid | Strength Journeys";
+  const title = "Barbell Strength Potential | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/analyzer";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_analyzer_og.png";
@@ -76,7 +76,7 @@ export default function ConquestGrid({ relatedArticles }) {
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys PR Conquest Grid",
+              alt: "Strength Journeys Barbell Strength Potential",
             },
           ],
           site_name: "Strength Journeys",
@@ -94,12 +94,12 @@ export default function ConquestGrid({ relatedArticles }) {
         ]}
       />
       {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
-      <ConquestGridMain relatedArticles={relatedArticles} />
+      <StrengthPotentialMain relatedArticles={relatedArticles} />
     </>
   );
 }
 
-function ConquestGridMain({ relatedArticles }) {
+function StrengthPotentialMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const {
     parsedData,
@@ -132,7 +132,7 @@ function ConquestGridMain({ relatedArticles }) {
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading icon={Grid2x2Check}>
+        <PageHeaderHeading icon={ChartColumnDecreasing}>
           Strength Potential
         </PageHeaderHeading>
         <PageHeaderDescription>
@@ -207,7 +207,7 @@ function StrengthPotentialBarChart({
   devLog(chartData);
 
   return (
-    <Card className="mt-6 shadow-lg">
+    <Card className="mx-2 mt-6 shadow-lg lg:mx-36">
       <CardHeader>
         <CardTitle>{liftType} Strength Potential By Rep Range</CardTitle>
       </CardHeader>

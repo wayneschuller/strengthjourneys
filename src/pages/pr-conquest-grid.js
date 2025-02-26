@@ -105,6 +105,7 @@ function ConquestGridMain({ relatedArticles }) {
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
+    selectedLiftTypes,
     isLoading,
   } = useUserLiftingData();
   const ssid = useReadLocalStorage("ssid");

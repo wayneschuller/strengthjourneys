@@ -24,6 +24,15 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
+
+import { Bar, BarChart, XAxis, YAxis } from "recharts";
+
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+
 import { Trophy, Grid2x2Check } from "lucide-react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
@@ -130,6 +139,9 @@ function ConquestGridMain({ relatedArticles }) {
           data-driven approach to measure and expand your strength progress.
         </PageHeaderDescription>
       </PageHeader>
+      {!isLoading && parsedData && (
+        <TopLiftsBarChart topLiftsByTypeAndReps={topLiftsByTypeAndReps} />
+      )}
       {!isLoading && parsedData && <ParetoGridCard paretoGrid={paretoGrid} />}
       {!isLoading && parsedData && (
         <FrequencyGridCard weightCounts={weightCounts} />
@@ -140,6 +152,56 @@ function ConquestGridMain({ relatedArticles }) {
   );
 }
 
+function TopLiftsBarChart({ topLiftsByTypeAndReps, liftType = "Bench Press" }) {
+  if (!topLiftsByTypeAndReps) return null;
+  const topLifts = topLiftsByTypeAndReps[liftType];
+  if (!topLifts) return null;
+
+  const startTime = performance.now();
+
+  // Convert `topLifts` into chart data (only for reps 1-10)
+  const chartData = Array.from({ length: 10 }, (_, i) => {
+    const reps = i + 1;
+    const bestLift = topLifts[reps - 1]?.[0]?.weight ?? 0;
+
+    return {
+      reps: `${reps} reps`, // X-axis label
+      weight: bestLift, // Y-axis value (bar height)
+    };
+  });
+
+  devLog(chartData);
+
+  // Shadcn charts needs this for theming but we just do custom colors anyway
+  // const chartConfig = Object.fromEntries(
+  // chartData.map((liftType, index) => [
+  // liftType,
+  // {
+  // label: liftType,
+  // },
+  // ]),
+  // );
+
+  return (
+    <Card className="mt-6 shadow-lg">
+      <CardHeader>
+        <CardTitle>{liftType} Best Lifts Bar Chart</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* <ChartContainer className="h-[300px] w-full"> */}
+        <ChartContainer config={{}} className="">
+          <BarChart data={chartData}>
+            <XAxis dataKey="reps" stroke="#8884d8" />
+            <YAxis stroke="#8884d8" domain={[0, "auto"]} />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Bar dataKey="weight" fill="#3b82f6" />
+          </BarChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ParetoGridCard({ paretoGrid }) {
   return (
     <Card className="mt-6 shadow-lg">
@@ -147,21 +209,19 @@ function ParetoGridCard({ paretoGrid }) {
         <CardTitle>Pareto Grid</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mx-auto w-full max-w-screen-md overflow-auto">
+        <div className="mx-auto w-full max-w-screen-lg overflow-auto">
           <div
             className="grid"
-            style={{ gridTemplateColumns: "auto repeat(10, 1fr)" }}
+            style={{ gridTemplateColumns: "auto repeat(10, 1fr)" }} // Ensures first column auto-sizes
           >
             {/* Column Headers (Reps 1-10) */}
-            <div className="flex h-12 w-12 items-center justify-center bg-gray-700 font-bold text-white">
-              W/Reps
-            </div>
+            <div className="flex h-10 w-20 items-center justify-center bg-gray-700 font-bold text-white"></div>
             {Array.from({ length: 10 }, (_, i) => (
               <div
                 key={i}
-                className="flex h-12 w-12 items-center justify-center bg-gray-700 font-bold text-white"
+                className="flex h-10 w-20 items-center justify-center bg-gray-700 font-bold text-white"
               >
-                {i + 1}
+                {i + 1} {i + 1 === 1 ? "Rep" : "Reps"}
               </div>
             ))}
 
@@ -171,7 +231,7 @@ function ParetoGridCard({ paretoGrid }) {
                 {/* Left-side Row Header (Weight values) */}
                 <div
                   key={`row-${rowIndex}`}
-                  className="flex h-12 w-12 items-center justify-center bg-gray-700 font-bold text-white"
+                  className="mr-2 flex h-10 w-20 items-center justify-center bg-gray-700 font-bold text-white"
                 >
                   {row[0].weight}kg
                 </div>
@@ -180,40 +240,12 @@ function ParetoGridCard({ paretoGrid }) {
                 {row.map((cell, colIndex) => (
                   <div
                     key={colIndex}
-                    className={`flex h-12 w-12 items-center justify-center border text-xs font-bold ${cell.color === "grey" ? "bg-gray-500" : "bg-blue-500"} text-white`}
+                    className={`flex h-10 w-20 items-center justify-center border text-xs font-bold ${cell.color === "grey" ? "bg-gray-500" : "bg-blue-500"} text-white`}
                   >
-                    {cell.weight}
+                    {cell.weight}kg
                   </div>
                 ))}
               </>
-            ))}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ParetoGridCardOLD({ paretoGrid }) {
-  return (
-    <Card className="mt-6 shadow-lg">
-      <CardHeader>
-        <CardTitle>Pareto Grid</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="mx-auto w-full max-w-screen-md overflow-auto">
-          <div className="grid grid-cols-10 gap-1">
-            {paretoGrid.map((row, rowIndex) => (
-              <div key={rowIndex} className="contents">
-                {row.map((cell, colIndex) => (
-                  <div
-                    key={colIndex}
-                    className={`flex h-12 w-12 items-center justify-center border text-xs font-bold ${cell.color === "grey" ? "bg-gray-500" : "bg-blue-500"} text-white`}
-                  >
-                    {cell.weight}
-                  </div>
-                ))}
-              </div>
             ))}
           </div>
         </div>
@@ -274,7 +306,7 @@ export function processParetoGrid(
 
   const topLifts = topLiftsByTypeAndReps[liftType];
   if (!topLifts) return null;
-  devLog(topLifts);
+  // devLog(topLifts);
 
   // Loop through and collect their best lift at each rep scheme from 1-10
   // FIXME: Don't hard code the start value but estimate based on data and
@@ -291,9 +323,7 @@ export function processParetoGrid(
 
       const isAbovePR = weight > bestLift;
 
-      devLog(
-        `weight: ${weight}, reps: ${reps}, bestLift: ${bestLift}, isAbovePR: ${isAbovePR}`,
-      );
+      // devLog( `weight: ${weight}, reps: ${reps}, bestLift: ${bestLift}, isAbovePR: ${isAbovePR}`,);
 
       row.push({
         weight,
@@ -304,7 +334,7 @@ export function processParetoGrid(
     paretoGrid.push(row);
   }
 
-  devLog(paretoGrid);
+  // devLog(paretoGrid);
 
   devLog(
     "processParetoGrid: execution time: " +

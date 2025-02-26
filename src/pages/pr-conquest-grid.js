@@ -106,8 +106,15 @@ function ConquestGridMain({ relatedArticles }) {
       </div>
     );
 
-  const weightCounts = processConquestGrid(parsedData, "Bench Press");
-  devLog(weightCounts);
+  const weightCounts = processFrequencyCommonWeights(parsedData, "Bench Press");
+  // devLog(weightCounts);
+
+  const paretoGrid = processParetoGrid(
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+    "Bench Press",
+  );
 
   return (
     <div className="container">
@@ -123,36 +130,9 @@ function ConquestGridMain({ relatedArticles }) {
           data-driven approach to measure and expand your strength progress.
         </PageHeaderDescription>
       </PageHeader>
+      {!isLoading && parsedData && <ParetoGridCard paretoGrid={paretoGrid} />}
       {!isLoading && parsedData && (
-        <Card className="mt-6 shadow-lg">
-          <CardHeader>
-            <CardTitle>Bench Press Frequency Table</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <table className="mt-4 w-full table-auto border-collapse">
-              <tbody>
-                <tr>
-                  <th className="border px-4 py-2 text-center">Weight (kg)</th>
-                  {[...Array(10).keys()].map((rep) => (
-                    <th key={rep} className="border px-4 py-2 text-center">
-                      {rep + 1} {rep + 1 === 1 ? "Rep" : "Reps"}
-                    </th>
-                  ))}
-                </tr>
-                {Object.entries(weightCounts).map(([weight, counts]) => (
-                  <tr key={weight} className="">
-                    <td className="border px-4 py-2 text-center">{weight}kg</td>
-                    {counts.map((count, index) => (
-                      <td key={index} className="border px-4 py-2 text-center">
-                        {count}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
+        <FrequencyGridCard weightCounts={weightCounts} />
       )}
 
       <RelatedArticles articles={relatedArticles} />
@@ -160,8 +140,178 @@ function ConquestGridMain({ relatedArticles }) {
   );
 }
 
-// Process the parsedData to get the conquest grid info needed
-export function processConquestGrid(parsedData, liftType = "Bench Press") {
+function ParetoGridCard({ paretoGrid }) {
+  return (
+    <Card className="mt-6 shadow-lg">
+      <CardHeader>
+        <CardTitle>Pareto Grid</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="mx-auto w-full max-w-screen-md overflow-auto">
+          <div
+            className="grid"
+            style={{ gridTemplateColumns: "auto repeat(10, 1fr)" }}
+          >
+            {/* Column Headers (Reps 1-10) */}
+            <div className="flex h-12 w-12 items-center justify-center bg-gray-700 font-bold text-white">
+              W/Reps
+            </div>
+            {Array.from({ length: 10 }, (_, i) => (
+              <div
+                key={i}
+                className="flex h-12 w-12 items-center justify-center bg-gray-700 font-bold text-white"
+              >
+                {i + 1}
+              </div>
+            ))}
+
+            {/* Grid with Row Headers (Weight) */}
+            {paretoGrid.map((row, rowIndex) => (
+              <>
+                {/* Left-side Row Header (Weight values) */}
+                <div
+                  key={`row-${rowIndex}`}
+                  className="flex h-12 w-12 items-center justify-center bg-gray-700 font-bold text-white"
+                >
+                  {row[0].weight}kg
+                </div>
+
+                {/* Grid Cells */}
+                {row.map((cell, colIndex) => (
+                  <div
+                    key={colIndex}
+                    className={`flex h-12 w-12 items-center justify-center border text-xs font-bold ${cell.color === "grey" ? "bg-gray-500" : "bg-blue-500"} text-white`}
+                  >
+                    {cell.weight}
+                  </div>
+                ))}
+              </>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ParetoGridCardOLD({ paretoGrid }) {
+  return (
+    <Card className="mt-6 shadow-lg">
+      <CardHeader>
+        <CardTitle>Pareto Grid</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="mx-auto w-full max-w-screen-md overflow-auto">
+          <div className="grid grid-cols-10 gap-1">
+            {paretoGrid.map((row, rowIndex) => (
+              <div key={rowIndex} className="contents">
+                {row.map((cell, colIndex) => (
+                  <div
+                    key={colIndex}
+                    className={`flex h-12 w-12 items-center justify-center border text-xs font-bold ${cell.color === "grey" ? "bg-gray-500" : "bg-blue-500"} text-white`}
+                  >
+                    {cell.weight}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FrequencyGridCard({ weightCounts }) {
+  return (
+    <Card className="mt-6 shadow-lg">
+      <CardHeader>
+        <CardTitle>Bench Press Frequency Table</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <table className="mt-4 w-full table-auto border-collapse">
+          <tbody>
+            <tr>
+              <th className="border px-4 py-2 text-center">Weight (kg)</th>
+              {[...Array(10).keys()].map((rep) => (
+                <th key={rep} className="border px-4 py-2 text-center">
+                  {rep + 1} {rep + 1 === 1 ? "Rep" : "Reps"}
+                </th>
+              ))}
+            </tr>
+            {Object.entries(weightCounts).map(([weight, counts]) => (
+              <tr key={weight} className="">
+                <td className="border px-4 py-2 text-center">{weight}kg</td>
+                {counts.map((count, index) => (
+                  <td key={index} className="border px-4 py-2 text-center">
+                    {count}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Process topLiftsByTypeAndReps and create a Pareto grid
+// The return array is a 2D array with the following structure:
+// paretoGrid[y][x] = { colour, date, weight, reps }
+// y = weight, x = reps
+// We do it Y-first because JSX can easily map over rows
+export function processParetoGrid(
+  parsedData,
+  topLiftsByTypeAndReps,
+  topLiftsByTypeAndRepsLast12Months,
+  liftType = "Bench Press",
+) {
+  if (!parsedData) return null;
+  if (!topLiftsByTypeAndReps) return null;
+
+  const startTime = performance.now();
+  const today = new Date().toISOString().slice(0, 10); // Format today's date as "YYYY-MM-DD"
+  const startDate = "1900-01-01"; // FIXME: Later we will add custom start dates
+
+  const topLifts = topLiftsByTypeAndReps[liftType];
+  if (!topLifts) return null;
+  devLog(topLifts);
+
+  // Loop through and collect their best lift at each rep scheme from 1-10
+  // FIXME: Don't hard code the start value but estimate based on data and
+  // also adjust step size based on unit type (kg or lb)
+  const paretoGrid = [];
+  for (let weight = 150; weight >= 0; weight -= 10) {
+    const row = [];
+    for (let reps = 1; reps <= 10; reps++) {
+      const bestLift = topLifts[reps]?.[0]?.weight ?? 0; // Get PR for this rep count
+      const isAbovePR = weight > bestLift;
+
+      row.push({
+        weight,
+        reps,
+        color: isAbovePR ? "grey" : "blue",
+      });
+    }
+    paretoGrid.push(row);
+  }
+
+  devLog(paretoGrid);
+
+  devLog(
+    "processParetoGrid: execution time: " +
+      `${Math.round(performance.now() - startTime)}ms`,
+  );
+
+  return paretoGrid;
+}
+
+// Process the parsedData to get an array of frequency counts for common weights
+export function processFrequencyCommonWeights(
+  parsedData,
+  liftType = "Bench Press",
+) {
   if (!parsedData) return null;
 
   const startTime = performance.now();

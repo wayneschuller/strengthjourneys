@@ -183,10 +183,14 @@ function TopLiftsBarChart({ topLiftsByTypeAndReps, liftType = "Bench Press" }) {
     // Calculate potential max weight to match the best e1RM
     const potentialMax = Math.round(bestE1RM / (1 + 0.0333 * reps));
 
+    // Calculate the "extension" piece (difference between potential max and actual lift)
+    const extension = Math.max(0, potentialMax - bestLift);
+
     return {
       reps: `${reps} reps`, // X-axis label
       weight: bestLift, // Y-axis value (bar height)
       potentialMax,
+      extension,
     };
   });
 
@@ -195,7 +199,7 @@ function TopLiftsBarChart({ topLiftsByTypeAndReps, liftType = "Bench Press" }) {
   return (
     <Card className="mt-6 shadow-lg">
       <CardHeader>
-        <CardTitle>{liftType} Best Lifts Bar Chart</CardTitle>
+        <CardTitle>{liftType} Strength Potential By Rep Range</CardTitle>
       </CardHeader>
       <CardContent>
         {/* <ChartContainer className="h-[300px] w-full"> */}
@@ -204,8 +208,15 @@ function TopLiftsBarChart({ topLiftsByTypeAndReps, liftType = "Bench Press" }) {
             <XAxis dataKey="reps" stroke="#8884d8" />
             <YAxis stroke="#8884d8" domain={[0, "auto"]} />
             <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar dataKey="weight" fill="#3b82f6" />
-            <Bar dataKey="potentialMax" fill="#f59e0b" opacity={0.6} />
+
+            {/* <Bar dataKey="weight" fill="#3b82f6" /> */}
+            {/* <Bar dataKey="potentialMax" fill="#f59e0b" opacity={0.6} /> */}
+
+            {/* Base (actual best lift) */}
+            <Bar dataKey="weight" fill="#3b82f6" stackId="a" />
+
+            {/* Extension (potential max increase) */}
+            <Bar dataKey="extension" fill="#f59e0b" stackId="a" />
           </BarChart>
         </ChartContainer>
       </CardContent>

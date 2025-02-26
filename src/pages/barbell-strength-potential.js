@@ -177,11 +177,13 @@ function StrengthPotentialBarChart({
 
   // Find the best e1RM across all rep schemes
   let bestE1RM = 0;
+  let unitType = "kg";
   for (let reps = 0; reps < 10; reps++) {
     if (topLifts[reps]?.[0]) {
       const lift = topLifts[reps][0];
       const e1RM = lift.weight * (1 + 0.0333 * (reps + 1)); // reps+1 to match actual rep count
       bestE1RM = Math.max(bestE1RM, e1RM);
+      if (lift.unitType) unitType = lift.unitType;
     }
   }
 
@@ -216,11 +218,12 @@ function StrengthPotentialBarChart({
         <ChartContainer config={{}} className="">
           <BarChart data={chartData}>
             <XAxis dataKey="reps" stroke="#8884d8" />
-            <YAxis stroke="#8884d8" domain={[0, "auto"]} />
+            <YAxis
+              stroke="#8884d8"
+              domain={[0, "auto"]}
+              tickFormatter={(tick) => `${tick}${unitType}`}
+            />
             <ChartTooltip content={<ChartTooltipContent />} />
-
-            {/* <Bar dataKey="weight" fill="#3b82f6" /> */}
-            {/* <Bar dataKey="potentialMax" fill="#f59e0b" opacity={0.6} /> */}
 
             {/* Base (actual best lift) */}
             <Bar dataKey="weight" fill="#3b82f6" stackId="a" />

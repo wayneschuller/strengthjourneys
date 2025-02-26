@@ -271,8 +271,6 @@ export function processParetoGrid(
   if (!topLiftsByTypeAndReps) return null;
 
   const startTime = performance.now();
-  const today = new Date().toISOString().slice(0, 10); // Format today's date as "YYYY-MM-DD"
-  const startDate = "1900-01-01"; // FIXME: Later we will add custom start dates
 
   const topLifts = topLiftsByTypeAndReps[liftType];
   if (!topLifts) return null;
@@ -285,8 +283,17 @@ export function processParetoGrid(
   for (let weight = 150; weight >= 0; weight -= 10) {
     const row = [];
     for (let reps = 1; reps <= 10; reps++) {
-      const bestLift = topLifts[reps]?.[0]?.weight ?? 0; // Get PR for this rep count
+      // Check if there is a valid PR entry for this rep count
+      const hasPR = topLifts[reps - 1] && topLifts[reps - 1].length > 0;
+
+      // If a PR exists, get the highest weight for this rep count, otherwise default to 0
+      const bestLift = hasPR ? topLifts[reps - 1][0].weight : 0;
+
       const isAbovePR = weight > bestLift;
+
+      devLog(
+        `weight: ${weight}, reps: ${reps}, bestLift: ${bestLift}, isAbovePR: ${isAbovePR}`,
+      );
 
       row.push({
         weight,

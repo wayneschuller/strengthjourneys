@@ -10,6 +10,7 @@ import { useReadLocalStorage } from "usehooks-ts";
 import { Separator } from "@/components/ui/separator";
 import { devLog } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
+import { useStateFromQueryOrLocalStorage } from "@/lib/use-state-from-query-or-localStorage";
 
 import {
   Card,
@@ -153,34 +154,43 @@ function ConquestGridMain({ relatedArticles }) {
 }
 
 function TopLiftsBarChart({ topLiftsByTypeAndReps, liftType = "Bench Press" }) {
+  const [e1rmFormula, setE1rmFormula] = useStateFromQueryOrLocalStorage(
+    "formula",
+    "Brzycki",
+  );
+
   if (!topLiftsByTypeAndReps) return null;
   const topLifts = topLiftsByTypeAndReps[liftType];
   if (!topLifts) return null;
 
   const startTime = performance.now();
 
+  // Find the best e1RM across all rep schemes
+  let bestE1RM = 0;
+  for (let reps = 0; reps < 10; reps++) {
+    if (topLifts[reps]?.[0]) {
+      const lift = topLifts[reps][0];
+      const e1RM = lift.weight * (1 + 0.0333 * (reps + 1)); // reps+1 to match actual rep count
+      bestE1RM = Math.max(bestE1RM, e1RM);
+    }
+  }
+
   // Convert `topLifts` into chart data (only for reps 1-10)
   const chartData = Array.from({ length: 10 }, (_, i) => {
     const reps = i + 1;
     const bestLift = topLifts[reps - 1]?.[0]?.weight ?? 0;
 
+    // Calculate potential max weight to match the best e1RM
+    const potentialMax = Math.round(bestE1RM / (1 + 0.0333 * reps));
+
     return {
       reps: `${reps} reps`, // X-axis label
       weight: bestLift, // Y-axis value (bar height)
+      potentialMax,
     };
   });
 
   devLog(chartData);
-
-  // Shadcn charts needs this for theming but we just do custom colors anyway
-  // const chartConfig = Object.fromEntries(
-  // chartData.map((liftType, index) => [
-  // liftType,
-  // {
-  // label: liftType,
-  // },
-  // ]),
-  // );
 
   return (
     <Card className="mt-6 shadow-lg">
@@ -195,6 +205,7 @@ function TopLiftsBarChart({ topLiftsByTypeAndReps, liftType = "Bench Press" }) {
             <YAxis stroke="#8884d8" domain={[0, "auto"]} />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Bar dataKey="weight" fill="#3b82f6" />
+            <Bar dataKey="potentialMax" fill="#f59e0b" opacity={0.6} />
           </BarChart>
         </ChartContainer>
       </CardContent>

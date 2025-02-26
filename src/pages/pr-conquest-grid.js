@@ -127,22 +127,25 @@ function ConquestGridMain({ relatedArticles }) {
     "Bench Press",
   );
 
+  devLog(selectedLiftTypes);
+
   return (
     <div className="container">
       <PageHeader>
         <PageHeaderHeading icon={Grid2x2Check}>
-          PR Conquest Grid
+          Strength Potential
         </PageHeaderHeading>
         <PageHeaderDescription>
-          Track and conquer your barbell lifting PRs with the PR Conquest Map, a
-          precise grid visualizing your PRs at different rep schemes. Dark green
-          marks achieved PRs, light green indicates guaranteed new PRs, and
-          light yellow highlights probable challenges, offering a serious,
-          data-driven approach to measure and expand your strength progress.
+          See bar charts of your best lifts by rep range, with potential
+          strength shown for each rep range. Use this to identify where you can
+          improve or get personal records at different rep ranges.
         </PageHeaderDescription>
       </PageHeader>
       {!isLoading && parsedData && (
-        <TopLiftsBarChart topLiftsByTypeAndReps={topLiftsByTypeAndReps} />
+        <StrengthPotentialBarChart
+          topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+          liftType={selectedLiftTypes[0]}
+        />
       )}
       {!isLoading && parsedData && <ParetoGridCard paretoGrid={paretoGrid} />}
       {!isLoading && parsedData && (
@@ -154,7 +157,10 @@ function ConquestGridMain({ relatedArticles }) {
   );
 }
 
-function TopLiftsBarChart({ topLiftsByTypeAndReps, liftType = "Bench Press" }) {
+function StrengthPotentialBarChart({
+  topLiftsByTypeAndReps,
+  liftType = "Bench Press",
+}) {
   const [e1rmFormula, setE1rmFormula] = useStateFromQueryOrLocalStorage(
     "formula",
     "Brzycki",

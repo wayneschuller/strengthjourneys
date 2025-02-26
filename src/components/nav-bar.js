@@ -86,7 +86,9 @@ export function NavBar() {
       </div>
       <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2">
         {/* Only show the select lifts button on the analyzer and visualizer pages */}
-        {(pathname === "/analyzer" || pathname === "/visualizer") && (
+        {(pathname === "/analyzer" ||
+          pathname === "/visualizer" ||
+          pathname === "/barbell-strength-potential") && (
           <SidePanelSelectLiftsButton isIconMode={true} />
         )}
         <MiniTimer />

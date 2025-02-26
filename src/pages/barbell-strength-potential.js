@@ -133,12 +133,13 @@ function StrengthPotentialMain({ relatedArticles }) {
     <div className="container">
       <PageHeader>
         <PageHeaderHeading icon={ChartColumnDecreasing}>
-          Strength Potential
+          Barbell Strength Potential
         </PageHeaderHeading>
         <PageHeaderDescription>
-          See bar charts of your best lifts by rep range, with potential
-          strength shown for each rep range. Use this to identify where you can
-          improve or get personal records at different rep ranges.
+          Unlock your strength potential with dynamic bar charts showcasing your
+          top lifts across rep ranges, highlighting untapped gains to help you
+          find new personal records to feed that desperate hunger for
+          validation.
         </PageHeaderDescription>
       </PageHeader>
       {!isLoading &&

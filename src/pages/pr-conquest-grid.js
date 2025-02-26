@@ -141,12 +141,15 @@ function ConquestGridMain({ relatedArticles }) {
           improve or get personal records at different rep ranges.
         </PageHeaderDescription>
       </PageHeader>
-      {!isLoading && parsedData && (
-        <StrengthPotentialBarChart
-          topLiftsByTypeAndReps={topLiftsByTypeAndReps}
-          liftType={selectedLiftTypes[0]}
-        />
-      )}
+      {!isLoading &&
+        parsedData &&
+        // Map over the selected lift types and create a StrengthPotentialBarChart for each
+        selectedLiftTypes.map((liftType) => (
+          <StrengthPotentialBarChart
+            topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+            liftType={liftType}
+          />
+        ))}
       {!isLoading && parsedData && <ParetoGridCard paretoGrid={paretoGrid} />}
       {!isLoading && parsedData && (
         <FrequencyGridCard weightCounts={weightCounts} />

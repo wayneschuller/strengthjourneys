@@ -147,6 +147,7 @@ function StrengthPotentialMain({ relatedArticles }) {
         // Map over the selected lift types and create a StrengthPotentialBarChart for each
         selectedLiftTypes.map((liftType) => (
           <StrengthPotentialBarChart
+            key={liftType}
             topLiftsByTypeAndReps={topLiftsByTypeAndReps}
             liftType={liftType}
           />

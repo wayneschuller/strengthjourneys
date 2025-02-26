@@ -183,6 +183,8 @@ function StrengthPotentialBarChart({
       const lift = topLifts[reps][0];
       const e1RM = lift.weight * (1 + 0.0333 * (reps + 1)); // reps+1 to match actual rep count
       bestE1RM = Math.max(bestE1RM, e1RM);
+
+      // Set the unit type based on any lift with a unitType set
       if (lift.unitType) unitType = lift.unitType;
     }
   }

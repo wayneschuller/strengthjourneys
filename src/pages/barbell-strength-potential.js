@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { devLog } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 import { useStateFromQueryOrLocalStorage } from "@/lib/use-state-from-query-or-localStorage";
+import { useLocalStorage } from "usehooks-ts";
 
 import {
   Card,
@@ -155,10 +156,7 @@ function StrengthPotentialBarChart({
   topLiftsByTypeAndReps,
   liftType = "Bench Press",
 }) {
-  const [e1rmFormula, setE1rmFormula] = useStateFromQueryOrLocalStorage(
-    "formula",
-    "Brzycki",
-  );
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki");
 
   if (!topLiftsByTypeAndReps) return null;
   const topLifts = topLiftsByTypeAndReps[liftType];

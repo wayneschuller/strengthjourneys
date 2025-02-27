@@ -61,7 +61,10 @@ export function SidePanelSelectLiftsButton({ isIconMode }) {
         <SheetHeader>
           <SheetTitle>Choose Lifts</SheetTitle>
           <SheetDescription>
-            Choose what lifts to analyze and visualize (sets)
+            Choose what lifts to analyze and visualize
+            <p>
+              (numbers in parentheses show your total sets for each lift type)
+            </p>
           </SheetDescription>
         </SheetHeader>
         <CheckboxLifts />

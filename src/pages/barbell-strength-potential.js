@@ -28,7 +28,8 @@ import {
   PageHeaderDescription,
 } from "@/components/page-header";
 
-import { Bar, BarChart, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from "recharts";
+``;
 
 import {
   ChartContainer,
@@ -239,20 +240,24 @@ function StrengthPotentialBarChart({
             />
             <ChartTooltip content={<CustomTooltip />} />
 
-            {/* Base (actual best lift) */}
-            {/* <Bar dataKey="weight" fill="#3b82f6" stackId="a" /> */}
-
-            {/* Extension (potential max increase) */}
-            {/* <Bar dataKey="extension" fill="#f59e0b" stackId="a" /> */}
-
             {/* Base (actual best lift) with gradient */}
-            <Bar dataKey="weight" stackId="a" fill="url(#actualGradient)" />
+            <Bar
+              dataKey="weight"
+              stackId="a"
+              fill="url(#actualGradient)"
+              // radius={[8, 8, 0, 0]}
+              // animationDuration={800}
+              // animationEasing="ease-out"
+            />
 
             {/* Extension (potential max increase) with gradient */}
             <Bar
               dataKey="extension"
               stackId="a"
               fill="url(#potentialGradient)"
+              radius={[4, 4, 0, 0]}
+              animationDuration={800}
+              animationEasing="ease-out"
             />
 
             {/* Gradient Definitions */}

@@ -117,17 +117,7 @@ function StrengthPotentialMain({ relatedArticles }) {
       </div>
     );
 
-  const weightCounts = processFrequencyCommonWeights(parsedData, "Bench Press");
-  // devLog(weightCounts);
-
-  const paretoGrid = processParetoGrid(
-    parsedData,
-    topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
-    "Bench Press",
-  );
-
-  devLog(selectedLiftTypes);
+  // const weightCounts = processFrequencyCommonWeights(parsedData, "Bench Press");
 
   return (
     <div className="container">
@@ -142,21 +132,20 @@ function StrengthPotentialMain({ relatedArticles }) {
           validation.
         </PageHeaderDescription>
       </PageHeader>
-      {!isLoading &&
-        parsedData &&
-        // Map over the selected lift types and create a StrengthPotentialBarChart for each
-        selectedLiftTypes.map((liftType) => (
-          <StrengthPotentialBarChart
-            key={liftType}
-            topLiftsByTypeAndReps={topLiftsByTypeAndReps}
-            liftType={liftType}
-          />
-        ))}
-      {!isLoading && parsedData && <ParetoGridCard paretoGrid={paretoGrid} />}
-      {!isLoading && parsedData && (
-        <FrequencyGridCard weightCounts={weightCounts} />
-      )}
-
+      <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {!isLoading &&
+          parsedData &&
+          // Map over the selected lift types and create a StrengthPotentialBarChart for each
+          selectedLiftTypes.map((liftType) => (
+            <StrengthPotentialBarChart
+              key={liftType}
+              topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+              liftType={liftType}
+            />
+          ))}
+        {/* {!isLoading && parsedData && <ParetoGridCard paretoGrid={paretoGrid} />} */}
+        {/* {!isLoading && parsedData && ( <FrequencyGridCard weightCounts={weightCounts} />)} */}
+      </section>
       <RelatedArticles articles={relatedArticles} />
     </div>
   );
@@ -210,10 +199,10 @@ function StrengthPotentialBarChart({
     };
   });
 
-  devLog(chartData);
+  // devLog(chartData);
 
   return (
-    <Card className="mx-2 mt-6 shadow-lg lg:mx-36">
+    <Card className="shadow-lg md:mx-2">
       <CardHeader>
         <CardTitle>{liftType} Strength Potential By Rep Range</CardTitle>
       </CardHeader>

@@ -240,10 +240,38 @@ function StrengthPotentialBarChart({
             <ChartTooltip content={<CustomTooltip />} />
 
             {/* Base (actual best lift) */}
-            <Bar dataKey="weight" fill="#3b82f6" stackId="a" />
+            {/* <Bar dataKey="weight" fill="#3b82f6" stackId="a" /> */}
 
             {/* Extension (potential max increase) */}
-            <Bar dataKey="extension" fill="#f59e0b" stackId="a" />
+            {/* <Bar dataKey="extension" fill="#f59e0b" stackId="a" /> */}
+
+            {/* Base (actual best lift) with gradient */}
+            <Bar dataKey="weight" stackId="a" fill="url(#actualGradient)" />
+
+            {/* Extension (potential max increase) with gradient */}
+            <Bar
+              dataKey="extension"
+              stackId="a"
+              fill="url(#potentialGradient)"
+            />
+
+            {/* Gradient Definitions */}
+            <defs>
+              <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#60a5fa" stopOpacity={1} />
+                <stop offset="100%" stopColor="#3b82f6" stopOpacity={1} />
+              </linearGradient>
+              <linearGradient
+                id="potentialGradient"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop offset="0%" stopColor="#facc15" stopOpacity={1} />
+                <stop offset="100%" stopColor="#f59e0b" stopOpacity={1} />
+              </linearGradient>
+            </defs>
           </BarChart>
         </ChartContainer>
       </CardContent>

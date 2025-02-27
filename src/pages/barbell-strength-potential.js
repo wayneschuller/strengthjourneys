@@ -57,7 +57,7 @@ export async function getStaticProps() {
 export default function StrengthPotential({ relatedArticles }) {
   // OG Meta Tags
   const description =
-    "Unlock free insights into your strength training with our PR Analyzer. Track PRs, consistency and detailed squat/bench/deadlift analysis.";
+    "Unlock free insights into your strength training with the barbell strength potential charts. Track PRs, consistency and detailed squat/bench/deadlift analysis.";
   const title = "Barbell Strength Potential | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/analyzer";
   const ogImageURL =
@@ -129,10 +129,9 @@ function StrengthPotentialMain({ relatedArticles }) {
           Barbell Strength Potential
         </PageHeaderHeading>
         <PageHeaderDescription>
-          Unlock your strength potential with dynamic bar charts showcasing your
-          top lifts across rep ranges, highlighting untapped gains to help you
-          find new personal records to feed that desperate hunger for
-          validation.
+          Review your strength potential with bar charts showcasing your top
+          lifts across rep ranges, highlighting untapped gains to help you find
+          new personal records to feed that desperate hunger for validation.
         </PageHeaderDescription>
       </PageHeader>
       <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -262,7 +261,8 @@ function StrengthPotentialBarChart({
             <Bar
               dataKey="extension"
               stackId="a"
-              fill="url(#potentialGradient)"
+              // fill="url(#potentialGradient)"
+              fill="url(#potentialPattern)" // Use pattern instead of solid color
               radius={[4, 4, 0, 0]}
               animationDuration={800}
               animationEasing="ease-out"
@@ -285,6 +285,29 @@ function StrengthPotentialBarChart({
                 <stop offset="0%" stopColor="#facc15" stopOpacity={1} />
                 <stop offset="100%" stopColor="#f59e0b" stopOpacity={1} />
               </linearGradient>
+              <pattern
+                id="potentialPattern"
+                width="8"
+                height="8"
+                patternUnits="userSpaceOnUse"
+                patternTransform="rotate(45)" // Diagonal lines
+              >
+                <rect
+                  width="8"
+                  height="8"
+                  fill="#f59e0b" // Base orange color
+                  opacity={0.8} // Slightly faded
+                />
+                <line
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="8"
+                  stroke="#ffffff" // White lines for contrast
+                  strokeWidth="1"
+                  opacity={0.5} // Subtle pattern
+                />
+              </pattern>
             </defs>
           </BarChart>
         </ChartContainer>
@@ -311,7 +334,7 @@ const CustomTooltip = ({
     const actualDate = actualLift.date ? formatDate(actualLift.date) : "N/A";
     const bestWeight = bestLift.weight || 0;
     const bestDate = bestLift.date ? formatDate(bestLift.date) : "N/A";
-    const unitType = actualLift.unitType || "kg"; // Default to "kg" if not specified
+    const unitType = actualLift.unitType || "lb"; // Default to "lb" if not specified
 
     // devLog( `CustomTooltip: reps: ${reps}, actualWeight: ${actualWeight}, bestWeight: ${bestWeight}`,);
 

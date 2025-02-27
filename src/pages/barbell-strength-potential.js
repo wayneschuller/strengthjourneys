@@ -12,6 +12,7 @@ import { devLog } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 import { useStateFromQueryOrLocalStorage } from "@/lib/use-state-from-query-or-localStorage";
 import { useLocalStorage } from "usehooks-ts";
+import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
 
 import {
   Card,
@@ -166,20 +167,20 @@ function StrengthPotentialBarChart({
 
   // Find the best e1RM across all rep schemes
   let bestE1RMWeight = 0;
-  let bestLift = null; // Store the best e1rm lift object
-  let unitType = "kg";
+  let bestLift = null;
+  let unitType = "lb"; // Default to lb if not specified
   for (let reps = 0; reps < 10; reps++) {
     if (topLifts[reps]?.[0]) {
       const lift = topLifts[reps][0];
-
-      // FIXME: This should use the user preferred e1rm formula
-      const currentE1RMweight = lift.weight * (1 + 0.0333 * (reps + 1)); // reps+1 to match actual rep count
+      const currentE1RMweight = estimateE1RM(
+        reps + 1,
+        lift.weight,
+        e1rmFormula,
+      );
       if (currentE1RMweight > bestE1RMWeight) {
         bestE1RMWeight = currentE1RMweight;
         bestLift = lift;
       }
-
-      // Set the unit type based on any lift with a unitType set
       if (lift.unitType) unitType = lift.unitType;
     }
   }
@@ -193,8 +194,12 @@ function StrengthPotentialBarChart({
     // This allows us to have bar charts that are 100% potential
     const actualWeight = topLiftAtReps?.weight || 0;
 
-    // Calculate potential max weight to match the best e1RM
-    const potentialMax = Math.round(bestE1RMWeight / (1 + 0.0333 * reps));
+    // Calculate potential max weight based on the best e1RM
+    const potentialMax = estimateWeightForReps(
+      bestE1RMWeight,
+      reps,
+      e1rmFormula,
+    );
 
     // Calculate the "extension" piece (difference between potential max and actual lift)
 
@@ -217,6 +222,10 @@ function StrengthPotentialBarChart({
     <Card className="shadow-lg md:mx-2">
       <CardHeader>
         <CardTitle>{liftType} Strength Potential By Rep Range</CardTitle>
+        <CardDescription>
+          Benchmark lift: {bestLift.reps}@{bestLift.weight}
+          {bestLift.unitType} ({bestLift.date})
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {/* <ChartContainer className="h-[300px] w-full"> */}

@@ -267,7 +267,7 @@ const CustomTooltip = ({ active, payload }) => {
     const unitType = actualLift?.unitType || "kg"; // Default to "kg" if not specified
 
     return (
-      <div className="w-48 rounded border border-gray-300 bg-white p-2 shadow-lg md:w-64">
+      <div className="w-48 rounded border border-gray-300 bg-white p-2 shadow-lg dark:bg-black md:w-64">
         {/* <p className="font-bold">{data.reps}</p> */}
         <p>
           {reps}@{actualWeight}
@@ -280,7 +280,7 @@ const CustomTooltip = ({ active, payload }) => {
               {unitType}
             </p>
             <p>
-              (based on best lift 1@{bestWeight}
+              (based on best lift {bestLift.reps}@{bestWeight}
               {unitType} achieved {bestDate}).
             </p>
           </>

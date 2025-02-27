@@ -57,7 +57,7 @@ export async function getStaticProps() {
 export default function StrengthPotential({ relatedArticles }) {
   // OG Meta Tags
   const description =
-    "Unlock free insights into your strength training with our PR Analyzer. Track PRs, consistency and detailed squat/bench/deadlift analysis.";
+    "Unlock free insights into your strength training with the barbell strength potential charts. Track PRs, consistency and detailed squat/bench/deadlift analysis.";
   const title = "Barbell Strength Potential | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/analyzer";
   const ogImageURL =
@@ -129,10 +129,9 @@ function StrengthPotentialMain({ relatedArticles }) {
           Barbell Strength Potential
         </PageHeaderHeading>
         <PageHeaderDescription>
-          Unlock your strength potential with dynamic bar charts showcasing your
-          top lifts across rep ranges, highlighting untapped gains to help you
-          find new personal records to feed that desperate hunger for
-          validation.
+          Review your strength potential with bar charts showcasing your top
+          lifts across rep ranges, highlighting untapped gains to help you find
+          new personal records to feed that desperate hunger for validation.
         </PageHeaderDescription>
       </PageHeader>
       <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">

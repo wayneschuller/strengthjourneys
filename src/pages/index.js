@@ -17,6 +17,7 @@ import {
   LibraryBig,
   Bot,
   Anvil,
+  ChartColumnDecreasing,
 } from "lucide-react";
 
 import {
@@ -47,6 +48,13 @@ export const featurePages = [
     description:
       "Interactive lifetime charts of all lifts. See your strength journey.",
     IconComponent: LineChart,
+  },
+  {
+    href: "/barbell-strength-potential",
+    title: "Barbell Strength Potential",
+    description:
+      "Top lifts by rep range with bar charts that reveal untapped strength potential.",
+    IconComponent: ChartColumnDecreasing,
   },
   {
     href: "/ai-lifting-assistant",

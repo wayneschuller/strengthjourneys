@@ -49,6 +49,8 @@ import {
   Activity,
   Timer,
   Bot,
+  Grid2x2Check,
+  ChartColumnDecreasing,
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
@@ -84,7 +86,9 @@ export function NavBar() {
       </div>
       <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2">
         {/* Only show the select lifts button on the analyzer and visualizer pages */}
-        {(pathname === "/analyzer" || pathname === "/visualizer") && (
+        {(pathname === "/analyzer" ||
+          pathname === "/visualizer" ||
+          pathname === "/barbell-strength-potential") && (
           <SidePanelSelectLiftsButton isIconMode={true} />
         )}
         <MiniTimer />
@@ -359,6 +363,11 @@ function StrengthInsightsMenu() {
       title: "AI Lifting Assistant",
       href: "/ai-lifting-assistant",
       icon: <Bot className="h-5 w-5" />,
+    },
+    {
+      title: "Barbell Strength Potential",
+      href: "/barbell-strength-potential",
+      icon: <ChartColumnDecreasing className="h-5 w-5" />,
     },
   ];
 

@@ -224,7 +224,7 @@ function StrengthPotentialBarChart({
         <CardTitle>{liftType} Strength Potential By Rep Range</CardTitle>
         <CardDescription>
           Benchmark lift: {bestLift.reps}@{bestLift.weight}
-          {bestLift.unitType} ({bestLift.date})
+          {bestLift.unitType} ({formatDate(bestLift.date)})
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -260,17 +260,6 @@ const CustomTooltip = ({ active, payload }) => {
     const actualLift = data.actualLift;
     const bestLift = data.bestLift;
 
-    // Format dates (assuming ISO format, e.g., "2018-08-31" -> "31 Aug 2018")
-    const formatDate = (dateStr) => {
-      if (!dateStr) return "Unknown Date";
-      const date = new Date(dateStr);
-      return date.toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
-    };
-
     const actualWeight = actualLift?.weight || 0;
     const actualDate = formatDate(actualLift?.date);
     const bestWeight = bestLift?.weight || 0;
@@ -300,6 +289,17 @@ const CustomTooltip = ({ active, payload }) => {
     );
   }
   return null;
+};
+
+// Format dates (assuming ISO format, e.g., "2018-08-31" -> "31 Aug 2018")
+const formatDate = (dateStr) => {
+  if (!dateStr) return "Unknown Date";
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 };
 
 // ------------------------------------------------------------------------------------

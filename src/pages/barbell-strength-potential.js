@@ -269,11 +269,13 @@ const CustomTooltip = ({ active, payload }) => {
     return (
       <div className="w-48 rounded border border-gray-300 bg-white p-2 shadow-lg dark:bg-black md:w-64">
         {/* <p className="font-bold">{data.reps}</p> */}
-        <p>
-          {reps}@{actualWeight}
-          {unitType} achieved {actualDate}.
-        </p>
-        {actualWeight !== bestWeight && (
+        {actualWeight > 0 && (
+          <p>
+            {reps}@{actualWeight}
+            {unitType} achieved {actualDate}.
+          </p>
+        )}
+        {actualWeight < bestWeight && (
           <>
             <p>
               Potential of {reps}@{data.potentialMax}

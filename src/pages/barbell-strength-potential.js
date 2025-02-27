@@ -293,6 +293,12 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
+// ------------------------------------------------------------------------------------
+//
+// Experimental feature - decided it was too blocky and not as useful as the bar charts
+// Safe to delete some time.
+//
+// ------------------------------------------------------------------------------------
 function ParetoGridCard({ paretoGrid }) {
   return (
     <Card className="mt-6 shadow-lg">
@@ -345,6 +351,12 @@ function ParetoGridCard({ paretoGrid }) {
   );
 }
 
+// ------------------------------------------------------------------------------------
+//
+// Experimental feature - decided it was too blocky and not as useful as the bar charts
+// Safe to delete some time. Or maybe it can be developed into a more useful feature.
+//
+// ------------------------------------------------------------------------------------
 function FrequencyGridCard({ weightCounts }) {
   return (
     <Card className="mt-6 shadow-lg">

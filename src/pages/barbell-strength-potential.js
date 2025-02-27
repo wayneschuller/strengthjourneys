@@ -271,6 +271,8 @@ const CustomTooltip = ({
     const bestDate = bestLift.date ? formatDate(bestLift.date) : "N/A";
     const unitType = actualLift.unitType || "kg"; // Default to "kg" if not specified
 
+    // devLog( `CustomTooltip: reps: ${reps}, actualWeight: ${actualWeight}, bestWeight: ${bestWeight}`,);
+
     return (
       <div className="w-48 rounded border border-gray-300 bg-white p-2 shadow-lg dark:bg-black md:w-64">
         {/* Title */}
@@ -291,7 +293,7 @@ const CustomTooltip = ({
         )}
 
         {/* Potential Lift (Orange) */}
-        {actualWeight < bestWeight && (
+        {actualWeight < data.potentialMax && (
           <>
             <p className="flex items-center">
               <span

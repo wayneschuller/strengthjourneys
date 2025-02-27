@@ -2,7 +2,7 @@
 
 import Head from "next/head";
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, act } from "react";
 import { NextSeo } from "next-seo";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
@@ -167,13 +167,19 @@ function StrengthPotentialBarChart({
   const startTime = performance.now();
 
   // Find the best e1RM across all rep schemes
-  let bestE1RM = 0;
+  let bestE1RMWeight = 0;
+  let bestLift = null; // Store the best e1rm lift object
   let unitType = "kg";
   for (let reps = 0; reps < 10; reps++) {
     if (topLifts[reps]?.[0]) {
       const lift = topLifts[reps][0];
-      const e1RM = lift.weight * (1 + 0.0333 * (reps + 1)); // reps+1 to match actual rep count
-      bestE1RM = Math.max(bestE1RM, e1RM);
+
+      // FIXME: This should use the user preferred e1rm formula
+      const currentE1RMweight = lift.weight * (1 + 0.0333 * (reps + 1)); // reps+1 to match actual rep count
+      if (currentE1RMweight > bestE1RMWeight) {
+        bestE1RMWeight = currentE1RMweight;
+        bestLift = lift;
+      }
 
       // Set the unit type based on any lift with a unitType set
       if (lift.unitType) unitType = lift.unitType;
@@ -183,23 +189,31 @@ function StrengthPotentialBarChart({
   // Convert `topLifts` into chart data (only for reps 1-10)
   const chartData = Array.from({ length: 10 }, (_, i) => {
     const reps = i + 1;
-    const bestLift = topLifts[reps - 1]?.[0]?.weight ?? 0;
+    const topLiftAtReps = topLifts[i]?.[0];
+
+    // FIXME: this doesn't handle the case where there is no PR at this rep range
+    // In this case we still want to record a 0 weight and all the potential
+    if (!topLiftAtReps) return null;
 
     // Calculate potential max weight to match the best e1RM
-    const potentialMax = Math.round(bestE1RM / (1 + 0.0333 * reps));
+    const potentialMax = Math.round(bestE1RMWeight / (1 + 0.0333 * reps));
 
     // Calculate the "extension" piece (difference between potential max and actual lift)
-    const extension = Math.max(0, potentialMax - bestLift);
+
+    const extension = Math.max(0, potentialMax - topLiftAtReps.weight);
 
     return {
-      reps: `${reps} reps`, // X-axis label
-      weight: bestLift, // Y-axis value (bar height)
+      reps: `${reps} ${reps === 1 ? "rep" : "reps"}`, // X-axis label
+      weight: topLiftAtReps.weight, // Y-axis value (bar height)
       potentialMax,
       extension,
+      // Tooltip-specific data
+      actualLift: topLiftAtReps,
+      bestLift: bestLift,
     };
   });
 
-  // devLog(chartData);
+  devLog(chartData);
 
   return (
     <Card className="shadow-lg md:mx-2">
@@ -216,7 +230,7 @@ function StrengthPotentialBarChart({
               domain={[0, "auto"]}
               tickFormatter={(tick) => `${tick}${unitType}`}
             />
-            <ChartTooltip content={<ChartTooltipContent />} />
+            <ChartTooltip content={<CustomTooltip />} />
 
             {/* Base (actual best lift) */}
             <Bar dataKey="weight" fill="#3b82f6" stackId="a" />
@@ -229,6 +243,57 @@ function StrengthPotentialBarChart({
     </Card>
   );
 }
+
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload; // Get the data for the hovered bar
+    const reps = parseInt(data.reps); // Extract reps (e.g., "7 reps" -> 7)
+
+    // Extract data from the lift objects
+    const actualLift = data.actualLift;
+    const bestLift = data.bestLift;
+
+    // Format dates (assuming ISO format, e.g., "2018-08-31" -> "31 Aug 2018")
+    const formatDate = (dateStr) => {
+      if (!dateStr) return "Unknown Date";
+      const date = new Date(dateStr);
+      return date.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    };
+
+    const actualWeight = actualLift?.weight || 0;
+    const actualDate = formatDate(actualLift?.date);
+    const bestWeight = bestLift?.weight || 0;
+    const bestDate = formatDate(bestLift?.date);
+    const unitType = actualLift?.unitType || "kg"; // Default to "kg" if not specified
+
+    return (
+      <div className="w-48 rounded border border-gray-300 bg-white p-2 shadow-lg md:w-64">
+        {/* <p className="font-bold">{data.reps}</p> */}
+        <p>
+          {reps}@{actualWeight}
+          {unitType} achieved {actualDate}.
+        </p>
+        {actualWeight !== bestWeight && (
+          <>
+            <p>
+              Potential of {reps}@{data.potentialMax}
+              {unitType}
+            </p>
+            <p>
+              (based on best lift 1@{bestWeight}
+              {unitType} achieved {bestDate}).
+            </p>
+          </>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
 
 function ParetoGridCard({ paretoGrid }) {
   return (

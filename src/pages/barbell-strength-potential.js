@@ -13,6 +13,8 @@ import { RelatedArticles } from "@/components/article-cards";
 import { useStateFromQueryOrLocalStorage } from "@/lib/use-state-from-query-or-localStorage";
 import { useLocalStorage } from "usehooks-ts";
 import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
+import { E1RMFormulaRadioGroup } from "@/components/e1rm-formula-radio-group";
+import { e1rmFormulae } from "@/lib/estimate-e1rm";
 
 import {
   Card,
@@ -112,6 +114,9 @@ function StrengthPotentialMain({ relatedArticles }) {
     isLoading,
   } = useUserLiftingData();
   const ssid = useReadLocalStorage("ssid");
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki", {
+    initializeWithValue: false,
+  });
 
   if (!isLoading && authStatus === "authenticated" && !ssid)
     return (
@@ -134,6 +139,11 @@ function StrengthPotentialMain({ relatedArticles }) {
           new personal records to feed that desperate hunger for validation.
         </PageHeaderDescription>
       </PageHeader>
+      <E1RMFormulaRadioGroup
+        e1rmFormula={e1rmFormula}
+        setE1rmFormula={setE1rmFormula}
+        horizontal={true}
+      />
       <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {!isLoading &&
           parsedData &&

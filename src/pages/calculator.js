@@ -49,6 +49,7 @@ import { Calculator } from "lucide-react";
 const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { E1RMFormulaRadioGroup } from "@/components/e1rm-formula-radio-group";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
@@ -612,7 +613,7 @@ const ShareIcon = () => {
   );
 };
 
-function E1RMFormulaRadioGroup({
+function E1RMFormulaRadioGroupOLD({
   formulae,
   e1rmFormula,
   setE1rmFormula,

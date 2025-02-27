@@ -187,22 +187,22 @@ function StrengthPotentialBarChart({
   // Convert `topLifts` into chart data (only for reps 1-10)
   const chartData = Array.from({ length: 10 }, (_, i) => {
     const reps = i + 1;
-    const topLiftAtReps = topLifts[i]?.[0];
+    const topLiftAtReps = topLifts[i]?.[0] || null; // Default to null if no lift exists
 
-    // FIXME: this doesn't handle the case where there is no PR at this rep range
-    // In this case we still want to record a 0 weight and all the potential
-    if (!topLiftAtReps) return null;
+    // Use 0 weight and the full potential if no lift exists at this rep range
+    // This allows us to have bar charts that are 100% potential
+    const actualWeight = topLiftAtReps?.weight || 0;
 
     // Calculate potential max weight to match the best e1RM
     const potentialMax = Math.round(bestE1RMWeight / (1 + 0.0333 * reps));
 
     // Calculate the "extension" piece (difference between potential max and actual lift)
 
-    const extension = Math.max(0, potentialMax - topLiftAtReps.weight);
+    const extension = Math.max(0, potentialMax - actualWeight);
 
     return {
       reps: `${reps} ${reps === 1 ? "rep" : "reps"}`, // X-axis label
-      weight: topLiftAtReps.weight, // Y-axis value (bar height)
+      weight: actualWeight, // Y-axis value (bar height)
       potentialMax,
       extension,
       // Tooltip-specific data

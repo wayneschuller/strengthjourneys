@@ -28,7 +28,8 @@ import {
   PageHeaderDescription,
 } from "@/components/page-header";
 
-import { Bar, BarChart, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from "recharts";
+``;
 
 import {
   ChartContainer,
@@ -239,11 +240,43 @@ function StrengthPotentialBarChart({
             />
             <ChartTooltip content={<CustomTooltip />} />
 
-            {/* Base (actual best lift) */}
-            <Bar dataKey="weight" fill="#3b82f6" stackId="a" />
+            {/* Base (actual best lift) with gradient */}
+            <Bar
+              dataKey="weight"
+              stackId="a"
+              fill="url(#actualGradient)"
+              // radius={[8, 8, 0, 0]}
+              // animationDuration={800}
+              // animationEasing="ease-out"
+            />
 
-            {/* Extension (potential max increase) */}
-            <Bar dataKey="extension" fill="#f59e0b" stackId="a" />
+            {/* Extension (potential max increase) with gradient */}
+            <Bar
+              dataKey="extension"
+              stackId="a"
+              fill="url(#potentialGradient)"
+              radius={[4, 4, 0, 0]}
+              animationDuration={800}
+              animationEasing="ease-out"
+            />
+
+            {/* Gradient Definitions */}
+            <defs>
+              <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#60a5fa" stopOpacity={1} />
+                <stop offset="100%" stopColor="#3b82f6" stopOpacity={1} />
+              </linearGradient>
+              <linearGradient
+                id="potentialGradient"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop offset="0%" stopColor="#facc15" stopOpacity={1} />
+                <stop offset="100%" stopColor="#f59e0b" stopOpacity={1} />
+              </linearGradient>
+            </defs>
           </BarChart>
         </ChartContainer>
       </CardContent>
@@ -251,39 +284,61 @@ function StrengthPotentialBarChart({
   );
 }
 
-const CustomTooltip = ({ active, payload }) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  actualColor = "#3b82f6",
+  potentialColor = "#f59e0b",
+}) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload; // Get the data for the hovered bar
     const reps = parseInt(data.reps); // Extract reps (e.g., "7 reps" -> 7)
 
     // Extract data from the lift objects
-    const actualLift = data.actualLift;
-    const bestLift = data.bestLift;
+    const actualLift = data.actualLift || {};
+    const bestLift = data.bestLift || {};
 
-    const actualWeight = actualLift?.weight || 0;
-    const actualDate = formatDate(actualLift?.date);
-    const bestWeight = bestLift?.weight || 0;
-    const bestDate = formatDate(bestLift?.date);
-    const unitType = actualLift?.unitType || "kg"; // Default to "kg" if not specified
+    const actualWeight = actualLift.weight || 0;
+    const actualDate = actualLift.date ? formatDate(actualLift.date) : "N/A";
+    const bestWeight = bestLift.weight || 0;
+    const bestDate = bestLift.date ? formatDate(bestLift.date) : "N/A";
+    const unitType = actualLift.unitType || "kg"; // Default to "kg" if not specified
+
+    // devLog( `CustomTooltip: reps: ${reps}, actualWeight: ${actualWeight}, bestWeight: ${bestWeight}`,);
 
     return (
       <div className="w-48 rounded border border-gray-300 bg-white p-2 shadow-lg dark:bg-black md:w-64">
-        {/* <p className="font-bold">{data.reps}</p> */}
+        {/* Title */}
+        <p className="font-bold">
+          {reps} Rep {bestLift.liftType}
+        </p>
+
+        {/* Actual Lift (Blue) */}
         {actualWeight > 0 && (
-          <p>
+          <p className="flex items-center">
+            <span
+              className="mr-2 inline-block h-3 w-3 rounded"
+              style={{ backgroundColor: actualColor }}
+            ></span>
             {reps}@{actualWeight}
             {unitType} achieved {actualDate}.
           </p>
         )}
-        {actualWeight < bestWeight && (
+
+        {/* Potential Lift (Orange) */}
+        {actualWeight < data.potentialMax && (
           <>
-            <p>
-              Potential of {reps}@{data.potentialMax}
+            <p className="flex items-center">
+              <span
+                className="mr-2 inline-block h-3 w-3 rounded"
+                style={{ backgroundColor: potentialColor }}
+              ></span>
+              Potential: {reps}@{data.potentialMax}
               {unitType}
             </p>
-            <p>
-              (based on best lift {bestLift.reps}@{bestWeight}
-              {unitType} achieved {bestDate}).
+            <p className="text-xs text-gray-500">
+              (Based on best: {bestLift.reps}@{bestWeight}
+              {unitType}, {bestDate})
             </p>
           </>
         )}

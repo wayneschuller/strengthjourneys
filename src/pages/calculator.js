@@ -613,39 +613,6 @@ const ShareIcon = () => {
   );
 };
 
-function E1RMFormulaRadioGroupOLD({
-  formulae,
-  e1rmFormula,
-  setE1rmFormula,
-  reps,
-  weight,
-  isMetric,
-}) {
-  return (
-    <fieldset className="">
-      <legend>
-        <Label>E1RM Algorithm:</Label>
-      </legend>
-      <RadioGroup
-        value={e1rmFormula}
-        onValueChange={setE1rmFormula}
-        className="mt-2 grid grid-cols-2 space-y-1 lg:grid-cols-1"
-        aria-label="Select E1RM Algorithm"
-      >
-        {formulae.map((formula) => (
-          <div key={formula} className="flex items-center space-x-2">
-            <RadioGroupItem value={formula} id={`e1rm-formula-${formula}`} />
-            <Label htmlFor={`e1rm-formula-${formula}`} className="">
-              {formula} ({estimateE1RM(reps, weight, formula)}
-              {isMetric ? "kg" : "lb"})
-            </Label>
-          </div>
-        ))}
-      </RadioGroup>
-    </fieldset>
-  );
-}
-
 function OptionalAtheleBioData({
   isMetric,
   bodyWeight,

@@ -261,7 +261,8 @@ function StrengthPotentialBarChart({
             <Bar
               dataKey="extension"
               stackId="a"
-              fill="url(#potentialGradient)"
+              // fill="url(#potentialGradient)"
+              fill="url(#potentialPattern)" // Use pattern instead of solid color
               radius={[4, 4, 0, 0]}
               animationDuration={800}
               animationEasing="ease-out"
@@ -284,6 +285,29 @@ function StrengthPotentialBarChart({
                 <stop offset="0%" stopColor="#facc15" stopOpacity={1} />
                 <stop offset="100%" stopColor="#f59e0b" stopOpacity={1} />
               </linearGradient>
+              <pattern
+                id="potentialPattern"
+                width="8"
+                height="8"
+                patternUnits="userSpaceOnUse"
+                patternTransform="rotate(45)" // Diagonal lines
+              >
+                <rect
+                  width="8"
+                  height="8"
+                  fill="#f59e0b" // Base orange color
+                  opacity={0.8} // Slightly faded
+                />
+                <line
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="8"
+                  stroke="#ffffff" // White lines for contrast
+                  strokeWidth="1"
+                  opacity={0.5} // Subtle pattern
+                />
+              </pattern>
             </defs>
           </BarChart>
         </ChartContainer>

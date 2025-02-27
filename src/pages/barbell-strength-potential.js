@@ -138,12 +138,14 @@ function StrengthPotentialMain({ relatedArticles }) {
           lifts across rep ranges, highlighting untapped gains to help you find
           new personal records to feed that desperate hunger for validation.
         </PageHeaderDescription>
+        <div className="md:max-w-md">
+          <E1RMFormulaRadioGroup
+            e1rmFormula={e1rmFormula}
+            setE1rmFormula={setE1rmFormula}
+            horizontal={true}
+          />
+        </div>
       </PageHeader>
-      <E1RMFormulaRadioGroup
-        e1rmFormula={e1rmFormula}
-        setE1rmFormula={setE1rmFormula}
-        horizontal={true}
-      />
       <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {!isLoading &&
           parsedData &&

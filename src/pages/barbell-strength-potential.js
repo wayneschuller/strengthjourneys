@@ -59,13 +59,14 @@ export async function getStaticProps() {
 export default function StrengthPotential({ relatedArticles }) {
   // OG Meta Tags
   const description =
-    "Unlock free insights into your strength training with the barbell strength potential charts. Track PRs, consistency and detailed squat/bench/deadlift analysis.";
+    "Unlock free insights into your strength training with the barbell strength potential charts. Track PRs and discover untapped PRs across rep schemes.";
   const title = "Barbell Strength Potential | Strength Journeys";
-  const canonicalURL = "https://www.strengthjourneys.xyz/analyzer";
+  const canonicalURL =
+    "https://www.strengthjourneys.xyz/barbell-strength-potential";
   const ogImageURL =
-    "https://www.strengthjourneys.xyz/strength_journeys_analyzer_og.png";
+    "https://www.strengthjourneys.xyz/strength_journeys_barbell_strength_potential_og.png";
   const keywords =
-    "strength training, PR analyzer, workout progress, consistency tracking, monthly highlights, lifting journey, strength gains, personal records, workout heatmap, lift frequency analysis, strength progress reports, fitness data visualization";
+    "strength training, PR analyzer, workout progress, potential strength, lifting journey, strength gains, personal records, strength progress reports, fitness data visualization";
 
   return (
     <>

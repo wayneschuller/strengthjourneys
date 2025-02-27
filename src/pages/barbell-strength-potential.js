@@ -28,7 +28,7 @@ import {
   PageHeaderDescription,
 } from "@/components/page-header";
 
-import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from "recharts";
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 ``;
 
 import {
@@ -37,7 +37,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-import { Trophy, Grid2x2Check, ChartColumnDecreasing } from "lucide-react";
+import { ChartColumnDecreasing } from "lucide-react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { parse } from "date-fns";
@@ -211,6 +211,8 @@ function StrengthPotentialBarChart({
       weight: actualWeight, // Y-axis value (bar height)
       potentialMax,
       extension,
+      // actualLabel: "Best Lift Achieved", // Embedded label
+      // potentialLabel: "Untapped Potential Max", // Embedded label
       // Tooltip-specific data
       actualLift: topLiftAtReps,
       bestLift: bestLift,
@@ -239,12 +241,18 @@ function StrengthPotentialBarChart({
               tickFormatter={(tick) => `${tick}${unitType}`}
             />
             <ChartTooltip content={<CustomTooltip />} />
+            <Legend
+              verticalAlign="bottom"
+              height={36}
+              wrapperStyle={{ fontSize: "12px", color: "#64748b" }}
+            />
 
             {/* Base (actual best lift) with gradient */}
             <Bar
               dataKey="weight"
               stackId="a"
               fill="url(#actualGradient)"
+              name="Best Lift Achieved"
               // radius={[8, 8, 0, 0]}
               // animationDuration={800}
               // animationEasing="ease-out"
@@ -258,6 +266,7 @@ function StrengthPotentialBarChart({
               radius={[4, 4, 0, 0]}
               animationDuration={800}
               animationEasing="ease-out"
+              name="Potential Max"
             />
 
             {/* Gradient Definitions */}

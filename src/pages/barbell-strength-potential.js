@@ -251,39 +251,59 @@ function StrengthPotentialBarChart({
   );
 }
 
-const CustomTooltip = ({ active, payload }) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  actualColor = "#3b82f6",
+  potentialColor = "#f59e0b",
+}) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload; // Get the data for the hovered bar
     const reps = parseInt(data.reps); // Extract reps (e.g., "7 reps" -> 7)
 
     // Extract data from the lift objects
-    const actualLift = data.actualLift;
-    const bestLift = data.bestLift;
+    const actualLift = data.actualLift || {};
+    const bestLift = data.bestLift || {};
 
-    const actualWeight = actualLift?.weight || 0;
-    const actualDate = formatDate(actualLift?.date);
-    const bestWeight = bestLift?.weight || 0;
-    const bestDate = formatDate(bestLift?.date);
-    const unitType = actualLift?.unitType || "kg"; // Default to "kg" if not specified
+    const actualWeight = actualLift.weight || 0;
+    const actualDate = actualLift.date ? formatDate(actualLift.date) : "N/A";
+    const bestWeight = bestLift.weight || 0;
+    const bestDate = bestLift.date ? formatDate(bestLift.date) : "N/A";
+    const unitType = actualLift.unitType || "kg"; // Default to "kg" if not specified
 
     return (
       <div className="w-48 rounded border border-gray-300 bg-white p-2 shadow-lg dark:bg-black md:w-64">
-        {/* <p className="font-bold">{data.reps}</p> */}
+        {/* Title */}
+        <p className="font-bold">
+          {reps} Rep {bestLift.liftType}
+        </p>
+
+        {/* Actual Lift (Blue) */}
         {actualWeight > 0 && (
-          <p>
+          <p className="flex items-center">
+            <span
+              className="mr-2 inline-block h-3 w-3 rounded"
+              style={{ backgroundColor: actualColor }}
+            ></span>
             {reps}@{actualWeight}
             {unitType} achieved {actualDate}.
           </p>
         )}
+
+        {/* Potential Lift (Orange) */}
         {actualWeight < bestWeight && (
           <>
-            <p>
-              Potential of {reps}@{data.potentialMax}
+            <p className="flex items-center">
+              <span
+                className="mr-2 inline-block h-3 w-3 rounded"
+                style={{ backgroundColor: potentialColor }}
+              ></span>
+              Potential: {reps}@{data.potentialMax}
               {unitType}
             </p>
-            <p>
-              (based on best lift {bestLift.reps}@{bestWeight}
-              {unitType} achieved {bestDate}).
+            <p className="text-xs text-gray-500">
+              (Based on best: {bestLift.reps}@{bestWeight}
+              {unitType}, {bestDate})
             </p>
           </>
         )}

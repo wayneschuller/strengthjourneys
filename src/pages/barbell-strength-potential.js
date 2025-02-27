@@ -311,7 +311,7 @@ const CustomTooltip = ({
     const actualDate = actualLift.date ? formatDate(actualLift.date) : "N/A";
     const bestWeight = bestLift.weight || 0;
     const bestDate = bestLift.date ? formatDate(bestLift.date) : "N/A";
-    const unitType = actualLift.unitType || "kg"; // Default to "kg" if not specified
+    const unitType = actualLift.unitType || "lb"; // Default to "lb" if not specified
 
     // devLog( `CustomTooltip: reps: ${reps}, actualWeight: ${actualWeight}, bestWeight: ${bestWeight}`,);
 

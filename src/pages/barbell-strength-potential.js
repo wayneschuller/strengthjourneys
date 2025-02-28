@@ -1,8 +1,6 @@
 "use client";
 
-import Head from "next/head";
 import { useSession } from "next-auth/react";
-import { useState, useEffect, act } from "react";
 import { NextSeo } from "next-seo";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
@@ -10,11 +8,10 @@ import { useReadLocalStorage } from "usehooks-ts";
 import { Separator } from "@/components/ui/separator";
 import { devLog } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
-import { useStateFromQueryOrLocalStorage } from "@/lib/use-state-from-query-or-localStorage";
 import { useLocalStorage } from "usehooks-ts";
 import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
 import { E1RMFormulaRadioGroup } from "@/components/e1rm-formula-radio-group";
-import { e1rmFormulae } from "@/lib/estimate-e1rm";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
   Card,
@@ -39,7 +36,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-import { ChartColumnDecreasing } from "lucide-react";
+import { ChartColumnDecreasing, LoaderCircle } from "lucide-react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { parse } from "date-fns";
@@ -107,13 +104,7 @@ export default function StrengthPotential({ relatedArticles }) {
 
 function StrengthPotentialMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
-  const {
-    parsedData,
-    topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
-    selectedLiftTypes,
-    isLoading,
-  } = useUserLiftingData();
+  const { selectedLiftTypes, isLoading } = useUserLiftingData();
   const ssid = useReadLocalStorage("ssid");
   const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki", {
     initializeWithValue: false,
@@ -125,8 +116,6 @@ function StrengthPotentialMain({ relatedArticles }) {
         <ChooseSheetInstructionsCard session={session} />
       </div>
     );
-
-  // const weightCounts = processFrequencyCommonWeights(parsedData, "Bench Press");
 
   return (
     <div className="container">
@@ -148,16 +137,9 @@ function StrengthPotentialMain({ relatedArticles }) {
         </div>
       </PageHeader>
       <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {!isLoading &&
-          parsedData &&
-          // Map over the selected lift types and create a StrengthPotentialBarChart for each
-          selectedLiftTypes.map((liftType) => (
-            <StrengthPotentialBarChart
-              key={liftType}
-              topLiftsByTypeAndReps={topLiftsByTypeAndReps}
-              liftType={liftType}
-            />
-          ))}
+        {selectedLiftTypes.map((liftType) => (
+          <StrengthPotentialBarChart key={liftType} liftType={liftType} />
+        ))}
         {/* {!isLoading && parsedData && <ParetoGridCard paretoGrid={paretoGrid} />} */}
         {/* {!isLoading && parsedData && ( <FrequencyGridCard weightCounts={weightCounts} />)} */}
       </section>
@@ -166,72 +148,77 @@ function StrengthPotentialMain({ relatedArticles }) {
   );
 }
 
-function StrengthPotentialBarChart({
-  topLiftsByTypeAndReps,
-  liftType = "Bench Press",
-}) {
+function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
+  const { parsedData, topLiftsByTypeAndReps, isValidating } =
+    useUserLiftingData();
   const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki");
 
-  if (!topLiftsByTypeAndReps) return null;
-  const topLifts = topLiftsByTypeAndReps[liftType];
-  if (!topLifts) return null;
+  // Early return only if topLiftsByTypeAndReps exists but is empty/invalid for this liftType
+  // if (topLiftsByTypeAndReps && !topLiftsByTypeAndReps[liftType]) {
+  // return null;
+  // }
 
+  const topLifts = topLiftsByTypeAndReps[liftType];
   const startTime = performance.now();
 
   // Find the best e1RM across all rep schemes
   let bestE1RMWeight = 0;
   let bestLift = null;
   let unitType = "lb"; // Default to lb if not specified
-  for (let reps = 0; reps < 10; reps++) {
-    if (topLifts[reps]?.[0]) {
-      const lift = topLifts[reps][0];
-      const currentE1RMweight = estimateE1RM(
-        reps + 1,
-        lift.weight,
+  let chartData = [];
+
+  if (parsedData) {
+    for (let reps = 0; reps < 10; reps++) {
+      if (topLifts[reps]?.[0]) {
+        const lift = topLifts[reps][0];
+        const currentE1RMweight = estimateE1RM(
+          reps + 1,
+          lift.weight,
+          e1rmFormula,
+        );
+        if (currentE1RMweight > bestE1RMWeight) {
+          bestE1RMWeight = currentE1RMweight;
+          bestLift = lift;
+        }
+        if (lift.unitType) unitType = lift.unitType;
+      }
+    }
+
+    // Convert `topLifts` into chart data (only for reps 1-10)
+    chartData = Array.from({ length: 10 }, (_, i) => {
+      const reps = i + 1;
+      const topLiftAtReps = topLifts[i]?.[0] || null; // Default to null if no lift exists
+
+      // Use 0 weight and the full potential if no lift exists at this rep range
+      // This allows us to have bar charts that are 100% potential
+      const actualWeight = topLiftAtReps?.weight || 0;
+
+      // Calculate potential max weight based on the best e1RM
+      const potentialMax = estimateWeightForReps(
+        bestE1RMWeight,
+        reps,
         e1rmFormula,
       );
-      if (currentE1RMweight > bestE1RMWeight) {
-        bestE1RMWeight = currentE1RMweight;
-        bestLift = lift;
-      }
-      if (lift.unitType) unitType = lift.unitType;
-    }
+
+      // Calculate the "extension" piece (difference between potential max and actual lift)
+
+      const extension = Math.max(0, potentialMax - actualWeight);
+
+      return {
+        reps: `${reps} ${reps === 1 ? "rep" : "reps"}`, // X-axis label
+        weight: actualWeight, // Y-axis value (bar height)
+        potentialMax,
+        extension,
+        // actualLabel: "Best Lift Achieved", // Embedded label
+        // potentialLabel: "Untapped Potential Max", // Embedded label
+        // Tooltip-specific data
+        actualLift: topLiftAtReps,
+        bestLift: bestLift,
+      };
+    });
+
+    // devLog(chartData);
   }
-
-  // Convert `topLifts` into chart data (only for reps 1-10)
-  const chartData = Array.from({ length: 10 }, (_, i) => {
-    const reps = i + 1;
-    const topLiftAtReps = topLifts[i]?.[0] || null; // Default to null if no lift exists
-
-    // Use 0 weight and the full potential if no lift exists at this rep range
-    // This allows us to have bar charts that are 100% potential
-    const actualWeight = topLiftAtReps?.weight || 0;
-
-    // Calculate potential max weight based on the best e1RM
-    const potentialMax = estimateWeightForReps(
-      bestE1RMWeight,
-      reps,
-      e1rmFormula,
-    );
-
-    // Calculate the "extension" piece (difference between potential max and actual lift)
-
-    const extension = Math.max(0, potentialMax - actualWeight);
-
-    return {
-      reps: `${reps} ${reps === 1 ? "rep" : "reps"}`, // X-axis label
-      weight: actualWeight, // Y-axis value (bar height)
-      potentialMax,
-      extension,
-      // actualLabel: "Best Lift Achieved", // Embedded label
-      // potentialLabel: "Untapped Potential Max", // Embedded label
-      // Tooltip-specific data
-      actualLift: topLiftAtReps,
-      bestLift: bestLift,
-    };
-  });
-
-  devLog(chartData);
 
   return (
     <Card className="shadow-lg md:mx-2">
@@ -240,90 +227,96 @@ function StrengthPotentialBarChart({
         <CardDescription>
           Benchmark lift: {bestLift.reps}@{bestLift.weight}
           {bestLift.unitType} ({formatDate(bestLift.date)})
+          {isValidating && (
+            <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* <ChartContainer className="h-[300px] w-full"> */}
-        <ChartContainer config={{}} className="">
-          <BarChart data={chartData}>
-            <XAxis dataKey="reps" stroke="#8884d8" />
-            <YAxis
-              stroke="#8884d8"
-              domain={[0, "auto"]}
-              tickFormatter={(tick) => `${tick}${unitType}`}
-            />
-            <ChartTooltip content={<CustomTooltip />} />
-            <Legend
-              verticalAlign="bottom"
-              height={36}
-              wrapperStyle={{ fontSize: "12px", color: "#64748b" }}
-            />
+        {!topLiftsByTypeAndReps ? (
+          <Skeleton className="h-[300px] w-full" /> // FIXME: This skeleton never shows
+        ) : (
+          <ChartContainer config={{}} className="">
+            <BarChart data={chartData}>
+              <XAxis dataKey="reps" stroke="#8884d8" />
+              <YAxis
+                stroke="#8884d8"
+                domain={[0, "auto"]}
+                tickFormatter={(tick) => `${tick}${unitType}`}
+              />
+              <ChartTooltip content={<CustomTooltip />} />
+              <Legend
+                verticalAlign="bottom"
+                height={36}
+                wrapperStyle={{ fontSize: "12px", color: "#64748b" }}
+              />
 
-            {/* Base (actual best lift) with gradient */}
-            <Bar
-              dataKey="weight"
-              stackId="a"
-              fill="url(#actualGradient)"
-              name="Best Lift Achieved"
-              // radius={[8, 8, 0, 0]}
-              // animationDuration={800}
-              // animationEasing="ease-out"
-            />
+              {/* Base (actual best lift) with gradient */}
+              <Bar
+                dataKey="weight"
+                stackId="a"
+                fill="url(#actualGradient)"
+                name="Best Lift Achieved"
+                // radius={[8, 8, 0, 0]}
+                // animationDuration={800}
+                // animationEasing="ease-out"
+              />
 
-            {/* Extension (potential max increase) with gradient */}
-            <Bar
-              dataKey="extension"
-              stackId="a"
-              // fill="url(#potentialGradient)"
-              fill="url(#potentialPattern)" // Use pattern instead of solid color
-              radius={[4, 4, 0, 0]}
-              animationDuration={800}
-              animationEasing="ease-out"
-              name="Potential Max"
-            />
+              {/* Extension (potential max increase) with gradient */}
+              <Bar
+                dataKey="extension"
+                stackId="a"
+                // fill="url(#potentialGradient)"
+                fill="url(#potentialPattern)" // Use pattern instead of solid color
+                radius={[4, 4, 0, 0]}
+                animationDuration={800}
+                animationEasing="ease-out"
+                name="Potential Max"
+              />
 
-            {/* Gradient Definitions */}
-            <defs>
-              <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#60a5fa" stopOpacity={1} />
-                <stop offset="100%" stopColor="#3b82f6" stopOpacity={1} />
-              </linearGradient>
-              <linearGradient
-                id="potentialGradient"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
-                <stop offset="0%" stopColor="#facc15" stopOpacity={1} />
-                <stop offset="100%" stopColor="#f59e0b" stopOpacity={1} />
-              </linearGradient>
-              <pattern
-                id="potentialPattern"
-                width="8"
-                height="8"
-                patternUnits="userSpaceOnUse"
-                patternTransform="rotate(45)" // Diagonal lines
-              >
-                <rect
-                  width="8"
-                  height="8"
-                  fill="#f59e0b" // Base orange color
-                  opacity={0.8} // Slightly faded
-                />
-                <line
+              {/* Gradient Definitions */}
+              <defs>
+                <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#60a5fa" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={1} />
+                </linearGradient>
+                <linearGradient
+                  id="potentialGradient"
                   x1="0"
                   y1="0"
                   x2="0"
-                  y2="8"
-                  stroke="#ffffff" // White lines for contrast
-                  strokeWidth="1"
-                  opacity={0.5} // Subtle pattern
-                />
-              </pattern>
-            </defs>
-          </BarChart>
-        </ChartContainer>
+                  y2="1"
+                >
+                  <stop offset="0%" stopColor="#facc15" stopOpacity={1} />
+                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={1} />
+                </linearGradient>
+                <pattern
+                  id="potentialPattern"
+                  width="8"
+                  height="8"
+                  patternUnits="userSpaceOnUse"
+                  patternTransform="rotate(45)" // Diagonal lines
+                >
+                  <rect
+                    width="8"
+                    height="8"
+                    fill="#f59e0b" // Base orange color
+                    opacity={0.8} // Slightly faded
+                  />
+                  <line
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="8"
+                    stroke="#ffffff" // White lines for contrast
+                    strokeWidth="1"
+                    opacity={0.5} // Subtle pattern
+                  />
+                </pattern>
+              </defs>
+            </BarChart>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   );

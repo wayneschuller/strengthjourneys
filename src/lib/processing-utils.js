@@ -52,7 +52,9 @@ export function getCelebrationEmoji(position) {
 
 // Convert ISO "YYYY-MM-DD" to readable date string
 export function getReadableDateString(ISOdate, includeDayOfWeek = false) {
-  const date = new Date(ISOdate);
+  // const date = new Date(ISOdate);
+
+  const date = new Date(ISOdate + "T00:00:00Z"); // Force midnight UTC time
 
   const dayNames = [
     "Sunday",

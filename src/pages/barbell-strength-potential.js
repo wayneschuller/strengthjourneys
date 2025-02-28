@@ -153,66 +153,72 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
     useUserLiftingData();
   const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki");
 
-  if (!topLiftsByTypeAndReps) return null;
-  const topLifts = topLiftsByTypeAndReps[liftType];
-  if (!topLifts) return null;
+  // Early return only if topLiftsByTypeAndReps exists but is empty/invalid for this liftType
+  if (topLiftsByTypeAndReps && !topLiftsByTypeAndReps[liftType]) {
+    return null;
+  }
 
+  const topLifts = topLiftsByTypeAndReps[liftType];
   const startTime = performance.now();
 
   // Find the best e1RM across all rep schemes
   let bestE1RMWeight = 0;
   let bestLift = null;
   let unitType = "lb"; // Default to lb if not specified
-  for (let reps = 0; reps < 10; reps++) {
-    if (topLifts[reps]?.[0]) {
-      const lift = topLifts[reps][0];
-      const currentE1RMweight = estimateE1RM(
-        reps + 1,
-        lift.weight,
+  let chartData = [];
+
+  if (parsedData) {
+    for (let reps = 0; reps < 10; reps++) {
+      if (topLifts[reps]?.[0]) {
+        const lift = topLifts[reps][0];
+        const currentE1RMweight = estimateE1RM(
+          reps + 1,
+          lift.weight,
+          e1rmFormula,
+        );
+        if (currentE1RMweight > bestE1RMWeight) {
+          bestE1RMWeight = currentE1RMweight;
+          bestLift = lift;
+        }
+        if (lift.unitType) unitType = lift.unitType;
+      }
+    }
+
+    // Convert `topLifts` into chart data (only for reps 1-10)
+    chartData = Array.from({ length: 10 }, (_, i) => {
+      const reps = i + 1;
+      const topLiftAtReps = topLifts[i]?.[0] || null; // Default to null if no lift exists
+
+      // Use 0 weight and the full potential if no lift exists at this rep range
+      // This allows us to have bar charts that are 100% potential
+      const actualWeight = topLiftAtReps?.weight || 0;
+
+      // Calculate potential max weight based on the best e1RM
+      const potentialMax = estimateWeightForReps(
+        bestE1RMWeight,
+        reps,
         e1rmFormula,
       );
-      if (currentE1RMweight > bestE1RMWeight) {
-        bestE1RMWeight = currentE1RMweight;
-        bestLift = lift;
-      }
-      if (lift.unitType) unitType = lift.unitType;
-    }
+
+      // Calculate the "extension" piece (difference between potential max and actual lift)
+
+      const extension = Math.max(0, potentialMax - actualWeight);
+
+      return {
+        reps: `${reps} ${reps === 1 ? "rep" : "reps"}`, // X-axis label
+        weight: actualWeight, // Y-axis value (bar height)
+        potentialMax,
+        extension,
+        // actualLabel: "Best Lift Achieved", // Embedded label
+        // potentialLabel: "Untapped Potential Max", // Embedded label
+        // Tooltip-specific data
+        actualLift: topLiftAtReps,
+        bestLift: bestLift,
+      };
+    });
+
+    devLog(chartData);
   }
-
-  // Convert `topLifts` into chart data (only for reps 1-10)
-  const chartData = Array.from({ length: 10 }, (_, i) => {
-    const reps = i + 1;
-    const topLiftAtReps = topLifts[i]?.[0] || null; // Default to null if no lift exists
-
-    // Use 0 weight and the full potential if no lift exists at this rep range
-    // This allows us to have bar charts that are 100% potential
-    const actualWeight = topLiftAtReps?.weight || 0;
-
-    // Calculate potential max weight based on the best e1RM
-    const potentialMax = estimateWeightForReps(
-      bestE1RMWeight,
-      reps,
-      e1rmFormula,
-    );
-
-    // Calculate the "extension" piece (difference between potential max and actual lift)
-
-    const extension = Math.max(0, potentialMax - actualWeight);
-
-    return {
-      reps: `${reps} ${reps === 1 ? "rep" : "reps"}`, // X-axis label
-      weight: actualWeight, // Y-axis value (bar height)
-      potentialMax,
-      extension,
-      // actualLabel: "Best Lift Achieved", // Embedded label
-      // potentialLabel: "Untapped Potential Max", // Embedded label
-      // Tooltip-specific data
-      actualLift: topLiftAtReps,
-      bestLift: bestLift,
-    };
-  });
-
-  devLog(chartData);
 
   return (
     <Card className="shadow-lg md:mx-2">
@@ -227,7 +233,7 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {!parsedData ? (
+        {!topLiftsByTypeAndReps ? (
           <Skeleton className="h-[300px] w-full" />
         ) : (
           <ChartContainer config={{}} className="">

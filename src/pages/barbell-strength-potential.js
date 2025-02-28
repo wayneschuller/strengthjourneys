@@ -154,9 +154,9 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki");
 
   // Early return only if topLiftsByTypeAndReps exists but is empty/invalid for this liftType
-  if (topLiftsByTypeAndReps && !topLiftsByTypeAndReps[liftType]) {
-    return null;
-  }
+  // if (topLiftsByTypeAndReps && !topLiftsByTypeAndReps[liftType]) {
+  // return null;
+  // }
 
   const topLifts = topLiftsByTypeAndReps[liftType];
   const startTime = performance.now();
@@ -217,7 +217,7 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
       };
     });
 
-    devLog(chartData);
+    // devLog(chartData);
   }
 
   return (
@@ -234,7 +234,7 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
       </CardHeader>
       <CardContent>
         {!topLiftsByTypeAndReps ? (
-          <Skeleton className="h-[300px] w-full" />
+          <Skeleton className="h-[300px] w-full" /> // FIXME: This skeleton never shows
         ) : (
           <ChartContainer config={{}} className="">
             <BarChart data={chartData}>

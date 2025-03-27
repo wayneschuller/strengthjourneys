@@ -123,7 +123,7 @@ export function VisualizerMini({ liftType }) {
   // Used to hide the y-axis and other UI elements on smaller screens
   const { width } = useWindowSize({ initializeWithValue: false });
 
-  const rangeFirstDate = calculateThresholdDate(timeRange);
+  const rangeFirstDate = calculateThresholdDate(timeRange, setTimeRange);
 
   const {
     dataset: chartData,

@@ -77,7 +77,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   // Used to hide the y-axis on smaller screens
   const { width } = useWindowSize({ initializeWithValue: false });
 
-  const rangeFirstDate = calculateThresholdDate(timeRange);
+  const rangeFirstDate = calculateThresholdDate(timeRange, setTimeRange);
 
   const {
     dataset: chartData,

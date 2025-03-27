@@ -50,6 +50,8 @@ import {
 
 import { getYearLabels, processVisualizerData } from "./visualizer-processing";
 
+// VisualizerMini is used in the big four lift pages to show a single lift
+// only visualizer.
 export function VisualizerMini({ liftType }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();

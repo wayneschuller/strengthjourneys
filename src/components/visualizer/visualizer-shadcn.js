@@ -458,7 +458,7 @@ const periodTargets = [
   // All Time option will be pushed manually
 ];
 
-function TimeRangeSelect({ timeRange, setTimeRange }) {
+export function TimeRangeSelect({ timeRange, setTimeRange }) {
   const { parsedData } = useUserLiftingData();
 
   // This is the first date in "YYYY-MM-DD" format

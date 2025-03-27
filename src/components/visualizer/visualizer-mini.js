@@ -14,6 +14,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ReferenceLine, ReferenceArea, ResponsiveContainer } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  TimeRangeSelect,
+  calculateThresholdDate,
+  getTimeRangeDescription,
+} from "./time-range-select";
 
 import {
   Card,
@@ -50,6 +55,8 @@ import {
 
 import { getYearLabels, processVisualizerData } from "./visualizer-processing";
 
+// VisualizerMini is used in the big four lift pages to show a single lift
+// only visualizer.
 export function VisualizerMini({ liftType }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
@@ -69,15 +76,14 @@ export function VisualizerMini({ liftType }) {
 
   // devLog(parsedData);
 
-  // FIXME: This design is terrible. We should be storing the periodTarget options in local storage
-  // If we just store the date then the next day onward we won't know the range they wanted
   const [timeRange, setTimeRange] = useLocalStorage(
     "SJ_timeRange",
-    "1900-01-01", // The start date threshold for inclusion in the chart
+    "MAX", // MAX, 3M, 6M, 1Y, 2Y, 5Y etc.
     {
       initializeWithValue: false,
     },
   );
+
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
     "SJ_showLabelValues",
     false,
@@ -85,6 +91,7 @@ export function VisualizerMini({ liftType }) {
       initializeWithValue: false,
     },
   );
+
   const [showAllData, setShowAllData] = useLocalStorage(
     "SJ_showAllData",
     true,
@@ -92,9 +99,11 @@ export function VisualizerMini({ liftType }) {
       initializeWithValue: false,
     },
   ); // Show weekly bests or all data
+
   const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki", {
     initializeWithValue: false,
   });
+
   const [showStandards, setShowStandards] = useLocalStorage(
     "SJ_VisMiniShowStandards",
     true,
@@ -114,6 +123,8 @@ export function VisualizerMini({ liftType }) {
   // Used to hide the y-axis and other UI elements on smaller screens
   const { width } = useWindowSize({ initializeWithValue: false });
 
+  const rangeFirstDate = calculateThresholdDate(timeRange);
+
   const {
     dataset: chartData,
     weightMax,
@@ -124,7 +135,7 @@ export function VisualizerMini({ liftType }) {
         parsedData,
         e1rmFormula,
         [liftType],
-        timeRange,
+        rangeFirstDate,
         showAllData,
       ),
     [parsedData, e1rmFormula, timeRange, showAllData],
@@ -529,129 +540,6 @@ export function VisualizerMini({ liftType }) {
         </div>
       </CardFooter>
     </Card>
-  );
-}
-
-// Used in the chart card description
-const getTimeRangeDescription = (timeRange, parsedData) => {
-  if (!parsedData) return null;
-
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth(); // 0-based index, January is 0
-
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  let timeRangeDate = new Date(timeRange);
-  if (timeRange === "1900-01-01") {
-    // Special case for the "All Time" category
-    timeRangeDate = new Date(parsedData[0].date); // Use first user data date for "All Time" option
-  }
-
-  let month = timeRangeDate.getMonth();
-  let year = timeRangeDate.getFullYear();
-
-  return `${monthNames[month]} ${year !== currentYear ? `${year}` : ""} - ${monthNames[currentMonth]} ${currentYear}`;
-};
-
-// These are the full period targets we will use for Visualizer chart time domains
-// This allows us to offer time domains on the visualizer that match the user data
-// The algorithm assumes each period is longer than the next
-const periodTargets = [
-  {
-    label: "Last 3 months",
-    months: 3,
-    shortLabel: "3M",
-  },
-  {
-    label: "Last 6 months",
-    months: 6,
-    shortLabel: "6M",
-  },
-  {
-    label: "Last year",
-    months: 12,
-    shortLabel: "1Y",
-  },
-  {
-    label: "Last 2 years",
-    months: 12 * 2,
-    shortLabel: "2Y",
-  },
-  {
-    label: "Last 5 years",
-    months: 12 * 5,
-    shortLabel: "5Y",
-  },
-  // All Time option will be pushed manually
-];
-
-function TimeRangeSelect({ timeRange, setTimeRange }) {
-  const { parsedData } = useUserLiftingData();
-
-  if (!parsedData) return null;
-
-  // This is the first date in "YYYY-MM-DD" format
-  // FIXME: Should we find the first date for selected lifts only?
-  const firstDateStr = parsedData[0].date;
-
-  const todayStr = new Date().toISOString().split("T")[0];
-
-  let validSelectTimeDomains = [];
-
-  periodTargets.forEach((period) => {
-    const dateMonthsAgo = subMonths(new Date(), period.months);
-    const thresholdDateStr = dateMonthsAgo.toISOString().split("T")[0];
-
-    if (firstDateStr < thresholdDateStr) {
-      validSelectTimeDomains.push({
-        label: period.label,
-        timeRangeThreshold: thresholdDateStr,
-      });
-    }
-  });
-
-  // Manually push "All Time" option every time
-  validSelectTimeDomains.push({
-    label: "All time",
-    timeRangeThreshold: "1900-01-01",
-    shortLabel: "MAX",
-  });
-
-  // devLog(validSelectTimeDomains);
-
-  return (
-    <Select value={timeRange} onValueChange={setTimeRange}>
-      <SelectTrigger
-        className="w-[160px] rounded-lg sm:ml-auto"
-        aria-label="Select a value"
-      >
-        <SelectValue placeholder="All time" />
-      </SelectTrigger>
-      <SelectContent className="rounded-xl">
-        {validSelectTimeDomains.map((period) => (
-          <SelectItem
-            key={`${period.label}-${period.timeRangeThreshold}`}
-            value={period.timeRangeThreshold}
-            className="rounded-lg"
-          >
-            {period.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }
 

@@ -12,6 +12,11 @@ import { subMonths } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ReferenceLine } from "recharts";
+import {
+  TimeRangeSelect,
+  calculateThresholdDate,
+  getTimeRangeDescription,
+} from "./time-range-select";
 
 import {
   Card,
@@ -54,12 +59,14 @@ export function VisualizerShadcn({ setHighlightDate }) {
 
   // devLog(parsedData);
 
-  // FIXME: This design is terrible. We should be storing the periodTarget options in local storage
-  // If we just store the date then the next day onward we won't know the range they wanted
   const [timeRange, setTimeRange] = useLocalStorage(
     "SJ_timeRange",
-    "1900-01-01", // The start date threshold for inclusion in the chart
+    "MAX", // MAX, 3M, 6M, 1Y, 2Y, 5Y etc.
+    {
+      initializeWithValue: false,
+    },
   );
+
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
     "SJ_showLabelValues",
     false,
@@ -69,6 +76,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
 
   // Used to hide the y-axis on smaller screens
   const { width } = useWindowSize({ initializeWithValue: false });
+
+  const rangeFirstDate = calculateThresholdDate(timeRange);
 
   const {
     dataset: chartData,
@@ -80,7 +89,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
         parsedData,
         e1rmFormula,
         selectedLiftTypes,
-        timeRange,
+        rangeFirstDate,
         showAllData,
       ),
     [parsedData, e1rmFormula, selectedLiftTypes, timeRange, showAllData],
@@ -114,7 +123,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   };
 
   let tickJump = 100; // 100 for pound jumps on y-Axis.
-  if (chartData[0].unitType === "kg") tickJump = 50; // 50 for kg jumps on y-Axis
+  if (chartData?.[0]?.unitType === "kg") tickJump = 50; // 50 for kg jumps on y-Axis
 
   // FIXME: We need more dynamic x-axis ticks
   const formatXAxisDateString = (tickItem) => {
@@ -391,125 +400,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
         </div>
       </CardFooter>
     </Card>
-  );
-}
-
-// Used in the chart card description
-const getTimeRangeDescription = (timeRange, parsedData) => {
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth(); // 0-based index, January is 0
-
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  let timeRangeDate = new Date(timeRange);
-  if (timeRange === "1900-01-01") {
-    // Special case for the "All Time" category
-    timeRangeDate = new Date(parsedData[0].date); // Use first user data date for "All Time" option
-  }
-
-  let month = timeRangeDate.getMonth();
-  let year = timeRangeDate.getFullYear();
-
-  return `${monthNames[month]} ${year !== currentYear ? `${year}` : ""} - ${monthNames[currentMonth]} ${currentYear}`;
-};
-
-// These are the full period targets we will use for Visualizer chart time domains
-// This allows us to offer time domains on the visualizer that match the user data
-// The algorithm assumes each period is longer than the next
-const periodTargets = [
-  {
-    label: "Last 3 months",
-    months: 3,
-    shortLabel: "3M",
-  },
-  {
-    label: "Last 6 months",
-    months: 6,
-    shortLabel: "6M",
-  },
-  {
-    label: "Last year",
-    months: 12,
-    shortLabel: "1Y",
-  },
-  {
-    label: "Last 2 years",
-    months: 12 * 2,
-    shortLabel: "2Y",
-  },
-  {
-    label: "Last 5 years",
-    months: 12 * 5,
-    shortLabel: "5Y",
-  },
-  // All Time option will be pushed manually
-];
-
-function TimeRangeSelect({ timeRange, setTimeRange }) {
-  const { parsedData } = useUserLiftingData();
-
-  // This is the first date in "YYYY-MM-DD" format
-  // FIXME: Should we find the first date for selected lifts only?
-  const firstDateStr = parsedData[0].date;
-
-  const todayStr = new Date().toISOString().split("T")[0];
-
-  let validSelectTimeDomains = [];
-
-  periodTargets.forEach((period) => {
-    const dateMonthsAgo = subMonths(new Date(), period.months);
-    const thresholdDateStr = dateMonthsAgo.toISOString().split("T")[0];
-
-    if (firstDateStr < thresholdDateStr) {
-      validSelectTimeDomains.push({
-        label: period.label,
-        timeRangeThreshold: thresholdDateStr,
-      });
-    }
-  });
-
-  // Manually push "All Time" option every time
-  validSelectTimeDomains.push({
-    label: "All time",
-    timeRangeThreshold: "1900-01-01",
-    shortLabel: "MAX",
-  });
-
-  // devLog(validSelectTimeDomains);
-
-  return (
-    <Select value={timeRange} onValueChange={setTimeRange}>
-      <SelectTrigger
-        className="w-[160px] rounded-lg sm:ml-auto"
-        aria-label="Select a value"
-      >
-        <SelectValue placeholder="All time" />
-      </SelectTrigger>
-      <SelectContent className="rounded-xl">
-        {validSelectTimeDomains.map((period) => (
-          <SelectItem
-            key={`${period.label}-${period.timeRangeThreshold}`}
-            value={period.timeRangeThreshold}
-            className="rounded-lg"
-          >
-            {period.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }
 

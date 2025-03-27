@@ -75,7 +75,7 @@ export function VisualizerMini({ liftType }) {
   // If we just store the date then the next day onward we won't know the range they wanted
   const [timeRange, setTimeRange] = useLocalStorage(
     "SJ_timeRange",
-    "1900-01-01", // The start date threshold for inclusion in the chart
+    "MAX", // MAX, 3M, 6M, 1Y, 2Y, 5Y etc.
     {
       initializeWithValue: false,
     },
@@ -116,6 +116,21 @@ export function VisualizerMini({ liftType }) {
   // Used to hide the y-axis and other UI elements on smaller screens
   const { width } = useWindowSize({ initializeWithValue: false });
 
+  // Calculate start YYYY-MM-DD for the user desired time range for chart
+  const calculateThresholdDate = (timeRange) => {
+    if (timeRange === "MAX") {
+      return "1900-01-01"; // "All Time"
+    }
+
+    const period = periodTargets.find((p) => p.shortLabel === timeRange);
+    if (!period) return "1900-01-01"; // Fallback to "All Time"
+
+    const dateMonthsAgo = subMonths(new Date(), period.months);
+    return dateMonthsAgo.toISOString().split("T")[0];
+  };
+
+  const rangeFirstDate = calculateThresholdDate(timeRange);
+
   const {
     dataset: chartData,
     weightMax,
@@ -126,7 +141,7 @@ export function VisualizerMini({ liftType }) {
         parsedData,
         e1rmFormula,
         [liftType],
-        timeRange,
+        rangeFirstDate,
         showAllData,
       ),
     [parsedData, e1rmFormula, timeRange, showAllData],
@@ -600,7 +615,7 @@ const periodTargets = [
   // All Time option will be pushed manually
 ];
 
-function TimeRangeSelect({ timeRange, setTimeRange }) {
+export function TimeRangeSelect({ timeRange, setTimeRange }) {
   const { parsedData } = useUserLiftingData();
 
   if (!parsedData) return null;
@@ -611,6 +626,7 @@ function TimeRangeSelect({ timeRange, setTimeRange }) {
 
   const todayStr = new Date().toISOString().split("T")[0];
 
+  // Filter out the time domains that are not valid for the user data
   let validSelectTimeDomains = [];
 
   periodTargets.forEach((period) => {
@@ -621,6 +637,7 @@ function TimeRangeSelect({ timeRange, setTimeRange }) {
       validSelectTimeDomains.push({
         label: period.label,
         timeRangeThreshold: thresholdDateStr,
+        shortLabel: period.shortLabel,
       });
     }
   });
@@ -645,8 +662,8 @@ function TimeRangeSelect({ timeRange, setTimeRange }) {
       <SelectContent className="rounded-xl">
         {validSelectTimeDomains.map((period) => (
           <SelectItem
-            key={`${period.label}-${period.timeRangeThreshold}`}
-            value={period.timeRangeThreshold}
+            key={period.shortLabel}
+            value={period.shortLabel}
             className="rounded-lg"
           >
             {period.label}

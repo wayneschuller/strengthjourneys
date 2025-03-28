@@ -46,6 +46,7 @@ import {
   Luggage,
   Calculator,
   BarChart,
+  Anvil,
   Activity,
   Timer,
   Bot,
@@ -453,6 +454,11 @@ function CalculatorsMenu() {
       title: "Strength Level Calculator",
       href: "/strength-level-calculator",
       icon: <BarChart className="h-5 w-5" />,
+    },
+    {
+      title: "1000lb Club Calculator",
+      href: "/1000lb-club-calculator",
+      icon: <Anvil className="h-5 w-5" />,
     },
     {
       title: "Lifting Set Timer",

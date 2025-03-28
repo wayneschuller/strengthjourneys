@@ -344,7 +344,8 @@ export function VisualizerMini({ liftType }) {
                   <YAxis
                     yAxisId="right"
                     orientation="right"
-                    domain={[0, roundedMaxWeightValue]}
+                    // domain={[1, roundedMaxWeightValue]}
+                    domain={[0, Math.max(100, roundedMaxWeightValue)]} // Sync with left Y-axis
                     hide={width < 1280}
                     axisLine={false}
                     tickLine={false}
@@ -373,7 +374,7 @@ export function VisualizerMini({ liftType }) {
                     hide={width < 1280}
                     axisLine={false}
                     tickLine={false}
-                    domain={[0, roundedMaxWeightValue]}
+                    domain={[0, Math.max(100, roundedMaxWeightValue)]} // Sync with left Y-axis
                     ticks={validBodyweightMultiples.map(
                       (multiple) => multiple * bodyWeight,
                     )} // Multiples of bodyweight

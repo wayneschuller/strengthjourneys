@@ -266,7 +266,7 @@ export function VisualizerMini({ liftType }) {
             {liftType} Estimated One Rep Maxes
           </CardTitle>
           <CardDescription>
-            {getTimeRangeDescription(timeRange, parsedData)}
+            {getTimeRangeDescription(rangeFirstDate, parsedData)}
           </CardDescription>
         </div>
         {width > 1280 && (

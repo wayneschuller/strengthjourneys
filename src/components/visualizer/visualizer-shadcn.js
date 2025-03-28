@@ -208,7 +208,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
             One Rep Maxes
           </CardTitle>
           <CardDescription>
-            {getTimeRangeDescription(timeRange, parsedData)}
+            {getTimeRangeDescription(rangeFirstDate, parsedData)}
           </CardDescription>
         </div>
         <div className="grid grid-cols-2 space-x-1">

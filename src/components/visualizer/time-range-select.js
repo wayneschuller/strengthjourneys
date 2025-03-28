@@ -102,13 +102,16 @@ export function TimeRangeSelect({ timeRange, setTimeRange }) {
 }
 
 // Calculate start YYYY-MM-DD for the user desired time range for chart
-export const calculateThresholdDate = (timeRange) => {
+export const calculateThresholdDate = (timeRange, setTimeRange) => {
   if (timeRange === "MAX") {
     return "1900-01-01"; // "All Time"
   }
 
   const period = periodTargets.find((p) => p.shortLabel === timeRange);
-  if (!period) return "1900-01-01"; // Fallback to "All Time"
+  if (!period) {
+    setTimeRange("MAX"); // This might trigger rerender but whatever
+    return "1900-01-01";
+  }
 
   const dateMonthsAgo = subMonths(new Date(), period.months);
   return dateMonthsAgo.toISOString().split("T")[0];

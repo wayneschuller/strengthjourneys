@@ -55,8 +55,9 @@ import {
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
-import darkModeLogo from "/public/nav_logo_light.png";
-import lightModeLogo from "/public/nav_logo_dark.png";
+// import darkModeLogo from "/public/nav_logo_light.png";
+import darkModeLogo from "../../public/nav_logo_light.png";
+import lightModeLogo from "../../public/nav_logo_dark.png";
 
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 

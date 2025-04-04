@@ -346,7 +346,7 @@ export function VisualizerMini({ liftType }) {
                     orientation="right"
                     // domain={[1, roundedMaxWeightValue]}
                     domain={[0, Math.max(100, roundedMaxWeightValue)]} // Sync with left Y-axis
-                    hide={width < 1280}
+                    hide={width < 768}
                     axisLine={false}
                     tickLine={false}
                     ticks={Object.values(strengthRanges)} // Use the strength ranges as ticks
@@ -471,7 +471,7 @@ export function VisualizerMini({ liftType }) {
                 ))}
 
                 {/* Horizontal reference lines on the secondary Y-axis */}
-                {strengthRanges && showStandards && width > 1280 && (
+                {strengthRanges && showStandards && width > 768 && (
                   <>
                     <ReferenceLine
                       y={strengthRanges.physicallyActive}

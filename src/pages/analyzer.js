@@ -91,6 +91,7 @@ export default function Analyzer({ relatedArticles }) {
 function AnalyzerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { isLoading } = useUserLiftingData();
+  const [highlightDate, setHighlightDate] = useState(null);
   const ssid = useReadLocalStorage("ssid");
 
   if (!isLoading && authStatus === "authenticated" && !ssid)
@@ -112,7 +113,10 @@ function AnalyzerMain({ relatedArticles }) {
       </PageHeader>
       <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <div className="flex h-full flex-col">
-          <SessionAnalysisCard />
+          <SessionAnalysisCard
+            highlightDate={highlightDate}
+            setHighlightDate={setHighlightDate}
+          />
         </div>
         <div className="flex h-full flex-col gap-6">
           <ConsistencyCard />

@@ -10,8 +10,8 @@ import { Menu } from "lucide-react";
 import { featurePages } from "@/pages";
 import Image from "next/image";
 
-import darkModeLogo from "/public/nav_logo_light.png";
-import lightModeLogo from "/public/nav_logo_dark.png";
+import darkModeLogo from "../../public/nav_logo_light.png";
+import lightModeLogo from "../../public/nav_logo_dark.png";
 
 import {
   Sheet,

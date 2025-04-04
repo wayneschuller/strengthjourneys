@@ -7,6 +7,8 @@ import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLiftColor } from "@/lib/get-lift-color";
 
+import { Button } from "@/components/ui/button";
+
 import {
   Card,
   CardContent,
@@ -17,14 +19,24 @@ import {
 } from "@/components/ui/card";
 
 import {
+  TooltipProvider,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+import {
   findLiftPositionInTopLifts,
   getCelebrationEmoji,
   getReadableDateString,
   getAnalyzedSessionLifts,
 } from "@/lib/processing-utils";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
-export function SessionAnalysisCard({ highlightDate = null }) {
+export function SessionAnalysisCard({
+  highlightDate = null,
+  setHighlightDate,
+}) {
   const {
     parsedData,
     topLiftsByTypeAndReps,
@@ -39,9 +51,17 @@ export function SessionAnalysisCard({ highlightDate = null }) {
     sessionRatingRef.current = null; // Reset the session rating when the highlight date changes
   }, [highlightDate]);
 
+  if (!parsedData) {
+    return <Skeleton className="h-[50vh]" />;
+  }
   let sessionDate = highlightDate;
+  const isFirstDate =
+    parsedData?.length > 0 && sessionDate === parsedData[0]?.date;
+  let isLastDate =
+    parsedData?.length > 0 &&
+    sessionDate === parsedData[parsedData.length - 1]?.date;
 
-  // The Visualizer will call the function with a highlight date included.
+  // The Visualizer will normally set the highlight date prop based on chart mouseover.
   // The PR Analyzer will call this component without a highlight date, so find the most recent session
   if (!sessionDate) {
     // Iterate backwards to find the most recent non-goal entry date
@@ -51,6 +71,7 @@ export function SessionAnalysisCard({ highlightDate = null }) {
         break; // Stop as soon as we find the most recent non-goal entry
       }
     }
+    isLastDate = true;
   }
 
   const analyzedSessionLifts = getAnalyzedSessionLifts(
@@ -64,93 +85,163 @@ export function SessionAnalysisCard({ highlightDate = null }) {
     sessionRatingRef.current = getCreativeSessionRating(analyzedSessionLifts);
   }
 
+  const prevDate = () => {
+    if (!parsedData || !sessionDate) return;
+
+    // Find the index of the current session date
+    const currentIndex = parsedData.findIndex(
+      (entry) => entry.date === sessionDate,
+    );
+
+    // Iterate backward to find the previous unique date
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      if (parsedData[i].date !== sessionDate) {
+        setHighlightDate(parsedData[i].date); // Update the highlight date
+        break;
+      }
+    }
+  };
+
+  const nextDate = () => {
+    if (!parsedData || !sessionDate) return;
+
+    // Find the index of the current session date
+    const currentIndex = parsedData.findIndex(
+      (entry) => entry.date === sessionDate,
+    );
+
+    // Iterate forward to find the next unique date
+    for (let i = currentIndex + 1; i < parsedData.length; i++) {
+      if (parsedData[i].date !== sessionDate) {
+        setHighlightDate(parsedData[i].date); // Update the highlight date
+        break;
+      }
+    }
+  };
+
   return (
-    <Card className="flex-1">
-      <CardHeader>
-        <CardTitle>
-          {authStatus === "unauthenticated" && "Demo Mode: "}
+    <TooltipProvider>
+      <Card className="flex-1">
+        <CardHeader className="">
+          <CardTitle className="flex flex-row items-center justify-between">
+            {authStatus === "unauthenticated" && "Demo Mode: "}
+            {analyzedSessionLifts &&
+              getReadableDateString(sessionDate, true)}{" "}
+            Session
+            {isValidating && (
+              <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
+            )}
+            <div className="flex flex-row items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={prevDate}
+                    disabled={isValidating || isFirstDate}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Previous session</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={nextDate}
+                    disabled={isValidating || isLastDate}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Next session</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </CardTitle>
+          <CardDescription>
+            <div>Session overview and analysis</div>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!analyzedSessionLifts && <Skeleton className="h-[50vh]" />}
           {analyzedSessionLifts &&
-            getReadableDateString(sessionDate, true)}{" "}
-          Session
-          {isValidating && (
-            <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
+            (Object.keys(analyzedSessionLifts).length > 0 ? (
+              <ul>
+                {Object.entries(analyzedSessionLifts).map(
+                  ([liftType, workouts]) => (
+                    <li key={liftType} className="pb-2">
+                      <div className="flex flex-row items-center">
+                        <div
+                          className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                          style={{ backgroundColor: getLiftColor(liftType) }} // Use css style because tailwind is picky
+                        />
+                        <div className="font-bold">{liftType}</div>
+                      </div>
+                      <ul className="pl-4">
+                        {workouts.map((workout, index) => (
+                          <li key={index}>
+                            <div className="flex flex-row justify-between">
+                              <div
+                                className={
+                                  workout.lifetimeRanking !== -1
+                                    ? "font-bold"
+                                    : ""
+                                }
+                              >
+                                {workout.URL ? (
+                                  <a
+                                    href={workout.URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline"
+                                  >
+                                    {workout.reps}@{workout.weight}
+                                    {workout.unitType}{" "}
+                                  </a>
+                                ) : (
+                                  <>
+                                    {workout.reps}@{workout.weight}
+                                    {workout.unitType}{" "}
+                                  </>
+                                )}
+                              </div>
+                              <div className="ml-6 inline-block">
+                                {/* If both exist they should be separated by a comma */}
+                                {workout.lifetimeSignificanceAnnotation &&
+                                  `${workout.lifetimeSignificanceAnnotation}`}
+                                {workout.lifetimeSignificanceAnnotation &&
+                                  workout.yearlySignificanceAnnotation &&
+                                  ", "}
+                                {workout.yearlySignificanceAnnotation &&
+                                  `${workout.yearlySignificanceAnnotation} of the year`}
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ),
+                )}
+              </ul>
+            ) : (
+              <p>No workouts available for the most recent date.</p>
+            ))}
+        </CardContent>
+        <CardFooter>
+          {analyzedSessionLifts && (
+            <div>
+              <strong>Session rating:</strong> {sessionRatingRef.current}
+            </div>
           )}
-        </CardTitle>
-        <CardDescription>Session overview and analysis</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {!analyzedSessionLifts && <Skeleton className="h-[50vh]" />}
-        {analyzedSessionLifts &&
-          (Object.keys(analyzedSessionLifts).length > 0 ? (
-            <ul>
-              {Object.entries(analyzedSessionLifts).map(
-                ([liftType, workouts]) => (
-                  <li key={liftType} className="pb-2">
-                    <div className="flex flex-row items-center">
-                      <div
-                        className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                        style={{ backgroundColor: getLiftColor(liftType) }} // Use css style because tailwind is picky
-                      />
-                      <div className="font-bold">{liftType}</div>
-                    </div>
-                    <ul className="pl-4">
-                      {workouts.map((workout, index) => (
-                        <li key={index}>
-                          <div className="flex flex-row justify-between">
-                            <div
-                              className={
-                                workout.lifetimeRanking !== -1
-                                  ? "font-bold"
-                                  : ""
-                              }
-                            >
-                              {workout.URL ? (
-                                <a
-                                  href={workout.URL}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="underline"
-                                >
-                                  {workout.reps}@{workout.weight}
-                                  {workout.unitType}{" "}
-                                </a>
-                              ) : (
-                                <>
-                                  {workout.reps}@{workout.weight}
-                                  {workout.unitType}{" "}
-                                </>
-                              )}
-                            </div>
-                            <div className="ml-6 inline-block">
-                              {/* If both exist they should be separated by a comma */}
-                              {workout.lifetimeSignificanceAnnotation &&
-                                `${workout.lifetimeSignificanceAnnotation}`}
-                              {workout.lifetimeSignificanceAnnotation &&
-                                workout.yearlySignificanceAnnotation &&
-                                ", "}
-                              {workout.yearlySignificanceAnnotation &&
-                                `${workout.yearlySignificanceAnnotation} of the year`}
-                            </div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </li>
-                ),
-              )}
-            </ul>
-          ) : (
-            <p>No workouts available for the most recent date.</p>
-          ))}
-      </CardContent>
-      <CardFooter>
-        {analyzedSessionLifts && (
-          <div>
-            <strong>Session rating:</strong> {sessionRatingRef.current}
-          </div>
-        )}
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </TooltipProvider>
   );
 }
 

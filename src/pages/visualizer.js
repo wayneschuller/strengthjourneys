@@ -109,7 +109,10 @@ function VisualizerMain({ relatedArticles }) {
           <VisualizerShadcn setHighlightDate={setHighlightDate} />
         </div>
         <div className="w-full lg:w-1/2 xl:w-1/3">
-          <SessionAnalysisCard highlightDate={highlightDate} />
+          <SessionAnalysisCard
+            highlightDate={highlightDate}
+            setHighlightDate={setHighlightDate}
+          />
         </div>
       </section>
       <RelatedArticles articles={relatedArticles} />

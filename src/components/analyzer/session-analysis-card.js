@@ -19,6 +19,13 @@ import {
 } from "@/components/ui/card";
 
 import {
+  TooltipProvider,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+import {
   findLiftPositionInTopLifts,
   getCelebrationEmoji,
   getReadableDateString,
@@ -113,112 +120,128 @@ export function SessionAnalysisCard({
   };
 
   return (
-    <Card className="flex-1">
-      <CardHeader className="">
-        <CardTitle className="flex flex-row items-center justify-between">
-          {authStatus === "unauthenticated" && "Demo Mode: "}
+    <TooltipProvider>
+      <Card className="flex-1">
+        <CardHeader className="">
+          <CardTitle className="flex flex-row items-center justify-between">
+            {authStatus === "unauthenticated" && "Demo Mode: "}
+            {analyzedSessionLifts &&
+              getReadableDateString(sessionDate, true)}{" "}
+            Session
+            {isValidating && (
+              <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
+            )}
+            <div className="flex flex-row items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={prevDate}
+                    disabled={isValidating || isFirstDate}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Previous session</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={nextDate}
+                    disabled={isValidating || isLastDate}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Next session</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </CardTitle>
+          <CardDescription>
+            <div>Session overview and analysis</div>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!analyzedSessionLifts && <Skeleton className="h-[50vh]" />}
           {analyzedSessionLifts &&
-            getReadableDateString(sessionDate, true)}{" "}
-          Session
-          {isValidating && (
-            <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
+            (Object.keys(analyzedSessionLifts).length > 0 ? (
+              <ul>
+                {Object.entries(analyzedSessionLifts).map(
+                  ([liftType, workouts]) => (
+                    <li key={liftType} className="pb-2">
+                      <div className="flex flex-row items-center">
+                        <div
+                          className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                          style={{ backgroundColor: getLiftColor(liftType) }} // Use css style because tailwind is picky
+                        />
+                        <div className="font-bold">{liftType}</div>
+                      </div>
+                      <ul className="pl-4">
+                        {workouts.map((workout, index) => (
+                          <li key={index}>
+                            <div className="flex flex-row justify-between">
+                              <div
+                                className={
+                                  workout.lifetimeRanking !== -1
+                                    ? "font-bold"
+                                    : ""
+                                }
+                              >
+                                {workout.URL ? (
+                                  <a
+                                    href={workout.URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline"
+                                  >
+                                    {workout.reps}@{workout.weight}
+                                    {workout.unitType}{" "}
+                                  </a>
+                                ) : (
+                                  <>
+                                    {workout.reps}@{workout.weight}
+                                    {workout.unitType}{" "}
+                                  </>
+                                )}
+                              </div>
+                              <div className="ml-6 inline-block">
+                                {/* If both exist they should be separated by a comma */}
+                                {workout.lifetimeSignificanceAnnotation &&
+                                  `${workout.lifetimeSignificanceAnnotation}`}
+                                {workout.lifetimeSignificanceAnnotation &&
+                                  workout.yearlySignificanceAnnotation &&
+                                  ", "}
+                                {workout.yearlySignificanceAnnotation &&
+                                  `${workout.yearlySignificanceAnnotation} of the year`}
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ),
+                )}
+              </ul>
+            ) : (
+              <p>No workouts available for the most recent date.</p>
+            ))}
+        </CardContent>
+        <CardFooter>
+          {analyzedSessionLifts && (
+            <div>
+              <strong>Session rating:</strong> {sessionRatingRef.current}
+            </div>
           )}
-          <div className="flex flex-row items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={prevDate}
-              disabled={isValidating || isFirstDate}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={nextDate}
-              disabled={isValidating || isLastDate}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardTitle>
-        <CardDescription>
-          <div>Session overview and analysis</div>
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {!analyzedSessionLifts && <Skeleton className="h-[50vh]" />}
-        {analyzedSessionLifts &&
-          (Object.keys(analyzedSessionLifts).length > 0 ? (
-            <ul>
-              {Object.entries(analyzedSessionLifts).map(
-                ([liftType, workouts]) => (
-                  <li key={liftType} className="pb-2">
-                    <div className="flex flex-row items-center">
-                      <div
-                        className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                        style={{ backgroundColor: getLiftColor(liftType) }} // Use css style because tailwind is picky
-                      />
-                      <div className="font-bold">{liftType}</div>
-                    </div>
-                    <ul className="pl-4">
-                      {workouts.map((workout, index) => (
-                        <li key={index}>
-                          <div className="flex flex-row justify-between">
-                            <div
-                              className={
-                                workout.lifetimeRanking !== -1
-                                  ? "font-bold"
-                                  : ""
-                              }
-                            >
-                              {workout.URL ? (
-                                <a
-                                  href={workout.URL}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="underline"
-                                >
-                                  {workout.reps}@{workout.weight}
-                                  {workout.unitType}{" "}
-                                </a>
-                              ) : (
-                                <>
-                                  {workout.reps}@{workout.weight}
-                                  {workout.unitType}{" "}
-                                </>
-                              )}
-                            </div>
-                            <div className="ml-6 inline-block">
-                              {/* If both exist they should be separated by a comma */}
-                              {workout.lifetimeSignificanceAnnotation &&
-                                `${workout.lifetimeSignificanceAnnotation}`}
-                              {workout.lifetimeSignificanceAnnotation &&
-                                workout.yearlySignificanceAnnotation &&
-                                ", "}
-                              {workout.yearlySignificanceAnnotation &&
-                                `${workout.yearlySignificanceAnnotation} of the year`}
-                            </div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </li>
-                ),
-              )}
-            </ul>
-          ) : (
-            <p>No workouts available for the most recent date.</p>
-          ))}
-      </CardContent>
-      <CardFooter>
-        {analyzedSessionLifts && (
-          <div>
-            <strong>Session rating:</strong> {sessionRatingRef.current}
-          </div>
-        )}
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </TooltipProvider>
   );
 }
 

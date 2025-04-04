@@ -7,6 +7,8 @@ import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLiftColor } from "@/lib/get-lift-color";
 
+import { Button } from "@/components/ui/button";
+
 import {
   Card,
   CardContent,
@@ -22,9 +24,12 @@ import {
   getReadableDateString,
   getAnalyzedSessionLifts,
 } from "@/lib/processing-utils";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
-export function SessionAnalysisCard({ highlightDate = null }) {
+export function SessionAnalysisCard({
+  highlightDate = null,
+  setHighlightDate,
+}) {
   const {
     parsedData,
     topLiftsByTypeAndReps,
@@ -39,9 +44,17 @@ export function SessionAnalysisCard({ highlightDate = null }) {
     sessionRatingRef.current = null; // Reset the session rating when the highlight date changes
   }, [highlightDate]);
 
+  if (!parsedData) {
+    return <Skeleton className="h-[50vh]" />;
+  }
   let sessionDate = highlightDate;
+  const isFirstDate =
+    parsedData?.length > 0 && sessionDate === parsedData[0]?.date;
+  let isLastDate =
+    parsedData?.length > 0 &&
+    sessionDate === parsedData[parsedData.length - 1]?.date;
 
-  // The Visualizer will call the function with a highlight date included.
+  // The Visualizer will normally set the highlight date prop based on chart mouseover.
   // The PR Analyzer will call this component without a highlight date, so find the most recent session
   if (!sessionDate) {
     // Iterate backwards to find the most recent non-goal entry date
@@ -51,6 +64,7 @@ export function SessionAnalysisCard({ highlightDate = null }) {
         break; // Stop as soon as we find the most recent non-goal entry
       }
     }
+    isLastDate = true;
   }
 
   const analyzedSessionLifts = getAnalyzedSessionLifts(
@@ -64,10 +78,44 @@ export function SessionAnalysisCard({ highlightDate = null }) {
     sessionRatingRef.current = getCreativeSessionRating(analyzedSessionLifts);
   }
 
+  const prevDate = () => {
+    if (!parsedData || !sessionDate) return;
+
+    // Find the index of the current session date
+    const currentIndex = parsedData.findIndex(
+      (entry) => entry.date === sessionDate,
+    );
+
+    // Iterate backward to find the previous unique date
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      if (parsedData[i].date !== sessionDate) {
+        setHighlightDate(parsedData[i].date); // Update the highlight date
+        break;
+      }
+    }
+  };
+
+  const nextDate = () => {
+    if (!parsedData || !sessionDate) return;
+
+    // Find the index of the current session date
+    const currentIndex = parsedData.findIndex(
+      (entry) => entry.date === sessionDate,
+    );
+
+    // Iterate forward to find the next unique date
+    for (let i = currentIndex + 1; i < parsedData.length; i++) {
+      if (parsedData[i].date !== sessionDate) {
+        setHighlightDate(parsedData[i].date); // Update the highlight date
+        break;
+      }
+    }
+  };
+
   return (
     <Card className="flex-1">
-      <CardHeader>
-        <CardTitle>
+      <CardHeader className="">
+        <CardTitle className="flex flex-row items-center justify-between">
           {authStatus === "unauthenticated" && "Demo Mode: "}
           {analyzedSessionLifts &&
             getReadableDateString(sessionDate, true)}{" "}
@@ -75,8 +123,28 @@ export function SessionAnalysisCard({ highlightDate = null }) {
           {isValidating && (
             <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
           )}
+          <div className="flex flex-row items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={prevDate}
+              disabled={isValidating || isFirstDate}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={nextDate}
+              disabled={isValidating || isLastDate}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </CardTitle>
-        <CardDescription>Session overview and analysis</CardDescription>
+        <CardDescription>
+          <div>Session overview and analysis</div>
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {!analyzedSessionLifts && <Skeleton className="h-[50vh]" />}

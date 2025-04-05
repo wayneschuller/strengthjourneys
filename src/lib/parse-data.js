@@ -63,6 +63,7 @@ function parseBespokeData(data) {
     const row = data[i];
     const obj = {}; // We build the object as we parse each column in the row
 
+    // devLog(row);
     // Loop through each column in the row and parse each cell
     for (let j = 0; j < columnNames.length; j++) {
       // FIXME: could we assume some sane defaults if the columnnames are missing?
@@ -79,6 +80,8 @@ function parseBespokeData(data) {
       switch (columnName) {
         case "Date":
           if (cellData) {
+            // We assume the date is in YYYY-MM-DD format
+            // Big assumption, but date functions here will slow down parsing significantly
             obj["date"] = cellData;
             previousDate = cellData;
           } else {

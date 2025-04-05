@@ -80,7 +80,11 @@ export function processVisualizerData(
     dataset.push({
       date,
       ...lifts,
-      rechartsDate: new Date(date).getTime(),
+      rechartsDate: Date.UTC(
+        new Date(date).getFullYear(),
+        new Date(date).getMonth(),
+        new Date(date).getDate(),
+      ),
     });
   });
   // devLog(`${dataset.length} points of chart data`);

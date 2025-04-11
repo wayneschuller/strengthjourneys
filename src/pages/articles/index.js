@@ -1,4 +1,5 @@
 // File: pages/articles/index.js
+// File: pages/articles/index.js
 
 import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
@@ -31,8 +32,6 @@ export async function getStaticProps() {
       description,
     }
   `);
-
-  // devLog(articles);
 
   const featuredArticles = articles?.filter((article) =>
     article.categories?.some(
@@ -80,6 +79,7 @@ export default function ArticleListingPage({
           property="og:image:alt"
           content="Strength Journeys Article Library - Strength and Lifting Topics"
         />
+
         {/* To avoid Google Search Console complaints about quotes, we use dodgilySetInnerHTML */}
         <script
           type="application/ld+json"
@@ -120,19 +120,39 @@ export default function ArticleListingPage({
 
       {featuredArticles.length > 0 && (
         <>
-          <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-            {featuredArticles.map((article) => (
-              <ArticleSummaryCard key={article.slug} article={article} />
-            ))}
-          </div>
+          <section className="mb-8">
+            <div className="mb-4">
+              <h2 className="text-2xl font-bold tracking-tight">
+                Editor’s Picks: Featured Articles
+              </h2>
+              <p className="text-muted-foreground">
+                Our top-curated insights to inspire your strength journey.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {featuredArticles.map((article) => (
+                <ArticleSummaryCard key={article.slug} article={article} />
+              ))}
+            </div>
+          </section>
         </>
       )}
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {regularArticles.map((article) => (
-          <ArticleSummaryCard key={article.slug} article={article} />
-        ))}
-      </div>
+      <section>
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold tracking-tight">
+            Explore All Articles
+          </h2>
+          <p className="text-muted-foreground">
+            Dive into our full library of strength, lifting, and fitness topics.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {regularArticles.map((article) => (
+            <ArticleSummaryCard key={article.slug} article={article} />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

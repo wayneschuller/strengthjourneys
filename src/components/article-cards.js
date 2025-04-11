@@ -13,14 +13,45 @@ import { format } from "date-fns";
 import Image from "next/image";
 import { urlFor } from "@/lib/sanity-io.js";
 
+const ArticleImage = ({ sanityImage, className }) => {
+  if (!sanityImage) return null;
+
+  let imageUrl = urlFor(sanityImage)
+    .width(600)
+    .height(600)
+    .fit("crop")
+    .quality(80)
+    .url();
+
+  if (!imageUrl) return null;
+
+  return (
+    <div
+      className={cn(
+        "relative w-full transform justify-center overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-110",
+        "aspect-[3/1] md:aspect-square md:max-w-[150px]",
+        className,
+      )}
+    >
+      <Image
+        src={imageUrl}
+        alt="Banner"
+        width={600}
+        height={600}
+        className="h-full w-full object-cover"
+      />
+    </div>
+  );
+};
+
 export function ArticleSummaryCard({ article }) {
   // devLog(article);
 
   return (
     <Link href={`/articles/${article.slug}`}>
       <Card className="group h-full transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800">
-        <CardHeader className="flex flex-row gap-4">
-          <div className="min-w-56 flex-1">
+        <CardHeader className="flex flex-col gap-4 md:flex-row">
+          <div className="order-2 flex-1 md:order-1">
             <CardTitle className="text-balance group-hover:underline">
               {article.title}
             </CardTitle>
@@ -32,7 +63,9 @@ export function ArticleSummaryCard({ article }) {
               <div className="mt-2 text-sm">{article.description}</div>
             )}
           </div>
-          <SquareImage sanityImage={article.mainImage} />
+          <div className="order-1 flex w-full justify-center md:order-2 md:w-auto md:justify-start">
+            <ArticleImage sanityImage={article.mainImage} />
+          </div>
         </CardHeader>
         <CardContent>
           {false && article.categories && article.categories.length > 0 && (
@@ -74,7 +107,10 @@ export function RelatedArticles({ articles }) {
                     {format(new Date(article.publishedAt), "MMMM d, yyyy")}
                   </div>
                 </span>
-                <SquareImage sanityImage={article.mainImage} className="w-28" />
+                <ArticleImage
+                  sanityImage={article.mainImage}
+                  className="w-28"
+                />
                 {/* <ArrowRight className="ml-2 text-gray-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-primary" size={16} /> */}
               </Link>
             </div>
@@ -84,37 +120,3 @@ export function RelatedArticles({ articles }) {
     </Card>
   );
 }
-
-const SquareImage = ({ sanityImage, className }) => {
-  if (!sanityImage) return null;
-
-  let imageUrl = urlFor(sanityImage)
-    .width(150)
-    .height(150)
-    .fit("crop")
-    .quality(80)
-    .url();
-
-  if (!imageUrl) return null;
-
-  return (
-    <div
-      className={cn(
-        "relative aspect-square transform justify-center overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-110",
-        className,
-      )}
-    >
-      <Image
-        src={imageUrl}
-        alt="Banner"
-        width={150}
-        height={150}
-        // fill
-        // style={{ objectFit: "cover" }}
-        className="h-full w-full object-cover"
-
-        // sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw"
-      />
-    </div>
-  );
-};

@@ -76,7 +76,12 @@ export const MultiLiftTooltipContent = ({
 // CustomToolTipContent
 // Out tooltip is modelled on the shadcnui chart layout but customised for our needs
 // -----------------------------------------------------------------------------
-export const CustomTooltipContent = ({ active, payload, label, liftType }) => {
+export const SingleLiftTooltipContent = ({
+  active,
+  payload,
+  label,
+  liftType,
+}) => {
   // devLog(payload);
 
   const selectedLiftTypes = [liftType]; // FIXME: we can just remove the .foreach below in mini mode

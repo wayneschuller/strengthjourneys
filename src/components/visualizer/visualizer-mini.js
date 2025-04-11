@@ -13,7 +13,7 @@ import { subMonths } from "date-fns";
 import {
   E1RMFormulaSelect,
   SpecialHtmlLabel,
-  CustomTooltipContent,
+  SingleLiftTooltipContent,
 } from "./visualizer-utils";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -318,7 +318,7 @@ export function VisualizerMini({ liftType }) {
                 )}
                 <Tooltip
                   content={
-                    <CustomTooltipContent
+                    <SingleLiftTooltipContent
                       selectedLiftTypes={selectedLiftTypes}
                       liftType={liftType}
                       e1rmFormula={e1rmFormula}

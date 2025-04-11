@@ -29,7 +29,7 @@ const ArticleImage = ({ sanityImage, className }) => {
     <div
       className={cn(
         "relative w-full transform justify-center overflow-hidden rounded-lg transition-transform duration-300 group-hover:scale-110",
-        "aspect-[16/9] md:aspect-square md:max-w-[150px]",
+        "aspect-[3/1] md:aspect-square md:max-w-[150px]",
         className,
       )}
     >

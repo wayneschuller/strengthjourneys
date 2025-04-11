@@ -29,3 +29,24 @@ export function E1RMFormulaSelect({ e1rmFormula, setE1rmFormula }) {
     </div>
   );
 }
+
+// Show a label of corresponding to labels in user data
+export const SpecialHtmlLabel = ({ x, y, value }) => {
+  if (!value) return null;
+
+  const maxChars = 20;
+  // Trim the label if it's longer than the specified max characters
+  const trimmedValue =
+    value.length > maxChars ? value.slice(0, maxChars) + "..." : value;
+
+  return (
+    <foreignObject x={x - 50} y={y + 220} width={100} height={50}>
+      <div
+        className="rounded-md border p-2 text-center text-xs tracking-tight shadow-lg"
+        title={value}
+      >
+        {trimmedValue}
+      </div>
+    </foreignObject>
+  );
+};

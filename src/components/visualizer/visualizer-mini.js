@@ -10,7 +10,7 @@ import { useSession } from "next-auth/react";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { subMonths } from "date-fns";
-import { E1RMFormulaSelect } from "./visualizer-utils";
+import { E1RMFormulaSelect, SpecialHtmlLabel } from "./visualizer-utils";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ReferenceLine, ReferenceArea, ResponsiveContainer } from "recharts";
@@ -536,23 +536,3 @@ export function VisualizerMini({ liftType }) {
     </Card>
   );
 }
-
-export const SpecialHtmlLabel = ({ x, y, value }) => {
-  if (!value) return null;
-
-  const maxChars = 20;
-  // Trim the label if it's longer than the specified max characters
-  const trimmedValue =
-    value.length > maxChars ? value.slice(0, maxChars) + "..." : value;
-
-  return (
-    <foreignObject x={x - 50} y={y + 220} width={100} height={50}>
-      <div
-        className="rounded-md border p-2 text-center text-xs tracking-tight shadow-lg"
-        title={value}
-      >
-        {trimmedValue}
-      </div>
-    </foreignObject>
-  );
-};

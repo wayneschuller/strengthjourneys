@@ -12,7 +12,7 @@ import { subMonths } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ReferenceLine } from "recharts";
-import { E1RMFormulaSelect } from "./visualizer-utils";
+import { E1RMFormulaSelect, SpecialHtmlLabel } from "./visualizer-utils";
 import {
   TimeRangeSelect,
   calculateThresholdDate,
@@ -336,7 +336,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   {/* Special user provided labels of special events/lifts */}
                   <LabelList
                     dataKey="label"
-                    // content={<CustomSpecialLabel />}
                     content={<SpecialHtmlLabel />}
                     position="top"
                   />
@@ -403,23 +402,3 @@ export function VisualizerShadcn({ setHighlightDate }) {
     </Card>
   );
 }
-
-export const SpecialHtmlLabel = ({ x, y, value }) => {
-  if (!value) return null;
-
-  const maxChars = 20;
-  // Trim the label if it's longer than the specified max characters
-  const trimmedValue =
-    value.length > maxChars ? value.slice(0, maxChars) + "..." : value;
-
-  return (
-    <foreignObject x={x - 50} y={y + 220} width={100} height={50}>
-      <div
-        className="rounded-md border p-2 text-center text-xs tracking-tight shadow-lg"
-        title={value}
-      >
-        {trimmedValue}
-      </div>
-    </foreignObject>
-  );
-};

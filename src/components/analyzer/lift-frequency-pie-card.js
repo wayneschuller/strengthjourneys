@@ -39,7 +39,7 @@ const renderCustomizedLabel = ({
   value,
   name,
 }) => {
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.7;
+  const radius = outerRadius + 20;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
@@ -48,11 +48,11 @@ const renderCustomizedLabel = ({
       x={x}
       y={y}
       fill="currentColor"
-      textAnchor="middle"
+      textAnchor={x > cx ? "start" : "end"}
       dominantBaseline="central"
       className="fill-foreground text-[12px] font-medium md:text-[14px]"
     >
-      {value}
+      {name}
     </text>
   );
 };
@@ -161,6 +161,11 @@ export function LiftTypeFrequencyPieCard() {
                     strokeWidth={2}
                   />
                 ))}
+                <LabelList
+                  dataKey="liftType"
+                  content={renderCustomizedLabel}
+                  position="outside"
+                />
               </Pie>
               <Legend content={<CustomLegend />} />
               <Tooltip

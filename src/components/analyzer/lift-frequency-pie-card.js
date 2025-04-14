@@ -136,7 +136,8 @@ export function LiftTypeFrequencyPieCard() {
       <CardContent>
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square min-h-[300px]"
+          // className="mx-auto aspect-square min-h-[300px]"
+          className="mx-auto h-[280px] w-full max-w-[400px] sm:h-[320px] md:h-[360px]"
         >
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>

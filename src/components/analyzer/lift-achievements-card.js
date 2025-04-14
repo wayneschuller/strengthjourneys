@@ -42,14 +42,12 @@ import { Maximize2, Minimize2 } from "lucide-react";
 import { Button, buttonVariants } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
-import { getLiftColor } from "@/lib/get-lift-color";
-import { CompactPicker, SliderPicker, TwitterPicker } from "react-color";
+import { useLiftColors, LiftColorPicker } from "@/lib/get-lift-color";
 
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
   const { liftTypes } = useUserLiftingData();
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
-  // FIXME: turn this into a hook
-  const [color, setColor] = useState(getLiftColor(liftType));
+  const { color, getBrightenedColor } = useLiftColors(liftType);
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
   const totalReps = lift ? lift.totalReps : null;
@@ -110,15 +108,13 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
         )}
       </CardContent>
       <CardFooter className="text-sm font-extralight">
-        {/* Click{" "} */}
-        {/* {isExpanded */}
-        {/* ? "to reduce to summary view" */}
-        {/* : `for full ${liftType} analysis`} */}
         {isExpanded && (
-          <ColorChangeButton
+          <LiftColorPicker
             liftType={liftType}
-            color={color}
-            setColor={setColor}
+            onColorChange={(newColor) => {
+              // The color is automatically updated through the hook
+              // This callback is useful if we need to trigger any other updates
+            }}
           />
         )}
       </CardFooter>
@@ -424,29 +420,6 @@ const TruncatedText = ({ text }) => {
   return (
     <div className="text-pretty" onClick={() => setIsExpanded(!isExpanded)}>
       {isExpanded ? text : truncatedText}
-    </div>
-  );
-};
-
-const ColorChangeButton = ({ liftType, color, setColor }) => {
-  // Define the localStorage key using the liftType
-  const storageKey = `SJ_${liftType}_color`;
-
-  const handleClose = () => {
-    setDisplayColorPicker(false);
-  };
-
-  const handleChangeComplete = (color) => {
-    // devLog(`${liftType} color changed to ${color.hex}`);
-    setColor(color.hex);
-    localStorage.setItem(storageKey, color.hex);
-
-    // FIXME: it would be good if this triggered a rerender of the pie chart
-  };
-
-  return (
-    <div className="w-96">
-      <SliderPicker color={color} onChangeComplete={handleChangeComplete} />
     </div>
   );
 };

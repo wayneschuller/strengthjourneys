@@ -5,7 +5,7 @@ import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getLiftColor } from "@/lib/get-lift-color";
+import { useLiftColors } from "@/lib/get-lift-color";
 
 import { Button } from "@/components/ui/button";
 
@@ -32,6 +32,20 @@ import {
   getAnalyzedSessionLifts,
 } from "@/lib/processing-utils";
 import { LoaderCircle, ChevronLeft, ChevronRight } from "lucide-react";
+
+const LiftTypeIndicator = ({ liftType }) => {
+  const { color } = useLiftColors(liftType);
+
+  return (
+    <div className="flex flex-row items-center">
+      <div
+        className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+        style={{ backgroundColor: color }}
+      />
+      <div className="font-bold">{liftType}</div>
+    </div>
+  );
+};
 
 export function SessionAnalysisCard({
   highlightDate = null,
@@ -176,13 +190,7 @@ export function SessionAnalysisCard({
                 {Object.entries(analyzedSessionLifts).map(
                   ([liftType, workouts]) => (
                     <li key={liftType} className="pb-2">
-                      <div className="flex flex-row items-center">
-                        <div
-                          className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                          style={{ backgroundColor: getLiftColor(liftType) }} // Use css style because tailwind is picky
-                        />
-                        <div className="font-bold">{liftType}</div>
-                      </div>
+                      <LiftTypeIndicator liftType={liftType} />
                       <ul className="pl-4">
                         {workouts.map((workout, index) => (
                           <li key={index}>

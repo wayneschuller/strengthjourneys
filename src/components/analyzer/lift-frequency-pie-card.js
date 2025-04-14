@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useContext, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { devLog } from "@/lib/processing-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
@@ -14,8 +14,6 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
 } from "@/components/ui/chart";
 
 import { LabelList, Pie, PieChart } from "recharts";
@@ -24,21 +22,18 @@ export function LiftTypeFrequencyPieCard() {
   const { liftTypes, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
-  if (isLoading) return;
-  if (!liftTypes || liftTypes.length < 1) return;
+  if (isLoading) return null;
+  if (!liftTypes || liftTypes.length < 1) return null;
 
-  const pieData = liftTypes
-    ?.map((item) => ({
-      liftType: item.liftType,
-      sets: item.totalSets,
-      color: getLiftColor(item.liftType),
-      fill: getLiftColor(item.liftType),
-    }))
-    .slice(0, 5); // Up to 5 lifts
+  // Get top 5 lifts and their colors
+  const pieData = liftTypes.slice(0, 5).map((item) => ({
+    liftType: item.liftType,
+    sets: item.totalSets,
+    color: getLiftColor(item.liftType),
+    fill: getLiftColor(item.liftType),
+  }));
 
-  // devLog(liftTypes);
-  // devLog(pieData);
-
+  // Create chart config for shadcn chart
   const chartConfig = {
     sets: {
       label: "Sets",
@@ -46,13 +41,11 @@ export function LiftTypeFrequencyPieCard() {
     ...pieData.reduce((config, lift) => {
       config[lift.liftType] = {
         label: lift.liftType,
-        color: getLiftColor(lift.liftType),
+        color: lift.color,
       };
       return config;
     }, {}),
   };
-
-  const chartData = pieData;
 
   return (
     <Card className="flex-1">
@@ -68,14 +61,42 @@ export function LiftTypeFrequencyPieCard() {
           className="mx-auto aspect-square min-h-[250px]"
         >
           <PieChart>
+            <Pie
+              data={pieData}
+              dataKey="sets"
+              nameKey="liftType"
+              cx="50%"
+              cy="50%"
+              innerRadius={40}
+              outerRadius={80}
+              paddingAngle={2}
+            >
+              <LabelList
+                dataKey="liftType"
+                position="outside"
+                className="fill-foreground"
+              />
+            </Pie>
             <ChartTooltip
-              content={<ChartTooltipContent nameKey="liftType" />}
-            />
-            <Pie data={chartData} dataKey="sets" />
-            <ChartLegend
-              content={<ChartLegendContent nameKey="liftType" />}
-              className="-translate-y-2 flex-wrap gap-2 text-base [&>*]:basis-1/4 [&>*]:justify-center"
-              verticalAlign="top"
+              content={({ active, payload }) => {
+                if (!active || !payload) return null;
+                return (
+                  <ChartTooltipContent>
+                    {payload.map((entry) => (
+                      <div key={entry.name} className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="h-2 w-2 rounded-full"
+                            style={{ background: entry.payload.color }}
+                          />
+                          <div>{entry.name}</div>
+                        </div>
+                        <div className="font-bold">{entry.value} sets</div>
+                      </div>
+                    ))}
+                  </ChartTooltipContent>
+                );
+              }}
             />
           </PieChart>
         </ChartContainer>

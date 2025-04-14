@@ -146,7 +146,7 @@ export function LiftTypeFrequencyPieCard() {
                 nameKey="liftType"
                 cx="50%"
                 cy="50%"
-                innerRadius={85}
+                innerRadius={60}
                 outerRadius={120}
                 paddingAngle={4}
                 labelLine={false}
@@ -162,11 +162,7 @@ export function LiftTypeFrequencyPieCard() {
                     strokeWidth={2}
                   />
                 ))}
-                <LabelList
-                  dataKey="liftType"
-                  content={renderCustomizedLabel}
-                  position="outside"
-                />
+                {/* <LabelList dataKey="liftType" content={renderCustomizedLabel} position="outside" /> */}
               </Pie>
               <Legend
                 verticalAlign="top"
@@ -206,7 +202,7 @@ export function LiftTypeFrequencyPieCard() {
           </ResponsiveContainer>
         </ChartContainer>
 
-        <Separator className="my-6" />
+        {/* <Separator className="my-6" /> */}
 
         <div>
           <h3 className="mb-2 text-sm font-semibold">

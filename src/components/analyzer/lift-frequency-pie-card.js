@@ -168,7 +168,11 @@ export function LiftTypeFrequencyPieCard() {
                   position="outside"
                 />
               </Pie>
-              <Legend content={<CustomLegend />} />
+              <Legend
+                verticalAlign="top"
+                align="center"
+                content={<CustomLegend />}
+              />
               <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload) return null;

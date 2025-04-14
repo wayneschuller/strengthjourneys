@@ -164,11 +164,7 @@ export function LiftTypeFrequencyPieCard() {
                 ))}
                 {/* <LabelList dataKey="liftType" content={renderCustomizedLabel} position="outside" /> */}
               </Pie>
-              <Legend
-                verticalAlign="top"
-                align="center"
-                content={<CustomLegend />}
-              />
+              {/* <Legend verticalAlign="top" align="center" content={<CustomLegend />} /> */}
               <Tooltip
                 content={({ active, payload }) => {
                   if (!active || !payload) return null;

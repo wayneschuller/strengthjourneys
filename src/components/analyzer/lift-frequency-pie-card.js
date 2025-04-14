@@ -63,7 +63,8 @@ const CustomLegend = ({ payload }) => {
       {payload.map((entry, index) => (
         <div key={`legend-${index}`} className="flex items-center gap-2">
           <div
-            className="h-3 w-3 rounded-full"
+            // className="h-3 w-3 rounded-md"
+            className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
             style={{ background: entry.color }}
           />
           <span className="text-sm">{entry.value}</span>
@@ -180,7 +181,7 @@ export function LiftTypeFrequencyPieCard() {
                       <div key={data.name} className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                           <div
-                            className="h-4 w-4 rounded-full"
+                            className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
                             style={{ background: data.payload.color }}
                           />
                           <div className="text-base font-semibold">
@@ -212,7 +213,7 @@ export function LiftTypeFrequencyPieCard() {
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div
-                    className="h-3 w-3 rounded-full"
+                    className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
                     style={{ background: item.color }}
                   />
                   <span className="text-sm">{item.liftType}</span>

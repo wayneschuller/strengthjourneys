@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useContext, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { devLog } from "@/lib/processing-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
@@ -31,7 +31,12 @@ export function ConsistencyCard() {
   const { parsedData } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
-  const consistency = processConsistency(parsedData);
+  // const consistency = processConsistency(parsedData);
+  // Memoize the consistency calculation
+  const consistency = useMemo(
+    () => processConsistency(parsedData),
+    [parsedData],
+  );
 
   // devLog(consistency);
 

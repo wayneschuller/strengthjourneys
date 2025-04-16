@@ -13,7 +13,6 @@
     "@ai-sdk/openai": "^0.0.62",
     "@braintree/sanitize-url": "^7.1.1",
     "@formkit/auto-animate": "^0.8.2",
-    "@metricalp/react": "^1.0.8",
     "@portabletext/react": "^3.2.1",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-avatar": "^1.1.3",

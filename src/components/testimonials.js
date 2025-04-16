@@ -53,7 +53,7 @@ function TestimonialCard({ testimony }) {
       <div className="flex flex-row gap-2">
         <div className="flex flex-col items-center justify-start">
           <Avatar>
-            <AvatarImage src={testimony.avatarUrl} />
+            <AvatarImage src={testimony.avatarUrl} alt={`${testimony.name}`} />
             {testimony.icon && (
               <AvatarFallback>{<testimony.icon />}</AvatarFallback>
             )}

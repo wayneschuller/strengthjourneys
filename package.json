@@ -51,7 +51,7 @@
     "geist": "^1.3.1",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.445.0",
-    "next": "^14.2.26",
+    "next": "^14.2.28",
     "next-auth": "^4.24.11",
     "next-seo": "^6.6.0",
     "next-sitemap": "^4.2.3",
@@ -74,15 +74,18 @@
     "use-sync-external-store": "^1.5.0",
     "usehooks-ts": "^3.1.1",
     "validator": "^13.15.0",
-    "zod": "^3.24.2"
+    "zod": "^3.24.3"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
     "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.26",
+    "eslint-config-next": "^14.2.28",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^3.4.17"
+  },
+  "resolutions": {
+    "nanoid": "3.3.8"
   }
 }

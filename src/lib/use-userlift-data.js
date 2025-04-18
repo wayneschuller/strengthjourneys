@@ -15,7 +15,7 @@ import {
   sampleParsedData,
   transposeDatesToToday,
 } from "@/lib/sample-parsed-data";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "usehooks-ts";
 import { ToastAction } from "@/components/ui/toast";
 

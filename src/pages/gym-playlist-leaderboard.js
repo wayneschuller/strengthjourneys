@@ -8,7 +8,7 @@ import { useSession, signIn } from "next-auth/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { fetchPlaylists } from "@/components/playlist-leaderboard/playlist-utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";

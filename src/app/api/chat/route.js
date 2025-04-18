@@ -72,9 +72,7 @@ export async function POST(req) {
   }
 
   isAdvancedModel = true; // While in early release, let everyone have the best model
-  const AI_model = isAdvancedModel
-    ? openai("gpt-4o-2024-08-06") // in a few weeks this will be the default
-    : openai("gpt-4o-mini");
+  const AI_model = isAdvancedModel ? openai("gpt-4.1") : openai("gpt-4o-mini");
 
   const result = await streamText({
     // model: openai("gpt-4o-mini"), // Anyone

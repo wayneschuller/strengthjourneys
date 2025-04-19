@@ -40,7 +40,6 @@ import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
-import ReactMarkdown from "react-markdown";
 import { processConsistency } from "@/components/analyzer/consistency-card";
 import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 
@@ -460,23 +459,6 @@ function FlickeringGridDemo() {
     />
   );
 }
-
-const MarkdownWithStyled = ({ children }) => (
-  <ReactMarkdown
-    components={{
-      a: ({ node, ...props }) => (
-        <a
-          {...props}
-          className="text-blue-500 underline hover:text-blue-700"
-          target="_blank"
-          rel="noopener noreferrer"
-        />
-      ),
-    }}
-  >
-    {children}
-  </ReactMarkdown>
-);
 
 function convertAnalyzedLiftsToLLMStrings(analyzedLifts) {
   const sessionDescriptions = [];

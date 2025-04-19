@@ -376,7 +376,25 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         <ChatMessageArea className="mb-4 h-[30rem] space-y-4 rounded-lg border border-border p-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center text-muted-foreground">
-              {/* default sample prompts… */}
+              <p className="mb-2 text-muted-foreground">
+                Enter your questions into the chat box below (or click a sample
+                question)
+              </p>
+              {defaultMessages.map((message, index) => (
+                <p
+                  key={index}
+                  className="cursor-pointer italic text-muted-foreground"
+                  // When user clicks one of the sample default messages, send it to the AI
+                  onClick={() => {
+                    append({
+                      role: "user",
+                      content: message,
+                    });
+                  }}
+                >
+                  {message}
+                </p>
+              ))}
             </div>
           ) : (
             messages.map((message, index) => (

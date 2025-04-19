@@ -412,7 +412,6 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                       : "bg-secondary text-secondary-foreground"
                   }`}
                 >
-                  {/* <MarkdownWithStyled>{message.content}</MarkdownWithStyled> */}
                   <MarkdownContent
                     id={`chat-msg-${index}`}
                     content={message.content}

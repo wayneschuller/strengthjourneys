@@ -8,6 +8,21 @@ import { devLog, getAnalyzedSessionLifts } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 
 import {
+  ChatMessage,
+  ChatMessageAvatar,
+  ChatMessageContent,
+} from "@/components/ui/chat-message";
+import { ChatMessageArea } from "@/components/ui/chat-message-area";
+
+import {
+  ChatInput,
+  ChatInputTextArea,
+  ChatInputSubmit,
+} from "@/components/ui/chat-input";
+
+import { MarkdownContent } from "@/components/ui/markdown-content";
+
+import {
   Card,
   CardContent,
   CardDescription,
@@ -30,7 +45,6 @@ import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
-import ReactMarkdown from "react-markdown";
 import { processConsistency } from "@/components/analyzer/consistency-card";
 import { useAthleteBioData } from "@/lib/use-athlete-biodata";
 
@@ -326,6 +340,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     handleInputChange,
     handleSubmit,
     isLoading,
+    stop,
   } = useChat({
     onFinish: (message, { usage, finishReason }) => {
       // devLog("Finished streaming message:", message);
@@ -339,9 +354,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     },
     body: { userProvidedMetadata: userProvidedProfileData }, // Share the user selected metadata with the AI temporarily
   });
-  const scrollRef = useChatScroll(messages);
 
-  // devLog(messages);
+  devLog(messages);
 
   return (
     <Card className="max-h-full bg-background text-foreground">
@@ -364,13 +378,10 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         </div>
         <FlickeringGridDemo />
       </CardHeader>
-      <CardContent className="flex flex-col pb-0 align-middle">
-        <div
-          ref={scrollRef}
-          className="mb-4 h-[30rem] overflow-auto scroll-smooth rounded-lg border border-border p-4 pb-0"
-        >
+      <CardContent className="flex flex-col pb-5 align-middle">
+        <ChatMessageArea className="h-[25rem] pr-4">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center space-x-1 overflow-auto text-center">
+            <div className="flex flex-col items-center justify-center text-center text-muted-foreground">
               <p className="mb-2 text-muted-foreground">
                 Enter your questions into the chat box below (or click a sample
                 question)
@@ -393,39 +404,37 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
             </div>
           ) : (
             messages.map((message, index) => (
-              <div
-                key={index}
-                className={`mb-4 flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              <ChatMessage
+                key={message.id}
+                id={message.id}
+                type={message.role === "user" ? "outgoing" : "incoming"}
+                variant={message.role === "user" ? "bubble" : undefined}
+                className="pb-6"
               >
-                <span
-                  className={`inline-block max-w-[80%] rounded-lg p-3 ${
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground"
-                  }`}
-                >
-                  <MarkdownWithStyled>{message.content}</MarkdownWithStyled>
-                </span>
-              </div>
+                {message.role === "assistant" && <ChatMessageAvatar />}
+                <ChatMessageContent content={message.content} />
+              </ChatMessage>
             ))
           )}
-          <LoaderCircle className={cn(isLoading ? "animate-spin" : "hidden")} />
-        </div>
+          {/* {isLoading && <LoaderCircle className="animate-spin self-center" />} */}
+        </ChatMessageArea>
       </CardContent>
       <CardFooter className="">
-        <div className="flex-1 flex-row">
-          <form onSubmit={handleSubmit} className="flex space-x-2">
-            <input
-              type="text"
+        <div className="flex-1 flex-col">
+          <div>
+            <ChatInput
+              variant="default"
               value={input}
+              // onChange={(e) => setInput(e.target.value)}
               onChange={handleInputChange}
-              placeholder="Type your question here..."
-              className="flex-grow rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-            <Button type="submit" className="rounded-r-lg">
-              Ask
-            </Button>
-          </form>
+              onSubmit={handleSubmit}
+              loading={isLoading}
+              onStop={stop}
+            >
+              <ChatInputTextArea placeholder="Type a message..." />
+              <ChatInputSubmit />
+            </ChatInput>
+          </div>
         </div>
       </CardFooter>
     </Card>
@@ -445,33 +454,6 @@ function FlickeringGridDemo() {
     />
   );
 }
-
-function useChatScroll(dep) {
-  const ref = useRef();
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.scrollTop = ref.current.scrollHeight;
-    }
-  }, [dep]);
-  return ref;
-}
-
-const MarkdownWithStyled = ({ children }) => (
-  <ReactMarkdown
-    components={{
-      a: ({ node, ...props }) => (
-        <a
-          {...props}
-          className="text-blue-500 underline hover:text-blue-700"
-          target="_blank"
-          rel="noopener noreferrer"
-        />
-      ),
-    }}
-  >
-    {children}
-  </ReactMarkdown>
-);
 
 function convertAnalyzedLiftsToLLMStrings(analyzedLifts) {
   const sessionDescriptions = [];

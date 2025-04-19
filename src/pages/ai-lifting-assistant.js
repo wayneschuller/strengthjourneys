@@ -278,7 +278,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
           you never had.
         </PageHeaderDescription>
       </PageHeader>
-      <div className="mt-8 flex flex-col gap-5 lg:flex-row">
+      <div className="flex flex-col gap-5 lg:flex-row">
         <div className="h-dvh flex-1 lg:flex lg:flex-col">
           <AILiftingAssistantCard
             userProvidedProfileData={userProvidedProfileData}

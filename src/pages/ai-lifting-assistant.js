@@ -411,8 +411,13 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                 variant="bubble"
                 className="pb-6"
               >
-                {message.role === "assistant" && <ChatMessageAvatar />}
-                <ChatMessageContent content={message.content} />
+                {message.role === "assistant" && (
+                  <ChatMessageAvatar className="hidden md:flex" />
+                )}
+                <ChatMessageContent
+                  content={message.content}
+                  className="min-w-0 break-words"
+                />
               </ChatMessage>
             ))
           )}
@@ -421,20 +426,17 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
       </CardContent>
       <CardFooter className="">
         <div className="flex-1 flex-col">
-          <div>
-            <ChatInput
-              variant="default"
-              value={input}
-              // onChange={(e) => setInput(e.target.value)}
-              onChange={handleInputChange}
-              onSubmit={handleSubmit}
-              loading={isLoading}
-              onStop={stop}
-            >
-              <ChatInputTextArea placeholder="Type a message..." />
-              <ChatInputSubmit />
-            </ChatInput>
-          </div>
+          <ChatInput
+            variant="default"
+            value={input}
+            onChange={handleInputChange}
+            onSubmit={handleSubmit}
+            loading={isLoading}
+            onStop={stop}
+          >
+            <ChatInputTextArea placeholder="Type a message..." />
+            <ChatInputSubmit />
+          </ChatInput>
         </div>
       </CardFooter>
     </Card>

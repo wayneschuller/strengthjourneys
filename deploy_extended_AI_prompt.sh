@@ -1,34 +1,37 @@
-#!/bin/bash
-# Use Vercel CLI to upload local .env variable EXTENDED_AI_PROMPT to Vercel servers
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Load variables from the .env file
-if [ -f ".env" ]; then
-  # Use 'source' to properly load variables with special characters or newlines
-  set -a
-  source .env
-  set +a
-else
-  echo ".env file not found"
+# Load variables from .env
+if [[ ! -f ".env" ]]; then
+  echo ".env file not found" >&2
+  exit 1
+fi
+set -a
+source .env
+set +a
+
+if [[ -z "${EXTENDED_AI_PROMPT-}" ]]; then
+  echo "EXTENDED_AI_PROMPT is not set in your .env file." >&2
   exit 1
 fi
 
-# Check if EXTENDED_AI_PROMPT is set in the .env file
-if [[ -z "$EXTENDED_AI_PROMPT" ]]; then
-  echo "EXTENDED_AI_PROMPT is not set in your .env file."
-  exit 1
-fi
+# Dump the prompt (with newlines) into a temp file
+TMPFILE=$(mktemp)
+printf "%s" "$EXTENDED_AI_PROMPT" > "$TMPFILE"
 
-# Encode EXTENDED_AI_PROMPT to base64 to preserve formatting
-ENCODED_PROMPT=$(echo -n "$EXTENDED_AI_PROMPT" | base64)
+for ENV in production preview development; do
+  # List current vars, check if ours exists
+  if vercel env ls "$ENV" | grep -q "EXTENDED_AI_PROMPT"; then
+    vercel env rm EXTENDED_AI_PROMPT "$ENV" -y
+    echo "🗑 Removed old EXTENDED_AI_PROMPT from $ENV"
+  else
+    echo "ℹ️  EXTENDED_AI_PROMPT not found in $ENV, skipping removal"
+  fi
 
-# Loop over each environment, remove the existing variable, and add it back
-for ENV in production preview development
-do
-  # Remove the existing EXTENDED_AI_PROMPT from the environment
-  vercel env rm EXTENDED_AI_PROMPT $ENV -y
-  echo "EXTENDED_AI_PROMPT has been removed from $ENV."
-
-  # Add the new EXTENDED_AI_PROMPT to the environment
-  vercel env add EXTENDED_AI_PROMPT $ENV <<< "$ENCODED_PROMPT"
-  echo "EXTENDED_AI_PROMPT has been successfully updated for $ENV."
+  # Add the new value, reading from the file
+  vercel env add EXTENDED_AI_PROMPT "$ENV" < "$TMPFILE"
+  echo "✅ Updated EXTENDED_AI_PROMPT for $ENV"
 done
+
+rm -f "$TMPFILE"
+

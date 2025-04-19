@@ -278,7 +278,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
           you never had.
         </PageHeaderDescription>
       </PageHeader>
-      <div className="mt-8 flex flex-col gap-5 lg:flex-row">
+      <div className="flex flex-col gap-2 md:gap-5 lg:flex-row">
         <div className="h-dvh flex-1 lg:flex lg:flex-col">
           <AILiftingAssistantCard
             userProvidedProfileData={userProvidedProfileData}
@@ -379,7 +379,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         <FlickeringGridDemo />
       </CardHeader>
       <CardContent className="flex flex-col pb-5 align-middle">
-        <ChatMessageArea className="h-[25rem] pr-4">
+        <ChatMessageArea className="h-[30rem] pr-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center text-muted-foreground">
               <p className="mb-2 text-muted-foreground">
@@ -408,7 +408,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                 key={message.id}
                 id={message.id}
                 type={message.role === "user" ? "outgoing" : "incoming"}
-                variant={message.role === "user" ? "bubble" : undefined}
+                variant="bubble"
                 className="pb-6"
               >
                 {message.role === "assistant" && <ChatMessageAvatar />}

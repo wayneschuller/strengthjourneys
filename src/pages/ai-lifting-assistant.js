@@ -6,6 +6,9 @@ import { NextSeo } from "next-seo";
 import { useChat } from "ai/react";
 import { devLog, getAnalyzedSessionLifts } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
+
+import { ChatMessageArea } from "@/components/ui/chat-message-area";
+
 import {
   ChatInput,
   ChatInputTextArea,
@@ -345,7 +348,6 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     },
     body: { userProvidedMetadata: userProvidedProfileData }, // Share the user selected metadata with the AI temporarily
   });
-  const scrollRef = useChatScroll(messages);
 
   // devLog(messages);
 
@@ -370,38 +372,19 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         </div>
         <FlickeringGridDemo />
       </CardHeader>
-      <CardContent className="flex flex-col pb-0 align-middle">
-        <div
-          ref={scrollRef}
-          className="mb-4 h-[30rem] overflow-auto scroll-smooth rounded-lg border border-border p-4 pb-0"
-        >
+      <CardContent className="flex flex-col pb-5 align-middle">
+        <ChatMessageArea className="mb-4 h-[30rem] space-y-4 rounded-lg border border-border p-4">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center space-x-1 overflow-auto text-center">
-              <p className="mb-2 text-muted-foreground">
-                Enter your questions into the chat box below (or click a sample
-                question)
-              </p>
-              {defaultMessages.map((message, index) => (
-                <p
-                  key={index}
-                  className="cursor-pointer italic text-muted-foreground"
-                  // When user clicks one of the sample default messages, send it to the AI
-                  onClick={() => {
-                    append({
-                      role: "user",
-                      content: message,
-                    });
-                  }}
-                >
-                  {message}
-                </p>
-              ))}
+            <div className="flex flex-col items-center justify-center text-center text-muted-foreground">
+              {/* default sample prompts… */}
             </div>
           ) : (
             messages.map((message, index) => (
               <div
                 key={index}
-                className={`mb-4 flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex ${
+                  message.role === "user" ? "justify-end" : "justify-start"
+                }`}
               >
                 <span
                   className={`inline-block max-w-[80%] rounded-lg p-3 ${
@@ -415,8 +398,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
               </div>
             ))
           )}
-          <LoaderCircle className={cn(isLoading ? "animate-spin" : "hidden")} />
-        </div>
+          {isLoading && <LoaderCircle className="animate-spin self-center" />}
+        </ChatMessageArea>
       </CardContent>
       <CardFooter className="">
         <div className="flex-1 flex-col">
@@ -452,16 +435,6 @@ function FlickeringGridDemo() {
       width={70}
     />
   );
-}
-
-function useChatScroll(dep) {
-  const ref = useRef();
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.scrollTop = ref.current.scrollHeight;
-    }
-  }, [dep]);
-  return ref;
 }
 
 const MarkdownWithStyled = ({ children }) => (

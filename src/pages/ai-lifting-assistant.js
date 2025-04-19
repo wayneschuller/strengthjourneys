@@ -6,6 +6,11 @@ import { NextSeo } from "next-seo";
 import { useChat } from "ai/react";
 import { devLog, getAnalyzedSessionLifts } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
+import {
+  ChatInput,
+  ChatInputTextArea,
+  ChatInputSubmit,
+} from "@/components/ui/chat-input";
 
 import {
   Card,
@@ -326,6 +331,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     handleInputChange,
     handleSubmit,
     isLoading,
+    stop,
   } = useChat({
     onFinish: (message, { usage, finishReason }) => {
       // devLog("Finished streaming message:", message);
@@ -413,19 +419,21 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         </div>
       </CardContent>
       <CardFooter className="">
-        <div className="flex-1 flex-row">
-          <form onSubmit={handleSubmit} className="flex space-x-2">
-            <input
-              type="text"
+        <div className="flex-1 flex-col">
+          <div>
+            <ChatInput
+              variant="default"
               value={input}
+              // onChange={(e) => setInput(e.target.value)}
               onChange={handleInputChange}
-              placeholder="Type your question here..."
-              className="flex-grow rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
-            <Button type="submit" className="rounded-r-lg">
-              Ask
-            </Button>
-          </form>
+              onSubmit={handleSubmit}
+              loading={isLoading}
+              onStop={stop}
+            >
+              <ChatInputTextArea placeholder="Type a message..." />
+              <ChatInputSubmit />
+            </ChatInput>
+          </div>
         </div>
       </CardFooter>
     </Card>

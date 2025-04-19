@@ -15,6 +15,8 @@ import {
   ChatInputSubmit,
 } from "@/components/ui/chat-input";
 
+import { MarkdownContent } from "@/components/ui/markdown-content";
+
 import {
   Card,
   CardContent,
@@ -411,7 +413,11 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                       : "bg-secondary text-secondary-foreground"
                   }`}
                 >
-                  <MarkdownWithStyled>{message.content}</MarkdownWithStyled>
+                  {/* <MarkdownWithStyled>{message.content}</MarkdownWithStyled> */}
+                  <MarkdownContent
+                    id={`chat-msg-${index}`}
+                    content={message.content}
+                  />
                 </span>
               </div>
             ))

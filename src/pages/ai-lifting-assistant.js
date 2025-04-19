@@ -379,7 +379,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         <FlickeringGridDemo />
       </CardHeader>
       <CardContent className="flex flex-col pb-5 align-middle">
-        <ChatMessageArea className="mb-4 h-[30rem] space-y-4 rounded-lg border border-border p-4">
+        {/* <ChatMessageArea className="mb-4 h-[30rem] space-y-4 rounded-lg border border-border p-4"> */}
+        <ChatMessageArea className="h-[25rem] pr-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center text-muted-foreground">
               <p className="mb-2 text-muted-foreground">
@@ -409,6 +410,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                 id={message.id}
                 type={message.role === "user" ? "outgoing" : "incoming"}
                 variant={message.role === "user" ? "bubble" : undefined}
+                className="pb-6"
               >
                 {message.role === "assistant" && <ChatMessageAvatar />}
                 <ChatMessageContent content={message.content} />

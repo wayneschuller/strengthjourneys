@@ -166,7 +166,7 @@ export function AvatarDropdown() {
                   }
                 >
                   <Bug className="mr-2 h-4 w-4" />
-                  Report Issue
+                  Report Issue via Github
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>

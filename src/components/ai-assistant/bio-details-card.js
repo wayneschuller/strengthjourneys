@@ -109,7 +109,7 @@ export function BioDetailsCard({
               aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
             />
           </div>
-          <div>
+          <div className="flex w-full flex-col justify-between">
             <HeightWidget height={height} setHeight={setHeight} />
           </div>
           <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
@@ -151,7 +151,7 @@ const HeightWidget = ({ height, setHeight }) => {
   };
 
   return (
-    <div className="flex w-96 flex-col align-middle">
+    <div className="flex flex-col align-middle">
       <div className="mb-2 flex flex-row gap-2 align-middle">
         <Label htmlFor="height" className="flex flex-row gap-3 text-xl">
           Height:
@@ -165,7 +165,7 @@ const HeightWidget = ({ height, setHeight }) => {
         step={1}
         value={[height]}
         onValueChange={handleHeightChange}
-        className="flex-grow"
+        className="mt-2"
       />
     </div>
   );

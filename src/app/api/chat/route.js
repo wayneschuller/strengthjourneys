@@ -40,8 +40,7 @@ export async function POST(req) {
   if (envAIPrompt) {
     let decodedPrompt = envAIPrompt;
 
-    // FIXME: We had some half working code to optionally read base64 encoded extended prompt.
-    // if (isBase64(envAIPrompt)) { decodedPrompt = Buffer.from(envAIPrompt, "base64").toString("utf-8"); } else { decodedPrompt = envAIPrompt; }
+    devLog(`Using EXTENDED_AI_PROMPT...`);
 
     systemMessages = [
       {
@@ -82,13 +81,4 @@ export async function POST(req) {
   });
 
   return result.toDataStreamResponse();
-}
-
-function isBase64(str) {
-  try {
-    const buffer = Buffer.from(str, "base64");
-    return buffer.toString("base64") === str;
-  } catch {
-    return false;
-  }
 }

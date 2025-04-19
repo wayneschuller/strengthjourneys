@@ -8,7 +8,7 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 export const maxDuration = 30;
 
 const SYSTEM_PROMPT =
-  "You are a strength coach answering questions about the exercise with an emphasis on getting strong." +
+  "You are a strength coach answering questions only about barbell exercises with an emphasis on getting strong." +
   "Emphasise safety and take precautions if user indicates any health concerns.";
 
 export async function POST(req) {

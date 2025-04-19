@@ -7,6 +7,11 @@ import { useChat } from "ai/react";
 import { devLog, getAnalyzedSessionLifts } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 
+import {
+  ChatMessage,
+  ChatMessageAvatar,
+  ChatMessageContent,
+} from "@/components/ui/chat-message";
 import { ChatMessageArea } from "@/components/ui/chat-message-area";
 
 import {
@@ -350,7 +355,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     body: { userProvidedMetadata: userProvidedProfileData }, // Share the user selected metadata with the AI temporarily
   });
 
-  // devLog(messages);
+  devLog(messages);
 
   return (
     <Card className="max-h-full bg-background text-foreground">
@@ -399,25 +404,16 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
             </div>
           ) : (
             messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
+              <ChatMessage
+                key={message.id}
+                id={message.id}
+                type={message.role === "user" ? "outgoing" : "incoming"}
+                variant={message.role === "user" ? "bubble" : undefined}
               >
-                <span
-                  className={`inline-block max-w-[80%] rounded-lg p-3 ${
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground"
-                  }`}
-                >
-                  <MarkdownContent
-                    id={`chat-msg-${index}`}
-                    content={message.content}
-                  />
-                </span>
-              </div>
+                {message.role === "assistant" && <ChatMessageAvatar />}
+                <ChatMessageContent content={message.content} />
+                {/* <MarkdownContent id={`chat-msg-${index}`} content={message.content} /> */}
+              </ChatMessage>
             ))
           )}
           {isLoading && <LoaderCircle className="animate-spin self-center" />}

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useLocalStorage } from "usehooks-ts";
 import {
   interpolateStandardKG,
   LiftingStandardsKG,
@@ -7,22 +6,34 @@ import {
 
 import { useStateFromQueryOrLocalStorage } from "./use-state-from-query-or-localStorage";
 
-// A custom hook to get and store the athlete provided bio data in localstorage
+// A custom hook to get and store the athlete provided bio data in localStorage
 // Also provide some custom strength levels for the main lifts based on this bio data.
-export const useAthleteBioData = () => {
-  const [age, setAge] = useStateFromQueryOrLocalStorage("AthleteAge", 30);
+// modifyURLQuery controls whether query parameters are updated (defaults to false)
+export const useAthleteBioData = (modifyURLQuery = false) => {
+  const [age, setAge] = useStateFromQueryOrLocalStorage(
+    "AthleteAge",
+    30,
+    modifyURLQuery,
+  );
   const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
     "calcIsMetric",
     false,
+    modifyURLQuery,
   );
-  const [sex, setSex] = useStateFromQueryOrLocalStorage("AthleteSex", "male");
+  const [sex, setSex] = useStateFromQueryOrLocalStorage(
+    "AthleteSex",
+    "male",
+    modifyURLQuery,
+  );
   const [bodyWeight, setBodyWeight] = useStateFromQueryOrLocalStorage(
     "AthleteBodyWeight",
     200,
+    modifyURLQuery,
   );
   const [liftType, setLiftType] = useStateFromQueryOrLocalStorage(
     "AthleteLiftType",
     "Back Squat",
+    modifyURLQuery,
   );
   const [standards, setStandards] = useState({});
 

@@ -137,7 +137,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
     standards,
     liftType,
     setLiftType,
-  } = useAthleteBioData();
+  } = useAthleteBioData(true);
 
   const [parent] = useAutoAnimate(/* optional config */);
   const isClient = useIsClient();

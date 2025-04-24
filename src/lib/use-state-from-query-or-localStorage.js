@@ -2,11 +2,13 @@
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 
-// This hook will provide state from the query params first and localstorage second and defaultValue third.
-// Setting will update both query params and localstorage.
-// FIXME: try to avoid inserting defaults into the query?
-
-export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
+// This hook provides state from query params first, localStorage second, and defaultValue third.
+// Setting state updates localStorage always and query params only if syncQuery is true.
+export const useStateFromQueryOrLocalStorage = (
+  key,
+  defaultValue,
+  syncQuery = false,
+) => {
   const router = useRouter();
   const [state, setState] = useState(defaultValue);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -23,6 +25,7 @@ export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
     return JSON.stringify(value);
   };
 
+  // Initialize state from query, localStorage, or default
   useEffect(() => {
     if (!router.isReady) return;
 
@@ -47,24 +50,27 @@ export const useStateFromQueryOrLocalStorage = (key, defaultValue) => {
     }
   }, [router.isReady, key, defaultValue]);
 
+  // Update query params (if syncQuery is true) and localStorage when state changes
   useEffect(() => {
     if (!isInitialized) return;
 
-    const newQueryParams = { ...router.query, [key]: state };
+    if (syncQuery) {
+      const newQueryParams = { ...router.query, [key]: stringifyValue(state) };
 
-    router.replace(
-      {
-        pathname: router.pathname,
-        query: newQueryParams,
-      },
-      undefined,
-      { shallow: true },
-    );
+      router.replace(
+        {
+          pathname: router.pathname,
+          query: newQueryParams,
+        },
+        undefined,
+        { shallow: true },
+      );
+    }
 
     if (typeof window !== "undefined") {
       localStorage.setItem(key, stringifyValue(state));
     }
-  }, [state, isInitialized]);
+  }, [state, isInitialized, syncQuery, key, router]);
 
   return [state, setState];
 };

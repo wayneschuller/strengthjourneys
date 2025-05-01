@@ -2,7 +2,6 @@
 
 "use client";
 import Image from "next/image";
-import Script from "next/script";
 import * as React from "react";
 import { useState, useEffect, useContext } from "react";
 import { useSession, signIn, sgnOut } from "next-auth/react";

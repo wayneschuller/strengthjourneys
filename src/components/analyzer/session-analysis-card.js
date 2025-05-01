@@ -32,7 +32,12 @@ import {
   getReadableDateString,
   getAnalyzedSessionLifts,
 } from "@/lib/processing-utils";
-import { LoaderCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  LoaderCircle,
+  ChevronLeft,
+  ChevronRight,
+  PlayCircle,
+} from "lucide-react";
 
 const bigFourURLs = {
   "Back Squat": "/barbell-squat-insights",
@@ -220,21 +225,28 @@ export function SessionAnalysisCard({
                                     : ""
                                 }
                               >
-                                {workout.URL ? (
-                                  <a
-                                    href={workout.URL}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="underline"
-                                  >
-                                    {workout.reps}@{workout.weight}
-                                    {workout.unitType}{" "}
-                                  </a>
-                                ) : (
-                                  <>
-                                    {workout.reps}@{workout.weight}
-                                    {workout.unitType}{" "}
-                                  </>
+                                {workout.reps}@{workout.weight}
+                                {workout.unitType}
+                                {workout.URL && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <a
+                                        href={workout.URL}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        <Button
+                                          variant="ghost"
+                                          className="ml-2 h-3 w-3 p-1 align-middle"
+                                        >
+                                          <PlayCircle className="" />
+                                        </Button>
+                                      </a>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>User Data URL</p>
+                                    </TooltipContent>
+                                  </Tooltip>
                                 )}
                               </div>
                               <div className="ml-6 inline-block">

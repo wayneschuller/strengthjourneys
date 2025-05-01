@@ -2157,6 +2157,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 125,
     unitType: "lb",
+    URL: "https://www.youtube.com/watch?v=jTQTiW_g2pU",
   },
   {
     date: "2022-06-22",
@@ -2192,6 +2193,7 @@ export const sampleParsedData = [
     reps: 5,
     weight: 265,
     unitType: "lb",
+    URL: "https://www.youtube.com/watch?v=2kEC7X1FUIg",
   },
   {
     date: "2022-06-26",
@@ -2259,6 +2261,7 @@ export const sampleParsedData = [
     weight: 285,
     unitType: "lb",
     notes: "Some like to record all warm up sets, others just top sets.",
+    URL: "https://www.youtube.com/watch?v=qgbnLdH4qjc",
   },
   {
     date: "2022-06-26",
@@ -2287,5 +2290,6 @@ export const sampleParsedData = [
     reps: 5,
     weight: 65,
     unitType: "lb",
+    URL: "https://www.youtube.com/watch?v=WnJd42b3EfI",
   },
 ];

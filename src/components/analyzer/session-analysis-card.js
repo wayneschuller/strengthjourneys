@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, useContext } from "react";
+import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
@@ -33,10 +34,18 @@ import {
 } from "@/lib/processing-utils";
 import { LoaderCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
+const bigFourURLs = {
+  "Back Squat": "/barbell-squat-insights",
+  "Bench Press": "/barbell-bench-press-insights",
+  Deadlift: "/barbell-deadlift-insights",
+  "Strict Press": "/barbell-strict-press-insights",
+};
+
 const LiftTypeIndicator = ({ liftType }) => {
   const { color } = useLiftColors(liftType);
 
-  return (
+  // Content to be rendered (color square and lift type text)
+  const content = (
     <div className="flex flex-row items-center">
       <div
         className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
@@ -44,6 +53,15 @@ const LiftTypeIndicator = ({ liftType }) => {
       />
       <div className="font-bold">{liftType}</div>
     </div>
+  );
+
+  // Conditionally wrap content in a Link for big four lifts
+  return bigFourURLs[liftType] ? (
+    <Link href={bigFourURLs[liftType]} className="underline">
+      {content}
+    </Link>
+  ) : (
+    content
   );
 };
 

@@ -37,7 +37,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { BicepsFlexed } from "lucide-react";
-import { useAthleteBioData } from "@/lib/use-athlete-biodata";
+import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 import { StandardsSlider } from "@/components/standards-slider";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";

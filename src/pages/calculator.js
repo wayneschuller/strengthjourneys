@@ -42,7 +42,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage, useIsClient } from "usehooks-ts";
 
-import { useAthleteBioData } from "@/lib/use-athlete-biodata";
+import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
 import { Calculator } from "lucide-react";
 

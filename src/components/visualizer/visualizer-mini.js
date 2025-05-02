@@ -4,7 +4,7 @@ import { useMemo, useEffect, useState } from "react";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/lib/use-userlift-data";
-import { useAthleteBioData } from "@/lib/use-athlete-biodata";
+import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";

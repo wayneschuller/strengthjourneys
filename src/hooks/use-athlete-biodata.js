@@ -4,7 +4,7 @@ import {
   LiftingStandardsKG,
 } from "@/lib/lifting-standards-kg";
 
-import { useStateFromQueryOrLocalStorage } from "./use-state-from-query-or-localStorage";
+import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
 
 // A custom hook to get and store the athlete provided bio data in localStorage
 // Also provide some custom strength levels for the main lifts based on this bio data.

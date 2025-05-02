@@ -46,7 +46,7 @@ import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
 import { processConsistency } from "@/components/analyzer/consistency-card";
-import { useAthleteBioData } from "@/lib/use-athlete-biodata";
+import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
@@ -331,7 +331,7 @@ const defaultMessages = [
 // AILiftingAssistantCard - chatbot
 // -----------------------------------------------------------------------------------------------------
 function AILiftingAssistantCard({ userProvidedProfileData }) {
-  const [isFirstMessage, setIsFirstMessage] = useState(true);
+  const [followUpQuestions, setFollowUpQuestions] = useState([]); // New state for suggestions
   const {
     messages,
     input,
@@ -341,10 +341,23 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     handleSubmit,
     isLoading,
     stop,
+    data,
   } = useChat({
-    onFinish: (message, { usage, finishReason }) => {
-      // devLog("Finished streaming message:", message);
+    onFinish: (finalMessages, { usage }) => {
       devLog("Token usage:", usage);
+      if (Array.isArray(finalMessages)) {
+        // Look for the suggestions message with the correct role.
+        const suggestionMessage = finalMessages.find(
+          (msg) => msg.role === "suggestions",
+        );
+        if (
+          suggestionMessage &&
+          suggestionMessage.content &&
+          suggestionMessage.content.suggestions
+        ) {
+          setFollowUpQuestions(suggestionMessage.content.suggestions);
+        }
+      }
     },
     onError: (error) => {
       console.error("An error occurred:", error);
@@ -356,6 +369,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   });
 
   devLog(messages);
+  // devLog(data);
+  devLog(followUpQuestions);
 
   return (
     <Card className="max-h-full bg-background text-foreground">
@@ -403,23 +418,26 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
               ))}
             </div>
           ) : (
-            messages.map((message, index) => (
-              <ChatMessage
-                key={message.id}
-                id={message.id}
-                type={message.role === "user" ? "outgoing" : "incoming"}
-                variant="bubble"
-                className="pb-6"
-              >
-                {message.role === "assistant" && (
-                  <ChatMessageAvatar className="hidden md:flex" />
-                )}
-                <ChatMessageContent
-                  content={message.content}
-                  className="min-w-0 break-words"
-                />
-              </ChatMessage>
-            ))
+            // messages.map((message, index) => (
+            messages
+              .filter((msg) => msg.role !== "suggestions") // Skip suggestions in main chat
+              .map((message, index) => (
+                <ChatMessage
+                  key={message.id}
+                  id={message.id}
+                  type={message.role === "user" ? "outgoing" : "incoming"}
+                  variant="bubble"
+                  className="pb-6"
+                >
+                  {message.role === "assistant" && (
+                    <ChatMessageAvatar className="hidden md:flex" />
+                  )}
+                  <ChatMessageContent
+                    content={message.content}
+                    className="min-w-0 break-words"
+                  />
+                </ChatMessage>
+              ))
           )}
           {/* {isLoading && <LoaderCircle className="animate-spin self-center" />} */}
         </ChatMessageArea>

@@ -8,7 +8,7 @@ import React, { useState, useEffect, useContext } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useTimer } from "@/lib/timer-context";
+import { useTimer } from "@/hooks/use-timer";
 import { devLog } from "@/lib/processing-utils";
 import { NextSeo } from "next-seo";
 

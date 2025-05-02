@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useUserLiftingData } from "../hooks/use-userlift-data";
+import { useUserLiftingData } from "./use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
 
 const TimerContext = createContext();

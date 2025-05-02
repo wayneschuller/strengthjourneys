@@ -12,7 +12,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/router";
 import Script from "next/script";
 import { devLog } from "@/lib/processing-utils";
-import { TimerProvider } from "@/lib/timer-context";
+import { TimerProvider } from "@/hooks/use-timer";
 import { UserLiftingDataProvider } from "@/hooks/use-userlift-data";
 
 export default function App({ Component, pageProps, session }) {

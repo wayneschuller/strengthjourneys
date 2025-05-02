@@ -225,7 +225,7 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
       <CardHeader>
         <CardTitle>{liftType} Strength Potential By Rep Range</CardTitle>
         <CardDescription>
-          Benchmark lift: {bestLift.reps}@{bestLift.weight}
+          Your best set: {bestLift.reps}@{bestLift.weight}
           {bestLift.unitType} ({formatDate(bestLift.date)})
           {isValidating && (
             <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />

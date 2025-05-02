@@ -43,7 +43,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage, useIsClient } from "usehooks-ts";
 
 import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
-import { useStateFromQueryOrLocalStorage } from "../lib/use-state-from-query-or-localStorage";
+import { useStateFromQueryOrLocalStorage } from "../hooks/use-state-from-query-or-localStorage";
 import { Calculator } from "lucide-react";
 
 const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");

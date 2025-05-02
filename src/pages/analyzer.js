@@ -4,7 +4,7 @@ import Head from "next/head";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { NextSeo } from "next-seo";
-import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { useReadLocalStorage } from "usehooks-ts";
 import { Separator } from "@/components/ui/separator";

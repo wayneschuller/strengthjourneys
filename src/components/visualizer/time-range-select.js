@@ -1,4 +1,4 @@
-import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { subMonths } from "date-fns";
 
 import {

@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "../ui/separator";
 import { cn } from "@/lib/utils";
-import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 
 export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {

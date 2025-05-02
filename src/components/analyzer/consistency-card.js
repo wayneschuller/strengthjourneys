@@ -18,7 +18,7 @@ import {
   formatISO,
 } from "date-fns";
 
-import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   Tooltip,
   TooltipContent,

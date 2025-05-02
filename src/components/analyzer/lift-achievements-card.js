@@ -41,7 +41,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { Button, buttonVariants } from "../ui/button";
 import { Separator } from "../ui/separator";
-import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors, LiftColorPicker } from "@/lib/get-lift-color";
 
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {

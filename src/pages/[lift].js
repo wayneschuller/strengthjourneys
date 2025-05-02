@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
-import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
 import { StandardsSlider } from "@/components/standards-slider";

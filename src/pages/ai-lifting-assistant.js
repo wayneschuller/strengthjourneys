@@ -39,7 +39,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "usehooks-ts";
-import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { Bot, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";

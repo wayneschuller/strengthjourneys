@@ -16,7 +16,7 @@ import { Table2, Loader2, Github, Trophy, LineChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
-import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useTheme } from "next-themes";
 
 import {

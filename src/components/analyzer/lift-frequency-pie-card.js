@@ -8,7 +8,7 @@ import { useSession } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
 
 import { getLiftColor } from "@/lib/get-lift-color";
-import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
 import {
   ChartConfig,

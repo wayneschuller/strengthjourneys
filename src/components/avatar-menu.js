@@ -17,7 +17,7 @@ import {
   Mail,
   Bug,
 } from "lucide-react";
-import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
 import {
   DropdownMenu,

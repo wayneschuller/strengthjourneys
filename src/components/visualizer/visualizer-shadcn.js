@@ -3,7 +3,7 @@
 import { useMemo, useEffect } from "react";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
-import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";

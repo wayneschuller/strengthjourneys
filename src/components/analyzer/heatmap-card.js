@@ -12,7 +12,7 @@ import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsClient, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
-import { useUserLiftingData } from "@/lib/use-userlift-data";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import html2canvas from "html2canvas";
 

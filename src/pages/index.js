@@ -18,6 +18,7 @@ import {
   Bot,
   Anvil,
   ChartColumnDecreasing,
+  Bus,
 } from "lucide-react";
 
 import {
@@ -82,6 +83,13 @@ export const featurePages = [
     description:
       "Are you in the 1000lb club? Track your progress to this milestone.",
     IconComponent: Anvil,
+  },
+  {
+    href: "/tonnage",
+    title: "Tonnage",
+    description:
+      "Ever wondered how many buses you've lifted? Your lifting volume, visualized.",
+    IconComponent: Bus,
   },
   {
     href: "/timer",

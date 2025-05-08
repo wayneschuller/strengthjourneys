@@ -15,7 +15,7 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
-import { LineChart } from "lucide-react";
+import { Bus } from "lucide-react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
@@ -34,14 +34,14 @@ export async function getStaticProps() {
 
 export default function Visualizer({ relatedArticles }) {
   // OG Meta Tags
-  const title = "Strength Journeys Lift Strength Visualizer";
-  const canonicalURL = "https://www.strengthjourneys.xyz/visualizer";
+  const title = "Strength Journeys Tonnage Visualizer";
+  const canonicalURL = "https://www.strengthjourneys.xyz/tonnage-visualizer";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_visualizer_og.png";
   const description =
-    "Big picture visualization of your strength journey. Charted E1RMs for each lift to identify trends and show your overall progress.";
+    "Big picture visualization of your tonnage and weight moved over time.";
   const keywords =
-    "strength visualizer, lift strength tracker, weightlifting progress, strength journey, personal record tracker, powerlifting analytics, bodybuilding progress, fitness data visualization, strength gains over time, workout progress tracker";
+    "tonnage visualizer, tonnage tracker, tonnage progress, tonnage journey, tonnage analytics";
 
   return (
     <>
@@ -57,7 +57,7 @@ export default function Visualizer({ relatedArticles }) {
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys Strength Visualizer",
+              alt: "Strength Journeys Tonnage Visualizer",
             },
           ],
           site_name: "Strength Journeys",
@@ -96,12 +96,9 @@ function VisualizerMain({ relatedArticles }) {
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading icon={LineChart}>
-          Strength Visualizer
-        </PageHeaderHeading>
+        <PageHeaderHeading icon={Bus}>Tonnage Visualizer</PageHeaderHeading>
         <PageHeaderDescription>
-          Visualize your E1RM for every set and every lift. See your complete
-          strength journey.
+          See your total weight moved over time.
         </PageHeaderDescription>
       </PageHeader>
       <section className="flex flex-col gap-5 md:flex-row">

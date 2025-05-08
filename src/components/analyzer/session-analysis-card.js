@@ -118,6 +118,8 @@ export function SessionAnalysisCard({
     topLiftsByTypeAndRepsLast12Months,
   );
 
+  devLog(analyzedSessionLifts);
+
   if (analyzedSessionLifts && !sessionRatingRef.current) {
     sessionRatingRef.current = getCreativeSessionRating(analyzedSessionLifts);
   }
@@ -273,13 +275,33 @@ export function SessionAnalysisCard({
         </CardContent>
         <CardFooter>
           {analyzedSessionLifts && (
-            <div>
-              <strong>Session rating:</strong> {sessionRatingRef.current}
+            <div className="flex flex-col gap-4">
+              <SessionTonnage analyzedSessionLifts={analyzedSessionLifts} />
+              <div>
+                <strong>Session rating:</strong> {sessionRatingRef.current}
+              </div>
             </div>
           )}
         </CardFooter>
       </Card>
     </TooltipProvider>
+  );
+}
+
+function SessionTonnage({ analyzedSessionLifts }) {
+  if (!analyzedSessionLifts) return null;
+
+  const tonnage = Object.values(analyzedSessionLifts)
+    .flat()
+    .reduce((acc, lift) => acc + (lift.weight ?? 0) * (lift.reps ?? 0), 0);
+
+  const firstLift = Object.values(analyzedSessionLifts)?.[0]?.[0];
+  const unitType = firstLift?.unitType ?? "lb";
+
+  return (
+    <div>
+      <strong>Session Tonnage:</strong> {tonnage.toLocaleString()} {unitType}
+    </div>
   );
 }
 

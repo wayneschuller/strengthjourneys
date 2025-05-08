@@ -118,7 +118,7 @@ export function SessionAnalysisCard({
     topLiftsByTypeAndRepsLast12Months,
   );
 
-  devLog(analyzedSessionLifts);
+  // devLog(analyzedSessionLifts);
 
   if (analyzedSessionLifts && !sessionRatingRef.current) {
     sessionRatingRef.current = getCreativeSessionRating(analyzedSessionLifts);
@@ -278,7 +278,7 @@ export function SessionAnalysisCard({
             <div className="flex flex-col gap-4">
               <SessionTonnage analyzedSessionLifts={analyzedSessionLifts} />
               <div>
-                <strong>Session rating:</strong> {sessionRatingRef.current}
+                <strong>Session Rating:</strong> {sessionRatingRef.current}
               </div>
             </div>
           )}
@@ -296,11 +296,40 @@ function SessionTonnage({ analyzedSessionLifts }) {
     .reduce((acc, lift) => acc + (lift.weight ?? 0) * (lift.reps ?? 0), 0);
 
   const firstLift = Object.values(analyzedSessionLifts)?.[0]?.[0];
-  const unitType = firstLift?.unitType ?? "lb";
+  const unitType = firstLift?.unitType ?? "lb"; // default to lb
+
+  // real-world equivalents (per unit type)
+  const equivalents = {
+    kg: [
+      { name: "blue whales", weight: 150000, emoji: "🐋" },
+      { name: "buses", weight: 12000, emoji: "🚌" },
+      { name: "elephants", weight: 6000, emoji: "🐘" },
+      { name: "cars", weight: 1500, emoji: "🚗" },
+      { name: "cows", weight: 700, emoji: "🐄" },
+      { name: "grand pianos", weight: 300, emoji: "🎹" },
+    ],
+    lb: [
+      { name: "blue whales", weight: 330000, emoji: "🐋" },
+      { name: "buses", weight: 26400, emoji: "🚌" },
+      { name: "elephants", weight: 13200, emoji: "🐘" },
+      { name: "cars", weight: 3300, emoji: "🚗" },
+      { name: "cows", weight: 1540, emoji: "🐄" },
+      { name: "grand pianos", weight: 660, emoji: "🎹" },
+    ],
+  };
+
+  const unitEquivalents = equivalents[unitType] ?? equivalents["lb"]; // defult to lb
+
+  const randomIndex = Math.floor(Math.random() * unitEquivalents.length);
+  const equivalent = unitEquivalents[randomIndex];
+
+  const equivalentCount = (tonnage / equivalent.weight).toFixed(1);
 
   return (
     <div>
-      <strong>Session Tonnage:</strong> {tonnage.toLocaleString()} {unitType}
+      <strong>Session Tonnage:</strong> {tonnage.toLocaleString()}
+      {unitType}
+      {`.  About ${equivalentCount} ${equivalent.name} lifted. ${equivalent.emoji}`}
     </div>
   );
 }

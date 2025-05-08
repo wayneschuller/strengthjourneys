@@ -301,20 +301,26 @@ function SessionTonnage({ analyzedSessionLifts }) {
   // real-world equivalents (per unit type)
   const equivalents = {
     kg: [
-      { name: "blue whales", weight: 150000, emoji: "🐋" },
-      { name: "buses", weight: 12000, emoji: "🚌" },
-      { name: "elephants", weight: 6000, emoji: "🐘" },
-      { name: "cars", weight: 1500, emoji: "🚗" },
-      { name: "cows", weight: 700, emoji: "🐄" },
-      { name: "grand pianos", weight: 300, emoji: "🎹" },
+      { name: "blue whale", weight: 150000, emoji: "🐋" },
+      { name: "elephant", weight: 6000, emoji: "🐘" },
+      { name: "car", weight: 1500, emoji: "🚗" },
+      { name: "cow", weight: 700, emoji: "🐄" },
+      { name: "grand piano", weight: 300, emoji: "🎹" },
+      { name: "vending machine", weight: 250, emoji: "🥤" },
+      { name: "Eddie Hall", weight: 180, emoji: "🦍" },
+      { name: "Labrador Retriever", weight: 30, emoji: "🐕" },
+      { name: "rotisserie chicken", weight: 1.5, emoji: "🍗" },
     ],
     lb: [
-      { name: "blue whales", weight: 330000, emoji: "🐋" },
-      { name: "buses", weight: 26400, emoji: "🚌" },
-      { name: "elephants", weight: 13200, emoji: "🐘" },
-      { name: "cars", weight: 3300, emoji: "🚗" },
-      { name: "cows", weight: 1540, emoji: "🐄" },
-      { name: "grand pianos", weight: 660, emoji: "🎹" },
+      { name: "blue whale", weight: 330000, emoji: "🐋" },
+      { name: "elephant", weight: 13200, emoji: "🐘" },
+      { name: "car", weight: 3300, emoji: "🚗" },
+      { name: "cow", weight: 1540, emoji: "🐄" },
+      { name: "grand piano", weight: 660, emoji: "🎹" },
+      { name: "vending machine", weight: 550, emoji: "🥤" },
+      { name: "Eddie Hall", weight: 400, emoji: "🦍" },
+      { name: "Labrador Retriever", weight: 66, emoji: "🐕" },
+      { name: "rotisserie chicken", weight: 3.3, emoji: "🍗" },
     ],
   };
 
@@ -329,7 +335,7 @@ function SessionTonnage({ analyzedSessionLifts }) {
     <div>
       <strong>Session Tonnage:</strong> {tonnage.toLocaleString()}
       {unitType}
-      {`.  About ${equivalentCount} ${equivalent.name} lifted. ${equivalent.emoji}`}
+      {`.  About ${equivalentCount} ${equivalent.name}${equivalentCount != 1 ? "s" : ""}  lifted. ${equivalent.emoji}`}
     </div>
   );
 }

@@ -34,7 +34,7 @@ export async function getStaticProps() {
 
 export default function Visualizer({ relatedArticles }) {
   // OG Meta Tags
-  const title = "Strength Journeys Tonnage Visualizer";
+  const title = "Strength Journeys Tonnage Metrics";
   const canonicalURL = "https://www.strengthjourneys.xyz/tonnage-visualizer";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_visualizer_og.png";
@@ -57,7 +57,7 @@ export default function Visualizer({ relatedArticles }) {
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys Tonnage Visualizer",
+              alt: "Strength Journeys Tonnage Metrics",
             },
           ],
           site_name: "Strength Journeys",
@@ -96,7 +96,7 @@ function VisualizerMain({ relatedArticles }) {
   return (
     <div className="container">
       <PageHeader>
-        <PageHeaderHeading icon={Bus}>Tonnage Visualizer</PageHeaderHeading>
+        <PageHeaderHeading icon={Bus}>Tonnage Metrics</PageHeaderHeading>
         <PageHeaderDescription>
           See your total weight moved over time.
         </PageHeaderDescription>

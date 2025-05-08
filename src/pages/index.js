@@ -86,7 +86,7 @@ export const featurePages = [
   },
   {
     href: "/tonnage",
-    title: "Tonnage",
+    title: "Tonnage Metrics",
     description:
       "Ever wondered how many buses you've lifted? Your lifting volume, visualized.",
     IconComponent: Bus,

@@ -418,6 +418,8 @@ export function TonnageChart({ setHighlightDate }) {
     },
   };
 
+  const yearLabels = getYearLabels(chartData);
+
   return (
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
@@ -502,6 +504,20 @@ export function TonnageChart({ setHighlightDate }) {
                 />
               )}
             </Area>
+            {/* Year labels to show year start */}
+            {yearLabels.map(({ date, label }) => (
+              <ReferenceLine
+                key={`label-${date}`}
+                x={date} // Position label at January 1 of each year
+                stroke="none" // No visible line
+                label={{
+                  value: label,
+                  position: "insideBottom",
+                  fontSize: 14,
+                  fill: "#666",
+                }}
+              />
+            ))}
           </AreaChart>
         </ChartContainer>
       </CardContent>

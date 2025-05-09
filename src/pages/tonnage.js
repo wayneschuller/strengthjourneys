@@ -19,6 +19,7 @@ import { Bus } from "lucide-react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
+import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Strength Visualizer";
@@ -103,7 +104,7 @@ function VisualizerMain({ relatedArticles }) {
       </PageHeader>
       <section className="flex flex-col gap-5 md:flex-row">
         <div className="w-full lg:w-1/2 xl:w-2/3">
-          <VisualizerShadcn setHighlightDate={setHighlightDate} />
+          <TonnageChart setHighlightDate={setHighlightDate} />
         </div>
         <div className="w-full lg:w-1/2 xl:w-1/3">
           <SessionAnalysisCard

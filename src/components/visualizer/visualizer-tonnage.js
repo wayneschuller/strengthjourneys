@@ -119,7 +119,11 @@ export function TonnageChart({ setHighlightDate }) {
               ]}
               tickFormatter={formatXAxisDate}
             />
-            <YAxis tickFormatter={(value) => `${value}${unitType}`} />
+            <YAxis
+              tickFormatter={(value) => `${value}${unitType}`}
+              domain={[0, (dataMax) => dataMax * 1.2]}
+            />
+
             <Tooltip content={<TonnageTooltipContent />} />
 
             <defs>

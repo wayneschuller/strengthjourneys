@@ -346,6 +346,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
  *
  */
 function processTonnageData(parsedData, thresholdDateStr) {
+  const startTime = performance.now();
   const tonnageMap = new Map();
 
   parsedData.forEach((tuple) => {
@@ -356,12 +357,20 @@ function processTonnageData(parsedData, thresholdDateStr) {
     }
   });
 
-  return Array.from(tonnageMap.entries())
+  const chartData = Array.from(tonnageMap.entries())
     .map(([date, tonnage]) => ({
       date: new Date(date).getTime(), // timestamp for recharts
       tonnage,
     }))
     .sort((a, b) => a.date - b.date);
+
+  devLog(
+    `processTonnageData() execution time: \x1b[1m${Math.round(
+      performance.now() - startTime,
+    )}ms\x1b[0m`,
+  );
+
+  return chartData;
 }
 
 //-------------------------------------------------------------------

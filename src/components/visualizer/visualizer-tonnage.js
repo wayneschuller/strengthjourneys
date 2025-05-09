@@ -427,7 +427,7 @@ export function TonnageChart({ setHighlightDate }) {
             {getTimeRangeDescription(rangeFirstDate, parsedData)}
           </CardDescription>
         </div>
-        <div className="grid grid-cols-2 space-x-1">
+        <div className="grid grid-cols-1 space-x-1">
           <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
         </div>
       </CardHeader>

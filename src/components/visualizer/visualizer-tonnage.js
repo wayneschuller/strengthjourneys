@@ -7,7 +7,7 @@ import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ReferenceLine } from "recharts";
+import { ReferenceLine, Line } from "recharts";
 import {
   TimeRangeSelect,
   calculateThresholdDate,
@@ -55,12 +55,13 @@ export function TonnageChart({ setHighlightDate }) {
 
   const chartData = useMemo(() => {
     if (!parsedData || parsedData.length === 0) return [];
-    return processTonnageData(parsedData, rangeFirstDate);
+    return processTonnageData(parsedData, rangeFirstDate, timeRange);
   }, [parsedData, rangeFirstDate]);
 
   if (!parsedData) return null; // <-- gracefully handle null loading state
 
   // devLog(chartData);
+
   // devLog(timeRange);
 
   const unitType = parsedData?.[0]?.unitType ?? "";
@@ -129,12 +130,15 @@ export function TonnageChart({ setHighlightDate }) {
             </defs>
             <Area
               type="monotone"
+              // type="basis"
               dataKey="tonnage"
+              // dataKey="rollingAverageTonnage"
               stroke="#8884d8"
               fill="url(#fillTonnage)"
               // fill="#8884d8"
               // fillOpacity={0.2}
-              dot={false}
+              // fillOpacity={0.1}
+              dot={["3M", "6M"].includes(timeRange)} // Show point dots in short time ranges
               connectNulls
             >
               {showLabelValues && (
@@ -156,6 +160,7 @@ export function TonnageChart({ setHighlightDate }) {
                 />
               )}
             </Area>
+
             {/* Year labels to show year start */}
             {yearLabels.map(({ date, label }) => (
               <ReferenceLine
@@ -196,6 +201,7 @@ export function TonnageChart({ setHighlightDate }) {
 /**
  * Aggregates total tonnage per date from parsedData
  */
+
 function processTonnageData(parsedData, thresholdDateStr) {
   const startTime = performance.now();
   const tonnageMap = new Map();
@@ -215,6 +221,16 @@ function processTonnageData(parsedData, thresholdDateStr) {
       tonnage,
     }))
     .sort((a, b) => a.date - b.date);
+
+  // Add rolling average
+  const windowSize = 7; // 7-day moving average
+  for (let i = 0; i < chartData.length; i++) {
+    const windowData = chartData.slice(Math.max(0, i - windowSize + 1), i + 1);
+    const avg =
+      windowData.reduce((sum, d) => sum + d.tonnage, 0) / windowData.length;
+
+    chartData[i].rollingAverageTonnage = isNaN(avg) ? null : Math.round(avg);
+  }
 
   devLog(
     `processTonnageData() execution time: \x1b[1m${Math.round(

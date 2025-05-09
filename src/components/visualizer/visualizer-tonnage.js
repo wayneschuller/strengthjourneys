@@ -359,7 +359,8 @@ function processTonnageData(parsedData, thresholdDateStr) {
 
   const chartData = Array.from(tonnageMap.entries())
     .map(([date, tonnage]) => ({
-      date: new Date(date).getTime(), // timestamp for recharts
+      date, // keep string date for use in setHighlightDate on mouseover
+      rechartsDate: new Date(date).getTime(), // numeric timestamp for X-axis
       tonnage,
     }))
     .sort((a, b) => a.date - b.date);
@@ -400,7 +401,7 @@ export function TonnageChart({ setHighlightDate }) {
 
   const handleMouseMove = (event) => {
     if (event && event.activePayload) {
-      setHighlightDate(new Date(event.activePayload[0]?.payload?.date));
+      setHighlightDate(event.activePayload[0]?.payload?.date);
     }
   };
 
@@ -440,7 +441,7 @@ export function TonnageChart({ setHighlightDate }) {
           >
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="date"
+              dataKey="rechartsDate"
               type="number"
               scale="time"
               domain={[

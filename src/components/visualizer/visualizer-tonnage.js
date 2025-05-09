@@ -414,7 +414,7 @@ export function TonnageChart({ setHighlightDate }) {
   const chartConfig = {
     tonnage: {
       label: "Tonnage",
-      color: "#8884d8",
+      // color: "#8884d8",
     },
   };
 
@@ -467,12 +467,19 @@ export function TonnageChart({ setHighlightDate }) {
                 strokeDasharray: "5 5",
               }}
             />
+            <defs>
+              <linearGradient id="fillTonnage" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                <stop offset="50%" stopColor="#8884d8" stopOpacity={0.09} />
+              </linearGradient>
+            </defs>
             <Area
               type="monotone"
               dataKey="tonnage"
               stroke="#8884d8"
-              fill="#8884d8"
-              fillOpacity={0.2}
+              fill="url(#fillTonnage)"
+              // fill="#8884d8"
+              // fillOpacity={0.2}
               dot={false}
               connectNulls
             >

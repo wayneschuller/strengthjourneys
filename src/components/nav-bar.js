@@ -51,6 +51,7 @@ import {
   Bot,
   Grid2x2Check,
   ChartColumnDecreasing,
+  Bus,
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
@@ -369,6 +370,11 @@ function StrengthInsightsMenu() {
       title: "Barbell Strength Potential",
       href: "/barbell-strength-potential",
       icon: <ChartColumnDecreasing className="h-5 w-5" />,
+    },
+    {
+      title: "Tonnage Metrics",
+      href: "/tonnage",
+      icon: <Bus className="h-5 w-5" />,
     },
   ];
 

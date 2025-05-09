@@ -249,7 +249,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   strokeWidth={2}
                   fill={`url(#fill${gradientId})`}
                   fillOpacity={0.4}
-                  dot={false}
+                  dot={["3M", "6M"].includes(timeRange)} // Show point dots in short time ranges
                   connectNulls
                 >
                   {showLabelValues && (

@@ -16,6 +16,7 @@ import {
   E1RMFormulaSelect,
   SpecialHtmlLabel,
   MultiLiftTooltipContent,
+  SingleLiftTooltipContent,
 } from "./visualizer-utils";
 import {
   TimeRangeSelect,
@@ -453,22 +454,8 @@ export function TonnageChart({ setHighlightDate }) {
               tickFormatter={formatXAxisDate}
             />
             <YAxis tickFormatter={(value) => `${value}${unitType}`} />
-            <Tooltip
-              formatter={(value) => `${value.toFixed(0)} ${unitType}`}
-              labelFormatter={(label) =>
-                new Date(label).toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                })
-              }
-              position={{ y: 10 }}
-              cursor={{
-                stroke: "#8884d8",
-                strokeWidth: 2,
-                strokeDasharray: "5 5",
-              }}
-            />
+            <Tooltip content={<TonnageTooltipContent />} />
+
             <defs>
               <linearGradient id="fillTonnage" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
@@ -540,3 +527,25 @@ export function TonnageChart({ setHighlightDate }) {
     </Card>
   );
 }
+
+const TonnageTooltipContent = ({ payload, label }) => {
+  if (!payload || payload.length === 0) return null;
+
+  const tonnage = payload[0].value;
+  const dateLabel = new Date(label).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+
+  return (
+    <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+      <p className="font-bold">{dateLabel}</p>
+      <div className="flex flex-row items-center">
+        <div className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px] bg-primary" />
+        <div className="font-semibold">Total Tonnage</div>
+      </div>
+      <div>{`${tonnage.toFixed(0)} kg`}</div>
+    </div>
+  );
+};

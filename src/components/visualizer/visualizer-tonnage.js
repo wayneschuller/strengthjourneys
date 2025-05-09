@@ -339,3 +339,171 @@ export function VisualizerShadcn({ setHighlightDate }) {
     </Card>
   );
 }
+
+/**
+ *
+ * Aggregates total tonnage per date from parsedData
+ *
+ */
+function processTonnageData(parsedData, thresholdDateStr) {
+  const tonnageMap = new Map();
+
+  parsedData.forEach((tuple) => {
+    const dateKey = tuple.date; // already "YYYY-MM-DD"
+    if (dateKey >= thresholdDateStr) {
+      const tonnage = tuple.weight * tuple.reps;
+      tonnageMap.set(dateKey, (tonnageMap.get(dateKey) || 0) + tonnage);
+    }
+  });
+
+  return Array.from(tonnageMap.entries())
+    .map(([date, tonnage]) => ({
+      date: new Date(date).getTime(), // timestamp for recharts
+      tonnage,
+    }))
+    .sort((a, b) => a.date - b.date);
+}
+
+//-------------------------------------------------------------------
+export function TonnageChart({ setHighlightDate }) {
+  const { parsedData } = useUserLiftingData();
+  const [timeRange, setTimeRange] = useLocalStorage("SJ_timeRange", "MAX", {
+    initializeWithValue: false,
+  });
+  const [showLabelValues, setShowLabelValues] = useLocalStorage(
+    "SJ_showLabelValues",
+    false,
+  );
+
+  const rangeFirstDate = calculateThresholdDate(timeRange, setTimeRange);
+
+  const chartData = useMemo(() => {
+    if (!parsedData || parsedData.length === 0) return [];
+    return processTonnageData(parsedData, rangeFirstDate);
+  }, [parsedData, rangeFirstDate]);
+
+  if (!parsedData) return null; // <-- gracefully handle null loading state
+
+  // devLog(chartData);
+  // devLog(timeRange);
+
+  const unitType = parsedData?.[0]?.unitType ?? "";
+
+  const handleMouseMove = (event) => {
+    if (event && event.activePayload) {
+      setHighlightDate(new Date(event.activePayload[0]?.payload?.date));
+    }
+  };
+
+  const formatXAxisDate = (tickItem) => {
+    const date = new Date(tickItem);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+
+  // Define a valid chartConfig for shadcnui
+  const chartConfig = {
+    tonnage: {
+      label: "Tonnage",
+      color: "#8884d8",
+    },
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+        <div className="grid flex-1 gap-1 text-pretty">
+          <CardTitle>Total Tonnage</CardTitle>
+          <CardDescription>
+            {getTimeRangeDescription(rangeFirstDate, parsedData)}
+          </CardDescription>
+        </div>
+        <div className="grid grid-cols-2 space-x-1">
+          <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
+        </div>
+      </CardHeader>
+
+      <CardContent className="pl-0 pr-2">
+        <ChartContainer config={chartConfig}>
+          <AreaChart
+            data={chartData}
+            margin={{ left: 5, right: 20 }}
+            onMouseMove={handleMouseMove}
+          >
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="date"
+              type="number"
+              scale="time"
+              domain={[
+                (dataMin) => dataMin - 2 * 24 * 60 * 60 * 1000,
+                (dataMax) => dataMax + 2 * 24 * 60 * 60 * 1000,
+              ]}
+              tickFormatter={formatXAxisDate}
+            />
+            <YAxis tickFormatter={(value) => `${value}${unitType}`} />
+            <Tooltip
+              formatter={(value) => `${value.toFixed(0)} ${unitType}`}
+              labelFormatter={(label) =>
+                new Date(label).toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })
+              }
+              position={{ y: 10 }}
+              cursor={{
+                stroke: "#8884d8",
+                strokeWidth: 2,
+                strokeDasharray: "5 5",
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="tonnage"
+              stroke="#8884d8"
+              fill="#8884d8"
+              fillOpacity={0.2}
+              dot={false}
+              connectNulls
+            >
+              {showLabelValues && (
+                <LabelList
+                  position="top"
+                  offset={12}
+                  content={({ x, y, value }) => (
+                    <text
+                      x={x}
+                      y={y}
+                      dy={-10}
+                      fontSize={12}
+                      textAnchor="middle"
+                      className="fill-foreground"
+                    >
+                      {`${Math.round(value)}${unitType}`}
+                    </text>
+                  )}
+                />
+              )}
+            </Area>
+          </AreaChart>
+        </ChartContainer>
+      </CardContent>
+
+      <CardFooter>
+        <div className="flex w-full flex-col items-center justify-between gap-2 md:flex-row">
+          <div className="flex items-center space-x-2">
+            <Label className="font-light" htmlFor="show-values">
+              Show Values
+            </Label>
+            <Switch
+              id="show-values"
+              value={showLabelValues}
+              checked={showLabelValues}
+              onCheckedChange={(show) => setShowLabelValues(show)}
+            />
+          </div>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}

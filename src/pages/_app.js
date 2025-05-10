@@ -4,6 +4,7 @@
 
 import "@/styles/globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Layout } from "@/components/layout";
 import { Toaster } from "@/components/ui/toaster";
@@ -62,6 +63,8 @@ export default function App({ Component, pageProps, session }) {
           </UserLiftingDataProvider>
         </SessionProvider>
       </ThemeProvider>
+      <Analytics />
+
       <SpeedInsights />
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}

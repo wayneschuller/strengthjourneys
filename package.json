@@ -38,6 +38,7 @@
     "@sanity/client": "^6.28.4",
     "@sanity/image-url": "^1.1.0",
     "@tailwindcss/typography": "^0.5.16",
+    "@vercel/analytics": "^1.5.0",
     "@vercel/kv": "^2.0.0",
     "@vercel/speed-insights": "^1.2.0",
     "ai": "^4.3.9",

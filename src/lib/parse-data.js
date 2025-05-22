@@ -3,7 +3,6 @@
 import { devLog } from "@/lib/processing-utils";
 import { parse } from "date-fns";
 import { parseTurnKeyData } from "@/lib/parse-turnkey-importer";
-
 // Discern data format and parse
 export function parseData(data) {
   const columnNames = data[0];
@@ -80,10 +79,12 @@ function parseBespokeData(data) {
       switch (columnName) {
         case "Date":
           if (cellData) {
-            // We assume the date is in YYYY-MM-DD format
-            // Big assumption, but date functions here will slow down parsing significantly
-            obj["date"] = cellData;
-            previousDate = cellData;
+            // Normalize the date string to ensure proper format
+            const normalizedDate = normalizeDateString(cellData);
+            if (normalizedDate) {
+              obj["date"] = normalizedDate;
+              previousDate = normalizedDate;
+            }
           } else {
             obj["date"] = previousDate;
           }
@@ -186,4 +187,73 @@ export function normalizeLiftTypeNames(liftType) {
 
   const key = liftType.toLowerCase();
   return standardLiftTypes[key] || liftType; // Defaults to original if no match
+}
+
+// Helper function to normalize date strings to YYYY-MM-DD format
+// Occasionally google sheets will return dates in the format "2025-5-23"
+// instead of "2025-05-23"
+// Our assumed date format is always YYYY-MM-DD
+// Maybe one day we will use Typescript like grownups.
+// Fast string-only date normalization
+function normalizeDateString(dateStr) {
+  if (!dateStr) return null;
+
+  // Trim is very fast - just removes whitespace from start/end
+  dateStr = dateStr.trim();
+
+  // Split is fast - just splits on delimiter
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return null;
+
+  // Fast string operations only
+  const year = parts[0];
+  if (year.length !== 4) return null;
+
+  // Zero-pad month and day using string operations only
+  const month = parts[1].padStart(2, "0");
+  const day = parts[2].padStart(2, "0");
+
+  // Simple numeric validation without parsing
+  if (month < "01" || month > "12") return null;
+  if (day < "01" || day > "31") return null;
+
+  return `${year}-${month}-${day}`;
+}
+
+function normalizeDateStringSLOW(dateStr) {
+  if (!dateStr) return null;
+
+  // Trim any whitespace
+  dateStr = dateStr.trim();
+
+  // Split into parts and ensure each part is zero-padded
+  const parts = dateStr.split("-").map((part) => part.padStart(2, "0"));
+
+  // Validate we have exactly 3 parts (year, month, day)
+  if (parts.length !== 3) {
+    console.error(`Invalid date format: ${dateStr}`);
+    return null;
+  }
+
+  // Validate year is 4 digits
+  if (parts[0].length !== 4) {
+    console.error(`Invalid year format: ${dateStr}`);
+    return null;
+  }
+
+  // Validate month is 1-12
+  const month = parseInt(parts[1], 10);
+  if (month < 1 || month > 12) {
+    console.error(`Invalid month: ${dateStr}`);
+    return null;
+  }
+
+  // Validate day is 1-31
+  const day = parseInt(parts[2], 10);
+  if (day < 1 || day > 31) {
+    console.error(`Invalid day: ${dateStr}`);
+    return null;
+  }
+
+  return parts.join("-");
 }

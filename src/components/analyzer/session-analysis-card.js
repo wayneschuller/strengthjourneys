@@ -88,9 +88,11 @@ export function SessionAnalysisCard({
     sessionRatingRef.current = null; // Reset the session rating when the highlight date changes
   }, [highlightDate]);
 
+  // FIXME: it would be better to have the card always render and skeleton inside it
   if (!parsedData) {
     return <Skeleton className="h-[50vh]" />;
   }
+
   let sessionDate = highlightDate;
   const isFirstDate =
     parsedData?.length > 0 && sessionDate === parsedData[0]?.date;
@@ -99,7 +101,7 @@ export function SessionAnalysisCard({
     sessionDate === parsedData[parsedData.length - 1]?.date;
 
   // The Visualizer will normally set the highlight date prop based on chart mouseover.
-  // The PR Analyzer will call this component without a highlight date, so find the most recent session
+  // The PR Analyzer defaults to no highlight date prop expecting to get the most recent session
   if (!sessionDate) {
     // Iterate backwards to find the most recent non-goal entry date
     for (let i = parsedData?.length - 1; i >= 0; i--) {

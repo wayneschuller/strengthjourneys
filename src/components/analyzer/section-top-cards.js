@@ -19,7 +19,7 @@ import {
   formatISO,
 } from "date-fns";
 
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, CalendarDays } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   Tooltip,
@@ -31,17 +31,19 @@ import { CircularProgressWithLetter } from "./circular-progress-with-letter";
 
 // Show a section row of key metrics on smaller cards
 export function SectionTopCards() {
-  const { parsedData } = useUserLiftingData();
+  const {
+    parsedData,
+    liftTypes,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+  } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
-  // const consistency = processConsistency(parsedData);
-  // Memoize the consistency calculation
-  const consistency = useMemo(() => processData(parsedData), [parsedData]);
-
-  // devLog(consistency);
+  // Memoize the processing of data
+  const results = useMemo(() => processData(parsedData), [parsedData]);
 
   return (
-    <div className="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
       <Card className="flex-1">
         <CardHeader className="">
           <CardDescription>Journey Length</CardDescription>
@@ -50,8 +52,8 @@ export function SectionTopCards() {
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 pb-2 text-sm">
-          <div className="text-muted-foreground">
-            Lifting data begins on 23 March 2015
+          <div className="line-clamp-1 flex gap-2 text-muted-foreground">
+            3453 reps and 2323 sets lifted.
           </div>
         </CardFooter>
       </Card>
@@ -91,6 +93,19 @@ export function SectionTopCards() {
         <CardFooter className="flex-col items-start gap-1.5 pb-2 text-sm">
           <div className="text-muted-foreground">
             In the last 12 months you have PRs in Squat, Bench and Snatch
+          </div>
+        </CardFooter>
+      </Card>
+      <Card className="flex-1">
+        <CardHeader>
+          <CardDescription>Current streak</CardDescription>
+          <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
+            7 weeks
+          </CardTitle>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 pb-2 text-sm">
+          <div className="text-muted-foreground">
+            You've trained at least once a week for the last 7 weeks.
           </div>
         </CardFooter>
       </Card>

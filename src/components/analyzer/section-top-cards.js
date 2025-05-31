@@ -16,6 +16,8 @@ import {
   parseISO,
   subDays,
   differenceInCalendarDays,
+  differenceInCalendarYears,
+  differenceInCalendarMonths,
   formatISO,
 } from "date-fns";
 
@@ -42,13 +44,17 @@ export function SectionTopCards() {
   // Memoize the processing of data
   const results = useMemo(() => processData(parsedData), [parsedData]);
 
+  devLog(liftTypes);
+
   return (
     <div className="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
       <Card className="flex-1">
         <CardHeader className="">
           <CardDescription>Journey Length</CardDescription>
           <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
-            Over 10 years lifting
+            {parsedData && parsedData.length > 0
+              ? formatJourneyLength(parsedData[0].date)
+              : "Starting your journey"}
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 pb-2 text-sm">
@@ -105,7 +111,8 @@ export function SectionTopCards() {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 pb-2 text-sm">
           <div className="text-muted-foreground">
-            You've trained at least once a week for the last 7 weeks.
+            You've trained at least three times a week for the last 7 weeks.
+            Best streak: 23 weeks.
           </div>
         </CardFooter>
       </Card>
@@ -229,3 +236,32 @@ const periodTargets = [
     days: 350 * 10,
   },
 ];
+
+function formatJourneyLength(startDate) {
+  const today = new Date();
+  const start = parseISO(startDate);
+
+  const years = differenceInCalendarYears(today, start);
+  const months = differenceInCalendarMonths(today, start) % 12;
+  const days = differenceInCalendarDays(today, start) % 30;
+
+  if (years > 0) {
+    if (years >= 10) {
+      return `Over ${years} years of strength mastery`;
+    } else if (years >= 5) {
+      return `${years} years of strength excellence`;
+    } else if (years >= 1) {
+      return `${years} year${years > 1 ? "s" : ""} of strength commitment`;
+    }
+  }
+
+  if (months > 0) {
+    if (months >= 6) {
+      return `${months} months of strength progress`;
+    } else {
+      return `${months} month${months > 1 ? "s" : ""} of lifting`;
+    }
+  }
+
+  return `${days} day${days !== 1 ? "s" : ""} of lifting`;
+}

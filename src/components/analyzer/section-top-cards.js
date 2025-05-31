@@ -148,8 +148,8 @@ export function SectionTopCards() {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 pb-2 text-sm">
           <div className="text-muted-foreground">
-            You've trained at least three times a week for the last{" "}
-            {currentStreak} week{currentStreak === 1 ? "" : "s"}
+            At least three sessions a week for the last {currentStreak} week
+            {currentStreak === 1 ? "" : "s"}
           </div>
           <div className="text-muted-foreground">
             Best streak: {bestStreak} week{bestStreak === 1 ? "" : "s"}

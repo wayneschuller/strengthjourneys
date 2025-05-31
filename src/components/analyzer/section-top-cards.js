@@ -19,6 +19,7 @@ import {
   differenceInCalendarYears,
   differenceInCalendarMonths,
   formatISO,
+  format,
 } from "date-fns";
 
 import { TrendingUp, CalendarDays } from "lucide-react";
@@ -44,6 +45,11 @@ export function SectionTopCards() {
   // Memoize the processing of data
   const results = useMemo(() => processData(parsedData), [parsedData]);
 
+  // Find the most recent PR single from top 5 most frequent lifts
+  const mostRecentPR = findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes);
+
+  devLog(topLiftsByTypeAndReps);
+
   return (
     <div className="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
       <Card className="flex-1">
@@ -65,14 +71,18 @@ export function SectionTopCards() {
       </Card>
       <Card className="flex-1">
         <CardHeader>
-          <CardDescription>Most Recent PR</CardDescription>
+          <CardDescription>Most Recent PR Single</CardDescription>
           <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
-            Bench Press 1@136kg
+            {mostRecentPR
+              ? `${mostRecentPR.liftType} 1@${mostRecentPR.weight}${mostRecentPR.unitType}`
+              : "No PRs yet"}
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="text-muted-foreground">
-            Performed on 1 January 2024
+            {mostRecentPR
+              ? `Performed on ${format(new Date(mostRecentPR.date), "d MMMM yyyy")}`
+              : ""}
           </div>
         </CardFooter>
       </Card>
@@ -276,4 +286,37 @@ function calculateTotalStats(liftTypes) {
     }),
     { totalSets: 0, totalReps: 0 },
   );
+}
+
+/**
+ * Finds the most recent 1-rep PR across the top 5 most frequent lift types
+ * @param {Object} topLiftsByTypeAndReps - The data structure containing PRs by lift type and rep ranges
+ * @param {Array} liftTypes - Array of lift types sorted by frequency (totalSets)
+ * @returns {Object|null} The most recent 1-rep PR or null if none found
+ */
+function findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes) {
+  if (!topLiftsByTypeAndReps || !liftTypes) return null;
+
+  // Get the top 5 most frequent lift types
+  const topFiveLiftTypes = liftTypes.slice(0, 5).map((lift) => lift.liftType);
+
+  let mostRecentPR = null;
+  let mostRecentDate = "";
+
+  // Only look at PRs from the top 5 lift types
+  Object.entries(topLiftsByTypeAndReps).forEach(([liftType, repRanges]) => {
+    // Skip if this lift type isn't in the top 5
+    if (!topFiveLiftTypes.includes(liftType)) return;
+
+    const singleReps = repRanges[0]; // Index 0 is 1-rep maxes
+    if (singleReps && singleReps.length > 0) {
+      const pr = singleReps[0]; // First item is highest weight
+      if (!mostRecentPR || pr.date > mostRecentDate) {
+        mostRecentPR = pr;
+        mostRecentDate = pr.date;
+      }
+    }
+  });
+
+  return mostRecentPR;
 }

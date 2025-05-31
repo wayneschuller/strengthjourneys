@@ -297,15 +297,15 @@ function calculateTotalStats(liftTypes) {
 function findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes) {
   if (!topLiftsByTypeAndReps || !liftTypes) return null;
 
-  // Get the top 5 most frequent lift types
+  // Get the most frequent lift types
   const topFiveLiftTypes = liftTypes.slice(0, 5).map((lift) => lift.liftType);
 
   let mostRecentPR = null;
   let mostRecentDate = "";
 
-  // Only look at PRs from the top 5 lift types
+  // Only look at PRs from the top lift types
   Object.entries(topLiftsByTypeAndReps).forEach(([liftType, repRanges]) => {
-    // Skip if this lift type isn't in the top 5
+    // Skip if this lift type isn't in the top
     if (!topFiveLiftTypes.includes(liftType)) return;
 
     const singleReps = repRanges[0]; // Index 0 is 1-rep maxes

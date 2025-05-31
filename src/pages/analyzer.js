@@ -116,21 +116,21 @@ function AnalyzerMain({ relatedArticles }) {
         <SectionTopCards />
       </div>
       <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        <div className="flex h-full flex-col">
+        <div className="flex h-full min-w-full flex-col">
           <SessionAnalysisCard
             highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}
           />
         </div>
-        <div className="flex h-full flex-col gap-6">
+        <div className="flex h-full min-w-full flex-col gap-6">
           <ConsistencyCard />
           <MonthsHighlightsCard />
         </div>
-        <div className="grid h-full gap-6">
-          <div className="">
+        <div className="grid h-full min-w-full gap-6">
+          <div className="min-w-full">
             <InspirationCard />
           </div>
-          <div className="flex h-full flex-col">
+          <div className="flex h-full min-w-full flex-col">
             <LiftTypeFrequencyPieCard />
           </div>
         </div>

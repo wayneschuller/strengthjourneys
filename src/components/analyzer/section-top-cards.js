@@ -44,8 +44,6 @@ export function SectionTopCards() {
   // Memoize the processing of data
   const results = useMemo(() => processData(parsedData), [parsedData]);
 
-  devLog(liftTypes);
-
   return (
     <div className="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
       <Card className="flex-1">
@@ -59,7 +57,9 @@ export function SectionTopCards() {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 pb-2 text-sm">
           <div className="line-clamp-1 flex gap-2 text-muted-foreground">
-            3453 reps and 2323 sets lifted.
+            {calculateTotalStats(liftTypes).totalReps.toLocaleString()} reps and{" "}
+            {calculateTotalStats(liftTypes).totalSets.toLocaleString()} sets
+            lifted
           </div>
         </CardFooter>
       </Card>
@@ -78,7 +78,7 @@ export function SectionTopCards() {
       </Card>
       <Card className="flex-1">
         <CardHeader>
-          <CardDescription>Average monthly sessions</CardDescription>
+          <CardDescription>Average Monthly Sessions</CardDescription>
           <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
             3 sessions per month
           </CardTitle>
@@ -91,7 +91,7 @@ export function SectionTopCards() {
       </Card>
       <Card className="flex-1">
         <CardHeader>
-          <CardDescription>In this last 12 months</CardDescription>
+          <CardDescription>In This Last 12 Months</CardDescription>
           <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
             5 Personal Records
           </CardTitle>
@@ -104,16 +104,16 @@ export function SectionTopCards() {
       </Card>
       <Card className="flex-1">
         <CardHeader>
-          <CardDescription>Current streak</CardDescription>
+          <CardDescription>Current Streak</CardDescription>
           <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
             7 weeks
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 pb-2 text-sm">
           <div className="text-muted-foreground">
-            You've trained at least three times a week for the last 7 weeks.
-            Best streak: 23 weeks.
+            You've trained at least three times a week for the last 7 weeks
           </div>
+          <div className="text-muted-foreground">Best streak: 23 weeks</div>
         </CardFooter>
       </Card>
     </div>
@@ -264,4 +264,16 @@ function formatJourneyLength(startDate) {
   }
 
   return `${days} day${days !== 1 ? "s" : ""} of lifting`;
+}
+
+function calculateTotalStats(liftTypes) {
+  if (!liftTypes) return { totalSets: 0, totalReps: 0 };
+
+  return liftTypes.reduce(
+    (acc, lift) => ({
+      totalSets: acc.totalSets + lift.totalSets,
+      totalReps: acc.totalReps + lift.totalReps,
+    }),
+    { totalSets: 0, totalReps: 0 },
+  );
 }

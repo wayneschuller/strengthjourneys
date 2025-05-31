@@ -20,6 +20,8 @@ import {
   differenceInCalendarMonths,
   formatISO,
   format,
+  startOfWeek,
+  subWeeks,
 } from "date-fns";
 
 import { TrendingUp, CalendarDays } from "lucide-react";
@@ -42,9 +44,6 @@ export function SectionTopCards() {
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
-  // Memoize the processing of data
-  const results = useMemo(() => processData(parsedData), [parsedData]);
-
   // Find the most recent PR single from top 5 most frequent lifts
   const mostRecentPR = findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes);
 
@@ -54,7 +53,16 @@ export function SectionTopCards() {
     [topLiftsByTypeAndReps],
   );
 
-  devLog(topLiftsByTypeAndReps);
+  // Calculate average monthly sessions and streak
+  const { currentAverage, lastYearAverage } = useMemo(
+    () => calculateAverageMonthlySessions(parsedData),
+    [parsedData],
+  );
+
+  const { currentStreak, bestStreak } = useMemo(
+    () => calculateStreak(parsedData),
+    [parsedData],
+  );
 
   return (
     <div className="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -96,12 +104,12 @@ export function SectionTopCards() {
         <CardHeader>
           <CardDescription>Average Monthly Sessions</CardDescription>
           <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
-            3 sessions per month
+            {currentAverage} sessions per month
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="text-muted-foreground">
-            Last year was 2.3 sessions per month{" "}
+            Last year was {lastYearAverage} sessions per month
           </div>
         </CardFooter>
       </Card>
@@ -135,136 +143,22 @@ export function SectionTopCards() {
         <CardHeader>
           <CardDescription>Current Streak</CardDescription>
           <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
-            7 weeks
+            {currentStreak} week{currentStreak === 1 ? "" : "s"}
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 pb-2 text-sm">
           <div className="text-muted-foreground">
-            You've trained at least three times a week for the last 7 weeks
+            You've trained at least three times a week for the last{" "}
+            {currentStreak} week{currentStreak === 1 ? "" : "s"}
           </div>
-          <div className="text-muted-foreground">Best streak: 23 weeks</div>
+          <div className="text-muted-foreground">
+            Best streak: {bestStreak} week{bestStreak === 1 ? "" : "s"}
+          </div>
         </CardFooter>
       </Card>
     </div>
   );
 }
-
-function subtractDays(dateStr, days) {
-  const date = parseISO(dateStr);
-  return subDays(date, days).toISOString().slice(0, 10);
-}
-
-export function processData(parsedData) {
-  if (!parsedData) return null;
-
-  const startTime = performance.now();
-  const today = new Date().toISOString().slice(0, 10); // Format today's date as "YYYY-MM-DD"
-
-  const workoutRangeDays = differenceInCalendarDays(
-    parseISO(today),
-    parseISO(parsedData[0].date),
-  );
-
-  // Determine the relevant periods
-  const relevantPeriods = [];
-  for (let i = 0; i < periodTargets.length; i++) {
-    relevantPeriods.push(periodTargets[i]);
-    if (periodTargets[i].days > workoutRangeDays) {
-      break; // Include the first period beyond the workout range days
-    }
-  }
-
-  // Compute start dates for each period, for easier comparison
-  const periodStartDates = relevantPeriods.map((period) => ({
-    label: period.label,
-    startDate: subtractDays(today, period.days - 1),
-  }));
-
-  // devLog(periodStartDates);
-
-  const periodDates = relevantPeriods.reduce((acc, period) => {
-    acc[period.label] = new Set();
-    return acc;
-  }, {});
-
-  // Loop backwards through the parsed data
-  for (let i = parsedData.length - 1; i >= 0; i--) {
-    const entryDate = parsedData[i].date; // Directly use the date string
-
-    if (parsedData[i].isGoal) continue; // Don't count entries that are just dreams
-
-    // Loop backwards through the period start dates
-    for (let j = periodStartDates.length - 1; j >= 0; j--) {
-      if (entryDate < periodStartDates[j].startDate) {
-        break; // Since we're moving backwards, if the date is before the start date, skip this and further earlier periods
-      }
-      periodDates[periodStartDates[j].label].add(entryDate); // Record an entry for this unique session date in this period
-    }
-  }
-
-  // devLog(periodDates);
-
-  const results = relevantPeriods.map((period) => {
-    const actualWorkouts = periodDates[period.label].size;
-    const totalWorkoutsExpected = Math.round((period.days / 7) * 3); // Expecation is 3 per week on average
-    const rawPercentage = (actualWorkouts / totalWorkoutsExpected) * 100;
-    const consistencyPercentage = Math.min(Math.round(rawPercentage), 100); // Cap the percentage at 100
-
-    let tooltip = "";
-
-    return {
-      label: period.label,
-      percentage: consistencyPercentage,
-      tooltip: tooltip,
-    };
-  });
-
-  devLog(
-    "processConsistency execution time: " +
-      `${Math.round(performance.now() - startTime)}ms`,
-  );
-
-  return results;
-}
-
-// These are the full period targets we will analyse for consistency.
-// However if the user only has limited data it will choose the smallest cycle plus one extra
-// So as the user lifts over time they should unlock new consistency arc charts
-// The algorithm assumes each period is longer than the next
-const periodTargets = [
-  {
-    label: "Week",
-    days: 7,
-  },
-  {
-    label: "Month",
-    days: 30, // Approximate is good enough
-  },
-  {
-    label: "3 Month",
-    days: 90,
-  },
-  {
-    label: "Half Year",
-    days: 180,
-  },
-  {
-    label: "Year",
-    days: 345, // Lower to allow some rest days
-  },
-  {
-    label: "24 Month",
-    days: 350 * 2, // Lower to allow some rest days
-  },
-  {
-    label: "5 Year",
-    days: 350 * 5,
-  },
-  {
-    label: "Decade",
-    days: 350 * 10,
-  },
-];
 
 function formatJourneyLength(startDate) {
   const today = new Date();
@@ -368,4 +262,118 @@ function calculatePRsInLast12Months(topLiftsByTypeAndReps) {
     count: prLiftTypes.size,
     liftTypes: Array.from(prLiftTypes),
   };
+}
+
+/**
+ * Calculates average monthly sessions and last year's average
+ * @param {Array} parsedData - Array of workout entries sorted chronologically
+ * @returns {Object} Object containing current and last year's average monthly sessions
+ */
+function calculateAverageMonthlySessions(parsedData) {
+  if (!parsedData || parsedData.length === 0) {
+    return { currentAverage: 0, lastYearAverage: 0 };
+  }
+
+  const today = new Date();
+  const twelveMonthsAgo = subDays(today, 365);
+  const twentyFourMonthsAgo = subDays(today, 730);
+
+  // Initialize counters for both periods
+  const currentPeriodSessions = new Map(); // Last 12 months
+  const lastYearSessions = new Map(); // Previous 12 months
+
+  // Work backwards through the data
+  for (let i = parsedData.length - 1; i >= 0; i--) {
+    const entry = parsedData[i];
+    if (entry.isGoal) continue; // Skip goal entries
+
+    const entryDate = parseISO(entry.date);
+    const monthKey = format(entryDate, "yyyy-MM");
+
+    // Stop if we've gone beyond 24 months
+    if (entryDate < twentyFourMonthsAgo) break;
+
+    // Count unique workout days per month
+    if (entryDate >= twelveMonthsAgo) {
+      currentPeriodSessions.set(
+        monthKey,
+        (currentPeriodSessions.get(monthKey) || 0) + 1,
+      );
+    } else if (entryDate >= twentyFourMonthsAgo) {
+      lastYearSessions.set(monthKey, (lastYearSessions.get(monthKey) || 0) + 1);
+    }
+  }
+
+  // Calculate averages
+  const currentAverage =
+    currentPeriodSessions.size > 0
+      ? Array.from(currentPeriodSessions.values()).reduce((a, b) => a + b, 0) /
+        currentPeriodSessions.size
+      : 0;
+
+  const lastYearAverage =
+    lastYearSessions.size > 0
+      ? Array.from(lastYearSessions.values()).reduce((a, b) => a + b, 0) /
+        lastYearSessions.size
+      : 0;
+
+  return {
+    currentAverage: Math.round(currentAverage * 10) / 10, // Round to 1 decimal
+    lastYearAverage: Math.round(lastYearAverage * 10) / 10,
+  };
+}
+
+/**
+ * Calculates current streak and best streak of weeks with 3+ sessions
+ * @param {Array} parsedData - Array of workout entries sorted chronologically
+ * @returns {Object} Object containing current streak and best streak in weeks
+ */
+function calculateStreak(parsedData) {
+  if (!parsedData || parsedData.length === 0) {
+    return { currentStreak: 0, bestStreak: 0 };
+  }
+
+  // Group sessions by week (Monday as start of week)
+  const weekMap = new Map();
+  for (let i = 0; i < parsedData.length; i++) {
+    const entry = parsedData[i];
+    if (entry.isGoal) continue;
+    const entryDate = parseISO(entry.date);
+    const weekStart = format(
+      startOfWeek(entryDate, { weekStartsOn: 1 }),
+      "yyyy-MM-dd",
+    );
+    weekMap.set(weekStart, (weekMap.get(weekStart) || 0) + 1);
+  }
+
+  // Find the range of weeks
+  const weekKeys = Array.from(weekMap.keys()).sort(); // ascending
+  const mostRecentWeek =
+    weekKeys.length > 0 ? weekKeys[weekKeys.length - 1] : null;
+  const oldestWeek = weekKeys.length > 0 ? weekKeys[0] : null;
+  if (!mostRecentWeek || !oldestWeek)
+    return { currentStreak: 0, bestStreak: 0 };
+
+  // Step week-by-week from most recent to oldest
+  let currentStreak = 0;
+  let bestStreak = 0;
+  let tempStreak = 0;
+  let weekCursor = parseISO(mostRecentWeek);
+  const oldestWeekDate = parseISO(oldestWeek);
+
+  while (weekCursor >= oldestWeekDate) {
+    const weekKey = format(weekCursor, "yyyy-MM-dd");
+    const sessionCount = weekMap.get(weekKey) || 0;
+    if (sessionCount >= 3) {
+      tempStreak++;
+      if (currentStreak === 0) currentStreak = tempStreak; // Only set currentStreak for the most recent run
+      bestStreak = Math.max(bestStreak, tempStreak);
+    } else {
+      if (currentStreak !== 0) break; // Only break current streak on first interruption
+      tempStreak = 0;
+    }
+    weekCursor = subWeeks(weekCursor, 1);
+  }
+
+  return { currentStreak, bestStreak };
 }

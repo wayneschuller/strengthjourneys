@@ -48,6 +48,12 @@ export function SectionTopCards() {
   // Find the most recent PR single from top 5 most frequent lifts
   const mostRecentPR = findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes);
 
+  // Calculate PRs in last 12 months
+  const prsLast12Months = useMemo(
+    () => calculatePRsInLast12Months(topLiftsByTypeAndReps),
+    [topLiftsByTypeAndReps],
+  );
+
   devLog(topLiftsByTypeAndReps);
 
   return (
@@ -103,13 +109,26 @@ export function SectionTopCards() {
         <CardHeader>
           <CardDescription>In This Last 12 Months</CardDescription>
           <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
-            5 Personal Records
+            {prsLast12Months.count} Personal Records
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 pb-2 text-sm">
-          <div className="text-muted-foreground">
-            In the last 12 months you have PRs in Squat, Bench and Snatch
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="line-clamp-3 cursor-pointer text-muted-foreground">
+                  {prsLast12Months.count > 0
+                    ? `In the last 12 months you have PRs in ${prsLast12Months.liftTypes.join(", ")}`
+                    : "No PRs in the last 12 months"}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[300px]">
+                {prsLast12Months.count > 0
+                  ? `Full list of PRs in the last 12 months:\n${prsLast12Months.liftTypes.join("\n")}`
+                  : "No PRs in the last 12 months"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardFooter>
       </Card>
       <Card className="flex-1">
@@ -319,4 +338,34 @@ function findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes) {
   });
 
   return mostRecentPR;
+}
+
+/**
+ * Calculates PRs achieved in the last 12 months
+ * @param {Object} topLiftsByTypeAndReps - The data structure containing PRs by lift type and rep ranges
+ * @returns {Object} Object containing count of PRs and array of lift types with PRs
+ */
+function calculatePRsInLast12Months(topLiftsByTypeAndReps) {
+  if (!topLiftsByTypeAndReps) return { count: 0, liftTypes: [] };
+
+  const twelveMonthsAgo = subDays(new Date(), 365).toISOString().slice(0, 10);
+  const prLiftTypes = new Set();
+
+  Object.entries(topLiftsByTypeAndReps).forEach(([liftType, repRanges]) => {
+    // Look at all rep ranges
+    Object.values(repRanges).forEach((prs) => {
+      if (prs && prs.length > 0) {
+        // Check if any PR in this rep range is from last 12 months
+        const hasRecentPR = prs.some((pr) => pr.date >= twelveMonthsAgo);
+        if (hasRecentPR) {
+          prLiftTypes.add(liftType);
+        }
+      }
+    });
+  });
+
+  return {
+    count: prLiftTypes.size,
+    liftTypes: Array.from(prLiftTypes),
+  };
 }

@@ -333,6 +333,8 @@ function calculateStreak(parsedData) {
     return { currentStreak: 0, bestStreak: 0 };
   }
 
+  const startTime = performance.now();
+
   // Group sessions by week (Monday as start of week)
   const weekMap = new Map();
   for (let i = 0; i < parsedData.length; i++) {
@@ -374,6 +376,10 @@ function calculateStreak(parsedData) {
     }
     weekCursor = subWeeks(weekCursor, 1);
   }
+  devLog(
+    "calculateStreak execution time: " +
+      `${Math.round(performance.now() - startTime)}ms`,
+  );
 
   return { currentStreak, bestStreak };
 }

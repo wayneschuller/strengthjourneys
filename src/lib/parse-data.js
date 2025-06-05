@@ -66,6 +66,15 @@ function parseBespokeData(data) {
   const objectsArray = [];
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
+
+    // Quick validation check for required fields before processing
+    // Google Sheets API always returns strings (or numbers) for cells, never null/undefined
+    const repsVal = row[repsColumnIndex];
+    const weightVal = row[weightColumnIndex];
+    if (repsVal === "" || weightVal === "") {
+      continue;
+    }
+
     const obj = {};
 
     for (let j = 0; j < columnNames.length; j++) {
@@ -103,11 +112,11 @@ function parseBespokeData(data) {
       } else if (j === urlColumnIndex) {
         if (cellData) obj["url"] = cellData;
       } else {
-        obj[columnNames[j]] = cellData;
+        obj[columnNames[j]] = cellData; // Store unknown column names as is
       }
     }
 
-    // FIXME: Check for this earlier at beginning of the loop
+    // Only push if we have the required fields
     if (obj["reps"] !== undefined && obj["weight"] !== undefined) {
       objectsArray.push(obj);
     }
@@ -133,32 +142,45 @@ function parseBespokeData(data) {
   return objectsArray;
 }
 
+// Used to convert number strings to integer
+// Handles Google Sheets API format where numbers come as strings
+function convertStringToInt(repsString) {
+  // Google Sheets API returns empty string for empty cells
+  if (!repsString || repsString === "") {
+    return undefined;
+  }
+
+  // Trim whitespace and try to parse
+  repsString = repsString.trim();
+  const num = parseInt(repsString, 10);
+
+  // Only return if it's a valid integer
+  return isNaN(num) ? undefined : num;
+}
+
 // Used to convert strings like "226lb" to {225, "lb"}
+// Handles Google Sheets API format where weights come as strings
 function convertWeightAndUnitType(weightString) {
-  if (weightString === undefined || weightString === "") {
+  // Google Sheets API returns empty string for empty cells
+  if (!weightString || weightString === "") {
     return { value: undefined, unitType: undefined };
   }
 
-  const value = parseFloat(weightString);
-  const unitType = weightString.toLowerCase().includes("kg") ? "kg" : "lb";
+  // Trim whitespace
+  weightString = weightString.trim();
 
-  return { value, unitType };
-}
-
-// Used to convert number strings to integer
-// FIXME: not really needed?
-function convertStringToInt(repsString) {
-  if (!repsString) {
-    return undefined;
+  // Try to parse the number part
+  const num = parseFloat(weightString);
+  if (isNaN(num)) {
+    return { value: undefined, unitType: undefined };
   }
 
-  repsString = repsString.trim();
-
-  if (repsString === "" || isNaN(parseInt(repsString, 10))) {
-    return undefined;
-  }
-
-  return parseInt(repsString, 10);
+  // Simple string check for unit
+  const hasKg = weightString.toLowerCase().includes("kg");
+  return {
+    value: num,
+    unitType: hasKg ? "kg" : "lb",
+  };
 }
 
 // Allow variations of some lift names and capitalization but harmonize for output

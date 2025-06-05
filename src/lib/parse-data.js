@@ -127,6 +127,7 @@ function parseBespokeData(data) {
   // FIXME: if there are no entries we could throw an error to prompt them to sheet docs article?
 
   // Safe array sort
+  // We have to make sure our sorting preserves intraday order
   objectsArray.sort((a, b) => {
     if (!a.date && !b.date) return 0;
     if (!a.date) return 1;

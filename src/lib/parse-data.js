@@ -66,57 +66,40 @@ function parseBespokeData(data) {
     // devLog(row);
     // Loop through each column in the row and parse each cell
     for (let j = 0; j < columnNames.length; j++) {
-      // FIXME: could we assume some sane defaults if the columnnames are missing?
+      const cellData = row[j];
       const columnName = columnNames[j];
-      let cellData = row[j]; // Grab the cell from this row and column combo
 
-      // Trim the rowData string if it is a string
-      if (typeof cellData === "string") {
-        cellData = cellData.trim();
-      }
-
-      // FIXME: Why aren't we putting URL explicitly in this switch? Are we just getting it from the default?
-
-      switch (columnName) {
-        case "Date":
-          if (cellData) {
-            // Normalize the date string to ensure proper format
-            const normalizedDate = normalizeDateString(cellData);
-            if (normalizedDate) {
-              obj["date"] = normalizedDate;
-              previousDate = normalizedDate;
-            }
-          } else {
-            obj["date"] = previousDate;
+      if (j === dateColumnIndex) {
+        if (cellData) {
+          const normalizedDate = normalizeDateString(cellData);
+          if (normalizedDate) {
+            obj["date"] = normalizedDate;
+            previousDate = normalizedDate;
           }
-          break;
-        case "Lift Type":
-          if (cellData) {
-            obj["liftType"] = normalizeLiftTypeNames(cellData);
-            previousLiftType = cellData;
-          } else {
-            obj["liftType"] = previousLiftType;
-          }
-          break;
-        case "Reps":
-          obj["reps"] = convertStringToInt(cellData);
-          break;
-        case "Weight":
-          const { value, unitType } = convertWeightAndUnitType(cellData);
-          obj["weight"] = value;
-          obj["unitType"] = unitType;
-          break;
-        case "Notes":
-          if (cellData) obj["notes"] = cellData;
-          break;
-        case "isGoal":
-          obj["isGoal"] = cellData === "TRUE"; // Will default to false if blank
-          break;
-        case "Label":
-          if (cellData) obj["label"] = cellData;
-          break;
-        default:
-          obj[columnName] = cellData; // Kind of a hack to store any extra columns - we don't use this.
+        } else {
+          obj["date"] = previousDate;
+        }
+      } else if (j === liftTypeColumnIndex) {
+        if (cellData) {
+          obj["liftType"] = normalizeLiftTypeNames(cellData);
+          previousLiftType = cellData;
+        } else {
+          obj["liftType"] = previousLiftType;
+        }
+      } else if (j === repsColumnIndex) {
+        obj["reps"] = convertStringToInt(cellData);
+      } else if (j === weightColumnIndex) {
+        const { value, unitType } = convertWeightAndUnitType(cellData);
+        obj["weight"] = value;
+        obj["unitType"] = unitType;
+      } else if (columnName === "Notes") {
+        if (cellData) obj["notes"] = cellData;
+      } else if (columnName === "isGoal") {
+        obj["isGoal"] = cellData === "TRUE";
+      } else if (columnName === "Label") {
+        if (cellData) obj["label"] = cellData;
+      } else {
+        obj[columnName] = cellData;
       }
     }
 

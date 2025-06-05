@@ -60,7 +60,7 @@ export function parseTurnKeyData(data) {
 
     let unitType = row[units_COL]; // Record the units type global for later. (we assume it won't change in the data)
 
-    const liftURL = `https://app.turnkey.coach//workout/${row[workout_id_COL]}`;
+    const liftURL = `https://app.turnkey.coach/workout/${row[workout_id_COL]}`;
 
     let liftType = row[exercise_name_COL];
 

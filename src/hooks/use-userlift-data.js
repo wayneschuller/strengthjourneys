@@ -2,7 +2,7 @@
 
 import { useContext, useState, useEffect, createContext } from "react";
 import { useRouter } from "next/router";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import useSWR from "swr";
 import { parseData } from "@/lib/parse-data";
 import {

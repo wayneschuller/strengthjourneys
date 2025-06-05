@@ -33,11 +33,12 @@ function parseBespokeData(data) {
   let previousDate = null;
   let previousLiftType = null;
 
-  // Before we loop through the data, let's make sure we have the critical column names
-  let dateColumnIndex = columnNames.indexOf("Date");
-  let liftTypeColumnIndex = columnNames.indexOf("Lift Type");
-  let repsColumnIndex = columnNames.indexOf("Reps");
-  let weightColumnIndex = columnNames.indexOf("Weight");
+  // Replace the existing column index finding code with:
+  const normalizedColumnNames = columnNames.map(normalizeColumnName);
+  let dateColumnIndex = normalizedColumnNames.indexOf("Date");
+  let liftTypeColumnIndex = normalizedColumnNames.indexOf("Lift Type");
+  let repsColumnIndex = normalizedColumnNames.indexOf("Reps");
+  let weightColumnIndex = normalizedColumnNames.indexOf("Weight");
 
   // Check if we have the minimum required columns
   if (
@@ -218,4 +219,65 @@ function normalizeDateString(dateStr) {
   if (day < "01" || day > "31") return null;
 
   return `${year}-${month}-${day}`;
+}
+
+// Used to normalize column names to a standard format
+function normalizeColumnName(columnName) {
+  const standardColumnNames = {
+    // Lift Type variations
+    "lift type": "Lift Type",
+    lifttype: "Lift Type",
+    lift_type: "Lift Type",
+    "lift-type": "Lift Type",
+    "LIFT TYPE": "Lift Type",
+    LiftType: "Lift Type",
+    Lift_Type: "Lift Type",
+    "Lift-Type": "Lift Type",
+    exercise: "Lift Type",
+    Exercise: "Lift Type",
+    EXERCISE: "Lift Type",
+    movement: "Lift Type",
+    Movement: "Lift Type",
+    MOVEMENT: "Lift Type",
+
+    // Date variations
+    date: "Date",
+    DATE: "Date",
+    "workout date": "Date",
+    "Workout Date": "Date",
+    "WORKOUT DATE": "Date",
+    workout_date: "Date",
+    Workout_Date: "Date",
+
+    // Reps variations
+    reps: "Reps",
+    REPS: "Reps",
+    repetitions: "Reps",
+    Repetitions: "Reps",
+    REPETITIONS: "Reps",
+    rep: "Reps",
+    Rep: "Reps",
+    REP: "Reps",
+
+    // Weight variations
+    weight: "Weight",
+    WEIGHT: "Weight",
+    load: "Weight",
+    Load: "Weight",
+    LOAD: "Weight",
+    "weight used": "Weight",
+    "Weight Used": "Weight",
+    "WEIGHT USED": "Weight",
+    weight_used: "Weight",
+    Weight_Used: "Weight",
+  };
+
+  // First try exact match
+  if (standardColumnNames[columnName]) {
+    return standardColumnNames[columnName];
+  }
+
+  // Then try case-insensitive match with normalized version
+  const normalizedInput = columnName.toLowerCase().replace(/[_-]/g, " ").trim();
+  return standardColumnNames[normalizedInput] || columnName; // Default to original if no match
 }

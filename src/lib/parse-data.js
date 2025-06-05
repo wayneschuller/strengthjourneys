@@ -64,62 +64,64 @@ function parseBespokeData(data) {
   }
 
   const objectsArray = [];
+  // Cache column indices outside the loop since they never change
+  const dateCol = dateColumnIndex;
+  const liftTypeCol = liftTypeColumnIndex;
+  const repsCol = repsColumnIndex;
+  const weightCol = weightColumnIndex;
+  const notesCol = notesColumnIndex;
+  const isGoalCol = isGoalColumnIndex;
+  const labelCol = labelColumnIndex;
+  const urlCol = urlColumnIndex;
+
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
 
     // Quick validation check for required fields before processing
     // Google Sheets API always returns strings (or numbers) for cells, never null/undefined
-    const repsVal = row[repsColumnIndex];
-    const weightVal = row[weightColumnIndex];
-    if (repsVal === "" || weightVal === "") {
+    if (row[repsCol] === "" || row[weightCol] === "") {
       continue;
     }
 
     const obj = {};
 
-    for (let j = 0; j < columnNames.length; j++) {
-      const cellData = row[j];
-
-      if (j === dateColumnIndex) {
-        if (cellData) {
-          const normalizedDate = normalizeDateString(cellData);
-          if (normalizedDate) {
-            obj["date"] = normalizedDate;
-            previousDate = normalizedDate;
-          }
-        } else {
-          obj["date"] = previousDate;
-        }
-      } else if (j === liftTypeColumnIndex) {
-        if (cellData) {
-          obj["liftType"] = normalizeLiftTypeNames(cellData);
-          previousLiftType = cellData;
-        } else {
-          obj["liftType"] = previousLiftType;
-        }
-      } else if (j === repsColumnIndex) {
-        obj["reps"] = convertStringToInt(cellData);
-      } else if (j === weightColumnIndex) {
-        const { value, unitType } = convertWeightAndUnitType(cellData);
-        obj["weight"] = value;
-        obj["unitType"] = unitType;
-      } else if (j === notesColumnIndex) {
-        if (cellData) obj["notes"] = cellData;
-      } else if (j === isGoalColumnIndex) {
-        obj["isGoal"] = cellData === "TRUE";
-      } else if (j === labelColumnIndex) {
-        if (cellData) obj["label"] = cellData;
-      } else if (j === urlColumnIndex) {
-        if (cellData) obj["url"] = cellData;
-      } else {
-        obj[columnNames[j]] = cellData; // Store unknown column names as is
+    // Process date first since it's used for previousDate
+    if (row[dateCol]) {
+      const normalizedDate = normalizeDateString(row[dateCol]);
+      if (normalizedDate) {
+        obj.date = normalizedDate;
+        previousDate = normalizedDate;
       }
+    } else {
+      obj.date = previousDate;
     }
 
-    // Only push if we have the required fields
-    if (obj["reps"] !== undefined && obj["weight"] !== undefined) {
-      objectsArray.push(obj);
+    // Process lift type next since it's used for previousLiftType
+    if (row[liftTypeCol]) {
+      obj.liftType = normalizeLiftTypeNames(row[liftTypeCol]);
+      previousLiftType = row[liftTypeCol];
+    } else {
+      obj.liftType = previousLiftType;
     }
+
+    // Process required fields
+    obj.reps = convertStringToInt(row[repsCol]);
+    const { value, unitType } = convertWeightAndUnitType(row[weightCol]);
+    obj.weight = value;
+    obj.unitType = unitType;
+
+    // Validate that we have valid numbers for required fields
+    if (obj.reps === undefined || obj.weight === undefined) {
+      continue;
+    }
+
+    // Process optional fields only if they exist
+    if (row[notesCol]) obj.notes = row[notesCol];
+    if (row[isGoalCol]) obj.isGoal = row[isGoalCol] === "TRUE";
+    if (row[labelCol]) obj.label = row[labelCol];
+    if (row[urlCol]) obj.url = row[urlCol];
+
+    objectsArray.push(obj);
   }
 
   // FIXME: if there are no entries we could throw an error to prompt them to sheet docs article?

@@ -53,7 +53,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.log(error);
 
-    //FIXME: If Google gives 404 we propogate to client. All other errors will be sent back to client as 400.
+    // FIXME: If Google gives 404 propagate to client. All other errors will be sent back to client as 400.
     res.status(400).json({ error: error.message });
   }
 }

@@ -11,7 +11,7 @@ export function parseData(data) {
   if (columnNames[0] === "user_name" && columnNames[1] === "workout_id") {
     parsedData = parseTurnKeyData(data); // TurnKey data source detected
   } else {
-    parsedData = parseBespokeData(data); // Default to Strength Journeys bespoke format
+    parsedData = parseBespokeData(data); // Default to Strength Journeys Google Sheet bespoke format
   }
 
   // devLog(parsedData);
@@ -218,42 +218,4 @@ function normalizeDateString(dateStr) {
   if (day < "01" || day > "31") return null;
 
   return `${year}-${month}-${day}`;
-}
-
-function normalizeDateStringSLOW(dateStr) {
-  if (!dateStr) return null;
-
-  // Trim any whitespace
-  dateStr = dateStr.trim();
-
-  // Split into parts and ensure each part is zero-padded
-  const parts = dateStr.split("-").map((part) => part.padStart(2, "0"));
-
-  // Validate we have exactly 3 parts (year, month, day)
-  if (parts.length !== 3) {
-    console.error(`Invalid date format: ${dateStr}`);
-    return null;
-  }
-
-  // Validate year is 4 digits
-  if (parts[0].length !== 4) {
-    console.error(`Invalid year format: ${dateStr}`);
-    return null;
-  }
-
-  // Validate month is 1-12
-  const month = parseInt(parts[1], 10);
-  if (month < 1 || month > 12) {
-    console.error(`Invalid month: ${dateStr}`);
-    return null;
-  }
-
-  // Validate day is 1-31
-  const day = parseInt(parts[2], 10);
-  if (day < 1 || day > 31) {
-    console.error(`Invalid day: ${dateStr}`);
-    return null;
-  }
-
-  return parts.join("-");
 }

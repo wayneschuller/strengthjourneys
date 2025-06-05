@@ -29,18 +29,23 @@ export function parseData(data) {
 // See @/lib/sample-parsed-data.js for data structure design
 function parseBespokeData(data) {
   const startTime = performance.now();
-  const columnNames = data[0]; // We assume the column names are in the first row of data
+  const columnNames = data[0];
   let previousDate = null;
   let previousLiftType = null;
 
-  // Replace the existing column index finding code with:
   const normalizedColumnNames = columnNames.map(normalizeColumnName);
+
+  // Find indices for all columns
   let dateColumnIndex = normalizedColumnNames.indexOf("Date");
   let liftTypeColumnIndex = normalizedColumnNames.indexOf("Lift Type");
   let repsColumnIndex = normalizedColumnNames.indexOf("Reps");
   let weightColumnIndex = normalizedColumnNames.indexOf("Weight");
+  let notesColumnIndex = normalizedColumnNames.indexOf("Notes");
+  let isGoalColumnIndex = normalizedColumnNames.indexOf("isGoal");
+  let labelColumnIndex = normalizedColumnNames.indexOf("Label");
+  let urlColumnIndex = normalizedColumnNames.indexOf("URL");
 
-  // Check if we have the minimum required columns
+  // Check only required columns
   if (
     dateColumnIndex === -1 ||
     liftTypeColumnIndex === -1 ||
@@ -61,13 +66,10 @@ function parseBespokeData(data) {
   const objectsArray = [];
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    const obj = {}; // We build the object as we parse each column in the row
+    const obj = {};
 
-    // devLog(row);
-    // Loop through each column in the row and parse each cell
     for (let j = 0; j < columnNames.length; j++) {
       const cellData = row[j];
-      const columnName = columnNames[j];
 
       if (j === dateColumnIndex) {
         if (cellData) {
@@ -92,14 +94,16 @@ function parseBespokeData(data) {
         const { value, unitType } = convertWeightAndUnitType(cellData);
         obj["weight"] = value;
         obj["unitType"] = unitType;
-      } else if (columnName === "Notes") {
+      } else if (j === notesColumnIndex) {
         if (cellData) obj["notes"] = cellData;
-      } else if (columnName === "isGoal") {
+      } else if (j === isGoalColumnIndex) {
         obj["isGoal"] = cellData === "TRUE";
-      } else if (columnName === "Label") {
+      } else if (j === labelColumnIndex) {
         if (cellData) obj["label"] = cellData;
+      } else if (j === urlColumnIndex) {
+        if (cellData) obj["url"] = cellData;
       } else {
-        obj[columnName] = cellData;
+        obj[columnNames[j]] = cellData;
       }
     }
 
@@ -253,6 +257,58 @@ function normalizeColumnName(columnName) {
     "WEIGHT USED": "Weight",
     weight_used: "Weight",
     Weight_Used: "Weight",
+
+    // Notes variations
+    notes: "Notes",
+    NOTES: "Notes",
+    note: "Notes",
+    Note: "Notes",
+    NOTE: "Notes",
+    comment: "Notes",
+    Comment: "Notes",
+    COMMENT: "Notes",
+    comments: "Notes",
+    Comments: "Notes",
+    COMMENTS: "Notes",
+
+    // isGoal variations
+    isgoal: "isGoal",
+    ISGOAL: "isGoal",
+    "is goal": "isGoal",
+    "Is Goal": "isGoal",
+    "IS GOAL": "isGoal",
+    is_goal: "isGoal",
+    Is_Goal: "isGoal",
+    goal: "isGoal",
+    Goal: "isGoal",
+    GOAL: "isGoal",
+
+    // Label variations
+    label: "Label",
+    LABEL: "Label",
+    labels: "Label",
+    Labels: "Label",
+    LABELS: "Label",
+    tag: "Label",
+    Tag: "Label",
+    TAG: "Label",
+    tags: "Label",
+    Tags: "Label",
+    TAGS: "Label",
+
+    // URL variations
+    url: "URL",
+    URL: "URL",
+    link: "URL",
+    Link: "URL",
+    LINK: "URL",
+    "video url": "URL",
+    "Video URL": "URL",
+    "VIDEO URL": "URL",
+    video_url: "URL",
+    Video_URL: "URL",
+    "video-link": "URL",
+    "Video-Link": "URL",
   };
 
   // First try exact match

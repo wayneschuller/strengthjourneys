@@ -304,22 +304,57 @@ function calculateAverageMonthlySessions(parsedData) {
     }
   }
 
-  // Calculate averages
-  const currentAverage =
-    currentPeriodSessions.size > 0
-      ? Array.from(currentPeriodSessions.values()).reduce((a, b) => a + b, 0) /
-        currentPeriodSessions.size
-      : 0;
+  // Calculate current period average (last 12 months)
+  let currentAverage = 0;
+  if (currentPeriodSessions.size > 0) {
+    const currentMonthKey = format(today, "yyyy-MM");
+    const daysInCurrentMonth = today.getDate();
+    const totalDaysInCurrentMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0,
+    ).getDate();
 
-  const lastYearAverage =
-    lastYearSessions.size > 0
-      ? Array.from(lastYearSessions.values()).reduce((a, b) => a + b, 0) /
-        lastYearSessions.size
-      : 0;
+    // Calculate sum excluding current month
+    let totalSessions = 0;
+    let monthCount = 0;
+
+    currentPeriodSessions.forEach((sessions, monthKey) => {
+      if (monthKey === currentMonthKey) {
+        // For current month, prorate based on days elapsed
+        totalSessions +=
+          (sessions / daysInCurrentMonth) * totalDaysInCurrentMonth;
+        monthCount += 1;
+      } else {
+        totalSessions += sessions;
+        monthCount += 1;
+      }
+    });
+
+    // If we have less than 12 months of data, we should still divide by 12
+    // unless we're looking at a shorter total history
+    const firstEntryDate = parseISO(parsedData[0].date);
+    const monthsSinceStart =
+      differenceInCalendarMonths(today, firstEntryDate) + 1;
+    const divisor = Math.min(12, monthsSinceStart);
+
+    currentAverage = totalSessions / divisor;
+  }
+
+  // Calculate last year average
+  let lastYearAverage = 0;
+  if (lastYearSessions.size > 0) {
+    const totalSessions = Array.from(lastYearSessions.values()).reduce(
+      (a, b) => a + b,
+      0,
+    );
+    // Always divide by 12 for last year's average
+    lastYearAverage = totalSessions / 12;
+  }
 
   return {
-    currentAverage: Math.round(currentAverage * 10) / 10, // Round to 1 decimal
-    lastYearAverage: Math.round(lastYearAverage * 10) / 10,
+    currentAverage: Math.round(currentAverage), // Round to nearest integer
+    lastYearAverage: Math.round(lastYearAverage),
   };
 }
 

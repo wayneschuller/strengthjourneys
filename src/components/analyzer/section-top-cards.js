@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardAction,
 } from "@/components/ui/card";
 import { useMemo } from "react";
 import { devLog } from "@/lib/processing-utils";
@@ -100,25 +101,27 @@ export function SectionTopCards() {
           </div>
         </CardFooter>
       </Card>
-      <Card className="flex-1">
+      <Card className="relative flex-1">
+        <CardAction>
+          {percentageChange !== 0 && (
+            <span
+              className={`flex items-center text-sm font-normal ${
+                percentageChange > 0 ? "text-green-500" : "text-red-500"
+              }`}
+            >
+              {percentageChange > 0 ? (
+                <TrendingUp className="h-4 w-4" />
+              ) : (
+                <TrendingDown className="h-4 w-4" />
+              )}
+              {Math.abs(percentageChange)}%
+            </span>
+          )}
+        </CardAction>
         <CardHeader>
           <CardDescription>Session Momentum</CardDescription>
-          <CardTitle className="flex items-center gap-2 text-xl font-semibold tabular-nums sm:text-3xl">
+          <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
             {recentSessions} sessions
-            {percentageChange !== 0 && (
-              <span
-                className={`flex items-center text-sm font-normal ${
-                  percentageChange > 0 ? "text-green-500" : "text-red-500"
-                }`}
-              >
-                {percentageChange > 0 ? (
-                  <TrendingUp className="h-4 w-4" />
-                ) : (
-                  <TrendingDown className="h-4 w-4" />
-                )}
-                {Math.abs(percentageChange)}%
-              </span>
-            )}
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">

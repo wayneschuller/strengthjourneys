@@ -288,7 +288,6 @@ export const UserLiftingDataProvider = ({ children }) => {
   }, [authStatus, router]);
 
   return (
-    // FIXME: audit these and only export the ones that are used by components
     <UserLiftingDataContext.Provider
       value={{
         isLoading,

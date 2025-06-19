@@ -67,41 +67,43 @@ export function SectionTopCards() {
 
   return (
     <div className="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-      <Card className="flex-1">
-        <CardHeader className="">
+      <Card className="flex h-full flex-col justify-between">
+        <CardHeader className="p-4">
           <CardDescription>Journey Length</CardDescription>
-          <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
+          <CardTitle className="min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
             {parsedData && parsedData.length > 0
               ? formatJourneyLength(parsedData[0].date)
               : "Starting your journey"}
           </CardTitle>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 pb-2 text-sm">
+        <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 text-sm">
           <div className="line-clamp-1 flex gap-2 text-muted-foreground">
             {calculateTotalStats(liftTypes).totalReps.toLocaleString()} reps and{" "}
             {calculateTotalStats(liftTypes).totalSets.toLocaleString()} sets
             lifted
           </div>
+          <div className="text-muted-foreground">&nbsp;</div>
         </CardFooter>
       </Card>
-      <Card className="flex-1">
-        <CardHeader>
+      <Card className="flex h-full flex-col justify-between">
+        <CardHeader className="p-4">
           <CardDescription>Most Recent PR Single</CardDescription>
-          <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
+          <CardTitle className="min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
             {mostRecentPR
               ? `${mostRecentPR.liftType} 1@${mostRecentPR.weight}${mostRecentPR.unitType}`
               : "No PRs yet"}
           </CardTitle>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+        <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 text-sm">
           <div className="text-muted-foreground">
             {mostRecentPR
               ? `Performed on ${format(new Date(mostRecentPR.date), "d MMMM yyyy")}`
               : ""}
           </div>
+          <div className="text-muted-foreground">&nbsp;</div>
         </CardFooter>
       </Card>
-      <Card className="relative flex-1">
+      <Card className="relative flex h-full flex-col justify-between">
         <CardAction>
           {percentageChange !== 0 && (
             <span
@@ -110,39 +112,39 @@ export function SectionTopCards() {
               }`}
             >
               {percentageChange > 0 ? (
-                <TrendingUp className="h-4 w-4" />
+                <TrendingUp className="mr-1 h-4 w-4" />
               ) : (
-                <TrendingDown className="h-4 w-4" />
+                <TrendingDown className="mr-1 h-4 w-4" />
               )}
               {Math.abs(percentageChange)}%
             </span>
           )}
         </CardAction>
-        <CardHeader>
+        <CardHeader className="p-4">
           <CardDescription>Session Momentum</CardDescription>
-          <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
+          <CardTitle className="min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
             {recentSessions} sessions
           </CardTitle>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="text-muted-foreground">In the last 90 days</div>
+        <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 text-sm">
+          <div className="text-muted-foreground">in the last 90 days</div>
           <div className="text-muted-foreground">
-            Previous 90 days: {previousSessions} sessions
+            ({previousSessions} sessions in previous 90 days)
           </div>
         </CardFooter>
       </Card>
-      <Card className="flex-1">
-        <CardHeader>
+      <Card className="flex h-full flex-col justify-between">
+        <CardHeader className="p-4">
           <CardDescription>In This Last 12 Months</CardDescription>
-          <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
+          <CardTitle className="min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
             {prsLast12Months.count} Personal Records
           </CardTitle>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 pb-2 text-sm">
+        <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 text-sm">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="line-clamp-3 cursor-pointer text-muted-foreground">
+                <div className="line-clamp-2 cursor-pointer text-muted-foreground">
                   {prsLast12Months.count > 0
                     ? `In the last 12 months you have PRs in ${prsLast12Months.liftTypes.join(", ")}`
                     : "No PRs in the last 12 months"}
@@ -157,20 +159,18 @@ export function SectionTopCards() {
           </TooltipProvider>
         </CardFooter>
       </Card>
-      <Card className="flex-1">
-        <CardHeader>
+      <Card className="flex h-full flex-col justify-between">
+        <CardHeader className="p-4">
           <CardDescription>Current Streak</CardDescription>
-          <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
+          <CardTitle className="min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
             {currentStreak} week{currentStreak === 1 ? "" : "s"}
           </CardTitle>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 pb-2 text-sm">
+        <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 text-sm">
           <div className="text-muted-foreground">
             At least three sessions a week for the last {currentStreak} week
-            {currentStreak === 1 ? "" : "s"}
-          </div>
-          <div className="text-muted-foreground">
-            Best streak: {bestStreak} week{bestStreak === 1 ? "" : "s"}
+            {currentStreak === 1 ? "" : "s"} (best streak: {bestStreak} week
+            {bestStreak === 1 ? "" : "s"})
           </div>
         </CardFooter>
       </Card>

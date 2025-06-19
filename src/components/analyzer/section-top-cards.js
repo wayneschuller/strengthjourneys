@@ -24,7 +24,7 @@ import {
   subWeeks,
 } from "date-fns";
 
-import { TrendingUp, CalendarDays } from "lucide-react";
+import { TrendingUp, CalendarDays, TrendingDown } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   Tooltip,
@@ -53,9 +53,9 @@ export function SectionTopCards() {
     [topLiftsByTypeAndReps],
   );
 
-  // Calculate average monthly sessions and streak
-  const { currentAverage, lastYearAverage } = useMemo(
-    () => calculateAverageMonthlySessions(parsedData),
+  // Calculate session momentum
+  const { recentSessions, previousSessions, percentageChange } = useMemo(
+    () => calculateSessionMomentum(parsedData),
     [parsedData],
   );
 
@@ -102,14 +102,29 @@ export function SectionTopCards() {
       </Card>
       <Card className="flex-1">
         <CardHeader>
-          <CardDescription>Average Monthly Sessions</CardDescription>
-          <CardTitle className="text-xl font-semibold tabular-nums sm:text-3xl">
-            {currentAverage} sessions per month
+          <CardDescription>Session Momentum</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-xl font-semibold tabular-nums sm:text-3xl">
+            {recentSessions} sessions
+            {percentageChange !== 0 && (
+              <span
+                className={`flex items-center text-sm font-normal ${
+                  percentageChange > 0 ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                {percentageChange > 0 ? (
+                  <TrendingUp className="h-4 w-4" />
+                ) : (
+                  <TrendingDown className="h-4 w-4" />
+                )}
+                {Math.abs(percentageChange)}%
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="text-muted-foreground">In the last 90 days</div>
           <div className="text-muted-foreground">
-            Last year was {lastYearAverage} sessions per month
+            Previous 90 days: {previousSessions} sessions
           </div>
         </CardFooter>
       </Card>
@@ -265,97 +280,43 @@ function calculatePRsInLast12Months(topLiftsByTypeAndReps) {
 }
 
 /**
- * Calculates average monthly sessions and last year's average
+ * Calculates session momentum by comparing the last 90 days to the previous 90 days.
  * @param {Array} parsedData - Array of workout entries sorted chronologically
- * @returns {Object} Object containing current and last year's average monthly sessions
+ * @returns {Object} Object containing session counts and percentage change
  */
-function calculateAverageMonthlySessions(parsedData) {
+function calculateSessionMomentum(parsedData) {
   if (!parsedData || parsedData.length === 0) {
-    return { currentAverage: 0, lastYearAverage: 0 };
+    return { recentSessions: 0, previousSessions: 0, percentageChange: 0 };
   }
 
   const today = new Date();
-  const twelveMonthsAgo = subDays(today, 365);
-  const twentyFourMonthsAgo = subDays(today, 730);
+  const ninetyDaysAgo = subDays(today, 90);
+  const oneEightyDaysAgo = subDays(today, 180);
 
-  // Initialize counters for both periods
-  const currentPeriodSessions = new Map(); // Last 12 months
-  const lastYearSessions = new Map(); // Previous 12 months
+  let recentSessions = 0;
+  let previousSessions = 0;
 
-  // Work backwards through the data
-  for (let i = parsedData.length - 1; i >= 0; i--) {
-    const entry = parsedData[i];
-    if (entry.isGoal) continue; // Skip goal entries
-
+  for (const entry of parsedData) {
+    if (entry.isGoal) continue;
     const entryDate = parseISO(entry.date);
-    const monthKey = format(entryDate, "yyyy-MM");
 
-    // Stop if we've gone beyond 24 months
-    if (entryDate < twentyFourMonthsAgo) break;
-
-    // Count unique workout days per month
-    if (entryDate >= twelveMonthsAgo) {
-      currentPeriodSessions.set(
-        monthKey,
-        (currentPeriodSessions.get(monthKey) || 0) + 1,
-      );
-    } else if (entryDate >= twentyFourMonthsAgo) {
-      lastYearSessions.set(monthKey, (lastYearSessions.get(monthKey) || 0) + 1);
+    if (entryDate >= ninetyDaysAgo && entryDate <= today) {
+      recentSessions++;
+    } else if (entryDate >= oneEightyDaysAgo && entryDate < ninetyDaysAgo) {
+      previousSessions++;
     }
   }
 
-  // Calculate current period average (last 12 months)
-  let currentAverage = 0;
-  if (currentPeriodSessions.size > 0) {
-    const currentMonthKey = format(today, "yyyy-MM");
-    const daysInCurrentMonth = today.getDate();
-    const totalDaysInCurrentMonth = new Date(
-      today.getFullYear(),
-      today.getMonth() + 1,
-      0,
-    ).getDate();
-
-    // Calculate sum excluding current month
-    let totalSessions = 0;
-    let monthCount = 0;
-
-    currentPeriodSessions.forEach((sessions, monthKey) => {
-      if (monthKey === currentMonthKey) {
-        // For current month, prorate based on days elapsed
-        totalSessions +=
-          (sessions / daysInCurrentMonth) * totalDaysInCurrentMonth;
-        monthCount += 1;
-      } else {
-        totalSessions += sessions;
-        monthCount += 1;
-      }
-    });
-
-    // If we have less than 12 months of data, we should still divide by 12
-    // unless we're looking at a shorter total history
-    const firstEntryDate = parseISO(parsedData[0].date);
-    const monthsSinceStart =
-      differenceInCalendarMonths(today, firstEntryDate) + 1;
-    const divisor = Math.min(12, monthsSinceStart);
-
-    currentAverage = totalSessions / divisor;
-  }
-
-  // Calculate last year average
-  let lastYearAverage = 0;
-  if (lastYearSessions.size > 0) {
-    const totalSessions = Array.from(lastYearSessions.values()).reduce(
-      (a, b) => a + b,
-      0,
+  let percentageChange = 0;
+  if (previousSessions > 0) {
+    percentageChange = Math.round(
+      ((recentSessions - previousSessions) / previousSessions) * 100,
     );
-    // Always divide by 12 for last year's average
-    lastYearAverage = totalSessions / 12;
+  } else if (recentSessions > 0) {
+    percentageChange = 100; // From 0 to something is a 100% improvement for this context
   }
 
-  return {
-    currentAverage: Math.round(currentAverage), // Round to nearest integer
-    lastYearAverage: Math.round(lastYearAverage),
-  };
+  return { recentSessions, previousSessions, percentageChange };
 }
 
 /**

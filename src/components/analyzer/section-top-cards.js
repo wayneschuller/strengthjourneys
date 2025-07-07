@@ -345,6 +345,7 @@ function calculateStreak(parsedData) {
   for (let i = 0; i < parsedData.length; i++) {
     const entry = parsedData[i];
     if (entry.isGoal) continue;
+
     if (!entry.date || typeof entry.date !== "string") {
       console.warn("Invalid entry.date in parsedData:", entry);
       continue;

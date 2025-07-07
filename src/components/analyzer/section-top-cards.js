@@ -301,6 +301,12 @@ function calculateSessionMomentum(parsedData) {
 
   for (const entry of parsedData) {
     if (entry.isGoal) continue;
+
+    if (!entry.date || typeof entry.date !== "string") {
+      console.warn("Invalid entry.date in parsedData:", entry);
+      continue;
+    }
+
     const entryDate = parseISO(entry.date);
 
     if (entryDate >= ninetyDaysAgo && entryDate <= today) {
@@ -339,6 +345,10 @@ function calculateStreak(parsedData) {
   for (let i = 0; i < parsedData.length; i++) {
     const entry = parsedData[i];
     if (entry.isGoal) continue;
+    if (!entry.date || typeof entry.date !== "string") {
+      console.warn("Invalid entry.date in parsedData:", entry);
+      continue;
+    }
     const entryDate = parseISO(entry.date);
     const weekStart = format(
       startOfWeek(entryDate, { weekStartsOn: 1 }),

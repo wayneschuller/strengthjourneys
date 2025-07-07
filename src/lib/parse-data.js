@@ -85,16 +85,31 @@ function parseBespokeData(data) {
 
     const obj = {};
 
-    // Process date first since it's used for previousDate
+    // --- DATE HANDLING LOGIC ---
+    // If the date cell is filled, try to normalize it
     if (row[dateCol]) {
       const normalizedDate = normalizeDateString(row[dateCol]);
       if (normalizedDate) {
+        // Valid date: use it and update previousDate
         obj.date = normalizedDate;
         previousDate = normalizedDate;
+      } else {
+        // Invalid date: skip this row and reset previousDate to null
+        // This ensures that subsequent rows with blank dates will also be skipped
+        // until a new valid date is found, enforcing data integrity
+        previousDate = null;
+        continue;
       }
     } else {
-      obj.date = previousDate;
+      // Date cell is blank: only use previousDate if it is not null
+      if (previousDate) {
+        obj.date = previousDate;
+      } else {
+        // No valid previous date to inherit from, skip this row
+        continue;
+      }
     }
+    // --- END DATE HANDLING LOGIC ---
 
     // Process lift type next since it's used for previousLiftType
     if (row[liftTypeCol]) {

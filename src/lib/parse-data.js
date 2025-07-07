@@ -94,9 +94,12 @@ function parseBespokeData(data) {
         obj.date = normalizedDate;
         previousDate = normalizedDate;
       } else {
-        // Invalid date: skip this row and reset previousDate to null
+        // Invalid date: warn, skip this row, and reset previousDate to null
         // This ensures that subsequent rows with blank dates will also be skipped
         // until a new valid date is found, enforcing data integrity
+        console.warn(
+          `Strength Journeys (parser): Invalid date encountered at row ${i + 1}: '${row[dateCol]}'. Row skipped.`,
+        );
         previousDate = null;
         continue;
       }

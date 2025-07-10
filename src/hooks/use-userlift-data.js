@@ -18,6 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "usehooks-ts";
 import { ToastAction } from "@/components/ui/toast";
+import { format, isToday, parseISO } from "date-fns";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
@@ -133,6 +134,21 @@ export const UserLiftingDataProvider = ({ children }) => {
         // We have some good new data loaded - tell the user via toast
         loadedToastInit = true; // Don't show this again
 
+        // Find the latest date in parsedData
+        let latestDate = null;
+        if (parsedData && parsedData.length > 0) {
+          // parsedData is sorted ascending, so last item is latest
+          latestDate = parsedData[parsedData.length - 1].date;
+        }
+        let latestDateString = "";
+        if (latestDate) {
+          const parsed = parseISO(latestDate);
+          if (isToday(parsed)) {
+            latestDateString = "Latest data: Today";
+          } else {
+            latestDateString = `Latest data: ${format(parsed, "d MMMM yyyy")}`;
+          }
+        }
         toast({
           title: "Data updated from Google Sheets",
           description: (
@@ -151,6 +167,12 @@ export const UserLiftingDataProvider = ({ children }) => {
               )}
               <br />
               {parsedData.length} valid rows
+              {latestDateString && (
+                <>
+                  <br />
+                  {latestDateString}
+                </>
+              )}
             </>
           ),
         });

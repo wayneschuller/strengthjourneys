@@ -137,7 +137,13 @@ export const UserLiftingDataProvider = ({ children }) => {
 
         toast({
           title: "Data updated from Google Sheets",
-          description: description,
+          description: (
+            <>
+              {sheetFilename || "File name unknown"}
+              <br />
+              {parsedData.length} valid rows
+            </>
+          ),
         });
 
         if (

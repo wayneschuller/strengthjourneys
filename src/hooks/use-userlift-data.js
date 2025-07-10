@@ -41,6 +41,7 @@ export const UserLiftingDataProvider = ({ children }) => {
     setTopLiftsByTypeAndRepsLast12Months,
   ] = useState(null); // see @/lib/processing-utils.js for data structure design
   const [selectedLiftTypes, setSelectedLiftTypes] = useState([]);
+  let toastId = null;
 
   const { data: session, status: authStatus } = useSession();
 
@@ -132,8 +133,10 @@ export const UserLiftingDataProvider = ({ children }) => {
 
         // We have some good new data loaded - tell the user via toast
         loadedToastInit = true; // Don't show this again
-        const description = sheetFilename || "File name unknown";
-        toast({
+        // const description = sheetFilename || "File name unknown";
+        const description = `${sheetFilename || "File name unknown"} (${parsedData.length} valid rows)`;
+
+        toastId = toast({
           title: "Data updated from Google Sheets",
           description: description,
         });

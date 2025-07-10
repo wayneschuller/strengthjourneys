@@ -132,14 +132,23 @@ export const UserLiftingDataProvider = ({ children }) => {
 
         // We have some good new data loaded - tell the user via toast
         loadedToastInit = true; // Don't show this again
-        // const description = sheetFilename || "File name unknown";
-        const description = `${sheetFilename || "File name unknown"} (${parsedData.length} valid rows)`;
 
         toast({
           title: "Data updated from Google Sheets",
           description: (
             <>
-              {sheetFilename || "File name unknown"}
+              {sheetURL ? (
+                <a
+                  href={decodeURIComponent(sheetURL)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+                >
+                  {sheetFilename || "File name unknown"}
+                </a>
+              ) : (
+                sheetFilename || "File name unknown"
+              )}
               <br />
               {parsedData.length} valid rows
             </>

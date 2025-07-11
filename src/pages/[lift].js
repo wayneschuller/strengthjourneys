@@ -33,7 +33,14 @@ import {
 } from "@/components/analyzer/lift-achievements-card";
 
 import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
+import { VisualizerReps } from "@/components/visualizer/visualizer-reps";
 import { RelatedArticles } from "@/components/article-cards";
+
+import {
+  TimeRangeSelect,
+  calculateThresholdDate,
+  getTimeRangeDescription,
+} from "@/components/visualizer/time-range-select";
 
 const googleSheetSampleURL =
   "https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0";
@@ -189,6 +196,9 @@ function BarbellInsightsMain({
         </div>
         <div className="col-span-3">
           <VisualizerMini liftType={liftInsightData.liftType} />
+        </div>
+        <div className="col-span-3">
+          <VisualizerReps liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">
           <MyLiftTypePRsCard liftType={liftInsightData.liftType} />

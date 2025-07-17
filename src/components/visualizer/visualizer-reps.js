@@ -118,6 +118,12 @@ export function VisualizerReps({ data, liftType }) {
       const found = chartDataByReps[t.reps].find((d) => d.date === date);
       entry[`reps${t.reps}`] = found ? found.weight : null;
     });
+    // Add rechartsDate field for consistency with visualizer-processing.js
+    entry.rechartsDate = Date.UTC(
+      new Date(date).getFullYear(),
+      new Date(date).getMonth(),
+      new Date(date).getDate(),
+    );
     return entry;
   });
 
@@ -176,13 +182,22 @@ export function VisualizerReps({ data, liftType }) {
             width={undefined}
             height={undefined}
             data={chartData}
-            margin={{ top: 10, right: 30, left: 20, bottom: 20 }}
+            margin={{ left: 5, right: 20 }}
           >
             <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.08} />
             <XAxis
-              dataKey="date"
-              tick={{ fill: "#d1d5db", fontSize: 12 }}
-              padding={{ left: 10, right: 10 }}
+              dataKey="rechartsDate"
+              type="number"
+              scale="time"
+              // tick={{ fill: "#d1d5db", fontSize: 12 }}
+              // padding={{ left: 10, right: 10 }}
+              domain={[
+                (dataMin) =>
+                  new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),
+                (dataMax) =>
+                  new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
+              ]}
+              tickFormatter={formatXAxisDateString}
             />
             <YAxis
               tick={{ fill: "#d1d5db", fontSize: 12 }}
@@ -231,3 +246,9 @@ export function VisualizerReps({ data, liftType }) {
     </Card>
   );
 }
+
+// FIXME: This code could be shared with VisualizerMini
+const formatXAxisDateString = (tickItem) => {
+  const date = new Date(tickItem);
+  return date.toLocaleString("en-US", { month: "short", day: "numeric" });
+};

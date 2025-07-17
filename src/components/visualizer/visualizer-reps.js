@@ -176,7 +176,10 @@ export function VisualizerReps({ data, liftType }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Singles, Triples and Fives Progression</CardTitle>
+        <CardTitle>
+          {authStatus === "unauthenticated" && "Demo Mode: "}
+          {liftType} Singles, Triples and Fives Progression
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">

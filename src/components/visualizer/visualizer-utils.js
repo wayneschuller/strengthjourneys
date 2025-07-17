@@ -174,23 +174,24 @@ export const VisualizerRepsTooltip = ({ active, payload, label }) => {
         )}
       </p>
       {repInfos.map((info) => (
-        <div key={info.label}>
-          <div className="flex flex-row items-center">
-            <div
-              className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
-              style={{ backgroundColor: info.color }}
-            />
-            <div className="font-semibold">
-              {info.label}
+        <div key={info.label} className="mb-1">
+          <div className="flex flex-row items-center justify-between">
+            <div className="flex flex-row items-center">
+              <div
+                className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                style={{ backgroundColor: info.color }}
+              />
+              <div className="font-semibold">{info.label}</div>
+            </div>
+            <div className="ml-4 whitespace-nowrap font-semibold">
               {typeof info.weight !== "undefined" && (
-                <span className="ml-2">
+                <span>
                   {info.weight}
                   {info.unitType}
                 </span>
               )}
             </div>
           </div>
-          {/* RPE on its own line if present */}
           {info.rpe ? (
             <div className="ml-6 text-xs text-muted-foreground">
               RPE {info.rpe}

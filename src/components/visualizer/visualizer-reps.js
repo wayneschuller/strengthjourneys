@@ -204,9 +204,16 @@ export function VisualizerReps({ data, liftType }) {
               tick={{ fill: "#d1d5db", fontSize: 12 }}
               domain={["auto", "auto"]}
               width={60}
-              tickFormatter={
-                (value) => `${value}${chartData[0]?.unitType || ""}` // Default to first item's unitType
-              }
+              tickFormatter={(value, index) => {
+                // Try to find unitType from one of the tuple data for this tick's chartData point
+                const d = chartData[index] || {};
+                const unitType =
+                  d.reps1_tuple?.unitType ||
+                  d.reps3_tuple?.unitType ||
+                  d.reps5_tuple?.unitType ||
+                  "";
+                return `${value}${unitType}`;
+              }}
             />
             <Tooltip
               contentStyle={{ background: "#111827", border: "none" }}

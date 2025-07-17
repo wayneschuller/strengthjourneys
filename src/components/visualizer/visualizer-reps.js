@@ -52,6 +52,7 @@ import { useSession } from "next-auth/react";
 import { getLiftColor } from "@/lib/get-lift-color";
 import { ChartContainer } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VisualizerRepsTooltip } from "./visualizer-utils";
 
 // ────────────────────────────────────────────────────────────
 // util: collapse many sets on the same day → single best set
@@ -215,16 +216,7 @@ export function VisualizerReps({ data, liftType }) {
                 return `${value}${unitType}`;
               }}
             />
-            <Tooltip
-              contentStyle={{ background: "#111827", border: "none" }}
-              labelStyle={{ color: "#f3f4f6" }}
-              formatter={(v, name, props) => {
-                // name is like 'reps1', 'reps3', etc.
-                const tupleKey = `${name}_tuple`;
-                const unitType = props.payload?.[tupleKey]?.unitType || "";
-                return [`${v}${unitType}`, `${name.replace("reps", "")}-rep`];
-              }}
-            />
+            <Tooltip content={<VisualizerRepsTooltip />} />
             <Legend
               // onClick={handleLegendClick} // remove this
               wrapperStyle={{ cursor: "pointer" }}

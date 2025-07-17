@@ -218,10 +218,12 @@ export function VisualizerReps({ data, liftType }) {
             <Tooltip
               contentStyle={{ background: "#111827", border: "none" }}
               labelStyle={{ color: "#f3f4f6" }}
-              formatter={(v, name) => [
-                `${v} kg`,
-                `${name.replace("reps", "")}-rep`,
-              ]}
+              formatter={(v, name, props) => {
+                // name is like 'reps1', 'reps3', etc.
+                const tupleKey = `${name}_tuple`;
+                const unitType = props.payload?.[tupleKey]?.unitType || "";
+                return [`${v}${unitType}`, `${name.replace("reps", "")}-rep`];
+              }}
             />
             <Legend
               // onClick={handleLegendClick} // remove this

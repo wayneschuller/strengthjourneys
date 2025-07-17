@@ -128,12 +128,9 @@ export function VisualizerReps({ data, liftType }) {
   });
 
   // State for toggling line visibility
-  const [visible, setVisible] = useState({ 1: true, 3: true, 5: true });
-
-  const handleLegendClick = (o) => {
-    const reps = Number(o.dataKey.replace("reps", ""));
-    setVisible((v) => ({ ...v, [reps]: !v[reps] }));
-  };
+  // Remove custom legend toggling state and handler
+  // const [visible, setVisible] = useState({ 1: true, 3: true, 5: true });
+  // const handleLegendClick = (payload) => { ... } // remove
 
   // Show skeleton if loading or no data yet
   if (isLoading || !parsedData) {
@@ -213,7 +210,7 @@ export function VisualizerReps({ data, liftType }) {
               ]}
             />
             <Legend
-              onClick={handleLegendClick}
+              // onClick={handleLegendClick} // remove this
               wrapperStyle={{ cursor: "pointer" }}
               formatter={(value) => {
                 const reps = value.replace("reps", "");
@@ -225,21 +222,19 @@ export function VisualizerReps({ data, liftType }) {
                 );
               }}
             />
-            {repTabs.map((t) =>
-              visible[t.reps] ? (
-                <Line
-                  key={t.reps}
-                  type="monotone"
-                  dataKey={`reps${t.reps}`}
-                  name={`reps${t.reps}`}
-                  stroke={t.color}
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={false}
-                  connectNulls={true}
-                />
-              ) : null,
-            )}
+            {repTabs.map((t) => (
+              <Line
+                key={t.reps}
+                type="monotone"
+                dataKey={`reps${t.reps}`}
+                name={`reps${t.reps}`}
+                stroke={t.color}
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+                connectNulls={true}
+              />
+            ))}
           </LineChart>
         </ChartContainer>
       </CardContent>

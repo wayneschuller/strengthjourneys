@@ -48,6 +48,7 @@ import {
 
 import { useSession } from "next-auth/react";
 import { getLiftColor } from "@/lib/get-lift-color";
+import { ChartContainer } from "@/components/ui/chart";
 
 // ────────────────────────────────────────────────────────────
 // util: collapse many sets on the same day → single best set
@@ -141,38 +142,48 @@ function RepLineChart({ data, liftType, reps, color }) {
     );
   }
 
+  // Chart config for ChartContainer (for theming/colors)
+  const chartConfig = {
+    [liftType]: {
+      label: liftType,
+      color: color || getLiftColor(liftType),
+    },
+  };
+
   return (
-    <LineChart
-      key={`chart-${reps}`} // stable key kills React duplicate warnings
-      width={900}
-      height={300}
-      data={chartData}
-      margin={{ top: 10, right: 30, left: 20, bottom: 20 }}
-    >
-      <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.08} />
-      <XAxis
-        dataKey="date"
-        tick={{ fill: "#d1d5db", fontSize: 12 }}
-        padding={{ left: 10, right: 10 }}
-      />
-      <YAxis
-        tick={{ fill: "#d1d5db", fontSize: 12 }}
-        domain={["auto", "auto"]}
-        width={60}
-      />
-      <Tooltip
-        contentStyle={{ background: "#111827", border: "none" }}
-        labelStyle={{ color: "#f3f4f6" }}
-        formatter={(v) => [`${v} kg`, "Weight"]}
-      />
-      <Line
-        type="monotone"
-        dataKey="weight"
-        stroke={color}
-        strokeWidth={2}
-        dot={false}
-        isAnimationActive={false}
-      />
-    </LineChart>
+    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+      <LineChart
+        key={`chart-${reps}`}
+        width={undefined}
+        height={undefined}
+        data={chartData}
+        margin={{ top: 10, right: 30, left: 20, bottom: 20 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.08} />
+        <XAxis
+          dataKey="date"
+          tick={{ fill: "#d1d5db", fontSize: 12 }}
+          padding={{ left: 10, right: 10 }}
+        />
+        <YAxis
+          tick={{ fill: "#d1d5db", fontSize: 12 }}
+          domain={["auto", "auto"]}
+          width={60}
+        />
+        <Tooltip
+          contentStyle={{ background: "#111827", border: "none" }}
+          labelStyle={{ color: "#f3f4f6" }}
+          formatter={(v) => [`${v} kg`, "Weight"]}
+        />
+        <Line
+          type="monotone"
+          dataKey="weight"
+          stroke={color}
+          strokeWidth={2}
+          dot={false}
+          isAnimationActive={false}
+        />
+      </LineChart>
+    </ChartContainer>
   );
 }

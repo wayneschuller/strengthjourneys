@@ -130,11 +130,19 @@ export const SpecialHtmlLabel = ({ x, y, value }) => {
   );
 };
 
-// Tooltip for VisualizerReps (singles, triples, fives)
+// Tooltip for VisualizerReps (singles, triples, fives chart card)
 export const VisualizerRepsTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   const tuple = payload[0].payload;
   const dateLabel = getReadableDateString(tuple.date);
+
+  // Extract liftType from the first available repsX_tuple
+  const firstRepTuple = [
+    tuple.reps1_tuple,
+    tuple.reps3_tuple,
+    tuple.reps5_tuple,
+  ].find(Boolean);
+  const liftType = firstRepTuple?.liftType;
 
   // Build info for singles, triples, fives
   const repInfos = [
@@ -150,14 +158,18 @@ export const VisualizerRepsTooltip = ({ active, payload, label }) => {
         weight: t.weight,
         unitType: t.unitType,
         rpe: t.rpe,
+        liftType: t.liftType, // Add liftType from the tuple
         // Add more fields as needed
       };
     })
     .filter(Boolean);
 
+  devLog(tuple);
+
   return (
     <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
+      {liftType && <p className="text-xs text-muted-foreground">{liftType}</p>}
       {repInfos.map((info) => (
         <div key={info.label}>
           <div className="flex flex-row items-center">

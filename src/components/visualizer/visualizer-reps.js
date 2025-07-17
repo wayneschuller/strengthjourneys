@@ -26,6 +26,7 @@
 import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { devLog } from "@/lib/processing-utils";
 
 import {
   ResponsiveContainer,
@@ -62,12 +63,12 @@ const getDailyBest = (data, liftType, repsWanted) => {
     if (s.liftType !== liftType || s.reps !== repsWanted) return;
 
     // → YYYY-MM-DD (guaranteed stable)
-    // const dateKey = new Date(s.session_date).toISOString().slice(0, 10);
     const dateKey = s.date;
 
     // keep the heaviest weight for that day
     if (!bestByDate[dateKey] || s.weight > bestByDate[dateKey].weight) {
-      bestByDate[dateKey] = { date: dateKey, weight: s.weight };
+      // Store the full tuple for future flexibility
+      bestByDate[dateKey] = { ...s, date: dateKey };
     }
   });
 
@@ -117,6 +118,7 @@ export function VisualizerReps({ data, liftType }) {
     repTabs.forEach((t) => {
       const found = chartDataByReps[t.reps].find((d) => d.date === date);
       entry[`reps${t.reps}`] = found ? found.weight : null;
+      entry[`reps${t.reps}_tuple`] = found || null; // Store the full tuple
     });
     // Add rechartsDate field for consistency with visualizer-processing.js
     entry.rechartsDate = Date.UTC(
@@ -126,6 +128,8 @@ export function VisualizerReps({ data, liftType }) {
     );
     return entry;
   });
+
+  devLog(chartData);
 
   // State for toggling line visibility
   // Remove custom legend toggling state and handler
@@ -200,6 +204,9 @@ export function VisualizerReps({ data, liftType }) {
               tick={{ fill: "#d1d5db", fontSize: 12 }}
               domain={["auto", "auto"]}
               width={60}
+              tickFormatter={
+                (value) => `${value}${chartData[0]?.unitType || ""}` // Default to first item's unitType
+              }
             />
             <Tooltip
               contentStyle={{ background: "#111827", border: "none" }}

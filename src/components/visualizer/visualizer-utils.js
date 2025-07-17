@@ -146,9 +146,9 @@ export const VisualizerRepsTooltip = ({ active, payload, label }) => {
 
   // Build info for singles, triples, fives
   const repInfos = [
-    { label: "Singles", reps: 1, color: "#ef4444" },
-    { label: "Triples", reps: 3, color: "#3b82f6" },
-    { label: "Fives", reps: 5, color: "#10b981" },
+    { label: "Single", reps: 1, color: "#ef4444" },
+    { label: "Triple", reps: 3, color: "#3b82f6" },
+    { label: "Five", reps: 5, color: "#10b981" },
   ]
     .map((tab) => {
       const t = tuple[`reps${tab.reps}_tuple`];
@@ -157,19 +157,22 @@ export const VisualizerRepsTooltip = ({ active, payload, label }) => {
         ...tab,
         weight: t.weight,
         unitType: t.unitType,
-        rpe: t.rpe,
         liftType: t.liftType, // Add liftType from the tuple
         // Add more fields as needed
       };
     })
     .filter(Boolean);
 
-  devLog(tuple);
+  // devLog(tuple);
 
   return (
     <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
-      <p className="font-bold">{dateLabel}</p>
-      {liftType && <p className="text-xs text-muted-foreground">{liftType}</p>}
+      <p className="font-bold">
+        {dateLabel}
+        {liftType && (
+          <div className="text-xs text-muted-foreground">{liftType}</div>
+        )}
+      </p>
       {repInfos.map((info) => (
         <div key={info.label}>
           <div className="flex flex-row items-center">
@@ -177,15 +180,22 @@ export const VisualizerRepsTooltip = ({ active, payload, label }) => {
               className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
               style={{ backgroundColor: info.color }}
             />
-            <div className="font-semibold">{info.label}</div>
+            <div className="font-semibold">
+              {info.label}
+              {typeof info.weight !== "undefined" && (
+                <span className="ml-2">
+                  {info.weight}
+                  {info.unitType}
+                </span>
+              )}
+            </div>
           </div>
-          <div>
-            {info.weight}
-            {info.unitType}
-            {info.rpe ? (
-              <span className="ml-1 text-muted-foreground">RPE {info.rpe}</span>
-            ) : null}
-          </div>
+          {/* RPE on its own line if present */}
+          {info.rpe ? (
+            <div className="ml-6 text-xs text-muted-foreground">
+              RPE {info.rpe}
+            </div>
+          ) : null}
         </div>
       ))}
     </div>

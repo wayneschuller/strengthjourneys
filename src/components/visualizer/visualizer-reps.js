@@ -151,6 +151,9 @@ export function VisualizerReps({ data, liftType }) {
 
   // Custom legend renderer
   function CustomLegend() {
+    // Helper to get dash pattern
+    const getDash = (reps) =>
+      reps === 1 ? "0" : reps === 3 ? "6 4" : reps === 5 ? "2 4" : "0";
     return (
       <div className="flex items-center justify-center gap-4 pt-3">
         {repTabs.map((t) => (
@@ -163,10 +166,23 @@ export function VisualizerReps({ data, liftType }) {
             aria-pressed={visible[t.reps] ? "true" : "false"}
             tabIndex={0}
           >
-            <span
-              className="h-2.5 w-2.5 rounded-[2px]"
-              style={{ backgroundColor: t.color, display: "inline-block" }}
-            />
+            <svg
+              width="28"
+              height="8"
+              viewBox="0 0 28 8"
+              className="inline-block align-middle"
+            >
+              <line
+                x1="2"
+                y1="4"
+                x2="26"
+                y2="4"
+                stroke={t.color}
+                strokeWidth="3"
+                strokeDasharray={getDash(t.reps)}
+                strokeLinecap="round"
+              />
+            </svg>
             <span style={{ color: t.color }}>{t.label}</span>
           </button>
         ))}
@@ -254,6 +270,15 @@ export function VisualizerReps({ data, liftType }) {
                       name={`reps${t.reps}`}
                       stroke={t.color}
                       strokeWidth={2}
+                      strokeDasharray={
+                        t.reps === 1
+                          ? "0"
+                          : t.reps === 3
+                            ? "6 4"
+                            : t.reps === 5
+                              ? "2 4"
+                              : "0"
+                      }
                       fill={`url(#fill`}
                       fillOpacity={0.4}
                       dot={false}

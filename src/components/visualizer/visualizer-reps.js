@@ -82,6 +82,9 @@ export function VisualizerReps({ data, liftType }) {
     },
   );
 
+  // Used to hide the y-axis and other UI elements on smaller screens
+  const { width } = useWindowSize({ initializeWithValue: false });
+
   // Add state for toggling line visibility
   const [visible, setVisible] = useState({ 1: true, 3: true, 5: true });
   const handleLegendClick = (reps) => {
@@ -207,6 +210,7 @@ export function VisualizerReps({ data, liftType }) {
                 tick={{ fill: "#d1d5db", fontSize: 12 }}
                 domain={["auto", "auto"]}
                 width={60}
+                hide={width < 1280}
                 tickFormatter={(value, index) => {
                   const d = chartData[index] || {};
                   const unitType =

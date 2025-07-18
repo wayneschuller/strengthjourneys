@@ -193,7 +193,8 @@ export function VisualizerReps({ data, liftType }) {
         ) : (
           <ChartContainer config={chartConfig} className="h-[300px] w-full">
             <AreaChart data={chartData} margin={{ left: 5, right: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.08} />
+              {/* <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.08} /> */}
+              <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="rechartsDate"
                 type="number"

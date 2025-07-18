@@ -167,12 +167,12 @@ export const VisualizerRepsTooltip = ({ active, payload, label }) => {
 
   return (
     <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
-      <p className="font-bold">
-        {dateLabel}
+      <div className="font-bold">
+        <span>{dateLabel}</span>
         {liftType && (
           <div className="text-xs text-muted-foreground">{liftType}</div>
         )}
-      </p>
+      </div>
       {repInfos.map((info) => (
         <div key={info.label} className="mb-1">
           <div className="flex flex-row items-center justify-between">

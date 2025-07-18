@@ -191,71 +191,78 @@ export function VisualizerReps({ data, liftType }) {
         ) : !allDates.length ? (
           <p className="text-muted-foreground">No data for {liftType}.</p>
         ) : (
-          <ChartContainer config={chartConfig} className="h-[300px] w-full">
-            <AreaChart data={chartData} margin={{ left: 5, right: 20 }}>
-              {/* <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.08} /> */}
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="rechartsDate"
-                type="number"
-                scale="time"
-                domain={[
-                  (dataMin) =>
-                    new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),
-                  (dataMax) =>
-                    new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
-                ]}
-                tickFormatter={formatXAxisDateString}
-              />
-              <YAxis
-                tick={{ fill: "#d1d5db", fontSize: 12 }}
-                domain={["auto", "auto"]}
-                width={60}
-                hide={width < 1280}
-                tickFormatter={(value, index) => {
-                  const d = chartData[index] || {};
-                  const unitType =
-                    d.reps1_tuple?.unitType ||
-                    d.reps3_tuple?.unitType ||
-                    d.reps5_tuple?.unitType ||
-                    "";
-                  return `${value}${unitType}`;
-                }}
-              />
-              <Tooltip content={<VisualizerRepsTooltip />} />
-              <Legend content={<CustomLegend />} />
-              {repTabs.map((t) =>
-                visible[t.reps] ? (
-                  <Area
-                    key={t.reps}
-                    type="monotone"
-                    dataKey={`reps${t.reps}`}
-                    name={`reps${t.reps}`}
-                    stroke={t.color}
-                    strokeWidth={2}
-                    dot={false}
-                    fill={`url(#fill`}
-                    fillOpacity={0.4}
-                    connectNulls={true}
-                  />
-                ) : null,
-              )}
-              {/* Year labels to show year start */}
-              {yearLabels.map(({ date, label }) => (
-                <ReferenceLine
-                  key={`label-${date}`}
-                  x={date} // Position label at January 1 of each year
-                  stroke="none" // No visible line
-                  label={{
-                    value: label,
-                    position: "insideBottom",
-                    fontSize: 14,
-                    fill: "#666",
-                  }}
+          <ResponsiveContainer width="100%" height={400} className="">
+            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <AreaChart data={chartData} margin={{ left: 5, right: 20 }}>
+                {/* <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.08} /> */}
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="rechartsDate"
+                  type="number"
+                  scale="time"
+                  domain={[
+                    (dataMin) =>
+                      new Date(dataMin).setDate(
+                        new Date(dataMin).getDate() - 2,
+                      ),
+                    (dataMax) =>
+                      new Date(dataMax).setDate(
+                        new Date(dataMax).getDate() + 2,
+                      ),
+                  ]}
+                  tickFormatter={formatXAxisDateString}
                 />
-              ))}
-            </AreaChart>
-          </ChartContainer>
+                <YAxis
+                  domain={["auto", "auto"]}
+                  hide={width < 1280}
+                  axisLine={false}
+                  tickFormatter={(value, index) => {
+                    const d = chartData[index] || {};
+                    const unitType =
+                      d.reps1_tuple?.unitType ||
+                      d.reps3_tuple?.unitType ||
+                      d.reps5_tuple?.unitType ||
+                      "";
+                    return `${value}${unitType}`;
+                  }}
+                  // width={60}
+                  // tick={{ fill: "#d1d5db", fontSize: 12 }}
+                />
+                <Tooltip content={<VisualizerRepsTooltip />} />
+                <Legend content={<CustomLegend />} />
+                {repTabs.map((t) =>
+                  visible[t.reps] ? (
+                    <Area
+                      key={t.reps}
+                      type="monotone"
+                      dataKey={`reps${t.reps}`}
+                      name={`reps${t.reps}`}
+                      stroke={t.color}
+                      strokeWidth={2}
+                      fill={`url(#fill`}
+                      fillOpacity={0.4}
+                      dot={false}
+                      connectNulls
+                    />
+                  ) : null,
+                )}
+                {/* Year labels to show year start */}
+                {yearLabels.map(({ date, label }) => (
+                  <ReferenceLine
+                    key={`label-${date}`}
+                    x={date} // Position label at January 1 of each year
+                    stroke="none" // No visible line
+                    label={{
+                      value: label,
+                      position: "insideBottom",
+                      fontSize: 14,
+                      fill: "#666",
+                    }}
+                  />
+                ))}
+              </AreaChart>
+            </ChartContainer>
+          </ResponsiveContainer>
         )}
       </CardContent>
     </Card>

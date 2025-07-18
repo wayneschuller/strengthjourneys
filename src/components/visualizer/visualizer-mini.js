@@ -10,15 +10,18 @@ import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { subMonths } from "date-fns";
+
 import {
   E1RMFormulaSelect,
   SpecialHtmlLabel,
   SingleLiftTooltipContent,
 } from "./visualizer-utils";
+
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ReferenceLine, ReferenceArea, ResponsiveContainer } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
+
 import {
   TimeRangeSelect,
   calculateThresholdDate,

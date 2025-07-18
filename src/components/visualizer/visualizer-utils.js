@@ -129,3 +129,76 @@ export const SpecialHtmlLabel = ({ x, y, value }) => {
     </foreignObject>
   );
 };
+
+// Tooltip for VisualizerReps (singles, triples, fives chart card)
+export const VisualizerRepsTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  const tuple = payload[0].payload;
+  const dateLabel = getReadableDateString(tuple.date);
+
+  // Extract liftType from the first available repsX_tuple
+  const firstRepTuple = [
+    tuple.reps1_tuple,
+    tuple.reps3_tuple,
+    tuple.reps5_tuple,
+  ].find(Boolean);
+  const liftType = firstRepTuple?.liftType;
+
+  // Build info for singles, triples, fives
+  const repInfos = [
+    { label: "Single", reps: 1, color: "#ef4444" },
+    { label: "Triple", reps: 3, color: "#3b82f6" },
+    { label: "Five", reps: 5, color: "#10b981" },
+  ]
+    .map((tab) => {
+      const t = tuple[`reps${tab.reps}_tuple`];
+      if (!t) return null;
+      return {
+        ...tab,
+        weight: t.weight,
+        unitType: t.unitType,
+        liftType: t.liftType, // Add liftType from the tuple
+        // Add more fields as needed
+      };
+    })
+    .filter(Boolean);
+
+  // devLog(tuple);
+
+  return (
+    <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+      <div className="font-bold">
+        <span>{dateLabel}</span>
+        {liftType && (
+          <div className="text-xs text-muted-foreground">{liftType}</div>
+        )}
+      </div>
+      {repInfos.map((info) => (
+        <div key={info.label} className="mb-1">
+          <div className="flex flex-row items-center justify-between">
+            <div className="flex flex-row items-center">
+              <div
+                className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                style={{ backgroundColor: info.color }}
+              />
+              <div className="font-semibold">{info.label}</div>
+            </div>
+            <div className="ml-4 whitespace-nowrap font-semibold">
+              {typeof info.weight !== "undefined" && (
+                <span>
+                  {info.weight}
+                  {info.unitType}
+                </span>
+              )}
+            </div>
+          </div>
+          {info.rpe ? (
+            <div className="ml-6 text-xs text-muted-foreground">
+              RPE {info.rpe}
+            </div>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+};

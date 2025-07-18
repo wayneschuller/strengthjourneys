@@ -64,7 +64,6 @@ export default function App({ Component, pageProps, session }) {
         </SessionProvider>
       </ThemeProvider>
       <Analytics />
-
       <SpeedInsights />
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}

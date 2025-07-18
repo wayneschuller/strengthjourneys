@@ -24,7 +24,6 @@ export function processVisualizerData(
   parsedData.forEach(
     ({ date, liftType, reps, weight, isGoal, unitType, label }) => {
       if (date < timeRange) return; // Skip if date out of range of chart
-
       if (isGoal) return; // FIXME: implement goal dashed lines at some point
 
       // Skip if the lift type is not selected

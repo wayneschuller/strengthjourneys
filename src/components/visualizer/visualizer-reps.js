@@ -228,7 +228,10 @@ export function VisualizerReps({ data, liftType }) {
                   // width={60}
                   // tick={{ fill: "#d1d5db", fontSize: 12 }}
                 />
-                <Tooltip content={<VisualizerRepsTooltip />} />
+                <Tooltip
+                  content={<VisualizerRepsTooltip />}
+                  position={{ y: 10 }}
+                />
                 <Legend content={<CustomLegend />} />
                 {repTabs.map((t) =>
                   visible[t.reps] ? (

@@ -183,7 +183,7 @@ export function VisualizerReps({ data, liftType }) {
         </CardTitle>
         <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
       </CardHeader>
-      <CardContent>
+      <CardContent className="pl-0 pr-2">
         {isLoading || !parsedData ? (
           <div className="flex h-[300px] w-full items-center justify-center">
             <Skeleton className="h-full w-full" />

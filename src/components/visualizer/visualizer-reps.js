@@ -4,29 +4,34 @@
 /**
  * visualizer-reps.js
  *
- * ShadCN-style tab component that visualises Singles, Triples, and Fives
+ * ShadCN-style card component with a chart that visualises Singles, Triples, and Fives
  * for a given lift.  It expects the already-parsed `data` array you use
  * elsewhere in Strength Journeys:
  *
  *   {
- *     session_date: "2025-07-11T09:32:00Z",
+ *     date: "2025-07-11",
  *     liftType: "Back Squat",
  *     reps: 5,
  *     weight: 112.5,
- *     // ...other props (rpe, e1rm, etc.)
+ *     unitType: "lb",
  *   }
  *
  * Assumptions
  * ───────────
  * • parsedData is chronologically ordered oldest→newest.
  * • You only need the heaviest set per calendar day for each rep range.
- * • The project already has shadcn/ui (Tabs) and Recharts installed.
  */
 
 import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
+
+import {
+  TimeRangeSelect,
+  calculateThresholdDate,
+  getTimeRangeDescription,
+} from "./time-range-select";
 
 import {
   ResponsiveContainer,

@@ -63,6 +63,7 @@ import { getYearLabels } from "./visualizer-processing";
 import { ChartContainer } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VisualizerRepsTooltip } from "./visualizer-utils";
+import { Badge } from "@/components/ui/badge";
 
 const repTabs = [
   { label: "Singles", reps: 1, color: "#ef4444" }, // red-500
@@ -177,9 +178,15 @@ export function VisualizerReps({ data, liftType }) {
   return (
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <CardTitle>
+        <CardTitle className="flex items-center gap-2">
           {authStatus === "unauthenticated" && "Demo Mode: "}
           {liftType} Singles, Triples and Fives
+          <Badge
+            variant="outline"
+            className="ml-2 bg-green-100 text-xs text-green-800"
+          >
+            New!
+          </Badge>
         </CardTitle>
         <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
       </CardHeader>

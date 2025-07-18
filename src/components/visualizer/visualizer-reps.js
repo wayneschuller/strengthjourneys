@@ -231,6 +231,11 @@ export function VisualizerReps({ data, liftType }) {
                 <Tooltip
                   content={<VisualizerRepsTooltip />}
                   position={{ y: 10 }}
+                  cursor={{
+                    stroke: "#8884d8",
+                    strokeWidth: 2,
+                    strokeDasharray: "5 5",
+                  }} // Recharts tooltip cursor is the vertical reference line that follows the mouse
                 />
                 <Legend content={<CustomLegend />} />
                 {repTabs.map((t) =>

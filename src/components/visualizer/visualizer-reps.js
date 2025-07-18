@@ -26,6 +26,7 @@ import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
+import { useLocalStorage, useWindowSize } from "usehooks-ts";
 
 import {
   TimeRangeSelect,
@@ -59,31 +60,6 @@ import { ChartContainer } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VisualizerRepsTooltip } from "./visualizer-utils";
 
-// ────────────────────────────────────────────────────────────
-// util: collapse many sets on the same day → single best set
-// ────────────────────────────────────────────────────────────
-const getDailyBest = (data, liftType, repsWanted) => {
-  const bestByDate = Object.create(null); // bare object map
-
-  data.forEach((s) => {
-    if (s.liftType !== liftType || s.reps !== repsWanted) return;
-
-    // → YYYY-MM-DD (guaranteed stable)
-    const dateKey = s.date;
-
-    // keep the heaviest weight for that day
-    if (!bestByDate[dateKey] || s.weight > bestByDate[dateKey].weight) {
-      // Store the full tuple for future flexibility
-      bestByDate[dateKey] = { ...s, date: dateKey };
-    }
-  });
-
-  // because incoming data is already chronological, Object.values()
-  // preserves order → no extra sort needed
-  return Object.values(bestByDate);
-};
-
-// Tab configuration – extendable
 const repTabs = [
   { label: "Singles", reps: 1, color: "#ef4444" }, // red-500
   { label: "Triples", reps: 3, color: "#3b82f6" }, // blue-500
@@ -93,6 +69,14 @@ const repTabs = [
 export function VisualizerReps({ data, liftType }) {
   const { parsedData, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
+
+  const [timeRange, setTimeRange] = useLocalStorage(
+    "SJ_timeRange",
+    "MAX", // MAX, 3M, 6M, 1Y, 2Y, 5Y etc.
+    {
+      initializeWithValue: false,
+    },
+  );
 
   // Compute daily bests for each rep range
   const chartDataByReps = useMemo(() => {
@@ -106,7 +90,13 @@ export function VisualizerReps({ data, liftType }) {
     }
     const result = {};
     repTabs.forEach((t) => {
-      result[t.reps] = getDailyBest(parsedData, liftType, t.reps);
+      result[t.reps] = getDailyBest(
+        parsedData,
+        liftType,
+        t.reps,
+        timeRange,
+        setTimeRange,
+      );
     });
     return result;
   }, [parsedData, liftType]);
@@ -262,4 +252,32 @@ export function VisualizerReps({ data, liftType }) {
 const formatXAxisDateString = (tickItem) => {
   const date = new Date(tickItem);
   return date.toLocaleString("en-US", { month: "short", day: "numeric" });
+};
+
+// ────────────────────────────────────────────────────────────
+// util: collapse many sets on the same day → single best set
+// ────────────────────────────────────────────────────────────
+const getDailyBest = (data, liftType, repsWanted, timeRange, setTimeRange) => {
+  const bestByDate = Object.create(null); // bare object map
+
+  const rangeFirstDate = calculateThresholdDate(timeRange, setTimeRange);
+
+  data.forEach((s) => {
+    if (s.liftType !== liftType || s.reps !== repsWanted) return;
+
+    if (s.date < rangeFirstDate) return; // Skip if date out of range of chart
+    if (s.isGoal) return; // FIXME: implement goal dashed lines at some point
+    // → YYYY-MM-DD (guaranteed stable)
+    const dateKey = s.date;
+
+    // keep the heaviest weight for that day
+    if (!bestByDate[dateKey] || s.weight > bestByDate[dateKey].weight) {
+      // Store the full tuple for future flexibility
+      bestByDate[dateKey] = { ...s, date: dateKey };
+    }
+  });
+
+  // because incoming data is already chronological, Object.values()
+  // preserves order → no extra sort needed
+  return Object.values(bestByDate);
 };

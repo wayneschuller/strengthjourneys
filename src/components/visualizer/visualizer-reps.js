@@ -58,7 +58,11 @@ import {
 } from "@/components/ui/card";
 
 import { useSession } from "next-auth/react";
-import { getLiftColor } from "@/lib/get-lift-color";
+import {
+  getLiftColor,
+  brightenHexColor,
+  saturateHexColor,
+} from "@/lib/get-lift-color";
 import { getYearLabels } from "./visualizer-processing";
 import { ChartContainer } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,14 +70,16 @@ import { VisualizerRepsTooltip } from "./visualizer-utils";
 import { Badge } from "@/components/ui/badge";
 
 const repTabs = [
-  { label: "Singles", reps: 1, color: "#ef4444" }, // red-500
-  { label: "Triples", reps: 3, color: "#3b82f6" }, // blue-500
-  { label: "Fives", reps: 5, color: "#10b981" }, // emerald-500
+  { label: "Singles", reps: 1 },
+  { label: "Triples", reps: 3 },
+  { label: "Fives", reps: 5 },
 ];
 
 export function VisualizerReps({ data, liftType }) {
   const { parsedData, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
+
+  const liftColor = getLiftColor(liftType);
 
   const [timeRange, setTimeRange] = useLocalStorage(
     "SJ_timeRange",
@@ -145,31 +151,50 @@ export function VisualizerReps({ data, liftType }) {
 
   // Chart config for ChartContainer (for theming/colors)
   const chartConfig = repTabs.reduce((acc, t) => {
-    acc[t.label] = { label: t.label, color: t.color };
+    acc[t.label] = { label: t.label, color: getLiftColor(liftType) };
     return acc;
   }, {});
 
   // Custom legend renderer
   function CustomLegend() {
+    // Helper to get dash pattern
+    const getDash = (reps) =>
+      reps === 1 ? "0" : reps === 3 ? "6 4" : reps === 5 ? "2 4" : "0";
     return (
       <div className="flex items-center justify-center gap-4 pt-3">
-        {repTabs.map((t) => (
-          <button
-            key={t.reps}
-            type="button"
-            onClick={() => handleLegendClick(t.reps)}
-            className={`flex items-center gap-1.5 transition-opacity focus:outline-none ${visible[t.reps] ? "opacity-100" : "opacity-50"}`}
-            style={{ cursor: "pointer" }}
-            aria-pressed={visible[t.reps] ? "true" : "false"}
-            tabIndex={0}
-          >
-            <span
-              className="h-2.5 w-2.5 rounded-[2px]"
-              style={{ backgroundColor: t.color, display: "inline-block" }}
-            />
-            <span style={{ color: t.color }}>{t.label}</span>
-          </button>
-        ))}
+        {repTabs.map((t) => {
+          const repColor = getRepColor(t.reps, liftColor);
+          return (
+            <button
+              key={t.reps}
+              type="button"
+              onClick={() => handleLegendClick(t.reps)}
+              className={`flex items-center gap-1.5 transition-opacity focus:outline-none ${visible[t.reps] ? "opacity-100" : "opacity-50"}`}
+              style={{ cursor: "pointer" }}
+              aria-pressed={visible[t.reps] ? "true" : "false"}
+              tabIndex={0}
+            >
+              <svg
+                width="28"
+                height="8"
+                viewBox="0 0 28 8"
+                className="inline-block align-middle"
+              >
+                <line
+                  x1="2"
+                  y1="4"
+                  x2="26"
+                  y2="4"
+                  stroke={repColor}
+                  strokeWidth="3"
+                  strokeDasharray={getDash(t.reps)}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span style={{ color: repColor }}>{t.label}</span>
+            </button>
+          );
+        })}
       </div>
     );
   }
@@ -201,6 +226,32 @@ export function VisualizerReps({ data, liftType }) {
           <ResponsiveContainer width="100%" height={400} className="">
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
               <AreaChart data={chartData} margin={{ left: 5, right: 20 }}>
+                <defs>
+                  {repTabs.map((t) => {
+                    const repColor = getRepColor(t.reps, liftColor);
+                    return (
+                      <linearGradient
+                        key={`fill-reps${t.reps}`}
+                        id={`fill-reps${t.reps}`}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor={repColor}
+                          stopOpacity={0.8}
+                        />
+                        <stop
+                          offset="50%"
+                          stopColor={repColor}
+                          stopOpacity={0.05}
+                        />
+                      </linearGradient>
+                    );
+                  })}
+                </defs>
                 {/* <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.08} /> */}
                 <CartesianGrid vertical={false} />
                 <XAxis
@@ -245,22 +296,32 @@ export function VisualizerReps({ data, liftType }) {
                   }} // Recharts tooltip cursor is the vertical reference line that follows the mouse
                 />
                 <Legend content={<CustomLegend />} />
-                {repTabs.map((t) =>
-                  visible[t.reps] ? (
+                {repTabs.map((t) => {
+                  const repColor = getRepColor(t.reps, liftColor);
+                  return visible[t.reps] ? (
                     <Area
                       key={t.reps}
                       type="monotone"
                       dataKey={`reps${t.reps}`}
                       name={`reps${t.reps}`}
-                      stroke={t.color}
+                      stroke={repColor}
                       strokeWidth={2}
-                      fill={`url(#fill`}
+                      strokeDasharray={
+                        t.reps === 1
+                          ? "0"
+                          : t.reps === 3
+                            ? "6 4"
+                            : t.reps === 5
+                              ? "2 4"
+                              : "0"
+                      }
+                      fill={`url(#fill-reps${t.reps})`}
                       fillOpacity={0.4}
                       dot={false}
                       connectNulls
                     />
-                  ) : null,
-                )}
+                  ) : null;
+                })}
                 {/* Year labels to show year start */}
                 {yearLabels.map(({ date, label }) => (
                   <ReferenceLine
@@ -317,3 +378,10 @@ const getDailyBest = (data, liftType, repsWanted, timeRange, setTimeRange) => {
   // preserves order → no extra sort needed
   return Object.values(bestByDate);
 };
+
+function getRepColor(reps, liftColor) {
+  if (reps === 1) return liftColor;
+  if (reps === 3) return brightenHexColor(liftColor, 1.25);
+  if (reps === 5) return saturateHexColor(liftColor, 1.3);
+  return liftColor;
+}

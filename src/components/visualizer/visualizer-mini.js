@@ -141,7 +141,7 @@ export function VisualizerMini({ liftType }) {
     [parsedData, e1rmFormula, timeRange, showAllData],
   );
 
-  if (authStatus !== "authenticated") return; // Don't show at all for anon mode
+  // if (authStatus !== "authenticated") return; // Don't show at all for anon mode
   // devLog(chartData);
 
   const yearLabels = getYearLabels(chartData);

@@ -45,6 +45,7 @@ import {
   Line,
   Area,
   Legend,
+  ReferenceLine,
 } from "recharts";
 
 import {
@@ -58,6 +59,7 @@ import {
 
 import { useSession } from "next-auth/react";
 import { getLiftColor } from "@/lib/get-lift-color";
+import { getYearLabels } from "./visualizer-processing";
 import { ChartContainer } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VisualizerRepsTooltip } from "./visualizer-utils";
@@ -134,6 +136,8 @@ export function VisualizerReps({ data, liftType }) {
   });
 
   // devLog(chartData);
+
+  const yearLabels = getYearLabels(chartData);
 
   // Chart config for ChartContainer (for theming/colors)
   const chartConfig = repTabs.reduce((acc, t) => {
@@ -231,6 +235,20 @@ export function VisualizerReps({ data, liftType }) {
                   />
                 ) : null,
               )}
+              {/* Year labels to show year start */}
+              {yearLabels.map(({ date, label }) => (
+                <ReferenceLine
+                  key={`label-${date}`}
+                  x={date} // Position label at January 1 of each year
+                  stroke="none" // No visible line
+                  label={{
+                    value: label,
+                    position: "insideBottom",
+                    fontSize: 14,
+                    fill: "#666",
+                  }}
+                />
+              ))}
             </AreaChart>
           </ChartContainer>
         )}

@@ -99,7 +99,7 @@ export function VisualizerReps({ data, liftType }) {
       );
     });
     return result;
-  }, [parsedData, liftType]);
+  }, [parsedData, liftType, timeRange]);
 
   // Merge all dates for X axis
   const allDates = Array.from(
@@ -170,11 +170,12 @@ export function VisualizerReps({ data, liftType }) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo Mode: "}
           {liftType} Singles, Triples and Fives Progression
         </CardTitle>
+        <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">

@@ -37,11 +37,13 @@ import {
 import {
   ResponsiveContainer,
   LineChart,
+  AreaChart,
   CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
   Line,
+  Area,
   Legend,
 } from "recharts";
 
@@ -137,7 +139,7 @@ export function VisualizerReps({ data, liftType }) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Singles, Triples and Fives Progression</CardTitle>
+          <CardTitle>Singles, Triples and Fives</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex h-[300px] w-full items-center justify-center">
@@ -153,7 +155,7 @@ export function VisualizerReps({ data, liftType }) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Singles, Triples and Fives Progression</CardTitle>
+          <CardTitle>Singles, Triples and Fives</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">No data for {liftType}.</p>
@@ -173,15 +175,15 @@ export function VisualizerReps({ data, liftType }) {
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo Mode: "}
-          {liftType} Singles, Triples and Fives Progression
+          {liftType} Singles, Triples and Fives
         </CardTitle>
         <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
-          <LineChart
-            width={undefined}
-            height={undefined}
+          <AreaChart
+            // width={undefined}
+            // height={undefined}
             data={chartData}
             margin={{ left: 5, right: 20 }}
           >
@@ -230,7 +232,7 @@ export function VisualizerReps({ data, liftType }) {
               }}
             />
             {repTabs.map((t) => (
-              <Line
+              <Area
                 key={t.reps}
                 type="monotone"
                 dataKey={`reps${t.reps}`}
@@ -238,11 +240,13 @@ export function VisualizerReps({ data, liftType }) {
                 stroke={t.color}
                 strokeWidth={2}
                 dot={false}
-                isAnimationActive={false}
+                // isAnimationActive={false}
+                fill={`url(#fill`}
+                fillOpacity={0.4}
                 connectNulls={true}
               />
             ))}
-          </LineChart>
+          </AreaChart>
         </ChartContainer>
       </CardContent>
     </Card>

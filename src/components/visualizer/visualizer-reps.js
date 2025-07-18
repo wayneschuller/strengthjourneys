@@ -80,6 +80,12 @@ export function VisualizerReps({ data, liftType }) {
     },
   );
 
+  // Add state for toggling line visibility
+  const [visible, setVisible] = useState({ 1: true, 3: true, 5: true });
+  const handleLegendClick = (reps) => {
+    setVisible((prev) => ({ ...prev, [reps]: !prev[reps] }));
+  };
+
   // Compute daily bests for each rep range
   const chartDataByReps = useMemo(() => {
     if (!parsedData) {
@@ -129,11 +135,6 @@ export function VisualizerReps({ data, liftType }) {
 
   devLog(chartData);
 
-  // State for toggling line visibility
-  // Remove custom legend toggling state and handler
-  // const [visible, setVisible] = useState({ 1: true, 3: true, 5: true });
-  // const handleLegendClick = (payload) => { ... } // remove
-
   // Show skeleton if loading or no data yet
   if (isLoading || !parsedData) {
     return (
@@ -170,6 +171,31 @@ export function VisualizerReps({ data, liftType }) {
     return acc;
   }, {});
 
+  // Custom legend renderer
+  function CustomLegend() {
+    return (
+      <div className="flex items-center justify-center gap-4 pt-3">
+        {repTabs.map((t) => (
+          <button
+            key={t.reps}
+            type="button"
+            onClick={() => handleLegendClick(t.reps)}
+            className={`flex items-center gap-1.5 transition-opacity focus:outline-none ${visible[t.reps] ? "opacity-100" : "opacity-50"}`}
+            style={{ cursor: "pointer" }}
+            aria-pressed={visible[t.reps] ? "true" : "false"}
+            tabIndex={0}
+          >
+            <span
+              className="h-2.5 w-2.5 rounded-[2px]"
+              style={{ backgroundColor: t.color, display: "inline-block" }}
+            />
+            <span style={{ color: t.color }}>{t.label}</span>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
@@ -181,19 +207,12 @@ export function VisualizerReps({ data, liftType }) {
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
-          <AreaChart
-            // width={undefined}
-            // height={undefined}
-            data={chartData}
-            margin={{ left: 5, right: 20 }}
-          >
+          <AreaChart data={chartData} margin={{ left: 5, right: 20 }}>
             <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.08} />
             <XAxis
               dataKey="rechartsDate"
               type="number"
               scale="time"
-              // tick={{ fill: "#d1d5db", fontSize: 12 }}
-              // padding={{ left: 10, right: 10 }}
               domain={[
                 (dataMin) =>
                   new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),
@@ -207,7 +226,6 @@ export function VisualizerReps({ data, liftType }) {
               domain={["auto", "auto"]}
               width={60}
               tickFormatter={(value, index) => {
-                // Try to find unitType from one of the tuple data for this tick's chartData point
                 const d = chartData[index] || {};
                 const unitType =
                   d.reps1_tuple?.unitType ||
@@ -218,34 +236,23 @@ export function VisualizerReps({ data, liftType }) {
               }}
             />
             <Tooltip content={<VisualizerRepsTooltip />} />
-            <Legend
-              // onClick={handleLegendClick} // remove this
-              wrapperStyle={{ cursor: "pointer" }}
-              formatter={(value) => {
-                const reps = value.replace("reps", "");
-                const tab = repTabs.find((t) => String(t.reps) === reps);
-                return (
-                  <span className="ml-1" style={{ color: tab?.color }}>
-                    {tab?.label}
-                  </span>
-                );
-              }}
-            />
-            {repTabs.map((t) => (
-              <Area
-                key={t.reps}
-                type="monotone"
-                dataKey={`reps${t.reps}`}
-                name={`reps${t.reps}`}
-                stroke={t.color}
-                strokeWidth={2}
-                dot={false}
-                // isAnimationActive={false}
-                fill={`url(#fill`}
-                fillOpacity={0.4}
-                connectNulls={true}
-              />
-            ))}
+            <Legend content={<CustomLegend />} />
+            {repTabs.map((t) =>
+              visible[t.reps] ? (
+                <Area
+                  key={t.reps}
+                  type="monotone"
+                  dataKey={`reps${t.reps}`}
+                  name={`reps${t.reps}`}
+                  stroke={t.color}
+                  strokeWidth={2}
+                  dot={false}
+                  fill={`url(#fill`}
+                  fillOpacity={0.4}
+                  connectNulls={true}
+                />
+              ) : null,
+            )}
           </AreaChart>
         </ChartContainer>
       </CardContent>

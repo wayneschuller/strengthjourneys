@@ -133,37 +133,7 @@ export function VisualizerReps({ data, liftType }) {
     return entry;
   });
 
-  devLog(chartData);
-
-  // Show skeleton if loading or no data yet
-  if (isLoading || !parsedData) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Singles, Triples and Fives</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex h-[300px] w-full items-center justify-center">
-            <Skeleton className="h-full w-full" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // If no data at all
-  if (!allDates.length) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Singles, Triples and Fives</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">No data for {liftType}.</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // devLog(chartData);
 
   // Chart config for ChartContainer (for theming/colors)
   const chartConfig = repTabs.reduce((acc, t) => {
@@ -196,6 +166,7 @@ export function VisualizerReps({ data, liftType }) {
     );
   }
 
+  // Always render a single Card, with conditional CardContent
   return (
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
@@ -206,55 +177,63 @@ export function VisualizerReps({ data, liftType }) {
         <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[300px] w-full">
-          <AreaChart data={chartData} margin={{ left: 5, right: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.08} />
-            <XAxis
-              dataKey="rechartsDate"
-              type="number"
-              scale="time"
-              domain={[
-                (dataMin) =>
-                  new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),
-                (dataMax) =>
-                  new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
-              ]}
-              tickFormatter={formatXAxisDateString}
-            />
-            <YAxis
-              tick={{ fill: "#d1d5db", fontSize: 12 }}
-              domain={["auto", "auto"]}
-              width={60}
-              tickFormatter={(value, index) => {
-                const d = chartData[index] || {};
-                const unitType =
-                  d.reps1_tuple?.unitType ||
-                  d.reps3_tuple?.unitType ||
-                  d.reps5_tuple?.unitType ||
-                  "";
-                return `${value}${unitType}`;
-              }}
-            />
-            <Tooltip content={<VisualizerRepsTooltip />} />
-            <Legend content={<CustomLegend />} />
-            {repTabs.map((t) =>
-              visible[t.reps] ? (
-                <Area
-                  key={t.reps}
-                  type="monotone"
-                  dataKey={`reps${t.reps}`}
-                  name={`reps${t.reps}`}
-                  stroke={t.color}
-                  strokeWidth={2}
-                  dot={false}
-                  fill={`url(#fill`}
-                  fillOpacity={0.4}
-                  connectNulls={true}
-                />
-              ) : null,
-            )}
-          </AreaChart>
-        </ChartContainer>
+        {isLoading || !parsedData ? (
+          <div className="flex h-[300px] w-full items-center justify-center">
+            <Skeleton className="h-full w-full" />
+          </div>
+        ) : !allDates.length ? (
+          <p className="text-muted-foreground">No data for {liftType}.</p>
+        ) : (
+          <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <AreaChart data={chartData} margin={{ left: 5, right: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.08} />
+              <XAxis
+                dataKey="rechartsDate"
+                type="number"
+                scale="time"
+                domain={[
+                  (dataMin) =>
+                    new Date(dataMin).setDate(new Date(dataMin).getDate() - 2),
+                  (dataMax) =>
+                    new Date(dataMax).setDate(new Date(dataMax).getDate() + 2),
+                ]}
+                tickFormatter={formatXAxisDateString}
+              />
+              <YAxis
+                tick={{ fill: "#d1d5db", fontSize: 12 }}
+                domain={["auto", "auto"]}
+                width={60}
+                tickFormatter={(value, index) => {
+                  const d = chartData[index] || {};
+                  const unitType =
+                    d.reps1_tuple?.unitType ||
+                    d.reps3_tuple?.unitType ||
+                    d.reps5_tuple?.unitType ||
+                    "";
+                  return `${value}${unitType}`;
+                }}
+              />
+              <Tooltip content={<VisualizerRepsTooltip />} />
+              <Legend content={<CustomLegend />} />
+              {repTabs.map((t) =>
+                visible[t.reps] ? (
+                  <Area
+                    key={t.reps}
+                    type="monotone"
+                    dataKey={`reps${t.reps}`}
+                    name={`reps${t.reps}`}
+                    stroke={t.color}
+                    strokeWidth={2}
+                    dot={false}
+                    fill={`url(#fill`}
+                    fillOpacity={0.4}
+                    connectNulls={true}
+                  />
+                ) : null,
+              )}
+            </AreaChart>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   );

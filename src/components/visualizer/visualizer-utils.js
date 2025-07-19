@@ -1,6 +1,10 @@
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
-import { getLiftColor } from "@/lib/get-lift-color";
+import {
+  getLiftColor,
+  brightenHexColor,
+  saturateHexColor,
+} from "@/lib/get-lift-color";
 import {
   Select,
   SelectContent,
@@ -130,6 +134,15 @@ export const SpecialHtmlLabel = ({ x, y, value }) => {
   );
 };
 
+// Helper to get rep color for tooltip, matching chart logic
+function getRepColor(reps, liftType) {
+  const liftColor = getLiftColor(liftType);
+  if (reps === 1) return liftColor;
+  if (reps === 3) return brightenHexColor(liftColor, 1.25);
+  if (reps === 5) return saturateHexColor(liftColor, 1.3);
+  return liftColor;
+}
+
 // Tooltip for VisualizerReps (singles, triples, fives chart card)
 export const VisualizerRepsTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -146,9 +159,9 @@ export const VisualizerRepsTooltip = ({ active, payload, label }) => {
 
   // Build info for singles, triples, fives
   const repInfos = [
-    { label: "Single", reps: 1, color: "#ef4444" },
-    { label: "Triple", reps: 3, color: "#3b82f6" },
-    { label: "Five", reps: 5, color: "#10b981" },
+    { label: "Single", reps: 1 },
+    { label: "Triple", reps: 3 },
+    { label: "Five", reps: 5 },
   ]
     .map((tab) => {
       const t = tuple[`reps${tab.reps}_tuple`];
@@ -158,6 +171,7 @@ export const VisualizerRepsTooltip = ({ active, payload, label }) => {
         weight: t.weight,
         unitType: t.unitType,
         liftType: t.liftType, // Add liftType from the tuple
+        color: getRepColor(tab.reps, t.liftType),
         // Add more fields as needed
       };
     })

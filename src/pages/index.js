@@ -19,6 +19,10 @@ import {
   Anvil,
   ChartColumnDecreasing,
   Bus,
+  Crown,
+  Shield,
+  Skull,
+  Luggage,
 } from "lucide-react";
 
 import {
@@ -33,8 +37,9 @@ import { GettingStartedCard } from "@/components/instructions-cards";
 import { SloganCarousel } from "@/components/slogan-carousel";
 import { Testimonials } from "@/components/testimonials";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+import { Separator } from "@/components/ui/separator";
 
-//
+// The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [
   {
     href: "/analyzer",
@@ -112,6 +117,38 @@ export const featurePages = [
   },
 ];
 
+// The main barbell lifts are the main lifts that have dedicated pages
+// Defined again here for static generation SEO benefits
+// One day we might add power clean and power snatch.
+const mainBarbellLifts = [
+  {
+    slug: "barbell-squat-insights",
+    liftType: "Back Squat",
+    liftDescription:
+      "A barbell squat to full depth, resting across the upper back.",
+    IconComponent: Crown,
+  },
+  {
+    slug: "barbell-bench-press-insights",
+    liftType: "Bench Press",
+    liftDescription:
+      "A horizontal press from the chest while lying on a bench.",
+    IconComponent: Shield,
+  },
+  {
+    slug: "barbell-deadlift-insights",
+    liftType: "Deadlift",
+    liftDescription: "Lifting a barbell from the floor to a standing lockout.",
+    IconComponent: Skull,
+  },
+  {
+    slug: "barbell-strict-press-insights",
+    liftType: "Strict Press",
+    liftDescription: "A standing overhead press with no leg drive.",
+    IconComponent: Luggage,
+  },
+];
+
 // {
 //   href: "/articles/why-it-s-good-to-be-a-barbell-weirdo",
 //   title: `Feature Article: Why It's Good To Be A Barbell Weirdo`,
@@ -175,9 +212,15 @@ export default function Home() {
 
         <PageDescription />
 
-        {/* <BigFourLiftCards /> */}
+        <h2 class="mb-4 mt-8 text-xl font-semibold">
+          🏋️ The Big Four Barbell Lifts
+        </h2>
 
-        <div className="my-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-3 2xl:grid-cols-4">
+        <BigFourLiftCards />
+        <Separator className="my-8" />
+
+        <h2 class="mt-8 text-xl font-semibold">🛠️ Strength Insights & Tools</h2>
+        <div className="mb-16 mt-4 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {featurePages.map((card, index) => (
             <FeatureCard key={index} {...card} />
           ))}
@@ -203,51 +246,64 @@ const PageDescription = () => (
     >
       open source
     </a>{" "}
-    web app with creative visualization and analysis of your{" "}
+    dashboard that turns your{" "}
     <a
       className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
       target="_blank"
       href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
     >
-      Google Sheet
+      Google Sheet lifting log
     </a>{" "}
-    barbell lifting data.
+    into powerful, visual insights for barbell training.
   </h2>
 );
 
-const FeatureCard = ({ href, title, description, IconComponent }) => (
-  <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
-    <Link href={href}>
-      <CardHeader className="min-h-28">
-        <CardTitle className="">{title}</CardTitle>
-        <CardDescription className="h-[2rem]">{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex justify-center">
-        <IconComponent size={64} strokeWidth={1.25} />
-      </CardContent>
-    </Link>
-  </Card>
-);
+function FeatureCard({ href, title, description, IconComponent }) {
+  return (
+    <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
+      <Link href={href}>
+        <CardHeader className="min-h-28">
+          <CardTitle className="">{title}</CardTitle>
+          <CardDescription className="h-[2rem]">{description}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <IconComponent size={64} strokeWidth={1.25} />
+        </CardContent>
+      </Link>
+    </Card>
+  );
+}
 
 function BigFourLiftCards() {
-  const lifts = bigFourLiftInsightData;
+  const lifts = mainBarbellLifts;
+
+  const bigFourDiagrams = {
+    "Back Squat": "/back_squat.svg",
+    "Bench Press": "/bench_press.svg",
+    Deadlift: "/deadlift.svg",
+    "Strict Press": "/strict_press.svg",
+  };
 
   return (
     <div className="grid grid-cols-2 gap-6 md:grid-cols-2 lg:grid-cols-4">
       {lifts.map((lift) => (
         <Card
           key={lift.slug}
-          className="flex flex-col ring-0 ring-black hover:ring-1 dark:ring-white"
+          className="group shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white"
         >
           <Link href={`/${lift.slug}`}>
-            <CardHeader>
-              <CardTitle>
-                {/* <DynamicIcon iconName={lift.liftIcon} className="mr-2" /> */}
-                {lift.liftType}
-              </CardTitle>
+            <CardHeader className="min-h-28">
+              <CardTitle>{lift.liftType}</CardTitle>
+              <CardDescription className="h-[2rem]">
+                {lift.liftDescription}
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <p>{lift.liftDescription}</p>
+            <CardContent className="flex justify-center p-2">
+              <img
+                src={bigFourDiagrams[lift.liftType]}
+                alt={`${lift.liftType} diagram`}
+                className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
+              />
             </CardContent>
           </Link>
         </Card>

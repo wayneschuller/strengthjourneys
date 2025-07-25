@@ -277,16 +277,36 @@ function FeatureCard({ href, title, description, IconComponent }) {
 function BigFourLiftCards() {
   const lifts = mainBarbellLifts;
 
+  const bigFourDiagrams = {
+    "Back Squat": "/back_squat.svg",
+    "Bench Press": "/bench_press.svg",
+    Deadlift: "/deadlift.svg",
+    "Strict Press": "/strict_press.svg",
+  };
+
   return (
     <div className="grid grid-cols-2 gap-6 md:grid-cols-2 lg:grid-cols-4">
       {lifts.map((lift) => (
-        <FeatureCard
+        <Card
           key={lift.slug}
-          href={`/${lift.slug}`}
-          title={lift.liftType}
-          description={lift.liftDescription}
-          IconComponent={lift.IconComponent}
-        />
+          className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white"
+        >
+          <Link href={`/${lift.slug}`}>
+            <CardHeader className="min-h-28">
+              <CardTitle>{lift.liftType}</CardTitle>
+              <CardDescription className="h-[2rem]">
+                {lift.liftDescription}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <img
+                src={bigFourDiagrams[lift.liftType]}
+                alt={`${lift.liftType} diagram`}
+                className="h-24 w-24 object-contain"
+              />
+            </CardContent>
+          </Link>
+        </Card>
       ))}
     </div>
   );

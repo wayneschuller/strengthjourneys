@@ -212,14 +212,15 @@ export default function Home() {
 
         <PageDescription />
 
-        <h2 class="mb-4 mt-8 text-xl font-semibold text-white">
-          The Big Four Barbell Lifts
+        <h2 class="mb-4 mt-8 text-xl font-semibold">
+          🏋️ The Big Four Barbell Lifts
         </h2>
 
         <BigFourLiftCards />
         <Separator className="my-8" />
 
-        <div className="my-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-3 2xl:grid-cols-4">
+        <h2 class="mt-8 text-xl font-semibold">🛠️ Strength Insights & Tools</h2>
+        <div className="mb-16 mt-4 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {featurePages.map((card, index) => (
             <FeatureCard key={index} {...card} />
           ))}

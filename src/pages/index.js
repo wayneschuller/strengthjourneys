@@ -19,6 +19,10 @@ import {
   Anvil,
   ChartColumnDecreasing,
   Bus,
+  Crown,
+  Shield,
+  Skull,
+  Luggage,
 } from "lucide-react";
 
 import {
@@ -34,7 +38,7 @@ import { SloganCarousel } from "@/components/slogan-carousel";
 import { Testimonials } from "@/components/testimonials";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
-//
+// The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [
   {
     href: "/analyzer",
@@ -112,6 +116,38 @@ export const featurePages = [
   },
 ];
 
+// The main barbell lifts are the main lifts that have dedicated pages
+// Defined again here for static generation SEO benefits
+// One day we might add power clean and power snatch.
+const mainBarbellLifts = [
+  {
+    slug: "barbell-squat-insights",
+    liftType: "Back Squat",
+    liftDescription:
+      "A barbell squat to full depth, resting across the upper back.",
+    IconComponent: Crown,
+  },
+  {
+    slug: "barbell-bench-press-insights",
+    liftType: "Bench Press",
+    liftDescription:
+      "A horizontal press from the chest while lying on a bench.",
+    IconComponent: Shield,
+  },
+  {
+    slug: "barbell-deadlift-insights",
+    liftType: "Deadlift",
+    liftDescription: "Lifting a barbell from the floor to a standing lockout.",
+    IconComponent: Skull,
+  },
+  {
+    slug: "barbell-strict-press-insights",
+    liftType: "Strict Press",
+    liftDescription: "A standing overhead press with no leg drive.",
+    IconComponent: Luggage,
+  },
+];
+
 // {
 //   href: "/articles/why-it-s-good-to-be-a-barbell-weirdo",
 //   title: `Feature Article: Why It's Good To Be A Barbell Weirdo`,
@@ -175,7 +211,7 @@ export default function Home() {
 
         <PageDescription />
 
-        {/* <BigFourLiftCards /> */}
+        <BigFourLiftCards />
 
         <div className="my-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-3 2xl:grid-cols-4">
           {featurePages.map((card, index) => (
@@ -215,42 +251,35 @@ const PageDescription = () => (
   </h2>
 );
 
-const FeatureCard = ({ href, title, description, IconComponent }) => (
-  <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
-    <Link href={href}>
-      <CardHeader className="min-h-28">
-        <CardTitle className="">{title}</CardTitle>
-        <CardDescription className="h-[2rem]">{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex justify-center">
-        <IconComponent size={64} strokeWidth={1.25} />
-      </CardContent>
-    </Link>
-  </Card>
-);
+function FeatureCard({ href, title, description, IconComponent }) {
+  return (
+    <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
+      <Link href={href}>
+        <CardHeader className="min-h-28">
+          <CardTitle className="">{title}</CardTitle>
+          <CardDescription className="h-[2rem]">{description}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <IconComponent size={64} strokeWidth={1.25} />
+        </CardContent>
+      </Link>
+    </Card>
+  );
+}
 
 function BigFourLiftCards() {
-  const lifts = bigFourLiftInsightData;
+  const lifts = mainBarbellLifts;
 
   return (
     <div className="grid grid-cols-2 gap-6 md:grid-cols-2 lg:grid-cols-4">
       {lifts.map((lift) => (
-        <Card
+        <FeatureCard
           key={lift.slug}
-          className="flex flex-col ring-0 ring-black hover:ring-1 dark:ring-white"
-        >
-          <Link href={`/${lift.slug}`}>
-            <CardHeader>
-              <CardTitle>
-                {/* <DynamicIcon iconName={lift.liftIcon} className="mr-2" /> */}
-                {lift.liftType}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>{lift.liftDescription}</p>
-            </CardContent>
-          </Link>
-        </Card>
+          href={`/${lift.slug}`}
+          title={lift.liftType}
+          description={lift.liftDescription}
+          IconComponent={lift.IconComponent}
+        />
       ))}
     </div>
   );

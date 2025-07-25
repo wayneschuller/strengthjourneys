@@ -37,6 +37,7 @@ import { GettingStartedCard } from "@/components/instructions-cards";
 import { SloganCarousel } from "@/components/slogan-carousel";
 import { Testimonials } from "@/components/testimonials";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+import { Separator } from "@/components/ui/separator";
 
 // The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [
@@ -211,7 +212,12 @@ export default function Home() {
 
         <PageDescription />
 
+        <h2 class="mb-4 mt-8 text-xl font-semibold text-white">
+          The Big Four Barbell Lifts
+        </h2>
+
         <BigFourLiftCards />
+        <Separator className="my-8" />
 
         <div className="my-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:my-16 lg:grid-cols-3 2xl:grid-cols-4">
           {featurePages.map((card, index) => (

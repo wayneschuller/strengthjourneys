@@ -203,15 +203,15 @@ const PageDescription = () => (
     >
       open source
     </a>{" "}
-    web app with creative visualization and analysis of your{" "}
+    dashboard that turns your{" "}
     <a
       className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
       target="_blank"
       href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
     >
-      Google Sheet
+      Google Sheet lifting log
     </a>{" "}
-    barbell lifting data.
+    into powerful, visual insights for barbell training.
   </h2>
 );
 

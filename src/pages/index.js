@@ -289,7 +289,7 @@ function BigFourLiftCards() {
       {lifts.map((lift) => (
         <Card
           key={lift.slug}
-          className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white"
+          className="group shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white"
         >
           <Link href={`/${lift.slug}`}>
             <CardHeader className="min-h-28">
@@ -302,7 +302,7 @@ function BigFourLiftCards() {
               <img
                 src={bigFourDiagrams[lift.liftType]}
                 alt={`${lift.liftType} diagram`}
-                className="h-36 w-36 object-contain"
+                className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
               />
             </CardContent>
           </Link>

@@ -298,11 +298,11 @@ function BigFourLiftCards() {
                 {lift.liftDescription}
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex justify-center">
+            <CardContent className="flex justify-center p-2">
               <img
                 src={bigFourDiagrams[lift.liftType]}
                 alt={`${lift.liftType} diagram`}
-                className="h-24 w-24 object-contain"
+                className="h-36 w-36 object-contain"
               />
             </CardContent>
           </Link>

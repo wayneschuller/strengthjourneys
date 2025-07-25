@@ -78,6 +78,12 @@ const inspirationalQuotes = [
     author: "Ed Coan",
     URL: null,
   },
+  {
+    quote:
+      "No man has the right to be an amateur in the matter of physical training. It is a shame for a man to grow old without seeing the beauty and strength of which his body is capable.",
+    author: "Socrates",
+    URL: null,
+  },
 ];
 
 const getRandomQuote = () => {

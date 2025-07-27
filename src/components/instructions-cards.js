@@ -178,7 +178,7 @@ export function GettingStartedCard() {
           >
             strict press
           </Link>
-          . Usually inside a gym.
+          . Just log any measurable lift movement and we can track it.
         </div>
         <div className="flex justify-center">
           <ArrowBigRight
@@ -193,7 +193,8 @@ export function GettingStartedCard() {
           />
         </div>
         <div className="">
-          Record your lifting progress in Google Sheets.
+          Record your lifting progress in Google Sheets. Use simple columns:
+          date, lift type, reps, weight. One set per row.
           <div>
             (
             <a

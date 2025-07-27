@@ -260,13 +260,13 @@ const PageDescription = () => (
 
 function FeatureCard({ href, title, description, IconComponent }) {
   return (
-    <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
+    <Card className="group shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
       <Link href={href}>
         <CardHeader className="min-h-28">
           <CardTitle className="">{title}</CardTitle>
           <CardDescription className="h-[2rem]">{description}</CardDescription>
         </CardHeader>
-        <CardContent className="flex justify-center">
+        <CardContent className="flex justify-center transition-transform group-hover:scale-110">
           <IconComponent size={64} strokeWidth={1.25} />
         </CardContent>
       </Link>

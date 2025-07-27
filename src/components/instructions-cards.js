@@ -249,7 +249,8 @@ export function GettingStartedCard() {
           ) : (
             "select your Google Sheet"
           )}
-          .
+          . We will read your data every couple of seconds. We do not keep a
+          copy of your data.
         </div>
         <div className="flex justify-center">
           <ArrowBigRight

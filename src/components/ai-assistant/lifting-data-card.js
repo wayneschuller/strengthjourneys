@@ -139,6 +139,11 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
           </div>
         </div>
         <div className="mt-5 text-sm text-muted-foreground">
+          <p className="w-64 text-pretty">
+            Strength Journeys loads your Google Sheet lifting data directly into
+            your browser. Nothing is streamed to our servers—only summary points
+            are shared with the AI.{" "}
+          </p>
           <p>
             For more information read our{" "}
             <Link

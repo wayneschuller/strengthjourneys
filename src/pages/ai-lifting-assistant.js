@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
-// import { useChat } from "ai/react";
 import { useChat } from "@ai-sdk/react";
 import { devLog, getAnalyzedSessionLifts } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
@@ -324,6 +323,7 @@ const defaultMessages = [
   "Should I lift every day?",
   "What are the health benefits for women who lift?",
   "ME STRONG",
+  "Give me a riddle about lifting weights.",
 ];
 
 // -----------------------------------------------------------------------------------------------------
@@ -339,7 +339,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     append,
     handleInputChange,
     handleSubmit,
-    isLoading,
+    status,
     stop,
     data,
   } = useChat({
@@ -513,7 +513,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
           )}
 
           {/* Show spinner only while waiting, and hide it once an assistant message begins */}
-          {isLoading &&
+          {status === "submitted" &&
             !messages.some(
               (m) => m.role === "assistant" && m.content?.length > 0,
             ) && (
@@ -533,7 +533,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
             value={input}
             onChange={handleInputChange}
             onSubmit={handleSubmit}
-            loading={isLoading}
+            loading={status === "submitting" || status === "streaming"}
             onStop={stop}
           >
             <ChatInputTextArea placeholder="Type a message..." />

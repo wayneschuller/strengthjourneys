@@ -447,7 +447,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col pb-5 align-middle">
-        <ChatMessageArea className="h-[30rem] pr-4">
+        <ChatMessageArea className="h-[55vh] pr-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center text-muted-foreground">
               <p className="mb-2 text-muted-foreground">

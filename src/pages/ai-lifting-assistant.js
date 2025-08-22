@@ -389,6 +389,13 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   // devLog(data);
   devLog(followUpQuestions);
 
+  const handleResetChat = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("chat:/ai");
+    }
+    setMessages([]);
+  };
+
   return (
     <Card className="max-h-full bg-background text-foreground">
       <CardHeader className="flex flex-1 flex-row">
@@ -408,6 +415,16 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
             about this AI.
           </CardDescription>
         </div>
+        {messages.length > 0 && (
+          <div className="mr-4 flex items-start gap-2">
+            <Button variant="outline" size="sm">
+              Download chat
+            </Button>
+            <Button variant="destructive" size="sm" onClick={handleResetChat}>
+              Reset chat
+            </Button>
+          </div>
+        )}
         <FlickeringGridDemo />
       </CardHeader>
       <CardContent className="flex flex-col pb-5 align-middle">

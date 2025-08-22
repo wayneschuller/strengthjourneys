@@ -359,7 +359,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
       }
     },
     onError: (error) => {
-      console.error("An error occurred:", error);
+      console.error("(useChat() error: ", error);
     },
     onResponse: (response) => {
       // devLog("Received HTTP response from server:", response);

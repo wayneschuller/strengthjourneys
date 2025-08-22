@@ -369,6 +369,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   });
 
   devLog(messages);
+  devLog(userProvidedProfileData);
   // devLog(data);
   devLog(followUpQuestions);
 

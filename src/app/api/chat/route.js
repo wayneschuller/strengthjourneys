@@ -1,5 +1,10 @@
 import { openai } from "@ai-sdk/openai";
-import { streamText } from "ai";
+import {
+  streamText,
+  convertToModelMessages,
+  createUIMessageStreamResponse,
+  validateUIMessages,
+} from "ai";
 import { devLog } from "@/lib/processing-utils";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
@@ -30,7 +35,10 @@ export async function POST(req) {
     isAdvancedModel = paidUsers.includes(session?.user?.email);
   }
 
-  const { messages, userProvidedMetadata } = await req.json();
+  const { messages: uiMessages = [], userProvidedMetadata } = await req.json();
+
+  devLog(`UIMessages: ${JSON.stringify(uiMessages)}`);
+  devLog(`validated? ${validateUIMessages(uiMessages)}`);
 
   // Initialize the system messages array
   let systemMessages = [{ role: "system", content: SYSTEM_PROMPT }];
@@ -71,17 +79,23 @@ export async function POST(req) {
   }
 
   // isAdvancedModel = true; // While in early release, let everyone have the best model
-  const AI_model = isAdvancedModel ? openai("gpt-4.1") : openai("o4-mini");
-  // const AI_model = isAdvancedModel ? openai("gpt-5") : openai("gpt-5-mini");
+  // const AI_model = isAdvancedModel ? openai("gpt-4.1") : openai("o4-mini");
+  // const AI_model = isAdvancedModel ? openai.chat("gpt-5") : openai.chat("gpt-5-mini");
+  // const AI_model = openai("gpt-5");
 
-  const result = await streamText({
+  const result = streamText({
     // model: openai("gpt-4o-mini"),
-    // model: openai("gpt-4o"),
+    model: openai("gpt-4.1"),
     // model: openai("gpt-5"),
     // max_completion_tokens: 5000, // GPT 5
-    model: AI_model,
-    messages: [...systemMessages, ...messages],
+    // model: AI_model,
+    // system: systemMessages,
+    // messages: convertToModelMessages(uiMessages),
+    // messages: [...systemMessages, ...convertToModelMessages(uiMessages)],
+    messages: [...systemMessages, ...uiMessages],
   });
 
-  return result.toDataStreamResponse();
+  return result.toUIMessageStreamResponse();
+
+  // return createUIMessageStreamResponse(result); // ??? weird
 }

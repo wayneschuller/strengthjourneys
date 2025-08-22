@@ -7,13 +7,13 @@ import { useChat } from "@ai-sdk/react";
 import { devLog, getAnalyzedSessionLifts } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 
+// Old simple-ai chat components - let's remove soon
 import {
   ChatMessage,
   ChatMessageAvatar,
   ChatMessageContent,
 } from "@/components/ui/chat-message";
 import { ChatMessageArea } from "@/components/ui/chat-message-area";
-
 import {
   ChatInput,
   ChatInputTextArea,
@@ -23,6 +23,12 @@ import {
 import { MarkdownContent } from "@/components/ui/markdown-content";
 
 import {
+  Message,
+  MessageAvatar,
+  MessageContent,
+} from "@/components/ai-elements/message";
+
+import {
   Card,
   CardContent,
   CardDescription,
@@ -30,6 +36,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+import { Response } from "@/components/ai-elements/response";
 
 import {
   PageHeader,
@@ -331,21 +339,26 @@ const defaultMessages = [
 // -----------------------------------------------------------------------------------------------------
 function AILiftingAssistantCard({ userProvidedProfileData }) {
   const [followUpQuestions, setFollowUpQuestions] = useState([]); // New state for suggestions
-  const {
-    messages,
-    setMessages,
-    input,
-    setInput,
-    append,
-    handleInputChange,
-    handleSubmit,
-    status,
-    stop,
-  } = useChat({
-    body: { userProvidedMetadata: userProvidedProfileData }, // Share the user selected metadata with the AI temporarily
-    onError: (error) => {
-      console.error("(useChat() error: ", error);
-    },
+  const [input, setInput] = useState("");
+
+  // const {
+  //   messages,
+  //   setMessages,
+  //   append,
+  //   handleInputChange,
+  //   handleSubmit,
+  //   status,
+  //   stop,
+  // } = useChat({
+  //   body: { userProvidedMetadata: userProvidedProfileData }, // Share the user selected metadata with the AI temporarily
+  //   onError: (error) => {
+  //     console.error("(useChat() error: ", error);
+  //   },
+  // });
+
+  const { messages, setMessages, sendMessage, status, stop, error } = useChat({
+    api: "/api/chat",
+    onError: (err) => console.error("useChat error:", err),
   });
 
   // Hydrate once on mount (client only)
@@ -366,7 +379,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     } catch {}
   }, [messages]);
 
-  // devLog(messages);
+  devLog(messages);
   // devLog(followUpQuestions);
 
   const handleResetChat = () => {
@@ -413,6 +426,18 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     URL.revokeObjectURL(url);
   };
 
+  // Submit using AI SDK v5 pattern: pass dynamic metadata per-call (avoid stale hook body)
+  function onSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const text = (input || "").trim();
+    if (!text) return;
+    setInput("");
+    sendMessage(
+      { role: "user", content: text },
+      { body: { userProvidedMetadata: userProvidedProfileData } },
+    );
+  }
+
   return (
     <Card className="max-h-full bg-background text-foreground">
       <CardHeader className="flex flex-1 flex-row">
@@ -458,10 +483,12 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                   className="cursor-pointer italic text-muted-foreground"
                   // When user clicks one of the sample default messages, send it to the AI
                   onClick={() => {
-                    append({
-                      role: "user",
-                      content: message,
-                    });
+                    sendMessage(
+                      { role: "user", content: message },
+                      {
+                        body: { userProvidedMetadata: userProvidedProfileData },
+                      },
+                    );
                   }}
                 >
                   {message}
@@ -484,7 +511,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                     <ChatMessageAvatar className="hidden md:flex" />
                   )}
                   <ChatMessageContent
-                    content={message.content}
+                    content={extractTextFromMessage(message)}
                     className="min-w-0 break-words"
                   />
                 </ChatMessage>
@@ -507,9 +534,9 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
           <ChatInput
             variant="default"
             value={input}
-            onChange={handleInputChange}
-            onSubmit={handleSubmit}
-            loading={status === "submitting" || status === "streaming"}
+            onSubmit={onSubmit}
+            onChange={(e) => setInput(e.target.value)}
+            loading={status === "submitted" || status === "streaming"}
             onStop={stop}
           >
             <ChatInputTextArea placeholder="Type a message..." />
@@ -568,4 +595,22 @@ function convertAnalyzedLiftsToLLMStrings(analyzedLifts) {
   });
 
   return sessionDescriptions;
+}
+
+// Normalize AI SDK v5 `parts[]` (and still accept legacy `content`)
+function extractTextFromMessage(message) {
+  if (Array.isArray(message?.parts) && message.parts.length) {
+    // concatenate text parts (ignore non-text parts)
+    return message.parts
+      .map((p) => (typeof p?.text === "string" ? p.text : ""))
+      .join("");
+  }
+  if (typeof message?.content === "string") return message.content;
+  if (Array.isArray(message?.content))
+    return message.content.map((c) => (c?.text ? c.text : "")).join("");
+  try {
+    return JSON.stringify(message?.content ?? "");
+  } catch {
+    return "";
+  }
 }

@@ -248,8 +248,6 @@ function AILiftingAssistantMain({ relatedArticles }) {
       }
     }
 
-    if (!sessionDate) return; // No data to share yet
-
     const analyzedSessionLifts = getAnalyzedSessionLifts(
       sessionDate,
       parsedData,
@@ -495,6 +493,8 @@ function FlickeringGridDemo() {
 }
 
 function convertAnalyzedLiftsToLLMStrings(analyzedLifts) {
+  if (!analyzedLifts || Object.keys(analyzedLifts).length === 0) return [];
+
   const sessionDescriptions = [];
 
   Object.entries(analyzedLifts).forEach(([liftType, lifts]) => {

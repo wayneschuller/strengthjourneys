@@ -366,9 +366,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     } catch {}
   }, [messages]);
 
-  devLog(messages);
-  // devLog(data);
-  devLog(followUpQuestions);
+  // devLog(messages);
+  // devLog(followUpQuestions);
 
   const handleResetChat = () => {
     if (typeof window !== "undefined") {

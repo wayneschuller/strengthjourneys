@@ -71,16 +71,16 @@ export async function POST(req) {
   }
 
   // isAdvancedModel = true; // While in early release, let everyone have the best model
-  // const AI_model = isAdvancedModel ? openai("gpt-4.1") : openai("o4-mini");
+  const AI_model = isAdvancedModel ? openai("gpt-4.1") : openai("o4-mini");
   // const AI_model = isAdvancedModel ? openai("gpt-5") : openai("gpt-5-mini");
 
   const result = await streamText({
     // model: openai("gpt-4o-mini"),
     // model: openai("gpt-4o"),
-    // model: AI_model,
-    model: openai("gpt-5"),
+    // model: openai("gpt-5"),
+    model: AI_model,
     messages: [...systemMessages, ...messages],
-    max_completion_tokens: 5000, // instead of max_tokens
+    // max_completion_tokens: 5000, // GPT 5
   });
 
   return result.toDataStreamResponse();

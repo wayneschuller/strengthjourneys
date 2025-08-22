@@ -328,7 +328,7 @@ const defaultMessages = [
 ];
 
 // -----------------------------------------------------------------------------------------------------
-// AILiftingAssistantCard - chatbot
+// AILiftingAssistantCard - chatbot (full proprietary prompt lives in the server env variable)
 // -----------------------------------------------------------------------------------------------------
 function AILiftingAssistantCard({ userProvidedProfileData }) {
   const [followUpQuestions, setFollowUpQuestions] = useState([]); // New state for suggestions
@@ -379,10 +379,10 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
 
   // save whenever messages change
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") return; // Ensure this runs only in the browser
     if (!Array.isArray(messages) || messages.length === 0) return; // Avoid saving empty messages on mount
     try {
-      const capped = messages.slice(-20); // optional cap
+      const capped = messages.slice(-20); // Cap to avoid AI bills
       sessionStorage.setItem("chat:/ai", JSON.stringify(capped));
     } catch {}
   }, [messages]);

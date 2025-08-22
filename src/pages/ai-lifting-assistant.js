@@ -510,7 +510,19 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                 </ChatMessage>
               ))
           )}
-          {/* {isLoading && <LoaderCircle className="animate-spin self-center" />} */}
+
+          {/* Show spinner only while waiting, and hide it once an assistant message begins */}
+          {isLoading &&
+            !messages.some(
+              (m) => m.role === "assistant" && m.content?.length > 0,
+            ) && (
+              <ChatMessage role="assistant">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                  <span>Thinking…</span>
+                </div>
+              </ChatMessage>
+            )}
         </ChatMessageArea>
       </CardContent>
       <CardFooter className="">

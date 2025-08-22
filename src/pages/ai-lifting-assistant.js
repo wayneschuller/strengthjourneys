@@ -341,31 +341,11 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     handleSubmit,
     status,
     stop,
-    data,
   } = useChat({
-    onFinish: (finalMessages, { usage }) => {
-      devLog("Token usage:", usage);
-      if (Array.isArray(finalMessages)) {
-        // Look for the suggestions message with the correct role.
-        const suggestionMessage = finalMessages.find(
-          (msg) => msg.role === "suggestions",
-        );
-        if (
-          suggestionMessage &&
-          suggestionMessage.content &&
-          suggestionMessage.content.suggestions
-        ) {
-          setFollowUpQuestions(suggestionMessage.content.suggestions);
-        }
-      }
-    },
+    body: { userProvidedMetadata: userProvidedProfileData }, // Share the user selected metadata with the AI temporarily
     onError: (error) => {
       console.error("(useChat() error: ", error);
     },
-    onResponse: (response) => {
-      // devLog("Received HTTP response from server:", response);
-    },
-    body: { userProvidedMetadata: userProvidedProfileData }, // Share the user selected metadata with the AI temporarily
   });
 
   // Hydrate once on mount (client only)

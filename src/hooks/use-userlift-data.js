@@ -149,6 +149,7 @@ export const UserLiftingDataProvider = ({ children }) => {
           latestDate = parsedData[parsedData.length - 1].date;
         }
         let latestDateString = "";
+        let gymInviteString = "";
         if (latestDate) {
           const parsed = parseISO(latestDate);
           const now = new Date();
@@ -176,6 +177,11 @@ export const UserLiftingDataProvider = ({ children }) => {
           } else {
             latestDateString = `Latest data: ${yearsAgo} years ago`;
           }
+
+          // Add gym invite if daysAgo > 3
+          if (daysAgo > 30) {
+            gymInviteString = "🏋️‍♂️ It's been a while! Time to hit the gym?";
+          }
         }
         toast({
           title: "Data updated from Google Sheets",
@@ -199,6 +205,14 @@ export const UserLiftingDataProvider = ({ children }) => {
                 <>
                   <br />
                   {latestDateString}
+                </>
+              )}
+              {gymInviteString && (
+                <>
+                  <br />
+                  <span className="font-bold text-orange-600">
+                    {gymInviteString}
+                  </span>
                 </>
               )}
             </>

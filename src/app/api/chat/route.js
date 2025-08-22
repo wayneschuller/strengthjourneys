@@ -78,13 +78,9 @@ export async function POST(req) {
     // model: openai("gpt-4o-mini"),
     // model: openai("gpt-4o"),
     // model: openai("gpt-5"),
-    // model: AI_model,
     // max_completion_tokens: 5000, // GPT 5
-
-    model: openai.chat("gpt-5"), // explicit chat API
+    model: AI_model,
     messages: [...systemMessages, ...messages],
-    // 👇 provider-specific param passed straight to OpenAI
-    providerOptions: { openai: { max_completion_tokens: 8000 } },
   });
 
   return result.toDataStreamResponse();

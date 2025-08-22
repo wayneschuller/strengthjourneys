@@ -160,10 +160,12 @@ export const UserLiftingDataProvider = ({ children }) => {
 
           if (isToday(parsed)) {
             latestDateString = "Latest data: Today";
+            gymInviteString = "💪 You're crushing it today! Keep going!";
           } else if (daysAgo === 1) {
             latestDateString = "Latest data: Yesterday";
           } else if (daysAgo <= 7) {
             latestDateString = `Latest data: ${daysAgo} days ago`;
+            gymInviteString = "Heading into the gym today, right?";
           } else if (weeksAgo === 1) {
             latestDateString = "Latest data: 1 week ago";
           } else if (weeksAgo <= 3) {
@@ -179,7 +181,7 @@ export const UserLiftingDataProvider = ({ children }) => {
           }
 
           // Add gym invite if daysAgo > 3
-          if (daysAgo > 30) {
+          if (daysAgo > 7) {
             gymInviteString = "🏋️‍♂️ It's been a while! Time to hit the gym?";
           }
         }

@@ -76,7 +76,7 @@ export async function POST(req) {
 
   const result = await streamText({
     // model: openai("gpt-4o-mini"), // Anyone
-    // model: openai("gpt-5"), // Anyone
+    // model: openai("gpt-5-mini"), // Anyone
     // model: openai("gpt-4o"), // Paid users only
     model: AI_model,
     messages: [...systemMessages, ...messages],

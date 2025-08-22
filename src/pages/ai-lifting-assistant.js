@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
-import { useChat } from "ai/react";
+// import { useChat } from "ai/react";
+import { useChat } from "@ai-sdk/react";
 import { devLog, getAnalyzedSessionLifts } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 

@@ -334,6 +334,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   const [followUpQuestions, setFollowUpQuestions] = useState([]); // New state for suggestions
   const {
     messages,
+    setMessages,
     input,
     setInput,
     append,
@@ -367,6 +368,24 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     },
     body: { userProvidedMetadata: userProvidedProfileData }, // Share the user selected metadata with the AI temporarily
   });
+
+  // Hydrate once on mount (client only)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("chat:/ai");
+      if (raw) setMessages(JSON.parse(raw));
+    } catch {}
+  }, [setMessages]);
+
+  // save whenever messages change
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!Array.isArray(messages) || messages.length === 0) return; // Avoid saving empty messages on mount
+    try {
+      const capped = messages.slice(-20); // optional cap
+      sessionStorage.setItem("chat:/ai", JSON.stringify(capped));
+    } catch {}
+  }, [messages]);
 
   devLog(messages);
   // devLog(data);

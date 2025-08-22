@@ -18,7 +18,15 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "usehooks-ts";
 import { ToastAction } from "@/components/ui/toast";
-import { format, isToday, parseISO } from "date-fns";
+import {
+  format,
+  isToday,
+  parseISO,
+  differenceInDays,
+  differenceInWeeks,
+  differenceInMonths,
+  differenceInYears,
+} from "date-fns";
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
 
@@ -143,10 +151,30 @@ export const UserLiftingDataProvider = ({ children }) => {
         let latestDateString = "";
         if (latestDate) {
           const parsed = parseISO(latestDate);
+          const now = new Date();
+          const daysAgo = differenceInDays(now, parsed);
+          const weeksAgo = differenceInWeeks(now, parsed);
+          const monthsAgo = differenceInMonths(now, parsed);
+          const yearsAgo = differenceInYears(now, parsed);
+
           if (isToday(parsed)) {
             latestDateString = "Latest data: Today";
+          } else if (daysAgo === 1) {
+            latestDateString = "Latest data: Yesterday";
+          } else if (daysAgo <= 7) {
+            latestDateString = `Latest data: ${daysAgo} days ago`;
+          } else if (weeksAgo === 1) {
+            latestDateString = "Latest data: 1 week ago";
+          } else if (weeksAgo <= 3) {
+            latestDateString = `Latest data: ${weeksAgo} weeks ago`;
+          } else if (monthsAgo === 1) {
+            latestDateString = "Latest data: 1 month ago";
+          } else if (monthsAgo <= 11) {
+            latestDateString = `Latest data: ${monthsAgo} months ago`;
+          } else if (yearsAgo === 1) {
+            latestDateString = "Latest data: 1 year ago";
           } else {
-            latestDateString = `Latest data: ${format(parsed, "d MMMM yyyy")}`;
+            latestDateString = `Latest data: ${yearsAgo} years ago`;
           }
         }
         toast({

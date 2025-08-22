@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
-import { useChat } from "ai/react";
 import { devLog, getAnalyzedSessionLifts } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 
@@ -49,6 +48,7 @@ import { processConsistency } from "@/components/analyzer/consistency-card";
 import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { useAIChat } from "@/hooks/use-aichat-provider";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "AI Lifting Assistant";
@@ -342,7 +342,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     isLoading,
     stop,
     data,
-  } = useChat({
+  } = useAIChat({
     onFinish: (finalMessages, { usage }) => {
       devLog("Token usage:", usage);
       if (Array.isArray(finalMessages)) {

@@ -396,6 +396,43 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     setMessages([]);
   };
 
+  const handleDownloadChat = () => {
+    if (!messages || messages.length === 0) return;
+
+    // Filter out internal 'suggestions' role
+    const exportMessages = messages.filter((m) => m.role !== "suggestions");
+
+    // Header and footer text
+    const header = "=== StrengthJourneys.xyz AI Coach Output ===\n\n";
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+
+    const footer =
+      `\n\n---\nGenerated at ${today}\n` +
+      `Conversations are processed in your browser and are not stored on our servers.\n` +
+      `https://strengthjourneys.xyz`;
+
+    // Body text
+    const body = exportMessages.map((m) => {
+      const content =
+        typeof m.content === "string" ? m.content : JSON.stringify(m.content);
+      return `${m.role.toUpperCase()}:\n${content}`;
+    });
+
+    // Build file content
+    const fileText = [header, body.join("\n\n"), footer].join("");
+
+    // Create and trigger download
+    const blob = new Blob([fileText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "strengthjourneys.xyz_AI_coach_output.txt";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <Card className="max-h-full bg-background text-foreground">
       <CardHeader className="flex flex-1 flex-row">
@@ -417,7 +454,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         </div>
         {messages.length > 0 && (
           <div className="mr-4 flex items-start gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleDownloadChat}>
               Download chat
             </Button>
             <Button variant="destructive" size="sm" onClick={handleResetChat}>

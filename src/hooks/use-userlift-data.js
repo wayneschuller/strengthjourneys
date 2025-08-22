@@ -340,7 +340,6 @@ export const UserLiftingDataProvider = ({ children }) => {
   }, [data, isLoading, isError, authStatus]);
 
   // useEffect for reminding the user when Analyzer/Visualizer show demo data
-  // FIXME: this could be integrated into the main useEffect above
   useEffect(() => {
     // devLog(`<Layout /> Toast useEffect`);
 

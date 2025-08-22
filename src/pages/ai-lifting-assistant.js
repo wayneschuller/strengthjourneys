@@ -37,6 +37,7 @@ import {
   PageHeaderDescription,
 } from "@/components/page-header";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -454,21 +455,29 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                 Enter your questions into the chat box below (or click a sample
                 question)
               </p>
-              {defaultMessages.map((message, index) => (
-                <p
-                  key={index}
-                  className="cursor-pointer italic text-muted-foreground"
-                  // When user clicks one of the sample default messages, send it to the AI
-                  onClick={() => {
-                    append({
-                      role: "user",
-                      content: message,
-                    });
-                  }}
-                >
-                  {message}
-                </p>
-              ))}
+              <div className="mt-3 flex max-w-3xl flex-wrap justify-center gap-3 md:mt-10 md:gap-5">
+                {defaultMessages.map((message, index) => (
+                  <Badge
+                    key={message}
+                    variant="secondary"
+                    className="cursor-pointer select-none whitespace-nowrap px-3 py-1 hover:bg-muted-foreground"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Ask: ${message}`}
+                    onClick={() => {
+                      append({ role: "user", content: message });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        append({ role: "user", content: message });
+                      }
+                    }}
+                  >
+                    {message}
+                  </Badge>
+                ))}
+              </div>
             </div>
           ) : (
             // messages.map((message, index) => (

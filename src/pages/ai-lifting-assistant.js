@@ -415,7 +415,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
 
   return (
     <Card className="max-h-full bg-background text-foreground">
-      <CardHeader className="flex flex-1 flex-row">
+      <CardHeader className="flex flex-1 flex-col md:flex-row">
         <div className="flex flex-1 flex-col">
           <CardTitle className="text-balance text-2xl font-bold">
             Your Personal Lifting AI Assistant
@@ -442,7 +442,9 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
             </Button>
           </div>
         )}
-        <FlickeringGridDemo />
+        <div className="hidden md:block">
+          <FlickeringGridDemo />
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col pb-5 align-middle">
         <ChatMessageArea className="h-[30rem] pr-4">

@@ -204,7 +204,9 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             </div>
 
             {/* Total Display */}
-            <div className="mt-4 text-3xl font-bold">Total: {total} lbs</div>
+            <div className="mt-4 text-3xl font-bold">
+              Total: {total} lbs ({toKg(total)}kg)
+            </div>
 
             {/* 1000lb Club Indicator */}
             <div
@@ -214,7 +216,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
               })}
             >
               {inClub
-                ? "Congratulations! You're in the 1000lb Club!"
+                ? "You're in the 1000lb Club!"
                 : "Keep lifting to reach 1000 lbs!"}
             </div>
             <ThousandDonut total={total} />
@@ -249,13 +251,11 @@ function ThousandDonut({ total, target = 1000 }) {
   ];
   const COLORS = ["#10B981", "#1F2937"]; // emerald / gray-800
 
-  return (
-    <div className="mx-auto my-6 w-full max-w-md">
-      <div className="mb-2 text-center">
-        <div className="text-2xl font-semibold">{total} lbs</div>
-        <div className="text-xs text-muted-foreground">of {target} lbs</div>
-      </div>
+  const percent = Math.min(100, Math.round((total / target) * 100));
+  const inClub = total >= target;
 
+  return (
+    <div className="relative mx-auto my-6 w-full max-w-md">
       <ResponsiveContainer width="100%" height={220}>
         <PieChart>
           <Pie
@@ -275,9 +275,26 @@ function ThousandDonut({ total, target = 1000 }) {
         </PieChart>
       </ResponsiveContainer>
 
-      {/* simple percent readout */}
-      <div className="text-center text-sm text-muted-foreground">
-        {Math.min(100, Math.round((total / target) * 100))}% to goal
+      {/* Center overlay */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="text-center tabular-nums">
+          {inClub ? (
+            <>
+              <div className="text-3xl font-bold text-green-500">
+                {total} lbs
+              </div>
+              <div className="text-sm font-semibold text-green-400">
+                1000lb Club!
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-2xl font-bold">{total} lbs</div>
+              <div className="text-xs text-muted-foreground">of {target}</div>
+              <div className="text-sm text-muted-foreground">{percent}%</div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

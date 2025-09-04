@@ -29,6 +29,8 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Anvil } from "lucide-react";
 
+import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
 export async function getStaticProps() {
@@ -215,6 +217,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                 ? "Congratulations! You're in the 1000lb Club!"
                 : "Keep lifting to reach 1000 lbs!"}
             </div>
+            <ThousandDonut total={total} />
           </div>
         </CardContent>
         <CardFooter className="text-sm">
@@ -233,6 +236,49 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
         </CardFooter>
       </Card>
       <RelatedArticles articles={relatedArticles} />
+    </div>
+  );
+}
+
+function ThousandDonut({ total, target = 1000 }) {
+  const capped = Math.min(total, target);
+  const remainder = Math.max(0, target - total);
+  const data = [
+    { name: "Progress", value: capped },
+    { name: "Remainder", value: remainder },
+  ];
+  const COLORS = ["#10B981", "#1F2937"]; // emerald / gray-800
+
+  return (
+    <div className="mx-auto my-6 w-full max-w-md">
+      <div className="mb-2 text-center">
+        <div className="text-2xl font-semibold">{total} lbs</div>
+        <div className="text-xs text-muted-foreground">of {target} lbs</div>
+      </div>
+
+      <ResponsiveContainer width="100%" height={220}>
+        <PieChart>
+          <Pie
+            data={data}
+            dataKey="value"
+            innerRadius={70}
+            outerRadius={100}
+            startAngle={90}
+            endAngle={-270}
+            stroke="none"
+            isAnimationActive
+          >
+            {data.map((_, i) => (
+              <Cell key={i} fill={COLORS[i]} />
+            ))}
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
+
+      {/* simple percent readout */}
+      <div className="text-center text-sm text-muted-foreground">
+        {Math.min(100, Math.round((total / target) * 100))}% to goal
+      </div>
     </div>
   );
 }

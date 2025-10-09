@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useEffect, useState } from "react";
-import { getLiftColor } from "@/lib/get-lift-color";
+import { getLiftColor, useLiftColors } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
@@ -60,6 +60,7 @@ import { getYearLabels, processVisualizerData } from "./visualizer-processing";
 export function VisualizerMini({ liftType }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
+  const { color: liftColor } = useLiftColors(liftType);
 
   const {
     age,
@@ -346,14 +347,10 @@ export function VisualizerMini({ liftType }) {
                     y2="1"
                     key={liftType}
                   >
-                    <stop
-                      offset="5%"
-                      stopColor={getLiftColor(liftType)}
-                      stopOpacity={0.8}
-                    />
+                    <stop offset="5%" stopColor={liftColor} stopOpacity={0.8} />
                     <stop
                       offset="50%"
-                      stopColor={getLiftColor(liftType)}
+                      stopColor={liftColor}
                       stopOpacity={0.05}
                     />
                   </linearGradient>
@@ -363,7 +360,7 @@ export function VisualizerMini({ liftType }) {
                   key={liftType}
                   type="monotone"
                   dataKey={liftType}
-                  stroke={getLiftColor(liftType)}
+                  stroke={liftColor}
                   name={liftType}
                   strokeWidth={2}
                   fill={`url(#fill`}

@@ -62,6 +62,7 @@ import {
   getLiftColor,
   brightenHexColor,
   saturateHexColor,
+  useLiftColors,
 } from "@/lib/get-lift-color";
 import { getYearLabels } from "./visualizer-processing";
 import { ChartContainer } from "@/components/ui/chart";
@@ -78,8 +79,7 @@ const repTabs = [
 export function VisualizerReps({ data, liftType }) {
   const { parsedData, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
-
-  const liftColor = getLiftColor(liftType);
+  const { color: liftColor } = useLiftColors(liftType);
 
   const [timeRange, setTimeRange] = useLocalStorage(
     "SJ_timeRange",

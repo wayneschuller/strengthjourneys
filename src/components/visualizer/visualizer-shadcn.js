@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useEffect } from "react";
-import { getLiftColor } from "@/lib/get-lift-color";
+import { getLiftColor, useLiftColors } from "@/lib/get-lift-color";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
@@ -61,6 +61,15 @@ import { processVisualizerData, getYearLabels } from "./visualizer-processing";
 export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
+
+  // Get reactive colors for all selected lift types
+  // Create individual hooks for each lift type
+  const liftColors = {};
+  selectedLiftTypes.forEach((liftType) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { color } = useLiftColors(liftType);
+    liftColors[liftType] = color;
+  });
 
   // devLog(parsedData);
 
@@ -225,12 +234,12 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   >
                     <stop
                       offset="5%"
-                      stopColor={getLiftColor(liftType)}
+                      stopColor={liftColors[liftType]}
                       stopOpacity={0.8}
                     />
                     <stop
                       offset="50%"
-                      stopColor={getLiftColor(liftType)}
+                      stopColor={liftColors[liftType]}
                       stopOpacity={0.05}
                     />
                   </linearGradient>
@@ -244,7 +253,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   key={liftType}
                   type="monotone"
                   dataKey={liftType}
-                  stroke={getLiftColor(liftType)}
+                  stroke={liftColors[liftType]}
                   name={liftType}
                   strokeWidth={2}
                   fill={`url(#fill${gradientId})`}

@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
 
-import { getLiftColor } from "@/lib/get-lift-color";
+import { getLiftColor, useLiftColors } from "@/lib/get-lift-color";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
 import {
@@ -94,12 +94,21 @@ export function LiftTypeFrequencyPieCard() {
 
   if (!liftTypes || liftTypes.length < 1) return null;
 
+  // Get reactive colors for top 10 lifts
+  const topLifts = liftTypes.slice(0, 10);
+  const liftColors = {};
+  topLifts.forEach((item) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { color } = useLiftColors(item.liftType);
+    liftColors[item.liftType] = color;
+  });
+
   // Get top 10 lifts and their colors
-  const pieData = liftTypes.slice(0, 10).map((item) => ({
+  const pieData = topLifts.map((item) => ({
     liftType: item.liftType,
     sets: item.totalSets,
-    color: getLiftColor(item.liftType),
-    fill: getLiftColor(item.liftType),
+    color: liftColors[item.liftType],
+    fill: liftColors[item.liftType],
   }));
 
   // Calculate total sets for percentage

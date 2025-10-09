@@ -53,6 +53,7 @@ const StrengthJourneys = () => (
 
 import { fetchRelatedArticles, fetchArticleById } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+import { LiftColorPicker } from "@/lib/get-lift-color";
 
 export async function getStaticPaths() {
   const paths = bigFourLiftInsightData.map((lift) => ({
@@ -221,19 +222,22 @@ function MyLiftTypeSummaryCard({ liftType }) {
   // FIXME: add a skeleton loader
 
   return (
-    <Card>
+    <Card className="min-h-[300px]">
       <CardHeader>
         <CardTitle>My {liftType} Journey</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         {authStatus === "authenticated" ? (
-          <>
+          <div className="flex h-full flex-col justify-between gap-4">
             <LiftTypeSummaryStatistics liftType={liftType} />
             <LiftTypeRecentHighlights liftType={liftType} />
-          </>
+          </div>
         ) : (
           <div>Login to see your data</div>
         )}
+        <div className="mt-10">
+          <LiftColorPicker liftType={liftType} />
+        </div>
       </CardContent>
     </Card>
   );

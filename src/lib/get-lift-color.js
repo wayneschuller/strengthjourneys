@@ -36,6 +36,12 @@ const LIFT_COLORS = {
   default: "#001219", // Rich Black FOGRA 29
 };
 
+// Helper function to validate hex color
+function isValidHexColor(hex) {
+  if (!hex || typeof hex !== "string") return false;
+  return /^#[0-9A-Fa-f]{6}$/.test(hex);
+}
+
 // Provide good defaults for popular barbell lifts
 export function getLiftColor(liftType) {
   const storageKey = `SJ_${liftType}_color`;
@@ -43,7 +49,16 @@ export function getLiftColor(liftType) {
 
   // Only try to access localStorage in the browser
   if (typeof window !== "undefined") {
-    color = localStorage.getItem(storageKey);
+    const storedColor = localStorage.getItem(storageKey);
+    // Validate the stored color is a valid hex color
+    if (storedColor && isValidHexColor(storedColor)) {
+      color = storedColor;
+    } else if (storedColor) {
+      // Log invalid color for debugging
+      devLog(
+        `Invalid color stored for ${liftType}: "${storedColor}". Falling back to default.`,
+      );
+    }
   }
 
   if (!color) {
@@ -214,8 +229,15 @@ export function LiftColorPicker({ liftType, onColorChange }) {
   const { color, setColor, resetColor, isLightColor } = useLiftColors(liftType);
 
   const handleColorChange = (newColor) => {
-    setColor(newColor.hex);
-    onColorChange?.(newColor.hex);
+    // Validate the color before setting it
+    if (isValidHexColor(newColor.hex)) {
+      setColor(newColor.hex);
+      onColorChange?.(newColor.hex);
+    } else {
+      devLog(
+        `Invalid color selected for ${liftType}: "${newColor.hex}". Not updating color.`,
+      );
+    }
   };
 
   return (
@@ -262,5 +284,19 @@ export function getAllLiftColors() {
 export function resetAllLiftColors() {
   Object.keys(LIFT_COLORS).forEach((liftType) => {
     localStorage.removeItem(`SJ_${liftType}_color`);
+  });
+}
+
+// Function to clean up invalid colors from localStorage
+export function cleanupInvalidColors() {
+  if (typeof window === "undefined") return;
+
+  Object.keys(LIFT_COLORS).forEach((liftType) => {
+    const storageKey = `SJ_${liftType}_color`;
+    const storedColor = localStorage.getItem(storageKey);
+    if (storedColor && !isValidHexColor(storedColor)) {
+      devLog(`Cleaning up invalid color for ${liftType}: "${storedColor}"`);
+      localStorage.removeItem(storageKey);
+    }
   });
 }

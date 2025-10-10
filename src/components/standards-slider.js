@@ -37,13 +37,16 @@ export function StandardsSlider({
 
   let athleteRankingWeight = 0;
   if (authStatus === "authenticated") {
+    const topLifts = topLiftsByTypeAndReps?.[liftType];
     if (isYearly) {
-      athleteRankingWeight =
-        topLiftsByTypeAndRepsLast12Months?.[liftType]?.[0]?.[0]?.weight;
-    } else {
-      athleteRankingWeight =
-        topLiftsByTypeAndReps?.[liftType]?.[0]?.[0]?.weight;
+      const topLifts = topLiftsByTypeAndRepsLast12Months?.[liftType];
     }
+    athleteRankingWeight = Array.isArray(topLifts)
+      ? topLifts.reduce((max, sets) => {
+          const w = sets?.[0]?.weight || 0;
+          return w > max ? w : max;
+        }, 0)
+      : 0;
   }
 
   // Helper to calculate proportional % from minLift to maxLift

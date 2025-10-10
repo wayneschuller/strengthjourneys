@@ -43,9 +43,9 @@ export function StandardsSlider({
   let athleteRankingWeight = 0;
   let highestE1RM = 0;
   if (authStatus === "authenticated") {
-    const topLifts = topLiftsByTypeAndReps?.[liftType];
+    let topLifts = topLiftsByTypeAndReps?.[liftType];
     if (isYearly) {
-      const topLifts = topLiftsByTypeAndRepsLast12Months?.[liftType];
+      topLifts = topLiftsByTypeAndRepsLast12Months?.[liftType];
     }
 
     if (Array.isArray(topLifts)) {
@@ -141,7 +141,7 @@ export function StandardsSlider({
         </div>
         {highestE1RM > 0 && highestE1RM > athleteRankingWeight && (
           <div
-            className="pointer-events-none absolute top-0 z-30 h-full border-l-2 border-dashed border-gray-400 opacity-70"
+            className="pointer-events-none absolute top-0 z-30 h-full border-l-2 border-gray-400 opacity-70"
             style={{
               left: `${getPercent(highestE1RM)}%`,
               transform: "translateX(-1px)",

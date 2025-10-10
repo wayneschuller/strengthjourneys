@@ -12,8 +12,7 @@ import {
 import { useLiftColors } from "@/hooks/use-lift-colors";
 
 // Shared function to create tooltip content for a lift
-const createLiftTooltipContent = (liftType, tuple) => {
-  const { getColor } = useLiftColors();
+const createLiftTooltipContent = (liftType, tuple, color) => {
   const reps = tuple[`${liftType}_reps`];
   const weight = tuple[`${liftType}_weight`];
   const oneRepMax = tuple[`${liftType}`];
@@ -29,7 +28,7 @@ const createLiftTooltipContent = (liftType, tuple) => {
   return {
     liftType,
     label: labelContent,
-    color: getColor(liftType),
+    color: color,
     reps,
   };
 };
@@ -60,12 +59,16 @@ export const MultiLiftTooltipContent = ({
   label,
   selectedLiftTypes,
 }) => {
+  const { getColor } = useLiftColors();
+
   if (!active || !payload?.length) return null;
 
   const tuple = payload[0].payload;
   const dateLabel = getReadableDateString(tuple.date);
   const tooltipsPerLift = selectedLiftTypes
-    .map((liftType) => createLiftTooltipContent(liftType, tuple))
+    .map((liftType) =>
+      createLiftTooltipContent(liftType, tuple, getColor(liftType)),
+    )
     .filter(Boolean);
 
   return <TooltipUI dateLabel={dateLabel} tooltipsPerLift={tooltipsPerLift} />;
@@ -78,11 +81,16 @@ export const SingleLiftTooltipContent = ({
   label,
   liftType,
 }) => {
+  const { getColor } = useLiftColors();
   if (!active || !payload?.length) return null;
 
   const tuple = payload[0].payload;
   const dateLabel = getReadableDateString(tuple.date);
-  const tooltipContent = createLiftTooltipContent(liftType, tuple);
+  const tooltipContent = createLiftTooltipContent(
+    liftType,
+    tuple,
+    getColor(liftType),
+  );
 
   return tooltipContent ? (
     <TooltipUI dateLabel={dateLabel} tooltipsPerLift={[tooltipContent]} />

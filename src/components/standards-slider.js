@@ -19,9 +19,8 @@ export function StandardsSlider({
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { width } = useWindowSize({ initializeWithValue: false });
-  const [e1rmFormula] = useReadLocalStorage("formula", "Brzycki", {
-    initializeWithValue: false,
-  });
+  const e1rmFormula =
+    useReadLocalStorage("formula", { initializeWithValue: false }) ?? "Brzycki";
 
   if (!standards) return null;
   const originalData = standards[liftType];
@@ -42,6 +41,7 @@ export function StandardsSlider({
   // If we have data find their records
   let athleteRankingWeight = 0;
   let highestE1RM = 0;
+
   if (authStatus === "authenticated") {
     let topLifts = topLiftsByTypeAndReps?.[liftType];
     if (isYearly) {
@@ -139,19 +139,21 @@ export function StandardsSlider({
             </span>
           )}
         </div>
-        {highestE1RM > 0 && highestE1RM > athleteRankingWeight && (
-          <div
-            className="pointer-events-none absolute top-0 z-30 h-full border-l-4 border-gray-400 opacity-50 dark:border-gray-200"
-            style={{
-              left: `${getPercent(highestE1RM)}%`,
-              transform: "translateX(-1px)",
-            }}
-          >
-            <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-1 text-xs text-muted shadow dark:bg-white dark:text-gray-500">
-              E1RM
-            </span>
-          </div>
-        )}
+        {authStatus === "authenticated" &&
+          highestE1RM > 0 &&
+          highestE1RM > athleteRankingWeight && (
+            <div
+              className="pointer-events-none absolute top-0 z-30 h-full border-l-4 border-gray-400 opacity-50 dark:border-gray-200"
+              style={{
+                left: `${getPercent(highestE1RM)}%`,
+                transform: "translateX(-1px)",
+              }}
+            >
+              <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-1 text-xs text-muted shadow dark:bg-white dark:text-gray-500">
+                E1RM
+              </span>
+            </div>
+          )}
       </div>
     </div>
   );

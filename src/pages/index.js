@@ -204,16 +204,19 @@ export default function Home() {
         ]}
       />
       <main className="mx-4 mb-4 md:mx-[5vw]">
-        <div className="flex flex-row justify-center">
-          <SloganCarousel />
+        <div className="grid grid-cols-1 xl:grid-cols-2">
+          <div>
+            <div className="flex flex-row justify-center">
+              <SloganCarousel />
+            </div>
+            <h1 className="my-4 space-x-2 text-balance text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
+              Welcome to Strength Journeys
+            </h1>
+
+            <PageDescription />
+          </div>
+          <SpreadsheetShowcase />
         </div>
-        <h1 className="my-4 space-x-2 text-balance text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
-          Welcome to Strength Journeys
-        </h1>
-
-        <PageDescription />
-
-        <SpreadsheetShowcase />
 
         <h2 class="mb-4 mt-8 text-xl font-semibold">
           🏋️ The Big Four Barbell Lifts

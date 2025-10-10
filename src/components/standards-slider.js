@@ -149,7 +149,7 @@ export function StandardsSlider({
                 transform: "translateX(-1px)",
               }}
             >
-              <span className="absolute left-1/2 top-full -translate-x-1/2 whitespace-nowrap rounded bg-black px-1 text-xs text-muted opacity-50 shadow dark:bg-white dark:text-gray-500">
+              <span className="absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-1 text-xs text-muted opacity-50 shadow dark:bg-white dark:text-gray-500">
                 E1RM
               </span>
             </div>

@@ -43,7 +43,10 @@ export function StandardsSlider({
   // devLog(best);
 
   // Calculate the left percentage based on current weight relative to maxLift
-  const thumbPosition = (athleteRankingWeight / maxLift) * 100;
+  // const thumbPosition = (athleteRankingWeight / maxLift) * 100;
+  const thumbPosition = maxLift
+    ? Math.min(100, Math.max(0, (athleteRankingWeight / maxLift) * 100))
+    : 0;
 
   // Convert object keys to an array for rendering labels
   const levelLabels = Object.keys(liftTypeStandards);

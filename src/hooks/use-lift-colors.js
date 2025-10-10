@@ -195,7 +195,7 @@ export function LiftColorPicker({ liftType }) {
             color: isLightColor(color) ? "#000" : "#fff",
           }}
         >
-          {liftType} Color
+          Change {liftType} Color
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[380px]">

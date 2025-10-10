@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useEffect, useState } from "react";
-import { getLiftColor, useLiftColors } from "@/lib/get-lift-color";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
@@ -60,7 +60,8 @@ import { getYearLabels, processVisualizerData } from "./visualizer-processing";
 export function VisualizerMini({ liftType }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
-  const { color: liftColor } = useLiftColors(liftType);
+  const { getColor } = useLiftColors();
+  const liftColor = getColor(liftType);
 
   const {
     age,

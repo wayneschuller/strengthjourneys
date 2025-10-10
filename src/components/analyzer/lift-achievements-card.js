@@ -42,8 +42,7 @@ import { Maximize2, Minimize2 } from "lucide-react";
 import { Button, buttonVariants } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useLiftColors } from "@/hooks/use-lift-colors";
-import { LiftColorPicker } from "@/hooks/use-lift-colors";
+import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
 
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
   const { liftTypes } = useUserLiftingData();

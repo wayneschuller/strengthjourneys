@@ -53,7 +53,8 @@ const StrengthJourneys = () => (
 
 import { fetchRelatedArticles, fetchArticleById } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
-import { LiftColorPicker } from "@/lib/get-lift-color";
+// import { LiftColorPicker } from "@/lib/get-lift-color";
+import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
 
 export async function getStaticPaths() {
   const paths = bigFourLiftInsightData.map((lift) => ({

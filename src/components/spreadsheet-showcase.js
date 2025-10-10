@@ -77,7 +77,7 @@ export default function SpreadsheetShowcase() {
             {images[index].caption}
           </div>
         </div>
-        <div className="pointer-events-none absolute inset-0 rounded-3xl ring-4 ring-white/60 ring-offset-2 ring-offset-gray-100" />
+        <div className="pointer-events-none absolute inset-0 rounded-3xl ring-2 ring-white/60 ring-offset-2 ring-offset-gray-100" />
       </div>
     </div>
   );

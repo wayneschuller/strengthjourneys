@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 
+import { cn } from "@/lib/utils";
 import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
@@ -53,8 +54,7 @@ const StrengthJourneys = () => (
 
 import { fetchRelatedArticles, fetchArticleById } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
-// import { LiftColorPicker } from "@/lib/get-lift-color";
-import { LiftColorPicker } from "@/hooks/use-lift-colors";
+import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
 
 export async function getStaticPaths() {
   const paths = bigFourLiftInsightData.map((lift) => ({
@@ -219,6 +219,7 @@ function BarbellInsightsMain({
 
 function MyLiftTypeSummaryCard({ liftType }) {
   const { status: authStatus } = useSession();
+  const { getColor } = useLiftColors();
 
   // FIXME: add a skeleton loader
 
@@ -227,7 +228,15 @@ function MyLiftTypeSummaryCard({ liftType }) {
   return (
     <Card className="min-h-[300px]">
       <CardHeader>
-        <CardTitle>My {liftType} Journey</CardTitle>
+        <CardTitle
+          className="mr-5 text-pretty"
+          style={{
+            textDecoration: "underline",
+            textDecorationColor: `${getColor(liftType)}`,
+          }}
+        >
+          My {liftType} Journey
+        </CardTitle>
       </CardHeader>
       <CardContent className="">
         {authStatus === "authenticated" ? (

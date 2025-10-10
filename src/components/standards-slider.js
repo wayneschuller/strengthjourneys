@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import { useWindowSize } from "usehooks-ts";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 export function StandardsSlider({
   liftType,
@@ -35,19 +36,34 @@ export function StandardsSlider({
   const minLift = Math.min(...standardValues); // Usually 'physicallyActive'
   const maxLift = originalData.elite; // Max value of slider
 
+  // If we have data find their records
   let athleteRankingWeight = 0;
+  let highestE1RM = 0;
   if (authStatus === "authenticated") {
     const topLifts = topLiftsByTypeAndReps?.[liftType];
     if (isYearly) {
       const topLifts = topLiftsByTypeAndRepsLast12Months?.[liftType];
     }
-    athleteRankingWeight = Array.isArray(topLifts)
-      ? topLifts.reduce((max, sets) => {
-          const w = sets?.[0]?.weight || 0;
-          return w > max ? w : max;
-        }, 0)
-      : 0;
+
+    if (Array.isArray(topLifts)) {
+      for (let repsIdx = 0; repsIdx < topLifts.length; repsIdx++) {
+        const topSet = topLifts[repsIdx]?.[0]; // the best lift for this rep count
+        if (!topSet) continue;
+
+        const reps = repsIdx + 1;
+        const weight = topSet.weight || 0;
+
+        if (weight > athleteRankingWeight) athleteRankingWeight = weight;
+
+        const e1rm = estimateE1RM(reps, weight, "Epley");
+        if (e1rm > highestE1RM) highestE1RM = e1rm;
+      }
+    }
   }
+
+  devLog(
+    `${liftType} Best: ${athleteRankingWeight}, best e1rm: ${highestE1RM}`,
+  );
 
   // Helper to calculate proportional % from minLift to maxLift
   const getPercent = (val) =>
@@ -122,6 +138,19 @@ export function StandardsSlider({
             </span>
           )}
         </div>
+        {highestE1RM > 0 && highestE1RM > athleteRankingWeight && (
+          <div
+            className="pointer-events-none absolute top-0 z-30 h-full border-l-2 border-dashed border-gray-400 opacity-70"
+            style={{
+              left: `${getPercent(highestE1RM)}%`,
+              transform: "translateX(-1px)",
+            }}
+          >
+            <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-white px-1 text-xs text-gray-500 shadow">
+              E1RM
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

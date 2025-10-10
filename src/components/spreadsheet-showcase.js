@@ -3,7 +3,11 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 
 const IMAGE_FADE_DURATION = 500; // ms
-const IMAGE_PAUSE_DURATION = 2200; // ms
+const IMAGE_PAUSE_DURATION = 2800; // ms
+const CAPTION_FADE_DELAY = 400;
+const CAPTION_FADE_DURATION = 400;
+const CAPTION_ON_PERCENT = 0.2; //
+const CAPTION_OFF_PERCENT = 0.8; //
 
 const images = [
   {
@@ -29,33 +33,46 @@ const images = [
   {
     src: "/spreadsheet.png",
     alt: "Spreadsheet example",
-    caption: "No subscriptions",
+    caption: "No subscriptions. Ever.",
   },
   {
     src: "/app3.png",
     alt: "App Screenshot C",
-    caption: "Lift consistently to get strong ",
+    caption: "Lift. Track. Repeat. ",
   },
 ];
 
 export default function SpreadsheetShowcase() {
   const [index, setIndex] = useState(0);
   const [fade, setFade] = useState(true);
+  const [captionVisible, setCaptionVisible] = useState(true);
 
   useEffect(() => {
-    const timeout = setTimeout(() => setFade(false), IMAGE_PAUSE_DURATION);
-    return () => clearTimeout(timeout);
-  }, [index]);
-
-  useEffect(() => {
-    if (!fade) {
+    if (fade) {
+      // When the image is fully visible, set up timers for caption
+      const captionIn = setTimeout(
+        () => setCaptionVisible(true),
+        IMAGE_PAUSE_DURATION * CAPTION_ON_PERCENT,
+      );
+      const captionOut = setTimeout(
+        () => setCaptionVisible(false),
+        IMAGE_PAUSE_DURATION * CAPTION_OFF_PERCENT,
+      );
+      const imageOut = setTimeout(() => setFade(false), IMAGE_PAUSE_DURATION);
+      return () => {
+        clearTimeout(captionIn);
+        clearTimeout(captionOut);
+        clearTimeout(imageOut);
+      };
+    } else {
+      // When fading out, run normal fade-out cycle
       const timeout = setTimeout(() => {
-        setFade(true);
         setIndex((i) => (i + 1) % images.length);
+        setFade(true);
       }, IMAGE_FADE_DURATION);
       return () => clearTimeout(timeout);
     }
-  }, [fade]);
+  }, [fade, images.length]);
 
   return (
     <div className="flex justify-center py-8">
@@ -65,16 +82,17 @@ export default function SpreadsheetShowcase() {
           alt={images[index].alt}
           fill
           sizes="(max-width: 900px) 100vw, 900px"
-          className={`object-cover transition-all duration-[${IMAGE_FADE_DURATION}] ease-in-out ${fade ? "opacity-100 blur-0" : "opacity-0 blur-md"} `}
+          className={`object-cover transition-all duration-[${IMAGE_FADE_DURATION}ms] ease-in-out ${fade ? "opacity-100 blur-0" : "opacity-0 blur-md"} `}
           priority
         />
-        {/* Floating caption */}
-        <div className="pointer-events-none absolute bottom-6 left-1/2 max-w-[80%] -translate-x-1/2">
+        {/* Floating Label with new timing */}
+        <div className="absolute bottom-12 left-1/2 z-10 -translate-x-1/2">
           <div
-            className={`transition-all duration-[${IMAGE_FADE_DURATION}] rounded-full bg-white/80 px-5 py-2 text-lg font-semibold text-gray-900 shadow-lg ease-in-out ${fade ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"} `}
-            style={{ backdropFilter: "blur(3px)" }}
+            className={`rounded-full border border-border bg-card px-6 py-3 shadow-lg transition-all duration-[${CAPTION_FADE_DURATION}ms] ease-in-out ${captionVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"} `}
           >
-            {images[index].caption}
+            <p className="text-sm font-semibold text-foreground">
+              {images[index].caption}
+            </p>
           </div>
         </div>
         <div className="pointer-events-none absolute inset-0 rounded-3xl ring-2 ring-white/60 ring-offset-2 ring-offset-gray-100" />

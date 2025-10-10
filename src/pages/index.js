@@ -38,6 +38,7 @@ import { SloganCarousel } from "@/components/slogan-carousel";
 import { Testimonials } from "@/components/testimonials";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { Separator } from "@/components/ui/separator";
+import SpreadsheetShowcase from "@/components/spreadsheet-showcase";
 
 // The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [
@@ -211,6 +212,8 @@ export default function Home() {
         </h1>
 
         <PageDescription />
+
+        <SpreadsheetShowcase />
 
         <h2 class="mb-4 mt-8 text-xl font-semibold">
           🏋️ The Big Four Barbell Lifts

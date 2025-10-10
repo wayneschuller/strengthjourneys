@@ -59,15 +59,13 @@ export const MultiLiftTooltipContent = ({
   label,
   selectedLiftTypes,
 }) => {
-  const { getColor } = useLiftColors();
-
   if (!active || !payload?.length) return null;
 
   const tuple = payload[0].payload;
   const dateLabel = getReadableDateString(tuple.date);
   const tooltipsPerLift = selectedLiftTypes
     .map((liftType) =>
-      createLiftTooltipContent(liftType, tuple, getColor(liftType)),
+      createLiftTooltipContent(liftType, tuple, payload[0].color),
     )
     .filter(Boolean);
 
@@ -89,7 +87,7 @@ export const SingleLiftTooltipContent = ({
   const tooltipContent = createLiftTooltipContent(
     liftType,
     tuple,
-    getColor(liftType),
+    payload[0].color,
   );
 
   return tooltipContent ? (

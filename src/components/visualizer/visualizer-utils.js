@@ -1,10 +1,6 @@
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
-import {
-  getLiftColor,
-  brightenHexColor,
-  saturateHexColor,
-} from "@/lib/get-lift-color";
+import { brightenHexColor, saturateHexColor } from "@/lib/color-tools";
 import {
   Select,
   SelectContent,
@@ -13,8 +9,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { useLiftColors } from "@/hooks/use-lift-colors";
+
 // Shared function to create tooltip content for a lift
 const createLiftTooltipContent = (liftType, tuple) => {
+  const { getColor } = useLiftColors();
   const reps = tuple[`${liftType}_reps`];
   const weight = tuple[`${liftType}_weight`];
   const oneRepMax = tuple[`${liftType}`];
@@ -30,7 +29,7 @@ const createLiftTooltipContent = (liftType, tuple) => {
   return {
     liftType,
     label: labelContent,
-    color: getLiftColor(liftType),
+    color: getColor(liftType),
     reps,
   };
 };
@@ -136,7 +135,7 @@ export const SpecialHtmlLabel = ({ x, y, value }) => {
 
 // Helper to get rep color for tooltip, matching chart logic
 function getRepColor(reps, liftType) {
-  const liftColor = getLiftColor(liftType);
+  const liftColor = getColor(liftType);
   if (reps === 1) return liftColor;
   if (reps === 3) return brightenHexColor(liftColor, 1.25);
   if (reps === 5) return saturateHexColor(liftColor, 1.3);

@@ -54,7 +54,7 @@ const StrengthJourneys = () => (
 import { fetchRelatedArticles, fetchArticleById } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 // import { LiftColorPicker } from "@/lib/get-lift-color";
-import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
+import { LiftColorPicker } from "@/hooks/use-lift-colors";
 
 export async function getStaticPaths() {
   const paths = bigFourLiftInsightData.map((lift) => ({
@@ -221,6 +221,8 @@ function MyLiftTypeSummaryCard({ liftType }) {
   const { status: authStatus } = useSession();
 
   // FIXME: add a skeleton loader
+
+  // FIXME: Add color underline to title
 
   return (
     <Card className="min-h-[300px]">

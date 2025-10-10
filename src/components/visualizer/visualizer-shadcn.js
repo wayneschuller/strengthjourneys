@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useEffect } from "react";
-import { getLiftColor, useLiftColors } from "@/lib/get-lift-color";
+import { getLiftColor, useLiftColors } from "@/lib/color-tools";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";

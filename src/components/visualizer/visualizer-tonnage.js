@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { getLiftColor, useLiftColors } from "@/lib/get-lift-color";
+import { getLiftColor, useLiftColors } from "@/lib/color-tools";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";

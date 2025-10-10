@@ -58,12 +58,8 @@ import {
 } from "@/components/ui/card";
 
 import { useSession } from "next-auth/react";
-import {
-  getLiftColor,
-  brightenHexColor,
-  saturateHexColor,
-  useLiftColors,
-} from "@/lib/get-lift-color";
+// import { brightenHexColor, saturateHexColor } from "@/lib/get-lift-color";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 import { getYearLabels } from "./visualizer-processing";
 import { ChartContainer } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -79,7 +75,8 @@ const repTabs = [
 export function VisualizerReps({ data, liftType }) {
   const { parsedData, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
-  const { color: liftColor } = useLiftColors(liftType);
+  const { getColor } = useLiftColors();
+  const liftColor = getColor(liftType);
 
   const [timeRange, setTimeRange] = useLocalStorage(
     "SJ_timeRange",
@@ -151,7 +148,7 @@ export function VisualizerReps({ data, liftType }) {
 
   // Chart config for ChartContainer (for theming/colors)
   const chartConfig = repTabs.reduce((acc, t) => {
-    acc[t.label] = { label: t.label, color: getLiftColor(liftType) };
+    acc[t.label] = { label: t.label, color: liftColor };
     return acc;
   }, {});
 
@@ -381,7 +378,7 @@ const getDailyBest = (data, liftType, repsWanted, timeRange, setTimeRange) => {
 
 function getRepColor(reps, liftColor) {
   if (reps === 1) return liftColor;
-  if (reps === 3) return brightenHexColor(liftColor, 1.25);
-  if (reps === 5) return saturateHexColor(liftColor, 1.3);
+  // if (reps === 3) return brightenHexColor(liftColor, 1.25);
+  // if (reps === 5) return saturateHexColor(liftColor, 1.3);
   return liftColor;
 }

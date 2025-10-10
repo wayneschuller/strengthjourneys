@@ -6,7 +6,7 @@ import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLiftColors } from "@/lib/get-lift-color";
+import { useLiftColors } from "@/lib/color-tools";
 
 import { Button } from "@/components/ui/button";
 

@@ -28,6 +28,10 @@ export function StandardsSlider({
   // devLog(topLiftsByTypeAndReps);
 
   const unitType = isMetric ? "kg" : "lb";
+
+  // Get all standard values for scale
+  const standardValues = Object.values(originalData);
+  const minLift = Math.min(...standardValues); // Usually 'physicallyActive'
   const maxLift = originalData.elite; // Max value of slider
 
   let athleteRankingWeight = 0;
@@ -40,57 +44,67 @@ export function StandardsSlider({
         topLiftsByTypeAndReps?.[liftType]?.[0]?.[0]?.weight;
     }
   }
-  // devLog(best);
 
-  // Calculate the left percentage based on current weight relative to maxLift
-  // const thumbPosition = (athleteRankingWeight / maxLift) * 100;
-  const thumbPosition = maxLift
-    ? Math.min(100, Math.max(0, (athleteRankingWeight / maxLift) * 100))
-    : 0;
+  // Helper to calculate proportional % from minLift to maxLift
+  const getPercent = (val) =>
+    maxLift === minLift ? 0 : ((val - minLift) / (maxLift - minLift)) * 100;
 
-  // Convert object keys to an array for rendering labels
+  // Proportional thumb position
+  const thumbPosition = getPercent(athleteRankingWeight);
+
+  // Level label data
   const levelLabels = Object.keys(liftTypeStandards);
 
   return (
     <div className="mx-auto w-full">
       {/* Lift level labels */}
-      <div className="mb-2 flex justify-between text-sm">
-        {levelLabels.map((level, index) => (
-          <span
-            key={level}
-            className={cn(index % 2 !== 0 ? "hidden sm:block" : "block")}
-          >
-            <div className="md:text-base">{level}</div>
-            <div className="font-bold md:text-lg lg:text-xl">
-              {liftTypeStandards[level]}
-              {unitType}
-            </div>
-          </span>
-        ))}
+      <div className="relative mb-2 h-14 w-full">
+        {levelLabels.map((level, index) => {
+          const value = liftTypeStandards[level];
+          const left = getPercent(value);
+
+          // Alignment rules
+          let labelStyle, labelClass;
+          if (index === 0) {
+            // First (flush left)
+            labelStyle = { left: "0%" };
+            labelClass = "absolute flex flex-col items-start text-left";
+          } else if (index === levelLabels.length - 1) {
+            // Last (flush right)
+            labelStyle = { left: "100%", transform: "translateX(-100%)" };
+            labelClass = "absolute flex flex-col items-end text-right";
+          } else {
+            // Centered for others
+            labelStyle = { left: `${left}%`, transform: "translateX(-50%)" };
+            labelClass = "absolute flex flex-col items-center";
+          }
+
+          return (
+            <span key={level} className={labelClass} style={labelStyle}>
+              <div className="md:text-base">{level}</div>
+              <div className="font-bold md:text-lg lg:text-xl">
+                {liftTypeStandards[level]}
+                {unitType}
+              </div>
+            </span>
+          );
+        })}
         {/* <div className="block md:hidden">Rating: </div> */}
       </div>
       <div className="relative w-full">
-        <SliderPrimitive.Root
-          value={[athleteRankingWeight]}
-          max={maxLift}
-          disabled // Make it non-interactive
-          className="relative flex w-full touch-none select-none items-center pb-10"
-        >
-          {/* Static gradient background */}
-          <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800">
-            <SliderPrimitive.Range className="absolute h-full opacity-0" />{" "}
-          </SliderPrimitive.Track>
-        </SliderPrimitive.Root>
-
-        {/* We use a custom thumb so we can animate it. */}
+        {/* Slider bar background */}
+        <div className="relative h-2 w-full rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800" />
+        {/* Proportional thumb */}
         <div
           className="absolute -top-1 bg-primary transition-all duration-1000 ease-in"
-          style={{ left: `${thumbPosition}%` }} // Positioning based on percentage
+          style={{ left: `${thumbPosition}%`, transform: "translateX(-50%)" }}
         >
           <div className="h-4 w-4 rotate-45"></div>
-          {/* PR value displayed below thumb */}
           {athleteRankingWeight > 0 && (
-            <span className="absolute -left-2 top-5 w-max font-bold">
+            <span
+              className="absolute left-1/2 top-5 w-max font-bold"
+              style={{ transform: "translateX(-50%)" }}
+            >
               {athleteRankingWeight}
               {unitType}
             </span>

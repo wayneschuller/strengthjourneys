@@ -21,7 +21,7 @@ export function StandardsSlider({
   if (!standards) return null;
   const originalData = standards[liftType];
   if (!originalData) return null;
-  const liftTypeStandards = convertLabels(originalData);
+  const liftTypeStandards = readableLabels(originalData);
   // devLog(liftTypeStandards);
   // devLog(standards[`Back Squat`].beginner);
 
@@ -99,7 +99,7 @@ export function StandardsSlider({
 }
 
 // Helper function to convert the object member names to more readable English labels
-const convertLabels = (data) => {
+const readableLabels = (data) => {
   const labelMap = {
     physicallyActive: "Physically Active",
     beginner: "Beginner",

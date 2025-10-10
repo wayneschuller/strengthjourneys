@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
-const IMAGE_FADE_DURATION = 900; // ms
-const IMAGE_PAUSE_DURATION = 1800; // ms
+const IMAGE_FADE_DURATION = 500; // ms
+const IMAGE_PAUSE_DURATION = 2200; // ms
 
 const images = [
   {
@@ -19,7 +19,7 @@ const images = [
   {
     src: "/spreadsheet.png",
     alt: "Spreadsheet example",
-    caption: "📊 Your data forever in your Google Sheet",
+    caption: "📊 Own your data forever",
   },
   {
     src: "/app2.png",
@@ -29,7 +29,7 @@ const images = [
   {
     src: "/spreadsheet.png",
     alt: "Spreadsheet example",
-    caption: "📊 Sign in to process your Google sheet ",
+    caption: "No subscriptions",
   },
   {
     src: "/app3.png",
@@ -69,20 +69,12 @@ export default function SpreadsheetShowcase() {
           priority
         />
         {/* Floating caption */}
-        <div className="pointer-events-none absolute bottom-6 left-6 max-w-[70%]">
+        <div className="pointer-events-none absolute bottom-6 left-1/2 max-w-[80%] -translate-x-1/2">
           <div
-            className={`transition-all duration-[${IMAGE_FADE_DURATION}] rounded-xl bg-white/80 px-5 py-2 text-lg font-semibold text-gray-900 shadow-lg ease-in-out ${fade ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"} `}
+            className={`transition-all duration-[${IMAGE_FADE_DURATION}] rounded-full bg-white/80 px-5 py-2 text-lg font-semibold text-gray-900 shadow-lg ease-in-out ${fade ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"} `}
             style={{ backdropFilter: "blur(3px)" }}
           >
             {images[index].caption}
-          </div>
-        </div>
-        {/* Floating Label */}
-        <div className="absolute bottom-12 left-1/2 z-10 -translate-x-1/2">
-          <div className="duration-[900ms] ${fade ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'} rounded-full border border-border bg-card px-6 py-3 shadow-lg transition-all ease-in-out">
-            <p className="text-sm font-semibold text-foreground">
-              {images[index].caption}
-            </p>
           </div>
         </div>
         <div className="pointer-events-none absolute inset-0 rounded-3xl ring-4 ring-white/60 ring-offset-2 ring-offset-gray-100" />

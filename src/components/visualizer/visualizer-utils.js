@@ -134,8 +134,7 @@ export const SpecialHtmlLabel = ({ x, y, value }) => {
 };
 
 // Helper to get rep color for tooltip, matching chart logic
-function getRepColor(reps, liftType) {
-  const liftColor = getColor(liftType);
+function getRepColor(reps, liftColor) {
   if (reps === 1) return liftColor;
   if (reps === 3) return brightenHexColor(liftColor, 1.25);
   if (reps === 5) return saturateHexColor(liftColor, 1.3);
@@ -145,6 +144,7 @@ function getRepColor(reps, liftType) {
 // Tooltip for VisualizerReps (singles, triples, fives chart card)
 export const VisualizerRepsTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
+  // devLog(payload);
   const tuple = payload[0].payload;
   const dateLabel = getReadableDateString(tuple.date);
 
@@ -170,7 +170,7 @@ export const VisualizerRepsTooltip = ({ active, payload, label }) => {
         weight: t.weight,
         unitType: t.unitType,
         liftType: t.liftType, // Add liftType from the tuple
-        color: getRepColor(tab.reps, t.liftType),
+        color: getRepColor(tab.reps, payload[0].color),
         // Add more fields as needed
       };
     })

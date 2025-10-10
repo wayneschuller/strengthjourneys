@@ -3,7 +3,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
-import { useWindowSize } from "usehooks-ts";
+import { useReadLocalStorage, useWindowSize } from "usehooks-ts";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 export function StandardsSlider({
@@ -19,6 +19,9 @@ export function StandardsSlider({
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { width } = useWindowSize({ initializeWithValue: false });
+  const [e1rmFormula] = useReadLocalStorage("formula", "Brzycki", {
+    initializeWithValue: false,
+  });
 
   if (!standards) return null;
   const originalData = standards[liftType];
@@ -55,15 +58,13 @@ export function StandardsSlider({
 
         if (weight > athleteRankingWeight) athleteRankingWeight = weight;
 
-        const e1rm = estimateE1RM(reps, weight, "Epley");
+        const e1rm = estimateE1RM(reps, weight, e1rmFormula);
         if (e1rm > highestE1RM) highestE1RM = e1rm;
       }
     }
   }
 
-  devLog(
-    `${liftType} Best: ${athleteRankingWeight}, best e1rm: ${highestE1RM}`,
-  );
+  // devLog( `${liftType} Best: ${athleteRankingWeight}, best e1rm: ${highestE1RM}`);
 
   // Helper to calculate proportional % from minLift to maxLift
   const getPercent = (val) =>

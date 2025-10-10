@@ -6,7 +6,7 @@ import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLiftColors } from "@/lib/color-tools";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 
 import { Button } from "@/components/ui/button";
 
@@ -47,7 +47,8 @@ const bigFourURLs = {
 };
 
 const LiftTypeIndicator = ({ liftType }) => {
-  const { color } = useLiftColors(liftType);
+  const { getColor } = useLiftColors();
+  const color = getColor(liftType);
 
   // Content to be rendered (color square and lift type text)
   const content = (

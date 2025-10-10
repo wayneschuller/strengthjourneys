@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useEffect } from "react";
-import { getLiftColor, useLiftColors } from "@/lib/color-tools";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
@@ -61,14 +61,13 @@ import { processVisualizerData, getYearLabels } from "./visualizer-processing";
 export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, selectedLiftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
+  const { getColor } = useLiftColors();
 
   // Get reactive colors for all selected lift types
   // Create individual hooks for each lift type
   const liftColors = {};
   selectedLiftTypes.forEach((liftType) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { color } = useLiftColors(liftType);
-    liftColors[liftType] = color;
+    liftColors[liftType] = getColor(liftType);
   });
 
   // devLog(parsedData);

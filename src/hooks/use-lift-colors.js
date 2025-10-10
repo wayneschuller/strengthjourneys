@@ -1,4 +1,12 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { SliderPicker } from "react-color";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { devLog } from "@/lib/processing-utils";
 
 // Default lift colors
 // Color palette inspired from:
@@ -59,19 +67,34 @@ export const LiftColorsProvider = ({ children }) => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("liftColorOverrides");
       if (saved) {
-        const parsed = JSON.parse(saved);
-        // Validate each color in overrides
-        const validOverrides = {};
-        for (const [liftType, color] of Object.entries(parsed)) {
-          if (isValidHexColor(color)) {
-            validOverrides[liftType] = color;
-          } else {
-            console.warn(
-              `Invalid color for ${liftType}: "${color}". Ignoring.`,
-            );
+        try {
+          const parsed = JSON.parse(saved);
+          if (
+            typeof parsed !== "object" ||
+            Array.isArray(parsed) ||
+            parsed === null
+          ) {
+            throw new Error("Overrides value isn't an object");
           }
+          // Validate each color in overrides
+          const validOverrides = {};
+          for (const [liftType, color] of Object.entries(parsed)) {
+            if (isValidHexColor(color)) {
+              validOverrides[liftType] = color;
+            } else {
+              console.warn(
+                `Invalid color for ${liftType}: "${color}". Ignoring.`,
+              );
+            }
+          }
+          setOverrides(validOverrides);
+        } catch (e) {
+          console.warn(
+            "Error parsing liftColorOverrides from localStorage:",
+            e,
+          );
+          localStorage.removeItem("liftColorOverrides");
         }
-        setOverrides(validOverrides);
       }
     }
   }, []); // Runs once after mount
@@ -108,11 +131,21 @@ export const LiftColorsProvider = ({ children }) => {
     }));
   };
 
+  // Resets the override for a given liftType, returning it to the default color (or random if not listed)
+  const resetColor = (liftType) => {
+    setOverrides((prev) => {
+      const next = { ...prev };
+      delete next[liftType];
+      return next;
+    });
+  };
+
   return (
     <LiftColorsContext.Provider
       value={{
         getActiveColor,
         setLiftColor,
+        resetColor,
       }}
     >
       {children}
@@ -130,5 +163,64 @@ export const useLiftColors = () => {
   return {
     getColor: context.getActiveColor,
     setColor: context.setLiftColor,
+    resetColor: context.resetColor,
   };
+};
+
+// Color picker component
+export function LiftColorPicker({ liftType }) {
+  // const { color, setColor, resetColor, isLightColor } = useLiftColors();
+  const { getColor, setColor, resetColor } = useLiftColors();
+  const color = getColor(liftType);
+
+  const handleColorChange = (newColor) => {
+    // Validate the color before setting it
+    if (isValidHexColor(newColor.hex)) {
+      setColor(liftType, newColor.hex);
+    } else {
+      devLog(
+        `Invalid color selected for ${liftType}: "${newColor.hex}". Not updating color.`,
+      );
+    }
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className="w-[200px]"
+          style={{
+            backgroundColor: color,
+            color: isLightColor(color) ? "#000" : "#fff",
+          }}
+        >
+          {liftType} Color
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[380px]">
+        <div className="flex flex-col gap-4">
+          <SliderPicker color={color} onChangeComplete={handleColorChange} />
+          <Button
+            variant="outline"
+            onClick={() => {
+              resetColor(liftType);
+            }}
+          >
+            Reset to Default
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// Function to check if a color is light or dark
+const isLightColor = (color) => {
+  const hex = color.replace("#", "");
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  // Using the luminance formula
+  return 0.299 * r + 0.587 * g + 0.114 * b > 128;
 };

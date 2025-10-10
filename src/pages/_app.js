@@ -15,6 +15,7 @@ import Script from "next/script";
 import { devLog } from "@/lib/processing-utils";
 import { TimerProvider } from "@/hooks/use-timer";
 import { UserLiftingDataProvider } from "@/hooks/use-userlift-data";
+import { LiftColorsProvider } from "@/hooks/use-lift-colors";
 
 export default function App({ Component, pageProps, session }) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
@@ -55,10 +56,12 @@ export default function App({ Component, pageProps, session }) {
         <SessionProvider session={session}>
           <UserLiftingDataProvider>
             <TimerProvider>
-              <Layout>
-                <Component {...pageProps} />
-                <Toaster />
-              </Layout>
+              <LiftColorsProvider>
+                <Layout>
+                  <Component {...pageProps} />
+                  <Toaster />
+                </Layout>
+              </LiftColorsProvider>
             </TimerProvider>
           </UserLiftingDataProvider>
         </SessionProvider>

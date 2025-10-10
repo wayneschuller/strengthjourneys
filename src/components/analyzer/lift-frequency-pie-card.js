@@ -7,8 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
 
-import { getLiftColor, useLiftColors } from "@/lib/get-lift-color";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 
 import {
   ChartConfig,
@@ -77,6 +77,7 @@ const CustomLegend = ({ payload }) => {
 export function LiftTypeFrequencyPieCard() {
   const { liftTypes, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
+  const { getColor } = useLiftColors();
 
   if (isLoading)
     return (
@@ -99,7 +100,8 @@ export function LiftTypeFrequencyPieCard() {
   const liftColors = {};
   topLifts.forEach((item) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { color } = useLiftColors(item.liftType);
+    const color = getColor(item.liftType);
+    devLog(`type: ${item.liftType}, color: ${color}`);
     liftColors[item.liftType] = color;
   });
 

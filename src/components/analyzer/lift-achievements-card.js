@@ -42,12 +42,13 @@ import { Maximize2, Minimize2 } from "lucide-react";
 import { Button, buttonVariants } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useLiftColors, LiftColorPicker } from "@/lib/get-lift-color";
+import { useLiftColors } from "@/hooks/use-lift-colors";
+import { LiftColorPicker } from "@/hooks/use-lift-colors";
 
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
   const { liftTypes } = useUserLiftingData();
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
-  const { color, getBrightenedColor } = useLiftColors(liftType);
+  const { getColor } = useLiftColors();
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
   const totalReps = lift ? lift.totalReps : null;
@@ -84,7 +85,7 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
           className={cn("mr-5 text-pretty", isExpanded && "text-3xl")}
           style={{
             textDecoration: "underline",
-            textDecorationColor: `${color}`,
+            textDecorationColor: `${getColor(liftType)}`,
           }}
         >
           {liftType}
@@ -108,15 +109,7 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
         )}
       </CardContent>
       <CardFooter className="text-sm font-extralight">
-        {isExpanded && (
-          <LiftColorPicker
-            liftType={liftType}
-            onColorChange={(newColor) => {
-              // The color is automatically updated through the hook
-              // This callback is useful if we need to trigger any other updates
-            }}
-          />
-        )}
+        {isExpanded && <LiftColorPicker liftType={liftType} />}
       </CardFooter>
     </Card>
   );

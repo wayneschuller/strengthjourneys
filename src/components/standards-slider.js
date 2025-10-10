@@ -3,7 +3,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
-import * as SliderPrimitive from "@radix-ui/react-slider";
+import { useWindowSize } from "usehooks-ts";
 
 export function StandardsSlider({
   liftType,
@@ -17,6 +17,7 @@ export function StandardsSlider({
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
+  const { width } = useWindowSize({ initializeWithValue: false });
 
   if (!standards) return null;
   const originalData = standards[liftType];
@@ -60,6 +61,14 @@ export function StandardsSlider({
       {/* Lift level labels */}
       <div className="relative mb-2 h-14 w-full">
         {levelLabels.map((level, index) => {
+          // Only show 1st, 3rd, last on mobile
+          if (
+            width < 800 &&
+            index !== 0 &&
+            index !== 2 &&
+            index !== levelLabels.length - 1
+          )
+            return null;
           const value = liftTypeStandards[level];
           const left = getPercent(value);
 

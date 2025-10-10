@@ -245,7 +245,7 @@ function MyLiftTypeSummaryCard({ liftType }) {
             <LiftTypeRecentHighlights liftType={liftType} />
           </div>
         ) : (
-          <div>Login to see your data</div>
+          <div>Login to see a detailed analysis of your journey.</div>
         )}
         <div className="mt-10">
           <LiftColorPicker liftType={liftType} />

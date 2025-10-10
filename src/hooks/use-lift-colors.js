@@ -101,8 +101,12 @@ export const LiftColorsProvider = ({ children }) => {
 
   // Persist overrides to localStorage when they change (client-only)
   useEffect(() => {
-    if (typeof window !== "undefined" && Object.keys(overrides).length > 0) {
-      localStorage.setItem("liftColorOverrides", JSON.stringify(overrides));
+    if (typeof window !== "undefined") {
+      if (Object.keys(overrides).length > 0) {
+        localStorage.setItem("liftColorOverrides", JSON.stringify(overrides));
+      } else {
+        localStorage.removeItem("liftColorOverrides");
+      }
     }
   }, [overrides]);
 

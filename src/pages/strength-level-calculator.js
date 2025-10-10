@@ -254,7 +254,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
               </div>
             )}
           </div>
-          <div className="flex flex-col gap-4 md:ml-4">
+          <div className="flex flex-col gap-8 md:ml-4">
             {liftTypesFromStandards.map((liftType) => (
               <div key={liftType} className="">
                 <Link href={bigFourURLs[liftType]}>

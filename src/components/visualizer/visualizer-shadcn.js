@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useEffect } from "react";
-import { useLiftColors } from "@/hooks/use-lift-colors";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { subMonths } from "date-fns";

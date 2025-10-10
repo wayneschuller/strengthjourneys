@@ -204,13 +204,14 @@ export default function Home() {
         ]}
       />
       <main className="mx-4 mb-4 md:mx-[5vw]">
+        <div className="mb-8 flex flex-row justify-center">
+          <SloganCarousel />
+        </div>
         <div className="grid grid-cols-1 xl:grid-cols-2">
           <div>
-            <div className="flex flex-row justify-center">
-              <SloganCarousel />
-            </div>
-            <h1 className="my-4 space-x-2 text-balance text-center text-4xl font-extrabold tracking-tight md:mt-8 lg:text-5xl">
-              Welcome to Strength Journeys
+            <h1 className="mb-8 mt-4 space-x-2 text-balance text-center text-6xl font-extrabold leading-tight tracking-tight md:mt-8 lg:text-left lg:text-6xl xl:text-7xl">
+              Welcome to{" "}
+              <span className="whitespace-nowrap">Strength Journeys</span>
             </h1>
 
             <PageDescription />
@@ -243,7 +244,7 @@ export default function Home() {
 }
 
 const PageDescription = () => (
-  <h2 className="mb-10 mt-2 text-center text-2xl tracking-tight lg:mx-20">
+  <h2 className="mb-10 mt-2 text-3xl tracking-tight">
     A free{" "}
     <a
       className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"

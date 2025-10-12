@@ -47,23 +47,13 @@ import { findBestE1RM } from "@/lib/processing-utils";
 import { useReadLocalStorage } from "usehooks-ts";
 
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
-  const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
+  const { liftTypes } = useUserLiftingData();
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
   const { getColor } = useLiftColors();
-  const e1rmFormula =
-    useReadLocalStorage("formula", { initializeWithValue: false }) ?? "Brzycki";
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
   const totalReps = lift ? lift.totalReps : null;
   const totalSets = lift ? lift.totalSets : null;
-
-  const { bestLift, bestE1RMWeight, unitType } = findBestE1RM(
-    liftType,
-    topLiftsByTypeAndReps,
-    e1rmFormula,
-  );
-
-  devLog(`best ${liftType} is ${bestE1RMWeight}${unitType}`);
 
   return (
     <Card
@@ -156,6 +146,8 @@ export function ExpandedLiftAchievements({ liftType }) {
 // Visually showing progress to the next milestone would be good - progress bar.
 export const LiftTypeSummaryStatistics = ({ liftType }) => {
   const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
+  const e1rmFormula =
+    useReadLocalStorage("formula", { initializeWithValue: false }) ?? "Brzycki";
 
   if (!liftTypes) return null;
   if (!topLiftsByTypeAndReps) return null;
@@ -170,6 +162,16 @@ export const LiftTypeSummaryStatistics = ({ liftType }) => {
   const oneRM = topLiftsByReps?.[0]?.[0];
   const threeRM = topLiftsByReps?.[2]?.[0];
   const fiveRM = topLiftsByReps?.[4]?.[0];
+
+  const { bestLift, bestE1RMWeight, unitType } = findBestE1RM(
+    liftType,
+    topLiftsByTypeAndReps,
+    e1rmFormula,
+  );
+
+  devLog(`best ${liftType} is ${bestE1RMWeight}${unitType}`);
+  devLog(bestLift);
+
   return (
     <div className="grid grid-cols-3 justify-start">
       <div className="col-span-3 text-lg font-semibold">
@@ -204,6 +206,12 @@ export const LiftTypeSummaryStatistics = ({ liftType }) => {
           {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
         </div>
       )}
+      <div className="col-span-3 mt-4">
+        Your highest potential {liftType} is {bestE1RMWeight}
+        {unitType} based on your {getReadableDateString(bestLift.date)} set of{" "}
+        {bestLift.reps}@{bestLift.weight}
+        {bestLift.unitType} (using {e1rmFormula} formula).
+      </div>
     </div>
   );
 };

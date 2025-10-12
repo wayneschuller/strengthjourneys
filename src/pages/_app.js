@@ -80,10 +80,6 @@ export default function App({ Component, pageProps, session }) {
           gtag('config', '${GA_MEASUREMENT_ID}');
         `}
       </Script>
-      {/* Canny */}
-      <Script id="canny" strategy="afterInteractive">
-        {`!function(w,d,i,s){function l(){if(!d.getElementById(i)){var f=d.getElementsByTagName(s)[1],e=d.createElement(s);e.type="text/javascript",e.async=!0,e.src="https://canny.io/sdk.js",f.parentNode.insertBefore(e,f)}}if("function"!=typeof w.Canny){var c=function(){c.q.push(arguments)};c.q=[],w.Canny=c,"complete"===d.readyState?l():w.attachEvent?w.attachEvent("onload",l):w.addEventListener("load",l,!1)}}(window,document,"canny-jssdk","script");`}
-      </Script>
     </>
   );
 }

@@ -86,11 +86,11 @@ export default function SpreadsheetShowcase() {
           priority
         />
         {/* Floating Label with new timing */}
-        <div className="absolute bottom-12 left-1/2 z-10 -translate-x-1/2">
+        <div className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2 md:bottom-4">
           <div
             className={`rounded-full border border-border bg-card px-6 py-3 shadow-lg transition-all duration-[${CAPTION_FADE_DURATION}ms] ease-in-out ${captionVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"} `}
           >
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-xs font-semibold text-foreground md:text-sm">
               {images[index].caption}
             </p>
           </div>

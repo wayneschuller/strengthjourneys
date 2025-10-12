@@ -43,15 +43,27 @@ import { Button, buttonVariants } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
+import { findBestE1RM } from "@/lib/processing-utils";
+import { useReadLocalStorage } from "usehooks-ts";
 
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
-  const { liftTypes } = useUserLiftingData();
+  const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
   const { getColor } = useLiftColors();
+  const e1rmFormula =
+    useReadLocalStorage("formula", { initializeWithValue: false }) ?? "Brzycki";
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
   const totalReps = lift ? lift.totalReps : null;
   const totalSets = lift ? lift.totalSets : null;
+
+  const { bestLift, bestE1RMWeight, unitType } = findBestE1RM(
+    liftType,
+    topLiftsByTypeAndReps,
+    e1rmFormula,
+  );
+
+  devLog(`best ${liftType} is ${bestE1RMWeight}${unitType}`);
 
   return (
     <Card

@@ -1,3 +1,5 @@
+import { estimateE1RM } from "./estimate-e1rm";
+
 // Simple wrapper for console.log
 export function devLog(...messages) {
   // We setup this special env variable on Vercel dev and preview but NOT production builds

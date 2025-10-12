@@ -49,7 +49,7 @@ export function Footer() {
           <a
             data-canny-link
             className="font-medium underline underline-offset-4"
-            href="https://strengthjourneys.canny.io"
+            href="https://strengthjourneys.canny.io/feature-requests"
           >
             Give feedback
           </a>

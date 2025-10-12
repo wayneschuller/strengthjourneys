@@ -161,13 +161,23 @@ export function AvatarDropdown() {
                 <DropdownMenuItem
                   onClick={() =>
                     window.open(
+                      "https://strengthjourneys.canny.io/feature-requests",
+                    )
+                  }
+                >
+                  <Bug className="mr-2 h-4 w-4" />
+                  Report bugs or feature requests
+                </DropdownMenuItem>
+                {/* <DropdownMenuItem
+                  onClick={() =>
+                    window.open(
                       "https://github.com/wayneschuller/strengthjourneys/issues",
                     )
                   }
                 >
                   <Bug className="mr-2 h-4 w-4" />
                   Report Issue via Github
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuItem
                   onClick={() =>
                     window.open(

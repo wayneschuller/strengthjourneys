@@ -5,6 +5,8 @@
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { devLog } from "@/lib/processing-utils";
+import { useSession, signIn, signOut } from "next-auth/react";
+import { useState, useEffect } from "react";
 
 import {
   Calculator,
@@ -39,6 +41,7 @@ import { Testimonials } from "@/components/testimonials";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { Separator } from "@/components/ui/separator";
 import SpreadsheetShowcase from "@/components/spreadsheet-showcase";
+import { HomeDashboard } from "@/components/home-dashboard";
 
 // The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [
@@ -171,6 +174,17 @@ export default function Home() {
   const keywords =
     "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
+  const { data: session, status: authStatus } = useSession();
+  const [showHeroSection, setShowHeroSection] = useState(true); // Ensure static generation of Hero Section
+  const [isFadingHero, setIsFadingHero] = useState(false);
+
+  // When user is authenticated, stop showing the Hero section
+  useEffect(() => {
+    if (authStatus === "authenticated" && showHeroSection && !isFadingHero) {
+      setIsFadingHero(true); // start fade-out
+      setTimeout(() => setShowHeroSection(false), 800); // <-- match duration below
+    }
+  }, [authStatus, showHeroSection, isFadingHero]);
 
   return (
     <>
@@ -204,19 +218,15 @@ export default function Home() {
         ]}
       />
       <main className="mx-4 mb-4 md:mx-[5vw]">
-        <div className="mb-8 flex flex-row justify-center">
-          <SloganCarousel />
-        </div>
-        <div className="grid grid-cols-1 xl:grid-cols-2">
-          <div>
-            <h1 className="mb-4 mt-4 space-x-2 text-balance text-center text-5xl font-extrabold leading-tight tracking-tight md:mb-8 md:mt-8 lg:text-left lg:text-6xl xl:text-7xl">
-              Welcome to Strength Journeys
-            </h1>
-
-            <PageDescription />
+        {showHeroSection ? (
+          <div
+            className={`duration-800 transition-all ease-in-out ${isFadingHero ? "pointer-events-none -translate-y-6 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"} `}
+          >
+            <HeroSection />
           </div>
-          <SpreadsheetShowcase />
-        </div>
+        ) : (
+          <HomeDashboard />
+        )}
 
         <h2 class="mb-4 mt-8 text-xl font-semibold">
           🏋️ The Big Four Barbell Lifts
@@ -242,6 +252,25 @@ export default function Home() {
   );
 }
 
+function HeroSection() {
+  return (
+    <div>
+      <div className="mb-8 flex flex-row justify-center">
+        <SloganCarousel />
+      </div>
+      <div className="grid grid-cols-1 xl:grid-cols-2">
+        <div>
+          <h1 className="mb-4 mt-4 space-x-2 text-balance text-center text-5xl font-extrabold leading-tight tracking-tight md:mb-8 md:mt-8 lg:text-left lg:text-6xl xl:text-7xl">
+            Welcome to Strength Journeys
+          </h1>
+
+          <PageDescription />
+        </div>
+        <SpreadsheetShowcase />
+      </div>
+    </div>
+  );
+}
 const PageDescription = () => (
   <h2 className="mb-10 mt-2 text-center text-xl tracking-tight md:text-left md:text-3xl lg:w-4/5">
     A free{" "}

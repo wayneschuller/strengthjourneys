@@ -221,10 +221,6 @@ function MyLiftTypeSummaryCard({ liftType }) {
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
 
-  // FIXME: add a skeleton loader
-
-  // FIXME: Add color underline to title
-
   return (
     <Card className="min-h-[300px]">
       <CardHeader>
@@ -235,18 +231,23 @@ function MyLiftTypeSummaryCard({ liftType }) {
             textDecorationColor: `${getColor(liftType)}`,
           }}
         >
+          {authStatus !== "authenticated" && (
+            <span className="mr-2 font-bold">Demo Mode:</span>
+          )}
           My {liftType} Journey
         </CardTitle>
       </CardHeader>
       <CardContent className="">
-        {authStatus === "authenticated" ? (
-          <div className="flex h-full flex-col justify-between gap-4">
-            <LiftTypeSummaryStatistics liftType={liftType} />
-            <LiftTypeRecentHighlights liftType={liftType} />
+        {authStatus !== "authenticated" && (
+          <div className="mb-4 text-lg italic">
+            This is sample data. Please sign in using Google and connect your
+            sheet to get instant analysis of your data.
           </div>
-        ) : (
-          <div>Login to see a detailed analysis of your journey.</div>
         )}
+        <div className="flex h-full flex-col justify-between gap-4">
+          <LiftTypeSummaryStatistics liftType={liftType} />
+          <LiftTypeRecentHighlights liftType={liftType} />
+        </div>
         <div className="mt-10">
           <LiftColorPicker liftType={liftType} />
         </div>

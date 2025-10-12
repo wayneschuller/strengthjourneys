@@ -65,20 +65,30 @@ export function NavBar() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Not proud of putting this in a timer but it makes it work
-    const timer = setTimeout(() => {
-      if (window?.Canny) {
-        window.Canny("initChangelog", {
-          appID: "65ae4d4c921071bb0aae99c3",
-          position: "bottom",
-          align: "left",
-          theme: "dark",
-        });
-      }
-    }, 1000); // 1 second timeout
+    // Only run on client
+    if (typeof window === "undefined") return;
 
-    return () => clearTimeout(timer); // Cleanup timeout on unmount
-  }, [pathname]);
+    function initCannyChangelog() {
+      window.Canny("initChangelog", {
+        appID: "65ae4d4c921071bb0aae99c3",
+        position: "bottom",
+        align: "left",
+        theme: "dark",
+      });
+    }
+
+    if (!window.Canny) {
+      // If SDK is not present, inject it, then init after load
+      const script = document.createElement("script");
+      script.src = "https://canny.io/sdk.js";
+      script.async = true;
+      script.onload = initCannyChangelog;
+      document.body.appendChild(script);
+    } else {
+      // If SDK already there, just init as before
+      initCannyChangelog();
+    }
+  }, []);
 
   return (
     <div className="m-2 flex md:ml-10 md:max-w-[90vw] xl:ml-24">

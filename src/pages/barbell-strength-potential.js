@@ -151,7 +151,9 @@ function StrengthPotentialMain({ relatedArticles }) {
 function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   const { parsedData, topLiftsByTypeAndReps, isValidating } =
     useUserLiftingData();
-  const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki");
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki", {
+    initializeWithValue: false,
+  });
 
   // Early return only if topLiftsByTypeAndReps exists but is empty/invalid for this liftType
   // if (topLiftsByTypeAndReps && !topLiftsByTypeAndReps[liftType]) {

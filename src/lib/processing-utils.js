@@ -402,3 +402,30 @@ export function getAnalyzedSessionLifts(
 
   return analyzedLifts;
 }
+
+// Find the best e1RM across all rep schemes inside topLiftsByTypeAndReps
+export function findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula) {
+  const topLifts = topLiftsByTypeAndReps[liftType];
+  let bestE1RMWeight = 0;
+  let bestLift = null;
+  let unitType = "lb"; // Default to lb if not specified
+
+  for (let reps = 0; reps < 10; reps++) {
+    if (topLifts[reps]?.[0]) {
+      const lift = topLifts[reps][0];
+      const currentE1RMweight = estimateE1RM(
+        reps + 1,
+        lift.weight,
+        e1rmFormula,
+      );
+      if (currentE1RMweight > bestE1RMWeight) {
+        bestE1RMWeight = currentE1RMweight;
+        bestLift = lift;
+      }
+      if (lift.unitType) unitType = lift.unitType;
+    }
+  }
+
+  // Return the best lift entire tuple, as well as the numerical best e1RM weight and unit type
+  return { bestLift, bestE1RMWeight, unitType };
+}

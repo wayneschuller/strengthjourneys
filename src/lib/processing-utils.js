@@ -147,9 +147,18 @@ export function getReadableDateString2(ISOdate) {
   return dateString;
 }
 
-// Loop through the data once and collect top PRs for each lift, reps 1..10
-// This info will likely be used by both Analyzer and Visualizer components
-// The return format: topLiftsByTypeAndReps["Back Squat"][4][17] = lift tuple of 18th best Back Squat 5RM ever
+// Loop through the data once and collect top PRs for each lift, rep scehemes 1..10
+//  - The top-level keys (`liftType`) are strings like "Back Squat", "Bench Press", etc.
+//  - For each lift type, there is an array of 10 arrays.
+//    - Each inner array (indices 0-9) corresponds to sets performed for 1, 2, ... 10 reps, respectively.
+//    - Each entry within these arrays is a lift data object representing a specific session (sorted by weight descending).
+//    - Example:
+//        topLiftsByTypeAndReps["Bench Press"][2][0]
+//          → The heaviest Bench Press performed for 3 reps (3RM, index 2, first/best entry).
+//        topLiftsByTypeAndReps["Back Squat"][4][17]
+//          → The 18th best Back Squat performed for 5 reps (5RM, index 4, entry 17).
+//
+//  This lets you easily access the Nth-best lift for each lift type and rep range for analysis, charting, or UI.
 export function processTopLiftsByTypeAndReps(parsedData, liftTypes) {
   const startTime = performance.now();
   const topLiftsByTypeAndReps = {};

@@ -140,8 +140,6 @@ function StrengthPotentialMain({ relatedArticles }) {
         {selectedLiftTypes.map((liftType) => (
           <StrengthPotentialBarChart key={liftType} liftType={liftType} />
         ))}
-        {/* {!isLoading && parsedData && <ParetoGridCard paretoGrid={paretoGrid} />} */}
-        {/* {!isLoading && parsedData && ( <FrequencyGridCard weightCounts={weightCounts} />)} */}
       </section>
       <RelatedArticles articles={relatedArticles} />
     </div>

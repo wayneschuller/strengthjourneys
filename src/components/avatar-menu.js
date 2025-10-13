@@ -18,6 +18,7 @@ import {
   Mail,
   Bug,
   PaintRoller,
+  Coffee,
 } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
@@ -171,6 +172,14 @@ export function AvatarDropdown() {
                 >
                   <Bug className="mr-2 h-4 w-4" />
                   Report bugs or feature requests
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    window.open("https://buymeacoffee.com/lrhvbjxzqr")
+                  }
+                >
+                  <Coffee className="mr-2 h-4 w-4" />
+                  Buy Me A Coffee
                 </DropdownMenuItem>
                 {/* <DropdownMenuItem
                   onClick={() =>

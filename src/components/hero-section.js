@@ -53,7 +53,8 @@ function GoogleSignInButton() {
 
   if (authStatus !== "authenticated")
     return (
-      <Button variant="outline" onClick={() => signIn("google")}>
+      <Button onClick={() => signIn("google")}>
+        <GoogleLogo />
         Start Your Strength Journey — Free Google Sign-in
       </Button>
     );
@@ -155,5 +156,34 @@ export default function SpreadsheetShowcase() {
         <div className="pointer-events-none absolute inset-0 rounded-3xl ring-2 ring-white/60 ring-offset-2 ring-offset-gray-100" />
       </div>
     </div>
+  );
+}
+
+export function GoogleLogo({ size = 20, className = "" }) {
+  return (
+    <svg
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 48 48"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.69 1.22 9.18 3.61l6.83-6.83C35.46 2.45 30.12 0 24 0 14.62 0 6.5 5.48 2.56 13.41l7.96 6.18C12.14 13.38 17.58 9.5 24 9.5z"
+      />
+      <path
+        fill="#34A853"
+        d="M46.13 24.5c0-1.57-.14-3.08-.4-4.5H24v9h12.65c-.55 2.96-2.23 5.47-4.72 7.18l7.36 5.72C43.98 37.54 46.13 31.43 46.13 24.5z"
+      />
+      <path
+        fill="#4A90E2"
+        d="M9.52 28.59c-1.09-3.23-1.09-6.95 0-10.18L1.56 12.23C-1.7 18.18-1.7 25.82 1.56 31.77l7.96-3.18z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M24 48c6.12 0 11.46-2.02 15.28-5.5l-7.36-5.72c-2.05 1.39-4.65 2.22-7.92 2.22-6.42 0-11.86-3.88-14.48-9.09l-7.96 3.18C6.5 42.52 14.62 48 24 48z"
+      />
+    </svg>
   );
 }

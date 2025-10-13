@@ -226,7 +226,9 @@ export default function Home() {
               <HeroSection />
             </div>
           ) : (
-            <div className="absolute inset-0 h-full w-full">
+            <div
+              className={`absolute inset-0 h-full w-full transition-opacity duration-500 ${showHeroSection ? "opacity-0" : "opacity-100"} `}
+            >
               <HomeDashboard />
             </div>
           )}

@@ -143,6 +143,13 @@
     --shadow-2xl: 4px 4px 0px 0px hsl(0 0% 0% / 2.5);
     --tracking-normal: 0em;
     --spacing: 0.25rem;
+    --heatmap-0: hsl(var(--muted)); /* Light/empty */
+    --heatmap-1: hsl(
+      var(--secondary) / 0.25
+    ); /* Weak secondary, semi-transparent */
+    --heatmap-2: hsl(var(--secondary) / 0.5); /* Medium */
+    --heatmap-3: hsl(var(--primary) / 0.7); /* Primary faded */
+    --heatmap-4: hsl(var(--primary)); /* Full strength primary */
   }
 }
 
@@ -262,4 +269,20 @@
 
 .react-calendar-heatmap .color-gh-dark-4 {
   fill: #a1bfa5; /* Light green */
+}
+
+.neo-brutalism .react-calendar-heatmap .color-gh-neo-brutalism-0 {
+  fill: #fafafa;
+}
+.neo-brutalism .react-calendar-heatmap .color-gh-neo-brutalism-1 {
+  fill: #fff59d;
+}
+.neo-brutalism .react-calendar-heatmap .color-gh-neo-brutalism-2 {
+  fill: #ffff00;
+}
+.neo-brutalism .react-calendar-heatmap .color-gh-neo-brutalism-3 {
+  fill: #ffb3b3;
+}
+.neo-brutalism .react-calendar-heatmap .color-gh-neo-brutalism-4 {
+  fill: #ff6666;
 }

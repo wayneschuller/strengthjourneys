@@ -96,7 +96,7 @@ function RowProcessingIndicator({
 
   return (
     <div className="flex flex-col items-center py-4">
-      <Progress className="mb-2 h-2 w-1/2" value={percent} />
+      <Progress className="mb-2 h-2 w-4/5 md:w-3/5" value={percent} />
       <div className="text-sm text-muted-foreground">
         {isProgressDone ? "Processed" : "Processing"} Google Sheet rows:{" "}
         {animatedCount.toLocaleString()} / {rowCount?.toLocaleString()}

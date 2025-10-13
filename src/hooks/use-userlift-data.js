@@ -359,7 +359,7 @@ export const UserLiftingDataProvider = ({ children }) => {
       "/analyzer",
       "/barbell-strength-potential",
       "/tonnage",
-      "/barbell-squat-insights",
+      "/[lift]",
     ];
     if (!demoDataPaths.includes(currentPath)) return;
 

@@ -50,6 +50,7 @@ export const UserLiftingDataProvider = ({ children }) => {
     setTopLiftsByTypeAndRepsLast12Months,
   ] = useState(null); // see @/lib/processing-utils.js for data structure design
   const [selectedLiftTypes, setSelectedLiftTypes] = useState([]);
+  const [rawRows, setRawRows] = useState(null); // As soon as we have the user data, update this for UI indicators
 
   const { data: session, status: authStatus } = useSession();
 
@@ -137,6 +138,8 @@ export const UserLiftingDataProvider = ({ children }) => {
 
     if (authStatus === "authenticated" && data?.values) {
       try {
+        // devLog(data.values.length);
+        setRawRows(data?.values?.length);
         parsedData = parseData(data.values); // Will be sorted date ascending
 
         // We have some good new data loaded - tell the user via toast
@@ -381,6 +384,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         parsedData,
         topLiftsByTypeAndReps,
         topLiftsByTypeAndRepsLast12Months,
+        rawRows,
       }}
     >
       {children}

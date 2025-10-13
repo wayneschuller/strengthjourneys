@@ -34,6 +34,7 @@ export function HomeDashboard() {
     liftTypes,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
+    rawRows,
   } = useUserLiftingData();
 
   devLog(ssid);

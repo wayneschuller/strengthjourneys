@@ -260,7 +260,7 @@ export default function Home() {
 
 function FeatureCard({ href, title, description, IconComponent }) {
   return (
-    <Card className="group shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
+    <Card className="group shadow-lg ring-0 ring-black hover:ring-1 dark:ring-white">
       <Link href={href}>
         <CardHeader className="min-h-28">
           <CardTitle className="">{title}</CardTitle>
@@ -289,7 +289,7 @@ function BigFourLiftCards() {
       {lifts.map((lift) => (
         <Card
           key={lift.slug}
-          className="group shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white"
+          className="group shadow-lg ring-0 ring-black hover:ring-1 dark:ring-white"
         >
           <Link href={`/${lift.slug}`}>
             <CardHeader className="min-h-28">

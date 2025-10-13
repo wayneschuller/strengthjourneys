@@ -5,7 +5,7 @@ import { devLog } from "@/lib/processing-utils";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { SectionTopCards } from "./analyzer/section-top-cards";
+import { SectionTopCards } from "./section-top-cards";
 import { useLocalStorage } from "usehooks-ts";
 import useDrivePicker from "react-google-drive-picker";
 import { Progress } from "./ui/progress";

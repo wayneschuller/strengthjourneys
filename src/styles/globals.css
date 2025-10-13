@@ -214,6 +214,11 @@
   body {
     @apply bg-background text-foreground;
   }
+  utilities {
+    .neo-brutalism .shadow-lg {
+      box-shadow: var(--shadow-lg);
+    }
+  }
 }
 
 /*

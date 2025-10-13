@@ -33,7 +33,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CircularProgressWithLetter } from "./circular-progress-with-letter";
+import { CircularProgressWithLetter } from "./analyzer/circular-progress-with-letter";
 
 // Show a section row of key metrics on smaller cards
 export function SectionTopCards() {

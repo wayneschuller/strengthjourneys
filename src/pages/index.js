@@ -36,12 +36,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { GettingStartedCard } from "@/components/instructions-cards";
-import { SloganCarousel } from "@/components/slogan-carousel";
 import { Testimonials } from "@/components/testimonials";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { Separator } from "@/components/ui/separator";
-import SpreadsheetShowcase from "@/components/spreadsheet-showcase";
-import { HeroSection } from "@/components/spreadsheet-showcase";
+import { HeroSection } from "@/components/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard";
 
 // The feature pages are the main tools, with one card each on the landing page

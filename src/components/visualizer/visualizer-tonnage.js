@@ -82,6 +82,7 @@ export function TonnageChart({ setHighlightDate }) {
     tonnage: {
       label: "Tonnage",
       // color: "#8884d8",
+      color: "hsl(var(--chart-2))", // uses theme's first chart color for both light and dark
     },
   };
 
@@ -128,8 +129,16 @@ export function TonnageChart({ setHighlightDate }) {
 
             <defs>
               <linearGradient id="fillTonnage" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                <stop offset="50%" stopColor="#8884d8" stopOpacity={0.09} />
+                <stop
+                  offset="5%"
+                  stopColor="hsl(var(--chart-2))"
+                  stopOpacity={0.9}
+                />
+                <stop
+                  offset="50%"
+                  stopColor="hsl(var(--chart-2))"
+                  stopOpacity={0.09}
+                />
               </linearGradient>
             </defs>
             <Area
@@ -137,7 +146,7 @@ export function TonnageChart({ setHighlightDate }) {
               // type="basis"
               dataKey="tonnage"
               // dataKey="rollingAverageTonnage"
-              stroke="#8884d8"
+              stroke="hsl(var(--chart-1))"
               fill="url(#fillTonnage)"
               // fill="#8884d8"
               // fillOpacity={0.2}

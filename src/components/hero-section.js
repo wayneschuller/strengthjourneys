@@ -54,7 +54,7 @@ function GoogleSignInButton() {
   if (authStatus !== "authenticated")
     return (
       <>
-        <Button onClick={() => signIn("google")}>
+        <Button className="hover:ring-2" onClick={() => signIn("google")}>
           <GoogleLogo />
           <div className="hidden md:block">Start Your Strength Journey —</div>
           Free Google Sign-in

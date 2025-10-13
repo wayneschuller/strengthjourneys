@@ -60,7 +60,7 @@ export function OnBoardingDashboard() {
             Strength Journeys can show your training insights — while your data
             stays yours.
           </div>
-          <Button asChild className="">
+          <Button asChild className="w-fit self-center">
             <a
               href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
               target="_blank"
@@ -69,17 +69,12 @@ export function OnBoardingDashboard() {
               Step 1 - Open Google Sheet Template
             </a>
           </Button>
-          <div className="">
-            In Google Sheets click <span className="italic">"File"</span> then
-            <span className="italic">"Make a Copy"</span>. Give it a good name
-            and start entering your own lifts.
-          </div>
-          <div>
-            Our sample format is intuitive and easy to update. (You can use{" "}
-            {`"kg"`} or {`"lb"`})
+          <div className="mb-6">
+            In Google Sheets click <em>File → Make a copy</em>. Give it a good
+            name and start entering your own lifts.
           </div>
           <Button
-            className="min-w-28"
+            className="w-fit self-center"
             onClick={() =>
               handleOpenFilePicker(
                 openPicker,
@@ -92,6 +87,7 @@ export function OnBoardingDashboard() {
           >
             Step 2 - Connect your Google Sheet to Strength Journeys
           </Button>
+
           <div className="text-sm">
             Strength Journeys does not collect or store your data. Instead we
             encourage every lifter to own the data of their personal strength
@@ -99,19 +95,33 @@ export function OnBoardingDashboard() {
           </div>
         </div>
       </div>
-      <div className="md-auto flex flex-row md:ml-32">
-        <div>
+      <div className="md-auto flex flex-col md:ml-32">
+        <figure className="">
           <a
             href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
             target="_blank"
+            rel="noopener noreferrer"
           >
             <Image
-              className="w-96"
+              className="w-96 rounded-lg shadow-sm"
               src={SampleImage}
-              priority={true}
-              alt="Screenshot of sample google sheet data"
+              priority
+              alt="Screenshot of sample Google Sheet data"
             />
           </a>
+          <figcaption className="mt-2 self-start text-sm text-gray-500">
+            Example of your lifting log — simple, editable, and yours.
+          </figcaption>
+        </figure>
+
+        <div className="mt-4 text-sm leading-relaxed text-gray-500">
+          <p className="font-semibold text-gray-700">
+            Our sample format is intuitive and easy to update. Some tips:
+          </p>
+          <ul className="list-inside list-disc text-left">
+            <li>Use either “kg” or “lb” — the app reads both.</li>
+            <li>Insert new rows and put your latest session at the top.</li>
+          </ul>
         </div>
       </div>
     </div>

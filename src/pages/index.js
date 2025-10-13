@@ -218,16 +218,20 @@ export default function Home() {
         ]}
       />
       <main className="mx-4 mb-4 md:mx-[5vw]">
-        {/* FIXME: Make this height fixed so there is no vertical layout shift */}
-        {showHeroSection ? (
-          <div
-            className={`duration-800 transition-all ease-in-out ${isFadingHero ? "pointer-events-none -translate-y-6 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"} `}
-          >
-            <HeroSection />
-          </div>
-        ) : (
-          <HomeDashboard />
-        )}
+        {/* Fixed height hero section that turns into our onboarding section and then home dashboard */}
+        <div className="duration-400 relative flex h-[400px] items-center justify-center transition-all md:h-[500px]">
+          {showHeroSection ? (
+            <div
+              className={`duration-400 absolute inset-0 h-full w-full transition-all ${isFadingHero ? "pointer-events-none -translate-y-6 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"} `}
+            >
+              <HeroSection />
+            </div>
+          ) : (
+            <div className="absolute inset-0 h-full w-full">
+              <HomeDashboard />
+            </div>
+          )}
+        </div>
 
         <h2 class="mb-4 mt-8 text-xl font-semibold">
           🏋️ The Big Four Barbell Lifts

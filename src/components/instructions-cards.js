@@ -27,8 +27,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export function ChooseSheetInstructionsCard({ session }) {
+export function ChooseSheetInstructionsCard() {
   const [openPicker, authResponse] = useDrivePicker();
+  const { data: session, status: authStatus } = useSession();
 
   // We need the next 3 for the file picker button we give with instructions
   const [ssid, setSsid] = useLocalStorage("ssid", null, {
@@ -45,6 +46,8 @@ export function ChooseSheetInstructionsCard({ session }) {
     null,
     { initializeWithValue: false },
   );
+
+  if (!session) return null;
 
   return (
     <Card className="md:w-2/3">

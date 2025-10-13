@@ -1,11 +1,13 @@
 // A home dashboard for the top level of the site, shown only when user is logged in.
 // This will also help with onboarding.
 
+import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { SectionTopCards } from "./analyzer/section-top-cards";
 import { useLocalStorage } from "usehooks-ts";
 import useDrivePicker from "react-google-drive-picker";
+import { ChooseSheetInstructionsCard } from "./instructions-cards";
 
 export function HomeDashboard() {
   const { data: session, status: authStatus } = useSession();
@@ -31,11 +33,15 @@ export function HomeDashboard() {
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
 
+  devLog(ssid);
+
   return (
     <div>
-      <div className="text-xl">
+      <div className="mb-4 text-xl">
         Welcome back <div className="inline font-bold">{session.user.name}</div>
       </div>
+      {!ssid && <ChooseSheetInstructionsCard />}
+
       {parsedData && <SectionTopCards />}
     </div>
   );

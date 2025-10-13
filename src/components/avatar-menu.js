@@ -143,7 +143,8 @@ export function AvatarDropdown() {
                     Choose New Google Sheet
                   </DropdownMenuItem>
                 )}
-                {/* Not sure about the next option - false for now */}
+
+                {/* In dev environment offer a 'forget sheet' menu option. Good for testing onboarding. */}
                 {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV ===
                   "development" &&
                   ssid && (

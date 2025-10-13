@@ -140,7 +140,7 @@ export default function SpreadsheetShowcase() {
 
   return (
     <div className="flex justify-center md:py-8">
-      <div className="relative aspect-video w-full max-w-2xl overflow-hidden rounded-3xl border-4 border-white bg-gradient-to-br from-gray-200 via-white to-gray-100 shadow-2xl">
+      <div className="relative aspect-video w-full max-w-2xl overflow-hidden rounded-3xl border-4 border-white/20 bg-opacity-10 bg-gradient-to-br from-gray-200/30 via-white/60 to-gray-100/30 opacity-80 shadow-2xl">
         <Image
           src={images[index].src}
           alt={images[index].alt}

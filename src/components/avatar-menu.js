@@ -8,6 +8,7 @@ import useDrivePicker from "../../dependencies/react-google-drive-picker/dist";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { useLocalStorage } from "usehooks-ts";
 import { devLog } from "@/lib/processing-utils";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
   FolderX,
@@ -16,6 +17,7 @@ import {
   FolderOpenDot,
   Mail,
   Bug,
+  PaintRoller,
 } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
@@ -39,6 +41,7 @@ import {
 export function AvatarDropdown() {
   const { data: session, status: authStatus } = useSession();
   const [openPicker, authResponse] = useDrivePicker();
+  const { setTheme, theme } = useTheme();
 
   const [ssid, setSsid] = useLocalStorage("ssid", null, {
     initializeWithValue: false,
@@ -159,6 +162,13 @@ export function AvatarDropdown() {
                       <span>Forget Google Sheet</span>
                     </DropdownMenuItem>
                   )}
+                {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV ===
+                  "development" && (
+                  <DropdownMenuItem onClick={() => setTheme("neo-brutalism")}>
+                    <PaintRoller className="mr-2 h-4 w-4" />
+                    <span>Neo Brutalism Theme</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={() =>
                     window.open(

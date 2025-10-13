@@ -17,6 +17,11 @@ import { TimerProvider } from "@/hooks/use-timer";
 import { UserLiftingDataProvider } from "@/hooks/use-userlift-data";
 import { LiftColorsProvider } from "@/hooks/use-lift-colors";
 
+// Fonts needed for themes defined in global.css
+import "@fontsource/geist-sans/index.css";
+import "@fontsource/amiko/index.css";
+import "@fontsource/dm-sans/index.css";
+
 export default function App({ Component, pageProps, session }) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
   const router = useRouter();
@@ -51,6 +56,11 @@ export default function App({ Component, pageProps, session }) {
         attribute="class"
         //defaultTheme="light"
         // enableSystem
+        value={{
+          light: "light",
+          dark: "dark",
+          "neo-brutalism": "neo-brutalism",
+        }}
         disableTransitionOnChange
       >
         <SessionProvider session={session}>

@@ -3,16 +3,12 @@
 "use client";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
-import { GeistSans } from "geist/font/sans";
-
 import GridPattern from "./magicui/grid-pattern";
 import { cn } from "@/lib/utils";
 
 export function Layout({ children }) {
   return (
-    <div
-      className={`relative min-h-screen w-full bg-background ${GeistSans.className}`}
-    >
+    <div className={`relative min-h-screen w-full bg-background`}>
       {/* Container to hold the fixed background */}
       <div className="fixed inset-0 z-0">
         {/* GridPattern as background */}

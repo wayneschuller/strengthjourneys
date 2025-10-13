@@ -111,6 +111,7 @@ export function NavBar() {
         <div className="hidden">
           <GitHubButton />
         </div>
+
         <DarkModeToggle />
         <AvatarDropdown />
       </div>

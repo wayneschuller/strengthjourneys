@@ -42,6 +42,9 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --font-sans: Inter, sans-serif;
+    --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: Space Mono, monospace;
   }
 
   .dark {
@@ -64,6 +67,9 @@
     --border: 12 6.5% 15.1%;
     --input: 12 6.5% 15.1%;
     --ring: 24 5.7% 82.9%;
+    --font-sans: Inter, sans-serif;
+    --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: Space Mono, monospace;
     /* 202407 shadcn-ui charts */
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -79,12 +85,132 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+  .neo-brutalism {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 0 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 60 100% 50%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 94.1176%;
+    --muted-foreground: 0 0% 20%;
+    --accent: 216 100% 50%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 0% 0%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 0%;
+    --input: 0 0% 0%;
+    --ring: 0 100% 60%;
+    --chart-1: 0 100% 60%;
+    --chart-2: 60 100% 50%;
+    --chart-3: 216 100% 50%;
+    --chart-4: 120 100% 40%;
+    --chart-5: 300 100% 40%;
+    --sidebar: 0 0% 94.1176%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 0 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 216 100% 50%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 0%;
+    --sidebar-ring: 0 100% 60%;
+    --font-sans: DM Sans, sans-serif;
+    --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: Space Mono, monospace;
+    --radius: 0px;
+    --shadow-x: 4px;
+    --shadow-y: 4px;
+    --shadow-blur: 0px;
+    --shadow-spread: 0px;
+    --shadow-opacity: 1;
+    --shadow-color: hsl(0 0% 0%);
+    --shadow-2xs: 4px 4px 0px 0px hsl(0 0% 0% / 0.5);
+    --shadow-xs: 4px 4px 0px 0px hsl(0 0% 0% / 0.5);
+    --shadow-sm:
+      4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 1px 2px -1px hsl(0 0% 0% / 1);
+    --shadow:
+      4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 1px 2px -1px hsl(0 0% 0% / 1);
+    --shadow-md:
+      4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 2px 4px -1px hsl(0 0% 0% / 1);
+    --shadow-lg:
+      4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 4px 6px -1px hsl(0 0% 0% / 1);
+    --shadow-xl:
+      4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 8px 10px -1px hsl(0 0% 0% / 1);
+    --shadow-2xl: 4px 4px 0px 0px hsl(0 0% 0% / 2.5);
+    --tracking-normal: 0em;
+    --spacing: 0.25rem;
+  }
+
+  .neo-brutalism.dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 20%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 20%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 100% 70%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 60 100% 60%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 10.1961%;
+    --muted-foreground: 0 0% 80%;
+    --accent: 210 100% 60%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 0% 100%;
+    --destructive-foreground: 0 0% 0%;
+    --border: 0 0% 100%;
+    --input: 0 0% 100%;
+    --ring: 0 100% 70%;
+    --chart-1: 0 100% 70%;
+    --chart-2: 60 100% 60%;
+    --chart-3: 210 100% 60%;
+    --chart-4: 120 60% 50%;
+    --chart-5: 300 60% 50%;
+    --sidebar: 0 0% 0%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 100% 70%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 210 100% 60%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 100%;
+    --sidebar-ring: 0 100% 70%;
+    --font-sans: DM Sans, sans-serif;
+    --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: Space Mono, monospace;
+    --radius: 0px;
+    --shadow-x: 4px;
+    --shadow-y: 4px;
+    --shadow-blur: 0px;
+    --shadow-spread: 0px;
+    --shadow-opacity: 1;
+    --shadow-color: hsl(0 0% 0%);
+    --shadow-2xs: 4px 4px 0px 0px hsl(0 0% 0% / 0.5);
+    --shadow-xs: 4px 4px 0px 0px hsl(0 0% 0% / 0.5);
+    --shadow-sm:
+      4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 1px 2px -1px hsl(0 0% 0% / 1);
+    --shadow:
+      4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 1px 2px -1px hsl(0 0% 0% / 1);
+    --shadow-md:
+      4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 2px 4px -1px hsl(0 0% 0% / 1);
+    --shadow-lg:
+      4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 4px 6px -1px hsl(0 0% 0% / 1);
+    --shadow-xl:
+      4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 8px 10px -1px hsl(0 0% 0% / 1);
+    --shadow-2xl: 4px 4px 0px 0px hsl(0 0% 0% / 2.5);
+  }
 }
 
 /* FIXME: Why is this here again? */
 @layer base {
   * {
     @apply border-border;
+  }
+  html {
+    font-family: var(--font-sans);
   }
   body {
     @apply bg-background text-foreground;

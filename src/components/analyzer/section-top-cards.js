@@ -67,7 +67,7 @@ export function SectionTopCards() {
 
   return (
     <div className="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-      <Card className="flex h-full flex-col justify-between">
+      <Card className="animate-fade flex h-full flex-col justify-between opacity-0">
         <CardHeader className="p-4">
           <CardDescription>Journey Length</CardDescription>
           <CardTitle className="min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
@@ -85,7 +85,7 @@ export function SectionTopCards() {
           <div className="text-muted-foreground">&nbsp;</div>
         </CardFooter>
       </Card>
-      <Card className="flex h-full flex-col justify-between">
+      <Card className="animate-fade flex h-full flex-col justify-between opacity-0 [animation-delay:250ms]">
         <CardHeader className="p-4">
           <CardDescription>Most Recent PR Single</CardDescription>
           <CardTitle className="min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
@@ -103,9 +103,9 @@ export function SectionTopCards() {
           <div className="text-muted-foreground">&nbsp;</div>
         </CardFooter>
       </Card>
-      <Card className="relative flex h-full flex-col justify-between">
-        <CardAction>
-          {percentageChange !== 0 && (
+      <Card className="animate-fade relative flex h-full flex-col justify-between opacity-0 [animation-delay:500ms]">
+        {percentageChange !== 0 && (
+          <CardAction className="">
             <span
               className={`flex items-center text-sm font-normal ${
                 percentageChange > 0 ? "text-green-500" : "text-red-500"
@@ -118,8 +118,8 @@ export function SectionTopCards() {
               )}
               {Math.abs(percentageChange)}%
             </span>
-          )}
-        </CardAction>
+          </CardAction>
+        )}
         <CardHeader className="p-4">
           <CardDescription>Session Momentum</CardDescription>
           <CardTitle className="min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
@@ -133,7 +133,7 @@ export function SectionTopCards() {
           </div>
         </CardFooter>
       </Card>
-      <Card className="flex h-full flex-col justify-between">
+      <Card className="animate-fade flex h-full flex-col justify-between opacity-0 [animation-delay:750ms]">
         <CardHeader className="p-4">
           <CardDescription>In This Last 12 Months</CardDescription>
           <CardTitle className="min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
@@ -159,7 +159,7 @@ export function SectionTopCards() {
           </TooltipProvider>
         </CardFooter>
       </Card>
-      <Card className="flex h-full flex-col justify-between">
+      <Card className="animate-fade flex h-full flex-col justify-between opacity-0 [animation-delay:1000ms]">
         <CardHeader className="p-4">
           <CardDescription>Current Streak</CardDescription>
           <CardTitle className="min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">

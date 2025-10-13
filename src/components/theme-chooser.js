@@ -76,6 +76,12 @@ export function ThemeChooser() {
                 >
                   Retro Arcade
                 </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem
+                  value="retro-arcade-dark"
+                  onClick={() => setTheme("retro-arcade-dark")}
+                >
+                  Retro Arcade (Dark)
+                </DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>

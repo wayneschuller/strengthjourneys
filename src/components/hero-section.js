@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 import { SloganCarousel } from "./slogan-carousel";
+import { Button } from "./ui/button";
 
 export function HeroSection() {
   return (
@@ -16,6 +18,7 @@ export function HeroSection() {
           </h1>
 
           <PageDescription />
+          <GoogleSignInButton />
         </div>
         <SpreadsheetShowcase />
       </div>
@@ -44,6 +47,17 @@ const PageDescription = () => (
     into powerful, visual insights for barbell training.
   </h2>
 );
+
+function GoogleSignInButton() {
+  const { data: session, status: authStatus } = useSession();
+
+  if (authStatus !== "authenticated")
+    return (
+      <Button variant="outline" onClick={() => signIn("google")}>
+        Google Sign in
+      </Button>
+    );
+}
 
 const IMAGE_FADE_DURATION = 500; // ms
 const IMAGE_PAUSE_DURATION = 2800; // ms

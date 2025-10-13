@@ -14,7 +14,7 @@ export function PageHeader({ className, children, ...props }) {
   return (
     <section
       className={cn(
-        "flex w-full flex-col items-start gap-8 px-0 pb-8 sm:px-[2vw] md:flex-row md:items-start md:justify-between md:gap-4 md:px-[3vw] lg:px-[4vw] xl:px-[5vw]",
+        "flex w-full flex-col items-start gap-8 px-3 pb-8 sm:px-[2vw] md:flex-row md:items-start md:justify-between md:gap-4 md:px-[3vw] lg:px-[4vw] xl:px-[5vw]",
         className,
       )}
       {...props}

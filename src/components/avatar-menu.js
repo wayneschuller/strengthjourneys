@@ -162,13 +162,6 @@ export function AvatarDropdown() {
                       <span>Forget Google Sheet</span>
                     </DropdownMenuItem>
                   )}
-                {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV ===
-                  "development" && (
-                  <DropdownMenuItem onClick={() => setTheme("neo-brutalism")}>
-                    <PaintRoller className="mr-2 h-4 w-4" />
-                    <span>Neo Brutalism Theme</span>
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuItem
                   onClick={() =>
                     window.open(

@@ -9,7 +9,7 @@ import { useSession, signIn, sgnOut } from "next-auth/react";
 import { useLocalStorage } from "usehooks-ts";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { DarkModeToggle } from "@/components/dark-mode-toggle";
+import { DarkModeToggle, ThemeChooser } from "@/components/dark-mode-toggle";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
 import { Table2, Loader2, Github, Trophy, LineChart } from "lucide-react";
@@ -112,7 +112,8 @@ export function NavBar() {
           <GitHubButton />
         </div>
 
-        <DarkModeToggle />
+        <ThemeChooser />
+        {/* <DarkModeToggle /> */}
         <AvatarDropdown />
       </div>
     </div>

@@ -214,10 +214,32 @@
   body {
     @apply bg-background text-foreground;
   }
-  utilities {
-    .neo-brutalism .shadow-lg {
-      box-shadow: var(--shadow-lg);
-    }
+}
+
+@layer utilities {
+  .neo-brutalism .shadow-2xs {
+    box-shadow: var(--shadow-2xs);
+  }
+  .neo-brutalism .shadow-xs {
+    box-shadow: var(--shadow-xs);
+  }
+  .neo-brutalism .shadow-sm {
+    box-shadow: var(--shadow-sm);
+  }
+  .neo-brutalism .shadow {
+    box-shadow: var(--shadow);
+  }
+  .neo-brutalism .shadow-md {
+    box-shadow: var(--shadow-md);
+  }
+  .neo-brutalism .shadow-lg {
+    box-shadow: var(--shadow-lg);
+  }
+  .neo-brutalism .shadow-xl {
+    box-shadow: var(--shadow-xl);
+  }
+  .neo-brutalism .shadow-2xl {
+    box-shadow: var(--shadow-2xl);
   }
 }
 

@@ -204,7 +204,6 @@
   }
 }
 
-/* FIXME: Why is this here again? */
 @layer base {
   * {
     @apply border-border;

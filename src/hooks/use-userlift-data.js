@@ -71,7 +71,7 @@ export const UserLiftingDataProvider = ({ children }) => {
 
   const { toast } = useToast();
   const router = useRouter();
-  const currentPath = router.asPath;
+  const currentPath = router.pathname;
 
   const shouldFetch =
     authStatus === "authenticated" && !!session?.accessToken && !!ssid;

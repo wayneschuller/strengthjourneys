@@ -11,7 +11,7 @@ export function HeroSection() {
       <div className="mb-8 flex flex-row justify-center">
         <SloganCarousel />
       </div>
-      <div className="grid grid-cols-1 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div>
           <h1 className="mb-4 mt-4 space-x-2 text-balance text-center text-5xl font-extrabold leading-tight tracking-tight md:mb-8 md:mt-8 lg:text-left lg:text-6xl xl:text-7xl">
             Welcome to Strength Journeys

@@ -27,7 +27,6 @@ import {
 import { Trophy } from "lucide-react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
-import { SectionTopCards } from "@/components/analyzer/section-top-cards";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Personal Record Analyzer";
@@ -112,9 +111,6 @@ function AnalyzerMain({ relatedArticles }) {
           bench, deadlift and more.
         </PageHeaderDescription>
       </PageHeader>
-      <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        <SectionTopCards />
-      </div>
       <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <div className="flex h-full min-w-full flex-col">
           <SessionAnalysisCard

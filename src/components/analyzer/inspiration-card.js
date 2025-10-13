@@ -92,7 +92,7 @@ const getRandomQuote = () => {
 };
 
 export function InspirationCard({}) {
-  const [quote, setQuote] = useState(inspirationalQuotes[0]);
+  const [quote, setQuote] = useState(inspirationalQuotes[0]); // Consistent default for static rendering SEO
 
   useEffect(() => {
     const quote = getRandomQuote();

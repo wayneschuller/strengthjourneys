@@ -230,28 +230,28 @@
 }
 
 @layer utilities {
-  .neo-brutalism .shadow-2xs {
+  .shadow-2xs {
     box-shadow: var(--shadow-2xs);
   }
-  .neo-brutalism .shadow-xs {
+  .shadow-xs {
     box-shadow: var(--shadow-xs);
   }
-  .neo-brutalism .shadow-sm {
+  .shadow-sm {
     box-shadow: var(--shadow-sm);
   }
-  .neo-brutalism .shadow {
+  .shadow {
     box-shadow: var(--shadow);
   }
-  .neo-brutalism .shadow-md {
+  .shadow-md {
     box-shadow: var(--shadow-md);
   }
-  .neo-brutalism .shadow-lg {
+  .shadow-lg {
     box-shadow: var(--shadow-lg);
   }
-  .neo-brutalism .shadow-xl {
+  .shadow-xl {
     box-shadow: var(--shadow-xl);
   }
-  .neo-brutalism .shadow-2xl {
+  .shadow-2xl {
     box-shadow: var(--shadow-2xl);
   }
 }

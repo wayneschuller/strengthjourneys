@@ -51,33 +51,32 @@ export function OnBoardingDashboard() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2">
       <div>
-        <div>You have successfully signed in.</div>
+        <h2 className="text-lg font-bold">
+          Successful sign-in! Let{"'"}s connect your lifting data
+        </h2>
         <div className="flex flex-col gap-4">
           <div className="">
-            The final step is to link your personal Google sheet of your lifting
-            data.
+            In two quick steps, you’ll connect your personal Google Sheet so
+            Strength Journeys can show your training insights — while your data
+            stays yours.
           </div>
-          <div className="">
-            Our{" "}
+          <Button asChild className="">
             <a
               href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
               target="_blank"
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              rel="noopener noreferrer"
             >
-              sample Google Sheet
-            </a>{" "}
-            format is intuitive and easy to update. Make a copy and start
-            entering your lifts. (You can use {`"kg"`} or {`"lb"`})
-          </div>
-
+              Step 1 - Open Google Sheet Template
+            </a>
+          </Button>
           <div className="">
-            Link a Google sheet then every time you use Strength Journeys your
-            web client will read your data and bring insights and inspiration!
+            In Google Sheets click <span className="italic">"File"</span> then
+            <span className="italic">"Make a Copy"</span>. Give it a good name
+            and start entering your own lifts.
           </div>
-          <div className="">
-            Strength Journeys does not collect or store your data. Instead we
-            encourage every lifter to own the data of their personal strength
-            journey.
+          <div>
+            Our sample format is intuitive and easy to update. (You can use{" "}
+            {`"kg"`} or {`"lb"`})
           </div>
           <Button
             className="min-w-28"
@@ -91,11 +90,16 @@ export function OnBoardingDashboard() {
               )
             }
           >
-            Choose Google Sheet
+            Step 2 - Connect your Google Sheet to Strength Journeys
           </Button>
+          <div className="text-sm">
+            Strength Journeys does not collect or store your data. Instead we
+            encourage every lifter to own the data of their personal strength
+            journey.
+          </div>
         </div>
       </div>
-      <div className="md-auto flex flex-row">
+      <div className="md-auto flex flex-row md:ml-32">
         <div>
           <a
             href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"

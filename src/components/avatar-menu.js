@@ -44,12 +44,9 @@ export function AvatarDropdown() {
     initializeWithValue: false,
   });
 
-  const [sheetURL, setSheetURL] = useLocalStorage(
-    "sheetURL",
-    null,
-
-    { initializeWithValue: false },
-  );
+  const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null, {
+    initializeWithValue: false,
+  });
   const [sheetFilename, setSheetFilename] = useLocalStorage(
     "sheetFilename",
     null,
@@ -147,18 +144,20 @@ export function AvatarDropdown() {
                   </DropdownMenuItem>
                 )}
                 {/* Not sure about the next option - false for now */}
-                {false && ssid && (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSheetURL(null);
-                      setSheetFilename(null);
-                      setSsid(null);
-                    }}
-                  >
-                    <FolderX className="mr-2 h-4 w-4" />
-                    <span>Forget Google Sheet</span>
-                  </DropdownMenuItem>
-                )}
+                {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV ===
+                  "development" &&
+                  ssid && (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSheetURL(null);
+                        setSheetFilename(null);
+                        setSsid(null);
+                      }}
+                    >
+                      <FolderX className="mr-2 h-4 w-4" />
+                      <span>Forget Google Sheet</span>
+                    </DropdownMenuItem>
+                  )}
                 <DropdownMenuItem
                   onClick={() =>
                     window.open(

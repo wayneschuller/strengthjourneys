@@ -104,23 +104,23 @@ export function SectionTopCards() {
         </CardFooter>
       </Card>
       <Card className="animate-fade relative flex h-full flex-col justify-between opacity-0 [animation-delay:500ms]">
-        {percentageChange !== 0 && (
-          <CardAction className="">
-            <span
-              className={`flex items-center text-sm font-normal ${
-                percentageChange > 0 ? "text-green-500" : "text-red-500"
-              }`}
-            >
-              {percentageChange > 0 ? (
-                <TrendingUp className="mr-1 h-4 w-4" />
-              ) : (
-                <TrendingDown className="mr-1 h-4 w-4" />
-              )}
-              {Math.abs(percentageChange)}%
-            </span>
-          </CardAction>
-        )}
         <CardHeader className="p-4">
+          {percentageChange !== 0 && (
+            <CardAction className="">
+              <span
+                className={`flex items-center text-sm font-normal ${
+                  percentageChange > 0 ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                {percentageChange > 0 ? (
+                  <TrendingUp className="mr-1 h-4 w-4" />
+                ) : (
+                  <TrendingDown className="mr-1 h-4 w-4" />
+                )}
+                {Math.abs(percentageChange)}%
+              </span>
+            </CardAction>
+          )}
           <CardDescription>Session Momentum</CardDescription>
           <CardTitle className="min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
             {recentSessions} sessions

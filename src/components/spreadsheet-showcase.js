@@ -1,6 +1,49 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { SloganCarousel } from "./slogan-carousel";
+
+export function HeroSection() {
+  return (
+    <div>
+      <div className="mb-8 flex flex-row justify-center">
+        <SloganCarousel />
+      </div>
+      <div className="grid grid-cols-1 xl:grid-cols-2">
+        <div>
+          <h1 className="mb-4 mt-4 space-x-2 text-balance text-center text-5xl font-extrabold leading-tight tracking-tight md:mb-8 md:mt-8 lg:text-left lg:text-6xl xl:text-7xl">
+            Welcome to Strength Journeys
+          </h1>
+
+          <PageDescription />
+        </div>
+        <SpreadsheetShowcase />
+      </div>
+    </div>
+  );
+}
+
+const PageDescription = () => (
+  <h2 className="mb-10 mt-2 text-center text-xl tracking-tight md:text-left md:text-3xl lg:w-4/5">
+    A free{" "}
+    <a
+      className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+      target="_blank"
+      href="https://github.com/wayneschuller/strengthjourneys"
+    >
+      open source
+    </a>{" "}
+    dashboard that turns your{" "}
+    <a
+      className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+      target="_blank"
+      href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+    >
+      Google Sheet lifting log
+    </a>{" "}
+    into powerful, visual insights for barbell training.
+  </h2>
+);
 
 const IMAGE_FADE_DURATION = 500; // ms
 const IMAGE_PAUSE_DURATION = 2800; // ms

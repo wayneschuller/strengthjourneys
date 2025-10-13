@@ -43,6 +43,7 @@ export function AvatarDropdown() {
   const [ssid, setSsid] = useLocalStorage("ssid", null, {
     initializeWithValue: false,
   });
+
   const [sheetURL, setSheetURL] = useLocalStorage(
     "sheetURL",
     null,

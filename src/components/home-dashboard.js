@@ -7,7 +7,10 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { SectionTopCards } from "./analyzer/section-top-cards";
 import { useLocalStorage } from "usehooks-ts";
 import useDrivePicker from "react-google-drive-picker";
-import { ChooseSheetInstructionsCard } from "./instructions-cards";
+import {
+  ChooseSheetInstructionsCard,
+  OnBoardingDashboard,
+} from "./instructions-cards";
 
 export function HomeDashboard() {
   const { data: session, status: authStatus } = useSession();
@@ -38,11 +41,11 @@ export function HomeDashboard() {
   return (
     <div>
       <div className="mb-4 text-xl">
-        Welcome back <div className="inline font-bold">{session.user.name}</div>
+        Welcome <div className="inline font-bold">{session.user.name}</div>
       </div>
-      {!ssid && <ChooseSheetInstructionsCard />}
+      {!ssid && <OnBoardingDashboard />}
 
-      {parsedData && <SectionTopCards />}
+      {ssid && parsedData && <SectionTopCards />}
     </div>
   );
 }

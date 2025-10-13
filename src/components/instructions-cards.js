@@ -27,6 +27,94 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+// This is very similar to the ChooseSheetInstructionsCard but designed for the front page
+export function OnBoardingDashboard() {
+  const [openPicker, authResponse] = useDrivePicker();
+  const { data: session, status: authStatus } = useSession();
+
+  // We need the next 3 for the file picker button we give with instructions
+  const [ssid, setSsid] = useLocalStorage("ssid", null, {
+    initializeWithValue: false,
+  });
+  const [sheetURL, setSheetURL] = useLocalStorage(
+    "sheetURL",
+    null,
+
+    { initializeWithValue: false },
+  );
+  const [sheetFilename, setSheetFilename] = useLocalStorage(
+    "sheetFilename",
+    null,
+    { initializeWithValue: false },
+  );
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2">
+      <div>
+        <div>You have successfully signed in.</div>
+        <div className="flex flex-col gap-4">
+          <div className="">
+            The final step is to link your personal Google sheet of your lifting
+            data.
+          </div>
+          <div className="">
+            Our{" "}
+            <a
+              href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+              target="_blank"
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            >
+              sample Google Sheet
+            </a>{" "}
+            format is intuitive and easy to update. Make a copy and start
+            entering your lifts. (You can use {`"kg"`} or {`"lb"`})
+          </div>
+
+          <div className="">
+            Link a Google sheet then every time you use Strength Journeys your
+            web client will read your data and bring insights and inspiration!
+          </div>
+          <div className="">
+            Strength Journeys does not collect or store your data. Instead we
+            encourage every lifter to own the data of their personal strength
+            journey.
+          </div>
+          <Button
+            className="min-w-28"
+            onClick={() =>
+              handleOpenFilePicker(
+                openPicker,
+                session.accessToken,
+                setSsid,
+                setSheetURL,
+                setSheetFilename,
+              )
+            }
+          >
+            Choose Google Sheet
+          </Button>
+        </div>
+      </div>
+      <div className="md-auto flex flex-row">
+        <div>
+          <a
+            href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+            target="_blank"
+          >
+            <Image
+              className="w-96"
+              src={SampleImage}
+              priority={true}
+              alt="Screenshot of sample google sheet data"
+            />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// This card is shown if the user goes to the visualizer or analyzer with google auth but no spreadsheet selected
 export function ChooseSheetInstructionsCard() {
   const [openPicker, authResponse] = useDrivePicker();
   const { data: session, status: authStatus } = useSession();

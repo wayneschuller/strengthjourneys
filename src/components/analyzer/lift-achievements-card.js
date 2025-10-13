@@ -169,8 +169,8 @@ export const LiftTypeSummaryStatistics = ({ liftType }) => {
     e1rmFormula,
   );
 
-  devLog(`best ${liftType} is ${bestE1RMWeight}${unitType}`);
-  devLog(bestLift);
+  // devLog(`best ${liftType} is ${bestE1RMWeight}${unitType}`);
+  // devLog(bestLift);
 
   return (
     <div className="grid grid-cols-3 justify-start">

@@ -348,17 +348,20 @@ export const UserLiftingDataProvider = ({ children }) => {
     setParsedData(parsedData);
   }, [data, isLoading, isError, authStatus]);
 
-  // useEffect for reminding the user when Analyzer/Visualizer show demo data
+  // useEffect for reminding the user when they are looking at demo data
   useEffect(() => {
-    // devLog(`<Layout /> Toast useEffect`);
-
     if (authStatus === "loading") return;
 
-    // Check if the current path is "/visualizer" or "/analyzer"
-    const isVisualizerRoute = currentPath === "/visualizer";
-    const isAnalyzerRoute = currentPath === "/analyzer";
-
-    if (!isVisualizerRoute && !isAnalyzerRoute) return; // Don't show toast on generic pages like Timer
+    // A list of pages with demo data that need this reminder toast
+    devLog(currentPath);
+    const demoDataPaths = [
+      "/visualizer",
+      "/analyzer",
+      "/barbell-strength-potential",
+      "/tonnage",
+      "/barbell-squat-insights",
+    ];
+    if (!demoDataPaths.includes(currentPath)) return;
 
     // Tell the user when demo mode has started
     if (!demoToastInit && authStatus === "unauthenticated") {

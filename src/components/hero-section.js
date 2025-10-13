@@ -53,10 +53,16 @@ function GoogleSignInButton() {
 
   if (authStatus !== "authenticated")
     return (
-      <Button onClick={() => signIn("google")}>
-        <GoogleLogo />
-        Start Your Strength Journey — Free Google Sign-in
-      </Button>
+      <>
+        <Button onClick={() => signIn("google")}>
+          <GoogleLogo />
+          <div className="hidden md:block">Start Your Strength Journey —</div>
+          Free Google Sign-in
+        </Button>
+        <p className="mt-2 text-xs italic text-slate-500">
+          We never copy or store your data.
+        </p>
+      </>
     );
 }
 

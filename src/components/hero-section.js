@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { SloganCarousel } from "./slogan-carousel";
 import { Button } from "./ui/button";
 
@@ -54,7 +54,7 @@ function GoogleSignInButton() {
   if (authStatus !== "authenticated")
     return (
       <Button variant="outline" onClick={() => signIn("google")}>
-        Google Sign in
+        Start Your Strength Journey — Free Google Sign-in
       </Button>
     );
 }

@@ -2,7 +2,7 @@
 
 "use client";
 
-import * as React from "react";
+import { useState, useEffect } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,13 @@ import {
 
 export function ThemeChooser() {
   const { theme, setTheme } = useTheme();
+  const [position, setPosition] = useState("light");
+
+  useEffect(() => {
+    if (theme) {
+      setPosition(theme);
+    }
+  }, [theme]);
 
   return (
     <TooltipProvider>
@@ -41,16 +48,29 @@ export function ThemeChooser() {
             <DropdownMenuContent>
               <DropdownMenuLabel>Choose theme:</DropdownMenuLabel>
               <DropdownMenuSeparator />
-
-              <DropdownMenuItem onClick={() => setTheme("light")}>
-                Light
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("dark")}>
-                Dark
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("neo-brutalism")}>
-                Neo-Brutalism
-              </DropdownMenuItem>
+              <DropdownMenuRadioGroup
+                value={position}
+                onValueChange={setPosition}
+              >
+                <DropdownMenuRadioItem
+                  value="light"
+                  onClick={() => setTheme("light")}
+                >
+                  Light
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem
+                  value="dark"
+                  onClick={() => setTheme("dark")}
+                >
+                  Dark
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem
+                  value="neo-brutalism"
+                  onClick={() => setTheme("neo-brutalism")}
+                >
+                  Neo-Brutalism
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
         </TooltipTrigger>

@@ -70,6 +70,12 @@ export function ThemeChooser() {
                 >
                   Neo-Brutalism
                 </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem
+                  value="retro-arcade"
+                  onClick={() => setTheme("retro-arcade")}
+                >
+                  Retro Arcade
+                </DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>

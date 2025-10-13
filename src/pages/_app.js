@@ -60,6 +60,7 @@ export default function App({ Component, pageProps, session }) {
           light: "light",
           dark: "dark",
           "neo-brutalism": "neo-brutalism",
+          "retro-arcade": "retro-arcade",
         }}
         disableTransitionOnChange
       >

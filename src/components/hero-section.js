@@ -53,8 +53,8 @@ function GoogleSignInButton() {
 
   if (authStatus !== "authenticated")
     return (
-      <>
-        <Button className="hover:ring-2" onClick={() => signIn("google")}>
+      <div className="flex flex-col items-center gap-2 md:items-start">
+        <Button className="w-2/3 hover:ring-2" onClick={() => signIn("google")}>
           <GoogleLogo />
           <div className="hidden md:block">Start Your Strength Journey —</div>
           Free Google Sign-in
@@ -62,7 +62,7 @@ function GoogleSignInButton() {
         <p className="mt-2 text-xs italic text-slate-500">
           We never copy or store your data.
         </p>
-      </>
+      </div>
     );
 }
 

@@ -66,7 +66,7 @@ export function SectionTopCards() {
   );
 
   return (
-    <div className="col-span-full grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <div className="col-span-full grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-5">
       <Card className="animate-fade flex h-full flex-col justify-between opacity-0">
         <CardHeader className="p-4">
           <CardDescription>Journey Length</CardDescription>

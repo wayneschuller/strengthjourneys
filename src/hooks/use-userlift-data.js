@@ -153,7 +153,13 @@ export const UserLiftingDataProvider = ({ children }) => {
         }
         let latestDateString = "";
         let gymInviteString = "";
-        if (latestDate) {
+
+        // Show informative toast (but not on the front page because the home dashboard has the same info)
+        if (
+          latestDate &&
+          typeof router.pathname === "string" &&
+          router.pathname !== "/"
+        ) {
           const parsed = parseISO(latestDate);
           const now = new Date();
           const daysAgo = differenceInDays(now, parsed);
@@ -187,42 +193,42 @@ export const UserLiftingDataProvider = ({ children }) => {
           if (daysAgo > 7) {
             gymInviteString = "🏋️‍♂️ It's been a while! Time to hit the gym?";
           }
+          toast({
+            title: "Data updated from Google Sheets",
+            description: (
+              <>
+                {sheetURL ? (
+                  <a
+                    href={decodeURIComponent(sheetURL)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+                  >
+                    {sheetFilename || "File name unknown"}
+                  </a>
+                ) : (
+                  sheetFilename || "File name unknown"
+                )}
+                <br />
+                {parsedData.length} valid rows
+                {latestDateString && (
+                  <>
+                    <br />
+                    {latestDateString}
+                  </>
+                )}
+                {gymInviteString && (
+                  <>
+                    <br />
+                    <span className="font-bold text-orange-600">
+                      {gymInviteString}
+                    </span>
+                  </>
+                )}
+              </>
+            ),
+          });
         }
-        toast({
-          title: "Data updated from Google Sheets",
-          description: (
-            <>
-              {sheetURL ? (
-                <a
-                  href={decodeURIComponent(sheetURL)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-                >
-                  {sheetFilename || "File name unknown"}
-                </a>
-              ) : (
-                sheetFilename || "File name unknown"
-              )}
-              <br />
-              {parsedData.length} valid rows
-              {latestDateString && (
-                <>
-                  <br />
-                  {latestDateString}
-                </>
-              )}
-              {gymInviteString && (
-                <>
-                  <br />
-                  <span className="font-bold text-orange-600">
-                    {gymInviteString}
-                  </span>
-                </>
-              )}
-            </>
-          ),
-        });
 
         if (
           typeof window !== "undefined" &&

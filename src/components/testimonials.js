@@ -33,8 +33,8 @@ export function Testimonials({}) {
           <TestimonialCard key={index} testimony={testimony} />
         ))}
       </Marquee>
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-white dark:from-background"></div>
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-white dark:from-background"></div>
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-card" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-card" />
       {/* <div>Please tell us what you think.</div> */}
     </div>
   );
@@ -46,8 +46,6 @@ function TestimonialCard({ testimony }) {
     <figure
       className={cn(
         "max-w-[25rem] justify-center rounded-2xl border-2 p-4 align-middle",
-        "bg-white hover:bg-stone-100",
-        "dark:bg-stone-950 dark:hover:bg-stone-900",
       )}
     >
       <div className="flex flex-row gap-2">
@@ -55,7 +53,9 @@ function TestimonialCard({ testimony }) {
           <Avatar>
             <AvatarImage src={testimony.avatarUrl} alt={`${testimony.name}`} />
             {testimony.icon && (
-              <AvatarFallback>{<testimony.icon />}</AvatarFallback>
+              <AvatarFallback className="text-secondary-foreground">
+                {<testimony.icon />}
+              </AvatarFallback>
             )}
             {/* <AvatarFallback></AvatarFallback> */}
           </Avatar>

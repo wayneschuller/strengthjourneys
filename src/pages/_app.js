@@ -21,6 +21,7 @@ import { LiftColorsProvider } from "@/hooks/use-lift-colors";
 import "@fontsource/geist-sans/index.css";
 import "@fontsource/amiko/index.css";
 import "@fontsource/dm-sans/index.css";
+import "@fontsource/outfit/index.css";
 
 export default function App({ Component, pageProps, session }) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;

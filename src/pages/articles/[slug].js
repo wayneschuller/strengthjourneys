@@ -115,7 +115,7 @@ export default function ArticlePost({ article }) {
         </script>
       </Head>
 
-      <Card className="shadow-lg shadow-primary-foreground ring-0 ring-black hover:ring-1 dark:ring-white">
+      <Card className="shadow-lg shadow-primary-foreground ring-0 ring-border hover:ring-1">
         <CardHeader className="px-3 md:px-6">
           <div className="mb-4">
             <Link
@@ -141,10 +141,12 @@ export default function ArticlePost({ article }) {
           {bannerImageUrl && <Banner imageUrl={bannerImageUrl} />}
         </CardHeader>
         <CardContent className="px-3 md:px-6">
-          <article className="prose prose-orange dark:prose-invert">
+          <article className="prose max-w-3xl text-foreground prose-headings:text-foreground">
             <header>
-              <h1 className="tracking-tighter">{article.title}</h1>
-              <h3 className="mt-2 text-sm font-light text-gray-600 dark:text-gray-400">
+              <h1 className="tracking-tighter text-foreground">
+                {article.title}
+              </h1>
+              <h3 className="mt-2 text-sm font-light text-muted-foreground">
                 Published at: {formattedDate}
               </h3>
 
@@ -183,7 +185,7 @@ const Banner = ({ imageUrl }) => (
       alt="Banner"
       fill
       style={{ objectFit: "cover" }}
-      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw"
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw"
       priority
     />
   </div>

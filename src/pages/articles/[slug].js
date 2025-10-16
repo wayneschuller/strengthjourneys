@@ -141,7 +141,7 @@ export default function ArticlePost({ article }) {
           {bannerImageUrl && <Banner imageUrl={bannerImageUrl} />}
         </CardHeader>
         <CardContent className="px-3 md:px-6">
-          <article className="prose max-w-3xl text-foreground prose-headings:text-foreground">
+          <article className="prose max-w-3xl text-foreground prose-headings:text-foreground prose-strong:text-foreground">
             <header>
               <h1 className="tracking-tighter text-foreground">
                 {article.title}

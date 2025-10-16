@@ -58,6 +58,7 @@ import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 // import darkModeLogo from "/public/nav_logo_light.png";
 import darkModeLogo from "../../public/nav_logo_light.png";
 import lightModeLogo from "../../public/nav_logo_dark.png";
+const DARKISH = new Set(["dark", "retro-arcade-dark"]); // Themes that require the "light logo"
 
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 
@@ -125,6 +126,9 @@ export function NavBar() {
 export function DesktopNav() {
   const pathname = usePathname();
   const { isValidating } = useUserLiftingData();
+  const { resolvedTheme, theme } = useTheme();
+  const key = (theme ?? resolvedTheme) || "light";
+  const src = DARKISH.has(key) ? darkModeLogo : lightModeLogo;
 
   return (
     <div className="hidden align-middle md:flex">
@@ -136,19 +140,11 @@ export function DesktopNav() {
         )}
       >
         <Image
-          src={lightModeLogo}
+          src={src}
           width={100}
           height="auto"
-          alt="logo"
-          className="inline-block dark:hidden"
-          priority={true}
-        />
-        <Image
-          src={darkModeLogo}
-          width={100}
-          height="auto"
-          alt="logo"
-          className="hidden dark:inline-block"
+          alt="app logo"
+          className="inline-block"
           priority={true}
         />
       </Link>

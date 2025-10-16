@@ -2,6 +2,7 @@
 
 "use client";
 
+import { devLog } from "@/lib/processing-utils";
 import { useState, useEffect } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -26,8 +27,10 @@ import {
 } from "@/components/ui/tooltip";
 
 export function ThemeChooser() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, themes } = useTheme();
   const [position, setPosition] = useState("light");
+
+  devLog(themes);
 
   useEffect(() => {
     if (theme) {
@@ -52,42 +55,18 @@ export function ThemeChooser() {
                 value={position}
                 onValueChange={setPosition}
               >
-                <DropdownMenuRadioItem
-                  value="light"
-                  onClick={() => setTheme("light")}
-                >
-                  Light
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem
-                  value="dark"
-                  onClick={() => setTheme("dark")}
-                >
-                  Dark
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem
-                  value="neo-brutalism"
-                  onClick={() => setTheme("neo-brutalism")}
-                >
-                  Neo-Brutalism
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem
-                  value="neo-brutalism-dark"
-                  onClick={() => setTheme("neo-brutalism-dark")}
-                >
-                  Neo-Brutalism (Dark)
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem
-                  value="retro-arcade"
-                  onClick={() => setTheme("retro-arcade")}
-                >
-                  Retro Arcade
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem
-                  value="retro-arcade-dark"
-                  onClick={() => setTheme("retro-arcade-dark")}
-                >
-                  Retro Arcade (Dark)
-                </DropdownMenuRadioItem>
+                {themes.map((t) => (
+                  <DropdownMenuRadioItem
+                    key={t}
+                    value={t}
+                    onClick={() => setTheme(t)}
+                  >
+                    {/* Optionally prettify label */}
+                    {t
+                      .replace(/-/g, " ")
+                      .replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </DropdownMenuRadioItem>
+                ))}
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -56,18 +56,18 @@ export default function App({ Component, pageProps, session }) {
       <ThemeProvider
         attribute="class"
         defaultTheme="light"
+        // New themes added to globals.css get added here
+        themes={[
+          "light",
+          "dark",
+          "neo-brutalism",
+          "neo-brutalism-dark",
+          "retro-arcade",
+          "retro-arcade-dark",
+        ]}
+        // I'm not sure about the next two options. Commenting out for now.
         // enableSystem
-        // New themes added to globals.css get added here and theme-chooser.js
-        // Darkish themes should also be added to layout.js
-        value={{
-          light: "light",
-          dark: "dark",
-          "neo-brutalism": "neo-brutalism",
-          "neo-brutalism-dark": "neo-brutalism-dark",
-          "retro-arcade": "retro-arcade",
-          "retro-arcade-dark": "retro-arcade-dark",
-        }}
-        disableTransitionOnChange
+        // disableTransitionOnChange
       >
         <SessionProvider session={session}>
           <UserLiftingDataProvider>

@@ -42,7 +42,7 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    --font-sans: Inter, sans-serif;
+    --font-sans: Geist, Inter, sans-serif;
     --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
     --font-mono: Space Mono, monospace;
   }
@@ -67,7 +67,7 @@
     --border: 12 6.5% 15.1%;
     --input: 12 6.5% 15.1%;
     --ring: 24 5.7% 82.9%;
-    --font-sans: Inter, sans-serif;
+    --font-sans: Geist, Inter, sans-serif;
     --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
     --font-mono: Space Mono, monospace;
     /* 202407 shadcn-ui charts */

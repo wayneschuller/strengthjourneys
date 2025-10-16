@@ -18,10 +18,10 @@ import { UserLiftingDataProvider } from "@/hooks/use-userlift-data";
 import { LiftColorsProvider } from "@/hooks/use-lift-colors";
 
 // Fonts needed for themes defined in global.css
-import "@fontsource/geist-sans/index.css";
+import "@fontsource/geist-sans/index.css"; // Default font
 import "@fontsource/amiko/index.css";
 import "@fontsource/dm-sans/index.css";
-import "@fontsource/outfit/index.css";
+import "@fontsource/outfit/index.css"; // Needed for retro-arcade
 
 export default function App({ Component, pageProps, session }) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;

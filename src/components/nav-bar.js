@@ -129,6 +129,8 @@ export function DesktopNav() {
   const key = (theme ?? resolvedTheme) || "light";
   const src = key.includes("dark") ? darkModeLogo : lightModeLogo; // Dark themes should have the word dark in theme
 
+  devLog(resolvedTheme);
+
   return (
     <div className="hidden align-middle md:flex">
       <Link

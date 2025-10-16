@@ -58,7 +58,7 @@ import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 // import darkModeLogo from "/public/nav_logo_light.png";
 import darkModeLogo from "../../public/nav_logo_light.png";
 import lightModeLogo from "../../public/nav_logo_dark.png";
-const DARKISH = new Set(["dark", "retro-arcade-dark"]); // Themes that require the "light logo"
+const DARKISH = new Set(["dark", "neo-brutalism-dark", "retro-arcade-dark"]); // Themes that require the "light logo"
 
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 

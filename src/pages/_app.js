@@ -57,10 +57,13 @@ export default function App({ Component, pageProps, session }) {
         attribute="class"
         defaultTheme="light"
         // enableSystem
+        // New themes added to globals.css get added here and theme-chooser.js
+        // Darkish themes should also be added to layout.js
         value={{
           light: "light",
           dark: "dark",
           "neo-brutalism": "neo-brutalism",
+          "neo-brutalism-dark": "neo-brutalism-dark",
           "retro-arcade": "retro-arcade",
           "retro-arcade-dark": "retro-arcade-dark",
         }}

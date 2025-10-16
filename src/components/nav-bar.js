@@ -58,7 +58,6 @@ import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 // import darkModeLogo from "/public/nav_logo_light.png";
 import darkModeLogo from "../../public/nav_logo_light.png";
 import lightModeLogo from "../../public/nav_logo_dark.png";
-const DARKISH = new Set(["dark", "neo-brutalism-dark", "retro-arcade-dark"]); // Themes that require the "light logo"
 
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 
@@ -128,7 +127,7 @@ export function DesktopNav() {
   const { isValidating } = useUserLiftingData();
   const { resolvedTheme, theme } = useTheme();
   const key = (theme ?? resolvedTheme) || "light";
-  const src = DARKISH.has(key) ? darkModeLogo : lightModeLogo;
+  const src = key.includes("dark") ? darkModeLogo : lightModeLogo; // Dark themes should have the word dark in theme
 
   return (
     <div className="hidden align-middle md:flex">

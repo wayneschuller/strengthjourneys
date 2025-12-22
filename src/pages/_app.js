@@ -136,8 +136,7 @@ function AppContent({ Component, pageProps }) {
 
 export default function App({ Component, pageProps, session }) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
-  const isDev =
-    process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
+  const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 
   return (
     <>

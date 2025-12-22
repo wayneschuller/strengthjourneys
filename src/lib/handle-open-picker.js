@@ -2,6 +2,7 @@
 "use client";
 
 import { devLog } from "@/lib/processing-utils";
+import { trackSheetConnection, trackEvent } from "@/lib/ga-utils";
 
 export function handleOpenFilePicker(
   openPicker,
@@ -22,11 +23,10 @@ export function handleOpenFilePicker(
     supportDrives: true,
     multiselect: false,
     callbackFunction: (data) => {
-      if (typeof window !== "undefined") {
-        window.gtag("event", "gdrive_picker_opened");
-      }
+      trackEvent("gdrive_picker_opened");
 
       if (data.action === "cancel") {
+        trackEvent("gdrive_picker_cancelled");
         console.log("User clicked cancel/close button");
         return;
       }
@@ -41,6 +41,9 @@ export function handleOpenFilePicker(
         setSsid(newSsid);
         setSheetURL(newSheetURL);
         setSheetFilename(newFilename);
+
+        // Track successful sheet connection
+        trackSheetConnection(newSsid, newFilename);
 
         // Should we trigger a parsing of the sheet data here?
         // But it seems to happen fine through reactivity as ssid state change triggers the hook useSWR data fetch

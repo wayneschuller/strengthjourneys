@@ -7,6 +7,7 @@ import { NextSeo } from "next-seo";
 import { devLog } from "@/lib/processing-utils";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { trackFeatureVisit } from "@/lib/ga-utils";
 
 import {
   Calculator,
@@ -259,9 +260,13 @@ export default function Home() {
 }
 
 function FeatureCard({ href, title, description, IconComponent }) {
+  const handleClick = () => {
+    trackFeatureVisit(title, href);
+  };
+
   return (
     <Card className="group shadow-lg ring-0 ring-black hover:ring-1 dark:ring-white">
-      <Link href={href}>
+      <Link href={href} onClick={handleClick}>
         <CardHeader className="min-h-28">
           <CardTitle className="">{title}</CardTitle>
           <CardDescription className="h-[2rem]">{description}</CardDescription>
@@ -284,6 +289,10 @@ function BigFourLiftCards() {
     "Strict Press": "/strict_press.svg",
   };
 
+  const handleLiftClick = (liftType, slug) => {
+    trackFeatureVisit(`big_four_${liftType}`, `/${slug}`);
+  };
+
   return (
     <div className="grid grid-cols-2 gap-6 md:grid-cols-2 lg:grid-cols-4">
       {lifts.map((lift) => (
@@ -291,7 +300,10 @@ function BigFourLiftCards() {
           key={lift.slug}
           className="group shadow-lg ring-0 ring-black hover:ring-1 dark:ring-white"
         >
-          <Link href={`/${lift.slug}`}>
+          <Link
+            href={`/${lift.slug}`}
+            onClick={() => handleLiftClick(lift.liftType, lift.slug)}
+          >
             <CardHeader className="min-h-28">
               <CardTitle>{lift.liftType}</CardTitle>
               <CardDescription className="h-[2rem]">

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useSession, signIn } from "next-auth/react";
 import { SloganCarousel } from "./slogan-carousel";
 import { Button } from "./ui/button";
+import { trackEvent } from "@/lib/ga-utils";
 
 export function HeroSection() {
   return (
@@ -54,7 +55,15 @@ function GoogleSignInButton() {
   if (authStatus !== "authenticated")
     return (
       <div className="flex flex-col items-center gap-2 md:items-start">
-        <Button className="w-2/3 hover:ring-2" onClick={() => signIn("google")}>
+        <Button
+          className="w-2/3 hover:ring-2"
+          onClick={() => {
+            trackEvent("sign_in_click", {
+              location: "hero_section",
+            });
+            signIn("google");
+          }}
+        >
           <GoogleLogo />
           <div className="hidden md:block">Start Your Strength Journey —</div>
           Free Google Sign-in

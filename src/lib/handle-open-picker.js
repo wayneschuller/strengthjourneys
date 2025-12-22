@@ -42,8 +42,8 @@ export function handleOpenFilePicker(
         setSheetURL(newSheetURL);
         setSheetFilename(newFilename);
 
-        // Track successful sheet connection
-        trackSheetConnection(newSsid, newFilename);
+        // Track successful sheet connection (without sheet_id for security)
+        trackSheetConnection(newFilename);
 
         // Should we trigger a parsing of the sheet data here?
         // But it seems to happen fine through reactivity as ssid state change triggers the hook useSWR data fetch

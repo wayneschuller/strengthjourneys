@@ -42,11 +42,15 @@ export function extractUTMParams() {
  * Store UTM parameters in localStorage (persists across browser sessions)
  * This enables first-touch attribution: if a user clicks a Reddit ad, closes their browser,
  * and returns days later, we still know they originally came from that Reddit ad.
- * 
+ *
  * 30-day expiry matches Google Analytics default attribution window.
  */
 export function storeUTMParams(utmParams) {
-  if (typeof window === "undefined" || !utmParams || Object.keys(utmParams).length === 0) {
+  if (
+    typeof window === "undefined" ||
+    !utmParams ||
+    Object.keys(utmParams).length === 0
+  ) {
     return;
   }
 
@@ -182,10 +186,10 @@ export function trackFeatureVisit(featureName, featurePath) {
 
 /**
  * Track Google Sheet connection
+ * Note: We don't track sheet_id for security/privacy reasons
  */
-export function trackSheetConnection(sheetId, sheetName) {
+export function trackSheetConnection(sheetName) {
   trackEvent("sheet_connected", {
-    sheet_id: sheetId,
     sheet_name: sheetName,
   });
 }
@@ -200,21 +204,6 @@ export function trackEngagement(action, details = {}) {
   });
 }
 
-/**
- * Track conversion events
- */
-export function trackConversion(conversionType, value = null) {
-  const params = {
-    conversion_type: conversionType,
-  };
-
-  if (value !== null) {
-    params.value = value;
-    params.currency = "USD";
-  }
-
-  trackEvent("conversion", params);
-}
 
 /**
  * Track errors
@@ -235,4 +224,3 @@ export function setUserProperties(properties) {
 
   window.gtag("set", "user_properties", properties);
 }
-

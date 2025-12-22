@@ -126,6 +126,16 @@ export function getUTMParamsForGA() {
 }
 
 /**
+ * Check if we're in development mode (don't track in dev)
+ */
+function isDevelopment() {
+  return (
+    typeof process !== "undefined" &&
+    process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development"
+  );
+}
+
+/**
  * Check if gtag is available
  */
 export function isGtagAvailable() {
@@ -136,7 +146,7 @@ export function isGtagAvailable() {
  * Track a page view with UTM parameters
  */
 export function trackPageView(url, title = null) {
-  if (!isGtagAvailable()) return;
+  if (isDevelopment() || !isGtagAvailable()) return;
 
   const utmParams = getUTMParamsForGA();
   const config = {
@@ -154,7 +164,7 @@ export function trackPageView(url, title = null) {
  * @param {object} eventParams - Additional event parameters
  */
 export function trackEvent(eventName, eventParams = {}) {
-  if (!isGtagAvailable()) return;
+  if (isDevelopment() || !isGtagAvailable()) return;
 
   const utmParams = getUTMParamsForGA();
   const params = {
@@ -219,7 +229,7 @@ export function trackError(errorType, errorMessage, errorLocation) {
  * Set user properties (user_id, etc.)
  */
 export function setUserProperties(properties) {
-  if (!isGtagAvailable()) return;
+  if (isDevelopment() || !isGtagAvailable()) return;
 
   window.gtag("set", "user_properties", properties);
 }

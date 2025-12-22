@@ -136,6 +136,8 @@ function AppContent({ Component, pageProps }) {
 
 export default function App({ Component, pageProps, session }) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
+  const isDev =
+    process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 
   return (
     <>
@@ -167,12 +169,14 @@ export default function App({ Component, pageProps, session }) {
       </ThemeProvider>
       <Analytics />
       <SpeedInsights />
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-        strategy="afterInteractive"
-      />
-      <Script id="google-analytics" strategy="afterInteractive">
-        {`
+      {!isDev && GA_MEASUREMENT_ID && (
+        <>
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+            strategy="afterInteractive"
+          />
+          <Script id="google-analytics" strategy="afterInteractive">
+            {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
@@ -185,7 +189,9 @@ export default function App({ Component, pageProps, session }) {
             allow_ad_personalization_signals: true,
           });
         `}
-      </Script>
+          </Script>
+        </>
+      )}
     </>
   );
 }

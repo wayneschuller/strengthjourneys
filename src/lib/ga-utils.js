@@ -204,7 +204,6 @@ export function trackEngagement(action, details = {}) {
   });
 }
 
-
 /**
  * Track errors
  */

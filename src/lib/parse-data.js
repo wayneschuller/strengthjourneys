@@ -209,6 +209,7 @@ export function normalizeLiftTypeNames(liftType) {
   // The user data will be put in toLowerCase so just work with lower case samples
   const standardLiftTypes = {
     "bench press": "Bench Press",
+    press: "Strict Press",
     "strict press": "Strict Press",
     "overhead press": "Strict Press",
     "back squat": "Back Squat",

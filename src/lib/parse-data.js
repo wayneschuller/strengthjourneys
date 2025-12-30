@@ -209,9 +209,15 @@ export function normalizeLiftTypeNames(liftType) {
   const standardLiftTypes = {
     "bench press": "Bench Press",
     "Bench press": "Bench Press",
+    "bench Press": "Bench Press",
     "strict press": "Strict Press",
     "Strict press": "Strict Press",
+    "strict Press": "Strict Press",
+    "Overhead Press": "Strict Press",
+    "Overhead press": "Strict Press",
+    "overhead Press": "Strict Press",
     "back squat": "Back Squat",
+    "back Squat": "Back Squat",
     squat: "Back Squat",
     deadlift: "Deadlift",
   };

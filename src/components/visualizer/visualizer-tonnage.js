@@ -5,6 +5,7 @@ import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
+import { parseISO, startOfWeek, format } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ReferenceLine, Line, ResponsiveContainer } from "recharts";
@@ -52,6 +53,10 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     "SJ_showLabelValues",
     false,
   );
+  const [aggregationType, setAggregationType] = useLocalStorage(
+    "SJ_tonnageAggregationType",
+    "perSession",
+  );
 
   // Used to hide the y-axis and other UI elements on smaller screens
   const { width } = useWindowSize({ initializeWithValue: false });
@@ -60,8 +65,14 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
   const chartData = useMemo(() => {
     if (!parsedData || parsedData.length === 0) return [];
-    return processTonnageData(parsedData, rangeFirstDate, timeRange, liftType);
-  }, [parsedData, rangeFirstDate, liftType]);
+    return processTonnageData(
+      parsedData,
+      rangeFirstDate,
+      timeRange,
+      liftType,
+      aggregationType,
+    );
+  }, [parsedData, rangeFirstDate, liftType, aggregationType]);
 
   if (!parsedData) return null; // <-- gracefully handle null loading state
 
@@ -137,7 +148,11 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
                 <Tooltip
                   content={(props) => (
-                    <TonnageTooltipContent {...props} liftType={liftType} />
+                    <TonnageTooltipContent
+                      {...props}
+                      liftType={liftType}
+                      aggregationType={aggregationType}
+                    />
                   )}
                 />
 
@@ -233,7 +248,11 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
               <Tooltip
                 content={(props) => (
-                  <TonnageTooltipContent {...props} liftType={liftType} />
+                  <TonnageTooltipContent
+                    {...props}
+                    liftType={liftType}
+                    aggregationType={aggregationType}
+                  />
                 )}
               />
 
@@ -299,7 +318,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       </CardContent>
 
       <CardFooter>
-        <div className="flex w-full flex-col items-center justify-between gap-2 md:flex-row">
+        <div className="flex w-full items-center gap-2">
           <div className="flex items-center space-x-2">
             <Label className="font-light" htmlFor="show-values">
               Show Values
@@ -311,6 +330,24 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               onCheckedChange={(show) => setShowLabelValues(show)}
             />
           </div>
+          <div className="flex flex-1 items-center justify-center">
+            <div className="flex items-center space-x-1">
+              <Label className="font-light" htmlFor="aggregation-type">
+                Per Session
+              </Label>
+              <Switch
+                id="aggregation-type"
+                value={aggregationType === "perWeek"}
+                checked={aggregationType === "perWeek"}
+                onCheckedChange={(checked) =>
+                  setAggregationType(checked ? "perWeek" : "perSession")
+                }
+              />
+              <Label className="font-light" htmlFor="aggregation-type">
+                Per Week
+              </Label>
+            </div>
+          </div>
         </div>
       </CardFooter>
     </Card>
@@ -318,11 +355,18 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 }
 
 /**
- * Aggregates total tonnage per date from parsedData
+ * Aggregates total tonnage per date or per week from parsedData
  * If liftType is provided, filters to only that lift type
+ * aggregationType: "perSession" (default) or "perWeek"
  */
 
-function processTonnageData(parsedData, thresholdDateStr, timeRange, liftType) {
+function processTonnageData(
+  parsedData,
+  thresholdDateStr,
+  timeRange,
+  liftType,
+  aggregationType = "perSession",
+) {
   const startTime = performance.now();
   const tonnageMap = new Map();
 
@@ -335,7 +379,19 @@ function processTonnageData(parsedData, thresholdDateStr, timeRange, liftType) {
     const dateKey = tuple.date; // already "YYYY-MM-DD"
     if (dateKey >= thresholdDateStr) {
       const tonnage = tuple.weight * tuple.reps;
-      tonnageMap.set(dateKey, (tonnageMap.get(dateKey) || 0) + tonnage);
+
+      if (aggregationType === "perWeek") {
+        // Group by week (Monday as start of week)
+        const entryDate = parseISO(dateKey);
+        const weekStart = format(
+          startOfWeek(entryDate, { weekStartsOn: 1 }),
+          "yyyy-MM-dd",
+        );
+        tonnageMap.set(weekStart, (tonnageMap.get(weekStart) || 0) + tonnage);
+      } else {
+        // Group by session (per date)
+        tonnageMap.set(dateKey, (tonnageMap.get(dateKey) || 0) + tonnage);
+      }
     }
   });
 
@@ -345,10 +401,10 @@ function processTonnageData(parsedData, thresholdDateStr, timeRange, liftType) {
       rechartsDate: new Date(date).getTime(), // numeric timestamp for X-axis
       tonnage,
     }))
-    .sort((a, b) => a.date - b.date);
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   // Add rolling average
-  const windowSize = 7; // 7-day moving average
+  const windowSize = aggregationType === "perWeek" ? 4 : 7; // 4-week moving average for weekly, 7-day for daily
   for (let i = 0; i < chartData.length; i++) {
     const windowData = chartData.slice(Math.max(0, i - windowSize + 1), i + 1);
     const avg =
@@ -366,15 +422,32 @@ function processTonnageData(parsedData, thresholdDateStr, timeRange, liftType) {
   return chartData;
 }
 
-const TonnageTooltipContent = ({ payload, label, liftType }) => {
+const TonnageTooltipContent = ({
+  payload,
+  label,
+  liftType,
+  aggregationType = "perSession",
+}) => {
   if (!payload || payload.length === 0) return null;
 
   const tonnage = payload[0].value;
-  const dateLabel = new Date(label).toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
+  const date = new Date(label);
+
+  let dateLabel;
+  if (aggregationType === "perWeek") {
+    // Show week range (Monday to Sunday)
+    const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+
+    dateLabel = `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
+  } else {
+    dateLabel = date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  }
 
   return (
     <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">

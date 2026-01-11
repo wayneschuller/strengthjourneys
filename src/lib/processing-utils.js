@@ -412,6 +412,11 @@ export function findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula) {
   let bestLift = null;
   let unitType = "lb"; // Default to lb if not specified
 
+  // Return early if liftType doesn't exist in the data structure
+  if (!topLifts) {
+    return { bestLift, bestE1RMWeight, unitType };
+  }
+
   for (let reps = 0; reps < 10; reps++) {
     if (topLifts[reps]?.[0]) {
       const lift = topLifts[reps][0];

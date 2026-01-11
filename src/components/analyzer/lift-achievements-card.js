@@ -206,12 +206,14 @@ export const LiftTypeSummaryStatistics = ({ liftType }) => {
           {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
         </div>
       )}
-      <div className="col-span-3 mt-4">
-        Your highest potential {liftType} is {bestE1RMWeight}
-        {unitType} based on your {getReadableDateString(bestLift.date)} set of{" "}
-        {bestLift.reps}@{bestLift.weight}
-        {bestLift.unitType} (using {e1rmFormula} formula).
-      </div>
+      {bestLift && (
+        <div className="col-span-3 mt-4">
+          Your highest potential {liftType} is {bestE1RMWeight}
+          {unitType} based on your {getReadableDateString(bestLift.date)} set of{" "}
+          {bestLift.reps}@{bestLift.weight}
+          {bestLift.unitType} (using {e1rmFormula} formula).
+        </div>
+      )}
     </div>
   );
 };

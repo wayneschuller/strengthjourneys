@@ -187,9 +187,9 @@ function Heatmap({ parsedData, startDate, endDate, isMobile }) {
       showMonthLabels={!isMobile}
       classForValue={(value) => {
         if (!value) {
-          return `color-gh-${theme || "light"}-0`; // Grabs colors from css
+          return `color-heatmap-0`; // Uses CSS variables from theme
         }
-        return `color-gh-${theme || "light"}-${value.count}`; // Grabs colors from css
+        return `color-heatmap-${value.count}`; // Uses CSS variables from theme
       }}
       titleForValue={(value) => {
         if (value?.tooltip) return value.tooltip;

@@ -45,6 +45,11 @@
     --font-sans: Geist, Inter, sans-serif;
     --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
     --font-mono: Space Mono, monospace;
+    --heatmap-0: #eeeeee;
+    --heatmap-1: #a3b18a;
+    --heatmap-2: #588157;
+    --heatmap-3: #3a5a40;
+    --heatmap-4: #17221c;
   }
 
   .dark {
@@ -84,6 +89,11 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --heatmap-0: rgb(15, 19, 26);
+    --heatmap-1: #354a34;
+    --heatmap-2: #4d683f;
+    --heatmap-3: #6f8d60;
+    --heatmap-4: #a1bfa5;
   }
 
   .neo-brutalism {
@@ -144,13 +154,11 @@
     --shadow-2xl: 4px 4px 0px 0px hsl(0 0% 0% / 2.5);
     --tracking-normal: 0em;
     --spacing: 0.25rem;
-    --heatmap-0: hsl(var(--muted)); /* Light/empty */
-    --heatmap-1: hsl(
-      var(--secondary) / 0.25
-    ); /* Weak secondary, semi-transparent */
-    --heatmap-2: hsl(var(--secondary) / 0.5); /* Medium */
-    --heatmap-3: hsl(var(--primary) / 0.7); /* Primary faded */
-    --heatmap-4: hsl(var(--primary)); /* Full strength primary */
+    --heatmap-0: #fafafa;
+    --heatmap-1: #fff59d;
+    --heatmap-2: #ffff00;
+    --heatmap-3: #ffb3b3;
+    --heatmap-4: #ff6666;
   }
 
   .neo-brutalism-dark {
@@ -209,6 +217,11 @@
     --shadow-xl:
       4px 4px 0px 0px hsl(0 0% 0% / 1), 4px 8px 10px -1px hsl(0 0% 0% / 1);
     --shadow-2xl: 4px 4px 0px 0px hsl(0 0% 0% / 2.5);
+    --heatmap-0: #1a1a1a;
+    --heatmap-1: #cc6600;
+    --heatmap-2: #ff9933;
+    --heatmap-3: #ffcccc;
+    --heatmap-4: #ff3333;
   }
 
   .retro-arcade {
@@ -274,6 +287,11 @@
     --shadow-2xl: 2px 2px 4px 0px hsl(196 83% 10% / 0.38);
     --tracking-normal: 0em;
     --spacing: 0.25rem;
+    --heatmap-0: #d4e5e7;
+    --heatmap-1: #b8d4d9;
+    --heatmap-2: #5fa8a3;
+    --heatmap-3: #d66b7a;
+    --heatmap-4: #c84864;
   }
 
   .retro-arcade-dark {
@@ -337,6 +355,11 @@
       2px 2px 4px 0px hsl(196 83% 10% / 0.15),
       2px 8px 10px -1px hsl(196 83% 10% / 0.15);
     --shadow-2xl: 2px 2px 4px 0px hsl(196 83% 10% / 0.38);
+    --heatmap-0: #2a3540;
+    --heatmap-1: #3d5361;
+    --heatmap-2: #4d8a8a;
+    --heatmap-3: #d66b7a;
+    --heatmap-4: #e8738a;
   }
 }
 
@@ -412,112 +435,23 @@
   fill: #8cc665;
 }
 
-/* Light heatmap theme styles */
-.react-calendar-heatmap .color-gh-light-0 {
-  fill: #eeeeee; /* Light gray */
+/* Heatmap color scale - uses CSS variables defined in each theme */
+.react-calendar-heatmap .color-heatmap-0 {
+  fill: var(--heatmap-0);
 }
 
-.react-calendar-heatmap .color-gh-light-1 {
-  /* fill: #d6e685; Light green */
-  fill: #a3b18a; /* Light green */
+.react-calendar-heatmap .color-heatmap-1 {
+  fill: var(--heatmap-1);
 }
 
-.react-calendar-heatmap .color-gh-light-2 {
-  /* fill: #8cc665; Olive green */
-  fill: #588157; /* Olive green */
+.react-calendar-heatmap .color-heatmap-2 {
+  fill: var(--heatmap-2);
 }
 
-.react-calendar-heatmap .color-gh-light-3 {
-  /* fill: #44a340; Sea green */
-  fill: #3a5a40; /* Sea green */
+.react-calendar-heatmap .color-heatmap-3 {
+  fill: var(--heatmap-3);
 }
 
-.react-calendar-heatmap .color-gh-light-4 {
-  /* fill: #1e6823; Dark green */
-  fill: #17221c; /* Dark green */
-}
-
-/* Dark heatmap theme styles */
-.react-calendar-heatmap .color-gh-dark-0 {
-  fill: rgb(15, 19, 26); /* Dark gray */
-}
-
-.react-calendar-heatmap .color-gh-dark-1 {
-  fill: #354a34; /* Dark green */
-}
-
-.react-calendar-heatmap .color-gh-dark-2 {
-  fill: #4d683f; /* Dark olive green */
-}
-
-.react-calendar-heatmap .color-gh-dark-3 {
-  fill: #6f8d60; /* Dark sea green */
-}
-
-.react-calendar-heatmap .color-gh-dark-4 {
-  fill: #a1bfa5; /* Light green */
-}
-
-.neo-brutalism .react-calendar-heatmap .color-gh-neo-brutalism-0 {
-  fill: #fafafa;
-}
-.neo-brutalism .react-calendar-heatmap .color-gh-neo-brutalism-1 {
-  fill: #fff59d;
-}
-.neo-brutalism .react-calendar-heatmap .color-gh-neo-brutalism-2 {
-  fill: #ffff00;
-}
-.neo-brutalism .react-calendar-heatmap .color-gh-neo-brutalism-3 {
-  fill: #ffb3b3;
-}
-.neo-brutalism .react-calendar-heatmap .color-gh-neo-brutalism-4 {
-  fill: #ff6666;
-}
-
-.neo-brutalism-dark .react-calendar-heatmap .color-gh-neo-brutalism-dark-0 {
-  fill: #1a1a1a; /* Very dark gray */
-}
-.neo-brutalism-dark .react-calendar-heatmap .color-gh-neo-brutalism-dark-1 {
-  fill: #cc6600; /* Dark orange */
-}
-.neo-brutalism-dark .react-calendar-heatmap .color-gh-neo-brutalism-dark-2 {
-  fill: #ff9933; /* Medium orange */
-}
-.neo-brutalism-dark .react-calendar-heatmap .color-gh-neo-brutalism-dark-3 {
-  fill: #ffcccc; /* Light pink */
-}
-.neo-brutalism-dark .react-calendar-heatmap .color-gh-neo-brutalism-dark-4 {
-  fill: #ff3333; /* Bright red */
-}
-
-.retro-arcade .react-calendar-heatmap .color-gh-retro-arcade-0 {
-  fill: #d4e5e7; /* Light gray-blue */
-}
-.retro-arcade .react-calendar-heatmap .color-gh-retro-arcade-1 {
-  fill: #b8d4d9; /* Light teal */
-}
-.retro-arcade .react-calendar-heatmap .color-gh-retro-arcade-2 {
-  fill: #5fa8a3; /* Medium teal */
-}
-.retro-arcade .react-calendar-heatmap .color-gh-retro-arcade-3 {
-  fill: #d66b7a; /* Medium pink */
-}
-.retro-arcade .react-calendar-heatmap .color-gh-retro-arcade-4 {
-  fill: #c84864; /* Dark pink/magenta */
-}
-
-.retro-arcade-dark .react-calendar-heatmap .color-gh-retro-arcade-dark-0 {
-  fill: #2a3540; /* Dark blue-gray */
-}
-.retro-arcade-dark .react-calendar-heatmap .color-gh-retro-arcade-dark-1 {
-  fill: #3d5361; /* Medium dark blue-gray */
-}
-.retro-arcade-dark .react-calendar-heatmap .color-gh-retro-arcade-dark-2 {
-  fill: #4d8a8a; /* Medium teal */
-}
-.retro-arcade-dark .react-calendar-heatmap .color-gh-retro-arcade-dark-3 {
-  fill: #d66b7a; /* Medium pink */
-}
-.retro-arcade-dark .react-calendar-heatmap .color-gh-retro-arcade-dark-4 {
-  fill: #e8738a; /* Bright pink */
+.react-calendar-heatmap .color-heatmap-4 {
+  fill: var(--heatmap-4);
 }

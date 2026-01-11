@@ -8,7 +8,6 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { devLog } from "@/lib/processing-utils";
 import { useReadLocalStorage } from "usehooks-ts";
-import { VisualizerShadcn } from "@/components/visualizer/visualizer-shadcn";
 import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
 import {
   PageHeader,
@@ -33,7 +32,7 @@ export async function getStaticProps() {
   };
 }
 
-export default function Visualizer({ relatedArticles }) {
+export default function TonnageVisualizer({ relatedArticles }) {
   // OG Meta Tags
   const title = "Strength Journeys Tonnage Metrics";
   const canonicalURL = "https://www.strengthjourneys.xyz/tonnage-visualizer";
@@ -76,12 +75,12 @@ export default function Visualizer({ relatedArticles }) {
         ]}
       />
       {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
-      <VisualizerMain relatedArticles={relatedArticles} />
+      <TonnageVisualizerMain relatedArticles={relatedArticles} />
     </>
   );
 }
 
-function VisualizerMain({ relatedArticles }) {
+function TonnageVisualizerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { isLoading } = useUserLiftingData();
   const ssid = useReadLocalStorage("ssid");

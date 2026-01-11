@@ -5,9 +5,10 @@ import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
-import { parseISO, startOfWeek, format } from "date-fns";
+import { parseISO, startOfWeek, startOfMonth, format } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ReferenceLine, Line, ResponsiveContainer } from "recharts";
 import {
   TimeRangeSelect,
@@ -330,22 +331,24 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               onCheckedChange={(show) => setShowLabelValues(show)}
             />
           </div>
-          <div className="flex items-center space-x-1">
-            <Label className="font-light" htmlFor="aggregation-type">
+          <ToggleGroup
+            type="single"
+            value={aggregationType}
+            onValueChange={(value) => {
+              if (value) setAggregationType(value);
+            }}
+            variant="outline"
+          >
+            <ToggleGroupItem value="perSession" aria-label="Per Session">
               Per Session
-            </Label>
-            <Switch
-              id="aggregation-type"
-              value={aggregationType === "perWeek"}
-              checked={aggregationType === "perWeek"}
-              onCheckedChange={(checked) =>
-                setAggregationType(checked ? "perWeek" : "perSession")
-              }
-            />
-            <Label className="font-light" htmlFor="aggregation-type">
+            </ToggleGroupItem>
+            <ToggleGroupItem value="perWeek" aria-label="Per Week">
               Per Week
-            </Label>
-          </div>
+            </ToggleGroupItem>
+            <ToggleGroupItem value="perMonth" aria-label="Per Month">
+              Per Month
+            </ToggleGroupItem>
+          </ToggleGroup>
           <div></div>
         </div>
       </CardFooter>
@@ -354,9 +357,9 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 }
 
 /**
- * Aggregates total tonnage per date or per week from parsedData
+ * Aggregates total tonnage per date, per week, or per month from parsedData
  * If liftType is provided, filters to only that lift type
- * aggregationType: "perSession" (default) or "perWeek"
+ * aggregationType: "perSession" (default), "perWeek", or "perMonth"
  */
 
 function processTonnageData(
@@ -387,6 +390,11 @@ function processTonnageData(
           "yyyy-MM-dd",
         );
         tonnageMap.set(weekStart, (tonnageMap.get(weekStart) || 0) + tonnage);
+      } else if (aggregationType === "perMonth") {
+        // Group by month (first day of month)
+        const entryDate = parseISO(dateKey);
+        const monthStart = format(startOfMonth(entryDate), "yyyy-MM-dd");
+        tonnageMap.set(monthStart, (tonnageMap.get(monthStart) || 0) + tonnage);
       } else {
         // Group by session (per date)
         tonnageMap.set(dateKey, (tonnageMap.get(dateKey) || 0) + tonnage);
@@ -403,7 +411,8 @@ function processTonnageData(
     .sort((a, b) => a.date.localeCompare(b.date));
 
   // Add rolling average
-  const windowSize = aggregationType === "perWeek" ? 4 : 7; // 4-week moving average for weekly, 7-day for daily
+  const windowSize =
+    aggregationType === "perWeek" ? 4 : aggregationType === "perMonth" ? 3 : 7; // 4-week moving average for weekly, 3-month for monthly, 7-day for daily
   for (let i = 0; i < chartData.length; i++) {
     const windowData = chartData.slice(Math.max(0, i - windowSize + 1), i + 1);
     const avg =
@@ -440,6 +449,9 @@ const TonnageTooltipContent = ({
     weekEnd.setDate(weekEnd.getDate() + 6);
 
     dateLabel = `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
+  } else if (aggregationType === "perMonth") {
+    // Show month (e.g., "January 2024")
+    dateLabel = format(date, "MMMM yyyy");
   } else {
     dateLabel = date.toLocaleDateString("en-US", {
       weekday: "short",

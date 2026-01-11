@@ -74,6 +74,39 @@ const CustomLegend = ({ payload }) => {
   );
 };
 
+const TopLiftsTable = ({ stats }) => {
+  return (
+    <div>
+      <h3 className="mb-2 text-sm font-semibold">
+        Top {stats.length} Most Frequent Lifts
+      </h3>
+      <table className="w-full">
+        <tbody>
+          {stats.map((item, index) => (
+            <tr key={index}>
+              <td className="py-1">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div
+                    className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                    style={{ background: item.color }}
+                  />
+                  <span className="truncate text-sm">{item.liftType}</span>
+                </div>
+              </td>
+              <td className="whitespace-nowrap py-1 text-right text-sm">
+                {item.reps.toLocaleString()} reps
+              </td>
+              <td className="whitespace-nowrap py-1 text-right text-sm">
+                {item.sets} sets ({item.percentage}%)
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
 export function LiftTypeFrequencyPieCard() {
   const { liftTypes, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
@@ -109,6 +142,7 @@ export function LiftTypeFrequencyPieCard() {
   const pieData = topLifts.map((item) => ({
     liftType: item.liftType,
     sets: item.totalSets,
+    reps: item.totalReps,
     color: liftColors[item.liftType],
     fill: liftColors[item.liftType],
   }));
@@ -198,6 +232,9 @@ export function LiftTypeFrequencyPieCard() {
                         </div>
                         <div className="space-y-1 pl-6">
                           <div className="text-sm">
+                            {data.payload.reps?.toLocaleString()} reps
+                          </div>
+                          <div className="text-sm">
                             {sets} sets ({percentage}% of total)
                           </div>
                         </div>
@@ -212,27 +249,7 @@ export function LiftTypeFrequencyPieCard() {
 
         {/* <Separator className="my-6" /> */}
 
-        <div>
-          <h3 className="mb-2 text-sm font-semibold">
-            Top {stats.length} Most Frequent Lifts
-          </h3>
-          <div className="space-y-2">
-            {stats.map((item, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                    style={{ background: item.color }}
-                  />
-                  <span className="text-sm">{item.liftType}</span>
-                </div>
-                <span className="text-sm">
-                  {item.sets} sets ({item.percentage}%)
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <TopLiftsTable stats={stats} />
       </CardContent>
     </Card>
   );

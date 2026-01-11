@@ -473,3 +473,51 @@
 .neo-brutalism .react-calendar-heatmap .color-gh-neo-brutalism-4 {
   fill: #ff6666;
 }
+
+.neo-brutalism-dark .react-calendar-heatmap .color-gh-neo-brutalism-dark-0 {
+  fill: #1a1a1a; /* Very dark gray */
+}
+.neo-brutalism-dark .react-calendar-heatmap .color-gh-neo-brutalism-dark-1 {
+  fill: #cc6600; /* Dark orange */
+}
+.neo-brutalism-dark .react-calendar-heatmap .color-gh-neo-brutalism-dark-2 {
+  fill: #ff9933; /* Medium orange */
+}
+.neo-brutalism-dark .react-calendar-heatmap .color-gh-neo-brutalism-dark-3 {
+  fill: #ffcccc; /* Light pink */
+}
+.neo-brutalism-dark .react-calendar-heatmap .color-gh-neo-brutalism-dark-4 {
+  fill: #ff3333; /* Bright red */
+}
+
+.retro-arcade .react-calendar-heatmap .color-gh-retro-arcade-0 {
+  fill: #d4e5e7; /* Light gray-blue */
+}
+.retro-arcade .react-calendar-heatmap .color-gh-retro-arcade-1 {
+  fill: #b8d4d9; /* Light teal */
+}
+.retro-arcade .react-calendar-heatmap .color-gh-retro-arcade-2 {
+  fill: #5fa8a3; /* Medium teal */
+}
+.retro-arcade .react-calendar-heatmap .color-gh-retro-arcade-3 {
+  fill: #d66b7a; /* Medium pink */
+}
+.retro-arcade .react-calendar-heatmap .color-gh-retro-arcade-4 {
+  fill: #c84864; /* Dark pink/magenta */
+}
+
+.retro-arcade-dark .react-calendar-heatmap .color-gh-retro-arcade-dark-0 {
+  fill: #2a3540; /* Dark blue-gray */
+}
+.retro-arcade-dark .react-calendar-heatmap .color-gh-retro-arcade-dark-1 {
+  fill: #3d5361; /* Medium dark blue-gray */
+}
+.retro-arcade-dark .react-calendar-heatmap .color-gh-retro-arcade-dark-2 {
+  fill: #4d8a8a; /* Medium teal */
+}
+.retro-arcade-dark .react-calendar-heatmap .color-gh-retro-arcade-dark-3 {
+  fill: #d66b7a; /* Medium pink */
+}
+.retro-arcade-dark .react-calendar-heatmap .color-gh-retro-arcade-dark-4 {
+  fill: #e8738a; /* Bright pink */
+}

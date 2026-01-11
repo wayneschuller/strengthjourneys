@@ -35,6 +35,7 @@ import {
 
 import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
 import { VisualizerReps } from "@/components/visualizer/visualizer-reps";
+import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
 import { RelatedArticles } from "@/components/article-cards";
 
 import {
@@ -201,6 +202,9 @@ function BarbellInsightsMain({
         </div>
         <div className="col-span-3">
           <VisualizerReps liftType={liftInsightData.liftType} />
+        </div>
+        <div className="col-span-3">
+          <TonnageChart liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">
           <MyLiftTypePRsCard liftType={liftInsightData.liftType} />

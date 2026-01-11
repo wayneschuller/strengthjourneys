@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo } from "react";
-import { getLiftColor, useLiftColors } from "@/lib/color-tools";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ReferenceLine, Line } from "recharts";
+import { ReferenceLine, Line, ResponsiveContainer } from "recharts";
 import {
   TimeRangeSelect,
   calculateThresholdDate,
@@ -41,8 +41,10 @@ import {
 
 import { getYearLabels } from "./visualizer-processing";
 
-export function TonnageChart({ setHighlightDate }) {
+export function TonnageChart({ setHighlightDate, liftType }) {
   const { parsedData } = useUserLiftingData();
+  const { getColor } = useLiftColors();
+  const liftColor = liftType ? getColor(liftType) : null;
   const [timeRange, setTimeRange] = useLocalStorage("SJ_timeRange", "MAX", {
     initializeWithValue: false,
   });
@@ -55,8 +57,8 @@ export function TonnageChart({ setHighlightDate }) {
 
   const chartData = useMemo(() => {
     if (!parsedData || parsedData.length === 0) return [];
-    return processTonnageData(parsedData, rangeFirstDate, timeRange);
-  }, [parsedData, rangeFirstDate]);
+    return processTonnageData(parsedData, rangeFirstDate, timeRange, liftType);
+  }, [parsedData, rangeFirstDate, liftType]);
 
   if (!parsedData) return null; // <-- gracefully handle null loading state
 
@@ -67,7 +69,7 @@ export function TonnageChart({ setHighlightDate }) {
   const unitType = parsedData?.[0]?.unitType ?? "";
 
   const handleMouseMove = (event) => {
-    if (event && event.activePayload) {
+    if (event && event.activePayload && setHighlightDate) {
       setHighlightDate(event.activePayload[0]?.payload?.date);
     }
   };
@@ -78,11 +80,11 @@ export function TonnageChart({ setHighlightDate }) {
   };
 
   // Define a valid chartConfig for shadcnui
+  // Use lift color when liftType is provided, otherwise use default theme color
   const chartConfig = {
     tonnage: {
-      label: "Tonnage",
-      // color: "#8884d8",
-      color: "hsl(var(--chart-2))", // uses theme's first chart color for both light and dark
+      label: liftType ? `${liftType} Tonnage` : "Tonnage",
+      color: liftColor || "hsl(var(--chart-2))", // uses theme's chart color or lift-specific color
     },
   };
 
@@ -92,7 +94,9 @@ export function TonnageChart({ setHighlightDate }) {
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-pretty">
-          <CardTitle>Total Tonnage</CardTitle>
+          <CardTitle>
+            {liftType ? `${liftType} Tonnage` : "Total Tonnage"}
+          </CardTitle>
           <CardDescription>
             {getTimeRangeDescription(rangeFirstDate, parsedData)}
           </CardDescription>
@@ -103,93 +107,190 @@ export function TonnageChart({ setHighlightDate }) {
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">
-        <ChartContainer config={chartConfig}>
-          <AreaChart
-            data={chartData}
-            margin={{ left: 5, right: 20 }}
-            onMouseMove={handleMouseMove}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="rechartsDate"
-              type="number"
-              scale="time"
-              domain={[
-                (dataMin) => dataMin - 2 * 24 * 60 * 60 * 1000,
-                (dataMax) => dataMax + 2 * 24 * 60 * 60 * 1000,
-              ]}
-              tickFormatter={formatXAxisDate}
-            />
-            <YAxis
-              tickFormatter={(value) => `${value}${unitType}`}
-              domain={[0, (dataMax) => dataMax * 1.2]}
-            />
-
-            <Tooltip content={<TonnageTooltipContent />} />
-
-            <defs>
-              <linearGradient id="fillTonnage" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="hsl(var(--chart-2))"
-                  stopOpacity={0.9}
+        {liftType ? (
+          <ResponsiveContainer width="100%" height={400} className="">
+            <ChartContainer config={chartConfig} className="">
+              <AreaChart
+                data={chartData}
+                margin={{ left: 5, right: 20 }}
+                onMouseMove={handleMouseMove}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="rechartsDate"
+                  type="number"
+                  scale="time"
+                  domain={[
+                    (dataMin) => dataMin - 2 * 24 * 60 * 60 * 1000,
+                    (dataMax) => dataMax + 2 * 24 * 60 * 60 * 1000,
+                  ]}
+                  tickFormatter={formatXAxisDate}
                 />
-                <stop
-                  offset="50%"
-                  stopColor="hsl(var(--chart-2))"
-                  stopOpacity={0.09}
+                <YAxis
+                  tickFormatter={(value) => `${value}${unitType}`}
+                  domain={[0, (dataMax) => dataMax * 1.2]}
                 />
-              </linearGradient>
-            </defs>
-            <Area
-              type="monotone"
-              // type="basis"
-              dataKey="tonnage"
-              // dataKey="rollingAverageTonnage"
-              stroke="hsl(var(--chart-1))"
-              fill="url(#fillTonnage)"
-              // fill="#8884d8"
-              // fillOpacity={0.2}
-              // fillOpacity={0.1}
-              dot={["3M", "6M"].includes(timeRange)} // Show point dots in short time ranges
-              connectNulls
-            >
-              {showLabelValues && (
-                <LabelList
-                  position="top"
-                  offset={12}
-                  content={({ x, y, value }) => (
-                    <text
-                      x={x}
-                      y={y}
-                      dy={-10}
-                      fontSize={12}
-                      textAnchor="middle"
-                      className="fill-foreground"
-                    >
-                      {`${Math.round(value)}${unitType}`}
-                    </text>
+
+                <Tooltip
+                  content={(props) => (
+                    <TonnageTooltipContent {...props} liftType={liftType} />
                   )}
                 />
-              )}
-            </Area>
 
-            {/* Year labels to show year start */}
-            {yearLabels.map(({ date, label }) => (
-              <ReferenceLine
-                key={`label-${date}`}
-                x={date} // Position label at January 1 of each year
-                stroke="none" // No visible line
-                label={{
-                  value: label,
-                  position: "insideBottom",
-                  fontSize: 14,
-                  fill: "#666",
-                }}
+                <defs>
+                  <linearGradient
+                    id={`fill`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                    key={liftType}
+                  >
+                    <stop offset="5%" stopColor={liftColor} stopOpacity={0.8} />
+                    <stop
+                      offset="50%"
+                      stopColor={liftColor}
+                      stopOpacity={0.05}
+                    />
+                  </linearGradient>
+                </defs>
+                <Area
+                  key={liftType}
+                  type="monotone"
+                  dataKey="tonnage"
+                  stroke={liftColor}
+                  name={liftType}
+                  strokeWidth={2}
+                  fill={`url(#fill)`}
+                  fillOpacity={0.4}
+                  dot={["3M", "6M"].includes(timeRange)} // Show point dots in short time ranges
+                  connectNulls
+                >
+                  {showLabelValues && (
+                    <LabelList
+                      position="top"
+                      offset={12}
+                      content={({ x, y, value }) => (
+                        <text
+                          x={x}
+                          y={y}
+                          dy={-10}
+                          fontSize={12}
+                          textAnchor="middle"
+                          className="fill-foreground"
+                        >
+                          {`${Math.round(value)}${unitType}`}
+                        </text>
+                      )}
+                    />
+                  )}
+                </Area>
+
+                {/* Year labels to show year start */}
+                {yearLabels.map(({ date, label }) => (
+                  <ReferenceLine
+                    key={`label-${date}`}
+                    x={date} // Position label at January 1 of each year
+                    stroke="none" // No visible line
+                    label={{
+                      value: label,
+                      position: "insideBottom",
+                      fontSize: 14,
+                      fill: "#666",
+                    }}
+                  />
+                ))}
+              </AreaChart>
+            </ChartContainer>
+          </ResponsiveContainer>
+        ) : (
+          <ChartContainer config={chartConfig}>
+            <AreaChart
+              data={chartData}
+              margin={{ left: 5, right: 20 }}
+              onMouseMove={handleMouseMove}
+            >
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="rechartsDate"
+                type="number"
+                scale="time"
+                domain={[
+                  (dataMin) => dataMin - 2 * 24 * 60 * 60 * 1000,
+                  (dataMax) => dataMax + 2 * 24 * 60 * 60 * 1000,
+                ]}
+                tickFormatter={formatXAxisDate}
               />
-            ))}
-          </AreaChart>
-        </ChartContainer>
+              <YAxis
+                tickFormatter={(value) => `${value}${unitType}`}
+                domain={[0, (dataMax) => dataMax * 1.2]}
+              />
+
+              <Tooltip
+                content={(props) => (
+                  <TonnageTooltipContent {...props} liftType={liftType} />
+                )}
+              />
+
+              <defs>
+                <linearGradient id="fillTonnage" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="hsl(var(--chart-2))"
+                    stopOpacity={0.9}
+                  />
+                  <stop
+                    offset="50%"
+                    stopColor="hsl(var(--chart-2))"
+                    stopOpacity={0.09}
+                  />
+                </linearGradient>
+              </defs>
+              <Area
+                type="monotone"
+                dataKey="tonnage"
+                stroke="hsl(var(--chart-1))"
+                fill="url(#fillTonnage)"
+                dot={["3M", "6M"].includes(timeRange)} // Show point dots in short time ranges
+                connectNulls
+              >
+                {showLabelValues && (
+                  <LabelList
+                    position="top"
+                    offset={12}
+                    content={({ x, y, value }) => (
+                      <text
+                        x={x}
+                        y={y}
+                        dy={-10}
+                        fontSize={12}
+                        textAnchor="middle"
+                        className="fill-foreground"
+                      >
+                        {`${Math.round(value)}${unitType}`}
+                      </text>
+                    )}
+                  />
+                )}
+              </Area>
+
+              {/* Year labels to show year start */}
+              {yearLabels.map(({ date, label }) => (
+                <ReferenceLine
+                  key={`label-${date}`}
+                  x={date} // Position label at January 1 of each year
+                  stroke="none" // No visible line
+                  label={{
+                    value: label,
+                    position: "insideBottom",
+                    fontSize: 14,
+                    fill: "#666",
+                  }}
+                />
+              ))}
+            </AreaChart>
+          </ChartContainer>
+        )}
       </CardContent>
 
       <CardFooter>
@@ -213,13 +314,19 @@ export function TonnageChart({ setHighlightDate }) {
 
 /**
  * Aggregates total tonnage per date from parsedData
+ * If liftType is provided, filters to only that lift type
  */
 
-function processTonnageData(parsedData, thresholdDateStr) {
+function processTonnageData(parsedData, thresholdDateStr, timeRange, liftType) {
   const startTime = performance.now();
   const tonnageMap = new Map();
 
   parsedData.forEach((tuple) => {
+    // Filter by liftType if provided
+    if (liftType && tuple.liftType !== liftType) {
+      return;
+    }
+
     const dateKey = tuple.date; // already "YYYY-MM-DD"
     if (dateKey >= thresholdDateStr) {
       const tonnage = tuple.weight * tuple.reps;
@@ -254,7 +361,7 @@ function processTonnageData(parsedData, thresholdDateStr) {
   return chartData;
 }
 
-const TonnageTooltipContent = ({ payload, label }) => {
+const TonnageTooltipContent = ({ payload, label, liftType }) => {
   if (!payload || payload.length === 0) return null;
 
   const tonnage = payload[0].value;
@@ -269,7 +376,9 @@ const TonnageTooltipContent = ({ payload, label }) => {
       <p className="font-bold">{dateLabel}</p>
       <div className="flex flex-row items-center">
         <div className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px] bg-primary" />
-        <div className="font-semibold">Total Tonnage</div>
+        <div className="font-semibold">
+          {liftType ? `${liftType} Tonnage` : "Total Tonnage"}
+        </div>
       </div>
       <div>{`${tonnage.toFixed(0)} kg`}</div>
     </div>

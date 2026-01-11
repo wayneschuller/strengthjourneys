@@ -77,6 +77,7 @@ export function ThemeChooser() {
   );
 }
 
+// This is the old dark mode toggle that is no longer used
 export function DarkModeToggle() {
   const { theme, setTheme } = useTheme();
 

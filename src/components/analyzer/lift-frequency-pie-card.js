@@ -6,6 +6,7 @@ import { devLog } from "@/lib/processing-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
@@ -26,6 +27,13 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
+
+const bigFourURLs = {
+  "Back Squat": "/barbell-squat-insights",
+  "Bench Press": "/barbell-bench-press-insights",
+  Deadlift: "/barbell-deadlift-insights",
+  "Strict Press": "/barbell-strict-press-insights",
+};
 
 const RADIAN = Math.PI / 180;
 const renderCustomizedLabel = ({
@@ -90,7 +98,16 @@ const TopLiftsTable = ({ stats }) => {
                     className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
                     style={{ background: item.color }}
                   />
-                  <span className="truncate text-sm">{item.liftType}</span>
+                  {bigFourURLs[item.liftType] ? (
+                    <Link
+                      href={bigFourURLs[item.liftType]}
+                      className="truncate text-sm underline"
+                    >
+                      {item.liftType}
+                    </Link>
+                  ) : (
+                    <span className="truncate text-sm">{item.liftType}</span>
+                  )}
                 </div>
               </td>
               <td className="whitespace-nowrap py-1 text-right text-sm">

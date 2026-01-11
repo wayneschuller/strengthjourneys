@@ -318,7 +318,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       </CardContent>
 
       <CardFooter>
-        <div className="flex w-full items-center gap-2">
+        <div className="flex w-full flex-col items-center justify-between gap-2 md:flex-row">
           <div className="flex items-center space-x-2">
             <Label className="font-light" htmlFor="show-values">
               Show Values
@@ -330,24 +330,23 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               onCheckedChange={(show) => setShowLabelValues(show)}
             />
           </div>
-          <div className="flex flex-1 items-center justify-center">
-            <div className="flex items-center space-x-1">
-              <Label className="font-light" htmlFor="aggregation-type">
-                Per Session
-              </Label>
-              <Switch
-                id="aggregation-type"
-                value={aggregationType === "perWeek"}
-                checked={aggregationType === "perWeek"}
-                onCheckedChange={(checked) =>
-                  setAggregationType(checked ? "perWeek" : "perSession")
-                }
-              />
-              <Label className="font-light" htmlFor="aggregation-type">
-                Per Week
-              </Label>
-            </div>
+          <div className="flex items-center space-x-1">
+            <Label className="font-light" htmlFor="aggregation-type">
+              Per Session
+            </Label>
+            <Switch
+              id="aggregation-type"
+              value={aggregationType === "perWeek"}
+              checked={aggregationType === "perWeek"}
+              onCheckedChange={(checked) =>
+                setAggregationType(checked ? "perWeek" : "perSession")
+              }
+            />
+            <Label className="font-light" htmlFor="aggregation-type">
+              Per Week
+            </Label>
           </div>
+          <div></div>
         </div>
       </CardFooter>
     </Card>

@@ -53,6 +53,9 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     false,
   );
 
+  // Used to hide the y-axis and other UI elements on smaller screens
+  const { width } = useWindowSize({ initializeWithValue: false });
+
   const rangeFirstDate = calculateThresholdDate(timeRange, setTimeRange);
 
   const chartData = useMemo(() => {
@@ -129,6 +132,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 <YAxis
                   tickFormatter={(value) => `${value}${unitType}`}
                   domain={[0, (dataMax) => dataMax * 1.2]}
+                  hide={width < 1280}
                 />
 
                 <Tooltip
@@ -224,6 +228,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               <YAxis
                 tickFormatter={(value) => `${value}${unitType}`}
                 domain={[0, (dataMax) => dataMax * 1.2]}
+                hide={width < 1280}
               />
 
               <Tooltip

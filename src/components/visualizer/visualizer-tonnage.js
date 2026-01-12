@@ -411,6 +411,11 @@ function processTonnageData(
     .sort((a, b) => a.date.localeCompare(b.date));
 
   // Add rolling average
+  // Note: chartData elements represent different time periods based on aggregationType:
+  // - "perSession": each element = 1 day
+  // - "perWeek": each element = 1 week (Monday-Sunday)
+  // - "perMonth": each element = 1 month
+  // The windowSize below is the number of these aggregated periods to include in the rolling average
   const windowSize =
     aggregationType === "perWeek" ? 4 : aggregationType === "perMonth" ? 3 : 7; // 4-week moving average for weekly, 3-month for monthly, 7-day for daily
   for (let i = 0; i < chartData.length; i++) {

@@ -724,12 +724,12 @@ const TonnageTooltipContent = ({
         <div className="font-semibold">
           {liftType ? `${liftType} Tonnage` : "Total Tonnage"}
         </div>
+        <div className="ml-2">{`${tonnage.toFixed(0)}${unitType}`}</div>
       </div>
-      <div>{`${tonnage.toFixed(0)}${unitType}`}</div>
 
       {/* Per Session: Show lifts */}
       {sessionLiftsByType && Object.keys(sessionLiftsByType).length > 0 && (
-        <div className="mt-2 border-t border-border/50 pt-2">
+        <div className="mt-2">
           {Object.entries(sessionLiftsByType).map(([liftTypeName, lifts]) => (
             <div key={liftTypeName} className="mb-2 last:mb-0">
               {!liftType && <LiftTypeIndicator liftType={liftTypeName} />}
@@ -754,7 +754,7 @@ const TonnageTooltipContent = ({
 
       {/* Per Week: Show rich data */}
       {weekData && weekData.totalSessions > 0 && (
-        <div className="mt-2 border-t border-border/50 pt-2">
+        <div className="mt-2">
           {liftType && weekData.sessionDetails.length > 0 ? (
             // Per-lift chart: show one row per session with sets
             <div className="max-h-64 space-y-1 overflow-y-auto">
@@ -818,7 +818,7 @@ const TonnageTooltipContent = ({
 
       {/* Per Month: Show rich data */}
       {monthData && monthData.totalSessions > 0 && (
-        <div className="mt-2 border-t border-border/50 pt-2">
+        <div className="mt-2">
           {liftType && monthData.sessionDetails.length > 0 ? (
             // Per-lift chart: show one row per session with sets
             <div className="max-h-64 space-y-1 overflow-y-auto">

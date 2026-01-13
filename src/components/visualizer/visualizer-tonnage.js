@@ -734,13 +734,29 @@ const TonnageTooltipContent = ({
             <div key={liftTypeName} className="mb-2 text-xs last:mb-0">
               {!liftType && <LiftTypeIndicator liftType={liftTypeName} />}
               <div className={liftType ? "" : "ml-6 mt-1"}>
-                {lifts.map((lift, index) => (
-                  <span key={index}>
-                    {lift.reps}@{lift.weight}
-                    {lift.unitType}
-                    {index < lifts.length - 1 && ", "}
-                  </span>
-                ))}
+                {(() => {
+                  const sessionTonnage = lifts.reduce(
+                    (sum, lift) => sum + lift.weight * lift.reps,
+                    0,
+                  );
+                  const unitType = lifts[0]?.unitType ?? "";
+                  return (
+                    <>
+                      <span className="font-semibold">
+                        {sessionTonnage.toFixed(0)}
+                        {unitType}
+                      </span>
+                      <span className="mx-1">-</span>
+                      {lifts.map((lift, index) => (
+                        <span key={index}>
+                          {lift.reps}@{lift.weight}
+                          {lift.unitType}
+                          {index < lifts.length - 1 && ", "}
+                        </span>
+                      ))}
+                    </>
+                  );
+                })()}
               </div>
             </div>
           ))}
@@ -763,6 +779,11 @@ const TonnageTooltipContent = ({
                 return (
                   <div key={session.date} className="text-xs">
                     <span className="font-semibold">{formattedDate}:</span>{" "}
+                    <span className="font-semibold">
+                      {session.tonnage.toFixed(0)}
+                      {unitType}
+                    </span>
+                    <span className="mx-1">-</span>
                     {session.lifts.map((lift, index) => (
                       <span key={index}>
                         {lift.reps}@{lift.weight}
@@ -770,10 +791,6 @@ const TonnageTooltipContent = ({
                         {index < session.lifts.length - 1 && ", "}
                       </span>
                     ))}
-                    <span className="ml-2 text-muted-foreground">
-                      - {session.tonnage.toFixed(0)}
-                      {unitType}
-                    </span>
                   </div>
                 );
               })}
@@ -826,6 +843,11 @@ const TonnageTooltipContent = ({
                 return (
                   <div key={session.date} className="text-xs">
                     <span className="font-semibold">{formattedDate}:</span>{" "}
+                    <span className="font-semibold">
+                      {session.tonnage.toFixed(0)}
+                      {unitType}
+                    </span>
+                    <span className="mx-1">-</span>
                     {session.lifts.map((lift, index) => (
                       <span key={index}>
                         {lift.reps}@{lift.weight}
@@ -833,10 +855,6 @@ const TonnageTooltipContent = ({
                         {index < session.lifts.length - 1 && ", "}
                       </span>
                     ))}
-                    <span className="ml-2 text-muted-foreground">
-                      - {session.tonnage.toFixed(0)}
-                      {unitType}
-                    </span>
                   </div>
                 );
               })}

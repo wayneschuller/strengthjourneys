@@ -11,6 +11,41 @@ import {
 
 import { useLiftColors } from "@/hooks/use-lift-colors";
 
+// Reusable component to render a session row with date, tonnage, and sets
+export const SessionRow = ({ date, lifts, unitType, showDate = true }) => {
+  if (!lifts || lifts.length === 0) return null;
+
+  const sessionTonnage = lifts.reduce(
+    (sum, lift) => sum + lift.weight * lift.reps,
+    0,
+  );
+  const formattedDate = date
+    ? new Date(date).toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
+
+  return (
+    <div className="text-xs">
+      {showDate && formattedDate && (
+        <>
+          <span className="font-semibold">{formattedDate}:</span>{" "}
+        </>
+      )}
+      <span className="mr-1 font-semibold">Sets:</span>
+      {lifts.map((lift, index) => (
+        <span key={index}>
+          {lift.reps}@{lift.weight}
+          {lift.unitType}
+          {index < lifts.length - 1 && ", "}
+        </span>
+      ))}
+    </div>
+  );
+};
+
 // Shared function to create tooltip content for a lift
 const createLiftTooltipContent = (liftType, tuple, color) => {
   const reps = tuple[`${liftType}_reps`];
@@ -72,17 +107,45 @@ export const MultiLiftTooltipContent = ({
   return <TooltipUI dateLabel={dateLabel} tooltipsPerLift={tooltipsPerLift} />;
 };
 
+// Helper function to get session lifts grouped by lift type (reused from visualizer-tonnage.js)
+function getSessionLiftsByType(parsedData, dateStr, chartLiftType) {
+  if (!parsedData || !dateStr) return {};
+
+  // Filter lifts for the given date, excluding goals
+  const sessionLifts = parsedData.filter(
+    (lift) =>
+      lift.date === dateStr &&
+      lift.isGoal !== true &&
+      (!chartLiftType || lift.liftType === chartLiftType),
+  );
+
+  // Group by lift type
+  const liftsByType = {};
+  sessionLifts.forEach((lift) => {
+    if (!liftsByType[lift.liftType]) {
+      liftsByType[lift.liftType] = [];
+    }
+    liftsByType[lift.liftType].push(lift);
+  });
+
+  return liftsByType;
+}
+
 // For single lift - visualizer mini uses this
 export const SingleLiftTooltipContent = ({
   active,
   payload,
   label,
   liftType,
+  parsedData,
+  liftColor,
 }) => {
   const { getColor } = useLiftColors();
   if (!active || !payload?.length) return null;
 
   const tuple = payload[0].payload;
+  const dateStr = tuple.date; // "YYYY-MM-DD" format
+  const unitType = tuple.unitType || "";
   const dateLabel = getReadableDateString(tuple.date);
   const tooltipContent = createLiftTooltipContent(
     liftType,
@@ -90,9 +153,39 @@ export const SingleLiftTooltipContent = ({
     payload[0].color,
   );
 
-  return tooltipContent ? (
-    <TooltipUI dateLabel={dateLabel} tooltipsPerLift={[tooltipContent]} />
-  ) : null;
+  // Get session lifts for this date and lift type
+  const sessionLiftsByType =
+    parsedData && dateStr
+      ? getSessionLiftsByType(parsedData, dateStr, liftType)
+      : null;
+
+  const lifts = sessionLiftsByType?.[liftType] || [];
+
+  if (!tooltipContent) return null;
+
+  return (
+    <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+      <p className="font-bold">{dateLabel}</p>
+      <div className="flex flex-row items-center">
+        <div
+          className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+          style={{ backgroundColor: liftColor || getColor(liftType) }}
+        />
+        <div className="font-semibold">{liftType}</div>
+      </div>
+      <div className="">{tooltipContent.label}</div>
+      {lifts.length > 0 && (
+        <div className="mt-2">
+          <SessionRow
+            date={dateStr}
+            lifts={lifts}
+            unitType={unitType}
+            showDate={false}
+          />
+        </div>
+      )}
+    </div>
+  );
 };
 
 export function E1RMFormulaSelect({ e1rmFormula, setE1rmFormula }) {

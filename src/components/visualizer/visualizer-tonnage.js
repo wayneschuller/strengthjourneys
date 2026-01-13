@@ -7,6 +7,7 @@ import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
 import { parseISO, startOfWeek, startOfMonth, format } from "date-fns";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
+import { SessionRow } from "./visualizer-utils";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -734,29 +735,12 @@ const TonnageTooltipContent = ({
             <div key={liftTypeName} className="mb-2 text-xs last:mb-0">
               {!liftType && <LiftTypeIndicator liftType={liftTypeName} />}
               <div className={liftType ? "" : "ml-6 mt-1"}>
-                {(() => {
-                  const sessionTonnage = lifts.reduce(
-                    (sum, lift) => sum + lift.weight * lift.reps,
-                    0,
-                  );
-                  const unitType = lifts[0]?.unitType ?? "";
-                  return (
-                    <>
-                      <span className="font-semibold">
-                        {sessionTonnage.toFixed(0)}
-                        {unitType}
-                      </span>
-                      <span className="mx-1">-</span>
-                      {lifts.map((lift, index) => (
-                        <span key={index}>
-                          {lift.reps}@{lift.weight}
-                          {lift.unitType}
-                          {index < lifts.length - 1 && ", "}
-                        </span>
-                      ))}
-                    </>
-                  );
-                })()}
+                <SessionRow
+                  date={dateStr}
+                  lifts={lifts}
+                  unitType={lifts[0]?.unitType ?? ""}
+                  showDate={false}
+                />
               </div>
             </div>
           ))}
@@ -777,21 +761,12 @@ const TonnageTooltipContent = ({
                   day: "numeric",
                 });
                 return (
-                  <div key={session.date} className="text-xs">
-                    <span className="font-semibold">{formattedDate}:</span>{" "}
-                    <span className="font-semibold">
-                      {session.tonnage.toFixed(0)}
-                      {unitType}
-                    </span>
-                    <span className="mx-1">-</span>
-                    {session.lifts.map((lift, index) => (
-                      <span key={index}>
-                        {lift.reps}@{lift.weight}
-                        {lift.unitType}
-                        {index < session.lifts.length - 1 && ", "}
-                      </span>
-                    ))}
-                  </div>
+                  <SessionRow
+                    key={session.date}
+                    date={session.date}
+                    lifts={session.lifts}
+                    unitType={unitType}
+                  />
                 );
               })}
             </div>
@@ -841,21 +816,12 @@ const TonnageTooltipContent = ({
                   day: "numeric",
                 });
                 return (
-                  <div key={session.date} className="text-xs">
-                    <span className="font-semibold">{formattedDate}:</span>{" "}
-                    <span className="font-semibold">
-                      {session.tonnage.toFixed(0)}
-                      {unitType}
-                    </span>
-                    <span className="mx-1">-</span>
-                    {session.lifts.map((lift, index) => (
-                      <span key={index}>
-                        {lift.reps}@{lift.weight}
-                        {lift.unitType}
-                        {index < session.lifts.length - 1 && ", "}
-                      </span>
-                    ))}
-                  </div>
+                  <SessionRow
+                    key={session.date}
+                    date={session.date}
+                    lifts={session.lifts}
+                    unitType={unitType}
+                  />
                 );
               })}
             </div>

@@ -322,13 +322,14 @@ export function VisualizerMini({ liftType }) {
                   />
                 )}
                 <Tooltip
-                  content={
+                  content={(props) => (
                     <SingleLiftTooltipContent
-                      selectedLiftTypes={selectedLiftTypes}
+                      {...props}
                       liftType={liftType}
-                      e1rmFormula={e1rmFormula}
+                      parsedData={parsedData}
+                      liftColor={liftColor}
                     />
-                  }
+                  )}
                   formatter={(value, name, props) =>
                     `${value} ${props.payload.unitType}`
                   }

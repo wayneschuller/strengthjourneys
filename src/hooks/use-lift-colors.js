@@ -120,7 +120,14 @@ export const LiftColorsProvider = ({ children }) => {
       return activeColors[liftType];
     }
     // Fallback to random color for unknown lift types
-    return generateRandomColor();
+    // Auto-save it to localStorage and state so it persists
+    const randomColor = generateRandomColor();
+    const newOverrides = { ...overrides, [liftType]: randomColor };
+    setOverrides(newOverrides);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("liftColorOverrides", JSON.stringify(newOverrides));
+    }
+    return randomColor;
   };
 
   // Set a color override and update localStorage

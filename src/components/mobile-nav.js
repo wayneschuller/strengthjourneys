@@ -67,7 +67,7 @@ export function MobileNav() {
           <span className="sr-only">Toggle Menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="pr-0">
+      <SheetContent side="left" className="flex flex-col pr-0">
         <SheetHeader>
           <SheetTitle>
             <SheetClose asChild>
@@ -92,8 +92,8 @@ export function MobileNav() {
           </SheetTitle>
           <SheetDescription></SheetDescription>
         </SheetHeader>
-        <div className="flex flex-col">
-          <div className="flex flex-1 flex-col gap-4 text-lg font-medium tracking-tight">
+        <div className="flex flex-1 flex-col overflow-y-auto">
+          <div className="flex flex-col gap-4 text-lg font-medium tracking-tight">
             {featurePages.map((item) => (
               <NavLink key={item.href} {...item} />
             ))}

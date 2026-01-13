@@ -6,6 +6,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
 import { parseISO, startOfWeek, startOfMonth, format } from "date-fns";
+import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -153,6 +154,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                       {...props}
                       liftType={liftType}
                       aggregationType={aggregationType}
+                      parsedData={parsedData}
                     />
                   )}
                 />
@@ -435,11 +437,36 @@ function processTonnageData(
   return chartData;
 }
 
+// Helper function to get session lifts grouped by lift type
+function getSessionLiftsByType(parsedData, dateStr, chartLiftType) {
+  if (!parsedData || !dateStr) return {};
+
+  // Filter lifts for the given date, excluding goals
+  const sessionLifts = parsedData.filter(
+    (lift) =>
+      lift.date === dateStr &&
+      lift.isGoal !== true &&
+      (!chartLiftType || lift.liftType === chartLiftType),
+  );
+
+  // Group by lift type
+  const liftsByType = {};
+  sessionLifts.forEach((lift) => {
+    if (!liftsByType[lift.liftType]) {
+      liftsByType[lift.liftType] = [];
+    }
+    liftsByType[lift.liftType].push(lift);
+  });
+
+  return liftsByType;
+}
+
 const TonnageTooltipContent = ({
   payload,
   label,
   liftType,
   aggregationType = "perSession",
+  parsedData,
 }) => {
   if (!payload || payload.length === 0) return null;
 
@@ -465,6 +492,21 @@ const TonnageTooltipContent = ({
     });
   }
 
+  // Get unit type from parsedData or default to empty string
+  const unitType = parsedData?.[0]?.unitType ?? "";
+
+  // Get session lifts if aggregationType is perSession
+  // Extract date string from payload (format: "YYYY-MM-DD")
+  const dateStr =
+    aggregationType === "perSession" && payload[0]?.payload?.date
+      ? payload[0].payload.date
+      : null;
+
+  const sessionLiftsByType =
+    aggregationType === "perSession" && parsedData && dateStr
+      ? getSessionLiftsByType(parsedData, dateStr, liftType)
+      : null;
+
   return (
     <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
@@ -474,7 +516,24 @@ const TonnageTooltipContent = ({
           {liftType ? `${liftType} Tonnage` : "Total Tonnage"}
         </div>
       </div>
-      <div>{`${tonnage.toFixed(0)} kg`}</div>
+      <div>{`${tonnage.toFixed(0)}${unitType}`}</div>
+      {sessionLiftsByType && Object.keys(sessionLiftsByType).length > 0 && (
+        <div className="mt-2 border-t border-border/50 pt-2">
+          {Object.entries(sessionLiftsByType).map(([liftTypeName, lifts]) => (
+            <div key={liftTypeName} className="mb-2 last:mb-0">
+              <LiftTypeIndicator liftType={liftTypeName} />
+              <div className="ml-6 mt-1 flex flex-wrap gap-x-2 gap-y-0.5">
+                {lifts.map((lift, index) => (
+                  <span key={index} className="text-xs">
+                    {lift.reps}@{lift.weight}
+                    {lift.unitType}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

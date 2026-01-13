@@ -88,7 +88,8 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     }
 
     const maxTonnage = Math.max(...chartData.map((d) => d.tonnage));
-    const { roundedMax, tickInterval } = calculateNiceYAxis(maxTonnage * 1.2); // Add 20% padding
+    // Calculate nice number - the rounding algorithm naturally provides headroom by rounding up
+    const { roundedMax, tickInterval } = calculateNiceYAxis(maxTonnage);
 
     // Generate tick values
     const ticks = [];

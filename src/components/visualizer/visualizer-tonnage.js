@@ -155,6 +155,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                       liftType={liftType}
                       aggregationType={aggregationType}
                       parsedData={parsedData}
+                      liftColor={liftColor}
                     />
                   )}
                 />
@@ -255,6 +256,8 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     {...props}
                     liftType={liftType}
                     aggregationType={aggregationType}
+                    parsedData={parsedData}
+                    liftColor={liftColor}
                   />
                 )}
               />
@@ -492,7 +495,7 @@ function getWeekLiftsData(parsedData, weekStartStr, chartLiftType) {
   // Get unique session dates
   const sessionDates = [...new Set(weekLifts.map((lift) => lift.date))].sort();
 
-  // Calculate session details (tonnage per session)
+  // Calculate session details (tonnage per session with lifts)
   const sessionDetails = sessionDates.map((date) => {
     const sessionLifts = weekLifts.filter((lift) => lift.date === date);
     const sessionTonnage = sessionLifts.reduce(
@@ -503,6 +506,7 @@ function getWeekLiftsData(parsedData, weekStartStr, chartLiftType) {
       date,
       tonnage: sessionTonnage,
       liftCount: sessionLifts.length,
+      lifts: sessionLifts,
     };
   });
 
@@ -573,7 +577,7 @@ function getMonthLiftsData(parsedData, monthStartStr, chartLiftType) {
   // Get unique session dates
   const sessionDates = [...new Set(monthLifts.map((lift) => lift.date))].sort();
 
-  // Calculate session details (tonnage per session)
+  // Calculate session details (tonnage per session with lifts)
   const sessionDetails = sessionDates.map((date) => {
     const sessionLifts = monthLifts.filter((lift) => lift.date === date);
     const sessionTonnage = sessionLifts.reduce(
@@ -584,6 +588,7 @@ function getMonthLiftsData(parsedData, monthStartStr, chartLiftType) {
       date,
       tonnage: sessionTonnage,
       liftCount: sessionLifts.length,
+      lifts: sessionLifts,
     };
   });
 
@@ -663,6 +668,7 @@ const TonnageTooltipContent = ({
   liftType,
   aggregationType = "perSession",
   parsedData,
+  liftColor,
 }) => {
   if (!payload || payload.length === 0) return null;
 
@@ -711,7 +717,10 @@ const TonnageTooltipContent = ({
     <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
       <div className="flex flex-row items-center">
-        <div className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px] bg-primary" />
+        <div
+          className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
+          style={{ backgroundColor: liftColor || "hsl(var(--chart-2))" }}
+        />
         <div className="font-semibold">
           {liftType ? `${liftType} Tonnage` : "Total Tonnage"}
         </div>
@@ -723,8 +732,14 @@ const TonnageTooltipContent = ({
         <div className="mt-2 border-t border-border/50 pt-2">
           {Object.entries(sessionLiftsByType).map(([liftTypeName, lifts]) => (
             <div key={liftTypeName} className="mb-2 last:mb-0">
-              <LiftTypeIndicator liftType={liftTypeName} />
-              <div className="ml-6 mt-1 flex flex-wrap gap-x-2 gap-y-0.5">
+              {!liftType && <LiftTypeIndicator liftType={liftTypeName} />}
+              <div
+                className={
+                  liftType
+                    ? "flex flex-wrap gap-x-2 gap-y-0.5"
+                    : "ml-6 mt-1 flex flex-wrap gap-x-2 gap-y-0.5"
+                }
+              >
                 {lifts.map((lift, index) => (
                   <span key={index} className="text-xs">
                     {lift.reps}@{lift.weight}
@@ -739,59 +754,63 @@ const TonnageTooltipContent = ({
 
       {/* Per Week: Show rich data */}
       {weekData && weekData.totalSessions > 0 && (
-        <div className="mt-2 space-y-2 border-t border-border/50 pt-2">
-          <div className="text-xs">
-            <span className="font-semibold">{weekData.totalSessions}</span>{" "}
-            {weekData.totalSessions === 1 ? "session" : "sessions"}
-            {weekData.totalSessions > 0 && (
-              <span className="ml-2 text-muted-foreground">
-                Avg: {weekData.avgTonnagePerSession.toFixed(0)}
-                {unitType}/session
-              </span>
-            )}
-          </div>
-
-          {weekData.liftTypes.length > 0 && (
-            <div>
-              <div className="mb-1 text-xs font-semibold">Lift Types:</div>
-              <div className="flex flex-wrap gap-1">
-                {weekData.liftTypes.map((liftTypeName) => (
-                  <LiftTypeIndicator
-                    key={liftTypeName}
-                    liftType={liftTypeName}
-                  />
-                ))}
-              </div>
+        <div className="mt-2 border-t border-border/50 pt-2">
+          {liftType && weekData.sessionDetails.length > 0 ? (
+            // Per-lift chart: show one row per session with sets
+            <div className="max-h-64 space-y-1 overflow-y-auto">
+              {weekData.sessionDetails.map((session) => {
+                const sessionDate = new Date(session.date);
+                const formattedDate = sessionDate.toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                });
+                return (
+                  <div key={session.date} className="text-xs">
+                    <span className="font-semibold">{formattedDate}:</span>{" "}
+                    <span className="inline-flex flex-wrap gap-x-2 gap-y-0.5">
+                      {session.lifts.map((lift, index) => (
+                        <span key={index}>
+                          {lift.reps}@{lift.weight}
+                          {lift.unitType}
+                        </span>
+                      ))}
+                    </span>
+                    <span className="ml-2 text-muted-foreground">
+                      - {session.tonnage.toFixed(0)}
+                      {unitType}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-          )}
-
-          {weekData.sessionDetails.length > 0 && (
-            <div>
-              <div className="mb-1 text-xs font-semibold">Sessions:</div>
-              <div className="max-h-32 space-y-0.5 overflow-y-auto">
-                {weekData.sessionDetails.map((session) => {
-                  const sessionDate = new Date(session.date);
-                  const formattedDate = sessionDate.toLocaleDateString(
-                    "en-US",
-                    {
-                      month: "short",
-                      day: "numeric",
-                    },
-                  );
-                  return (
-                    <div
-                      key={session.date}
-                      className="flex justify-between text-xs"
-                    >
-                      <span>{formattedDate}</span>
-                      <span className="text-muted-foreground">
-                        {session.tonnage.toFixed(0)}
-                        {unitType}
-                      </span>
-                    </div>
-                  );
-                })}
+          ) : (
+            // Total tonnage chart: show summary stats
+            <div className="space-y-2">
+              <div className="text-xs">
+                <span className="font-semibold">{weekData.totalSessions}</span>{" "}
+                {weekData.totalSessions === 1 ? "session" : "sessions"}
+                {weekData.totalSessions > 0 && (
+                  <span className="ml-2 text-muted-foreground">
+                    Avg: {weekData.avgTonnagePerSession.toFixed(0)}
+                    {unitType}/session
+                  </span>
+                )}
               </div>
+
+              {weekData.liftTypes.length > 0 && (
+                <div>
+                  <div className="mb-1 text-xs font-semibold">Lift Types:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {weekData.liftTypes.map((liftTypeName) => (
+                      <LiftTypeIndicator
+                        key={liftTypeName}
+                        liftType={liftTypeName}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -799,92 +818,95 @@ const TonnageTooltipContent = ({
 
       {/* Per Month: Show rich data */}
       {monthData && monthData.totalSessions > 0 && (
-        <div className="mt-2 space-y-2 border-t border-border/50 pt-2">
-          <div className="text-xs">
-            <span className="font-semibold">{monthData.totalSessions}</span>{" "}
-            {monthData.totalSessions === 1 ? "session" : "sessions"}
-            {monthData.totalSessions > 0 && (
-              <span className="ml-2 text-muted-foreground">
-                Avg: {monthData.avgTonnagePerSession.toFixed(0)}
-                {unitType}/session
-              </span>
-            )}
-          </div>
-
-          {monthData.liftTypes.length > 0 && (
-            <div>
-              <div className="mb-1 text-xs font-semibold">Lift Types:</div>
-              <div className="flex flex-wrap gap-1">
-                {monthData.liftTypes.map((liftTypeName) => (
-                  <LiftTypeIndicator
-                    key={liftTypeName}
-                    liftType={liftTypeName}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {monthData.weeklyBreakdown.length > 0 && (
-            <div>
-              <div className="mb-1 text-xs font-semibold">
-                Weekly Breakdown:
-              </div>
-              <div className="space-y-0.5">
-                {monthData.weeklyBreakdown.map((week, index) => {
-                  const weekStartDate = new Date(week.weekStart);
-                  const weekEndDate = new Date(week.weekEnd);
-                  const weekLabel = `${format(weekStartDate, "MMM d")} - ${format(weekEndDate, "MMM d")}`;
-                  return (
-                    <div
-                      key={week.weekStart}
-                      className="flex justify-between text-xs"
-                    >
-                      <span>
-                        Week {index + 1} ({weekLabel}): {week.sessionCount}{" "}
-                        {week.sessionCount === 1 ? "session" : "sessions"}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {week.tonnage.toFixed(0)}
-                        {unitType}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {monthData.sessionDetails.length > 0 &&
-            monthData.sessionDetails.length <= 10 && (
-              <div>
-                <div className="mb-1 text-xs font-semibold">Sessions:</div>
-                <div className="max-h-32 space-y-0.5 overflow-y-auto">
-                  {monthData.sessionDetails.map((session) => {
-                    const sessionDate = new Date(session.date);
-                    const formattedDate = sessionDate.toLocaleDateString(
-                      "en-US",
-                      {
-                        month: "short",
-                        day: "numeric",
-                      },
-                    );
-                    return (
-                      <div
-                        key={session.date}
-                        className="flex justify-between text-xs"
-                      >
-                        <span>{formattedDate}</span>
-                        <span className="text-muted-foreground">
-                          {session.tonnage.toFixed(0)}
-                          {unitType}
+        <div className="mt-2 border-t border-border/50 pt-2">
+          {liftType && monthData.sessionDetails.length > 0 ? (
+            // Per-lift chart: show one row per session with sets
+            <div className="max-h-64 space-y-1 overflow-y-auto">
+              {monthData.sessionDetails.map((session) => {
+                const sessionDate = new Date(session.date);
+                const formattedDate = sessionDate.toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                });
+                return (
+                  <div key={session.date} className="text-xs">
+                    <span className="font-semibold">{formattedDate}:</span>{" "}
+                    <span className="inline-flex flex-wrap gap-x-2 gap-y-0.5">
+                      {session.lifts.map((lift, index) => (
+                        <span key={index}>
+                          {lift.reps}@{lift.weight}
+                          {lift.unitType}
                         </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                      ))}
+                    </span>
+                    <span className="ml-2 text-muted-foreground">
+                      - {session.tonnage.toFixed(0)}
+                      {unitType}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            // Total tonnage chart: show summary stats
+            <div className="space-y-2">
+              <div className="text-xs">
+                <span className="font-semibold">{monthData.totalSessions}</span>{" "}
+                {monthData.totalSessions === 1 ? "session" : "sessions"}
+                {monthData.totalSessions > 0 && (
+                  <span className="ml-2 text-muted-foreground">
+                    Avg: {monthData.avgTonnagePerSession.toFixed(0)}
+                    {unitType}/session
+                  </span>
+                )}
               </div>
-            )}
+
+              {monthData.liftTypes.length > 0 && (
+                <div>
+                  <div className="mb-1 text-xs font-semibold">Lift Types:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {monthData.liftTypes.map((liftTypeName) => (
+                      <LiftTypeIndicator
+                        key={liftTypeName}
+                        liftType={liftTypeName}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {monthData.weeklyBreakdown.length > 0 && (
+                <div>
+                  <div className="mb-1 text-xs font-semibold">
+                    Weekly Breakdown:
+                  </div>
+                  <div className="space-y-0.5">
+                    {monthData.weeklyBreakdown.map((week, index) => {
+                      const weekStartDate = new Date(week.weekStart);
+                      const weekEndDate = new Date(week.weekEnd);
+                      const weekLabel = `${format(weekStartDate, "MMM d")} - ${format(weekEndDate, "MMM d")}`;
+                      return (
+                        <div
+                          key={week.weekStart}
+                          className="flex justify-between text-xs"
+                        >
+                          <span>
+                            Week {index + 1} ({weekLabel}): {week.sessionCount}{" "}
+                            {week.sessionCount === 1 ? "session" : "sessions"}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {week.tonnage.toFixed(0)}
+                            {unitType}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -77,6 +77,28 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     );
   }, [parsedData, rangeFirstDate, liftType, aggregationType]);
 
+  // Calculate Y-axis values with nice round numbers
+  const yAxisConfig = useMemo(() => {
+    if (!chartData || chartData.length === 0) {
+      return {
+        roundedMax: 1000,
+        tickInterval: 200,
+        ticks: [0, 200, 400, 600, 800, 1000],
+      };
+    }
+
+    const maxTonnage = Math.max(...chartData.map((d) => d.tonnage));
+    const { roundedMax, tickInterval } = calculateNiceYAxis(maxTonnage * 1.2); // Add 20% padding
+
+    // Generate tick values
+    const ticks = [];
+    for (let tick = 0; tick <= roundedMax; tick += tickInterval) {
+      ticks.push(tick);
+    }
+
+    return { roundedMax, tickInterval, ticks };
+  }, [chartData]);
+
   if (!parsedData) return null; // <-- gracefully handle null loading state
 
   // devLog(chartData);
@@ -145,7 +167,8 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 />
                 <YAxis
                   tickFormatter={(value) => `${value}${unitType}`}
-                  domain={[0, (dataMax) => dataMax * 1.2]}
+                  domain={[0, yAxisConfig.roundedMax]}
+                  ticks={yAxisConfig.ticks}
                   hide={width < 1280}
                 />
 
@@ -247,7 +270,8 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               />
               <YAxis
                 tickFormatter={(value) => `${value}${unitType}`}
-                domain={[0, (dataMax) => dataMax * 1.2]}
+                domain={[0, yAxisConfig.roundedMax]}
+                ticks={yAxisConfig.ticks}
                 hide={width < 1280}
               />
 
@@ -360,6 +384,59 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       </CardFooter>
     </Card>
   );
+}
+
+/**
+ * Calculates nice round numbers for Y-axis ticks
+ * Returns an object with roundedMax and tickInterval
+ * Uses a scale based on powers of 10 with multipliers (1, 2, 5, 10, 20, 50, etc.)
+ */
+function calculateNiceYAxis(maxValue) {
+  if (maxValue <= 0) {
+    return { roundedMax: 1000, tickInterval: 200 };
+  }
+
+  // Calculate the order of magnitude
+  const magnitude = Math.floor(Math.log10(maxValue));
+  const normalized = maxValue / Math.pow(10, magnitude);
+
+  // Nice number multipliers: 1, 2, 5, 10, 20, 50, 100, etc.
+  const niceMultipliers = [1, 2, 5, 10, 20, 50];
+  let niceMultiplier = 1;
+
+  // Find the smallest nice multiplier that's greater than normalized
+  for (const multiplier of niceMultipliers) {
+    if (multiplier >= normalized) {
+      niceMultiplier = multiplier;
+      break;
+    }
+  }
+
+  // If normalized is larger than all multipliers, use 100
+  if (normalized > niceMultipliers[niceMultipliers.length - 1]) {
+    niceMultiplier = 100;
+  }
+
+  const roundedMax = niceMultiplier * Math.pow(10, magnitude);
+
+  // Calculate tick interval - aim for about 5-8 ticks
+  const targetTicks = 6;
+  const rawInterval = roundedMax / targetTicks;
+  const intervalMagnitude = Math.floor(Math.log10(rawInterval));
+  const normalizedInterval = rawInterval / Math.pow(10, intervalMagnitude);
+
+  // Find nice interval multiplier
+  let intervalMultiplier = 1;
+  for (const multiplier of niceMultipliers) {
+    if (multiplier >= normalizedInterval) {
+      intervalMultiplier = multiplier;
+      break;
+    }
+  }
+
+  const tickInterval = intervalMultiplier * Math.pow(10, intervalMagnitude);
+
+  return { roundedMax, tickInterval };
 }
 
 /**

@@ -30,8 +30,6 @@ export function ThemeChooser() {
   const { theme, setTheme, themes } = useTheme();
   const [position, setPosition] = useState("light");
 
-  devLog(themes);
-
   useEffect(() => {
     if (theme) {
       setPosition(theme);

@@ -175,7 +175,7 @@ export const SingleLiftTooltipContent = ({
       </div>
       <div className="">{tooltipContent.label}</div>
       {lifts.length > 0 && (
-        <div className="mt-2">
+        <div className="mt-1">
           <SessionRow
             date={dateStr}
             lifts={lifts}

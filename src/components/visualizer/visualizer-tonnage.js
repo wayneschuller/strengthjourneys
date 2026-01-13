@@ -731,19 +731,14 @@ const TonnageTooltipContent = ({
       {sessionLiftsByType && Object.keys(sessionLiftsByType).length > 0 && (
         <div className="mt-2">
           {Object.entries(sessionLiftsByType).map(([liftTypeName, lifts]) => (
-            <div key={liftTypeName} className="mb-2 last:mb-0">
+            <div key={liftTypeName} className="mb-2 text-xs last:mb-0">
               {!liftType && <LiftTypeIndicator liftType={liftTypeName} />}
-              <div
-                className={
-                  liftType
-                    ? "flex flex-wrap gap-x-2 gap-y-0.5"
-                    : "ml-6 mt-1 flex flex-wrap gap-x-2 gap-y-0.5"
-                }
-              >
+              <div className={liftType ? "" : "ml-6 mt-1"}>
                 {lifts.map((lift, index) => (
-                  <span key={index} className="text-xs">
+                  <span key={index}>
                     {lift.reps}@{lift.weight}
                     {lift.unitType}
+                    {index < lifts.length - 1 && ", "}
                   </span>
                 ))}
               </div>
@@ -768,14 +763,13 @@ const TonnageTooltipContent = ({
                 return (
                   <div key={session.date} className="text-xs">
                     <span className="font-semibold">{formattedDate}:</span>{" "}
-                    <span className="inline-flex flex-wrap gap-x-2 gap-y-0.5">
-                      {session.lifts.map((lift, index) => (
-                        <span key={index}>
-                          {lift.reps}@{lift.weight}
-                          {lift.unitType}
-                        </span>
-                      ))}
-                    </span>
+                    {session.lifts.map((lift, index) => (
+                      <span key={index}>
+                        {lift.reps}@{lift.weight}
+                        {lift.unitType}
+                        {index < session.lifts.length - 1 && ", "}
+                      </span>
+                    ))}
                     <span className="ml-2 text-muted-foreground">
                       - {session.tonnage.toFixed(0)}
                       {unitType}
@@ -832,14 +826,13 @@ const TonnageTooltipContent = ({
                 return (
                   <div key={session.date} className="text-xs">
                     <span className="font-semibold">{formattedDate}:</span>{" "}
-                    <span className="inline-flex flex-wrap gap-x-2 gap-y-0.5">
-                      {session.lifts.map((lift, index) => (
-                        <span key={index}>
-                          {lift.reps}@{lift.weight}
-                          {lift.unitType}
-                        </span>
-                      ))}
-                    </span>
+                    {session.lifts.map((lift, index) => (
+                      <span key={index}>
+                        {lift.reps}@{lift.weight}
+                        {lift.unitType}
+                        {index < session.lifts.length - 1 && ", "}
+                      </span>
+                    ))}
                     <span className="ml-2 text-muted-foreground">
                       - {session.tonnage.toFixed(0)}
                       {unitType}

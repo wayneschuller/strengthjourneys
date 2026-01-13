@@ -461,6 +461,202 @@ function getSessionLiftsByType(parsedData, dateStr, chartLiftType) {
   return liftsByType;
 }
 
+// Helper function to get week data aggregated
+function getWeekLiftsData(parsedData, weekStartStr, chartLiftType) {
+  if (!parsedData || !weekStartStr) {
+    return {
+      sessions: [],
+      liftTypes: [],
+      sessionDetails: [],
+      totalSessions: 0,
+      totalSets: 0,
+      avgTonnagePerSession: 0,
+      liftsByType: {},
+    };
+  }
+
+  const weekStart = parseISO(weekStartStr);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  const weekEndStr = format(weekEnd, "yyyy-MM-dd");
+
+  // Filter lifts for the week, excluding goals
+  const weekLifts = parsedData.filter(
+    (lift) =>
+      lift.date >= weekStartStr &&
+      lift.date <= weekEndStr &&
+      lift.isGoal !== true &&
+      (!chartLiftType || lift.liftType === chartLiftType),
+  );
+
+  // Get unique session dates
+  const sessionDates = [...new Set(weekLifts.map((lift) => lift.date))].sort();
+
+  // Calculate session details (tonnage per session)
+  const sessionDetails = sessionDates.map((date) => {
+    const sessionLifts = weekLifts.filter((lift) => lift.date === date);
+    const sessionTonnage = sessionLifts.reduce(
+      (sum, lift) => sum + lift.weight * lift.reps,
+      0,
+    );
+    return {
+      date,
+      tonnage: sessionTonnage,
+      liftCount: sessionLifts.length,
+    };
+  });
+
+  // Get lift types
+  const liftTypes = [...new Set(weekLifts.map((lift) => lift.liftType))];
+
+  // Group by lift type
+  const liftsByType = {};
+  weekLifts.forEach((lift) => {
+    if (!liftsByType[lift.liftType]) {
+      liftsByType[lift.liftType] = [];
+    }
+    liftsByType[lift.liftType].push(lift);
+  });
+
+  const totalSessions = sessionDates.length;
+  const totalSets = weekLifts.length;
+  const totalTonnage = sessionDetails.reduce(
+    (sum, session) => sum + session.tonnage,
+    0,
+  );
+  const avgTonnagePerSession =
+    totalSessions > 0 ? totalTonnage / totalSessions : 0;
+
+  return {
+    sessions: sessionDates,
+    liftTypes,
+    sessionDetails,
+    totalSessions,
+    totalSets,
+    avgTonnagePerSession,
+    liftsByType,
+  };
+}
+
+// Helper function to get month data aggregated
+function getMonthLiftsData(parsedData, monthStartStr, chartLiftType) {
+  if (!parsedData || !monthStartStr) {
+    return {
+      sessions: [],
+      liftTypes: [],
+      weeklyBreakdown: [],
+      sessionDetails: [],
+      totalSessions: 0,
+      totalSets: 0,
+      avgTonnagePerSession: 0,
+      liftsByType: {},
+    };
+  }
+
+  const monthStart = parseISO(monthStartStr);
+  const monthEnd = new Date(
+    monthStart.getFullYear(),
+    monthStart.getMonth() + 1,
+    0,
+  );
+  const monthEndStr = format(monthEnd, "yyyy-MM-dd");
+
+  // Filter lifts for the month, excluding goals
+  const monthLifts = parsedData.filter(
+    (lift) =>
+      lift.date >= monthStartStr &&
+      lift.date <= monthEndStr &&
+      lift.isGoal !== true &&
+      (!chartLiftType || lift.liftType === chartLiftType),
+  );
+
+  // Get unique session dates
+  const sessionDates = [...new Set(monthLifts.map((lift) => lift.date))].sort();
+
+  // Calculate session details (tonnage per session)
+  const sessionDetails = sessionDates.map((date) => {
+    const sessionLifts = monthLifts.filter((lift) => lift.date === date);
+    const sessionTonnage = sessionLifts.reduce(
+      (sum, lift) => sum + lift.weight * lift.reps,
+      0,
+    );
+    return {
+      date,
+      tonnage: sessionTonnage,
+      liftCount: sessionLifts.length,
+    };
+  });
+
+  // Get lift types
+  const liftTypes = [...new Set(monthLifts.map((lift) => lift.liftType))];
+
+  // Calculate weekly breakdown
+  const weeklyBreakdown = [];
+  let currentWeekStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+
+  while (currentWeekStart <= monthEnd) {
+    const currentWeekEnd = new Date(currentWeekStart);
+    currentWeekEnd.setDate(currentWeekEnd.getDate() + 6);
+
+    // Only include weeks that overlap with the month
+    if (currentWeekEnd >= monthStart && currentWeekStart <= monthEnd) {
+      const weekStartStr = format(currentWeekStart, "yyyy-MM-dd");
+      const weekEndStr = format(
+        currentWeekEnd > monthEnd ? monthEnd : currentWeekEnd,
+        "yyyy-MM-dd",
+      );
+
+      const weekLifts = monthLifts.filter(
+        (lift) => lift.date >= weekStartStr && lift.date <= weekEndStr,
+      );
+      const weekTonnage = weekLifts.reduce(
+        (sum, lift) => sum + lift.weight * lift.reps,
+        0,
+      );
+      const weekSessionDates = [...new Set(weekLifts.map((lift) => lift.date))];
+
+      weeklyBreakdown.push({
+        weekStart: weekStartStr,
+        weekEnd: weekEndStr,
+        tonnage: weekTonnage,
+        sessionCount: weekSessionDates.length,
+      });
+    }
+
+    // Move to next week
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+  }
+
+  // Group by lift type
+  const liftsByType = {};
+  monthLifts.forEach((lift) => {
+    if (!liftsByType[lift.liftType]) {
+      liftsByType[lift.liftType] = [];
+    }
+    liftsByType[lift.liftType].push(lift);
+  });
+
+  const totalSessions = sessionDates.length;
+  const totalSets = monthLifts.length;
+  const totalTonnage = sessionDetails.reduce(
+    (sum, session) => sum + session.tonnage,
+    0,
+  );
+  const avgTonnagePerSession =
+    totalSessions > 0 ? totalTonnage / totalSessions : 0;
+
+  return {
+    sessions: sessionDates,
+    liftTypes,
+    weeklyBreakdown,
+    sessionDetails,
+    totalSessions,
+    totalSets,
+    avgTonnagePerSession,
+    liftsByType,
+  };
+}
+
 const TonnageTooltipContent = ({
   payload,
   label,
@@ -495,17 +691,21 @@ const TonnageTooltipContent = ({
   // Get unit type from parsedData or default to empty string
   const unitType = parsedData?.[0]?.unitType ?? "";
 
-  // Get session lifts if aggregationType is perSession
   // Extract date string from payload (format: "YYYY-MM-DD")
-  const dateStr =
-    aggregationType === "perSession" && payload[0]?.payload?.date
-      ? payload[0].payload.date
-      : null;
+  const dateStr = payload[0]?.payload?.date || null;
 
-  const sessionLiftsByType =
-    aggregationType === "perSession" && parsedData && dateStr
-      ? getSessionLiftsByType(parsedData, dateStr, liftType)
-      : null;
+  // Get data based on aggregation type
+  let sessionLiftsByType = null;
+  let weekData = null;
+  let monthData = null;
+
+  if (aggregationType === "perSession" && parsedData && dateStr) {
+    sessionLiftsByType = getSessionLiftsByType(parsedData, dateStr, liftType);
+  } else if (aggregationType === "perWeek" && parsedData && dateStr) {
+    weekData = getWeekLiftsData(parsedData, dateStr, liftType);
+  } else if (aggregationType === "perMonth" && parsedData && dateStr) {
+    monthData = getMonthLiftsData(parsedData, dateStr, liftType);
+  }
 
   return (
     <div className="grid min-w-[8rem] max-w-[24rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
@@ -517,6 +717,8 @@ const TonnageTooltipContent = ({
         </div>
       </div>
       <div>{`${tonnage.toFixed(0)}${unitType}`}</div>
+
+      {/* Per Session: Show lifts */}
       {sessionLiftsByType && Object.keys(sessionLiftsByType).length > 0 && (
         <div className="mt-2 border-t border-border/50 pt-2">
           {Object.entries(sessionLiftsByType).map(([liftTypeName, lifts]) => (
@@ -532,6 +734,157 @@ const TonnageTooltipContent = ({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Per Week: Show rich data */}
+      {weekData && weekData.totalSessions > 0 && (
+        <div className="mt-2 space-y-2 border-t border-border/50 pt-2">
+          <div className="text-xs">
+            <span className="font-semibold">{weekData.totalSessions}</span>{" "}
+            {weekData.totalSessions === 1 ? "session" : "sessions"}
+            {weekData.totalSessions > 0 && (
+              <span className="ml-2 text-muted-foreground">
+                Avg: {weekData.avgTonnagePerSession.toFixed(0)}
+                {unitType}/session
+              </span>
+            )}
+          </div>
+
+          {weekData.liftTypes.length > 0 && (
+            <div>
+              <div className="mb-1 text-xs font-semibold">Lift Types:</div>
+              <div className="flex flex-wrap gap-1">
+                {weekData.liftTypes.map((liftTypeName) => (
+                  <LiftTypeIndicator
+                    key={liftTypeName}
+                    liftType={liftTypeName}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {weekData.sessionDetails.length > 0 && (
+            <div>
+              <div className="mb-1 text-xs font-semibold">Sessions:</div>
+              <div className="max-h-32 space-y-0.5 overflow-y-auto">
+                {weekData.sessionDetails.map((session) => {
+                  const sessionDate = new Date(session.date);
+                  const formattedDate = sessionDate.toLocaleDateString(
+                    "en-US",
+                    {
+                      month: "short",
+                      day: "numeric",
+                    },
+                  );
+                  return (
+                    <div
+                      key={session.date}
+                      className="flex justify-between text-xs"
+                    >
+                      <span>{formattedDate}</span>
+                      <span className="text-muted-foreground">
+                        {session.tonnage.toFixed(0)}
+                        {unitType}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Per Month: Show rich data */}
+      {monthData && monthData.totalSessions > 0 && (
+        <div className="mt-2 space-y-2 border-t border-border/50 pt-2">
+          <div className="text-xs">
+            <span className="font-semibold">{monthData.totalSessions}</span>{" "}
+            {monthData.totalSessions === 1 ? "session" : "sessions"}
+            {monthData.totalSessions > 0 && (
+              <span className="ml-2 text-muted-foreground">
+                Avg: {monthData.avgTonnagePerSession.toFixed(0)}
+                {unitType}/session
+              </span>
+            )}
+          </div>
+
+          {monthData.liftTypes.length > 0 && (
+            <div>
+              <div className="mb-1 text-xs font-semibold">Lift Types:</div>
+              <div className="flex flex-wrap gap-1">
+                {monthData.liftTypes.map((liftTypeName) => (
+                  <LiftTypeIndicator
+                    key={liftTypeName}
+                    liftType={liftTypeName}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {monthData.weeklyBreakdown.length > 0 && (
+            <div>
+              <div className="mb-1 text-xs font-semibold">
+                Weekly Breakdown:
+              </div>
+              <div className="space-y-0.5">
+                {monthData.weeklyBreakdown.map((week, index) => {
+                  const weekStartDate = new Date(week.weekStart);
+                  const weekEndDate = new Date(week.weekEnd);
+                  const weekLabel = `${format(weekStartDate, "MMM d")} - ${format(weekEndDate, "MMM d")}`;
+                  return (
+                    <div
+                      key={week.weekStart}
+                      className="flex justify-between text-xs"
+                    >
+                      <span>
+                        Week {index + 1} ({weekLabel}): {week.sessionCount}{" "}
+                        {week.sessionCount === 1 ? "session" : "sessions"}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {week.tonnage.toFixed(0)}
+                        {unitType}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {monthData.sessionDetails.length > 0 &&
+            monthData.sessionDetails.length <= 10 && (
+              <div>
+                <div className="mb-1 text-xs font-semibold">Sessions:</div>
+                <div className="max-h-32 space-y-0.5 overflow-y-auto">
+                  {monthData.sessionDetails.map((session) => {
+                    const sessionDate = new Date(session.date);
+                    const formattedDate = sessionDate.toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                      },
+                    );
+                    return (
+                      <div
+                        key={session.date}
+                        className="flex justify-between text-xs"
+                      >
+                        <span>{formattedDate}</span>
+                        <span className="text-muted-foreground">
+                          {session.tonnage.toFixed(0)}
+                          {unitType}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
         </div>
       )}
     </div>

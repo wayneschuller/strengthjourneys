@@ -440,7 +440,8 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
           </PageHeaderHeading>
           <PageHeaderDescription>
             Elevate your lifting experience with music playlists curated by the
-            fitness community.
+            fitness community. Don't fail a lift because you just picked the
+            wrong song.
           </PageHeaderDescription>
         </PageHeader>
         <section className="mx-0 md:mx-[10vw]">

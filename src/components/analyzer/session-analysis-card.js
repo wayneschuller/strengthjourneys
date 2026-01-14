@@ -372,6 +372,8 @@ export function SessionAnalysisCard({
 }
 
 function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
+  const equivalentRef = useRef(null);
+
   if (!analyzedSessionLifts) return null;
 
   const flatLifts = Object.values(analyzedSessionLifts).flat();
@@ -420,7 +422,6 @@ function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
   };
 
   const unitEquivalents = equivalents[unitType] ?? equivalents["lb"]; // defult to lb
-  const equivalentRef = useRef(null);
   const equivalentKey = `${sessionDate}-${unitType}`;
 
   if (!equivalentRef.current || equivalentRef.current.key !== equivalentKey) {

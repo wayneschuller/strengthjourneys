@@ -348,11 +348,22 @@ function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
   };
 
   const unitEquivalents = equivalents[unitType] ?? equivalents["lb"]; // defult to lb
+  const equivalentRef = useRef(null);
+  const equivalentKey = `${sessionDate}-${unitType}`;
 
-  const randomIndex = Math.floor(Math.random() * unitEquivalents.length);
-  const equivalent = unitEquivalents[randomIndex];
+  if (!equivalentRef.current || equivalentRef.current.key !== equivalentKey) {
+    const randomIndex = Math.floor(Math.random() * unitEquivalents.length);
+    const chosenEquivalent = unitEquivalents[randomIndex];
+    const chosenCount = (tonnage / chosenEquivalent.weight).toFixed(1);
 
-  const equivalentCount = (tonnage / equivalent.weight).toFixed(1);
+    equivalentRef.current = {
+      key: equivalentKey,
+      equivalent: chosenEquivalent,
+      equivalentCount: chosenCount,
+    };
+  }
+
+  const { equivalent, equivalentCount } = equivalentRef.current;
 
   return (
     <div>

@@ -149,6 +149,143 @@ export function getReadableDateString2(ISOdate) {
   return dateString;
 }
 
+// --- Session tonnage helpers (rolling 365 days) ---
+
+// Internal: normalize ISO date string (YYYY-MM-DD) to a Date at midnight UTC
+function toUTCDate(dateStr) {
+  return new Date(dateStr + "T00:00:00Z");
+}
+
+// Internal: check if a given entry should be included based on goal and unit type
+function isIncludedLift(entry, unitType) {
+  if (!entry) return false;
+  if (entry.isGoal) return false;
+  if (unitType && entry.unitType && entry.unitType !== unitType) return false;
+  return true;
+}
+
+// Sum tonnage (weight * reps) for a specific session date.
+export function calculateSessionTonnageForDate(parsedData, date, unitType) {
+  if (!parsedData || !date) return 0;
+
+  return parsedData.reduce((acc, lift) => {
+    if (!isIncludedLift(lift, unitType)) return acc;
+    if (lift.date !== date) return acc;
+
+    const reps = lift.reps ?? 0;
+    const weight = lift.weight ?? 0;
+    return acc + reps * weight;
+  }, 0);
+}
+
+// Sum tonnage for a specific lift type on a specific session date.
+export function calculateLiftTonnageForDate(
+  parsedData,
+  date,
+  liftType,
+  unitType,
+) {
+  if (!parsedData || !date || !liftType) return 0;
+
+  return parsedData.reduce((acc, lift) => {
+    if (!isIncludedLift(lift, unitType)) return acc;
+    if (lift.date !== date) return acc;
+    if (lift.liftType !== liftType) return acc;
+
+    const reps = lift.reps ?? 0;
+    const weight = lift.weight ?? 0;
+    return acc + reps * weight;
+  }, 0);
+}
+
+// Get distinct session dates within the last 365 days (inclusive of endDate).
+export function getRollingYearSessions(parsedData, endDate, unitType) {
+  if (!parsedData || !endDate) return [];
+
+  const end = toUTCDate(endDate);
+  const start = new Date(end);
+  // 365-day window including end date: end minus 364 days
+  start.setUTCDate(start.getUTCDate() - 364);
+
+  const sessionsMap = {};
+
+  parsedData.forEach((lift) => {
+    if (!isIncludedLift(lift, unitType)) return;
+    if (!lift.date) return;
+
+    const d = toUTCDate(lift.date);
+    if (d < start || d > end) return;
+
+    sessionsMap[lift.date] = true;
+  });
+
+  return Object.keys(sessionsMap).sort();
+}
+
+// Average total tonnage per session over the rolling last 365 days.
+export function getAverageSessionTonnage(parsedData, endDate, unitType) {
+  const sessions = getRollingYearSessions(parsedData, endDate, unitType);
+  if (!sessions.length) {
+    return { average: 0, sessionCount: 0 };
+  }
+
+  let totalTonnage = 0;
+  sessions.forEach((sessionDate) => {
+    totalTonnage += calculateSessionTonnageForDate(
+      parsedData,
+      sessionDate,
+      unitType,
+    );
+  });
+
+  return {
+    average: totalTonnage / sessions.length,
+    sessionCount: sessions.length,
+  };
+}
+
+// Average per-session tonnage for a specific lift type over the rolling last 365 days.
+export function getAverageLiftSessionTonnage(
+  parsedData,
+  endDate,
+  liftType,
+  unitType,
+) {
+  if (!parsedData || !liftType || !endDate) {
+    return { average: 0, sessionCount: 0 };
+  }
+
+  const sessions = getRollingYearSessions(parsedData, endDate, unitType);
+  if (!sessions.length) {
+    return { average: 0, sessionCount: 0 };
+  }
+
+  let totalTonnage = 0;
+  let countedSessions = 0;
+
+  sessions.forEach((sessionDate) => {
+    const tonnage = calculateLiftTonnageForDate(
+      parsedData,
+      sessionDate,
+      liftType,
+      unitType,
+    );
+    if (tonnage > 0) {
+      totalTonnage += tonnage;
+      countedSessions += 1;
+    }
+  });
+
+  if (!countedSessions) {
+    return { average: 0, sessionCount: 0 };
+  }
+
+  return {
+    average: totalTonnage / countedSessions,
+    sessionCount: countedSessions,
+  };
+}
+
 // Loop through the data once and collect top PRs for each lift, rep scehemes 1..10
 //  - The top-level keys (`liftType`) are strings like "Back Squat", "Bench Press", etc.
 //  - For each lift type, there is an array of 10 arrays.

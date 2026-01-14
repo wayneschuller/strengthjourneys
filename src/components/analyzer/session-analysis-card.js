@@ -31,12 +31,16 @@ import {
   getCelebrationEmoji,
   getReadableDateString,
   getAnalyzedSessionLifts,
+  getAverageSessionTonnage,
+  getAverageLiftSessionTonnage,
 } from "@/lib/processing-utils";
 import {
   LoaderCircle,
   ChevronLeft,
   ChevronRight,
   PlayCircle,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 
@@ -248,7 +252,11 @@ export function SessionAnalysisCard({
         <CardFooter>
           {analyzedSessionLifts && (
             <div className="flex flex-col gap-4">
-              <SessionTonnage analyzedSessionLifts={analyzedSessionLifts} />
+              <SessionTonnage
+                analyzedSessionLifts={analyzedSessionLifts}
+                parsedData={parsedData}
+                sessionDate={sessionDate}
+              />
               <div>
                 <strong>Session Rating:</strong> {sessionRatingRef.current}
               </div>
@@ -260,15 +268,58 @@ export function SessionAnalysisCard({
   );
 }
 
-function SessionTonnage({ analyzedSessionLifts }) {
+function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
   if (!analyzedSessionLifts) return null;
 
-  const tonnage = Object.values(analyzedSessionLifts)
-    .flat()
-    .reduce((acc, lift) => acc + (lift.weight ?? 0) * (lift.reps ?? 0), 0);
+  const flatLifts = Object.values(analyzedSessionLifts).flat();
 
-  const firstLift = Object.values(analyzedSessionLifts)?.[0]?.[0];
+  const tonnage = flatLifts.reduce(
+    (acc, lift) => acc + (lift.weight ?? 0) * (lift.reps ?? 0),
+    0,
+  );
+
+  const firstLift = flatLifts?.[0];
   const unitType = firstLift?.unitType ?? "lb"; // default to lb
+
+  // Rolling 365-day session-level baseline
+  const { average: avgSessionTonnage, sessionCount: sessionCountLastYear } =
+    getAverageSessionTonnage(parsedData, sessionDate, unitType);
+
+  const overallPctDiff =
+    avgSessionTonnage > 0
+      ? ((tonnage - avgSessionTonnage) / avgSessionTonnage) * 100
+      : null;
+
+  // Per-lift baselines
+  const perLiftStats = Object.entries(analyzedSessionLifts).map(
+    ([liftType, lifts]) => {
+      const currentLiftTonnage = lifts.reduce(
+        (acc, lift) => acc + (lift.weight ?? 0) * (lift.reps ?? 0),
+        0,
+      );
+
+      const { average: avgLiftTonnage, sessionCount } =
+        getAverageLiftSessionTonnage(
+          parsedData,
+          sessionDate,
+          liftType,
+          unitType,
+        );
+
+      const pctDiff =
+        avgLiftTonnage > 0
+          ? ((currentLiftTonnage - avgLiftTonnage) / avgLiftTonnage) * 100
+          : null;
+
+      return {
+        liftType,
+        currentLiftTonnage,
+        avgLiftTonnage,
+        sessionCount,
+        pctDiff,
+      };
+    },
+  );
 
   // real-world equivalents (per unit type)
   const equivalents = {
@@ -305,9 +356,105 @@ function SessionTonnage({ analyzedSessionLifts }) {
 
   return (
     <div>
-      <strong>Session Tonnage:</strong> {tonnage.toLocaleString()}
-      {unitType}
-      {`.  About ${equivalentCount} ${equivalent.name}${equivalentCount != 1 ? "s" : ""}  lifted. ${equivalent.emoji}`}
+      <div>
+        <strong>Session Tonnage:</strong> {tonnage.toLocaleString()}
+        {unitType}
+        {`.  About ${equivalentCount} ${equivalent.name}${
+          equivalentCount != 1 ? "s" : ""
+        }  lifted. ${equivalent.emoji}`}
+      </div>
+
+      <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+        {sessionCountLastYear > 1 && overallPctDiff !== null ? (
+          <div className="flex items-center gap-1">
+            <span>
+              Your tonnage this session is{" "}
+              <span
+                className={
+                  overallPctDiff > 0
+                    ? "font-medium text-emerald-500"
+                    : "font-medium text-red-500"
+                }
+              >
+                {overallPctDiff > 0 ? (
+                  <span className="inline-flex items-center gap-0.5">
+                    <ArrowUpRight className="h-3 w-3" />
+                    {Math.abs(overallPctDiff).toFixed(1)}% up
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-0.5">
+                    <ArrowDownRight className="h-3 w-3" />
+                    {Math.abs(overallPctDiff).toFixed(1)}% down
+                  </span>
+                )}
+              </span>{" "}
+              compared to your average session tonnage over the last year of{" "}
+              {Math.round(avgSessionTonnage).toLocaleString()}
+              {unitType}.
+            </span>
+          </div>
+        ) : (
+          <div>
+            Not enough history yet to compare your session tonnage over the last
+            year.
+          </div>
+        )}
+
+        {perLiftStats.map(
+          ({
+            liftType,
+            currentLiftTonnage,
+            avgLiftTonnage,
+            sessionCount,
+            pctDiff,
+          }) => {
+            if (!currentLiftTonnage) return null;
+
+            if (!sessionCount || sessionCount <= 1 || pctDiff === null) {
+              return (
+                <div key={liftType}>
+                  For {liftType}, there is not enough history over the last year
+                  to show a tonnage comparison yet.
+                </div>
+              );
+            }
+
+            const isUp = pctDiff > 0;
+
+            return (
+              <div key={liftType} className="flex items-center gap-1">
+                <span>
+                  {liftType} tonnage this session is{" "}
+                  <span
+                    className={
+                      isUp
+                        ? "font-medium text-emerald-500"
+                        : "font-medium text-red-500"
+                    }
+                  >
+                    {isUp ? (
+                      <span className="inline-flex items-center gap-0.5">
+                        <ArrowUpRight className="h-3 w-3" />
+                        {Math.abs(pctDiff).toFixed(1)}% up
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-0.5">
+                        <ArrowDownRight className="h-3 w-3" />
+                        {Math.abs(pctDiff).toFixed(1)}% down
+                      </span>
+                    )}
+                  </span>{" "}
+                  compared to your average{" "}
+                  <span className="lowercase">{liftType}</span> session tonnage
+                  over the last year of{" "}
+                  {Math.round(avgLiftTonnage).toLocaleString()}
+                  {unitType}.
+                </span>
+              </div>
+            );
+          },
+        )}
+      </div>
     </div>
   );
 }

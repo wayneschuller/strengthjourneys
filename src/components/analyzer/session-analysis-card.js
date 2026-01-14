@@ -467,10 +467,10 @@ function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
         {sessionCountLastYear > 1 && overallPctDiff !== null ? (
           <div className="pl-4">
             <span>
-              Session tonnage this session:{" "}
+              Overall tonnage this session:{" "}
               {Math.round(tonnage).toLocaleString()}
               {unitType} vs {Math.round(avgSessionTonnage).toLocaleString()}
-              {unitType} over the last year.{" "}
+              {unitType} average over the last year.{" "}
               <Badge
                 variant="outline"
                 className={

@@ -352,9 +352,18 @@ function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
   const equivalentKey = `${sessionDate}-${unitType}`;
 
   if (!equivalentRef.current || equivalentRef.current.key !== equivalentKey) {
-    const randomIndex = Math.floor(Math.random() * unitEquivalents.length);
-    const chosenEquivalent = unitEquivalents[randomIndex];
-    const chosenCount = (tonnage / chosenEquivalent.weight).toFixed(1);
+    // Filter to only equivalents that would give >= 0.1 when divided
+    const validEquivalents = unitEquivalents.filter(
+      (eq) => tonnage / eq.weight >= 0.1,
+    );
+
+    // If no valid equivalents (tonnage is very small), use the smallest one
+    const candidates =
+      validEquivalents.length > 0 ? validEquivalents : unitEquivalents;
+
+    const randomIndex = Math.floor(Math.random() * candidates.length);
+    const chosenEquivalent = candidates[randomIndex];
+    const chosenCount = tonnage / chosenEquivalent.weight;
 
     equivalentRef.current = {
       key: equivalentKey,
@@ -365,13 +374,20 @@ function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
 
   const { equivalent, equivalentCount } = equivalentRef.current;
 
+  // Format with commas; show one decimal place if < 100, no decimals if >= 100
+  const countValue = parseFloat(equivalentCount);
+  const formattedCount = countValue.toLocaleString("en-US", {
+    minimumFractionDigits: countValue >= 100 ? 0 : 1,
+    maximumFractionDigits: countValue >= 100 ? 0 : 1,
+  });
+
   return (
     <div>
       <div>
         <strong>Session Tonnage:</strong> {tonnage.toLocaleString()}
         {unitType}
-        {`.  About ${equivalentCount} ${equivalent.name}${
-          equivalentCount != 1 ? "s" : ""
+        {`.  About ${formattedCount} ${equivalent.name}${
+          parseFloat(equivalentCount) != 1 ? "s" : ""
         }  lifted. ${equivalent.emoji}`}
       </div>
 

@@ -454,7 +454,7 @@ function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
   return (
     <div>
       <div>
-        <strong>Session Tonnage:</strong> {tonnage.toLocaleString()}
+        <strong>Session Tonnage:</strong> {Math.round(tonnage).toLocaleString()}
         {unitType}
         {`.  About ${formattedCount} ${equivalent.name}${
           parseFloat(equivalentCount) != 1 ? "s" : ""
@@ -463,9 +463,12 @@ function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
 
       <div className="mt-2 space-y-1 text-sm text-muted-foreground">
         {sessionCountLastYear > 1 && overallPctDiff !== null ? (
-          <div className="flex items-center gap-1">
+          <div className="pl-4">
             <span>
-              Your tonnage this session is{" "}
+              Session tonnage this session:{" "}
+              {Math.round(tonnage).toLocaleString()}
+              {unitType} vs {Math.round(avgSessionTonnage).toLocaleString()}
+              {unitType} over the last year.{" "}
               <span
                 className={
                   overallPctDiff > 0
@@ -476,22 +479,19 @@ function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
                 {overallPctDiff > 0 ? (
                   <span className="inline-flex items-center gap-0.5">
                     <ArrowUpRight className="h-3 w-3" />
-                    {Math.abs(overallPctDiff).toFixed(1)}% up
+                    {Math.abs(overallPctDiff).toFixed(1)}%
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-0.5">
                     <ArrowDownRight className="h-3 w-3" />
-                    {Math.abs(overallPctDiff).toFixed(1)}% down
+                    {Math.abs(overallPctDiff).toFixed(1)}%
                   </span>
                 )}
-              </span>{" "}
-              compared to your average session tonnage over the last year of{" "}
-              {Math.round(avgSessionTonnage).toLocaleString()}
-              {unitType}.
+              </span>
             </span>
           </div>
         ) : (
-          <div>
+          <div className="pl-4">
             Not enough history yet to compare your session tonnage over the last
             year.
           </div>

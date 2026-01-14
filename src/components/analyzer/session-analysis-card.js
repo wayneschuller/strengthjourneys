@@ -100,6 +100,46 @@ export function SessionAnalysisCard({
     sessionRatingRef.current = getCreativeSessionRating(analyzedSessionLifts);
   }
 
+  // Precompute per-lift tonnage stats for this session vs last year
+  const perLiftTonnageStats =
+    analyzedSessionLifts && parsedData && sessionDate
+      ? Object.entries(analyzedSessionLifts).reduce(
+          (acc, [liftType, lifts]) => {
+            const currentLiftTonnage = lifts.reduce(
+              (sum, lift) => sum + (lift.weight ?? 0) * (lift.reps ?? 0),
+              0,
+            );
+
+            const firstLift = lifts?.[0];
+            const unitTypeForLift = firstLift?.unitType ?? "lb";
+
+            const { average: avgLiftTonnage, sessionCount } =
+              getAverageLiftSessionTonnage(
+                parsedData,
+                sessionDate,
+                liftType,
+                unitTypeForLift,
+              );
+
+            const pctDiff =
+              avgLiftTonnage > 0
+                ? ((currentLiftTonnage - avgLiftTonnage) / avgLiftTonnage) * 100
+                : null;
+
+            acc[liftType] = {
+              currentLiftTonnage,
+              avgLiftTonnage,
+              sessionCount,
+              pctDiff,
+              unitType: unitTypeForLift,
+            };
+
+            return acc;
+          },
+          {},
+        )
+      : {};
+
   const prevDate = () => {
     if (!parsedData || !sessionDate) return;
 
@@ -241,6 +281,67 @@ export function SessionAnalysisCard({
                           </li>
                         ))}
                       </ul>
+                      {perLiftTonnageStats?.[liftType] && (
+                        <div className="mt-1 pl-4 text-xs text-muted-foreground">
+                          {(() => {
+                            const {
+                              currentLiftTonnage,
+                              avgLiftTonnage,
+                              sessionCount,
+                              pctDiff,
+                              unitType,
+                            } = perLiftTonnageStats[liftType];
+
+                            if (
+                              !currentLiftTonnage ||
+                              !sessionCount ||
+                              sessionCount <= 1 ||
+                              pctDiff === null
+                            ) {
+                              return (
+                                <span>
+                                  Not enough history yet to compare{" "}
+                                  {liftType.toLowerCase()} tonnage over the last
+                                  year.
+                                </span>
+                              );
+                            }
+
+                            const isUp = pctDiff > 0;
+
+                            return (
+                              <span>
+                                {liftType} tonnage this session:{" "}
+                                {Math.round(
+                                  currentLiftTonnage,
+                                ).toLocaleString()}
+                                {unitType} vs{" "}
+                                {Math.round(avgLiftTonnage).toLocaleString()}
+                                {unitType} over the last year.{" "}
+                                <span
+                                  className={
+                                    isUp
+                                      ? "font-medium text-emerald-500"
+                                      : "font-medium text-red-500"
+                                  }
+                                >
+                                  {isUp ? (
+                                    <span className="inline-flex items-center gap-0.5">
+                                      <ArrowUpRight className="h-3 w-3" />
+                                      {Math.abs(pctDiff).toFixed(1)}%
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-0.5">
+                                      <ArrowDownRight className="h-3 w-3" />
+                                      {Math.abs(pctDiff).toFixed(1)}%
+                                    </span>
+                                  )}
+                                </span>
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      )}
                     </li>
                   ),
                 )}
@@ -289,37 +390,6 @@ function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
     avgSessionTonnage > 0
       ? ((tonnage - avgSessionTonnage) / avgSessionTonnage) * 100
       : null;
-
-  // Per-lift baselines
-  const perLiftStats = Object.entries(analyzedSessionLifts).map(
-    ([liftType, lifts]) => {
-      const currentLiftTonnage = lifts.reduce(
-        (acc, lift) => acc + (lift.weight ?? 0) * (lift.reps ?? 0),
-        0,
-      );
-
-      const { average: avgLiftTonnage, sessionCount } =
-        getAverageLiftSessionTonnage(
-          parsedData,
-          sessionDate,
-          liftType,
-          unitType,
-        );
-
-      const pctDiff =
-        avgLiftTonnage > 0
-          ? ((currentLiftTonnage - avgLiftTonnage) / avgLiftTonnage) * 100
-          : null;
-
-      return {
-        liftType,
-        currentLiftTonnage,
-        avgLiftTonnage,
-        sessionCount,
-        pctDiff,
-      };
-    },
-  );
 
   // real-world equivalents (per unit type)
   const equivalents = {
@@ -425,61 +495,6 @@ function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
             Not enough history yet to compare your session tonnage over the last
             year.
           </div>
-        )}
-
-        {perLiftStats.map(
-          ({
-            liftType,
-            currentLiftTonnage,
-            avgLiftTonnage,
-            sessionCount,
-            pctDiff,
-          }) => {
-            if (!currentLiftTonnage) return null;
-
-            if (!sessionCount || sessionCount <= 1 || pctDiff === null) {
-              return (
-                <div key={liftType}>
-                  For {liftType}, there is not enough history over the last year
-                  to show a tonnage comparison yet.
-                </div>
-              );
-            }
-
-            const isUp = pctDiff > 0;
-
-            return (
-              <div key={liftType} className="flex items-center gap-1">
-                <span>
-                  {liftType} tonnage this session is{" "}
-                  <span
-                    className={
-                      isUp
-                        ? "font-medium text-emerald-500"
-                        : "font-medium text-red-500"
-                    }
-                  >
-                    {isUp ? (
-                      <span className="inline-flex items-center gap-0.5">
-                        <ArrowUpRight className="h-3 w-3" />
-                        {Math.abs(pctDiff).toFixed(1)}% up
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-0.5">
-                        <ArrowDownRight className="h-3 w-3" />
-                        {Math.abs(pctDiff).toFixed(1)}% down
-                      </span>
-                    )}
-                  </span>{" "}
-                  compared to your average{" "}
-                  <span className="lowercase">{liftType}</span> session tonnage
-                  over the last year of{" "}
-                  {Math.round(avgLiftTonnage).toLocaleString()}
-                  {unitType}.
-                </span>
-              </div>
-            );
-          },
         )}
       </div>
     </div>

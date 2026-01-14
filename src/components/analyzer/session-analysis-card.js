@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 import {
   Card,
@@ -318,25 +319,26 @@ export function SessionAnalysisCard({
                                 {unitType} vs{" "}
                                 {Math.round(avgLiftTonnage).toLocaleString()}
                                 {unitType} over the last year.{" "}
-                                <span
+                                <Badge
+                                  variant="outline"
                                   className={
                                     isUp
-                                      ? "font-medium text-emerald-500"
-                                      : "font-medium text-red-500"
+                                      ? "gap-0.5 border-emerald-500 text-emerald-500"
+                                      : "gap-0.5 border-red-500 text-red-500"
                                   }
                                 >
                                   {isUp ? (
-                                    <span className="inline-flex items-center gap-0.5">
+                                    <>
                                       <ArrowUpRight className="h-3 w-3" />
                                       {Math.abs(pctDiff).toFixed(1)}%
-                                    </span>
+                                    </>
                                   ) : (
-                                    <span className="inline-flex items-center gap-0.5">
+                                    <>
                                       <ArrowDownRight className="h-3 w-3" />
                                       {Math.abs(pctDiff).toFixed(1)}%
-                                    </span>
+                                    </>
                                   )}
-                                </span>
+                                </Badge>
                               </span>
                             );
                           })()}
@@ -469,25 +471,26 @@ function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
               {Math.round(tonnage).toLocaleString()}
               {unitType} vs {Math.round(avgSessionTonnage).toLocaleString()}
               {unitType} over the last year.{" "}
-              <span
+              <Badge
+                variant="outline"
                 className={
                   overallPctDiff > 0
-                    ? "font-medium text-emerald-500"
-                    : "font-medium text-red-500"
+                    ? "gap-0.5 border-emerald-500 text-emerald-500"
+                    : "gap-0.5 border-red-500 text-red-500"
                 }
               >
                 {overallPctDiff > 0 ? (
-                  <span className="inline-flex items-center gap-0.5">
+                  <>
                     <ArrowUpRight className="h-3 w-3" />
                     {Math.abs(overallPctDiff).toFixed(1)}%
-                  </span>
+                  </>
                 ) : (
-                  <span className="inline-flex items-center gap-0.5">
+                  <>
                     <ArrowDownRight className="h-3 w-3" />
                     {Math.abs(overallPctDiff).toFixed(1)}%
-                  </span>
+                  </>
                 )}
-              </span>
+              </Badge>
             </span>
           </div>
         ) : (

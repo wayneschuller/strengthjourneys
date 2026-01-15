@@ -5,21 +5,26 @@ import { getServerSession } from "next-auth/next";
 import { devLog } from "@/lib/processing-utils";
 
 export default async function handler(req, res) {
-  const session = await getServerSession(req, res, authOptions);
+  // Start session fetch immediately
+  const sessionPromise = getServerSession(req, res, authOptions);
 
-  if (!session) {
-    res.status(401).json({ error: "You must be logged in." });
+  // Extract ssid from query immediately (synchronous operation)
+  const { ssid } = req.query;
+
+  // Validate ssid early (before waiting for session)
+  if (!ssid || ssid === "null") {
+    res.status(400).json({ error: "Missing ssid parameter" });
     return;
   }
 
-  const { ssid } = req.query;
+  // Build URL immediately since it only depends on ssid (synchronous)
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
 
-  // res.status(400).json({ error: "Fake failure for testing purposes" });
+  // Now await session (we've done all synchronous work first)
+  const session = await sessionPromise;
 
-  // Check that query has ssid parameter - should not happen ever.
-  // Fortunately doesn't happen often.
-  if (!ssid || ssid === "null") {
-    res.status(400).json({ error: "Missing ssid parameter" });
+  if (!session) {
+    res.status(401).json({ error: "You must be logged in." });
     return;
   }
 
@@ -28,10 +33,8 @@ export default async function handler(req, res) {
     return;
   }
 
-  // No API key required here - everything is authorized via temporary oauth token unique to user
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
-
   try {
+    // Fetch from Google Sheets API
     const response = await fetch(url, {
       method: "GET",
       headers: {

@@ -11,7 +11,12 @@ const SYSTEM_PROMPT =
   "Emphasise safety and take precautions if user indicates any health concerns.";
 
 export async function POST(req) {
-  const session = await getServerSession(authOptions);
+  // Parallelize independent operations: session fetch and request body parsing
+  const [session, body] = await Promise.all([
+    getServerSession(authOptions),
+    req.json(),
+  ]);
+  
   let isAdvancedModel = false;
 
   if (!process.env.OPENAI_API_KEY) {
@@ -29,7 +34,7 @@ export async function POST(req) {
     isAdvancedModel = paidUsers.includes(session?.user?.email);
   }
 
-  const { messages, userProvidedMetadata } = await req.json();
+  const { messages, userProvidedMetadata } = body;
 
   // Initialize the system messages array
   let systemMessages = [{ role: "system", content: SYSTEM_PROMPT }];

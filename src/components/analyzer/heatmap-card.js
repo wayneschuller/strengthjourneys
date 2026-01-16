@@ -8,7 +8,7 @@ import {
   devLog,
   getReadableDateString,
 } from "@/lib/processing-utils";
-import { Share2 } from "lucide-react";
+import { Share2, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -35,6 +35,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+
 export function ActivityHeatmapsCard() {
   const { parsedData, isLoading } = useUserLiftingData();
   const [startDate, setStartDate] = useState(null);
@@ -43,6 +44,7 @@ export function ActivityHeatmapsCard() {
   const { status: authStatus } = useSession();
   const { theme } = useTheme();
   const shareRef = useRef(null);
+  const [isSharing, setIsSharing] = useState(false);
 
   // FIXME: I think we have the skills to not need this useEffect anymore
   useEffect(() => {
@@ -66,37 +68,57 @@ export function ActivityHeatmapsCard() {
 
   const handleShare = async () => {
     const startTime = performance.now();
+    setIsSharing(true);
 
-    if (shareRef.current) {
-      // Dynamically import html2canvas only when user clicks share
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(shareRef.current, {
-        ignoreElements: (element) => element.id === "ignoreCopy",
-      });
+    try {
+      if (shareRef.current) {
+        // Dynamically import html2canvas only when user clicks share
+        const html2canvas = (await import("html2canvas")).default;
+        const canvas = await html2canvas(shareRef.current, {
+          ignoreElements: (element) => element.id === "ignoreCopy",
+        });
 
-      canvas.toBlob((blob) => {
-        navigator.clipboard
-          .write([new ClipboardItem({ "image/png": blob })])
-          .then(() => {
-            console.log("Heatmap copied to clipboard");
-            // FIXME: toast update here
-          })
-          .catch((err) => console.error("Error in copying heatmap: ", err));
-      }, "image/png");
-    }
+        canvas.toBlob((blob) => {
+          navigator.clipboard
+            .write([new ClipboardItem({ "image/png": blob })])
+            .then(() => {
+              console.log("Heatmap copied to clipboard");
+              // FIXME: toast update here
+            })
+            .catch((err) => console.error("Error in copying heatmap: ", err));
+        }, "image/png");
+      }
 
-    devLog(
-      `generate html2canvas execution time: ` +
-        `\x1b[1m${Math.round(performance.now() - startTime)}ms\x1b[0m`,
-    );
+      devLog(
+        `generate html2canvas execution time: ` +
+          `\x1b[1m${Math.round(performance.now() - startTime)}ms\x1b[0m`,
+      );
 
-    if (typeof window !== "undefined") {
-      window.gtag("event", "heatmap_share_clipboard");
+      if (typeof window !== "undefined") {
+        window.gtag("event", "heatmap_share_clipboard");
+      }
+    } finally {
+      setIsSharing(false);
     }
   };
 
   return (
-    <Card ref={shareRef}>
+    <>
+      {isSharing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="flex flex-col items-center gap-4 rounded-lg border bg-background p-6 shadow-lg">
+            <LoaderCircle className="h-8 w-8 animate-spin" />
+            <div className="text-center">
+              <h3 className="text-lg font-semibold">Generating Image</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                This may take a few seconds, especially with many years of data.
+                Please wait...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      <Card ref={shareRef}>
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo mode: "}Activity History
@@ -139,17 +161,30 @@ export function ActivityHeatmapsCard() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" onClick={handleShare}>
-                    <Share2 />
+                  <Button
+                    variant="outline"
+                    onClick={handleShare}
+                    disabled={isSharing}
+                  >
+                    {isSharing ? (
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Share2 />
+                    )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Share heatmaps to clipboard</TooltipContent>
+                <TooltipContent>
+                  {isSharing
+                    ? "Generating image..."
+                    : "Share heatmaps to clipboard"}
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
         </CardFooter>
       )}
     </Card>
+    </>
   );
 }
 

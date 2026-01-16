@@ -7,7 +7,6 @@ import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { SectionTopCards } from "./section-top-cards";
 import { useLocalStorage } from "usehooks-ts";
-import useDrivePicker from "react-google-drive-picker";
 import { Progress } from "./ui/progress";
 import {
   ChooseSheetInstructionsCard,
@@ -16,7 +15,6 @@ import {
 
 export function HomeDashboard() {
   const { data: session, status: authStatus } = useSession();
-  const [openPicker, authResponse] = useDrivePicker();
 
   const [ssid, setSsid] = useLocalStorage("ssid", null, {
     initializeWithValue: false,

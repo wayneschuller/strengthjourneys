@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
-import useDrivePicker from "react-google-drive-picker";
+import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
@@ -29,8 +29,22 @@ import {
 
 // This is very similar to the ChooseSheetInstructionsCard but designed for the front page
 export function OnBoardingDashboard() {
-  const [openPicker, authResponse] = useDrivePicker();
+  const [openPicker, setOpenPicker] = useState(null);
+  const [authResponse, setAuthResponse] = useState(null);
+  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
   const { data: session, status: authStatus } = useSession();
+
+  const handlePickerReady = (picker, auth) => {
+    setOpenPicker(() => picker);
+    setAuthResponse(auth);
+  };
+
+  // Load picker when component mounts (user needs it for onboarding)
+  useEffect(() => {
+    if (authStatus === "authenticated" && !shouldLoadPicker) {
+      setShouldLoadPicker(true);
+    }
+  }, [authStatus, shouldLoadPicker]);
 
   // We need the next 3 for the file picker button we give with instructions
   const [ssid, setSsid] = useLocalStorage("ssid", null, {
@@ -49,7 +63,14 @@ export function OnBoardingDashboard() {
   );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2">
+    <>
+      {shouldLoadPicker && (
+        <DrivePickerContainer
+          onReady={handlePickerReady}
+          trigger={shouldLoadPicker}
+        />
+      )}
+      <div className="grid grid-cols-1 md:grid-cols-2">
       <div>
         <h2 className="text-lg font-bold">
           Successful sign-in! Let{"'"}s connect your lifting data
@@ -75,15 +96,18 @@ export function OnBoardingDashboard() {
           </div>
           <Button
             className="w-fit self-center"
-            onClick={() =>
-              handleOpenFilePicker(
-                openPicker,
-                session.accessToken,
-                setSsid,
-                setSheetURL,
-                setSheetFilename,
-              )
-            }
+            onClick={() => {
+              if (openPicker) {
+                handleOpenFilePicker(
+                  openPicker,
+                  session.accessToken,
+                  setSsid,
+                  setSheetURL,
+                  setSheetFilename,
+                );
+              }
+            }}
+            disabled={!openPicker}
           >
             Step 2 - Connect your Google Sheet to Strength Journeys
           </Button>
@@ -125,13 +149,28 @@ export function OnBoardingDashboard() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
 // This card is shown if the user goes to the visualizer or analyzer with google auth but no spreadsheet selected
 export function ChooseSheetInstructionsCard() {
-  const [openPicker, authResponse] = useDrivePicker();
+  const [openPicker, setOpenPicker] = useState(null);
+  const [authResponse, setAuthResponse] = useState(null);
+  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
   const { data: session, status: authStatus } = useSession();
+
+  const handlePickerReady = (picker, auth) => {
+    setOpenPicker(() => picker);
+    setAuthResponse(auth);
+  };
+
+  // Load picker when component mounts (user needs it to choose sheet)
+  useEffect(() => {
+    if (session && !shouldLoadPicker) {
+      setShouldLoadPicker(true);
+    }
+  }, [session, shouldLoadPicker]);
 
   // We need the next 3 for the file picker button we give with instructions
   const [ssid, setSsid] = useLocalStorage("ssid", null, {
@@ -152,72 +191,97 @@ export function ChooseSheetInstructionsCard() {
   if (!session) return null;
 
   return (
-    <Card className="md:w-2/3">
-      <CardHeader>
-        <CardTitle>Hello {session.user.name}! You are logged in.</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="">
-          Next step is to link your personal Google sheet of your lifting data.
-        </div>
-        <div className="">
-          Our{" "}
-          <a
-            href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
-            target="_blank"
-            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+    <>
+      {shouldLoadPicker && (
+        <DrivePickerContainer
+          onReady={handlePickerReady}
+          trigger={shouldLoadPicker}
+        />
+      )}
+      <Card className="md:w-2/3">
+        <CardHeader>
+          <CardTitle>Hello {session.user.name}! You are logged in.</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="">
+            Next step is to link your personal Google sheet of your lifting data.
+          </div>
+          <div className="">
+            Our{" "}
+            <a
+              href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+              target="_blank"
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            >
+              sample Google Sheet
+            </a>{" "}
+            format is intuitive and easy to update. Make a copy and start entering
+            your lifts. (You can use {`"kg"`} or {`"lb"`})
+          </div>
+          <div className="">
+            <a
+              href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+              target="_blank"
+            >
+              <Image
+                className="w-5/6 md:w-1/2"
+                src={SampleImage}
+                priority={true}
+                alt="Screenshot of sample google sheet data"
+              />
+            </a>
+          </div>
+          <div className="">
+            Strength Journeys does not collect or store your data. Instead we
+            encourage every lifter to own the data of their personal strength
+            journey.
+          </div>
+          <div className="">
+            Link a Google sheet then every time you use Strength Journeys your web
+            client will read your data and bring insights and inspiration!
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button
+            className="w-full"
+            onClick={() => {
+              if (openPicker) {
+                handleOpenFilePicker(
+                  openPicker,
+                  session.accessToken,
+                  setSsid,
+                  setSheetURL,
+                  setSheetFilename,
+                );
+              }
+            }}
+            disabled={!openPicker}
           >
-            sample Google Sheet
-          </a>{" "}
-          format is intuitive and easy to update. Make a copy and start entering
-          your lifts. (You can use {`"kg"`} or {`"lb"`})
-        </div>
-        <div className="">
-          <a
-            href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
-            target="_blank"
-          >
-            <Image
-              className="w-5/6 md:w-1/2"
-              src={SampleImage}
-              priority={true}
-              alt="Screenshot of sample google sheet data"
-            />
-          </a>
-        </div>
-        <div className="">
-          Strength Journeys does not collect or store your data. Instead we
-          encourage every lifter to own the data of their personal strength
-          journey.
-        </div>
-        <div className="">
-          Link a Google sheet then every time you use Strength Journeys your web
-          client will read your data and bring insights and inspiration!
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button
-          className="w-full"
-          onClick={() =>
-            handleOpenFilePicker(
-              openPicker,
-              session.accessToken,
-              setSsid,
-              setSheetURL,
-              setSheetFilename,
-            )
-          }
-        >
-          Choose Google Sheet
-        </Button>
-      </CardFooter>
-    </Card>
+            Choose Google Sheet
+          </Button>
+        </CardFooter>
+      </Card>
+    </>
   );
 }
 
 export function GettingStartedCard() {
   const { data: session, status: authStatus } = useSession();
-  const [openPicker, authResponse] = useDrivePicker();
+  const [openPicker, setOpenPicker] = useState(null);
+  const [authResponse, setAuthResponse] = useState(null);
+  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
+
+  const handlePickerReady = (picker, auth) => {
+    setOpenPicker(() => picker);
+    setAuthResponse(auth);
+  };
+
+  // Load picker when user is authenticated and might use it
+  useEffect(() => {
+    if (authStatus === "authenticated" && !shouldLoadPicker) {
+      setShouldLoadPicker(true);
+    }
+  }, [authStatus, shouldLoadPicker]);
 
   // We need the next 3 for the file picker button we give with instructions
   const [ssid, setSsid] = useLocalStorage("ssid", null, {
@@ -237,13 +301,20 @@ export function GettingStartedCard() {
 
   const arrowSize = 75;
   return (
-    <Card className="hover:ring-0">
-      <CardHeader>
-        <CardTitle>
-          Getting Started: Set Up Google Sheets and Connect with Strength
-          Journeys
-        </CardTitle>
-      </CardHeader>
+    <>
+      {shouldLoadPicker && (
+        <DrivePickerContainer
+          onReady={handlePickerReady}
+          trigger={shouldLoadPicker}
+        />
+      )}
+      <Card className="hover:ring-0">
+        <CardHeader>
+          <CardTitle>
+            Getting Started: Set Up Google Sheets and Connect with Strength
+            Journeys
+          </CardTitle>
+        </CardHeader>
       <CardContent className="grid grid-cols-1 lg:grid-cols-7">
         <div className="">
           Lift progressively heavier things with a{" "}
@@ -338,16 +409,19 @@ export function GettingStartedCard() {
           and{" "}
           {authStatus === "authenticated" && !ssid ? (
             <button
-              onClick={() =>
-                handleOpenFilePicker(
-                  openPicker,
-                  session.accessToken,
-                  setSsid,
-                  setSheetURL,
-                  setSheetFilename,
-                )
-              }
+              onClick={() => {
+                if (openPicker) {
+                  handleOpenFilePicker(
+                    openPicker,
+                    session.accessToken,
+                    setSsid,
+                    setSheetURL,
+                    setSheetFilename,
+                  );
+                }
+              }}
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              disabled={!openPicker}
             >
               select your Google Sheet
             </button>
@@ -401,6 +475,7 @@ export function GettingStartedCard() {
         </div>
       </CardFooter>
     </Card>
+    </>
   );
 }
 

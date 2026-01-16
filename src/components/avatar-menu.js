@@ -4,7 +4,7 @@ import * as React from "react";
 import { useContext, useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, signIn, signOut } from "next-auth/react";
-import useDrivePicker from "../../dependencies/react-google-drive-picker/dist";
+import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { useLocalStorage } from "usehooks-ts";
 import { devLog } from "@/lib/processing-utils";
@@ -41,7 +41,9 @@ import {
 
 export function AvatarDropdown() {
   const { data: session, status: authStatus } = useSession();
-  const [openPicker, authResponse] = useDrivePicker();
+  const [openPicker, setOpenPicker] = useState(null);
+  const [authResponse, setAuthResponse] = useState(null);
+  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
   const { setTheme, theme } = useTheme();
 
   const [ssid, setSsid] = useLocalStorage("ssid", null, {
@@ -58,6 +60,20 @@ export function AvatarDropdown() {
   );
 
   const { parsedData, isLoading, isValidating, isError } = useUserLiftingData();
+
+  // Initialize picker when needed (only loads when user might use it)
+  const handlePickerReady = (picker, auth) => {
+    setOpenPicker(() => picker);
+    setAuthResponse(auth);
+  };
+
+  // Load picker when user opens dropdown menu (anticipate they might use it)
+  // Or when they need to choose a sheet (ssid is missing)
+  useEffect(() => {
+    if (authStatus === "authenticated" && (!ssid || shouldLoadPicker)) {
+      setShouldLoadPicker(true);
+    }
+  }, [authStatus, ssid, shouldLoadPicker]);
 
   if (authStatus !== "authenticated")
     return (
@@ -76,10 +92,25 @@ export function AvatarDropdown() {
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger>
-          <DropdownMenu>
+    <>
+      {/* Only load picker when needed - this defers ~163 KiB of Google API scripts */}
+      {shouldLoadPicker && (
+        <DrivePickerContainer
+          onReady={handlePickerReady}
+          trigger={shouldLoadPicker}
+        />
+      )}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <DropdownMenu
+            onOpenChange={(open) => {
+              // Load picker when dropdown opens (user might use it)
+              if (open && !shouldLoadPicker) {
+                setShouldLoadPicker(true);
+              }
+            }}
+          >
             <DropdownMenuTrigger asChild>
               <Avatar className="ml-2 h-8 w-8 ring-muted-foreground hover:ring-2">
                 <AvatarImage src={session.user.image} />
@@ -109,15 +140,18 @@ export function AvatarDropdown() {
               <DropdownMenuGroup>
                 {!ssid && (
                   <DropdownMenuItem
-                    onClick={() =>
-                      handleOpenFilePicker(
-                        openPicker,
-                        session.accessToken,
-                        setSsid,
-                        setSheetURL,
-                        setSheetFilename,
-                      )
-                    }
+                    onClick={() => {
+                      if (openPicker) {
+                        handleOpenFilePicker(
+                          openPicker,
+                          session.accessToken,
+                          setSsid,
+                          setSheetURL,
+                          setSheetFilename,
+                        );
+                      }
+                    }}
+                    disabled={!openPicker}
                   >
                     <FolderOpenDot className="mr-2 h-4 w-4" />
                     Choose Google Sheet
@@ -133,15 +167,18 @@ export function AvatarDropdown() {
                 )}
                 {ssid && (
                   <DropdownMenuItem
-                    onClick={() =>
-                      handleOpenFilePicker(
-                        openPicker,
-                        session.accessToken,
-                        setSsid,
-                        setSheetURL,
-                        setSheetFilename,
-                      )
-                    }
+                    onClick={() => {
+                      if (openPicker) {
+                        handleOpenFilePicker(
+                          openPicker,
+                          session.accessToken,
+                          setSsid,
+                          setSheetURL,
+                          setSheetFilename,
+                        );
+                      }
+                    }}
+                    disabled={!openPicker}
                   >
                     <FolderOpenDot className="mr-2 h-4 w-4" />
                     Choose New Google Sheet
@@ -219,5 +256,6 @@ export function AvatarDropdown() {
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
+    </>
   );
 }

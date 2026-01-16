@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { Button } from "@/components/ui/button";
@@ -34,10 +34,10 @@ export function OnBoardingDashboard() {
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
   const { data: session, status: authStatus } = useSession();
 
-  const handlePickerReady = (picker, auth) => {
+  const handlePickerReady = useCallback((picker, auth) => {
     setOpenPicker(() => picker);
     setAuthResponse(auth);
-  };
+  }, []);
 
   // Load picker when component mounts (user needs it for onboarding)
   useEffect(() => {
@@ -160,10 +160,10 @@ export function ChooseSheetInstructionsCard() {
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
   const { data: session, status: authStatus } = useSession();
 
-  const handlePickerReady = (picker, auth) => {
+  const handlePickerReady = useCallback((picker, auth) => {
     setOpenPicker(() => picker);
     setAuthResponse(auth);
-  };
+  }, []);
 
   // Load picker when component mounts (user needs it to choose sheet)
   useEffect(() => {
@@ -271,10 +271,10 @@ export function GettingStartedCard() {
   const [authResponse, setAuthResponse] = useState(null);
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
 
-  const handlePickerReady = (picker, auth) => {
+  const handlePickerReady = useCallback((picker, auth) => {
     setOpenPicker(() => picker);
     setAuthResponse(auth);
-  };
+  }, []);
 
   // Load picker when user is authenticated and might use it
   useEffect(() => {

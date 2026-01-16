@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import useDrivePicker from "react-google-drive-picker";
 
 /**
@@ -18,14 +18,17 @@ import useDrivePicker from "react-google-drive-picker";
  */
 export function DrivePickerContainer({ onReady, trigger = false }) {
   const [openPicker, authResponse] = useDrivePicker();
-  const [isReady, setIsReady] = useState(false);
+  const hasCalledReady = useRef(false);
 
   useEffect(() => {
-    if (openPicker && onReady) {
+    // Only call onReady once when picker becomes available
+    // Use ref to prevent infinite loops from onReady being recreated
+    if (openPicker && onReady && !hasCalledReady.current) {
+      hasCalledReady.current = true;
       onReady(openPicker, authResponse);
-      setIsReady(true);
     }
-  }, [openPicker, authResponse, onReady]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openPicker, authResponse]); // Don't include onReady to avoid infinite loops
 
   // This component doesn't render anything visible
   // It just initializes the picker hook and passes it to the parent

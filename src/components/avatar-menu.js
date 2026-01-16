@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
@@ -62,10 +62,10 @@ export function AvatarDropdown() {
   const { parsedData, isLoading, isValidating, isError } = useUserLiftingData();
 
   // Initialize picker when needed (only loads when user might use it)
-  const handlePickerReady = (picker, auth) => {
+  const handlePickerReady = useCallback((picker, auth) => {
     setOpenPicker(() => picker);
     setAuthResponse(auth);
-  };
+  }, []);
 
   // Load picker when user opens dropdown menu (anticipate they might use it)
   // Or when they need to choose a sheet (ssid is missing)

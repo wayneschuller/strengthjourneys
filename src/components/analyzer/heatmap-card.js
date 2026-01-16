@@ -119,7 +119,7 @@ export function ActivityHeatmapsCard() {
             {intervals.map((interval, index) => {
               return (
                 <div key={`${index}-heatmap`}>
-                  <div className="text-center text-lg font-semibold mb-2">
+                  <div className="mb-2 text-center text-lg font-semibold">
                     {new Date(interval.startDate).getFullYear()}
                   </div>
                   <Heatmap
@@ -139,8 +139,8 @@ export function ActivityHeatmapsCard() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline">
-                    <Share2 onClick={handleShare} />
+                  <Button variant="outline" onClick={handleShare}>
+                    <Share2 />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Share heatmaps to clipboard</TooltipContent>

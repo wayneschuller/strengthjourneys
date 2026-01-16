@@ -10,7 +10,6 @@ import {
 } from "@/lib/processing-utils";
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useIsClient, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,13 +37,10 @@ import {
 
 export function ActivityHeatmapsCard() {
   const { parsedData, isLoading } = useUserLiftingData();
-  const { width } = useWindowSize({ initializeWithValue: false });
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [intervals, setIntervals] = useState(null);
-  const [intervalMonths, setIntervalMonths] = useState(18);
   const { status: authStatus } = useSession();
-  const isClient = useIsClient();
   const { theme } = useTheme();
   const shareRef = useRef(null);
 
@@ -58,19 +54,13 @@ export function ActivityHeatmapsCard() {
     setStartDate(startDate);
     setEndDate(endDate);
 
-    // devLog(`Heatmaps: Width changing to ${width}`);
-    let intervalMonths = 12;
-    if (width > 768 && width <= 1536) intervalMonths = 24;
-    else if (width > 1536) intervalMonths = 32;
-    setIntervalMonths(intervalMonths);
-
-    const intervals = generateDateRanges(startDate, endDate, intervalMonths);
+    const intervals = generateYearRanges(startDate, endDate);
 
     // devLog(`Heatmaps: setting intervals:`);
     // devLog(intervals);
 
     setIntervals(intervals); // intervals is the trigger for showing the heatmaps
-  }, [isLoading, parsedData, width]);
+  }, [isLoading, parsedData]);
 
   // if (!parsedData || parsedData.length === 0) { return null; }
 
@@ -114,33 +104,34 @@ export function ActivityHeatmapsCard() {
         </CardTitle>
         {intervals && (
           <CardDescription>
-            {intervalMonths} month heatmap{intervals.length > 1 && "s"} for all
-            lifting sessions from {getReadableDateString(startDate)} -{" "}
-            {getReadableDateString(endDate)}. Historical PRs are highlighted.
-            Major barbell lift type PRs are{" "}
+            Calendar year heatmap{intervals.length > 1 && "s"} for all lifting
+            sessions from {new Date(intervals[0].startDate).getFullYear()} -{" "}
+            {new Date(intervals[intervals.length - 1].endDate).getFullYear()}.
+            Historical PRs are highlighted. Major barbell lift type PRs are{" "}
             {theme === "dark" ? "brighter" : "darker"}.
           </CardDescription>
         )}
       </CardHeader>
       <CardContent>
         {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
-        {intervals &&
-          intervals.map((interval, index) => {
-            return (
-              <div className="mb-2 md:mb-6" key={`${index}-heatmap`}>
-                <div className="hidden text-center md:block lg:text-lg">
-                  {getReadableDateString(interval.startDate)} -{" "}
-                  {getReadableDateString(interval.endDate)}
+        {intervals && (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {intervals.map((interval, index) => {
+              return (
+                <div key={`${index}-heatmap`}>
+                  <div className="text-center text-lg font-semibold mb-2">
+                    {new Date(interval.startDate).getFullYear()}
+                  </div>
+                  <Heatmap
+                    parsedData={parsedData}
+                    startDate={interval.startDate}
+                    endDate={interval.endDate}
+                  />
                 </div>
-                <Heatmap
-                  parsedData={parsedData}
-                  startDate={interval.startDate}
-                  endDate={interval.endDate}
-                  isMobile={intervalMonths === 18}
-                />
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+        )}
       </CardContent>
       {intervals && (
         <CardFooter id="ignoreCopy">
@@ -162,7 +153,7 @@ export function ActivityHeatmapsCard() {
   );
 }
 
-function Heatmap({ parsedData, startDate, endDate, isMobile }) {
+function Heatmap({ parsedData, startDate, endDate }) {
   const { theme } = useTheme();
   const { status: authStatus } = useSession();
   const [heatmapData, setHeatmapData] = useState(null);
@@ -187,7 +178,7 @@ function Heatmap({ parsedData, startDate, endDate, isMobile }) {
       startDate={startDate}
       endDate={endDate}
       values={heatmapData}
-      showMonthLabels={!isMobile}
+      showMonthLabels={true}
       classForValue={(value) => {
         if (!value) {
           return `color-heatmap-0`; // Uses CSS variables from theme
@@ -233,68 +224,32 @@ function findStartEndDates(parsedData) {
   };
 }
 
-// generateDateRanges
+// generateYearRanges
 //
-// 1. If the startDate and end date are within intervalMonths,
-// then we return one interval of length intervalMonths with start and end
-// date in the middle.
-//
-// 2. If the start and end date are longer than intervalMonths,
-// then return multiple intervals starting at startDate and ending
-// AFTER endDate.
+// Generates one interval per calendar year from the first year with data
+// to the last year with data. Each interval is exactly Jan 1 - Dec 31 of that year.
 //
 // startDateStr and endDateStr format is: "yyyy-mm-dd"
 //
-function generateDateRanges(startDateStr, endDateStr, intervalMonths) {
+function generateYearRanges(startDateStr, endDateStr) {
   // Convert input date strings to Date objects
   const startDate = new Date(startDateStr);
   const endDate = new Date(endDateStr);
 
-  // Calculate the duration of the input date range in milliseconds
-  const rangeDuration = endDate - startDate;
+  // Get the year of the start and end dates
+  const startYear = startDate.getFullYear();
+  const endYear = endDate.getFullYear();
 
-  // Calculate the interval duration in milliseconds
-  const intervalDuration = intervalMonths * 30 * 24 * 60 * 60 * 1000;
-
-  // Check if the duration is less than the specified interval
-  if (rangeDuration < intervalDuration) {
-    // If less than the interval, place startDate and endDate in the middle of the interval
-    const middleDate = new Date(
-      startDate.getTime() + rangeDuration / 2 - intervalDuration / 2,
-    );
-    const intervalStartDate = new Date(middleDate);
-    const intervalEndDate = new Date(intervalStartDate);
-    intervalEndDate.setMilliseconds(
-      intervalEndDate.getMilliseconds() + intervalDuration,
-    );
-
-    return [
-      {
-        startDate: intervalStartDate.toISOString().split("T")[0],
-        endDate: intervalEndDate.toISOString().split("T")[0],
-      },
-    ];
-  } else {
-    // If more than the interval, generate multiple ranges with the specified interval
-    const dateRanges = [];
-    let currentStartDate = new Date(startDate);
-
-    while (currentStartDate < endDate) {
-      const currentEndDate = new Date(currentStartDate);
-      currentEndDate.setMilliseconds(
-        currentEndDate.getMilliseconds() + intervalDuration,
-      );
-
-      dateRanges.push({
-        startDate: currentStartDate.toISOString().split("T")[0],
-        endDate: currentEndDate.toISOString().split("T")[0],
-      });
-
-      // Move the start date for the next iteration
-      currentStartDate.setTime(currentEndDate.getTime());
-    }
-    return dateRanges;
+  // Generate one range per calendar year
+  const yearRanges = [];
+  for (let year = startYear; year <= endYear; year++) {
+    yearRanges.push({
+      startDate: `${year}-01-01`,
+      endDate: `${year}-12-31`,
+    });
   }
+
+  return yearRanges;
 }
 
 // Create heatmapData

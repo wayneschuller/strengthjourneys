@@ -35,7 +35,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-
 export function ActivityHeatmapsCard() {
   const { parsedData, isLoading } = useUserLiftingData();
   const [startDate, setStartDate] = useState(null);
@@ -119,88 +118,87 @@ export function ActivityHeatmapsCard() {
         </div>
       )}
       <Card ref={shareRef}>
-      <CardHeader>
-        <CardTitle>
-          {authStatus === "unauthenticated" && "Demo mode: "}Activity History
-          For All Lift Types
-        </CardTitle>
-        {intervals && (
-          <CardDescription>
-            Calendar year heatmap{intervals.length > 1 && "s"} for all lifting
-            sessions from {new Date(intervals[0].startDate).getFullYear()} -{" "}
-            {new Date(intervals[intervals.length - 1].endDate).getFullYear()}.
-            Historical PRs are highlighted. Major barbell lift type PRs are{" "}
-            {theme === "dark" ? "brighter" : "darker"}.
-          </CardDescription>
-        )}
-      </CardHeader>
-      <CardContent>
-        {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
-        {intervals && (
-          <>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {intervals.map((interval, index) => {
-                return (
-                  <div key={`${index}-heatmap`}>
-                    <div className="mb-2 text-center text-lg font-semibold">
-                      {new Date(interval.startDate).getFullYear()}
+        <CardHeader>
+          <CardTitle>
+            {authStatus === "unauthenticated" && "Demo mode: "}Activity History
+            For All Lift Types
+          </CardTitle>
+          {intervals && (
+            <CardDescription>
+              Your strength journey from{" "}
+              {new Date(intervals[0].startDate).getFullYear()} -{" "}
+              {new Date(intervals[intervals.length - 1].endDate).getFullYear()}.
+              Historical PRs are highlighted.
+            </CardDescription>
+          )}
+        </CardHeader>
+        <CardContent>
+          {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
+          {intervals && (
+            <>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {intervals.map((interval, index) => {
+                  return (
+                    <div key={`${index}-heatmap`}>
+                      <div className="mb-2 text-center text-lg font-semibold">
+                        {new Date(interval.startDate).getFullYear()}
+                      </div>
+                      <Heatmap
+                        parsedData={parsedData}
+                        startDate={interval.startDate}
+                        endDate={interval.endDate}
+                      />
                     </div>
-                    <Heatmap
-                      parsedData={parsedData}
-                      startDate={interval.startDate}
-                      endDate={interval.endDate}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-            {/* Footer with app branding - only visible during image capture */}
-            {isSharing && (
-              <div className="mt-6 flex items-center justify-center border-t pt-4">
-                <p className="text-sm text-muted-foreground">
-                  Created with{" "}
-                  <span className="font-semibold text-foreground">
-                    Strength Journeys
-                  </span>
-                  {" • "}
-                  <span className="text-muted-foreground">
-                    strengthjourneys.xyz
-                  </span>
-                </p>
+                  );
+                })}
               </div>
-            )}
-          </>
+              {/* Footer with app branding - only visible during image capture */}
+              {isSharing && (
+                <div className="mt-6 flex items-center justify-center border-t pt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Created with{" "}
+                    <span className="font-semibold text-foreground">
+                      Strength Journeys
+                    </span>
+                    {" • "}
+                    <span className="text-muted-foreground">
+                      strengthjourneys.xyz
+                    </span>
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+        {intervals && (
+          <CardFooter id="ignoreCopy">
+            <div className="flex flex-1 flex-row justify-end">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      onClick={handleShare}
+                      disabled={isSharing}
+                    >
+                      {isSharing ? (
+                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Share2 />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isSharing
+                      ? "Generating image..."
+                      : "Share heatmaps to clipboard"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </CardFooter>
         )}
-      </CardContent>
-      {intervals && (
-        <CardFooter id="ignoreCopy">
-          <div className="flex flex-1 flex-row justify-end">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    onClick={handleShare}
-                    disabled={isSharing}
-                  >
-                    {isSharing ? (
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Share2 />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isSharing
-                    ? "Generating image..."
-                    : "Share heatmaps to clipboard"}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </CardFooter>
-      )}
-    </Card>
+      </Card>
     </>
   );
 }

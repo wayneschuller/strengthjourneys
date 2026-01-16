@@ -137,22 +137,39 @@ export function ActivityHeatmapsCard() {
       <CardContent>
         {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
         {intervals && (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {intervals.map((interval, index) => {
-              return (
-                <div key={`${index}-heatmap`}>
-                  <div className="mb-2 text-center text-lg font-semibold">
-                    {new Date(interval.startDate).getFullYear()}
+          <>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {intervals.map((interval, index) => {
+                return (
+                  <div key={`${index}-heatmap`}>
+                    <div className="mb-2 text-center text-lg font-semibold">
+                      {new Date(interval.startDate).getFullYear()}
+                    </div>
+                    <Heatmap
+                      parsedData={parsedData}
+                      startDate={interval.startDate}
+                      endDate={interval.endDate}
+                    />
                   </div>
-                  <Heatmap
-                    parsedData={parsedData}
-                    startDate={interval.startDate}
-                    endDate={interval.endDate}
-                  />
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+            {/* Footer with app branding - only visible during image capture */}
+            {isSharing && (
+              <div className="mt-6 flex items-center justify-center border-t pt-4">
+                <p className="text-sm text-muted-foreground">
+                  Created with{" "}
+                  <span className="font-semibold text-foreground">
+                    Strength Journeys
+                  </span>
+                  {" • "}
+                  <span className="text-muted-foreground">
+                    strengthjourneys.xyz
+                  </span>
+                </p>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
       {intervals && (

@@ -72,7 +72,6 @@
     "obscenity": "^0.4.3",
     "react": "^18",
     "react-calendar-heatmap": "^1.10.0",
-    "react-chartjs-2": "^5.3.0",
     "react-color": "^2.19.3",
     "react-dom": "^18",
     "react-google-drive-picker": "file:dependencies/react-google-drive-picker",
@@ -91,6 +90,7 @@
     "zod": "^3.24.3"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.1.2",
     "autoprefixer": "^10.4.21",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.28",

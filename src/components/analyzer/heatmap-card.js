@@ -14,7 +14,8 @@ import { useIsClient, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { Skeleton } from "@/components/ui/skeleton";
-import html2canvas from "html2canvas";
+// Dynamically import html2canvas only when needed (share feature)
+// This is a large library (~200KB) that's only used when user clicks share
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
@@ -77,6 +78,8 @@ export function ActivityHeatmapsCard() {
     const startTime = performance.now();
 
     if (shareRef.current) {
+      // Dynamically import html2canvas only when user clicks share
+      const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(shareRef.current, {
         ignoreElements: (element) => element.id === "ignoreCopy",
       });

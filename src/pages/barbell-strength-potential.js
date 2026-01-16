@@ -28,7 +28,6 @@ import {
 } from "@/components/page-header";
 
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
-``;
 
 import {
   ChartContainer,

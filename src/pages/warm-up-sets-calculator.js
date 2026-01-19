@@ -179,7 +179,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
         <PageHeaderHeading icon={Flame}>Barbell Warm Ups Calculator</PageHeaderHeading>
         <PageHeaderDescription>
           Generate warmup sets for your barbell workouts using Starting Strength
-          methodology. Enter your target top set weight and reps, and we'll
+          methodology. Enter your target top set weight and reps, and we&apos;ll
           calculate the warmup progression with plate breakdowns.
         </PageHeaderDescription>
       </PageHeader>

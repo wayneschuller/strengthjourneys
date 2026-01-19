@@ -150,9 +150,15 @@ export const PLATE_SETS = {
  * @param {number} totalWeight - Total weight including bar
  * @param {number} barWeight - Weight of the barbell
  * @param {boolean} isMetric - Whether using kg (true) or lb (false)
+ * @param {string} platePreference - "red" or "blue" to prefer red or blue plates
  * @returns {Object} { platesPerSide, remainder, closestWeight }
  */
-export function calculatePlateBreakdown(totalWeight, barWeight, isMetric) {
+export function calculatePlateBreakdown(
+  totalWeight,
+  barWeight,
+  isMetric,
+  platePreference = "red",
+) {
   if (totalWeight < barWeight) {
     return {
       platesPerSide: [],
@@ -161,7 +167,22 @@ export function calculatePlateBreakdown(totalWeight, barWeight, isMetric) {
     };
   }
 
-  const availablePlates = isMetric ? PLATE_SETS.kg : PLATE_SETS.lb;
+  let availablePlates = isMetric ? PLATE_SETS.kg : PLATE_SETS.lb;
+
+  // Filter out non-preferred plate type
+  if (platePreference === "blue") {
+    // Prefer blue: exclude red plates
+    // For kg: exclude 25kg (red), for lb: exclude 35lb (red)
+    availablePlates = availablePlates.filter(
+      (plate) => !(isMetric ? plate.weight === 25 : plate.weight === 35),
+    );
+  } else {
+    // Prefer red: exclude blue plates
+    // For kg: exclude 20kg (blue), for lb: exclude 25lb (blue)
+    availablePlates = availablePlates.filter(
+      (plate) => !(isMetric ? plate.weight === 20 : plate.weight === 25),
+    );
+  }
   const minIncrement = isMetric ? 1.25 : 2.5; // Smallest plate
   const weightPerSide = (totalWeight - barWeight) / 2;
 

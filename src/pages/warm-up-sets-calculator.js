@@ -101,6 +101,13 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
   const [barType, setBarType] = useLocalStorage("SJ_WarmupsBarType", "standard", {
     initializeWithValue: false,
   });
+  const [platePreference, setPlatePreference] = useLocalStorage(
+    "SJ_WarmupsPlatePreference",
+    "red",
+    {
+      initializeWithValue: false,
+    },
+  );
 
   // Calculate bar weight based on unit and bar type
   const barWeight = isMetric
@@ -124,6 +131,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     Number(weight),
     barWeight,
     isMetric,
+    platePreference,
   );
 
   const handleWeightSliderChange = (value) => {
@@ -179,7 +187,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
         <CardHeader>
           <CardTitle>Target Top Set</CardTitle>
           <CardDescription>
-            Enter the weight and reps for your working set
+            Enter the weight and reps for your working set/s
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -263,6 +271,25 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
               </div>
             </RadioGroup>
           </div>
+
+          {/* Plate Preference Selection */}
+          <div className="mt-6">
+            <Label className="mb-2 block">Plate Preference</Label>
+            <RadioGroup value={platePreference} onValueChange={setPlatePreference}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="red" id="prefer-red" />
+                <Label htmlFor="prefer-red">
+                  Prefer {isMetric ? "red (25kg)" : "red (35lb)"} plates
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="blue" id="prefer-blue" />
+                <Label htmlFor="prefer-blue">
+                  Prefer {isMetric ? "blue (20kg)" : "blue (25lb)"} plates
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
         </CardContent>
       </Card>
 
@@ -283,6 +310,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
                   set.weight,
                   barWeight,
                   isMetric,
+                  platePreference,
                 );
                 return (
                   <div

@@ -28,9 +28,9 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
   }
 
   return (
-    <div className={cn("flex flex-col items-center gap-4", className)}>
+    <div className={cn("flex flex-col items-end gap-4", className)}>
       {/* Base barbell (same as bar-only state) with plates overlaid on the right */}
-      <div className="relative flex items-center justify-center px-2 py-1">
+      <div className="relative flex items-center justify-end px-2 py-1">
         {/* Horizontal bar - centered vertically */}
         <div className="h-2 w-24 rounded bg-gray-400" />
 
@@ -59,8 +59,8 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
         </div>
       </div>
 
-      {/* Plate labels - centered, showing one side only */}
-      <div className="flex flex-wrap justify-center gap-1 text-xs text-muted-foreground">
+      {/* Plate labels - right-aligned, showing one side only */}
+      <div className="flex flex-wrap justify-end gap-1 text-xs text-muted-foreground">
         {platesPerSide.map((plate, idx) => (
           <span key={idx} className="flex items-center gap-1">
             <span

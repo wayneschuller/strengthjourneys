@@ -9,9 +9,10 @@
  * @param {number} topReps - Number of reps for the top set
  * @param {number} barWeight - Weight of the barbell
  * @param {boolean} isMetric - Whether using kg (true) or lb (false)
+ * @param {string} platePreference - "red" or "blue" plate preference
  * @returns {Array} Array of warmup set objects with {weight, reps, percentage}
  */
-export function generateWarmupSets(topWeight, topReps, barWeight, isMetric) {
+export function generateWarmupSets(topWeight, topReps, barWeight, isMetric, platePreference = "red") {
   if (!topWeight || topWeight <= 0 || topReps <= 0) {
     return [];
   }
@@ -30,6 +31,31 @@ export function generateWarmupSets(topWeight, topReps, barWeight, isMetric) {
   // For very light weights, we might only need the bar
   if (topWeight <= barWeight + minIncrement) {
     return warmupSets;
+  }
+
+  // For lifts over 100kg/225lb, add a standard first warmup with plates
+  const heavyLiftThreshold = isMetric ? 100 : 225;
+  if (topWeight > heavyLiftThreshold) {
+    const heavyLiftThresholdRed = isMetric ? 140 : 315;
+    
+    let firstWarmupWeight;
+    if (platePreference === "blue" || (platePreference === "red" && topWeight <= heavyLiftThresholdRed)) {
+      // Use blue plates: 60kg (20kg bar + 2x20kg) or 135lb (45lb bar + 2x45lb)
+      firstWarmupWeight = isMetric ? 60 : 135;
+    } else {
+      // Prefer red and top set > 140kg/315lb: use red plates
+      // 70kg (20kg bar + 2x25kg) or 155lb (45lb bar + 2x55lb)
+      firstWarmupWeight = isMetric ? 70 : 155;
+    }
+    
+    // Only add if it's heavier than bar and lighter than top set
+    if (firstWarmupWeight > barWeight && firstWarmupWeight < topWeight) {
+      warmupSets.push({
+        weight: firstWarmupWeight,
+        reps: 5,
+        percentage: Math.round((firstWarmupWeight / topWeight) * 100),
+      });
+    }
   }
 
   // Calculate working weight (total minus bar)

@@ -124,6 +124,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     Number(reps),
     barWeight,
     isMetric,
+    platePreference,
   );
 
   // Calculate plate breakdown for top set

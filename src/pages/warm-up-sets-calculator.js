@@ -253,42 +253,45 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
             </div>
           </div>
 
-          {/* Bar Type Selection */}
-          <div className="mt-6">
-            <Label className="mb-2 block">Barbell Type</Label>
-            <RadioGroup value={barType} onValueChange={setBarType}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="standard" id="standard" />
-                <Label htmlFor="standard">
-                  Standard bar ({isMetric ? "20kg" : "45lb"})
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="womens" id="womens" />
-                <Label htmlFor="womens">
-                  Women&apos;s bar ({isMetric ? "15kg" : "35lb"})
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
+          {/* Options: horizontal on desktop, vertical on mobile */}
+          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Bar Type Selection */}
+            <div>
+              <Label className="mb-2 block">Barbell Type</Label>
+              <RadioGroup value={barType} onValueChange={setBarType}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="standard" id="standard" />
+                  <Label htmlFor="standard">
+                    Standard bar ({isMetric ? "20kg" : "45lb"})
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="womens" id="womens" />
+                  <Label htmlFor="womens">
+                    Women&apos;s bar ({isMetric ? "15kg" : "35lb"})
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
 
-          {/* Plate Preference Selection */}
-          <div className="mt-6">
-            <Label className="mb-2 block">Plate Preference</Label>
-            <RadioGroup value={platePreference} onValueChange={setPlatePreference}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="red" id="prefer-red" />
-                <Label htmlFor="prefer-red">
-                  Prefer {isMetric ? "red (25kg)" : "red (35lb)"} plates
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="blue" id="prefer-blue" />
-                <Label htmlFor="prefer-blue">
-                  Prefer {isMetric ? "blue (20kg)" : "blue (25lb)"} plates
-                </Label>
-              </div>
-            </RadioGroup>
+            {/* Plate Preference Selection */}
+            <div>
+              <Label className="mb-2 block">Plate Preference</Label>
+              <RadioGroup value={platePreference} onValueChange={setPlatePreference}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="red" id="prefer-red" />
+                  <Label htmlFor="prefer-red">
+                    Prefer {isMetric ? "red (25kg)" : "red (35lb)"} plates
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="blue" id="prefer-blue" />
+                  <Label htmlFor="prefer-blue">
+                    Prefer {isMetric ? "blue (20kg)" : "blue (25lb)"} plates
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
           </div>
         </CardContent>
       </Card>

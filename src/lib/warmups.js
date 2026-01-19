@@ -136,9 +136,10 @@ export const PLATE_SETS = {
     { weight: 1.25, color: "#6B7280", name: "1.25kg" }, // Gray/Micro
   ],
   lb: [
-    { weight: 45, color: "#9CA3AF", name: "45lb" }, // Gray (standard)
-    { weight: 35, color: "#DC2626", name: "35lb" }, // Red
-    { weight: 25, color: "#2563EB", name: "25lb" }, // Blue
+    { weight: 55, color: "#DC2626", name: "55lb" }, // Red (like 25kg)
+    { weight: 45, color: "#2563EB", name: "45lb" }, // Blue (like 20kg)
+    { weight: 35, color: "#FACC15", name: "35lb" }, // Yellow (like 15kg)
+    { weight: 25, color: "#22C55E", name: "25lb" }, // Green (like 10kg)
     { weight: 10, color: "#10B981", name: "10lb" }, // Green
     { weight: 5, color: "#FFFFFF", name: "5lb" }, // White
     { weight: 2.5, color: "#F59E0B", name: "2.5lb" }, // Orange/Small
@@ -172,15 +173,15 @@ export function calculatePlateBreakdown(
   // Filter out non-preferred plate type
   if (platePreference === "blue") {
     // Prefer blue: exclude red plates
-    // For kg: exclude 25kg (red), for lb: exclude 35lb (red)
+    // For kg: exclude 25kg (red), for lb: exclude 55lb (red)
     availablePlates = availablePlates.filter(
-      (plate) => !(isMetric ? plate.weight === 25 : plate.weight === 35),
+      (plate) => !(isMetric ? plate.weight === 25 : plate.weight === 55),
     );
   } else {
     // Prefer red: exclude blue plates
-    // For kg: exclude 20kg (blue), for lb: exclude 25lb (blue)
+    // For kg: exclude 20kg (blue), for lb: exclude 45lb (blue)
     availablePlates = availablePlates.filter(
-      (plate) => !(isMetric ? plate.weight === 20 : plate.weight === 25),
+      (plate) => !(isMetric ? plate.weight === 20 : plate.weight === 45),
     );
   }
   const minIncrement = isMetric ? 1.25 : 2.5; // Smallest plate

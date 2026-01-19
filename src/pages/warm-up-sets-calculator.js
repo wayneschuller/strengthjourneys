@@ -281,13 +281,13 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="red" id="prefer-red" />
                   <Label htmlFor="prefer-red">
-                    Prefer {isMetric ? "red (25kg)" : "red (35lb)"} plates
+                    Prefer {isMetric ? "red (25kg)" : "red (55lb)"} plates
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="blue" id="prefer-blue" />
                   <Label htmlFor="prefer-blue">
-                    Prefer {isMetric ? "blue (20kg)" : "blue (25lb)"} plates
+                    Prefer {isMetric ? "blue (20kg)" : "blue (45lb)"} plates
                   </Label>
                 </div>
               </RadioGroup>

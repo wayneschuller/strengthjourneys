@@ -28,14 +28,14 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
   }
 
   return (
-    <div className={cn("flex flex-col items-end gap-4", className)}>
+    <div className={cn("flex flex-col items-end gap-8 mt-2", className)}>
       {/* Base barbell (same as bar-only state) with plates overlaid on the right */}
       <div className="relative flex items-center justify-end px-2 py-1">
-        {/* Horizontal bar - centered vertically */}
-        <div className="h-2 w-24 rounded bg-gray-400" />
+        {/* Horizontal bar - wider to show sleeve beyond plates */}
+        <div className="h-2 w-28 rounded bg-gray-400" />
 
-        {/* Plates stacked over the right-hand side of the bar, vertically centered */}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1">
+        {/* Plates stacked over the right-hand side of the bar, vertically centered, with sleeve visible beyond */}
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {/* Plates stacked from heaviest (inside) to lightest (outside) */}
           {platesPerSide
             .flatMap((plate) =>
@@ -44,18 +44,29 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
                 index: i,
               })),
             )
-            .map((plate, idx) => (
-              <div
-                key={`${plate.weight}-${idx}`}
-                className="h-10 w-4 rounded border-2 border-gray-800 dark:border-gray-200"
-                style={{
-                  backgroundColor:
-                    plate.color === "#FFFFFF" ? "#E5E7EB" : plate.color,
-                  minWidth: "14px",
-                }}
-                title={`${plate.weight}${unit}`}
-              />
-            ))}
+            .map((plate, idx) => {
+              // Fractional plates (2.5kg/2.5lb, 1.25kg) should be smaller
+              const isFractional = plate.weight === 2.5 || plate.weight === 1.25;
+              const heightClass = isFractional ? "h-9" : "h-16"; 
+              const widthClass = isFractional ? "w-2" : "w-4";
+              
+              return (
+                <div
+                  key={`${plate.weight}-${idx}`}
+                  className={cn(
+                    heightClass,
+                    widthClass,
+                    "rounded border-2 border-gray-800 dark:border-gray-200",
+                  )}
+                  style={{
+                    backgroundColor:
+                      plate.color === "#FFFFFF" ? "#E5E7EB" : plate.color,
+                    minWidth: isFractional ? "8px" : "14px",
+                  }}
+                  title={`${plate.weight}${unit}`}
+                />
+              );
+            })}
         </div>
       </div>
 

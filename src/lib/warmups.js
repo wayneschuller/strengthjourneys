@@ -19,6 +19,8 @@ export function generateWarmupSets(topWeight, topReps, barWeight, isMetric, plat
 
   const warmupSets = [];
   const minIncrement = isMetric ? 2.5 : 5; // Minimum plate increment
+  const minJump = isMetric ? 5 : 10; // Minimum meaningful jump between sets
+  const maxGapToTop = isMetric ? 20 : 45; // Maximum gap before top set (add intermediate if larger)
 
   // Always start with empty bar
   warmupSets.push({
@@ -78,9 +80,13 @@ export function generateWarmupSets(topWeight, topReps, barWeight, isMetric, plat
 
       // Only add if it's heavier than previous set and lighter than top set
       const lastSetWeight = warmupSets[warmupSets.length - 1]?.weight || barWeight;
+      const jump = roundedWeight - lastSetWeight;
+      
+      // Skip if jump is too small (less than minimum meaningful jump)
       if (
         roundedWeight > lastSetWeight &&
-        roundedWeight < topWeight
+        roundedWeight < topWeight &&
+        jump >= minJump
       ) {
         warmupSets.push({
           weight: roundedWeight,
@@ -99,10 +105,13 @@ export function generateWarmupSets(topWeight, topReps, barWeight, isMetric, plat
       const warmupTotalWeight = barWeight + warmupWorkingWeight;
       const roundedWeight = Math.round(warmupTotalWeight / minIncrement) * minIncrement;
 
+      const lastSetWeight = warmupSets[warmupSets.length - 1]?.weight || barWeight;
+      const jump = roundedWeight - lastSetWeight;
+
       if (
-        roundedWeight > barWeight &&
+        roundedWeight > lastSetWeight &&
         roundedWeight < topWeight &&
-        (!warmupSets.length || roundedWeight > warmupSets[warmupSets.length - 1].weight)
+        jump >= minJump
       ) {
         warmupSets.push({
           weight: roundedWeight,
@@ -121,10 +130,13 @@ export function generateWarmupSets(topWeight, topReps, barWeight, isMetric, plat
       const warmupTotalWeight = barWeight + warmupWorkingWeight;
       const roundedWeight = Math.round(warmupTotalWeight / minIncrement) * minIncrement;
 
+      const lastSetWeight = warmupSets[warmupSets.length - 1]?.weight || barWeight;
+      const jump = roundedWeight - lastSetWeight;
+
       if (
-        roundedWeight > barWeight &&
+        roundedWeight > lastSetWeight &&
         roundedWeight < topWeight &&
-        (!warmupSets.length || roundedWeight > warmupSets[warmupSets.length - 1].weight)
+        jump >= minJump
       ) {
         warmupSets.push({
           weight: roundedWeight,
@@ -144,6 +156,30 @@ export function generateWarmupSets(topWeight, topReps, barWeight, isMetric, plat
       uniqueSets.push(set);
     }
   });
+
+  // Check if gap between last warmup and top set is too large
+  // If so, add an intermediate set at ~90-92% of top set
+  if (uniqueSets.length > 0) {
+    const lastWarmup = uniqueSets[uniqueSets.length - 1];
+    const gapToTop = topWeight - lastWarmup.weight;
+    
+    if (gapToTop > maxGapToTop) {
+      // Add an intermediate set at ~90% of top set
+      const intermediateWeight = Math.round((topWeight * 0.9) / minIncrement) * minIncrement;
+      
+      // Only add if it's meaningfully different from last warmup and top set
+      if (
+        intermediateWeight > lastWarmup.weight + minJump &&
+        intermediateWeight < topWeight - minJump
+      ) {
+        uniqueSets.push({
+          weight: intermediateWeight,
+          reps: 1,
+          percentage: Math.round((intermediateWeight / topWeight) * 100),
+        });
+      }
+    }
+  }
 
   return uniqueSets;
 }
@@ -194,22 +230,7 @@ export function calculatePlateBreakdown(
     };
   }
 
-  let availablePlates = isMetric ? PLATE_SETS.kg : PLATE_SETS.lb;
-
-  // Filter out non-preferred plate type
-  if (platePreference === "blue") {
-    // Prefer blue: exclude red plates
-    // For kg: exclude 25kg (red), for lb: exclude 55lb (red)
-    availablePlates = availablePlates.filter(
-      (plate) => !(isMetric ? plate.weight === 25 : plate.weight === 55),
-    );
-  } else {
-    // Prefer red: exclude blue plates
-    // For kg: exclude 20kg (blue), for lb: exclude 45lb (blue)
-    availablePlates = availablePlates.filter(
-      (plate) => !(isMetric ? plate.weight === 20 : plate.weight === 45),
-    );
-  }
+  const allPlates = isMetric ? PLATE_SETS.kg : PLATE_SETS.lb;
   const minIncrement = isMetric ? 1.25 : 2.5; // Smallest plate
   const weightPerSide = (totalWeight - barWeight) / 2;
 
@@ -221,35 +242,78 @@ export function calculatePlateBreakdown(
     };
   }
 
-  const platesPerSide = [];
-  let remaining = weightPerSide;
+  // Helper function to calculate plate breakdown with given plate set
+  const calculateWithPlates = (plates) => {
+    const result = [];
+    let remaining = weightPerSide;
 
-  // Greedy algorithm: use largest plates first
-  for (const plate of availablePlates) {
-    const count = Math.floor(remaining / plate.weight);
-    if (count > 0) {
-      platesPerSide.push({
-        ...plate,
-        count,
-      });
-      remaining -= count * plate.weight;
+    // Greedy algorithm: use largest plates first
+    for (const plate of plates) {
+      const count = Math.floor(remaining / plate.weight);
+      if (count > 0) {
+        result.push({
+          ...plate,
+          count,
+        });
+        remaining -= count * plate.weight;
+      }
     }
-  }
 
-  // Calculate remainder and closest buildable weight
-  const totalPlatesWeight = platesPerSide.reduce(
-    (sum, p) => sum + p.weight * p.count,
-    0,
-  );
-  const actualWeight = barWeight + totalPlatesWeight * 2;
-  const remainder = totalWeight - actualWeight;
-  const closestWeight = actualWeight;
+    const totalPlatesWeight = result.reduce(
+      (sum, p) => sum + p.weight * p.count,
+      0,
+    );
+    const actualWeight = barWeight + totalPlatesWeight * 2;
+    const remainder = totalWeight - actualWeight;
 
-  return {
-    platesPerSide,
-    remainder: Math.abs(remainder) < 0.01 ? 0 : remainder, // Round near-zero to 0
-    closestWeight,
+    return {
+      platesPerSide: result,
+      remainder: Math.abs(remainder) < 0.01 ? 0 : remainder,
+      closestWeight: actualWeight,
+      totalPlateCount: result.reduce((sum, p) => sum + p.count, 0),
+    };
   };
+
+  // Calculate with all plates (no preference filter)
+  const breakdownAll = calculateWithPlates(allPlates);
+
+  // Calculate with preference filter
+  let filteredPlates = allPlates;
+  if (platePreference === "blue") {
+    // Prefer blue: exclude red plates
+    filteredPlates = allPlates.filter(
+      (plate) => !(isMetric ? plate.weight === 25 : plate.weight === 55),
+    );
+  } else {
+    // Prefer red: exclude blue plates
+    filteredPlates = allPlates.filter(
+      (plate) => !(isMetric ? plate.weight === 20 : plate.weight === 45),
+    );
+  }
+  const breakdownPreferred = calculateWithPlates(filteredPlates);
+
+  // Use whichever has fewer total plates
+  // If equal, prefer the one that matches preference
+  if (breakdownAll.totalPlateCount < breakdownPreferred.totalPlateCount) {
+    return {
+      platesPerSide: breakdownAll.platesPerSide,
+      remainder: breakdownAll.remainder,
+      closestWeight: breakdownAll.closestWeight,
+    };
+  } else if (breakdownPreferred.totalPlateCount < breakdownAll.totalPlateCount) {
+    return {
+      platesPerSide: breakdownPreferred.platesPerSide,
+      remainder: breakdownPreferred.remainder,
+      closestWeight: breakdownPreferred.closestWeight,
+    };
+  } else {
+    // Equal plate count - prefer the one that matches preference
+    return {
+      platesPerSide: breakdownPreferred.platesPerSide,
+      remainder: breakdownPreferred.remainder,
+      closestWeight: breakdownPreferred.closestWeight,
+    };
+  }
 }
 
 /**

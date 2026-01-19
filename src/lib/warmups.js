@@ -129,8 +129,8 @@ export const PLATE_SETS = {
   kg: [
     { weight: 25, color: "#DC2626", name: "25kg" }, // Red
     { weight: 20, color: "#2563EB", name: "20kg" }, // Blue
-    { weight: 15, color: "#FCD34D", name: "15kg" }, // Yellow
-    { weight: 10, color: "#10B981", name: "10kg" }, // Green
+    { weight: 15, color: "#FACC15", name: "15kg" }, // Yellow (vivid yellow)
+    { weight: 10, color: "#22C55E", name: "10kg" }, // Green (more vivid)
     { weight: 5, color: "#FFFFFF", name: "5kg" }, // White
     { weight: 2.5, color: "#F59E0B", name: "2.5kg" }, // Orange/Small
     { weight: 1.25, color: "#6B7280", name: "1.25kg" }, // Gray/Micro

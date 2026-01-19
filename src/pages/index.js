@@ -36,6 +36,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { GettingStartedCard } from "@/components/instructions-cards";
 import { Testimonials } from "@/components/testimonials";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
@@ -267,8 +268,18 @@ export default function Home() {
 }
 
 function FeatureCard({ href, title, description, IconComponent }) {
+  const isWarmupsCalculator = href === "/warm-up-sets-calculator";
+  
   return (
-    <Card className="group shadow-lg ring-0 ring-black hover:ring-1 dark:ring-white">
+    <Card className="group relative shadow-lg ring-0 ring-black hover:ring-1 dark:ring-white">
+      {isWarmupsCalculator && (
+        <Badge
+          variant="outline"
+          className="absolute right-2 top-2 bg-green-100 text-xs text-green-800 dark:bg-green-900 dark:text-green-200"
+        >
+          New
+        </Badge>
+      )}
       <Link href={href}>
         <CardHeader className="min-h-28">
           <CardTitle className="">{title}</CardTitle>

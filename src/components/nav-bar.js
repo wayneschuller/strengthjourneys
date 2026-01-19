@@ -52,6 +52,7 @@ import {
   Grid2x2Check,
   ChartColumnDecreasing,
   Bus,
+  Flame,
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
@@ -465,6 +466,11 @@ function CalculatorsMenu() {
       icon: <Calculator className="h-5 w-5" />,
     },
     {
+      title: "Warm Ups Calculator",
+      href: "/warm-up-sets-calculator",
+      icon: <Flame className="h-5 w-5" />,
+    },
+    {
       title: "Strength Level Calculator",
       href: "/strength-level-calculator",
       icon: <BarChart className="h-5 w-5" />,
@@ -517,6 +523,7 @@ function CalculatorsMenu() {
             className={cn(
               "bg-transparent transition-colors hover:text-foreground/80",
               pathname.startsWith("/calculator") ||
+                pathname.startsWith("/warm-up-sets-calculator") ||
                 pathname.startsWith("/strength-level-calculator") ||
                 pathname.startsWith("/timer")
                 ? "text-foreground"

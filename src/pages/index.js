@@ -25,6 +25,7 @@ import {
   Shield,
   Skull,
   Luggage,
+  Flame,
 } from "lucide-react";
 
 import {
@@ -77,6 +78,13 @@ export const featurePages = [
     title: "One Rep Max Calculator",
     description: "The greatest e1rm multi-formula one rep max calculations.",
     IconComponent: Calculator,
+  },
+  {
+    href: "/warm-up-sets-calculator",
+    title: "Warm Ups Calculator",
+    description:
+      "Generate warmup sets for your barbell workouts using Starting Strength methodology.",
+    IconComponent: Flame,
   },
   {
     href: "/strength-level-calculator",

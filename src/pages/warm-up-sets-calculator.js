@@ -5,13 +5,7 @@ import { Flame } from "lucide-react";
 
 import { RelatedArticles } from "@/components/article-cards";
 import { UnitChooser } from "@/components/unit-type-chooser";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   PageHeader,
   PageHeaderHeading,
@@ -21,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "usehooks-ts";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 
@@ -108,6 +103,13 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
       initializeWithValue: false,
     },
   );
+  const [warmupSetCount, setWarmupSetCount] = useLocalStorage(
+    "SJ_WarmupsSetCount",
+    4,
+    {
+      initializeWithValue: false,
+    },
+  );
 
   // Calculate bar weight based on unit and bar type
   const barWeight = isMetric
@@ -125,6 +127,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     barWeight,
     isMetric,
     platePreference,
+    Number(warmupSetCount),
   );
 
   // Calculate plate breakdown for top set
@@ -255,7 +258,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
           </div>
 
           {/* Options: horizontal on desktop, vertical on mobile */}
-          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
             {/* Bar Type Selection */}
             <div>
               <Label className="mb-2 block">Barbell Type</Label>
@@ -292,6 +295,45 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
                   </Label>
                 </div>
               </RadioGroup>
+            </div>
+
+            {/* Warmup Set Count Selection */}
+            <div>
+              <Label className="mb-2 block">Warmup sets (before top set)</Label>
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() =>
+                    setWarmupSetCount((prev) => {
+                      const current = Number(prev ?? 0) || 0;
+                      return Math.max(2, current - 1);
+                    })
+                  }
+                  aria-label="Fewer warmup sets"
+                >
+                  -
+                </Button>
+                <div className="w-10 text-center text-lg font-medium">
+                  {Number(warmupSetCount)}
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() =>
+                    setWarmupSetCount((prev) => {
+                      const current = Number(prev ?? 0) || 0;
+                      return Math.min(6, current + 1);
+                    })
+                  }
+                  aria-label="More warmup sets"
+                >
+                  +
+                </Button>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Fewer sets = bigger jumps, more sets = smaller jumps.
+              </p>
             </div>
           </div>
         </CardContent>

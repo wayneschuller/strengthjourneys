@@ -10,6 +10,7 @@
  * @param {number} barWeight - Weight of the barbell
  * @param {boolean} isMetric - Whether using kg (true) or lb (false)
  * @param {string} platePreference - "red" or "blue" plate preference
+ * @param {number} targetWarmupCount - Desired number of warmup sets before top (including bar)
  * @returns {Array} Array of warmup set objects with {weight, reps, percentage}
  */
 export function generateWarmupSets(
@@ -18,6 +19,7 @@ export function generateWarmupSets(
   barWeight,
   isMetric,
   platePreference = "red",
+  targetWarmupCount = 4,
 ) {
   if (!topWeight || topWeight <= 0 || topReps <= 0) {
     return [];
@@ -28,7 +30,10 @@ export function generateWarmupSets(
 
   const warmupSets = [];
   const minIncrement = isMetric ? 2.5 : 5; // Minimum plate increment
-  const minJump = isMetric ? 5 : 10; // Minimum meaningful jump between sets
+  const minJump = isMetric ? 5 : 10; // Base minimum meaningful jump between sets
+
+  // Clamp target warmup count to a reasonable range
+  const clampedTargetCount = Math.min(Math.max(Math.round(targetWarmupCount), 2), 6);
 
   // Always start with empty bar
   warmupSets.push({
@@ -56,7 +61,7 @@ export function generateWarmupSets(
   let anchorTarget;
   if (isMetric) {
     // Metric: 60kg (blue 20s) for most weights, 70kg (red 25s) for heavy unless blue is explicitly preferred
-    const heavyThresholdKg = 140;
+    const heavyThresholdKg = 150;
     if (topWeight >= heavyThresholdKg && platePreference !== "blue") {
       anchorTarget = 70;
     } else {
@@ -64,7 +69,7 @@ export function generateWarmupSets(
     }
   } else {
     // Imperial: 135lb (blue 45s) vs 155lb (red 55s)
-    const heavyThresholdLb = 315;
+    const heavyThresholdLb = 330;
     if (topWeight >= heavyThresholdLb && platePreference !== "blue") {
       anchorTarget = 155;
     } else {
@@ -72,13 +77,21 @@ export function generateWarmupSets(
     }
   }
 
+  // Let the target number of warmup sets influence jump size:
+  // fewer sets -> bigger jumps, more sets -> smaller jumps
+  const volumeJumpMultiplier =
+    clampedTargetCount <= 3 ? 1.4 : clampedTargetCount >= 5 ? 0.8 : 1.0;
+  const totalRange = Math.max(topWeight - barWeight, minIncrement);
+  const desiredAvgJump = totalRange / clampedTargetCount;
+  const effectiveMinJump = Math.min(minJump * volumeJumpMultiplier, desiredAvgJump);
+
   let previousWeight = barWeight;
   let previousPlateMap = buildPlateCountMap([]);
 
   // Only add anchor if it makes sense (meaningful jump and below top)
   if (
-    anchorTarget > barWeight + minJump &&
-    anchorTarget < topWeight - minJump
+    anchorTarget > barWeight + effectiveMinJump &&
+    anchorTarget < topWeight - effectiveMinJump
   ) {
     const anchorBreakdown = calculatePlateBreakdown(
       anchorTarget,
@@ -89,8 +102,8 @@ export function generateWarmupSets(
     const anchorWeight = anchorBreakdown.closestWeight;
 
     if (
-      anchorWeight > barWeight + minJump &&
-      anchorWeight < topWeight - minJump
+      anchorWeight > barWeight + effectiveMinJump &&
+      anchorWeight < topWeight - effectiveMinJump
     ) {
       warmupSets.push({
         weight: anchorWeight,
@@ -102,18 +115,21 @@ export function generateWarmupSets(
     }
   }
 
-  // Starting Strength style progression
-  // For higher rep sets (5+), use more gradual progression
-  // For lower rep sets (1-3), use fewer but heavier warmup sets
-  const { percentages, repScheme } =
-    topReps >= 5
-      ? // 5+ reps: higher volume, we usually want 2 mid sets
-        { percentages: [0.75, 0.9], repScheme: [4, 3] }
-      : topReps >= 3
-        ? // 3-4 reps: slightly fewer sets
-          { percentages: [0.8, 0.9], repScheme: [3, 2] }
-        : // 1-2 reps: minimal volume
-          { percentages: [0.85, 0.95], repScheme: [3, 2] };
+  // Progression schemes by reps and volume preference
+  const getScheme = () => {
+    // We expose up to 4 candidate mid-set percentages; the target warmup
+    // count determines how many will actually be used.
+    if (topReps >= 5) {
+      // Lighter technique-focused options up to heavy singles before top
+      return { percentages: [0.6, 0.75, 0.85, 0.9], repScheme: [5, 4, 3, 2] };
+    }
+    if (topReps >= 3) {
+      return { percentages: [0.7, 0.8, 0.9, 0.95], repScheme: [3, 3, 2, 1] };
+    }
+    return { percentages: [0.8, 0.87, 0.93, 0.97], repScheme: [3, 2, 2, 1] };
+  };
+
+  const { percentages, repScheme } = getScheme();
 
   // Helper that finds the next practical warmup weight honouring:
   // - rounding to plate increments
@@ -127,8 +143,8 @@ export function generateWarmupSets(
       const roundedDesired = roundToIncrement(desired, minIncrement);
 
       if (
-        roundedDesired <= previousWeight + minJump ||
-        roundedDesired >= topWeight - minJump
+        roundedDesired <= previousWeight + effectiveMinJump ||
+        roundedDesired >= topWeight - effectiveMinJump
       ) {
         return null;
       }
@@ -142,8 +158,8 @@ export function generateWarmupSets(
       const actualWeight = breakdown.closestWeight;
 
       if (
-        actualWeight <= previousWeight + minJump ||
-        actualWeight >= topWeight - minJump
+        actualWeight <= previousWeight + effectiveMinJump ||
+        actualWeight >= topWeight - effectiveMinJump
       ) {
         desired += minIncrement;
         continue;
@@ -177,6 +193,10 @@ export function generateWarmupSets(
   };
 
   percentages.forEach((pct, idx) => {
+    // Stop once we've reached the requested number of warmup sets
+    if (warmupSets.length >= clampedTargetCount) {
+      return;
+    }
     const reps = repScheme[idx] || 1;
     const next = findNextWarmupFromPercentage(pct, reps);
     if (next) {

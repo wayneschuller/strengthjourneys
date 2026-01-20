@@ -88,45 +88,80 @@ export function generateWarmupSets(
   let previousWeight = barWeight;
   let previousPlateMap = buildPlateCountMap([]);
 
-  // Only add anchor if it makes sense (meaningful jump and below top)
-  if (
-    anchorTarget > barWeight + effectiveMinJump &&
-    anchorTarget < topWeight - effectiveMinJump
-  ) {
-    const anchorBreakdown = calculatePlateBreakdown(
-      anchorTarget,
-      barWeight,
-      isMetric,
-      platePreference,
-    );
-    const anchorWeight = anchorBreakdown.closestWeight;
+  // Only add anchor (big plate jump) if user wants fewer warmups.
+  // For many warmups (5-6), skip the anchor and use gradual percentage-based sets from bar.
+  const shouldUseAnchor = clampedTargetCount <= 4;
 
+  if (shouldUseAnchor) {
+    // Only add anchor if it makes sense (meaningful jump and below top)
     if (
-      anchorWeight > barWeight + effectiveMinJump &&
-      anchorWeight < topWeight - effectiveMinJump
+      anchorTarget > barWeight + effectiveMinJump &&
+      anchorTarget < topWeight - effectiveMinJump
     ) {
-      warmupSets.push({
-        weight: anchorWeight,
-        reps: 5,
-        percentage: Math.round((anchorWeight / topWeight) * 100),
-      });
-      previousWeight = anchorWeight;
-      previousPlateMap = buildPlateCountMap(anchorBreakdown.platesPerSide);
+      const anchorBreakdown = calculatePlateBreakdown(
+        anchorTarget,
+        barWeight,
+        isMetric,
+        platePreference,
+      );
+      const anchorWeight = anchorBreakdown.closestWeight;
+
+      if (
+        anchorWeight > barWeight + effectiveMinJump &&
+        anchorWeight < topWeight - effectiveMinJump
+      ) {
+        warmupSets.push({
+          weight: anchorWeight,
+          reps: 5,
+          percentage: Math.round((anchorWeight / topWeight) * 100),
+        });
+        previousWeight = anchorWeight;
+        previousPlateMap = buildPlateCountMap(anchorBreakdown.platesPerSide);
+      }
     }
   }
 
-  // Progression schemes by reps and volume preference
+  // Calculate how many sets we still need (excluding bar, which is already added)
+  const setsNeeded = clampedTargetCount - warmupSets.length;
+
+  // Generate percentage candidates dynamically based on what we need
   const getScheme = () => {
-    // We expose up to 4 candidate mid-set percentages; the target warmup
-    // count determines how many will actually be used.
+    // Base percentages vary by rep range
+    let basePercentages, baseRepScheme;
     if (topReps >= 5) {
-      // Lighter technique-focused options up to heavy singles before top
-      return { percentages: [0.6, 0.75, 0.85, 0.9], repScheme: [5, 4, 3, 2] };
+      basePercentages = [0.6, 0.75, 0.85, 0.9];
+      baseRepScheme = [5, 4, 3, 2];
+    } else if (topReps >= 3) {
+      basePercentages = [0.7, 0.8, 0.9, 0.95];
+      baseRepScheme = [3, 3, 2, 1];
+    } else {
+      basePercentages = [0.8, 0.87, 0.93, 0.97];
+      baseRepScheme = [3, 2, 2, 1];
     }
-    if (topReps >= 3) {
-      return { percentages: [0.7, 0.8, 0.9, 0.95], repScheme: [3, 3, 2, 1] };
+
+    // If we need more sets than base percentages, generate evenly spaced ones
+    if (setsNeeded > basePercentages.length) {
+      const startPct = basePercentages[0];
+      const endPct = basePercentages[basePercentages.length - 1];
+      const percentages = [];
+      const repScheme = [];
+
+      for (let i = 0; i < setsNeeded; i++) {
+        const pct = startPct + ((endPct - startPct) * i) / (setsNeeded - 1);
+        percentages.push(pct);
+        // Interpolate reps: more reps for lighter sets, fewer for heavier
+        const repIdx = Math.floor((i / (setsNeeded - 1)) * (baseRepScheme.length - 1));
+        repScheme.push(baseRepScheme[repIdx] || 1);
+      }
+
+      return { percentages, repScheme };
     }
-    return { percentages: [0.8, 0.87, 0.93, 0.97], repScheme: [3, 2, 2, 1] };
+
+    // Otherwise use base scheme, but only take what we need
+    return {
+      percentages: basePercentages.slice(0, setsNeeded),
+      repScheme: baseRepScheme.slice(0, setsNeeded),
+    };
   };
 
   const { percentages, repScheme } = getScheme();
@@ -209,6 +244,69 @@ export function generateWarmupSets(
       previousPlateMap = next.plateMap;
     }
   });
+
+  // If we're still short of the target, keep generating intermediate sets
+  // by evenly spacing between last warmup and top set
+  while (warmupSets.length < clampedTargetCount && warmupSets.length > 0) {
+    const lastSet = warmupSets[warmupSets.length - 1];
+    const gap = topWeight - lastSet.weight;
+
+    // If gap is too small, we can't fit more sets
+    if (gap < effectiveMinJump * 1.5) {
+      break;
+    }
+
+    // Try a set at roughly 50% of the remaining gap
+    const targetPct = (lastSet.weight + gap * 0.5) / topWeight;
+    const reps = topReps >= 5 ? 3 : topReps >= 3 ? 2 : 1;
+    const next = findNextWarmupFromPercentage(targetPct, reps);
+
+    if (next && next.weight > lastSet.weight && next.weight < topWeight) {
+      warmupSets.push({
+        weight: next.weight,
+        reps: next.reps,
+        percentage: Math.round((next.weight / topWeight) * 100),
+      });
+      previousWeight = next.weight;
+      previousPlateMap = next.plateMap;
+    } else {
+      // If we can't add a set, try with a slightly relaxed constraint
+      // by temporarily reducing effectiveMinJump
+      const relaxedJump = effectiveMinJump * 0.7;
+      let relaxedDesired = (lastSet.weight + topWeight) / 2;
+      const relaxedRounded = roundToIncrement(relaxedDesired, minIncrement);
+
+      if (
+        relaxedRounded > lastSet.weight + relaxedJump &&
+        relaxedRounded < topWeight - relaxedJump
+      ) {
+        const relaxedBreakdown = calculatePlateBreakdown(
+          relaxedRounded,
+          barWeight,
+          isMetric,
+          platePreference,
+        );
+        const relaxedWeight = relaxedBreakdown.closestWeight;
+
+        if (
+          relaxedWeight > lastSet.weight + relaxedJump &&
+          relaxedWeight < topWeight - relaxedJump
+        ) {
+          warmupSets.push({
+            weight: relaxedWeight,
+            reps,
+            percentage: Math.round((relaxedWeight / topWeight) * 100),
+          });
+          previousWeight = relaxedWeight;
+          previousPlateMap = buildPlateCountMap(relaxedBreakdown.platesPerSide);
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+  }
 
   // Remove duplicates (can happen with very light weights)
   const uniqueSets = [];

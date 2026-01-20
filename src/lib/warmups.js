@@ -12,20 +12,28 @@
  * @param {string} platePreference - "red" or "blue" plate preference
  * @returns {Array} Array of warmup set objects with {weight, reps, percentage}
  */
-export function generateWarmupSets(topWeight, topReps, barWeight, isMetric, platePreference = "red") {
+export function generateWarmupSets(
+  topWeight,
+  topReps,
+  barWeight,
+  isMetric,
+  platePreference = "red",
+) {
   if (!topWeight || topWeight <= 0 || topReps <= 0) {
     return [];
   }
 
+  const roundToIncrement = (value, increment) =>
+    Math.round(value / increment) * increment;
+
   const warmupSets = [];
   const minIncrement = isMetric ? 2.5 : 5; // Minimum plate increment
   const minJump = isMetric ? 5 : 10; // Minimum meaningful jump between sets
-  const maxGapToTop = isMetric ? 20 : 45; // Maximum gap before top set (add intermediate if larger)
 
   // Always start with empty bar
   warmupSets.push({
     weight: barWeight,
-    reps: 5,
+    reps: 10,
     percentage: 0,
     isBarOnly: true,
   });
@@ -35,117 +43,152 @@ export function generateWarmupSets(topWeight, topReps, barWeight, isMetric, plat
     return warmupSets;
   }
 
-  // For lifts over 100kg/225lb, add a standard first warmup with plates
-  const heavyLiftThreshold = isMetric ? 100 : 225;
-  if (topWeight > heavyLiftThreshold) {
-    const heavyLiftThresholdRed = isMetric ? 140 : 315;
-    
-    let firstWarmupWeight;
-    if (platePreference === "blue" || (platePreference === "red" && topWeight <= heavyLiftThresholdRed)) {
-      // Use blue plates: 60kg (20kg bar + 2x20kg) or 135lb (45lb bar + 2x45lb)
-      firstWarmupWeight = isMetric ? 60 : 135;
+  // Helper to build a map of plate counts for "only add plates" checks
+  const buildPlateCountMap = (platesPerSide) => {
+    const map = new Map();
+    platesPerSide.forEach((p) => {
+      map.set(p.weight, (map.get(p.weight) || 0) + p.count);
+    });
+    return map;
+  };
+
+  // Choose anchor warmup that sets the big plates which mostly stay on
+  let anchorTarget;
+  if (isMetric) {
+    // Metric: 60kg (blue 20s) for most weights, 70kg (red 25s) for heavy unless blue is explicitly preferred
+    const heavyThresholdKg = 140;
+    if (topWeight >= heavyThresholdKg && platePreference !== "blue") {
+      anchorTarget = 70;
     } else {
-      // Prefer red and top set > 140kg/315lb: use red plates
-      // 70kg (20kg bar + 2x25kg) or 155lb (45lb bar + 2x55lb)
-      firstWarmupWeight = isMetric ? 70 : 155;
+      anchorTarget = 60;
     }
-    
-    // Only add if it's heavier than bar and lighter than top set
-    if (firstWarmupWeight > barWeight && firstWarmupWeight < topWeight) {
-      warmupSets.push({
-        weight: firstWarmupWeight,
-        reps: 5,
-        percentage: Math.round((firstWarmupWeight / topWeight) * 100),
-      });
+  } else {
+    // Imperial: 135lb (blue 45s) vs 155lb (red 55s)
+    const heavyThresholdLb = 315;
+    if (topWeight >= heavyThresholdLb && platePreference !== "blue") {
+      anchorTarget = 155;
+    } else {
+      anchorTarget = 135;
     }
   }
 
-  // Calculate working weight (total minus bar)
-  const workingWeight = topWeight - barWeight;
+  let previousWeight = barWeight;
+  let previousPlateMap = buildPlateCountMap([]);
+
+  // Only add anchor if it makes sense (meaningful jump and below top)
+  if (
+    anchorTarget > barWeight + minJump &&
+    anchorTarget < topWeight - minJump
+  ) {
+    const anchorBreakdown = calculatePlateBreakdown(
+      anchorTarget,
+      barWeight,
+      isMetric,
+      platePreference,
+    );
+    const anchorWeight = anchorBreakdown.closestWeight;
+
+    if (
+      anchorWeight > barWeight + minJump &&
+      anchorWeight < topWeight - minJump
+    ) {
+      warmupSets.push({
+        weight: anchorWeight,
+        reps: 5,
+        percentage: Math.round((anchorWeight / topWeight) * 100),
+      });
+      previousWeight = anchorWeight;
+      previousPlateMap = buildPlateCountMap(anchorBreakdown.platesPerSide);
+    }
+  }
 
   // Starting Strength style progression
   // For higher rep sets (5+), use more gradual progression
   // For lower rep sets (1-3), use fewer but heavier warmup sets
-  if (topReps >= 5) {
-    // Standard progression: 40%, 60%, 80% of working weight
-    const percentages = [0.4, 0.6, 0.8];
-    const repScheme = [5, 3, 2];
+  const { percentages, repScheme } =
+    topReps >= 5
+      ? // 5+ reps: higher volume, we usually want 2 mid sets
+        { percentages: [0.75, 0.9], repScheme: [4, 3] }
+      : topReps >= 3
+        ? // 3-4 reps: slightly fewer sets
+          { percentages: [0.8, 0.9], repScheme: [3, 2] }
+        : // 1-2 reps: minimal volume
+          { percentages: [0.85, 0.95], repScheme: [3, 2] };
 
-    percentages.forEach((pct, idx) => {
-      const warmupWorkingWeight = workingWeight * pct;
-      const warmupTotalWeight = barWeight + warmupWorkingWeight;
+  // Helper that finds the next practical warmup weight honouring:
+  // - rounding to plate increments
+  // - only adding plates (no removing)
+  // - being between previous and top with a meaningful jump
+  const findNextWarmupFromPercentage = (pct, reps) => {
+    let desired = topWeight * pct;
 
-      // Round to nearest plate increment
-      const roundedWeight = Math.round(warmupTotalWeight / minIncrement) * minIncrement;
-
-      // Only add if it's heavier than previous set and lighter than top set
-      const lastSetWeight = warmupSets[warmupSets.length - 1]?.weight || barWeight;
-      const jump = roundedWeight - lastSetWeight;
-      
-      // Skip if jump is too small (less than minimum meaningful jump)
-      if (
-        roundedWeight > lastSetWeight &&
-        roundedWeight < topWeight &&
-        jump >= minJump
-      ) {
-        warmupSets.push({
-          weight: roundedWeight,
-          reps: repScheme[idx] || 1,
-          percentage: Math.round((roundedWeight / topWeight) * 100),
-        });
-      }
-    });
-  } else if (topReps >= 3) {
-    // For 3-4 rep sets: 50%, 70%, 85%
-    const percentages = [0.5, 0.7, 0.85];
-    const repScheme = [3, 2, 1];
-
-    percentages.forEach((pct, idx) => {
-      const warmupWorkingWeight = workingWeight * pct;
-      const warmupTotalWeight = barWeight + warmupWorkingWeight;
-      const roundedWeight = Math.round(warmupTotalWeight / minIncrement) * minIncrement;
-
-      const lastSetWeight = warmupSets[warmupSets.length - 1]?.weight || barWeight;
-      const jump = roundedWeight - lastSetWeight;
+    // Small safety to avoid infinite loops
+    for (let i = 0; i < 20; i++) {
+      const roundedDesired = roundToIncrement(desired, minIncrement);
 
       if (
-        roundedWeight > lastSetWeight &&
-        roundedWeight < topWeight &&
-        jump >= minJump
+        roundedDesired <= previousWeight + minJump ||
+        roundedDesired >= topWeight - minJump
       ) {
-        warmupSets.push({
-          weight: roundedWeight,
-          reps: repScheme[idx] || 1,
-          percentage: Math.round((roundedWeight / topWeight) * 100),
-        });
+        return null;
       }
-    });
-  } else {
-    // For 1-2 rep sets: 60%, 80%, 90%
-    const percentages = [0.6, 0.8, 0.9];
-    const repScheme = [3, 2, 1];
 
-    percentages.forEach((pct, idx) => {
-      const warmupWorkingWeight = workingWeight * pct;
-      const warmupTotalWeight = barWeight + warmupWorkingWeight;
-      const roundedWeight = Math.round(warmupTotalWeight / minIncrement) * minIncrement;
-
-      const lastSetWeight = warmupSets[warmupSets.length - 1]?.weight || barWeight;
-      const jump = roundedWeight - lastSetWeight;
+      const breakdown = calculatePlateBreakdown(
+        roundedDesired,
+        barWeight,
+        isMetric,
+        platePreference,
+      );
+      const actualWeight = breakdown.closestWeight;
 
       if (
-        roundedWeight > lastSetWeight &&
-        roundedWeight < topWeight &&
-        jump >= minJump
+        actualWeight <= previousWeight + minJump ||
+        actualWeight >= topWeight - minJump
       ) {
-        warmupSets.push({
-          weight: roundedWeight,
-          reps: repScheme[idx] || 1,
-          percentage: Math.round((roundedWeight / topWeight) * 100),
-        });
+        desired += minIncrement;
+        continue;
       }
-    });
-  }
+
+      const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
+
+      // Enforce "only add plates": for every existing plate weight,
+      // the new count must be >= previous.
+      let onlyAdding = true;
+      previousPlateMap.forEach((prevCount, weight) => {
+        const nextCount = newPlateMap.get(weight) || 0;
+        if (nextCount < prevCount) {
+          onlyAdding = false;
+        }
+      });
+
+      if (!onlyAdding) {
+        desired += minIncrement;
+        continue;
+      }
+
+      return {
+        weight: actualWeight,
+        reps,
+        plateMap: newPlateMap,
+      };
+    }
+
+    return null;
+  };
+
+  percentages.forEach((pct, idx) => {
+    const reps = repScheme[idx] || 1;
+    const next = findNextWarmupFromPercentage(pct, reps);
+    if (next) {
+      warmupSets.push({
+        weight: next.weight,
+        reps: next.reps,
+        percentage: Math.round((next.weight / topWeight) * 100),
+      });
+      previousWeight = next.weight;
+      previousPlateMap = next.plateMap;
+    }
+  });
 
   // Remove duplicates (can happen with very light weights)
   const uniqueSets = [];
@@ -156,30 +199,6 @@ export function generateWarmupSets(topWeight, topReps, barWeight, isMetric, plat
       uniqueSets.push(set);
     }
   });
-
-  // Check if gap between last warmup and top set is too large
-  // If so, add an intermediate set at ~90-92% of top set
-  if (uniqueSets.length > 0) {
-    const lastWarmup = uniqueSets[uniqueSets.length - 1];
-    const gapToTop = topWeight - lastWarmup.weight;
-    
-    if (gapToTop > maxGapToTop) {
-      // Add an intermediate set at ~90% of top set
-      const intermediateWeight = Math.round((topWeight * 0.9) / minIncrement) * minIncrement;
-      
-      // Only add if it's meaningfully different from last warmup and top set
-      if (
-        intermediateWeight > lastWarmup.weight + minJump &&
-        intermediateWeight < topWeight - minJump
-      ) {
-        uniqueSets.push({
-          weight: intermediateWeight,
-          reps: 1,
-          percentage: Math.round((intermediateWeight / topWeight) * 100),
-        });
-      }
-    }
-  }
 
   return uniqueSets;
 }

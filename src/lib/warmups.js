@@ -4,16 +4,16 @@
  */
 
 /**
- * Generate warmup sets based on Starting Strength methodology
+ * Generate warmup sets and top set based on Starting Strength methodology
  * @param {number} topWeight - Target weight for the top set
  * @param {number} topReps - Number of reps for the top set
  * @param {number} barWeight - Weight of the barbell
  * @param {boolean} isMetric - Whether using kg (true) or lb (false)
  * @param {string} platePreference - "red" or "blue" plate preference
  * @param {number} targetWarmupCount - Desired number of warmup sets before top (including bar)
- * @returns {Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean}>} Array of warmup set objects with weight, reps, percentage, and plate breakdown
+ * @returns {{warmupSets: Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean}>, topSet: {weight: number, reps: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}}}} Object with warmup sets array and top set object, both with plate breakdowns
  */
-export function generateWarmupSets(
+export function generateSessionSets(
   topWeight,
   topReps,
   barWeight,
@@ -22,7 +22,14 @@ export function generateWarmupSets(
   targetWarmupCount = 4,
 ) {
   if (!topWeight || topWeight <= 0 || topReps <= 0) {
-    return [];
+    return {
+      warmupSets: [],
+      topSet: {
+        weight: topWeight,
+        reps: topReps,
+        plateBreakdown: calculatePlateBreakdown(topWeight, barWeight, isMetric, platePreference),
+      },
+    };
   }
 
   const roundToIncrement = (value, increment) =>
@@ -92,7 +99,15 @@ export function generateWarmupSets(
 
   // For very light weights, we might only need the bar
   if (topWeight <= barWeight + minIncrement) {
-    return warmupSets;
+    const topSetBreakdown = calculatePlateBreakdown(topWeight, barWeight, isMetric, platePreference);
+    return {
+      warmupSets,
+      topSet: {
+        weight: topWeight,
+        reps: topReps,
+        plateBreakdown: topSetBreakdown,
+      },
+    };
   }
 
   let previousWeight = barWeight;
@@ -624,7 +639,30 @@ export function generateWarmupSets(
     }
   }
 
-  return uniqueSets;
+  // Calculate top set plate breakdown based on the last warmup set's plates
+  let topSetBreakdown;
+  if (uniqueSets.length > 0) {
+    const lastWarmupSet = uniqueSets[uniqueSets.length - 1];
+    topSetBreakdown = calculateTopSetBreakdown(
+      topWeight,
+      barWeight,
+      lastWarmupSet.plateBreakdown.platesPerSide,
+      isMetric,
+      platePreference,
+    );
+  } else {
+    // Fallback to standard calculation if no warmup sets
+    topSetBreakdown = calculatePlateBreakdown(topWeight, barWeight, isMetric, platePreference);
+  }
+
+  return {
+    warmupSets: uniqueSets,
+    topSet: {
+      weight: topWeight,
+      reps: topReps,
+      plateBreakdown: topSetBreakdown,
+    },
+  };
 }
 
 /**

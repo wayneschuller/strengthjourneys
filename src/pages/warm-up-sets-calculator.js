@@ -20,9 +20,7 @@ import { useLocalStorage } from "usehooks-ts";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 
 import {
-  generateWarmupSets,
-  calculatePlateBreakdown,
-  calculateTopSetBreakdown,
+  generateSessionSets,
   formatPlateBreakdown,
 } from "@/lib/warmups";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
@@ -122,16 +120,21 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
       : 45;
 
   /**
-   * Generate warmup sets with plate breakdowns
-   * @type {Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean}>}
-   * warmupSets - Array of warmup set objects:
-   *   - weight: Weight for this warmup set (number)
-   *   - reps: Number of reps for this set (number)
-   *   - percentage: Percentage of top set weight (number, 0 for bar-only sets)
-   *   - plateBreakdown: Plate breakdown calculated during generation (includes platesPerSide, remainder, closestWeight)
-   *   - isBarOnly: Optional flag indicating this is just the empty bar (boolean)
+   * Generate warmup sets and top set with plate breakdowns
+   * @type {{warmupSets: Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean}>, topSet: {weight: number, reps: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}}}}
+   * session - Object containing:
+   *   - warmupSets: Array of warmup set objects, each with:
+   *     - weight: Weight for this warmup set (number)
+   *     - reps: Number of reps for this set (number)
+   *     - percentage: Percentage of top set weight (number, 0 for bar-only sets)
+   *     - plateBreakdown: Plate breakdown calculated during generation (includes platesPerSide, remainder, closestWeight)
+   *     - isBarOnly: Optional flag indicating this is just the empty bar (boolean)
+   *   - topSet: Top set object with:
+   *     - weight: Target weight for top set (number)
+   *     - reps: Number of reps for top set (number)
+   *     - plateBreakdown: Plate breakdown that builds on last warmup set's plates
    */
-  const warmupSets = generateWarmupSets(
+  const session = generateSessionSets(
     Number(weight),
     Number(reps),
     barWeight,
@@ -139,45 +142,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     platePreference,
     Number(warmupSetCount),
   );
-
-  /**
-   * Calculate plate breakdown for top set
-   * If we have warmup sets, start from the last warmup's plates and add what's needed
-   * @type {{platesPerSide: Array<{weight: number, count: number, color: string, name: string}>, remainder: number, closestWeight: number}}
-   * topSetBreakdown - Plate breakdown object:
-   *   - platesPerSide: Array of plate objects, each with:
-   *     - weight: Plate weight (number)
-   *     - count: Number of plates of this weight per side (number)
-   *     - color: Hex color code for visualization (string)
-   *     - name: Display name (string, e.g., "25kg" or "45lb")
-   *   - remainder: Difference between target weight and achievable weight (number)
-   *   - closestWeight: Actual achievable weight with available plates (number)
-   */
-  let topSetBreakdown;
-  if (warmupSets.length > 0) {
-    const lastWarmupSet = warmupSets[warmupSets.length - 1];
-    const lastWarmupBreakdown = calculatePlateBreakdown(
-      lastWarmupSet.weight,
-      barWeight,
-      isMetric,
-      platePreference,
-    );
-    topSetBreakdown = calculateTopSetBreakdown(
-      Number(weight),
-      barWeight,
-      lastWarmupBreakdown.platesPerSide,
-      isMetric,
-      platePreference,
-    );
-  } else {
-    // Fallback to standard calculation if no warmup sets
-    topSetBreakdown = calculatePlateBreakdown(
-      Number(weight),
-      barWeight,
-      isMetric,
-      platePreference,
-    );
-  }
+  const { warmupSets, topSet } = session;
 
   const handleWeightSliderChange = (value) => {
     let newWeight = value[0];
@@ -383,9 +348,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
       {/* Warmup Sets Output */}
       <WarmupSetsDisplay
         warmupSets={warmupSets}
-        topSetBreakdown={topSetBreakdown}
-        reps={reps}
-        weight={weight}
+        topSet={topSet}
         unit={unit}
         barWeight={barWeight}
         isMetric={isMetric}
@@ -402,18 +365,14 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
  * Display component for warmup sets and top set with plate breakdowns
  * @param {Object} props
  * @param {Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean}>} props.warmupSets - Array of warmup set objects with stored plate breakdowns
- * @param {{platesPerSide: Array<{weight: number, count: number, color: string, name: string}>, remainder: number, closestWeight: number}} props.topSetBreakdown - Plate breakdown for top set
- * @param {number} props.reps - Number of reps for top set
- * @param {number} props.weight - Weight for top set
+ * @param {{weight: number, reps: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}}} props.topSet - Top set object with weight, reps, and plate breakdown
  * @param {string} props.unit - Unit string ("kg" or "lb")
  * @param {number} props.barWeight - Weight of the barbell
  * @param {boolean} props.isMetric - Whether using metric (kg) or imperial (lb)
  */
 function WarmupSetsDisplay({
   warmupSets,
-  topSetBreakdown,
-  reps,
-  weight,
+  topSet,
   unit,
   barWeight,
   isMetric,
@@ -470,25 +429,25 @@ function WarmupSetsDisplay({
           <div className="flex h-full flex-col justify-between gap-3 rounded-lg border-4 border-primary p-4">
             <div>
               <div className="text-xl font-bold">
-                Top Set: {reps}@{weight}
+                Top Set: {topSet.reps}@{topSet.weight}
                 {unit}
               </div>
               <div className="mt-1 text-sm text-muted-foreground">
-                {formatPlateBreakdown(topSetBreakdown, barWeight, isMetric)}
+                {formatPlateBreakdown(topSet.plateBreakdown, barWeight, isMetric)}
               </div>
-              {topSetBreakdown.remainder !== 0 && (
+              {topSet.plateBreakdown.remainder !== 0 && (
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Closest load: {topSetBreakdown.closestWeight}
+                  Closest load: {topSet.plateBreakdown.closestWeight}
                   {unit}
-                  {topSetBreakdown.remainder > 0
-                    ? ` (+${topSetBreakdown.remainder.toFixed(2)}${unit})`
-                    : ` (${topSetBreakdown.remainder.toFixed(2)}${unit})`}
+                  {topSet.plateBreakdown.remainder > 0
+                    ? ` (+${topSet.plateBreakdown.remainder.toFixed(2)}${unit})`
+                    : ` (${topSet.plateBreakdown.remainder.toFixed(2)}${unit})`}
                 </div>
               )}
             </div>
             <div className="mt-2 self-end">
               <PlateDiagram
-                platesPerSide={topSetBreakdown.platesPerSide}
+                platesPerSide={topSet.plateBreakdown.platesPerSide}
                 barWeight={barWeight}
                 isMetric={isMetric}
               />

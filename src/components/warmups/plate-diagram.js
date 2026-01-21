@@ -16,14 +16,19 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
 
   if (platesPerSide.length === 0) {
     return (
-      <div className={cn("flex items-center justify-center p-4", className)}>
-        <div className="text-center">
-          <div className="mb-2 h-2 w-24 rounded bg-gray-400"></div>
-          <div className="text-sm text-muted-foreground">
-            Bar only ({barWeight}
-            {unit})
-          </div>
+      <div className={cn("flex flex-col items-end gap-8 mt-2", className)}>
+        {/* Base barbell - same structure as plates version for alignment */}
+        <div className="relative flex items-center justify-end px-2 py-1">
+          {/* Horizontal bar - same width as plates version */}
+          <div className="h-2 w-48 rounded bg-gray-400" />
         </div>
+
+        {/* Reserve space for labels to match plates version */}
+        {!hideLabels && (
+          <div className="flex h-8 flex-wrap justify-end gap-1 text-xs text-muted-foreground">
+            <span>Bar only ({barWeight}{unit})</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -33,7 +38,7 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
       {/* Base barbell (same as bar-only state) with plates overlaid on the right */}
       <div className="relative flex items-center justify-end px-2 py-1">
         {/* Horizontal bar - wider to show sleeve beyond plates */}
-        <div className="h-2 w-28 rounded bg-gray-400" />
+        <div className="h-2 w-48 rounded bg-gray-400" />
 
         {/* Plates stacked over the right-hand side of the bar, vertically centered, with sleeve visible beyond */}
         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">

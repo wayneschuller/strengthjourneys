@@ -122,12 +122,13 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
       : 45;
 
   /**
-   * Generate warmup sets
-   * @type {Array<{weight: number, reps: number, percentage: number, isBarOnly?: boolean}>}
+   * Generate warmup sets with plate breakdowns
+   * @type {Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean}>}
    * warmupSets - Array of warmup set objects:
    *   - weight: Weight for this warmup set (number)
    *   - reps: Number of reps for this set (number)
    *   - percentage: Percentage of top set weight (number, 0 for bar-only sets)
+   *   - plateBreakdown: Plate breakdown calculated during generation (includes platesPerSide, remainder, closestWeight)
    *   - isBarOnly: Optional flag indicating this is just the empty bar (boolean)
    */
   const warmupSets = generateWarmupSets(
@@ -388,7 +389,6 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
         unit={unit}
         barWeight={barWeight}
         isMetric={isMetric}
-        platePreference={platePreference}
       />
 
       {relatedArticles && relatedArticles.length > 0 && (
@@ -401,14 +401,13 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
 /**
  * Display component for warmup sets and top set with plate breakdowns
  * @param {Object} props
- * @param {Array<{weight: number, reps: number, percentage: number, isBarOnly?: boolean}>} props.warmupSets - Array of warmup set objects
+ * @param {Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean}>} props.warmupSets - Array of warmup set objects with stored plate breakdowns
  * @param {{platesPerSide: Array<{weight: number, count: number, color: string, name: string}>, remainder: number, closestWeight: number}} props.topSetBreakdown - Plate breakdown for top set
  * @param {number} props.reps - Number of reps for top set
  * @param {number} props.weight - Weight for top set
  * @param {string} props.unit - Unit string ("kg" or "lb")
  * @param {number} props.barWeight - Weight of the barbell
  * @param {boolean} props.isMetric - Whether using metric (kg) or imperial (lb)
- * @param {string} props.platePreference - Plate preference ("red" or "blue")
  */
 function WarmupSetsDisplay({
   warmupSets,
@@ -418,7 +417,6 @@ function WarmupSetsDisplay({
   unit,
   barWeight,
   isMetric,
-  platePreference,
 }) {
   if (warmupSets.length === 0) {
     return null;
@@ -436,12 +434,8 @@ function WarmupSetsDisplay({
         {/* Warmup sets: responsive grid (1 col mobile, 2–3 cols desktop) */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {warmupSets.map((set, idx) => {
-            const breakdown = calculatePlateBreakdown(
-              set.weight,
-              barWeight,
-              isMetric,
-              platePreference,
-            );
+            // Use the plate breakdown calculated during warmup generation
+            const breakdown = set.plateBreakdown;
             return (
               <div
                 key={idx}

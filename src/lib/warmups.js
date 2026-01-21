@@ -11,7 +11,7 @@
  * @param {boolean} isMetric - Whether using kg (true) or lb (false)
  * @param {string} platePreference - "red" or "blue" plate preference
  * @param {number} targetWarmupCount - Desired number of warmup sets before top (including bar)
- * @returns {Array} Array of warmup set objects with {weight, reps, percentage}
+ * @returns {Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean}>} Array of warmup set objects with weight, reps, percentage, and plate breakdown
  */
 export function generateWarmupSets(
   topWeight,
@@ -80,6 +80,11 @@ export function generateWarmupSets(
     reps: 10,
     percentage: 0,
     isBarOnly: true,
+    plateBreakdown: {
+      platesPerSide: [],
+      remainder: 0,
+      closestWeight: barWeight,
+    },
   });
 
   // For very light weights, we might only need the bar
@@ -136,6 +141,7 @@ export function generateWarmupSets(
         weight: anchorWeight,
         reps: 5,
         percentage: Math.round((anchorWeight / topWeight) * 100),
+        plateBreakdown: anchorBreakdown,
       });
       previousWeight = anchorWeight;
       previousPlateMap = buildPlateCountMap(anchorBreakdown.platesPerSide);
@@ -161,6 +167,7 @@ export function generateWarmupSets(
               weight: secondAnchorActual,
               reps: 5,
               percentage: Math.round((secondAnchorActual / topWeight) * 100),
+              plateBreakdown: secondAnchorBreakdown,
             });
             previousWeight = secondAnchorActual;
             previousPlateMap = buildPlateCountMap(secondAnchorBreakdown.platesPerSide);
@@ -271,6 +278,7 @@ export function generateWarmupSets(
             weight: actualWeight,
             reps: 5, // All middle sets are 5 reps
             percentage: Math.round((actualWeight / topWeight) * 100),
+            plateBreakdown: breakdown,
           });
           previousWeight = actualWeight;
           previousPlateMap = newPlateMap;
@@ -349,6 +357,7 @@ export function generateWarmupSets(
                 weight: actualWeight,
                 reps: 5,
                 percentage: Math.round((actualWeight / topWeight) * 100),
+                plateBreakdown: breakdown,
               });
               previousWeight = actualWeight;
               previousPlateMap = newPlateMap;
@@ -430,6 +439,7 @@ export function generateWarmupSets(
       weight: actualWeight,
       reps,
       percentage: Math.round((actualWeight / topWeight) * 100),
+      plateBreakdown: breakdown,
     });
     previousWeight = actualWeight;
     previousPlateMap = newPlateMap;
@@ -531,6 +541,7 @@ export function generateWarmupSets(
             weight: actualWeight,
             reps: 5, // Default to 5 reps for fill-in sets
             percentage: Math.round((actualWeight / topWeight) * 100),
+            plateBreakdown: breakdown,
           });
           previousWeight = actualWeight;
           previousPlateMap = newPlateMap;
@@ -593,6 +604,7 @@ export function generateWarmupSets(
               weight: actualWeight,
               reps: 5,
               percentage: Math.round((actualWeight / topWeight) * 100),
+              plateBreakdown: breakdown,
             });
             seenWeights.add(actualWeight);
           }

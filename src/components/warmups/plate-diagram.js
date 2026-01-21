@@ -9,8 +9,9 @@ import { cn } from "@/lib/utils";
  * @param {number} props.barWeight - Weight of the barbell
  * @param {boolean} props.isMetric - Whether using kg (true) or lb (false)
  * @param {string} props.className - Additional CSS classes
+ * @param {boolean} props.hideLabels - Whether to hide the plate labels
  */
-export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, className }) {
+export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, className, hideLabels = false }) {
   const unit = isMetric ? "kg" : "lb";
 
   if (platesPerSide.length === 0) {
@@ -71,21 +72,23 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
       </div>
 
       {/* Plate labels - right-aligned, showing one side only */}
-      <div className="flex flex-wrap justify-end gap-1 text-xs text-muted-foreground">
-        {platesPerSide.map((plate, idx) => (
-          <span key={idx} className="flex items-center gap-1">
-            <span
-              className="inline-block h-3 w-3 rounded border border-gray-300"
-              style={{
-                backgroundColor:
-                  plate.color === "#FFFFFF" ? "#E5E7EB" : plate.color,
-              }}
-            />
-            {plate.count}x {plate.weight}
-            {unit}
-          </span>
-        ))}
-      </div>
+      {!hideLabels && (
+        <div className="flex flex-wrap justify-end gap-1 text-xs text-muted-foreground">
+          {platesPerSide.map((plate, idx) => (
+            <span key={idx} className="flex items-center gap-1">
+              <span
+                className="inline-block h-3 w-3 rounded border border-gray-300"
+                style={{
+                  backgroundColor:
+                    plate.color === "#FFFFFF" ? "#E5E7EB" : plate.color,
+                }}
+              />
+              {plate.count}x {plate.weight}
+              {unit}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

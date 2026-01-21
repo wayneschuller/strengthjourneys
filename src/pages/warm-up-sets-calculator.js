@@ -341,7 +341,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
       </Card>
 
       {/* Session Sets Output */}
-      <WarmupSetsDisplay
+      <WarmupSetsDisplayCard
         sessionSets={sessionSets}
         unit={unit}
         barWeight={barWeight}
@@ -363,7 +363,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
  * @param {number} props.barWeight - Weight of the barbell
  * @param {boolean} props.isMetric - Whether using metric (kg) or imperial (lb)
  */
-function WarmupSetsDisplay({
+function WarmupSetsDisplayCard({
   sessionSets,
   unit,
   barWeight,
@@ -393,7 +393,7 @@ function WarmupSetsDisplay({
             return (
               <div
                 key={idx}
-                className={`flex h-full flex-col justify-between gap-3 rounded-lg p-4 ${
+                className={`flex h-64 flex-col justify-between gap-3 rounded-lg p-4 ${
                   isTopSet ? "border-4 border-primary" : "border"
                 }`}
               >
@@ -408,7 +408,7 @@ function WarmupSetsDisplay({
                       ~{set.percentage}% of top set
                     </div>
                   )}
-                  <div className="mt-1 text-sm text-muted-foreground">
+                  <div className="mt-1 h-10 text-sm text-muted-foreground">
                     {formatPlateBreakdown(breakdown, barWeight, isMetric)}
                   </div>
                   {isTopSet && breakdown.remainder !== 0 && (

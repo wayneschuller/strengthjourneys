@@ -121,7 +121,15 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
       ? 35
       : 45;
 
-  // Generate warmup sets
+  /**
+   * Generate warmup sets
+   * @type {Array<{weight: number, reps: number, percentage: number, isBarOnly?: boolean}>}
+   * warmupSets - Array of warmup set objects:
+   *   - weight: Weight for this warmup set (number)
+   *   - reps: Number of reps for this set (number)
+   *   - percentage: Percentage of top set weight (number, 0 for bar-only sets)
+   *   - isBarOnly: Optional flag indicating this is just the empty bar (boolean)
+   */
   const warmupSets = generateWarmupSets(
     Number(weight),
     Number(reps),
@@ -131,8 +139,19 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     Number(warmupSetCount),
   );
 
-  // Calculate plate breakdown for top set
-  // If we have warmup sets, start from the last warmup's plates and add what's needed
+  /**
+   * Calculate plate breakdown for top set
+   * If we have warmup sets, start from the last warmup's plates and add what's needed
+   * @type {{platesPerSide: Array<{weight: number, count: number, color: string, name: string}>, remainder: number, closestWeight: number}}
+   * topSetBreakdown - Plate breakdown object:
+   *   - platesPerSide: Array of plate objects, each with:
+   *     - weight: Plate weight (number)
+   *     - count: Number of plates of this weight per side (number)
+   *     - color: Hex color code for visualization (string)
+   *     - name: Display name (string, e.g., "25kg" or "45lb")
+   *   - remainder: Difference between target weight and achievable weight (number)
+   *   - closestWeight: Actual achievable weight with available plates (number)
+   */
   let topSetBreakdown;
   if (warmupSets.length > 0) {
     const lastWarmupSet = warmupSets[warmupSets.length - 1];
@@ -361,90 +380,128 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
       </Card>
 
       {/* Warmup Sets Output */}
-      {warmupSets.length > 0 && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Warmup Sets</CardTitle>
-            <CardDescription>
-              Progressive warmup sets leading to your top set
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Warmup sets: responsive grid (1 col mobile, 2–3 cols desktop) */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {warmupSets.map((set, idx) => {
-                const breakdown = calculatePlateBreakdown(
-                  set.weight,
-                  barWeight,
-                  isMetric,
-                  platePreference,
-                );
-                return (
-                  <div
-                    key={idx}
-                    className="flex h-full flex-col justify-between gap-3 rounded-lg border p-4"
-                  >
-                    <div>
-                      <div className="text-lg font-semibold">
-                        Set {idx + 1}: {set.reps}@{set.weight}
-                        {unit}
-                      </div>
-                      {set.percentage > 0 && (
-                        <div className="text-sm text-muted-foreground">
-                          ~{set.percentage}% of top set
-                        </div>
-                      )}
-                      <div className="mt-1 text-sm text-muted-foreground">
-                        {formatPlateBreakdown(breakdown, barWeight, isMetric)}
-                      </div>
-                    </div>
-                    <div className="mt-2 self-end">
-                      <PlateDiagram
-                        platesPerSide={breakdown.platesPerSide}
-                        barWeight={barWeight}
-                        isMetric={isMetric}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Top Set - included in grid with thicker border */}
-              <div className="flex h-full flex-col justify-between gap-3 rounded-lg border-4 border-primary p-4">
-                <div>
-                  <div className="text-xl font-bold">
-                    Top Set: {reps}@{weight}
-                    {unit}
-                  </div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    {formatPlateBreakdown(topSetBreakdown, barWeight, isMetric)}
-                  </div>
-                  {topSetBreakdown.remainder !== 0 && (
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      Closest load: {topSetBreakdown.closestWeight}
-                      {unit}
-                      {topSetBreakdown.remainder > 0
-                        ? ` (+${topSetBreakdown.remainder.toFixed(2)}${unit})`
-                        : ` (${topSetBreakdown.remainder.toFixed(2)}${unit})`}
-                    </div>
-                  )}
-                </div>
-                <div className="mt-2 self-end">
-                  <PlateDiagram
-                    platesPerSide={topSetBreakdown.platesPerSide}
-                    barWeight={barWeight}
-                    isMetric={isMetric}
-                  />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <WarmupSetsDisplay
+        warmupSets={warmupSets}
+        topSetBreakdown={topSetBreakdown}
+        reps={reps}
+        weight={weight}
+        unit={unit}
+        barWeight={barWeight}
+        isMetric={isMetric}
+        platePreference={platePreference}
+      />
 
       {relatedArticles && relatedArticles.length > 0 && (
         <RelatedArticles articles={relatedArticles} />
       )}
     </div>
+  );
+}
+
+/**
+ * Display component for warmup sets and top set with plate breakdowns
+ * @param {Object} props
+ * @param {Array<{weight: number, reps: number, percentage: number, isBarOnly?: boolean}>} props.warmupSets - Array of warmup set objects
+ * @param {{platesPerSide: Array<{weight: number, count: number, color: string, name: string}>, remainder: number, closestWeight: number}} props.topSetBreakdown - Plate breakdown for top set
+ * @param {number} props.reps - Number of reps for top set
+ * @param {number} props.weight - Weight for top set
+ * @param {string} props.unit - Unit string ("kg" or "lb")
+ * @param {number} props.barWeight - Weight of the barbell
+ * @param {boolean} props.isMetric - Whether using metric (kg) or imperial (lb)
+ * @param {string} props.platePreference - Plate preference ("red" or "blue")
+ */
+function WarmupSetsDisplay({
+  warmupSets,
+  topSetBreakdown,
+  reps,
+  weight,
+  unit,
+  barWeight,
+  isMetric,
+  platePreference,
+}) {
+  if (warmupSets.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle>Warmup Sets</CardTitle>
+        <CardDescription>
+          Progressive warmup sets leading to your top set
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {/* Warmup sets: responsive grid (1 col mobile, 2–3 cols desktop) */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {warmupSets.map((set, idx) => {
+            const breakdown = calculatePlateBreakdown(
+              set.weight,
+              barWeight,
+              isMetric,
+              platePreference,
+            );
+            return (
+              <div
+                key={idx}
+                className="flex h-full flex-col justify-between gap-3 rounded-lg border p-4"
+              >
+                <div>
+                  <div className="text-lg font-semibold">
+                    Set {idx + 1}: {set.reps}@{set.weight}
+                    {unit}
+                  </div>
+                  {set.percentage > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      ~{set.percentage}% of top set
+                    </div>
+                  )}
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    {formatPlateBreakdown(breakdown, barWeight, isMetric)}
+                  </div>
+                </div>
+                <div className="mt-2 self-end">
+                  <PlateDiagram
+                    platesPerSide={breakdown.platesPerSide}
+                    barWeight={barWeight}
+                    isMetric={isMetric}
+                  />
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Top Set - included in grid with thicker border */}
+          <div className="flex h-full flex-col justify-between gap-3 rounded-lg border-4 border-primary p-4">
+            <div>
+              <div className="text-xl font-bold">
+                Top Set: {reps}@{weight}
+                {unit}
+              </div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                {formatPlateBreakdown(topSetBreakdown, barWeight, isMetric)}
+              </div>
+              {topSetBreakdown.remainder !== 0 && (
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Closest load: {topSetBreakdown.closestWeight}
+                  {unit}
+                  {topSetBreakdown.remainder > 0
+                    ? ` (+${topSetBreakdown.remainder.toFixed(2)}${unit})`
+                    : ` (${topSetBreakdown.remainder.toFixed(2)}${unit})`}
+                </div>
+              )}
+            </div>
+            <div className="mt-2 self-end">
+              <PlateDiagram
+                platesPerSide={topSetBreakdown.platesPerSide}
+                barWeight={barWeight}
+                isMetric={isMetric}
+              />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

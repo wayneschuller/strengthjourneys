@@ -4,14 +4,14 @@
  */
 
 /**
- * Generate warmup sets and top set based on Starting Strength methodology
+ * Generate all sets (warmups + top set) based on Starting Strength methodology
  * @param {number} topWeight - Target weight for the top set
  * @param {number} topReps - Number of reps for the top set
  * @param {number} barWeight - Weight of the barbell
  * @param {boolean} isMetric - Whether using kg (true) or lb (false)
  * @param {string} platePreference - "red" or "blue" plate preference
  * @param {number} targetWarmupCount - Desired number of warmup sets before top (including bar)
- * @returns {{warmupSets: Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean}>, topSet: {weight: number, reps: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}}}} Object with warmup sets array and top set object, both with plate breakdowns
+ * @returns {Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean, isTopSet?: boolean}>} Array of all sets (warmups + top set) with plate breakdowns
  */
 export function generateSessionSets(
   topWeight,
@@ -22,14 +22,16 @@ export function generateSessionSets(
   targetWarmupCount = 4,
 ) {
   if (!topWeight || topWeight <= 0 || topReps <= 0) {
-    return {
-      warmupSets: [],
-      topSet: {
+    const topSetBreakdown = calculatePlateBreakdown(topWeight, barWeight, isMetric, platePreference);
+    return [
+      {
         weight: topWeight,
         reps: topReps,
-        plateBreakdown: calculatePlateBreakdown(topWeight, barWeight, isMetric, platePreference),
+        percentage: 100,
+        plateBreakdown: topSetBreakdown,
+        isTopSet: true,
       },
-    };
+    ];
   }
 
   const roundToIncrement = (value, increment) =>
@@ -100,14 +102,14 @@ export function generateSessionSets(
   // For very light weights, we might only need the bar
   if (topWeight <= barWeight + minIncrement) {
     const topSetBreakdown = calculatePlateBreakdown(topWeight, barWeight, isMetric, platePreference);
-    return {
-      warmupSets,
-      topSet: {
-        weight: topWeight,
-        reps: topReps,
-        plateBreakdown: topSetBreakdown,
-      },
-    };
+    warmupSets.push({
+      weight: topWeight,
+      reps: topReps,
+      percentage: 100,
+      plateBreakdown: topSetBreakdown,
+      isTopSet: true,
+    });
+    return warmupSets;
   }
 
   let previousWeight = barWeight;
@@ -655,14 +657,16 @@ export function generateSessionSets(
     topSetBreakdown = calculatePlateBreakdown(topWeight, barWeight, isMetric, platePreference);
   }
 
-  return {
-    warmupSets: uniqueSets,
-    topSet: {
-      weight: topWeight,
-      reps: topReps,
-      plateBreakdown: topSetBreakdown,
-    },
-  };
+  // Add top set to the array
+  uniqueSets.push({
+    weight: topWeight,
+    reps: topReps,
+    percentage: 100,
+    plateBreakdown: topSetBreakdown,
+    isTopSet: true,
+  });
+
+  return uniqueSets;
 }
 
 /**

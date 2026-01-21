@@ -120,21 +120,17 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
       : 45;
 
   /**
-   * Generate warmup sets and top set with plate breakdowns
-   * @type {{warmupSets: Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean}>, topSet: {weight: number, reps: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}}}}
-   * session - Object containing:
-   *   - warmupSets: Array of warmup set objects, each with:
-   *     - weight: Weight for this warmup set (number)
-   *     - reps: Number of reps for this set (number)
-   *     - percentage: Percentage of top set weight (number, 0 for bar-only sets)
-   *     - plateBreakdown: Plate breakdown calculated during generation (includes platesPerSide, remainder, closestWeight)
-   *     - isBarOnly: Optional flag indicating this is just the empty bar (boolean)
-   *   - topSet: Top set object with:
-   *     - weight: Target weight for top set (number)
-   *     - reps: Number of reps for top set (number)
-   *     - plateBreakdown: Plate breakdown that builds on last warmup set's plates
+   * Generate all sets (warmups + top set) with plate breakdowns
+   * @type {Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean, isTopSet?: boolean}>}
+   * sessionSets - Array of all set objects (warmups and top set):
+   *   - weight: Weight for this set (number)
+   *   - reps: Number of reps for this set (number)
+   *   - percentage: Percentage of top set weight (number, 0 for bar-only sets, 100 for top set)
+   *   - plateBreakdown: Plate breakdown calculated during generation (includes platesPerSide, remainder, closestWeight)
+   *   - isBarOnly: Optional flag indicating this is just the empty bar (boolean)
+   *   - isTopSet: Optional flag indicating this is the top set (boolean, true for last set)
    */
-  const session = generateSessionSets(
+  const sessionSets = generateSessionSets(
     Number(weight),
     Number(reps),
     barWeight,
@@ -142,7 +138,6 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
     platePreference,
     Number(warmupSetCount),
   );
-  const { warmupSets, topSet } = session;
 
   const handleWeightSliderChange = (value) => {
     let newWeight = value[0];
@@ -345,10 +340,9 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
         </CardContent>
       </Card>
 
-      {/* Warmup Sets Output */}
+      {/* Session Sets Output */}
       <WarmupSetsDisplay
-        warmupSets={warmupSets}
-        topSet={topSet}
+        sessionSets={sessionSets}
         unit={unit}
         barWeight={barWeight}
         isMetric={isMetric}
@@ -362,22 +356,20 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
 }
 
 /**
- * Display component for warmup sets and top set with plate breakdowns
+ * Display component for all session sets (warmups + top set) with plate breakdowns
  * @param {Object} props
- * @param {Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean}>} props.warmupSets - Array of warmup set objects with stored plate breakdowns
- * @param {{weight: number, reps: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}}} props.topSet - Top set object with weight, reps, and plate breakdown
+ * @param {Array<{weight: number, reps: number, percentage: number, plateBreakdown: {platesPerSide: Array, remainder: number, closestWeight: number}, isBarOnly?: boolean, isTopSet?: boolean}>} props.sessionSets - Array of all set objects (warmups and top set)
  * @param {string} props.unit - Unit string ("kg" or "lb")
  * @param {number} props.barWeight - Weight of the barbell
  * @param {boolean} props.isMetric - Whether using metric (kg) or imperial (lb)
  */
 function WarmupSetsDisplay({
-  warmupSets,
-  topSet,
+  sessionSets,
   unit,
   barWeight,
   isMetric,
 }) {
-  if (warmupSets.length === 0) {
+  if (sessionSets.length === 0) {
     return null;
   }
 
@@ -390,22 +382,28 @@ function WarmupSetsDisplay({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* Warmup sets: responsive grid (1 col mobile, 2–3 cols desktop) */}
+        {/* All sets: responsive grid (1 col mobile, 2–3 cols desktop) */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {warmupSets.map((set, idx) => {
-            // Use the plate breakdown calculated during warmup generation
+          {sessionSets.map((set, idx) => {
+            // Use the plate breakdown calculated during generation
             const breakdown = set.plateBreakdown;
+            const isTopSet = set.isTopSet || idx === sessionSets.length - 1;
+            const isLastSet = idx === sessionSets.length - 1;
+
             return (
               <div
                 key={idx}
-                className="flex h-full flex-col justify-between gap-3 rounded-lg border p-4"
+                className={`flex h-full flex-col justify-between gap-3 rounded-lg p-4 ${
+                  isTopSet ? "border-4 border-primary" : "border"
+                }`}
               >
                 <div>
-                  <div className="text-lg font-semibold">
-                    Set {idx + 1}: {set.reps}@{set.weight}
-                    {unit}
+                  <div className={isTopSet ? "text-xl font-bold" : "text-lg font-semibold"}>
+                    {isTopSet
+                      ? `Top Set: ${set.reps}@${set.weight}${unit}`
+                      : `Set ${idx + 1}: ${set.reps}@${set.weight}${unit}`}
                   </div>
-                  {set.percentage > 0 && (
+                  {!isTopSet && set.percentage > 0 && (
                     <div className="text-sm text-muted-foreground">
                       ~{set.percentage}% of top set
                     </div>
@@ -413,6 +411,15 @@ function WarmupSetsDisplay({
                   <div className="mt-1 text-sm text-muted-foreground">
                     {formatPlateBreakdown(breakdown, barWeight, isMetric)}
                   </div>
+                  {isTopSet && breakdown.remainder !== 0 && (
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Closest load: {breakdown.closestWeight}
+                      {unit}
+                      {breakdown.remainder > 0
+                        ? ` (+${breakdown.remainder.toFixed(2)}${unit})`
+                        : ` (${breakdown.remainder.toFixed(2)}${unit})`}
+                    </div>
+                  )}
                 </div>
                 <div className="mt-2 self-end">
                   <PlateDiagram
@@ -424,35 +431,6 @@ function WarmupSetsDisplay({
               </div>
             );
           })}
-
-          {/* Top Set - included in grid with thicker border */}
-          <div className="flex h-full flex-col justify-between gap-3 rounded-lg border-4 border-primary p-4">
-            <div>
-              <div className="text-xl font-bold">
-                Top Set: {topSet.reps}@{topSet.weight}
-                {unit}
-              </div>
-              <div className="mt-1 text-sm text-muted-foreground">
-                {formatPlateBreakdown(topSet.plateBreakdown, barWeight, isMetric)}
-              </div>
-              {topSet.plateBreakdown.remainder !== 0 && (
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Closest load: {topSet.plateBreakdown.closestWeight}
-                  {unit}
-                  {topSet.plateBreakdown.remainder > 0
-                    ? ` (+${topSet.plateBreakdown.remainder.toFixed(2)}${unit})`
-                    : ` (${topSet.plateBreakdown.remainder.toFixed(2)}${unit})`}
-                </div>
-              )}
-            </div>
-            <div className="mt-2 self-end">
-              <PlateDiagram
-                platesPerSide={topSet.plateBreakdown.platesPerSide}
-                barWeight={barWeight}
-                isMetric={isMetric}
-              />
-            </div>
-          </div>
         </div>
       </CardContent>
     </Card>

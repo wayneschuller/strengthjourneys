@@ -756,11 +756,16 @@ export function calculatePlateBreakdownWithExisting(
   const isPreferredPlate = (weight) => weight === preferredPlateWeight;
 
   // Check if the preferred plate can satisfy the entire remaining weight cleanly
-  // (exactly 1 plate, or exactly 2 plates - powerlifters love seeing more of their preferred color)
+  // (any whole number of preferred plates - powerlifters love seeing more of their preferred color)
   const canPreferredPlateSatisfyCleanly = () => {
-    if (additionalWeightPerSide === preferredPlateWeight) return true; // Exactly 1 plate
-    if (additionalWeightPerSide === preferredPlateWeight * 2) return true; // Exactly 2 plates
-    return false;
+    // Check if the additional weight needed is exactly divisible by preferred plate weight
+    const preferredPlateCount = additionalWeightPerSide / preferredPlateWeight;
+    // Must be a whole number and reasonable (max 10 plates per side)
+    return (
+      preferredPlateCount > 0 &&
+      preferredPlateCount <= 10 &&
+      Math.abs(preferredPlateCount - Math.round(preferredPlateCount)) < 0.001
+    );
   };
 
   const preferredCanSatisfy = canPreferredPlateSatisfyCleanly();
@@ -877,14 +882,82 @@ export function calculateTopSetBreakdown(
     };
   }
 
-  // Start with existing plates and add what's needed
+  // Identify preferred color plate weight
+  const preferredPlateWeight = platePreference === "blue"
+    ? (isMetric ? 20 : 45)
+    : (isMetric ? 25 : 55);
+
+  // For top set, check if we can use ONLY preferred plates to reach target
+  // This gives powerlifters the satisfaction of seeing all their preferred color
+  const weightPerSide = (targetWeight - barWeight) / 2;
+  const preferredPlateCount = weightPerSide / preferredPlateWeight;
+  const canUseOnlyPreferred = (
+    preferredPlateCount > 0 &&
+    preferredPlateCount <= 10 &&
+    Math.abs(preferredPlateCount - Math.round(preferredPlateCount)) < 0.001
+  );
+
+  // If we can use only preferred plates, do that (even if it means not building on existing)
+  if (canUseOnlyPreferred) {
+    const count = Math.round(preferredPlateCount);
+    const preferredPlate = allPlates.find(p => p.weight === preferredPlateWeight);
+    if (preferredPlate) {
+      const actualWeight = barWeight + (preferredPlateWeight * count * 2);
+      return {
+        platesPerSide: [{ ...preferredPlate, count }],
+        remainder: targetWeight - actualWeight,
+        closestWeight: actualWeight,
+      };
+    }
+  }
+
+  // Otherwise, build on existing plates with preference logic
   const result = [...existingPlatesPerSide.map(p => ({ ...p }))];
   let remaining = additionalWeightPerSide;
 
-  // Greedy algorithm: use largest plates first to minimize plate count
-  // This ensures we use 1×10kg instead of 4×1.25kg, etc.
+  // Build a map of existing plate weights for quick lookup
+  const existingPlateWeights = new Set(existingPlatesPerSide.map(p => p.weight));
+
+  // Check if a plate weight is the preferred color plate
+  const isPreferredPlate = (weight) => weight === preferredPlateWeight;
+
+  // Check if the preferred plate can satisfy the entire remaining weight cleanly
+  const canPreferredPlateSatisfyCleanly = () => {
+    const preferredPlateCount = remaining / preferredPlateWeight;
+    return (
+      preferredPlateCount > 0 &&
+      preferredPlateCount <= 10 &&
+      Math.abs(preferredPlateCount - Math.round(preferredPlateCount)) < 0.001
+    );
+  };
+
+  const preferredCanSatisfy = canPreferredPlateSatisfyCleanly();
+
+  // Sort plates: balance minimizing changes with honoring preference
   const sortedPlates = [...allPlates].sort((a, b) => {
-    // Sort largest to smallest
+    const aExists = existingPlateWeights.has(a.weight);
+    const bExists = existingPlateWeights.has(b.weight);
+    const aIsPreferred = isPreferredPlate(a.weight);
+    const bIsPreferred = isPreferredPlate(b.weight);
+    
+    // Special case: If preferred plate can satisfy the entire weight cleanly,
+    // prioritize it even over existing smaller plates (powerlifter preference)
+    if (preferredCanSatisfy) {
+      if (aIsPreferred && !aExists && !bIsPreferred) return -1;
+      if (!aIsPreferred && bIsPreferred && !bExists) return 1;
+    }
+    
+    // Priority 1: Existing plates (minimize changes)
+    if (aExists && !bExists) return -1;
+    if (!aExists && bExists) return 1;
+    
+    // Priority 2: Preferred color plates (when not already on the bar)
+    if (!aExists && !bExists) {
+      if (aIsPreferred && !bIsPreferred) return -1;
+      if (!aIsPreferred && bIsPreferred) return 1;
+    }
+    
+    // Priority 3: Sort by weight (largest first)
     return b.weight - a.weight;
   });
 

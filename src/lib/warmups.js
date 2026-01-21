@@ -34,7 +34,8 @@ export function generateWarmupSets(
   // Clamp target warmup count to a reasonable range
   const clampedTargetCount = Math.min(Math.max(Math.round(targetWarmupCount), 2), 6);
 
-  // Determine base jump by topWeight (section 4.3)
+  // Determine base jump size based on the top set weight
+  // Heavier weights need larger jumps between warmup sets
   let baseJump;
   if (isMetric) {
     if (topWeight < 60) {
@@ -54,7 +55,8 @@ export function generateWarmupSets(
     }
   }
 
-  // Calculate effective min jump (section 4.2)
+  // Calculate effective minimum jump, accounting for target warmup count
+  // More warmup sets = smaller average jumps, fewer sets = larger jumps
   const volumeJumpMultiplier =
     clampedTargetCount <= 3 ? 1.4 : clampedTargetCount >= 5 ? 0.8 : 1.0;
   const totalRange = Math.max(topWeight - barWeight, minIncrement);
@@ -71,10 +73,11 @@ export function generateWarmupSets(
   };
 
   // ============================================
-  // SECTION 1: OPENING (10@bar + 5@anchor)
+  // OPENING SETS: Empty bar and anchor plate set
   // ============================================
 
-  // Always start with empty bar (section 1.2, 2.1)
+  // Always start with empty bar for 10 reps
+  // This allows the lifter to warm up movement pattern without load
   warmupSets.push({
     weight: barWeight,
     reps: 10,
@@ -95,7 +98,9 @@ export function generateWarmupSets(
   let previousWeight = barWeight;
   let previousPlateMap = buildPlateCountMap([]);
 
-  // Choose anchor plate (section 3.1, 3.4)
+  // Choose anchor plate weight based on top weight and plate preference
+  // Anchor plate is the largest plate used in the first loaded warmup set
+  // For heavy lifts, prefer red (25kg/55lb) if available; otherwise use blue (20kg/45lb)
   let anchorTarget;
   const heavyThreshold = isMetric ? 150 : 330;
   const range = topWeight - barWeight;
@@ -120,7 +125,8 @@ export function generateWarmupSets(
     }
   }
 
-  // Add anchor set (section 2.1, 3.2)
+  // Add anchor set: first loaded warmup with anchor plates for 5 reps
+  // This establishes the base plate loading that subsequent sets build upon
   if (
     anchorTarget > barWeight + effectiveMinJump &&
     anchorTarget < topWeight - effectiveMinJump
@@ -146,7 +152,8 @@ export function generateWarmupSets(
       previousWeight = anchorWeight;
       previousPlateMap = buildPlateCountMap(anchorBreakdown.platesPerSide);
 
-      // For heavy lifts (>140kg), add third opening set: bar + 2×anchorPlate (section 2.1)
+      // For heavy lifts, add a second anchor set by adding another pair of anchor plates
+      // This creates a smoother progression for very heavy weights
       if (topWeight > (isMetric ? 140 : 310) && warmupSets.length < clampedTargetCount - 2) {
         const secondAnchorWeight = isMetric
           ? anchorWeight + 40 // Add another pair of 20s
@@ -178,13 +185,14 @@ export function generateWarmupSets(
   }
 
   // ============================================
-  // SECTION 2: MIDDLE (5-rep sets)
+  // MIDDLE SETS: Progressive 5-rep sets
   // ============================================
 
   // Calculate how many sets we still need for middle + final sections
   const setsRemaining = clampedTargetCount - warmupSets.length;
   
-  // Determine how many final warmup sets we need (section 7.2)
+  // Determine how many final warmup sets we need based on top set reps
+  // More final sets needed for 3-4 rep top sets to prime CNS properly
   let finalWarmupCount = 0;
   if (topReps <= 2) {
     // PR attempt: 1 rep at base jump below goal
@@ -197,7 +205,8 @@ export function generateWarmupSets(
     finalWarmupCount = 2;
   }
 
-  // Middle section gets the remaining slots (all 5 reps per section 7.1)
+  // Middle section gets the remaining slots, all performed for 5 reps
+  // This maintains consistent volume while building load progressively
   const middleSetCount = Math.max(0, setsRemaining - finalWarmupCount);
 
   // Identify anchor plate weight from the anchor set
@@ -380,7 +389,7 @@ export function generateWarmupSets(
   }
 
   // ============================================
-  // SECTION 3: FINAL WARMUPS (reducing reps)
+  // FINAL WARMUPS: Reduce reps to prime CNS for top set
   // ============================================
 
   // Helper to add a final warmup set with only-add-plates check
@@ -446,14 +455,15 @@ export function generateWarmupSets(
     return true;
   };
 
-  // Generate final warmup sets based on topReps (section 7.2)
+  // Generate final warmup sets based on top set rep count
+  // These sets use reduced reps (1-3) to prime the central nervous system
   if (topReps <= 2) {
     // PR attempt: 1 rep at base jump below goal
     const finalWarmupWeight = topWeight - baseJump;
     addFinalWarmupSet(finalWarmupWeight, 1);
   } else if (topReps >= 5) {
     // 5+ reps: one final warmup at 3 reps, baseJump below top (e.g., 130kg for 140kg top)
-    // This primes CNS nicely (section 7.2)
+    // The 3-rep set primes the CNS without causing excessive fatigue
     const finalJump = topWeight > (isMetric ? 100 : 220) 
       ? (isMetric ? 10 : 25)  // ~10kg/25lb for heavier lifts
       : baseJump;
@@ -475,7 +485,8 @@ export function generateWarmupSets(
     }
   }
 
-  // Fill remaining slots if we're still short (section 6.2)
+  // Fill remaining slots if we're still short of target warmup count
+  // Add evenly-spaced sets while maintaining the "only add plates" progression
   // Be aggressive about hitting the target count
   let attempts = 0;
   const maxAttempts = 50; // Prevent infinite loops

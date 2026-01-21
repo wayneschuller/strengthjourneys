@@ -747,16 +747,49 @@ export function calculatePlateBreakdownWithExisting(
   // Build a map of existing plate weights for quick lookup
   const existingPlateWeights = new Set((existingPlatesPerSide || []).map(p => p.weight));
 
-  // Sort plates: prefer existing plate types first, then by size (largest first)
+  // Identify preferred color plate weight
+  const preferredPlateWeight = platePreference === "blue"
+    ? (isMetric ? 20 : 45)
+    : (isMetric ? 25 : 55);
+
+  // Check if a plate weight is the preferred color plate
+  const isPreferredPlate = (weight) => weight === preferredPlateWeight;
+
+  // Check if the preferred plate can satisfy the entire remaining weight cleanly
+  // (exactly 1 plate, or exactly 2 plates - powerlifters love seeing more of their preferred color)
+  const canPreferredPlateSatisfyCleanly = () => {
+    if (additionalWeightPerSide === preferredPlateWeight) return true; // Exactly 1 plate
+    if (additionalWeightPerSide === preferredPlateWeight * 2) return true; // Exactly 2 plates
+    return false;
+  };
+
+  const preferredCanSatisfy = canPreferredPlateSatisfyCleanly();
+
+  // Sort plates: balance minimizing changes with honoring preference
   const sortedPlates = [...allPlates].sort((a, b) => {
     const aExists = existingPlateWeights.has(a.weight);
     const bExists = existingPlateWeights.has(b.weight);
+    const aIsPreferred = isPreferredPlate(a.weight);
+    const bIsPreferred = isPreferredPlate(b.weight);
     
-    // Existing plates come first
+    // Special case: If preferred plate can satisfy the entire weight cleanly,
+    // prioritize it even over existing smaller plates (powerlifter preference)
+    if (preferredCanSatisfy) {
+      if (aIsPreferred && !aExists && !bIsPreferred) return -1;
+      if (!aIsPreferred && bIsPreferred && !bExists) return 1;
+    }
+    
+    // Priority 1: Existing plates (minimize changes)
     if (aExists && !bExists) return -1;
     if (!aExists && bExists) return 1;
     
-    // Then sort by weight (largest first)
+    // Priority 2: Preferred color plates (when not already on the bar)
+    if (!aExists && !bExists) {
+      if (aIsPreferred && !bIsPreferred) return -1;
+      if (!aIsPreferred && bIsPreferred) return 1;
+    }
+    
+    // Priority 3: Sort by weight (largest first)
     return b.weight - a.weight;
   });
 

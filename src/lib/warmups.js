@@ -694,6 +694,32 @@ export const PLATE_SETS = {
 };
 
 /**
+ * Calculate minimum number of preferred plates required per side based on total weight
+ * Rule: Each weight range requires a minimum number of preferred plates
+ * e.g., blue (20kg): 60-99.5kg needs 1 blue, 100-139.5kg needs 2 blues, 140-179.5kg needs 3 blues
+ * @param {number} totalWeight - Total weight including bar
+ * @param {number} barWeight - Weight of the barbell
+ * @param {boolean} isMetric - Whether using kg (true) or lb (false)
+ * @param {string} platePreference - "red" or "blue" to prefer red or blue plates
+ * @returns {number} Minimum preferred plates per side required
+ */
+function getMinimumPreferredPlates(totalWeight, barWeight, isMetric, platePreference) {
+  const preferredPlateWeight = platePreference === "blue"
+    ? (isMetric ? 20 : 45)
+    : (isMetric ? 25 : 55);
+  
+  // Calculate plate weight per side (excluding bar)
+  const platesPerSide = (totalWeight - barWeight) / 2;
+  
+  // Calculate minimum preferred plates per side needed
+  // Formula: floor(platesPerSide / preferredPlateWeight)
+  // This ensures ranges like 60-99.5kg get 1, 100-139.5kg get 2, etc.
+  const minPreferred = Math.floor(platesPerSide / preferredPlateWeight);
+  
+  return Math.max(0, minPreferred); // Never negative
+}
+
+/**
  * Calculate plate breakdown by adding to existing plates (prioritizes keeping existing plates)
  * @param {number} targetWeight - Target weight
  * @param {number} barWeight - Weight of the barbell
@@ -755,34 +781,41 @@ export function calculatePlateBreakdownWithExisting(
   // Check if a plate weight is the preferred color plate
   const isPreferredPlate = (weight) => weight === preferredPlateWeight;
 
-  // Check if the preferred plate can satisfy the entire remaining weight cleanly
-  // (any whole number of preferred plates - powerlifters love seeing more of their preferred color)
-  const canPreferredPlateSatisfyCleanly = () => {
-    // Check if the additional weight needed is exactly divisible by preferred plate weight
-    const preferredPlateCount = additionalWeightPerSide / preferredPlateWeight;
-    // Must be a whole number and reasonable (max 10 plates per side)
-    return (
-      preferredPlateCount > 0 &&
-      preferredPlateCount <= 10 &&
-      Math.abs(preferredPlateCount - Math.round(preferredPlateCount)) < 0.001
-    );
-  };
+  // Calculate minimum preferred plates required for target weight
+  const minPreferredPlates = getMinimumPreferredPlates(targetWeight, barWeight, isMetric, platePreference);
+  
+  // Count existing preferred plates
+  const existingPreferredPlate = result.find(p => p.weight === preferredPlateWeight);
+  const existingPreferredCount = existingPreferredPlate ? existingPreferredPlate.count : 0;
+  
+  // Calculate how many more preferred plates we need to meet minimum
+  const preferredPlatesNeeded = Math.max(0, minPreferredPlates - existingPreferredCount);
 
-  const preferredCanSatisfy = canPreferredPlateSatisfyCleanly();
+  // First, ensure we meet minimum preferred plates requirement
+  if (preferredPlatesNeeded > 0 && remaining >= preferredPlateWeight * preferredPlatesNeeded) {
+    if (existingPreferredPlate) {
+      existingPreferredPlate.count += preferredPlatesNeeded;
+    } else {
+      const preferredPlate = allPlates.find(p => p.weight === preferredPlateWeight);
+      if (preferredPlate) {
+        result.push({
+          ...preferredPlate,
+          count: preferredPlatesNeeded,
+        });
+      }
+    }
+    remaining -= preferredPlateWeight * preferredPlatesNeeded;
+  }
+
+  // Build a map of existing plate weights for quick lookup (updated)
+  const updatedExistingPlateWeights = new Set(result.map(p => p.weight));
 
   // Sort plates: balance minimizing changes with honoring preference
   const sortedPlates = [...allPlates].sort((a, b) => {
-    const aExists = existingPlateWeights.has(a.weight);
-    const bExists = existingPlateWeights.has(b.weight);
+    const aExists = updatedExistingPlateWeights.has(a.weight);
+    const bExists = updatedExistingPlateWeights.has(b.weight);
     const aIsPreferred = isPreferredPlate(a.weight);
     const bIsPreferred = isPreferredPlate(b.weight);
-    
-    // Special case: If preferred plate can satisfy the entire weight cleanly,
-    // prioritize it even over existing smaller plates (powerlifter preference)
-    if (preferredCanSatisfy) {
-      if (aIsPreferred && !aExists && !bIsPreferred) return -1;
-      if (!aIsPreferred && bIsPreferred && !bExists) return 1;
-    }
     
     // Priority 1: Existing plates (minimize changes)
     if (aExists && !bExists) return -1;
@@ -915,37 +948,44 @@ export function calculateTopSetBreakdown(
   const result = [...existingPlatesPerSide.map(p => ({ ...p }))];
   let remaining = additionalWeightPerSide;
 
-  // Build a map of existing plate weights for quick lookup
-  const existingPlateWeights = new Set(existingPlatesPerSide.map(p => p.weight));
+  // Calculate minimum preferred plates required for target weight
+  const minPreferredPlates = getMinimumPreferredPlates(targetWeight, barWeight, isMetric, platePreference);
+  
+  // Count existing preferred plates
+  const existingPreferredPlate = result.find(p => p.weight === preferredPlateWeight);
+  const existingPreferredCount = existingPreferredPlate ? existingPreferredPlate.count : 0;
+  
+  // Calculate how many more preferred plates we need to meet minimum
+  const preferredPlatesNeeded = Math.max(0, minPreferredPlates - existingPreferredCount);
+
+  // First, ensure we meet minimum preferred plates requirement
+  if (preferredPlatesNeeded > 0 && remaining >= preferredPlateWeight * preferredPlatesNeeded) {
+    if (existingPreferredPlate) {
+      existingPreferredPlate.count += preferredPlatesNeeded;
+    } else {
+      const preferredPlate = allPlates.find(p => p.weight === preferredPlateWeight);
+      if (preferredPlate) {
+        result.push({
+          ...preferredPlate,
+          count: preferredPlatesNeeded,
+        });
+      }
+    }
+    remaining -= preferredPlateWeight * preferredPlatesNeeded;
+  }
+
+  // Build a map of existing plate weights for quick lookup (updated)
+  const updatedExistingPlateWeights = new Set(result.map(p => p.weight));
 
   // Check if a plate weight is the preferred color plate
   const isPreferredPlate = (weight) => weight === preferredPlateWeight;
 
-  // Check if the preferred plate can satisfy the entire remaining weight cleanly
-  const canPreferredPlateSatisfyCleanly = () => {
-    const preferredPlateCount = remaining / preferredPlateWeight;
-    return (
-      preferredPlateCount > 0 &&
-      preferredPlateCount <= 10 &&
-      Math.abs(preferredPlateCount - Math.round(preferredPlateCount)) < 0.001
-    );
-  };
-
-  const preferredCanSatisfy = canPreferredPlateSatisfyCleanly();
-
   // Sort plates: balance minimizing changes with honoring preference
   const sortedPlates = [...allPlates].sort((a, b) => {
-    const aExists = existingPlateWeights.has(a.weight);
-    const bExists = existingPlateWeights.has(b.weight);
+    const aExists = updatedExistingPlateWeights.has(a.weight);
+    const bExists = updatedExistingPlateWeights.has(b.weight);
     const aIsPreferred = isPreferredPlate(a.weight);
     const bIsPreferred = isPreferredPlate(b.weight);
-    
-    // Special case: If preferred plate can satisfy the entire weight cleanly,
-    // prioritize it even over existing smaller plates (powerlifter preference)
-    if (preferredCanSatisfy) {
-      if (aIsPreferred && !aExists && !bIsPreferred) return -1;
-      if (!aIsPreferred && bIsPreferred && !bExists) return 1;
-    }
     
     // Priority 1: Existing plates (minimize changes)
     if (aExists && !bExists) return -1;

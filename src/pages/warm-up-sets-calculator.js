@@ -22,6 +22,7 @@ import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or
 import {
   generateWarmupSets,
   calculatePlateBreakdown,
+  calculateTopSetBreakdown,
   formatPlateBreakdown,
 } from "@/lib/warmups";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
@@ -131,12 +132,32 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
   );
 
   // Calculate plate breakdown for top set
-  const topSetBreakdown = calculatePlateBreakdown(
-    Number(weight),
-    barWeight,
-    isMetric,
-    platePreference,
-  );
+  // If we have warmup sets, start from the last warmup's plates and add what's needed
+  let topSetBreakdown;
+  if (warmupSets.length > 0) {
+    const lastWarmupSet = warmupSets[warmupSets.length - 1];
+    const lastWarmupBreakdown = calculatePlateBreakdown(
+      lastWarmupSet.weight,
+      barWeight,
+      isMetric,
+      platePreference,
+    );
+    topSetBreakdown = calculateTopSetBreakdown(
+      Number(weight),
+      barWeight,
+      lastWarmupBreakdown.platesPerSide,
+      isMetric,
+      platePreference,
+    );
+  } else {
+    // Fallback to standard calculation if no warmup sets
+    topSetBreakdown = calculatePlateBreakdown(
+      Number(weight),
+      barWeight,
+      isMetric,
+      platePreference,
+    );
+  }
 
   const handleWeightSliderChange = (value) => {
     let newWeight = value[0];

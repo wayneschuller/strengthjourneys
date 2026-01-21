@@ -30,12 +30,51 @@ export function generateWarmupSets(
 
   const warmupSets = [];
   const minIncrement = isMetric ? 2.5 : 5; // Minimum plate increment
-  const minJump = isMetric ? 5 : 10; // Base minimum meaningful jump between sets
 
   // Clamp target warmup count to a reasonable range
   const clampedTargetCount = Math.min(Math.max(Math.round(targetWarmupCount), 2), 6);
 
-  // Always start with empty bar
+  // Determine base jump by topWeight (section 4.3)
+  let baseJump;
+  if (isMetric) {
+    if (topWeight < 60) {
+      baseJump = 2.5;
+    } else if (topWeight <= 140) {
+      baseJump = 5;
+    } else {
+      baseJump = 10;
+    }
+  } else {
+    if (topWeight < 135) {
+      baseJump = 5;
+    } else if (topWeight <= 310) {
+      baseJump = 10;
+    } else {
+      baseJump = 20;
+    }
+  }
+
+  // Calculate effective min jump (section 4.2)
+  const volumeJumpMultiplier =
+    clampedTargetCount <= 3 ? 1.4 : clampedTargetCount >= 5 ? 0.8 : 1.0;
+  const totalRange = Math.max(topWeight - barWeight, minIncrement);
+  const desiredAvgJump = totalRange / clampedTargetCount;
+  const effectiveMinJump = Math.min(baseJump * volumeJumpMultiplier, desiredAvgJump);
+
+  // Helper to build a map of plate counts for "only add plates" checks
+  const buildPlateCountMap = (platesPerSide) => {
+    const map = new Map();
+    platesPerSide.forEach((p) => {
+      map.set(p.weight, (map.get(p.weight) || 0) + p.count);
+    });
+    return map;
+  };
+
+  // ============================================
+  // SECTION 1: OPENING (10@bar + 5@anchor)
+  // ============================================
+
+  // Always start with empty bar (section 1.2, 2.1)
   warmupSets.push({
     weight: barWeight,
     reps: 10,
@@ -48,263 +87,463 @@ export function generateWarmupSets(
     return warmupSets;
   }
 
-  // Helper to build a map of plate counts for "only add plates" checks
-  const buildPlateCountMap = (platesPerSide) => {
-    const map = new Map();
-    platesPerSide.forEach((p) => {
-      map.set(p.weight, (map.get(p.weight) || 0) + p.count);
-    });
-    return map;
-  };
-
-  // Choose anchor warmup that sets the big plates which mostly stay on
-  let anchorTarget;
-  if (isMetric) {
-    // Metric: 60kg (blue 20s) for most weights, 70kg (red 25s) for heavy unless blue is explicitly preferred
-    const heavyThresholdKg = 150;
-    if (topWeight >= heavyThresholdKg && platePreference !== "blue") {
-      anchorTarget = 70;
-    } else {
-      anchorTarget = 60;
-    }
-  } else {
-    // Imperial: 135lb (blue 45s) vs 155lb (red 55s)
-    const heavyThresholdLb = 330;
-    if (topWeight >= heavyThresholdLb && platePreference !== "blue") {
-      anchorTarget = 155;
-    } else {
-      anchorTarget = 135;
-    }
-  }
-
-  // Let the target number of warmup sets influence jump size:
-  // fewer sets -> bigger jumps, more sets -> smaller jumps
-  const volumeJumpMultiplier =
-    clampedTargetCount <= 3 ? 1.4 : clampedTargetCount >= 5 ? 0.8 : 1.0;
-  const totalRange = Math.max(topWeight - barWeight, minIncrement);
-  const desiredAvgJump = totalRange / clampedTargetCount;
-  const effectiveMinJump = Math.min(minJump * volumeJumpMultiplier, desiredAvgJump);
-
   let previousWeight = barWeight;
   let previousPlateMap = buildPlateCountMap([]);
 
-  // Only add anchor (big plate jump) if user wants fewer warmups.
-  // For many warmups (5-6), skip the anchor and use gradual percentage-based sets from bar.
-  const shouldUseAnchor = clampedTargetCount <= 4;
+  // Choose anchor plate (section 3.1, 3.4)
+  let anchorTarget;
+  const heavyThreshold = isMetric ? 150 : 330;
+  const range = topWeight - barWeight;
+  const avgJumpNeeded = range / clampedTargetCount;
 
-  if (shouldUseAnchor) {
-    // Only add anchor if it makes sense (meaningful jump and below top)
+  if (isMetric) {
+    // If many warmups requested and range is small, use smaller anchor
+    if (clampedTargetCount >= 5 && avgJumpNeeded < 15) {
+      anchorTarget = 50; // Smaller: bar + 2×15kg
+    } else if (topWeight >= heavyThreshold && platePreference !== "blue") {
+      anchorTarget = 70; // Red 25s
+    } else {
+      anchorTarget = 60; // Blue 20s
+    }
+  } else {
+    if (clampedTargetCount >= 5 && avgJumpNeeded < 35) {
+      anchorTarget = 115; // Smaller: bar + 2×35lb
+    } else if (topWeight >= heavyThreshold && platePreference !== "blue") {
+      anchorTarget = 155; // Red 55s
+    } else {
+      anchorTarget = 135; // Blue 45s
+    }
+  }
+
+  // Add anchor set (section 2.1, 3.2)
+  if (
+    anchorTarget > barWeight + effectiveMinJump &&
+    anchorTarget < topWeight - effectiveMinJump
+  ) {
+    const anchorBreakdown = calculatePlateBreakdown(
+      anchorTarget,
+      barWeight,
+      isMetric,
+      platePreference,
+    );
+    const anchorWeight = anchorBreakdown.closestWeight;
+
     if (
-      anchorTarget > barWeight + effectiveMinJump &&
-      anchorTarget < topWeight - effectiveMinJump
+      anchorWeight > barWeight + effectiveMinJump &&
+      anchorWeight < topWeight - effectiveMinJump
     ) {
-      const anchorBreakdown = calculatePlateBreakdown(
-        anchorTarget,
-        barWeight,
-        isMetric,
-        platePreference,
-      );
-      const anchorWeight = anchorBreakdown.closestWeight;
+      warmupSets.push({
+        weight: anchorWeight,
+        reps: 5,
+        percentage: Math.round((anchorWeight / topWeight) * 100),
+      });
+      previousWeight = anchorWeight;
+      previousPlateMap = buildPlateCountMap(anchorBreakdown.platesPerSide);
 
-      if (
-        anchorWeight > barWeight + effectiveMinJump &&
-        anchorWeight < topWeight - effectiveMinJump
-      ) {
-        warmupSets.push({
-          weight: anchorWeight,
-          reps: 5,
-          percentage: Math.round((anchorWeight / topWeight) * 100),
-        });
-        previousWeight = anchorWeight;
-        previousPlateMap = buildPlateCountMap(anchorBreakdown.platesPerSide);
+      // For heavy lifts (>140kg), add third opening set: bar + 2×anchorPlate (section 2.1)
+      if (topWeight > (isMetric ? 140 : 310) && warmupSets.length < clampedTargetCount - 2) {
+        const secondAnchorWeight = isMetric
+          ? anchorWeight + 40 // Add another pair of 20s
+          : anchorWeight + 90; // Add another pair of 45s
+        if (secondAnchorWeight < topWeight - effectiveMinJump) {
+          const secondAnchorBreakdown = calculatePlateBreakdown(
+            secondAnchorWeight,
+            barWeight,
+            isMetric,
+            platePreference,
+          );
+          const secondAnchorActual = secondAnchorBreakdown.closestWeight;
+          if (
+            secondAnchorActual > anchorWeight + effectiveMinJump &&
+            secondAnchorActual < topWeight - effectiveMinJump
+          ) {
+            warmupSets.push({
+              weight: secondAnchorActual,
+              reps: 5,
+              percentage: Math.round((secondAnchorActual / topWeight) * 100),
+            });
+            previousWeight = secondAnchorActual;
+            previousPlateMap = buildPlateCountMap(secondAnchorBreakdown.platesPerSide);
+          }
+        }
       }
     }
   }
 
-  // Calculate how many sets we still need (excluding bar, which is already added)
-  const setsNeeded = clampedTargetCount - warmupSets.length;
+  // ============================================
+  // SECTION 2: MIDDLE (5-rep sets)
+  // ============================================
 
-  // Generate percentage candidates dynamically based on what we need
-  const getScheme = () => {
-    // Base percentages vary by rep range
-    let basePercentages, baseRepScheme;
-    if (topReps >= 5) {
-      basePercentages = [0.6, 0.75, 0.85, 0.9];
-      baseRepScheme = [5, 4, 3, 2];
-    } else if (topReps >= 3) {
-      basePercentages = [0.7, 0.8, 0.9, 0.95];
-      baseRepScheme = [3, 3, 2, 1];
-    } else {
-      basePercentages = [0.8, 0.87, 0.93, 0.97];
-      baseRepScheme = [3, 2, 2, 1];
-    }
+  // Calculate how many sets we still need for middle + final sections
+  const setsRemaining = clampedTargetCount - warmupSets.length;
+  
+  // Determine how many final warmup sets we need (section 7.2)
+  let finalWarmupCount = 0;
+  if (topReps <= 2) {
+    // PR attempt: 1 rep at base jump below goal
+    finalWarmupCount = 1;
+  } else if (topReps >= 5) {
+    // 5+ reps: one final warmup at 3 reps, baseJump below top
+    finalWarmupCount = 1;
+  } else {
+    // 3-4 reps: 3 reps, then 2 reps
+    finalWarmupCount = 2;
+  }
 
-    // If we need more sets than base percentages, generate evenly spaced ones
-    if (setsNeeded > basePercentages.length) {
-      const startPct = basePercentages[0];
-      const endPct = basePercentages[basePercentages.length - 1];
-      const percentages = [];
-      const repScheme = [];
+  // Middle section gets the remaining slots (all 5 reps per section 7.1)
+  const middleSetCount = Math.max(0, setsRemaining - finalWarmupCount);
 
-      for (let i = 0; i < setsNeeded; i++) {
-        const pct = startPct + ((endPct - startPct) * i) / (setsNeeded - 1);
-        percentages.push(pct);
-        // Interpolate reps: more reps for lighter sets, fewer for heavier
-        const repIdx = Math.floor((i / (setsNeeded - 1)) * (baseRepScheme.length - 1));
-        repScheme.push(baseRepScheme[repIdx] || 1);
+  // Identify anchor plate weight from the anchor set
+  let anchorPlateWeight = null;
+  if (warmupSets.length > 1 && previousPlateMap.size > 0) {
+    // Find the largest plate in the anchor set (this is our anchor plate)
+    previousPlateMap.forEach((count, weight) => {
+      if (!anchorPlateWeight || weight > anchorPlateWeight) {
+        anchorPlateWeight = weight;
       }
+    });
+  }
 
-      return { percentages, repScheme };
+  // Generate middle sets by progressively adding pairs of anchor plates
+  if (middleSetCount > 0 && anchorPlateWeight) {
+    // Calculate target weights by adding pairs of anchor plates
+    // e.g., if anchor is 60kg (bar + 2×20kg), next would be 100kg (bar + 4×20kg), then 140kg (bar + 6×20kg)
+    const anchorPairsPerSide = previousPlateMap.get(anchorPlateWeight) || 0;
+    
+    // Calculate where final warmups start
+    let finalWarmupWeight;
+    if (topReps <= 2) {
+      finalWarmupWeight = topWeight - baseJump;
+    } else if (topReps >= 5) {
+      const finalJump = topWeight > (isMetric ? 100 : 220) ? (isMetric ? 10 : 25) : baseJump;
+      finalWarmupWeight = topWeight - finalJump;
+    } else {
+      // 3-4 reps: final warmups start earlier
+      const finalJump = topWeight > (isMetric ? 100 : 220) ? (isMetric ? 10 : 25) : baseJump;
+      finalWarmupWeight = topWeight - finalJump;
+    }
+    
+    // Calculate how many more pairs we can add before hitting final warmup
+    const maxPairsNeeded = Math.floor((finalWarmupWeight - previousWeight) / (anchorPlateWeight * 2));
+    const pairsToAdd = Math.min(middleSetCount, maxPairsNeeded);
+    
+    for (let i = 0; i < pairsToAdd; i++) {
+      const newPairsPerSide = anchorPairsPerSide + i + 1;
+      const targetWeight = barWeight + (newPairsPerSide * anchorPlateWeight * 2);
+      
+      if (targetWeight >= finalWarmupWeight) {
+        break; // Don't go past final warmup
+      }
+      
+      // Use existing plates to build on
+      const currentPlatesPerSide = Array.from(previousPlateMap.entries()).map(([weight, count]) => {
+        const plateInfo = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(p => p.weight === weight);
+        return plateInfo ? { ...plateInfo, count } : null;
+      }).filter(Boolean);
+      
+      const breakdown = calculatePlateBreakdownWithExisting(
+        targetWeight,
+        barWeight,
+        currentPlatesPerSide,
+        isMetric,
+        platePreference,
+      );
+      const actualWeight = breakdown.closestWeight;
+      
+      // Only add if it's meaningfully different and below final warmup
+      if (
+        actualWeight > previousWeight + effectiveMinJump &&
+        actualWeight < finalWarmupWeight - effectiveMinJump
+      ) {
+        const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
+        
+        // Verify only-add-plates constraint
+        let onlyAdding = true;
+        previousPlateMap.forEach((prevCount, weight) => {
+          const nextCount = newPlateMap.get(weight) || 0;
+          if (nextCount < prevCount) {
+            onlyAdding = false;
+          }
+        });
+        
+        if (onlyAdding) {
+          warmupSets.push({
+            weight: actualWeight,
+            reps: 5, // All middle sets are 5 reps
+            percentage: Math.round((actualWeight / topWeight) * 100),
+          });
+          previousWeight = actualWeight;
+          previousPlateMap = newPlateMap;
+        }
+      }
+    }
+    
+    // If we still need more middle sets and can't add more anchor pairs,
+    // fill gaps with percentage-based sets that respect only-add-plates
+    const openingSetsCount = warmupSets.length > 1 ? 2 : 1; // Bar + anchor (if added)
+    const middleSetsAdded = warmupSets.length - openingSetsCount;
+    let stillNeeded = middleSetCount - middleSetsAdded;
+    if (stillNeeded > 0) {
+      const lastWeight = previousWeight;
+      // Use same finalWarmupWeight calculation as above
+      let finalWarmupWeight;
+      if (topReps <= 2) {
+        finalWarmupWeight = topWeight - baseJump;
+      } else if (topReps >= 5) {
+        const finalJump = topWeight > (isMetric ? 100 : 220) ? (isMetric ? 10 : 25) : baseJump;
+        finalWarmupWeight = topWeight - finalJump;
+      } else {
+        const finalJump = topWeight > (isMetric ? 100 : 220) ? (isMetric ? 10 : 25) : baseJump;
+        finalWarmupWeight = topWeight - finalJump;
+      }
+      const gap = finalWarmupWeight - lastWeight;
+      
+      // Be more aggressive: try multiple positions and relax constraints if needed
+      let attempts = 0;
+      const maxAttempts = stillNeeded * 15; // Try multiple times per needed set
+      
+      while (stillNeeded > 0 && warmupSets.length < clampedTargetCount - finalWarmupCount && attempts < maxAttempts) {
+        attempts++;
+        const setsAdded = warmupSets.length - openingSetsCount - (middleSetCount - stillNeeded);
+        const targetWeight = lastWeight + (gap * (setsAdded + 1) / (middleSetCount + 1));
+        const roundedWeight = roundToIncrement(targetWeight, minIncrement);
+        
+        // Progressively relax jump requirement
+        const relaxedJump = Math.max(
+          effectiveMinJump * 0.4, // Very relaxed
+          (gap / (stillNeeded + 1)) * 0.3 // Or based on remaining sets
+        );
+        
+        if (roundedWeight > previousWeight + relaxedJump && roundedWeight < finalWarmupWeight - relaxedJump) {
+          // Use existing plates to build on
+          const currentPlatesPerSide = Array.from(previousPlateMap.entries()).map(([weight, count]) => {
+            const plateInfo = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(p => p.weight === weight);
+            return plateInfo ? { ...plateInfo, count } : null;
+          }).filter(Boolean);
+          
+          const breakdown = calculatePlateBreakdownWithExisting(
+            roundedWeight,
+            barWeight,
+            currentPlatesPerSide,
+            isMetric,
+            platePreference,
+          );
+          const actualWeight = breakdown.closestWeight;
+          
+          if (
+            actualWeight > previousWeight + relaxedJump &&
+            actualWeight < finalWarmupWeight - relaxedJump
+          ) {
+            const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
+            
+            let onlyAdding = true;
+            previousPlateMap.forEach((prevCount, weight) => {
+              const nextCount = newPlateMap.get(weight) || 0;
+              if (nextCount < prevCount) {
+                onlyAdding = false;
+              }
+            });
+            
+            if (onlyAdding) {
+              warmupSets.push({
+                weight: actualWeight,
+                reps: 5,
+                percentage: Math.round((actualWeight / topWeight) * 100),
+              });
+              previousWeight = actualWeight;
+              previousPlateMap = newPlateMap;
+              stillNeeded--;
+              continue; // Successfully added, try again
+            }
+          }
+        }
+        
+        // If we couldn't add at that position, try adjusting incrementally
+        if (attempts % 3 === 0) {
+          // Every 3 attempts, try a slightly different position
+          const adjustedTarget = previousWeight + minIncrement * 2;
+          if (adjustedTarget >= finalWarmupWeight - relaxedJump) {
+            break; // Can't fit more
+          }
+        }
+      }
+    }
+  }
+
+  // ============================================
+  // SECTION 3: FINAL WARMUPS (reducing reps)
+  // ============================================
+
+  // Helper to add a final warmup set with only-add-plates check
+  const addFinalWarmupSet = (targetWeight, reps) => {
+    if (warmupSets.length >= clampedTargetCount) {
+      return false;
     }
 
-    // Otherwise use base scheme, but only take what we need
-    return {
-      percentages: basePercentages.slice(0, setsNeeded),
-      repScheme: baseRepScheme.slice(0, setsNeeded),
-    };
+    const roundedWeight = roundToIncrement(targetWeight, minIncrement);
+    
+    if (
+      roundedWeight <= previousWeight + effectiveMinJump ||
+      roundedWeight >= topWeight - effectiveMinJump
+    ) {
+      return false;
+    }
+
+    // Use existing plates to build on
+    const currentPlatesPerSide = Array.from(previousPlateMap.entries()).map(([weight, count]) => {
+      const plateInfo = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(p => p.weight === weight);
+      return plateInfo ? { ...plateInfo, count } : null;
+    }).filter(Boolean);
+    
+    const breakdown = calculatePlateBreakdownWithExisting(
+      roundedWeight,
+      barWeight,
+      currentPlatesPerSide,
+      isMetric,
+      platePreference,
+    );
+    const actualWeight = breakdown.closestWeight;
+
+    if (
+      actualWeight <= previousWeight + effectiveMinJump ||
+      actualWeight >= topWeight - effectiveMinJump
+    ) {
+      return false;
+    }
+
+    const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
+
+    // Enforce only-add-plates constraint
+    let onlyAdding = true;
+    previousPlateMap.forEach((prevCount, weight) => {
+      const nextCount = newPlateMap.get(weight) || 0;
+      if (nextCount < prevCount) {
+        onlyAdding = false;
+      }
+    });
+
+    if (!onlyAdding) {
+      return false;
+    }
+
+    warmupSets.push({
+      weight: actualWeight,
+      reps,
+      percentage: Math.round((actualWeight / topWeight) * 100),
+    });
+    previousWeight = actualWeight;
+    previousPlateMap = newPlateMap;
+    return true;
   };
 
-  const { percentages, repScheme } = getScheme();
+  // Generate final warmup sets based on topReps (section 7.2)
+  if (topReps <= 2) {
+    // PR attempt: 1 rep at base jump below goal
+    const finalWarmupWeight = topWeight - baseJump;
+    addFinalWarmupSet(finalWarmupWeight, 1);
+  } else if (topReps >= 5) {
+    // 5+ reps: one final warmup at 3 reps, baseJump below top (e.g., 130kg for 140kg top)
+    // This primes CNS nicely (section 7.2)
+    const finalJump = topWeight > (isMetric ? 100 : 220) 
+      ? (isMetric ? 10 : 25)  // ~10kg/25lb for heavier lifts
+      : baseJump;
+    
+    const finalWarmupWeight = topWeight - finalJump;
+    addFinalWarmupSet(finalWarmupWeight, 3);
+  } else {
+    // 3-4 reps: 3 reps, then 2 reps (with smaller jumps ~10kg/20-25lb when top > 100kg/220lb)
+    const finalJump = topWeight > (isMetric ? 100 : 220) 
+      ? (isMetric ? 10 : 25)
+      : baseJump;
+    
+    // First final warmup: 3 reps
+    const firstFinalWeight = topWeight - finalJump;
+    if (addFinalWarmupSet(firstFinalWeight, 3)) {
+      // Second final warmup: 2 reps at half the jump
+      const secondFinalWeight = topWeight - (finalJump / 2);
+      addFinalWarmupSet(secondFinalWeight, 2);
+    }
+  }
 
-  // Helper that finds the next practical warmup weight honouring:
-  // - rounding to plate increments
-  // - only adding plates (no removing)
-  // - being between previous and top with a meaningful jump
-  const findNextWarmupFromPercentage = (pct, reps) => {
-    let desired = topWeight * pct;
+  // Fill remaining slots if we're still short (section 6.2)
+  // Be aggressive about hitting the target count
+  let attempts = 0;
+  const maxAttempts = 50; // Prevent infinite loops
+  
+  while (warmupSets.length < clampedTargetCount && warmupSets.length > 0 && attempts < maxAttempts) {
+    attempts++;
+    const lastSet = warmupSets[warmupSets.length - 1];
+    const gap = topWeight - lastSet.weight;
+    const setsStillNeeded = clampedTargetCount - warmupSets.length;
 
-    // Small safety to avoid infinite loops
-    for (let i = 0; i < 20; i++) {
-      const roundedDesired = roundToIncrement(desired, minIncrement);
+    // Calculate minimum gap needed per remaining set
+    const minGapPerSet = gap / (setsStillNeeded + 1);
+    
+    // If gap is too small even with relaxed constraints, we can't fit more
+    if (gap < minIncrement * 2) {
+      break;
+    }
 
-      if (
-        roundedDesired <= previousWeight + effectiveMinJump ||
-        roundedDesired >= topWeight - effectiveMinJump
-      ) {
-        return null;
-      }
+    // Progressively relax jump requirements as we get closer to target
+    const relaxedJump = Math.max(
+      effectiveMinJump * 0.5, // Very relaxed
+      minGapPerSet * 0.8 // Or based on remaining sets
+    );
 
-      const breakdown = calculatePlateBreakdown(
-        roundedDesired,
+    // Try to add a set at evenly spaced intervals
+    const targetWeight = lastSet.weight + minGapPerSet;
+    const roundedWeight = roundToIncrement(targetWeight, minIncrement);
+
+    if (
+      roundedWeight > lastSet.weight + relaxedJump &&
+      roundedWeight < topWeight - relaxedJump
+    ) {
+      // Use existing plates to build on
+      const currentPlatesPerSide = Array.from(previousPlateMap.entries()).map(([weight, count]) => {
+        const plateInfo = (isMetric ? PLATE_SETS.kg : PLATE_SETS.lb).find(p => p.weight === weight);
+        return plateInfo ? { ...plateInfo, count } : null;
+      }).filter(Boolean);
+      
+      const breakdown = calculatePlateBreakdownWithExisting(
+        roundedWeight,
         barWeight,
+        currentPlatesPerSide,
         isMetric,
         platePreference,
       );
       const actualWeight = breakdown.closestWeight;
 
       if (
-        actualWeight <= previousWeight + effectiveMinJump ||
-        actualWeight >= topWeight - effectiveMinJump
+        actualWeight > lastSet.weight + relaxedJump &&
+        actualWeight < topWeight - relaxedJump
       ) {
-        desired += minIncrement;
-        continue;
-      }
+        const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
+        let onlyAdding = true;
+        previousPlateMap.forEach((prevCount, weight) => {
+          const nextCount = newPlateMap.get(weight) || 0;
+          if (nextCount < prevCount) {
+            onlyAdding = false;
+          }
+        });
 
-      const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
-
-      // Enforce "only add plates": for every existing plate weight,
-      // the new count must be >= previous.
-      let onlyAdding = true;
-      previousPlateMap.forEach((prevCount, weight) => {
-        const nextCount = newPlateMap.get(weight) || 0;
-        if (nextCount < prevCount) {
-          onlyAdding = false;
-        }
-      });
-
-      if (!onlyAdding) {
-        desired += minIncrement;
-        continue;
-      }
-
-      return {
-        weight: actualWeight,
-        reps,
-        plateMap: newPlateMap,
-      };
-    }
-
-    return null;
-  };
-
-  percentages.forEach((pct, idx) => {
-    // Stop once we've reached the requested number of warmup sets
-    if (warmupSets.length >= clampedTargetCount) {
-      return;
-    }
-    const reps = repScheme[idx] || 1;
-    const next = findNextWarmupFromPercentage(pct, reps);
-    if (next) {
-      warmupSets.push({
-        weight: next.weight,
-        reps: next.reps,
-        percentage: Math.round((next.weight / topWeight) * 100),
-      });
-      previousWeight = next.weight;
-      previousPlateMap = next.plateMap;
-    }
-  });
-
-  // If we're still short of the target, keep generating intermediate sets
-  // by evenly spacing between last warmup and top set
-  while (warmupSets.length < clampedTargetCount && warmupSets.length > 0) {
-    const lastSet = warmupSets[warmupSets.length - 1];
-    const gap = topWeight - lastSet.weight;
-
-    // If gap is too small, we can't fit more sets
-    if (gap < effectiveMinJump * 1.5) {
-      break;
-    }
-
-    // Try a set at roughly 50% of the remaining gap
-    const targetPct = (lastSet.weight + gap * 0.5) / topWeight;
-    const reps = topReps >= 5 ? 3 : topReps >= 3 ? 2 : 1;
-    const next = findNextWarmupFromPercentage(targetPct, reps);
-
-    if (next && next.weight > lastSet.weight && next.weight < topWeight) {
-      warmupSets.push({
-        weight: next.weight,
-        reps: next.reps,
-        percentage: Math.round((next.weight / topWeight) * 100),
-      });
-      previousWeight = next.weight;
-      previousPlateMap = next.plateMap;
-    } else {
-      // If we can't add a set, try with a slightly relaxed constraint
-      // by temporarily reducing effectiveMinJump
-      const relaxedJump = effectiveMinJump * 0.7;
-      let relaxedDesired = (lastSet.weight + topWeight) / 2;
-      const relaxedRounded = roundToIncrement(relaxedDesired, minIncrement);
-
-      if (
-        relaxedRounded > lastSet.weight + relaxedJump &&
-        relaxedRounded < topWeight - relaxedJump
-      ) {
-        const relaxedBreakdown = calculatePlateBreakdown(
-          relaxedRounded,
-          barWeight,
-          isMetric,
-          platePreference,
-        );
-        const relaxedWeight = relaxedBreakdown.closestWeight;
-
-        if (
-          relaxedWeight > lastSet.weight + relaxedJump &&
-          relaxedWeight < topWeight - relaxedJump
-        ) {
+        if (onlyAdding) {
           warmupSets.push({
-            weight: relaxedWeight,
-            reps,
-            percentage: Math.round((relaxedWeight / topWeight) * 100),
+            weight: actualWeight,
+            reps: 5, // Default to 5 reps for fill-in sets
+            percentage: Math.round((actualWeight / topWeight) * 100),
           });
-          previousWeight = relaxedWeight;
-          previousPlateMap = buildPlateCountMap(relaxedBreakdown.platesPerSide);
-        } else {
-          break;
+          previousWeight = actualWeight;
+          previousPlateMap = newPlateMap;
+          continue; // Successfully added, try again
         }
-      } else {
-        break;
       }
+    }
+    
+    // If we couldn't add at that position, try a slightly different position
+    // by incrementing the target weight
+    const nextAttemptWeight = lastSet.weight + minGapPerSet + minIncrement;
+    if (nextAttemptWeight >= topWeight - relaxedJump) {
+      break; // Can't fit more
     }
   }
 
@@ -317,6 +556,50 @@ export function generateWarmupSets(
       uniqueSets.push(set);
     }
   });
+
+  // Final aggressive pass: if we're still short, add sets even more aggressively
+  if (uniqueSets.length < clampedTargetCount && uniqueSets.length > 0) {
+    const lastSet = uniqueSets[uniqueSets.length - 1];
+    const gap = topWeight - lastSet.weight;
+    const stillNeeded = clampedTargetCount - uniqueSets.length;
+    
+    if (gap > minIncrement && stillNeeded > 0) {
+      // Calculate evenly spaced positions
+      for (let i = 0; i < stillNeeded && uniqueSets.length < clampedTargetCount; i++) {
+        const targetWeight = lastSet.weight + (gap * (i + 1) / (stillNeeded + 1));
+        const roundedWeight = roundToIncrement(targetWeight, minIncrement);
+        
+        if (roundedWeight > lastSet.weight && roundedWeight < topWeight) {
+          // Get plates from last set to build on
+          const lastSetBreakdown = calculatePlateBreakdown(
+            lastSet.weight,
+            barWeight,
+            isMetric,
+            platePreference,
+          );
+          
+          const breakdown = calculatePlateBreakdownWithExisting(
+            roundedWeight,
+            barWeight,
+            lastSetBreakdown.platesPerSide,
+            isMetric,
+            platePreference,
+          );
+          const actualWeight = breakdown.closestWeight;
+          
+          // Very relaxed constraints - just make sure it's different and below top
+          if (actualWeight > lastSet.weight && actualWeight < topWeight && !seenWeights.has(actualWeight)) {
+            uniqueSets.push({
+              weight: actualWeight,
+              reps: 5,
+              percentage: Math.round((actualWeight / topWeight) * 100),
+            });
+            seenWeights.add(actualWeight);
+          }
+        }
+      }
+    }
+  }
 
   return uniqueSets;
 }
@@ -344,6 +627,204 @@ export const PLATE_SETS = {
     { weight: 2.5, color: "#F59E0B", name: "2.5lb" }, // Orange/Small
   ],
 };
+
+/**
+ * Calculate plate breakdown by adding to existing plates (prioritizes keeping existing plates)
+ * @param {number} targetWeight - Target weight
+ * @param {number} barWeight - Weight of the barbell
+ * @param {Array} existingPlatesPerSide - Plates already on the bar
+ * @param {boolean} isMetric - Whether using kg (true) or lb (false)
+ * @param {string} platePreference - "red" or "blue" to prefer red or blue plates
+ * @returns {Object} { platesPerSide, remainder, closestWeight }
+ */
+export function calculatePlateBreakdownWithExisting(
+  targetWeight,
+  barWeight,
+  existingPlatesPerSide,
+  isMetric,
+  platePreference = "red",
+) {
+  if (targetWeight < barWeight) {
+    return {
+      platesPerSide: existingPlatesPerSide || [],
+      remainder: targetWeight - barWeight,
+      closestWeight: barWeight,
+    };
+  }
+
+  const allPlates = isMetric ? PLATE_SETS.kg : PLATE_SETS.lb;
+  const minIncrement = isMetric ? 1.25 : 2.5;
+  
+  // Calculate current weight with existing plates
+  const existingWeightPerSide = (existingPlatesPerSide || []).reduce(
+    (sum, plate) => sum + plate.weight * plate.count,
+    0,
+  );
+  const currentTotalWeight = barWeight + existingWeightPerSide * 2;
+  
+  // Calculate additional weight needed per side
+  const additionalWeightPerSide = (targetWeight - currentTotalWeight) / 2;
+  
+  if (additionalWeightPerSide <= 0) {
+    // Already at or above target, return existing plates
+    const actualWeight = barWeight + existingWeightPerSide * 2;
+    return {
+      platesPerSide: existingPlatesPerSide || [],
+      remainder: targetWeight - actualWeight,
+      closestWeight: actualWeight,
+    };
+  }
+
+  // Start with existing plates
+  const result = (existingPlatesPerSide || []).map(p => ({ ...p }));
+  let remaining = additionalWeightPerSide;
+
+  // Build a map of existing plate weights for quick lookup
+  const existingPlateWeights = new Set((existingPlatesPerSide || []).map(p => p.weight));
+
+  // Sort plates: prefer existing plate types first, then by size (largest first)
+  const sortedPlates = [...allPlates].sort((a, b) => {
+    const aExists = existingPlateWeights.has(a.weight);
+    const bExists = existingPlateWeights.has(b.weight);
+    
+    // Existing plates come first
+    if (aExists && !bExists) return -1;
+    if (!aExists && bExists) return 1;
+    
+    // Then sort by weight (largest first)
+    return b.weight - a.weight;
+  });
+
+  // Greedy algorithm: use largest plates first, preferring existing types
+  for (const plate of sortedPlates) {
+    if (remaining <= 0) break;
+    
+    const count = Math.floor(remaining / plate.weight);
+    if (count > 0) {
+      // Check if this plate type already exists
+      const existingPlate = result.find(p => p.weight === plate.weight);
+      if (existingPlate) {
+        existingPlate.count += count;
+      } else {
+        result.push({
+          ...plate,
+          count,
+        });
+      }
+      remaining -= count * plate.weight;
+    }
+  }
+
+  // Sort result by weight (largest first) for display
+  result.sort((a, b) => b.weight - a.weight);
+
+  const totalPlatesWeight = result.reduce(
+    (sum, p) => sum + p.weight * p.count,
+    0,
+  );
+  const actualWeight = barWeight + totalPlatesWeight * 2;
+  const remainder = targetWeight - actualWeight;
+
+  return {
+    platesPerSide: result,
+    remainder: Math.abs(remainder) < 0.01 ? 0 : remainder,
+    closestWeight: actualWeight,
+  };
+}
+
+/**
+ * Calculate plate breakdown for top set by adding to existing plates from last warmup
+ * @param {number} targetWeight - Target weight for top set
+ * @param {number} barWeight - Weight of the barbell
+ * @param {Array} existingPlatesPerSide - Plates already on from last warmup set
+ * @param {boolean} isMetric - Whether using kg (true) or lb (false)
+ * @param {string} platePreference - "red" or "blue" to prefer red or blue plates
+ * @returns {Object} { platesPerSide, remainder, closestWeight }
+ */
+export function calculateTopSetBreakdown(
+  targetWeight,
+  barWeight,
+  existingPlatesPerSide,
+  isMetric,
+  platePreference = "red",
+) {
+  if (targetWeight < barWeight) {
+    return {
+      platesPerSide: existingPlatesPerSide,
+      remainder: targetWeight - barWeight,
+      closestWeight: barWeight,
+    };
+  }
+
+  const allPlates = isMetric ? PLATE_SETS.kg : PLATE_SETS.lb;
+  const minIncrement = isMetric ? 1.25 : 2.5;
+  
+  // Calculate current weight with existing plates
+  const existingWeightPerSide = existingPlatesPerSide.reduce(
+    (sum, plate) => sum + plate.weight * plate.count,
+    0,
+  );
+  const currentTotalWeight = barWeight + existingWeightPerSide * 2;
+  
+  // Calculate additional weight needed per side
+  const additionalWeightPerSide = (targetWeight - currentTotalWeight) / 2;
+  
+  if (additionalWeightPerSide <= 0) {
+    // Already at or above target, return existing plates
+    const actualWeight = barWeight + existingWeightPerSide * 2;
+    return {
+      platesPerSide: existingPlatesPerSide,
+      remainder: targetWeight - actualWeight,
+      closestWeight: actualWeight,
+    };
+  }
+
+  // Start with existing plates and add what's needed
+  const result = [...existingPlatesPerSide.map(p => ({ ...p }))];
+  let remaining = additionalWeightPerSide;
+
+  // Greedy algorithm: use largest plates first to minimize plate count
+  // This ensures we use 1×10kg instead of 4×1.25kg, etc.
+  const sortedPlates = [...allPlates].sort((a, b) => {
+    // Sort largest to smallest
+    return b.weight - a.weight;
+  });
+
+  for (const plate of sortedPlates) {
+    if (remaining <= 0) break;
+    
+    const count = Math.floor(remaining / plate.weight);
+    if (count > 0) {
+      // Check if this plate type already exists
+      const existingPlate = result.find(p => p.weight === plate.weight);
+      if (existingPlate) {
+        existingPlate.count += count;
+      } else {
+        result.push({
+          ...plate,
+          count,
+        });
+      }
+      remaining -= count * plate.weight;
+    }
+  }
+
+  // Sort result by weight (largest first) for display
+  result.sort((a, b) => b.weight - a.weight);
+
+  const totalPlatesWeight = result.reduce(
+    (sum, p) => sum + p.weight * p.count,
+    0,
+  );
+  const actualWeight = barWeight + totalPlatesWeight * 2;
+  const remainder = targetWeight - actualWeight;
+
+  return {
+    platesPerSide: result,
+    remainder: Math.abs(remainder) < 0.01 ? 0 : remainder,
+    closestWeight: actualWeight,
+  };
+}
 
 /**
  * Calculate plate breakdown for a given total weight

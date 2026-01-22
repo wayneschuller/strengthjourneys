@@ -489,7 +489,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
       </CardHeader>
       <CardContent className="flex flex-col pb-5 align-middle">
         <div className="h-[55vh] pr-4">
-          <Conversation className="h-full">
+          <Conversation className="h-full w-full">
             {messages.length === 0 ? (
               <ConversationEmptyState
                 title="No messages yet"

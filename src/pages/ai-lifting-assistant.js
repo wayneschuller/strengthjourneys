@@ -17,7 +17,21 @@ import {
   Message,
   MessageContent,
   MessageResponse,
+  MessageActions,
+  MessageAction,
 } from "@/components/ai-elements/message";
+import {
+  Source,
+  Sources,
+  SourcesContent,
+  SourcesTrigger,
+} from "@/components/ai-elements/sources";
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from "@/components/ai-elements/reasoning";
+import { Loader } from "@/components/ai-elements/loader";
 
 import {
   PromptInput,
@@ -48,7 +62,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { Bot, LoaderCircle } from "lucide-react";
+import { Bot, CopyIcon, RefreshCcwIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
@@ -346,6 +360,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     sendMessage,
     status,
     stop,
+    regenerate,
   } = useChat({
     api: "/api/chat", // Explicitly set the pages router endpoint
     body: { userProvidedMetadata: userProvidedProfileData }, // Share the user selected metadata with the AI temporarily
@@ -354,23 +369,24 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     },
   });
 
-  // Handle submit from PromptInput (receives message object with text and files)
-  const handleSubmit = (message, event) => {
-    if (event && event.preventDefault) {
-      event.preventDefault();
-    }
-    
+  // Handle submit from PromptInput (receives message object with text)
+  const handleSubmit = (message) => {
     const hasText = Boolean(message.text && message.text.trim());
-    const hasAttachments = Boolean(message.files && message.files.length > 0);
     
-    if (!hasText && !hasAttachments) {
+    if (!hasText) {
       return;
     }
     
-    sendMessage({
-      text: message.text || "Sent with attachments",
-      files: message.files,
-    });
+    sendMessage(
+      { 
+        text: message.text
+      },
+      {
+        body: {
+          userProvidedMetadata: userProvidedProfileData,
+        },
+      },
+    );
   };
 
   // Hydrate once on mount (client only)
@@ -509,37 +525,116 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                   .filter((msg) => msg.role !== "suggestions") // Skip suggestions in main chat
                   .map((message) => {
                     // Handle AI SDK v6 parts format
-                    const content = message.parts || message.content;
-                    let textContent = "";
-                    if (typeof content === "string") {
-                      textContent = content;
-                    } else if (Array.isArray(content)) {
-                      textContent = content
-                        .filter((part) => part.type === "text")
-                        .map((part) => part.text)
-                        .join("");
-                    }
-
+                    const parts = message.parts || [];
+                    const isLastMessage = message.id === messages[messages.length - 1]?.id;
+                    
+                    // Show sources if there are any source-url parts
+                    const hasSources = parts.some((part) => part.type === "source-url");
+                    
                     return (
-                      <Message key={message.id} from={message.role}>
-                        <MessageContent>
-                          <MessageResponse>{textContent}</MessageResponse>
-                        </MessageContent>
-                      </Message>
+                      <div key={message.id}>
+                        {message.role === "assistant" && hasSources && (
+                          <Sources>
+                            <SourcesTrigger
+                              count={
+                                parts.filter((part) => part.type === "source-url").length
+                              }
+                            />
+                            {parts
+                              .filter((part) => part.type === "source-url")
+                              .map((part, i) => (
+                                <SourcesContent key={`${message.id}-source-${i}`}>
+                                  <Source
+                                    href={part.url}
+                                    title={part.url}
+                                  />
+                                </SourcesContent>
+                              ))}
+                          </Sources>
+                        )}
+                        {parts.map((part, i) => {
+                          switch (part.type) {
+                            case "text":
+                              return (
+                                <Message key={`${message.id}-${i}`} from={message.role}>
+                                  <MessageContent>
+                                    <MessageResponse>{part.text}</MessageResponse>
+                                  </MessageContent>
+                                  {message.role === "assistant" && isLastMessage && i === parts.length - 1 && (
+                                    <MessageActions>
+                                      <MessageAction
+                                        onClick={() => regenerate()}
+                                        label="Retry"
+                                      >
+                                        <RefreshCcwIcon className="size-3" />
+                                      </MessageAction>
+                                      <MessageAction
+                                        onClick={() =>
+                                          navigator.clipboard.writeText(part.text)
+                                        }
+                                        label="Copy"
+                                      >
+                                        <CopyIcon className="size-3" />
+                                      </MessageAction>
+                                    </MessageActions>
+                                  )}
+                                </Message>
+                              );
+                            case "reasoning":
+                              return (
+                                <Reasoning
+                                  key={`${message.id}-${i}`}
+                                  className="w-full"
+                                  isStreaming={status === "streaming" && i === parts.length - 1 && isLastMessage}
+                                >
+                                  <ReasoningTrigger />
+                                  <ReasoningContent>{part.text}</ReasoningContent>
+                                </Reasoning>
+                              );
+                            default:
+                              return null;
+                          }
+                        })}
+                        {/* Fallback for messages without parts (legacy format) */}
+                        {parts.length === 0 && message.content && (
+                          <Message from={message.role}>
+                            <MessageContent>
+                              <MessageResponse>
+                                {typeof message.content === "string"
+                                  ? message.content
+                                  : JSON.stringify(message.content)}
+                              </MessageResponse>
+                            </MessageContent>
+                            {message.role === "assistant" && isLastMessage && (
+                              <MessageActions>
+                                <MessageAction
+                                  onClick={() => regenerate()}
+                                  label="Retry"
+                                >
+                                  <RefreshCcwIcon className="size-3" />
+                                </MessageAction>
+                                <MessageAction
+                                  onClick={() =>
+                                    navigator.clipboard.writeText(
+                                      typeof message.content === "string"
+                                        ? message.content
+                                        : JSON.stringify(message.content)
+                                    )
+                                  }
+                                  label="Copy"
+                                >
+                                  <CopyIcon className="size-3" />
+                                </MessageAction>
+                              </MessageActions>
+                            )}
+                          </Message>
+                        )}
+                      </div>
                     );
                   })}
 
-                {/* Show spinner only while waiting, and hide it once an assistant message begins */}
-                {(status === "submitted" || status === "streaming") && (
-                  <Message from="assistant">
-                    <MessageContent>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                        <span>Thinking…</span>
-                      </div>
-                    </MessageContent>
-                  </Message>
-                )}
+                {/* Show loader only while waiting */}
+                {status === "submitted" && <Loader />}
               </ConversationContent>
             )}
             <ConversationScrollButton />

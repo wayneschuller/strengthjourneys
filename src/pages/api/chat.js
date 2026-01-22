@@ -100,6 +100,8 @@ export default async function handler(req, res) {
   // Convert the Response from toUIMessageStreamResponse() to work with pages router
   const response = result.toUIMessageStreamResponse({
     originalMessages: userMessages, // Required to prevent duplicate messages (use sanitized array)
+    sendSources: true,
+    sendReasoning: true,
   });
 
   // Copy headers from the Response to the pages router res

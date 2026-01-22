@@ -1,10 +1,10 @@
 /**
- * Warmup generation utilities following Starting Strength methodology
+ * Warmup generation utilities following progressive warmup methodology
  * and plate breakdown calculations for barbell loading
  */
 
 /**
- * Generate all sets (warmups + top set) based on Starting Strength methodology
+ * Generate all sets (warmups + top set) based on progressive warmup methodology
  * @param {number} topWeight - Target weight for the top set
  * @param {number} topReps - Number of reps for the top set
  * @param {number} barWeight - Weight of the barbell

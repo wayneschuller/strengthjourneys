@@ -42,9 +42,9 @@ export async function getStaticProps() {
 export default function WarmUpSetsCalculator({ relatedArticles }) {
   const title = "Barbell Warm Up Sets Calculator | Free tool, no login required";
   const description =
-    "Generate warmup sets for your barbell workouts using Starting Strength methodology. Calculate warmup weights, reps, and see plate breakdowns with visual diagrams.";
+    "Generate warmup sets for your barbell workouts using progressive warmup methodology. Calculate warmup weights, reps, and see plate breakdowns with visual diagrams.";
   const keywords =
-    "warmup sets calculator, barbell warmup calculator, starting strength warmup, warmup sets generator, barbell warmup sets, strength training warmup, powerlifting warmup calculator, workout warmup calculator, warmup reps calculator";
+    "warmup sets calculator, barbell warmup calculator, progressive warmup, warmup sets generator, barbell warmup sets, strength training warmup, powerlifting warmup calculator, workout warmup calculator, warmup reps calculator";
   const canonicalURL = "https://www.strengthjourneys.xyz/warm-up-sets-calculator";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_warm_up_sets_calculator_og.png";
@@ -182,7 +182,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
       <PageHeader>
         <PageHeaderHeading icon={Flame}>Barbell Warm Ups Calculator</PageHeaderHeading>
         <PageHeaderDescription>
-          Generate warmup sets for your barbell workouts using Starting Strength
+          Generate warmup sets for your barbell workouts using progressive warmup
           methodology. Enter your target top set weight and reps, and we&apos;ll
           calculate the warmup progression with plate breakdowns.
         </PageHeaderDescription>

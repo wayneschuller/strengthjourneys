@@ -84,7 +84,7 @@ export const featurePages = [
     href: "/warm-up-sets-calculator",
     title: "Warm Ups Calculator",
     description:
-      "Generate warmup sets for your barbell workouts using Starting Strength methodology.",
+      "Generate warmup sets for your barbell workouts using progressive warmup methodology.",
     IconComponent: Flame,
   },
   {

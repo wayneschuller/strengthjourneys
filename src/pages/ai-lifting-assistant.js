@@ -455,8 +455,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   };
 
   return (
-    <Card className="max-h-full bg-background text-foreground">
-      <CardHeader className="flex flex-1 flex-col md:flex-row">
+    <Card className="flex flex-col h-full bg-background text-foreground">
+      <CardHeader className="flex flex-1 flex-col md:flex-row flex-shrink-0">
         <div className="flex flex-1 flex-col">
           <CardTitle className="text-balance text-2xl font-bold">
             Your Personal Lifting AI Assistant
@@ -487,161 +487,163 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
           <FlickeringGridDemo />
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col pb-5 align-middle">
-        <div className="h-[55vh] pr-4">
-          <Conversation className="h-full w-full">
-            {messages.length === 0 ? (
-              <ConversationEmptyState
-                title="No messages yet"
-                description="Enter your questions into the chat box below (or click a sample question)"
-              >
-                <div className="mt-3 flex max-w-3xl flex-wrap justify-center gap-3 md:mt-10 md:gap-5">
-                  {defaultMessages.map((message) => (
-                    <Badge
-                      key={message}
-                      variant="secondary"
-                      className="cursor-pointer select-none whitespace-nowrap px-3 py-1 hover:bg-muted-foreground"
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Ask: ${message}`}
-                      onClick={() => {
-                        sendMessage({ text: message });
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
+      <CardContent className="flex flex-col flex-1 min-h-0 pb-5 align-middle">
+        <div className="flex flex-col h-full">
+          <Conversation className="pr-4">
+            <ConversationContent>
+              {messages.length === 0 ? (
+                <ConversationEmptyState
+                  title="No messages yet"
+                  description="Enter your questions into the chat box below (or click a sample question)"
+                >
+                  <div className="mt-3 flex max-w-3xl flex-wrap justify-center gap-3 md:mt-10 md:gap-5">
+                    {defaultMessages.map((message) => (
+                      <Badge
+                        key={message}
+                        variant="secondary"
+                        className="cursor-pointer select-none whitespace-nowrap px-3 py-1 hover:bg-muted-foreground"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Ask: ${message}`}
+                        onClick={() => {
                           sendMessage({ text: message });
-                        }
-                      }}
-                    >
-                      {message}
-                    </Badge>
-                  ))}
-                </div>
-              </ConversationEmptyState>
-            ) : (
-              <ConversationContent>
-                {messages
-                  .filter((msg) => msg.role !== "suggestions") // Skip suggestions in main chat
-                  .map((message) => {
-                    // Handle AI SDK v6 parts format
-                    const parts = message.parts || [];
-                    const isLastMessage = message.id === messages[messages.length - 1]?.id;
-                    
-                    // Show sources if there are any source-url parts
-                    const hasSources = parts.some((part) => part.type === "source-url");
-                    
-                    return (
-                      <div key={message.id}>
-                        {message.role === "assistant" && hasSources && (
-                          <Sources>
-                            <SourcesTrigger
-                              count={
-                                parts.filter((part) => part.type === "source-url").length
-                              }
-                            />
-                            {parts
-                              .filter((part) => part.type === "source-url")
-                              .map((part, i) => (
-                                <SourcesContent key={`${message.id}-source-${i}`}>
-                                  <Source
-                                    href={part.url}
-                                    title={part.url}
-                                  />
-                                </SourcesContent>
-                              ))}
-                          </Sources>
-                        )}
-                        {parts.map((part, i) => {
-                          switch (part.type) {
-                            case "text":
-                              return (
-                                <Message key={`${message.id}-${i}`} from={message.role}>
-                                  <MessageContent>
-                                    <MessageResponse>{part.text}</MessageResponse>
-                                  </MessageContent>
-                                  {message.role === "assistant" && isLastMessage && i === parts.length - 1 && (
-                                    <MessageActions>
-                                      <MessageAction
-                                        onClick={() => regenerate()}
-                                        label="Retry"
-                                      >
-                                        <RefreshCcwIcon className="size-3" />
-                                      </MessageAction>
-                                      <MessageAction
-                                        onClick={() =>
-                                          navigator.clipboard.writeText(part.text)
-                                        }
-                                        label="Copy"
-                                      >
-                                        <CopyIcon className="size-3" />
-                                      </MessageAction>
-                                    </MessageActions>
-                                  )}
-                                </Message>
-                              );
-                            case "reasoning":
-                              return (
-                                <Reasoning
-                                  key={`${message.id}-${i}`}
-                                  className="w-full"
-                                  isStreaming={status === "streaming" && i === parts.length - 1 && isLastMessage}
-                                >
-                                  <ReasoningTrigger />
-                                  <ReasoningContent>{part.text}</ReasoningContent>
-                                </Reasoning>
-                              );
-                            default:
-                              return null;
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            sendMessage({ text: message });
                           }
-                        })}
-                        {/* Fallback for messages without parts (legacy format) */}
-                        {parts.length === 0 && message.content && (
-                          <Message from={message.role}>
-                            <MessageContent>
-                              <MessageResponse>
-                                {typeof message.content === "string"
-                                  ? message.content
-                                  : JSON.stringify(message.content)}
-                              </MessageResponse>
-                            </MessageContent>
-                            {message.role === "assistant" && isLastMessage && (
-                              <MessageActions>
-                                <MessageAction
-                                  onClick={() => regenerate()}
-                                  label="Retry"
-                                >
-                                  <RefreshCcwIcon className="size-3" />
-                                </MessageAction>
-                                <MessageAction
-                                  onClick={() =>
-                                    navigator.clipboard.writeText(
-                                      typeof message.content === "string"
-                                        ? message.content
-                                        : JSON.stringify(message.content)
-                                    )
-                                  }
-                                  label="Copy"
-                                >
-                                  <CopyIcon className="size-3" />
-                                </MessageAction>
-                              </MessageActions>
-                            )}
-                          </Message>
-                        )}
-                      </div>
-                    );
-                  })}
+                        }}
+                      >
+                        {message}
+                      </Badge>
+                    ))}
+                  </div>
+                </ConversationEmptyState>
+              ) : (
+                <>
+                  {messages
+                    .filter((msg) => msg.role !== "suggestions") // Skip suggestions in main chat
+                    .map((message) => {
+                      // Handle AI SDK v6 parts format
+                      const parts = message.parts || [];
+                      const isLastMessage = message.id === messages[messages.length - 1]?.id;
+                      
+                      // Show sources if there are any source-url parts
+                      const hasSources = parts.some((part) => part.type === "source-url");
+                      
+                      return (
+                        <div key={message.id}>
+                          {message.role === "assistant" && hasSources && (
+                            <Sources>
+                              <SourcesTrigger
+                                count={
+                                  parts.filter((part) => part.type === "source-url").length
+                                }
+                              />
+                              {parts
+                                .filter((part) => part.type === "source-url")
+                                .map((part, i) => (
+                                  <SourcesContent key={`${message.id}-source-${i}`}>
+                                    <Source
+                                      href={part.url}
+                                      title={part.url}
+                                    />
+                                  </SourcesContent>
+                                ))}
+                            </Sources>
+                          )}
+                          {parts.map((part, i) => {
+                            switch (part.type) {
+                              case "text":
+                                return (
+                                  <Message key={`${message.id}-${i}`} from={message.role}>
+                                    <MessageContent>
+                                      <MessageResponse>{part.text}</MessageResponse>
+                                    </MessageContent>
+                                    {message.role === "assistant" && isLastMessage && i === parts.length - 1 && (
+                                      <MessageActions>
+                                        <MessageAction
+                                          onClick={() => regenerate()}
+                                          label="Retry"
+                                        >
+                                          <RefreshCcwIcon className="size-3" />
+                                        </MessageAction>
+                                        <MessageAction
+                                          onClick={() =>
+                                            navigator.clipboard.writeText(part.text)
+                                          }
+                                          label="Copy"
+                                        >
+                                          <CopyIcon className="size-3" />
+                                        </MessageAction>
+                                      </MessageActions>
+                                    )}
+                                  </Message>
+                                );
+                              case "reasoning":
+                                return (
+                                  <Reasoning
+                                    key={`${message.id}-${i}`}
+                                    className="w-full"
+                                    isStreaming={status === "streaming" && i === parts.length - 1 && isLastMessage}
+                                  >
+                                    <ReasoningTrigger />
+                                    <ReasoningContent>{part.text}</ReasoningContent>
+                                  </Reasoning>
+                                );
+                              default:
+                                return null;
+                            }
+                          })}
+                          {/* Fallback for messages without parts (legacy format) */}
+                          {parts.length === 0 && message.content && (
+                            <Message from={message.role}>
+                              <MessageContent>
+                                <MessageResponse>
+                                  {typeof message.content === "string"
+                                    ? message.content
+                                    : JSON.stringify(message.content)}
+                                </MessageResponse>
+                              </MessageContent>
+                              {message.role === "assistant" && isLastMessage && (
+                                <MessageActions>
+                                  <MessageAction
+                                    onClick={() => regenerate()}
+                                    label="Retry"
+                                  >
+                                    <RefreshCcwIcon className="size-3" />
+                                  </MessageAction>
+                                  <MessageAction
+                                    onClick={() =>
+                                      navigator.clipboard.writeText(
+                                        typeof message.content === "string"
+                                          ? message.content
+                                          : JSON.stringify(message.content)
+                                      )
+                                    }
+                                    label="Copy"
+                                  >
+                                    <CopyIcon className="size-3" />
+                                  </MessageAction>
+                                </MessageActions>
+                              )}
+                            </Message>
+                          )}
+                        </div>
+                      );
+                    })}
 
-                {/* Show loader only while waiting */}
-                {status === "submitted" && <Loader />}
-              </ConversationContent>
-            )}
+                  {/* Show loader only while waiting */}
+                  {status === "submitted" && <Loader />}
+                </>
+              )}
+            </ConversationContent>
             <ConversationScrollButton />
           </Conversation>
         </div>
       </CardContent>
-      <CardFooter className="">
+      <CardFooter className="flex-shrink-0">
         <div className="flex-1 flex-col">
           <PromptInput onSubmit={handleSubmit}>
             <PromptInputBody>

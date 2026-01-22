@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Required for MessageResponse component (Streamdown) */
+@source "../node_modules/streamdown/dist/*.js";
+
 /* Shadcn stuff is below */
 
 @layer base {

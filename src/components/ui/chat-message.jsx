@@ -143,12 +143,25 @@ const ChatMessageContent = React.forwardRef(({ className, content, id: idProp, c
 	const type = context?.type ?? "incoming";
 	const id = idProp ?? context?.id ?? "";
 
+	// Handle both old content (string) and new parts array (AI SDK v6)
+	let textContent = "";
+	if (typeof content === "string") {
+		// Legacy format (AI SDK v4)
+		textContent = content;
+	} else if (Array.isArray(content)) {
+		// New format (AI SDK v6) - extract text from parts array
+		textContent = content
+			.filter((part) => part.type === "text")
+			.map((part) => part.text)
+			.join("");
+	}
+
 	return (
         <div
             ref={ref}
             className={cn(chatMessageContentVariants({ variant, type, className }))}
             {...props}>
-            {content.length > 0 && <MarkdownContent id={id} content={content} />}
+            {textContent.length > 0 && <MarkdownContent id={id} content={textContent} />}
             {children}
         </div>
     );

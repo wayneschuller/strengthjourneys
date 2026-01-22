@@ -1,32 +1,30 @@
 import { openai } from "@ai-sdk/openai";
-import { streamText } from "ai";
+import { streamText, convertToModelMessages } from "ai";
 import { devLog } from "@/lib/processing-utils";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
-
-export const maxDuration = 45;
 
 const SYSTEM_PROMPT =
   "You are a strength coach answering questions only about barbell exercises with an emphasis on getting strong." +
   "Emphasise safety and take precautions if user indicates any health concerns.";
 
-export async function POST(req) {
+export default async function handler(req, res) {
+  // Only handle POST requests
+  if (req.method !== "POST") {
+    res.setHeader("Allow", ["POST"]);
+    return res.status(405).json({ error: "Method Not Allowed" });
+  }
+
   // Parallelize independent operations: session fetch and request body parsing
   const [session, body] = await Promise.all([
-    getServerSession(authOptions),
-    req.json(),
+    getServerSession(req, res, authOptions),
+    Promise.resolve(req.body), // Pages router already parses JSON body
   ]);
-  
+
   let isAdvancedModel = false;
 
   if (!process.env.OPENAI_API_KEY) {
-    return new Response(
-      JSON.stringify({ error: "OpenAI API key is not set" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return res.status(500).json({ error: "OpenAI API key is not set" });
   }
 
   const paidUsers = process.env.SJ_PAID_USERS;
@@ -36,7 +34,7 @@ export async function POST(req) {
 
   const { messages, userProvidedMetadata } = body;
 
-  // Initialize the system messages array
+  // Initialize the system messages array (already in ModelMessage format)
   let systemMessages = [{ role: "system", content: SYSTEM_PROMPT }];
 
   // Check for the EXTENDED_AI_PROMPT environment variable
@@ -80,14 +78,45 @@ export async function POST(req) {
   // const AI_model = openai("gpt-5-mini");
   const AI_model = openai("gpt-4.1");
 
+  // Convert UI messages (from client) to model messages, then combine with system messages
+  // Ensure messages is an array and convert it
+  const userMessages = Array.isArray(messages) ? messages : [];
+  const convertedUserMessages = convertToModelMessages(userMessages);
+  // Ensure convertedUserMessages is an array (safety check)
+  const modelMessages = [
+    ...systemMessages,
+    ...(Array.isArray(convertedUserMessages) ? convertedUserMessages : []),
+  ];
+
   const result = await streamText({
     // model: openai("gpt-4o-mini"),
     // model: openai("gpt-4o"),
     // model: openai("gpt-5"),
     // max_completion_tokens: 5000, // GPT 5
     model: AI_model,
-    messages: [...systemMessages, ...messages],
+    messages: modelMessages,
   });
 
-  return result.toDataStreamResponse();
+  // Convert the Response from toUIMessageStreamResponse() to work with pages router
+  const response = result.toUIMessageStreamResponse({
+    originalMessages: userMessages, // Required to prevent duplicate messages (use sanitized array)
+  });
+
+  // Copy headers from the Response to the pages router res
+  response.headers.forEach((value, key) => {
+    res.setHeader(key, value);
+  });
+
+  // Set status code
+  res.status(response.status);
+
+  // Pipe the response body to the pages router res
+  if (response.body) {
+    // Convert Web ReadableStream to Node.js stream and pipe to res
+    const { Readable } = require("stream");
+    const nodeStream = Readable.fromWeb(response.body);
+    nodeStream.pipe(res);
+  } else {
+    res.end();
+  }
 }

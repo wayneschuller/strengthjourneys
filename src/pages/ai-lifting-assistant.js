@@ -332,22 +332,37 @@ const defaultMessages = [
 // -----------------------------------------------------------------------------------------------------
 function AILiftingAssistantCard({ userProvidedProfileData }) {
   const [followUpQuestions, setFollowUpQuestions] = useState([]); // New state for suggestions
+  const [input, setInput] = useState(""); // Manual input state management (required in AI SDK v6)
+  
   const {
     messages,
     setMessages,
-    input,
-    setInput,
-    append,
-    handleInputChange,
-    handleSubmit,
+    sendMessage,
     status,
     stop,
   } = useChat({
+    api: "/api/chat", // Explicitly set the pages router endpoint
     body: { userProvidedMetadata: userProvidedProfileData }, // Share the user selected metadata with the AI temporarily
     onError: (error) => {
       console.error("(useChat() error: ", error);
     },
   });
+
+  // Manual input change handler (required in AI SDK v6)
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+  };
+
+  // Manual submit handler (required in AI SDK v6)
+  const handleSubmit = (e) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
+    if (!input || !input.trim()) return;
+    
+    sendMessage({ text: input });
+    setInput(""); // Clear input after sending
+  };
 
   // Hydrate once on mount (client only)
   useEffect(() => {
@@ -465,12 +480,12 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                     tabIndex={0}
                     aria-label={`Ask: ${message}`}
                     onClick={() => {
-                      append({ role: "user", content: message });
+                      sendMessage({ text: message });
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        append({ role: "user", content: message });
+                        sendMessage({ text: message });
                       }
                     }}
                   >
@@ -495,7 +510,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                     <ChatMessageAvatar className="hidden md:flex" />
                   )}
                   <ChatMessageContent
-                    content={message.content}
+                    content={message.parts || message.content}
                     className="min-w-0 break-words"
                   />
                 </ChatMessage>

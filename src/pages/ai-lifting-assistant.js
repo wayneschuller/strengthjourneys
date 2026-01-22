@@ -8,17 +8,24 @@ import { devLog, getAnalyzedSessionLifts } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 
 import {
-  ChatMessage,
-  ChatMessageAvatar,
-  ChatMessageContent,
-} from "@/components/ui/chat-message";
-import { ChatMessageArea } from "@/components/ui/chat-message-area";
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
 
 import {
-  ChatInput,
-  ChatInputTextArea,
-  ChatInputSubmit,
-} from "@/components/ui/chat-input";
+  PromptInput,
+  PromptInputBody,
+  PromptInputTextarea,
+  PromptInputFooter,
+  PromptInputSubmit,
+} from "@/components/ai-elements/prompt-input";
 
 import { MarkdownContent } from "@/components/ui/markdown-content";
 
@@ -332,7 +339,6 @@ const defaultMessages = [
 // -----------------------------------------------------------------------------------------------------
 function AILiftingAssistantCard({ userProvidedProfileData }) {
   const [followUpQuestions, setFollowUpQuestions] = useState([]); // New state for suggestions
-  const [input, setInput] = useState(""); // Manual input state management (required in AI SDK v6)
   
   const {
     messages,
@@ -348,20 +354,23 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     },
   });
 
-  // Manual input change handler (required in AI SDK v6)
-  const handleInputChange = (e) => {
-    setInput(e.target.value);
-  };
-
-  // Manual submit handler (required in AI SDK v6)
-  const handleSubmit = (e) => {
-    if (e && e.preventDefault) {
-      e.preventDefault();
+  // Handle submit from PromptInput (receives message object with text and files)
+  const handleSubmit = (message, event) => {
+    if (event && event.preventDefault) {
+      event.preventDefault();
     }
-    if (!input || !input.trim()) return;
     
-    sendMessage({ text: input });
-    setInput(""); // Clear input after sending
+    const hasText = Boolean(message.text && message.text.trim());
+    const hasAttachments = Boolean(message.files && message.files.length > 0);
+    
+    if (!hasText && !hasAttachments) {
+      return;
+    }
+    
+    sendMessage({
+      text: message.text || "Sent with attachments",
+      files: message.files,
+    });
   };
 
   // Hydrate once on mount (client only)
@@ -463,84 +472,90 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col pb-5 align-middle">
-        <ChatMessageArea className="h-[55vh] pr-4">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-center text-muted-foreground">
-              <p className="mb-2 text-muted-foreground">
-                Enter your questions into the chat box below (or click a sample
-                question)
-              </p>
-              <div className="mt-3 flex max-w-3xl flex-wrap justify-center gap-3 md:mt-10 md:gap-5">
-                {defaultMessages.map((message, index) => (
-                  <Badge
-                    key={message}
-                    variant="secondary"
-                    className="cursor-pointer select-none whitespace-nowrap px-3 py-1 hover:bg-muted-foreground"
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Ask: ${message}`}
-                    onClick={() => {
-                      sendMessage({ text: message });
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
+        <div className="h-[55vh] pr-4">
+          <Conversation className="h-full">
+            {messages.length === 0 ? (
+              <ConversationEmptyState
+                title="No messages yet"
+                description="Enter your questions into the chat box below (or click a sample question)"
+              >
+                <div className="mt-3 flex max-w-3xl flex-wrap justify-center gap-3 md:mt-10 md:gap-5">
+                  {defaultMessages.map((message) => (
+                    <Badge
+                      key={message}
+                      variant="secondary"
+                      className="cursor-pointer select-none whitespace-nowrap px-3 py-1 hover:bg-muted-foreground"
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Ask: ${message}`}
+                      onClick={() => {
                         sendMessage({ text: message });
-                      }
-                    }}
-                  >
-                    {message}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          ) : (
-            // messages.map((message, index) => (
-            messages
-              .filter((msg) => msg.role !== "suggestions") // Skip suggestions in main chat
-              .map((message, index) => (
-                <ChatMessage
-                  key={message.id}
-                  id={message.id}
-                  type={message.role === "user" ? "outgoing" : "incoming"}
-                  variant="bubble"
-                  className="pb-6"
-                >
-                  {message.role === "assistant" && (
-                    <ChatMessageAvatar className="hidden md:flex" />
-                  )}
-                  <ChatMessageContent
-                    content={message.parts || message.content}
-                    className="min-w-0 break-words"
-                  />
-                </ChatMessage>
-              ))
-          )}
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          sendMessage({ text: message });
+                        }
+                      }}
+                    >
+                      {message}
+                    </Badge>
+                  ))}
+                </div>
+              </ConversationEmptyState>
+            ) : (
+              <ConversationContent>
+                {messages
+                  .filter((msg) => msg.role !== "suggestions") // Skip suggestions in main chat
+                  .map((message) => {
+                    // Handle AI SDK v6 parts format
+                    const content = message.parts || message.content;
+                    let textContent = "";
+                    if (typeof content === "string") {
+                      textContent = content;
+                    } else if (Array.isArray(content)) {
+                      textContent = content
+                        .filter((part) => part.type === "text")
+                        .map((part) => part.text)
+                        .join("");
+                    }
 
-          {/* Show spinner only while waiting, and hide it once an assistant message begins */}
-          {(status === "submitted" || status === "streaming") && (
-            <ChatMessage role="assistant">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <LoaderCircle className="h-4 w-4 animate-spin" />
-                <span>Thinking…</span>
-              </div>
-            </ChatMessage>
-          )}
-        </ChatMessageArea>
+                    return (
+                      <Message key={message.id} from={message.role}>
+                        <MessageContent>
+                          <MessageResponse>{textContent}</MessageResponse>
+                        </MessageContent>
+                      </Message>
+                    );
+                  })}
+
+                {/* Show spinner only while waiting, and hide it once an assistant message begins */}
+                {(status === "submitted" || status === "streaming") && (
+                  <Message from="assistant">
+                    <MessageContent>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                        <span>Thinking…</span>
+                      </div>
+                    </MessageContent>
+                  </Message>
+                )}
+              </ConversationContent>
+            )}
+            <ConversationScrollButton />
+          </Conversation>
+        </div>
       </CardContent>
       <CardFooter className="">
         <div className="flex-1 flex-col">
-          <ChatInput
-            variant="default"
-            value={input}
-            onChange={handleInputChange}
-            onSubmit={handleSubmit}
-            loading={status === "submitting" || status === "streaming"}
-            onStop={stop}
-          >
-            <ChatInputTextArea placeholder="Type a message..." />
-            <ChatInputSubmit />
-          </ChatInput>
+          <PromptInput onSubmit={handleSubmit}>
+            <PromptInputBody>
+              <PromptInputTextarea placeholder="Type a message..." />
+            </PromptInputBody>
+            <PromptInputFooter>
+              <PromptInputSubmit status={status} onStop={stop} />
+            </PromptInputFooter>
+          </PromptInput>
         </div>
       </CardFooter>
     </Card>

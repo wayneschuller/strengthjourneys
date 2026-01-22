@@ -79,13 +79,20 @@ export default async function handler(req, res) {
   const AI_model = openai("gpt-4.1");
 
   // Convert UI messages (from client) to model messages, then combine with system messages
-  // Ensure messages is an array and convert it
+  // In AI SDK v6, convertToModelMessages is async and must be awaited
   const userMessages = Array.isArray(messages) ? messages : [];
-  const convertedUserMessages = convertToModelMessages(userMessages);
-  // Ensure convertedUserMessages is an array (safety check)
+  
+  if (userMessages.length === 0) {
+    devLog("WARNING: No messages received from client");
+    return res.status(400).json({ error: "No messages provided" });
+  }
+  
+  // convertToModelMessages handles both legacy (content) and new (parts) formats
+  const convertedUserMessages = await convertToModelMessages(userMessages);
+  
   const modelMessages = [
     ...systemMessages,
-    ...(Array.isArray(convertedUserMessages) ? convertedUserMessages : []),
+    ...convertedUserMessages,
   ];
 
   const result = await streamText({

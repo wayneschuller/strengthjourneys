@@ -487,8 +487,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
           <FlickeringGridDemo />
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col flex-1 min-h-0 p-0">
-        <Conversation className="pr-4">
+      <CardContent className="flex flex-col flex-1 min-h-0 p-0 ">
+        <Conversation className="pr-4 overflow-y-hidden">
             <ConversationContent>
               {messages.length === 0 ? (
                 <ConversationEmptyState

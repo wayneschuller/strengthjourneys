@@ -534,6 +534,10 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                       // Show sources if there are any source-url parts
                       const hasSources = parts.some((part) => part.type === "source-url");
                       
+                      // Get text content for actions (last text part or fallback to content)
+                      const lastTextPart = parts.filter((p) => p.type === "text").pop();
+                      const textContent = lastTextPart?.text || (typeof message.content === "string" ? message.content : null);
+                      
                       return (
                         <div key={message.id}>
                           {message.role === "assistant" && hasSources && (
@@ -555,83 +559,59 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                                 ))}
                             </Sources>
                           )}
-                          {parts.map((part, i) => {
-                            switch (part.type) {
-                              case "text":
-                                return (
-                                  <Message key={`${message.id}-${i}`} from={message.role}>
-                                    <MessageContent>
-                                      <MessageResponse>{part.text}</MessageResponse>
-                                    </MessageContent>
-                                    {message.role === "assistant" && isLastMessage && i === parts.length - 1 && (
-                                      <MessageActions>
-                                        <MessageAction
-                                          onClick={() => regenerate()}
-                                          label="Retry"
+                          <Message from={message.role}>
+                            <MessageContent>
+                              {parts.length > 0 ? (
+                                parts.map((part, i) => {
+                                  switch (part.type) {
+                                    case "text":
+                                      return (
+                                        <MessageResponse key={`${message.id}-${i}`}>
+                                          {part.text}
+                                        </MessageResponse>
+                                      );
+                                    case "reasoning":
+                                      return (
+                                        <Reasoning
+                                          key={`${message.id}-${i}`}
+                                          className="w-full"
+                                          isStreaming={status === "streaming" && i === parts.length - 1 && isLastMessage}
                                         >
-                                          <RefreshCcwIcon className="size-3" />
-                                        </MessageAction>
-                                        <MessageAction
-                                          onClick={() =>
-                                            navigator.clipboard.writeText(part.text)
-                                          }
-                                          label="Copy"
-                                        >
-                                          <CopyIcon className="size-3" />
-                                        </MessageAction>
-                                      </MessageActions>
-                                    )}
-                                  </Message>
-                                );
-                              case "reasoning":
-                                return (
-                                  <Reasoning
-                                    key={`${message.id}-${i}`}
-                                    className="w-full"
-                                    isStreaming={status === "streaming" && i === parts.length - 1 && isLastMessage}
-                                  >
-                                    <ReasoningTrigger />
-                                    <ReasoningContent>{part.text}</ReasoningContent>
-                                  </Reasoning>
-                                );
-                              default:
-                                return null;
-                            }
-                          })}
-                          {/* Fallback for messages without parts (legacy format) */}
-                          {parts.length === 0 && message.content && (
-                            <Message from={message.role}>
-                              <MessageContent>
+                                          <ReasoningTrigger />
+                                          <ReasoningContent>{part.text}</ReasoningContent>
+                                        </Reasoning>
+                                      );
+                                    default:
+                                      return null;
+                                  }
+                                })
+                              ) : message.content ? (
                                 <MessageResponse>
                                   {typeof message.content === "string"
                                     ? message.content
                                     : JSON.stringify(message.content)}
                                 </MessageResponse>
-                              </MessageContent>
-                              {message.role === "assistant" && isLastMessage && (
-                                <MessageActions>
-                                  <MessageAction
-                                    onClick={() => regenerate()}
-                                    label="Retry"
-                                  >
-                                    <RefreshCcwIcon className="size-3" />
-                                  </MessageAction>
-                                  <MessageAction
-                                    onClick={() =>
-                                      navigator.clipboard.writeText(
-                                        typeof message.content === "string"
-                                          ? message.content
-                                          : JSON.stringify(message.content)
-                                      )
-                                    }
-                                    label="Copy"
-                                  >
-                                    <CopyIcon className="size-3" />
-                                  </MessageAction>
-                                </MessageActions>
-                              )}
-                            </Message>
-                          )}
+                              ) : null}
+                            </MessageContent>
+                            {message.role === "assistant" && isLastMessage && textContent && (
+                              <MessageActions>
+                                <MessageAction
+                                  onClick={() => regenerate()}
+                                  label="Retry"
+                                >
+                                  <RefreshCcwIcon className="size-3" />
+                                </MessageAction>
+                                <MessageAction
+                                  onClick={() =>
+                                    navigator.clipboard.writeText(textContent)
+                                  }
+                                  label="Copy"
+                                >
+                                  <CopyIcon className="size-3" />
+                                </MessageAction>
+                              </MessageActions>
+                            )}
+                          </Message>
                         </div>
                       );
                     })}

@@ -455,8 +455,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   };
 
   return (
-    <Card className="flex flex-col h-full bg-background text-foreground overflow-hidden">
-      <CardHeader className="flex flex-col md:flex-row flex-shrink-0">
+    <Card className="max-h-full bg-background text-foreground">
+      <CardHeader className="flex flex-1 flex-col md:flex-row">
         <div className="flex flex-1 flex-col">
           <CardTitle className="text-balance text-2xl font-bold">
             Your Personal Lifting AI Assistant
@@ -487,7 +487,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
           <FlickeringGridDemo />
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col flex-1 min-h-0 p-0 ">
+      <CardContent className="flex flex-col pb-5 align-middle h-[55vh] overflow-y-auto">
         <Conversation className="pr-4 overflow-y-hidden">
             <ConversationContent>
               {messages.length === 0 ? (
@@ -641,7 +641,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
             <ConversationScrollButton />
           </Conversation>
       </CardContent>
-      <CardFooter className="flex-shrink-0 pt-0">
+      <CardFooter className="">
         <div className="flex-1 flex-col">
           <PromptInput onSubmit={handleSubmit}>
             <PromptInputBody>

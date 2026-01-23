@@ -469,10 +469,25 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
       `Conversations are processed in your browser and are not stored on our servers.\n` +
       `https://strengthjourneys.xyz`;
 
-    // Body text
+    // Body text - handle AI SDK v6 parts format
     const body = exportMessages.map((m) => {
-      const content =
-        typeof m.content === "string" ? m.content : JSON.stringify(m.content);
+      let content = "";
+      
+      // Handle AI SDK v6 parts format
+      if (m.parts && Array.isArray(m.parts)) {
+        // Extract text from parts array
+        const textParts = m.parts
+          .filter((part) => part.type === "text")
+          .map((part) => part.text);
+        content = textParts.join("");
+      } else if (typeof m.content === "string") {
+        // Legacy format fallback
+        content = m.content;
+      } else if (m.content) {
+        // Fallback for other content types
+        content = JSON.stringify(m.content);
+      }
+      
       return `${m.role.toUpperCase()}:\n${content}`;
     });
 

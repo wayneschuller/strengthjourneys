@@ -394,14 +394,13 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
       },
     });
 
-  // Helper to send messages with fresh metadata (per AI SDK v6 best practices)
-  // Request-level body is evaluated fresh on each call, avoiding stale data issues
+  // Helper to send messages with fresh metadata (per AI SDK v6 docs for ChatRequestOptions.body)
   const sendMessageWithMetadata = (message) => {
     sendMessage(
       typeof message === "string" ? { text: message } : message,
       {
         body: {
-          userProvidedMetadata: userProvidedProfileData, // Fresh value on each call
+          userProvidedMetadata: userProvidedProfileData,
         },
       },
     );
@@ -543,13 +542,13 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                   {defaultMessages.map((row, rowIndex) => (
                     <Suggestions key={rowIndex} className="w-full">
                       {row.map((message) => (
-                        <Suggestion
-                          key={message}
-                          suggestion={message}
-                          onClick={(suggestion) => {
-                            sendMessageWithMetadata(suggestion);
-                          }}
-                        />
+                          <Suggestion
+                            key={message}
+                            suggestion={message}
+                            onClick={(suggestion) => {
+                              sendMessageWithMetadata(suggestion);
+                            }}
+                          />
                       ))}
                     </Suggestions>
                   ))}

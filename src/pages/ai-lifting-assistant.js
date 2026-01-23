@@ -26,11 +26,6 @@ import {
   SourcesContent,
   SourcesTrigger,
 } from "@/components/ai-elements/sources";
-import {
-  Reasoning,
-  ReasoningContent,
-  ReasoningTrigger,
-} from "@/components/ai-elements/reasoning";
 import { Loader } from "@/components/ai-elements/loader";
 import {
   Suggestions,
@@ -562,29 +557,13 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                           <Message from={message.role}>
                             <MessageContent>
                               {parts.length > 0 ? (
-                                parts.map((part, i) => {
-                                  switch (part.type) {
-                                    case "text":
-                                      return (
-                                        <MessageResponse key={`${message.id}-${i}`}>
-                                          {part.text}
-                                        </MessageResponse>
-                                      );
-                                    case "reasoning":
-                                      return (
-                                        <Reasoning
-                                          key={`${message.id}-${i}`}
-                                          className="w-full"
-                                          isStreaming={status === "streaming" && i === parts.length - 1 && isLastMessage}
-                                        >
-                                          <ReasoningTrigger />
-                                          <ReasoningContent>{part.text}</ReasoningContent>
-                                        </Reasoning>
-                                      );
-                                    default:
-                                      return null;
-                                  }
-                                })
+                                parts
+                                  .filter((part) => part.type === "text")
+                                  .map((part, i) => (
+                                    <MessageResponse key={`${message.id}-${i}`}>
+                                      {part.text}
+                                    </MessageResponse>
+                                  ))
                               ) : message.content ? (
                                 <MessageResponse>
                                   {typeof message.content === "string"

@@ -27,10 +27,7 @@ import {
   SourcesTrigger,
 } from "@/components/ai-elements/sources";
 import { Loader } from "@/components/ai-elements/loader";
-import {
-  Suggestions,
-  Suggestion,
-} from "@/components/ai-elements/suggestion";
+import { Suggestions, Suggestion } from "@/components/ai-elements/suggestion";
 
 import {
   PromptInput,
@@ -389,41 +386,36 @@ function CopyButton({ text, ...props }) {
 // AILiftingAssistantCard - chatbot (full proprietary prompt lives in the server env variable)
 // -----------------------------------------------------------------------------------------------------
 function AILiftingAssistantCard({ userProvidedProfileData }) {
-  const [followUpQuestions, setFollowUpQuestions] = useState([]); // New state for suggestions
-  
-  const {
-    messages,
-    setMessages,
-    sendMessage,
-    status,
-    stop,
-    regenerate,
-  } = useChat({
-    api: "/api/chat", // Explicitly set the pages router endpoint
-    body: { userProvidedMetadata: userProvidedProfileData }, // Share the user selected metadata with the AI temporarily
-    onError: (error) => {
-      console.error("(useChat() error: ", error);
-    },
-  });
+  const { messages, setMessages, sendMessage, status, stop, regenerate } =
+    useChat({
+      api: "/api/chat", // Explicitly set the pages router endpoint
+      onError: (error) => {
+        console.error("(useChat() error: ", error);
+      },
+    });
+
+  // Helper to send messages with fresh metadata (per AI SDK v6 best practices)
+  // Request-level body is evaluated fresh on each call, avoiding stale data issues
+  const sendMessageWithMetadata = (message) => {
+    sendMessage(
+      typeof message === "string" ? { text: message } : message,
+      {
+        body: {
+          userProvidedMetadata: userProvidedProfileData, // Fresh value on each call
+        },
+      },
+    );
+  };
 
   // Handle submit from PromptInput (receives message object with text)
   const handleSubmit = (message) => {
     const hasText = Boolean(message.text && message.text.trim());
-    
+
     if (!hasText) {
       return;
     }
-    
-    sendMessage(
-      { 
-        text: message.text
-      },
-      {
-        body: {
-          userProvidedMetadata: userProvidedProfileData,
-        },
-      },
-    );
+
+    sendMessageWithMetadata(message.text);
   };
 
   // Hydrate once on mount (client only)
@@ -445,7 +437,6 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   }, [messages]);
 
   // devLog(messages);
-  // devLog(followUpQuestions);
 
   const handleResetChat = () => {
     if (typeof window !== "undefined") {
@@ -472,7 +463,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     // Body text - handle AI SDK v6 parts format
     const body = exportMessages.map((m) => {
       let content = "";
-      
+
       // Handle AI SDK v6 parts format
       if (m.parts && Array.isArray(m.parts)) {
         // Extract text from parts array
@@ -487,7 +478,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         // Fallback for other content types
         content = JSON.stringify(m.content);
       }
-      
+
       return `${m.role.toUpperCase()}:\n${content}`;
     });
 
@@ -539,87 +530,99 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
           <FlickeringGridDemo />
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col pb-5 align-middle h-[55vh] overflow-y-auto">
+      <CardContent className="flex h-[55vh] flex-col overflow-y-auto pb-5 align-middle">
         <Conversation className="overflow-y-hidden overflow-x-visible">
-            <ConversationContent>
-              {messages.length === 0 ? (
-                <ConversationEmptyState
-                  title="No messages yet"
-                  description="Enter your questions into the chat box below (or click a sample question)"
-                  className="items-start px-0"
-                >
-                  <div className="mt-6 flex w-full flex-col gap-3 -mx-4 px-4">
-                    {defaultMessages.map((row, rowIndex) => (
-                      <Suggestions key={rowIndex} className="w-full">
-                        {row.map((message) => (
-                          <Suggestion
-                            key={message}
-                            suggestion={message}
-                            onClick={(suggestion) => {
-                              sendMessage({ text: suggestion });
-                            }}
-                          />
-                        ))}
-                      </Suggestions>
-                    ))}
-                  </div>
-                </ConversationEmptyState>
-              ) : (
-                <>
-                  {messages
-                    .filter((msg) => msg.role !== "suggestions") // Skip suggestions in main chat
-                    .map((message) => {
-                      // Handle AI SDK v6 parts format
-                      const parts = message.parts || [];
-                      const isLastMessage = message.id === messages[messages.length - 1]?.id;
-                      
-                      // Show sources if there are any source-url parts
-                      const hasSources = parts.some((part) => part.type === "source-url");
-                      
-                      // Get text content for actions (last text part or fallback to content)
-                      const lastTextPart = parts.filter((p) => p.type === "text").pop();
-                      const textContent = lastTextPart?.text || (typeof message.content === "string" ? message.content : null);
-                      
-                      return (
-                        <div key={message.id}>
-                          {message.role === "assistant" && hasSources && (
-                            <Sources>
-                              <SourcesTrigger
-                                count={
-                                  parts.filter((part) => part.type === "source-url").length
-                                }
-                              />
-                              {parts
-                                .filter((part) => part.type === "source-url")
+          <ConversationContent>
+            {messages.length === 0 ? (
+              <ConversationEmptyState
+                title="No messages yet"
+                description="Enter your questions into the chat box below (or click a sample question)"
+                className="items-start px-0"
+              >
+                <div className="-mx-4 mt-6 flex w-full flex-col gap-3 px-4">
+                  {defaultMessages.map((row, rowIndex) => (
+                    <Suggestions key={rowIndex} className="w-full">
+                      {row.map((message) => (
+                        <Suggestion
+                          key={message}
+                          suggestion={message}
+                          onClick={(suggestion) => {
+                            sendMessageWithMetadata(suggestion);
+                          }}
+                        />
+                      ))}
+                    </Suggestions>
+                  ))}
+                </div>
+              </ConversationEmptyState>
+            ) : (
+              <>
+                {messages
+                  .filter((msg) => msg.role !== "suggestions") // Skip suggestions in main chat
+                  .map((message) => {
+                    // Handle AI SDK v6 parts format
+                    const parts = message.parts || [];
+                    const isLastMessage =
+                      message.id === messages[messages.length - 1]?.id;
+
+                    // Show sources if there are any source-url parts
+                    const hasSources = parts.some(
+                      (part) => part.type === "source-url",
+                    );
+
+                    // Get text content for actions (last text part or fallback to content)
+                    const lastTextPart = parts
+                      .filter((p) => p.type === "text")
+                      .pop();
+                    const textContent =
+                      lastTextPart?.text ||
+                      (typeof message.content === "string"
+                        ? message.content
+                        : null);
+
+                    return (
+                      <div key={message.id}>
+                        {message.role === "assistant" && hasSources && (
+                          <Sources>
+                            <SourcesTrigger
+                              count={
+                                parts.filter(
+                                  (part) => part.type === "source-url",
+                                ).length
+                              }
+                            />
+                            {parts
+                              .filter((part) => part.type === "source-url")
+                              .map((part, i) => (
+                                <SourcesContent
+                                  key={`${message.id}-source-${i}`}
+                                >
+                                  <Source href={part.url} title={part.url} />
+                                </SourcesContent>
+                              ))}
+                          </Sources>
+                        )}
+                        <Message from={message.role}>
+                          <MessageContent>
+                            {parts.length > 0 ? (
+                              parts
+                                .filter((part) => part.type === "text")
                                 .map((part, i) => (
-                                  <SourcesContent key={`${message.id}-source-${i}`}>
-                                    <Source
-                                      href={part.url}
-                                      title={part.url}
-                                    />
-                                  </SourcesContent>
-                                ))}
-                            </Sources>
-                          )}
-                          <Message from={message.role}>
-                            <MessageContent>
-                              {parts.length > 0 ? (
-                                parts
-                                  .filter((part) => part.type === "text")
-                                  .map((part, i) => (
-                                    <MessageResponse key={`${message.id}-${i}`}>
-                                      {part.text}
-                                    </MessageResponse>
-                                  ))
-                              ) : message.content ? (
-                                <MessageResponse>
-                                  {typeof message.content === "string"
-                                    ? message.content
-                                    : JSON.stringify(message.content)}
-                                </MessageResponse>
-                              ) : null}
-                            </MessageContent>
-                            {message.role === "assistant" && isLastMessage && textContent && (
+                                  <MessageResponse key={`${message.id}-${i}`}>
+                                    {part.text}
+                                  </MessageResponse>
+                                ))
+                            ) : message.content ? (
+                              <MessageResponse>
+                                {typeof message.content === "string"
+                                  ? message.content
+                                  : JSON.stringify(message.content)}
+                              </MessageResponse>
+                            ) : null}
+                          </MessageContent>
+                          {message.role === "assistant" &&
+                            isLastMessage &&
+                            textContent && (
                               <MessageActions>
                                 <MessageAction
                                   onClick={() => regenerate()}
@@ -630,18 +633,18 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                                 <CopyButton text={textContent} />
                               </MessageActions>
                             )}
-                          </Message>
-                        </div>
-                      );
-                    })}
+                        </Message>
+                      </div>
+                    );
+                  })}
 
-                  {/* Show loader only while waiting */}
-                  {status === "submitted" && <Loader />}
-                </>
-              )}
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
+                {/* Show loader only while waiting */}
+                {status === "submitted" && <Loader />}
+              </>
+            )}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
       </CardContent>
       <CardFooter className="">
         <div className="flex-1 flex-col">

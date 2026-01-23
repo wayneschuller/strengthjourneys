@@ -32,6 +32,10 @@ import {
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
 import { Loader } from "@/components/ai-elements/loader";
+import {
+  Suggestions,
+  Suggestion,
+} from "@/components/ai-elements/suggestion";
 
 import {
   PromptInput,
@@ -58,7 +62,6 @@ import {
   PageHeaderDescription,
 } from "@/components/page-header";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -330,22 +333,29 @@ function AILiftingAssistantMain({ relatedArticles }) {
   );
 }
 
+// Organize suggestions into multiple rows
 const defaultMessages = [
-  "Why lift weights?",
-  "What should I do in my first gym session?",
-  "How often should I deadlift?",
-  "Am I strong for my age?",
-  "I'm female, will I get bulky lifting weights?",
-  "How do I choose a gym?",
-  "Write me a motivational rap.",
-  "Isn't deadlifting dangerous?",
-  "How strong am I?",
-  "Can I lift weights and still lose weight?",
-  "How much protein should I eat?",
-  "Should I lift every day?",
-  "What are the health benefits for women who lift?",
-  "ME STRONG",
-  "Give me a riddle about lifting weights.",
+  [
+    "Why lift weights?",
+    "What should I do in my first gym session?",
+    "How often should I deadlift?",
+    "Am I strong for my age?",
+    "I'm female, will I get bulky lifting weights?",
+  ],
+  [
+    "How do I choose a gym?",
+    "Write me a motivational rap.",
+    "Isn't deadlifting dangerous?",
+    "How strong am I?",
+    "Can I lift weights and still lose weight?",
+  ],
+  [
+    "How much protein should I eat?",
+    "Should I lift every day?",
+    "What are the health benefits for women who lift?",
+    "ME STRONG",
+    "Give me a riddle about lifting weights.",
+  ],
 ];
 
 // -----------------------------------------------------------------------------------------------------
@@ -488,34 +498,27 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col pb-5 align-middle h-[55vh] overflow-y-auto">
-        <Conversation className="pr-4 overflow-y-hidden">
+        <Conversation className="overflow-y-hidden overflow-x-visible">
             <ConversationContent>
               {messages.length === 0 ? (
                 <ConversationEmptyState
                   title="No messages yet"
                   description="Enter your questions into the chat box below (or click a sample question)"
+                  className="items-start px-0"
                 >
-                  <div className="mt-3 flex max-w-3xl flex-wrap justify-center gap-3 md:mt-10 md:gap-5">
-                    {defaultMessages.map((message) => (
-                      <Badge
-                        key={message}
-                        variant="secondary"
-                        className="cursor-pointer select-none whitespace-nowrap px-3 py-1 hover:bg-muted-foreground"
-                        role="button"
-                        tabIndex={0}
-                        aria-label={`Ask: ${message}`}
-                        onClick={() => {
-                          sendMessage({ text: message });
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            sendMessage({ text: message });
-                          }
-                        }}
-                      >
-                        {message}
-                      </Badge>
+                  <div className="mt-6 flex w-full flex-col gap-3 -mx-4 px-4">
+                    {defaultMessages.map((row, rowIndex) => (
+                      <Suggestions key={rowIndex} className="w-full">
+                        {row.map((message) => (
+                          <Suggestion
+                            key={message}
+                            suggestion={message}
+                            onClick={(suggestion) => {
+                              sendMessage({ text: suggestion });
+                            }}
+                          />
+                        ))}
+                      </Suggestions>
                     ))}
                   </div>
                 </ConversationEmptyState>

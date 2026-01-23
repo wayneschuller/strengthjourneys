@@ -72,28 +72,25 @@ export default async function handler(req, res) {
     });
   }
 
-  // isAdvancedModel = true; // While in early release, let everyone have the best model
-  // const AI_model = isAdvancedModel ? openai("gpt-4.1") : openai("o4-mini");
-  // const AI_model = isAdvancedModel ? openai("gpt-5") : openai("gpt-5-mini");
-  // const AI_model = openai("gpt-5-mini");
-  const AI_model = openai("gpt-4.1");
+  // Use gpt-4o-mini for cheap and fast responses (7.5x cheaper than gpt-4.1)
+  // Paid users get gpt-4.1 for better quality
+  const AI_model = isAdvancedModel
+    ? openai("gpt-5-mini")
+    : openai("gpt-4o-mini");
 
   // Convert UI messages (from client) to model messages, then combine with system messages
   // In AI SDK v6, convertToModelMessages is async and must be awaited
   const userMessages = Array.isArray(messages) ? messages : [];
-  
+
   if (userMessages.length === 0) {
     devLog("WARNING: No messages received from client");
     return res.status(400).json({ error: "No messages provided" });
   }
-  
+
   // convertToModelMessages handles both legacy (content) and new (parts) formats
   const convertedUserMessages = await convertToModelMessages(userMessages);
-  
-  const modelMessages = [
-    ...systemMessages,
-    ...convertedUserMessages,
-  ];
+
+  const modelMessages = [...systemMessages, ...convertedUserMessages];
 
   const result = await streamText({
     // model: openai("gpt-4o-mini"),

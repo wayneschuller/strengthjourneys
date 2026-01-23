@@ -60,7 +60,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { Bot, CopyIcon, RefreshCcwIcon } from "lucide-react";
+import { Bot, CopyIcon, RefreshCcwIcon, CheckIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
@@ -354,6 +354,38 @@ const defaultMessages = [
 ];
 
 // -----------------------------------------------------------------------------------------------------
+// CopyButton - Component with visual feedback for copy action
+// -----------------------------------------------------------------------------------------------------
+function CopyButton({ text, ...props }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy text:", err);
+    }
+  };
+
+  return (
+    <MessageAction
+      onClick={handleCopy}
+      label="Copy"
+      tooltip={copied ? "Copied!" : "Copy"}
+      {...props}
+    >
+      {copied ? (
+        <CheckIcon className="size-3" />
+      ) : (
+        <CopyIcon className="size-3" />
+      )}
+    </MessageAction>
+  );
+}
+
+// -----------------------------------------------------------------------------------------------------
 // AILiftingAssistantCard - chatbot (full proprietary prompt lives in the server env variable)
 // -----------------------------------------------------------------------------------------------------
 function AILiftingAssistantCard({ userProvidedProfileData }) {
@@ -580,14 +612,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                                 >
                                   <RefreshCcwIcon className="size-3" />
                                 </MessageAction>
-                                <MessageAction
-                                  onClick={() =>
-                                    navigator.clipboard.writeText(textContent)
-                                  }
-                                  label="Copy"
-                                >
-                                  <CopyIcon className="size-3" />
-                                </MessageAction>
+                                <CopyButton text={textContent} />
                               </MessageActions>
                             )}
                           </Message>

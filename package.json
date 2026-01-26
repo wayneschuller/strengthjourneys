@@ -110,5 +110,11 @@
   },
   "resolutions": {
     "nanoid": "3.3.8"
+  },
+  "overrides": {
+    "lodash": ">=4.17.23",
+    "lodash-es": ">=4.17.23",
+    "preact": ">=10.28.2",
+    "glob": ">=10.5.0"
   }
 }

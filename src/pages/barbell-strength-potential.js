@@ -39,6 +39,8 @@ import { ChartColumnDecreasing, LoaderCircle } from "lucide-react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { parse } from "date-fns";
+import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Personal Record Analyzer";
@@ -151,6 +153,69 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki", {
     initializeWithValue: false,
   });
+  const { theme, resolvedTheme } = useTheme();
+
+  // Get theme colors from CSS variables
+  const [themeColors, setThemeColors] = useState({
+    chart1: "#3b82f6", // fallback blue
+    chart1Light: "#60a5fa", // fallback light blue
+    chart3: "#f59e0b", // fallback orange
+    chart3Light: "#facc15", // fallback light orange
+    mutedForeground: "#64748b", // fallback gray
+    border: "#8884d8", // fallback purple-gray
+    background: "#ffffff", // fallback white
+  });
+
+  useEffect(() => {
+    // Get computed CSS variable values and convert to usable color strings
+    const root = document.documentElement;
+    const computedStyle = getComputedStyle(root);
+
+    // Helper to get HSL value and convert to a color string SVG can use
+    const getHSLColor = (varName) => {
+      const hslValue = computedStyle.getPropertyValue(varName).trim();
+      if (!hslValue) return null;
+      return `hsl(${hslValue})`;
+    };
+
+    // Helper to get computed color value for background
+    const getBackgroundColor = () => {
+      const temp = document.createElement("div");
+      temp.style.backgroundColor = "hsl(var(--background))";
+      temp.style.position = "absolute";
+      temp.style.visibility = "hidden";
+      document.body.appendChild(temp);
+      const color = getComputedStyle(temp).backgroundColor;
+      document.body.removeChild(temp);
+      return color || "#ffffff";
+    };
+
+    // Create lighter variants by adjusting lightness
+    const createLighterVariant = (hslString, lightnessIncrease = 10) => {
+      if (!hslString) return null;
+      // Extract HSL values: "hsl(12 76% 61%)" -> ["12", "76", "61"]
+      const match = hslString.match(/hsl\((\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\)/);
+      if (!match) return hslString;
+      const [, h, s, l] = match;
+      const newL = Math.min(100, parseFloat(l) + lightnessIncrease);
+      return `hsl(${h} ${s}% ${newL}%)`;
+    };
+
+    // Get chart colors (these are HSL values)
+    const chart1HSL = getHSLColor("--chart-1");
+    const chart3HSL = getHSLColor("--chart-3");
+    const mutedForegroundHSL = getHSLColor("--muted-foreground");
+
+    setThemeColors({
+      chart1: chart1HSL || "#3b82f6",
+      chart1Light: chart1HSL ? createLighterVariant(chart1HSL, 15) : "#60a5fa",
+      chart3: chart3HSL || "#f59e0b",
+      chart3Light: chart3HSL ? createLighterVariant(chart3HSL, 10) : "#facc15",
+      mutedForeground: mutedForegroundHSL || "#64748b",
+      border: mutedForegroundHSL || "#8884d8",
+      background: getBackgroundColor(),
+    });
+  }, [theme, resolvedTheme]); // Re-run when theme changes
 
   // Early return only if topLiftsByTypeAndReps exists but is empty/invalid for this liftType
   // if (topLiftsByTypeAndReps && !topLiftsByTypeAndReps[liftType]) {
@@ -237,17 +302,27 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
         ) : (
           <ChartContainer config={{}} className="">
             <BarChart data={chartData}>
-              <XAxis dataKey="reps" stroke="#8884d8" />
+              <XAxis dataKey="reps" stroke={themeColors.border} />
               <YAxis
-                stroke="#8884d8"
+                stroke={themeColors.border}
                 domain={[0, "auto"]}
                 tickFormatter={(tick) => `${tick}${unitType}`}
               />
-              <ChartTooltip content={<CustomTooltip />} />
+              <ChartTooltip
+                content={
+                  <CustomTooltip
+                    actualColor={themeColors.chart1}
+                    potentialColor={themeColors.chart3}
+                  />
+                }
+              />
               <Legend
                 verticalAlign="bottom"
                 height={36}
-                wrapperStyle={{ fontSize: "12px", color: "#64748b" }}
+                wrapperStyle={{
+                  fontSize: "12px",
+                  color: themeColors.mutedForeground,
+                }}
               />
 
               {/* Base (actual best lift) with gradient */}
@@ -276,8 +351,12 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
               {/* Gradient Definitions */}
               <defs>
                 <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#60a5fa" stopOpacity={1} />
-                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={1} />
+                  <stop
+                    offset="0%"
+                    stopColor={themeColors.chart1Light}
+                    stopOpacity={1}
+                  />
+                  <stop offset="100%" stopColor={themeColors.chart1} stopOpacity={1} />
                 </linearGradient>
                 <linearGradient
                   id="potentialGradient"
@@ -286,8 +365,12 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                   x2="0"
                   y2="1"
                 >
-                  <stop offset="0%" stopColor="#facc15" stopOpacity={1} />
-                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={1} />
+                  <stop
+                    offset="0%"
+                    stopColor={themeColors.chart3Light}
+                    stopOpacity={1}
+                  />
+                  <stop offset="100%" stopColor={themeColors.chart3} stopOpacity={1} />
                 </linearGradient>
                 <pattern
                   id="potentialPattern"
@@ -299,7 +382,7 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                   <rect
                     width="8"
                     height="8"
-                    fill="#f59e0b" // Base orange color
+                    fill={themeColors.chart3} // Base color from theme
                     opacity={0.8} // Slightly faded
                   />
                   <line
@@ -307,7 +390,7 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                     y1="0"
                     x2="0"
                     y2="8"
-                    stroke="#ffffff" // White lines for contrast
+                    stroke={themeColors.background} // Use theme background for contrast
                     strokeWidth="1"
                     opacity={0.5} // Subtle pattern
                   />

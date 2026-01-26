@@ -72,10 +72,9 @@ export default async function handler(req, res) {
     });
   }
 
-  // Use gpt-4o-mini for cheap and fast responses (7.5x cheaper than gpt-4.1)
-  // Paid users get gpt-4.1 for better quality
+  // 20260126 - GPT 5 is still too slow. Everyone gets 4o for a while.
   const AI_model = isAdvancedModel
-    ? openai("gpt-5-mini")
+    ? openai("gpt-4o-mini")
     : openai("gpt-4o-mini");
 
   // Convert UI messages (from client) to model messages, then combine with system messages

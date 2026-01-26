@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useState, useEffect, createContext } from "react";
+import { useContext, useState, useEffect, createContext, useMemo } from "react";
 import { useRouter } from "next/router";
 import { useSession, signIn } from "next-auth/react";
 import useSWR from "swr";
@@ -41,9 +41,7 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
 export const UserLiftingDataProvider = ({ children }) => {
   // These are our key global state variables.
   // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
-  // We do keep liftTypes (lift names and frequency) here as an exception to save processing it too often
   const [parsedData, setParsedData] = useState(null); // see @/lib/sample-parsed-data.js for data structure design
-  const [liftTypes, setLiftTypes] = useState([]); // see @/lib/processing-utils.js for data structure design
   const [topLiftsByTypeAndReps, setTopLiftsByTypeAndReps] = useState(null); // see @/lib/processing-utils.js for data structure design
   const [
     topLiftsByTypeAndRepsLast12Months,
@@ -277,9 +275,9 @@ export const UserLiftingDataProvider = ({ children }) => {
     // state variables everything needs.
     parsedData = markHigherWeightAsHistoricalPRs(parsedData);
 
-    // Calculate our liftTypes basic stats array (sorted by most popular lift descending)
+    // Calculate liftTypes locally for use in selectedLiftTypes logic
+    // (liftTypes is also computed via useMemo for the context provider)
     const liftTypes = calculateLiftTypes(parsedData);
-    setLiftTypes(liftTypes);
 
     // Check if selectedLifts exists in localStorage
     // When in demo mode (auth unauthenticated) we have a separate localstorage
@@ -347,6 +345,12 @@ export const UserLiftingDataProvider = ({ children }) => {
 
     setParsedData(parsedData);
   }, [data, isLoading, isError, authStatus]);
+
+  // Calculate liftTypes from parsedData (computed automatically when parsedData changes)
+  const liftTypes = useMemo(() => 
+    parsedData ? calculateLiftTypes(parsedData) : [], 
+    [parsedData]
+  );
 
   // useEffect for reminding the user when they are looking at demo data
   useEffect(() => {

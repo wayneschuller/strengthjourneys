@@ -43,7 +43,6 @@ export const UserLiftingDataProvider = ({ children }) => {
   // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
   const [parsedData, setParsedData] = useState(null); // see @/lib/sample-parsed-data.js for data structure design
   const [selectedLiftTypes, setSelectedLiftTypes] = useState([]);
-  const [rawRows, setRawRows] = useState(null); // As soon as we have the user data, update this for UI indicators
 
   const { data: session, status: authStatus } = useSession();
 
@@ -132,7 +131,6 @@ export const UserLiftingDataProvider = ({ children }) => {
     if (authStatus === "authenticated" && data?.values) {
       try {
         // devLog(data.values.length);
-        setRawRows(data?.values?.length);
         parsedData = parseData(data.values); // Will be sorted date ascending
 
         // We have some good new data loaded - tell the user via toast
@@ -345,6 +343,12 @@ export const UserLiftingDataProvider = ({ children }) => {
     }
     return processTopLiftsByTypeAndReps(parsedData, liftTypes);
   }, [parsedData, liftTypes]);
+
+  // Calculate rawRows from useSWR data (computed automatically when data changes)
+  const rawRows = useMemo(() => 
+    data?.values?.length ?? null, 
+    [data]
+  );
 
   // useEffect for reminding the user when they are looking at demo data
   useEffect(() => {

@@ -9,9 +9,8 @@ import { ViewVerticalIcon } from "@radix-ui/react-icons";
 import { Menu } from "lucide-react";
 import { featurePages } from "@/pages";
 import Image from "next/image";
-
-import darkModeLogo from "../../public/nav_logo_light.png";
-import lightModeLogo from "../../public/nav_logo_dark.png";
+import { useTheme } from "next-themes";
+import { getLogoForTheme } from "@/lib/theme-logos";
 
 import {
   Sheet,
@@ -30,6 +29,9 @@ export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const logoWidth = 150;
+  const { resolvedTheme, theme } = useTheme();
+  const currentTheme = (theme ?? resolvedTheme) || "light";
+  const logoSrc = getLogoForTheme(currentTheme);
 
   const lifts = bigFourLiftInsightData;
 
@@ -74,18 +76,12 @@ export function MobileNav() {
               <Link href="/" className="flex flex-col">
                 {/* <span className="inline-block text-xl text-left font-bold tracking-tighter"> Strength Journeys Home </span> */}
                 <Image
-                  src={lightModeLogo}
+                  src={logoSrc}
+                  key={logoSrc}
                   width={logoWidth}
                   height="auto"
                   alt="logo"
-                  className="inline-block dark:hidden"
-                />
-                <Image
-                  src={darkModeLogo}
-                  width={logoWidth}
-                  height="auto"
-                  alt="logo"
-                  className="hidden dark:inline-block"
+                  className="inline-block"
                 />
               </Link>
             </SheetClose>

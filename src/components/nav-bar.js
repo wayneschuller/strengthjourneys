@@ -56,9 +56,7 @@ import {
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
-// import darkModeLogo from "/public/nav_logo_light.png";
-import darkModeLogo from "../../public/nav_logo_light.png";
-import lightModeLogo from "../../public/nav_logo_dark.png";
+import { getLogoForTheme } from "@/lib/theme-logos";
 
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 
@@ -127,8 +125,8 @@ export function DesktopNav() {
   const pathname = usePathname();
   const { isValidating } = useUserLiftingData();
   const { resolvedTheme, theme } = useTheme();
-  const key = (theme ?? resolvedTheme) || "light";
-  const src = key.includes("dark") ? darkModeLogo : lightModeLogo; // Dark themes should have the word dark in theme
+  const currentTheme = (theme ?? resolvedTheme) || "light";
+  const src = getLogoForTheme(currentTheme);
 
   return (
     <div className="hidden align-middle md:flex">

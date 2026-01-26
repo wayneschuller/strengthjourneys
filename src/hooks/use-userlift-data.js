@@ -42,11 +42,6 @@ export const UserLiftingDataProvider = ({ children }) => {
   // These are our key global state variables.
   // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
   const [parsedData, setParsedData] = useState(null); // see @/lib/sample-parsed-data.js for data structure design
-  const [topLiftsByTypeAndReps, setTopLiftsByTypeAndReps] = useState(null); // see @/lib/processing-utils.js for data structure design
-  const [
-    topLiftsByTypeAndRepsLast12Months,
-    setTopLiftsByTypeAndRepsLast12Months,
-  ] = useState(null); // see @/lib/processing-utils.js for data structure design
   const [selectedLiftTypes, setSelectedLiftTypes] = useState([]);
   const [rawRows, setRawRows] = useState(null); // As soon as we have the user data, update this for UI indicators
 
@@ -334,15 +329,6 @@ export const UserLiftingDataProvider = ({ children }) => {
     // Now set it in state for useContext usage throughout the components
     setSelectedLiftTypes(selectedLiftTypes);
 
-    // Critical PR processing
-    const { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months } =
-      processTopLiftsByTypeAndReps(parsedData, liftTypes);
-
-    setTopLiftsByTypeAndReps(topLiftsByTypeAndReps);
-    setTopLiftsByTypeAndRepsLast12Months(topLiftsByTypeAndRepsLast12Months);
-    // devLog(topLiftsByTypeAndReps);
-    // devLog(topLiftsByTypeAndRepsLast12Months);
-
     setParsedData(parsedData);
   }, [data, isLoading, isError, authStatus]);
 
@@ -351,6 +337,14 @@ export const UserLiftingDataProvider = ({ children }) => {
     parsedData ? calculateLiftTypes(parsedData) : [], 
     [parsedData]
   );
+
+  // Calculate topLiftsByTypeAndReps from parsedData and liftTypes (computed automatically when they change)
+  const { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months } = useMemo(() => {
+    if (!parsedData || !liftTypes.length) {
+      return { topLiftsByTypeAndReps: null, topLiftsByTypeAndRepsLast12Months: null };
+    }
+    return processTopLiftsByTypeAndReps(parsedData, liftTypes);
+  }, [parsedData, liftTypes]);
 
   // useEffect for reminding the user when they are looking at demo data
   useEffect(() => {

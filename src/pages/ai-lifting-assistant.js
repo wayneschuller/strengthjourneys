@@ -292,12 +292,12 @@ function AILiftingAssistantMain({ relatedArticles }) {
         </PageHeaderDescription>
       </PageHeader>
       <div className="flex flex-col gap-2 md:gap-5 lg:flex-row">
-        <div className="h-dvh flex-1 lg:flex lg:flex-col">
+        <div className="h-dvh flex-1 lg:flex lg:flex-col 2xl:max-w-screen-xl">
           <AILiftingAssistantCard
             userProvidedProfileData={userProvidedProfileData}
           />
         </div>
-        <div className="md:max-w-2/5 flex flex-col gap-5">
+        <div className="md:max-w-3/5 flex flex-col gap-5">
           <BioDetailsCard
             age={age}
             setAge={setAge}

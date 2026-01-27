@@ -30,8 +30,25 @@ export function MobileNav() {
   const pathname = usePathname();
   const logoWidth = 150;
   const { resolvedTheme, theme } = useTheme();
-  const currentTheme = (theme ?? resolvedTheme) || "light";
-  const logoSrc = getLogoForTheme(currentTheme);
+  const [logoSrc, setLogoSrc] = useState(() => {
+    // Start with default theme for SSR/hydration consistency
+    return getLogoForTheme("light");
+  });
+
+  // Set logo on mount and when theme changes
+  useEffect(() => {
+    let currentTheme = theme ?? resolvedTheme;
+    
+    // If theme not yet resolved, try to get from localStorage
+    if (!currentTheme && typeof window !== "undefined") {
+      const storedTheme = localStorage.getItem("theme");
+      if (storedTheme) {
+        currentTheme = storedTheme;
+      }
+    }
+    
+    setLogoSrc(getLogoForTheme(currentTheme || "light"));
+  }, [theme, resolvedTheme]);
 
   const lifts = bigFourLiftInsightData;
 

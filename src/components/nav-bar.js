@@ -125,8 +125,25 @@ export function DesktopNav() {
   const pathname = usePathname();
   const { isValidating } = useUserLiftingData();
   const { resolvedTheme, theme } = useTheme();
-  const currentTheme = (theme ?? resolvedTheme) || "light";
-  const src = getLogoForTheme(currentTheme);
+  const [logoSrc, setLogoSrc] = useState(() => {
+    // Start with default theme for SSR/hydration consistency
+    return getLogoForTheme("light");
+  });
+
+  // Set logo on mount and when theme changes
+  useEffect(() => {
+    let currentTheme = theme ?? resolvedTheme;
+    
+    // If theme not yet resolved, try to get from localStorage
+    if (!currentTheme && typeof window !== "undefined") {
+      const storedTheme = localStorage.getItem("theme");
+      if (storedTheme) {
+        currentTheme = storedTheme;
+      }
+    }
+    
+    setLogoSrc(getLogoForTheme(currentTheme || "light"));
+  }, [theme, resolvedTheme]);
 
   return (
     <div className="hidden align-middle md:flex">
@@ -138,8 +155,8 @@ export function DesktopNav() {
         )}
       >
         <Image
-          src={src}
-          key={src}
+          src={logoSrc}
+          key={logoSrc}
           width={100}
           height="auto"
           alt="app logo"

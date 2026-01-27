@@ -323,29 +323,23 @@ function AILiftingAssistantMain({ relatedArticles }) {
   );
 }
 
-// Organize suggestions into multiple rows
+// Single flat array of suggestions
 const defaultMessages = [
-  [
-    "Why lift weights?",
-    "What should I do in my first gym session?",
-    "How often should I deadlift?",
-    "Am I strong for my age?",
-    "I'm female, will I get bulky lifting weights?",
-  ],
-  [
-    "How do I choose a gym?",
-    "Write me a motivational rap.",
-    "Isn't deadlifting dangerous?",
-    "How strong am I?",
-    "Can I lift weights and still lose weight?",
-  ],
-  [
-    "How much protein should I eat?",
-    "Should I lift every day?",
-    "What are the health benefits for women who lift?",
-    "ME STRONG",
-    "Give me a riddle about lifting weights.",
-  ],
+  "Why lift weights?",
+  "What should I do in my first gym session?",
+  "How often should I deadlift?",
+  "Am I strong for my age?",
+  "I'm female, will I get bulky lifting weights?",
+  "How do I choose a gym?",
+  "Write me a motivational rap.",
+  "Isn't deadlifting dangerous?",
+  "How strong am I?",
+  "Can I lift weights and still lose weight?",
+  "How much protein should I eat?",
+  "Should I lift every day?",
+  "What are the health benefits for women who lift?",
+  "ME STRONG",
+  "Give me a riddle about lifting weights.",
 ];
 
 // -----------------------------------------------------------------------------------------------------
@@ -533,20 +527,18 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
                 description="Enter your questions into the chat box below (or click a sample question)"
                 className="items-start px-0"
               >
-                <div className="-mx-4 mt-6 flex w-full flex-col gap-3 px-4">
-                  {defaultMessages.map((row, rowIndex) => (
-                    <Suggestions key={rowIndex} className="w-full">
-                      {row.map((message) => (
-                        <Suggestion
-                          key={message}
-                          suggestion={message}
-                          onClick={(suggestion) => {
-                            sendMessageWithMetadata(suggestion);
-                          }}
-                        />
-                      ))}
-                    </Suggestions>
-                  ))}
+                <div className="-mx-4 mt-6 w-full px-4">
+                  <Suggestions className="w-full">
+                    {defaultMessages.map((message) => (
+                      <Suggestion
+                        key={message}
+                        suggestion={message}
+                        onClick={(suggestion) => {
+                          sendMessageWithMetadata(suggestion);
+                        }}
+                      />
+                    ))}
+                  </Suggestions>
                 </div>
               </ConversationEmptyState>
             ) : (

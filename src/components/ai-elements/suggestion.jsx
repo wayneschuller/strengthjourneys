@@ -1,22 +1,17 @@
-"use client";;
+"use client";
 import { Button } from "@/components/ui/button";
-import {
-  ScrollArea,
-  ScrollBar,
-} from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-export const Suggestions = ({
-  className,
-  children,
-  ...props
-}) => (
-  <ScrollArea className="w-full overflow-x-auto whitespace-nowrap" {...props}>
-    <div className={cn("flex w-max flex-nowrap items-center gap-2", className)}>
-      {children}
-    </div>
-    <ScrollBar className="hidden" orientation="horizontal" />
-  </ScrollArea>
+export const Suggestions = ({ className, children, ...props }) => (
+  <div
+    className={cn(
+      "flex flex-wrap gap-2",
+      className,
+    )}
+    {...props}
+  >
+    {children}
+  </div>
 );
 
 export const Suggestion = ({
@@ -34,12 +29,16 @@ export const Suggestion = ({
 
   return (
     <Button
-      className={cn("cursor-pointer rounded-full px-4", className)}
+      className={cn(
+        "w-auto min-w-fit cursor-pointer rounded-full px-4 whitespace-nowrap",
+        className,
+      )}
       onClick={handleClick}
       size={size}
       type="button"
       variant={variant}
-      {...props}>
+      {...props}
+    >
       {children || suggestion}
     </Button>
   );

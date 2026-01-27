@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { MarkdownContent } from "@/components/ui/markdown-content";
+import { MessageResponse } from "@/components/ai-elements/message";
 import { cva } from "class-variance-authority";
 import { SparklesIcon, UserIcon } from "lucide-react";
 import React from "react";
@@ -161,7 +161,7 @@ const ChatMessageContent = React.forwardRef(({ className, content, id: idProp, c
             ref={ref}
             className={cn(chatMessageContentVariants({ variant, type, className }))}
             {...props}>
-            {textContent.length > 0 && <MarkdownContent id={id} content={textContent} />}
+            {textContent.length > 0 && <MessageResponse>{textContent}</MessageResponse>}
             {children}
         </div>
     );

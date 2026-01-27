@@ -37,8 +37,6 @@ import {
   PromptInputSubmit,
 } from "@/components/ai-elements/prompt-input";
 
-import { MarkdownContent } from "@/components/ui/markdown-content";
-
 import {
   Card,
   CardContent,
@@ -705,4 +703,23 @@ function convertAnalyzedLiftsToLLMStrings(analyzedLifts) {
   });
 
   return sessionDescriptions;
+}
+
+// -----------------------------------------------------------------------------------------------------
+// Helper functions for AI SDK v6 message parts handling
+// Following AI SDK v6 patterns: messages always have a parts array
+// -----------------------------------------------------------------------------------------------------
+
+/**
+ * Extract text content from message parts (AI SDK v6)
+ * In v6, messages use parts array - this combines all text parts into a single string
+ * @param {Object} message - The message object from useChat
+ * @returns {string} Combined text content from all text parts
+ */
+function getMessageText(message) {
+  if (!message.parts) return "";
+  return message.parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("");
 }

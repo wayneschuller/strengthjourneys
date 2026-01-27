@@ -47,3 +47,32 @@ dependencies/react-google-drive-picker/node_modules
 # 20240911 next-sitemap
 public/sitemap*.xml
 public/robots.txt
+
+# AI coding assistant skills directories
+/.agent/
+/.agents/
+/.claude/
+/.cline/
+/.codex/
+/.commandcode/
+/.continue/
+/.crush/
+/.cursor/
+/.factory/
+/.gemini/
+/.github/
+/.goose/
+/.kilocode/
+/.kiro/
+/.mcpjam/
+/.neovate/
+/.opencode/
+/.openhands/
+/.pi/
+/.qoder/
+/.qwen/
+/.roo/
+/.trae/
+/.windsurf/
+/.zencoder/
+/skills/

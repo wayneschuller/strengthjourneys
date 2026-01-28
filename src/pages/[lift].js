@@ -29,9 +29,9 @@ import {
 
 import {
   LiftTypeSummaryStatistics,
-  LiftTypeRepPRsAccordion,
   LiftTypeRecentHighlights,
 } from "@/components/analyzer/lift-achievements-card";
+import { LiftTypeRepPRsDisplay } from "@/components/analyzer/lift-type-prs-display";
 
 import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
 import { VisualizerReps } from "@/components/visualizer/visualizer-reps";
@@ -269,12 +269,9 @@ function MyLiftTypePRsCard({ liftType }) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>My {liftType} PRs</CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         {authStatus === "authenticated" ? (
-          <LiftTypeRepPRsAccordion liftType={liftType} />
+          <LiftTypeRepPRsDisplay liftType={liftType} />
         ) : (
           <div>Login to see your data</div>
         )}

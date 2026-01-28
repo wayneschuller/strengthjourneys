@@ -269,6 +269,11 @@ export const LiftTypeRepPRsDisplay = ({ liftType }) => {
     setActiveTab(`rep-${repIndex}`);
   };
 
+  // Featured rep ranges for smaller screens
+  const mobileRepTabs = repRangesWithData.filter(({ repCount }) =>
+    [1, 3, 5, 10].includes(repCount),
+  );
+
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -276,20 +281,40 @@ export const LiftTypeRepPRsDisplay = ({ liftType }) => {
           <h2 className="text-xl sm:text-2xl font-semibold">{liftType} PRs</h2>
         </div>
 
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 lg:grid-cols-10">
-          <TabsTrigger value="overview" className="text-xs">
-            Overview
-          </TabsTrigger>
-          {repRangesWithData.map(({ repIndex, repCount }) => (
+        {/* Mobile / tablet: only show key rep ranges to reduce crowding */}
+        <div className="w-full lg:hidden">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger
-              key={repIndex}
-              value={`rep-${repIndex}`}
-              className="text-xs"
+              value="overview"
+              className="whitespace-nowrap text-xs"
             >
-              {repCount}RM
+              Overview
             </TabsTrigger>
-          ))}
-        </TabsList>
+            {mobileRepTabs.map(({ repIndex, repCount }) => (
+              <TabsTrigger
+                key={repIndex}
+                value={`rep-${repIndex}`}
+                className="whitespace-nowrap text-xs"
+              >
+                {repCount}RM
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+
+        {/* Desktop (lg+): show full set of rep-range tabs */}
+        <div className="hidden w-full overflow-x-auto lg:block">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:grid-cols-11">
+            <TabsTrigger value="overview" className="text-xs">
+              Overview
+            </TabsTrigger>
+            {repRangesWithData.map(({ repIndex, repCount }) => (
+              <TabsTrigger key={repIndex} value={`rep-${repIndex}`} className="text-xs">
+                {repCount}RM
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
         {/* Overview tab: summary grid of rep range PR cards */}
         <TabsContent value="overview" className="mt-4 space-y-4">

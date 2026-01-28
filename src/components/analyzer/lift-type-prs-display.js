@@ -24,7 +24,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
  */
 const TruncatedText = ({ text, className }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const truncLength = 100;
+  const truncLength = 300;
 
   if (!text) return null;
 

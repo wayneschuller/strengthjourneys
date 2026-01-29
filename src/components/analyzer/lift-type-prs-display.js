@@ -117,23 +117,13 @@ const PRCard = ({
   return (
     <Card
       className={cn(
-        "cursor-pointer transition-all duration-200",
-        isExpanded && "ring-2",
+        "cursor-pointer transition-all duration-200 border-2",
+        isExpanded 
+          ? "ring-2" 
+          : "border-transparent hover:border-foreground/50"
       )}
       style={{
         borderColor: isExpanded ? liftColor : undefined,
-      }}
-      onMouseEnter={(e) => {
-        if (!isExpanded) {
-          e.currentTarget.style.borderColor = liftColor;
-          e.currentTarget.style.borderWidth = "2px";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isExpanded) {
-          e.currentTarget.style.borderColor = "";
-          e.currentTarget.style.borderWidth = "";
-        }
       }}
       onClick={onCardClick}
     >
@@ -247,23 +237,13 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards
           <Card
             key={liftIndex}
             className={cn(
-              "transition-all duration-200",
-              liftIndex === 0 && "ring-2",
+              "transition-all duration-200 border-2",
+              liftIndex === 0 
+                ? "ring-2" 
+                : "border-transparent hover:border-foreground/50"
             )}
             style={{
               borderColor: liftIndex === 0 ? liftColor : undefined,
-            }}
-            onMouseEnter={(e) => {
-              if (liftIndex !== 0) {
-                e.currentTarget.style.borderColor = liftColor;
-                e.currentTarget.style.borderWidth = "2px";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (liftIndex !== 0) {
-                e.currentTarget.style.borderColor = "";
-                e.currentTarget.style.borderWidth = "";
-              }
             }}
           >
             <CardContent className="p-4">

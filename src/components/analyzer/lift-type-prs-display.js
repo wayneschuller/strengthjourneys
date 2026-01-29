@@ -224,7 +224,7 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards
   return (
     <div className="space-y-4">
       <div className="mb-4">
-        <h3 className="text-xl font-semibold" style={{ color: liftColor }}>
+        <h3 className="text-xl font-semibold text-foreground">
           All {repCount}RM Lifts
         </h3>
         <p className="text-sm text-muted-foreground">
@@ -237,14 +237,8 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards
           <Card
             key={liftIndex}
             className={cn(
-              "transition-all duration-200 border-2",
-              liftIndex === 0 
-                ? "ring-2" 
-                : "border-transparent hover:border-foreground/50"
+              liftIndex === 0 && "ring-2 ring-foreground/50"
             )}
-            style={{
-              borderColor: liftIndex === 0 ? liftColor : undefined,
-            }}
           >
             <CardContent className="p-4">
               <div className="space-y-3">
@@ -255,11 +249,8 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards
                       <span className="text-lg font-semibold">
                         {getCelebrationEmoji(liftIndex)} #{liftIndex + 1}
                       </span>
-                      <span
-                        className="text-xl font-bold"
-                        style={{ color: liftColor }}
-                      >
-                        {lift.weight}
+                      <span className="text-xl font-bold text-foreground">
+                        {repCount}@{lift.weight}
                         {lift.unitType}
                       </span>
                       {getStrengthRating(repCount, lift.weight, liftType, standards) && (

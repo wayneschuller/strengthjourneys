@@ -9,7 +9,6 @@ import {
   getCelebrationEmoji,
 } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { VideoThumbnail } from "./video-thumbnail";
 import {
   Card,
   CardContent,
@@ -18,8 +17,9 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Play } from "lucide-react";
 
 /**
  * Helper function to calculate strength rating for a lift
@@ -117,12 +117,23 @@ const PRCard = ({
   return (
     <Card
       className={cn(
-        "cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02]",
+        "cursor-pointer transition-all duration-200",
         isExpanded && "ring-2",
       )}
       style={{
         borderColor: isExpanded ? liftColor : undefined,
-        transition: "all 0.3s ease-in-out",
+      }}
+      onMouseEnter={(e) => {
+        if (!isExpanded) {
+          e.currentTarget.style.borderColor = liftColor;
+          e.currentTarget.style.borderWidth = "2px";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isExpanded) {
+          e.currentTarget.style.borderColor = "";
+          e.currentTarget.style.borderWidth = "";
+        }
       }}
       onClick={onCardClick}
     >
@@ -152,25 +163,40 @@ const PRCard = ({
       <CardContent className="space-y-3">
         {/* PR Weight - Large and prominent */}
         <div>
-          <div
-            className="text-3xl font-bold"
-            style={{ color: liftColor }}
-          >
-            {pr.weight}
-            {pr.unitType}
+          <div className="flex items-center gap-2">
+            <div
+              className="text-3xl font-bold"
+              style={{ color: liftColor }}
+            >
+              {pr.weight}
+              {pr.unitType}
+            </div>
+            {pr.URL && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <a
+                      href={pr.URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-primary hover:text-primary/80 transition-all duration-200 hover:scale-110"
+                      aria-label="Open video in new tab"
+                    >
+                      <Play className="h-5 w-5" />
+                    </a>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Open video in new tab</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
           <div className="text-sm text-muted-foreground">
             {getReadableDateString(pr.date)}
           </div>
         </div>
-
-        {/* Video Thumbnail */}
-        {pr.URL && (
-          <VideoThumbnail
-            url={pr.URL}
-            className="mt-2"
-          />
-        )}
 
         {/* Notes */}
         {pr.notes && (
@@ -221,12 +247,23 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards
           <Card
             key={liftIndex}
             className={cn(
-              "transition-all duration-300 hover:shadow-md hover:scale-[1.01]",
+              "transition-all duration-200",
               liftIndex === 0 && "ring-2",
             )}
             style={{
               borderColor: liftIndex === 0 ? liftColor : undefined,
-              transition: "all 0.3s ease-in-out",
+            }}
+            onMouseEnter={(e) => {
+              if (liftIndex !== 0) {
+                e.currentTarget.style.borderColor = liftColor;
+                e.currentTarget.style.borderWidth = "2px";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (liftIndex !== 0) {
+                e.currentTarget.style.borderColor = "";
+                e.currentTarget.style.borderWidth = "";
+              }
             }}
           >
             <CardContent className="p-4">
@@ -250,6 +287,27 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards
                           {getStrengthRating(repCount, lift.weight, liftType, standards)}
                         </Badge>
                       )}
+                      {lift.URL && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <a
+                                href={lift.URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-primary hover:text-primary/80 transition-all duration-200 hover:scale-110"
+                                aria-label="Open video in new tab"
+                              >
+                                <Play className="h-5 w-5" />
+                              </a>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Open video in new tab</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {getReadableDateString(lift.date)}
@@ -257,28 +315,11 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards
                   </div>
                 </div>
 
-                {/* Video Thumbnail */}
-                {lift.URL && (
-                  <VideoThumbnail url={lift.URL} className="mt-2" />
-                )}
-
                 {/* Notes */}
                 {lift.notes && (
                   <TruncatedText text={lift.notes} className="mt-2" />
                 )}
 
-                {/* Link to video if URL exists */}
-                {lift.URL && (
-                  <a
-                    href={lift.URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-xs text-primary hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    View Video →
-                  </a>
-                )}
               </div>
             </CardContent>
           </Card>

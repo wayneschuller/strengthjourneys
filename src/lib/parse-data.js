@@ -137,7 +137,7 @@ function parseBespokeData(data) {
     if (row[notesCol]) obj.notes = row[notesCol];
     if (row[isGoalCol]) obj.isGoal = row[isGoalCol] === "TRUE";
     if (row[labelCol]) obj.label = row[labelCol];
-    if (row[urlCol]) obj.url = row[urlCol];
+    if (row[urlCol]) obj.URL = row[urlCol];
 
     objectsArray.push(obj);
   }

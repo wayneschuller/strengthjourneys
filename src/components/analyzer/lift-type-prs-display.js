@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
+import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 import {
   getReadableDateString,
   getCelebrationEmoji,
 } from "@/lib/processing-utils";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { VideoThumbnail } from "./video-thumbnail";
 import {
   Card,
@@ -18,6 +20,48 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
+
+/**
+ * Helper function to calculate strength rating for a lift
+ */
+const getStrengthRating = (repCount, weight, liftType, standards) => {
+  if (!standards || !standards[liftType]) return null;
+
+  const standard = standards[liftType];
+  const oneRepMax = estimateE1RM(repCount, weight, "Brzycki");
+
+  if (oneRepMax < standard.beginner) {
+    return "Physically Active";
+  } else if (oneRepMax < standard.intermediate) {
+    return "Beginner";
+  } else if (oneRepMax < standard.advanced) {
+    return "Intermediate";
+  } else if (oneRepMax < standard.elite) {
+    return "Advanced";
+  } else {
+    return "Elite";
+  }
+};
+
+/**
+ * Helper function to get badge variant based on rating
+ */
+const getRatingBadgeVariant = (rating) => {
+  switch (rating) {
+    case "Elite":
+      return "default";
+    case "Advanced":
+      return "default";
+    case "Intermediate":
+      return "secondary";
+    case "Beginner":
+      return "outline";
+    case "Physically Active":
+      return "outline";
+    default:
+      return "outline";
+  }
+};
 
 /**
  * TruncatedText component for displaying notes with expand/collapse
@@ -62,6 +106,7 @@ const PRCard = ({
   liftColor,
   onCardClick,
   isExpanded,
+  strengthRating,
 }) => {
   if (!repRange || repRange.length === 0) return null;
 
@@ -86,15 +131,22 @@ const PRCard = ({
           <CardTitle className="text-lg font-semibold">
             {repCount}RM
           </CardTitle>
-          <Badge
-            variant="outline"
-            style={{
-              borderColor: liftColor,
-              color: liftColor,
-            }}
-          >
-            {celebrationEmoji} PR
-          </Badge>
+          <div className="flex items-center gap-2">
+            {strengthRating && (
+              <Badge variant={getRatingBadgeVariant(strengthRating)}>
+                {strengthRating}
+              </Badge>
+            )}
+            <Badge
+              variant="outline"
+              style={{
+                borderColor: liftColor,
+                color: liftColor,
+              }}
+            >
+              {celebrationEmoji} PR
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -148,7 +200,7 @@ const PRCard = ({
 /**
  * Detail view showing all lifts in a rep range
  */
-const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor }) => {
+const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards }) => {
   if (!repRange || repRange.length === 0) return null;
 
   const repCount = repIndex + 1;
@@ -182,7 +234,7 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor }) => {
                 {/* Rank and Weight */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-lg font-semibold">
                         {getCelebrationEmoji(liftIndex)} #{liftIndex + 1}
                       </span>
@@ -193,6 +245,11 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor }) => {
                         {lift.weight}
                         {lift.unitType}
                       </span>
+                      {getStrengthRating(repCount, lift.weight, liftType, standards) && (
+                        <Badge variant={getRatingBadgeVariant(getStrengthRating(repCount, lift.weight, liftType, standards))}>
+                          {getStrengthRating(repCount, lift.weight, liftType, standards)}
+                        </Badge>
+                      )}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {getReadableDateString(lift.date)}
@@ -238,7 +295,11 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor }) => {
 export const LiftTypeRepPRsDisplay = ({ liftType }) => {
   const { topLiftsByTypeAndReps } = useUserLiftingData();
   const { getColor } = useLiftColors();
+  const { age, bodyWeight, standards } = useAthleteBioData();
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // Check if we have the necessary data for strength ratings
+  const hasBioData = age && bodyWeight && standards && Object.keys(standards).length > 0;
 
   if (!topLiftsByTypeAndReps) return null;
 
@@ -323,17 +384,25 @@ export const LiftTypeRepPRsDisplay = ({ liftType }) => {
             a card or a tab above to explore all lifts for that rep range.
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {repRangesWithData.map(({ repRange, repIndex }) => (
-              <PRCard
-                key={repIndex}
-                repRange={repRange}
-                repIndex={repIndex}
-                liftType={liftType}
-                liftColor={liftColor}
-                onCardClick={() => handleCardClick(repIndex)}
-                isExpanded={activeTab === `rep-${repIndex}`}
-              />
-            ))}
+            {repRangesWithData.map(({ repRange, repIndex, repCount }) => {
+              const pr = repRange[0];
+              const strengthRating = hasBioData 
+                ? getStrengthRating(repCount, pr.weight, liftType, standards)
+                : null;
+              
+              return (
+                <PRCard
+                  key={repIndex}
+                  repRange={repRange}
+                  repIndex={repIndex}
+                  liftType={liftType}
+                  liftColor={liftColor}
+                  onCardClick={() => handleCardClick(repIndex)}
+                  isExpanded={activeTab === `rep-${repIndex}`}
+                  strengthRating={strengthRating}
+                />
+              );
+            })}
           </div>
         </TabsContent>
 
@@ -361,6 +430,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType }) => {
               repIndex={repIndex}
               liftType={liftType}
               liftColor={liftColor}
+              standards={hasBioData ? standards : null}
             />
           </TabsContent>
         ))}

@@ -60,10 +60,11 @@ export function SectionTopCards() {
     [parsedData],
   );
 
-  const { currentStreak, bestStreak } = useMemo(
+  const { currentStreak, bestStreak, sessionsThisWeek } = useMemo(
     () => calculateStreak(parsedData),
     [parsedData],
   );
+  const sessionsNeededThisWeek = Math.max(0, 3 - (sessionsThisWeek ?? 0));
 
   return (
     <div className="col-span-full grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -168,10 +169,21 @@ export function SectionTopCards() {
         </CardHeader>
         <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 text-sm">
           <div className="text-muted-foreground">
-            At least three sessions a week for the last {currentStreak} week
-            {currentStreak === 1 ? "" : "s"} (best streak: {bestStreak} week
-            {bestStreak === 1 ? "" : "s"})
+            At least three sessions a week through last week (best: {bestStreak}{" "}
+            week{bestStreak === 1 ? "" : "s"})
           </div>
+          {sessionsNeededThisWeek > 0 && (
+            <div className="text-muted-foreground">
+              Complete {sessionsNeededThisWeek} more lifting session
+              {sessionsNeededThisWeek === 1 ? "" : "s"} by Sunday to continue
+              your streak.
+            </div>
+          )}
+          {sessionsNeededThisWeek === 0 && (sessionsThisWeek ?? 0) >= 3 && (
+            <div className="text-muted-foreground">
+              3+ sessions this week — streak on track.
+            </div>
+          )}
         </CardFooter>
       </Card>
     </div>
@@ -335,13 +347,13 @@ function calculateSessionMomentum(parsedData) {
  */
 function calculateStreak(parsedData) {
   if (!parsedData || parsedData.length === 0) {
-    return { currentStreak: 0, bestStreak: 0 };
+    return { currentStreak: 0, bestStreak: 0, sessionsThisWeek: 0 };
   }
 
   const startTime = performance.now();
 
-  // Group sessions by week (Monday as start of week)
-  const weekMap = new Map();
+  // Group by week: count unique session days per week (not entries — one workout can have many sets)
+  const weekMap = new Map(); // weekStart -> Set of date strings (unique days)
   for (let i = 0; i < parsedData.length; i++) {
     const entry = parsedData[i];
     if (entry.isGoal) continue;
@@ -355,33 +367,45 @@ function calculateStreak(parsedData) {
       startOfWeek(entryDate, { weekStartsOn: 1 }),
       "yyyy-MM-dd",
     );
-    weekMap.set(weekStart, (weekMap.get(weekStart) || 0) + 1);
+    if (!weekMap.has(weekStart)) weekMap.set(weekStart, new Set());
+    weekMap.get(weekStart).add(entry.date);
   }
+  // Convert to session count per week (unique days)
+  const weekSessionCount = new Map();
+  weekMap.forEach((dates, weekStart) => {
+    weekSessionCount.set(weekStart, dates.size);
+  });
 
-  // Find the range of weeks
-  const weekKeys = Array.from(weekMap.keys()).sort(); // ascending
-  const mostRecentWeek =
-    weekKeys.length > 0 ? weekKeys[weekKeys.length - 1] : null;
+  // Find the range of weeks (we need oldest to scan full history for best streak)
+  const weekKeys = Array.from(weekSessionCount.keys()).sort(); // ascending
   const oldestWeek = weekKeys.length > 0 ? weekKeys[0] : null;
-  if (!mostRecentWeek || !oldestWeek)
-    return { currentStreak: 0, bestStreak: 0 };
+  if (!oldestWeek) return { currentStreak: 0, bestStreak: 0, sessionsThisWeek: 0 };
 
-  // Step week-by-week from most recent to oldest
+  const today = new Date();
+  const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+  const thisWeekKey = format(thisWeekStart, "yyyy-MM-dd");
+  const sessionsThisWeek = weekSessionCount.get(thisWeekKey) || 0;
+
+  // Streak is counted through end of previous week (not including this week)
+  const lastWeekStart = subWeeks(thisWeekStart, 1);
+  const oldestWeekDate = parseISO(oldestWeek);
+  let weekCursor =
+    lastWeekStart >= oldestWeekDate ? lastWeekStart : oldestWeekDate;
+
   let currentStreak = 0;
   let bestStreak = 0;
   let tempStreak = 0;
-  let weekCursor = parseISO(mostRecentWeek);
-  const oldestWeekDate = parseISO(oldestWeek);
+  let currentStreakFinalized = false; // true after we've seen a bad week (so we stop updating current streak)
 
   while (weekCursor >= oldestWeekDate) {
     const weekKey = format(weekCursor, "yyyy-MM-dd");
-    const sessionCount = weekMap.get(weekKey) || 0;
+    const sessionCount = weekSessionCount.get(weekKey) || 0;
     if (sessionCount >= 3) {
       tempStreak++;
-      if (currentStreak === 0) currentStreak = tempStreak; // Only set currentStreak for the most recent run
+      if (!currentStreakFinalized) currentStreak = tempStreak;
       bestStreak = Math.max(bestStreak, tempStreak);
     } else {
-      if (currentStreak !== 0) break; // Only break current streak on first interruption
+      if (!currentStreakFinalized) currentStreakFinalized = true;
       tempStreak = 0;
     }
     weekCursor = subWeeks(weekCursor, 1);
@@ -391,5 +415,5 @@ function calculateStreak(parsedData) {
       `${Math.round(performance.now() - startTime)}ms`,
   );
 
-  return { currentStreak, bestStreak };
+  return { currentStreak, bestStreak, sessionsThisWeek };
 }

@@ -178,7 +178,7 @@ export function SectionTopCards() {
           )}
           {sessionsNeededThisWeek === 0 && (sessionsThisWeek ?? 0) >= 3 && (
             <div className="text-muted-foreground">
-              This week: 3+ sessions. You're on track.
+              This week: 3+ sessions. You&apos;re on track.
             </div>
           )}
         </CardFooter>

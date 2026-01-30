@@ -136,7 +136,7 @@ export default function SpreadsheetShowcase() {
       }, IMAGE_FADE_DURATION);
       return () => clearTimeout(timeout);
     }
-  }, [fade, images.length]);
+  }, [fade]);
 
   return (
     <div className="flex justify-center md:py-8">

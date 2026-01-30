@@ -14,15 +14,11 @@ import { devLog } from "@/lib/processing-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 import {
+  format,
   parseISO,
-  subDays,
-  differenceInCalendarDays,
   differenceInCalendarYears,
   differenceInCalendarMonths,
-  formatISO,
-  format,
-  startOfWeek,
-  subWeeks,
+  differenceInCalendarDays,
 } from "date-fns";
 
 import { TrendingUp, CalendarDays, TrendingDown } from "lucide-react";
@@ -273,7 +269,8 @@ function findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes) {
 function calculatePRsInLast12Months(topLiftsByTypeAndReps) {
   if (!topLiftsByTypeAndReps) return { count: 0, liftTypes: [] };
 
-  const twelveMonthsAgo = subDays(new Date(), 365).toISOString().slice(0, 10);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const twelveMonthsAgo = subtractDaysFromStr(todayStr, 365);
   const prLiftTypes = new Set();
 
   Object.entries(topLiftsByTypeAndReps).forEach(([liftType, repRanges]) => {
@@ -305,9 +302,9 @@ function calculateSessionMomentum(parsedData) {
     return { recentSessions: 0, previousSessions: 0, percentageChange: 0 };
   }
 
-  const today = new Date();
-  const ninetyDaysAgo = subDays(today, 90);
-  const oneEightyDaysAgo = subDays(today, 180);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const ninetyDaysAgoStr = subtractDaysFromStr(todayStr, 90);
+  const oneEightyDaysAgoStr = subtractDaysFromStr(todayStr, 180);
 
   let recentSessions = 0;
   let previousSessions = 0;
@@ -315,16 +312,16 @@ function calculateSessionMomentum(parsedData) {
   for (const entry of parsedData) {
     if (entry.isGoal) continue;
 
-    if (!entry.date || typeof entry.date !== "string") {
+    const dateStr = entry.date;
+    if (!dateStr || typeof dateStr !== "string") {
       console.warn("Invalid entry.date in parsedData:", entry);
       continue;
     }
 
-    const entryDate = parseISO(entry.date);
-
-    if (entryDate >= ninetyDaysAgo && entryDate <= today) {
+    // YYYY-MM-DD string comparison
+    if (dateStr >= ninetyDaysAgoStr && dateStr <= todayStr) {
       recentSessions++;
-    } else if (entryDate >= oneEightyDaysAgo && entryDate < ninetyDaysAgo) {
+    } else if (dateStr >= oneEightyDaysAgoStr && dateStr < ninetyDaysAgoStr) {
       previousSessions++;
     }
   }
@@ -341,8 +338,70 @@ function calculateSessionMomentum(parsedData) {
   return { recentSessions, previousSessions, percentageChange };
 }
 
+// YYYY-MM-DD only. Returns Monday of that week as "YYYY-MM-DD" (one Date used).
+function getWeekKeyFromDateStr(dateStr) {
+  const d = new Date(dateStr + "T00:00:00Z");
+  const dow = d.getUTCDay(); // 0=Sun, 1=Mon, ...
+  const daysBack = (dow + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - daysBack);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// Days in month (1-12); Feb uses 28, caller can pass 29 for leap year.
+function daysInMonth(y, month1Based) {
+  if (month1Based === 2) {
+    const isLeap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+    return isLeap ? 29 : 28;
+  }
+  if ([4, 6, 9, 11].includes(month1Based)) return 30;
+  return 31;
+}
+
+// YYYY-MM-DD minus n days, returns "YYYY-MM-DD". Pure string/math, no Date.
+function subtractDaysFromStr(dateStr, n) {
+  let y = parseInt(dateStr.slice(0, 4), 10);
+  let m = parseInt(dateStr.slice(5, 7), 10);
+  let d = parseInt(dateStr.slice(8, 10), 10);
+  for (let i = 0; i < n; i++) {
+    d--;
+    if (d < 1) {
+      m--;
+      if (m < 1) {
+        m = 12;
+        y--;
+      }
+      d = daysInMonth(y, m);
+    }
+  }
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+// YYYY-MM-DD plus n days, returns "YYYY-MM-DD". Pure string/math, no Date.
+function addDaysFromStr(dateStr, n) {
+  let y = parseInt(dateStr.slice(0, 4), 10);
+  let m = parseInt(dateStr.slice(5, 7), 10);
+  let d = parseInt(dateStr.slice(8, 10), 10);
+  for (let i = 0; i < n; i++) {
+    const maxD = daysInMonth(y, m);
+    d++;
+    if (d > maxD) {
+      d = 1;
+      m++;
+      if (m > 12) {
+        m = 1;
+        y++;
+      }
+    }
+  }
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
 /**
- * Calculates current streak and best streak of weeks with 3+ sessions
+ * Calculates current streak and best streak of weeks with 3+ sessions.
+ * Uses string comparison for dates (YYYY-MM-DD) and caches week key per unique date to avoid repeated date-fns work.
  * @param {Array} parsedData - Array of workout entries sorted chronologically
  * @returns {Object} Object containing current streak and best streak in weeks
  */
@@ -353,53 +412,54 @@ function calculateStreak(parsedData) {
 
   const startTime = performance.now();
 
-  // Group by week: count unique session days per week (not entries — one workout can have many sets)
-  const weekMap = new Map(); // weekStart -> Set of date strings (unique days)
+  // Cache week key per unique date so we only compute once per day, not per entry (20k entries → ~few thousand days)
+  const dateToWeekKey = new Map();
+  const weekMap = new Map(); // weekKey -> Set of date strings (unique days)
+
   for (let i = 0; i < parsedData.length; i++) {
     const entry = parsedData[i];
     if (entry.isGoal) continue;
-
-    if (!entry.date || typeof entry.date !== "string") {
+    const dateStr = entry.date;
+    if (!dateStr || typeof dateStr !== "string") {
       console.warn("Invalid entry.date in parsedData:", entry);
       continue;
     }
-    const entryDate = parseISO(entry.date);
-    const weekStart = format(
-      startOfWeek(entryDate, { weekStartsOn: 1 }),
-      "yyyy-MM-dd",
-    );
-    if (!weekMap.has(weekStart)) weekMap.set(weekStart, new Set());
-    weekMap.get(weekStart).add(entry.date);
+    let weekKey = dateToWeekKey.get(dateStr);
+    if (weekKey === undefined) {
+      weekKey = getWeekKeyFromDateStr(dateStr);
+      dateToWeekKey.set(dateStr, weekKey);
+    }
+    if (!weekMap.has(weekKey)) weekMap.set(weekKey, new Set());
+    weekMap.get(weekKey).add(dateStr);
   }
-  // Convert to session count per week (unique days)
+
   const weekSessionCount = new Map();
-  weekMap.forEach((dates, weekStart) => {
-    weekSessionCount.set(weekStart, dates.size);
+  weekMap.forEach((dates, weekKey) => {
+    weekSessionCount.set(weekKey, dates.size);
   });
 
-  // Find the range of weeks (we need oldest to scan full history for best streak)
-  const weekKeys = Array.from(weekSessionCount.keys()).sort(); // ascending
-  const oldestWeek = weekKeys.length > 0 ? weekKeys[0] : null;
-  if (!oldestWeek) return { currentStreak: 0, bestStreak: 0, sessionsThisWeek: 0 };
+  const weekKeys = Array.from(weekSessionCount.keys()).sort(); // string sort is correct for YYYY-MM-DD
+  if (weekKeys.length === 0) {
+    return { currentStreak: 0, bestStreak: 0, sessionsThisWeek: 0 };
+  }
 
-  const today = new Date();
-  const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
-  const thisWeekKey = format(thisWeekStart, "yyyy-MM-dd");
+  const oldestWeek = weekKeys[0];
+
+  // This week's key and last week's key (one Date for today, then string helpers)
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const thisWeekKey = getWeekKeyFromDateStr(todayStr);
+  const lastWeekKey = subtractDaysFromStr(thisWeekKey, 7);
   const sessionsThisWeek = weekSessionCount.get(thisWeekKey) || 0;
 
-  // Streak is counted through end of previous week (not including this week)
-  const lastWeekStart = subWeeks(thisWeekStart, 1);
-  const oldestWeekDate = parseISO(oldestWeek);
-  let weekCursor =
-    lastWeekStart >= oldestWeekDate ? lastWeekStart : oldestWeekDate;
-
+  // Iterate week-by-week so gaps (weeks with no data) correctly break the streak.
+  // Current streak: from last week backwards
   let currentStreak = 0;
-  let bestStreak = 0;
+  let currentStreakFinalized = false;
   let tempStreak = 0;
-  let currentStreakFinalized = false; // true after we've seen a bad week (so we stop updating current streak)
+  let bestStreak = 0;
 
-  while (weekCursor >= oldestWeekDate) {
-    const weekKey = format(weekCursor, "yyyy-MM-dd");
+  let weekKey = lastWeekKey;
+  while (weekKey >= oldestWeek) {
     const sessionCount = weekSessionCount.get(weekKey) || 0;
     if (sessionCount >= 3) {
       tempStreak++;
@@ -409,8 +469,23 @@ function calculateStreak(parsedData) {
       if (!currentStreakFinalized) currentStreakFinalized = true;
       tempStreak = 0;
     }
-    weekCursor = subWeeks(weekCursor, 1);
+    weekKey = subtractDaysFromStr(weekKey, 7);
   }
+
+  // Best streak: all weeks from oldest through last week (chronological)
+  tempStreak = 0;
+  weekKey = oldestWeek;
+  while (weekKey <= lastWeekKey) {
+    const sessionCount = weekSessionCount.get(weekKey) || 0;
+    if (sessionCount >= 3) {
+      tempStreak++;
+      bestStreak = Math.max(bestStreak, tempStreak);
+    } else {
+      tempStreak = 0;
+    }
+    weekKey = addDaysFromStr(weekKey, 7);
+  }
+
   devLog(
     "calculateStreak execution time: " +
       `${Math.round(performance.now() - startTime)}ms`,

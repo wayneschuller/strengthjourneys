@@ -8,7 +8,7 @@ import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
-import { e1rmFormulae } from "@/lib/estimate-e1rm";
+import { e1rmFormulae, estimateE1RM } from "@/lib/estimate-e1rm";
 import { subMonths } from "date-fns";
 
 import {
@@ -19,7 +19,11 @@ import {
 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ReferenceLine, ReferenceArea, ResponsiveContainer } from "recharts";
+import {
+  ReferenceLine,
+  ReferenceArea,
+  ResponsiveContainer,
+} from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import {
@@ -58,7 +62,7 @@ import { getYearLabels, processVisualizerData } from "./visualizer-processing";
 // VisualizerMini is used in the big four lift pages to show a single lift
 // only visualizer.
 export function VisualizerMini({ liftType }) {
-  const { parsedData, selectedLiftTypes } = useUserLiftingData();
+  const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
@@ -147,6 +151,57 @@ export function VisualizerMini({ liftType }) {
   // devLog(chartData);
 
   const yearLabels = getYearLabels(chartData);
+
+  // Significant lifts: best per rep range (1–5 RM) that appear on the chart, one per date
+  const significantLiftsForChart = useMemo(() => {
+    if (
+      !topLiftsByTypeAndReps?.[liftType] ||
+      !chartData?.length ||
+      !e1rmFormula
+    )
+      return [];
+    const repArrays = topLiftsByTypeAndReps[liftType];
+    const candidates = [];
+    for (let repIndex = 0; repIndex < Math.min(5, repArrays?.length ?? 0); repIndex++) {
+      const entry = repArrays[repIndex]?.[0];
+      if (!entry) continue;
+      const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
+      const dateStr =
+        typeof entry.date === "number"
+          ? new Date(entry.date).toISOString().slice(0, 10)
+          : String(entry.date).slice(0, 10);
+      candidates.push({
+        dateStr,
+        reps: entry.reps,
+        weight: entry.weight,
+        e1rm,
+        unitType: entry.unitType || "",
+      });
+    }
+    const dateToPoint = new Map(
+      chartData.map((d) => {
+        const k =
+          typeof d.date === "number"
+            ? new Date(d.date).toISOString().slice(0, 10)
+            : String(d.date).slice(0, 10);
+        return [k, d];
+      }),
+    );
+    const byDate = new Map();
+    candidates.forEach((c) => {
+      const point = dateToPoint.get(c.dateStr);
+      if (!point) return;
+      const existing = byDate.get(c.dateStr);
+      if (!existing || c.e1rm > existing.e1rm)
+        byDate.set(c.dateStr, { ...c, point });
+    });
+    return Array.from(byDate.values());
+  }, [
+    topLiftsByTypeAndReps,
+    liftType,
+    chartData,
+    e1rmFormula,
+  ]);
 
   const strengthRanges = standards?.[liftType] || null;
 
@@ -389,6 +444,20 @@ export function VisualizerMini({ liftType }) {
                     />
                   )}
                 </Area>
+                {/* Significant lift highlights: vertical line from bottom up to the data point */}
+                {significantLiftsForChart.map((lift, idx) => (
+                  <ReferenceLine
+                    key={`pr-${lift.dateStr}-${idx}`}
+                    segment={[
+                      { x: lift.point.rechartsDate, y: 0 },
+                      { x: lift.point.rechartsDate, y: lift.point[liftType] },
+                    ]}
+                    stroke={liftColor}
+                    strokeOpacity={0.5}
+                    strokeWidth={2}
+                    strokeDasharray="4 8"
+                  />
+                ))}
                 {/* Year labels to show year start */}
                 {yearLabels.map(({ date, label }) => (
                   <ReferenceLine

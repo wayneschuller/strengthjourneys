@@ -172,8 +172,8 @@ export function SectionTopCards() {
           {sessionsNeededThisWeek > 0 && (
             <div className="text-muted-foreground">
               {sessionsNeededThisWeek === 1
-                ? "One more session by Sunday and you keep the streak going."
-                : `${sessionsNeededThisWeek} more sessions by Sunday and you're still on track.`}
+                ? "One more session by Sunday night and you keep the streak going."
+                : `${sessionsNeededThisWeek} more sessions by Sunday night and you're still on track.`}
             </div>
           )}
           {sessionsNeededThisWeek === 0 && (sessionsThisWeek ?? 0) >= 3 && (

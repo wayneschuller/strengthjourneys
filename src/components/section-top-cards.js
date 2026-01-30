@@ -401,9 +401,11 @@ function addDaysFromStr(dateStr, n) {
 
 /**
  * Calculates current streak and best streak of weeks with 3+ sessions.
- * Uses string comparison for dates (YYYY-MM-DD) and caches week key per unique date to avoid repeated date-fns work.
+ * A "session" = one calendar day with at least one gym visit (we count unique days, not sets/lifts).
+ * Uses string comparison for dates (YYYY-MM-DD) and caches week key per unique date.
+ *
  * @param {Array} parsedData - Array of workout entries sorted chronologically
- * @returns {Object} Object containing current streak and best streak in weeks
+ * @returns {Object} Object containing currentStreak, bestStreak (weeks), and sessionsThisWeek (unique days)
  */
 function calculateStreak(parsedData) {
   if (!parsedData || parsedData.length === 0) {
@@ -412,9 +414,12 @@ function calculateStreak(parsedData) {
 
   const startTime = performance.now();
 
-  // Cache week key per unique date so we only compute once per day, not per entry (20k entries → ~few thousand days)
-  const dateToWeekKey = new Map();
-  const weekMap = new Map(); // weekKey -> Set of date strings (unique days)
+  // --- Phase 1: Build "sessions per week" (unique days per week) ---
+  // weekMap: for each week (Monday's date as "YYYY-MM-DD"), we store the Set of *dates* that had
+  // at least one gym session that week. So if you trained Mon/Wed/Fri, that week key maps to 3 dates.
+  // We do NOT count lift entries — one workout with 20 sets still counts as 1 session (one day).
+  const dateToWeekKey = new Map(); // cache: dateStr -> Monday of that week (so we compute once per unique day)
+  const weekMap = new Map(); // weekKey (Monday YYYY-MM-DD) -> Set of date strings (unique session days in that week)
 
   for (let i = 0; i < parsedData.length; i++) {
     const entry = parsedData[i];
@@ -424,37 +429,39 @@ function calculateStreak(parsedData) {
       console.warn("Invalid entry.date in parsedData:", entry);
       continue;
     }
+    // Resolve which week (Monday) this session falls into; cache so we only compute once per unique date
     let weekKey = dateToWeekKey.get(dateStr);
     if (weekKey === undefined) {
       weekKey = getWeekKeyFromDateStr(dateStr);
       dateToWeekKey.set(dateStr, weekKey);
     }
     if (!weekMap.has(weekKey)) weekMap.set(weekKey, new Set());
-    weekMap.get(weekKey).add(dateStr);
+    weekMap.get(weekKey).add(dateStr); // add this session date to that week's set (Set = unique days)
   }
 
+  // Session count per week = number of unique days with a gym session that week (3+ = "streak week")
   const weekSessionCount = new Map();
   weekMap.forEach((dates, weekKey) => {
     weekSessionCount.set(weekKey, dates.size);
   });
 
-  const weekKeys = Array.from(weekSessionCount.keys()).sort(); // string sort is correct for YYYY-MM-DD
+  const weekKeys = Array.from(weekSessionCount.keys()).sort(); // ascending; string sort is correct for YYYY-MM-DD
   if (weekKeys.length === 0) {
     return { currentStreak: 0, bestStreak: 0, sessionsThisWeek: 0 };
   }
 
   const oldestWeek = weekKeys[0];
 
-  // This week's key and last week's key (one Date for today, then string helpers)
+  // --- Phase 2: Reference weeks (this week, last week) ---
   const todayStr = new Date().toISOString().slice(0, 10);
   const thisWeekKey = getWeekKeyFromDateStr(todayStr);
   const lastWeekKey = subtractDaysFromStr(thisWeekKey, 7);
   const sessionsThisWeek = weekSessionCount.get(thisWeekKey) || 0;
 
-  // Iterate week-by-week so gaps (weeks with no data) correctly break the streak.
-  // Current streak: from last week backwards
+  // --- Phase 3: Current streak (consecutive weeks with 3+ sessions, counting from last week backwards) ---
+  // We walk week-by-week (not just weeks that have data) so a week with zero sessions breaks the streak.
   let currentStreak = 0;
-  let currentStreakFinalized = false;
+  let currentStreakFinalized = false; // once we see a "bad" week going backwards, we stop updating current streak
   let tempStreak = 0;
   let bestStreak = 0;
 
@@ -472,7 +479,7 @@ function calculateStreak(parsedData) {
     weekKey = subtractDaysFromStr(weekKey, 7);
   }
 
-  // Best streak: all weeks from oldest through last week (chronological)
+  // --- Phase 4: Best streak (longest run of consecutive weeks with 3+ sessions, over full history) ---
   tempStreak = 0;
   weekKey = oldestWeek;
   while (weekKey <= lastWeekKey) {

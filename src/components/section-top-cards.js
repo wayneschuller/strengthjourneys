@@ -162,26 +162,27 @@ export function SectionTopCards() {
       </Card>
       <Card className="animate-fade flex h-full flex-col justify-between opacity-0 [animation-delay:1000ms]">
         <CardHeader className="p-4">
-          <CardDescription>Current Streak</CardDescription>
+          <CardDescription>Weekly consistency</CardDescription>
           <CardTitle className="min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
-            {currentStreak} week{currentStreak === 1 ? "" : "s"}
+            {currentStreak} week{currentStreak === 1 ? "" : "s"} in a row
           </CardTitle>
         </CardHeader>
         <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 text-sm">
           <div className="text-muted-foreground">
-            At least three sessions a week through last week (best: {bestStreak}{" "}
-            week{bestStreak === 1 ? "" : "s"})
+            {currentStreak > 0
+              ? `3+ sessions every week through last Sunday. Your best run: ${bestStreak} week${bestStreak === 1 ? "" : "s"}.`
+              : `Aim for 3+ sessions per week. Your best so far: ${bestStreak} week${bestStreak === 1 ? "" : "s"} in a row.`}
           </div>
           {sessionsNeededThisWeek > 0 && (
             <div className="text-muted-foreground">
-              Complete {sessionsNeededThisWeek} more lifting session
-              {sessionsNeededThisWeek === 1 ? "" : "s"} by Sunday to continue
-              your streak.
+              {sessionsNeededThisWeek === 1
+                ? "One more session by Sunday and you keep the streak going."
+                : `${sessionsNeededThisWeek} more sessions by Sunday and you're still on track.`}
             </div>
           )}
           {sessionsNeededThisWeek === 0 && (sessionsThisWeek ?? 0) >= 3 && (
             <div className="text-muted-foreground">
-              3+ sessions this week — streak on track.
+              This week: 3+ sessions. You're on track.
             </div>
           )}
         </CardFooter>

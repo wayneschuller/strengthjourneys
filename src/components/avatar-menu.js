@@ -152,9 +152,14 @@ export function AvatarDropdown() {
                       }
                     }}
                     disabled={!openPicker}
+                    title={
+                      !openPicker
+                        ? "Loading Google Picker… (allow Google scripts if blocked)"
+                        : undefined
+                    }
                   >
                     <FolderOpenDot className="mr-2 h-4 w-4" />
-                    Choose Google Sheet
+                    {openPicker ? "Choose Google Sheet" : "Choose Google Sheet (loading…)"}
                   </DropdownMenuItem>
                 )}
                 {ssid && (
@@ -179,9 +184,14 @@ export function AvatarDropdown() {
                       }
                     }}
                     disabled={!openPicker}
+                    title={
+                      !openPicker
+                        ? "Loading Google Picker… (allow Google scripts if blocked)"
+                        : undefined
+                    }
                   >
                     <FolderOpenDot className="mr-2 h-4 w-4" />
-                    Choose New Google Sheet
+                    {openPicker ? "Choose New Google Sheet" : "Choose New Google Sheet (loading…)"}
                   </DropdownMenuItem>
                 )}
 

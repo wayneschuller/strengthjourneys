@@ -137,7 +137,9 @@ function useDrivePicker() {
         picker.build().setVisible(true);
         return true;
     };
-    return [openPicker, authRes];
+    // Expose isReady so callers only enable the button when picker can actually open
+    var isReady = loaded && !error && loadedGsi && !errorGsi && pickerApiLoaded;
+    return [openPicker, authRes, isReady];
 }
 exports.default = useDrivePicker;
 //# sourceMappingURL=index.js.map

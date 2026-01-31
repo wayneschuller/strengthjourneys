@@ -95,7 +95,7 @@ export function OnBoardingDashboard() {
             name and start entering your own lifts.
           </div>
           <Button
-            className="w-fit self-center"
+            className="w-fit self-center disabled:cursor-wait disabled:opacity-70"
             onClick={() => {
               if (openPicker) {
                 handleOpenFilePicker(
@@ -108,8 +108,15 @@ export function OnBoardingDashboard() {
               }
             }}
             disabled={!openPicker}
+            title={
+              !openPicker
+                ? "Loading Google Picker… (allow Google scripts if blocked)"
+                : undefined
+            }
           >
-            Step 2 - Connect your Google Sheet to Strength Journeys
+            {openPicker
+              ? "Step 2 - Connect your Google Sheet to Strength Journeys"
+              : "Step 2 - Connect your Google Sheet (loading…)"}
           </Button>
 
           <div className="text-sm">
@@ -243,7 +250,7 @@ export function ChooseSheetInstructionsCard() {
         </CardContent>
         <CardFooter>
           <Button
-            className="w-full"
+            className="w-full disabled:cursor-wait disabled:opacity-70"
             onClick={() => {
               if (openPicker) {
                 handleOpenFilePicker(
@@ -256,8 +263,13 @@ export function ChooseSheetInstructionsCard() {
               }
             }}
             disabled={!openPicker}
+            title={
+              !openPicker
+                ? "Loading Google Picker… (allow Google scripts if blocked)"
+                : undefined
+            }
           >
-            Choose Google Sheet
+            {openPicker ? "Choose Google Sheet" : "Choose Google Sheet (loading…)"}
           </Button>
         </CardFooter>
       </Card>
@@ -420,10 +432,15 @@ export function GettingStartedCard() {
                   );
                 }
               }}
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800 disabled:cursor-wait disabled:opacity-70"
               disabled={!openPicker}
+              title={
+                !openPicker
+                  ? "Loading Google Picker… (allow Google scripts if blocked)"
+                  : undefined
+              }
             >
-              select your Google Sheet
+              {openPicker ? "select your Google Sheet" : "select your Google Sheet (loading…)"}
             </button>
           ) : (
             "select your Google Sheet"

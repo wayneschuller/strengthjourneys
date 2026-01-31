@@ -45,11 +45,11 @@ const LIFT_GRAPHICS = {
 };
 
 const WHATS_NEXT_FEATURES = [
-  { href: "/strength-level-calculator", title: "Strength Level Calculator", description: "See how each lift rates (beginner to elite) by age and bodyweight.", IconComponent: BicepsFlexed },
-  { href: "/calculator", title: "E1RM Calculator", description: "Estimate your one-rep max from any set.", IconComponent: Calculator },
-  { href: "/analyzer", title: "PR Analyzer", description: "Track PRs, consistency, and heatmaps over time.", IconComponent: Trophy },
-  { href: "/visualizer", title: "Strength Visualizer", description: "Charts of your lifts over time—see your journey.", IconComponent: LineChart },
-  { href: "/ai-lifting-assistant", title: "AI Lifting Assistant", description: "Ask questions about your lifting data.", IconComponent: Bot },
+  { href: "/strength-level-calculator", title: "Strength Level Calculator", description: "How do you compare? Get beginner to elite ratings per lift by age and bodyweight.", IconComponent: BicepsFlexed },
+  { href: "/calculator", title: "E1RM Calculator", description: "Estimate your true 1RM from any set. Set better targets for your next block.", IconComponent: Calculator },
+  { href: "/analyzer", title: "PR Analyzer", description: "Track your PRs, consistency, and heatmaps. See progress over time.", IconComponent: Trophy },
+  { href: "/visualizer", title: "Strength Visualizer", description: "Charts of every lift over time. Watch your strength journey unfold.", IconComponent: LineChart },
+  { href: "/ai-lifting-assistant", title: "AI Lifting Assistant", description: "Ask questions, get program ideas, and advice from your lifting data.", IconComponent: Bot },
 ];
 
 export async function getStaticProps() {
@@ -195,14 +195,14 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
               <h3 className="text-base font-semibold">
                 Strength Level Calculator
               </h3>
-              <p className="text-sm">How strong are you?</p>
+              <p className="text-sm">How strong am I?</p>
             </Link>
             <Link
               href="/calculator"
               className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
             >
               <h3 className="text-base font-semibold">E1RM Calculator</h3>
-              <p className="text-sm">Estimate your one rep max.</p>
+              <p className="text-sm">Set targets. Estimate 1RM from any set.</p>
             </Link>
           </div>
         </PageHeaderRight>

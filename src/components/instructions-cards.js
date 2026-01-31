@@ -496,6 +496,91 @@ export function GettingStartedCard() {
   );
 }
 
+/** Compact card for the 1000lb calculator page: See this with your data. */
+export function GettingStartedCardCompact() {
+  const { data: session, status: authStatus } = useSession();
+  const [openPicker, setOpenPicker] = useState(null);
+  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
+
+  const handlePickerReady = useCallback((picker) => {
+    setOpenPicker(() => picker);
+  }, []);
+
+  useEffect(() => {
+    if (authStatus === "authenticated" && !shouldLoadPicker) {
+      setShouldLoadPicker(true);
+    }
+  }, [authStatus, shouldLoadPicker]);
+
+  const [ssid, setSsid] = useLocalStorage("ssid", null, { initializeWithValue: false });
+  const [, setSheetURL] = useLocalStorage("sheetURL", null, { initializeWithValue: false });
+  const [, setSheetFilename] = useLocalStorage("sheetFilename", null, { initializeWithValue: false });
+
+  return (
+    <>
+      {shouldLoadPicker && (
+        <DrivePickerContainer onReady={handlePickerReady} trigger={shouldLoadPicker} />
+      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>See this with your data: PRs, charts, and insights</CardTitle>
+          <CardDescription>
+            Log your lifts in a Google Sheet. Connect it once. We never store your data.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {authStatus !== "authenticated" && (
+            <p className="text-sm">
+              Step 1:{" "}
+              <a
+                href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              >
+                Get the Google Sheet template
+              </a>{" "}
+              (File → Make a copy). Step 2: Sign in with Google and connect your sheet below.
+            </p>
+          )}
+          {authStatus !== "authenticated" ? (
+            <Button onClick={() => signIn("google")}>Sign in with Google</Button>
+          ) : !ssid ? (
+            <Button
+              onClick={() => {
+                if (openPicker && session?.accessToken) {
+                  handleOpenFilePicker(
+                    openPicker,
+                    session.accessToken,
+                    setSsid,
+                    setSheetURL,
+                    setSheetFilename,
+                  );
+                }
+              }}
+              disabled={!openPicker}
+            >
+              {openPicker ? "Connect your Google Sheet" : "Connect your sheet (loading…)"}
+            </Button>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              You&apos;re connected. Explore the{" "}
+              <Link href="/analyzer" className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">
+                Analyzer
+              </Link>{" "}
+              or{" "}
+              <Link href="/visualizer" className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">
+                Visualizer
+              </Link>{" "}
+              for your insights.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
 export const SignInInvite = () => {
   const { status: authStatus } = useSession();
 

@@ -1,14 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { useSession, signIn } from "next-auth/react";
-import { devLog } from "@/lib/processing-utils";
+import { useState, useEffect, useRef } from "react";
 import { NextSeo } from "next-seo";
 import { RelatedArticles } from "@/components/article-cards";
 import { cn } from "@/lib/utils";
-import { UnitChooser } from "@/components/unit-type-chooser";
-import { SignInInvite } from "@/components/instructions-cards";
+import { GettingStartedCard } from "@/components/instructions-cards";
 import { useLocalStorage } from "usehooks-ts";
 import {
   Card,
@@ -27,11 +24,33 @@ import {
 } from "@/components/page-header";
 
 import { Slider } from "@/components/ui/slider";
-import { Anvil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Anvil, Trophy, LineChart, Calculator, BicepsFlexed, Bot, Share2 } from "lucide-react";
 
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+
+const BIG_FOUR_URLS = {
+  "Back Squat": "/barbell-squat-insights",
+  "Bench Press": "/barbell-bench-press-insights",
+  Deadlift: "/barbell-deadlift-insights",
+  "Strict Press": "/barbell-strict-press-insights",
+};
+
+const LIFT_GRAPHICS = {
+  "Back Squat": "/back_squat.svg",
+  "Bench Press": "/bench_press.svg",
+  Deadlift: "/deadlift.svg",
+};
+
+const WHATS_NEXT_FEATURES = [
+  { href: "/strength-level-calculator", title: "Strength Level Calculator", description: "See how each lift rates (beginner to elite) by age and bodyweight.", IconComponent: BicepsFlexed },
+  { href: "/calculator", title: "E1RM Calculator", description: "Estimate your one-rep max from any set.", IconComponent: Calculator },
+  { href: "/analyzer", title: "PR Analyzer", description: "Track PRs, consistency, and heatmaps over time.", IconComponent: Trophy },
+  { href: "/visualizer", title: "Strength Visualizer", description: "Charts of your lifts over time—see your journey.", IconComponent: LineChart },
+  { href: "/ai-lifting-assistant", title: "AI Lifting Assistant", description: "Ask questions about your lifting data.", IconComponent: Bot },
+];
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "1000lb Club";
@@ -94,11 +113,11 @@ export default function ThousandPoundClubCalculator({ relatedArticles }) {
   );
 }
 
-// Strength Level Calculator
-function ThousandPoundClubCalculatorMain({ relatedArticles }) {
-  const { status: authStatus } = useSession();
-  const [isYearly, setIsYearly] = useState(false);
+// Helpers: dual lb/kg display (1000lb club is lb-primary)
+const toKg = (lbs) => (lbs * 0.453592).toFixed(1);
+const KG_PER_LB = 0.453592;
 
+function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const [squat, setSquat] = useLocalStorage("SJ_thousand_squat", 0, {
     initializeWithValue: false,
   });
@@ -108,20 +127,42 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const [deadlift, setDeadlift] = useLocalStorage("SJ_thousand_deadlift", 0, {
     initializeWithValue: false,
   });
+  const prevTotalRef = useRef(null);
+  const hasCelebratedRef = useRef(false);
 
   const total = squat + bench + deadlift;
   const inClub = total >= 1000;
 
-  // devLog(standards[`Back Squat`].beginner);
+  const toKgF = (n) => (Number(n) * KG_PER_LB).toFixed(1);
+  const awayLbs = Math.max(0, 1000 - total);
+  const pastLbs = Math.max(0, total - 1000);
 
-  const bigFourURLs = {
-    "Back Squat": "/barbell-squat-insights",
-    "Bench Press": "/barbell-bench-press-insights",
-    Deadlift: "/barbell-deadlift-insights",
-    "Strict Press": "/barbell-strict-press-insights",
+  // Celebration when crossing 1000 (client-only, one-time per direction)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (prevTotalRef.current === null) {
+      prevTotalRef.current = total;
+      return;
+    }
+    const wasInClub = prevTotalRef.current >= 1000;
+    const nowInClub = total >= 1000;
+    prevTotalRef.current = total;
+    if (!wasInClub && nowInClub) {
+      hasCelebratedRef.current = true;
+      import("canvas-confetti").then((confetti) => {
+        confetti.default({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+      });
+    }
+  }, [total]);
+
+  const handleCopyResult = () => {
+    const percent = Math.min(100, Math.round((total / 1000) * 100));
+    const text = inClub
+      ? `I'm in the 1000 lb club! Total: ${total} lbs – Strength Journeys`
+      : `I'm at ${percent}% of the 1000 lb club (${total} lbs) – Strength Journeys`;
+    const url = "https://www.strengthjourneys.xyz/1000lb-club-calculator";
+    navigator.clipboard?.writeText(`${text}\n${url}`).catch(() => {});
   };
-
-  const toKg = (lbs) => (lbs * 0.453592).toFixed(1); // Converts lbs to kg
 
   return (
     <div className="container">
@@ -131,8 +172,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
         </PageHeaderHeading>
         <PageHeaderDescription>
           How strong am I? Am I in the 1000lb Club? Use our 1000lb Club
-          calculator to test if you have joined the hallowed order of strength.{" "}
-          <SignInInvite />
+          calculator to test if you have joined the hallowed order of strength.
         </PageHeaderDescription>
         <PageHeaderRight>
           <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
@@ -155,89 +195,112 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           </div>
         </PageHeaderRight>
       </PageHeader>
+
       <Card className="pt-4">
-        <CardContent className="">
+        <CardContent className="pt-4">
           <div className="space-y-6">
-            {/* Squat Slider */}
-            <div>
-              <label className="text-lg font-semibold">
-                Back Squat: {squat} lbs ({toKg(squat)}kg)
-              </label>
-              <Slider
-                value={[squat]}
-                min={0}
-                max={700}
-                step={5}
-                onValueChange={([value]) => setSquat(value)}
-                className="mt-2"
-              />
+            {[
+              { key: "squat", liftType: "Back Squat", value: squat, set: setSquat },
+              { key: "bench", liftType: "Bench Press", value: bench, set: setBench },
+              { key: "deadlift", liftType: "Deadlift", value: deadlift, set: setDeadlift },
+            ].map(({ key, liftType, value, set }) => (
+              <div key={key} className="flex items-center gap-4">
+                <Link href={BIG_FOUR_URLS[liftType]} className="flex-shrink-0" aria-hidden>
+                  <img
+                    src={LIFT_GRAPHICS[liftType]}
+                    alt=""
+                    className="h-20 w-20 object-contain sm:h-24 sm:w-24"
+                  />
+                </Link>
+                <div className="min-w-0 flex-1">
+                  <label className="text-lg font-semibold">
+                    {liftType}: {value} lbs ({toKgF(value)} kg)
+                  </label>
+                  <Slider
+                    value={[value]}
+                    min={0}
+                    max={700}
+                    step={5}
+                    onValueChange={([v]) => set(v)}
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+            ))}
+
+            <div className="mt-4 text-3xl font-bold tabular-nums">
+              Total: {total} lbs ({toKgF(total)} kg)
             </div>
 
-            {/* Bench Slider */}
-            <div>
-              <label className="text-lg font-semibold">
-                Bench Press: {bench} lbs ({toKg(bench)}kg)
-              </label>
-              <Slider
-                value={[bench]}
-                min={0}
-                max={700}
-                step={5}
-                onValueChange={([value]) => setBench(value)}
-                className="mt-2"
-              />
-            </div>
-
-            {/* Deadlift Slider */}
-            <div>
-              <label className="text-lg font-semibold">
-                Deadlift: {deadlift} lbs ({toKg(deadlift)}kg)
-              </label>
-              <Slider
-                value={[deadlift]}
-                min={0}
-                max={700}
-                step={5}
-                onValueChange={([value]) => setDeadlift(value)}
-                className="mt-2"
-              />
-            </div>
-
-            {/* Total Display */}
-            <div className="mt-4 text-3xl font-bold">
-              Total: {total} lbs ({toKg(total)}kg)
-            </div>
-
-            {/* 1000lb Club Indicator */}
             <div
               className={cn("text-xl font-semibold", {
-                "text-green-600": inClub,
-                "text-gray-500": !inClub,
+                "text-green-600 dark:text-green-500": inClub,
+                "text-muted-foreground": !inClub,
               })}
             >
               {inClub
-                ? "You're in the 1000lb Club!"
-                : "Keep lifting to reach 1000 lbs!"}
+                ? `You're in the 1000lb Club! You're ${pastLbs} lbs (${toKgF(pastLbs)} kg) past 1000.`
+                : `You're ${awayLbs} lbs (${toKgF(awayLbs)} kg) away from the 1000lb Club.`}
             </div>
             <ThousandDonut total={total} />
+            <div className="flex justify-end">
+              <Button variant="outline" size="sm" onClick={handleCopyResult} className="gap-2">
+                <Share2 className="h-4 w-4" />
+                Copy my result
+              </Button>
+            </div>
           </div>
         </CardContent>
-        <CardFooter className="text-sm">
-          <div className="flex flex-col">
-            <p className="">
-              To see your strength level ratings per lift, see our{" "}
-              <Link
-                href="/strength-level-calculator"
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                Strength Level Calculator
-              </Link>
-              .
-            </p>
-          </div>
+        <CardFooter className="flex flex-col gap-2 text-sm">
+          <p>
+            To see your strength level ratings per lift, see our{" "}
+            <Link
+              href="/strength-level-calculator"
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            >
+              Strength Level Calculator
+            </Link>
+            . Explore:{" "}
+            <Link href={BIG_FOUR_URLS["Back Squat"]} className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">Squat</Link>
+            {" · "}
+            <Link href={BIG_FOUR_URLS["Bench Press"]} className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">Bench</Link>
+            {" · "}
+            <Link href={BIG_FOUR_URLS.Deadlift} className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">Deadlift</Link>
+            {" · "}
+            <Link href={BIG_FOUR_URLS["Strict Press"]} className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">Strict Press</Link>
+          </p>
         </CardFooter>
       </Card>
-      <RelatedArticles articles={relatedArticles} />
+
+      <section className="mt-10">
+        <h2 className="mb-4 text-xl font-semibold">You know your total. What&apos;s next?</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {WHATS_NEXT_FEATURES.map(({ href, title, description, IconComponent }) => (
+            <Link
+              key={href}
+              href={href}
+              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
+            >
+              <div className="mb-2 flex items-center gap-2">
+                <IconComponent className="h-5 w-5" />
+                <h3 className="font-semibold">{title}</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">{description}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <GettingStartedCard />
+      </section>
+
+      <section className="mt-10">
+        <p className="mb-4 text-sm text-muted-foreground">
+          Learn more: what the 1000lb club is, why it matters, and how to get there—see our articles below.
+        </p>
+        <RelatedArticles articles={relatedArticles} />
+      </section>
     </div>
   );
 }
@@ -253,6 +316,7 @@ function ThousandDonut({ total, target = 1000 }) {
 
   const percent = Math.min(100, Math.round((total / target) * 100));
   const inClub = total >= target;
+  const totalKg = (total * KG_PER_LB).toFixed(1);
 
   return (
     <div className="relative mx-auto my-6 w-full max-w-md">
@@ -275,7 +339,6 @@ function ThousandDonut({ total, target = 1000 }) {
         </PieChart>
       </ResponsiveContainer>
 
-      {/* Center overlay */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div className="text-center tabular-nums">
           {inClub ? (
@@ -283,6 +346,7 @@ function ThousandDonut({ total, target = 1000 }) {
               <div className="text-3xl font-bold text-green-500">
                 {total} lbs
               </div>
+              <div className="text-sm text-green-500/90">({totalKg} kg)</div>
               <div className="text-sm font-semibold text-green-400">
                 1000lb Club!
               </div>
@@ -290,7 +354,7 @@ function ThousandDonut({ total, target = 1000 }) {
           ) : (
             <>
               <div className="text-2xl font-bold">{total} lbs</div>
-              <div className="text-xs text-muted-foreground">of {target}</div>
+              <div className="text-xs text-muted-foreground">({totalKg} kg) of {target}</div>
               <div className="text-sm text-muted-foreground">{percent}%</div>
             </>
           )}

@@ -42,7 +42,7 @@ export function ThemeChooser() {
         <TooltipTrigger asChild>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="outline">
+              <Button size="icon" variant="outline" aria-label="Choose theme">
                 <Palette className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>

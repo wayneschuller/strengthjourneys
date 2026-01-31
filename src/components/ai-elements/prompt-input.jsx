@@ -806,7 +806,7 @@ export const PromptInputActionMenuTrigger = ({
   children,
   ...props
 }) => (
-  <DropdownMenuTrigger asChild>
+  <DropdownMenuTrigger asChild aria-label="Open action menu">
     <PromptInputButton className={className} {...props}>
       {children ?? <PlusIcon className="size-4" />}
     </PromptInputButton>

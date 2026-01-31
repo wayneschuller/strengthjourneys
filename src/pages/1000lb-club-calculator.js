@@ -157,11 +157,23 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
   const handleCopyResult = () => {
     const percent = Math.min(100, Math.round((total / 1000) * 100));
-    const text = inClub
-      ? `I'm in the 1000 lb club! Total: ${total} lbs – Strength Journeys`
-      : `I'm at ${percent}% of the 1000 lb club (${total} lbs) – Strength Journeys`;
     const url = "https://www.strengthjourneys.xyz/1000lb-club-calculator";
-    navigator.clipboard?.writeText(`${text}\n${url}`).catch(() => {});
+    const lines = [
+      inClub
+        ? "I'm in the 1000 lb club!"
+        : `I'm at ${percent}% of the 1000 lb club — ${awayLbs} lbs to go!`,
+      "",
+      `Back Squat: ${squat} lbs (${toKgF(squat)} kg)`,
+      `Bench Press: ${bench} lbs (${toKgF(bench)} kg)`,
+      `Deadlift: ${deadlift} lbs (${toKgF(deadlift)} kg)`,
+      "",
+      `Total: ${total} lbs (${toKgF(total)} kg)`,
+      inClub ? `— ${pastLbs} lbs past 1000!` : "",
+      "",
+      "Strength Journeys",
+      url,
+    ].filter(Boolean);
+    navigator.clipboard?.writeText(lines.join("\n")).catch(() => {});
   };
 
   return (

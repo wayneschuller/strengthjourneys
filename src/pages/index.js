@@ -269,7 +269,7 @@ export default function Home() {
 
 function FeatureCard({ href, title, description, IconComponent }) {
   const isWarmupsCalculator = href === "/warm-up-sets-calculator";
-  
+
   return (
     <Card className="group relative shadow-lg ring-0 ring-black hover:ring-1 dark:ring-white">
       {isWarmupsCalculator && (

@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { useSession, signIn } from "next-auth/react";
 import useSWR from "swr";
 import { parseData } from "@/lib/parse-data";
+import { event, trackSignInClick } from "@/lib/analytics";
 import {
   devLog,
   processTopLiftsByTypeAndReps,
@@ -111,13 +112,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         description: "Lift some weights and come back later.",
       });
 
-      if (
-        typeof window !== "undefined" &&
-        process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
-      ) {
-        window.gtag("event", "gSheetAPIError");
-      }
-
+      event("gSheetAPIError"); // Google Analytics: sheet API error
       devLog(`useSWR isError from google`);
 
       // FIXME: We used to clear the ssid but it happened too often. There are occasional weird errors (wifi loading etc)
@@ -221,12 +216,7 @@ export const UserLiftingDataProvider = ({ children }) => {
           });
         }
 
-        if (
-          typeof window !== "undefined" &&
-          process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
-        ) {
-          window.gtag("event", "gSheetDataUpdated");
-        }
+        event("gSheetDataUpdated"); // Google Analytics: sheet data loaded successfully
       } catch (error) {
         // Parsing error. Tell the user.
         console.error("Data parsing error:", error.message);
@@ -247,12 +237,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         setSheetURL(null);
         // Don't sign out, just go gracefully into demo mode below.
 
-        if (
-          typeof window !== "undefined" &&
-          process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
-        ) {
-          window.gtag("event", "gSheetReadRejected");
-        }
+        event("gSheetReadRejected"); // Google Analytics: sheet parse rejected
       }
     }
 
@@ -374,7 +359,13 @@ export const UserLiftingDataProvider = ({ children }) => {
         description:
           "Sign in via Google to visualize your personal Google Sheet lifting data.",
         action: (
-          <ToastAction altText="Google Login" onClick={() => signIn("google")}>
+          <ToastAction
+            altText="Google Login"
+            onClick={() => {
+              trackSignInClick(router.pathname); // Google Analytics: track sign-in click before opening OAuth
+              signIn("google");
+            }}
+          >
             Google Sign in
           </ToastAction>
         ),

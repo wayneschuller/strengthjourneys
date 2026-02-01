@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import shortUUID from "short-uuid";
 import { useLocalStorage } from "usehooks-ts";
 import { useSession, signIn } from "next-auth/react";
+import { trackSignInClick } from "@/lib/analytics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +70,7 @@ export async function getStaticProps() {
 // <GymPlaylistLeaderboard /> - World's best source of lifting music
 // ---------------------------------------------------------------------------------------------------
 export default function GymPlaylistLeaderboard({ initialPlaylists }) {
+  const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [playlists, setPlaylists] = useState(initialPlaylists);
   const [currentPage, setCurrentPage] = useState(1);
@@ -452,7 +455,10 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
                 Vote for your favorites, with extra weighting for athletes who
                 are{" "}
                 <button
-                  onClick={() => signIn("google")}
+                  onClick={() => {
+                    trackSignInClick(router.pathname);
+                    signIn("google");
+                  }}
                   className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
                 >
                   signed in via Google.

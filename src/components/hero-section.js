@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import { useSession, signIn } from "next-auth/react";
+import { trackSignInClick } from "@/lib/analytics";
 import { SloganCarousel } from "./slogan-carousel";
 import { Button } from "./ui/button";
 
@@ -49,12 +51,19 @@ const PageDescription = () => (
 );
 
 function GoogleSignInButton() {
+  const router = useRouter();
   const { data: session, status: authStatus } = useSession();
 
   if (authStatus !== "authenticated")
     return (
       <div className="flex flex-col items-center gap-2 md:items-start">
-        <Button className="w-2/3 hover:ring-2" onClick={() => signIn("google")}>
+        <Button
+          className="w-2/3 hover:ring-2"
+          onClick={() => {
+            trackSignInClick(router.pathname);
+            signIn("google");
+          }}
+        >
           <GoogleLogo />
           <div className="hidden md:block">Start Your Strength Journey —</div>
           Free Google Sign-in

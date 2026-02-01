@@ -8,11 +8,13 @@ import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Layout } from "@/components/layout";
 import { Toaster } from "@/components/ui/toaster";
+import { AnalyticsSession } from "@/components/analytics-session";
 import { SessionProvider } from "next-auth/react";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import Script from "next/script";
 import { devLog } from "@/lib/processing-utils";
+import { pageView, captureUtmFromUrl } from "@/lib/analytics";
 import { TimerProvider } from "@/hooks/use-timer";
 import { UserLiftingDataProvider } from "@/hooks/use-userlift-data";
 import { LiftColorsProvider } from "@/hooks/use-lift-colors";
@@ -27,27 +29,13 @@ export default function App({ Component, pageProps, session }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Don't gtag in dev
-    if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development") {
-      return;
-    }
-
-    const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS; // Repeat in local scope to please eslint dep rules
-    const handleRouteChange = (url) => {
-      let fullURL = `https://www.strengthjourneys.xyz${url}`;
-      window.gtag("config", `${GA_MEASUREMENT_ID}`, {
-        page_location: fullURL,
-      });
-      devLog(`gtagged url: ${fullURL}`);
+    captureUtmFromUrl(); // Google Analytics: persist UTM from URL for session
+    const handleRouteChange = () => {
+      pageView(typeof window !== "undefined" ? window.location.href : ""); // Google Analytics: send page_view with full URL
+      devLog("Google Analytics pageView:", typeof window !== "undefined" ? window.location.href : "");
     };
-
-    // Add the event listeners
     router.events.on("routeChangeComplete", handleRouteChange);
-
-    return () => {
-      // Remove the event listener on unmount
-      router.events.off("routeChangeComplete", handleRouteChange);
-    };
+    return () => router.events.off("routeChangeComplete", handleRouteChange);
   }, [router.events]);
 
   return (
@@ -69,6 +57,7 @@ export default function App({ Component, pageProps, session }) {
         // disableTransitionOnChange
       >
         <SessionProvider session={session}>
+          <AnalyticsSession />
           <UserLiftingDataProvider>
             <TimerProvider>
               <LiftColorsProvider>

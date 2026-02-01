@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useContext, useCallback } from "react";
+import { useRouter } from "next/router";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
+import { trackSignInClick } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { devLog } from "@/lib/processing-utils";
 import Image from "next/image";
@@ -278,6 +280,7 @@ export function ChooseSheetInstructionsCard() {
 }
 
 export function GettingStartedCard() {
+  const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [openPicker, setOpenPicker] = useState(null);
   const [authResponse, setAuthResponse] = useState(null);
@@ -410,7 +413,10 @@ export function GettingStartedCard() {
         <div className="">
           {authStatus !== "authenticated" ? (
             <button
-              onClick={() => signIn("google")}
+              onClick={() => {
+                trackSignInClick(router.pathname);
+                signIn("google");
+              }}
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
               Sign in via Google
@@ -498,6 +504,7 @@ export function GettingStartedCard() {
 
 /** Compact card for the 1000lb calculator page: See this with your data. */
 export function GettingStartedCardCompact() {
+  const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [openPicker, setOpenPicker] = useState(null);
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
@@ -544,7 +551,14 @@ export function GettingStartedCardCompact() {
             </p>
           )}
           {authStatus !== "authenticated" ? (
-            <Button onClick={() => signIn("google")}>Sign in with Google</Button>
+            <Button
+              onClick={() => {
+                trackSignInClick(router.pathname);
+                signIn("google");
+              }}
+            >
+              Sign in with Google
+            </Button>
           ) : !ssid ? (
             <Button
               onClick={() => {
@@ -582,6 +596,7 @@ export function GettingStartedCardCompact() {
 }
 
 export const SignInInvite = () => {
+  const router = useRouter();
   const { status: authStatus } = useSession();
 
   // FIXME: add in a check for ssid and prompt for file picker if needed.
@@ -590,7 +605,10 @@ export const SignInInvite = () => {
   return (
     <div>
       <button
-        onClick={() => signIn("google")}
+        onClick={() => {
+          trackSignInClick(router.pathname);
+          signIn("google");
+        }}
         className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
       >
         Sign in

@@ -1,7 +1,12 @@
 /** @format */
 "use client";
 
-import { devLog } from "@/lib/processing-utils";
+import {
+  trackSheetConnectClick,
+  trackSheetPickerCancelled,
+  trackSheetSelected,
+  event,
+} from "@/lib/analytics";
 
 export function handleOpenFilePicker(
   openPicker,
@@ -10,6 +15,9 @@ export function handleOpenFilePicker(
   setSheetURL,
   setSheetFilename,
 ) {
+  const page = typeof window !== "undefined" ? window.location.pathname : "";
+  trackSheetConnectClick(page); // Google Analytics: track sheet-connect click before opening picker
+
   openPicker({
     clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
     appId: process.env.NEXT_PUBLIC_GOOGLE_APP_ID, // This is needed for drive.file Google API access (MAKE SURE IT IS ON DEPLOYMENT ENV SETTINGS)
@@ -22,18 +30,15 @@ export function handleOpenFilePicker(
     supportDrives: true,
     multiselect: false,
     callbackFunction: (data) => {
-      if (typeof window !== "undefined") {
-        window.gtag("event", "gdrive_picker_opened");
-      }
-
       if (data.action === "cancel") {
-        console.log("User clicked cancel/close button");
+        trackSheetPickerCancelled(); // Google Analytics: user closed picker without selecting
         return;
       }
 
-      // devLog(data);
-
       if (data.docs && data.docs[0]) {
+        trackSheetSelected(); // Google Analytics: user selected a sheet
+        event("gdrive_picker_opened"); // Google Analytics: legacy event name
+
         const newSsid = data.docs[0].id;
         const newFilename = data.docs[0].name;
         const newSheetURL = encodeURIComponent(data.docs[0].url);
@@ -41,10 +46,6 @@ export function handleOpenFilePicker(
         setSsid(newSsid);
         setSheetURL(newSheetURL);
         setSheetFilename(newFilename);
-
-        // Should we trigger a parsing of the sheet data here?
-        // But it seems to happen fine through reactivity as ssid state change triggers the hook useSWR data fetch
-        return;
       }
     },
   });

@@ -2,8 +2,10 @@
 
 import * as React from "react";
 import { useContext, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { trackSignInClick } from "@/lib/analytics";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { useLocalStorage } from "usehooks-ts";
@@ -40,6 +42,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export function AvatarDropdown() {
+  const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [openPicker, setOpenPicker] = useState(null);
   const [authResponse, setAuthResponse] = useState(null);
@@ -77,7 +80,13 @@ export function AvatarDropdown() {
 
   if (authStatus !== "authenticated")
     return (
-      <Button variant="outline" onClick={() => signIn("google")}>
+      <Button
+        variant="outline"
+        onClick={() => {
+          trackSignInClick(router.pathname);
+          signIn("google");
+        }}
+      >
         Google Sign in
       </Button>
     );

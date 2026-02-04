@@ -2,14 +2,25 @@
 import { useRouter } from "next/router";
 import { useState, useEffect, useRef, useCallback } from "react";
 
-// This hook provides state from query params first, localStorage second, and defaultValue third.
-// Setting state updates localStorage always and query params only if syncQuery is true.
-// Query params are only written when the user explicitly changes state (slider, input, etc.),
-// never on initial load - so shared URLs stay clean and don't get polluted on page load.
-//
-// includeWhenSyncing: optional object of { [otherKey]: value } - when syncing this key to the URL,
-// also include these related keys. Use for interconnected state (e.g. weight + unit type) so
-// shared URLs have full context.
+/**
+ * State from URL query → localStorage → defaultValue. Used across calculators, biodata, warm-ups.
+ *
+ * Motivation: We encourage users to share Strength Journeys URLs so others see the same
+ * unique data/results. Query params make links shareable; localStorage persists preferences.
+ *
+ * Read order: query (highest) → localStorage → defaultValue.
+ * Write: localStorage always; URL only when syncQuery and user has interacted (never on load).
+ * Never sync on load: avoids polluting shared links when someone opens them.
+ *
+ * includeWhenSyncing: { [otherKey]: value } to add when syncing. Some strength features are only
+ * meaningful in partnership with other state (e.g. weight without unit type is ambiguous).
+ *
+ * @param {string} key - localStorage key and query param (use LOCAL_STORAGE_KEYS)
+ * @param {*} defaultValue
+ * @param {boolean} [syncQuery=false]
+ * @param {Record<string, *>|null} [includeWhenSyncing=null]
+ * @returns {[*, Function]} Use returned setter (not raw setState) or URL sync won't trigger.
+ */
 export const useStateFromQueryOrLocalStorage = (
   key,
   defaultValue,
@@ -19,8 +30,9 @@ export const useStateFromQueryOrLocalStorage = (
   const router = useRouter();
   const [state, setState] = useState(defaultValue);
   const [isInitialized, setIsInitialized] = useState(false);
-  const hasUserInteractedRef = useRef(false);
+  const hasUserInteractedRef = useRef(false); // Gates URL sync: only after user interaction
 
+  // Query/localStorage store strings; JSON.parse for numbers, booleans, objects
   const parseValue = (value) => {
     try {
       return JSON.parse(value);
@@ -33,7 +45,7 @@ export const useStateFromQueryOrLocalStorage = (
     return JSON.stringify(value);
   };
 
-  // Initialize state from query, localStorage, or default (priority order)
+  // Init: query → localStorage → default; persist to localStorage
   useEffect(() => {
     if (!router.isReady) return;
 
@@ -58,14 +70,10 @@ export const useStateFromQueryOrLocalStorage = (
     }
   }, [router.isReady, key, defaultValue]);
 
-  // Update localStorage when state changes; update query params only after user interaction
-  // Note: router is intentionally excluded from deps - the Next.js router object
-  // gets a new reference on each render, which would cause an infinite loop
+  // Persist to localStorage; sync to URL when syncQuery + user interacted. router excluded from deps (avoids infinite loop).
   useEffect(() => {
     if (!isInitialized) return;
 
-    // Only sync to URL when user has explicitly changed state (slider, input, etc.)
-    // Never on initial load - avoids polluting shared URLs when someone clicks a link
     if (syncQuery && hasUserInteractedRef.current) {
       const newQueryParams = {
         ...router.query,

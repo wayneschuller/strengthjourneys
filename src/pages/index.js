@@ -271,7 +271,7 @@ function FeatureCard({ href, title, description, IconComponent }) {
   const isWarmupsCalculator = href === "/warm-up-sets-calculator";
 
   return (
-    <Card className="group relative shadow-lg ring-0 ring-black hover:ring-1 dark:ring-white">
+    <Card className="group relative shadow-lg ring-0 ring-ring hover:ring-1">
       {isWarmupsCalculator && (
         <Badge
           variant="outline"
@@ -308,7 +308,7 @@ function BigFourLiftCards() {
       {lifts.map((lift) => (
         <Card
           key={lift.slug}
-          className="group shadow-lg ring-0 ring-black hover:ring-1 dark:ring-white"
+          className="group shadow-lg ring-0 ring-ring hover:ring-1"
         >
           <Link href={`/${lift.slug}`}>
             <CardHeader className="min-h-28">

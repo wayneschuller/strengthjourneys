@@ -244,6 +244,40 @@ function buildParsedState({
   setSheetFilename,
   setSheetURL,
 }) {
+  const parsedData = getParsedDataWithFallback({
+    authStatus,
+    data,
+    toast,
+    router,
+    sheetURL,
+    sheetFilename,
+    setSsid,
+    setSheetFilename,
+    setSheetURL,
+  });
+
+  const { selectedLiftTypes } = buildSelectedLiftTypes({
+    authStatus,
+    parsedData,
+  });
+
+  return {
+    parsedData,
+    selectedLiftTypes,
+  };
+}
+
+function getParsedDataWithFallback({
+  authStatus,
+  data,
+  toast,
+  router,
+  sheetURL,
+  sheetFilename,
+  setSsid,
+  setSheetFilename,
+  setSheetURL,
+}) {
   let parsedData = null; // A local version for this scope only
 
   if (authStatus === "authenticated" && data?.values) {
@@ -377,6 +411,10 @@ function buildParsedState({
   // state variables everything needs.
   parsedData = markHigherWeightAsHistoricalPRs(parsedData);
 
+  return parsedData;
+}
+
+function buildSelectedLiftTypes({ authStatus, parsedData }) {
   // Calculate liftTypes locally for use in selectedLiftTypes logic
   // (liftTypes is also computed via useMemo for the context provider)
   const liftTypes = calculateLiftTypes(parsedData);
@@ -428,8 +466,5 @@ function buildParsedState({
     }
   }
 
-  return {
-    parsedData,
-    selectedLiftTypes,
-  };
+  return { selectedLiftTypes };
 }

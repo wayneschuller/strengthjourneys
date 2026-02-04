@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
 import { devLog } from "@/lib/processing-utils";
 import { StandardsSlider } from "@/components/standards-slider";
 import { NextSeo } from "next-seo";
@@ -280,13 +281,17 @@ function MyLiftTypePRsCard({ liftType }) {
   );
 }
 
+const DARK_THEMES = ["dark", "neo-brutalism-dark", "retro-arcade-dark"];
+
 function SanityArticleCard({ article }) {
+  const { resolvedTheme } = useTheme();
+  const isDarkTheme = DARK_THEMES.includes(resolvedTheme ?? "");
   return (
     <Card>
       <CardHeader>
         <CardTitle>{article.title}</CardTitle>
       </CardHeader>
-      <CardContent className="prose prose-orange dark:prose-invert">
+      <CardContent className={cn("prose prose-orange", isDarkTheme && "prose-invert")}>
         <PortableText value={article.body} components={components} />
       </CardContent>
     </Card>

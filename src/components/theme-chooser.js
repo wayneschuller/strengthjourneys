@@ -28,6 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { cn } from "@/lib/utils";
 
 export function ThemeChooser() {
   const { theme, setTheme, themes } = useTheme();
@@ -92,9 +93,12 @@ export function ThemeChooser() {
   );
 }
 
+const DARK_THEMES = ["dark", "neo-brutalism-dark", "retro-arcade-dark"];
+
 // This is the old dark mode toggle that is no longer used
 export function DarkModeToggle() {
   const { theme, setTheme } = useTheme();
+  const isDark = DARK_THEMES.includes(theme ?? "");
 
   return (
     <TooltipProvider>
@@ -118,8 +122,8 @@ export function DarkModeToggle() {
               }
             }}
           >
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className={cn("absolute h-[1.2rem] w-[1.2rem] transition-all", isDark ? "rotate-0 scale-100" : "rotate-90 scale-0")} />
+            <Sun className={cn("h-[1.2rem] w-[1.2rem] transition-all", isDark ? "-rotate-90 scale-0" : "rotate-0 scale-100")} />
             <span className="sr-only">Toggle dark mode</span>
           </Button>
         </TooltipTrigger>

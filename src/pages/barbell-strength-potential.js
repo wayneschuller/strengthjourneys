@@ -430,7 +430,7 @@ const CustomTooltip = ({
     // devLog( `CustomTooltip: reps: ${reps}, actualWeight: ${actualWeight}, bestWeight: ${bestWeight}`,);
 
     return (
-      <div className="w-48 rounded border border-gray-300 bg-white p-2 shadow-lg dark:bg-black md:w-64">
+      <div className="w-48 rounded border border-border bg-card p-2 shadow-lg md:w-64">
         {/* Title */}
         <p className="font-bold">
           {reps} Rep {bestLift.liftType}

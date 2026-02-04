@@ -150,14 +150,14 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
           <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
             <Link
               href="/calculator"
-              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
+              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
             >
               <h3 className="text-base font-semibold">E1RM Calculator</h3>
               <p className="text-sm">Estimate your one rep max.</p>
             </Link>
             <Link
               href="/1000lb-club-calculator"
-              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
+              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
             >
               <h3 className="text-base font-semibold">
                 1000-lb Club Calculator

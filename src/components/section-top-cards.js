@@ -102,7 +102,7 @@ export function SectionTopCards() {
       >
         <CardHeader className="flex flex-row items-start gap-3 p-4">
           <div className="rounded-lg bg-amber-500/10 p-2">
-            <Trophy className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <Trophy className="h-5 w-5 text-amber-500" />
           </div>
           <div className="min-w-0 flex-1">
             <CardDescription>Most Recent PR Single</CardDescription>
@@ -143,7 +143,7 @@ export function SectionTopCards() {
         )}
         <CardHeader className="flex flex-row items-start gap-3 p-4">
           <div className="rounded-lg bg-emerald-500/10 p-2">
-            <Activity className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <Activity className="h-5 w-5 text-emerald-500" />
           </div>
           <div className="min-w-0 flex-1">
             <CardDescription>Session Momentum</CardDescription>
@@ -165,7 +165,7 @@ export function SectionTopCards() {
       >
         <CardHeader className="flex flex-row items-start gap-3 p-4">
           <div className="rounded-lg bg-violet-500/10 p-2">
-            <Award className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+            <Award className="h-5 w-5 text-violet-500" />
           </div>
           <div className="min-w-0 flex-1">
             <CardDescription>In This Last 12 Months</CardDescription>
@@ -199,7 +199,7 @@ export function SectionTopCards() {
       >
         <CardHeader className="flex flex-row items-start gap-3 p-4">
           <div className="rounded-lg bg-orange-500/10 p-2">
-            <Flame className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            <Flame className="h-5 w-5 text-orange-500" />
           </div>
           <div className="min-w-0 flex-1">
             <CardDescription>Weekly consistency</CardDescription>

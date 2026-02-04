@@ -35,7 +35,7 @@ export function SloganCarousel() {
       <CarouselContent>
         {slogans.map((slogan, index) => (
           <CarouselItem key={index}>
-            <h2 className="text-balance text-center text-3xl tracking-tighter text-amber-600 dark:text-amber-400">
+            <h2 className="text-balance text-center text-3xl tracking-tighter text-amber-500">
               {slogan}
             </h2>
           </CarouselItem>

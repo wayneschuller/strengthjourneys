@@ -14,7 +14,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 
 
 const staticGridClassName = cn(
-  "pointer-events-none absolute inset-0 h-full w-full fill-gray-400/30 stroke-gray-800/30 dark:stroke-gray-200/30",
+  "pointer-events-none absolute inset-0 h-full w-full fill-gray-400/30 stroke-foreground/30",
   "[mask-image:radial-gradient(1200px_circle_at_top_left,white,transparent)]",
   "inset-x-0 inset-y-[-30%] h-[200%] -skew-y-12"
 );
@@ -76,7 +76,7 @@ export function AppBackground() {
           duration={1.5}
           repeatDelay={0.3}
           className={cn(
-            "pointer-events-none absolute inset-0 h-full w-full fill-gray-400/30 stroke-gray-800/30 dark:stroke-gray-200/30",
+            "pointer-events-none absolute inset-0 h-full w-full fill-gray-400/30 stroke-foreground/30",
             "[mask-image:radial-gradient(1200px_circle_at_top_left,white,transparent)]",
             "inset-x-0 inset-y-[-30%] h-[200%] -skew-y-12"
           )}

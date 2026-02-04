@@ -144,13 +144,13 @@ export function StandardsSlider({
           highestE1RM > 0 &&
           highestE1RM > athleteRankingWeight && (
             <div
-              className="pointer-events-none absolute top-0 z-30 h-full border-l-4 border-gray-600 dark:border-gray-200"
+              className="pointer-events-none absolute top-0 z-30 h-full border-l-4 border-foreground"
               style={{
                 left: `${getPercent(highestE1RM)}%`,
                 transform: "translateX(-1px)",
               }}
             >
-              <span className="absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-1 text-xs text-muted opacity-50 shadow dark:bg-white dark:text-gray-500">
+              <span className="absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-foreground px-1 text-xs text-background opacity-50 shadow">
                 E1RM
               </span>
             </div>

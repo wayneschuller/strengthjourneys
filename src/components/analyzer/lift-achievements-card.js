@@ -247,7 +247,7 @@ export const LiftTypeRepPRsAccordion = ({ liftType }) => {
                   <ol className="list-decimal pl-[2rem]">
                     {repRange.slice(0, 20).map((lift, liftIndex) => (
                       <li key={liftIndex}>
-                        <div className="grid grid-cols-4 even:bg-accent-foreground/20 dark:even:bg-muted/40 md:grid-cols-6">
+                        <div className="grid grid-cols-4 even:bg-muted/40 md:grid-cols-6">
                           <div>
                             {`${index + 1}@${lift.weight}${lift.unitType}  `}
                           </div>
@@ -314,7 +314,7 @@ export const LiftTypeRecentHighlights = ({ liftType }) => {
         {recentHighlights.map((lift, index) => (
           <li
             key={index}
-            className="mb-1 grid grid-cols-4 even:bg-accent-foreground/20 dark:even:bg-muted/40 md:grid-cols-6"
+            className="mb-1 grid grid-cols-4 even:bg-muted/40 md:grid-cols-6"
           >
             <div>
               {lift.reps}@{lift.weight}

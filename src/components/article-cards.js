@@ -49,7 +49,7 @@ export function ArticleSummaryCard({ article }) {
 
   return (
     <Link href={`/articles/${article.slug}`}>
-      <Card className="group h-full transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+      <Card className="group h-full transition-colors duration-200 hover:bg-muted">
         <CardHeader className="flex flex-col gap-4 md:flex-row">
           <div className="order-2 flex-1 md:order-1">
             <CardTitle className="text-balance group-hover:underline">
@@ -98,7 +98,7 @@ export function RelatedArticles({ articles }) {
             <div key={article.slug} className="group h-full rounded-lg border">
               <Link
                 href={`/articles/${article.slug}`}
-                className="flex h-full items-center justify-center rounded-md p-2 align-middle transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="flex h-full items-center justify-center rounded-md p-2 align-middle transition-colors duration-200 hover:bg-muted"
               >
                 <FileText className="mr-3 h-10 text-gray-400 group-hover:text-primary" />
                 <span className="mr-3 w-2/3 flex-grow text-balance group-hover:text-primary">

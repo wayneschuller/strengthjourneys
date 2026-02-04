@@ -191,7 +191,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
             <Link
               href="/strength-level-calculator"
-              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
+              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
             >
               <h3 className="text-base font-semibold">
                 Strength Level Calculator
@@ -200,7 +200,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             </Link>
             <Link
               href="/calculator"
-              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
+              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
             >
               <h3 className="text-base font-semibold">E1RM Calculator</h3>
               <p className="text-sm">Set targets. Estimate 1RM from any set.</p>
@@ -247,7 +247,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
             <div
               className={cn("text-xl font-semibold", {
-                "text-green-600 dark:text-green-500": inClub,
+                "text-green-600": inClub,
                 "text-muted-foreground": !inClub,
               })}
             >
@@ -292,7 +292,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             <Link
               key={href}
               href={href}
-              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-gray-100 hover:shadow-md dark:hover:bg-gray-800"
+              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
             >
               <div className="mb-2 flex items-center gap-2">
                 <IconComponent className="h-5 w-5" />

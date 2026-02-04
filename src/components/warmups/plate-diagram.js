@@ -62,7 +62,7 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
                   className={cn(
                     heightClass,
                     widthClass,
-                    "rounded border-2 border-gray-800 dark:border-gray-200",
+                    "rounded border-2 border-border",
                   )}
                   style={{
                     backgroundColor:
@@ -82,7 +82,7 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
           {platesPerSide.map((plate, idx) => (
             <span key={idx} className="flex items-center gap-1">
               <span
-                className="inline-block h-3 w-3 rounded border border-gray-300"
+                className="inline-block h-3 w-3 rounded border border-border"
                 style={{
                   backgroundColor:
                     plate.color === "#FFFFFF" ? "#E5E7EB" : plate.color,

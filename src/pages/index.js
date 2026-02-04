@@ -275,7 +275,7 @@ function FeatureCard({ href, title, description, IconComponent }) {
       {isWarmupsCalculator && (
         <Badge
           variant="outline"
-          className="absolute right-2 top-2 bg-green-100 text-xs text-green-800 dark:bg-green-900 dark:text-green-200"
+          className="absolute right-2 top-2 bg-primary/10 text-xs text-primary"
         >
           New
         </Badge>

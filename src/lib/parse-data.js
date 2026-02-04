@@ -53,7 +53,10 @@ export function parseData(data) {
 // https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0
 //
 // We try to be agnostic about column positions by normalizing header names.
-// If date or lift type cells are blank, we infer them from a previous row.
+// If date or lift type cells are blank, we infer them from the previous row.
+// This only assumes that each session's sets are kept together in contiguous
+// rows (all sets for a given session grouped together), regardless of whether
+// new sessions are inserted at the top or appended at the bottom of the sheet.
 // Returns a `ParsedData` array that is always sorted by date ascending.
 // See @/lib/sample-parsed-data.js for example data using this structure.
 /**

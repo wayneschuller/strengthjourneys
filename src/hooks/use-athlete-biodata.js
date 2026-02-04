@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useRouter } from "next/router";
 import {
   interpolateStandardKG,
   LiftingStandardsKG,
@@ -7,35 +8,107 @@ import {
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useStateFromQueryOrLocalStorage } from "./use-state-from-query-or-localStorage";
 
+const ADVANCED_QUERY_PARAM = "advanced";
+
 // A custom hook to get and store the athlete provided bio data in localStorage
 // Also provide some custom strength levels for the main lifts based on this bio data.
 // modifyURLQuery controls whether query parameters are updated (defaults to false)
-export const useAthleteBioData = (modifyURLQuery = false) => {
-  const [age, setAge] = useStateFromQueryOrLocalStorage(
+// options.isAdvancedAnalysis: when false (e.g. calculator with advanced off), age/sex/bodyWeight/liftType
+// are not synced to URL. When true or undefined, they sync together so shared URLs are complete.
+export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
+  const router = useRouter();
+  const { isAdvancedAnalysis = true } = options;
+  const syncAdvancedParams = modifyURLQuery && isAdvancedAnalysis;
+  // Gate URL sync: only after user changes a value, never on initial load (avoids polluting shared links)
+  const hasAdvancedInteractedRef = useRef(false);
+
+  // Advanced params: syncQuery=false here; we sync all four together in the effect below
+  const [age, setAgeBase] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_AGE,
     30,
-    modifyURLQuery,
+    false,
   );
   const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
     false,
     modifyURLQuery,
   );
-  const [sex, setSex] = useStateFromQueryOrLocalStorage(
+  const [sex, setSexBase] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_SEX,
     "male",
-    modifyURLQuery,
+    false,
   );
-  const [bodyWeight, setBodyWeight] = useStateFromQueryOrLocalStorage(
+  const [bodyWeight, setBodyWeightBase] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT,
     200,
-    modifyURLQuery,
+    false,
   );
-  const [liftType, setLiftType] = useStateFromQueryOrLocalStorage(
+  const [liftType, setLiftTypeBase] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE,
     "Back Squat",
-    modifyURLQuery,
+    false,
   );
+
+  // Wrappers mark "user interacted" so the sync effect knows it's safe to write to URL
+  const setAge = useCallback(
+    (v) => {
+      hasAdvancedInteractedRef.current = true;
+      setAgeBase(v);
+    },
+    [setAgeBase],
+  );
+  const setSex = useCallback(
+    (v) => {
+      hasAdvancedInteractedRef.current = true;
+      setSexBase(v);
+    },
+    [setSexBase],
+  );
+  const setBodyWeight = useCallback(
+    (v) => {
+      hasAdvancedInteractedRef.current = true;
+      setBodyWeightBase(v);
+    },
+    [setBodyWeightBase],
+  );
+  const setLiftType = useCallback(
+    (v) => {
+      hasAdvancedInteractedRef.current = true;
+      setLiftTypeBase(v);
+    },
+    [setLiftTypeBase],
+  );
+
+  // Sync all advanced params together when any change. Keeps shared URLs complete (age without
+  // bodyweight etc. would be meaningless). Include unit type so bodyWeight is interpretable (kg vs lb).
+  // Only runs after user interaction, never on load.
+  useEffect(() => {
+    if (
+      !syncAdvancedParams ||
+      !hasAdvancedInteractedRef.current ||
+      !router.isReady
+    )
+      return;
+
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: {
+          ...router.query,
+          [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: JSON.stringify(age),
+          [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: JSON.stringify(sex),
+          [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: JSON.stringify(bodyWeight),
+          [LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE]: JSON.stringify(liftType),
+          [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: JSON.stringify(isMetric),
+          [ADVANCED_QUERY_PARAM]: "true", // Explicit flag so recipient knows to show advanced UI
+        },
+      },
+      undefined,
+      { shallow: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- router excluded to prevent infinite loop
+  }, [age, sex, bodyWeight, liftType, isMetric, syncAdvancedParams, router.isReady]);
+
   const [standards, setStandards] = useState({});
 
   // FIXME: It may be better to convert the standards to lb in the component rather than in the state

@@ -115,6 +115,12 @@ export default function E1RMCalculator({ relatedArticles }) {
 function E1RMCalculatorMain({ relatedArticles }) {
   const router = useRouter();
   const { toast } = useToast();
+  // Must be before useAthleteBioData so we can pass it; controls whether advanced params sync to URL
+  const [isAdvancedAnalysis, setIsAdvancedAnalysis] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.E1RM_ADVANCED_ANALYSIS,
+    false,
+    { initializeWithValue: false },
+  );
   const {
     age,
     setAge,
@@ -127,7 +133,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
     standards,
     liftType,
     setLiftType,
-  } = useAthleteBioData(true);
+  } = useAthleteBioData(true, { isAdvancedAnalysis });
   // Order matters: each includes the ones before it when syncing to URL.
   // Weight last so changing it syncs full state (reps, formula, unit type) → shareable URL.
   const [reps, setReps] = useStateFromQueryOrLocalStorage(
@@ -155,21 +161,24 @@ function E1RMCalculatorMain({ relatedArticles }) {
       [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
     },
   ); // Will be a string
-  const [isAdvancedAnalysis, setIsAdvancedAnalysis] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.E1RM_ADVANCED_ANALYSIS,
-    false,
-    { initializeWithValue: false },
-  );
-
   const [parent] = useAutoAnimate(/* optional config */);
   const isClient = useIsClient();
 
-  // Turn on advanced analysis if user has advanced variables in query string
+  // When opening a shared link: turn on advanced UI if URL has all four athlete params or explicit advanced flag
   useEffect(() => {
     if (router.isReady && router.query) {
-      const { AthleteLiftType, AthleteSex, AthleteBodyWeight, AthleteAge } =
-        router.query;
-      if (AthleteLiftType && AthleteSex && AthleteBodyWeight && AthleteAge) {
+      const {
+        AthleteLiftType,
+        AthleteSex,
+        AthleteBodyWeight,
+        AthleteAge,
+        advanced,
+      } = router.query;
+      const hasAdvancedParams =
+        AthleteLiftType && AthleteSex && AthleteBodyWeight && AthleteAge;
+      const hasAdvancedFlag =
+        advanced === "true" || advanced === true;
+      if (hasAdvancedParams || hasAdvancedFlag) {
         setIsAdvancedAnalysis(true);
       }
     }
@@ -187,6 +196,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
     );
   };
 
+  // Add/remove advanced params and explicit "advanced" flag so shared URLs restore full state
   const updateAdvancedAnalysisQueryParams = (isEnabled) => {
     const { query } = router;
     const updatedQuery = { ...query };
@@ -196,11 +206,14 @@ function E1RMCalculatorMain({ relatedArticles }) {
       updatedQuery.AthleteSex = sex;
       updatedQuery.AthleteBodyWeight = bodyWeight;
       updatedQuery.AthleteAge = age;
+      updatedQuery[LOCAL_STORAGE_KEYS.CALC_IS_METRIC] = isMetric;
+      updatedQuery.advanced = "true";
     } else {
       delete updatedQuery.AthleteLiftType;
       delete updatedQuery.AthleteSex;
       delete updatedQuery.AthleteBodyWeight;
       delete updatedQuery.AthleteAge;
+      delete updatedQuery.advanced;
     }
 
     router.replace(
@@ -316,6 +329,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
         AthleteBodyWeight: bodyWeight,
         AthleteSex: sex,
         AthleteLiftType: liftType,
+        advanced: "true",
       });
 
       const bodyWeightMultiplier = (e1rmWeight / bodyWeight).toFixed(2);

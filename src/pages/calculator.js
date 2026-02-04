@@ -128,14 +128,11 @@ function E1RMCalculatorMain({ relatedArticles }) {
     liftType,
     setLiftType,
   } = useAthleteBioData(true);
+  // Order matters: each includes the ones before it when syncing to URL.
+  // Weight last so changing it syncs full state (reps, formula, unit type) → shareable URL.
   const [reps, setReps] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.REPS,
     5,
-    true,
-  ); // Will be a string
-  const [weight, setWeight] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.WEIGHT,
-    225,
     true,
     { [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric },
   ); // Will be a string
@@ -143,7 +140,21 @@ function E1RMCalculatorMain({ relatedArticles }) {
     LOCAL_STORAGE_KEYS.FORMULA,
     "Brzycki",
     true,
+    {
+      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
+      [LOCAL_STORAGE_KEYS.REPS]: reps,
+    },
   );
+  const [weight, setWeight] = useStateFromQueryOrLocalStorage(
+    LOCAL_STORAGE_KEYS.WEIGHT,
+    225,
+    true,
+    {
+      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
+      [LOCAL_STORAGE_KEYS.REPS]: reps,
+      [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
+    },
+  ); // Will be a string
   const [isAdvancedAnalysis, setIsAdvancedAnalysis] = useLocalStorage(
     LOCAL_STORAGE_KEYS.E1RM_ADVANCED_ANALYSIS,
     false,

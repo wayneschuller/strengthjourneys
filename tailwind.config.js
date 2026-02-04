@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ["class"],
+  // dark: applies when html has .dark, .neo-brutalism-dark, or .retro-arcade-dark
+  darkMode: ["class", ".dark, .neo-brutalism-dark, .retro-arcade-dark"],
   content: [
     "./pages/**/*.{js,jsx}",
     "./components/**/*.{js,jsx}",

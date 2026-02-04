@@ -84,9 +84,18 @@ export function VisualizerShadcn({ setHighlightDate }) {
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
     LOCAL_STORAGE_KEYS.SHOW_LABEL_VALUES,
     false,
+    { initializeWithValue: false },
   );
-  const [showAllData, setShowAllData] = useLocalStorage(LOCAL_STORAGE_KEYS.SHOW_ALL_DATA, true); // Show weekly bests or all data
-  const [e1rmFormula, setE1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki");
+  const [showAllData, setShowAllData] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.SHOW_ALL_DATA,
+    true,
+    { initializeWithValue: false },
+  ); // Show weekly bests or all data
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.FORMULA,
+    "Brzycki",
+    { initializeWithValue: false },
+  );
 
   // Used to hide the y-axis on smaller screens
   const { width } = useWindowSize({ initializeWithValue: false });

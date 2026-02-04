@@ -107,7 +107,9 @@ export default function StrengthPotential({ relatedArticles }) {
 function StrengthPotentialMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { selectedLiftTypes, isLoading } = useUserLiftingData();
-  const ssid = useReadLocalStorage(LOCAL_STORAGE_KEYS.SSID);
+  const ssid = useReadLocalStorage(LOCAL_STORAGE_KEYS.SSID, {
+    initializeWithValue: false,
+  });
   const [e1rmFormula, setE1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });

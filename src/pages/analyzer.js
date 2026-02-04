@@ -93,7 +93,9 @@ function AnalyzerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { isLoading } = useUserLiftingData();
   const [highlightDate, setHighlightDate] = useState(null);
-  const ssid = useReadLocalStorage(LOCAL_STORAGE_KEYS.SSID);
+  const ssid = useReadLocalStorage(LOCAL_STORAGE_KEYS.SSID, {
+    initializeWithValue: false,
+  });
 
   if (!isLoading && authStatus === "authenticated" && !ssid)
     return (

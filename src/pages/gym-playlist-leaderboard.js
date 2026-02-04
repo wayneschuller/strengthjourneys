@@ -87,10 +87,15 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [clientVotes, setClientVotes] = useLocalStorage(LOCAL_STORAGE_KEYS.PLAYLIST_VOTES, {}); // Track user votes in client local storage
+  const [clientVotes, setClientVotes] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.PLAYLIST_VOTES,
+    {},
+    { initializeWithValue: false },
+  ); // Track user votes in client local storage
   const [savedPlaylists, setSavedPlaylists] = useLocalStorage(
     LOCAL_STORAGE_KEYS.SAVED_PLAYLISTS,
     [],
+    { initializeWithValue: false },
   );
   const [currentTab, setCurrentTab] = useState("top");
   const [selectedCategories, setSelectedCategories] = useState([]);

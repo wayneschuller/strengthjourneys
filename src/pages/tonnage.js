@@ -84,7 +84,9 @@ export default function TonnageVisualizer({ relatedArticles }) {
 function TonnageVisualizerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { isLoading } = useUserLiftingData();
-  const ssid = useReadLocalStorage(LOCAL_STORAGE_KEYS.SSID);
+  const ssid = useReadLocalStorage(LOCAL_STORAGE_KEYS.SSID, {
+    initializeWithValue: false,
+  });
   const [highlightDate, setHighlightDate] = useState(null);
 
   if (!isLoading && authStatus === "authenticated" && !ssid)

@@ -56,10 +56,12 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
     LOCAL_STORAGE_KEYS.SHOW_LABEL_VALUES,
     false,
+    { initializeWithValue: false },
   );
   const [aggregationType, setAggregationType] = useLocalStorage(
     LOCAL_STORAGE_KEYS.TONNAGE_AGGREGATION_TYPE,
     "perSession",
+    { initializeWithValue: false },
   );
 
   // Used to hide the y-axis and other UI elements on smaller screens

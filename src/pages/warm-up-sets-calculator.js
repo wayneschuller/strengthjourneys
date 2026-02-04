@@ -16,7 +16,6 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
-import { useLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 
@@ -87,27 +86,59 @@ export default function WarmUpSetsCalculator({ relatedArticles }) {
 }
 
 function WarmUpSetsCalculatorMain({ relatedArticles }) {
-  const [reps, setReps] = useStateFromQueryOrLocalStorage(LOCAL_STORAGE_KEYS.WARMUP_REPS, 5);
-  const [weight, setWeight] = useStateFromQueryOrLocalStorage(LOCAL_STORAGE_KEYS.WARMUP_WEIGHT, 100);
+  // Order matters: each includes the ones before it when syncing to URL.
+  // Weight is last so changing it syncs the full state → shareable URL on any change.
   const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
     false,
+    true,
   );
-  const [barType, setBarType] = useLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, "standard", {
-    initializeWithValue: false,
-  });
-  const [platePreference, setPlatePreference] = useLocalStorage(
+  const [barType, setBarType] = useStateFromQueryOrLocalStorage(
+    LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE,
+    "standard",
+    true,
+    { [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric },
+  );
+  const [platePreference, setPlatePreference] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE,
     "red",
+    true,
     {
-      initializeWithValue: false,
+      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
+      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: barType,
     },
   );
-  const [warmupSetCount, setWarmupSetCount] = useLocalStorage(
+  const [warmupSetCount, setWarmupSetCount] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.WARMUPS_SET_COUNT,
     4,
+    true,
     {
-      initializeWithValue: false,
+      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
+      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: barType,
+      [LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE]: platePreference,
+    },
+  );
+  const [reps, setReps] = useStateFromQueryOrLocalStorage(
+    LOCAL_STORAGE_KEYS.WARMUP_REPS,
+    5,
+    true,
+    {
+      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
+      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: barType,
+      [LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE]: platePreference,
+      [LOCAL_STORAGE_KEYS.WARMUPS_SET_COUNT]: warmupSetCount,
+    },
+  );
+  const [weight, setWeight] = useStateFromQueryOrLocalStorage(
+    LOCAL_STORAGE_KEYS.WARMUP_WEIGHT,
+    100,
+    true,
+    {
+      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
+      [LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE]: barType,
+      [LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE]: platePreference,
+      [LOCAL_STORAGE_KEYS.WARMUPS_SET_COUNT]: warmupSetCount,
+      [LOCAL_STORAGE_KEYS.WARMUP_REPS]: reps,
     },
   );
 

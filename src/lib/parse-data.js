@@ -1,9 +1,38 @@
-// parseGSheetData.js
-
 import { devLog } from "@/lib/processing-utils";
 import { parse } from "date-fns";
 import { parseTurnKeyData } from "@/lib/parse-turnkey-importer";
-// Discern data format and parse
+
+/**
+ * A single logged lift from the sheet after parsing and normalization.
+ *
+ * This is the canonical data shape used throughout the app. See
+ * `sample-parsed-data.js` for concrete examples of this structure in use.
+ *
+ * @typedef {Object} LiftEntry
+ * @property {string} date          ISO date string "YYYY-MM-DD"
+ * @property {string} liftType      Normalized lift name ("Back Squat", "Bench Press", etc.)
+ * @property {number} reps          Number of reps for this set
+ * @property {number} weight        Weight used for this set
+ * @property {"lb"|"kg"} [unitType] Units, if known
+ * @property {string} [notes]       Optional notes from the sheet
+ * @property {boolean} [isGoal]     True if this row represents a goal instead of an executed set
+ * @property {string} [label]       Optional label or tag for this lift
+ * @property {string} [URL]         Optional video or reference URL
+ * @property {boolean} [isHistoricalPR] Marked true when this entry is a historical PR for its liftType + reps
+ */
+
+/**
+ * The fully parsed and normalized dataset from the sheet.
+ * @typedef {LiftEntry[]} ParsedData
+ */
+
+/**
+ * Discern the incoming data format (TurnKey vs bespoke sheet) and parse it
+ * into the normalized `ParsedData` structure used by the visualizer.
+ *
+ * @param {any[][]} data Raw Google Sheets `values` array (rows x columns)
+ * @returns {ParsedData}
+ */
 export function parseData(data) {
   const columnNames = data[0];
   let parsedData = null;
@@ -19,14 +48,20 @@ export function parseData(data) {
   return parsedData;
 }
 
-// Parse Bespoke Strength Journeys Google Sheet format
-// This is the official Strength Journeys format that we offer a sample of:
+// Parse bespoke Strength Journeys Google Sheet format.
+// This is the official Strength Journeys template we offer a sample of:
 // https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0
 //
-// Trying to be agnostic about column position
-// We do assume that if date or lift type are blank we can infer from a previous row
-// We return a parsedData array of objects that is always sorted date ascending
-// See @/lib/sample-parsed-data.js for data structure design
+// We try to be agnostic about column positions by normalizing header names.
+// If date or lift type cells are blank, we infer them from a previous row.
+// Returns a `ParsedData` array that is always sorted by date ascending.
+// See @/lib/sample-parsed-data.js for example data using this structure.
+/**
+ * Parse the bespoke Strength Journeys Google Sheet format into `ParsedData`.
+ *
+ * @param {any[][]} data Raw Google Sheets `values` array (rows x columns)
+ * @returns {ParsedData}
+ */
 function parseBespokeData(data) {
   const startTime = performance.now();
   const columnNames = data[0];
@@ -154,7 +189,7 @@ function parseBespokeData(data) {
   });
 
   devLog(
-    "parseGSheetData() execution time: " +
+    "parseBespokeData() execution time: " +
       `\x1b[1m${Math.round(performance.now() - startTime)}` +
       `ms\x1b[0m` +
       ` (${objectsArray.length} tuples)`,

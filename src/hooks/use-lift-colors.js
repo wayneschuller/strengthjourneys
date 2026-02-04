@@ -6,6 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 
 // Default lift colors
@@ -65,7 +66,7 @@ export const LiftColorsProvider = ({ children }) => {
   // Load overrides from localStorage after mount (client-only)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("liftColorOverrides");
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.LIFT_COLOR_OVERRIDES);
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -93,7 +94,7 @@ export const LiftColorsProvider = ({ children }) => {
             "Error parsing liftColorOverrides from localStorage:",
             e,
           );
-          localStorage.removeItem("liftColorOverrides");
+          localStorage.removeItem(LOCAL_STORAGE_KEYS.LIFT_COLOR_OVERRIDES);
         }
       }
     }
@@ -103,9 +104,9 @@ export const LiftColorsProvider = ({ children }) => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       if (Object.keys(overrides).length > 0) {
-        localStorage.setItem("liftColorOverrides", JSON.stringify(overrides));
+        localStorage.setItem(LOCAL_STORAGE_KEYS.LIFT_COLOR_OVERRIDES, JSON.stringify(overrides));
       } else {
-        localStorage.removeItem("liftColorOverrides");
+        localStorage.removeItem(LOCAL_STORAGE_KEYS.LIFT_COLOR_OVERRIDES);
       }
     }
   }, [overrides]);
@@ -125,7 +126,7 @@ export const LiftColorsProvider = ({ children }) => {
     const newOverrides = { ...overrides, [liftType]: randomColor };
     setOverrides(newOverrides);
     if (typeof window !== "undefined") {
-      localStorage.setItem("liftColorOverrides", JSON.stringify(newOverrides));
+      localStorage.setItem(LOCAL_STORAGE_KEYS.LIFT_COLOR_OVERRIDES, JSON.stringify(newOverrides));
     }
     return randomColor;
   };

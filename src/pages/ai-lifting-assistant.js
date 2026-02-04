@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { useChat } from "@ai-sdk/react";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog, getAnalyzedSessionLifts } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 
@@ -138,12 +139,12 @@ function AILiftingAssistantMain({ relatedArticles }) {
     toggleIsMetric,
   } = useAthleteBioData();
 
-  const [height, setHeight] = useLocalStorage("AthleteHeight", 170, {
+  const [height, setHeight] = useLocalStorage(LOCAL_STORAGE_KEYS.ATHLETE_HEIGHT, 170, {
     initializeWithValue: false,
   }); // Default height in cm
 
   const [userLiftingMetadata, setUserLiftingMetaData] = useLocalStorage(
-    "userLiftingMetadata-selected-options",
+    LOCAL_STORAGE_KEYS.USER_LIFTING_METADATA,
     {
       all: false,
       records: false,
@@ -163,7 +164,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
   } = useUserLiftingData();
 
   const [shareBioDetails, setShareBioDetails] = useLocalStorage(
-    "SJ_ShareBioDetailsAI",
+    LOCAL_STORAGE_KEYS.SHARE_BIO_DETAILS_AI,
     false,
     { initializeWithValue: false },
   );

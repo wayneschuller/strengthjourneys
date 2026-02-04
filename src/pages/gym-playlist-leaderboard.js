@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import shortUUID from "short-uuid";
@@ -86,9 +87,9 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [clientVotes, setClientVotes] = useLocalStorage("SJ_playlistVotes", {}); // Track user votes in client local storage
+  const [clientVotes, setClientVotes] = useLocalStorage(LOCAL_STORAGE_KEYS.PLAYLIST_VOTES, {}); // Track user votes in client local storage
   const [savedPlaylists, setSavedPlaylists] = useLocalStorage(
-    "SJ_savedPlaylists",
+    LOCAL_STORAGE_KEYS.SAVED_PLAYLISTS,
     [],
   );
   const [currentTab, setCurrentTab] = useState("top");

@@ -6,6 +6,7 @@ import { NextSeo } from "next-seo";
 import { useSession, signIn } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { useReadLocalStorage } from "usehooks-ts";
 import { VisualizerShadcn } from "@/components/visualizer/visualizer-shadcn";
@@ -83,7 +84,7 @@ export default function Visualizer({ relatedArticles }) {
 function VisualizerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { isLoading } = useUserLiftingData();
-  const ssid = useReadLocalStorage("ssid");
+  const ssid = useReadLocalStorage(LOCAL_STORAGE_KEYS.SSID);
   const [highlightDate, setHighlightDate] = useState(null);
 
   if (!isLoading && authStatus === "authenticated" && !ssid)

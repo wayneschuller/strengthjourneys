@@ -10,8 +10,8 @@ import FlickeringGrid from "./magicui/flickering-grid";
 import { WarpBackground } from "@/components/ui/warp-background";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 
-const ANIMATED_BACKGROUND_KEY = "sj-animated-background";
 
 const staticGridClassName = cn(
   "pointer-events-none absolute inset-0 h-full w-full fill-gray-400/30 stroke-gray-800/30 dark:stroke-gray-200/30",
@@ -37,7 +37,7 @@ export function AppBackground() {
   const { theme, resolvedTheme } = useTheme();
   const currentTheme = theme ?? resolvedTheme ?? "light";
   const [animatedBackground] = useLocalStorage(
-    ANIMATED_BACKGROUND_KEY,
+    LOCAL_STORAGE_KEYS.ANIMATED_BACKGROUND,
     false,
     { initializeWithValue: false }
   );

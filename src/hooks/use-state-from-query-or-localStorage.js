@@ -51,6 +51,9 @@ export const useStateFromQueryOrLocalStorage = (
   }, [router.isReady, key, defaultValue]);
 
   // Update query params (if syncQuery is true) and localStorage when state changes
+  // Note: router is intentionally excluded from deps - the Next.js router object
+  // gets a new reference on each render, which would cause an infinite loop
+  // (effect runs -> router.replace -> re-render -> new router ref -> effect runs again)
   useEffect(() => {
     if (!isInitialized) return;
 
@@ -70,7 +73,8 @@ export const useStateFromQueryOrLocalStorage = (
     if (typeof window !== "undefined") {
       localStorage.setItem(key, stringifyValue(state));
     }
-  }, [state, isInitialized, syncQuery, key, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- router excluded to prevent infinite loop
+  }, [state, isInitialized, syncQuery, key]);
 
   return [state, setState];
 };

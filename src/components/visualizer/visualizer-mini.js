@@ -7,6 +7,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { e1rmFormulae, estimateE1RM } from "@/lib/estimate-e1rm";
 import { subMonths } from "date-fns";
@@ -83,7 +84,7 @@ export function VisualizerMini({ liftType }) {
   // devLog(parsedData);
 
   const [timeRange, setTimeRange] = useLocalStorage(
-    "SJ_timeRange",
+    LOCAL_STORAGE_KEYS.TIME_RANGE,
     "MAX", // MAX, 3M, 6M, 1Y, 2Y, 5Y etc.
     {
       initializeWithValue: false,
@@ -91,7 +92,7 @@ export function VisualizerMini({ liftType }) {
   );
 
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
-    "SJ_showLabelValues",
+    LOCAL_STORAGE_KEYS.SHOW_LABEL_VALUES,
     false,
     {
       initializeWithValue: false,
@@ -99,19 +100,19 @@ export function VisualizerMini({ liftType }) {
   );
 
   const [showAllData, setShowAllData] = useLocalStorage(
-    "SJ_showAllData",
+    LOCAL_STORAGE_KEYS.SHOW_ALL_DATA,
     true,
     {
       initializeWithValue: false,
     },
   ); // Show weekly bests or all data
 
-  const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki", {
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
 
   const [showStandards, setShowStandards] = useLocalStorage(
-    "SJ_VisMiniShowStandards",
+    LOCAL_STORAGE_KEYS.VIS_MINI_SHOW_STANDARDS,
     true,
     {
       initializeWithValue: false,
@@ -119,7 +120,7 @@ export function VisualizerMini({ liftType }) {
   );
 
   const [showBodyweightMultiples, setShowBodyweightMultiples] = useLocalStorage(
-    "SJ_VisMiniShowBodyweightMultiples",
+    LOCAL_STORAGE_KEYS.VIS_MINI_SHOW_BODYWEIGHT_MULTIPLES,
     true,
     {
       initializeWithValue: false,

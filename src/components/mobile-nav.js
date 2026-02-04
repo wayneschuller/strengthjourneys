@@ -10,6 +10,7 @@ import { Menu } from "lucide-react";
 import { featurePages } from "@/pages";
 import Image from "next/image";
 import { useTheme } from "next-themes";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getLogoForTheme } from "@/lib/theme-logos";
 
 import {
@@ -41,7 +42,7 @@ export function MobileNav() {
     
     // If theme not yet resolved, try to get from localStorage
     if (!currentTheme && typeof window !== "undefined") {
-      const storedTheme = localStorage.getItem("theme");
+      const storedTheme = localStorage.getItem(LOCAL_STORAGE_KEYS.THEME);
       if (storedTheme) {
         currentTheme = storedTheme;
       }

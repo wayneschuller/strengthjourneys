@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
 import { parseISO, startOfWeek, startOfMonth, format } from "date-fns";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
@@ -49,15 +50,15 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   const { parsedData } = useUserLiftingData();
   const { getColor } = useLiftColors();
   const liftColor = liftType ? getColor(liftType) : null;
-  const [timeRange, setTimeRange] = useLocalStorage("SJ_timeRange", "MAX", {
+  const [timeRange, setTimeRange] = useLocalStorage(LOCAL_STORAGE_KEYS.TIME_RANGE, "MAX", {
     initializeWithValue: false,
   });
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
-    "SJ_showLabelValues",
+    LOCAL_STORAGE_KEYS.SHOW_LABEL_VALUES,
     false,
   );
   const [aggregationType, setAggregationType] = useLocalStorage(
-    "SJ_tonnageAggregationType",
+    LOCAL_STORAGE_KEYS.TONNAGE_AGGREGATION_TYPE,
     "perSession",
   );
 

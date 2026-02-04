@@ -22,6 +22,7 @@ import {
   PaintRoller,
   Coffee,
 } from "lucide-react";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
 import {
@@ -49,15 +50,15 @@ export function AvatarDropdown() {
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
   const { setTheme, theme } = useTheme();
 
-  const [ssid, setSsid] = useLocalStorage("ssid", null, {
+  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, {
     initializeWithValue: false,
   });
 
-  const [sheetURL, setSheetURL] = useLocalStorage("sheetURL", null, {
+  const [sheetURL, setSheetURL] = useLocalStorage(LOCAL_STORAGE_KEYS.SHEET_URL, null, {
     initializeWithValue: false,
   });
   const [sheetFilename, setSheetFilename] = useLocalStorage(
-    "sheetFilename",
+    LOCAL_STORAGE_KEYS.SHEET_FILENAME,
     null,
     { initializeWithValue: false },
   );

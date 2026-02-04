@@ -4,6 +4,7 @@ import {
   LiftingStandardsKG,
 } from "@/lib/lifting-standards-kg";
 
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useStateFromQueryOrLocalStorage } from "./use-state-from-query-or-localStorage";
 
 // A custom hook to get and store the athlete provided bio data in localStorage
@@ -11,27 +12,27 @@ import { useStateFromQueryOrLocalStorage } from "./use-state-from-query-or-local
 // modifyURLQuery controls whether query parameters are updated (defaults to false)
 export const useAthleteBioData = (modifyURLQuery = false) => {
   const [age, setAge] = useStateFromQueryOrLocalStorage(
-    "AthleteAge",
+    LOCAL_STORAGE_KEYS.ATHLETE_AGE,
     30,
     modifyURLQuery,
   );
   const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
-    "calcIsMetric",
+    LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
     false,
     modifyURLQuery,
   );
   const [sex, setSex] = useStateFromQueryOrLocalStorage(
-    "AthleteSex",
+    LOCAL_STORAGE_KEYS.ATHLETE_SEX,
     "male",
     modifyURLQuery,
   );
   const [bodyWeight, setBodyWeight] = useStateFromQueryOrLocalStorage(
-    "AthleteBodyWeight",
+    LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT,
     200,
     modifyURLQuery,
   );
   const [liftType, setLiftType] = useStateFromQueryOrLocalStorage(
-    "AthleteLiftType",
+    LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE,
     "Back Squat",
     modifyURLQuery,
   );

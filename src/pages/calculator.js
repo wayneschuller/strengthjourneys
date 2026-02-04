@@ -42,6 +42,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage, useIsClient } from "usehooks-ts";
 
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 import { useStateFromQueryOrLocalStorage } from "../hooks/use-state-from-query-or-localStorage";
 import { Calculator } from "lucide-react";
@@ -114,14 +115,14 @@ export default function E1RMCalculator({ relatedArticles }) {
 function E1RMCalculatorMain({ relatedArticles }) {
   const router = useRouter();
   const { toast } = useToast();
-  const [reps, setReps] = useStateFromQueryOrLocalStorage("reps", 5); // Will be a string
-  const [weight, setWeight] = useStateFromQueryOrLocalStorage("weight", 225); // Will be a string
+  const [reps, setReps] = useStateFromQueryOrLocalStorage(LOCAL_STORAGE_KEYS.REPS, 5); // Will be a string
+  const [weight, setWeight] = useStateFromQueryOrLocalStorage(LOCAL_STORAGE_KEYS.WEIGHT, 225); // Will be a string
   const [e1rmFormula, setE1rmFormula] = useStateFromQueryOrLocalStorage(
-    "formula",
+    LOCAL_STORAGE_KEYS.FORMULA,
     "Brzycki",
   );
   const [isAdvancedAnalysis, setIsAdvancedAnalysis] = useLocalStorage(
-    "SJ_E1RMAdvancedAnalysis",
+    LOCAL_STORAGE_KEYS.E1RM_ADVANCED_ANALYSIS,
     false,
     { initializeWithValue: false },
   );

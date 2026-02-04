@@ -27,14 +27,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-const ANIMATED_BACKGROUND_KEY = "sj-animated-background";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 
 export function ThemeChooser() {
   const { theme, setTheme, themes } = useTheme();
   const [position, setPosition] = useState("light");
   const [animatedBackground, setAnimatedBackground] = useLocalStorage(
-    ANIMATED_BACKGROUND_KEY,
+    LOCAL_STORAGE_KEYS.ANIMATED_BACKGROUND,
     false,
     { initializeWithValue: false }
   );

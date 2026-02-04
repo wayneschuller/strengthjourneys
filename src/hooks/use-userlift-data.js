@@ -4,6 +4,7 @@ import { useContext, useState, useEffect, createContext, useMemo } from "react";
 import { useRouter } from "next/router";
 import { useSession, signIn } from "next-auth/react";
 import useSWR from "swr";
+import { getSelectedLiftsKey, LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { parseData } from "@/lib/parse-data";
 import { event, trackSignInClick } from "@/lib/analytics";
 import {
@@ -47,17 +48,17 @@ export const UserLiftingDataProvider = ({ children }) => {
 
   const { data: session, status: authStatus } = useSession();
 
-  const [ssid, setSsid] = useLocalStorage("ssid", null, {
+  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, {
     initializeWithValue: false,
   });
   const [sheetURL, setSheetURL] = useLocalStorage(
-    "sheetURL",
+    LOCAL_STORAGE_KEYS.SHEET_URL,
     null,
 
     { initializeWithValue: false },
   );
   const [sheetFilename, setSheetFilename] = useLocalStorage(
-    "sheetFilename",
+    LOCAL_STORAGE_KEYS.SHEET_FILENAME,
     null,
     { initializeWithValue: false },
   );
@@ -136,13 +137,14 @@ export const UserLiftingDataProvider = ({ children }) => {
     // Now set it in state for useContext usage throughout the components
     setSelectedLiftTypes(selectedLiftTypes);
     setParsedData(parsedData);
+  // router excluded from deps - Next.js router gets new ref each render, causes infinite loop
+  // when combined with useStateFromQueryOrLocalStorage which calls router.replace()
   }, [
     data,
     isLoading,
     isError,
     authStatus,
     toast,
-    router,
     sheetURL,
     sheetFilename,
     setSsid,
@@ -285,9 +287,6 @@ function getParsedDataWithFallback({
       // devLog(data.values.length);
       parsedData = parseData(data.values); // Will be sorted date ascending
 
-      // We have some good new data loaded - tell the user via toast
-      loadedToastInit = true; // Don't show this again
-
       // Find the latest date in parsedData
       let latestDate = null;
       if (parsedData && parsedData.length > 0) {
@@ -297,12 +296,14 @@ function getParsedDataWithFallback({
       let latestDateString = "";
       let gymInviteString = "";
 
-      // Show informative toast (but not on the front page because the home dashboard has the same info)
+      // Show informative toast once per session (but not on the front page because the home dashboard has the same info)
       if (
+        !loadedToastInit &&
         latestDate &&
         typeof router.pathname === "string" &&
         router.pathname !== "/"
       ) {
+        loadedToastInit = true;
         const parsed = parseISO(latestDate);
         const now = new Date();
         const daysAgo = differenceInDays(now, parsed);
@@ -421,9 +422,7 @@ function buildSelectedLiftTypes({ authStatus, parsedData }) {
 
   // Check if selectedLifts exists in localStorage
   // When in demo mode (auth unauthenticated) we have a separate localstorage
-  const localStorageKey = `selectedLifts${
-    authStatus === "unauthenticated" ? "_demoMode" : ""
-  }`;
+  const localStorageKey = getSelectedLiftsKey(authStatus === "unauthenticated");
   let selectedLiftTypes = localStorage.getItem(localStorageKey);
 
   // Attempt to parse selectedLiftTypes from localStorage, or fall back to null if unavailable

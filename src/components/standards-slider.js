@@ -1,3 +1,4 @@
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
@@ -20,7 +21,7 @@ export function StandardsSlider({
   const { status: authStatus } = useSession();
   const { width } = useWindowSize({ initializeWithValue: false });
   const e1rmFormula =
-    useReadLocalStorage("formula", { initializeWithValue: false }) ?? "Brzycki";
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false }) ?? "Brzycki";
 
   if (!standards) return null;
   const originalData = standards[liftType];

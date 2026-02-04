@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { NextSeo } from "next-seo";
 import { RelatedArticles } from "@/components/article-cards";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { GettingStartedCard } from "@/components/instructions-cards";
 import { useLocalStorage } from "usehooks-ts";
@@ -118,13 +119,13 @@ const toKg = (lbs) => (lbs * 0.453592).toFixed(1);
 const KG_PER_LB = 0.453592;
 
 function ThousandPoundClubCalculatorMain({ relatedArticles }) {
-  const [squat, setSquat] = useLocalStorage("SJ_thousand_squat", 0, {
+  const [squat, setSquat] = useLocalStorage(LOCAL_STORAGE_KEYS.THOUSAND_SQUAT, 0, {
     initializeWithValue: false,
   });
-  const [bench, setBench] = useLocalStorage("SJ_thousand_bench", 0, {
+  const [bench, setBench] = useLocalStorage(LOCAL_STORAGE_KEYS.THOUSAND_BENCH, 0, {
     initializeWithValue: false,
   });
-  const [deadlift, setDeadlift] = useLocalStorage("SJ_thousand_deadlift", 0, {
+  const [deadlift, setDeadlift] = useLocalStorage(LOCAL_STORAGE_KEYS.THOUSAND_DEADLIFT, 0, {
     initializeWithValue: false,
   });
   const prevTotalRef = useRef(null);

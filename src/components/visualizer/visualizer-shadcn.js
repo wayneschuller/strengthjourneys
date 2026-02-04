@@ -6,6 +6,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { subMonths } from "date-fns";
@@ -73,7 +74,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   // devLog(parsedData);
 
   const [timeRange, setTimeRange] = useLocalStorage(
-    "SJ_timeRange",
+    LOCAL_STORAGE_KEYS.TIME_RANGE,
     "MAX", // MAX, 3M, 6M, 1Y, 2Y, 5Y etc.
     {
       initializeWithValue: false,
@@ -81,11 +82,11 @@ export function VisualizerShadcn({ setHighlightDate }) {
   );
 
   const [showLabelValues, setShowLabelValues] = useLocalStorage(
-    "SJ_showLabelValues",
+    LOCAL_STORAGE_KEYS.SHOW_LABEL_VALUES,
     false,
   );
-  const [showAllData, setShowAllData] = useLocalStorage("SJ_showAllData", true); // Show weekly bests or all data
-  const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki");
+  const [showAllData, setShowAllData] = useLocalStorage(LOCAL_STORAGE_KEYS.SHOW_ALL_DATA, true); // Show weekly bests or all data
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki");
 
   // Used to hide the y-axis on smaller screens
   const { width } = useWindowSize({ initializeWithValue: false });

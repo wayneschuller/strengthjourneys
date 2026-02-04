@@ -14,6 +14,7 @@ import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
 import { Table2, Loader2, Github, Trophy, LineChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { MiniTimer } from "@/pages/timer";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -136,7 +137,7 @@ export function DesktopNav() {
     
     // If theme not yet resolved, try to get from localStorage
     if (!currentTheme && typeof window !== "undefined") {
-      const storedTheme = localStorage.getItem("theme");
+      const storedTheme = localStorage.getItem(LOCAL_STORAGE_KEYS.THEME);
       if (storedTheme) {
         currentTheme = storedTheme;
       }
@@ -214,17 +215,17 @@ export function DesktopNav() {
 // Also we have a subtle pulse animation when we are trying to look for new data from google (via useSWR isValidating)
 export function UserSheetIcon() {
   // We need the next 3 for the file picker button
-  const [ssid, setSsid] = useLocalStorage("ssid", null, {
+  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, {
     initializeWithValue: false,
   });
   const [sheetURL, setSheetURL] = useLocalStorage(
-    "sheetURL",
+    LOCAL_STORAGE_KEYS.SHEET_URL,
     null,
 
     { initializeWithValue: false },
   );
   const [sheetFilename, setSheetFilename] = useLocalStorage(
-    "sheetFilename",
+    LOCAL_STORAGE_KEYS.SHEET_FILENAME,
     null,
     { initializeWithValue: false },
   );

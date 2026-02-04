@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "usehooks-ts";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 
 import {
@@ -86,24 +87,24 @@ export default function WarmUpSetsCalculator({ relatedArticles }) {
 }
 
 function WarmUpSetsCalculatorMain({ relatedArticles }) {
-  const [reps, setReps] = useStateFromQueryOrLocalStorage("warmupReps", 5);
-  const [weight, setWeight] = useStateFromQueryOrLocalStorage("warmupWeight", 100);
+  const [reps, setReps] = useStateFromQueryOrLocalStorage(LOCAL_STORAGE_KEYS.WARMUP_REPS, 5);
+  const [weight, setWeight] = useStateFromQueryOrLocalStorage(LOCAL_STORAGE_KEYS.WARMUP_WEIGHT, 100);
   const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
-    "calcIsMetric",
+    LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
     false,
   );
-  const [barType, setBarType] = useLocalStorage("SJ_WarmupsBarType", "standard", {
+  const [barType, setBarType] = useLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, "standard", {
     initializeWithValue: false,
   });
   const [platePreference, setPlatePreference] = useLocalStorage(
-    "SJ_WarmupsPlatePreference",
+    LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE,
     "red",
     {
       initializeWithValue: false,
     },
   );
   const [warmupSetCount, setWarmupSetCount] = useLocalStorage(
-    "SJ_WarmupsSetCount",
+    LOCAL_STORAGE_KEYS.WARMUPS_SET_COUNT,
     4,
     {
       initializeWithValue: false,

@@ -25,6 +25,7 @@
 import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 
@@ -79,7 +80,7 @@ export function VisualizerReps({ data, liftType }) {
   const liftColor = getColor(liftType);
 
   const [timeRange, setTimeRange] = useLocalStorage(
-    "SJ_timeRange",
+    LOCAL_STORAGE_KEYS.TIME_RANGE,
     "MAX", // MAX, 3M, 6M, 1Y, 2Y, 5Y etc.
     {
       initializeWithValue: false,

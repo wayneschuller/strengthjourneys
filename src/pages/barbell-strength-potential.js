@@ -6,6 +6,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { useReadLocalStorage } from "usehooks-ts";
 import { Separator } from "@/components/ui/separator";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 import { useLocalStorage } from "usehooks-ts";
@@ -106,8 +107,8 @@ export default function StrengthPotential({ relatedArticles }) {
 function StrengthPotentialMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { selectedLiftTypes, isLoading } = useUserLiftingData();
-  const ssid = useReadLocalStorage("ssid");
-  const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki", {
+  const ssid = useReadLocalStorage(LOCAL_STORAGE_KEYS.SSID);
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
 
@@ -150,7 +151,7 @@ function StrengthPotentialMain({ relatedArticles }) {
 function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   const { parsedData, topLiftsByTypeAndReps, isValidating } =
     useUserLiftingData();
-  const [e1rmFormula, setE1rmFormula] = useLocalStorage("formula", "Brzycki", {
+  const [e1rmFormula, setE1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
   const { theme, resolvedTheme } = useTheme();

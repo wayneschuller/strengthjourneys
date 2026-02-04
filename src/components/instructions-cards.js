@@ -6,6 +6,7 @@ import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { trackSignInClick } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import Image from "next/image";
 import { useLocalStorage } from "usehooks-ts";
@@ -49,17 +50,17 @@ export function OnBoardingDashboard() {
   }, [authStatus, shouldLoadPicker]);
 
   // We need the next 3 for the file picker button we give with instructions
-  const [ssid, setSsid] = useLocalStorage("ssid", null, {
+  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, {
     initializeWithValue: false,
   });
   const [sheetURL, setSheetURL] = useLocalStorage(
-    "sheetURL",
+    LOCAL_STORAGE_KEYS.SHEET_URL,
     null,
 
     { initializeWithValue: false },
   );
   const [sheetFilename, setSheetFilename] = useLocalStorage(
-    "sheetFilename",
+    LOCAL_STORAGE_KEYS.SHEET_FILENAME,
     null,
     { initializeWithValue: false },
   );
@@ -182,7 +183,7 @@ export function ChooseSheetInstructionsCard() {
   }, [session, shouldLoadPicker]);
 
   // We need the next 3 for the file picker button we give with instructions
-  const [ssid, setSsid] = useLocalStorage("ssid", null, {
+  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, {
     initializeWithValue: false,
   });
   const [sheetURL, setSheetURL] = useLocalStorage(
@@ -299,7 +300,7 @@ export function GettingStartedCard() {
   }, [authStatus, shouldLoadPicker]);
 
   // We need the next 3 for the file picker button we give with instructions
-  const [ssid, setSsid] = useLocalStorage("ssid", null, {
+  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, {
     initializeWithValue: false,
   });
   const [sheetURL, setSheetURL] = useLocalStorage(
@@ -519,9 +520,9 @@ export function GettingStartedCardCompact() {
     }
   }, [authStatus, shouldLoadPicker]);
 
-  const [ssid, setSsid] = useLocalStorage("ssid", null, { initializeWithValue: false });
-  const [, setSheetURL] = useLocalStorage("sheetURL", null, { initializeWithValue: false });
-  const [, setSheetFilename] = useLocalStorage("sheetFilename", null, { initializeWithValue: false });
+  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, { initializeWithValue: false });
+  const [, setSheetURL] = useLocalStorage(LOCAL_STORAGE_KEYS.SHEET_URL, null, { initializeWithValue: false });
+  const [, setSheetFilename] = useLocalStorage(LOCAL_STORAGE_KEYS.SHEET_FILENAME, null, { initializeWithValue: false });
 
   return (
     <>

@@ -4,6 +4,7 @@ import * as React from "react";
 import { useState, useEffect, useContext } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { getSelectedLiftsKey } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Dumbbell } from "lucide-react";
@@ -97,9 +98,7 @@ const CheckboxLifts = ({}) => {
       .filter((liftType) => updatedSelected.includes(liftType));
 
     // Update localStorage
-    const localStorageKey = `selectedLifts${
-      authStatus === "unauthenticated" ? "_demoMode" : ""
-    }`;
+    const localStorageKey = getSelectedLiftsKey(authStatus === "unauthenticated");
     localStorage.setItem(localStorageKey, JSON.stringify(updatedSelected));
 
     // Set the state

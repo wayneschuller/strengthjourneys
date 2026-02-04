@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -147,7 +148,7 @@ export function ExpandedLiftAchievements({ liftType }) {
 export const LiftTypeSummaryStatistics = ({ liftType }) => {
   const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
   const e1rmFormula =
-    useReadLocalStorage("formula", { initializeWithValue: false }) ?? "Brzycki";
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false }) ?? "Brzycki";
 
   if (!liftTypes) return null;
   if (!topLiftsByTypeAndReps) return null;

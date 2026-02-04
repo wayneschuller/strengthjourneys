@@ -121,199 +121,34 @@ export const UserLiftingDataProvider = ({ children }) => {
       // setSheetURL(null);
     }
 
-    let parsedData = null; // A local version for this scope only
-
-    if (authStatus === "authenticated" && data?.values) {
-      try {
-        // devLog(data.values.length);
-        parsedData = parseData(data.values); // Will be sorted date ascending
-
-        // We have some good new data loaded - tell the user via toast
-        loadedToastInit = true; // Don't show this again
-
-        // Find the latest date in parsedData
-        let latestDate = null;
-        if (parsedData && parsedData.length > 0) {
-          // parsedData is sorted ascending, so last item is latest
-          latestDate = parsedData[parsedData.length - 1].date;
-        }
-        let latestDateString = "";
-        let gymInviteString = "";
-
-        // Show informative toast (but not on the front page because the home dashboard has the same info)
-        if (
-          latestDate &&
-          typeof router.pathname === "string" &&
-          router.pathname !== "/"
-        ) {
-          const parsed = parseISO(latestDate);
-          const now = new Date();
-          const daysAgo = differenceInDays(now, parsed);
-          const weeksAgo = differenceInWeeks(now, parsed);
-          const monthsAgo = differenceInMonths(now, parsed);
-          const yearsAgo = differenceInYears(now, parsed);
-
-          if (isToday(parsed)) {
-            latestDateString = "Latest data: Today";
-            gymInviteString = "💪 You're crushing it today! Keep going!";
-          } else if (daysAgo === 1) {
-            latestDateString = "Latest data: Yesterday";
-          } else if (daysAgo <= 7) {
-            latestDateString = `Latest data: ${daysAgo} days ago`;
-            gymInviteString = "Heading into the gym today, right?";
-          } else if (weeksAgo === 1) {
-            latestDateString = "Latest data: 1 week ago";
-          } else if (weeksAgo <= 3) {
-            latestDateString = `Latest data: ${weeksAgo} weeks ago`;
-          } else if (monthsAgo === 1) {
-            latestDateString = "Latest data: 1 month ago";
-          } else if (monthsAgo <= 11) {
-            latestDateString = `Latest data: ${monthsAgo} months ago`;
-          } else if (yearsAgo === 1) {
-            latestDateString = "Latest data: 1 year ago";
-          } else {
-            latestDateString = `Latest data: ${yearsAgo} years ago`;
-          }
-
-          // Add gym invite if daysAgo > 3
-          if (daysAgo > 7) {
-            gymInviteString = "🏋️‍♂️ It's been a while! Time to hit the gym?";
-          }
-          toast({
-            title: "Data updated from Google Sheets",
-            description: (
-              <>
-                {sheetURL ? (
-                  <a
-                    href={decodeURIComponent(sheetURL)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-                  >
-                    {sheetFilename || "File name unknown"}
-                  </a>
-                ) : (
-                  sheetFilename || "File name unknown"
-                )}
-                <br />
-                {parsedData.length} valid rows
-                {latestDateString && (
-                  <>
-                    <br />
-                    {latestDateString}
-                  </>
-                )}
-                {gymInviteString && (
-                  <>
-                    <br />
-                    <span className="font-bold text-orange-600">
-                      {gymInviteString}
-                    </span>
-                  </>
-                )}
-              </>
-            ),
-          });
-        }
-
-        event("gSheetDataUpdated"); // Google Analytics: sheet data loaded successfully
-      } catch (error) {
-        // Parsing error. Tell the user.
-        console.error("Data parsing error:", error.message);
-        toast({
-          variant: "destructive",
-          title: "Data Parsing Error",
-          description: error.message,
-        });
-
-        demoToastInit = true; // Don't run another toast
-
-        // Forget their chosen file, we have access but we cannot parse it
-        devLog(
-          `Could not parse data - deleting gsheet details from localstorage.`,
-        );
-        setSsid(null);
-        setSheetFilename(null);
-        setSheetURL(null);
-        // Don't sign out, just go gracefully into demo mode below.
-
-        event("gSheetReadRejected"); // Google Analytics: sheet parse rejected
-      }
-    }
-
-    // If there have been any problems we will switch into demo mode with sample data
-    // FIXME: Logic is NQR, demo data should only be when unauthenticated
-    // FIXME: if we are committing to demo mode then do the demo toast here and not in a separate useEffect
-    if (!parsedData) parsedData = transposeDatesToToday(sampleParsedData, true); // Transpose demo dates to recent, add jitter
-
-    // As far as possible try to get components to do their own unique processing of parsedData
-    // However if there are metrics commonly needed we can do it here just once to save CPU later
-
-    // Before we set parsedData there are a few other global
-    // state variables everything needs.
-    parsedData = markHigherWeightAsHistoricalPRs(parsedData);
-
-    // Calculate liftTypes locally for use in selectedLiftTypes logic
-    // (liftTypes is also computed via useMemo for the context provider)
-    const liftTypes = calculateLiftTypes(parsedData);
-
-    // Check if selectedLifts exists in localStorage
-    // When in demo mode (auth unauthenticated) we have a separate localstorage
-    const localStorageKey = `selectedLifts${
-      authStatus === "unauthenticated" ? "_demoMode" : ""
-    }`;
-    let selectedLiftTypes = localStorage.getItem(localStorageKey);
-
-    // Attempt to parse selectedLiftTypes from localStorage, or fall back to null if unavailable
-    selectedLiftTypes = selectedLiftTypes
-      ? JSON.parse(selectedLiftTypes)
-      : null;
-
-    // Check if selectedLiftTypes is not null and has elements after filtering; otherwise, set defaults
-    if (!selectedLiftTypes || !selectedLiftTypes.length) {
-      // Define the number of default lift types to select, with a minimum of 4 or the total number available
-      const defaultSelectionCount = Math.min(4, liftTypes.length);
-      // Select default lift types based on the calculated liftTypes array
-      selectedLiftTypes = liftTypes
-        .slice(0, defaultSelectionCount)
-        .map((lift) => lift.liftType);
-
-      // Log and update localStorage with the default selected lift types
-      devLog(
-        `Localstorage selectedLifts not found or invalid! Setting defaults for auth status ${authStatus}:`,
-        selectedLiftTypes,
-      );
-      localStorage.setItem(localStorageKey, JSON.stringify(selectedLiftTypes));
-    } else {
-      // Filter existing selectedLiftTypes to ensure they are all valid based on the current liftTypes data
-      selectedLiftTypes = selectedLiftTypes.filter((selectedLift) =>
-        liftTypes.some((lift) => lift.liftType === selectedLift),
-      );
-
-      // If filtering removes all items, revert to default selection logic
-      if (selectedLiftTypes.length === 0) {
-        const defaultSelectionCount = Math.min(4, liftTypes.length);
-        selectedLiftTypes = liftTypes
-          .slice(0, defaultSelectionCount)
-          .map((lift) => lift.liftType);
-
-        // Log and update localStorage with the default selected lift types
-        devLog(
-          `Filtered selectedLifts resulted in an empty array. Setting defaults for auth status ${authStatus}:`,
-          selectedLiftTypes,
-        );
-        localStorage.setItem(
-          localStorageKey,
-          JSON.stringify(selectedLiftTypes),
-        );
-      }
-    }
+    const { parsedData, selectedLiftTypes } = buildParsedState({
+      authStatus,
+      data,
+      toast,
+      router,
+      sheetURL,
+      sheetFilename,
+      setSsid,
+      setSheetFilename,
+      setSheetURL,
+    });
 
     // Now set it in state for useContext usage throughout the components
     setSelectedLiftTypes(selectedLiftTypes);
-
     setParsedData(parsedData);
-  }, [data, isLoading, isError, authStatus]);
+  }, [
+    data,
+    isLoading,
+    isError,
+    authStatus,
+    toast,
+    router,
+    sheetURL,
+    sheetFilename,
+    setSsid,
+    setSheetFilename,
+    setSheetURL,
+  ]);
 
   // Calculate liftTypes from parsedData (computed automatically when parsedData changes)
   const liftTypes = useMemo(() => 
@@ -393,3 +228,208 @@ export const UserLiftingDataProvider = ({ children }) => {
     </UserLiftingDataContext.Provider>
   );
 };
+
+// -----------------------------------------------------------------------------------------------
+// Helper to encapsulate parsing, demo-mode fallback, PR marking, and selected lift type logic.
+// This keeps the main effect in the provider smaller while preserving existing behavior.
+// -----------------------------------------------------------------------------------------------
+function buildParsedState({
+  authStatus,
+  data,
+  toast,
+  router,
+  sheetURL,
+  sheetFilename,
+  setSsid,
+  setSheetFilename,
+  setSheetURL,
+}) {
+  let parsedData = null; // A local version for this scope only
+
+  if (authStatus === "authenticated" && data?.values) {
+    try {
+      // devLog(data.values.length);
+      parsedData = parseData(data.values); // Will be sorted date ascending
+
+      // We have some good new data loaded - tell the user via toast
+      loadedToastInit = true; // Don't show this again
+
+      // Find the latest date in parsedData
+      let latestDate = null;
+      if (parsedData && parsedData.length > 0) {
+        // parsedData is sorted ascending, so last item is latest
+        latestDate = parsedData[parsedData.length - 1].date;
+      }
+      let latestDateString = "";
+      let gymInviteString = "";
+
+      // Show informative toast (but not on the front page because the home dashboard has the same info)
+      if (
+        latestDate &&
+        typeof router.pathname === "string" &&
+        router.pathname !== "/"
+      ) {
+        const parsed = parseISO(latestDate);
+        const now = new Date();
+        const daysAgo = differenceInDays(now, parsed);
+        const weeksAgo = differenceInWeeks(now, parsed);
+        const monthsAgo = differenceInMonths(now, parsed);
+        const yearsAgo = differenceInYears(now, parsed);
+
+        if (isToday(parsed)) {
+          latestDateString = "Latest data: Today";
+          gymInviteString = "💪 You're crushing it today! Keep going!";
+        } else if (daysAgo === 1) {
+          latestDateString = "Latest data: Yesterday";
+        } else if (daysAgo <= 7) {
+          latestDateString = `Latest data: ${daysAgo} days ago`;
+          gymInviteString = "Heading into the gym today, right?";
+        } else if (weeksAgo === 1) {
+          latestDateString = "Latest data: 1 week ago";
+        } else if (weeksAgo <= 3) {
+          latestDateString = `Latest data: ${weeksAgo} weeks ago`;
+        } else if (monthsAgo === 1) {
+          latestDateString = "Latest data: 1 month ago";
+        } else if (monthsAgo <= 11) {
+          latestDateString = `Latest data: ${monthsAgo} months ago`;
+        } else if (yearsAgo === 1) {
+          latestDateString = "Latest data: 1 year ago";
+        } else {
+          latestDateString = `Latest data: ${yearsAgo} years ago`;
+        }
+
+        // Add gym invite if daysAgo > 7
+        if (daysAgo > 7) {
+          gymInviteString = "🏋️‍♂️ It's been a while! Time to hit the gym?";
+        }
+        toast({
+          title: "Data updated from Google Sheets",
+          description: (
+            <>
+              {sheetURL ? (
+                <a
+                  href={decodeURIComponent(sheetURL)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+                >
+                  {sheetFilename || "File name unknown"}
+                </a>
+              ) : (
+                sheetFilename || "File name unknown"
+              )}
+              <br />
+              {parsedData.length} valid rows
+              {latestDateString && (
+                <>
+                  <br />
+                  {latestDateString}
+                </>
+              )}
+              {gymInviteString && (
+                <>
+                  <br />
+                  <span className="font-bold text-orange-600">
+                    {gymInviteString}
+                  </span>
+                </>
+              )}
+            </>
+          ),
+        });
+      }
+
+      event("gSheetDataUpdated"); // Google Analytics: sheet data loaded successfully
+    } catch (error) {
+      // Parsing error. Tell the user.
+      console.error("Data parsing error:", error.message);
+      toast({
+        variant: "destructive",
+        title: "Data Parsing Error",
+        description: error.message,
+      });
+
+      demoToastInit = true; // Don't run another toast
+
+      // Forget their chosen file, we have access but we cannot parse it
+      devLog(
+        `Could not parse data - deleting gsheet details from localstorage.`,
+      );
+      setSsid(null);
+      setSheetFilename(null);
+      setSheetURL(null);
+      // Don't sign out, just go gracefully into demo mode below.
+
+      event("gSheetReadRejected"); // Google Analytics: sheet parse rejected
+    }
+  }
+
+  // If there have been any problems we will switch into demo mode with sample data
+  // FIXME: Logic is NQR, demo data should only be when unauthenticated
+  // FIXME: if we are committing to demo mode then do the demo toast here and not in a separate useEffect
+  if (!parsedData)
+    parsedData = transposeDatesToToday(sampleParsedData, true); // Transpose demo dates to recent, add jitter
+
+  // As far as possible try to get components to do their own unique processing of parsedData
+  // However if there are metrics commonly needed we can do it here just once to save CPU later
+
+  // Before we set parsedData there are a few other global
+  // state variables everything needs.
+  parsedData = markHigherWeightAsHistoricalPRs(parsedData);
+
+  // Calculate liftTypes locally for use in selectedLiftTypes logic
+  // (liftTypes is also computed via useMemo for the context provider)
+  const liftTypes = calculateLiftTypes(parsedData);
+
+  // Check if selectedLifts exists in localStorage
+  // When in demo mode (auth unauthenticated) we have a separate localstorage
+  const localStorageKey = `selectedLifts${
+    authStatus === "unauthenticated" ? "_demoMode" : ""
+  }`;
+  let selectedLiftTypes = localStorage.getItem(localStorageKey);
+
+  // Attempt to parse selectedLiftTypes from localStorage, or fall back to null if unavailable
+  selectedLiftTypes = selectedLiftTypes ? JSON.parse(selectedLiftTypes) : null;
+
+  // Check if selectedLiftTypes is not null and has elements after filtering; otherwise, set defaults
+  if (!selectedLiftTypes || !selectedLiftTypes.length) {
+    // Define the number of default lift types to select, with a minimum of 4 or the total number available
+    const defaultSelectionCount = Math.min(4, liftTypes.length);
+    // Select default lift types based on the calculated liftTypes array
+    selectedLiftTypes = liftTypes
+      .slice(0, defaultSelectionCount)
+      .map((lift) => lift.liftType);
+
+    // Log and update localStorage with the default selected lift types
+    devLog(
+      `Localstorage selectedLifts not found or invalid! Setting defaults for auth status ${authStatus}:`,
+      selectedLiftTypes,
+    );
+    localStorage.setItem(localStorageKey, JSON.stringify(selectedLiftTypes));
+  } else {
+    // Filter existing selectedLiftTypes to ensure they are all valid based on the current liftTypes data
+    selectedLiftTypes = selectedLiftTypes.filter((selectedLift) =>
+      liftTypes.some((lift) => lift.liftType === selectedLift),
+    );
+
+    // If filtering removes all items, revert to default selection logic
+    if (selectedLiftTypes.length === 0) {
+      const defaultSelectionCount = Math.min(4, liftTypes.length);
+      selectedLiftTypes = liftTypes
+        .slice(0, defaultSelectionCount)
+        .map((lift) => lift.liftType);
+
+      // Log and update localStorage with the default selected lift types
+      devLog(
+        `Filtered selectedLifts resulted in an empty array. Setting defaults for auth status ${authStatus}:`,
+        selectedLiftTypes,
+      );
+      localStorage.setItem(localStorageKey, JSON.stringify(selectedLiftTypes));
+    }
+  }
+
+  return {
+    parsedData,
+    selectedLiftTypes,
+  };
+}

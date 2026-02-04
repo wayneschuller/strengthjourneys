@@ -4,6 +4,7 @@
 
 import { devLog } from "@/lib/processing-utils";
 import { useState, useEffect } from "react";
+import { useLocalStorage } from "usehooks-ts";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import { Palette } from "lucide-react";
 
@@ -26,9 +28,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+const ANIMATED_BACKGROUND_KEY = "sj-animated-background";
+
 export function ThemeChooser() {
   const { theme, setTheme, themes } = useTheme();
   const [position, setPosition] = useState("light");
+  const [animatedBackground, setAnimatedBackground] = useLocalStorage(
+    ANIMATED_BACKGROUND_KEY,
+    false,
+    { initializeWithValue: false }
+  );
 
   useEffect(() => {
     if (theme) {
@@ -66,6 +75,15 @@ export function ThemeChooser() {
                   </DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={animatedBackground ?? false}
+                onCheckedChange={(checked) =>
+                  setAnimatedBackground(checked === true)
+                }
+              >
+                Animated background
+              </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </TooltipTrigger>

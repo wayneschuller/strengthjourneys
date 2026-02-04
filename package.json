@@ -68,6 +68,7 @@
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.445.0",
     "marked": "^15.0.8",
+    "motion": "^12.31.0",
     "nanoid": "^5.1.6",
     "next": "^14.2.35",
     "next-auth": "^4.24.11",

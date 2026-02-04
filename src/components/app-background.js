@@ -1,0 +1,126 @@
+/** @format */
+
+"use client";
+
+import { useEffect, useState } from "react";
+import { useLocalStorage } from "usehooks-ts";
+import GridPattern from "./magicui/grid-pattern";
+import FlickeringGrid from "./magicui/flickering-grid";
+import { WarpBackground } from "@/components/ui/warp-background";
+import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
+
+const ANIMATED_BACKGROUND_KEY = "sj-animated-background";
+
+const staticGridClassName = cn(
+  "pointer-events-none absolute inset-0 h-full w-full fill-gray-400/30 stroke-gray-800/30 dark:stroke-gray-200/30",
+  "[mask-image:radial-gradient(1200px_circle_at_top_left,white,transparent)]",
+  "inset-x-0 inset-y-[-30%] h-[200%] -skew-y-12"
+);
+
+const GRID_SQUARES = [
+  [0, 3],
+  [4, 5],
+  [10, 6],
+  [6, 7],
+  [22, 7],
+  [1, 8],
+  [16, 10],
+  [0, 11],
+  [3, 14],
+  [8, 15],
+  [14, 16],
+];
+
+export function AppBackground() {
+  const { theme, resolvedTheme } = useTheme();
+  const currentTheme = theme ?? resolvedTheme ?? "light";
+  const [animatedBackground] = useLocalStorage(
+    ANIMATED_BACKGROUND_KEY,
+    false,
+    { initializeWithValue: false }
+  );
+
+  // Avoid theme-based SSR/CSR mismatch by only rendering
+  // theme-conditional backgrounds after the component mounts.
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isRetroArcade =
+    currentTheme === "retro-arcade" || currentTheme === "retro-arcade-dark";
+  const isNeoBrutalism =
+    currentTheme === "neo-brutalism" ||
+    currentTheme === "neo-brutalism-dark";
+
+  const showAnimated = animatedBackground ?? false;
+  const showStaticGrid =
+    (!isRetroArcade && !isNeoBrutalism) || !showAnimated;
+
+  return (
+    <div className="fixed inset-0 z-0">
+      {/* Static GridPattern for serious themes, or when animated is disabled */}
+      {showStaticGrid && (
+        <GridPattern squares={GRID_SQUARES} className={staticGridClassName} />
+      )}
+
+      {/* Bold, primary-colored flickering background for neo-brutalism themes */}
+      {mounted && showAnimated && isNeoBrutalism && (
+        <>
+          {/* Primary red layer */}
+          <FlickeringGrid
+            className="pointer-events-none absolute inset-0 h-full w-full"
+            squareSize={7}
+            gridGap={8}
+            flickerChance={currentTheme === "neo-brutalism" ? 0.18 : 0.28}
+            maxOpacity={currentTheme === "neo-brutalism" ? 0.22 : 0.28}
+            color={
+              currentTheme === "neo-brutalism"
+                ? "hsl(0 100% 60%)" // primary red on light
+                : "hsl(0 100% 70%)" // primary red on dark
+            }
+          />
+          {/* Secondary yellow layer */}
+          <FlickeringGrid
+            className="pointer-events-none absolute inset-0 h-full w-full"
+            squareSize={9}
+            gridGap={11}
+            flickerChance={currentTheme === "neo-brutalism" ? 0.16 : 0.24}
+            maxOpacity={currentTheme === "neo-brutalism" ? 0.18 : 0.24}
+            color={
+              currentTheme === "neo-brutalism"
+                ? "hsl(60 100% 50%)" // secondary yellow on light
+                : "hsl(60 100% 60%)" // secondary yellow on dark
+            }
+          />
+        </>
+      )}
+
+      {/* Warp background for retro-arcade themes */}
+      {mounted && showAnimated && isRetroArcade && (
+        <WarpBackground
+          className="pointer-events-none absolute inset-0 border-0 p-0"
+          perspective={140}
+          beamsPerSide={4}
+          beamSize={6}
+          beamDelayMin={0}
+          beamDelayMax={3}
+          beamDuration={3.5}
+          gridColor={
+            currentTheme === "retro-arcade"
+              ? "rgba(95, 168, 163, 0.6)" // teal-ish grid for light retro
+              : "rgba(214, 107, 122, 0.7)" // pink-ish grid for dark retro
+          }
+        >
+          {/* Empty child just to satisfy WarpBackground API while using it purely as a background */}
+          <div className="h-full w-full" />
+        </WarpBackground>
+      )}
+    </div>
+  );
+}
+
+export default AppBackground;
+

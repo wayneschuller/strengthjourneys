@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import GridPattern from "./magicui/grid-pattern";
+import { AnimatedGridPattern } from "@/components/ui/animated-grid-pattern";
 import FlickeringGrid from "./magicui/flickering-grid";
 import { WarpBackground } from "@/components/ui/warp-background";
 import { cn } from "@/lib/utils";
@@ -56,14 +57,30 @@ export function AppBackground() {
     currentTheme === "neo-brutalism-dark";
 
   const showAnimated = animatedBackground ?? false;
-  const showStaticGrid =
-    (!isRetroArcade && !isNeoBrutalism) || !showAnimated;
+  const isVanillaLightDark = !isRetroArcade && !isNeoBrutalism;
+  const showStaticGrid = !showAnimated;
+  const showAnimatedGrid = mounted && showAnimated && isVanillaLightDark;
 
   return (
     <div className="fixed inset-0 z-0">
-      {/* Static GridPattern for serious themes, or when animated is disabled */}
+      {/* Static GridPattern when animated is disabled (all themes) */}
       {showStaticGrid && (
         <GridPattern squares={GRID_SQUARES} className={staticGridClassName} />
+      )}
+
+      {/* Animated GridPattern for light/dark when animated is enabled */}
+      {showAnimatedGrid && (
+        <AnimatedGridPattern
+          numSquares={80}
+          maxOpacity={0.22}
+          duration={1.5}
+          repeatDelay={0.3}
+          className={cn(
+            "pointer-events-none absolute inset-0 h-full w-full fill-gray-400/30 stroke-gray-800/30 dark:stroke-gray-200/30",
+            "[mask-image:radial-gradient(1200px_circle_at_top_left,white,transparent)]",
+            "inset-x-0 inset-y-[-30%] h-[200%] -skew-y-12"
+          )}
+        />
       )}
 
       {/* Bold, primary-colored flickering background for neo-brutalism themes */}

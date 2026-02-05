@@ -34,6 +34,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const statCardBase =
   "animate-fade flex h-full flex-col justify-between rounded-xl border shadow-none opacity-0";
@@ -103,7 +104,7 @@ function StatCard({ accent, icon: Icon, description, title, footer, action, anim
 }
 
 // Show a section row of key metrics with accent colors and icons
-export function SectionTopCards() {
+export function SectionTopCards({ isProgressDone = false }) {
   const {
     parsedData,
     liftTypes,
@@ -134,133 +135,160 @@ export function SectionTopCards() {
 
   return (
     <div className="col-span-full grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-      <StatCard
-        accent="primary"
-        icon={Calendar}
-        description="Journey Length"
-        title={
-          parsedData && parsedData.length > 0
-            ? formatJourneyLength(parsedData[0].date)
-            : "Starting your journey"
-        }
-        footer={
-          <div className="line-clamp-1 text-muted-foreground">
-            {calculateTotalStats(liftTypes).totalReps.toLocaleString()} reps and{" "}
-            {calculateTotalStats(liftTypes).totalSets.toLocaleString()} sets lifted
-          </div>
-        }
-        animationDelay={0}
-      />
+      {!isProgressDone && <SectionTopCardsSkeleton />}
+      {isProgressDone && (
+        <>
+          <StatCard
+            accent="primary"
+            icon={Calendar}
+            description="Journey Length"
+            title={
+              parsedData && parsedData.length > 0
+                ? formatJourneyLength(parsedData[0].date)
+                : "Starting your journey"
+            }
+            footer={
+              <div className="line-clamp-1 text-muted-foreground">
+                {calculateTotalStats(liftTypes).totalReps.toLocaleString()} reps and{" "}
+                {calculateTotalStats(liftTypes).totalSets.toLocaleString()} sets lifted
+              </div>
+            }
+            animationDelay={0}
+          />
 
-      <StatCard
-        accent="amber"
-        icon={Trophy}
-        description="Most Recent PR Single"
-        title={
-          mostRecentPR
-            ? `${mostRecentPR.liftType} 1@${mostRecentPR.weight}${mostRecentPR.unitType}`
-            : "No PRs yet"
-        }
-        footer={
-          <div className="text-muted-foreground">
-            {mostRecentPR
-              ? `Performed on ${format(new Date(mostRecentPR.date), "d MMMM yyyy")}`
-              : ""}
-          </div>
-        }
-        animationDelay={250}
-      />
+          <StatCard
+            accent="amber"
+            icon={Trophy}
+            description="Most Recent PR Single"
+            title={
+              mostRecentPR
+                ? `${mostRecentPR.liftType} 1@${mostRecentPR.weight}${mostRecentPR.unitType}`
+                : "No PRs yet"
+            }
+            footer={
+              <div className="text-muted-foreground">
+                {mostRecentPR
+                  ? `Performed on ${format(new Date(mostRecentPR.date), "d MMMM yyyy")}`
+                  : ""}
+              </div>
+            }
+            animationDelay={250}
+          />
 
-      <StatCard
-        accent="emerald"
-        icon={Activity}
-        description="Session Momentum"
-        title={`${recentSessions} sessions`}
-        action={
-          percentageChange !== 0 ? (
-            <CardAction>
-              <span
-                className={`flex items-center text-sm font-normal ${
-                  percentageChange > 0 ? "text-emerald-600" : "text-red-500"
-                }`}
-              >
-                {percentageChange > 0 ? (
-                  <TrendingUp className="mr-1 h-4 w-4" />
-                ) : (
-                  <TrendingDown className="mr-1 h-4 w-4" />
-                )}
-                {Math.abs(percentageChange)}%
-              </span>
-            </CardAction>
-          ) : null
-        }
-        footer={
-          <>
-            <div className="text-muted-foreground">in the last 90 days</div>
-            <div className="text-muted-foreground">
-              ({previousSessions} sessions in previous 90 days)
-            </div>
-          </>
-        }
-        animationDelay={500}
-      />
-
-      <StatCard
-        accent="violet"
-        icon={Award}
-        description="In This Last 12 Months"
-        title={`${prsLast12Months.count} Personal Records`}
-        footer={
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="line-clamp-2 cursor-help text-muted-foreground">
-                  {prsLast12Months.count > 0
-                    ? `In the last 12 months you have PRs in ${prsLast12Months.liftTypes.join(", ")}`
-                    : "No PRs in the last 12 months"}
+          <StatCard
+            accent="emerald"
+            icon={Activity}
+            description="Session Momentum"
+            title={`${recentSessions} sessions`}
+            action={
+              percentageChange !== 0 ? (
+                <CardAction>
+                  <span
+                    className={`flex items-center text-sm font-normal ${
+                      percentageChange > 0 ? "text-emerald-600" : "text-red-500"
+                    }`}
+                  >
+                    {percentageChange > 0 ? (
+                      <TrendingUp className="mr-1 h-4 w-4" />
+                    ) : (
+                      <TrendingDown className="mr-1 h-4 w-4" />
+                    )}
+                    {Math.abs(percentageChange)}%
+                  </span>
+                </CardAction>
+              ) : null
+            }
+            footer={
+              <>
+                <div className="text-muted-foreground">in the last 90 days</div>
+                <div className="text-muted-foreground">
+                  ({previousSessions} sessions in previous 90 days)
                 </div>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-[300px]">
-                {prsLast12Months.count > 0
-                  ? `Full list of PRs in the last 12 months:\n${prsLast12Months.liftTypes.join("\n")}`
-                  : "No PRs in the last 12 months"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        }
-        animationDelay={750}
-      />
+              </>
+            }
+            animationDelay={500}
+          />
 
-      <StatCard
-        accent="orange"
-        icon={Flame}
-        description="Weekly consistency"
-        title={`${currentStreak} week${currentStreak === 1 ? "" : "s"} in a row`}
-        footer={
-          <>
-            <div className="text-muted-foreground">
-              {currentStreak > 0
-                ? `3+ sessions every week through last Sunday. Your best run: ${bestStreak} week${bestStreak === 1 ? "" : "s"}.`
-                : `Aim for 3+ sessions per week. Your best so far: ${bestStreak} week${bestStreak === 1 ? "" : "s"} in a row.`}
-            </div>
-            {sessionsNeededThisWeek > 0 && (
-              <div className="text-muted-foreground">
-                {sessionsNeededThisWeek === 1
-                  ? "One more session by Sunday night and you keep the streak going."
-                  : `${sessionsNeededThisWeek} more sessions by Sunday night and you're still on track.`}
-              </div>
-            )}
-            {sessionsNeededThisWeek === 0 && (sessionsThisWeek ?? 0) >= 3 && (
-              <div className="text-muted-foreground">
-                This week: 3+ sessions. You&apos;re on track.
-              </div>
-            )}
-          </>
-        }
-        animationDelay={1000}
-      />
+          <StatCard
+            accent="violet"
+            icon={Award}
+            description="In This Last 12 Months"
+            title={`${prsLast12Months.count} Personal Records`}
+            footer={
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="line-clamp-2 cursor-help text-muted-foreground">
+                      {prsLast12Months.count > 0
+                        ? `In the last 12 months you have PRs in ${prsLast12Months.liftTypes.join(", ")}`
+                        : "No PRs in the last 12 months"}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[300px]">
+                    {prsLast12Months.count > 0
+                      ? `Full list of PRs in the last 12 months:\n${prsLast12Months.liftTypes.join("\n")}`
+                      : "No PRs in the last 12 months"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            }
+            animationDelay={750}
+          />
+
+          <StatCard
+            accent="orange"
+            icon={Flame}
+            description="Weekly consistency"
+            title={`${currentStreak} week${currentStreak === 1 ? "" : "s"} in a row`}
+            footer={
+              <>
+                <div className="text-muted-foreground">
+                  {currentStreak > 0
+                    ? `3+ sessions every week through last Sunday. Your best run: ${bestStreak} week${bestStreak === 1 ? "" : "s"}.`
+                    : `Aim for 3+ sessions per week. Your best so far: ${bestStreak} week${bestStreak === 1 ? "" : "s"} in a row.`}
+                </div>
+                {sessionsNeededThisWeek > 0 && (
+                  <div className="text-muted-foreground">
+                    {sessionsNeededThisWeek === 1
+                      ? "One more session by Sunday night and you keep the streak going."
+                      : `${sessionsNeededThisWeek} more sessions by Sunday night and you're still on track.`
+                    }
+                  </div>
+                )}
+                {sessionsNeededThisWeek === 0 && (sessionsThisWeek ?? 0) >= 3 && (
+                  <div className="text-muted-foreground">
+                    This week: 3+ sessions. You&apos;re on track.
+                  </div>
+                )}
+              </>
+            }
+            animationDelay={1000}
+          />
+        </>
+      )}
     </div>
   );
+}
+
+function SectionTopCardsSkeleton() {
+  return Array.from({ length: 5 }).map((_, index) => (
+    <div
+      key={`section-top-card-skeleton-${index}`}
+      className="flex min-h-[260px] flex-col justify-between rounded-xl border border-border/60 bg-card/30 p-4 md:min-h-[280px]"
+    >
+      <div className="flex items-start gap-3">
+        <Skeleton className="h-10 w-10 rounded-lg" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-7 w-32" />
+        </div>
+      </div>
+      <div className="mt-4 space-y-2">
+        <Skeleton className="h-3 w-40" />
+        <Skeleton className="h-3 w-28" />
+      </div>
+    </div>
+  ));
 }
 
 function formatJourneyLength(startDate) {

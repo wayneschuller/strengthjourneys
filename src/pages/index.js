@@ -244,17 +244,16 @@ export default function Home() {
         ]}
       />
       <main className="mx-4 mb-4 md:mx-[5vw]">
-        {/* Fixed height hero section that turns into our onboarding section and then home dashboard */}
-        <div className="flex items-center justify-center transition-all duration-800 md:relative md:h-[500px]">
+        <div className="flex flex-col items-center justify-center transition-all duration-800">
           {showHeroSection ? (
             <div
-              className={`inset-0 h-full w-full transition-all duration-800 md:absolute ${isFadingHero ? "pointer-events-none -translate-y-6 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"} `}
+              className={`inset-0 h-full w-full transition-all duration-800 ${isFadingHero ? "pointer-events-none -translate-y-6 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"} `}
             >
               <HeroSection />
             </div>
           ) : (
             <div
-              className={`inset-0 h-full w-full transition-opacity duration-800 md:absolute ${showHeroSection ? "opacity-0" : "opacity-100"} `}
+              className={`inset-0 h-full w-full transition-opacity duration-800 ${showHeroSection ? "opacity-0" : "opacity-100"} `}
             >
               <HomeDashboard />
             </div>

@@ -9,6 +9,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { SectionTopCards } from "./section-top-cards";
 import { useLocalStorage } from "usehooks-ts";
 import { Progress } from "./ui/progress";
+import { Skeleton } from "./ui/skeleton";
 import {
   ChooseSheetInstructionsCard,
   OnBoardingDashboard,
@@ -45,14 +46,14 @@ export function HomeDashboard() {
         Welcome <div className="inline font-bold">{session.user.name}</div>
       </div>
       {!ssid && <OnBoardingDashboard />}
-      {ssid && rawRows && (
+      {ssid && (
         <RowProcessingIndicator
           rowCount={rawRows}
           isProgressDone={isProgressDone}
           setIsProgressDone={setIsProgressDone}
         />
       )}
-      {ssid && parsedData && isProgressDone && <SectionTopCards />}
+      {ssid && <SectionTopCards isProgressDone={isProgressDone} />}
     </div>
   );
 }
@@ -69,7 +70,12 @@ function RowProcessingIndicator({
     setAnimatedCount(0);
     setIsProgressDone(false);
 
-    if (!rowCount || rowCount <= 0) {
+    if (rowCount === null || rowCount === undefined) {
+      setIsProgressDone(false);
+      return;
+    }
+
+    if (rowCount <= 0) {
       setIsProgressDone(true);
       return;
     }
@@ -107,6 +113,15 @@ function RowProcessingIndicator({
   const dotColor = isProgressDone
     ? "text-green-500"
     : "text-amber-400 animate-pulse"; // amber/yellow while processing
+
+  if (rowCount === null || rowCount === undefined) {
+    return (
+      <div className="flex flex-col items-center py-4">
+        <Skeleton className="mb-2 h-2 w-4/5 md:w-3/5" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center py-4">

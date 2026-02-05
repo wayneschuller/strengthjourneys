@@ -304,6 +304,7 @@ function BigFourLiftCards() {
     initializeWithValue: false,
   });
   const { status: authStatus } = useSession();
+  const [statsVisible, setStatsVisible] = useState(false);
 
   const bigFourDiagrams = {
     "Back Squat": "/back_squat.svg",
@@ -360,6 +361,18 @@ function BigFourLiftCards() {
     };
   };
 
+  // Let stats gently fade in after the hero/home slider transition.
+  // Hard-coded delay to line up with the 800ms hero animation.
+  useEffect(() => {
+    if (authStatus === "authenticated" && topLiftsByTypeAndReps) {
+      const timeoutId = setTimeout(() => {
+        setStatsVisible(true);
+      }, 1400);
+      return () => clearTimeout(timeoutId);
+    }
+    setStatsVisible(false);
+  }, [authStatus, topLiftsByTypeAndReps]);
+
   return (
     <div className="grid grid-cols-2 gap-6 md:grid-cols-2 lg:grid-cols-4">
       {lifts.map((lift) => {
@@ -376,9 +389,25 @@ function BigFourLiftCards() {
             <Link href={`/${lift.slug}`}>
               <CardHeader className="min-h-28">
                 <CardTitle>{lift.liftType}</CardTitle>
-                <CardDescription>
-                  {isStatsMode && stats ? (
-                    <>
+                <div className="relative min-h-8">
+                  {/* Base description (for guests / non-stats mode). Hidden visually when stats overlay is active. */}
+                  <CardDescription
+                    className={
+                      isStatsMode
+                        ? "h-8 opacity-0 transition-opacity duration-300"
+                        : "h-8"
+                    }
+                  >
+                    {lift.liftDescription}
+                  </CardDescription>
+
+                  {/* Stats overlay that fades in on top for authenticated users with data */}
+                  {isStatsMode && stats && (
+                    <div
+                      className={`pointer-events-none absolute inset-0 flex flex-col justify-center text-sm text-muted-foreground transition-opacity duration-500 ${
+                        statsVisible ? "opacity-100" : "opacity-0"
+                      }`}
+                    >
                       {(stats.totalSets > 0 || stats.totalReps > 0) && (
                         <span>
                           {stats.totalSets.toLocaleString()} sets ·{" "}
@@ -394,11 +423,9 @@ function BigFourLiftCards() {
                           )}
                         </span>
                       )}
-                    </>
-                  ) : (
-                    lift.liftDescription
+                    </div>
                   )}
-                </CardDescription>
+                </div>
               </CardHeader>
               <CardContent className="flex justify-center p-2">
                 <img

@@ -1,6 +1,13 @@
 "use client";
 
-import { useRef, useState, useEffect, useContext } from "react";
+import {
+  useRef,
+  useState,
+  useEffect,
+  useContext,
+  useMemo,
+  useDeferredValue,
+} from "react";
 import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
@@ -59,16 +66,13 @@ export function SessionAnalysisCard({
 
   const sessionRatingRef = useRef(null); // Used to avoid randomised rating changes on rerenders
 
+  const deferredHighlightDate = useDeferredValue(highlightDate);
+
   useEffect(() => {
     sessionRatingRef.current = null; // Reset the session rating when the highlight date changes
-  }, [highlightDate]);
+  }, [deferredHighlightDate]);
 
-  // FIXME: it would be better to have the card always render and skeleton inside it
-  if (!parsedData) {
-    return <Skeleton className="h-[50vh]" />;
-  }
-
-  let sessionDate = highlightDate;
+  let sessionDate = deferredHighlightDate;
   const isFirstDate =
     parsedData?.length > 0 && sessionDate === parsedData[0]?.date;
   let isLastDate =
@@ -88,12 +92,21 @@ export function SessionAnalysisCard({
     isLastDate = true;
   }
 
-  const analyzedSessionLifts = getAnalyzedSessionLifts(
+  const analyzedSessionLifts = useMemo(() => {
+    if (!sessionDate || !parsedData) return null;
+
+    return getAnalyzedSessionLifts(
+      sessionDate,
+      parsedData,
+      topLiftsByTypeAndReps,
+      topLiftsByTypeAndRepsLast12Months,
+    );
+  }, [
     sessionDate,
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
-  );
+  ]);
 
   // devLog(analyzedSessionLifts);
 
@@ -102,44 +115,45 @@ export function SessionAnalysisCard({
   }
 
   // Precompute per-lift tonnage stats for this session vs last year
-  const perLiftTonnageStats =
-    analyzedSessionLifts && parsedData && sessionDate
-      ? Object.entries(analyzedSessionLifts).reduce(
-          (acc, [liftType, lifts]) => {
-            const currentLiftTonnage = lifts.reduce(
-              (sum, lift) => sum + (lift.weight ?? 0) * (lift.reps ?? 0),
-              0,
-            );
+  const perLiftTonnageStats = useMemo(() => {
+    if (!analyzedSessionLifts || !parsedData || !sessionDate) return {};
 
-            const firstLift = lifts?.[0];
-            const unitTypeForLift = firstLift?.unitType ?? "lb";
+    return Object.entries(analyzedSessionLifts).reduce(
+      (acc, [liftType, lifts]) => {
+        const currentLiftTonnage = lifts.reduce(
+          (sum, lift) => sum + (lift.weight ?? 0) * (lift.reps ?? 0),
+          0,
+        );
 
-            const { average: avgLiftTonnage, sessionCount } =
-              getAverageLiftSessionTonnage(
-                parsedData,
-                sessionDate,
-                liftType,
-                unitTypeForLift,
-              );
+        const firstLift = lifts?.[0];
+        const unitTypeForLift = firstLift?.unitType ?? "lb";
 
-            const pctDiff =
-              avgLiftTonnage > 0
-                ? ((currentLiftTonnage - avgLiftTonnage) / avgLiftTonnage) * 100
-                : null;
+        const { average: avgLiftTonnage, sessionCount } =
+          getAverageLiftSessionTonnage(
+            parsedData,
+            sessionDate,
+            liftType,
+            unitTypeForLift,
+          );
 
-            acc[liftType] = {
-              currentLiftTonnage,
-              avgLiftTonnage,
-              sessionCount,
-              pctDiff,
-              unitType: unitTypeForLift,
-            };
+        const pctDiff =
+          avgLiftTonnage > 0
+            ? ((currentLiftTonnage - avgLiftTonnage) / avgLiftTonnage) * 100
+            : null;
 
-            return acc;
-          },
-          {},
-        )
-      : {};
+        acc[liftType] = {
+          currentLiftTonnage,
+          avgLiftTonnage,
+          sessionCount,
+          pctDiff,
+          unitType: unitTypeForLift,
+        };
+
+        return acc;
+      },
+      {},
+    );
+  }, [analyzedSessionLifts, parsedData, sessionDate]);
 
   const prevDate = () => {
     if (!parsedData || !sessionDate) return;

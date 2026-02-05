@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardFooter,
   CardTitle,
+  CardAction,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -282,41 +283,22 @@ export function BigFourLiftCards({ lifts }) {
         return (
           <Card
             key={lift.slug}
-            className="group ring-ring shadow-lg ring-0 hover:ring-1"
+            className="group relative ring-ring shadow-lg ring-0 hover:ring-1"
           >
             <Link href={`/${lift.slug}`}>
-              <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
-                <CardTitle>{lift.liftType}</CardTitle>
-                {isStatsMode && badges.length > 0 && (
-                  <div
-                    className={`flex flex-col items-end gap-1 text-xs transition-opacity duration-500 ${
-                      statsVisible ? "opacity-100" : "opacity-0"
-                    }`}
-                  >
-                    {badges.map((badge) => (
-                      <Badge
-                        key={badge.type}
-                        variant={badge.variant}
-                        className="pointer-events-none"
-                      >
-                        {badge.label}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+              <CardHeader className="pb-2">
+                <CardTitle className="pr-20">{lift.liftType}</CardTitle>
               </CardHeader>
               <CardContent className="relative px-6 pt-0 pb-2">
                 <div className="relative h-16">
                   {/* Base description (for guests / non-stats mode). Hidden visually when stats overlay is active. */}
-                  <CardDescription
-                    className={
-                      isStatsMode
-                        ? "opacity-0 transition-opacity duration-300"
-                        : "opacity-100"
-                    }
+                  <div
+                    className={`text-sm text-muted-foreground transition-opacity duration-300 ${
+                      isStatsMode ? "opacity-0" : "opacity-100"
+                    }`}
                   >
                     {lift.liftDescription}
-                  </CardDescription>
+                  </div>
 
                   {/* Stats overlay that fades in on top for authenticated users with data */}
                   {isStatsMode && stats && (
@@ -352,6 +334,23 @@ export function BigFourLiftCards({ lifts }) {
                   className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
                 />
               </CardFooter>
+              {isStatsMode && badges.length > 0 && (
+                <CardAction
+                  className={`flex flex-col items-end gap-1 text-xs transition-opacity duration-500 ${
+                    statsVisible ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  {badges.map((badge) => (
+                    <Badge
+                      key={badge.type}
+                      variant={badge.variant}
+                      className="pointer-events-none"
+                    >
+                      {badge.label}
+                    </Badge>
+                  ))}
+                </CardAction>
+              )}
             </Link>
           </Card>
         );

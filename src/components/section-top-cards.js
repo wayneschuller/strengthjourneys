@@ -2,7 +2,6 @@
 
 import {
   Card,
-  CardContent,
   CardFooter,
   CardDescription,
   CardHeader,
@@ -11,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { useMemo } from "react";
 import { devLog } from "@/lib/processing-utils";
-import { useSession } from "next-auth/react";
 import {
   format,
   parseISO,
@@ -36,6 +34,74 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+const statCardBase =
+  "animate-fade flex h-full flex-col justify-between rounded-xl border shadow-none opacity-0";
+
+const ACCENTS = {
+  primary: {
+    card: "border-l-primary bg-primary/5",
+    iconBg: "bg-primary/10",
+    icon: "text-primary",
+  },
+  amber: {
+    card: "border-l-amber-500 bg-amber-500/5",
+    iconBg: "bg-amber-500/10",
+    icon: "text-amber-500",
+  },
+  emerald: {
+    card: "border-l-emerald-500 bg-emerald-500/5",
+    iconBg: "bg-emerald-500/10",
+    icon: "text-emerald-500",
+  },
+  violet: {
+    card: "border-l-violet-500 bg-violet-500/5",
+    iconBg: "bg-violet-500/10",
+    icon: "text-violet-500",
+  },
+  orange: {
+    card: "border-l-orange-500 bg-orange-500/5",
+    iconBg: "bg-orange-500/10",
+    icon: "text-orange-500",
+  },
+};
+
+/**
+ * Reusable stat card with icon, description, title, and footer.
+ * @param {Object} props
+ * @param {"primary"|"amber"|"emerald"|"violet"|"orange"} props.accent - Accent preset key
+ * @param {React.Component} props.icon - Lucide icon component
+ * @param {string} props.description - CardDescription text
+ * @param {React.ReactNode} props.title - CardTitle content
+ * @param {React.ReactNode} props.footer - CardFooter content
+ * @param {React.ReactNode} [props.action] - Optional CardAction (e.g. percentage badge)
+ * @param {number} props.animationDelay - Delay in ms for animation
+ */
+function StatCard({ accent, icon: Icon, description, title, footer, action, animationDelay }) {
+  const { card, iconBg, icon } = ACCENTS[accent] ?? ACCENTS.primary;
+  return (
+    <Card
+      className={`${statCardBase} relative border-l-4 ${card} [animation-delay:${animationDelay}ms]`}
+    >
+      {action}
+      <CardHeader className="flex flex-row items-start gap-3 p-4">
+        <div className={`rounded-lg p-2 ${iconBg}`}>
+          <Icon className={`h-5 w-5 ${icon}`} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <CardDescription>{description}</CardDescription>
+          <CardTitle className="mt-1 min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
+            {title}
+          </CardTitle>
+        </div>
+      </CardHeader>
+      <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 pt-0 text-sm">
+        {footer}
+      </CardFooter>
+    </Card>
+  );
+}
+
 // Show a section row of key metrics with accent colors and icons
 export function SectionTopCards() {
   const {
@@ -44,7 +110,6 @@ export function SectionTopCards() {
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
-  const { status: authStatus } = useSession();
 
   // Find the most recent PR single from top 5 most frequent lifts
   const mostRecentPR = findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes);
@@ -67,114 +132,85 @@ export function SectionTopCards() {
   );
   const sessionsNeededThisWeek = Math.max(0, 3 - (sessionsThisWeek ?? 0));
 
-  const statCardBase =
-    "animate-fade flex h-full flex-col justify-between rounded-xl border shadow-none opacity-0";
-
   return (
     <div className="col-span-full grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-      <Card
-        className={`${statCardBase} border-l-4 border-l-primary bg-primary/5 [animation-delay:0ms]`}
-      >
-        <CardHeader className="flex flex-row items-start gap-3 p-4">
-          <div className="rounded-lg bg-primary/10 p-2">
-            <Calendar className="h-5 w-5 text-primary" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <CardDescription>Journey Length</CardDescription>
-            <CardTitle className="mt-1 min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
-              {parsedData && parsedData.length > 0
-                ? formatJourneyLength(parsedData[0].date)
-                : "Starting your journey"}
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 pt-0 text-sm">
+      <StatCard
+        accent="primary"
+        icon={Calendar}
+        description="Journey Length"
+        title={
+          parsedData && parsedData.length > 0
+            ? formatJourneyLength(parsedData[0].date)
+            : "Starting your journey"
+        }
+        footer={
           <div className="line-clamp-1 text-muted-foreground">
             {calculateTotalStats(liftTypes).totalReps.toLocaleString()} reps and{" "}
-            {calculateTotalStats(liftTypes).totalSets.toLocaleString()} sets
-            lifted
+            {calculateTotalStats(liftTypes).totalSets.toLocaleString()} sets lifted
           </div>
-        </CardFooter>
-      </Card>
+        }
+        animationDelay={0}
+      />
 
-      <Card
-        className={`${statCardBase} border-l-4 border-l-amber-500 bg-amber-500/5 [animation-delay:250ms]`}
-      >
-        <CardHeader className="flex flex-row items-start gap-3 p-4">
-          <div className="rounded-lg bg-amber-500/10 p-2">
-            <Trophy className="h-5 w-5 text-amber-500" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <CardDescription>Most Recent PR Single</CardDescription>
-            <CardTitle className="mt-1 min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
-              {mostRecentPR
-                ? `${mostRecentPR.liftType} 1@${mostRecentPR.weight}${mostRecentPR.unitType}`
-                : "No PRs yet"}
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 pt-0 text-sm">
+      <StatCard
+        accent="amber"
+        icon={Trophy}
+        description="Most Recent PR Single"
+        title={
+          mostRecentPR
+            ? `${mostRecentPR.liftType} 1@${mostRecentPR.weight}${mostRecentPR.unitType}`
+            : "No PRs yet"
+        }
+        footer={
           <div className="text-muted-foreground">
             {mostRecentPR
               ? `Performed on ${format(new Date(mostRecentPR.date), "d MMMM yyyy")}`
               : ""}
           </div>
-        </CardFooter>
-      </Card>
+        }
+        animationDelay={250}
+      />
 
-      <Card
-        className={`${statCardBase} relative border-l-4 border-l-emerald-500 bg-emerald-500/5 [animation-delay:500ms]`}
-      >
-        {percentageChange !== 0 && (
-          <CardAction>
-            <span
-              className={`flex items-center text-sm font-normal ${
-                percentageChange > 0 ? "text-emerald-600" : "text-red-500"
-              }`}
-            >
-              {percentageChange > 0 ? (
-                <TrendingUp className="mr-1 h-4 w-4" />
-              ) : (
-                <TrendingDown className="mr-1 h-4 w-4" />
-              )}
-              {Math.abs(percentageChange)}%
-            </span>
-          </CardAction>
-        )}
-        <CardHeader className="flex flex-row items-start gap-3 p-4">
-          <div className="rounded-lg bg-emerald-500/10 p-2">
-            <Activity className="h-5 w-5 text-emerald-500" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <CardDescription>Session Momentum</CardDescription>
-            <CardTitle className="mt-1 min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
-              {recentSessions} sessions
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 pt-0 text-sm">
-          <div className="text-muted-foreground">in the last 90 days</div>
-          <div className="text-muted-foreground">
-            ({previousSessions} sessions in previous 90 days)
-          </div>
-        </CardFooter>
-      </Card>
+      <StatCard
+        accent="emerald"
+        icon={Activity}
+        description="Session Momentum"
+        title={`${recentSessions} sessions`}
+        action={
+          percentageChange !== 0 ? (
+            <CardAction>
+              <span
+                className={`flex items-center text-sm font-normal ${
+                  percentageChange > 0 ? "text-emerald-600" : "text-red-500"
+                }`}
+              >
+                {percentageChange > 0 ? (
+                  <TrendingUp className="mr-1 h-4 w-4" />
+                ) : (
+                  <TrendingDown className="mr-1 h-4 w-4" />
+                )}
+                {Math.abs(percentageChange)}%
+              </span>
+            </CardAction>
+          ) : null
+        }
+        footer={
+          <>
+            <div className="text-muted-foreground">in the last 90 days</div>
+            <div className="text-muted-foreground">
+              ({previousSessions} sessions in previous 90 days)
+            </div>
+          </>
+        }
+        animationDelay={500}
+      />
 
-      <Card
-        className={`${statCardBase} border-l-4 border-l-violet-500 bg-violet-500/5 [animation-delay:750ms]`}
-      >
-        <CardHeader className="flex flex-row items-start gap-3 p-4">
-          <div className="rounded-lg bg-violet-500/10 p-2">
-            <Award className="h-5 w-5 text-violet-500" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <CardDescription>In This Last 12 Months</CardDescription>
-            <CardTitle className="mt-1 min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
-              {prsLast12Months.count} Personal Records
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 pt-0 text-sm">
+      <StatCard
+        accent="violet"
+        icon={Award}
+        description="In This Last 12 Months"
+        title={`${prsLast12Months.count} Personal Records`}
+        footer={
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -191,43 +227,38 @@ export function SectionTopCards() {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        </CardFooter>
-      </Card>
+        }
+        animationDelay={750}
+      />
 
-      <Card
-        className={`${statCardBase} border-l-4 border-l-orange-500 bg-orange-500/5 [animation-delay:1000ms]`}
-      >
-        <CardHeader className="flex flex-row items-start gap-3 p-4">
-          <div className="rounded-lg bg-orange-500/10 p-2">
-            <Flame className="h-5 w-5 text-orange-500" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <CardDescription>Weekly consistency</CardDescription>
-            <CardTitle className="mt-1 min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
-              {currentStreak} week{currentStreak === 1 ? "" : "s"} in a row
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 pt-0 text-sm">
-          <div className="text-muted-foreground">
-            {currentStreak > 0
-              ? `3+ sessions every week through last Sunday. Your best run: ${bestStreak} week${bestStreak === 1 ? "" : "s"}.`
-              : `Aim for 3+ sessions per week. Your best so far: ${bestStreak} week${bestStreak === 1 ? "" : "s"} in a row.`}
-          </div>
-          {sessionsNeededThisWeek > 0 && (
+      <StatCard
+        accent="orange"
+        icon={Flame}
+        description="Weekly consistency"
+        title={`${currentStreak} week${currentStreak === 1 ? "" : "s"} in a row`}
+        footer={
+          <>
             <div className="text-muted-foreground">
-              {sessionsNeededThisWeek === 1
-                ? "One more session by Sunday night and you keep the streak going."
-                : `${sessionsNeededThisWeek} more sessions by Sunday night and you're still on track.`}
+              {currentStreak > 0
+                ? `3+ sessions every week through last Sunday. Your best run: ${bestStreak} week${bestStreak === 1 ? "" : "s"}.`
+                : `Aim for 3+ sessions per week. Your best so far: ${bestStreak} week${bestStreak === 1 ? "" : "s"} in a row.`}
             </div>
-          )}
-          {sessionsNeededThisWeek === 0 && (sessionsThisWeek ?? 0) >= 3 && (
-            <div className="text-muted-foreground">
-              This week: 3+ sessions. You&apos;re on track.
-            </div>
-          )}
-        </CardFooter>
-      </Card>
+            {sessionsNeededThisWeek > 0 && (
+              <div className="text-muted-foreground">
+                {sessionsNeededThisWeek === 1
+                  ? "One more session by Sunday night and you keep the streak going."
+                  : `${sessionsNeededThisWeek} more sessions by Sunday night and you're still on track.`}
+              </div>
+            )}
+            {sessionsNeededThisWeek === 0 && (sessionsThisWeek ?? 0) >= 3 && (
+              <div className="text-muted-foreground">
+                This week: 3+ sessions. You&apos;re on track.
+              </div>
+            )}
+          </>
+        }
+        animationDelay={1000}
+      />
     </div>
   );
 }

@@ -9,20 +9,178 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { getAverageLiftSessionTonnage } from "@/lib/processing-utils";
 
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
+  CardFooter,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const bigFourDiagrams = {
   "Back Squat": "/back_squat.svg",
   "Bench Press": "/bench_press.svg",
   Deadlift: "/deadlift.svg",
   "Strict Press": "/strict_press.svg",
+};
+
+const RECENT_PR_WINDOW_DAYS = 60;
+
+const computeLiftTonnageMeta = (parsedData, lifts) => {
+  if (!parsedData || !parsedData.length || !lifts || !lifts.length) {
+    return {
+      liftTonnageMap: null,
+      averageTonnage: 0,
+      favoriteLiftType: null,
+      leastFavoriteLiftType: null,
+    };
+  }
+
+  const endDate = parsedData[parsedData.length - 1]?.date;
+  if (!endDate) {
+    return {
+      liftTonnageMap: null,
+      averageTonnage: 0,
+      favoriteLiftType: null,
+      leastFavoriteLiftType: null,
+    };
+  }
+
+  const liftTonnageMap = {};
+
+  // Compute per-lift average session tonnage over the rolling year window
+  lifts.forEach((lift) => {
+    const liftType = lift.liftType;
+    if (!liftType || liftTonnageMap[liftType]) return; // skip duplicates
+
+    const { average } = getAverageLiftSessionTonnage(
+      parsedData,
+      endDate,
+      liftType,
+    );
+
+    liftTonnageMap[liftType] = { average };
+  });
+
+  const tonnageValues = Object.values(liftTonnageMap).map(
+    (entry) => entry.average ?? 0,
+  );
+
+  if (!tonnageValues.length) {
+    return {
+      liftTonnageMap,
+      averageTonnage: 0,
+      favoriteLiftType: null,
+      leastFavoriteLiftType: null,
+    };
+  }
+
+  const averageTonnage =
+    tonnageValues.reduce((sum, value) => sum + value, 0) / tonnageValues.length;
+
+  let favoriteLiftType = null;
+  let leastFavoriteLiftType = null;
+  let maxTonnage = -Infinity;
+  let minTonnage = Infinity;
+
+  Object.entries(liftTonnageMap).forEach(([liftType, { average }]) => {
+    const value = average ?? 0;
+    if (value > maxTonnage) {
+      maxTonnage = value;
+      favoriteLiftType = liftType;
+    }
+    if (value < minTonnage) {
+      minTonnage = value;
+      leastFavoriteLiftType = liftType;
+    }
+  });
+
+  return {
+    liftTonnageMap,
+    averageTonnage,
+    favoriteLiftType,
+    leastFavoriteLiftType,
+  };
+};
+
+const hasRecentPRForLiftType = (liftType, topLiftsByTypeAndReps) => {
+  if (!topLiftsByTypeAndReps || !topLiftsByTypeAndReps[liftType]) return false;
+
+  const today = new Date();
+  const cutoff = new Date(today);
+  cutoff.setDate(today.getDate() - RECENT_PR_WINDOW_DAYS);
+  const cutoffStr = cutoff.toISOString().slice(0, 10); // YYYY-MM-DD
+
+  const repRanges = topLiftsByTypeAndReps[liftType];
+  for (let repsIndex = 0; repsIndex < repRanges.length; repsIndex++) {
+    const repArray = repRanges[repsIndex];
+    if (!repArray || !repArray.length) continue;
+
+    for (let i = 0; i < repArray.length; i++) {
+      const pr = repArray[i];
+      if (pr?.date && pr.date >= cutoffStr) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
+const buildBadgesForLiftType = (
+  liftType,
+  {
+    topLiftsByTypeAndReps,
+    liftTonnageMap,
+    averageTonnage,
+    favoriteLiftType,
+    leastFavoriteLiftType,
+  },
+) => {
+  const badges = [];
+
+  if (hasRecentPRForLiftType(liftType, topLiftsByTypeAndReps)) {
+    badges.push({
+      type: "recent-pr",
+      label: "🔥 Recent PR",
+      variant: "secondary",
+    });
+  }
+
+  const tonnageInfo = liftTonnageMap?.[liftType];
+  if (
+    tonnageInfo &&
+    tonnageInfo.average > 0 &&
+    tonnageInfo.average > averageTonnage
+  ) {
+    badges.push({
+      type: "workhorse",
+      label: "🛠 Workhorse",
+      variant: "outline",
+    });
+  }
+
+  if (favoriteLiftType && liftType === favoriteLiftType) {
+    badges.push({
+      type: "favorite",
+      label: "⭐ Favourite of the four",
+      variant: "secondary",
+    });
+  }
+
+  if (leastFavoriteLiftType && liftType === leastFavoriteLiftType) {
+    badges.push({
+      type: "least-favorite",
+      label: "💩 Least favourite",
+      variant: "destructive",
+    });
+  }
+
+  return badges;
 };
 
 const formatLiftDate = (dateStr) => {
@@ -37,7 +195,8 @@ const formatLiftDate = (dateStr) => {
 };
 
 export function BigFourLiftCards({ lifts }) {
-  const { topLiftsByTypeAndReps, liftTypes } = useUserLiftingData() || {};
+  const { topLiftsByTypeAndReps, liftTypes, parsedData } =
+    useUserLiftingData() || {};
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
@@ -93,6 +252,13 @@ export function BigFourLiftCards({ lifts }) {
     setStatsVisible(false);
   }, [authStatus, topLiftsByTypeAndReps]);
 
+  const {
+    liftTonnageMap,
+    averageTonnage,
+    favoriteLiftType,
+    leastFavoriteLiftType,
+  } = computeLiftTonnageMeta(parsedData, lifts);
+
   return (
     <div className="grid grid-cols-2 gap-6 md:grid-cols-2 lg:grid-cols-4">
       {lifts.map((lift) => {
@@ -101,21 +267,51 @@ export function BigFourLiftCards({ lifts }) {
           stats && (stats.totalSets > 0 || stats.totalReps > 0 || stats.bestLift);
         const isStatsMode = authStatus === "authenticated" && hasAnyData;
 
+        const badges =
+          isStatsMode && topLiftsByTypeAndReps
+            ? buildBadgesForLiftType(lift.liftType, {
+                topLiftsByTypeAndReps,
+                liftTonnageMap,
+                averageTonnage,
+                favoriteLiftType,
+                leastFavoriteLiftType,
+              })
+            : [];
+
         return (
           <Card
             key={lift.slug}
             className="group shadow-lg ring-0 ring-ring hover:ring-1"
           >
             <Link href={`/${lift.slug}`}>
-              <CardHeader className="min-h-28">
+              <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
                 <CardTitle>{lift.liftType}</CardTitle>
-                <div className="relative min-h-8">
+                {isStatsMode && badges.length > 0 && (
+                  <div
+                    className={`flex flex-col items-end gap-1 text-xs transition-opacity duration-500 ${
+                      statsVisible ? "opacity-100" : "opacity-0"
+                    }`}
+                  >
+                    {badges.map((badge) => (
+                      <Badge
+                        key={badge.type}
+                        variant={badge.variant}
+                        className="pointer-events-none"
+                      >
+                        {badge.label}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent className="relative px-6 pb-2 pt-0">
+                <div className="relative min-h-10">
                   {/* Base description (for guests / non-stats mode). Hidden visually when stats overlay is active. */}
                   <CardDescription
                     className={
                       isStatsMode
-                        ? "h-8 opacity-0 transition-opacity duration-300"
-                        : "h-8"
+                        ? "opacity-0 transition-opacity duration-300"
+                        : "opacity-100"
                     }
                   >
                     {lift.liftDescription}
@@ -146,14 +342,14 @@ export function BigFourLiftCards({ lifts }) {
                     </div>
                   )}
                 </div>
-              </CardHeader>
-              <CardContent className="flex justify-center p-2">
+              </CardContent>
+              <CardFooter className="flex justify-center p-2 pt-0">
                 <img
                   src={bigFourDiagrams[lift.liftType]}
                   alt={`${lift.liftType} diagram`}
                   className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
                 />
-              </CardContent>
+              </CardFooter>
             </Link>
           </Card>
         );

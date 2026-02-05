@@ -89,7 +89,7 @@ function TonnageVisualizerMain({ relatedArticles }) {
   });
   const [highlightDate, setHighlightDate] = useState(null);
 
-  if (!isLoading && authStatus === "authenticated" && !ssid)
+  if (!isLoading && authStatus === "authenticated" && ssid === null)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
         <ChooseSheetInstructionsCard session={session} />

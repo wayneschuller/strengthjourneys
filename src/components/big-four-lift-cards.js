@@ -29,6 +29,8 @@ const bigFourDiagrams = {
   "Strict Press": "/strict_press.svg",
 };
 
+const STATS_STAGGER_MS = 360;
+
 const RECENT_PR_WINDOW_DAYS = 60;
 
 const computeLiftTonnageMeta = (parsedData, lifts) => {
@@ -195,14 +197,14 @@ const formatLiftDate = (dateStr) => {
   });
 };
 
-export function BigFourLiftCards({ lifts }) {
+export function BigFourLiftCards({ lifts, animated = true }) {
   const { topLiftsByTypeAndReps, liftTypes, parsedData } =
     useUserLiftingData() || {};
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
   const { status: authStatus } = useSession();
-  const [statsVisible, setStatsVisible] = useState(false);
+  const [statsVisibleCount, setStatsVisibleCount] = useState(0);
 
   const getStatsForLift = (liftType) => {
     if (!topLiftsByTypeAndReps || !topLiftsByTypeAndReps[liftType]) return null;
@@ -241,17 +243,25 @@ export function BigFourLiftCards({ lifts }) {
     };
   };
 
-  // Let stats gently fade in after the hero/home slider transition.
-  // Hard-coded delay to line up with the 800ms hero animation.
+  // Stagger the description→stats fade per card, left to right.
+  // Tied to the `animated` flag from the home page so the sequence
+  // starts after the dashboard intro.
   useEffect(() => {
-    if (authStatus === "authenticated" && topLiftsByTypeAndReps) {
-      const timeoutId = setTimeout(() => {
-        setStatsVisible(true);
-      }, 1400);
-      return () => clearTimeout(timeoutId);
+    if (
+      authStatus === "authenticated" &&
+      topLiftsByTypeAndReps &&
+      animated
+    ) {
+      const timeouts = [0, 1, 2, 3].map((i) =>
+        setTimeout(
+          () => setStatsVisibleCount((c) => Math.max(c, i + 1)),
+          i * STATS_STAGGER_MS,
+        ),
+      );
+      return () => timeouts.forEach(clearTimeout);
     }
-    setStatsVisible(false);
-  }, [authStatus, topLiftsByTypeAndReps]);
+    setStatsVisibleCount(0);
+  }, [authStatus, topLiftsByTypeAndReps, animated]);
 
   const {
     liftTonnageMap,
@@ -262,7 +272,7 @@ export function BigFourLiftCards({ lifts }) {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-4">
-      {lifts.map((lift) => {
+      {lifts.map((lift, index) => {
         const stats = getStatsForLift(lift.liftType);
         const hasAnyData =
           stats &&
@@ -280,6 +290,8 @@ export function BigFourLiftCards({ lifts }) {
               })
             : [];
 
+        const showStats = statsVisibleCount > index;
+
         return (
           <Card
             key={lift.slug}
@@ -291,10 +303,10 @@ export function BigFourLiftCards({ lifts }) {
               </CardHeader>
               <CardContent className="relative px-6 pt-0 pb-2">
                 <div className="relative h-16">
-                  {/* Base description (for guests / non-stats mode). Hidden visually when stats overlay is active. */}
+                  {/* Base description. Fades out per card when that card's stats fade in. */}
                   <div
                     className={`text-sm text-muted-foreground transition-opacity duration-300 ${
-                      isStatsMode ? "opacity-0" : "opacity-100"
+                      isStatsMode && showStats ? "opacity-0" : "opacity-100"
                     }`}
                   >
                     {lift.liftDescription}
@@ -303,8 +315,8 @@ export function BigFourLiftCards({ lifts }) {
                   {/* Stats overlay that fades in on top for authenticated users with data */}
                   {isStatsMode && stats && (
                     <div
-                      className={`text-muted-foreground pointer-events-none absolute inset-0 flex flex-col justify-center text-sm transition-opacity duration-500 ${
-                        statsVisible ? "opacity-100" : "opacity-0"
+                      className={`text-muted-foreground pointer-events-none absolute inset-0 flex flex-col justify-center text-sm transition-opacity duration-300 ${
+                        showStats ? "opacity-100" : "opacity-0"
                       }`}
                     >
                       {(stats.totalSets > 0 || stats.totalReps > 0) && (
@@ -336,8 +348,8 @@ export function BigFourLiftCards({ lifts }) {
               </CardFooter>
               {isStatsMode && badges.length > 0 && (
                 <CardAction
-                  className={`flex flex-col items-end gap-1 text-xs transition-opacity duration-500 ${
-                    statsVisible ? "opacity-100" : "opacity-0"
+                  className={`flex flex-col items-end gap-1 text-xs transition-opacity duration-300 ${
+                    showStats ? "opacity-100" : "opacity-0"
                   }`}
                 >
                   {badges.map((badge) => (

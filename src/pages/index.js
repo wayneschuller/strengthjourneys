@@ -186,6 +186,7 @@ export default function Home() {
   const { data: session, status: authStatus } = useSession();
   const [showHeroSection, setShowHeroSection] = useState(true); // Ensure static generation of Hero Section
   const [isFadingHero, setIsFadingHero] = useState(false);
+  const [bigFourAnimated, setBigFourAnimated] = useState(false);
 
   // When user is authenticated, stop showing the Hero section
   useEffect(() => {
@@ -194,6 +195,22 @@ export default function Home() {
       setTimeout(() => setShowHeroSection(false), 800); // <-- match duration below
     }
   }, [authStatus, showHeroSection, isFadingHero]);
+
+  // Delay the Big Four lift cards entrance until after the home dashboard intro
+  // (hero fade + row processing + top stat cards). For guests, show them immediately.
+  useEffect(() => {
+    if (authStatus === "authenticated") {
+      const totalIntroMs = 2500;
+      const timeoutId = setTimeout(() => {
+        setBigFourAnimated(true);
+      }, totalIntroMs);
+      return () => clearTimeout(timeoutId);
+    }
+
+    if (authStatus === "unauthenticated") {
+      setBigFourAnimated(true);
+    }
+  }, [authStatus]);
 
   return (
     <>
@@ -228,31 +245,31 @@ export default function Home() {
       />
       <main className="mx-4 mb-4 md:mx-[5vw]">
         {/* Fixed height hero section that turns into our onboarding section and then home dashboard */}
-        <div className="duration-800 flex items-center justify-center transition-all md:relative md:h-[500px]">
+        <div className="flex items-center justify-center transition-all duration-800 md:relative md:h-[500px]">
           {showHeroSection ? (
             <div
-              className={`duration-800 inset-0 h-full w-full transition-all md:absolute ${isFadingHero ? "pointer-events-none -translate-y-6 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"} `}
+              className={`inset-0 h-full w-full transition-all duration-800 md:absolute ${isFadingHero ? "pointer-events-none -translate-y-6 scale-95 opacity-0" : "translate-y-0 scale-100 opacity-100"} `}
             >
               <HeroSection />
             </div>
           ) : (
             <div
-              className={`duration-800 inset-0 h-full w-full transition-opacity md:absolute ${showHeroSection ? "opacity-0" : "opacity-100"} `}
+              className={`inset-0 h-full w-full transition-opacity duration-800 md:absolute ${showHeroSection ? "opacity-0" : "opacity-100"} `}
             >
               <HomeDashboard />
             </div>
           )}
         </div>
 
-        <h2 class="mb-4 mt-8 text-xl font-semibold">
+        <h2 class="mt-8 mb-4 text-xl font-semibold">
           🏋️ The Big Four Barbell Lifts
         </h2>
 
-        <BigFourLiftCards lifts={mainBarbellLifts} />
+        <BigFourLiftCards lifts={mainBarbellLifts} animated={bigFourAnimated} />
         <Separator className="my-8" />
 
         <h2 class="mt-8 text-xl font-semibold">🛠️ Strength Insights & Tools</h2>
-        <div className="mb-16 mt-4 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <div className="mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {featurePages.map((card, index) => (
             <FeatureCard key={index} {...card} />
           ))}
@@ -272,11 +289,11 @@ function FeatureCard({ href, title, description, IconComponent }) {
   const isWarmupsCalculator = href === "/warm-up-sets-calculator";
 
   return (
-    <Card className="group relative shadow-lg ring-0 ring-ring hover:ring-1">
+    <Card className="group ring-ring relative shadow-lg ring-0 hover:ring-1">
       {isWarmupsCalculator && (
         <Badge
           variant="outline"
-          className="absolute right-2 top-2 bg-primary/10 text-xs text-primary"
+          className="bg-primary/10 text-primary absolute top-2 right-2 text-xs"
         >
           New
         </Badge>

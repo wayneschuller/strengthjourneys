@@ -65,24 +65,39 @@ function RowProcessingIndicator({
   const [animatedCount, setAnimatedCount] = useState(0);
 
   useEffect(() => {
-    // reset when rowCount changes
+    // Reset whenever the incoming row count changes
     setAnimatedCount(0);
+    setIsProgressDone(false);
 
-    if (!rowCount || rowCount <= 0) return;
+    if (!rowCount || rowCount <= 0) {
+      setIsProgressDone(true);
+      return;
+    }
 
-    let n = 0;
-    const step = Math.max(1, Math.ceil(rowCount / 60)); // ~1s total, clamp to at least 1
-    const interval = setInterval(() => {
-      n = Math.min(n + step, rowCount);
-      setAnimatedCount(n);
-      if (n >= rowCount) {
-        clearInterval(interval);
+    const durationMs = 1200; // total animation duration
+    const start = performance.now();
+    let frameId;
+
+    const tick = (now) => {
+      const elapsed = now - start;
+      const progress = Math.min(1, elapsed / durationMs);
+      const nextCount = Math.round(rowCount * progress);
+      setAnimatedCount(nextCount);
+
+      if (progress >= 1) {
         setIsProgressDone(true);
+        return;
       }
-    }, 16); // ~60fps
 
-    return () => clearInterval(interval);
-  }, [rowCount]);
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+    };
+  }, [rowCount, setIsProgressDone]);
 
   const percent =
     rowCount && rowCount > 0

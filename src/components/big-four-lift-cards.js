@@ -150,6 +150,7 @@ const buildBadgesForLiftType = (
     badges.push({
       type: "recent-pr",
       label: "🔥 Recent PR",
+      shortLabel: "🔥 PR",
       variant: "secondary",
     });
   }
@@ -163,6 +164,7 @@ const buildBadgesForLiftType = (
     badges.push({
       type: "workhorse",
       label: "🛠 Workhorse",
+      shortLabel: "🛠",
       variant: "outline",
     });
   }
@@ -171,6 +173,7 @@ const buildBadgesForLiftType = (
     badges.push({
       type: "favorite",
       label: "⭐ Favourite of the four",
+      shortLabel: "⭐ Fav",
       variant: "secondary",
     });
   }
@@ -179,6 +182,7 @@ const buildBadgesForLiftType = (
     badges.push({
       type: "least-favorite",
       label: "💩 Least favourite",
+      shortLabel: "💩 Least",
       variant: "destructive",
     });
   }
@@ -299,7 +303,31 @@ export function BigFourLiftCards({ lifts, animated = true }) {
           >
             <Link href={`/${lift.slug}`}>
               <CardHeader className="pb-2">
-                <CardTitle className="pr-20">{lift.liftType}</CardTitle>
+                <div className="flex items-start gap-3">
+                  <CardTitle className="min-w-0 flex-1 text-xl leading-tight sm:text-2xl min-h-[3.2rem] sm:min-h-[3.8rem]">
+                    {lift.liftType}
+                  </CardTitle>
+                  {isStatsMode && badges.length > 0 && (
+                    <CardAction
+                      className={`static ml-auto flex flex-col items-end gap-1 text-[11px] leading-tight transition-opacity duration-300 ${
+                        showStats ? "opacity-100" : "opacity-0"
+                      }`}
+                    >
+                      {badges.map((badge) => (
+                        <Badge
+                          key={badge.type}
+                          variant={badge.variant}
+                          className="pointer-events-none whitespace-nowrap"
+                        >
+                          <span className="hidden sm:inline">
+                            {badge.label}
+                          </span>
+                          <span className="sm:hidden">{badge.shortLabel}</span>
+                        </Badge>
+                      ))}
+                    </CardAction>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="relative px-6 pt-0 pb-2">
                 <div className="relative h-16">
@@ -346,23 +374,6 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                   className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
                 />
               </CardFooter>
-              {isStatsMode && badges.length > 0 && (
-                <CardAction
-                  className={`flex flex-col items-end gap-1 text-xs transition-opacity duration-300 ${
-                    showStats ? "opacity-100" : "opacity-0"
-                  }`}
-                >
-                  {badges.map((badge) => (
-                    <Badge
-                      key={badge.type}
-                      variant={badge.variant}
-                      className="pointer-events-none"
-                    >
-                      {badge.label}
-                    </Badge>
-                  ))}
-                </CardAction>
-              )}
             </Link>
           </Card>
         );

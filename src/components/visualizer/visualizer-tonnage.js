@@ -127,7 +127,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   const chartConfig = {
     tonnage: {
       label: liftType ? `${liftType} Tonnage` : "Tonnage",
-      color: liftColor || "hsl(var(--chart-2))", // uses theme's chart color or lift-specific color
+      color: liftColor || "var(--chart-2)", // uses theme's chart color or lift-specific color
     },
   };
 
@@ -295,12 +295,12 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 <linearGradient id="fillTonnage" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="5%"
-                    stopColor="hsl(var(--chart-2))"
+                    stopColor="var(--chart-2)"
                     stopOpacity={0.9}
                   />
                   <stop
                     offset="50%"
-                    stopColor="hsl(var(--chart-2))"
+                    stopColor="var(--chart-2)"
                     stopOpacity={0.09}
                   />
                 </linearGradient>
@@ -308,7 +308,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               <Area
                 type="monotone"
                 dataKey="tonnage"
-                stroke="hsl(var(--chart-1))"
+                stroke="var(--chart-1)"
                 fill="url(#fillTonnage)"
                 dot={["3M", "6M"].includes(timeRange)} // Show point dots in short time ranges
                 connectNulls
@@ -801,7 +801,7 @@ const TonnageTooltipContent = ({
       <div className="flex flex-row items-center">
         <div
           className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
-          style={{ backgroundColor: liftColor || "hsl(var(--chart-2))" }}
+          style={{ backgroundColor: liftColor || "var(--chart-2)" }}
         />
         <div className="font-semibold">
           {liftType ? `${liftType} Tonnage` : "Total Tonnage"}

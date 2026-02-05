@@ -260,11 +260,12 @@ export function BigFourLiftCards({ lifts }) {
   } = computeLiftTonnageMeta(parsedData, lifts);
 
   return (
-    <div className="grid grid-cols-2 gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-4">
       {lifts.map((lift) => {
         const stats = getStatsForLift(lift.liftType);
         const hasAnyData =
-          stats && (stats.totalSets > 0 || stats.totalReps > 0 || stats.bestLift);
+          stats &&
+          (stats.totalSets > 0 || stats.totalReps > 0 || stats.bestLift);
         const isStatsMode = authStatus === "authenticated" && hasAnyData;
 
         const badges =
@@ -281,10 +282,10 @@ export function BigFourLiftCards({ lifts }) {
         return (
           <Card
             key={lift.slug}
-            className="group shadow-lg ring-0 ring-ring hover:ring-1"
+            className="group ring-ring shadow-lg ring-0 hover:ring-1"
           >
             <Link href={`/${lift.slug}`}>
-              <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+              <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
                 <CardTitle>{lift.liftType}</CardTitle>
                 {isStatsMode && badges.length > 0 && (
                   <div
@@ -304,8 +305,8 @@ export function BigFourLiftCards({ lifts }) {
                   </div>
                 )}
               </CardHeader>
-              <CardContent className="relative px-6 pb-2 pt-0">
-                <div className="relative min-h-10">
+              <CardContent className="relative px-6 pt-0 pb-2">
+                <div className="relative h-16">
                   {/* Base description (for guests / non-stats mode). Hidden visually when stats overlay is active. */}
                   <CardDescription
                     className={
@@ -320,7 +321,7 @@ export function BigFourLiftCards({ lifts }) {
                   {/* Stats overlay that fades in on top for authenticated users with data */}
                   {isStatsMode && stats && (
                     <div
-                      className={`pointer-events-none absolute inset-0 flex flex-col justify-center text-sm text-muted-foreground transition-opacity duration-500 ${
+                      className={`text-muted-foreground pointer-events-none absolute inset-0 flex flex-col justify-center text-sm transition-opacity duration-500 ${
                         statsVisible ? "opacity-100" : "opacity-0"
                       }`}
                     >
@@ -332,7 +333,8 @@ export function BigFourLiftCards({ lifts }) {
                       )}
                       {stats.bestLift && (
                         <span className="block">
-                          Best set: {stats.bestLift.reps}@{stats.bestLift.weight}
+                          Best set: {stats.bestLift.reps}@
+                          {stats.bestLift.weight}
                           {stats.bestLift.unitType || stats.unitType}
                           {stats.bestLift.date && (
                             <> on {formatLiftDate(stats.bestLift.date)}</>
@@ -357,4 +359,3 @@ export function BigFourLiftCards({ lifts }) {
     </div>
   );
 }
-

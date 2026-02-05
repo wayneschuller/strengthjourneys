@@ -1,74 +1,180 @@
-"use client";
-import { Button } from "@/components/ui/button";
+"use client";;
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { ChevronDownIcon } from "lucide-react";
-import { useState, useEffect } from "react";
+import { cjk } from "@streamdown/cjk";
+import { code } from "@streamdown/code";
+import { math } from "@streamdown/math";
+import { mermaid } from "@streamdown/mermaid";
+import { BrainIcon, ChevronDownIcon } from "lucide-react";
+import {
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { Streamdown } from "streamdown";
 
-export const Reasoning = ({
+import { Shimmer } from "./shimmer";
+
+const ReasoningContext = createContext(null);
+
+export const useReasoning = () => {
+  const context = useContext(ReasoningContext);
+  if (!context) {
+    throw new Error("Reasoning components must be used within Reasoning");
+  }
+  return context;
+};
+
+const AUTO_CLOSE_DELAY = 1000;
+const MS_IN_S = 1000;
+
+export const Reasoning = memo(({
   className,
   isStreaming = false,
+  open,
+  defaultOpen,
+  onOpenChange,
+  duration: durationProp,
   children,
   ...props
 }) => {
-  const [open, setOpen] = useState(isStreaming);
+  const resolvedDefaultOpen = defaultOpen ?? isStreaming;
+  // Track if defaultOpen was explicitly set to false (to prevent auto-open)
+  const isExplicitlyClosed = defaultOpen === false;
 
+  const [isOpen, setIsOpen] = useControllableState({
+    defaultProp: resolvedDefaultOpen,
+    onChange: onOpenChange,
+    prop: open,
+  });
+  const [duration, setDuration] = useControllableState({
+    defaultProp: undefined,
+    prop: durationProp,
+  });
+
+  const [hasEverStreamed, setHasEverStreamed] = useState(isStreaming);
+  const [hasAutoClosed, setHasAutoClosed] = useState(false);
+  const [startTime, setStartTime] = useState(null);
+
+  // Track when streaming starts
+  useEffect(() => {
+    if (isStreaming && !hasEverStreamed) {
+      setHasEverStreamed(true);
+    }
+  }, [isStreaming, hasEverStreamed]);
+
+  // Track duration when streaming starts and ends
   useEffect(() => {
     if (isStreaming) {
-      setOpen(true);
+      if (startTime === null) {
+        setStartTime(Date.now());
+      }
+    } else if (startTime !== null) {
+      setDuration(Math.ceil((Date.now() - startTime) / MS_IN_S));
+      setStartTime(null);
     }
-  }, [isStreaming]);
+  }, [isStreaming, startTime, setDuration]);
+
+  // Auto-open when streaming starts (unless explicitly closed)
+  useEffect(() => {
+    if (isStreaming && !isOpen && !isExplicitlyClosed) {
+      setIsOpen(true);
+    }
+  }, [isStreaming, isOpen, setIsOpen, isExplicitlyClosed]);
+
+  // Auto-close when streaming ends (once only, and only if it ever streamed)
+  useEffect(() => {
+    if (hasEverStreamed && !isStreaming && isOpen && !hasAutoClosed) {
+      // Add a small delay before closing to allow user to see the content
+      const timer = setTimeout(() => {
+        setIsOpen(false);
+        setHasAutoClosed(true);
+      }, AUTO_CLOSE_DELAY);
+
+      return () => clearTimeout(timer);
+    }
+  }, [hasEverStreamed, isStreaming, isOpen, setIsOpen, hasAutoClosed]);
+
+  const handleOpenChange = useCallback((newOpen) => {
+    setIsOpen(newOpen);
+  }, [setIsOpen]);
 
   return (
-    <Collapsible
-      className={cn("w-full", className)}
-      open={open}
-      onOpenChange={setOpen}
-      {...props}>
-      {children}
-    </Collapsible>
+    <ReasoningContext.Provider value={{ duration, isOpen, isStreaming, setIsOpen }}>
+      <Collapsible
+        className={cn("not-prose mb-4", className)}
+        onOpenChange={handleOpenChange}
+        open={isOpen}
+        {...props}>
+        {children}
+      </Collapsible>
+    </ReasoningContext.Provider>
   );
+});
+
+const defaultGetThinkingMessage = (isStreaming, duration) => {
+  if (isStreaming || duration === 0) {
+    return <Shimmer duration={1}>Thinking...</Shimmer>;
+  }
+  if (duration === undefined) {
+    return <p>Thought for a few seconds</p>;
+  }
+  return <p>Thought for {duration} seconds</p>;
 };
 
-export const ReasoningTrigger = ({
+export const ReasoningTrigger = memo(({
   className,
   children,
+  getThinkingMessage = defaultGetThinkingMessage,
   ...props
-}) => (
-  <CollapsibleTrigger asChild>
-    <Button
+}) => {
+  const { isStreaming, isOpen, duration } = useReasoning();
+
+  return (
+    <CollapsibleTrigger
       className={cn(
-        "h-auto gap-1.5 rounded-full border px-3 py-1.5 text-xs font-normal",
+        "flex w-full items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground",
         className
       )}
-      size="sm"
-      variant="outline"
       {...props}>
       {children ?? (
         <>
-          <span>Show reasoning</span>
-          <ChevronDownIcon className="size-3 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          <BrainIcon className="size-4" />
+          {getThinkingMessage(isStreaming, duration)}
+          <ChevronDownIcon
+            className={cn("size-4 transition-transform", isOpen ? "rotate-180" : "rotate-0")} />
         </>
       )}
-    </Button>
-  </CollapsibleTrigger>
-);
+    </CollapsibleTrigger>
+  );
+});
 
-export const ReasoningContent = ({
+export const ReasoningContent = memo(({
   className,
   children,
   ...props
 }) => (
   <CollapsibleContent
     className={cn(
-      "mt-2 space-y-2 rounded-lg border bg-muted/50 p-3 font-mono text-xs",
+      "mt-4 text-sm",
+      "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-muted-foreground outline-none data-[state=closed]:animate-out data-[state=open]:animate-in",
       className
     )}
     {...props}>
-    {children}
+    <Streamdown plugins={{ cjk, code, math, mermaid }} {...props}>
+      {children}
+    </Streamdown>
   </CollapsibleContent>
-);
+));
+
+Reasoning.displayName = "Reasoning";
+ReasoningTrigger.displayName = "ReasoningTrigger";
+ReasoningContent.displayName = "ReasoningContent";

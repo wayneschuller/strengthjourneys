@@ -1,0 +1,234 @@
+"use client";;
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
+import { MicIcon, SquareIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+const detectSpeechInputMode = () => {
+  if (typeof window === "undefined") {
+    return "none";
+  }
+
+  if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
+    return "speech-recognition";
+  }
+
+  if ("MediaRecorder" in window && "mediaDevices" in navigator) {
+    return "media-recorder";
+  }
+
+  return "none";
+};
+
+export const SpeechInput = ({
+  className,
+  onTranscriptionChange,
+  onAudioRecorded,
+  lang = "en-US",
+  ...props
+}) => {
+  const [isListening, setIsListening] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [mode, setMode] = useState("none");
+  const [recognition, setRecognition] = useState(null);
+  const recognitionRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+
+  // Detect mode on mount
+  useEffect(() => {
+    setMode(detectSpeechInputMode());
+  }, []);
+
+  // Initialize Speech Recognition when mode is speech-recognition
+  useEffect(() => {
+    if (mode !== "speech-recognition") {
+      return;
+    }
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const speechRecognition = new SpeechRecognition();
+
+    speechRecognition.continuous = true;
+    speechRecognition.interimResults = true;
+    speechRecognition.lang = lang;
+
+    const handleStart = () => {
+      setIsListening(true);
+    };
+
+    const handleEnd = () => {
+      setIsListening(false);
+    };
+
+    const handleResult = (event) => {
+      const speechEvent = event;
+      let finalTranscript = "";
+
+      for (
+        let i = speechEvent.resultIndex;
+        i < speechEvent.results.length;
+        i += 1
+      ) {
+        const result = speechEvent.results[i];
+        if (result.isFinal) {
+          finalTranscript += result[0]?.transcript ?? "";
+        }
+      }
+
+      if (finalTranscript) {
+        onTranscriptionChange?.(finalTranscript);
+      }
+    };
+
+    const handleError = (event) => {
+      const errorEvent = event;
+      console.error("Speech recognition error:", errorEvent.error);
+      setIsListening(false);
+    };
+
+    speechRecognition.addEventListener("start", handleStart);
+    speechRecognition.addEventListener("end", handleEnd);
+    speechRecognition.addEventListener("result", handleResult);
+    speechRecognition.addEventListener("error", handleError);
+
+    recognitionRef.current = speechRecognition;
+    setRecognition(speechRecognition);
+
+    return () => {
+      speechRecognition.removeEventListener("start", handleStart);
+      speechRecognition.removeEventListener("end", handleEnd);
+      speechRecognition.removeEventListener("result", handleResult);
+      speechRecognition.removeEventListener("error", handleError);
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [mode, onTranscriptionChange, lang]);
+
+  // Start MediaRecorder recording
+  const startMediaRecorder = useCallback(async () => {
+    if (!onAudioRecorded) {
+      console.warn(
+        "SpeechInput: onAudioRecorded callback is required for MediaRecorder fallback"
+      );
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      const handleDataAvailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      const handleStop = async () => {
+        for (const track of stream.getTracks()) {
+          track.stop();
+        }
+
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
+
+        if (audioBlob.size > 0) {
+          setIsProcessing(true);
+          try {
+            const transcript = await onAudioRecorded(audioBlob);
+            if (transcript) {
+              onTranscriptionChange?.(transcript);
+            }
+          } catch (error) {
+            console.error("Transcription error:", error);
+          } finally {
+            setIsProcessing(false);
+          }
+        }
+      };
+
+      const handleError = (event) => {
+        console.error("MediaRecorder error:", event);
+        setIsListening(false);
+        for (const track of stream.getTracks()) {
+          track.stop();
+        }
+      };
+
+      mediaRecorder.addEventListener("dataavailable", handleDataAvailable);
+      mediaRecorder.addEventListener("stop", handleStop);
+      mediaRecorder.addEventListener("error", handleError);
+
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsListening(true);
+    } catch (error) {
+      console.error("Failed to start MediaRecorder:", error);
+      setIsListening(false);
+    }
+  }, [onAudioRecorded, onTranscriptionChange]);
+
+  // Stop MediaRecorder recording
+  const stopMediaRecorder = useCallback(() => {
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+    setIsListening(false);
+  }, []);
+
+  const toggleListening = useCallback(() => {
+    if (mode === "speech-recognition" && recognition) {
+      if (isListening) {
+        recognition.stop();
+      } else {
+        recognition.start();
+      }
+    } else if (mode === "media-recorder") {
+      if (isListening) {
+        stopMediaRecorder();
+      } else {
+        startMediaRecorder();
+      }
+    }
+  }, [mode, recognition, isListening, startMediaRecorder, stopMediaRecorder]);
+
+  // Determine if button should be disabled
+  const isDisabled =
+    mode === "none" ||
+    (mode === "speech-recognition" && !recognition) ||
+    (mode === "media-recorder" && !onAudioRecorded) ||
+    isProcessing;
+
+  return (
+    <div className="relative inline-flex items-center justify-center">
+      {/* Animated pulse rings */}
+      {isListening &&
+        [0, 1, 2].map((index) => (
+          <div
+            className="absolute inset-0 animate-ping rounded-full border-2 border-red-400/30"
+            key={index}
+            style={{
+              animationDelay: `${index * 0.3}s`,
+              animationDuration: "2s",
+            }} />
+        ))}
+      {/* Main record button */}
+      <Button
+        className={cn("relative z-10 rounded-full transition-all duration-300", isListening
+          ? "bg-destructive text-white hover:bg-destructive/80 hover:text-white"
+          : "bg-primary text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground", className)}
+        disabled={isDisabled}
+        onClick={toggleListening}
+        {...props}>
+        {isProcessing && <Spinner />}
+        {!isProcessing && isListening && <SquareIcon className="size-4" />}
+        {!(isProcessing || isListening) && <MicIcon className="size-4" />}
+      </Button>
+    </div>
+  );
+};

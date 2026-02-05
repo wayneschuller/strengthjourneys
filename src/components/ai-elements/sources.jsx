@@ -1,79 +1,67 @@
-"use client";
-import { Button } from "@/components/ui/button";
+"use client";;
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { ChevronDownIcon } from "lucide-react";
+import { BookIcon, ChevronDownIcon } from "lucide-react";
 
 export const Sources = ({
   className,
-  children,
   ...props
 }) => (
-  <Collapsible className={cn("w-full", className)} {...props}>
-    {children}
-  </Collapsible>
+  <Collapsible
+    className={cn("not-prose mb-4 text-primary text-xs", className)}
+    {...props} />
 );
 
 export const SourcesTrigger = ({
-  count,
   className,
+  count,
   children,
   ...props
 }) => (
-  <CollapsibleTrigger asChild>
-    <Button
-      className={cn(
-        "h-auto gap-1.5 rounded-full border px-3 py-1.5 text-xs font-normal",
-        className
-      )}
-      size="sm"
-      variant="outline"
-      {...props}>
-      {children ?? (
-        <>
-          <span>Used {count} source{count !== 1 ? "s" : ""}</span>
-          <ChevronDownIcon className="size-3 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-        </>
-      )}
-    </Button>
+  <CollapsibleTrigger className={cn("flex items-center gap-2", className)} {...props}>
+    {children ?? (
+      <>
+        <p className="font-medium">Used {count} sources</p>
+        <ChevronDownIcon className="h-4 w-4" />
+      </>
+    )}
   </CollapsibleTrigger>
 );
 
 export const SourcesContent = ({
   className,
-  children,
   ...props
 }) => (
   <CollapsibleContent
     className={cn(
-      "mt-2 space-y-2 rounded-lg border bg-muted/50 p-3",
+      "mt-3 flex w-fit flex-col gap-2",
+      "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 outline-none data-[state=closed]:animate-out data-[state=open]:animate-in",
       className
     )}
-    {...props}>
-    {children}
-  </CollapsibleContent>
+    {...props} />
 );
 
 export const Source = ({
   href,
   title,
-  className,
+  children,
   ...props
 }) => (
   <a
-    className={cn(
-      "block rounded-md border bg-background p-2 text-sm transition-colors hover:bg-accent",
-      className
-    )}
+    className="flex items-center gap-2"
     href={href}
-    rel="noopener noreferrer"
+    rel="noreferrer"
     target="_blank"
     {...props}>
-    <div className="truncate font-medium">{title}</div>
-    <div className="truncate text-xs text-muted-foreground">{href}</div>
+    {children ?? (
+      <>
+        <BookIcon className="h-4 w-4" />
+        <span className="block font-medium">{title}</span>
+      </>
+    )}
   </a>
 );

@@ -16,7 +16,14 @@ import { code } from "@streamdown/code";
 import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import { createContext, memo, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  memo,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Streamdown } from "streamdown";
 
 export const Message = ({
@@ -42,7 +49,7 @@ export const MessageContent = ({
     className={cn(
       "is-user:dark flex w-fit min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm",
       "group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-foreground",
-      "group-[.is-assistant]:max-w-[85%] md:max-w-[75%] group-[.is-assistant]:rounded-lg group-[.is-assistant]:bg-muted/50 group-[.is-assistant]:border group-[.is-assistant]:border-border group-[.is-assistant]:px-4 group-[.is-assistant]:py-3 group-[.is-assistant]:text-foreground",
+      "group-[.is-assistant]:text-foreground",
       className
     )}
     {...props}>
@@ -130,12 +137,12 @@ export const MessageBranch = ({
   };
 
   const contextValue = {
-    currentBranch,
-    totalBranches: branches.length,
-    goToPrevious,
-    goToNext,
     branches,
+    currentBranch,
+    goToNext,
+    goToPrevious,
     setBranches,
+    totalBranches: branches.length,
   };
 
   return (
@@ -150,7 +157,7 @@ export const MessageBranchContent = ({
   ...props
 }) => {
   const { currentBranch, setBranches, branches } = useMessageBranch();
-  const childrenArray = Array.isArray(children) ? children : [children];
+  const childrenArray = useMemo(() => (Array.isArray(children) ? children : [children]), [children]);
 
   // Use useEffect to update branches when they change
   useEffect(() => {
@@ -174,7 +181,6 @@ export const MessageBranchContent = ({
 
 export const MessageBranchSelector = ({
   className,
-  from,
   ...props
 }) => {
   const { totalBranches } = useMessageBranch();
@@ -186,7 +192,10 @@ export const MessageBranchSelector = ({
 
   return (
     <ButtonGroup
-      className="[&>*:not(:first-child)]:rounded-l-md [&>*:not(:last-child)]:rounded-r-md"
+      className={cn(
+        "[&>*:not(:first-child)]:rounded-l-md [&>*:not(:last-child)]:rounded-r-md",
+        className
+      )}
       orientation="horizontal"
       {...props} />
   );
@@ -214,7 +223,6 @@ export const MessageBranchPrevious = ({
 
 export const MessageBranchNext = ({
   children,
-  className,
   ...props
 }) => {
   const { goToNext, totalBranches } = useMessageBranch();
@@ -254,7 +262,7 @@ export const MessageResponse = memo(({
 }) => (
   <Streamdown
     className={cn("size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}
-    plugins={{ code, mermaid, math, cjk }}
+    plugins={{ cjk, code, math, mermaid }}
     {...props} />
 ), (prevProps, nextProps) => prevProps.children === nextProps.children);
 

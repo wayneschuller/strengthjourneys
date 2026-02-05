@@ -89,10 +89,10 @@ export function AppBackground() {
           {/* Primary red layer */}
           <FlickeringGrid
             className="pointer-events-none absolute inset-0 h-full w-full"
-            squareSize={7}
-            gridGap={8}
-            flickerChance={currentTheme === "neo-brutalism" ? 0.18 : 0.28}
-            maxOpacity={currentTheme === "neo-brutalism" ? 0.22 : 0.28}
+            squareSize={10}
+            gridGap={28}
+            flickerChance={currentTheme === "neo-brutalism" ? 0.06 : 0.12}
+            maxOpacity={currentTheme === "neo-brutalism" ? 0.16 : 0.2}
             color={
               currentTheme === "neo-brutalism"
                 ? "hsl(0 100% 60%)" // primary red on light
@@ -102,10 +102,10 @@ export function AppBackground() {
           {/* Secondary yellow layer */}
           <FlickeringGrid
             className="pointer-events-none absolute inset-0 h-full w-full"
-            squareSize={9}
-            gridGap={11}
-            flickerChance={currentTheme === "neo-brutalism" ? 0.16 : 0.24}
-            maxOpacity={currentTheme === "neo-brutalism" ? 0.18 : 0.24}
+            squareSize={12}
+            gridGap={32}
+            flickerChance={currentTheme === "neo-brutalism" ? 0.05 : 0.1}
+            maxOpacity={currentTheme === "neo-brutalism" ? 0.13 : 0.17}
             color={
               currentTheme === "neo-brutalism"
                 ? "hsl(60 100% 50%)" // secondary yellow on light

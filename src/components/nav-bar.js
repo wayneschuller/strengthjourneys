@@ -91,7 +91,7 @@ export function NavBar() {
   }, []);
 
   return (
-    <div className="m-2 flex md:ml-10 md:max-w-[90vw] xl:ml-24">
+    <div className="mx-2 my-3 flex items-center rounded-lg bg-background/80 px-3 md:mx-10 md:px-6 xl:mx-24">
       <div className="flex items-center">
         <DesktopNav />
         <MobileNav />

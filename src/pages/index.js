@@ -7,6 +7,10 @@ import { NextSeo } from "next-seo";
 import { devLog } from "@/lib/processing-utils";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useLocalStorage } from "usehooks-ts";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 import {
   Calculator,
@@ -295,6 +299,11 @@ function FeatureCard({ href, title, description, IconComponent }) {
 
 function BigFourLiftCards() {
   const lifts = mainBarbellLifts;
+  const { topLiftsByTypeAndReps, liftTypes } = useUserLiftingData() || {};
+  const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
+    initializeWithValue: false,
+  });
+  const { status: authStatus } = useSession();
 
   const bigFourDiagrams = {
     "Back Squat": "/back_squat.svg",
@@ -303,30 +312,105 @@ function BigFourLiftCards() {
     "Strict Press": "/strict_press.svg",
   };
 
+  const formatLiftDate = (dateStr) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const getStatsForLift = (liftType) => {
+    if (!topLiftsByTypeAndReps || !topLiftsByTypeAndReps[liftType]) return null;
+
+    const repRanges = topLiftsByTypeAndReps[liftType];
+    let bestE1RMWeight = 0;
+    let bestLift = null;
+    let unitType = "lb";
+
+    // Mirror the barbell-strength-potential "best lift" logic:
+    // scan rep ranges 1–10 and pick the set with highest estimated 1RM
+    for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
+      const topAtReps = repRanges[repsIndex]?.[0];
+      if (!topAtReps) continue;
+
+      const reps = repsIndex + 1;
+      const currentE1RM = estimateE1RM(reps, topAtReps.weight, e1rmFormula);
+
+      if (currentE1RM > bestE1RMWeight) {
+        bestE1RMWeight = currentE1RM;
+        bestLift = topAtReps;
+      }
+
+      if (topAtReps.unitType) {
+        unitType = topAtReps.unitType;
+      }
+    }
+
+    const liftTotals = liftTypes?.find((lift) => lift.liftType === liftType);
+
+    return {
+      bestLift,
+      unitType,
+      totalSets: liftTotals?.totalSets ?? 0,
+      totalReps: liftTotals?.totalReps ?? 0,
+    };
+  };
+
   return (
     <div className="grid grid-cols-2 gap-6 md:grid-cols-2 lg:grid-cols-4">
-      {lifts.map((lift) => (
-        <Card
-          key={lift.slug}
-          className="group shadow-lg ring-0 ring-ring hover:ring-1"
-        >
-          <Link href={`/${lift.slug}`}>
-            <CardHeader className="min-h-28">
-              <CardTitle>{lift.liftType}</CardTitle>
-              <CardDescription className="h-[2rem]">
-                {lift.liftDescription}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center p-2">
-              <img
-                src={bigFourDiagrams[lift.liftType]}
-                alt={`${lift.liftType} diagram`}
-                className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
-              />
-            </CardContent>
-          </Link>
-        </Card>
-      ))}
+      {lifts.map((lift) => {
+        const stats = getStatsForLift(lift.liftType);
+        const hasAnyData =
+          stats && (stats.totalSets > 0 || stats.totalReps > 0 || stats.bestLift);
+        const isStatsMode = authStatus === "authenticated" && hasAnyData;
+
+        return (
+          <Card
+            key={lift.slug}
+            className="group shadow-lg ring-0 ring-ring hover:ring-1"
+          >
+            <Link href={`/${lift.slug}`}>
+              <CardHeader className="min-h-28">
+                <CardTitle>{lift.liftType}</CardTitle>
+                <CardDescription>
+                  {isStatsMode && stats ? (
+                    <>
+                      {(stats.totalSets > 0 || stats.totalReps > 0) && (
+                        <span>
+                          {stats.totalSets.toLocaleString()} sets ·{" "}
+                          {stats.totalReps.toLocaleString()} reps logged
+                        </span>
+                      )}
+                      {stats.bestLift && (
+                        <span className="block">
+                          Best set: {stats.bestLift.reps}@{stats.bestLift.weight}
+                          {stats.bestLift.unitType || stats.unitType}
+                          {stats.bestLift.date && (
+                            <> on {formatLiftDate(stats.bestLift.date)}</>
+                          )}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    lift.liftDescription
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex justify-center p-2">
+                <img
+                  src={bigFourDiagrams[lift.liftType]}
+                  alt={`${lift.liftType} diagram`}
+                  className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
+                />
+              </CardContent>
+            </Link>
+          </Card>
+        );
+      })}
     </div>
   );
 }

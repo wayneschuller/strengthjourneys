@@ -1,11 +1,10 @@
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
+import { getTopLiftStats } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import { useReadLocalStorage, useWindowSize } from "usehooks-ts";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 export function StandardsSlider({
   liftType,
@@ -14,7 +13,6 @@ export function StandardsSlider({
   standards,
 }) {
   const {
-    parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
@@ -27,10 +25,6 @@ export function StandardsSlider({
   const originalData = standards[liftType];
   if (!originalData) return null;
   const liftTypeStandards = readableLabels(originalData);
-  // devLog(liftTypeStandards);
-  // devLog(standards[`Back Squat`].beginner);
-
-  // devLog(topLiftsByTypeAndReps);
 
   const unitType = isMetric ? "kg" : "lb";
 
@@ -39,33 +33,19 @@ export function StandardsSlider({
   const minLift = Math.min(...standardValues); // Usually 'physicallyActive'
   const maxLift = originalData.elite; // Max value of slider
 
-  // If we have data find their records
+  // Use shared hook helper for top-lift stats (authenticated users only)
   let athleteRankingWeight = 0;
   let highestE1RM = 0;
-
+  let strengthRating = null;
   if (authStatus === "authenticated") {
-    let topLifts = topLiftsByTypeAndReps?.[liftType];
-    if (isYearly) {
-      topLifts = topLiftsByTypeAndRepsLast12Months?.[liftType];
-    }
-
-    if (Array.isArray(topLifts)) {
-      for (let repsIdx = 0; repsIdx < topLifts.length; repsIdx++) {
-        const topSet = topLifts[repsIdx]?.[0]; // the best lift for this rep count
-        if (!topSet) continue;
-
-        const reps = repsIdx + 1;
-        const weight = topSet.weight || 0;
-
-        if (weight > athleteRankingWeight) athleteRankingWeight = weight;
-
-        const e1rm = estimateE1RM(reps, weight, e1rmFormula);
-        if (e1rm > highestE1RM) highestE1RM = e1rm;
-      }
-    }
+    const topLifts = isYearly
+      ? topLiftsByTypeAndRepsLast12Months?.[liftType]
+      : topLiftsByTypeAndReps?.[liftType];
+    const stats = getTopLiftStats(topLifts, liftType, standards, e1rmFormula);
+    athleteRankingWeight = stats.bestWeight;
+    highestE1RM = stats.bestE1RM;
+    strengthRating = stats.strengthRating;
   }
-
-  // devLog( `${liftType} Best: ${athleteRankingWeight}, best e1rm: ${highestE1RM}`);
 
   // Helper to calculate proportional % from minLift to maxLift
   const getPercent = (val) =>
@@ -156,6 +136,11 @@ export function StandardsSlider({
             </div>
           )}
       </div>
+      {authStatus === "authenticated" && strengthRating && (
+        <div className="mt-2 text-xs text-muted-foreground">
+          Strength level: {strengthRating}
+        </div>
+      )}
     </div>
   );
 }

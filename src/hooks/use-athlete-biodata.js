@@ -4,9 +4,82 @@ import {
   interpolateStandardKG,
   LiftingStandardsKG,
 } from "@/lib/lifting-standards-kg";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useStateFromQueryOrLocalStorage } from "./use-state-from-query-or-localStorage";
+
+/**
+ * Returns strength rating (Physically Active, Beginner, Intermediate, Advanced, Elite)
+ * for a given e1RM based on standards. Shared by session analysis, lift PRs, etc.
+ */
+export function getStrengthRatingForE1RM(oneRepMax, standard) {
+  if (!standard) return null;
+  const { beginner, intermediate, advanced, elite } = standard;
+  if (oneRepMax < beginner) return "Physically Active";
+  if (oneRepMax < intermediate) return "Beginner";
+  if (oneRepMax < advanced) return "Intermediate";
+  if (oneRepMax < elite) return "Advanced";
+  return "Elite";
+}
+
+/**
+ * From topLiftsByTypeAndReps format (array of rep-range arrays, best lift at [0]),
+ * returns best e1RM, best raw weight, and strength rating. Used by StandardsSlider
+ * and strength-level-calculator.
+ */
+export function getTopLiftStats(
+  topLifts,
+  liftType,
+  standards,
+  e1rmFormula = "Brzycki",
+) {
+  let bestE1RM = 0;
+  let bestWeight = 0;
+  if (Array.isArray(topLifts)) {
+    for (let repsIdx = 0; repsIdx < topLifts.length; repsIdx++) {
+      const topSet = topLifts[repsIdx]?.[0];
+      if (!topSet) continue;
+      const reps = repsIdx + 1;
+      const weight = topSet.weight || 0;
+      if (weight > bestWeight) bestWeight = weight;
+      const e1rm = estimateE1RM(reps, weight, e1rmFormula);
+      if (e1rm > bestE1RM) bestE1RM = e1rm;
+    }
+  }
+  const standard = standards?.[liftType];
+  const strengthRating =
+    standard && bestE1RM > 0
+      ? getStrengthRatingForE1RM(bestE1RM, standard)
+      : null;
+  return { bestE1RM, bestWeight, strengthRating };
+}
+
+/**
+ * Finds the highest e1RM across workout sets and returns the corresponding
+ * strength rating. Handles drop sets where an earlier set may beat the last.
+ */
+export function getStrengthLevelForWorkouts(
+  workouts,
+  liftType,
+  standards,
+  e1rmFormula = "Brzycki",
+) {
+  const standard = standards?.[liftType];
+  if (!standard || !workouts?.length) return null;
+
+  let bestE1RM = 0;
+  for (const lift of workouts) {
+    const reps = lift.reps ?? 0;
+    const weight = lift.weight ?? 0;
+    if (reps === 0) continue;
+    const e1rm = estimateE1RM(reps, weight, e1rmFormula);
+    if (e1rm > bestE1RM) bestE1RM = e1rm;
+  }
+  if (bestE1RM === 0) return null;
+
+  return getStrengthRatingForE1RM(bestE1RM, standard);
+}
 
 const ADVANCED_QUERY_PARAM = "advanced";
 

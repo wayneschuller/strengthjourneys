@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
+import {
+  useAthleteBioData,
+  getStrengthRatingForE1RM,
+} from "@/hooks/use-athlete-biodata";
 import {
   getReadableDateString,
   getCelebrationEmoji,
@@ -21,26 +24,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp, Play } from "lucide-react";
 
-/**
- * Helper function to calculate strength rating for a lift
- */
+/** Helper: strength rating from reps/weight using shared logic from useAthleteBioData */
 const getStrengthRating = (repCount, weight, liftType, standards) => {
   if (!standards || !standards[liftType]) return null;
-
-  const standard = standards[liftType];
   const oneRepMax = estimateE1RM(repCount, weight, "Brzycki");
-
-  if (oneRepMax < standard.beginner) {
-    return "Physically Active";
-  } else if (oneRepMax < standard.intermediate) {
-    return "Beginner";
-  } else if (oneRepMax < standard.advanced) {
-    return "Intermediate";
-  } else if (oneRepMax < standard.elite) {
-    return "Advanced";
-  } else {
-    return "Elite";
-  }
+  return getStrengthRatingForE1RM(oneRepMax, standards[liftType]);
 };
 
 /**

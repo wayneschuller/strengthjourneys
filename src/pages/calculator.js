@@ -43,7 +43,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage, useIsClient } from "usehooks-ts";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
+import {
+  useAthleteBioData,
+  getStrengthRatingForE1RM,
+} from "@/hooks/use-athlete-biodata";
 import { useStateFromQueryOrLocalStorage } from "../hooks/use-state-from-query-or-localStorage";
 import { Calculator } from "lucide-react";
 
@@ -765,27 +768,5 @@ export const getStandardRatingString = (
   let liftRating;
 
   const oneRepMax = estimateE1RM(reps, weight, e1rmFormula);
-
-  // devLog(`lifttype: ${liftType}, oneRepMax: ${oneRepMax} (${e1rmFormula})`);
-
-  if (standard) {
-    const { physicallyActive, beginner, intermediate, advanced, elite } =
-      standard;
-
-    // devLog(standard);
-    // We don't give anything below "Physically Active" although data may be below the model
-    if (oneRepMax < beginner) {
-      liftRating = "Physically Active";
-    } else if (oneRepMax < intermediate) {
-      liftRating = "Beginner";
-    } else if (oneRepMax < advanced) {
-      liftRating = "Intermediate";
-    } else if (oneRepMax < elite) {
-      liftRating = "Advanced";
-    } else {
-      liftRating = "Elite";
-    }
-  }
-
-  return liftRating;
+  return standard ? getStrengthRatingForE1RM(oneRepMax, standard) : undefined;
 };

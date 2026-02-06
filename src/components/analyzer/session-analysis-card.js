@@ -12,6 +12,12 @@ import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import {
+  useAthleteBioData,
+  getStrengthLevelForWorkouts,
+} from "@/hooks/use-athlete-biodata";
+import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 
@@ -64,6 +70,14 @@ export function SessionAnalysisCard({
     isValidating,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
+  const { age, bodyWeight, standards } = useAthleteBioData();
+  const [e1rmFormula] = useStateFromQueryOrLocalStorage(
+    LOCAL_STORAGE_KEYS.FORMULA,
+    "Brzycki",
+    false,
+  );
+  const hasBioData =
+    age && bodyWeight && standards && Object.keys(standards).length > 0;
 
   const sessionRatingRef = useRef(null); // Used to avoid randomised rating changes on rerenders
 
@@ -363,6 +377,14 @@ export function SessionAnalysisCard({
                           })()}
                         </div>
                       )}
+                      {hasBioData && standards[liftType] && (
+                        <LiftStrengthLevel
+                          liftType={liftType}
+                          workouts={workouts}
+                          standards={standards}
+                          e1rmFormula={e1rmFormula}
+                        />
+                      )}
                     </li>
                   ),
                 )}
@@ -387,6 +409,31 @@ export function SessionAnalysisCard({
         </CardFooter>
       </Card>
     </TooltipProvider>
+  );
+}
+
+/**
+ * Shows strength level for a single lift type based on the highest e1RM across
+ * all sets in the session. Uses user's preferred e1RM formula from localStorage.
+ * Links to strength level calculator for more detail. Only rendered when
+ * standards exist for this lift type (caller checks).
+ */
+function LiftStrengthLevel({ liftType, workouts, standards, e1rmFormula }) {
+  const rating = getStrengthLevelForWorkouts(
+    workouts,
+    liftType,
+    standards,
+    e1rmFormula || "Brzycki",
+  );
+  if (!rating) return null;
+
+  return (
+    <Link
+      href="/strength-level-calculator"
+      className="mt-1 block pl-4 text-xs text-muted-foreground hover:text-foreground hover:underline"
+    >
+      Strength level: {rating}
+    </Link>
   );
 }
 

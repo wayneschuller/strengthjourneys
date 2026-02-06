@@ -3,7 +3,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage } from "usehooks-ts";
@@ -144,6 +144,14 @@ const hasRecentPRForLiftType = (liftType, topLiftsByTypeAndReps) => {
   return false;
 };
 
+const TODAY_BADGE_OPTIONS = [
+  "🎯 Actually showed up",
+  "🎯 Did the thing",
+  "🎯 Adulting",
+  "🎯 Today's hero",
+  "🎯 Crushing it",
+];
+
 const buildBadgesForLiftType = (
   liftType,
   {
@@ -153,11 +161,21 @@ const buildBadgesForLiftType = (
     averageTonnage,
     favoriteLiftType,
     leastFavoriteLiftType,
+    getTodayBadgeLabel,
   },
 ) => {
   const badges = [];
 
   const lastDate = lastDateByLiftType?.[liftType];
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (lastDate === todayStr && getTodayBadgeLabel) {
+    badges.push({
+      type: "did-today",
+      label: getTodayBadgeLabel(liftType),
+      shortLabel: "🎯 Today",
+      variant: "secondary",
+    });
+  }
   if (lastDate) {
     const today = new Date();
     const last = new Date(lastDate);
@@ -238,6 +256,17 @@ export function BigFourLiftCards({ lifts, animated = true }) {
   });
   const { status: authStatus } = useSession();
   const [statsVisibleCount, setStatsVisibleCount] = useState(0);
+  const todayBadgeLabelsRef = useRef({});
+
+  const getTodayBadgeLabel = (liftType) => {
+    if (!todayBadgeLabelsRef.current[liftType]) {
+      todayBadgeLabelsRef.current[liftType] =
+        TODAY_BADGE_OPTIONS[
+          Math.floor(Math.random() * TODAY_BADGE_OPTIONS.length)
+        ];
+    }
+    return todayBadgeLabelsRef.current[liftType];
+  };
 
   const getStatsForLift = (liftType) => {
     if (!topLiftsByTypeAndReps || !topLiftsByTypeAndReps[liftType]) return null;
@@ -317,6 +346,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                 averageTonnage,
                 favoriteLiftType,
                 leastFavoriteLiftType,
+                getTodayBadgeLabel,
               })
             : [];
 

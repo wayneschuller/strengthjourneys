@@ -1,5 +1,8 @@
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { getTopLiftStats } from "@/hooks/use-athlete-biodata";
+import {
+  getTopLiftStats,
+  STRENGTH_LEVEL_EMOJI,
+} from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
@@ -137,8 +140,9 @@ export function StandardsSlider({
           )}
       </div>
       {authStatus === "authenticated" && strengthRating && (
-        <div className="mt-2 text-xs text-muted-foreground">
-          Strength level: {strengthRating}
+        <div className="mt-2 text-sm font-medium text-muted-foreground">
+          {liftType} strength level: {STRENGTH_LEVEL_EMOJI[strengthRating] ?? ""}{" "}
+          {strengthRating}
         </div>
       )}
     </div>

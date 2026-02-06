@@ -15,6 +15,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   useAthleteBioData,
   getStrengthLevelForWorkouts,
+  STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -427,12 +428,13 @@ function LiftStrengthLevel({ liftType, workouts, standards, e1rmFormula }) {
   );
   if (!rating) return null;
 
+  const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
   return (
     <Link
       href="/strength-level-calculator"
-      className="mt-1 block pl-4 text-xs text-muted-foreground hover:text-foreground hover:underline"
+      className="mt-1 block pl-4 text-sm font-medium text-muted-foreground hover:text-foreground hover:underline"
     >
-      Strength level: {rating}
+      {liftType} strength level: {emoji} {rating}
     </Link>
   );
 }

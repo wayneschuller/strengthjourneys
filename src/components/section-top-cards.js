@@ -28,12 +28,8 @@ import {
   Flame,
 } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { useLocalStorage } from "usehooks-ts";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const statCardBase =
@@ -135,13 +131,22 @@ export function SectionTopCards({ isProgressDone = false }) {
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
 
+  // Global-ish unit preference shared with calculator & strength-level pages.
+  // Defaults to imperial (lb) when not set.
+  const [isMetricPreference] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
+    false,
+    { initializeWithValue: false },
+  );
+  const preferredUnit = isMetricPreference ? "kg" : "lb";
+
   // Find the most recent PR single from top 5 most frequent lifts
   const mostRecentPR = findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes);
 
-  // Calculate PRs in last 12 months
-  const prsLast12Months = useMemo(
-    () => calculatePRsInLast12Months(topLiftsByTypeAndReps),
-    [topLiftsByTypeAndReps],
+  // Calculate lifetime tonnage (all-time total weight moved) in preferred units.
+  const lifetimeTonnage = useMemo(
+    () => calculateLifetimeTonnage(parsedData, preferredUnit),
+    [parsedData, preferredUnit],
   );
 
   // Calculate session momentum
@@ -244,25 +249,46 @@ export function SectionTopCards({ isProgressDone = false }) {
           <StatCard
             accent="violet"
             icon={Award}
-            description="In This Last 12 Months"
-            title={`${prsLast12Months.count} Personal Records`}
+            description="Lifetime Tonnage"
+            title={
+              lifetimeTonnage.primaryTotal > 0
+                ? `${formatLifetimeTonnage(
+                    lifetimeTonnage.primaryTotal,
+                  )} ${lifetimeTonnage.primaryUnit} moved`
+                : "No lifting logged yet"
+            }
             footer={
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="line-clamp-2 cursor-help text-muted-foreground">
-                      {prsLast12Months.count > 0
-                        ? `In the last 12 months you have PRs in ${prsLast12Months.liftTypes.join(", ")}`
-                        : "No PRs in the last 12 months"}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-[300px]">
-                    {prsLast12Months.count > 0
-                      ? `Full list of PRs in the last 12 months:\n${prsLast12Months.liftTypes.join("\n")}`
-                      : "No PRs in the last 12 months"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              lifetimeTonnage.primaryTotal > 0 ? (
+                <>
+                  <div className="text-muted-foreground">
+                    Across {lifetimeTonnage.sessionCount.toLocaleString()} logged
+                    {" "}
+                    sessions
+                  </div>
+                  <div className="text-muted-foreground">
+                    Avg per session:{" "}
+                    {formatLifetimeTonnage(
+                      lifetimeTonnage.averagePerSession,
+                    )}{" "}
+                    {lifetimeTonnage.primaryUnit}
+                  </div>
+                  {lifetimeTonnage.hasTwelveMonthsOfData &&
+                    lifetimeTonnage.lastYearPrimaryTotal > 0 && (
+                      <div className="text-muted-foreground">
+                        In the last 12 months:{" "}
+                        {formatLifetimeTonnage(
+                          lifetimeTonnage.lastYearPrimaryTotal,
+                        )}{" "}
+                        {lifetimeTonnage.primaryUnit}
+                      </div>
+                    )}
+                </>
+              ) : (
+                <div className="text-muted-foreground">
+                  Once you start logging training, we'll track your lifetime
+                  tonnage here.
+                </div>
+              )
             }
             animationDelay={750}
           />
@@ -362,6 +388,154 @@ function calculateTotalStats(liftTypes) {
     }),
     { totalSets: 0, totalReps: 0 },
   );
+}
+
+/**
+ * Calculates lifetime tonnage (sum of weight × reps) across all non-goal lifts.
+ * Returns totals per unit plus a primary unit/total for display.
+ */
+function calculateLifetimeTonnage(parsedData, preferredUnit = "lb") {
+  const startTime = performance.now();
+
+  if (!parsedData || parsedData.length === 0) {
+    devLog("calculateLifetimeTonnage execution time: 0ms");
+    return {
+      totalByUnit: {},
+      primaryUnit: preferredUnit || "lb",
+      primaryTotal: 0,
+      sessionCount: 0,
+      averagePerSession: 0,
+      hasTwelveMonthsOfData: false,
+      lastYearPrimaryTotal: 0,
+    };
+  }
+
+  const totalByUnit = {};
+  const sessionDates = new Set();
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const twelveMonthsAgoStr = subtractDaysFromStr(todayStr, 365);
+  const lastYearByUnit = {};
+  let earliestDateStr = null;
+  let latestDateStr = null;
+
+  for (let i = 0; i < parsedData.length; i++) {
+    const entry = parsedData[i];
+    if (!entry || entry.isGoal) continue;
+
+    const { date, weight, reps, unitType } = entry;
+    if (!date) continue;
+
+    sessionDates.add(date);
+
+    if (!earliestDateStr || date < earliestDateStr) {
+      earliestDateStr = date;
+    }
+    if (!latestDateStr || date > latestDateStr) {
+      latestDateStr = date;
+    }
+
+    const repsSafe = typeof reps === "number" ? reps : 0;
+    const weightSafe = typeof weight === "number" ? weight : 0;
+    const tonnage = repsSafe * weightSafe;
+    if (!tonnage) continue;
+
+    const unit = unitType || "lb";
+    totalByUnit[unit] = (totalByUnit[unit] ?? 0) + tonnage;
+
+    if (date >= twelveMonthsAgoStr && date <= todayStr) {
+      lastYearByUnit[unit] = (lastYearByUnit[unit] ?? 0) + tonnage;
+    }
+  }
+
+  const elapsedMs = Math.round(performance.now() - startTime);
+  devLog(`calculateLifetimeTonnage execution time: ${elapsedMs}ms`);
+
+  const unitKeys = Object.keys(totalByUnit);
+  const primaryUnit = preferredUnit || unitKeys[0] || "lb";
+
+  // Combine all units into the preferred primary unit for display.
+  let primaryTotal = 0;
+  const KG_PER_LB = 1 / 2.2046;
+  const LB_PER_KG = 2.2046;
+
+  unitKeys.forEach((unit) => {
+    const value = totalByUnit[unit] ?? 0;
+    if (!value) return;
+
+    if (unit === primaryUnit) {
+      primaryTotal += value;
+      return;
+    }
+
+    // Only two units are expected ("lb" and "kg"), but handle generically.
+    if (unit === "kg" && primaryUnit === "lb") {
+      primaryTotal += value * LB_PER_KG;
+    } else if (unit === "lb" && primaryUnit === "kg") {
+      primaryTotal += value * KG_PER_LB;
+    } else {
+      // Fallback: if we somehow have another unit, just add raw.
+      primaryTotal += value;
+    }
+  });
+
+  // Determine whether we have more than 12 months of data.
+  let hasTwelveMonthsOfData = false;
+  let lastYearPrimaryTotal = 0;
+  if (earliestDateStr && latestDateStr) {
+    const earliestDate = new Date(earliestDateStr + "T00:00:00Z");
+    const latestDate = new Date(latestDateStr + "T00:00:00Z");
+    const diffDays =
+      (latestDate.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24);
+    hasTwelveMonthsOfData = diffDays >= 365;
+  }
+
+  if (hasTwelveMonthsOfData) {
+    const lastYearKeys = Object.keys(lastYearByUnit);
+    lastYearKeys.forEach((unit) => {
+      const value = lastYearByUnit[unit] ?? 0;
+      if (!value) return;
+
+      if (unit === primaryUnit) {
+        lastYearPrimaryTotal += value;
+      } else if (unit === "kg" && primaryUnit === "lb") {
+        lastYearPrimaryTotal += value * LB_PER_KG;
+      } else if (unit === "lb" && primaryUnit === "kg") {
+        lastYearPrimaryTotal += value * KG_PER_LB;
+      } else {
+        lastYearPrimaryTotal += value;
+      }
+    });
+  }
+
+  const averagePerSession =
+    sessionDates.size > 0
+      ? Math.round(primaryTotal / sessionDates.size)
+      : 0;
+
+  return {
+    totalByUnit,
+    primaryUnit,
+    primaryTotal,
+    sessionCount: sessionDates.size,
+    averagePerSession,
+    hasTwelveMonthsOfData,
+    lastYearPrimaryTotal,
+  };
+}
+
+// Nicely formats large tonnage numbers (e.g. 1.2M, 250k, 42,500)
+function formatLifetimeTonnage(value) {
+  if (!value || value <= 0) return "0";
+
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1)}M`;
+  }
+
+  if (value >= 10_000) {
+    return `${Math.round(value / 1_000)}k`;
+  }
+
+  return value.toLocaleString();
 }
 
 /**

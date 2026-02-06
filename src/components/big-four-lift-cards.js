@@ -163,7 +163,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
   })();
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 2xl:grid-cols-4">
       {lifts.map((lift, index) => {
         const stats = getStatsForLift(lift.liftType);
         const hasAnyData =
@@ -634,7 +634,11 @@ function buildBadgesForLiftType(
     });
   }
 
-  if (favoriteLiftType && liftType === favoriteLiftType && getFavoriteBadgeLabel) {
+  if (
+    favoriteLiftType &&
+    liftType === favoriteLiftType &&
+    getFavoriteBadgeLabel
+  ) {
     badges.push({
       type: "favorite",
       label: getFavoriteBadgeLabel(liftType),

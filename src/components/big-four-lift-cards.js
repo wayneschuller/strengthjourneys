@@ -40,12 +40,16 @@ export function BigFourLiftCards({ lifts, animated = true }) {
   const leastFavoriteBadgeLabelsRef = useRef({});
   const tonnageBadgeLabelsRef = useRef({});
 
-  const getTodayBadgeLabel = (liftType) => {
+  const getTodayBadgeLabel = (liftType, allLiftTypes) => {
     if (!todayBadgeLabelsRef.current[liftType]) {
+      const used = (allLiftTypes || [])
+        .filter((lt) => lt !== liftType)
+        .map((lt) => todayBadgeLabelsRef.current[lt])
+        .filter(Boolean);
+      const available = TODAY_BADGE_OPTIONS.filter((o) => !used.includes(o));
+      const options = available.length > 0 ? available : TODAY_BADGE_OPTIONS;
       todayBadgeLabelsRef.current[liftType] =
-        TODAY_BADGE_OPTIONS[
-          Math.floor(Math.random() * TODAY_BADGE_OPTIONS.length)
-        ];
+        options[Math.floor(Math.random() * options.length)];
     }
     return todayBadgeLabelsRef.current[liftType];
   };
@@ -70,12 +74,16 @@ export function BigFourLiftCards({ lifts, animated = true }) {
     return leastFavoriteBadgeLabelsRef.current[liftType];
   };
 
-  const getTonnageBadgeLabel = (liftType) => {
+  const getTonnageBadgeLabel = (liftType, allLiftTypes) => {
     if (!tonnageBadgeLabelsRef.current[liftType]) {
+      const used = (allLiftTypes || [])
+        .filter((lt) => lt !== liftType)
+        .map((lt) => tonnageBadgeLabelsRef.current[lt])
+        .filter(Boolean);
+      const available = TONNAGE_BADGE_OPTIONS.filter((o) => !used.includes(o));
+      const options = available.length > 0 ? available : TONNAGE_BADGE_OPTIONS;
       tonnageBadgeLabelsRef.current[liftType] =
-        TONNAGE_BADGE_OPTIONS[
-          Math.floor(Math.random() * TONNAGE_BADGE_OPTIONS.length)
-        ];
+        options[Math.floor(Math.random() * options.length)];
     }
     return tonnageBadgeLabelsRef.current[liftType];
   };
@@ -177,6 +185,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
           topTonnageByTypeLast12Months,
           tonnageBadgeCutoffStr,
         );
+        const allLiftTypes = lifts.map((l) => l.liftType);
         const badges =
           isStatsMode && topLiftsByTypeAndReps
             ? buildBadgesForLiftType(lift.liftType, {
@@ -189,6 +198,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                 getTonnageBadgeLabel,
                 recentPRTier,
                 qualifiesTonnageBadge,
+                allLiftTypes,
               })
             : [];
 
@@ -520,6 +530,7 @@ function buildBadgesForLiftType(
     getTonnageBadgeLabel,
     recentPRTier,
     qualifiesTonnageBadge,
+    allLiftTypes,
   },
 ) {
   const badges = [];
@@ -529,7 +540,7 @@ function buildBadgesForLiftType(
   if (lastDate === todayStr && getTodayBadgeLabel) {
     badges.push({
       type: "did-today",
-      label: getTodayBadgeLabel(liftType),
+      label: getTodayBadgeLabel(liftType, allLiftTypes),
       variant: "secondary",
     });
   }
@@ -573,7 +584,7 @@ function buildBadgesForLiftType(
   if (qualifiesTonnageBadge && getTonnageBadgeLabel) {
     badges.push({
       type: "tonnage",
-      label: getTonnageBadgeLabel(liftType),
+      label: getTonnageBadgeLabel(liftType, allLiftTypes),
       variant: "outline",
     });
   }

@@ -26,6 +26,7 @@ import {
   Activity,
   Award,
   Flame,
+  Anvil,
 } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
@@ -306,7 +307,7 @@ export function SectionTopCards({ isProgressDone = false }) {
 
           <StatCard
             accent="violet"
-            icon={Award}
+            icon={Anvil}
             description="Lifetime Tonnage"
             title={
               lifetimeTonnage.primaryTotal > 0

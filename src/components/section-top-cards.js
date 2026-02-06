@@ -28,6 +28,11 @@ import {
   Flame,
 } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import {
+  useAthleteBioData,
+  getStrengthRatingForE1RM,
+  STRENGTH_LEVEL_EMOJI,
+} from "@/hooks/use-athlete-biodata";
 import { useLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -139,6 +144,8 @@ export function SectionTopCards({ isProgressDone = false }) {
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
 
+  const { age, bodyWeight, standards, isMetric } = useAthleteBioData();
+
   // Global-ish unit preference shared with calculator & strength-level pages.
   // Defaults to imperial (lb) when not set.
   const [isMetricPreference] = useLocalStorage(
@@ -150,6 +157,36 @@ export function SectionTopCards({ isProgressDone = false }) {
 
   // Find the most recent PR single from top 5 most frequent lifts
   const mostRecentPR = findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes);
+
+  // Check if we have the necessary bio data and standards to calculate a strength rating
+  const hasBioData =
+    age && bodyWeight && standards && Object.keys(standards).length > 0;
+
+  // Calculate strength rating for the most recent PR single when possible
+  let mostRecentPRStrengthRating = null;
+  if (hasBioData && mostRecentPR) {
+    const standardForLift = standards[mostRecentPR.liftType];
+    const unitForStandards = isMetric ? "kg" : "lb";
+
+    if (standardForLift && mostRecentPR.weight) {
+      const prUnit = mostRecentPR.unitType || "lb";
+      let oneRepMax = mostRecentPR.weight;
+
+      // Align PR units with standards units before rating
+      if (prUnit !== unitForStandards) {
+        if (prUnit === "kg" && unitForStandards === "lb") {
+          oneRepMax = Math.round(oneRepMax * 2.2046);
+        } else if (prUnit === "lb" && unitForStandards === "kg") {
+          oneRepMax = Math.round(oneRepMax / 2.2046);
+        }
+      }
+
+      mostRecentPRStrengthRating = getStrengthRatingForE1RM(
+        oneRepMax,
+        standardForLift,
+      );
+    }
+  }
 
   // Calculate lifetime tonnage (all-time total weight moved) in preferred units.
   const lifetimeTonnage = useMemo(
@@ -212,10 +249,22 @@ export function SectionTopCards({ isProgressDone = false }) {
                 : "No PRs yet"
             }
             footer={
-              <div className="text-muted-foreground">
-                {mostRecentPR
-                  ? `Performed on ${format(new Date(mostRecentPR.date), "d MMMM yyyy")}`
-                  : ""}
+              <div className="text-muted-foreground space-y-1">
+                <div>
+                  {mostRecentPR
+                    ? `Performed on ${format(
+                        new Date(mostRecentPR.date),
+                        "d MMMM yyyy",
+                      )}`
+                    : ""}
+                </div>
+                {mostRecentPRStrengthRating && (
+                  <div>
+                    Strength level:{" "}
+                    {STRENGTH_LEVEL_EMOJI[mostRecentPRStrengthRating] ?? ""}{" "}
+                    {mostRecentPRStrengthRating}
+                  </div>
+                )}
               </div>
             }
             animationDelay={250}

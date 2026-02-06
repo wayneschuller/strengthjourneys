@@ -378,14 +378,16 @@ export function SessionAnalysisCard({
                           })()}
                         </div>
                       )}
-                      {hasBioData && standards[liftType] && (
-                        <LiftStrengthLevel
-                          liftType={liftType}
-                          workouts={workouts}
-                          standards={standards}
-                          e1rmFormula={e1rmFormula}
-                        />
-                      )}
+                      {authStatus === "authenticated" &&
+                        hasBioData &&
+                        standards[liftType] && (
+                          <LiftStrengthLevel
+                            liftType={liftType}
+                            workouts={workouts}
+                            standards={standards}
+                            e1rmFormula={e1rmFormula}
+                          />
+                        )}
                     </li>
                   ),
                 )}
@@ -420,21 +422,33 @@ export function SessionAnalysisCard({
  * standards exist for this lift type (caller checks).
  */
 function LiftStrengthLevel({ liftType, workouts, standards, e1rmFormula }) {
-  const rating = getStrengthLevelForWorkouts(
+  const result = getStrengthLevelForWorkouts(
     workouts,
     liftType,
     standards,
     e1rmFormula || "Brzycki",
   );
-  if (!rating) return null;
+  if (!result) return null;
 
-  const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
+  const { rating, bestE1RM } = result;
+  const eliteMax = standards[liftType]?.elite ?? 0;
+  const isBeyondElite = rating === "Elite" && bestE1RM > eliteMax;
+
   return (
     <Link
       href="/strength-level-calculator"
       className="mt-1 block pl-4 text-sm font-medium text-muted-foreground hover:text-foreground hover:underline"
     >
-      {liftType} strength level: {emoji} {rating}
+      {liftType} strength level:{" "}
+      {isBeyondElite ? (
+        <>
+          {STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite
+        </>
+      ) : (
+        <>
+          {STRENGTH_LEVEL_EMOJI[rating] ?? ""} {rating}
+        </>
+      )}
     </Link>
   );
 }

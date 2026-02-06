@@ -66,7 +66,8 @@ export function getTopLiftStats(
 
 /**
  * Finds the highest e1RM across workout sets and returns the corresponding
- * strength rating. Handles drop sets where an earlier set may beat the last.
+ * strength rating and best e1RM. Handles drop sets where an earlier set may beat the last.
+ * Returns { rating, bestE1RM } or null.
  */
 export function getStrengthLevelForWorkouts(
   workouts,
@@ -87,7 +88,8 @@ export function getStrengthLevelForWorkouts(
   }
   if (bestE1RM === 0) return null;
 
-  return getStrengthRatingForE1RM(bestE1RM, standard);
+  const rating = getStrengthRatingForE1RM(bestE1RM, standard);
+  return { rating, bestE1RM };
 }
 
 const ADVANCED_QUERY_PARAM = "advanced";

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/router";
+import { differenceInCalendarYears } from "date-fns";
 import {
   interpolateStandardKG,
   LiftingStandardsKG,
@@ -33,18 +34,70 @@ export function getStrengthRatingForE1RM(oneRepMax, standard) {
 }
 
 /**
+ * Returns standards interpolated for the athlete's age at the time of a lift.
+ * Use this when rating historical PRs: user's current age minus years since the
+ * lift date gives the correct age for age-adjusted strength standards.
+ *
+ * @param {number} currentAge - Athlete's age as of today
+ * @param {string} liftDate - Date of the lift (ISO string or parseable)
+ * @param {number} bodyWeight - Body weight (kg or lb based on isMetric)
+ * @param {string} sex - "male" or "female"
+ * @param {string} liftType - e.g. "Back Squat"
+ * @param {boolean} isMetric - Whether bodyWeight is in kg
+ * @returns {Object|null} Standard { beginner, intermediate, advanced, elite } or null
+ */
+export function getStandardForLiftDate(
+  currentAge,
+  liftDate,
+  bodyWeight,
+  sex,
+  liftType,
+  isMetric,
+) {
+  if (!currentAge || !liftDate || !bodyWeight || !sex || !liftType) return null;
+  const today = new Date();
+  const date = new Date(liftDate);
+  if (isNaN(date.getTime())) return null;
+  const yearsAgo = differenceInCalendarYears(today, date);
+  const ageAtLift = Math.max(0, currentAge - yearsAgo);
+  const bodyWeightKG = isMetric
+    ? bodyWeight
+    : Math.round(bodyWeight / 2.2046);
+  const gender = sex === "female" ? "female" : "male";
+  const standard = interpolateStandardKG(
+    ageAtLift,
+    bodyWeightKG,
+    gender,
+    liftType,
+    LiftingStandardsKG,
+  );
+  if (!standard) return null;
+  if (isMetric) return standard;
+  return {
+    physicallyActive: Math.round(standard.physicallyActive * 2.2046),
+    beginner: Math.round(standard.beginner * 2.2046),
+    intermediate: Math.round(standard.intermediate * 2.2046),
+    advanced: Math.round(standard.advanced * 2.2046),
+    elite: Math.round(standard.elite * 2.2046),
+  };
+}
+
+/**
  * From topLiftsByTypeAndReps format (array of rep-range arrays, best lift at [0]),
  * returns best e1RM, best raw weight, and strength rating. Used by StandardsSlider
  * and strength-level-calculator.
+ * When bioForDateRating is provided, uses age at the best lift's date for accurate rating.
  */
 export function getTopLiftStats(
   topLifts,
   liftType,
   standards,
   e1rmFormula = "Brzycki",
+  bioForDateRating = null,
 ) {
   let bestE1RM = 0;
   let bestWeight = 0;
+  let bestLiftDate = null;
   if (Array.isArray(topLifts)) {
     for (let repsIdx = 0; repsIdx < topLifts.length; repsIdx++) {
       const topSet = topLifts[repsIdx]?.[0];
@@ -53,10 +106,29 @@ export function getTopLiftStats(
       const weight = topSet.weight || 0;
       if (weight > bestWeight) bestWeight = weight;
       const e1rm = estimateE1RM(reps, weight, e1rmFormula);
-      if (e1rm > bestE1RM) bestE1RM = e1rm;
+      if (e1rm > bestE1RM) {
+        bestE1RM = e1rm;
+        bestLiftDate = topSet.date || null;
+      }
     }
   }
-  const standard = standards?.[liftType];
+  let standard = standards?.[liftType];
+  if (
+    bioForDateRating &&
+    bestLiftDate &&
+    bioForDateRating.age &&
+    bioForDateRating.bodyWeight != null &&
+    bioForDateRating.sex != null
+  ) {
+    standard = getStandardForLiftDate(
+      bioForDateRating.age,
+      bestLiftDate,
+      bioForDateRating.bodyWeight,
+      bioForDateRating.sex,
+      liftType,
+      bioForDateRating.isMetric ?? false,
+    );
+  }
   const strengthRating =
     standard && bestE1RM > 0
       ? getStrengthRatingForE1RM(bestE1RM, standard)

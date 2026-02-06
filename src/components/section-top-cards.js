@@ -32,6 +32,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   useAthleteBioData,
   getStrengthRatingForE1RM,
+  getStandardForLiftDate,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
 import { useLocalStorage } from "usehooks-ts";
@@ -145,7 +146,7 @@ export function SectionTopCards({ isProgressDone = false }) {
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
 
-  const { age, bodyWeight, standards, isMetric } = useAthleteBioData();
+  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBioData();
 
   // Global-ish unit preference shared with calculator & strength-level pages.
   // Defaults to imperial (lb) when not set.
@@ -163,10 +164,18 @@ export function SectionTopCards({ isProgressDone = false }) {
   const hasBioData =
     age && bodyWeight && standards && Object.keys(standards).length > 0;
 
-  // Calculate strength rating for the most recent PR single when possible
+  // Calculate strength rating for the most recent PR single when possible.
+  // Use age at time of PR for accurate age-adjusted rating (PR may be years old).
   let mostRecentPRStrengthRating = null;
   if (hasBioData && mostRecentPR) {
-    const standardForLift = standards[mostRecentPR.liftType];
+    const standardForLift = getStandardForLiftDate(
+      age,
+      mostRecentPR.date,
+      bodyWeight,
+      sex,
+      mostRecentPR.liftType,
+      isMetric,
+    );
     const unitForStandards = isMetric ? "kg" : "lb";
 
     if (standardForLift && mostRecentPR.weight) {

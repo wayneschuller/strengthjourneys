@@ -15,6 +15,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   useAthleteBioData,
   getStrengthLevelForWorkouts,
+  getStandardForLiftDate,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
@@ -71,7 +72,7 @@ export function SessionAnalysisCard({
     isValidating,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
-  const { age, bodyWeight, standards } = useAthleteBioData();
+  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBioData();
   const [e1rmFormula] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.FORMULA,
     "Brzycki",
@@ -386,6 +387,11 @@ export function SessionAnalysisCard({
                             workouts={workouts}
                             standards={standards}
                             e1rmFormula={e1rmFormula}
+                            sessionDate={sessionDate}
+                            age={age}
+                            bodyWeight={bodyWeight}
+                            sex={sex}
+                            isMetric={isMetric}
                           />
                         )}
                     </li>
@@ -417,21 +423,42 @@ export function SessionAnalysisCard({
 
 /**
  * Shows strength level for a single lift type based on the highest e1RM across
- * all sets in the session. Uses user's preferred e1RM formula from localStorage.
- * Links to strength level calculator for more detail. Only rendered when
- * standards exist for this lift type (caller checks).
+ * all sets in the session. Uses age at session date for accurate age-adjusted
+ * rating when viewing historical sessions.
  */
-function LiftStrengthLevel({ liftType, workouts, standards, e1rmFormula }) {
+function LiftStrengthLevel({
+  liftType,
+  workouts,
+  standards,
+  e1rmFormula,
+  sessionDate,
+  age,
+  bodyWeight,
+  sex,
+  isMetric,
+}) {
+  const standard =
+    sessionDate && age && bodyWeight != null && sex != null
+      ? getStandardForLiftDate(
+          age,
+          sessionDate,
+          bodyWeight,
+          sex,
+          liftType,
+          isMetric ?? false,
+        )
+      : standards?.[liftType];
+  const standardsForLift = standard ? { [liftType]: standard } : {};
   const result = getStrengthLevelForWorkouts(
     workouts,
     liftType,
-    standards,
+    standardsForLift,
     e1rmFormula || "Brzycki",
   );
   if (!result) return null;
 
   const { rating, bestE1RM } = result;
-  const eliteMax = standards[liftType]?.elite ?? 0;
+  const eliteMax = standard?.elite ?? 0;
   const isBeyondElite = rating === "Elite" && bestE1RM > eliteMax;
 
   return (

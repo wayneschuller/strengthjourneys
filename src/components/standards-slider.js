@@ -1,5 +1,6 @@
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
+  useAthleteBioData,
   getTopLiftStats,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
@@ -20,6 +21,7 @@ export function StandardsSlider({
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
+  const { age, bodyWeight, sex } = useAthleteBioData();
   const { width } = useWindowSize({ initializeWithValue: false });
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false }) ?? "Brzycki";
@@ -44,7 +46,17 @@ export function StandardsSlider({
     const topLifts = isYearly
       ? topLiftsByTypeAndRepsLast12Months?.[liftType]
       : topLiftsByTypeAndReps?.[liftType];
-    const stats = getTopLiftStats(topLifts, liftType, standards, e1rmFormula);
+    const bioForDateRating =
+      age && bodyWeight != null && sex != null
+        ? { age, bodyWeight, sex, isMetric }
+        : null;
+    const stats = getTopLiftStats(
+      topLifts,
+      liftType,
+      standards,
+      e1rmFormula,
+      bioForDateRating,
+    );
     athleteRankingWeight = stats.bestWeight;
     highestE1RM = stats.bestE1RM;
     strengthRating = stats.strengthRating;

@@ -6,6 +6,7 @@ import { useLiftColors } from "@/hooks/use-lift-colors";
 import {
   useAthleteBioData,
   getStrengthRatingForE1RM,
+  getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
 import {
   getReadableDateString,
@@ -24,11 +25,28 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp, Play } from "lucide-react";
 
-/** Helper: strength rating from reps/weight using shared logic from useAthleteBioData */
-const getStrengthRating = (repCount, weight, liftType, standards) => {
-  if (!standards || !standards[liftType]) return null;
+/** Helper: strength rating from reps/weight. Uses age-at-lift when bio+liftDate provided for accurate historical ratings. */
+const getStrengthRating = (
+  repCount,
+  weight,
+  liftType,
+  standards,
+  { age, liftDate, bodyWeight, sex, isMetric } = {},
+) => {
+  let standard = standards?.[liftType];
+  if (liftDate && age && bodyWeight && sex != null) {
+    standard = getStandardForLiftDate(
+      age,
+      liftDate,
+      bodyWeight,
+      sex,
+      liftType,
+      isMetric ?? false,
+    );
+  }
+  if (!standard) return null;
   const oneRepMax = estimateE1RM(repCount, weight, "Brzycki");
-  return getStrengthRatingForE1RM(oneRepMax, standards[liftType]);
+  return getStrengthRatingForE1RM(oneRepMax, standard);
 };
 
 /**
@@ -204,7 +222,7 @@ const PRCard = ({
 /**
  * Detail view showing all lifts in a rep range
  */
-const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards }) => {
+const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards, bioForDateRating }) => {
   if (!repRange || repRange.length === 0) return null;
 
   const repCount = repIndex + 1;
@@ -241,9 +259,9 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards
                         {repCount}@{lift.weight}
                         {lift.unitType}
                       </span>
-                      {getStrengthRating(repCount, lift.weight, liftType, standards) && (
-                        <Badge variant={getRatingBadgeVariant(getStrengthRating(repCount, lift.weight, liftType, standards))}>
-                          {getStrengthRating(repCount, lift.weight, liftType, standards)}
+                      {getStrengthRating(repCount, lift.weight, liftType, standards, bioForDateRating ? { ...bioForDateRating, liftDate: lift.date } : undefined) && (
+                        <Badge variant={getRatingBadgeVariant(getStrengthRating(repCount, lift.weight, liftType, standards, bioForDateRating ? { ...bioForDateRating, liftDate: lift.date } : undefined))}>
+                          {getStrengthRating(repCount, lift.weight, liftType, standards, bioForDateRating ? { ...bioForDateRating, liftDate: lift.date } : undefined)}
                         </Badge>
                       )}
                       {lift.URL && (
@@ -295,7 +313,7 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards
 export const LiftTypeRepPRsDisplay = ({ liftType }) => {
   const { topLiftsByTypeAndReps } = useUserLiftingData();
   const { getColor } = useLiftColors();
-  const { age, bodyWeight, standards } = useAthleteBioData();
+  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBioData();
   const [activeTab, setActiveTab] = useState("overview");
   
   // Check if we have the necessary data for strength ratings
@@ -387,7 +405,13 @@ export const LiftTypeRepPRsDisplay = ({ liftType }) => {
             {repRangesWithData.map(({ repRange, repIndex, repCount }) => {
               const pr = repRange[0];
               const strengthRating = hasBioData 
-                ? getStrengthRating(repCount, pr.weight, liftType, standards)
+                ? getStrengthRating(repCount, pr.weight, liftType, standards, {
+                    age,
+                    liftDate: pr.date,
+                    bodyWeight,
+                    sex,
+                    isMetric,
+                  })
                 : null;
               
               return (
@@ -431,6 +455,9 @@ export const LiftTypeRepPRsDisplay = ({ liftType }) => {
               liftType={liftType}
               liftColor={liftColor}
               standards={hasBioData ? standards : null}
+              bioForDateRating={
+                hasBioData ? { age, bodyWeight, sex, isMetric } : null
+              }
             />
           </TabsContent>
         ))}

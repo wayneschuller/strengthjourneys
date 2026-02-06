@@ -146,7 +146,8 @@ export function ExpandedLiftAchievements({ liftType }) {
 // So create a milestones function.
 // Visually showing progress to the next milestone would be good - progress bar.
 export const LiftTypeSummaryStatistics = ({ liftType }) => {
-  const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
+  const { liftTypes, topLiftsByTypeAndReps, topTonnageByType, topTonnageByTypeLast12Months } =
+    useUserLiftingData();
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false }) ?? "Brzycki";
 
@@ -170,45 +171,68 @@ export const LiftTypeSummaryStatistics = ({ liftType }) => {
     e1rmFormula,
   );
 
-  // devLog(`best ${liftType} is ${bestE1RMWeight}${unitType}`);
-  // devLog(bestLift);
+  const heaviestSession = topTonnageByType?.[liftType]?.[0];
+  const heaviestLast12 = topTonnageByTypeLast12Months?.[liftType]?.[0];
+  const showHeaviestLast12 =
+    heaviestLast12 &&
+    heaviestSession &&
+    (heaviestLast12.date !== heaviestSession.date ||
+      heaviestLast12.tonnage !== heaviestSession.tonnage);
 
   return (
-    <div className="grid grid-cols-3 justify-start">
-      <div className="col-span-3 text-lg font-semibold">
+    <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+      <div className="col-span-2 text-lg font-semibold">
         {liftType} Summary Statistics:
       </div>
-      <div className="font-semibold">Total Reps:</div>
-      <div className="col-span-2">{totalReps}</div>
-      <div className="font-semibold"> Total Sets: </div>
-      <div className="col-span-2">{totalSets}</div>
-      <div className="font-semibold">First lift: </div>
-      <div className="col-span-2">{getReadableDateString(oldestDate)}</div>
-      <div className="font-semibold">Most recent lift:</div>{" "}
-      <div className="col-span-2">{getReadableDateString(newestDate)}</div>
-      {oneRM && <div className="font-semibold">Best single:</div>}
+      <div className="font-semibold shrink-0">Total Reps:</div>
+      <div>{totalReps}</div>
+      <div className="font-semibold shrink-0">Total Sets:</div>
+      <div>{totalSets}</div>
+      <div className="font-semibold shrink-0">First lift:</div>
+      <div>{getReadableDateString(oldestDate)}</div>
+      <div className="font-semibold shrink-0">Most recent lift:</div>
+      <div>{getReadableDateString(newestDate)}</div>
+      {oneRM && <div className="font-semibold shrink-0">Best single:</div>}
       {oneRM && (
-        <div className="col-span-2">
+        <div>
           {oneRM.weight}
           {oneRM.unitType} ({getReadableDateString(oneRM.date)})
         </div>
       )}
-      {threeRM && <div className="font-semibold">Best triple:</div>}
+      {threeRM && <div className="font-semibold shrink-0">Best triple:</div>}
       {threeRM && (
-        <div className="col-span-2">
+        <div>
           {threeRM.weight}
           {threeRM.unitType} ({getReadableDateString(threeRM.date)})
         </div>
       )}
-      {fiveRM && <div className="font-semibold">Best five:</div>}
+      {fiveRM && <div className="font-semibold shrink-0">Best five:</div>}
       {fiveRM && (
-        <div className="col-span-2">
+        <div>
           {fiveRM.weight}
           {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
         </div>
       )}
+      {heaviestSession && (
+        <>
+          <div className="font-semibold shrink-0">Heaviest session:</div>
+          <div>
+            {Math.round(heaviestSession.tonnage).toLocaleString()} {heaviestSession.unitType} (
+            {getReadableDateString(heaviestSession.date)})
+          </div>
+        </>
+      )}
+      {showHeaviestLast12 && (
+        <>
+          <div className="font-semibold shrink-0">Heaviest (12 mo):</div>
+          <div>
+            {Math.round(heaviestLast12.tonnage).toLocaleString()} {heaviestLast12.unitType} (
+            {getReadableDateString(heaviestLast12.date)})
+          </div>
+        </>
+      )}
       {bestLift && (
-        <div className="col-span-3 mt-4">
+        <div className="col-span-2 mt-4">
           Your highest potential {liftType} is {bestE1RMWeight}
           {unitType} based on your {getReadableDateString(bestLift.date)} set of{" "}
           {bestLift.reps}@{bestLift.weight}

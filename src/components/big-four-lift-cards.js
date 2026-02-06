@@ -33,6 +33,23 @@ const STATS_STAGGER_MS = 360;
 
 const RECENT_PR_WINDOW_DAYS = 60;
 
+/** Fortnight = 14 days. We encourage each big four lift at least 1–2x per fortnight. */
+const NEGLECTED_TIERS = [
+  { days: 10, label: "⏰ It's time", shortLabel: "⏰ Time" },
+  { days: 30, label: "💪 Comeback ready", shortLabel: "💪 Comeback" },
+  { days: 60, label: "🌱 Been a while", shortLabel: "🌱 Yawn" },
+];
+
+const getLastDateForLiftType = (parsedData, liftType) => {
+  if (!parsedData || !parsedData.length || !liftType) return null;
+  for (let i = parsedData.length - 1; i >= 0; i--) {
+    if (parsedData[i].liftType === liftType) {
+      return parsedData[i].date;
+    }
+  }
+  return null;
+};
+
 const computeLiftTonnageMeta = (parsedData, lifts) => {
   if (!parsedData || !parsedData.length || !lifts || !lifts.length) {
     return {
@@ -137,6 +154,7 @@ const hasRecentPRForLiftType = (liftType, topLiftsByTypeAndReps) => {
 const buildBadgesForLiftType = (
   liftType,
   {
+    parsedData,
     topLiftsByTypeAndReps,
     liftTonnageMap,
     averageTonnage,
@@ -145,6 +163,24 @@ const buildBadgesForLiftType = (
   },
 ) => {
   const badges = [];
+
+  const lastDate = getLastDateForLiftType(parsedData, liftType);
+  if (lastDate) {
+    const today = new Date();
+    const last = new Date(lastDate);
+    const daysSince = Math.floor((today - last) / (1000 * 60 * 60 * 24));
+    const tier = [...NEGLECTED_TIERS]
+      .sort((a, b) => b.days - a.days)
+      .find((t) => daysSince >= t.days);
+    if (tier) {
+      badges.push({
+        type: "neglected",
+        label: tier.label,
+        shortLabel: tier.shortLabel,
+        variant: "outline",
+      });
+    }
+  }
 
   if (hasRecentPRForLiftType(liftType, topLiftsByTypeAndReps)) {
     badges.push({
@@ -251,11 +287,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
   // Tied to the `animated` flag from the home page so the sequence
   // starts after the dashboard intro.
   useEffect(() => {
-    if (
-      authStatus === "authenticated" &&
-      topLiftsByTypeAndReps &&
-      animated
-    ) {
+    if (authStatus === "authenticated" && topLiftsByTypeAndReps && animated) {
       const timeouts = [0, 1, 2, 3].map((i) =>
         setTimeout(
           () => setStatsVisibleCount((c) => Math.max(c, i + 1)),
@@ -286,6 +318,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
         const badges =
           isStatsMode && topLiftsByTypeAndReps
             ? buildBadgesForLiftType(lift.liftType, {
+                parsedData,
                 topLiftsByTypeAndReps,
                 liftTonnageMap,
                 averageTonnage,
@@ -299,12 +332,12 @@ export function BigFourLiftCards({ lifts, animated = true }) {
         return (
           <Card
             key={lift.slug}
-            className="group relative ring-ring shadow-lg ring-0 hover:ring-1"
+            className="group ring-ring relative shadow-lg ring-0 hover:ring-1"
           >
             <Link href={`/${lift.slug}`}>
               <CardHeader className="pb-2">
                 <div className="flex items-start gap-3">
-                  <CardTitle className="min-w-0 flex-1 text-xl leading-tight sm:text-2xl min-h-[3.2rem] sm:min-h-[3.8rem]">
+                  <CardTitle className="min-h-[3.2rem] min-w-0 flex-1 text-xl leading-tight sm:min-h-[3.8rem] sm:text-2xl">
                     {lift.liftType}
                   </CardTitle>
                   {isStatsMode && badges.length > 0 && (
@@ -333,7 +366,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                 <div className="relative h-16">
                   {/* Base description. Fades out per card when that card's stats fade in. */}
                   <div
-                    className={`text-sm text-muted-foreground transition-opacity duration-300 ${
+                    className={`text-muted-foreground text-sm transition-opacity duration-300 ${
                       isStatsMode && showStats ? "opacity-0" : "opacity-100"
                     }`}
                   >

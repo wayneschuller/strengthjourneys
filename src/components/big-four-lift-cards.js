@@ -120,28 +120,61 @@ const computeLiftTonnageMeta = (sessionTonnageLookup, lifts) => {
   };
 };
 
-const hasRecentPRForLiftType = (liftType, topLiftsByTypeAndReps) => {
-  if (!topLiftsByTypeAndReps || !topLiftsByTypeAndReps[liftType]) return false;
-
-  const today = new Date();
-  const cutoff = new Date(today);
-  cutoff.setDate(today.getDate() - RECENT_PR_WINDOW_DAYS);
-  const cutoffStr = cutoff.toISOString().slice(0, 10); // YYYY-MM-DD
+/**
+ * Returns the most impressive recent PR tier for a lift type.
+ * - "best": best lifetime lift (by e1RM) was done recently
+ * - "top5": a lifetime top-5 lift (for its rep scheme) was done recently
+ * - "top10": a lifetime top-10 lift was done recently
+ * - null: none of the above
+ */
+const getRecentPRTier = (
+  liftType,
+  topLiftsByTypeAndReps,
+  e1rmFormula,
+  cutoffStr,
+) => {
+  if (!topLiftsByTypeAndReps || !topLiftsByTypeAndReps[liftType]) return null;
 
   const repRanges = topLiftsByTypeAndReps[liftType];
-  for (let repsIndex = 0; repsIndex < repRanges.length; repsIndex++) {
-    const repArray = repRanges[repsIndex];
-    if (!repArray || !repArray.length) continue;
 
-    for (let i = 0; i < repArray.length; i++) {
-      const pr = repArray[i];
-      if (pr?.date && pr.date >= cutoffStr) {
-        return true;
-      }
+  // Find best lifetime lift (by e1RM across all rep schemes)
+  let bestLift = null;
+  let bestE1RM = 0;
+  for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
+    const topAtReps = repRanges[repsIndex]?.[0];
+    if (!topAtReps) continue;
+    const reps = repsIndex + 1;
+    const e1rm = estimateE1RM(reps, topAtReps.weight, e1rmFormula);
+    if (e1rm > bestE1RM) {
+      bestE1RM = e1rm;
+      bestLift = topAtReps;
+    }
+  }
+  if (bestLift?.date && bestLift.date >= cutoffStr) {
+    return "best";
+  }
+
+  // Check top 5 (indices 0–4 for each rep scheme)
+  for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
+    const repArray = repRanges[repsIndex];
+    if (!repArray) continue;
+    for (let i = 0; i < Math.min(5, repArray.length); i++) {
+      const lift = repArray[i];
+      if (lift?.date && lift.date >= cutoffStr) return "top5";
     }
   }
 
-  return false;
+  // Check top 10 (indices 0–9 for each rep scheme)
+  for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
+    const repArray = repRanges[repsIndex];
+    if (!repArray) continue;
+    for (let i = 0; i < Math.min(10, repArray.length); i++) {
+      const lift = repArray[i];
+      if (lift?.date && lift.date >= cutoffStr) return "top10";
+    }
+  }
+
+  return null;
 };
 
 const TODAY_BADGE_OPTIONS = [
@@ -182,7 +215,6 @@ const buildBadgesForLiftType = (
   liftType,
   {
     lastDateByLiftType,
-    topLiftsByTypeAndReps,
     liftTonnageMap,
     averageTonnage,
     favoriteLiftType,
@@ -190,6 +222,7 @@ const buildBadgesForLiftType = (
     getTodayBadgeLabel,
     getFavoriteBadgeLabel,
     getLeastFavoriteBadgeLabel,
+    recentPRTier,
   },
 ) => {
   const badges = [];
@@ -219,10 +252,22 @@ const buildBadgesForLiftType = (
     }
   }
 
-  if (hasRecentPRForLiftType(liftType, topLiftsByTypeAndReps)) {
+  if (recentPRTier === "best") {
     badges.push({
       type: "recent-pr",
-      label: "🔥 Recent PR",
+      label: "🔥 Best ever recently",
+      variant: "secondary",
+    });
+  } else if (recentPRTier === "top5") {
+    badges.push({
+      type: "recent-pr-top5",
+      label: "🔥 Top 5 recently",
+      variant: "secondary",
+    });
+  } else if (recentPRTier === "top10") {
+    badges.push({
+      type: "recent-pr-top10",
+      label: "🔥 Top 10 recently",
       variant: "secondary",
     });
   }
@@ -376,6 +421,13 @@ export function BigFourLiftCards({ lifts, animated = true }) {
     leastFavoriteLiftType,
   } = computeLiftTonnageMeta(sessionTonnageLookup, lifts);
 
+  const recentPRCutoffStr = (() => {
+    const today = new Date();
+    const cutoff = new Date(today);
+    cutoff.setDate(today.getDate() - RECENT_PR_WINDOW_DAYS);
+    return cutoff.toISOString().slice(0, 10);
+  })();
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-4">
       {lifts.map((lift, index) => {
@@ -385,11 +437,18 @@ export function BigFourLiftCards({ lifts, animated = true }) {
           (stats.totalSets > 0 || stats.totalReps > 0 || stats.bestLift);
         const isStatsMode = authStatus === "authenticated" && hasAnyData;
 
+        const recentPRTier = topLiftsByTypeAndReps
+          ? getRecentPRTier(
+              lift.liftType,
+              topLiftsByTypeAndReps,
+              e1rmFormula,
+              recentPRCutoffStr,
+            )
+          : null;
         const badges =
           isStatsMode && topLiftsByTypeAndReps
             ? buildBadgesForLiftType(lift.liftType, {
                 lastDateByLiftType: sessionTonnageLookup?.lastDateByLiftType,
-                topLiftsByTypeAndReps,
                 liftTonnageMap,
                 averageTonnage,
                 favoriteLiftType,
@@ -397,6 +456,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                 getTodayBadgeLabel,
                 getFavoriteBadgeLabel,
                 getLeastFavoriteBadgeLabel,
+                recentPRTier,
               })
             : [];
 

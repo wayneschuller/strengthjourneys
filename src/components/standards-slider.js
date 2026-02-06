@@ -148,8 +148,16 @@ export function StandardsSlider({
       </div>
       {authStatus === "authenticated" && strengthRating && (
         <div className="mt-2 text-sm font-medium text-muted-foreground">
-          {liftType} strength level: {STRENGTH_LEVEL_EMOJI[strengthRating] ?? ""}{" "}
-          {strengthRating}
+          {liftType} strength level:{" "}
+          {strengthRating === "Elite" && userMax > eliteMax ? (
+            <>
+              {STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite
+            </>
+          ) : (
+            <>
+              {STRENGTH_LEVEL_EMOJI[strengthRating] ?? ""} {strengthRating}
+            </>
+          )}
         </div>
       )}
     </div>

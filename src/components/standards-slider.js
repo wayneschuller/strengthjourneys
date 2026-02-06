@@ -34,7 +34,7 @@ export function StandardsSlider({
   // Get all standard values for scale
   const standardValues = Object.values(originalData);
   const minLift = Math.min(...standardValues); // Usually 'physicallyActive'
-  const maxLift = originalData.elite; // Max value of slider
+  const eliteMax = originalData.elite; // Elite standard value
 
   // Use shared hook helper for top-lift stats (authenticated users only)
   let athleteRankingWeight = 0;
@@ -49,6 +49,13 @@ export function StandardsSlider({
     highestE1RM = stats.bestE1RM;
     strengthRating = stats.strengthRating;
   }
+
+  // Extend max beyond Elite when user's record exceeds it (so E1RM/thumb stay on bar)
+  const userMax = Math.max(highestE1RM || 0, athleteRankingWeight || 0);
+  const maxLift =
+    userMax > eliteMax
+      ? Math.ceil(userMax * 1.05) // Slightly beyond user's record
+      : eliteMax;
 
   // Helper to calculate proportional % from minLift to maxLift
   const getPercent = (val) =>
@@ -82,12 +89,12 @@ export function StandardsSlider({
             // First (flush left)
             labelStyle = { left: "0%" };
             labelClass = "absolute flex flex-col items-start text-left";
-          } else if (index === levelLabels.length - 1) {
-            // Last (flush right)
+          } else if (index === levelLabels.length - 1 && maxLift === eliteMax) {
+            // Last (flush right) - only when scale ends at Elite
             labelStyle = { left: "100%", transform: "translateX(-100%)" };
             labelClass = "absolute flex flex-col items-end text-right";
           } else {
-            // Centered for others
+            // Centered for others, or last when scale extends beyond Elite
             labelStyle = { left: `${left}%`, transform: "translateX(-50%)" };
             labelClass = "absolute flex flex-col items-center";
           }

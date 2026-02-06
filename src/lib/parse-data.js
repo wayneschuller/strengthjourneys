@@ -155,7 +155,7 @@ function parseBespokeData(data) {
     // Process lift type next since it's used for previousLiftType
     if (row[liftTypeCol]) {
       obj.liftType = normalizeLiftTypeNames(row[liftTypeCol]);
-      previousLiftType = row[liftTypeCol];
+      previousLiftType = obj.liftType; // Store normalized value so inherited rows get "Strict Press" not "Overhead Press"
     } else {
       obj.liftType = previousLiftType;
     }

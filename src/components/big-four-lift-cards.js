@@ -212,7 +212,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
             <Link href={`/${lift.slug}`}>
               <CardHeader className="pb-2">
                 <div className="flex items-start gap-3">
-                  <CardTitle className="min-h-[3.2rem] min-w-0 flex-1 text-xl leading-tight sm:min-h-[3.8rem] sm:text-2xl">
+                  <CardTitle className="min-w-0 flex-1 text-xl leading-tight sm:text-2xl lg:min-h-[3.8rem]">
                     {lift.liftType}
                   </CardTitle>
                   {isStatsMode && badges.length > 0 && (
@@ -248,7 +248,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                   {/* Stats overlay that fades in on top for authenticated users with data */}
                   {isStatsMode && stats && (
                     <div
-                      className={`text-muted-foreground pointer-events-none absolute inset-0 flex flex-col justify-center text-sm transition-opacity duration-300 ${
+                      className={`text-muted-foreground pointer-events-none absolute inset-0 flex flex-col justify-start text-sm transition-opacity duration-300 ${
                         showStats ? "opacity-100" : "opacity-0"
                       }`}
                     >

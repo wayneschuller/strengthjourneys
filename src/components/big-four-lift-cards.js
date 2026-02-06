@@ -152,6 +152,19 @@ const TODAY_BADGE_OPTIONS = [
   "🎯 Crushing it",
 ];
 
+const FAVORITE_BADGE_OPTIONS = [
+  "⭐ Favourite of the four",
+  "⭐ Your beloved",
+  "⭐ The one you actually love",
+  "⭐ Your precious",
+  "⭐ Can't get enough",
+  "⭐ The one you show up for",
+  "⭐ Your ride or die",
+  "⭐ The one that gets the reps",
+  "⭐ Your true love",
+  "⭐ The one that gets the love",
+];
+
 const buildBadgesForLiftType = (
   liftType,
   {
@@ -162,6 +175,7 @@ const buildBadgesForLiftType = (
     favoriteLiftType,
     leastFavoriteLiftType,
     getTodayBadgeLabel,
+    getFavoriteBadgeLabel,
   },
 ) => {
   const badges = [];
@@ -216,10 +230,10 @@ const buildBadgesForLiftType = (
     });
   }
 
-  if (favoriteLiftType && liftType === favoriteLiftType) {
+  if (favoriteLiftType && liftType === favoriteLiftType && getFavoriteBadgeLabel) {
     badges.push({
       type: "favorite",
-      label: "⭐ Favourite of the four",
+      label: getFavoriteBadgeLabel(liftType),
       shortLabel: "⭐ Fav",
       variant: "secondary",
     });
@@ -257,6 +271,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
   const { status: authStatus } = useSession();
   const [statsVisibleCount, setStatsVisibleCount] = useState(0);
   const todayBadgeLabelsRef = useRef({});
+  const favoriteBadgeLabelsRef = useRef({});
 
   const getTodayBadgeLabel = (liftType) => {
     if (!todayBadgeLabelsRef.current[liftType]) {
@@ -266,6 +281,16 @@ export function BigFourLiftCards({ lifts, animated = true }) {
         ];
     }
     return todayBadgeLabelsRef.current[liftType];
+  };
+
+  const getFavoriteBadgeLabel = (liftType) => {
+    if (!favoriteBadgeLabelsRef.current[liftType]) {
+      favoriteBadgeLabelsRef.current[liftType] =
+        FAVORITE_BADGE_OPTIONS[
+          Math.floor(Math.random() * FAVORITE_BADGE_OPTIONS.length)
+        ];
+    }
+    return favoriteBadgeLabelsRef.current[liftType];
   };
 
   const getStatsForLift = (liftType) => {
@@ -347,6 +372,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                 favoriteLiftType,
                 leastFavoriteLiftType,
                 getTodayBadgeLabel,
+                getFavoriteBadgeLabel,
               })
             : [];
 

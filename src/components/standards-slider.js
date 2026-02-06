@@ -6,8 +6,9 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
-import { devLog } from "@/lib/processing-utils";
+import { devLog, getReadableDateString } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useReadLocalStorage, useWindowSize } from "usehooks-ts";
 
 export function StandardsSlider({
@@ -42,6 +43,8 @@ export function StandardsSlider({
   let athleteRankingWeight = 0;
   let highestE1RM = 0;
   let strengthRating = null;
+  let bestWeightTuple = null;
+  let bestE1RMTuple = null;
   if (authStatus === "authenticated") {
     const topLifts = isYearly
       ? topLiftsByTypeAndRepsLast12Months?.[liftType]
@@ -60,6 +63,8 @@ export function StandardsSlider({
     athleteRankingWeight = stats.bestWeight;
     highestE1RM = stats.bestE1RM;
     strengthRating = stats.strengthRating;
+    bestWeightTuple = stats.bestWeightTuple;
+    bestE1RMTuple = stats.bestE1RMTuple;
   }
 
   // Extend max beyond Elite when user's record exceeds it (so E1RM/thumb stay on bar)
@@ -126,37 +131,81 @@ export function StandardsSlider({
       <div className="relative w-full">
         {/* Slider bar background */}
         <div className="relative h-2 w-full rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800" />
-        {/* Proportional thumb */}
-        <div
-          className="absolute -top-1 bg-primary transition-all duration-1000 ease-in"
-          style={{ left: `${thumbPosition}%`, transform: "translateX(-50%)" }}
-        >
-          <div className="h-4 w-4 rotate-45"></div>
-          {athleteRankingWeight > 0 && (
-            <span
-              className="absolute left-1/2 top-5 w-max font-bold"
-              style={{ transform: "translateX(-50%)" }}
-            >
-              {athleteRankingWeight}
-              {unitType}
-            </span>
-          )}
-        </div>
-        {authStatus === "authenticated" &&
-          highestE1RM > 0 &&
-          highestE1RM > athleteRankingWeight && (
-            <div
-              className="pointer-events-none absolute top-0 z-30 h-full border-l-4 border-foreground"
-              style={{
-                left: `${getPercent(highestE1RM)}%`,
-                transform: "translateX(-1px)",
-              }}
-            >
-              <span className="absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-foreground px-1 text-xs text-background opacity-50 shadow">
-                E1RM
-              </span>
-            </div>
-          )}
+        {/* Proportional thumb (PR marker) */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className="absolute -top-1 z-20 cursor-help bg-primary transition-all duration-200 hover:scale-125 hover:ring-2 hover:ring-primary hover:ring-offset-2 hover:shadow-lg"
+                style={{ left: `${thumbPosition}%`, transform: "translateX(-50%)" }}
+              >
+                <div className="h-4 w-4 rotate-45"></div>
+                {athleteRankingWeight > 0 && (
+                  <span
+                    className="absolute left-1/2 top-5 w-max font-bold"
+                    style={{ transform: "translateX(-50%)" }}
+                  >
+                    {athleteRankingWeight}
+                    {unitType}
+                  </span>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs">
+              {bestWeightTuple ? (
+                <div className="space-y-0.5 text-sm">
+                  <div className="font-semibold">Best single</div>
+                  <div>
+                    {bestWeightTuple.reps} rep{bestWeightTuple.reps > 1 ? "s" : ""} × {bestWeightTuple.weight}
+                    {unitType}
+                  </div>
+                  {bestWeightTuple.date && (
+                    <div className="text-muted-foreground">
+                      {getReadableDateString(bestWeightTuple.date)}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <span>Best single: {athleteRankingWeight}{unitType}</span>
+              )}
+            </TooltipContent>
+          </Tooltip>
+          {authStatus === "authenticated" &&
+            highestE1RM > 0 &&
+            highestE1RM > athleteRankingWeight && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className="group absolute top-0 z-30 h-full w-6 cursor-help -translate-x-1/2"
+                    style={{ left: `${getPercent(highestE1RM)}%` }}
+                  >
+                    <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-medium shadow transition-colors bg-foreground/70 text-background group-hover:bg-primary group-hover:text-primary-foreground">
+                      E1RM
+                    </span>
+                    <div className="absolute inset-0 top-0 w-1 border-l-4 border-foreground/80 transition-colors group-hover:border-primary group-hover:bg-primary/20" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  {bestE1RMTuple ? (
+                    <div className="space-y-0.5 text-sm">
+                      <div className="font-semibold">Estimated 1RM</div>
+                      <div>
+                        {bestE1RMTuple.reps}×{bestE1RMTuple.weight}
+                        {unitType} → ~{Math.round(bestE1RMTuple.e1rm)}{unitType}
+                      </div>
+                      {bestE1RMTuple.date && (
+                        <div className="text-muted-foreground">
+                          {getReadableDateString(bestE1RMTuple.date)}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span>E1RM: ~{Math.round(highestE1RM)}{unitType}</span>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            )}
+        </TooltipProvider>
       </div>
       {authStatus === "authenticated" && strengthRating && (
         <div className="mt-2 text-sm font-medium text-muted-foreground">

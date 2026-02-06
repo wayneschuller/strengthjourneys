@@ -98,17 +98,27 @@ export function getTopLiftStats(
   let bestE1RM = 0;
   let bestWeight = 0;
   let bestLiftDate = null;
+  let bestWeightTuple = null;
+  let bestE1RMTuple = null;
   if (Array.isArray(topLifts)) {
     for (let repsIdx = 0; repsIdx < topLifts.length; repsIdx++) {
       const topSet = topLifts[repsIdx]?.[0];
       if (!topSet) continue;
       const reps = repsIdx + 1;
       const weight = topSet.weight || 0;
-      if (weight > bestWeight) bestWeight = weight;
       const e1rm = estimateE1RM(reps, weight, e1rmFormula);
+      if (weight > bestWeight) {
+        bestWeight = weight;
+        bestWeightTuple = {
+          weight,
+          reps,
+          date: topSet.date || null,
+        };
+      }
       if (e1rm > bestE1RM) {
         bestE1RM = e1rm;
         bestLiftDate = topSet.date || null;
+        bestE1RMTuple = { weight, reps, date: topSet.date || null, e1rm };
       }
     }
   }
@@ -133,7 +143,13 @@ export function getTopLiftStats(
     standard && bestE1RM > 0
       ? getStrengthRatingForE1RM(bestE1RM, standard)
       : null;
-  return { bestE1RM, bestWeight, strengthRating };
+  return {
+    bestE1RM,
+    bestWeight,
+    strengthRating,
+    bestWeightTuple,
+    bestE1RMTuple,
+  };
 }
 
 /**

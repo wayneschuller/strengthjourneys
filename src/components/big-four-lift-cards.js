@@ -23,8 +23,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 export function BigFourLiftCards({ lifts, animated = true }) {
-  const { topLiftsByTypeAndReps, liftTypes, sessionTonnageLookup } =
-    useUserLiftingData() || {};
+  const {
+    topLiftsByTypeAndReps,
+    liftTypes,
+    sessionTonnageLookup,
+    topTonnageByType,
+    topTonnageByTypeLast12Months,
+  } = useUserLiftingData() || {};
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
@@ -33,6 +38,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
   const todayBadgeLabelsRef = useRef({});
   const favoriteBadgeLabelsRef = useRef({});
   const leastFavoriteBadgeLabelsRef = useRef({});
+  const tonnageBadgeLabelsRef = useRef({});
 
   const getTodayBadgeLabel = (liftType) => {
     if (!todayBadgeLabelsRef.current[liftType]) {
@@ -62,6 +68,16 @@ export function BigFourLiftCards({ lifts, animated = true }) {
         ];
     }
     return leastFavoriteBadgeLabelsRef.current[liftType];
+  };
+
+  const getTonnageBadgeLabel = (liftType) => {
+    if (!tonnageBadgeLabelsRef.current[liftType]) {
+      tonnageBadgeLabelsRef.current[liftType] =
+        TONNAGE_BADGE_OPTIONS[
+          Math.floor(Math.random() * TONNAGE_BADGE_OPTIONS.length)
+        ];
+    }
+    return tonnageBadgeLabelsRef.current[liftType];
   };
 
   const getStatsForLift = (liftType) => {
@@ -131,6 +147,13 @@ export function BigFourLiftCards({ lifts, animated = true }) {
     return cutoff.toISOString().slice(0, 10);
   })();
 
+  const tonnageBadgeCutoffStr = (() => {
+    const today = new Date();
+    const cutoff = new Date(today);
+    cutoff.setDate(today.getDate() - TONNAGE_BADGE_WINDOW_DAYS);
+    return cutoff.toISOString().slice(0, 10);
+  })();
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-4">
       {lifts.map((lift, index) => {
@@ -148,18 +171,24 @@ export function BigFourLiftCards({ lifts, animated = true }) {
               recentPRCutoffStr,
             )
           : null;
+        const qualifiesTonnageBadge = qualifiesForTonnageBadge(
+          lift.liftType,
+          topTonnageByType,
+          topTonnageByTypeLast12Months,
+          tonnageBadgeCutoffStr,
+        );
         const badges =
           isStatsMode && topLiftsByTypeAndReps
             ? buildBadgesForLiftType(lift.liftType, {
                 lastDateByLiftType: sessionTonnageLookup?.lastDateByLiftType,
-                liftTonnageMap,
-                averageTonnage,
                 favoriteLiftType,
                 leastFavoriteLiftType,
                 getTodayBadgeLabel,
                 getFavoriteBadgeLabel,
                 getLeastFavoriteBadgeLabel,
+                getTonnageBadgeLabel,
                 recentPRTier,
+                qualifiesTonnageBadge,
               })
             : [];
 
@@ -261,6 +290,8 @@ const STATS_STAGGER_MS = 360;
 
 const RECENT_PR_WINDOW_DAYS = 60;
 
+const TONNAGE_BADGE_WINDOW_DAYS = 30; // last month
+
 /** Fortnight = 14 days. We encourage each big four lift at least 1–2x per fortnight. */
 const NEGLECTED_TIERS = [
   { days: 10, label: "⏰ It's time" },
@@ -301,6 +332,44 @@ const LEAST_FAVORITE_BADGE_OPTIONS = [
   "💩 The one you avoid eye contact with",
   "💩 The one you do begrudgingly",
 ];
+
+const TONNAGE_BADGE_OPTIONS = [
+  "🏋️ Volume monster",
+  "🏋️ Tonnage king",
+  "🏋️ Moving serious weight",
+  "🏋️ Volume beast",
+  "🏋️ Tonnage champion",
+  "🏋️ Piling on the plates",
+  "🏋️ Volume legend",
+  "🏋️ Tonnage hero",
+  "🏋️ Shifting the iron",
+  "🏋️ Volume warrior",
+];
+
+function qualifiesForTonnageBadge(
+  liftType,
+  topTonnageByType,
+  topTonnageByTypeLast12Months,
+  lastMonthCutoffStr,
+) {
+  if (!topTonnageByType || !topTonnageByType[liftType]) return false;
+
+  // In the last month: lifetime top 20 tonnage session
+  const lifetimeTop = topTonnageByType[liftType];
+  for (let i = 0; i < Math.min(20, lifetimeTop.length); i++) {
+    const session = lifetimeTop[i];
+    if (session?.date && session.date >= lastMonthCutoffStr) return true;
+  }
+
+  // In the last month: 12-month top 5 tonnage session
+  const last12 = topTonnageByTypeLast12Months?.[liftType];
+  for (let i = 0; i < Math.min(5, last12?.length ?? 0); i++) {
+    const session = last12[i];
+    if (session?.date && session.date >= lastMonthCutoffStr) return true;
+  }
+
+  return false;
+}
 
 function computeLiftTonnageMeta(sessionTonnageLookup, lifts) {
   if (!sessionTonnageLookup || !lifts || !lifts.length) {
@@ -443,14 +512,14 @@ function buildBadgesForLiftType(
   liftType,
   {
     lastDateByLiftType,
-    liftTonnageMap,
-    averageTonnage,
     favoriteLiftType,
     leastFavoriteLiftType,
     getTodayBadgeLabel,
     getFavoriteBadgeLabel,
     getLeastFavoriteBadgeLabel,
+    getTonnageBadgeLabel,
     recentPRTier,
+    qualifiesTonnageBadge,
   },
 ) {
   const badges = [];
@@ -501,15 +570,10 @@ function buildBadgesForLiftType(
     });
   }
 
-  const tonnageInfo = liftTonnageMap?.[liftType];
-  if (
-    tonnageInfo &&
-    tonnageInfo.average > 0 &&
-    tonnageInfo.average > averageTonnage
-  ) {
+  if (qualifiesTonnageBadge && getTonnageBadgeLabel) {
     badges.push({
-      type: "workhorse",
-      label: "🛠 Workhorse",
+      type: "tonnage",
+      label: getTonnageBadgeLabel(liftType),
       variant: "outline",
     });
   }

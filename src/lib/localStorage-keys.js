@@ -1,6 +1,30 @@
 /**
- * LocalStorage key constants - single source of truth.
+ * LocalStorage key constants – single source of truth.
  * Import from here when reading/writing localStorage to avoid typos and collisions.
+ *
+ *
+ * Common `usehooks-ts` patterns:
+ * - **Read/write preference with `useLocalStorage` (SSR‑safe)**:
+ *   - Use `initializeWithValue: false` so the hook doesn’t touch `window` during SSR.
+ *   - Example:
+ *     const [isMetricPreference, setIsMetricPreference] = useLocalStorage(
+ *       LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
+ *       false,
+ *       { initializeWithValue: false },
+ *     );
+ *
+ * - **Read‑only value with `useReadLocalStorage` (SSR‑safe)**:
+ *   - Also pass `{ initializeWithValue: false }` and provide a fallback.
+ *   - Example:
+ *     const e1rmFormula =
+ *       useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false }) ??
+ *       "Brzycki";
+ *
+ * We also have a dedicated hook, `useStateFromQueryOrLocalStorage`, for values that should be
+ * both persisted in localStorage and shareable via URL query params (calculators, biodata, etc.).
+ *
+ * Following these patterns keeps pages SSR‑safe and avoids hydration warnings while still
+ * benefiting from client‑side persistence.
  */
 
 export const LOCAL_STORAGE_KEYS = {

@@ -341,7 +341,7 @@ export function SectionTopCards({ isProgressDone = false }) {
                 </>
               ) : (
                 <div className="text-muted-foreground">
-                  Once you start logging training, we'll track your lifetime
+                  Once you start logging training, we&apos;ll track your lifetime
                   tonnage here.
                 </div>
               )

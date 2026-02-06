@@ -284,7 +284,14 @@ export function SectionTopCards({ isProgressDone = false }) {
             accent="emerald"
             icon={Activity}
             description="Session Momentum"
-            title={`${recentSessions} sessions`}
+            title={
+              <span className="flex flex-col gap-0.5">
+                <span>{recentSessions} sessions</span>
+                <span className="text-base font-semibold text-muted-foreground">
+                  in the last 90 days
+                </span>
+              </span>
+            }
             action={
               percentageChange !== 0 ? (
                 <CardAction>
@@ -303,14 +310,19 @@ export function SectionTopCards({ isProgressDone = false }) {
                 </CardAction>
               ) : null
             }
-            footer={
-              <>
-                <div className="text-muted-foreground">in the last 90 days</div>
-                <div className="text-muted-foreground">
-                  ({previousSessions} sessions in previous 90 days)
+            footer={(() => {
+              const avgPerWeek = (recentSessions * 7) / 90;
+              const avgFormatted =
+                avgPerWeek % 1 === 0
+                  ? Math.round(avgPerWeek)
+                  : avgPerWeek.toFixed(1);
+              return (
+                <div className="flex flex-col gap-1.5 text-muted-foreground">
+                  <div>Average {avgFormatted} sessions per week</div>
+                  <div>{previousSessions} sessions in previous 90 days</div>
                 </div>
-              </>
-            }
+              );
+            })()}
             animationDelay={500}
           />
 

@@ -680,8 +680,8 @@ function calculateSessionMomentum(parsedData) {
   const ninetyDaysAgoStr = subtractDaysFromStr(todayStr, 90);
   const oneEightyDaysAgoStr = subtractDaysFromStr(todayStr, 180);
 
-  let recentSessions = 0;
-  let previousSessions = 0;
+  const recentSessionDates = new Set();
+  const previousSessionDates = new Set();
 
   for (const entry of parsedData) {
     if (entry.isGoal) continue;
@@ -694,11 +694,14 @@ function calculateSessionMomentum(parsedData) {
 
     // YYYY-MM-DD string comparison
     if (dateStr >= ninetyDaysAgoStr && dateStr <= todayStr) {
-      recentSessions++;
+      recentSessionDates.add(dateStr);
     } else if (dateStr >= oneEightyDaysAgoStr && dateStr < ninetyDaysAgoStr) {
-      previousSessions++;
+      previousSessionDates.add(dateStr);
     }
   }
+
+  const recentSessions = recentSessionDates.size;
+  const previousSessions = previousSessionDates.size;
 
   let percentageChange = 0;
   if (previousSessions > 0) {

@@ -97,7 +97,15 @@ const STREAK_ENCOURAGMENTS = [
  * @param {React.ReactNode} [props.action] - Optional CardAction (e.g. percentage badge)
  * @param {number} props.animationDelay - Delay in ms for animation
  */
-function StatCard({ accent, icon: Icon, description, title, footer, action, animationDelay }) {
+function StatCard({
+  accent,
+  icon: Icon,
+  description,
+  title,
+  footer,
+  action,
+  animationDelay,
+}) {
   const { card, iconBg, icon } = ACCENTS[accent] ?? ACCENTS.primary;
   return (
     <Card
@@ -110,12 +118,12 @@ function StatCard({ accent, icon: Icon, description, title, footer, action, anim
         </div>
         <div className="min-w-0 flex-1">
           <CardDescription>{description}</CardDescription>
-          <CardTitle className="mt-1 min-h-[3rem] text-xl font-semibold tabular-nums leading-tight sm:text-3xl">
+          <CardTitle className="mt-1 min-h-[3rem] text-xl leading-tight font-semibold tabular-nums sm:text-3xl">
             {title}
           </CardTitle>
         </div>
       </CardHeader>
-      <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pb-4 pt-0 text-sm">
+      <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pt-0 pb-4 text-sm">
         {footer}
       </CardFooter>
     </Card>
@@ -171,7 +179,7 @@ export function SectionTopCards({ isProgressDone = false }) {
   const encouragementMessage = streakEncouragementRef.current;
 
   return (
-    <div className="col-span-full grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <div className="col-span-full grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
       {!isProgressDone && <SectionTopCardsSkeleton />}
       {isProgressDone && (
         <>
@@ -185,9 +193,10 @@ export function SectionTopCards({ isProgressDone = false }) {
                 : "Starting your journey"
             }
             footer={
-              <div className="line-clamp-1 text-muted-foreground">
-                {calculateTotalStats(liftTypes).totalReps.toLocaleString()} reps and{" "}
-                {calculateTotalStats(liftTypes).totalSets.toLocaleString()} sets lifted
+              <div className="text-muted-foreground line-clamp-1">
+                {calculateTotalStats(liftTypes).totalReps.toLocaleString()} reps
+                and {calculateTotalStats(liftTypes).totalSets.toLocaleString()}{" "}
+                sets lifted
               </div>
             }
             animationDelay={0}
@@ -261,15 +270,12 @@ export function SectionTopCards({ isProgressDone = false }) {
               lifetimeTonnage.primaryTotal > 0 ? (
                 <>
                   <div className="text-muted-foreground">
-                    Across {lifetimeTonnage.sessionCount.toLocaleString()} logged
-                    {" "}
-                    sessions
+                    Across {lifetimeTonnage.sessionCount.toLocaleString()}{" "}
+                    logged sessions
                   </div>
                   <div className="text-muted-foreground">
                     Avg per session:{" "}
-                    {formatLifetimeTonnage(
-                      lifetimeTonnage.averagePerSession,
-                    )}{" "}
+                    {formatLifetimeTonnage(lifetimeTonnage.averagePerSession)}{" "}
                     {lifetimeTonnage.primaryUnit}
                   </div>
                   {lifetimeTonnage.hasTwelveMonthsOfData &&
@@ -309,15 +315,16 @@ export function SectionTopCards({ isProgressDone = false }) {
                   <div className="text-muted-foreground">
                     {sessionsNeededThisWeek === 1
                       ? "One more session by Sunday night and you keep the streak going."
-                      : `${sessionsNeededThisWeek} more sessions by Sunday night and you're still on track.`
-                    }
+                      : `${sessionsNeededThisWeek} more sessions by Sunday night and you're still on track.`}
                   </div>
                 )}
-                {sessionsNeededThisWeek === 0 && (sessionsThisWeek ?? 0) >= 3 && (
-                  <div className="text-muted-foreground">
-                    This week: {sessionsThisWeek} sessions. {encouragementMessage}
-                  </div>
-                )}
+                {sessionsNeededThisWeek === 0 &&
+                  (sessionsThisWeek ?? 0) >= 3 && (
+                    <div className="text-muted-foreground">
+                      This week: {sessionsThisWeek} sessions.{" "}
+                      {encouragementMessage}
+                    </div>
+                  )}
               </>
             }
             animationDelay={1000}
@@ -332,7 +339,7 @@ function SectionTopCardsSkeleton() {
   return Array.from({ length: 5 }).map((_, index) => (
     <div
       key={`section-top-card-skeleton-${index}`}
-      className="flex min-h-[260px] flex-col justify-between rounded-xl border border-border/60 bg-card/30 p-4 md:min-h-[280px]"
+      className="border-border/60 bg-card/30 flex min-h-[260px] flex-col justify-between rounded-xl border p-4 md:min-h-[280px]"
     >
       <div className="flex items-start gap-3">
         <Skeleton className="h-10 w-10 rounded-lg" />
@@ -508,9 +515,7 @@ function calculateLifetimeTonnage(parsedData, preferredUnit = "lb") {
   }
 
   const averagePerSession =
-    sessionDates.size > 0
-      ? Math.round(primaryTotal / sessionDates.size)
-      : 0;
+    sessionDates.size > 0 ? Math.round(primaryTotal / sessionDates.size) : 0;
 
   return {
     totalByUnit,

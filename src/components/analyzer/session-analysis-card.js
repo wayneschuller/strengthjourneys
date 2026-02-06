@@ -39,8 +39,8 @@ import {
   getCelebrationEmoji,
   getReadableDateString,
   getAnalyzedSessionLifts,
-  getAverageSessionTonnage,
-  getAverageLiftSessionTonnage,
+  getAverageSessionTonnageFromPrecomputed,
+  getAverageLiftSessionTonnageFromPrecomputed,
 } from "@/lib/processing-utils";
 import {
   LoaderCircle,
@@ -60,6 +60,7 @@ export function SessionAnalysisCard({
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
+    sessionTonnageLookup,
     isValidating,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
@@ -116,7 +117,10 @@ export function SessionAnalysisCard({
 
   // Precompute per-lift tonnage stats for this session vs last year
   const perLiftTonnageStats = useMemo(() => {
-    if (!analyzedSessionLifts || !parsedData || !sessionDate) return {};
+    if (!analyzedSessionLifts || !sessionDate) return {};
+
+    const lookup = sessionTonnageLookup;
+    if (!lookup) return {};
 
     return Object.entries(analyzedSessionLifts).reduce(
       (acc, [liftType, lifts]) => {
@@ -129,8 +133,9 @@ export function SessionAnalysisCard({
         const unitTypeForLift = firstLift?.unitType ?? "lb";
 
         const { average: avgLiftTonnage, sessionCount } =
-          getAverageLiftSessionTonnage(
-            parsedData,
+          getAverageLiftSessionTonnageFromPrecomputed(
+            lookup.sessionTonnageByDateAndLift,
+            lookup.allSessionDates,
             sessionDate,
             liftType,
             unitTypeForLift,
@@ -153,7 +158,7 @@ export function SessionAnalysisCard({
       },
       {},
     );
-  }, [analyzedSessionLifts, parsedData, sessionDate]);
+  }, [analyzedSessionLifts, sessionDate, sessionTonnageLookup]);
 
   const prevDate = () => {
     if (!parsedData || !sessionDate) return;
@@ -371,7 +376,7 @@ export function SessionAnalysisCard({
             <div className="flex flex-col gap-4">
               <SessionTonnage
                 analyzedSessionLifts={analyzedSessionLifts}
-                parsedData={parsedData}
+                sessionTonnageLookup={sessionTonnageLookup}
                 sessionDate={sessionDate}
               />
               <div>
@@ -385,7 +390,11 @@ export function SessionAnalysisCard({
   );
 }
 
-function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
+function SessionTonnage({
+  analyzedSessionLifts,
+  sessionTonnageLookup,
+  sessionDate,
+}) {
   const equivalentRef = useRef(null);
 
   if (!analyzedSessionLifts) return null;
@@ -400,9 +409,16 @@ function SessionTonnage({ analyzedSessionLifts, parsedData, sessionDate }) {
   const firstLift = flatLifts?.[0];
   const unitType = firstLift?.unitType ?? "lb"; // default to lb
 
-  // Rolling 365-day session-level baseline
+  // Rolling 365-day session-level baseline (from precomputed lookup)
   const { average: avgSessionTonnage, sessionCount: sessionCountLastYear } =
-    getAverageSessionTonnage(parsedData, sessionDate, unitType);
+    sessionTonnageLookup
+      ? getAverageSessionTonnageFromPrecomputed(
+          sessionTonnageLookup.sessionTonnageByDate,
+          sessionTonnageLookup.allSessionDates,
+          sessionDate,
+          unitType,
+        )
+      : { average: 0, sessionCount: 0 };
 
   const overallPctDiff =
     avgSessionTonnage > 0

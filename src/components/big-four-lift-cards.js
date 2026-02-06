@@ -9,7 +9,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { getAverageLiftSessionTonnage } from "@/lib/processing-utils";
+import { getAverageLiftSessionTonnageFromPrecomputed } from "@/lib/processing-utils";
 
 import {
   Card,
@@ -40,18 +40,8 @@ const NEGLECTED_TIERS = [
   { days: 60, label: "🌱 Been a while", shortLabel: "🌱 Yawn" },
 ];
 
-const getLastDateForLiftType = (parsedData, liftType) => {
-  if (!parsedData || !parsedData.length || !liftType) return null;
-  for (let i = parsedData.length - 1; i >= 0; i--) {
-    if (parsedData[i].liftType === liftType) {
-      return parsedData[i].date;
-    }
-  }
-  return null;
-};
-
-const computeLiftTonnageMeta = (parsedData, lifts) => {
-  if (!parsedData || !parsedData.length || !lifts || !lifts.length) {
+const computeLiftTonnageMeta = (sessionTonnageLookup, lifts) => {
+  if (!sessionTonnageLookup || !lifts || !lifts.length) {
     return {
       liftTonnageMap: null,
       averageTonnage: 0,
@@ -60,7 +50,8 @@ const computeLiftTonnageMeta = (parsedData, lifts) => {
     };
   }
 
-  const endDate = parsedData[parsedData.length - 1]?.date;
+  const { sessionTonnageByDateAndLift, allSessionDates } = sessionTonnageLookup;
+  const endDate = allSessionDates[allSessionDates.length - 1];
   if (!endDate) {
     return {
       liftTonnageMap: null,
@@ -72,15 +63,17 @@ const computeLiftTonnageMeta = (parsedData, lifts) => {
 
   const liftTonnageMap = {};
 
-  // Compute per-lift average session tonnage over the rolling year window
+  // Compute per-lift average session tonnage over the rolling year window (from precomputed lookup)
   lifts.forEach((lift) => {
     const liftType = lift.liftType;
     if (!liftType || liftTonnageMap[liftType]) return; // skip duplicates
 
-    const { average } = getAverageLiftSessionTonnage(
-      parsedData,
+    const { average } = getAverageLiftSessionTonnageFromPrecomputed(
+      sessionTonnageByDateAndLift,
+      allSessionDates,
       endDate,
       liftType,
+      undefined, // include all unit types
     );
 
     liftTonnageMap[liftType] = { average };
@@ -154,7 +147,7 @@ const hasRecentPRForLiftType = (liftType, topLiftsByTypeAndReps) => {
 const buildBadgesForLiftType = (
   liftType,
   {
-    parsedData,
+    lastDateByLiftType,
     topLiftsByTypeAndReps,
     liftTonnageMap,
     averageTonnage,
@@ -164,7 +157,7 @@ const buildBadgesForLiftType = (
 ) => {
   const badges = [];
 
-  const lastDate = getLastDateForLiftType(parsedData, liftType);
+  const lastDate = lastDateByLiftType?.[liftType];
   if (lastDate) {
     const today = new Date();
     const last = new Date(lastDate);
@@ -238,7 +231,7 @@ const formatLiftDate = (dateStr) => {
 };
 
 export function BigFourLiftCards({ lifts, animated = true }) {
-  const { topLiftsByTypeAndReps, liftTypes, parsedData } =
+  const { topLiftsByTypeAndReps, liftTypes, sessionTonnageLookup } =
     useUserLiftingData() || {};
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
@@ -304,7 +297,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
     averageTonnage,
     favoriteLiftType,
     leastFavoriteLiftType,
-  } = computeLiftTonnageMeta(parsedData, lifts);
+  } = computeLiftTonnageMeta(sessionTonnageLookup, lifts);
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-4">
@@ -318,7 +311,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
         const badges =
           isStatsMode && topLiftsByTypeAndReps
             ? buildBadgesForLiftType(lift.liftType, {
-                parsedData,
+                lastDateByLiftType: sessionTonnageLookup?.lastDateByLiftType,
                 topLiftsByTypeAndReps,
                 liftTonnageMap,
                 averageTonnage,

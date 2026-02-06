@@ -286,18 +286,23 @@ export function getAverageLiftSessionTonnage(
   };
 }
 
-// Loop through the data once and collect top PRs for each lift, rep scehemes 1..10
-//  - The top-level keys (`liftType`) are strings like "Back Squat", "Bench Press", etc.
-//  - For each lift type, there is an array of 10 arrays.
-//    - Each inner array (indices 0-9) corresponds to sets performed for 1, 2, ... 10 reps, respectively.
-//    - Each entry within these arrays is a lift data object representing a specific session (sorted by weight descending).
-//    - Example:
-//        topLiftsByTypeAndReps["Bench Press"][2][0]
-//          → The heaviest Bench Press performed for 3 reps (3RM, index 2, first/best entry).
-//        topLiftsByTypeAndReps["Back Squat"][4][17]
-//          → The 18th best Back Squat performed for 5 reps (5RM, index 4, entry 17).
-//
-//  This lets you easily access the Nth-best lift for each lift type and rep range for analysis, charting, or UI.
+/**
+ * Collect top PRs for each lift type and rep range (1–10 reps).
+ *
+ * @param {Array} parsedData - Chronologically sorted lift entries from parseData
+ * @param {Array} liftTypes - List of { liftType } from calculateLiftTypes
+ * @returns {{ topLiftsByTypeAndReps: Object, topLiftsByTypeAndRepsLast12Months: Object }}
+ *
+ * **topLiftsByTypeAndReps / topLiftsByTypeAndRepsLast12Months format:**
+ * - Top-level keys: lift type strings (e.g. `"Back Squat"`, `"Bench Press"`)
+ * - Value per lift type: array of 10 arrays (indices 0–9 = 1–10 reps)
+ * - Each inner array: lift objects sorted by weight descending (best first)
+ * - Each entry: `{ date, liftType, reps, weight, unitType, ... }` (full parsed row)
+ *
+ * Examples:
+ * - `topLiftsByTypeAndReps["Bench Press"][2][0]` → heaviest 3RM
+ * - `topLiftsByTypeAndReps["Back Squat"][4][17]` → 18th-best 5RM
+ */
 export function processTopLiftsByTypeAndReps(parsedData, liftTypes) {
   const startTime = performance.now();
   const topLiftsByTypeAndReps = {};
@@ -374,6 +379,216 @@ export function processTopLiftsByTypeAndReps(parsedData, liftTypes) {
   );
 
   return { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months };
+}
+
+/**
+ * Precompute top tonnage sessions per lift type (all-time and last 12 months).
+ *
+ * @param {Array} parsedData - Chronologically sorted lift entries from parseData
+ * @param {Array} liftTypes - List of { liftType } from calculateLiftTypes
+ * @returns {{ topTonnageByType: Object, topTonnageByTypeLast12Months: Object }}
+ *
+ * **topTonnageByType / topTonnageByTypeLast12Months format:**
+ * - Top-level keys: lift type strings (e.g. `"Back Squat"`, `"Deadlift"`)
+ * - Value per lift type: array of up to 20 session records, sorted by tonnage descending
+ * - Each record: `{ date: string, tonnage: number, unitType: string }`
+ * - Tonnage = sum of (weight × reps) for that lift type on that date
+ * - Records are per (date, liftType, unitType); mixed-unit sessions appear as separate entries
+ */
+export function processTopTonnageByType(parsedData, liftTypes) {
+  const startTime = performance.now();
+  const topTonnageByType = {};
+  const topTonnageByTypeLast12Months = {};
+
+  if (!parsedData || parsedData.length === 0) {
+    return { topTonnageByType, topTonnageByTypeLast12Months };
+  }
+
+  const now = new Date();
+  const last12Months = new Date(now);
+  last12Months.setFullYear(now.getFullYear() - 1);
+  const last12MonthsStr = last12Months.toISOString().split("T")[0];
+
+  liftTypes.forEach((t) => {
+    topTonnageByType[t.liftType] = [];
+    topTonnageByTypeLast12Months[t.liftType] = [];
+  });
+
+  // Aggregate tonnage per (date, liftType, unitType) in one pass
+  const byDateLiftUnit = {};
+  parsedData.forEach((entry) => {
+    if (entry.isGoal) return;
+    const { date, liftType, weight, reps, unitType } = entry;
+    if (!date || !liftType) return;
+    const tonnage = (weight ?? 0) * (reps ?? 0);
+    const u = unitType || "lb";
+    const key = `${date}|${liftType}|${u}`;
+    byDateLiftUnit[key] = (byDateLiftUnit[key] ?? 0) + tonnage;
+  });
+
+  // Build top records per lift type
+  const byLiftAll = {};
+  const byLift12 = {};
+  Object.entries(byDateLiftUnit).forEach(([key, tonnage]) => {
+    const [date, liftType, unitType] = key.split("|");
+    if (!topTonnageByType[liftType]) return;
+    byLiftAll[liftType] = byLiftAll[liftType] || [];
+    byLiftAll[liftType].push({ date, tonnage, unitType });
+    if (date >= last12MonthsStr) {
+      byLift12[liftType] = byLift12[liftType] || [];
+      byLift12[liftType].push({ date, tonnage, unitType });
+    }
+  });
+
+  Object.keys(topTonnageByType).forEach((liftType) => {
+    const all = byLiftAll[liftType] || [];
+    all.sort((a, b) => b.tonnage - a.tonnage);
+    topTonnageByType[liftType] = all.slice(0, 20);
+    const last12 = byLift12[liftType] || [];
+    last12.sort((a, b) => b.tonnage - a.tonnage);
+    topTonnageByTypeLast12Months[liftType] = last12.slice(0, 20);
+  });
+
+  devLog(
+    `processTopTonnageByType() execution time: \x1b[1m${Math.round(
+      performance.now() - startTime,
+    )}ms\x1b[0m`,
+  );
+
+  return { topTonnageByType, topTonnageByTypeLast12Months };
+}
+
+// Precompute session tonnage for O(1) lookups. Single pass over parsedData.
+// Enables fast getAverageLiftSessionTonnage and getAverageSessionTonnage without rescanning.
+// Also includes lastDateByLiftType for neglected-lift detection.
+export function processSessionTonnageLookup(parsedData) {
+  const startTime = performance.now();
+  const sessionTonnageByDateAndLift = {};
+  const sessionTonnageByDate = {};
+  const allSessionDatesSet = new Set();
+  const lastDateByLiftType = {};
+
+  if (!parsedData || parsedData.length === 0) {
+    return {
+      sessionTonnageByDateAndLift,
+      sessionTonnageByDate,
+      allSessionDates: [],
+      lastDateByLiftType,
+    };
+  }
+
+  parsedData.forEach((entry) => {
+    if (entry.isGoal) return;
+    const { date, liftType, weight, reps, unitType } = entry;
+    if (!date) return;
+    const tonnage = (weight ?? 0) * (reps ?? 0);
+    const u = unitType || "lb";
+
+    allSessionDatesSet.add(date);
+
+    if (!sessionTonnageByDate[date]) sessionTonnageByDate[date] = {};
+    sessionTonnageByDate[date][u] = (sessionTonnageByDate[date][u] ?? 0) + tonnage;
+
+    if (!sessionTonnageByDateAndLift[date]) sessionTonnageByDateAndLift[date] = {};
+    if (!sessionTonnageByDateAndLift[date][liftType])
+      sessionTonnageByDateAndLift[date][liftType] = {};
+    sessionTonnageByDateAndLift[date][liftType][u] =
+      (sessionTonnageByDateAndLift[date][liftType][u] ?? 0) + tonnage;
+
+    lastDateByLiftType[liftType] = date;
+  });
+
+  const allSessionDates = Array.from(allSessionDatesSet).sort();
+
+  devLog(
+    `processSessionTonnageLookup() execution time: \x1b[1m${Math.round(
+      performance.now() - startTime,
+    )}ms\x1b[0m`,
+  );
+
+  return {
+    sessionTonnageByDateAndLift,
+    sessionTonnageByDate,
+    allSessionDates,
+    lastDateByLiftType,
+  };
+}
+
+// Fast average lift session tonnage using precomputed lookup (avoids full parsedData scans).
+// When unitType is undefined, sums tonnage across all unit types (matches original behavior).
+export function getAverageLiftSessionTonnageFromPrecomputed(
+  sessionTonnageByDateAndLift,
+  allSessionDates,
+  endDate,
+  liftType,
+  unitType,
+) {
+  if (!endDate || !liftType || !allSessionDates?.length) {
+    return { average: 0, sessionCount: 0 };
+  }
+
+  const end = toUTCDate(endDate);
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - 364);
+
+  let totalTonnage = 0;
+  let countedSessions = 0;
+
+  for (let i = 0; i < allSessionDates.length; i++) {
+    const dateStr = allSessionDates[i];
+    const d = toUTCDate(dateStr);
+    if (d < start || d > end) continue;
+    const liftData = sessionTonnageByDateAndLift[dateStr]?.[liftType];
+    if (!liftData) continue;
+    const tonnage = unitType
+      ? (liftData[unitType] ?? 0)
+      : Object.values(liftData).reduce((s, v) => s + (v ?? 0), 0);
+    if (tonnage > 0) {
+      totalTonnage += tonnage;
+      countedSessions += 1;
+    }
+  }
+
+  return {
+    average: countedSessions > 0 ? totalTonnage / countedSessions : 0,
+    sessionCount: countedSessions,
+  };
+}
+
+// Fast average session tonnage (all lifts) using precomputed lookup.
+export function getAverageSessionTonnageFromPrecomputed(
+  sessionTonnageByDate,
+  allSessionDates,
+  endDate,
+  unitType,
+) {
+  if (!endDate || !allSessionDates?.length) {
+    return { average: 0, sessionCount: 0 };
+  }
+
+  const end = toUTCDate(endDate);
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - 364);
+
+  const u = unitType || "lb";
+  let totalTonnage = 0;
+  let countedSessions = 0;
+
+  for (let i = 0; i < allSessionDates.length; i++) {
+    const dateStr = allSessionDates[i];
+    const d = toUTCDate(dateStr);
+    if (d < start || d > end) continue;
+    const tonnage = sessionTonnageByDate[dateStr]?.[u] ?? 0;
+    if (tonnage > 0) {
+      totalTonnage += tonnage;
+      countedSessions += 1;
+    }
+  }
+
+  return {
+    average: countedSessions > 0 ? totalTonnage / countedSessions : 0,
+    sessionCount: countedSessions,
+  };
 }
 
 // liftTypes is an array sorted by lift set frequency descending of these objects:

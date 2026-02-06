@@ -10,6 +10,8 @@ import { event, trackSignInClick } from "@/lib/analytics";
 import {
   devLog,
   processTopLiftsByTypeAndReps,
+  processTopTonnageByType,
+  processSessionTonnageLookup,
   markHigherWeightAsHistoricalPRs,
   calculateLiftTypes,
 } from "@/lib/processing-utils";
@@ -166,6 +168,20 @@ export const UserLiftingDataProvider = ({ children }) => {
     return processTopLiftsByTypeAndReps(parsedData, liftTypes);
   }, [parsedData, liftTypes]);
 
+  // Top tonnage sessions per lift type (all-time and last 12 months)
+  const { topTonnageByType, topTonnageByTypeLast12Months } = useMemo(() => {
+    if (!parsedData || !liftTypes.length) {
+      return { topTonnageByType: null, topTonnageByTypeLast12Months: null };
+    }
+    return processTopTonnageByType(parsedData, liftTypes);
+  }, [parsedData, liftTypes]);
+
+  // Precomputed session tonnage lookup for fast getAverageLiftSessionTonnage / getAverageSessionTonnage
+  const sessionTonnageLookup = useMemo(() => {
+    if (!parsedData) return null;
+    return processSessionTonnageLookup(parsedData);
+  }, [parsedData]);
+
   // Calculate rawRows from useSWR data (computed automatically when data changes)
   const rawRows = useMemo(() => 
     data?.values?.length ?? null, 
@@ -223,6 +239,9 @@ export const UserLiftingDataProvider = ({ children }) => {
         parsedData,
         topLiftsByTypeAndReps,
         topLiftsByTypeAndRepsLast12Months,
+        topTonnageByType,
+        topTonnageByTypeLast12Months,
+        sessionTonnageLookup,
         rawRows,
       }}
     >

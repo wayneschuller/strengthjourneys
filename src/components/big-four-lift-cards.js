@@ -35,9 +35,9 @@ const RECENT_PR_WINDOW_DAYS = 60;
 
 /** Fortnight = 14 days. We encourage each big four lift at least 1–2x per fortnight. */
 const NEGLECTED_TIERS = [
-  { days: 10, label: "⏰ It's time", shortLabel: "⏰ Time" },
-  { days: 30, label: "💪 Comeback ready", shortLabel: "💪 Comeback" },
-  { days: 60, label: "🌱 Been a while", shortLabel: "🌱 Yawn" },
+  { days: 10, label: "⏰ It's time" },
+  { days: 30, label: "💪 Comeback ready" },
+  { days: 60, label: "🌱 Been a while" },
 ];
 
 const computeLiftTonnageMeta = (sessionTonnageLookup, lifts) => {
@@ -200,7 +200,6 @@ const buildBadgesForLiftType = (
     badges.push({
       type: "did-today",
       label: getTodayBadgeLabel(liftType),
-      shortLabel: "🎯 Today",
       variant: "secondary",
     });
   }
@@ -215,7 +214,6 @@ const buildBadgesForLiftType = (
       badges.push({
         type: "neglected",
         label: tier.label,
-        shortLabel: tier.shortLabel,
         variant: "outline",
       });
     }
@@ -225,7 +223,6 @@ const buildBadgesForLiftType = (
     badges.push({
       type: "recent-pr",
       label: "🔥 Recent PR",
-      shortLabel: "🔥 PR",
       variant: "secondary",
     });
   }
@@ -239,7 +236,6 @@ const buildBadgesForLiftType = (
     badges.push({
       type: "workhorse",
       label: "🛠 Workhorse",
-      shortLabel: "🛠",
       variant: "outline",
     });
   }
@@ -248,7 +244,6 @@ const buildBadgesForLiftType = (
     badges.push({
       type: "favorite",
       label: getFavoriteBadgeLabel(liftType),
-      shortLabel: "⭐ Fav",
       variant: "secondary",
     });
   }
@@ -261,7 +256,6 @@ const buildBadgesForLiftType = (
     badges.push({
       type: "least-favorite",
       label: getLeastFavoriteBadgeLabel(liftType),
-      shortLabel: "💩 Least",
       variant: "destructive",
     });
   }
@@ -431,10 +425,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                           variant={badge.variant}
                           className="pointer-events-none whitespace-nowrap"
                         >
-                          <span className="hidden sm:inline">
-                            {badge.label}
-                          </span>
-                          <span className="sm:hidden">{badge.shortLabel}</span>
+                          {badge.label}
                         </Badge>
                       ))}
                     </CardAction>

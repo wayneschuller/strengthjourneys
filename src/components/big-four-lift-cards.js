@@ -22,303 +22,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const bigFourDiagrams = {
-  "Back Squat": "/back_squat.svg",
-  "Bench Press": "/bench_press.svg",
-  Deadlift: "/deadlift.svg",
-  "Strict Press": "/strict_press.svg",
-};
-
-const STATS_STAGGER_MS = 360;
-
-const RECENT_PR_WINDOW_DAYS = 60;
-
-/** Fortnight = 14 days. We encourage each big four lift at least 1–2x per fortnight. */
-const NEGLECTED_TIERS = [
-  { days: 10, label: "⏰ It's time" },
-  { days: 30, label: "💪 Comeback ready" },
-  { days: 60, label: "🌱 Been a while" },
-];
-
-const computeLiftTonnageMeta = (sessionTonnageLookup, lifts) => {
-  if (!sessionTonnageLookup || !lifts || !lifts.length) {
-    return {
-      liftTonnageMap: null,
-      averageTonnage: 0,
-      favoriteLiftType: null,
-      leastFavoriteLiftType: null,
-    };
-  }
-
-  const { sessionTonnageByDateAndLift, allSessionDates } = sessionTonnageLookup;
-  const endDate = allSessionDates[allSessionDates.length - 1];
-  if (!endDate) {
-    return {
-      liftTonnageMap: null,
-      averageTonnage: 0,
-      favoriteLiftType: null,
-      leastFavoriteLiftType: null,
-    };
-  }
-
-  const liftTonnageMap = {};
-
-  // Compute per-lift average session tonnage over the rolling year window (from precomputed lookup)
-  lifts.forEach((lift) => {
-    const liftType = lift.liftType;
-    if (!liftType || liftTonnageMap[liftType]) return; // skip duplicates
-
-    const { average } = getAverageLiftSessionTonnageFromPrecomputed(
-      sessionTonnageByDateAndLift,
-      allSessionDates,
-      endDate,
-      liftType,
-      undefined, // include all unit types
-    );
-
-    liftTonnageMap[liftType] = { average };
-  });
-
-  const tonnageValues = Object.values(liftTonnageMap).map(
-    (entry) => entry.average ?? 0,
-  );
-
-  if (!tonnageValues.length) {
-    return {
-      liftTonnageMap,
-      averageTonnage: 0,
-      favoriteLiftType: null,
-      leastFavoriteLiftType: null,
-    };
-  }
-
-  const averageTonnage =
-    tonnageValues.reduce((sum, value) => sum + value, 0) / tonnageValues.length;
-
-  let favoriteLiftType = null;
-  let leastFavoriteLiftType = null;
-  let maxTonnage = -Infinity;
-  let minTonnage = Infinity;
-
-  Object.entries(liftTonnageMap).forEach(([liftType, { average }]) => {
-    const value = average ?? 0;
-    if (value > maxTonnage) {
-      maxTonnage = value;
-      favoriteLiftType = liftType;
-    }
-    if (value < minTonnage) {
-      minTonnage = value;
-      leastFavoriteLiftType = liftType;
-    }
-  });
-
-  return {
-    liftTonnageMap,
-    averageTonnage,
-    favoriteLiftType,
-    leastFavoriteLiftType,
-  };
-};
-
-/**
- * Returns the most impressive recent PR tier for a lift type.
- * - "best": best lifetime lift (by e1RM) was done recently
- * - "top5": a lifetime top-5 lift (for its rep scheme) was done recently
- * - "top10": a lifetime top-10 lift was done recently
- * - null: none of the above
- */
-const getRecentPRTier = (
-  liftType,
-  topLiftsByTypeAndReps,
-  e1rmFormula,
-  cutoffStr,
-) => {
-  if (!topLiftsByTypeAndReps || !topLiftsByTypeAndReps[liftType]) return null;
-
-  const repRanges = topLiftsByTypeAndReps[liftType];
-
-  // Find best lifetime lift (by e1RM across all rep schemes)
-  let bestLift = null;
-  let bestE1RM = 0;
-  for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
-    const topAtReps = repRanges[repsIndex]?.[0];
-    if (!topAtReps) continue;
-    const reps = repsIndex + 1;
-    const e1rm = estimateE1RM(reps, topAtReps.weight, e1rmFormula);
-    if (e1rm > bestE1RM) {
-      bestE1RM = e1rm;
-      bestLift = topAtReps;
-    }
-  }
-  if (bestLift?.date && bestLift.date >= cutoffStr) {
-    return "best";
-  }
-
-  // Check top 5 (indices 0–4 for each rep scheme)
-  for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
-    const repArray = repRanges[repsIndex];
-    if (!repArray) continue;
-    for (let i = 0; i < Math.min(5, repArray.length); i++) {
-      const lift = repArray[i];
-      if (lift?.date && lift.date >= cutoffStr) return "top5";
-    }
-  }
-
-  // Check top 10 (indices 0–9 for each rep scheme)
-  for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
-    const repArray = repRanges[repsIndex];
-    if (!repArray) continue;
-    for (let i = 0; i < Math.min(10, repArray.length); i++) {
-      const lift = repArray[i];
-      if (lift?.date && lift.date >= cutoffStr) return "top10";
-    }
-  }
-
-  return null;
-};
-
-const TODAY_BADGE_OPTIONS = [
-  "🎯 Actually showed up",
-  "🎯 Did the thing",
-  "🎯 Adulting",
-  "🎯 Today's hero",
-  "🎯 Crushing it",
-];
-
-const FAVORITE_BADGE_OPTIONS = [
-  "⭐ Favourite of the four",
-  "⭐ Your beloved",
-  "⭐ The one you actually love",
-  "⭐ Your precious",
-  "⭐ Can't get enough",
-  "⭐ The one you show up for",
-  "⭐ Your ride or die",
-  "⭐ The one that gets the reps",
-  "⭐ Your true love",
-  "⭐ The one that gets the love",
-];
-
-const LEAST_FAVORITE_BADGE_OPTIONS = [
-  "💩 Least favourite",
-  "💩 The one you avoid",
-  "💩 The neglected one",
-  "💩 The one you dread",
-  "💩 The one you skip",
-  "💩 The one you forget about",
-  "💩 The one that gets no love",
-  "💩 The one you put off",
-  "💩 The one you avoid eye contact with",
-  "💩 The one you do begrudgingly",
-];
-
-const buildBadgesForLiftType = (
-  liftType,
-  {
-    lastDateByLiftType,
-    liftTonnageMap,
-    averageTonnage,
-    favoriteLiftType,
-    leastFavoriteLiftType,
-    getTodayBadgeLabel,
-    getFavoriteBadgeLabel,
-    getLeastFavoriteBadgeLabel,
-    recentPRTier,
-  },
-) => {
-  const badges = [];
-
-  const lastDate = lastDateByLiftType?.[liftType];
-  const todayStr = new Date().toISOString().slice(0, 10);
-  if (lastDate === todayStr && getTodayBadgeLabel) {
-    badges.push({
-      type: "did-today",
-      label: getTodayBadgeLabel(liftType),
-      variant: "secondary",
-    });
-  }
-  if (lastDate) {
-    const today = new Date();
-    const last = new Date(lastDate);
-    const daysSince = Math.floor((today - last) / (1000 * 60 * 60 * 24));
-    const tier = [...NEGLECTED_TIERS]
-      .sort((a, b) => b.days - a.days)
-      .find((t) => daysSince >= t.days);
-    if (tier) {
-      badges.push({
-        type: "neglected",
-        label: tier.label,
-        variant: "outline",
-      });
-    }
-  }
-
-  if (recentPRTier === "best") {
-    badges.push({
-      type: "recent-pr",
-      label: "🔥 Best ever recently",
-      variant: "secondary",
-    });
-  } else if (recentPRTier === "top5") {
-    badges.push({
-      type: "recent-pr-top5",
-      label: "🔥 Top 5 recently",
-      variant: "secondary",
-    });
-  } else if (recentPRTier === "top10") {
-    badges.push({
-      type: "recent-pr-top10",
-      label: "🔥 Top 10 recently",
-      variant: "secondary",
-    });
-  }
-
-  const tonnageInfo = liftTonnageMap?.[liftType];
-  if (
-    tonnageInfo &&
-    tonnageInfo.average > 0 &&
-    tonnageInfo.average > averageTonnage
-  ) {
-    badges.push({
-      type: "workhorse",
-      label: "🛠 Workhorse",
-      variant: "outline",
-    });
-  }
-
-  if (favoriteLiftType && liftType === favoriteLiftType && getFavoriteBadgeLabel) {
-    badges.push({
-      type: "favorite",
-      label: getFavoriteBadgeLabel(liftType),
-      variant: "secondary",
-    });
-  }
-
-  if (
-    leastFavoriteLiftType &&
-    liftType === leastFavoriteLiftType &&
-    getLeastFavoriteBadgeLabel
-  ) {
-    badges.push({
-      type: "least-favorite",
-      label: getLeastFavoriteBadgeLabel(liftType),
-      variant: "destructive",
-    });
-  }
-
-  return badges;
-};
-
-const formatLiftDate = (dateStr) => {
-  if (!dateStr) return null;
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-};
-
 export function BigFourLiftCards({ lifts, animated = true }) {
   const { topLiftsByTypeAndReps, liftTypes, sessionTonnageLookup } =
     useUserLiftingData() || {};
@@ -543,4 +246,305 @@ export function BigFourLiftCards({ lifts, animated = true }) {
       })}
     </div>
   );
+}
+
+// ——— Supporting constants and helpers ———
+
+const bigFourDiagrams = {
+  "Back Squat": "/back_squat.svg",
+  "Bench Press": "/bench_press.svg",
+  Deadlift: "/deadlift.svg",
+  "Strict Press": "/strict_press.svg",
+};
+
+const STATS_STAGGER_MS = 360;
+
+const RECENT_PR_WINDOW_DAYS = 60;
+
+/** Fortnight = 14 days. We encourage each big four lift at least 1–2x per fortnight. */
+const NEGLECTED_TIERS = [
+  { days: 10, label: "⏰ It's time" },
+  { days: 30, label: "💪 Comeback ready" },
+  { days: 60, label: "🌱 Been a while" },
+];
+
+const TODAY_BADGE_OPTIONS = [
+  "🎯 Actually showed up",
+  "🎯 Did the thing",
+  "🎯 Adulting",
+  "🎯 Today's hero",
+  "🎯 Crushing it",
+];
+
+const FAVORITE_BADGE_OPTIONS = [
+  "⭐ Favourite of the four",
+  "⭐ Your beloved",
+  "⭐ The one you actually love",
+  "⭐ Your precious",
+  "⭐ Can't get enough",
+  "⭐ The one you show up for",
+  "⭐ Your ride or die",
+  "⭐ The one that gets the reps",
+  "⭐ Your true love",
+  "⭐ The one that gets the love",
+];
+
+const LEAST_FAVORITE_BADGE_OPTIONS = [
+  "💩 Least favourite",
+  "💩 The one you avoid",
+  "💩 The neglected one",
+  "💩 The one you dread",
+  "💩 The one you skip",
+  "💩 The one you forget about",
+  "💩 The one that gets no love",
+  "💩 The one you put off",
+  "💩 The one you avoid eye contact with",
+  "💩 The one you do begrudgingly",
+];
+
+function computeLiftTonnageMeta(sessionTonnageLookup, lifts) {
+  if (!sessionTonnageLookup || !lifts || !lifts.length) {
+    return {
+      liftTonnageMap: null,
+      averageTonnage: 0,
+      favoriteLiftType: null,
+      leastFavoriteLiftType: null,
+    };
+  }
+
+  const { sessionTonnageByDateAndLift, allSessionDates } = sessionTonnageLookup;
+  const endDate = allSessionDates[allSessionDates.length - 1];
+  if (!endDate) {
+    return {
+      liftTonnageMap: null,
+      averageTonnage: 0,
+      favoriteLiftType: null,
+      leastFavoriteLiftType: null,
+    };
+  }
+
+  const liftTonnageMap = {};
+
+  // Compute per-lift average session tonnage over the rolling year window (from precomputed lookup)
+  lifts.forEach((lift) => {
+    const liftType = lift.liftType;
+    if (!liftType || liftTonnageMap[liftType]) return; // skip duplicates
+
+    const { average } = getAverageLiftSessionTonnageFromPrecomputed(
+      sessionTonnageByDateAndLift,
+      allSessionDates,
+      endDate,
+      liftType,
+      undefined, // include all unit types
+    );
+
+    liftTonnageMap[liftType] = { average };
+  });
+
+  const tonnageValues = Object.values(liftTonnageMap).map(
+    (entry) => entry.average ?? 0,
+  );
+
+  if (!tonnageValues.length) {
+    return {
+      liftTonnageMap,
+      averageTonnage: 0,
+      favoriteLiftType: null,
+      leastFavoriteLiftType: null,
+    };
+  }
+
+  const averageTonnage =
+    tonnageValues.reduce((sum, value) => sum + value, 0) / tonnageValues.length;
+
+  let favoriteLiftType = null;
+  let leastFavoriteLiftType = null;
+  let maxTonnage = -Infinity;
+  let minTonnage = Infinity;
+
+  Object.entries(liftTonnageMap).forEach(([liftType, { average }]) => {
+    const value = average ?? 0;
+    if (value > maxTonnage) {
+      maxTonnage = value;
+      favoriteLiftType = liftType;
+    }
+    if (value < minTonnage) {
+      minTonnage = value;
+      leastFavoriteLiftType = liftType;
+    }
+  });
+
+  return {
+    liftTonnageMap,
+    averageTonnage,
+    favoriteLiftType,
+    leastFavoriteLiftType,
+  };
+}
+
+/**
+ * Returns the most impressive recent PR tier for a lift type.
+ * - "best": best lifetime lift (by e1RM) was done recently
+ * - "top5": a lifetime top-5 lift (for its rep scheme) was done recently
+ * - "top10": a lifetime top-10 lift was done recently
+ * - null: none of the above
+ */
+function getRecentPRTier(
+  liftType,
+  topLiftsByTypeAndReps,
+  e1rmFormula,
+  cutoffStr,
+) {
+  if (!topLiftsByTypeAndReps || !topLiftsByTypeAndReps[liftType]) return null;
+
+  const repRanges = topLiftsByTypeAndReps[liftType];
+
+  // Find best lifetime lift (by e1RM across all rep schemes)
+  let bestLift = null;
+  let bestE1RM = 0;
+  for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
+    const topAtReps = repRanges[repsIndex]?.[0];
+    if (!topAtReps) continue;
+    const reps = repsIndex + 1;
+    const e1rm = estimateE1RM(reps, topAtReps.weight, e1rmFormula);
+    if (e1rm > bestE1RM) {
+      bestE1RM = e1rm;
+      bestLift = topAtReps;
+    }
+  }
+  if (bestLift?.date && bestLift.date >= cutoffStr) {
+    return "best";
+  }
+
+  // Check top 5 (indices 0–4 for each rep scheme)
+  for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
+    const repArray = repRanges[repsIndex];
+    if (!repArray) continue;
+    for (let i = 0; i < Math.min(5, repArray.length); i++) {
+      const lift = repArray[i];
+      if (lift?.date && lift.date >= cutoffStr) return "top5";
+    }
+  }
+
+  // Check top 10 (indices 0–9 for each rep scheme)
+  for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
+    const repArray = repRanges[repsIndex];
+    if (!repArray) continue;
+    for (let i = 0; i < Math.min(10, repArray.length); i++) {
+      const lift = repArray[i];
+      if (lift?.date && lift.date >= cutoffStr) return "top10";
+    }
+  }
+
+  return null;
+}
+
+function buildBadgesForLiftType(
+  liftType,
+  {
+    lastDateByLiftType,
+    liftTonnageMap,
+    averageTonnage,
+    favoriteLiftType,
+    leastFavoriteLiftType,
+    getTodayBadgeLabel,
+    getFavoriteBadgeLabel,
+    getLeastFavoriteBadgeLabel,
+    recentPRTier,
+  },
+) {
+  const badges = [];
+
+  const lastDate = lastDateByLiftType?.[liftType];
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (lastDate === todayStr && getTodayBadgeLabel) {
+    badges.push({
+      type: "did-today",
+      label: getTodayBadgeLabel(liftType),
+      variant: "secondary",
+    });
+  }
+  // Neglected badge: only when they haven't done it today (reward for showing up)
+  if (lastDate && lastDate !== todayStr) {
+    const today = new Date();
+    const last = new Date(lastDate);
+    const daysSince = Math.floor((today - last) / (1000 * 60 * 60 * 24));
+    const tier = [...NEGLECTED_TIERS]
+      .sort((a, b) => b.days - a.days)
+      .find((t) => daysSince >= t.days);
+    if (tier) {
+      badges.push({
+        type: "neglected",
+        label: tier.label,
+        variant: "outline",
+      });
+    }
+  }
+
+  if (recentPRTier === "best") {
+    badges.push({
+      type: "recent-pr",
+      label: "🔥 Best ever recently",
+      variant: "secondary",
+    });
+  } else if (recentPRTier === "top5") {
+    badges.push({
+      type: "recent-pr-top5",
+      label: "🔥 Top 5 recently",
+      variant: "secondary",
+    });
+  } else if (recentPRTier === "top10") {
+    badges.push({
+      type: "recent-pr-top10",
+      label: "🔥 Top 10 recently",
+      variant: "secondary",
+    });
+  }
+
+  const tonnageInfo = liftTonnageMap?.[liftType];
+  if (
+    tonnageInfo &&
+    tonnageInfo.average > 0 &&
+    tonnageInfo.average > averageTonnage
+  ) {
+    badges.push({
+      type: "workhorse",
+      label: "🛠 Workhorse",
+      variant: "outline",
+    });
+  }
+
+  if (favoriteLiftType && liftType === favoriteLiftType && getFavoriteBadgeLabel) {
+    badges.push({
+      type: "favorite",
+      label: getFavoriteBadgeLabel(liftType),
+      variant: "secondary",
+    });
+  }
+
+  if (
+    leastFavoriteLiftType &&
+    liftType === leastFavoriteLiftType &&
+    getLeastFavoriteBadgeLabel &&
+    lastDate !== todayStr
+  ) {
+    badges.push({
+      type: "least-favorite",
+      label: getLeastFavoriteBadgeLabel(liftType),
+      variant: "destructive",
+    });
+  }
+
+  return badges;
+}
+
+function formatLiftDate(dateStr) {
+  if (!dateStr) return null;
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }

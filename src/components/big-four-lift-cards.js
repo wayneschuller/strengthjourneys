@@ -165,6 +165,19 @@ const FAVORITE_BADGE_OPTIONS = [
   "⭐ The one that gets the love",
 ];
 
+const LEAST_FAVORITE_BADGE_OPTIONS = [
+  "💩 Least favourite",
+  "💩 The one you avoid",
+  "💩 The neglected one",
+  "💩 The one you dread",
+  "💩 The one you skip",
+  "💩 The one you forget about",
+  "💩 The one that gets no love",
+  "💩 The one you put off",
+  "💩 The one you avoid eye contact with",
+  "💩 The one you do begrudgingly",
+];
+
 const buildBadgesForLiftType = (
   liftType,
   {
@@ -176,6 +189,7 @@ const buildBadgesForLiftType = (
     leastFavoriteLiftType,
     getTodayBadgeLabel,
     getFavoriteBadgeLabel,
+    getLeastFavoriteBadgeLabel,
   },
 ) => {
   const badges = [];
@@ -239,10 +253,14 @@ const buildBadgesForLiftType = (
     });
   }
 
-  if (leastFavoriteLiftType && liftType === leastFavoriteLiftType) {
+  if (
+    leastFavoriteLiftType &&
+    liftType === leastFavoriteLiftType &&
+    getLeastFavoriteBadgeLabel
+  ) {
     badges.push({
       type: "least-favorite",
-      label: "💩 Least favourite",
+      label: getLeastFavoriteBadgeLabel(liftType),
       shortLabel: "💩 Least",
       variant: "destructive",
     });
@@ -272,6 +290,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
   const [statsVisibleCount, setStatsVisibleCount] = useState(0);
   const todayBadgeLabelsRef = useRef({});
   const favoriteBadgeLabelsRef = useRef({});
+  const leastFavoriteBadgeLabelsRef = useRef({});
 
   const getTodayBadgeLabel = (liftType) => {
     if (!todayBadgeLabelsRef.current[liftType]) {
@@ -291,6 +310,16 @@ export function BigFourLiftCards({ lifts, animated = true }) {
         ];
     }
     return favoriteBadgeLabelsRef.current[liftType];
+  };
+
+  const getLeastFavoriteBadgeLabel = (liftType) => {
+    if (!leastFavoriteBadgeLabelsRef.current[liftType]) {
+      leastFavoriteBadgeLabelsRef.current[liftType] =
+        LEAST_FAVORITE_BADGE_OPTIONS[
+          Math.floor(Math.random() * LEAST_FAVORITE_BADGE_OPTIONS.length)
+        ];
+    }
+    return leastFavoriteBadgeLabelsRef.current[liftType];
   };
 
   const getStatsForLift = (liftType) => {
@@ -373,6 +402,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                 leastFavoriteLiftType,
                 getTodayBadgeLabel,
                 getFavoriteBadgeLabel,
+                getLeastFavoriteBadgeLabel,
               })
             : [];
 

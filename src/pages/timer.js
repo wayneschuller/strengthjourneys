@@ -14,6 +14,7 @@ import { NextSeo } from "next-seo";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
+import { PageContainer } from "@/components/page-header";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Gym Timer";
@@ -41,7 +42,7 @@ export default function Timer({ relatedArticles }) {
     "gym timer, workout timer, lifting set timer, rest period tracker, strength training app, fitness timer, exercise timer, workout management, interval timer, weight lifting timer, strength journeys, fitness app";
 
   return (
-    <div className="container">
+    <PageContainer>
       <NextSeo
         title={title}
         description={description}
@@ -79,7 +80,7 @@ export default function Timer({ relatedArticles }) {
         <LargeTimer />
         <RelatedArticles articles={relatedArticles} />
       </section>
-    </div>
+    </PageContainer>
   );
 }
 

@@ -7,6 +7,7 @@ import { RelatedArticles } from "@/components/article-cards";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
@@ -210,7 +211,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
   const maxWeight = isMetric ? 300 : 700;
 
   return (
-    <div className="container">
+    <PageContainer>
       <PageHeader>
         <PageHeaderHeading icon={Flame}>Barbell Warm Ups Calculator</PageHeaderHeading>
         <PageHeaderDescription>
@@ -383,7 +384,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
       {relatedArticles && relatedArticles.length > 0 && (
         <RelatedArticles articles={relatedArticles} />
       )}
-    </div>
+    </PageContainer>
   );
 }
 

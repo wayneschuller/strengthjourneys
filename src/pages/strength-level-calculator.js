@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 
 import {
+  PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
@@ -136,7 +137,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
   const liftTypesFromStandards = Object.keys(standards);
 
   return (
-    <div className="container">
+    <PageContainer>
       <PageHeader>
         <PageHeaderHeading icon={BicepsFlexed}>
           Strength Level Calculator
@@ -302,7 +303,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
         </CardFooter>
       </Card>
       <RelatedArticles articles={relatedArticles} />
-    </div>
+    </PageContainer>
   );
 }
 

@@ -12,6 +12,7 @@ import { useReadLocalStorage } from "usehooks-ts";
 import { VisualizerShadcn } from "@/components/visualizer/visualizer-shadcn";
 import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
 import {
+  PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
@@ -97,7 +98,7 @@ function VisualizerMain({ relatedArticles }) {
     );
 
   return (
-    <div className="container">
+    <PageContainer>
       <PageHeader>
         <PageHeaderHeading icon={LineChart}>
           Strength Visualizer
@@ -119,6 +120,6 @@ function VisualizerMain({ relatedArticles }) {
         </div>
       </section>
       <RelatedArticles articles={relatedArticles} />
-    </div>
+    </PageContainer>
   );
 }

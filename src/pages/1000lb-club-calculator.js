@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 
 import {
+  PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
@@ -178,7 +179,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   };
 
   return (
-    <div className="container">
+    <PageContainer>
       <PageHeader>
         <PageHeaderHeading icon={Anvil}>
           1000lb Club Calculator
@@ -314,7 +315,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
         </p>
         <RelatedArticles articles={relatedArticles} />
       </section>
-    </div>
+    </PageContainer>
   );
 }
 

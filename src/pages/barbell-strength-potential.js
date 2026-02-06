@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/card";
 
 import {
+  PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
@@ -122,7 +123,7 @@ function StrengthPotentialMain({ relatedArticles }) {
     );
 
   return (
-    <div className="container">
+    <PageContainer>
       <PageHeader>
         <PageHeaderHeading icon={ChartColumnDecreasing}>
           Barbell Strength Potential
@@ -146,7 +147,7 @@ function StrengthPotentialMain({ relatedArticles }) {
         ))}
       </section>
       <RelatedArticles articles={relatedArticles} />
-    </div>
+    </PageContainer>
   );
 }
 

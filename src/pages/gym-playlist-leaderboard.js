@@ -18,6 +18,7 @@ import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
 import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/playlist-create-edit";
 import { TrendingUp, Clock, Flame, Bookmark, Heart, Music } from "lucide-react";
 import {
+  PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
@@ -442,7 +443,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={ogImageURL} />
       </Head>
-      <div className="container">
+      <PageContainer>
         <PageHeader>
           <PageHeaderHeading icon={Music}>
             Gym Music Playlist Global Leaderboard
@@ -568,7 +569,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
             </TabsContent>
           </Tabs>
         </section>
-      </div>
+      </PageContainer>
     </>
   );
 }

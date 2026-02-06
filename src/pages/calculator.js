@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/card";
 
 import {
+  PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
@@ -399,7 +400,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
     );
 
   return (
-    <div className="container">
+    <PageContainer>
       <PageHeader>
         <PageHeaderHeading icon={Calculator}>
           One Rep Max Calculator
@@ -552,7 +553,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
         </CardContent>
       </Card>
       <RelatedArticles articles={relatedArticles} />
-    </div>
+    </PageContainer>
   );
 }
 

@@ -11,6 +11,7 @@ import { devLog } from "@/lib/processing-utils";
 import { useReadLocalStorage } from "usehooks-ts";
 import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
 import {
+  PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
@@ -97,7 +98,7 @@ function TonnageVisualizerMain({ relatedArticles }) {
     );
 
   return (
-    <div className="container">
+    <PageContainer>
       <PageHeader>
         <PageHeaderHeading icon={Bus}>Tonnage Metrics</PageHeaderHeading>
         <PageHeaderDescription>
@@ -116,6 +117,6 @@ function TonnageVisualizerMain({ relatedArticles }) {
         </div>
       </section>
       <RelatedArticles articles={relatedArticles} />
-    </div>
+    </PageContainer>
   );
 }

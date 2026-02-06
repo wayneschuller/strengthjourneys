@@ -8,6 +8,7 @@ import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
 import { ArticleSummaryCard } from "@/components/article-cards";
 import { format } from "date-fns";
 import {
+  PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
@@ -62,7 +63,7 @@ export default function ArticleListingPage({
   const fullTitle = `${pageTitle} | ${siteName}`;
 
   return (
-    <div className="container">
+    <PageContainer>
       <Head>
         <title>{fullTitle}</title>
         <meta name="description" content={description} />
@@ -153,6 +154,6 @@ export default function ArticleListingPage({
           ))}
         </div>
       </section>
-    </div>
+    </PageContainer>
   );
 }

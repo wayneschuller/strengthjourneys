@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/card";
 
 import {
+  PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
@@ -283,8 +284,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
   const unitType = isMetric ? "kg" : "lb";
 
   return (
-    // <main className="mx-4 flex flex-col items-center md:mx-[5vw]">
-    <div className="container">
+    <PageContainer>
       <PageHeader>
         <PageHeaderHeading icon={Bot}>AI Lifting Assistant</PageHeaderHeading>
         <PageHeaderDescription>
@@ -320,7 +320,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
         </div>
       </div>
       <RelatedArticles articles={relatedArticles} />
-    </div>
+    </PageContainer>
   );
 }
 

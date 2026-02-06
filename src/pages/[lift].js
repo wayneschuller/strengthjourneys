@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/card";
 
 import {
+  PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
@@ -168,7 +169,7 @@ function BarbellInsightsMain({
   };
 
   return (
-    <div className="container">
+    <PageContainer>
       <PageHeader>
         <PageHeaderHeading icon={bigFourIcons[liftInsightData.liftType]}>
           {liftInsightData.pageTitle}
@@ -218,7 +219,7 @@ function BarbellInsightsMain({
         </div>
       </div>
       <RelatedArticles articles={relatedArticles} />
-    </div>
+    </PageContainer>
   );
 }
 

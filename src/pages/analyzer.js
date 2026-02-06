@@ -21,6 +21,7 @@ import { MonthsHighlightsCard } from "@/components/analyzer/months-highlights-ca
 import { ActivityHeatmapsCard } from "@/components/analyzer/heatmap-card";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
 import {
+  PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
@@ -105,7 +106,7 @@ function AnalyzerMain({ relatedArticles }) {
     );
 
   return (
-    <div className="container">
+    <PageContainer>
       <PageHeader>
         <PageHeaderHeading icon={Trophy}>PR Analyzer</PageHeaderHeading>
         <PageHeaderDescription>
@@ -140,6 +141,6 @@ function AnalyzerMain({ relatedArticles }) {
       </section>
       <SelectedLiftsIndividualLiftCards />
       <RelatedArticles articles={relatedArticles} />
-    </div>
+    </PageContainer>
   );
 }

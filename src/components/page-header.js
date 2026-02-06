@@ -1,5 +1,14 @@
 import { cn } from "@/lib/utils";
 
+/** Centered page wrapper. Tailwind v4 container does not center by default; use mx-auto per docs. */
+export function PageContainer({ className, children, ...props }) {
+  return (
+    <div className={cn("container mx-auto", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
 export function PageHeader({ className, children, ...props }) {
   // Find the right section if it exists
   const rightSection = children?.find(

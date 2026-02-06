@@ -8,7 +8,7 @@ import {
   CardTitle,
   CardAction,
 } from "@/components/ui/card";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { devLog } from "@/lib/processing-utils";
 import {
   format,
@@ -66,6 +66,29 @@ const ACCENTS = {
     icon: "text-orange-500",
   },
 };
+
+const STREAK_ENCOURAGMENTS = [
+  "Go have a beer.",
+  "You've earned couch time.",
+  "You're on track.",
+  "Winner winner chicken dinner.",
+  "Crushing it. Keep going.",
+  "Consistency looks good on you.",
+  "This is how PR streaks start.",
+  "Text a friend and brag a little.",
+  "You showed up. That matters most.",
+  "Momentum is on your side.",
+  "Future you is very grateful.",
+  "Your streak graph would be proud.",
+  "Log it, then relax. You did work.",
+  "Tiny habits, big results.",
+  "You vs. last week: you're winning.",
+  "Banked another week. Nice.",
+  "Coach brain: approved.",
+  "Solid work. Sleep like an athlete.",
+  "You did the hard part today.",
+  "Bookmark this feeling.",
+];
 
 /**
  * Reusable stat card with icon, description, title, and footer.
@@ -132,6 +155,15 @@ export function SectionTopCards({ isProgressDone = false }) {
     [parsedData],
   );
   const sessionsNeededThisWeek = Math.max(0, 3 - (sessionsThisWeek ?? 0));
+
+  const streakEncouragementRef = useRef(null);
+  if (streakEncouragementRef.current === null) {
+    streakEncouragementRef.current =
+      STREAK_ENCOURAGMENTS[
+        Math.floor(Math.random() * STREAK_ENCOURAGMENTS.length)
+      ];
+  }
+  const encouragementMessage = streakEncouragementRef.current;
 
   return (
     <div className="col-span-full grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -244,7 +276,7 @@ export function SectionTopCards({ isProgressDone = false }) {
               <>
                 <div className="text-muted-foreground">
                   {currentStreak > 0
-                    ? `3+ sessions every week through last Sunday. Your best run: ${bestStreak} week${bestStreak === 1 ? "" : "s"}.`
+                    ? `You're on a ${currentStreak}-week streak of 3+ sessions. Your best run: ${bestStreak} week${bestStreak === 1 ? "" : "s"}.`
                     : `Aim for 3+ sessions per week. Your best so far: ${bestStreak} week${bestStreak === 1 ? "" : "s"} in a row.`}
                 </div>
                 {sessionsNeededThisWeek > 0 && (
@@ -257,7 +289,7 @@ export function SectionTopCards({ isProgressDone = false }) {
                 )}
                 {sessionsNeededThisWeek === 0 && (sessionsThisWeek ?? 0) >= 3 && (
                   <div className="text-muted-foreground">
-                    This week: 3+ sessions. You&apos;re on track.
+                    This week: {sessionsThisWeek} sessions. {encouragementMessage}
                   </div>
                 )}
               </>
@@ -559,34 +591,27 @@ function calculateStreak(parsedData) {
   // --- Phase 2: Reference weeks (this week, last week) ---
   const todayStr = new Date().toISOString().slice(0, 10);
   const thisWeekKey = getWeekKeyFromDateStr(todayStr);
-  const lastWeekKey = subtractDaysFromStr(thisWeekKey, 7);
   const sessionsThisWeek = weekSessionCount.get(thisWeekKey) || 0;
 
-  // --- Phase 3: Current streak (consecutive weeks with 3+ sessions, counting from last week backwards) ---
-  // We walk week-by-week (not just weeks that have data) so a week with zero sessions breaks the streak.
+  // --- Phase 3: Current streak (consecutive weeks with 3+ sessions, INCLUDING this week if it's already at 3+) ---
+  // We walk week-by-week starting from the current week backwards. A week with fewer than 3 sessions breaks the streak.
   let currentStreak = 0;
-  let currentStreakFinalized = false; // once we see a "bad" week going backwards, we stop updating current streak
-  let tempStreak = 0;
-  let bestStreak = 0;
-
-  let weekKey = lastWeekKey;
+  let weekKey = thisWeekKey;
   while (weekKey >= oldestWeek) {
     const sessionCount = weekSessionCount.get(weekKey) || 0;
     if (sessionCount >= 3) {
-      tempStreak++;
-      if (!currentStreakFinalized) currentStreak = tempStreak;
-      bestStreak = Math.max(bestStreak, tempStreak);
+      currentStreak++;
     } else {
-      if (!currentStreakFinalized) currentStreakFinalized = true;
-      tempStreak = 0;
+      break;
     }
     weekKey = subtractDaysFromStr(weekKey, 7);
   }
 
-  // --- Phase 4: Best streak (longest run of consecutive weeks with 3+ sessions, over full history) ---
-  tempStreak = 0;
+  // --- Phase 4: Best streak (longest run of consecutive weeks with 3+ sessions, over full history INCLUDING this week) ---
+  let bestStreak = 0;
+  let tempStreak = 0;
   weekKey = oldestWeek;
-  while (weekKey <= lastWeekKey) {
+  while (weekKey <= thisWeekKey) {
     const sessionCount = weekSessionCount.get(weekKey) || 0;
     if (sessionCount >= 3) {
       tempStreak++;

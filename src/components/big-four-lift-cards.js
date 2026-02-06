@@ -11,6 +11,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getAverageLiftSessionTonnageFromPrecomputed } from "@/lib/processing-utils";
 
+import { format } from "date-fns";
 import {
   Card,
   CardContent,
@@ -152,14 +153,14 @@ export function BigFourLiftCards({ lifts, animated = true }) {
     const today = new Date();
     const cutoff = new Date(today);
     cutoff.setDate(today.getDate() - RECENT_PR_WINDOW_DAYS);
-    return cutoff.toISOString().slice(0, 10);
+    return format(cutoff, "yyyy-MM-dd"); // Use local date, not UTC
   })();
 
   const tonnageBadgeCutoffStr = (() => {
     const today = new Date();
     const cutoff = new Date(today);
     cutoff.setDate(today.getDate() - TONNAGE_BADGE_WINDOW_DAYS);
-    return cutoff.toISOString().slice(0, 10);
+    return format(cutoff, "yyyy-MM-dd"); // Use local date, not UTC
   })();
 
   return (
@@ -581,7 +582,7 @@ function buildBadgesForLiftType(
   const badges = [];
 
   const lastDate = lastDateByLiftType?.[liftType];
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = format(new Date(), "yyyy-MM-dd"); // Use local date, not UTC
   if (lastDate === todayStr && getTodayBadgeLabel) {
     badges.push({
       type: "did-today",

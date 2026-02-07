@@ -1,5 +1,7 @@
 /** @format */
 
+import { format } from "date-fns";
+
 // A function we call on the demo data to always keep it fresh
 // Don't let it jitter the final date to keep the most recent session card fairly predictable in height
 export function transposeDatesToToday(parsedData, addJitter) {
@@ -53,7 +55,7 @@ export function transposeDatesToToday(parsedData, addJitter) {
 
     return {
       ...item,
-      date: itemDate.toISOString().split("T")[0],
+      date: format(itemDate, "yyyy-MM-dd"), // Local date, not UTC
       reps: jitteredReps,
     };
   });

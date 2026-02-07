@@ -41,6 +41,19 @@ export const SESSIONS_PHRASES = [
   "Keep showing up",
 ];
 
+export const MOST_TRAINED_LIFT_LABELS = [
+  "Most popular lift",
+  "Favourite lift",
+  "Your go-to lift",
+  "Most trained lift",
+  "Your signature lift",
+  "Top of the list",
+  "Your most beloved lift",
+  "The one you kept coming back to",
+  "Your number one lift",
+  "Your ride-or-die lift",
+];
+
 export const MOST_TRAINED_LIFT_PHRASES = [
   "Your beloved",
   "Your ride or die",

@@ -109,6 +109,9 @@ export function computeYearRecapMetrics(
       tonnage: 0,
       tonnageByUnit: {},
       mostTrainedLift: null,
+      mostTrainedLiftSets: 0,
+      mostTrainedLiftReps: 0,
+      mostTrainedLiftSessions: 0,
       bestStreak: 0,
       consistencyGrade: null,
       consistencyPercentage: 0,
@@ -122,6 +125,8 @@ export function computeYearRecapMetrics(
   const sessionDatesByMonth = Array.from({ length: 12 }, () => new Set());
   let tonnageByUnit = {};
   const liftTypeSets = {};
+  const liftTypeReps = {};
+  const liftTypeSessionDates = {};
 
   parsedData.forEach((entry) => {
     if (entry.isGoal || !entry.date) return;
@@ -136,7 +141,11 @@ export function computeYearRecapMetrics(
     const u = entry.unitType || "lb";
     tonnageByUnit[u] = (tonnageByUnit[u] ?? 0) + tonnage;
 
-    liftTypeSets[entry.liftType] = (liftTypeSets[entry.liftType] ?? 0) + 1;
+    const lt = entry.liftType;
+    liftTypeSets[lt] = (liftTypeSets[lt] ?? 0) + 1;
+    liftTypeReps[lt] = (liftTypeReps[lt] ?? 0) + (entry.reps ?? 0);
+    if (!liftTypeSessionDates[lt]) liftTypeSessionDates[lt] = new Set();
+    liftTypeSessionDates[lt].add(entry.date);
   });
 
   const monthSessionCounts = sessionDatesByMonth.map((s) => s.size);
@@ -157,9 +166,15 @@ export function computeYearRecapMetrics(
     else if (u === "lb" && primaryUnit === "kg") tonnage += v * KG_PER_LB;
   });
 
-  const mostTrainedLift = Object.keys(liftTypeSets).length > 0
-    ? Object.entries(liftTypeSets).sort((a, b) => b[1] - a[1])[0][0]
+  const mostTrainedEntry = Object.keys(liftTypeSets).length > 0
+    ? Object.entries(liftTypeSets).sort((a, b) => b[1] - a[1])[0]
     : null;
+  const mostTrainedLift = mostTrainedEntry ? mostTrainedEntry[0] : null;
+  const mostTrainedLiftSets = mostTrainedLift ? liftTypeSets[mostTrainedLift] : 0;
+  const mostTrainedLiftReps = mostTrainedLift ? liftTypeReps[mostTrainedLift] : 0;
+  const mostTrainedLiftSessions = mostTrainedLift && liftTypeSessionDates[mostTrainedLift]
+    ? liftTypeSessionDates[mostTrainedLift].size
+    : 0;
 
   const bestStreak = computeBestStreakForYear(
     Array.from(sessionDates).sort(),
@@ -199,6 +214,9 @@ export function computeYearRecapMetrics(
     tonnageByUnit,
     primaryUnit,
     mostTrainedLift,
+    mostTrainedLiftSets,
+    mostTrainedLiftReps,
+    mostTrainedLiftSessions,
     bestStreak,
     consistencyGrade,
     consistencyPercentage,

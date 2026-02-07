@@ -114,7 +114,7 @@ function subtractDays(dateStr, days) {
 }
 
 export function processConsistency(parsedData) {
-  if (!parsedData) return null;
+  if (!parsedData || parsedData.length === 0) return null;
 
   const startTime = performance.now();
   const today = format(new Date(), "yyyy-MM-dd"); // Local date, not UTC
@@ -241,26 +241,24 @@ const periodTargets = [
   },
 ];
 
-// Function to calculate how many more workouts needed to reach the next grade
-// FIXME: this is NQR
+// Calculate how many more workouts needed to reach the next grade.
+// Uses the same thresholds as getGradeAndColor in circular-progress-with-letter.
 function calculateGradeJump(actualWorkouts, totalWorkoutsExpected) {
-  let currentProgress = (actualWorkouts / totalWorkoutsExpected) * 100;
+  if (totalWorkoutsExpected <= 0) return 0;
 
-  // Find the first threshold that is greater than the current progress
+  const currentProgress = (actualWorkouts / totalWorkoutsExpected) * 100;
+
+  // Find the next threshold strictly above current progress (next higher grade)
   const nextThreshold = thresholds.find(
-    (threshold) => threshold.minProgress > currentProgress,
+    (t) => t.minProgress > currentProgress,
   );
 
-  // If there's no higher threshold, return 0 as no more workouts can improve the grade
-  if (!nextThreshold) {
-    return 0;
-  }
+  if (!nextThreshold) return 0; // Already at A+
 
-  // Calculate the exact number of workouts needed to reach the next threshold
-  const requiredProgressToNextGrade = nextThreshold.minProgress;
-  const workoutsNeeded =
-    Math.ceil((requiredProgressToNextGrade * totalWorkoutsExpected) / 100) -
-    actualWorkouts;
+  const minWorkoutsForNextGrade = Math.ceil(
+    (nextThreshold.minProgress * totalWorkoutsExpected) / 100,
+  );
+  const workoutsNeeded = minWorkoutsForNextGrade - actualWorkouts;
 
-  return workoutsNeeded;
+  return Math.max(0, workoutsNeeded);
 }

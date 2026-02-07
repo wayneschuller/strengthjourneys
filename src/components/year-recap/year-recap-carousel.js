@@ -20,12 +20,24 @@ import { PRHighlightsCard } from "./cards/pr-highlights-card";
 import { SeasonalPatternCard } from "./cards/seasonal-pattern-card";
 import { ClosingCard } from "./cards/closing-card";
 
+function fireTitleConfetti() {
+  import("canvas-confetti").then((confetti) => {
+    const fn = confetti.default;
+    const opts = { origin: { y: 0.6 }, spread: 70, zIndex: 9999 };
+    fn({ ...opts, particleCount: 60 });
+    fn({ ...opts, particleCount: 50, spread: 100, startVelocity: 30 });
+    fn({ ...opts, particleCount: 40, spread: 120, startVelocity: 45 });
+  });
+}
+
 export function YearRecapCarousel({ year, isDemo }) {
   const [api, setApi] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const shareRef = useRef(null);
   const [isSharing, setIsSharing] = useState(false);
   const { toast } = useToast();
+
+  const hasFiredConfettiRef = useRef(false);
 
   useEffect(() => {
     if (!api) return;
@@ -39,6 +51,18 @@ export function YearRecapCarousel({ year, isDemo }) {
       setSelectedIndex(0);
     }
   }, [api, year]);
+
+  useEffect(() => {
+    if (year) hasFiredConfettiRef.current = false;
+  }, [year]);
+
+  useEffect(() => {
+    if (selectedIndex === 0 && !hasFiredConfettiRef.current) {
+      hasFiredConfettiRef.current = true;
+      const timer = setTimeout(fireTitleConfetti, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedIndex, year]);
 
   const handleShare = async () => {
     if (!shareRef.current) return;

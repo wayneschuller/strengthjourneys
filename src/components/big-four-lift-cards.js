@@ -304,11 +304,23 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-center p-2 pt-0">
-                  <img
-                    src={bigFourDiagrams[lift.liftType]}
-                    alt={`${lift.liftType} diagram`}
-                    className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
-                  />
+                  <motion.div
+                    className="flex justify-center"
+                    initial={false}
+                    animate={{
+                      rotate: showStats ? [0, -8, 8, -4, 0] : 0,
+                    }}
+                    transition={{
+                      duration: 0.35,
+                      ease: "easeOut",
+                    }}
+                  >
+                    <img
+                      src={bigFourDiagrams[lift.liftType]}
+                      alt={`${lift.liftType} diagram`}
+                      className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
+                    />
+                  </motion.div>
                 </CardFooter>
               </Link>
             </Card>

@@ -1,5 +1,5 @@
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { subMonths } from "date-fns";
+import { format, subMonths } from "date-fns";
 
 import {
   Select,
@@ -52,13 +52,13 @@ export function TimeRangeSelect({ timeRange, setTimeRange }) {
   // FIXME: Should we find the first date for selected lifts only?
   const firstDateStr = parsedData[0].date;
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = format(new Date(), "yyyy-MM-dd"); // Local date, not UTC
 
   let validSelectTimeDomains = [];
 
   periodTargets.forEach((period) => {
     const dateMonthsAgo = subMonths(new Date(), period.months);
-    const thresholdDateStr = dateMonthsAgo.toISOString().split("T")[0];
+    const thresholdDateStr = format(dateMonthsAgo, "yyyy-MM-dd");
 
     if (firstDateStr < thresholdDateStr) {
       validSelectTimeDomains.push({
@@ -114,7 +114,7 @@ export const calculateThresholdDate = (timeRange, setTimeRange) => {
   }
 
   const dateMonthsAgo = subMonths(new Date(), period.months);
-  return dateMonthsAgo.toISOString().split("T")[0];
+  return format(dateMonthsAgo, "yyyy-MM-dd");
 };
 
 // Used in the chart card description

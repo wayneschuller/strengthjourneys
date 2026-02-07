@@ -33,6 +33,34 @@ const cornerVariants = {
   }),
 };
 
+const wordVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 200,
+      damping: 22,
+      delay: 0.4 + i * 0.12,
+    },
+  }),
+};
+
+const yearVariants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 180,
+      damping: 16,
+      delay: 0.75,
+    },
+  },
+};
+
 const ICON_BG_COLORS = [
   "bg-chart-1/20 ring-1 ring-chart-1/50",
   "bg-chart-2/20 ring-1 ring-chart-2/50",
@@ -50,12 +78,23 @@ function CornerIcon({ liftType, index, isActive, variants }) {
       custom={index}
       className={`flex items-center justify-center rounded-lg p-2 ${ICON_BG_COLORS[index]}`}
     >
-      <img
-        src={LIFT_SVG_MAP[liftType]}
-        alt=""
-        aria-hidden
-        className="h-24 w-24 md:h-28 md:w-28 [filter:opacity(0.9)]"
-      />
+      <motion.div
+        initial={{ scale: 0.92 }}
+        animate={isActive ? { scale: 1 } : { scale: 0.92 }}
+        transition={{
+          type: "spring",
+          stiffness: 140,
+          damping: 14,
+          delay: isActive ? 0.35 + index * 0.05 : 0,
+        }}
+      >
+        <img
+          src={LIFT_SVG_MAP[liftType]}
+          alt=""
+          aria-hidden
+          className="h-24 w-24 md:h-28 md:w-28 [filter:opacity(0.9)]"
+        />
+      </motion.div>
     </motion.div>
   );
 }
@@ -63,7 +102,7 @@ function CornerIcon({ liftType, index, isActive, variants }) {
 export function TitleCard({ year, isDemo, isActive = true }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
-      <div className="mb-4 flex justify-center gap-10 md:gap-14">
+      <div className="mb-8 flex justify-center gap-10 md:gap-14">
         {TOP_LIFTS.map((liftType, i) => (
           <CornerIcon
             key={liftType}
@@ -74,15 +113,37 @@ export function TitleCard({ year, isDemo, isActive = true }) {
           />
         ))}
       </div>
-      <motion.h2
-        className="text-3xl font-bold tracking-tight md:text-5xl"
-        initial={{ opacity: 0, y: 24 }}
-        animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-        transition={{ type: "spring", stiffness: 180, damping: 20, delay: isActive ? 0.4 : 0 }}
-      >
-        Strength Unwrapped {year}
-      </motion.h2>
-      <div className="mt-4 flex justify-center gap-10 md:gap-14">
+      <h2 className="text-3xl font-bold leading-tight tracking-tight md:text-5xl [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.06))]">
+        <span className="block">
+          <motion.span
+            variants={wordVariants}
+            initial="hidden"
+            animate={isActive ? "visible" : "hidden"}
+            custom={0}
+            className="block"
+          >
+            Strength
+          </motion.span>
+          <motion.span
+            variants={wordVariants}
+            initial="hidden"
+            animate={isActive ? "visible" : "hidden"}
+            custom={1}
+            className="block"
+          >
+            Unwrapped
+          </motion.span>
+          <motion.span
+            variants={yearVariants}
+            initial="hidden"
+            animate={isActive ? "visible" : "hidden"}
+            className="mt-1 block text-4xl font-extrabold tracking-tight md:text-7xl bg-gradient-to-r from-chart-3 via-chart-4 to-chart-1 bg-clip-text text-transparent drop-shadow-sm"
+          >
+            {year}
+          </motion.span>
+        </span>
+      </h2>
+      <div className="mt-8 flex justify-center gap-10 md:gap-14">
         {BOTTOM_LIFTS.map((liftType, i) => (
           <CornerIcon
             key={liftType}

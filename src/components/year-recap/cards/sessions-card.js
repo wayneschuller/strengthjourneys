@@ -1,15 +1,20 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { motion } from "motion/react";
-import { pickQuirkyPhrase, SESSIONS_PHRASES } from "@/lib/year-recap-phrases";
+import { pickQuirkyPhrase, SESSIONS_PHRASES } from "../phrases";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { Calendar } from "lucide-react";
 
-export function SessionsCard({ year, metrics, isDemo, isActive = true }) {
+export function SessionsCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const phrase = pickQuirkyPhrase(SESSIONS_PHRASES, phraseRef, `sessions-${year}`);
 
-  const count = metrics?.sessionCount ?? 0;
+  const { parsedData } = useUserLiftingData();
+  const count = useMemo(() => computeSessionCountForYear(parsedData, year), [
+    parsedData,
+    year,
+  ]);
 
   return (
     <div className="flex flex-col items-center justify-center text-center">
@@ -56,4 +61,20 @@ export function SessionsCard({ year, metrics, isDemo, isActive = true }) {
       )}
     </div>
   );
+}
+
+// --- Supporting functions ---
+
+function computeSessionCountForYear(parsedData, year) {
+  if (!parsedData || !year) return 0;
+  const yearStart = `${year}-01-01`;
+  const yearEnd = `${year}-12-31`;
+  const sessionDates = new Set();
+  parsedData.forEach((entry) => {
+    if (entry.isGoal || !entry.date) return;
+    if (entry.date >= yearStart && entry.date <= yearEnd) {
+      sessionDates.add(entry.date);
+    }
+  });
+  return sessionDates.size;
 }

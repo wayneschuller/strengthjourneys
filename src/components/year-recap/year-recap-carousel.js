@@ -20,7 +20,7 @@ import { PRHighlightsCard } from "./cards/pr-highlights-card";
 import { SeasonalPatternCard } from "./cards/seasonal-pattern-card";
 import { ClosingCard } from "./cards/closing-card";
 
-export function YearRecapCarousel({ year, metrics, isDemo }) {
+export function YearRecapCarousel({ year, isDemo }) {
   const [api, setApi] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const shareRef = useRef(null);
@@ -105,7 +105,6 @@ export function YearRecapCarousel({ year, metrics, isDemo }) {
                   <Component
                     key={id === "title" ? `${id}-${year}` : id}
                     year={year}
-                    metrics={metrics}
                     isDemo={isDemo}
                     isActive={selectedIndex === index}
                   />

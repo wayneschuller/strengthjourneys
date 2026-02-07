@@ -5,10 +5,7 @@ import { useRouter } from "next/router";
 import { useMemo, useState, useEffect } from "react";
 import { NextSeo } from "next-seo";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { getYearsWithData, computeYearRecapMetrics } from "@/lib/year-recap-processing";
-import { calculateLiftTypes } from "@/lib/processing-utils";
-import { useLocalStorage } from "usehooks-ts";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { getYearsWithData } from "@/components/year-recap/year-selector";
 import Link from "next/link";
 import {
   PageContainer,
@@ -63,19 +60,7 @@ export default function StrengthYearInReview() {
 function StrengthYearInReviewMain() {
   const router = useRouter();
   const { status: authStatus } = useSession();
-  const {
-    parsedData,
-    topLiftsByTypeAndReps,
-    liftTypes,
-    isLoading,
-  } = useUserLiftingData();
-
-  const [isMetricPreference] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
-    false,
-    { initializeWithValue: false },
-  );
-  const preferredUnit = isMetricPreference ? "kg" : "lb";
+  const { parsedData, isLoading } = useUserLiftingData();
 
   const yearsWithData = useMemo(() => {
     if (!parsedData) return [];
@@ -106,28 +91,10 @@ function StrengthYearInReviewMain() {
     yearFromQuery ??
     (hasSingleYear ? yearsWithData[0] : null);
 
-  const yearMetrics = useMemo(() => {
-    if (!parsedData || !effectiveYear) return null;
-    const types = liftTypes ?? calculateLiftTypes(parsedData);
-    return computeYearRecapMetrics(
-      parsedData,
-      topLiftsByTypeAndReps,
-      types,
-      effectiveYear,
-      preferredUnit,
-    );
-  }, [
-    parsedData,
-    topLiftsByTypeAndReps,
-    liftTypes,
-    effectiveYear,
-    preferredUnit,
-  ]);
-
   const showYearSelector =
     hasMultipleYears &&
     (authStatus === "authenticated" || !effectiveYear);
-  const showCarousel = effectiveYear && yearMetrics;
+  const showCarousel = !!effectiveYear;
 
   const handleYearSelect = (year) => {
     setSelectedYear(year);
@@ -192,7 +159,6 @@ function StrengthYearInReviewMain() {
         {!isLoading && showCarousel && (
           <YearRecapCarousel
             year={effectiveYear}
-            metrics={yearMetrics}
             isDemo={authStatus === "unauthenticated"}
           />
         )}

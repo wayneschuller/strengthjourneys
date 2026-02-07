@@ -4,6 +4,24 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 
+/**
+ * Get unique years that have data (ascending).
+ * @param {Array} parsedData
+ * @returns {number[]}
+ */
+export function getYearsWithData(parsedData) {
+  if (!parsedData || parsedData.length === 0) return [];
+
+  const years = new Set();
+  parsedData.forEach((entry) => {
+    if (entry.isGoal || !entry.date) return;
+    const year = new Date(entry.date + "T00:00:00Z").getFullYear();
+    years.add(year);
+  });
+
+  return Array.from(years).sort((a, b) => a - b);
+}
+
 export function YearSelector({ years, selectedYear, onSelect }) {
   const descendingYears = [...years].sort((a, b) => b - a);
 

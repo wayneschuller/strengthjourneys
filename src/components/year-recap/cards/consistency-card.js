@@ -1,14 +1,16 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { motion } from "motion/react";
 import {
   pickQuirkyPhrase,
   CONSISTENCY_PHRASES,
-} from "@/lib/year-recap-phrases";
+} from "../phrases";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { getGradeAndColor } from "@/lib/consistency-grades";
 import { Flame } from "lucide-react";
 
-export function ConsistencyCard({ year, metrics, isDemo, isActive = true }) {
+export function ConsistencyCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const phrase = pickQuirkyPhrase(
     CONSISTENCY_PHRASES,
@@ -16,9 +18,15 @@ export function ConsistencyCard({ year, metrics, isDemo, isActive = true }) {
     `consistency-${year}`,
   );
 
-  const bestStreak = metrics?.bestStreak ?? 0;
-  const grade = metrics?.consistencyGrade?.grade ?? "—";
-  const percentage = metrics?.consistencyPercentage ?? 0;
+  const { parsedData } = useUserLiftingData();
+  const stats = useMemo(
+    () => computeConsistencyForYear(parsedData, year),
+    [parsedData, year],
+  );
+
+  const { bestStreak, consistencyGrade, consistencyPercentage } = stats;
+
+  const grade = consistencyGrade?.grade ?? "—";
 
   return (
     <div className="flex flex-col items-center justify-center text-center">
@@ -52,7 +60,7 @@ export function ConsistencyCard({ year, metrics, isDemo, isActive = true }) {
           animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: 16 }}
           transition={{ delay: isActive ? 0.28 : 0 }}
         >
-          Grade: {grade} ({percentage}%)
+          Grade: {grade} ({consistencyPercentage}%)
         </motion.p>
       )}
       <motion.p
@@ -75,4 +83,115 @@ export function ConsistencyCard({ year, metrics, isDemo, isActive = true }) {
       )}
     </div>
   );
+}
+
+// --- Supporting functions ---
+
+function getWeekKeyFromDateStr(dateStr) {
+  const d = new Date(dateStr + "T00:00:00Z");
+  const dow = d.getUTCDay();
+  const daysBack = (dow + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - daysBack);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function daysInMonth(y, month1Based) {
+  if (month1Based === 2) {
+    const isLeap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+    return isLeap ? 29 : 28;
+  }
+  if ([4, 6, 9, 11].includes(month1Based)) return 30;
+  return 31;
+}
+
+function addDaysFromStr(dateStr, n) {
+  let y = parseInt(dateStr.slice(0, 4), 10);
+  let m = parseInt(dateStr.slice(5, 7), 10);
+  let d = parseInt(dateStr.slice(8, 10), 10);
+  for (let i = 0; i < n; i++) {
+    const maxD = daysInMonth(y, m);
+    d++;
+    if (d > maxD) {
+      d = 1;
+      m++;
+      if (m > 12) {
+        m = 1;
+        y++;
+      }
+    }
+  }
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+function computeBestStreakForYear(sessionDates, year) {
+  if (!sessionDates.length) return 0;
+  const yearStart = `${year}-01-01`;
+  const yearEnd = `${year}-12-31`;
+  const weekMap = new Map();
+  const dateToWeekKey = new Map();
+  sessionDates.forEach((dateStr) => {
+    if (dateStr < yearStart || dateStr > yearEnd) return;
+    let weekKey = dateToWeekKey.get(dateStr);
+    if (weekKey === undefined) {
+      weekKey = getWeekKeyFromDateStr(dateStr);
+      dateToWeekKey.set(dateStr, weekKey);
+    }
+    if (!weekMap.has(weekKey)) weekMap.set(weekKey, new Set());
+    weekMap.get(weekKey).add(dateStr);
+  });
+  const weekSessionCount = new Map();
+  weekMap.forEach((dates, weekKey) => {
+    weekSessionCount.set(weekKey, dates.size);
+  });
+  const firstMonday = getWeekKeyFromDateStr(yearStart);
+  const lastMonday = getWeekKeyFromDateStr(yearEnd);
+  let bestStreak = 0;
+  let tempStreak = 0;
+  let weekKey = firstMonday;
+  while (weekKey <= lastMonday) {
+    const sessionCount = weekSessionCount.get(weekKey) || 0;
+    if (sessionCount >= 3) {
+      tempStreak++;
+      bestStreak = Math.max(bestStreak, tempStreak);
+    } else {
+      tempStreak = 0;
+    }
+    weekKey = addDaysFromStr(weekKey, 7);
+  }
+  return bestStreak;
+}
+
+function computeConsistencyForYear(parsedData, year) {
+  const empty = {
+    bestStreak: 0,
+    consistencyGrade: null,
+    consistencyPercentage: 0,
+  };
+  if (!parsedData || !year) return empty;
+  const yearStart = `${year}-01-01`;
+  const yearEnd = `${year}-12-31`;
+  const sessionDates = new Set();
+  parsedData.forEach((entry) => {
+    if (entry.isGoal || !entry.date) return;
+    if (entry.date >= yearStart && entry.date <= yearEnd) {
+      sessionDates.add(entry.date);
+    }
+  });
+  const sortedDates = Array.from(sessionDates).sort();
+  const bestStreak = computeBestStreakForYear(sortedDates, year);
+  const sessionCount = sessionDates.size;
+  const expectedSessions = Math.round((365 / 7) * 3);
+  const consistencyPercentage = Math.min(
+    100,
+    Math.round((sessionCount / expectedSessions) * 100),
+  );
+  const consistencyGrade = getGradeAndColor(consistencyPercentage);
+  return {
+    bestStreak,
+    consistencyGrade,
+    consistencyPercentage,
+  };
 }

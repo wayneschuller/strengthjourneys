@@ -1,14 +1,15 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { motion } from "motion/react";
 import {
   pickQuirkyPhrase,
   SEASONAL_PHRASES,
-} from "@/lib/year-recap-phrases";
+} from "../phrases";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { BarChart3 } from "lucide-react";
 
-export function SeasonalPatternCard({ year, metrics, isDemo, isActive = true }) {
+export function SeasonalPatternCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const phrase = pickQuirkyPhrase(
     SEASONAL_PHRASES,
@@ -16,8 +17,12 @@ export function SeasonalPatternCard({ year, metrics, isDemo, isActive = true }) 
     `seasonal-${year}`,
   );
 
-  const busiestMonth = metrics?.busiestMonth ?? null;
-  const monthlySessions = metrics?.monthlySessions ?? [];
+  const { parsedData } = useUserLiftingData();
+  const { busiestMonth, monthlySessions } = useMemo(
+    () => computeSeasonalPatternForYear(parsedData, year),
+    [parsedData, year],
+  );
+
   const maxCount = Math.max(...monthlySessions.map((m) => m.sessionCount), 1);
 
   return (
@@ -96,4 +101,35 @@ export function SeasonalPatternCard({ year, metrics, isDemo, isActive = true }) 
       )}
     </div>
   );
+}
+
+// --- Supporting functions ---
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function computeSeasonalPatternForYear(parsedData, year) {
+  const empty = { busiestMonth: null, monthlySessions: [] };
+  if (!parsedData || !year) return empty;
+  const yearStart = `${year}-01-01`;
+  const yearEnd = `${year}-12-31`;
+  const sessionDatesByMonth = Array.from({ length: 12 }, () => new Set());
+  parsedData.forEach((entry) => {
+    if (entry.isGoal || !entry.date) return;
+    if (entry.date < yearStart || entry.date > yearEnd) return;
+    const month = parseInt(entry.date.slice(5, 7), 10) - 1;
+    sessionDatesByMonth[month].add(entry.date);
+  });
+  const monthSessionCounts = sessionDatesByMonth.map((s) => s.size);
+  const monthlySessions = monthSessionCounts.map((count, i) => ({
+    month: MONTH_NAMES[i],
+    monthIndex: i,
+    sessionCount: count,
+  }));
+  const maxMonthCount = Math.max(...monthSessionCounts);
+  const busiestMonthIndex = monthSessionCounts.indexOf(maxMonthCount);
+  const busiestMonth = busiestMonthIndex >= 0 ? MONTH_NAMES[busiestMonthIndex] : null;
+  return { busiestMonth, monthlySessions };
 }

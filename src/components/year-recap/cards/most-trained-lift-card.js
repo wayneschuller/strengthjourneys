@@ -1,28 +1,17 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { motion } from "motion/react";
 import {
   pickQuirkyPhrase,
   MOST_TRAINED_LIFT_PHRASES,
   MOST_TRAINED_LIFT_LABELS,
-} from "@/lib/year-recap-phrases";
+} from "../phrases";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { Trophy } from "lucide-react";
 import { LiftSvg } from "../lift-svg";
 
-function ordinal(n) {
-  if (n <= 0) return String(n);
-  const s = String(n);
-  const last = s.slice(-1);
-  const lastTwo = s.slice(-2);
-  if (lastTwo === "11" || lastTwo === "12" || lastTwo === "13") return `${n}th`;
-  if (last === "1") return `${n}st`;
-  if (last === "2") return `${n}nd`;
-  if (last === "3") return `${n}rd`;
-  return `${n}th`;
-}
-
-export function MostTrainedLiftCard({ year, metrics, isDemo, isActive = true }) {
+export function MostTrainedLiftCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const label = pickQuirkyPhrase(
     MOST_TRAINED_LIFT_LABELS,
@@ -35,11 +24,19 @@ export function MostTrainedLiftCard({ year, metrics, isDemo, isActive = true }) 
     `most-trained-${year}`,
   );
 
-  const lift = metrics?.mostTrainedLift ?? null;
-  const sets = metrics?.mostTrainedLiftSets ?? 0;
-  const reps = metrics?.mostTrainedLiftReps ?? 0;
-  const sessionsWithLift = metrics?.mostTrainedLiftSessions ?? 0;
-  const sessionCount = metrics?.sessionCount ?? 0;
+  const { parsedData } = useUserLiftingData();
+  const stats = useMemo(
+    () => computeMostTrainedLiftForYear(parsedData, year),
+    [parsedData, year],
+  );
+
+  const {
+    mostTrainedLift: lift,
+    mostTrainedLiftSets: sets,
+    mostTrainedLiftReps: reps,
+    mostTrainedLiftSessions: sessionsWithLift,
+    sessionCount,
+  } = stats;
 
   const sessionsLine =
     lift &&
@@ -123,4 +120,64 @@ export function MostTrainedLiftCard({ year, metrics, isDemo, isActive = true }) 
       )}
     </div>
   );
+}
+
+// --- Supporting functions ---
+
+function ordinal(n) {
+  if (n <= 0) return String(n);
+  const s = String(n);
+  const last = s.slice(-1);
+  const lastTwo = s.slice(-2);
+  if (lastTwo === "11" || lastTwo === "12" || lastTwo === "13") return `${n}th`;
+  if (last === "1") return `${n}st`;
+  if (last === "2") return `${n}nd`;
+  if (last === "3") return `${n}rd`;
+  return `${n}th`;
+}
+
+function computeMostTrainedLiftForYear(parsedData, year) {
+  const empty = {
+    mostTrainedLift: null,
+    mostTrainedLiftSets: 0,
+    mostTrainedLiftReps: 0,
+    mostTrainedLiftSessions: 0,
+    sessionCount: 0,
+  };
+  if (!parsedData || !year) return empty;
+  const yearStart = `${year}-01-01`;
+  const yearEnd = `${year}-12-31`;
+  const sessionDates = new Set();
+  const liftTypeSets = {};
+  const liftTypeReps = {};
+  const liftTypeSessionDates = {};
+  parsedData.forEach((entry) => {
+    if (entry.isGoal || !entry.date) return;
+    if (entry.date < yearStart || entry.date > yearEnd) return;
+    sessionDates.add(entry.date);
+    const lt = entry.liftType;
+    liftTypeSets[lt] = (liftTypeSets[lt] ?? 0) + 1;
+    liftTypeReps[lt] = (liftTypeReps[lt] ?? 0) + (entry.reps ?? 0);
+    if (!liftTypeSessionDates[lt]) liftTypeSessionDates[lt] = new Set();
+    liftTypeSessionDates[lt].add(entry.date);
+  });
+  const sessionCount = sessionDates.size;
+  const mostTrainedEntry =
+    Object.keys(liftTypeSets).length > 0
+      ? Object.entries(liftTypeSets).sort((a, b) => b[1] - a[1])[0]
+      : null;
+  const mostTrainedLift = mostTrainedEntry ? mostTrainedEntry[0] : null;
+  const mostTrainedLiftSets = mostTrainedLift ? liftTypeSets[mostTrainedLift] : 0;
+  const mostTrainedLiftReps = mostTrainedLift ? liftTypeReps[mostTrainedLift] : 0;
+  const mostTrainedLiftSessions =
+    mostTrainedLift && liftTypeSessionDates[mostTrainedLift]
+      ? liftTypeSessionDates[mostTrainedLift].size
+      : 0;
+  return {
+    mostTrainedLift,
+    mostTrainedLiftSets,
+    mostTrainedLiftReps,
+    mostTrainedLiftSessions,
+    sessionCount,
+  };
 }

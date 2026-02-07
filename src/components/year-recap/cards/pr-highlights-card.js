@@ -1,16 +1,17 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import {
   pickQuirkyPhrase,
   PR_HIGHLIGHTS_PHRASES,
-} from "@/lib/year-recap-phrases";
-import { getReadableDateString } from "@/lib/processing-utils";
+} from "../phrases";
+import { getReadableDateString, findLiftPositionInTopLifts } from "@/lib/processing-utils";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { Award } from "lucide-react";
 import { motion } from "motion/react";
 import { LiftSvg, getLiftSvgPath } from "../lift-svg";
 
-export function PRHighlightsCard({ year, metrics, isDemo, isActive = true }) {
+export function PRHighlightsCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const phrase = pickQuirkyPhrase(
     PR_HIGHLIGHTS_PHRASES,
@@ -18,7 +19,11 @@ export function PRHighlightsCard({ year, metrics, isDemo, isActive = true }) {
     `pr-${year}`,
   );
 
-  const prs = metrics?.prHighlights ?? [];
+  const { topLiftsByTypeAndReps } = useUserLiftingData();
+  const prs = useMemo(
+    () => getPRHighlightsForYear(year, topLiftsByTypeAndReps),
+    [year, topLiftsByTypeAndReps],
+  );
 
   return (
     <div className="flex flex-col items-center justify-center text-center">
@@ -92,4 +97,37 @@ export function PRHighlightsCard({ year, metrics, isDemo, isActive = true }) {
       )}
     </div>
   );
+}
+
+// --- Supporting functions ---
+
+function getPRHighlightsForYear(year, topLiftsByTypeAndReps) {
+  if (!year || !topLiftsByTypeAndReps) return [];
+  const yearStart = `${year}-01-01`;
+  const yearEnd = `${year}-12-31`;
+  const yearPRs = [];
+  Object.entries(topLiftsByTypeAndReps).forEach(([liftType, repRanges]) => {
+    repRanges.forEach((prs, repsIndex) => {
+      const reps = repsIndex + 1;
+      (prs || []).forEach((pr) => {
+        if (pr.date >= yearStart && pr.date <= yearEnd) {
+          const { rank, annotation } = findLiftPositionInTopLifts(
+            pr,
+            topLiftsByTypeAndReps,
+          );
+          yearPRs.push({
+            ...pr,
+            reps,
+            rank,
+            annotation,
+          });
+        }
+      });
+    });
+  });
+  yearPRs.sort((a, b) => {
+    if (a.rank !== b.rank) return a.rank - b.rank;
+    return (b.weight ?? 0) - (a.weight ?? 0);
+  });
+  return yearPRs.slice(0, 5);
 }

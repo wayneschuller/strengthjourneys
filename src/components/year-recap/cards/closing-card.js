@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { motion } from "motion/react";
-import { pickQuirkyPhrase, CLOSING_PHRASES } from "@/lib/year-recap-phrases";
+import { pickQuirkyPhrase, CLOSING_PHRASES } from "../phrases";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";

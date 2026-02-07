@@ -57,8 +57,6 @@ export function SeasonalPatternCard({ year, metrics, isDemo, isActive = true }) 
                 className="w-full min-w-[4px] rounded-t"
                 style={{
                   backgroundColor: `var(--chart-${(i % 5) + 1})`,
-                }}
-                style={{
                   height: `${Math.max(4, (m.sessionCount / maxCount) * 80)}%`,
                   originY: 1,
                 }}

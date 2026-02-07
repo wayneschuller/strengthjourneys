@@ -285,7 +285,7 @@ export default function Home() {
         <h2 class="mt-8 text-xl font-semibold">🛠️ Strength Insights & Tools</h2>
         <div className="mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {featurePages.map((card, index) => (
-            <FeatureCard key={index} {...card} />
+            <FeatureCard key={index} index={index} {...card} />
           ))}
         </div>
 
@@ -299,8 +299,9 @@ export default function Home() {
   );
 }
 
-function FeatureCard({ href, title, description, IconComponent }) {
+function FeatureCard({ href, title, description, IconComponent, index = 0 }) {
   const isWarmupsCalculator = href === "/warm-up-sets-calculator";
+  const chartColorVar = `--chart-${(index % 5) + 1}`;
 
   return (
     <Card className="group ring-ring relative shadow-lg ring-0 hover:ring-1">
@@ -317,8 +318,11 @@ function FeatureCard({ href, title, description, IconComponent }) {
           <CardTitle className="">{title}</CardTitle>
           <CardDescription className="h-[2rem]">{description}</CardDescription>
         </CardHeader>
-        <CardContent className="flex justify-center transition-transform group-hover:scale-110">
-          <IconComponent size={64} strokeWidth={1.25} />
+        <CardContent
+          className="flex justify-center transition-transform group-hover:scale-110"
+          style={{ color: `var(${chartColorVar})` }}
+        >
+          <IconComponent size={64} strokeWidth={1.25} className="shrink-0" />
         </CardContent>
       </Link>
     </Card>

@@ -3,6 +3,7 @@
 import { useMemo, useEffect, useState } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
+import { format } from "date-fns";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
@@ -169,7 +170,7 @@ export function VisualizerMini({ liftType }) {
       const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
       const dateStr =
         typeof entry.date === "number"
-          ? new Date(entry.date).toISOString().slice(0, 10)
+          ? format(new Date(entry.date), "yyyy-MM-dd")
           : String(entry.date).slice(0, 10);
       candidates.push({
         dateStr,
@@ -183,7 +184,7 @@ export function VisualizerMini({ liftType }) {
       chartData.map((d) => {
         const k =
           typeof d.date === "number"
-            ? new Date(d.date).toISOString().slice(0, 10)
+            ? format(new Date(d.date), "yyyy-MM-dd")
             : String(d.date).slice(0, 10);
         return [k, d];
       }),

@@ -1,5 +1,6 @@
 "use client";
 
+import { format } from "date-fns";
 import { useState, useEffect, useContext } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -112,7 +113,7 @@ function getRecentMonthHighlights(
 
   const lastMonth = new Date();
   lastMonth.setMonth(lastMonth.getMonth() - 1);
-  const lastMonthStr = lastMonth.toISOString().split("T")[0]; // Convert to "YYYY-MM-DD" string format
+  const lastMonthStr = format(lastMonth, "yyyy-MM-dd"); // Local date, not UTC
 
   var recentMonthHighlights = [];
 

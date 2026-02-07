@@ -1,5 +1,6 @@
 "use client";
 
+import { format } from "date-fns";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
@@ -275,7 +276,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
     const sessionData = convertAnalyzedLiftsToLLMStrings(analyzedSessionLifts);
     // devLog(sessionData);
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = format(new Date(), "yyyy-MM-dd"); // Local date, not UTC
 
     userProvidedProfileData += `Background info: Here is my most recent session from Google Sheets, completed ${sessionDate} (today's day is: ${today}):`;
     userProvidedProfileData += sessionData.join(" ");
@@ -442,7 +443,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
 
     // Header and footer text
     const header = "=== StrengthJourneys.xyz AI Coach Output ===\n\n";
-    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const today = format(new Date(), "yyyy-MM-dd"); // Local date, not UTC
 
     const footer =
       `\n\n---\nGenerated at ${today}\n` +

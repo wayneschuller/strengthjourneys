@@ -29,6 +29,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { motion } from "motion/react";
 import {
   Card,
   CardContent,
@@ -322,7 +323,19 @@ function FeatureCard({ href, title, description, IconComponent, index = 0 }) {
           className="flex justify-center transition-transform group-hover:scale-110"
           style={{ color: `var(${chartColorVar})` }}
         >
-          <IconComponent size={64} strokeWidth={1.25} className="shrink-0" />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.7, y: 12 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px", amount: 0.3 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 18,
+              delay: (index % 12) * 0.04,
+            }}
+          >
+            <IconComponent size={64} strokeWidth={1.25} className="shrink-0" />
+          </motion.div>
         </CardContent>
       </Link>
     </Card>

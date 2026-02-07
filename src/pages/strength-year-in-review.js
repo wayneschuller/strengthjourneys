@@ -15,6 +15,7 @@ import {
 } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { YearRecapCarousel } from "@/components/year-recap/year-recap-carousel";
 import { YearSelector } from "@/components/year-recap/year-selector";
 
@@ -148,19 +149,37 @@ function StrengthYearInReviewMain() {
           </div>
         )}
 
-        {!isLoading && yearsWithData.length > 0 && showYearSelector && (
-          <YearSelector
-            years={yearsWithData}
-            selectedYear={effectiveYear}
-            onSelect={handleYearSelect}
-          />
-        )}
-
-        {!isLoading && showCarousel && (
-          <YearRecapCarousel
-            year={effectiveYear}
-            isDemo={authStatus === "unauthenticated"}
-          />
+        {!isLoading && yearsWithData.length > 0 && (showYearSelector || showCarousel) && (
+          <div
+            className={cn(
+              "flex flex-col gap-6 md:gap-8 lg:gap-12 md:min-h-0",
+              showYearSelector && showCarousel
+                ? "md:grid md:grid-cols-[13rem_1fr_13rem] md:items-start"
+                : "md:flex md:flex-row md:items-start",
+            )}
+          >
+            {showCarousel && (
+              <div className="order-1 md:order-2 flex justify-center md:min-w-0">
+                <YearRecapCarousel
+                  year={effectiveYear}
+                  isDemo={authStatus === "unauthenticated"}
+                />
+              </div>
+            )}
+            {showYearSelector && (
+              <div className="order-2 md:order-1 md:w-52 md:shrink-0 md:pt-2 md:flex md:justify-end">
+                <YearSelector
+                  years={yearsWithData}
+                  selectedYear={effectiveYear}
+                  onSelect={handleYearSelect}
+                  variant={showCarousel ? "sidebar" : "default"}
+                />
+              </div>
+            )}
+            {showYearSelector && showCarousel && (
+              <div className="hidden md:order-3 md:block" aria-hidden="true" />
+            )}
+          </div>
         )}
       </section>
     </PageContainer>

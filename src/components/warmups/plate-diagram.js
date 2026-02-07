@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -10,8 +11,11 @@ import { cn } from "@/lib/utils";
  * @param {boolean} props.isMetric - Whether using kg (true) or lb (false)
  * @param {string} props.className - Additional CSS classes
  * @param {boolean} props.hideLabels - Whether to hide the plate labels
+ * @param {number} [props.animationDelay] - Base delay (seconds) before plates animate in (for stagger between sets)
+ * @param {string} [props.animationKey] - Key that changes when sliders change, retriggers plate animation
+ * @param {boolean} [props.useScrollTrigger] - If true, animate when card scrolls into view (mobile); if false, animate immediately (desktop)
  */
-export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, className, hideLabels = false }) {
+export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, className, hideLabels = false, animationDelay = 0, animationKey, useScrollTrigger = false }) {
   const unit = isMetric ? "kg" : "lb";
 
   if (platesPerSide.length === 0) {
@@ -41,7 +45,7 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
         <div className="h-2 w-48 rounded bg-gray-400" />
 
         {/* Plates stacked over the right-hand side of the bar, vertically centered, with sleeve visible beyond */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
+        <div key={animationKey ?? "static"} className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {/* Plates stacked from heaviest (inside) to lightest (outside) */}
           {platesPerSide
             .flatMap((plate) =>
@@ -56,9 +60,22 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
               const heightClass = isFractional ? "h-9" : "h-16"; 
               const widthClass = isFractional ? "w-2" : "w-4";
               
+              const transition = {
+                duration: 0.3,
+                delay: animationDelay + idx * 0.06,
+                ease: "easeOut",
+              };
               return (
-                <div
+                <motion.div
                   key={`${plate.weight}-${idx}`}
+                  initial={{ x: 24, opacity: 0 }}
+                  {...(useScrollTrigger
+                    ? {
+                        whileInView: { x: 0, opacity: 1 },
+                        viewport: { once: true, margin: "-20px" },
+                      }
+                    : { animate: { x: 0, opacity: 1 } })}
+                  transition={transition}
                   className={cn(
                     heightClass,
                     widthClass,

@@ -26,6 +26,7 @@ import {
   Skull,
   Luggage,
   Flame,
+  Sparkles,
 } from "lucide-react";
 
 import {
@@ -44,6 +45,7 @@ import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard";
 import { BigFourLiftCards } from "@/components/big-four-lift-cards";
+import { StrengthUnwrappedBanner } from "@/components/year-recap/strength-unwrapped-banner";
 
 // The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [
@@ -127,6 +129,13 @@ export const featurePages = [
     description:
       "A collection of our articles, common questions, plus curated lifting content.",
     IconComponent: LibraryBig,
+  },
+  {
+    href: "/strength-year-in-review",
+    title: "Strength Unwrapped - Yearly Recap",
+    description:
+      "Your year of strength training in a Spotify Wrapped-style recap. Sessions, tonnage, PRs, and more.",
+    IconComponent: Sparkles,
   },
 ];
 
@@ -259,6 +268,12 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {new Date().getMonth() === 11 && (
+          <div className="mt-8 mb-6">
+            <StrengthUnwrappedBanner />
+          </div>
+        )}
 
         <h2 class="mt-8 mb-4 text-xl font-semibold">
           🏋️ The Big Four Barbell Lifts

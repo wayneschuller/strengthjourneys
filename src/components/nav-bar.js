@@ -54,6 +54,7 @@ import {
   ChartColumnDecreasing,
   Bus,
   Flame,
+  Sparkles,
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
@@ -400,6 +401,11 @@ function StrengthInsightsMenu() {
       title: "Tonnage Metrics",
       href: "/tonnage",
       icon: <Bus className="h-5 w-5" />,
+    },
+    {
+      title: "Strength Unwrapped",
+      href: "/strength-year-in-review",
+      icon: <Sparkles className="h-5 w-5" />,
     },
   ];
 

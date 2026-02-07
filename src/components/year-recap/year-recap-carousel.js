@@ -68,7 +68,7 @@ export function YearRecapCarousel({ year, isDemo }) {
     if (!shareRef.current) return;
     setIsSharing(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
+      const html2canvas = (await import("html2canvas-pro")).default;
       const slides = shareRef.current.querySelectorAll("[data-recap-slide]");
       const activeSlide = slides[selectedIndex];
       if (!activeSlide) {

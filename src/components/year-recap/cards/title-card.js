@@ -137,7 +137,7 @@ export function TitleCard({ year, isDemo, isActive = true }) {
             variants={yearVariants}
             initial="hidden"
             animate={isActive ? "visible" : "hidden"}
-            className="mt-1 block text-4xl font-extrabold tracking-tight md:text-7xl bg-gradient-to-r from-chart-3 via-chart-4 to-chart-1 bg-clip-text text-transparent drop-shadow-sm"
+            className="mt-1 block text-4xl font-extrabold tracking-tight md:text-7xl text-chart-4 drop-shadow-sm"
           >
             {year}
           </motion.span>

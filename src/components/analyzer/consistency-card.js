@@ -27,6 +27,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { CircularProgressWithLetter } from "./circular-progress-with-letter";
+import { CONSISTENCY_GRADE_THRESHOLDS } from "@/lib/consistency-grades";
 
 export function ConsistencyCard() {
   const { parsedData } = useUserLiftingData();
@@ -87,26 +88,6 @@ export function ConsistencyCard() {
     </Card>
   );
 }
-
-// Define base hues as constants
-const HUE_GREEN = 120;
-const HUE_YELLOW = 60;
-const HUE_ORANGE = 30;
-const HUE_RED = 0;
-
-// Define thresholds for grades and colors using constants
-const thresholds = [
-  { minProgress: 100, grade: "A+", hue: HUE_GREEN },
-  { minProgress: 90, grade: "A", hue: HUE_GREEN },
-  { minProgress: 80, grade: "A-", hue: HUE_GREEN },
-  { minProgress: 70, grade: "B+", hue: HUE_YELLOW },
-  { minProgress: 59, grade: "B", hue: HUE_YELLOW },
-  { minProgress: 50, grade: "B-", hue: HUE_YELLOW },
-  { minProgress: 42, grade: "C+", hue: HUE_ORANGE },
-  { minProgress: 36, grade: "C", hue: HUE_ORANGE },
-  { minProgress: 30, grade: "C-", hue: HUE_ORANGE },
-  { minProgress: 0, grade: ".", hue: HUE_RED }, // Red for low progress
-];
 
 function subtractDays(dateStr, days) {
   const date = parseISO(dateStr);
@@ -242,14 +223,13 @@ const periodTargets = [
 ];
 
 // Calculate how many more workouts needed to reach the next grade.
-// Uses the same thresholds as getGradeAndColor in circular-progress-with-letter.
 function calculateGradeJump(actualWorkouts, totalWorkoutsExpected) {
   if (totalWorkoutsExpected <= 0) return 0;
 
   const currentProgress = (actualWorkouts / totalWorkoutsExpected) * 100;
 
   // Find the next threshold strictly above current progress (next higher grade)
-  const nextThreshold = thresholds.find(
+  const nextThreshold = CONSISTENCY_GRADE_THRESHOLDS.find(
     (t) => t.minProgress > currentProgress,
   );
 

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { format } from "date-fns";
 import { useUserLiftingData } from "./use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
 
@@ -15,7 +16,7 @@ export const TimerProvider = ({ children }) => {
   useEffect(() => {
     if (parsedData === null) return; // Still pending data
 
-    const todayString = new Date().toISOString().slice(0, 10); // Get today's date in 'YYYY-MM-DD' format
+    const todayString = format(new Date(), "yyyy-MM-dd"); // Local date, not UTC
     const newEntriesForToday = parsedData.filter(
       (item) => item.date === todayString,
     ).length;

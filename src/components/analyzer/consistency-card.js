@@ -12,6 +12,7 @@ import { devLog } from "@/lib/processing-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 import {
+  format,
   parseISO,
   subDays,
   differenceInCalendarDays,
@@ -109,14 +110,14 @@ const thresholds = [
 
 function subtractDays(dateStr, days) {
   const date = parseISO(dateStr);
-  return subDays(date, days).toISOString().slice(0, 10);
+  return format(subDays(date, days), "yyyy-MM-dd");
 }
 
 export function processConsistency(parsedData) {
   if (!parsedData) return null;
 
   const startTime = performance.now();
-  const today = new Date().toISOString().slice(0, 10); // Format today's date as "YYYY-MM-DD"
+  const today = format(new Date(), "yyyy-MM-dd"); // Local date, not UTC
 
   const workoutRangeDays = differenceInCalendarDays(
     parseISO(today),

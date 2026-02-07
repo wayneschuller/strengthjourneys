@@ -490,7 +490,7 @@ function calculateLifetimeTonnage(parsedData, preferredUnit = "lb") {
 
   const totalByUnit = {};
   const sessionDates = new Set();
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = format(new Date(), "yyyy-MM-dd");
   const twelveMonthsAgoStr = subtractDaysFromStr(todayStr, 365);
   const lastYearByUnit = {};
   let earliestDateStr = null;
@@ -655,7 +655,7 @@ function findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes) {
 function calculatePRsInLast12Months(topLiftsByTypeAndReps) {
   if (!topLiftsByTypeAndReps) return { count: 0, liftTypes: [] };
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = format(new Date(), "yyyy-MM-dd");
   const twelveMonthsAgo = subtractDaysFromStr(todayStr, 365);
   const prLiftTypes = new Set();
 
@@ -688,7 +688,7 @@ function calculateSessionMomentum(parsedData) {
     return { recentSessions: 0, previousSessions: 0, percentageChange: 0 };
   }
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = format(new Date(), "yyyy-MM-dd");
   const ninetyDaysAgoStr = subtractDaysFromStr(todayStr, 90);
   const oneEightyDaysAgoStr = subtractDaysFromStr(todayStr, 180);
 
@@ -842,7 +842,7 @@ function calculateStreak(parsedData) {
   const oldestWeek = weekKeys[0];
 
   // --- Phase 2: Reference weeks (this week, last week) ---
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = format(new Date(), "yyyy-MM-dd");
   const thisWeekKey = getWeekKeyFromDateStr(todayStr);
   const sessionsThisWeek = weekSessionCount.get(thisWeekKey) || 0;
 

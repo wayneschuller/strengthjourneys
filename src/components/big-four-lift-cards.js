@@ -10,6 +10,7 @@ import { useLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getAverageLiftSessionTonnageFromPrecomputed } from "@/lib/processing-utils";
+import { motion } from "motion/react";
 
 import { format } from "date-fns";
 import {
@@ -210,78 +211,107 @@ export function BigFourLiftCards({ lifts, animated = true }) {
             key={lift.slug}
             className="group ring-ring relative shadow-lg ring-0 hover:ring-1"
           >
-            <Link href={`/${lift.slug}`}>
-              <CardHeader className="pb-2">
-                <div className="flex items-start gap-3">
-                  <CardTitle className="min-w-0 flex-1 text-xl leading-tight sm:text-2xl lg:min-h-[3.8rem]">
-                    {lift.liftType}
-                  </CardTitle>
-                  {isStatsMode && badges.length > 0 && (
-                    <CardAction
-                      className={`static ml-auto flex flex-col items-end gap-1 text-[11px] leading-tight transition-opacity duration-300 ${
-                        showStats ? "opacity-100" : "opacity-0"
-                      }`}
-                    >
-                      {badges.map((badge) => (
-                        <Badge
-                          key={badge.type}
-                          variant={badge.variant}
-                          className="pointer-events-none whitespace-nowrap"
-                        >
-                          {badge.label}
-                        </Badge>
-                      ))}
-                    </CardAction>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="relative px-6 pt-0 pb-2">
-                <div className="relative h-16">
-                  {/* Base description. Fades out per card when that card's stats fade in. */}
-                  <div
-                    className={`text-muted-foreground text-sm transition-opacity duration-300 ${
-                      isStatsMode && showStats ? "opacity-0" : "opacity-100"
-                    }`}
-                  >
-                    {lift.liftDescription}
+              <Link href={`/${lift.slug}`}>
+                <CardHeader className="pb-2">
+                  <div className="flex items-start gap-3">
+                    <CardTitle className="min-w-0 flex-1 text-xl leading-tight sm:text-2xl lg:min-h-[3.8rem]">
+                      {lift.liftType}
+                    </CardTitle>
+                    {isStatsMode && badges.length > 0 && (
+                      <CardAction className="static ml-auto flex flex-col items-end gap-1 text-[11px] leading-tight">
+                        <div className="flex flex-col items-end gap-1">
+                          {badges.map((badge, i) => (
+                            <motion.div
+                              key={badge.type}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={
+                                showStats
+                                  ? { opacity: 1, scale: 1 }
+                                  : { opacity: 0, scale: 0.9 }
+                              }
+                              transition={{
+                                type: "spring",
+                                stiffness: 220,
+                                damping: 22,
+                                delay: showStats ? i * 0.06 : 0,
+                              }}
+                            >
+                              <Badge
+                                variant={badge.variant}
+                                className="pointer-events-none whitespace-nowrap"
+                              >
+                                {badge.label}
+                              </Badge>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </CardAction>
+                    )}
                   </div>
-
-                  {/* Stats overlay that fades in on top for authenticated users with data */}
-                  {isStatsMode && stats && (
-                    <div
-                      className={`text-muted-foreground pointer-events-none absolute inset-0 flex flex-col justify-start text-sm transition-opacity duration-300 ${
-                        showStats ? "opacity-100" : "opacity-0"
-                      }`}
+                </CardHeader>
+                <CardContent className="relative px-6 pt-0 pb-2">
+                  <div className="relative h-16">
+                    {/* Base description. Fades out per card when that card's stats fade in. */}
+                    <motion.div
+                      className="text-muted-foreground text-sm"
+                      initial={false}
+                      animate={{
+                        opacity: isStatsMode && showStats ? 0 : 1,
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 220,
+                        damping: 24,
+                      }}
                     >
-                      {(stats.totalSets > 0 || stats.totalReps > 0) && (
-                        <span>
-                          {stats.totalSets.toLocaleString()} sets ·{" "}
-                          {stats.totalReps.toLocaleString()} reps logged
-                        </span>
-                      )}
-                      {stats.bestLift && (
-                        <span className="block">
-                          Best set: {stats.bestLift.reps}@
-                          {stats.bestLift.weight}
-                          {stats.bestLift.unitType || stats.unitType}
-                          {stats.bestLift.date && (
-                            <> on {formatLiftDate(stats.bestLift.date)}</>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-center p-2 pt-0">
-                <img
-                  src={bigFourDiagrams[lift.liftType]}
-                  alt={`${lift.liftType} diagram`}
-                  className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
-                />
-              </CardFooter>
-            </Link>
-          </Card>
+                      {lift.liftDescription}
+                    </motion.div>
+
+                    {/* Stats overlay that fades in on top for authenticated users with data */}
+                    {isStatsMode && stats && (
+                      <motion.div
+                        className="text-muted-foreground pointer-events-none absolute inset-0 flex flex-col justify-start text-sm"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={
+                          showStats
+                            ? { opacity: 1, y: 0 }
+                            : { opacity: 0, y: 8 }
+                        }
+                        transition={{
+                          type: "spring",
+                          stiffness: 200,
+                          damping: 22,
+                        }}
+                      >
+                        {(stats.totalSets > 0 || stats.totalReps > 0) && (
+                          <span>
+                            {stats.totalSets.toLocaleString()} sets ·{" "}
+                            {stats.totalReps.toLocaleString()} reps logged
+                          </span>
+                        )}
+                        {stats.bestLift && (
+                          <span className="block">
+                            Best set: {stats.bestLift.reps}@
+                            {stats.bestLift.weight}
+                            {stats.bestLift.unitType || stats.unitType}
+                            {stats.bestLift.date && (
+                              <> on {formatLiftDate(stats.bestLift.date)}</>
+                            )}
+                          </span>
+                        )}
+                      </motion.div>
+                    )}
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-center p-2 pt-0">
+                  <img
+                    src={bigFourDiagrams[lift.liftType]}
+                    alt={`${lift.liftType} diagram`}
+                    className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
+                  />
+                </CardFooter>
+              </Link>
+            </Card>
         );
       })}
     </div>
@@ -297,7 +327,7 @@ const bigFourDiagrams = {
   "Strict Press": "/strict_press.svg",
 };
 
-const STATS_STAGGER_MS = 360;
+const STATS_STAGGER_MS = 520;
 
 const RECENT_PR_WINDOW_DAYS = 60;
 

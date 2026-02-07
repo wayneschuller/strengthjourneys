@@ -206,10 +206,10 @@ export default function Home() {
   }, [authStatus, showHeroSection, isFadingHero]);
 
   // Delay the Big Four lift cards entrance until after the home dashboard intro
-  // (hero fade + row processing + top stat cards). For guests, show them immediately.
+  // (hero fade + row processing ~1.2s + top stat cards ~2.2s). For guests, show them immediately.
   useEffect(() => {
     if (authStatus === "authenticated") {
-      const totalIntroMs = 2500;
+      const totalIntroMs = 4000; // Row processing + section cards left-to-right stagger
       const timeoutId = setTimeout(() => {
         setBigFourAnimated(true);
       }, totalIntroMs);

@@ -10,6 +10,7 @@ import { SectionTopCards } from "./section-top-cards";
 import { useLocalStorage } from "usehooks-ts";
 import { Progress } from "./ui/progress";
 import { Skeleton } from "./ui/skeleton";
+import { motion } from "motion/react";
 import {
   ChooseSheetInstructionsCard,
   OnBoardingDashboard,
@@ -110,10 +111,6 @@ function RowProcessingIndicator({
       ? Math.min(100, Math.round((animatedCount / rowCount) * 100))
       : 0;
 
-  const dotColor = isProgressDone
-    ? "text-green-500"
-    : "text-amber-400 animate-pulse"; // amber/yellow while processing
-
   if (rowCount === null || rowCount === undefined) {
     return (
       <div className="flex flex-col items-center py-4">
@@ -124,13 +121,35 @@ function RowProcessingIndicator({
   }
 
   return (
-    <div className="flex flex-col items-center py-4">
+    <motion.div
+      className="flex flex-col items-center py-4"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 180, damping: 22 }}
+    >
       <Progress className="mb-2 h-2 w-4/5 md:w-3/5" value={percent} />
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-muted-foreground flex items-center">
         {isProgressDone ? "Processed" : "Processing"} Google Sheet rows:{" "}
         {animatedCount.toLocaleString()} / {rowCount?.toLocaleString()}
-        <span className={`ml-2 ${dotColor}`}>●</span>
+        <motion.span
+          className={`ml-2 ${isProgressDone ? "text-green-500" : "text-amber-400"}`}
+          animate={
+            isProgressDone
+              ? {}
+              : {
+                  opacity: [1, 0.4, 1],
+                  scale: [1, 1.1, 1],
+                }
+          }
+          transition={{
+            duration: 1.8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
+          ●
+        </motion.span>
       </div>
-    </div>
+    </motion.div>
   );
 }

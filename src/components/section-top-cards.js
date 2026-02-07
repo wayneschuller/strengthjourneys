@@ -8,6 +8,7 @@ import {
   CardTitle,
   CardAction,
 } from "@/components/ui/card";
+import { motion } from "motion/react";
 import { useMemo, useRef } from "react";
 import { devLog } from "@/lib/processing-utils";
 import {
@@ -40,7 +41,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const statCardBase =
-  "animate-fade flex h-full flex-col justify-between rounded-xl border shadow-none opacity-0";
+  "flex h-full flex-col justify-between rounded-xl border shadow-none";
 
 const ACCENTS = {
   primary: {
@@ -102,7 +103,7 @@ const STREAK_ENCOURAGMENTS = [
  * @param {React.ReactNode} props.title - CardTitle content
  * @param {React.ReactNode} props.footer - CardFooter content
  * @param {React.ReactNode} [props.action] - Optional CardAction (e.g. percentage badge)
- * @param {number} props.animationDelay - Delay in ms for animation
+ * @param {number} props.animationDelay - Delay in ms for left-to-right stagger
  */
 function StatCard({
   accent,
@@ -115,8 +116,18 @@ function StatCard({
 }) {
   const { card, iconBg, icon } = ACCENTS[accent] ?? ACCENTS.primary;
   return (
+    <motion.div
+      initial={{ opacity: 0, x: -24 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{
+        type: "spring",
+        stiffness: 180,
+        damping: 20,
+        delay: animationDelay / 1000,
+      }}
+    >
     <Card
-      className={`${statCardBase} relative border-l-4 ${card} [animation-delay:${animationDelay}ms]`}
+      className={`${statCardBase} relative border-l-4 ${card}`}
     >
       {action}
       <CardHeader className="flex flex-row items-start gap-3 p-4">
@@ -131,9 +142,20 @@ function StatCard({
         </div>
       </CardHeader>
       <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pt-0 pb-4 text-sm">
-        {footer}
+        <motion.div
+          className="w-full"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{
+            duration: 0.35,
+            delay: animationDelay / 1000 + 0.15,
+          }}
+        >
+          {footer}
+        </motion.div>
       </CardFooter>
     </Card>
+    </motion.div>
   );
 }
 
@@ -277,7 +299,7 @@ export function SectionTopCards({ isProgressDone = false }) {
                 )}
               </div>
             }
-            animationDelay={250}
+            animationDelay={400}
           />
 
           <StatCard
@@ -323,7 +345,7 @@ export function SectionTopCards({ isProgressDone = false }) {
                 </div>
               );
             })()}
-            animationDelay={500}
+            animationDelay={800}
           />
 
           <StatCard
@@ -367,7 +389,7 @@ export function SectionTopCards({ isProgressDone = false }) {
                 </div>
               )
             }
-            animationDelay={750}
+            animationDelay={1200}
           />
 
           <StatCard
@@ -398,7 +420,7 @@ export function SectionTopCards({ isProgressDone = false }) {
                   )}
               </>
             }
-            animationDelay={1000}
+            animationDelay={1600}
           />
         </>
       )}

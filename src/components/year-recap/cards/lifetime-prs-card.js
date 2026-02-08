@@ -1,33 +1,28 @@
 "use client";
 
 import { useRef, useMemo } from "react";
-import { useLocalStorage } from "usehooks-ts";
 import {
   pickQuirkyPhrase,
   PR_HIGHLIGHTS_PHRASES,
 } from "../phrases";
-import { getReadableDateString, getPRHighlightsForYear } from "@/lib/processing-utils";
+import { getReadableDateString, getLifetimePRsAchievedInYear } from "@/lib/processing-utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { Award } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { motion } from "motion/react";
 import { LiftSvg, getLiftSvgPath } from "../lift-svg";
 
-export function PRHighlightsCard({ year, isDemo, isActive = true }) {
+export function LifetimePRsCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const phrase = pickQuirkyPhrase(
     PR_HIGHLIGHTS_PHRASES,
     phraseRef,
-    `pr-${year}`,
+    `lifetime-prs-${year}`,
   );
 
-  const { parsedData } = useUserLiftingData();
-  const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
-    initializeWithValue: false,
-  });
+  const { topLiftsByTypeAndReps } = useUserLiftingData();
   const prs = useMemo(
-    () => getPRHighlightsForYear(parsedData, year, e1rmFormula ?? "Brzycki"),
-    [year, parsedData, e1rmFormula],
+    () => getLifetimePRsAchievedInYear(year, topLiftsByTypeAndReps),
+    [year, topLiftsByTypeAndReps],
   );
 
   return (
@@ -37,7 +32,7 @@ export function PRHighlightsCard({ year, isDemo, isActive = true }) {
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: -24 }}
         transition={{ type: "spring", stiffness: 220, damping: 22 }}
       >
-        <Award className="mb-4 h-12 w-12 text-chart-1" />
+        <Trophy className="mb-4 h-12 w-12 text-chart-1" />
       </motion.div>
       <motion.p
         className="text-xl font-semibold text-chart-2"
@@ -45,7 +40,7 @@ export function PRHighlightsCard({ year, isDemo, isActive = true }) {
         animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -12 }}
         transition={{ type: "spring", stiffness: 200, damping: 20, delay: isActive ? 0.1 : 0 }}
       >
-        PR highlights
+        Lifetime PRs achieved
       </motion.p>
       {prs.length > 0 ? (
         <ul className="mt-4 space-y-2 text-left">
@@ -79,7 +74,7 @@ export function PRHighlightsCard({ year, isDemo, isActive = true }) {
           animate={isActive ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: isActive ? 0.2 : 0 }}
         >
-          No PRs this year
+          No lifetime PRs this year
         </motion.p>
       )}
       <motion.p
@@ -103,4 +98,3 @@ export function PRHighlightsCard({ year, isDemo, isActive = true }) {
     </div>
   );
 }
-

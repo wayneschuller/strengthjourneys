@@ -100,6 +100,19 @@ export const CONSISTENCY_PHRASES = [
   "Bookmark this feeling.",
 ];
 
+export const NOTABLE_LIFTS_PHRASES = [
+  "More solid work",
+  "Other peaks worth noting",
+  "Still impressive",
+  "Nice supporting cast",
+  "The full picture",
+  "More highlights",
+  "Round out the year",
+  "Other strong lifts",
+  "More to celebrate",
+  "The rest of the story",
+];
+
 export const PR_HIGHLIGHTS_PHRASES = [
   "Look at this champion",
   "Someone get this hero some beers",

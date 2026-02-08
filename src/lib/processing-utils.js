@@ -915,6 +915,66 @@ export function getPRHighlightsForYear(parsedData, year, e1rmFormula = "Brzycki"
   return out;
 }
 
+/**
+ * Get lifetime PRs (all-time bests) that were achieved in the chosen year.
+ * Uses topLiftsByTypeAndReps: for each (liftType, reps), the #1 entry is the all-time best.
+ * If that best was set in the given year, include it.
+ *
+ * @param {string|number} year - e.g. "2024" or 2024
+ * @param {Object} topLiftsByTypeAndReps - From processTopLiftsByTypeAndReps
+ * @returns {Array} Sorted list: { date, liftType, reps, weight, unitType, ... }
+ */
+export function getLifetimePRsAchievedInYear(year, topLiftsByTypeAndReps) {
+  const startTime = performance.now();
+  if (!year || !topLiftsByTypeAndReps) return [];
+  const yearStr = String(year);
+  const yearStart = `${yearStr}-01-01`;
+  const yearEnd = `${yearStr}-12-31`;
+
+  const results = [];
+  Object.entries(topLiftsByTypeAndReps).forEach(([liftType, repRanges]) => {
+    repRanges.forEach((prs, repsIndex) => {
+      const reps = repsIndex + 1;
+      const best = (prs || [])[0];
+      if (!best || best.date < yearStart || best.date > yearEnd) return;
+      results.push({ ...best, reps });
+    });
+  });
+
+  const bigFourIndex = (liftType) => {
+    const i = BIG_FOUR_LIFT_TYPES.indexOf(liftType);
+    return i >= 0 ? i : 999;
+  };
+
+  results.sort((a, b) => {
+    const aBigFour = BIG_FOUR_LIFT_TYPES.includes(a.liftType);
+    const bBigFour = BIG_FOUR_LIFT_TYPES.includes(b.liftType);
+    if (aBigFour !== bBigFour) return aBigFour ? -1 : 1;
+    const aLiftOrder = bigFourIndex(a.liftType);
+    const bLiftOrder = bigFourIndex(b.liftType);
+    if (aLiftOrder !== bLiftOrder) return aLiftOrder - bLiftOrder;
+    const repOrder = [1, 3, 5, 2, 4, 6, 7, 8, 9, 10];
+    return repOrder.indexOf(a.reps) - repOrder.indexOf(b.reps);
+  });
+
+  // Diversity: best 2 per Big Four (up to 8 rows)
+  const byLiftType = {};
+  results.forEach((r) => {
+    if (!BIG_FOUR_LIFT_TYPES.includes(r.liftType)) return;
+    byLiftType[r.liftType] = byLiftType[r.liftType] || [];
+    if (byLiftType[r.liftType].length < 2) {
+      byLiftType[r.liftType].push(r);
+    }
+  });
+  const out = BIG_FOUR_LIFT_TYPES.flatMap((lt) => byLiftType[lt] || []);
+  devLog(
+    `getLifetimePRsAchievedInYear() execution time: \x1b[1m${Math.round(
+      performance.now() - startTime,
+    )}ms\x1b[0m`,
+  );
+  return out;
+}
+
 // Analyzes lifts for a specific session date, providing context about their significance.
 // Returns an array of their session data grouped by lift type
 // FIXME: consider making this a method provided by the userUserLiftingData hook

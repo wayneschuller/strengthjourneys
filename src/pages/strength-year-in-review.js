@@ -76,21 +76,8 @@ function YearSelectorSkeleton() {
 
 function CarouselSkeleton() {
   return (
-    <div className="relative mx-auto max-w-[360px] rounded-xl border bg-card">
-      <div className="flex items-center justify-center gap-2 px-4 py-6">
-        <Skeleton className="h-9 w-9 shrink-0 rounded-full" aria-hidden />
-        <div className="flex aspect-[9/16] w-full flex-col items-center justify-center gap-6 rounded-xl border border-border p-6">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-12 w-20" />
-          <div className="grid grid-cols-2 gap-3">
-            <Skeleton className="h-16 w-16 rounded-lg" />
-            <Skeleton className="h-16 w-16 rounded-lg" />
-            <Skeleton className="h-16 w-16 rounded-lg" />
-            <Skeleton className="h-16 w-16 rounded-lg" />
-          </div>
-        </div>
-        <Skeleton className="h-9 w-9 shrink-0 rounded-full" aria-hidden />
-      </div>
+    <div className="relative mx-auto w-full max-w-[360px] rounded-xl border bg-card overflow-hidden">
+      <Skeleton className="aspect-[9/16] w-full rounded-xl" />
       <div className="flex items-center justify-between border-t px-4 py-3">
         <Skeleton className="h-4 w-12" />
         <Skeleton className="h-8 w-28 rounded-md" />

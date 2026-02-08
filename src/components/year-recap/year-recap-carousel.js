@@ -15,7 +15,6 @@ import { TitleCard } from "./cards/title-card";
 import { SessionsCard } from "./cards/sessions-card";
 import { TonnageCard } from "./cards/tonnage-card";
 import { MostTrainedLiftCard } from "./cards/most-trained-lift-card";
-import { ConsistencyCard } from "./cards/consistency-card";
 import { LifetimePRsCard } from "./cards/lifetime-prs-card";
 import { NotableLiftsCard } from "./cards/notable-lifts-card";
 import { SeasonalPatternCard } from "./cards/seasonal-pattern-card";
@@ -94,7 +93,6 @@ export function YearRecapCarousel({ year, isDemo }) {
     { id: "sessions", Component: SessionsCard },
     { id: "tonnage", Component: TonnageCard },
     { id: "most-trained", Component: MostTrainedLiftCard },
-    { id: "consistency", Component: ConsistencyCard },
     { id: "lifetime-prs", Component: LifetimePRsCard },
     { id: "notable-lifts", Component: NotableLiftsCard },
     { id: "seasonal", Component: SeasonalPatternCard },

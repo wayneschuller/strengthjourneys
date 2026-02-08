@@ -1,4 +1,4 @@
-// Shared grade thresholds for consistency analysis. Used by ConsistencyCard
+// Shared grade thresholds for consistency analysis. Used by Analyzer and year-recap SessionsCard.
 // (for calculateGradeJump tooltips) and CircularProgressWithLetter (for grade + color display).
 
 const HUE_GREEN = 120;

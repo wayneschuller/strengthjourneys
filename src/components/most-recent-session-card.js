@@ -15,10 +15,16 @@ import {
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { getReadableDateString, getAnalyzedSessionLifts } from "@/lib/processing-utils";
+import { differenceInDays } from "date-fns";
+import {
+  getReadableDateString,
+  getAnalyzedSessionLifts,
+  getSessionDatesContainingLiftType,
+} from "@/lib/processing-utils";
 import { SessionExerciseBlock } from "@/components/analyzer/session-exercise-block";
 
 export function MostRecentSessionCard({
+  liftType = null,
   highlightDate: highlightDateProp = null,
   setHighlightDate: setHighlightDateProp,
 }) {
@@ -38,69 +44,133 @@ export function MostRecentSessionCard({
       initializeWithValue: false,
     }) ?? "Brzycki";
 
-  const { sessionDate, analyzedSessionLifts, isFirstDate, isLastDate } =
+  const { sessionDate, analyzedSessionLifts, isFirstDate, isLastDate, datesForNav } =
     useMemo(() => {
-      if (!parsedData?.length) return { sessionDate: null, analyzedSessionLifts: null, isFirstDate: true, isLastDate: true };
+      if (!parsedData?.length)
+        return {
+          sessionDate: null,
+          analyzedSessionLifts: null,
+          isFirstDate: true,
+          isLastDate: true,
+          datesForNav: [],
+        };
 
-      let sessionDate = highlightDate;
-      const isFirstDate = parsedData?.length > 0 && sessionDate === parsedData[0]?.date;
-      let isLastDate =
-        parsedData?.length > 0 &&
-        sessionDate === parsedData[parsedData.length - 1]?.date;
+      let sessionDate = null;
+      let datesForNav = [];
 
-      if (!sessionDate) {
+      if (liftType) {
+        datesForNav = getSessionDatesContainingLiftType(parsedData, liftType);
+        if (highlightDate && datesForNav.includes(highlightDate)) {
+          sessionDate = highlightDate;
+        } else {
+          sessionDate = datesForNav[datesForNav.length - 1] ?? null;
+        }
+      } else if (highlightDate) {
+        sessionDate = highlightDate;
+      } else {
         for (let i = parsedData.length - 1; i >= 0; i--) {
           if (!parsedData[i].isGoal) {
             sessionDate = parsedData[i].date;
             break;
           }
         }
-        isLastDate = true;
       }
 
-      if (!sessionDate) return { sessionDate: null, analyzedSessionLifts: null, isFirstDate: true, isLastDate: true };
+      const isFirstDate = liftType
+        ? datesForNav.length > 0 && sessionDate === datesForNav[0]
+        : parsedData?.length > 0 && sessionDate === parsedData[0]?.date;
+      const isLastDate = liftType
+        ? datesForNav.length > 0 && sessionDate === datesForNav[datesForNav.length - 1]
+        : parsedData?.length > 0 &&
+          sessionDate === parsedData[parsedData.length - 1]?.date;
 
-      const analyzedSessionLifts = getAnalyzedSessionLifts(
+      if (!sessionDate)
+        return {
+          sessionDate: null,
+          analyzedSessionLifts: null,
+          isFirstDate: true,
+          isLastDate: true,
+          datesForNav: [],
+        };
+
+      const allAnalyzed = getAnalyzedSessionLifts(
         sessionDate,
         parsedData,
         topLiftsByTypeAndReps,
         topLiftsByTypeAndRepsLast12Months,
       );
 
-      return { sessionDate, analyzedSessionLifts, isFirstDate, isLastDate };
-    }, [parsedData, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, highlightDate]);
+      const analyzedSessionLifts = liftType
+        ? allAnalyzed[liftType]
+          ? { [liftType]: allAnalyzed[liftType] }
+          : {}
+        : allAnalyzed;
+
+      return { sessionDate, analyzedSessionLifts, isFirstDate, isLastDate, datesForNav };
+    }, [
+      parsedData,
+      topLiftsByTypeAndReps,
+      topLiftsByTypeAndRepsLast12Months,
+      highlightDate,
+      liftType,
+    ]);
 
   const prevDate = () => {
-    if (!parsedData || !sessionDate) return;
-    const currentIndex = parsedData.findIndex((entry) => entry.date === sessionDate);
-    for (let i = currentIndex - 1; i >= 0; i--) {
-      if (parsedData[i].date !== sessionDate) {
-        setHighlightDate(parsedData[i].date);
-        break;
+    if (!sessionDate) return;
+    if (liftType && datesForNav.length > 0) {
+      const idx = datesForNav.indexOf(sessionDate);
+      if (idx > 0) setHighlightDate(datesForNav[idx - 1]);
+    } else if (parsedData) {
+      const currentIndex = parsedData.findIndex((entry) => entry.date === sessionDate);
+      for (let i = currentIndex - 1; i >= 0; i--) {
+        if (parsedData[i].date !== sessionDate) {
+          setHighlightDate(parsedData[i].date);
+          break;
+        }
       }
     }
   };
 
   const nextDate = () => {
-    if (!parsedData || !sessionDate) return;
-    const currentIndex = parsedData.findIndex((entry) => entry.date === sessionDate);
-    for (let i = currentIndex + 1; i < parsedData.length; i++) {
-      if (parsedData[i].date !== sessionDate) {
-        setHighlightDate(parsedData[i].date);
-        break;
+    if (!sessionDate) return;
+    if (liftType && datesForNav.length > 0) {
+      const idx = datesForNav.indexOf(sessionDate);
+      if (idx >= 0 && idx < datesForNav.length - 1)
+        setHighlightDate(datesForNav[idx + 1]);
+    } else if (parsedData) {
+      const currentIndex = parsedData.findIndex((entry) => entry.date === sessionDate);
+      for (let i = currentIndex + 1; i < parsedData.length; i++) {
+        if (parsedData[i].date !== sessionDate) {
+          setHighlightDate(parsedData[i].date);
+          break;
+        }
       }
     }
   };
+
+  const isWithinLastMonth =
+    sessionDate &&
+    differenceInDays(new Date(), new Date(sessionDate + "T00:00:00")) <= 30;
+  const titlePrefix =
+    liftType
+      ? isLastDate
+        ? `Most recent ${liftType} session`
+        : isWithinLastMonth
+          ? `Recent ${liftType} session`
+          : `${liftType} session`
+      : "Most recent session";
 
   if (!sessionDate || !analyzedSessionLifts) {
     return (
       <Card className="mt-4 rounded-xl border">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Most recent session</CardTitle>
+          <CardTitle className="text-lg">{titlePrefix}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
-            No sessions logged yet.
+            {liftType
+              ? `No ${liftType} sessions logged yet.`
+              : "No sessions logged yet."}
           </p>
         </CardContent>
       </Card>
@@ -112,11 +182,13 @@ export function MostRecentSessionCard({
     return (
       <Card className="mt-4 rounded-xl border">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Most recent session</CardTitle>
+          <CardTitle className="text-lg">{titlePrefix}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
-            No workouts available for the most recent date.
+            {liftType
+              ? `No ${liftType} workouts for the most recent date.`
+              : "No workouts available for the most recent date."}
           </p>
         </CardContent>
       </Card>
@@ -130,7 +202,7 @@ export function MostRecentSessionCard({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
-                Most recent session — {getReadableDateString(sessionDate, true)}
+                {titlePrefix} — {getReadableDateString(sessionDate, true)}
               </CardTitle>
             </div>
             <div className="flex shrink-0 items-center gap-2">
@@ -148,7 +220,7 @@ export function MostRecentSessionCard({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Previous session</p>
+                    <p>{liftType ? `Previous ${liftType} session` : "Previous session"}</p>
                   </TooltipContent>
                 </Tooltip>
                 <Tooltip>
@@ -164,7 +236,7 @@ export function MostRecentSessionCard({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Next session</p>
+                    <p>{liftType ? `Next ${liftType} session` : "Next session"}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>

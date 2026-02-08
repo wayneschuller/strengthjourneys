@@ -35,6 +35,7 @@ import {
 } from "@/components/analyzer/lift-achievements-card";
 import { LiftTypeRepPRsDisplay } from "@/components/analyzer/lift-type-prs-display";
 
+import { MostRecentSessionCard } from "@/components/most-recent-session-card";
 import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
 import { VisualizerReps } from "@/components/visualizer/visualizer-reps";
 import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
@@ -198,6 +199,9 @@ function BarbellInsightsMain({
           <MyLiftTypeSummaryCard liftType={liftInsightData.liftType} />
           <SanityArticleCard article={introductionArticle} />
           <SanityArticleCard article={resourcesArticle} />
+        </div>
+        <div className="col-span-3">
+          <MostRecentSessionCard liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">
           <VisualizerMini liftType={liftInsightData.liftType} />

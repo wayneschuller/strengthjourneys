@@ -995,6 +995,23 @@ export function getLifetimePRsAchievedInYear(parsedData, year) {
   return out;
 }
 
+// Returns session dates (ascending) that contain the given lift type.
+// Useful for finding most recent session for a lift, and for prev/next navigation.
+export function getSessionDatesContainingLiftType(parsedData, liftType) {
+  if (!parsedData?.length || !liftType) return [];
+  const seen = new Set();
+  const dates = [];
+  for (let i = parsedData.length - 1; i >= 0; i--) {
+    const entry = parsedData[i];
+    if (entry.isGoal) continue;
+    if (entry.liftType === liftType && !seen.has(entry.date)) {
+      seen.add(entry.date);
+      dates.unshift(entry.date);
+    }
+  }
+  return dates;
+}
+
 // Analyzes lifts for a specific session date, providing context about their significance.
 // Returns an array of their session data grouped by lift type
 // FIXME: consider making this a method provided by the userUserLiftingData hook

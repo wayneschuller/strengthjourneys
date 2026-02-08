@@ -587,7 +587,9 @@ function LiftTonnageRow({ liftType, stats }) {
   const isUp = pctDiff > 0;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-xs">
+    <div
+      className={`flex flex-wrap items-center gap-2 ${isUp ? "text-sm" : "text-xs"}`}
+    >
       <span className="text-muted-foreground">
         Tonnage: {Math.round(currentLiftTonnage).toLocaleString()}
         {unitType} vs {Math.round(avgLiftTonnage).toLocaleString()}
@@ -603,7 +605,7 @@ function LiftTonnageRow({ liftType, stats }) {
       >
         {isUp ? (
           <>
-            <ArrowUpRight className="h-3 w-3" />
+            <ArrowUpRight className="h-4 w-4" />
             {Math.abs(pctDiff).toFixed(1)}%
           </>
         ) : (

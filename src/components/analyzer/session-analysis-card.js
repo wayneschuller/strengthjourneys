@@ -510,7 +510,10 @@ function ExerciseBlock({
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="max-w-xs">{workout.notes}</p>
+                      <p className="max-w-xs">
+                        <span className="font-semibold">Note: </span>
+                        {workout.notes}
+                      </p>
                     </TooltipContent>
                   </Tooltip>
                 )}

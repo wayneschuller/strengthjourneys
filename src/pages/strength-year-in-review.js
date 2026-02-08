@@ -16,6 +16,7 @@ import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearRecapCarousel } from "@/components/year-recap/year-recap-carousel";
 import { YearSelector } from "@/components/year-recap/year-selector";
+import { DemoModeSignInCard } from "@/components/instructions-cards";
 
 export async function getStaticProps() {
   return { props: {}, revalidate: 60 * 60 };
@@ -128,7 +129,9 @@ function StrengthYearInReviewMain() {
             className={cn(
               "flex flex-col gap-6 md:gap-8 lg:gap-12 md:min-h-0",
               showCarousel
-                ? "md:grid md:grid-cols-[13rem_1fr_minmax(12rem,14rem)] md:items-start"
+                ? authStatus === "unauthenticated"
+                  ? "md:grid md:grid-cols-[13rem_1fr_minmax(18rem,22rem)] md:items-start"
+                  : "md:grid md:grid-cols-[13rem_1fr] md:items-start"
                 : "md:flex md:flex-row md:items-start",
             )}
           >
@@ -150,8 +153,10 @@ function StrengthYearInReviewMain() {
                 />
               </div>
             )}
-            {showYearSelector && showCarousel && (
-              <div className="hidden md:col-start-3 md:block" aria-hidden="true" />
+            {showCarousel && authStatus === "unauthenticated" && (
+              <div className="order-3 flex flex-col pt-2 md:col-start-3 md:pt-2">
+                <DemoModeSignInCard />
+              </div>
             )}
           </div>
         )}

@@ -20,6 +20,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 
 import SampleImage from "../../public/sample_google_sheet_fuzzy_border.png";
+import { GoogleLogo } from "@/components/hero-section";
 
 import {
   Card,
@@ -619,3 +620,67 @@ export const SignInInvite = () => {
     </div>
   );
 };
+
+/**
+ * Vertical card for demo mode sidebars (e.g. Strength Year in Review).
+ * Compact layout to fit narrow columns; other instruction cards are horizontal.
+ */
+export function DemoModeSignInCard() {
+  const router = useRouter();
+  const { status: authStatus } = useSession();
+
+  if (authStatus === "authenticated") return null;
+
+  return (
+    <Card className="flex min-w-[14rem] flex-col md:min-w-[18rem]">
+      <CardHeader className="space-y-2 pb-5 pt-6">
+        <CardTitle className="text-lg">See your year</CardTitle>
+        <CardDescription className="text-sm leading-relaxed">
+          This is sample data. Sign in and connect your Google Sheet to get your
+          personalized recap.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-6 pb-8 pt-2">
+        <Button
+          size="default"
+          className="flex w-full items-center justify-center gap-2"
+          onClick={() => {
+            trackSignInClick(router.pathname);
+            signIn("google");
+          }}
+        >
+          <GoogleLogo size={18} />
+          Sign in with Google
+        </Button>
+        <div className="space-y-5 text-sm text-muted-foreground">
+          <p className="leading-relaxed">
+            Your recap will show your sessions, tonnage, PRs, most-trained lifts,
+            and seasonal patterns — all from your own data.
+          </p>
+          <ol className="space-y-3 list-decimal list-inside leading-relaxed">
+            <li>
+              <a
+                href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              >
+                Open the template
+              </a>{" "}
+              — a simple Google Sheet with columns for date, lift, reps, and weight.
+            </li>
+            <li>
+              In Google Sheets, go to <strong>File → Make a copy</strong>. Give it a
+              name and start logging your lifts.
+            </li>
+            <li>
+              After signing in above, connect your sheet — we&apos;ll prompt you to pick
+              it from your Google Drive. We read your data directly and never store
+              a copy.
+            </li>
+          </ol>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

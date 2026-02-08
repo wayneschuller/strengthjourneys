@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useMemo } from "react";
-import { motion } from "motion/react";
+import { useRef, useMemo, useState, useEffect } from "react";
+import { motion, animate } from "motion/react";
 import { pickQuirkyPhrase, SESSIONS_PHRASES, CONSISTENCY_PHRASES } from "../phrases";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getGradeAndColor } from "@/lib/consistency-grades";
-import { Calendar, Flame } from "lucide-react";
+import { CircularProgressWithLetter } from "@/components/analyzer/circular-progress-with-letter";
+import { Calendar } from "lucide-react";
 
 const MERGED_PHRASES = [...SESSIONS_PHRASES, ...CONSISTENCY_PHRASES];
 
@@ -20,6 +21,20 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
   );
 
   const { count, prevYearCount, bestStreak, consistencyGrade, consistencyPercentage } = stats;
+
+  const [animatedProgress, setAnimatedProgress] = useState(0);
+  useEffect(() => {
+    if (!isActive || !consistencyGrade) {
+      setAnimatedProgress(0);
+      return;
+    }
+    const controls = animate(0, consistencyPercentage, {
+      duration: 0.8,
+      ease: "easeOut",
+      onUpdate: (v) => setAnimatedProgress(v),
+    });
+    return () => controls.stop();
+  }, [isActive, consistencyPercentage, consistencyGrade]);
 
   const showPrevYearComparison = useMemo(() => {
     const now = new Date();
@@ -38,20 +53,21 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
   }, [showPrevYearComparison, count, prevYearCount]);
 
   const grade = consistencyGrade?.grade ?? null;
+  const showGrade = grade && grade !== ".";
 
   return (
     <div className="flex flex-col items-center justify-center gap-0 text-center">
-      {/* Top: Sessions block */}
+      {/* Top: Calendar + sessions */}
       <div className="flex flex-col items-center">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
           transition={{ type: "spring", stiffness: 240, damping: 20 }}
         >
-          <Calendar className="mb-2 h-10 w-10 text-chart-1" />
+          <Calendar className="mb-4 h-12 w-12 text-chart-1" />
         </motion.div>
         <motion.p
-          className="text-4xl font-bold tabular-nums text-foreground md:text-5xl"
+          className="text-5xl font-bold tabular-nums text-foreground md:text-6xl"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
           transition={{ type: "spring", stiffness: 220, damping: 22, delay: isActive ? 0.05 : 0 }}
@@ -59,61 +75,63 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
           {count}
         </motion.p>
         <motion.p
-          className="text-lg font-semibold text-chart-2"
+          className="mt-2 text-xl font-semibold text-chart-2"
           initial={{ opacity: 0, x: -16 }}
           animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -16 }}
           transition={{ type: "spring", stiffness: 180, damping: 18, delay: isActive ? 0.12 : 0 }}
         >
           training sessions
         </motion.p>
+        {showGrade && (
+          <motion.div
+            className="mt-2"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+            transition={{ type: "spring", stiffness: 200, damping: 20, delay: isActive ? 0.18 : 0 }}
+          >
+            <CircularProgressWithLetter
+              progress={Math.round(animatedProgress)}
+              size="lg"
+              gradeOverride={isActive ? consistencyPercentage : undefined}
+            />
+          </motion.div>
+        )}
+        {showGrade && (
+          <motion.p
+            className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+            initial={{ opacity: 0 }}
+            animate={isActive ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ delay: isActive ? 0.3 : 0 }}
+          >
+            Yearly consistency
+          </motion.p>
+        )}
         {comparisonText && (
           <motion.p
             className="mt-1 text-sm text-muted-foreground"
             initial={{ opacity: 0, y: 8 }}
             animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
-            transition={{ delay: isActive ? 0.2 : 0 }}
+            transition={{ delay: isActive ? 0.32 : 0 }}
           >
             {comparisonText}
           </motion.p>
         )}
-        {grade && grade !== "." && (
-          <motion.p
-            className="mt-1 text-sm font-medium text-chart-3"
-            initial={{ opacity: 0, x: 16 }}
-            animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: 16 }}
-            transition={{ delay: isActive ? 0.24 : 0 }}
-          >
-            Year grade: {grade} ({consistencyPercentage}%)
-          </motion.p>
-        )}
       </div>
 
-      {/* Bottom: Consistency block */}
-      <div className="mt-8 flex flex-col items-center">
+      {/* Bottom: Streak */}
+      {bestStreak > 0 && (
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-          transition={{ type: "spring", stiffness: 240, damping: 20, delay: isActive ? 0.1 : 0 }}
+          className="mt-6 flex flex-col items-center"
+          initial={{ opacity: 0 }}
+          animate={isActive ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ delay: isActive ? 0.3 : 0 }}
         >
-          <Flame className="mb-2 h-10 w-10 text-chart-4" />
+          <p className="text-base text-muted-foreground">Best streak:</p>
+          <p className="text-2xl font-bold tabular-nums text-foreground md:text-3xl">
+            {bestStreak} week{bestStreak !== 1 ? "s" : ""}
+          </p>
         </motion.div>
-        <motion.p
-          className="text-4xl font-bold tabular-nums text-foreground md:text-5xl"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
-          transition={{ type: "spring", stiffness: 220, damping: 22, delay: isActive ? 0.15 : 0 }}
-        >
-          {bestStreak} week{bestStreak !== 1 ? "s" : ""}
-        </motion.p>
-        <motion.p
-          className="text-lg font-semibold text-chart-2"
-          initial={{ opacity: 0, x: -16 }}
-          animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -16 }}
-          transition={{ type: "spring", stiffness: 180, damping: 18, delay: isActive ? 0.22 : 0 }}
-        >
-          Most consistent training streak
-        </motion.p>
-      </div>
+      )}
 
       <motion.p
         className="mt-3 text-sm italic text-muted-foreground"

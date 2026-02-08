@@ -9,9 +9,15 @@ import {
 } from "@/components/ui/chart";
 import { getGradeAndColor } from "@/lib/consistency-grades";
 
-export function CircularProgressWithLetter({ progress = 90 }) {
-  // Determine color based on progress value
-  const { grade, color } = getGradeAndColor(progress);
+const SIZES = {
+  sm: { minH: 100, innerRadius: 26, strokeWidth: 5, textClass: "text-2xl" },
+  lg: { minH: 150, innerRadius: 42, strokeWidth: 8, textClass: "text-4xl" },
+};
+
+export function CircularProgressWithLetter({ progress = 90, size = "sm", gradeOverride }) {
+  const displayProgress = gradeOverride ?? progress;
+  const { grade, color } = getGradeAndColor(displayProgress);
+  const { minH, innerRadius, strokeWidth, textClass } = SIZES[size] ?? SIZES.sm;
 
   const chartConfig = {
     consistency: {
@@ -34,14 +40,18 @@ export function CircularProgressWithLetter({ progress = 90 }) {
   return (
     <ChartContainer
       config={chartConfig}
-      className="mx-auto aspect-square min-h-[100px]"
+      className="mx-auto aspect-square"
+      style={{ minHeight: minH }}
     >
       <PieChart>
         <Pie
           data={chartData}
           dataKey="consistency"
-          innerRadius={26}
-          strokeWidth={5}
+          innerRadius={innerRadius}
+          strokeWidth={strokeWidth}
+          isAnimationActive={true}
+          animationDuration={800}
+          animationBegin={0}
         >
           <Label
             content={({ viewBox }) => {
@@ -52,7 +62,7 @@ export function CircularProgressWithLetter({ progress = 90 }) {
                     y={viewBox.cy}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    className="fill-foreground text-2xl font-bold"
+                    className={`fill-foreground font-bold ${textClass}`}
                   >
                     {grade}
                   </text>

@@ -6,7 +6,11 @@ import {
   pickQuirkyPhrase,
   NOTABLE_LIFTS_PHRASES,
 } from "../phrases";
-import { getReadableDateString, getPRHighlightsForYear } from "@/lib/processing-utils";
+import {
+  getReadableDateString,
+  getPRHighlightsForYear,
+  getLifetimePRsAchievedInYear,
+} from "@/lib/processing-utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Sparkles } from "lucide-react";
@@ -25,10 +29,20 @@ export function NotableLiftsCard({ year, isDemo, isActive = true }) {
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
-  const prs = useMemo(
-    () => getPRHighlightsForYear(parsedData, year, e1rmFormula ?? "Brzycki"),
-    [year, parsedData, e1rmFormula],
-  );
+  const prs = useMemo(() => {
+    const lifetimePRs = getLifetimePRsAchievedInYear(parsedData, year);
+    const excludeKeys = new Set(
+      lifetimePRs.map((l) => `${l.liftType}|${l.reps}|${l.date}|${l.weight}`),
+    );
+    const notable = getPRHighlightsForYear(
+      parsedData,
+      year,
+      e1rmFormula ?? "Brzycki",
+    );
+    return notable.filter(
+      (l) => !excludeKeys.has(`${l.liftType}|${l.reps}|${l.date}|${l.weight}`),
+    );
+  }, [year, parsedData, e1rmFormula]);
 
   return (
     <div className="flex flex-col items-center justify-center text-center">

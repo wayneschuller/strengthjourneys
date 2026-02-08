@@ -917,29 +917,41 @@ export function getPRHighlightsForYear(parsedData, year, e1rmFormula = "Brzycki"
 
 /**
  * Get lifetime PRs (all-time bests) that were achieved in the chosen year.
- * Uses topLiftsByTypeAndReps: for each (liftType, reps), the #1 entry is the all-time best.
- * If that best was set in the given year, include it.
+ * Uses parsedData and isHistoricalPR: marks lifts that were new PRs when logged.
+ * Works for old data where PRs may no longer be in topLiftsByTypeAndReps.
  *
+ * @param {Array} parsedData - Chronologically sorted lift entries (with isHistoricalPR set)
  * @param {string|number} year - e.g. "2024" or 2024
- * @param {Object} topLiftsByTypeAndReps - From processTopLiftsByTypeAndReps
  * @returns {Array} Sorted list: { date, liftType, reps, weight, unitType, ... }
  */
-export function getLifetimePRsAchievedInYear(year, topLiftsByTypeAndReps) {
+export function getLifetimePRsAchievedInYear(parsedData, year) {
   const startTime = performance.now();
-  if (!year || !topLiftsByTypeAndReps) return [];
+  if (!parsedData || !year) return [];
   const yearStr = String(year);
   const yearStart = `${yearStr}-01-01`;
   const yearEnd = `${yearStr}-12-31`;
 
-  const results = [];
-  Object.entries(topLiftsByTypeAndReps).forEach(([liftType, repRanges]) => {
-    repRanges.forEach((prs, repsIndex) => {
-      const reps = repsIndex + 1;
-      const best = (prs || [])[0];
-      if (!best || best.date < yearStart || best.date > yearEnd) return;
-      results.push({ ...best, reps });
-    });
+  // Best isHistoricalPR per (liftType, reps) in this year
+  const bestByLiftAndReps = {};
+  parsedData.forEach((entry) => {
+    if (entry.isGoal) return;
+    if (entry.isHistoricalPR !== true) return;
+    const reps = entry.reps ?? 0;
+    if (reps < 1 || reps > 10) return;
+    if (entry.date < yearStart || entry.date > yearEnd) return;
+
+    const key = `${entry.liftType}|${reps}`;
+    const existing = bestByLiftAndReps[key];
+    const weight = entry.weight ?? 0;
+
+    if (!existing || weight > (existing.weight ?? 0)) {
+      bestByLiftAndReps[key] = { ...entry, reps };
+    } else if (weight === (existing.weight ?? 0) && entry.date < existing.date) {
+      bestByLiftAndReps[key] = { ...entry, reps }; // tie: earlier date wins
+    }
   });
+
+  const results = Object.values(bestByLiftAndReps);
 
   const bigFourIndex = (liftType) => {
     const i = BIG_FOUR_LIFT_TYPES.indexOf(liftType);

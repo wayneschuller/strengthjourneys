@@ -19,10 +19,10 @@ export function LifetimePRsCard({ year, isDemo, isActive = true }) {
     `lifetime-prs-${year}`,
   );
 
-  const { topLiftsByTypeAndReps } = useUserLiftingData();
+  const { parsedData } = useUserLiftingData();
   const prs = useMemo(
-    () => getLifetimePRsAchievedInYear(year, topLiftsByTypeAndReps),
-    [year, topLiftsByTypeAndReps],
+    () => getLifetimePRsAchievedInYear(parsedData, year),
+    [year, parsedData],
   );
 
   return (

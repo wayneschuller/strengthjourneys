@@ -92,7 +92,7 @@ function CornerIcon({ liftType, index, isActive, variants }) {
           src={LIFT_SVG_MAP[liftType]}
           alt=""
           aria-hidden
-          className="h-24 w-24 md:h-28 md:w-28 [filter:opacity(0.9)]"
+          className="h-24 w-24 [filter:opacity(0.9)] md:h-28 md:w-28"
         />
       </motion.div>
     </motion.div>
@@ -113,7 +113,7 @@ export function TitleCard({ year, isDemo, isActive = true }) {
           />
         ))}
       </div>
-      <h2 className="text-3xl font-bold leading-tight tracking-tight md:text-5xl [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.06))]">
+      <h2 className="text-3xl leading-tight font-bold tracking-tight [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.06))] md:text-5xl">
         <span className="block">
           <motion.span
             variants={wordVariants}
@@ -137,7 +137,7 @@ export function TitleCard({ year, isDemo, isActive = true }) {
             variants={yearVariants}
             initial="hidden"
             animate={isActive ? "visible" : "hidden"}
-            className="mt-1 block text-4xl font-extrabold tracking-tight md:text-7xl text-chart-4 drop-shadow-sm"
+            className="text-chart-4 mt-1 block text-4xl font-extrabold tracking-tight drop-shadow-sm md:text-7xl"
           >
             {year}
           </motion.span>
@@ -156,7 +156,7 @@ export function TitleCard({ year, isDemo, isActive = true }) {
       </div>
       {isDemo && (
         <motion.p
-          className="mt-4 text-sm text-muted-foreground"
+          className="text-muted-foreground mt-4 text-sm"
           initial={{ opacity: 0 }}
           animate={isActive ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: isActive ? 0.7 : 0 }}

@@ -269,8 +269,8 @@ export function SessionAnalysisCard({
                     <li key={liftType} className="pb-2">
                       <LiftTypeIndicator liftType={liftType} />
                       <ul className="pl-4">
-                        {workouts.map((workout, index) => (
-                          <li key={index}>
+                        {workouts.map((workout, index) => {
+                          const setRow = (
                             <div className="flex flex-row justify-between">
                               <div
                                 className={
@@ -314,8 +314,26 @@ export function SessionAnalysisCard({
                                   `${workout.yearlySignificanceAnnotation} of the year`}
                               </div>
                             </div>
-                          </li>
-                        ))}
+                          );
+                          return (
+                            <li key={index}>
+                              {workout.notes ? (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="cursor-help">
+                                      {setRow}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p className="max-w-xs">{workout.notes}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              ) : (
+                                setRow
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                       {perLiftTonnageStats?.[liftType] && (
                         <div className="mt-1 pl-4 text-xs text-muted-foreground">

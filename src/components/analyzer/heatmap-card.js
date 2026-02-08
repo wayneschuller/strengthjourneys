@@ -73,7 +73,7 @@ export function ActivityHeatmapsCard() {
     try {
       if (shareRef.current) {
         // Dynamically import html2canvas only when user clicks share
-        const html2canvas = (await import("html2canvas")).default;
+        const html2canvas = (await import("html2canvas-pro")).default;
         const canvas = await html2canvas(shareRef.current, {
           ignoreElements: (element) => element.id === "ignoreCopy",
         });

@@ -51,11 +51,11 @@ export function SeasonalPatternCard({ year, isDemo, isActive = true }) {
         {busiestMonth ?? "—"}
       </motion.p>
       {monthlySessions.length > 0 && (
-        <div className="mt-6 flex h-24 items-end gap-1">
+        <div className="mt-6 flex h-24 items-stretch justify-center gap-1">
           {monthlySessions.map((m, i) => (
             <div
               key={m.month}
-              className="flex flex-1 flex-col items-center gap-1"
+              className="flex h-full flex-1 flex-col items-center justify-end gap-1"
               title={`${m.month}: ${m.sessionCount} sessions`}
             >
               <motion.div
@@ -63,7 +63,7 @@ export function SeasonalPatternCard({ year, isDemo, isActive = true }) {
                 style={{
                   backgroundColor: `var(--chart-${(i % 5) + 1})`,
                   height: `${Math.max(4, (m.sessionCount / maxCount) * 80)}%`,
-                  originY: 1,
+                  transformOrigin: "bottom",
                 }}
                 initial={{ scaleY: 0 }}
                 animate={isActive ? { scaleY: 1 } : { scaleY: 0 }}

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getAverageLiftSessionTonnageFromPrecomputed } from "@/lib/processing-utils";
@@ -36,6 +36,9 @@ export function BigFourLiftCards({ lifts, animated = true }) {
     initializeWithValue: false,
   });
   const { status: authStatus } = useSession();
+  const isMobile = useMediaQuery("(max-width: 1279px)", {
+    initializeWithValue: false,
+  });
   const [statsVisibleCount, setStatsVisibleCount] = useState(0);
   const todayBadgeLabelsRef = useRef({});
   const favoriteBadgeLabelsRef = useRef({});
@@ -315,11 +318,31 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                       ease: "easeOut",
                     }}
                   >
-                    <img
-                      src={bigFourDiagrams[lift.liftType]}
-                      alt={`${lift.liftType} diagram`}
-                      className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
-                    />
+                    <motion.div
+                      className="flex justify-center"
+                      initial={
+                        isMobile
+                          ? { opacity: 0, y: 24 }
+                          : false
+                      }
+                      {...(isMobile
+                        ? {
+                            whileInView: { opacity: 1, y: 0 },
+                            viewport: { once: true, amount: 0.6, margin: "-40px" },
+                          }
+                        : { animate: { opacity: 1, y: 0 } })}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 24,
+                      }}
+                    >
+                      <img
+                        src={bigFourDiagrams[lift.liftType]}
+                        alt={`${lift.liftType} diagram`}
+                        className="h-36 w-36 object-contain transition-transform group-hover:scale-110"
+                      />
+                    </motion.div>
                   </motion.div>
                 </CardFooter>
               </Link>

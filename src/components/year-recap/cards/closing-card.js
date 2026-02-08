@@ -41,30 +41,18 @@ export function ClosingCard({ year, isDemo, isActive = true }) {
       >
         Created with Strength Journeys
       </motion.p>
-      {!isDemo && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ type: "spring", stiffness: 180, damping: 20, delay: isActive ? 0.4 : 0 }}
-        >
-          <Link href="/">
-            <Button variant="outline" className="mt-6">
-              Back to dashboard
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </motion.div>
-      )}
-      {isDemo && (
-        <motion.p
-          className="mt-4 text-xs text-muted-foreground"
-          initial={{ opacity: 0 }}
-          animate={isActive ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ delay: isActive ? 0.45 : 0 }}
-        >
-          Sign in to see your own recap
-        </motion.p>
-      )}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+        transition={{ type: "spring", stiffness: 180, damping: 20, delay: isActive ? 0.4 : 0 }}
+      >
+        <Link href="/">
+          <Button variant="outline" className="mt-6">
+            Back to dashboard
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link>
+      </motion.div>
     </div>
   );
 }

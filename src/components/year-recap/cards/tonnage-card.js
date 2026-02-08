@@ -159,16 +159,6 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
           })}
         </div>
       )}
-      {isDemo && (
-        <motion.p
-          className="mt-2 text-xs text-muted-foreground"
-          initial={{ opacity: 0 }}
-          animate={isActive ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ delay: isActive ? 0.5 : 0 }}
-        >
-          Demo mode
-        </motion.p>
-      )}
     </div>
   );
 }

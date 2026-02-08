@@ -109,16 +109,6 @@ export function MostTrainedLiftCard({ year, isDemo, isActive = true }) {
       >
         {phrase}
       </motion.p>
-      {isDemo && (
-        <motion.p
-          className="mt-2 text-xs text-muted-foreground"
-          initial={{ opacity: 0 }}
-          animate={isActive ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ delay: isActive ? 0.65 : 0 }}
-        >
-          Demo mode
-        </motion.p>
-      )}
     </div>
   );
 }

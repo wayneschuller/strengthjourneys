@@ -140,14 +140,18 @@ export function YearRecapCarousel({ year, isDemo }) {
           <span className="text-sm text-muted-foreground">
             {selectedIndex + 1} of {cards.length}
           </span>
-          <Button variant="outline" size="sm" onClick={handleShare} disabled={isSharing}>
-            {isSharing ? (
-              <LoaderCircle className="h-4 w-4 animate-spin" />
-            ) : (
-              <Share2 className="h-4 w-4" />
-            )}
-            <span className="ml-2">Copy this card</span>
-          </Button>
+          {isDemo ? (
+            <span className="text-sm text-muted-foreground">Demo mode</span>
+          ) : (
+            <Button variant="outline" size="sm" onClick={handleShare} disabled={isSharing}>
+              {isSharing ? (
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+              ) : (
+                <Share2 className="h-4 w-4" />
+              )}
+              <span className="ml-2">Copy this card</span>
+            </Button>
+          )}
         </div>
       </div>
     </div>

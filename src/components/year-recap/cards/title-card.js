@@ -154,16 +154,6 @@ export function TitleCard({ year, isDemo, isActive = true }) {
           />
         ))}
       </div>
-      {isDemo && (
-        <motion.p
-          className="text-muted-foreground mt-4 text-sm"
-          initial={{ opacity: 0 }}
-          animate={isActive ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ delay: isActive ? 0.7 : 0 }}
-        >
-          Demo mode
-        </motion.p>
-      )}
     </div>
   );
 }

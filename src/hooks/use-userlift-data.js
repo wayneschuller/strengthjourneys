@@ -200,6 +200,7 @@ export const UserLiftingDataProvider = ({ children }) => {
       "/barbell-strength-potential",
       "/tonnage",
       "/[lift]",
+      "/strength-year-in-review",
     ];
     if (!demoDataPaths.includes(currentPath)) return;
 

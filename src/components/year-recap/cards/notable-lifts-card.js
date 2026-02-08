@@ -105,16 +105,6 @@ export function NotableLiftsCard({ year, isDemo, isActive = true }) {
       >
         {phrase}
       </motion.p>
-      {isDemo && (
-        <motion.p
-          className="mt-2 text-xs text-muted-foreground"
-          initial={{ opacity: 0 }}
-          animate={isActive ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ delay: isActive ? 0.6 : 0 }}
-        >
-          Demo mode
-        </motion.p>
-      )}
     </div>
   );
 }

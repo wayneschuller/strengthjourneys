@@ -6,14 +6,12 @@ import { useMemo, useState, useEffect } from "react";
 import { NextSeo } from "next-seo";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { getYearsWithData } from "@/components/year-recap/year-selector";
-import Link from "next/link";
 import {
   PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearRecapCarousel } from "@/components/year-recap/year-recap-carousel";
@@ -76,11 +74,7 @@ function StrengthYearInReviewMain() {
   useEffect(() => {
     if (yearFromQuery && yearsWithData.includes(yearFromQuery)) {
       setSelectedYear(yearFromQuery);
-    } else if (
-      authStatus === "authenticated" &&
-      yearsWithData.length > 1 &&
-      !selectedYear
-    ) {
+    } else if (yearsWithData.length > 1 && !selectedYear) {
       setSelectedYear(Math.max(...yearsWithData));
     }
   }, [authStatus, yearFromQuery, yearsWithData, selectedYear]);
@@ -92,9 +86,7 @@ function StrengthYearInReviewMain() {
     yearFromQuery ??
     (hasSingleYear ? yearsWithData[0] : null);
 
-  const showYearSelector =
-    hasMultipleYears &&
-    (authStatus === "authenticated" || !effectiveYear);
+  const showYearSelector = hasMultipleYears;
   const showCarousel = !!effectiveYear;
 
   const handleYearSelect = (year) => {
@@ -119,24 +111,6 @@ function StrengthYearInReviewMain() {
       </PageHeader>
 
       <section className="mt-6 space-y-6 px-3 sm:px-[2vw] md:px-[3vw]">
-        {authStatus === "unauthenticated" && (
-          <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
-            <p className="text-sm font-medium">
-              Sign in to connect your Google Sheet and see your own recap.
-            </p>
-            <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
-              <li>Connect your Google Sheet (or try the demo below)</li>
-              <li>Pick a year with data</li>
-              <li>Swipe through your recap and share to Instagram</li>
-            </ol>
-            <Link href="/api/auth/signin">
-              <Button variant="outline" size="sm" className="mt-3">
-                Sign in with Google
-              </Button>
-            </Link>
-          </div>
-        )}
-
         {isLoading && (
           <div className="flex min-h-[200px] items-center justify-center text-muted-foreground">
             Loading your data...
@@ -153,13 +127,13 @@ function StrengthYearInReviewMain() {
           <div
             className={cn(
               "flex flex-col gap-6 md:gap-8 lg:gap-12 md:min-h-0",
-              showYearSelector && showCarousel
-                ? "md:grid md:grid-cols-[13rem_1fr_13rem] md:items-start"
+              showCarousel
+                ? "md:grid md:grid-cols-[13rem_1fr_minmax(12rem,14rem)] md:items-start"
                 : "md:flex md:flex-row md:items-start",
             )}
           >
             {showCarousel && (
-              <div className="order-1 md:order-2 flex justify-center md:min-w-0">
+              <div className="order-1 md:order-2 md:col-start-2 flex justify-center md:min-w-0">
                 <YearRecapCarousel
                   year={effectiveYear}
                   isDemo={authStatus === "unauthenticated"}
@@ -167,7 +141,7 @@ function StrengthYearInReviewMain() {
               </div>
             )}
             {showYearSelector && (
-              <div className="order-2 md:order-1 md:w-52 md:shrink-0 md:pt-2 md:flex md:justify-end">
+              <div className="order-2 md:order-1 md:col-start-1 md:w-52 md:shrink-0 md:pt-2 md:flex md:justify-end">
                 <YearSelector
                   years={yearsWithData}
                   selectedYear={effectiveYear}
@@ -177,7 +151,7 @@ function StrengthYearInReviewMain() {
               </div>
             )}
             {showYearSelector && showCarousel && (
-              <div className="hidden md:order-3 md:block" aria-hidden="true" />
+              <div className="hidden md:col-start-3 md:block" aria-hidden="true" />
             )}
           </div>
         )}

@@ -47,13 +47,6 @@ export function YearRecapCarousel({ year, isDemo }) {
   }, [api]);
 
   useEffect(() => {
-    if (api) {
-      api.scrollTo(0);
-      setSelectedIndex(0);
-    }
-  }, [api, year]);
-
-  useEffect(() => {
     if (year) hasFiredConfettiRef.current = false;
   }, [year]);
 
@@ -129,7 +122,7 @@ export function YearRecapCarousel({ year, isDemo }) {
                   className="flex aspect-[9/16] w-full items-center justify-center rounded-xl border border-border bg-card p-6"
                 >
                   <Component
-                    key={id === "title" ? `${id}-${year}` : id}
+                    key={`${id}-${year}`}
                     year={year}
                     isDemo={isDemo}
                     isActive={selectedIndex === index}

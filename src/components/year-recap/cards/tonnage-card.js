@@ -18,12 +18,20 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
   );
   const preferredUnit = isMetricPreference ? "kg" : "lb";
 
-  const { tonnage, primaryUnit } = useMemo(
+  const { tonnage, primaryUnit, prevYearTonnage } = useMemo(
     () => computeTonnageForYear(parsedData, year, preferredUnit),
     [parsedData, year, preferredUnit],
   );
 
   const equiv = pickTonnageEquivalent(tonnage, primaryUnit, equivRef, `tonnage-${year}`);
+
+  const comparisonText = useMemo(() => {
+    if (prevYearTonnage == null || prevYearTonnage <= 0) return null;
+    const pct = Math.round(((tonnage - prevYearTonnage) / prevYearTonnage) * 100);
+    if (pct > 0) return `Up ${pct}% from last year`;
+    if (pct < 0) return `${Math.abs(pct)}% less than last year`;
+    return "Same as last year";
+  }, [tonnage, prevYearTonnage]);
 
   const formattedCount =
     equiv && equiv.count >= 100
@@ -60,6 +68,16 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
       >
         moved this year
       </motion.p>
+      {comparisonText && (
+        <motion.p
+          className="mt-2 text-sm text-muted-foreground"
+          initial={{ opacity: 0, y: 8 }}
+          animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+          transition={{ delay: isActive ? 0.25 : 0 }}
+        >
+          {comparisonText}
+        </motion.p>
+      )}
       {equiv && (
         <motion.p
           className="mt-4 text-sm text-chart-4"
@@ -142,17 +160,25 @@ function pickTonnageEquivalent(tonnage, unitType, ref, key) {
 
 function computeTonnageForYear(parsedData, year, preferredUnit) {
   if (!parsedData || !year) {
-    return { tonnage: 0, primaryUnit: preferredUnit || "lb" };
+    return { tonnage: 0, primaryUnit: preferredUnit || "lb", prevYearTonnage: null };
   }
+  const prevYear = String(parseInt(year, 10) - 1);
   const yearStart = `${year}-01-01`;
   const yearEnd = `${year}-12-31`;
+  const prevYearStart = `${prevYear}-01-01`;
+  const prevYearEnd = `${prevYear}-12-31`;
   const tonnageByUnit = {};
+  const prevYearTonnageByUnit = {};
   parsedData.forEach((entry) => {
     if (entry.isGoal || !entry.date) return;
-    if (entry.date < yearStart || entry.date > yearEnd) return;
     const tonnage = (entry.weight ?? 0) * (entry.reps ?? 0);
     const u = entry.unitType || "lb";
-    tonnageByUnit[u] = (tonnageByUnit[u] ?? 0) + tonnage;
+    if (entry.date >= yearStart && entry.date <= yearEnd) {
+      tonnageByUnit[u] = (tonnageByUnit[u] ?? 0) + tonnage;
+    }
+    if (entry.date >= prevYearStart && entry.date <= prevYearEnd) {
+      prevYearTonnageByUnit[u] = (prevYearTonnageByUnit[u] ?? 0) + tonnage;
+    }
   });
   const unitKeys = Object.keys(tonnageByUnit);
   const primaryUnit =
@@ -168,5 +194,17 @@ function computeTonnageForYear(parsedData, year, preferredUnit) {
     if (u === "kg" && primaryUnit === "lb") tonnage += v * LB_PER_KG;
     else if (u === "lb" && primaryUnit === "kg") tonnage += v * KG_PER_LB;
   });
-  return { tonnage, primaryUnit };
+  const prevUnitKeys = Object.keys(prevYearTonnageByUnit);
+  let prevYearTonnage = prevYearTonnageByUnit[primaryUnit] ?? 0;
+  prevUnitKeys.forEach((u) => {
+    if (u === primaryUnit) return;
+    const v = prevYearTonnageByUnit[u] ?? 0;
+    if (u === "kg" && primaryUnit === "lb") prevYearTonnage += v * LB_PER_KG;
+    else if (u === "lb" && primaryUnit === "kg") prevYearTonnage += v * KG_PER_LB;
+  });
+  return {
+    tonnage,
+    primaryUnit,
+    prevYearTonnage: prevYearTonnage > 0 ? prevYearTonnage : null,
+  };
 }

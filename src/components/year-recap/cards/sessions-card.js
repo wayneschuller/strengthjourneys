@@ -11,10 +11,18 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
   const phrase = pickQuirkyPhrase(SESSIONS_PHRASES, phraseRef, `sessions-${year}`);
 
   const { parsedData } = useUserLiftingData();
-  const count = useMemo(() => computeSessionCountForYear(parsedData, year), [
-    parsedData,
-    year,
-  ]);
+  const { count, prevYearCount } = useMemo(
+    () => computeSessionCountForYear(parsedData, year),
+    [parsedData, year],
+  );
+
+  const comparisonText = useMemo(() => {
+    if (prevYearCount == null || prevYearCount === 0) return null;
+    const diff = count - prevYearCount;
+    if (diff > 0) return `Up ${diff} from last year`;
+    if (diff < 0) return `${Math.abs(diff)} fewer than last year`;
+    return "Same as last year";
+  }, [count, prevYearCount]);
 
   return (
     <div className="flex flex-col items-center justify-center text-center">
@@ -41,6 +49,16 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
       >
         training sessions
       </motion.p>
+      {comparisonText && (
+        <motion.p
+          className="mt-2 text-sm text-muted-foreground"
+          initial={{ opacity: 0, y: 8 }}
+          animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+          transition={{ delay: isActive ? 0.28 : 0 }}
+        >
+          {comparisonText}
+        </motion.p>
+      )}
       <motion.p
         className="mt-4 text-sm italic text-muted-foreground"
         initial={{ opacity: 0, x: 24 }}
@@ -66,15 +84,26 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
 // --- Supporting functions ---
 
 function computeSessionCountForYear(parsedData, year) {
-  if (!parsedData || !year) return 0;
+  if (!parsedData || !year) return { count: 0, prevYearCount: null };
+  const prevYear = String(parseInt(year, 10) - 1);
   const yearStart = `${year}-01-01`;
   const yearEnd = `${year}-12-31`;
+  const prevYearStart = `${prevYear}-01-01`;
+  const prevYearEnd = `${prevYear}-12-31`;
   const sessionDates = new Set();
+  const prevYearDates = new Set();
   parsedData.forEach((entry) => {
     if (entry.isGoal || !entry.date) return;
     if (entry.date >= yearStart && entry.date <= yearEnd) {
       sessionDates.add(entry.date);
     }
+    if (entry.date >= prevYearStart && entry.date <= prevYearEnd) {
+      prevYearDates.add(entry.date);
+    }
   });
-  return sessionDates.size;
+  const prevCount = prevYearDates.size;
+  return {
+    count: sessionDates.size,
+    prevYearCount: prevCount > 0 ? prevCount : null,
+  };
 }

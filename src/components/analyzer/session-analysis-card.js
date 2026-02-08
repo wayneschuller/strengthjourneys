@@ -21,7 +21,6 @@ import {
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLiftColors } from "@/hooks/use-lift-colors";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +49,7 @@ import {
   getAverageSessionTonnageFromPrecomputed,
   getAverageLiftSessionTonnageFromPrecomputed,
 } from "@/lib/processing-utils";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
   LoaderCircle,
   ChevronLeft,
@@ -213,22 +213,36 @@ export function SessionAnalysisCard({
 
   return (
     <TooltipProvider>
-      <Card className="flex-1">
-        <CardHeader className="">
-          <CardTitle className="flex flex-row items-center justify-between">
-            {authStatus === "unauthenticated" && "Demo Mode: "}
-            {analyzedSessionLifts &&
-              getReadableDateString(sessionDate, true)}{" "}
-            Session
-            {isValidating && (
-              <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
-            )}
-            <div className="flex flex-row items-center gap-2">
+      <Card className="flex-1 overflow-hidden">
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <CardTitle className="flex flex-wrap items-center gap-2 text-xl font-bold tracking-tight">
+                {authStatus === "unauthenticated" && (
+                  <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium">
+                    Demo Mode
+                  </span>
+                )}
+                {analyzedSessionLifts &&
+                  getReadableDateString(sessionDate, true)}{" "}
+                Session
+                {isValidating && (
+                  <LoaderCircle className="inline-flex h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </CardTitle>
+              <CardDescription className="mt-1">
+                {analyzedSessionLifts
+                  ? sessionRatingRef.current
+                  : "Session overview and analysis"}
+              </CardDescription>
+            </div>
+            <div className="flex shrink-0 items-center gap-0.5 rounded-lg border bg-muted/30 p-0.5">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-8 w-8"
                     onClick={prevDate}
                     disabled={isValidating || isFirstDate}
                   >
@@ -244,6 +258,7 @@ export function SessionAnalysisCard({
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-8 w-8"
                     onClick={nextDate}
                     disabled={isValidating || isLastDate}
                   >
@@ -255,188 +270,285 @@ export function SessionAnalysisCard({
                 </TooltipContent>
               </Tooltip>
             </div>
-          </CardTitle>
-          <CardDescription>
-            <div>Session overview and analysis</div>
-          </CardDescription>
+          </div>
         </CardHeader>
-        <CardContent>
-          {!analyzedSessionLifts && <Skeleton className="h-[50vh]" />}
+        <CardContent className="space-y-6 pt-0">
+          {!analyzedSessionLifts && <Skeleton className="h-[50vh] rounded-lg" />}
           {analyzedSessionLifts &&
             (Object.keys(analyzedSessionLifts).length > 0 ? (
-              <ul>
+              <div className="space-y-4">
                 {Object.entries(analyzedSessionLifts).map(
                   ([liftType, workouts]) => (
-                    <li key={liftType} className="pb-2">
-                      <LiftTypeIndicator liftType={liftType} />
-                      <ul className="pl-4">
-                        {workouts.map((workout, index) => (
-                          <li key={index}>
-                            <div className="flex flex-row justify-between">
-                              <div
-                                className={
-                                  workout.lifetimeRanking !== -1
-                                    ? "font-bold"
-                                    : ""
-                                }
-                              >
-                                {workout.reps}@{workout.weight}
-                                {workout.unitType}
-                                {workout.URL && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <a
-                                        href={workout.URL}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                      >
-                                        <Button
-                                          variant="ghost"
-                                          className="ml-2 h-3 w-3 p-1 align-middle"
-                                        >
-                                          <PlayCircle className="" />
-                                        </Button>
-                                      </a>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>
-                                        Click to open user video (
-                                        {workout.URL.length > 25
-                                          ? `${workout.URL.slice(0, 22)}…`
-                                          : workout.URL}
-                                        )
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                                {workout.notes && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span className="ml-1 inline-flex cursor-help align-middle">
-                                        <StickyNote className="h-3 w-3" />
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p className="max-w-xs">{workout.notes}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                              </div>
-                              <div className="ml-6 inline-block">
-                                {/* If both exist they should be separated by a comma */}
-                                {workout.lifetimeSignificanceAnnotation &&
-                                  `${workout.lifetimeSignificanceAnnotation}`}
-                                {workout.lifetimeSignificanceAnnotation &&
-                                  workout.yearlySignificanceAnnotation &&
-                                  ", "}
-                                {workout.yearlySignificanceAnnotation &&
-                                  `${workout.yearlySignificanceAnnotation} of the year`}
-                              </div>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                      {perLiftTonnageStats?.[liftType] && (
-                        <div className="mt-1 pl-4 text-xs text-muted-foreground">
-                          {(() => {
-                            const {
-                              currentLiftTonnage,
-                              avgLiftTonnage,
-                              sessionCount,
-                              pctDiff,
-                              unitType,
-                            } = perLiftTonnageStats[liftType];
-
-                            if (
-                              !currentLiftTonnage ||
-                              !sessionCount ||
-                              sessionCount <= 1 ||
-                              pctDiff === null
-                            ) {
-                              return (
-                                <span>
-                                  Not enough history yet to compare{" "}
-                                  {liftType.toLowerCase()} tonnage over the last
-                                  year.
-                                </span>
-                              );
-                            }
-
-                            const isUp = pctDiff > 0;
-
-                            return (
-                              <span>
-                                {liftType} tonnage this session:{" "}
-                                {Math.round(
-                                  currentLiftTonnage,
-                                ).toLocaleString()}
-                                {unitType} vs{" "}
-                                {Math.round(avgLiftTonnage).toLocaleString()}
-                                {unitType} over the last year.{" "}
-                                <Badge
-                                  variant="outline"
-                                  className={
-                                    isUp
-                                      ? "gap-0.5 border-emerald-500 text-emerald-500"
-                                      : "gap-0.5 border-red-500 text-red-500"
-                                  }
-                                >
-                                  {isUp ? (
-                                    <>
-                                      <ArrowUpRight className="h-3 w-3" />
-                                      {Math.abs(pctDiff).toFixed(1)}%
-                                    </>
-                                  ) : (
-                                    <>
-                                      <ArrowDownRight className="h-3 w-3" />
-                                      {Math.abs(pctDiff).toFixed(1)}%
-                                    </>
-                                  )}
-                                </Badge>
-                              </span>
-                            );
-                          })()}
-                        </div>
-                      )}
-                      {authStatus === "authenticated" &&
-                        hasBioData &&
-                        standards[liftType] && (
-                          <LiftStrengthLevel
-                            liftType={liftType}
-                            workouts={workouts}
-                            standards={standards}
-                            e1rmFormula={e1rmFormula}
-                            sessionDate={sessionDate}
-                            age={age}
-                            bodyWeight={bodyWeight}
-                            sex={sex}
-                            isMetric={isMetric}
-                          />
-                        )}
-                    </li>
+                    <ExerciseBlock
+                      key={liftType}
+                      liftType={liftType}
+                      workouts={workouts}
+                      perLiftTonnageStats={perLiftTonnageStats}
+                      authStatus={authStatus}
+                      hasBioData={hasBioData}
+                      standards={standards}
+                      e1rmFormula={e1rmFormula}
+                      sessionDate={sessionDate}
+                      age={age}
+                      bodyWeight={bodyWeight}
+                      sex={sex}
+                      isMetric={isMetric}
+                    />
                   ),
                 )}
-              </ul>
+              </div>
             ) : (
-              <p>No workouts available for the most recent date.</p>
+              <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
+                No workouts available for the most recent date.
+              </p>
             ))}
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex-col items-stretch gap-4 pt-0">
           {analyzedSessionLifts && (
-            <div className="flex flex-col gap-4">
               <SessionTonnage
                 analyzedSessionLifts={analyzedSessionLifts}
                 sessionTonnageLookup={sessionTonnageLookup}
                 sessionDate={sessionDate}
               />
-              <div>
-                <strong>Session Rating:</strong> {sessionRatingRef.current}
-              </div>
-            </div>
           )}
         </CardFooter>
       </Card>
     </TooltipProvider>
+  );
+}
+
+// --- Supporting components and functions ---
+
+function ExerciseBlock({
+  liftType,
+  workouts,
+  perLiftTonnageStats,
+  authStatus,
+  hasBioData,
+  standards,
+  e1rmFormula,
+  sessionDate,
+  age,
+  bodyWeight,
+  sex,
+  isMetric,
+}) {
+  const formula = e1rmFormula || "Brzycki";
+  let bestE1rmIndex = 0;
+  let bestE1rm = 0;
+  workouts.forEach((w, i) => {
+    const e1rm = estimateE1RM(w.reps ?? 0, w.weight ?? 0, formula);
+    if (e1rm > bestE1rm) {
+      bestE1rm = e1rm;
+      bestE1rmIndex = i;
+    }
+  });
+
+  // Groups: consecutive sets with same reps×weight (e.g. 3x5 of 60kg)
+  const groups = [];
+  let currentGroup = [];
+  let currentKey = null;
+  workouts.forEach((w, i) => {
+    const key = `${w.reps}×${w.weight}`;
+    if (key !== currentKey) {
+      if (currentGroup.length > 0) groups.push(currentGroup);
+      currentGroup = [i];
+      currentKey = key;
+    } else {
+      currentGroup.push(i);
+    }
+  });
+  if (currentGroup.length > 0) groups.push(currentGroup);
+
+  // Initially highlighted: PRs or highest e1rm set
+  const initiallyHighlighted = new Set(
+    workouts
+      .map((w, i) => (w.lifetimeRanking !== -1 || i === bestE1rmIndex ? i : null))
+      .filter((i) => i != null),
+  );
+  // Expand: if any set in a group is highlighted, highlight the whole group
+  const highlightedIndices = new Set();
+  groups.forEach((group) => {
+    if (group.some((i) => initiallyHighlighted.has(i))) {
+      group.forEach((i) => highlightedIndices.add(i));
+    }
+  });
+
+  const highlightClass = "border-emerald-500/30 bg-emerald-500/5";
+
+  return (
+    <div className="rounded-xl border bg-muted/20 p-4">
+      <div className="space-y-3">
+        <LiftTypeIndicator liftType={liftType} />
+        <div className="flex flex-wrap gap-2">
+          {workouts.map((workout, index) => {
+            const isHighlighted = highlightedIndices.has(index);
+            return (
+            <div
+              key={index}
+              className={`flex flex-col gap-1 rounded-lg border px-3 py-2 transition-colors ${
+                isHighlighted
+                  ? `${highlightClass} px-3.5 py-2.5`
+                  : "border-border/60 bg-muted/30"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className={
+                    isHighlighted
+                      ? "text-lg font-semibold tabular-nums sm:text-xl"
+                      : "tabular-nums"
+                  }
+                >
+                  {workout.reps}×{workout.weight}
+                  {workout.unitType}
+                </span>
+                {workout.URL && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={workout.URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded p-0.5 hover:bg-muted"
+                      >
+                        <PlayCircle
+                          className={
+                            isHighlighted
+                              ? "h-4 w-4 text-muted-foreground"
+                              : "h-3.5 w-3.5 text-muted-foreground"
+                          }
+                        />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Click to open user video (
+                        {workout.URL.length > 25
+                          ? `${workout.URL.slice(0, 22)}…`
+                          : workout.URL}
+                        )
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {workout.notes && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-help text-muted-foreground">
+                        <StickyNote
+                          className={
+                            isHighlighted ? "h-4 w-4" : "h-3.5 w-3.5"
+                          }
+                        />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">{workout.notes}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+              {(workout.lifetimeSignificanceAnnotation ||
+                workout.yearlySignificanceAnnotation) && (
+                <span
+                  className={
+                    isHighlighted
+                      ? "text-sm text-muted-foreground"
+                      : "text-xs text-muted-foreground"
+                  }
+                >
+                  {workout.lifetimeSignificanceAnnotation}
+                  {workout.lifetimeSignificanceAnnotation &&
+                    workout.yearlySignificanceAnnotation &&
+                    ", "}
+                  {workout.yearlySignificanceAnnotation &&
+                    `${workout.yearlySignificanceAnnotation} of the year`}
+                </span>
+              )}
+            </div>
+          );
+          })}
+        </div>
+        {perLiftTonnageStats?.[liftType] && (
+          <LiftTonnageRow
+            liftType={liftType}
+            stats={perLiftTonnageStats[liftType]}
+          />
+        )}
+        {authStatus === "authenticated" &&
+          hasBioData &&
+          standards[liftType] && (
+            <LiftStrengthLevel
+              liftType={liftType}
+              workouts={workouts}
+              standards={standards}
+              e1rmFormula={e1rmFormula}
+              sessionDate={sessionDate}
+              age={age}
+              bodyWeight={bodyWeight}
+              sex={sex}
+              isMetric={isMetric}
+            />
+          )}
+      </div>
+    </div>
+  );
+}
+
+function LiftTonnageRow({ liftType, stats }) {
+  const {
+    currentLiftTonnage,
+    avgLiftTonnage,
+    sessionCount,
+    pctDiff,
+    unitType,
+  } = stats;
+
+  if (
+    !currentLiftTonnage ||
+    !sessionCount ||
+    sessionCount <= 1 ||
+    pctDiff === null
+  ) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Not enough history yet to compare {liftType.toLowerCase()} tonnage over
+        the last year.
+      </p>
+    );
+  }
+
+  const isUp = pctDiff > 0;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs">
+      <span className="text-muted-foreground">
+        Tonnage: {Math.round(currentLiftTonnage).toLocaleString()}
+        {unitType} vs {Math.round(avgLiftTonnage).toLocaleString()}
+        {unitType} avg
+      </span>
+      <Badge
+        variant="outline"
+        className={
+          isUp
+            ? "gap-0.5 border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+            : "gap-0.5 border-red-500/60 bg-red-500/10 text-red-600 dark:text-red-400"
+        }
+      >
+        {isUp ? (
+          <>
+            <ArrowUpRight className="h-3 w-3" />
+            {Math.abs(pctDiff).toFixed(1)}%
+          </>
+        ) : (
+          <>
+            <ArrowDownRight className="h-3 w-3" />
+            {Math.abs(pctDiff).toFixed(1)}%
+          </>
+        )}
+      </Badge>
+    </div>
   );
 }
 
@@ -483,17 +595,17 @@ function LiftStrengthLevel({
   return (
     <Link
       href="/strength-level-calculator"
-      className="mt-1 block pl-4 text-sm font-medium text-muted-foreground hover:text-foreground hover:underline"
+      className="inline-flex items-center gap-1.5 rounded-md py-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline"
     >
       {liftType} strength level:{" "}
       {isBeyondElite ? (
-        <>
+        <span className="font-semibold text-foreground">
           {STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite
-        </>
+        </span>
       ) : (
-        <>
+        <span className="font-semibold text-foreground">
           {STRENGTH_LEVEL_EMOJI[rating] ?? ""} {rating}
-        </>
+        </span>
       )}
     </Link>
   );
@@ -594,52 +706,53 @@ function SessionTonnage({
   });
 
   return (
-    <div>
-      <div>
-        <strong>Session Tonnage:</strong> {Math.round(tonnage).toLocaleString()}
-        {unitType}
-        {`.  About ${formattedCount} ${equivalent.name}${
-          parseFloat(equivalentCount) != 1 ? "s" : ""
-        }  lifted. ${equivalent.emoji}`}
+    <div className="rounded-lg border bg-muted/30 px-4 py-3">
+      <div className="flex flex-wrap items-baseline gap-2">
+        <span className="font-semibold text-foreground">
+          Session Tonnage:
+        </span>
+        <span className="tabular-nums font-bold">
+          {Math.round(tonnage).toLocaleString()}
+          {unitType}
+        </span>
+        <span className="text-muted-foreground">
+          — about {formattedCount} {equivalent.name}
+          {parseFloat(equivalentCount) != 1 ? "s" : ""} lifted {equivalent.emoji}
+        </span>
       </div>
-
-      <div className="mt-2 space-y-1 text-sm text-muted-foreground">
-        {sessionCountLastYear > 1 && overallPctDiff !== null ? (
-          <div className="pl-4">
-            <span>
-              Overall tonnage this session:{" "}
-              {Math.round(tonnage).toLocaleString()}
-              {unitType} vs {Math.round(avgSessionTonnage).toLocaleString()}
-              {unitType} average over the last year.{" "}
-              <Badge
-                variant="outline"
-                className={
-                  overallPctDiff > 0
-                    ? "gap-0.5 border-emerald-500 text-emerald-500"
-                    : "gap-0.5 border-red-500 text-red-500"
-                }
-              >
-                {overallPctDiff > 0 ? (
-                  <>
-                    <ArrowUpRight className="h-3 w-3" />
-                    {Math.abs(overallPctDiff).toFixed(1)}%
-                  </>
-                ) : (
-                  <>
-                    <ArrowDownRight className="h-3 w-3" />
-                    {Math.abs(overallPctDiff).toFixed(1)}%
-                  </>
-                )}
-              </Badge>
-            </span>
-          </div>
-        ) : (
-          <div className="pl-4">
-            Not enough history yet to compare your session tonnage over the last
-            year.
-          </div>
-        )}
-      </div>
+      {sessionCountLastYear > 1 && overallPctDiff !== null ? (
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-muted-foreground">
+            vs {Math.round(avgSessionTonnage).toLocaleString()}
+            {unitType} avg this year
+          </span>
+          <Badge
+            variant="outline"
+            className={
+              overallPctDiff > 0
+                ? "gap-0.5 border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                : "gap-0.5 border-red-500/60 bg-red-500/10 text-red-600 dark:text-red-400"
+            }
+          >
+            {overallPctDiff > 0 ? (
+              <>
+                <ArrowUpRight className="h-3 w-3" />
+                {Math.abs(overallPctDiff).toFixed(1)}%
+              </>
+            ) : (
+              <>
+                <ArrowDownRight className="h-3 w-3" />
+                {Math.abs(overallPctDiff).toFixed(1)}%
+              </>
+            )}
+          </Badge>
+        </div>
+      ) : (
+        <p className="mt-2 text-sm text-muted-foreground">
+          Not enough history yet to compare your session tonnage over the last
+          year.
+        </p>
+      )}
     </div>
   );
 }

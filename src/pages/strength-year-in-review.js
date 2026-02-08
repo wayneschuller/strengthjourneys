@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { YearRecapCarousel } from "@/components/year-recap/year-recap-carousel";
 import { YearSelector } from "@/components/year-recap/year-selector";
 import { DemoModeSignInCard } from "@/components/instructions-cards";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export async function getStaticProps() {
   return { props: {}, revalidate: 60 * 60 };
@@ -54,6 +55,47 @@ export default function StrengthYearInReview() {
       />
       <StrengthYearInReviewMain />
     </>
+  );
+}
+
+function YearSelectorSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Skeleton className="h-7 w-24" />
+      <div className="grid grid-cols-2 gap-3">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="flex h-11 w-full items-center gap-2 rounded-lg border border-input px-4 py-2">
+            <Skeleton className="h-4 w-4 shrink-0" />
+            <Skeleton className="h-5 w-10" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CarouselSkeleton() {
+  return (
+    <div className="relative mx-auto max-w-[360px] rounded-xl border bg-card">
+      <div className="flex items-center justify-center gap-2 px-4 py-6">
+        <Skeleton className="h-9 w-9 shrink-0 rounded-full" aria-hidden />
+        <div className="flex aspect-[9/16] w-full flex-col items-center justify-center gap-6 rounded-xl border border-border p-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-12 w-20" />
+          <div className="grid grid-cols-2 gap-3">
+            <Skeleton className="h-16 w-16 rounded-lg" />
+            <Skeleton className="h-16 w-16 rounded-lg" />
+            <Skeleton className="h-16 w-16 rounded-lg" />
+            <Skeleton className="h-16 w-16 rounded-lg" />
+          </div>
+        </div>
+        <Skeleton className="h-9 w-9 shrink-0 rounded-full" aria-hidden />
+      </div>
+      <div className="flex items-center justify-between border-t px-4 py-3">
+        <Skeleton className="h-4 w-12" />
+        <Skeleton className="h-8 w-28 rounded-md" />
+      </div>
+    </div>
   );
 }
 
@@ -113,8 +155,14 @@ function StrengthYearInReviewMain() {
 
       <section className="mt-6 space-y-6 px-3 sm:px-[2vw] md:px-[3vw]">
         {isLoading && (
-          <div className="flex min-h-[200px] items-center justify-center text-muted-foreground">
-            Loading your data...
+          <div className="flex flex-col gap-6 md:gap-8 lg:gap-12 md:min-h-0 md:grid md:grid-cols-[13rem_1fr_minmax(18rem,22rem)] md:items-start">
+            <div className="order-2 md:order-1 md:col-start-1 md:w-52 md:shrink-0 md:pt-2 md:flex md:justify-end">
+              <YearSelectorSkeleton />
+            </div>
+            <div className="order-1 md:order-2 md:col-start-2 flex justify-center md:min-w-0">
+              <CarouselSkeleton />
+            </div>
+            <div className="order-3 flex flex-col pt-2 md:col-start-3 md:pt-2" />
           </div>
         )}
 

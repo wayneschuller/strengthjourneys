@@ -25,13 +25,21 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
 
   const equiv = pickTonnageEquivalent(tonnage, primaryUnit, equivRef, `tonnage-${year}`);
 
+  const showPrevYearComparison = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const isDecember = now.getMonth() === 11;
+    const yearNum = parseInt(year, 10);
+    return yearNum < currentYear || (yearNum === currentYear && isDecember);
+  }, [year]);
+
   const comparisonText = useMemo(() => {
-    if (prevYearTonnage == null || prevYearTonnage <= 0) return null;
+    if (!showPrevYearComparison || prevYearTonnage == null || prevYearTonnage <= 0) return null;
     const pct = Math.round(((tonnage - prevYearTonnage) / prevYearTonnage) * 100);
     if (pct > 0) return `Up ${pct}% from last year`;
     if (pct < 0) return `${Math.abs(pct)}% less than last year`;
     return "Same as last year";
-  }, [tonnage, prevYearTonnage]);
+  }, [showPrevYearComparison, tonnage, prevYearTonnage]);
 
   const formattedCount =
     equiv && equiv.count >= 100

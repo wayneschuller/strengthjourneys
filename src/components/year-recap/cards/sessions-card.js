@@ -16,13 +16,21 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
     [parsedData, year],
   );
 
+  const showPrevYearComparison = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const isDecember = now.getMonth() === 11;
+    const yearNum = parseInt(year, 10);
+    return yearNum < currentYear || (yearNum === currentYear && isDecember);
+  }, [year]);
+
   const comparisonText = useMemo(() => {
-    if (prevYearCount == null || prevYearCount === 0) return null;
+    if (!showPrevYearComparison || prevYearCount == null || prevYearCount === 0) return null;
     const diff = count - prevYearCount;
     if (diff > 0) return `Up ${diff} from last year`;
     if (diff < 0) return `${Math.abs(diff)} fewer than last year`;
     return "Same as last year";
-  }, [count, prevYearCount]);
+  }, [showPrevYearComparison, count, prevYearCount]);
 
   return (
     <div className="flex flex-col items-center justify-center text-center">

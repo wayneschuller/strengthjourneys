@@ -83,6 +83,7 @@ export function SessionAnalysisCard({
     age && bodyWeight && standards && Object.keys(standards).length > 0;
 
   const sessionRatingRef = useRef(null); // Used to avoid randomised rating changes on rerenders
+  const lastUsedAdlibRef = useRef({}); // Tracks last-used indices to avoid repeats when switching sessions
 
   const deferredHighlightDate = useDeferredValue(highlightDate);
 
@@ -129,7 +130,23 @@ export function SessionAnalysisCard({
   // devLog(analyzedSessionLifts);
 
   if (analyzedSessionLifts && !sessionRatingRef.current) {
-    sessionRatingRef.current = getCreativeSessionRating(analyzedSessionLifts);
+    const strengthContext =
+      hasBioData && standards && Object.keys(standards).length > 0
+        ? {
+            standards,
+            e1rmFormula,
+            sessionDate,
+            age,
+            bodyWeight,
+            sex,
+            isMetric,
+          }
+        : null;
+    sessionRatingRef.current = getCreativeSessionRating(
+      analyzedSessionLifts,
+      strengthContext,
+      lastUsedAdlibRef,
+    );
   }
 
   // Precompute per-lift tonnage stats for this session vs last year
@@ -757,78 +774,163 @@ function SessionTonnage({
   );
 }
 
-function getCreativeSessionRating(workouts) {
+function pickWithoutRepeat(arr, lastUsedRef, key) {
+  if (!arr?.length) return "";
+  if (!lastUsedRef?.current) return arr[Math.floor(Math.random() * arr.length)];
+  const last = lastUsedRef.current[key];
+  let idx;
+  if (arr.length === 1) idx = 0;
+  else if (last !== undefined) {
+    idx = Math.floor(Math.random() * (arr.length - 1));
+    if (idx >= last) idx++;
+  } else {
+    idx = Math.floor(Math.random() * arr.length);
+  }
+  lastUsedRef.current = { ...lastUsedRef.current, [key]: idx };
+  return arr[idx];
+}
+
+function getCreativeSessionRating(workouts, strengthContext, lastUsedAdlibRef) {
   if (!workouts) return "";
 
-  // Loop through workouts and count how many lifetimeRanking or yearlyRanking are not -1
-  let totalPRs = 0;
-  let totalYearlyPRs = 0;
-  let lifetimePRFound = false;
-  let yearlyPRFound = false;
+  let yearlyRank1 = false;
+  let yearlyTop10 = false;
+  let yearlyTop20 = false;
+  let yearlyOther = false;
+  let lifetimeRank1 = false;
+  let lifetimeTop10 = false;
+  let lifetimeTop20 = false;
+  let lifetimeOther = false;
 
-  // Gather some statistics on this session
   Object.values(workouts).forEach((lifts) => {
     lifts.forEach((lift) => {
-      if (lift.lifetimeRanking !== -1) totalPRs++;
-      if (lift.yearlyRanking !== -1) totalYearlyPRs++;
-      if (lift.lifetimeRanking === 0) lifetimePRFound = true;
-      if (lift.yearlyRanking === 0) yearlyPRFound = true;
+      const yr = lift.yearlyRanking;
+      const lt = lift.lifetimeRanking;
+      if (yr === 0) yearlyRank1 = true;
+      else if (yr >= 1 && yr <= 9) yearlyTop10 = true;
+      else if (yr >= 10 && yr <= 19) yearlyTop20 = true;
+      else if (yr >= 20) yearlyOther = true;
+      if (lt === 0) lifetimeRank1 = true;
+      else if (lt >= 1 && lt <= 9) lifetimeTop10 = true;
+      else if (lt >= 10 && lt <= 19) lifetimeTop20 = true;
+      else if (lt >= 20) lifetimeOther = true;
     });
   });
-
-  // devLog("totalPRs", totalPRs);
-  // devLog("totalYearlyPRs", totalYearlyPRs);
-
-  // FIXME: detect if they do a single in all of squat/bench/deadlift in one session - autodetect powerlifting meet
-
-  // Give some feedback from least impressive session to best
-
-  // Some randomising to make the feedback appear to be artificially intelligent
-  let mehIndex = Math.floor(Math.random() * mehEncouragements.length);
-  let victorIndex = Math.floor(Math.random() * victoriousNouns.length);
-  let treatIndex = Math.floor(Math.random() * celebrationTreat.length);
 
   const totalSetCount = Object.values(workouts).reduce(
     (sum, lifts) => sum + lifts.length,
     0,
   );
 
-  // 5 or less sets, they may have the app open during a session.
-  if (!yearlyPRFound && !lifetimePRFound && totalSetCount <= 5)
-    return `Good start. Now do more sets to become the ${victoriousNouns[victorIndex]}.`;
+  const r = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const p = (arr, key) =>
+    pickWithoutRepeat(arr, lastUsedAdlibRef, key);
 
-  if (totalPRs === 0 && totalYearlyPRs === 0)
-    return mehEncouragements[mehIndex];
+  // Strength level: best rating across session (when bio data available)
+  let bestStrengthRating = null;
+  if (strengthContext) {
+    const tierOrder = [
+      "Physically Active",
+      "Beginner",
+      "Intermediate",
+      "Advanced",
+      "Elite",
+    ];
+    for (const [liftType, lifts] of Object.entries(workouts)) {
+      const standard =
+        strengthContext.sessionDate &&
+        strengthContext.age != null &&
+        strengthContext.bodyWeight != null &&
+        strengthContext.sex
+          ? getStandardForLiftDate(
+              strengthContext.age,
+              strengthContext.sessionDate,
+              strengthContext.bodyWeight,
+              strengthContext.sex,
+              liftType,
+              strengthContext.isMetric ?? false,
+            )
+          : strengthContext.standards?.[liftType];
+      if (!standard) continue;
+      const result = getStrengthLevelForWorkouts(
+        lifts,
+        liftType,
+        { [liftType]: standard },
+        strengthContext.e1rmFormula || "Brzycki",
+      );
+      if (
+        result?.rating &&
+        tierOrder.indexOf(result.rating) >
+          (bestStrengthRating ? tierOrder.indexOf(bestStrengthRating) : -1)
+      ) {
+        bestStrengthRating = result.rating;
+      }
+    }
+  }
+  const strength =
+    bestStrengthRating && bestStrengthRating !== "Physically Active"
+      ? {
+          rating: bestStrengthRating,
+          emoji: STRENGTH_LEVEL_EMOJI[bestStrengthRating] ?? "",
+        }
+      : null;
 
-  // If they get a yearly #1
-  if (yearlyPRFound)
-    return `Look at the ${victoriousNouns[victorIndex]} over here getting the lift of the year.`;
+  const buildMsg = (msg) =>
+    typeof msg === "function" ? msg(p, strength) : msg;
 
-  // No lifetime PRs but some yearly non-#1 PRs
-  if (totalPRs === 0 && totalYearlyPRs > 0)
-    return `Just watching the ${victoriousNouns[victorIndex]} hitting some of the best lifts of the year.`;
+  // Low volume, no PRs
+  if (
+    !yearlyRank1 &&
+    !yearlyTop10 &&
+    !yearlyTop20 &&
+    !yearlyOther &&
+    !lifetimeRank1 &&
+    !lifetimeTop10 &&
+    !lifetimeTop20 &&
+    !lifetimeOther &&
+    totalSetCount <= 5
+  ) {
+    return buildMsg(r(lowVolumeMessages));
+  }
 
-  // If they get a lifetime #1
-  // This is the biggest reward.
-  if (lifetimePRFound)
-    return `Someone get this ${victoriousNouns[victorIndex]} some ${celebrationTreat[treatIndex]}. Lifetime PR today.`;
+  // No PRs at all
+  if (
+    !yearlyRank1 &&
+    !yearlyTop10 &&
+    !yearlyTop20 &&
+    !yearlyOther &&
+    !lifetimeRank1 &&
+    !lifetimeTop10 &&
+    !lifetimeTop20 &&
+    !lifetimeOther
+  ) {
+    return buildMsg(r(mehEncouragements));
+  }
 
-  // If they get a lifetime non-#1 PR (e.g.: top 20 lifetime)
-  return `You truly are the ${victoriousNouns[victorIndex]} with a lifetime top 20 in this session.`;
+  // Tier 1: Lifetime #1 – biggest celebration
+  if (lifetimeRank1) return buildMsg(r(lifetimeRank1Messages));
+
+  // Tier 2: Lifetime top 10
+  if (lifetimeTop10) return buildMsg(r(lifetimeTop10Messages));
+
+  // Tier 3: Lifetime top 20
+  if (lifetimeTop20) return buildMsg(r(lifetimeTop20Messages));
+
+  // Tier 4: Lifetime other (top 21+)
+  if (lifetimeOther) return buildMsg(r(lifetimeOtherMessages));
+
+  // Tier 5: Yearly #1 – celebrate well
+  if (yearlyRank1) return buildMsg(r(yearlyRank1Messages));
+
+  // Tier 6: Yearly top 10
+  if (yearlyTop10) return buildMsg(r(yearlyTop10Messages));
+
+  // Tier 7: Yearly top 20
+  if (yearlyTop20) return buildMsg(r(yearlyTop20Messages));
+
+  // Tier 8: Yearly other
+  return buildMsg(r(yearlyOtherMessages));
 }
-
-const mehEncouragements = [
-  "You are beating 100% of people who won't get off the couch.",
-  "Arnold would be proud of you right now.",
-  "You are doing better than you think.",
-  "Now go get some protein.",
-  "Don't worry, you'll get there.",
-  "Maybe try ordering some Captain America underpants.",
-  "At least you are not a marathon runner",
-  "INSERT AI GENERATED FEIGNED COMPLIMENT",
-  "No top lifts today. Maybe next time.",
-  "Another day at the office for this `athlete`.",
-];
 
 const victoriousNouns = [
   "champion",
@@ -837,27 +939,135 @@ const victoriousNouns = [
   "savage",
   "baddie",
   "top dog",
-  "professional",
-  "top banana (or other fruit)",
-  "big cheese",
-  "big low-carb enchilada",
+  "beast",
   "big kahuna",
-  "big wheel",
-  "bigshot",
-  "bigwig",
   "boss",
+  "legend",
 ];
 
 const celebrationTreat = [
   "beers",
   "champagne",
-  "cocktails",
-  "cocktail sausages",
-  "freshly brewed coffee",
-  "cigars",
   "grass-fed steak",
-  "mouldy cheese",
+  "freshly brewed coffee",
+  "whey protein",
   "milk by the gallon",
-  "whey protein of an unusually pleasant flavouring",
-  "fresh mountain air",
+];
+
+const lowVolumeMessages = [
+  "Good start. More sets = more gains.",
+  "Touching base. Now add volume.",
+  (p) => `You showed up. Now become the ${p(victoriousNouns, "noun")}.`,
+];
+
+const mehEncouragements = [
+  "You're beating everyone on the couch.",
+  "Arnold nods approvingly.",
+  "Protein time.",
+  "Captain America underpants incoming.",
+  "Not a marathon runner. ✓",
+  "Next time.",
+  "Another brick in the wall.",
+  "Consistency beats perfection.",
+  (p) => `No PRs today. Still counts, ${p(victoriousNouns, "noun")}.`,
+];
+
+const yearlyRank1Messages = [
+  (p, s) =>
+    s?.rating === "Elite"
+      ? `${s.emoji} Elite lift of the year. What a ${p(victoriousNouns, "noun")}.`
+      : s?.rating === "Advanced"
+        ? `${s.emoji} Advanced territory. Lift of the year.`
+        : `Lift of the year. What a ${p(victoriousNouns, "noun")}.`,
+  "Yearly #1. Nice.",
+  (p, s) =>
+    s?.rating === "Elite"
+      ? `Best lift of the year. Elite ${p(victoriousNouns, "noun")} energy.`
+      : `Best lift of the year. ${p(victoriousNouns, "noun")} energy.`,
+  (p, s) =>
+    s?.rating === "Advanced"
+      ? `${s.emoji} Advanced ${p(victoriousNouns, "noun")}. Top of the year.`
+      : `Top of the year. You're the ${p(victoriousNouns, "noun")}.`,
+];
+
+const yearlyTop10Messages = [
+  (p, s) =>
+    s?.rating === "Elite"
+      ? `${s.emoji} Elite strength. Yearly top 10.`
+      : "Yearly top 10. Strong.",
+  (p) => `Building that annual highlight reel, ${p(victoriousNouns, "noun")}.`,
+  "Some of this year's best lifts.",
+];
+
+const yearlyTop20Messages = [
+  "Yearly top 20. Solid progress.",
+  "Moving up the yearly ranks.",
+  (p, s) =>
+    s?.rating === "Advanced"
+      ? `${s.emoji} Advanced lifter. Annual PRs stacking up.`
+      : "Annual PRs stacking up.",
+];
+
+const yearlyOtherMessages = [
+  "Yearly PR. On the climb.",
+  (p) => `Another notch, ${p(victoriousNouns, "noun")}.`,
+  "Strong year. Strong session.",
+];
+
+const lifetimeRank1Messages = [
+  (p, s) =>
+    s?.rating === "Elite"
+      ? `${s.emoji} Elite ${p(victoriousNouns, "noun")}. Lifetime PR. Legendary.`
+      : s?.rating === "Advanced"
+        ? `${s.emoji} Advanced legend. Lifetime PR.`
+        : `Lifetime PR. Legendary ${p(victoriousNouns, "noun")}.`,
+  (p, s) =>
+    s?.rating === "Elite"
+      ? `All-time best. Get this Elite ${p(victoriousNouns, "noun")} some ${p(celebrationTreat, "treat")}.`
+      : `All-time best. Get this ${p(victoriousNouns, "noun")} some ${p(celebrationTreat, "treat")}.`,
+  (p, s) =>
+    s?.rating === "Elite"
+      ? `${s.emoji} Lifetime #1. Elite ${p(victoriousNouns, "noun")} mode.`
+      : `Lifetime #1. ${p(victoriousNouns, "noun")} mode.`,
+  (p, s) =>
+    s?.rating === "Advanced"
+      ? `${s.emoji} Advanced ${p(victoriousNouns, "noun")}. New lifetime peak.`
+      : `New lifetime peak. What a ${p(victoriousNouns, "noun")}.`,
+];
+
+const lifetimeTop10Messages = [
+  (p, s) =>
+    s?.rating === "Elite"
+      ? `${s.emoji} Elite territory. Lifetime top 10.`
+      : s?.rating === "Advanced"
+        ? `${s.emoji} Advanced ${p(victoriousNouns, "noun")}. Lifetime top 10.`
+        : `Lifetime top 10. ${p(victoriousNouns, "noun")} territory.`,
+  (p, s) =>
+    s?.rating === "Elite"
+      ? `${s.emoji} Elite territory. All-time top 10.`
+      : s?.rating === "Advanced"
+        ? `${s.emoji} Advanced. All-time top 10.`
+        : "All-time top 10. Strong.",
+  (p, s) =>
+    s?.rating === "Advanced"
+      ? `Lifetime PR. Advanced ${p(victoriousNouns, "noun")} energy.`
+      : `Lifetime PR. ${p(victoriousNouns, "noun")} energy.`,
+];
+
+const lifetimeTop20Messages = [
+  (p, s) =>
+    s?.rating === "Advanced"
+      ? `${s.emoji} Advanced ${p(victoriousNouns, "noun")} climbing the ranks.`
+      : `Lifetime top 20. This ${p(victoriousNouns, "noun")} is climbing.`,
+  "All-time ranking improved.",
+  "Moving up the lifetime list.",
+];
+
+const lifetimeOtherMessages = [
+  (p, s) =>
+    s?.rating === "Advanced"
+      ? `${s.emoji} Advanced ${p(victoriousNouns, "noun")}. Building the legacy.`
+      : `Lifetime PR. Building the ${p(victoriousNouns, "noun")} legacy.`,
+  "All-time best list expanded.",
+  "Lifetime PR. Solid.",
 ];

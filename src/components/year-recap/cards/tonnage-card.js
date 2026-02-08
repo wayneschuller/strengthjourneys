@@ -6,6 +6,8 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Dumbbell } from "lucide-react";
+import { BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
+import { getLiftSvgPath } from "../lift-svg";
 
 export function TonnageCard({ year, isDemo, isActive = true }) {
   const equivRef = useRef(null);
@@ -18,7 +20,7 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
   );
   const preferredUnit = isMetricPreference ? "kg" : "lb";
 
-  const { tonnage, primaryUnit, prevYearTonnage } = useMemo(
+  const { tonnage, primaryUnit, prevYearTonnage, tonnageByLift } = useMemo(
     () => computeTonnageForYear(parsedData, year, preferredUnit),
     [parsedData, year, preferredUnit],
   );
@@ -61,12 +63,12 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
         <Dumbbell className="mb-4 h-12 w-12 text-chart-3" />
       </motion.div>
       <motion.p
-        className="text-5xl font-bold tabular-nums text-foreground md:text-6xl"
+        className="text-4xl font-bold tabular-nums text-foreground md:text-5xl"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={isActive ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
         transition={{ type: "spring", stiffness: 260, damping: 22, delay: isActive ? 0.08 : 0 }}
       >
-        {formatYearTonnage(tonnage)} {primaryUnit}
+        {formatYearTonnageTitle(tonnage)} {primaryUnit}
       </motion.p>
       <motion.p
         className="mt-2 text-xl font-semibold text-chart-2"
@@ -96,6 +98,67 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
           About {formattedCount} {equiv.name}{equiv.count !== 1 ? "s" : ""} {equiv.emoji}
         </motion.p>
       )}
+      {tonnageByLift.length > 0 && (
+        <div className="mt-6 w-full max-w-xs space-y-2.5">
+          {tonnageByLift.map(({ liftType, tonnage: liftTonnage }, i) => {
+            const maxTonnage = Math.max(
+              ...tonnageByLift.map((r) => r.tonnage),
+              1,
+            );
+            const pct = (liftTonnage / maxTonnage) * 100;
+            const svgPath = getLiftSvgPath(liftType);
+            return (
+              <motion.div
+                key={liftType}
+                className="flex items-center gap-2"
+                initial={{ opacity: 0, x: -12 }}
+                animate={
+                  isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -12 }
+                }
+                transition={{
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 20,
+                  delay: isActive ? 0.25 + i * 0.06 : 0,
+                }}
+              >
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center">
+                  {svgPath ? (
+                    <img
+                      src={svgPath}
+                      alt={liftType}
+                      className="h-20 w-20 object-contain"
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      {liftType.slice(0, 2)}
+                    </span>
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-1 items-center">
+                  <div className="flex h-5 min-w-0 flex-1 overflow-hidden rounded-md bg-muted/50">
+                    <motion.div
+                      className="h-full rounded-md"
+                      style={{
+                        width: `${pct}%`,
+                        backgroundColor: `var(--chart-${(i % 5) + 1})`,
+                      }}
+                      initial={{ width: 0 }}
+                      animate={isActive ? { width: `${pct}%` } : { width: 0 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 180,
+                        damping: 22,
+                        delay: isActive ? 0.35 + i * 0.06 : 0,
+                      }}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
       {isDemo && (
         <motion.p
           className="mt-2 text-xs text-muted-foreground"
@@ -112,11 +175,9 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
 
 // --- Supporting functions ---
 
-function formatYearTonnage(value) {
+function formatYearTonnageTitle(value) {
   if (!value || value <= 0) return "0";
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 10_000) return `${Math.round(value / 1_000)}k`;
-  return value.toLocaleString();
+  return Math.round(value).toLocaleString();
 }
 
 const YEARLY_TONNAGE_EQUIVALENTS = {
@@ -168,7 +229,12 @@ function pickTonnageEquivalent(tonnage, unitType, ref, key) {
 
 function computeTonnageForYear(parsedData, year, preferredUnit) {
   if (!parsedData || !year) {
-    return { tonnage: 0, primaryUnit: preferredUnit || "lb", prevYearTonnage: null };
+    return {
+      tonnage: 0,
+      primaryUnit: preferredUnit || "lb",
+      prevYearTonnage: null,
+      tonnageByLift: [],
+    };
   }
   const prevYear = String(parseInt(year, 10) - 1);
   const yearStart = `${year}-01-01`;
@@ -177,15 +243,22 @@ function computeTonnageForYear(parsedData, year, preferredUnit) {
   const prevYearEnd = `${prevYear}-12-31`;
   const tonnageByUnit = {};
   const prevYearTonnageByUnit = {};
+  const tonnageByLiftRaw = {};
   parsedData.forEach((entry) => {
     if (entry.isGoal || !entry.date) return;
-    const tonnage = (entry.weight ?? 0) * (entry.reps ?? 0);
+    const t = (entry.weight ?? 0) * (entry.reps ?? 0);
     const u = entry.unitType || "lb";
     if (entry.date >= yearStart && entry.date <= yearEnd) {
-      tonnageByUnit[u] = (tonnageByUnit[u] ?? 0) + tonnage;
+      tonnageByUnit[u] = (tonnageByUnit[u] ?? 0) + t;
+      if (BIG_FOUR_LIFT_TYPES.includes(entry.liftType)) {
+        if (!tonnageByLiftRaw[entry.liftType])
+          tonnageByLiftRaw[entry.liftType] = {};
+        tonnageByLiftRaw[entry.liftType][u] =
+          (tonnageByLiftRaw[entry.liftType][u] ?? 0) + t;
+      }
     }
     if (entry.date >= prevYearStart && entry.date <= prevYearEnd) {
-      prevYearTonnageByUnit[u] = (prevYearTonnageByUnit[u] ?? 0) + tonnage;
+      prevYearTonnageByUnit[u] = (prevYearTonnageByUnit[u] ?? 0) + t;
     }
   });
   const unitKeys = Object.keys(tonnageByUnit);
@@ -210,9 +283,24 @@ function computeTonnageForYear(parsedData, year, preferredUnit) {
     if (u === "kg" && primaryUnit === "lb") prevYearTonnage += v * LB_PER_KG;
     else if (u === "lb" && primaryUnit === "kg") prevYearTonnage += v * KG_PER_LB;
   });
+
+  const tonnageByLift = BIG_FOUR_LIFT_TYPES.map((liftType) => {
+    const byUnit = tonnageByLiftRaw[liftType] ?? {};
+    let liftTonnage = byUnit[primaryUnit] ?? 0;
+    Object.keys(byUnit).forEach((u) => {
+      if (u === primaryUnit) return;
+      const v = byUnit[u] ?? 0;
+      if (u === "kg" && primaryUnit === "lb") liftTonnage += v * LB_PER_KG;
+      else if (u === "lb" && primaryUnit === "kg")
+        liftTonnage += v * KG_PER_LB;
+    });
+    return { liftType, tonnage: liftTonnage };
+  }).filter((r) => r.tonnage > 0);
+
   return {
     tonnage,
     primaryUnit,
     prevYearTonnage: prevYearTonnage > 0 ? prevYearTonnage : null,
+    tonnageByLift,
   };
 }

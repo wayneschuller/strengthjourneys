@@ -48,6 +48,7 @@ import {
   getAnalyzedSessionLifts,
   getAverageSessionTonnageFromPrecomputed,
   getAverageLiftSessionTonnageFromPrecomputed,
+  getSessionTonnagePercentileRangeFromPrecomputed,
 } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
@@ -708,6 +709,15 @@ function SessionTonnage({
         )
       : { average: 0, sessionCount: 0 };
 
+  const { low: rangeMin, high: rangeMax } = sessionTonnageLookup
+    ? getSessionTonnagePercentileRangeFromPrecomputed(
+        sessionTonnageLookup.sessionTonnageByDate,
+        sessionTonnageLookup.allSessionDates,
+        sessionDate,
+        unitType,
+      )
+    : { low: 0, high: 0 };
+
   const overallPctDiff =
     avgSessionTonnage > 0
       ? ((tonnage - avgSessionTonnage) / avgSessionTonnage) * 100
@@ -772,6 +782,18 @@ function SessionTonnage({
     maximumFractionDigits: countValue >= 100 ? 0 : 1,
   });
 
+  const hasRange = sessionCountLastYear > 1 && rangeMax > 0;
+  const scaleMax = hasRange
+    ? Math.max(tonnage, rangeMax) * 1.3 || 1
+    : Math.max(tonnage * 1.3, 1);
+  const currentPct = Math.min(100, (tonnage / scaleMax) * 100);
+  const rawRangeWidth =
+    hasRange && rangeMax > 0 ? (rangeMax - rangeMin) / scaleMax : 0;
+  const rangeLeftPct = hasRange ? (rangeMin / scaleMax) * 100 : 0;
+  const rangeWidthPct = hasRange
+    ? (rawRangeWidth > 0 ? rawRangeWidth * 100 : 3)
+    : 0;
+
   return (
     <div className="rounded-lg border bg-muted/30 px-4 py-3">
       <div className="flex flex-wrap items-baseline gap-2">
@@ -782,42 +804,126 @@ function SessionTonnage({
           {Math.round(tonnage).toLocaleString()}
           {unitType}
         </span>
-        <span className="text-muted-foreground">
-          — about {formattedCount} {equivalent.name}
-          {parseFloat(equivalentCount) != 1 ? "s" : ""} lifted {equivalent.emoji}
-        </span>
-      </div>
-      {sessionCountLastYear > 1 && overallPctDiff !== null ? (
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-          <span className="text-muted-foreground">
-            vs {Math.round(avgSessionTonnage).toLocaleString()}
-            {unitType} avg this year
+        {hasRange && overallPctDiff !== null ? (
+          <>
+            <span className="text-muted-foreground">
+              vs {Math.round(avgSessionTonnage).toLocaleString()}
+              {unitType} avg over last 12 months
+            </span>
+            <Badge
+              variant="outline"
+              className={
+                overallPctDiff > 0
+                  ? "gap-0.5 border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  : "gap-0.5 border-red-500/60 bg-red-500/10 text-red-600 dark:text-red-400"
+              }
+            >
+              {overallPctDiff > 0 ? (
+                <>
+                  <ArrowUpRight className="h-3 w-3" />
+                  {Math.abs(overallPctDiff).toFixed(1)}%
+                </>
+              ) : (
+                <>
+                  <ArrowDownRight className="h-3 w-3" />
+                  {Math.abs(overallPctDiff).toFixed(1)}%
+                </>
+              )}
+            </Badge>
+          </>
+        ) : (
+          <span className="text-lg text-foreground">
+            — About {formattedCount} {equivalent.name}
+            {parseFloat(equivalentCount) != 1 ? "s" : ""} lifted {equivalent.emoji}
           </span>
-          <Badge
-            variant="outline"
-            className={
-              overallPctDiff > 0
-                ? "gap-0.5 border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                : "gap-0.5 border-red-500/60 bg-red-500/10 text-red-600 dark:text-red-400"
-            }
+        )}
+      </div>
+      <div className="mt-3 space-y-1">
+        <TonnageRangeSlider
+          currentPct={currentPct}
+          rangeLeftPct={rangeLeftPct}
+          rangeWidthPct={rangeWidthPct}
+          showRange={hasRange}
+          rangeMin={rangeMin}
+          rangeMax={rangeMax}
+          unitType={unitType}
+        />
+        {hasRange ? (
+          <p className="text-lg text-foreground">
+            About {formattedCount} {equivalent.name}
+            {parseFloat(equivalentCount) != 1 ? "s" : ""} lifted {equivalent.emoji}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Not enough history yet to compare your session tonnage over the last
+            year.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TonnageRangeSlider({
+  currentPct,
+  rangeLeftPct,
+  rangeWidthPct,
+  showRange,
+  rangeMin,
+  rangeMax,
+  unitType,
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  const formatVal = (n) => Math.round(n).toLocaleString() + unitType;
+
+  return (
+    <div className="space-y-1">
+      <div
+        className="group relative h-6 w-full cursor-default"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Track background */}
+        <div className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-muted" />
+        {/* Dashed range (min–max over last 12 months) — taller band like Fitbit */}
+        {showRange && (
+          <div
+            className="absolute inset-x-0 top-1/2 h-5 -translate-y-1/2"
           >
-            {overallPctDiff > 0 ? (
-              <>
-                <ArrowUpRight className="h-3 w-3" />
-                {Math.abs(overallPctDiff).toFixed(1)}%
-              </>
-            ) : (
-              <>
-                <ArrowDownRight className="h-3 w-3" />
-                {Math.abs(overallPctDiff).toFixed(1)}%
-              </>
-            )}
-          </Badge>
+            <div
+              className="absolute top-0 h-full rounded-md border-2 border-dashed border-muted-foreground/40 bg-muted-foreground/5"
+              style={{
+                left: `${rangeLeftPct}%`,
+                width: `${rangeWidthPct}%`,
+              }}
+            />
+          </div>
+        )}
+        {/* Solid bar (today's tonnage) */}
+        <div className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full">
+          <div
+            className="h-full rounded-full bg-violet-500 dark:bg-violet-600"
+            style={{ width: `${currentPct}%` }}
+          />
         </div>
-      ) : (
-        <p className="mt-2 text-sm text-muted-foreground">
-          Not enough history yet to compare your session tonnage over the last
-          year.
+        {/* Hover overlay: range numbers appear on hover */}
+        {isHovered && showRange && (
+          <div className="absolute inset-0 pointer-events-none animate-in fade-in duration-150">
+            <span
+              className="absolute top-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-medium tabular-nums text-foreground bg-background/70 dark:bg-background/70"
+              style={{
+                left: `${rangeLeftPct + rangeWidthPct / 2}%`,
+                transform: "translate(-50%, -50%)",
+              }}
+            >
+              {formatVal(rangeMin)} – {formatVal(rangeMax)}
+            </span>
+          </div>
+        )}
+      </div>
+      {showRange && (
+        <p className="text-[10px] text-muted-foreground">
+          Dashed range: typical session tonnage (25th–90th percentile, last 12 months)
         </p>
       )}
     </div>

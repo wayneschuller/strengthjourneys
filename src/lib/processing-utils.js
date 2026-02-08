@@ -592,6 +592,89 @@ export function getAverageSessionTonnageFromPrecomputed(
   };
 }
 
+// Min/max session tonnage over the rolling last 365 days (same window as average).
+export function getSessionTonnageMinMaxFromPrecomputed(
+  sessionTonnageByDate,
+  allSessionDates,
+  endDate,
+  unitType,
+) {
+  if (!endDate || !allSessionDates?.length) {
+    return { min: 0, max: 0, sessionCount: 0 };
+  }
+
+  const end = toUTCDate(endDate);
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - 364);
+
+  const u = unitType || "lb";
+  let minTonnage = Infinity;
+  let maxTonnage = -Infinity;
+  let countedSessions = 0;
+
+  for (let i = 0; i < allSessionDates.length; i++) {
+    const dateStr = allSessionDates[i];
+    const d = toUTCDate(dateStr);
+    if (d < start || d > end) continue;
+    const tonnage = sessionTonnageByDate[dateStr]?.[u] ?? 0;
+    if (tonnage > 0) {
+      minTonnage = Math.min(minTonnage, tonnage);
+      maxTonnage = Math.max(maxTonnage, tonnage);
+      countedSessions += 1;
+    }
+  }
+
+  return {
+    min: countedSessions > 0 ? minTonnage : 0,
+    max: countedSessions > 0 ? maxTonnage : 0,
+    sessionCount: countedSessions,
+  };
+}
+
+// Percentile-based range (excludes outliers, especially on low end).
+// Returns 25th and 90th percentile as low/high for a more meaningful "typical" range.
+export function getSessionTonnagePercentileRangeFromPrecomputed(
+  sessionTonnageByDate,
+  allSessionDates,
+  endDate,
+  unitType,
+) {
+  if (!endDate || !allSessionDates?.length) {
+    return { low: 0, high: 0, sessionCount: 0 };
+  }
+
+  const end = toUTCDate(endDate);
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - 364);
+
+  const u = unitType || "lb";
+  const values = [];
+
+  for (let i = 0; i < allSessionDates.length; i++) {
+    const dateStr = allSessionDates[i];
+    const d = toUTCDate(dateStr);
+    if (d < start || d > end) continue;
+    const tonnage = sessionTonnageByDate[dateStr]?.[u] ?? 0;
+    if (tonnage > 0) values.push(tonnage);
+  }
+
+  if (values.length === 0) {
+    return { low: 0, high: 0, sessionCount: 0 };
+  }
+
+  values.sort((a, b) => a - b);
+  const n = values.length;
+  // Nearest-rank: pth percentile index = ceil(p/100 * n) - 1
+  const lowIdx = Math.max(0, Math.ceil(0.25 * n) - 1);  // 25th - trims low outliers
+  const highIdx = Math.min(n - 1, Math.ceil(0.9 * n) - 1); // 90th - trims high outliers
+
+  return {
+    low: values[lowIdx],
+    high: values[highIdx],
+    sessionCount: n,
+  };
+}
+
 // liftTypes is an array sorted by lift set frequency descending of these objects:
 // {
 // "liftType": "Back Squat",

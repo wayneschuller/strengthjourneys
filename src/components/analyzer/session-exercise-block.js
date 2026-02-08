@@ -33,18 +33,20 @@ export function SessionExerciseBlock({
   isMetric,
 }) {
   const formula = e1rmFormula || "Brzycki";
-  let bestE1rmIndex = 0;
   let bestE1rm = 0;
   const e1rms = workouts.map((w) =>
     estimateE1RM(w.reps ?? 0, w.weight ?? 0, formula),
   );
   workouts.forEach((w, i) => {
     const e1rm = e1rms[i];
-    if (e1rm > bestE1rm) {
-      bestE1rm = e1rm;
-      bestE1rmIndex = i;
-    }
+    if (e1rm > bestE1rm) bestE1rm = e1rm;
   });
+  // All indices with equal best e1rm (e.g. 3x5 top sets) get highlighted
+  const bestE1rmIndices = new Set(
+    workouts
+      .map((w, i) => (e1rms[i] >= bestE1rm - 1e-6 ? i : null))
+      .filter((i) => i != null),
+  );
 
   const e1rmMin = Math.min(...e1rms);
   const e1rmMax = Math.max(...e1rms);
@@ -75,10 +77,12 @@ export function SessionExerciseBlock({
   });
   if (currentGroup.length > 0) groups.push(currentGroup);
 
-  // Initially highlighted: PRs or highest e1rm set (full variant only)
+  // Initially highlighted: PRs or all sets with best e1rm (full variant only)
   const initiallyHighlighted = new Set(
     workouts
-      .map((w, i) => (w.lifetimeRanking !== -1 || i === bestE1rmIndex ? i : null))
+      .map((w, i) =>
+        w.lifetimeRanking !== -1 || bestE1rmIndices.has(i) ? i : null,
+      )
       .filter((i) => i != null),
   );
   const highlightedIndices = new Set();
@@ -97,7 +101,7 @@ export function SessionExerciseBlock({
   const pills = (
     <div className={isCompact ? "ml-4 flex min-w-0 flex-1 flex-wrap content-center gap-2" : "flex flex-wrap gap-2"}>
       {workouts.map((workout, index) => {
-        const isTopSet = index === bestE1rmIndex;
+        const isTopSet = bestE1rmIndices.has(index);
         const isHighlighted = !isCompact ? highlightedIndices.has(index) : isTopSet;
         const size = isCompact ? { text: "text-sm", pad: "px-2.5 py-2" } : getSizeForE1rm(e1rms[index]);
         const padClass = isHighlighted && !isCompact ? "px-3.5 py-2.5" : size.pad;

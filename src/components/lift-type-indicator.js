@@ -10,13 +10,13 @@ const bigFourURLs = {
   "Strict Press": "/barbell-strict-press-insights",
 };
 
-export const LiftTypeIndicator = ({ liftType }) => {
+export const LiftTypeIndicator = ({ liftType, className = "" }) => {
   const { getColor } = useLiftColors();
   const color = getColor(liftType);
 
   // Content to be rendered (color square and lift type text)
   const content = (
-    <div className="flex flex-row items-center">
+    <div className={`flex flex-row items-center ${className}`.trim()}>
       <div
         className="mr-1 h-2.5 w-2.5 shrink-0 rounded-[2px]"
         style={{ backgroundColor: color }}

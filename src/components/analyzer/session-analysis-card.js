@@ -461,7 +461,7 @@ function ExerciseBlock({
   return (
     <div className="rounded-xl border bg-muted/20 p-4">
       <div className="space-y-3">
-        <LiftTypeIndicator liftType={liftType} />
+        <LiftTypeIndicator liftType={liftType} className="text-lg" />
         <div className="flex flex-wrap gap-2">
           {workouts.map((workout, index) => {
             const isHighlighted = highlightedIndices.has(index);

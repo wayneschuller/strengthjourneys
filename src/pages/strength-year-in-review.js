@@ -131,7 +131,7 @@ function StrengthYearInReviewMain() {
               showCarousel
                 ? authStatus === "unauthenticated"
                   ? "md:grid md:grid-cols-[13rem_1fr_minmax(18rem,22rem)] md:items-start"
-                  : "md:grid md:grid-cols-[13rem_1fr] md:items-start"
+                  : "md:grid md:grid-cols-[13rem_1fr_minmax(12rem,14rem)] md:items-start"
                 : "md:flex md:flex-row md:items-start",
             )}
           >
@@ -153,9 +153,13 @@ function StrengthYearInReviewMain() {
                 />
               </div>
             )}
-            {showCarousel && authStatus === "unauthenticated" && (
+            {showCarousel && (
               <div className="order-3 flex flex-col pt-2 md:col-start-3 md:pt-2">
-                <DemoModeSignInCard />
+                {authStatus === "unauthenticated" ? (
+                  <DemoModeSignInCard />
+                ) : (
+                  <span aria-hidden="true" />
+                )}
               </div>
             )}
           </div>

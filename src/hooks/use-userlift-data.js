@@ -47,6 +47,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
   const [parsedData, setParsedData] = useState(null); // see @/lib/sample-parsed-data.js for data structure design
   const [selectedLiftTypes, setSelectedLiftTypes] = useState([]);
+  const [lastDataReceivedAt, setLastDataReceivedAt] = useState(null);
 
   const { data: session, status: authStatus } = useSession();
 
@@ -78,7 +79,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   // Call gsheets API via our backend api route using useSWR
   // (we used to do from client but got intermittent CORS problems)
   // -----------------------------------------------------------------------------------------------
-  const { data, error, isLoading, isValidating } = useSWR(
+  const { data, error, isLoading, isValidating, dataUpdatedAt } = useSWR(
     shouldFetch ? apiURL : null,
     fetcher,
     {
@@ -139,6 +140,9 @@ export const UserLiftingDataProvider = ({ children }) => {
     // Now set it in state for useContext usage throughout the components
     setSelectedLiftTypes(selectedLiftTypes);
     setParsedData(parsedData);
+    if (authStatus === "authenticated" && data?.values) {
+      setLastDataReceivedAt(Date.now());
+    }
   // router excluded from deps - Next.js router gets new ref each render, causes infinite loop
   // when combined with useStateFromQueryOrLocalStorage which calls router.replace()
   }, [
@@ -244,6 +248,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         topTonnageByTypeLast12Months,
         sessionTonnageLookup,
         rawRows,
+        dataSyncedAt: dataUpdatedAt > 0 ? dataUpdatedAt : lastDataReceivedAt,
       }}
     >
       {children}

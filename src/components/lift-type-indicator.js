@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 
-const bigFourURLs = {
+export const bigFourURLs = {
   "Back Squat": "/barbell-squat-insights",
   "Bench Press": "/barbell-bench-press-insights",
   Deadlift: "/barbell-deadlift-insights",

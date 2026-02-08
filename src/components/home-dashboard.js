@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { SectionTopCards } from "./section-top-cards";
+import { MostRecentSessionCard } from "./most-recent-session-card";
 import { useLocalStorage } from "usehooks-ts";
 import { Progress } from "./ui/progress";
 import { Skeleton } from "./ui/skeleton";
@@ -55,6 +56,7 @@ export function HomeDashboard() {
         />
       )}
       {ssid && <SectionTopCards isProgressDone={isProgressDone} />}
+      {ssid && isProgressDone && <MostRecentSessionCard />}
     </div>
   );
 }

@@ -53,6 +53,7 @@ export function HomeDashboard() {
             parsedData={parsedData}
             dataSyncedAt={dataSyncedAt}
             isValidating={isValidating}
+            sheetURL={sheetURL}
           />
         )}
       </div>
@@ -75,11 +76,11 @@ function formatSyncTime(timestamp) {
   const date = new Date(timestamp);
   const minsAgo = differenceInMinutes(Date.now(), date);
 
-  if (minsAgo < 1) return "Data synced in the last minute";
-  if (minsAgo === 1) return "Data synced 1 minute ago";
-  if (minsAgo <= 15) return `Data synced ${minsAgo} minutes ago`;
-  if (isToday(date)) return `Data synced at ${format(date, "h:mm a")} today`;
-  return `Data synced ${format(date, "MMM d")} at ${format(date, "h:mm a")}`;
+  if (minsAgo < 1) return "in the last minute";
+  if (minsAgo === 1) return "1 minute ago";
+  if (minsAgo <= 15) return `${minsAgo} minutes ago`;
+  if (isToday(date)) return `at ${format(date, "h:mm a")} today`;
+  return `${format(date, "MMM d")} at ${format(date, "h:mm a")}`;
 }
 
 function DataSheetStatus({
@@ -87,6 +88,7 @@ function DataSheetStatus({
   parsedData,
   dataSyncedAt,
   isValidating,
+  sheetURL,
 }) {
   const rowLabel =
     parsedData &&
@@ -97,16 +99,37 @@ function DataSheetStatus({
         ? `${rawRows.toLocaleString()} rows`
         : null;
 
-  const syncLabel = isValidating
+  const timeSuffix = formatSyncTime(dataSyncedAt);
+  const syncText = isValidating
     ? "Syncing…"
-    : formatSyncTime(dataSyncedAt) || "Data synced";
+    : timeSuffix
+      ? `User Google Sheet synced ${timeSuffix}`
+      : "User Google Sheet synced";
+
+  const syncLabel = sheetURL ? (
+    <a
+      href={decodeURIComponent(sheetURL)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-muted-foreground hover:text-foreground hover:underline"
+    >
+      {syncText}
+    </a>
+  ) : (
+    syncText
+  );
 
   const parts = [syncLabel];
   if (rowLabel) parts.push(rowLabel);
 
   return (
     <div className="text-right text-xs text-muted-foreground">
-      {parts.join(" · ")}
+      {parts.map((part, i) => (
+        <span key={i}>
+          {i > 0 && " · "}
+          {part}
+        </span>
+      ))}
     </div>
   );
 }

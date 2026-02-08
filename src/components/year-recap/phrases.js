@@ -113,6 +113,44 @@ export const NOTABLE_LIFTS_PHRASES = [
   "The rest of the story",
 ];
 
+/** Encouraging phrases when there are no lifetime PRs this year */
+export const PR_EMPTY_PHRASES = [
+  "Next year's PRs are waiting",
+  "The bar is patient",
+  "Building the foundation",
+  "This is how comebacks start",
+  "The iron never forgets",
+  "Your next PR is out there",
+  "Every rep counts",
+  "Foundation year",
+  "The journey continues",
+  "Keep showing up",
+  "Your future self will thank you",
+  "One rep at a time",
+  "The best is yet to come",
+  "Patience and persistence",
+  "Warming up for greatness",
+];
+
+/** Encouraging phrases when there are no notable lifts this year */
+export const NOTABLE_LIFTS_EMPTY_PHRASES = [
+  "More highlights incoming",
+  "The full picture is forming",
+  "Building blocks",
+  "Story still unfolding",
+  "More to come",
+  "Every session adds up",
+  "The grind continues",
+  "Next year's highlights are brewing",
+  "Keep stacking",
+  "Foundation work",
+  "Consistency is the real win",
+  "The best chapters are ahead",
+  "More to celebrate soon",
+  "Your data is growing",
+  "Stay the course",
+];
+
 export const PR_HIGHLIGHTS_PHRASES = [
   "Look at this champion",
   "Someone get this hero some beers",

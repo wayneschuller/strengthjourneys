@@ -5,6 +5,7 @@ import { useLocalStorage } from "usehooks-ts";
 import {
   pickQuirkyPhrase,
   NOTABLE_LIFTS_PHRASES,
+  NOTABLE_LIFTS_EMPTY_PHRASES,
 } from "../phrases";
 import {
   getReadableDateString,
@@ -19,12 +20,6 @@ import { LiftSvg, getLiftSvgPath } from "../lift-svg";
 
 export function NotableLiftsCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
-  const phrase = pickQuirkyPhrase(
-    NOTABLE_LIFTS_PHRASES,
-    phraseRef,
-    `notable-lifts-${year}`,
-  );
-
   const { parsedData } = useUserLiftingData();
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
@@ -43,6 +38,12 @@ export function NotableLiftsCard({ year, isDemo, isActive = true }) {
       (l) => !excludeKeys.has(`${l.liftType}|${l.reps}|${l.date}|${l.weight}`),
     );
   }, [year, parsedData, e1rmFormula]);
+
+  const phrase = pickQuirkyPhrase(
+    prs.length > 0 ? NOTABLE_LIFTS_PHRASES : NOTABLE_LIFTS_EMPTY_PHRASES,
+    phraseRef,
+    prs.length > 0 ? `notable-lifts-${year}` : `notable-lifts-empty-${year}`,
+  );
 
   return (
     <div className="flex flex-col items-center justify-center text-center">
@@ -93,7 +94,7 @@ export function NotableLiftsCard({ year, isDemo, isActive = true }) {
           animate={isActive ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: isActive ? 0.2 : 0 }}
         >
-          No notable lifts this year
+          No notable lifts this year yet
         </motion.p>
       )}
       <motion.p

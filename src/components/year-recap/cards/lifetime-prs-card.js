@@ -4,6 +4,7 @@ import { useRef, useMemo } from "react";
 import {
   pickQuirkyPhrase,
   PR_HIGHLIGHTS_PHRASES,
+  PR_EMPTY_PHRASES,
 } from "../phrases";
 import { getReadableDateString, getLifetimePRsAchievedInYear } from "@/lib/processing-utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -13,16 +14,16 @@ import { LiftSvg, getLiftSvgPath } from "../lift-svg";
 
 export function LifetimePRsCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
-  const phrase = pickQuirkyPhrase(
-    PR_HIGHLIGHTS_PHRASES,
-    phraseRef,
-    `lifetime-prs-${year}`,
-  );
-
   const { parsedData } = useUserLiftingData();
   const prs = useMemo(
     () => getLifetimePRsAchievedInYear(parsedData, year),
     [year, parsedData],
+  );
+
+  const phrase = pickQuirkyPhrase(
+    prs.length > 0 ? PR_HIGHLIGHTS_PHRASES : PR_EMPTY_PHRASES,
+    phraseRef,
+    prs.length > 0 ? `lifetime-prs-${year}` : `lifetime-prs-empty-${year}`,
   );
 
   return (
@@ -74,7 +75,7 @@ export function LifetimePRsCard({ year, isDemo, isActive = true }) {
           animate={isActive ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: isActive ? 0.2 : 0 }}
         >
-          No lifetime PRs this year
+          No lifetime PRs this year yet
         </motion.p>
       )}
       <motion.p

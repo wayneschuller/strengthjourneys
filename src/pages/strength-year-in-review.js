@@ -129,9 +129,7 @@ function StrengthYearInReviewMain() {
             className={cn(
               "flex flex-col gap-6 md:gap-8 lg:gap-12 md:min-h-0",
               showCarousel
-                ? authStatus === "unauthenticated"
-                  ? "md:grid md:grid-cols-[13rem_1fr_minmax(18rem,22rem)] md:items-start"
-                  : "md:grid md:grid-cols-[13rem_1fr_minmax(12rem,14rem)] md:items-start"
+                ? "md:grid md:grid-cols-[13rem_1fr_minmax(18rem,22rem)] md:items-start"
                 : "md:flex md:flex-row md:items-start",
             )}
           >

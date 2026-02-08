@@ -23,7 +23,7 @@ import { ClosingCard } from "./cards/closing-card";
 function fireTitleConfetti() {
   import("canvas-confetti").then((confetti) => {
     const fn = confetti.default;
-    const opts = { origin: { y: 0.6 }, spread: 70, zIndex: 9999 };
+    const opts = { origin: { x: 0.46, y: 0.6 }, spread: 70, zIndex: 9999 };
     fn({ ...opts, particleCount: 60 });
     fn({ ...opts, particleCount: 50, spread: 100, startVelocity: 30 });
     fn({ ...opts, particleCount: 40, spread: 120, startVelocity: 45 });

@@ -8,6 +8,7 @@ import {
   useMemo,
   useDeferredValue,
 } from "react";
+import { useLocalStorage } from "usehooks-ts";
 import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
@@ -84,6 +85,14 @@ export function SessionAnalysisCard({
 
   const sessionRatingRef = useRef(null); // Used to avoid randomised rating changes on rerenders
   const lastUsedAdlibRef = useRef({}); // Tracks last-used indices to avoid repeats when switching sessions
+  const isDemoMode = authStatus === "unauthenticated";
+  const [sessionRatingCache, setSessionRatingCache] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.SESSION_RATING_CACHE,
+    {},
+    { initializeWithValue: false },
+  );
+  const [persistCacheTrigger, setPersistCacheTrigger] = useState(0);
+  const pendingCacheUpdateRef = useRef(null);
 
   const deferredHighlightDate = useDeferredValue(highlightDate);
 
@@ -129,25 +138,66 @@ export function SessionAnalysisCard({
 
   // devLog(analyzedSessionLifts);
 
-  if (analyzedSessionLifts && !sessionRatingRef.current) {
-    const strengthContext =
-      hasBioData && standards && Object.keys(standards).length > 0
-        ? {
-            standards,
-            e1rmFormula,
-            sessionDate,
-            age,
-            bodyWeight,
-            sex,
-            isMetric,
-          }
-        : null;
-    sessionRatingRef.current = getCreativeSessionRating(
-      analyzedSessionLifts,
-      strengthContext,
-      lastUsedAdlibRef,
-    );
+  if (analyzedSessionLifts && !sessionRatingRef.current && !isDemoMode) {
+    const tupleCountForDate = parsedData?.filter(
+      (e) => e.date === sessionDate && !e.isGoal,
+    ).length ?? 0;
+
+    const cache = sessionRatingCache;
+    const stored = cache?.[sessionDate];
+    if (stored?.tupleCount === tupleCountForDate) {
+      sessionRatingRef.current = stored.rating;
+    }
+
+    if (!sessionRatingRef.current) {
+      const strengthContext =
+        hasBioData && standards && Object.keys(standards).length > 0
+          ? {
+              standards,
+              e1rmFormula,
+              sessionDate,
+              age,
+              bodyWeight,
+              sex,
+              isMetric,
+            }
+          : null;
+      sessionRatingRef.current = getCreativeSessionRating(
+        analyzedSessionLifts,
+        strengthContext,
+        lastUsedAdlibRef,
+      );
+
+      pendingCacheUpdateRef.current = {
+        sessionDate,
+        rating: sessionRatingRef.current,
+        tupleCount: tupleCountForDate,
+      };
+      setPersistCacheTrigger((t) => t + 1);
+    }
   }
+
+  useEffect(() => {
+    const pending = pendingCacheUpdateRef.current;
+    if (!pending) return;
+    pendingCacheUpdateRef.current = null;
+
+    setSessionRatingCache((prev) => {
+      const next = { ...(prev || {}) };
+      next[pending.sessionDate] = {
+        rating: pending.rating,
+        tupleCount: pending.tupleCount,
+      };
+      const keys = Object.keys(next);
+      if (keys.length > 200) {
+        keys.sort();
+        for (let i = 0; i < keys.length - 200; i++) {
+          delete next[keys[i]];
+        }
+      }
+      return next;
+    });
+  }, [persistCacheTrigger, setSessionRatingCache]);
 
   // Precompute per-lift tonnage stats for this session vs last year
   const perLiftTonnageStats = useMemo(() => {
@@ -248,7 +298,7 @@ export function SessionAnalysisCard({
                 )}
               </CardTitle>
               <CardDescription className="mt-1">
-                {analyzedSessionLifts
+                {analyzedSessionLifts && !isDemoMode
                   ? sessionRatingRef.current
                   : "Session overview and analysis"}
               </CardDescription>

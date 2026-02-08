@@ -85,6 +85,9 @@ export const LOCAL_STORAGE_KEYS = {
   // AI assistant
   USER_LIFTING_METADATA: "userLiftingMetadata-selected-options",
   SHARE_BIO_DETAILS_AI: "SJ_ShareBioDetailsAI",
+
+  // Session analysis – creative ratings cache (per date, auth only)
+  SESSION_RATING_CACHE: "sj-session-rating-cache",
 };
 
 /**

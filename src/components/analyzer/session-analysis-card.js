@@ -402,13 +402,29 @@ function ExerciseBlock({
   const formula = e1rmFormula || "Brzycki";
   let bestE1rmIndex = 0;
   let bestE1rm = 0;
+  const e1rms = workouts.map((w) =>
+    estimateE1RM(w.reps ?? 0, w.weight ?? 0, formula),
+  );
   workouts.forEach((w, i) => {
-    const e1rm = estimateE1RM(w.reps ?? 0, w.weight ?? 0, formula);
+    const e1rm = e1rms[i];
     if (e1rm > bestE1rm) {
       bestE1rm = e1rm;
       bestE1rmIndex = i;
     }
   });
+
+  const e1rmMin = Math.min(...e1rms);
+  const e1rmMax = Math.max(...e1rms);
+  const e1rmRange = e1rmMax - e1rmMin || 1;
+
+  function getSizeForE1rm(e1rm) {
+    const t = (e1rm - e1rmMin) / e1rmRange;
+    if (t < 0.2) return { text: "text-xs", pad: "px-2 py-1.5" };
+    if (t < 0.4) return { text: "text-sm", pad: "px-2.5 py-2" };
+    if (t < 0.6) return { text: "text-base", pad: "px-3 py-2" };
+    if (t < 0.8) return { text: "text-lg", pad: "px-3.5 py-2.5" };
+    return { text: "text-xl", pad: "px-4 py-3" };
+  }
 
   // Groups: consecutive sets with same reps×weight (e.g. 3x5 of 60kg)
   const groups = [];
@@ -449,22 +465,20 @@ function ExerciseBlock({
         <div className="flex flex-wrap gap-2">
           {workouts.map((workout, index) => {
             const isHighlighted = highlightedIndices.has(index);
+            const size = getSizeForE1rm(e1rms[index]);
+            const padClass = isHighlighted ? "px-3.5 py-2.5" : size.pad;
             return (
             <div
               key={index}
-              className={`flex flex-col gap-1 rounded-lg border px-3 py-2 transition-colors ${
-                isHighlighted
-                  ? `${highlightClass} px-3.5 py-2.5`
-                  : "border-border/60 bg-muted/30"
+              className={`flex flex-col gap-1 rounded-lg border transition-colors ${padClass} ${
+                isHighlighted ? highlightClass : "border-border/60 bg-muted/30"
               }`}
             >
               <div className="flex items-center gap-2">
                 <span
-                  className={
-                    isHighlighted
-                      ? "text-lg font-semibold tabular-nums sm:text-xl"
-                      : "tabular-nums"
-                  }
+                  className={`tabular-nums ${size.text} ${
+                    isHighlighted ? "font-semibold" : ""
+                  }`}
                 >
                   {workout.reps}×{workout.weight}
                   {workout.unitType}
@@ -536,7 +550,7 @@ function ExerciseBlock({
                 </span>
               )}
             </div>
-          );
+            );
           })}
         </div>
         {perLiftTonnageStats?.[liftType] && (
@@ -666,7 +680,7 @@ function LiftStrengthLevel({
   return (
     <Link
       href="/strength-level-calculator"
-      className="inline-flex items-center gap-1.5 rounded-md py-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline"
+      className="inline-flex items-center gap-1.5 rounded-md py-1 text-base font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline"
     >
       {liftType} strength level:{" "}
       {isBeyondElite ? (

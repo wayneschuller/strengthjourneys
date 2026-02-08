@@ -23,6 +23,17 @@ export const coreLiftTypes = [
   "Front Squat",
 ];
 
+// Big Four lifts in canonical order (used for year recap PR prioritization)
+export const BIG_FOUR_LIFT_TYPES = [
+  "Back Squat",
+  "Bench Press",
+  "Deadlift",
+  "Strict Press",
+];
+
+// Rep schemes to prioritize in year recap (1RM, 3RM, 5RM)
+export const PRIORITY_REP_SCHEMES = [1, 3, 5];
+
 // Function to get a celebration emoji based on the provided position
 export function getCelebrationEmoji(position) {
   // Array of celebration emojis corresponding to different positions
@@ -798,6 +809,110 @@ export function findLiftPositionInTopLifts(liftTuple, topLiftsByTypeAndReps) {
   }
 
   return { rank: -1, annotation: null }; // Return -1 if the lift is not found
+}
+
+/**
+ * Get PR highlights for a given year from parsedData using e1RM-based selection.
+ * - Big Four: show the best any-rep e1RM lift for each (Back Squat, Bench Press, Deadlift, Strict Press)
+ * - All lifts: show any 1RM, 3RM, or 5RM that is within 5% of that lift type's best e1RM for the year
+ *
+ * @param {Array} parsedData - Chronologically sorted lift entries
+ * @param {string|number} year - e.g. "2024" or 2024
+ * @param {string} e1rmFormula - e.g. "Brzycki", "Epley"
+ * @returns {Array} Sorted list of year PR objects: { date, liftType, reps, weight, unitType, ... }
+ */
+export function getPRHighlightsForYear(parsedData, year, e1rmFormula = "Brzycki") {
+  const startTime = performance.now();
+  if (!parsedData || !year) return [];
+  const yearStr = String(year);
+  const yearStart = `${yearStr}-01-01`;
+  const yearEnd = `${yearStr}-12-31`;
+
+  const yearLifts = [];
+  parsedData.forEach((entry) => {
+    if (entry.isGoal) return;
+    const reps = entry.reps ?? 0;
+    if (reps < 1 || reps > 10) return;
+    if (entry.date < yearStart || entry.date > yearEnd) return;
+    yearLifts.push({ ...entry, reps });
+  });
+
+  // Per lift type: best e1RM and the lift that achieved it
+  const bestByLiftType = {};
+  yearLifts.forEach((lift) => {
+    const e1rm = estimateE1RM(lift.reps, lift.weight ?? 0, e1rmFormula);
+    const existing = bestByLiftType[lift.liftType];
+    if (!existing || e1rm > existing.e1rm) {
+      bestByLiftType[lift.liftType] = { ...lift, e1rm };
+    }
+  });
+
+  const results = [];
+  const seen = new Set();
+
+  const dedupeKey = (l) => `${l.liftType}|${l.reps}|${l.date}|${l.weight}`;
+
+  // 1. Big Four: add the lift that achieved best e1RM for each
+  BIG_FOUR_LIFT_TYPES.forEach((liftType) => {
+    const best = bestByLiftType[liftType];
+    if (!best) return;
+    const key = dedupeKey(best);
+    if (!seen.has(key)) {
+      seen.add(key);
+      results.push(best);
+    }
+  });
+
+  // 2. Any lift: add 1RM, 3RM, 5RM within 5% of that lift type's best e1RM
+  const within5Percent = (lift, best) => {
+    if (!best) return false;
+    const liftE1rm = estimateE1RM(lift.reps, lift.weight ?? 0, e1rmFormula);
+    return liftE1rm >= best.e1rm * 0.95;
+  };
+
+  yearLifts.forEach((lift) => {
+    if (!PRIORITY_REP_SCHEMES.includes(lift.reps)) return;
+    const best = bestByLiftType[lift.liftType];
+    if (!within5Percent(lift, best)) return;
+
+    const key = dedupeKey(lift);
+    if (seen.has(key)) return;
+    seen.add(key);
+    results.push(lift);
+  });
+
+  const bigFourIndex = (liftType) => {
+    const i = BIG_FOUR_LIFT_TYPES.indexOf(liftType);
+    return i >= 0 ? i : 999;
+  };
+
+  results.sort((a, b) => {
+    const aBigFour = BIG_FOUR_LIFT_TYPES.includes(a.liftType);
+    const bBigFour = BIG_FOUR_LIFT_TYPES.includes(b.liftType);
+    if (aBigFour !== bBigFour) return aBigFour ? -1 : 1;
+    const aLiftOrder = bigFourIndex(a.liftType);
+    const bLiftOrder = bigFourIndex(b.liftType);
+    if (aLiftOrder !== bLiftOrder) return aLiftOrder - bLiftOrder;
+    const repOrder = [1, 3, 5, 2, 4, 6, 7, 8, 9, 10];
+    return repOrder.indexOf(a.reps) - repOrder.indexOf(b.reps);
+  });
+
+  // Trim with diversity: best 2 per Big Four lift (up to 8 rows)
+  const byLiftType = {};
+  results.forEach((r) => {
+    if (!BIG_FOUR_LIFT_TYPES.includes(r.liftType)) return;
+    byLiftType[r.liftType] = byLiftType[r.liftType] || [];
+    if (byLiftType[r.liftType].length < 2) {
+      byLiftType[r.liftType].push(r);
+    }
+  });
+  const out = BIG_FOUR_LIFT_TYPES.flatMap((lt) => byLiftType[lt] || []);
+  devLog(
+    `getPRHighlightsForYear() execution time: \x1b[1m${Math.round(
+      performance.now() - startTime,
+    )}ms\x1b[0m`,
+  );
+  return out;
 }
 
 // Analyzes lifts for a specific session date, providing context about their significance.

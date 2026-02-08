@@ -1,12 +1,14 @@
 "use client";
 
 import { useRef, useMemo } from "react";
+import { useLocalStorage } from "usehooks-ts";
 import {
   pickQuirkyPhrase,
   PR_HIGHLIGHTS_PHRASES,
 } from "../phrases";
-import { getReadableDateString, findLiftPositionInTopLifts } from "@/lib/processing-utils";
+import { getReadableDateString, getPRHighlightsForYear } from "@/lib/processing-utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Award } from "lucide-react";
 import { motion } from "motion/react";
 import { LiftSvg, getLiftSvgPath } from "../lift-svg";
@@ -19,10 +21,13 @@ export function PRHighlightsCard({ year, isDemo, isActive = true }) {
     `pr-${year}`,
   );
 
-  const { topLiftsByTypeAndReps } = useUserLiftingData();
+  const { parsedData } = useUserLiftingData();
+  const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
+    initializeWithValue: false,
+  });
   const prs = useMemo(
-    () => getPRHighlightsForYear(year, topLiftsByTypeAndReps),
-    [year, topLiftsByTypeAndReps],
+    () => getPRHighlightsForYear(parsedData, year, e1rmFormula ?? "Brzycki"),
+    [year, parsedData, e1rmFormula],
   );
 
   return (
@@ -44,7 +49,7 @@ export function PRHighlightsCard({ year, isDemo, isActive = true }) {
       </motion.p>
       {prs.length > 0 ? (
         <ul className="mt-4 space-y-2 text-left">
-          {prs.slice(0, 5).map((pr, i) => {
+          {prs.map((pr, i) => {
             const barColors = ["border-l-chart-1", "border-l-chart-2", "border-l-chart-3", "border-l-chart-4", "border-l-chart-5"];
             return (
             <motion.li
@@ -99,35 +104,3 @@ export function PRHighlightsCard({ year, isDemo, isActive = true }) {
   );
 }
 
-// --- Supporting functions ---
-
-function getPRHighlightsForYear(year, topLiftsByTypeAndReps) {
-  if (!year || !topLiftsByTypeAndReps) return [];
-  const yearStart = `${year}-01-01`;
-  const yearEnd = `${year}-12-31`;
-  const yearPRs = [];
-  Object.entries(topLiftsByTypeAndReps).forEach(([liftType, repRanges]) => {
-    repRanges.forEach((prs, repsIndex) => {
-      const reps = repsIndex + 1;
-      (prs || []).forEach((pr) => {
-        if (pr.date >= yearStart && pr.date <= yearEnd) {
-          const { rank, annotation } = findLiftPositionInTopLifts(
-            pr,
-            topLiftsByTypeAndReps,
-          );
-          yearPRs.push({
-            ...pr,
-            reps,
-            rank,
-            annotation,
-          });
-        }
-      });
-    });
-  });
-  yearPRs.sort((a, b) => {
-    if (a.rank !== b.rank) return a.rank - b.rank;
-    return (b.weight ?? 0) - (a.weight ?? 0);
-  });
-  return yearPRs.slice(0, 5);
-}

@@ -9,7 +9,10 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { getAverageLiftSessionTonnageFromPrecomputed } from "@/lib/processing-utils";
+import {
+  getAverageLiftSessionTonnageFromPrecomputed,
+  getLiftVolumeMultiplier,
+} from "@/lib/processing-utils";
 import { motion } from "motion/react";
 
 import { format } from "date-fns";
@@ -553,7 +556,7 @@ function computeLiftTonnageMeta(sessionTonnageLookup, lifts) {
   let minTonnage = Infinity;
 
   Object.entries(liftTonnageMap).forEach(([liftType, { average }]) => {
-    const value = average ?? 0;
+    const value = (average ?? 0) * getLiftVolumeMultiplier(liftType);
     if (value > maxTonnage) {
       maxTonnage = value;
       favoriteLiftType = liftType;

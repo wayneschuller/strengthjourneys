@@ -34,6 +34,14 @@ export const BIG_FOUR_LIFT_TYPES = [
 // Rep schemes to prioritize in year recap (1RM, 3RM, 5RM)
 export const PRIORITY_REP_SCHEMES = [1, 3, 5];
 
+/** Deadlift is more physically demanding so typically has fewer sets/reps. Use this to weight
+ *  deadlift volume when comparing popularity/effort across lifts (most-trained, favorite badges). */
+export const DEADLIFT_VOLUME_MULTIPLIER = 1.5;
+
+export function getLiftVolumeMultiplier(liftType) {
+  return liftType === "Deadlift" ? DEADLIFT_VOLUME_MULTIPLIER : 1;
+}
+
 // Function to get a celebration emoji based on the provided position
 export function getCelebrationEmoji(position) {
   // Array of celebration emojis corresponding to different positions

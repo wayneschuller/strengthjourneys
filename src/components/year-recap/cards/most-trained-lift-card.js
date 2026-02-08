@@ -8,6 +8,7 @@ import {
   MOST_TRAINED_LIFT_LABELS,
 } from "../phrases";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { getLiftVolumeMultiplier } from "@/lib/processing-utils";
 import { Trophy } from "lucide-react";
 import { LiftSvg } from "../lift-svg";
 
@@ -164,7 +165,12 @@ function computeMostTrainedLiftForYear(parsedData, year) {
   const sessionCount = sessionDates.size;
   const mostTrainedEntry =
     Object.keys(liftTypeSets).length > 0
-      ? Object.entries(liftTypeSets).sort((a, b) => b[1] - a[1])[0]
+      ? Object.entries(liftTypeSets)
+          .sort(
+            (a, b) =>
+              b[1] * getLiftVolumeMultiplier(b[0]) -
+              a[1] * getLiftVolumeMultiplier(a[0]),
+          )[0]
       : null;
   const mostTrainedLift = mostTrainedEntry ? mostTrainedEntry[0] : null;
   const mostTrainedLiftSets = mostTrainedLift ? liftTypeSets[mostTrainedLift] : 0;

@@ -130,18 +130,18 @@ function StatCard({
       className={`${statCardBase} relative border-l-4 ${card}`}
     >
       {action}
-      <CardHeader className="flex flex-row items-start gap-3 p-4">
-        <div className={`rounded-lg p-2 ${iconBg}`}>
-          <Icon className={`h-5 w-5 ${icon}`} />
+      <CardHeader className="flex flex-row items-start gap-2.5 p-3">
+        <div className={`rounded-lg p-1.5 ${iconBg}`}>
+          <Icon className={`h-4 w-4 ${icon}`} />
         </div>
         <div className="min-w-0 flex-1">
-          <CardDescription>{description}</CardDescription>
-          <CardTitle className="mt-1 min-h-[3rem] text-xl leading-tight font-semibold tabular-nums sm:text-3xl">
+          <CardDescription className="text-xs">{description}</CardDescription>
+          <CardTitle className="mt-1 min-h-10 text-lg leading-tight font-semibold tabular-nums sm:text-xl">
             {title}
           </CardTitle>
         </div>
       </CardHeader>
-      <CardFooter className="min-h-[2.5rem] flex-col items-start gap-1.5 px-4 pt-0 pb-4 text-sm">
+      <CardFooter className="min-h-8 flex-col items-start gap-1.5 px-3 pt-0 pb-3 text-xs">
         <motion.div
           className="w-full"
           initial={{ opacity: 0 }}
@@ -309,7 +309,7 @@ export function SectionTopCards({ isProgressDone = false }) {
             title={
               <span className="flex flex-col gap-0.5">
                 <span>{recentSessions} sessions</span>
-                <span className="text-base font-semibold text-muted-foreground">
+                <span className="text-sm font-semibold text-muted-foreground">
                   in the last 90 days
                 </span>
               </span>
@@ -318,14 +318,14 @@ export function SectionTopCards({ isProgressDone = false }) {
               percentageChange !== 0 ? (
                 <CardAction>
                   <span
-                    className={`flex items-center text-sm font-normal ${
+                    className={`flex items-center text-xs font-normal ${
                       percentageChange > 0 ? "text-emerald-600" : "text-red-500"
                     }`}
                   >
                     {percentageChange > 0 ? (
-                      <TrendingUp className="mr-1 h-4 w-4" />
+                      <TrendingUp className="mr-1 h-3.5 w-3.5" />
                     ) : (
-                      <TrendingDown className="mr-1 h-4 w-4" />
+                      <TrendingDown className="mr-1 h-3.5 w-3.5" />
                     )}
                     {Math.abs(percentageChange)}%
                   </span>
@@ -432,13 +432,13 @@ function SectionTopCardsSkeleton() {
   return Array.from({ length: 5 }).map((_, index) => (
     <div
       key={`section-top-card-skeleton-${index}`}
-      className="border-border/60 bg-card/30 flex min-h-[260px] flex-col justify-between rounded-xl border p-4 md:min-h-[280px]"
+      className="border-border/60 bg-card/30 flex min-h-[220px] flex-col justify-between rounded-xl border p-3 md:min-h-[240px]"
     >
       <div className="flex items-start gap-3">
-        <Skeleton className="h-10 w-10 rounded-lg" />
+        <Skeleton className="h-8 w-8 rounded-lg" />
         <div className="flex-1 space-y-2">
           <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-7 w-32" />
+          <Skeleton className="h-6 w-28" />
         </div>
       </div>
       <div className="mt-4 space-y-2">

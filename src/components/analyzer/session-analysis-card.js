@@ -8,7 +8,7 @@ import {
   useMemo,
   useDeferredValue,
 } from "react";
-import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
@@ -19,7 +19,6 @@ import {
   getStandardForLiftDate,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
-import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -75,11 +74,10 @@ export function SessionAnalysisCard({
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBioData();
-  const [e1rmFormula] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.FORMULA,
-    "Brzycki",
-    false,
-  );
+  const e1rmFormula =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
+      initializeWithValue: false,
+    }) ?? "Brzycki";
   const hasBioData =
     age && bodyWeight && standards && Object.keys(standards).length > 0;
 

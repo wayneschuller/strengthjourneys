@@ -658,7 +658,10 @@ function findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes) {
 
     const singleReps = repRanges[0]; // Index 0 is 1-rep maxes
     if (singleReps && singleReps.length > 0) {
-      const pr = singleReps[0]; // First item is highest weight
+      const topWeight = singleReps[0].weight;
+      const pr = singleReps
+        .filter((lift) => lift.weight === topWeight)
+        .reduce((best, lift) => (lift.date > best.date ? lift : best), singleReps[0]);
       if (!mostRecentPR || pr.date > mostRecentDate) {
         mostRecentPR = pr;
         mostRecentDate = pr.date;

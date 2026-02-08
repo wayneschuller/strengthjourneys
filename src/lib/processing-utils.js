@@ -298,6 +298,7 @@ export function getAverageLiftSessionTonnage(
  * - Top-level keys: lift type strings (e.g. `"Back Squat"`, `"Bench Press"`)
  * - Value per lift type: array of 10 arrays (indices 0–9 = 1–10 reps)
  * - Each inner array: lift objects sorted by weight descending (best first)
+ * - Ties (equal weight): earlier date ranks better; later warmups are trimmed out
  * - Each entry: `{ date, liftType, reps, weight, unitType, ... }` (full parsed row)
  *
  * Examples:
@@ -359,10 +360,14 @@ export function processTopLiftsByTypeAndReps(parsedData, liftTypes) {
   });
 
   // Function to sort and trim arrays
+  // When weights are equal, earlier dates rank better (later warmups get trimmed)
   const sortAndTrimArrays = (dataStructure, maxEntries) => {
     Object.keys(dataStructure).forEach((liftType) => {
       dataStructure[liftType].forEach((repArray) => {
-        repArray.sort((a, b) => b.weight - a.weight);
+        repArray.sort((a, b) => {
+          if (b.weight !== a.weight) return b.weight - a.weight;
+          return new Date(a.date) - new Date(b.date); // earlier date wins
+        });
         if (repArray.length > maxEntries) {
           repArray.length = maxEntries;
         }

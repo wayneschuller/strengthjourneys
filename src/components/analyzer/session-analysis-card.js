@@ -55,6 +55,7 @@ import {
   ChevronLeft,
   ChevronRight,
   PlayCircle,
+  StickyNote,
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
@@ -269,8 +270,8 @@ export function SessionAnalysisCard({
                     <li key={liftType} className="pb-2">
                       <LiftTypeIndicator liftType={liftType} />
                       <ul className="pl-4">
-                        {workouts.map((workout, index) => {
-                          const setRow = (
+                        {workouts.map((workout, index) => (
+                          <li key={index}>
                             <div className="flex flex-row justify-between">
                               <div
                                 className={
@@ -298,7 +299,25 @@ export function SessionAnalysisCard({
                                       </a>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>User Data URL</p>
+                                      <p>
+                                        Click to open user video (
+                                        {workout.URL.length > 25
+                                          ? `${workout.URL.slice(0, 22)}…`
+                                          : workout.URL}
+                                        )
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {workout.notes && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="ml-1 inline-flex cursor-help align-middle">
+                                        <StickyNote className="h-3 w-3" />
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="max-w-xs">{workout.notes}</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 )}
@@ -314,26 +333,8 @@ export function SessionAnalysisCard({
                                   `${workout.yearlySignificanceAnnotation} of the year`}
                               </div>
                             </div>
-                          );
-                          return (
-                            <li key={index}>
-                              {workout.notes ? (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="cursor-help">
-                                      {setRow}
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p className="max-w-xs">{workout.notes}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              ) : (
-                                setRow
-                              )}
-                            </li>
-                          );
-                        })}
+                          </li>
+                        ))}
                       </ul>
                       {perLiftTonnageStats?.[liftType] && (
                         <div className="mt-1 pl-4 text-xs text-muted-foreground">

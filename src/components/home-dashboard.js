@@ -11,8 +11,9 @@ import { useLocalStorage } from "usehooks-ts";
 import { Progress } from "./ui/progress";
 import { Skeleton } from "./ui/skeleton";
 import { motion } from "motion/react";
-import { format, differenceInMinutes, isToday } from "date-fns";
+import { format, differenceInSeconds, differenceInMinutes, differenceInHours, isToday } from "date-fns";
 import { OnBoardingDashboard } from "./instructions-cards";
+import { RefreshCw, Loader2 } from "lucide-react";
 
 export function HomeDashboard() {
   const { data: session, status: authStatus } = useSession();
@@ -38,8 +39,18 @@ export function HomeDashboard() {
     rawRows,
     dataSyncedAt,
     isValidating,
+    mutate,
   } = useUserLiftingData();
   const [isProgressDone, setIsProgressDone] = useState(false);
+  const [hasDataLoaded, setHasDataLoaded] = useState(false);
+
+  useEffect(() => {
+    if (isProgressDone) setHasDataLoaded(true);
+  }, [isProgressDone]);
+
+  useEffect(() => {
+    if (!ssid) setHasDataLoaded(false);
+  }, [ssid]);
 
   return (
     <div>
@@ -47,13 +58,15 @@ export function HomeDashboard() {
         <div>
           Welcome <span className="font-bold">{session.user.name}</span>
         </div>
-        {ssid && isProgressDone && (
+        {ssid && hasDataLoaded && (
           <DataSheetStatus
             rawRows={rawRows}
             parsedData={parsedData}
             dataSyncedAt={dataSyncedAt}
             isValidating={isValidating}
             sheetURL={sheetURL}
+            sheetFilename={sheetFilename}
+            mutate={mutate}
           />
         )}
       </div>
@@ -63,10 +76,11 @@ export function HomeDashboard() {
           rowCount={rawRows}
           isProgressDone={isProgressDone}
           setIsProgressDone={setIsProgressDone}
+          isValidating={isValidating}
         />
       )}
-      {ssid && <SectionTopCards isProgressDone={isProgressDone} />}
-      {ssid && isProgressDone && <MostRecentSessionCard />}
+      {ssid && <SectionTopCards isProgressDone={hasDataLoaded} />}
+      {ssid && hasDataLoaded && <MostRecentSessionCard />}
     </div>
   );
 }
@@ -74,13 +88,20 @@ export function HomeDashboard() {
 function formatSyncTime(timestamp) {
   if (!timestamp) return null;
   const date = new Date(timestamp);
+  const secsAgo = differenceInSeconds(Date.now(), date);
   const minsAgo = differenceInMinutes(Date.now(), date);
 
-  if (minsAgo < 1) return "in the last minute";
+  if (secsAgo < 60) return "just now";
   if (minsAgo === 1) return "1 minute ago";
   if (minsAgo <= 15) return `${minsAgo} minutes ago`;
   if (isToday(date)) return `at ${format(date, "h:mm a")} today`;
   return `${format(date, "MMM d")} at ${format(date, "h:mm a")}`;
+}
+
+function getFreshnessColor(dataSyncedAt) {
+  if (!dataSyncedAt) return "text-muted-foreground";
+  const hoursAgo = differenceInHours(Date.now(), dataSyncedAt);
+  return hoursAgo < 1 ? "text-green-600 dark:text-green-500" : "text-amber-600 dark:text-amber-500";
 }
 
 function DataSheetStatus({
@@ -89,6 +110,8 @@ function DataSheetStatus({
   dataSyncedAt,
   isValidating,
   sheetURL,
+  sheetFilename,
+  mutate,
 }) {
   const rowLabel =
     parsedData &&
@@ -99,37 +122,64 @@ function DataSheetStatus({
         ? `${rawRows.toLocaleString()} rows`
         : null;
 
+  const sheetLabel = sheetFilename || "Your Google Sheet";
   const timeSuffix = formatSyncTime(dataSyncedAt);
   const syncText = isValidating
-    ? "Syncing…"
+    ? "Reading your workout data…"
     : timeSuffix
-      ? `User Google Sheet synced ${timeSuffix}`
-      : "User Google Sheet synced";
+      ? `✓ Synced with ${sheetLabel} ${timeSuffix}`
+      : `✓ Up to date with ${sheetLabel}`;
+
+  const freshnessColor = isValidating ? "text-muted-foreground" : getFreshnessColor(dataSyncedAt);
+  const tooltipText = dataSyncedAt
+    ? `Last synced: ${format(new Date(dataSyncedAt), "MMM d, h:mm a")}${rowLabel ? ` • ${rowLabel}` : ""}`
+    : rowLabel || null;
 
   const syncLabel = sheetURL ? (
     <a
       href={decodeURIComponent(sheetURL)}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-muted-foreground hover:text-foreground hover:underline"
+      title={tooltipText}
+      className={`${freshnessColor} hover:text-foreground hover:underline`}
     >
       {syncText}
     </a>
   ) : (
-    syncText
+    <span title={tooltipText} className={freshnessColor}>
+      {syncText}
+    </span>
   );
 
   const parts = [syncLabel];
   if (rowLabel) parts.push(rowLabel);
 
   return (
-    <div className="text-right text-xs text-muted-foreground">
-      {parts.map((part, i) => (
-        <span key={i}>
-          {i > 0 && " · "}
-          {part}
-        </span>
-      ))}
+    <div className="flex items-center justify-end gap-2 text-xs">
+      <div className="text-right">
+        {parts.map((part, i) => (
+          <span key={i}>
+            {i > 0 && " · "}
+            {part}
+          </span>
+        ))}
+      </div>
+      {mutate && (
+        <button
+          type="button"
+          onClick={() => mutate()}
+          disabled={isValidating}
+          title="Sync now"
+          className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Sync now"
+        >
+          {isValidating ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5" />
+          )}
+        </button>
+      )}
     </div>
   );
 }
@@ -140,9 +190,11 @@ function RowProcessingIndicator({
   rowCount,
   isProgressDone,
   setIsProgressDone,
+  isValidating,
 }) {
   const [animatedCount, setAnimatedCount] = useState(0);
   const [shouldFadeOut, setShouldFadeOut] = useState(false);
+  const [animationKey, setAnimationKey] = useState(0);
 
   useEffect(() => {
     if (!isProgressDone) {
@@ -153,8 +205,17 @@ function RowProcessingIndicator({
     return () => clearTimeout(timer);
   }, [isProgressDone]);
 
+  // When SWR starts revalidating, reappear and re-run the animation
   useEffect(() => {
-    // Reset whenever the incoming row count changes
+    if (isValidating && rowCount != null && rowCount > 0) {
+      setShouldFadeOut(false);
+      setIsProgressDone(false);
+      setAnimationKey((k) => k + 1);
+    }
+  }, [isValidating, rowCount]);
+
+  useEffect(() => {
+    // Reset whenever the incoming row count changes or animation is re-triggered
     setAnimatedCount(0);
     setIsProgressDone(false);
 
@@ -191,7 +252,7 @@ function RowProcessingIndicator({
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [rowCount, setIsProgressDone]);
+  }, [rowCount, animationKey, setIsProgressDone]);
 
   const percent =
     rowCount && rowCount > 0
@@ -226,7 +287,7 @@ function RowProcessingIndicator({
         >
           <Progress className="mb-2 h-2 w-4/5 md:w-3/5" value={percent} />
           <div className="text-sm text-muted-foreground flex items-center">
-            {isProgressDone ? "Processed" : "Processing"} Google Sheet rows:{" "}
+            {isProgressDone ? "Processed" : "Reading your workout data"}:{" "}
             {animatedCount.toLocaleString()} / {rowCount?.toLocaleString()}
             <motion.span
               className={`ml-2 ${isProgressDone ? "text-green-500" : "text-amber-400"}`}

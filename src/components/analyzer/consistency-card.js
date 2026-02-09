@@ -62,13 +62,16 @@ export function ConsistencyCard() {
               <TooltipProvider key={item.label}>
                 <Tooltip>
                   <TooltipTrigger>
-                    <div className="flex-col text-center">
+                    <div className="flex flex-col items-center text-center">
                       <div className="">
                         <CircularProgressWithLetter
                           progress={item.percentage}
                         />
                       </div>
                       <div className="text-nowrap">{item.label}</div>
+                      <p className="mt-1 text-xs text-muted-foreground sm:hidden">
+                        {item.tooltip}
+                      </p>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>

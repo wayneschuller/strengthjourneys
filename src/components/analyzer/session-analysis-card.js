@@ -287,7 +287,7 @@ export function SessionAnalysisCard({
   };
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={300} skipDelayDuration={1000} disableHoverableContent>
       <Card className="flex-1 overflow-hidden">
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-4">

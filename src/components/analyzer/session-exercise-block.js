@@ -157,7 +157,7 @@ export function SessionExerciseBlock({
                 {workout.reps}×{workout.weight}
                 {workout.unitType}
               </span>
-              <div className="flex shrink-0 items-center gap-1.5 sm:gap-0.5">
+              <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
                 {workout.lifetimeRanking !== -1 && (
                   <Tooltip>
                     <TooltipTrigger asChild>

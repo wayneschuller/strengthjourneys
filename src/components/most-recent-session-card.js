@@ -187,7 +187,7 @@ export function MostRecentSessionCard({
     const titlePrefix = `Recent ${liftType} sessions`;
     const svgPath = getLiftSvgPath(liftType);
     return (
-      <TooltipProvider>
+      <TooltipProvider delayDuration={300} skipDelayDuration={1000} disableHoverableContent>
         <Card className="mt-4 rounded-xl border">
           <CardHeader className="pb-1.5">
             <div className="flex items-start justify-between gap-4">
@@ -296,7 +296,7 @@ export function MostRecentSessionCard({
   }
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={300} skipDelayDuration={1000} disableHoverableContent>
       <Card className="mt-4 rounded-xl border">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-4">
@@ -305,8 +305,8 @@ export function MostRecentSessionCard({
                 {titlePrefix} — {getReadableDateString(sessionDate, true)}
               </CardTitle>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <div className="flex items-center gap-0.5 rounded-lg border bg-muted/30 p-0.5">
+            <div className="flex shrink-0 items-center gap-2 md:gap-6">
+              <div className="flex items-center gap-0.5 md:gap-3 rounded-lg border bg-muted/30 p-0.5 md:px-1.5">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button

@@ -8,6 +8,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { GettingStartedCard } from "@/components/instructions-cards";
 import { useLocalStorage } from "usehooks-ts";
+import { useToast } from "@/hooks/use-toast";
 import {
   Card,
   CardContent,
@@ -122,6 +123,7 @@ const toKg = (lbs) => (lbs * 0.453592).toFixed(1);
 const KG_PER_LB = 0.453592;
 
 function ThousandPoundClubCalculatorMain({ relatedArticles }) {
+  const { toast } = useToast();
   const [squat, setSquat] = useLocalStorage(LOCAL_STORAGE_KEYS.THOUSAND_SQUAT, 0, {
     initializeWithValue: false,
   });
@@ -177,8 +179,15 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       "Strength Journeys",
       url,
     ].filter(Boolean);
-    navigator.clipboard?.writeText(lines.join("\n")).catch(() => {});
-    trackShareCopy("1000lb_club", { page: "/1000lb-club-calculator" });
+    navigator.clipboard
+      ?.writeText(lines.join("\n"))
+      .then(() => {
+        toast({ description: "Result copied to clipboard." });
+        trackShareCopy("1000lb_club", { page: "/1000lb-club-calculator" });
+      })
+      .catch(() => {
+        toast({ variant: "destructive", title: "Could not copy to clipboard" });
+      });
   };
 
   return (

@@ -103,15 +103,6 @@ export function YearRecapCarousel({ year, isDemo }) {
 
   return (
     <div className="relative">
-      {isSharing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-          <div className="flex flex-col items-center gap-4 rounded-lg border bg-background p-6 shadow-lg">
-            <LoaderCircle className="h-8 w-8 animate-spin" />
-            <p className="text-sm text-muted-foreground">Generating image...</p>
-          </div>
-        </div>
-      )}
-
       <div ref={shareRef} className="mx-auto max-w-[360px] rounded-xl border bg-card">
         <Carousel setApi={setApi} className="w-full">
           <CarouselContent className="-ml-0">

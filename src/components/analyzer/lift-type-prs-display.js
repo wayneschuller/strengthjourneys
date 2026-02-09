@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useReadLocalStorage } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import {
@@ -21,9 +22,17 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp, Play } from "lucide-react";
+import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
+import { LiftStrengthLevel } from "@/components/analyzer/session-exercise-block";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 
 /** Helper: strength rating from reps/weight. Uses age-at-lift when bio+liftDate provided for accurate historical ratings. */
 const getStrengthRating = (
@@ -47,26 +56,6 @@ const getStrengthRating = (
   if (!standard) return null;
   const oneRepMax = estimateE1RM(repCount, weight, "Brzycki");
   return getStrengthRatingForE1RM(oneRepMax, standard);
-};
-
-/**
- * Helper function to get badge variant based on rating
- */
-const getRatingBadgeVariant = (rating) => {
-  switch (rating) {
-    case "Elite":
-      return "default";
-    case "Advanced":
-      return "default";
-    case "Intermediate":
-      return "secondary";
-    case "Beginner":
-      return "outline";
-    case "Physically Active":
-      return "outline";
-    default:
-      return "outline";
-  }
 };
 
 /**
@@ -112,7 +101,13 @@ const PRCard = ({
   liftColor,
   onCardClick,
   isExpanded,
-  strengthRating,
+  standards,
+  age,
+  bodyWeight,
+  sex,
+  isMetric,
+  hasBioData,
+  e1rmFormula = "Brzycki",
 }) => {
   if (!repRange || repRange.length === 0) return null;
 
@@ -139,10 +134,28 @@ const PRCard = ({
             {repCount}RM
           </CardTitle>
           <div className="flex items-center gap-2">
-            {strengthRating && (
-              <Badge variant={getRatingBadgeVariant(strengthRating)}>
-                {strengthRating}
-              </Badge>
+            {hasBioData && (
+              <LiftStrengthLevel
+                liftType={liftType}
+                workouts={[
+                  {
+                    reps: repCount,
+                    weight: pr.weight,
+                    unitType: pr.unitType,
+                  },
+                ]}
+                standards={standards}
+                e1rmFormula={e1rmFormula}
+                sessionDate={pr.date}
+                age={age}
+                bodyWeight={bodyWeight}
+                sex={sex}
+                isMetric={isMetric}
+                bestSetReps={repCount}
+                bestSetWeight={pr.weight}
+                inline
+                asBadge
+              />
             )}
             <Badge
               variant="outline"
@@ -222,7 +235,15 @@ const PRCard = ({
 /**
  * Detail view showing all lifts in a rep range
  */
-const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards, bioForDateRating }) => {
+const RepRangeDetailView = ({
+  repRange,
+  repIndex,
+  liftType,
+  liftColor,
+  standards,
+  bioForDateRating,
+  e1rmFormula = "Brzycki",
+}) => {
   if (!repRange || repRange.length === 0) return null;
 
   const repCount = repIndex + 1;
@@ -259,10 +280,28 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards
                         {repCount}@{lift.weight}
                         {lift.unitType}
                       </span>
-                      {getStrengthRating(repCount, lift.weight, liftType, standards, bioForDateRating ? { ...bioForDateRating, liftDate: lift.date } : undefined) && (
-                        <Badge variant={getRatingBadgeVariant(getStrengthRating(repCount, lift.weight, liftType, standards, bioForDateRating ? { ...bioForDateRating, liftDate: lift.date } : undefined))}>
-                          {getStrengthRating(repCount, lift.weight, liftType, standards, bioForDateRating ? { ...bioForDateRating, liftDate: lift.date } : undefined)}
-                        </Badge>
+                      {bioForDateRating && (
+                        <LiftStrengthLevel
+                          liftType={liftType}
+                          workouts={[
+                            {
+                              reps: repCount,
+                              weight: lift.weight,
+                              unitType: lift.unitType,
+                            },
+                          ]}
+                          standards={standards}
+                          e1rmFormula={e1rmFormula}
+                          sessionDate={lift.date}
+                          age={bioForDateRating.age}
+                          bodyWeight={bioForDateRating.bodyWeight}
+                          sex={bioForDateRating.sex}
+                          isMetric={bioForDateRating.isMetric}
+                          bestSetReps={repCount}
+                          bestSetWeight={lift.weight}
+                          inline
+                          asBadge
+                        />
                       )}
                       {lift.URL && (
                         <TooltipProvider>
@@ -318,6 +357,10 @@ export const LiftTypeRepPRsDisplay = ({ liftType }) => {
   const { getColor } = useLiftColors();
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBioData();
   const [activeTab, setActiveTab] = useState("overview");
+  const e1rmFormula =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
+      initializeWithValue: false,
+    }) ?? "Brzycki";
   
   // Check if we have the necessary data for strength ratings
   const hasBioData = age && bodyWeight && standards && Object.keys(standards).length > 0;
@@ -405,31 +448,24 @@ export const LiftTypeRepPRsDisplay = ({ liftType }) => {
             a card or a tab above to explore all lifts for that rep range.
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {repRangesWithData.map(({ repRange, repIndex, repCount }) => {
-              const pr = repRange[0];
-              const strengthRating = hasBioData 
-                ? getStrengthRating(repCount, pr.weight, liftType, standards, {
-                    age,
-                    liftDate: pr.date,
-                    bodyWeight,
-                    sex,
-                    isMetric,
-                  })
-                : null;
-              
-              return (
-                <PRCard
-                  key={repIndex}
-                  repRange={repRange}
-                  repIndex={repIndex}
-                  liftType={liftType}
-                  liftColor={liftColor}
-                  onCardClick={() => handleCardClick(repIndex)}
-                  isExpanded={activeTab === `rep-${repIndex}`}
-                  strengthRating={strengthRating}
-                />
-              );
-            })}
+            {repRangesWithData.map(({ repRange, repIndex, repCount }) => (
+              <PRCard
+                key={repIndex}
+                repRange={repRange}
+                repIndex={repIndex}
+                liftType={liftType}
+                liftColor={liftColor}
+                onCardClick={() => handleCardClick(repIndex)}
+                isExpanded={activeTab === `rep-${repIndex}`}
+                hasBioData={hasBioData}
+                standards={standards}
+                age={age}
+                bodyWeight={bodyWeight}
+                sex={sex}
+                isMetric={isMetric}
+                e1rmFormula={e1rmFormula}
+              />
+            ))}
           </div>
         </TabsContent>
 
@@ -461,6 +497,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType }) => {
               bioForDateRating={
                 hasBioData ? { age, bodyWeight, sex, isMetric } : null
               }
+              e1rmFormula={e1rmFormula}
             />
           </TabsContent>
         ))}

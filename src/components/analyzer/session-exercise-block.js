@@ -27,6 +27,7 @@ import {
   getStandardForLiftDate,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
+import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 
 /**
  * Renders a block of workout sets for a single lift type. Shows reps×weight pills with
@@ -557,7 +558,7 @@ function LiftTonnageRow({ liftType, stats }) {
   );
 }
 
-function LiftStrengthLevel({
+export function LiftStrengthLevel({
   liftType,
   workouts,
   standards,
@@ -570,6 +571,7 @@ function LiftStrengthLevel({
   inline = false,
   bestSetReps,
   bestSetWeight,
+  asBadge = false,
 }) {
   const formula = e1rmFormula || "Brzycki";
   const standard =
@@ -633,15 +635,32 @@ function LiftStrengthLevel({
   }
 
   const href = `/calculator?${searchParams.toString()}`;
-  const ratingContent = isBeyondElite ? (
+  const ratingLabel = isBeyondElite ? "Beyond Elite" : rating;
+  const ratingEmoji =
+    isBeyondElite ? STRENGTH_LEVEL_EMOJI.Elite : STRENGTH_LEVEL_EMOJI[rating] ?? "";
+  const ratingContent = (
     <span className="text-foreground font-semibold">
-      {STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite
-    </span>
-  ) : (
-    <span className="text-foreground font-semibold">
-      {STRENGTH_LEVEL_EMOJI[rating] ?? ""} {rating}
+      {ratingEmoji} {ratingLabel}
     </span>
   );
+
+  if (asBadge) {
+    return (
+      <Link
+        href={href}
+        aria-label={`${liftType} strength level: ${ratingLabel}`}
+        className="inline-flex"
+      >
+        <Badge
+          variant={getRatingBadgeVariant(rating)}
+          className="inline-flex items-center gap-1 cursor-pointer"
+        >
+          {ratingEmoji && <span>{ratingEmoji}</span>}
+          <span>{ratingLabel}</span>
+        </Badge>
+      </Link>
+    );
+  }
 
   return (
     <Link

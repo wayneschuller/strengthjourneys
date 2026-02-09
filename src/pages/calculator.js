@@ -586,7 +586,7 @@ const E1RMSummaryCard = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-2">
-        <div className="text-center">
+        <div className="text-center text-lg md:text-xl">
           {isAdvancedAnalysis && `${liftType} `}
           {reps}@{weight}
           {isMetric ? "kg" : "lb"}

@@ -162,7 +162,7 @@ export function DesktopNav() {
           width={100}
           height="auto"
           alt="app logo"
-          className="inline-block"
+          className="inline-block rounded-lg"
           priority={true}
         />
       </Link>

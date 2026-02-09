@@ -7,6 +7,7 @@ import logoNeoBrutalism from "../../public/nav_logo_neo-brutalism.png";
 // import logoNeoBrutalismDark from "../../public/nav_logo_neo-brutalism-dark.png";
 import logoRetroArcade from "../../public/nav_logo_retro-arcade.png";
 //import logoRetroArcadeDark from "../../public/nav_logo_retro-arcade-dark.png";
+import logoStarryNight from "../../public/nav_logo_starry-night.png";
 
 // Fallback logos (existing light/dark logic)
 import fallbackDarkLogo from "../../public/nav_logo_light.png";
@@ -20,8 +21,8 @@ export const logoMap = {
   "neo-brutalism-dark": logoNeoBrutalism,
   "retro-arcade": logoRetroArcade,
   "retro-arcade-dark": logoRetroArcade,
-  "starry-night": fallbackLightLogo,
-  "starry-night-dark": fallbackDarkLogo,
+  "starry-night": logoStarryNight,
+  "starry-night-dark": logoStarryNight,
 };
 
 /**

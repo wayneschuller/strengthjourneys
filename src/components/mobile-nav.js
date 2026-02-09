@@ -99,7 +99,7 @@ export function MobileNav() {
                   width={logoWidth}
                   height="auto"
                   alt="logo"
-                  className="inline-block"
+                  className="inline-block rounded-lg"
                 />
               </Link>
             </SheetClose>

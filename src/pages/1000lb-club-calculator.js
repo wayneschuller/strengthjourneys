@@ -27,12 +27,13 @@ import {
 
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { Anvil, Trophy, LineChart, Calculator, BicepsFlexed, Bot, Share2 } from "lucide-react";
+import { Anvil, Trophy, LineChart, Calculator, BicepsFlexed, Bot } from "lucide-react";
 
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { trackShareCopy } from "@/lib/analytics";
+import { ShareCopyButton } from "@/components/share-copy-button";
 
 const BIG_FOUR_URLS = {
   "Back Squat": "/barbell-squat-insights",
@@ -260,10 +261,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             </div>
             <ThousandDonut total={total} />
             <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={handleCopyResult} className="gap-2">
-                <Share2 className="h-4 w-4" />
-                Copy my result
-              </Button>
+              <ShareCopyButton label="Copy my result" onClick={handleCopyResult} />
             </div>
           </div>
         </CardContent>

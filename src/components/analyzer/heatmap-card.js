@@ -9,9 +9,9 @@ import {
   devLog,
   getReadableDateString,
 } from "@/lib/processing-utils";
+import { LoaderCircle } from "lucide-react";
 import { trackShareCopy } from "@/lib/analytics";
-import { Share2, LoaderCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ShareCopyButton } from "@/components/share-copy-button";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,13 +29,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 export function ActivityHeatmapsCard() {
   const { parsedData, isLoading } = useUserLiftingData();
@@ -172,28 +165,13 @@ export function ActivityHeatmapsCard() {
         {intervals && (
           <CardFooter id="ignoreCopy">
             <div className="flex flex-1 flex-row justify-end">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      onClick={handleShare}
-                      disabled={isSharing}
-                    >
-                      {isSharing ? (
-                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Share2 />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {isSharing
-                      ? "Generating image..."
-                      : "Share heatmaps to clipboard"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <ShareCopyButton
+                label="Copy heatmap"
+                tooltip="Share heatmaps to clipboard"
+                onClick={handleShare}
+                isLoading={isSharing}
+                disabled={isSharing}
+              />
             </div>
           </CardFooter>
         )}

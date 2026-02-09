@@ -8,10 +8,9 @@ import {
   CarouselPrevious,
   CarouselNext,
 } from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
-import { Share2, LoaderCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { trackShareCopy } from "@/lib/analytics";
+import { ShareCopyButton } from "@/components/share-copy-button";
 import { TitleCard } from "./cards/title-card";
 import { SessionsCard } from "./cards/sessions-card";
 import { TonnageCard } from "./cards/tonnage-card";
@@ -146,14 +145,12 @@ export function YearRecapCarousel({ year, isDemo }) {
           {isDemo ? (
             <span className="text-sm text-muted-foreground">Demo mode</span>
           ) : (
-            <Button variant="outline" size="sm" onClick={handleShare} disabled={isSharing}>
-              {isSharing ? (
-                <LoaderCircle className="h-4 w-4 animate-spin" />
-              ) : (
-                <Share2 className="h-4 w-4" />
-              )}
-              <span className="ml-2">Copy this card</span>
-            </Button>
+            <ShareCopyButton
+              label="Copy this card"
+              onClick={handleShare}
+              isLoading={isSharing}
+              disabled={isSharing}
+            />
           )}
         </div>
       </div>

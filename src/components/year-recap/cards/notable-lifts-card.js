@@ -45,6 +45,9 @@ export function NotableLiftsCard({ year, isDemo, isActive = true }) {
     prs.length > 0 ? `notable-lifts-${year}` : `notable-lifts-empty-${year}`,
   );
 
+  const isCurrentYear = Number(year) === new Date().getFullYear();
+  const yearLabel = isCurrentYear ? "this year" : `in ${year}`;
+
   return (
     <div className="flex flex-col items-center justify-center text-center">
       <motion.div
@@ -60,7 +63,7 @@ export function NotableLiftsCard({ year, isDemo, isActive = true }) {
         animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -12 }}
         transition={{ type: "spring", stiffness: 200, damping: 20, delay: isActive ? 0.1 : 0 }}
       >
-        Notable lifts this year
+        Notable lifts {yearLabel}
       </motion.p>
       {prs.length > 0 ? (
         <ul className="mt-4 space-y-2 text-left">
@@ -94,7 +97,7 @@ export function NotableLiftsCard({ year, isDemo, isActive = true }) {
           animate={isActive ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: isActive ? 0.2 : 0 }}
         >
-          No notable lifts this year yet
+          No notable lifts {isCurrentYear ? "this year yet" : `in ${year}`}
         </motion.p>
       )}
       <motion.p

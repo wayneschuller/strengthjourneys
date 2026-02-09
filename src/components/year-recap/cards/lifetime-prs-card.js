@@ -26,6 +26,8 @@ export function LifetimePRsCard({ year, isDemo, isActive = true }) {
     prs.length > 0 ? `lifetime-prs-${year}` : `lifetime-prs-empty-${year}`,
   );
 
+  const isCurrentYear = Number(year) === new Date().getFullYear();
+
   return (
     <div className="flex flex-col items-center justify-center text-center">
       <motion.div
@@ -75,7 +77,7 @@ export function LifetimePRsCard({ year, isDemo, isActive = true }) {
           animate={isActive ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: isActive ? 0.2 : 0 }}
         >
-          No lifetime PRs this year yet
+          No lifetime PRs {isCurrentYear ? "this year yet" : `in ${year}`}
         </motion.p>
       )}
       <motion.p

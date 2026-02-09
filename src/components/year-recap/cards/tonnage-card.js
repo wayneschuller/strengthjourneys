@@ -43,6 +43,9 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
     return "Same as last year";
   }, [showPrevYearComparison, tonnage, prevYearTonnage]);
 
+  const isCurrentYear = Number(year) === new Date().getFullYear();
+  const yearPhrase = isCurrentYear ? "this year" : `in ${year}`;
+
   const formattedCount =
     equiv && equiv.count >= 100
       ? Math.round(equiv.count).toLocaleString()
@@ -76,7 +79,7 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
         transition={{ type: "spring", stiffness: 180, damping: 20, delay: isActive ? 0.18 : 0 }}
       >
-        moved this year
+        moved {yearPhrase}
       </motion.p>
       {comparisonText && (
         <motion.p

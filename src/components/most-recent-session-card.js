@@ -63,7 +63,7 @@ export function MostRecentSessionCard({
 
       if (liftType) {
         datesForNav = getSessionDatesContainingLiftType(parsedData, liftType);
-        const recentDates = datesForNav.slice(-RECENT_SESSIONS_COUNT);
+        const recentDates = datesForNav.slice(-RECENT_SESSIONS_COUNT).reverse();
         const recentSessions = recentDates
           .map((date) => {
             const allAnalyzed = getAnalyzedSessionLifts(
@@ -172,7 +172,7 @@ export function MostRecentSessionCard({
     return (
       <TooltipProvider>
         <Card className="mt-4 rounded-xl border">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-1.5">
             <div className="flex items-start justify-between gap-4">
               <CardTitle className="text-lg">{titlePrefix}</CardTitle>
               <Link
@@ -185,42 +185,39 @@ export function MostRecentSessionCard({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
               {svgPath && (
-                <div className="flex shrink-0 items-center justify-center sm:w-20 md:w-24">
+                <div className="flex shrink-0 items-center justify-center sm:w-14 md:w-16">
                   <img
                     src={svgPath}
                     alt={`${liftType} diagram`}
-                    className="h-16 w-16 object-contain sm:h-20 sm:w-20 md:h-24 md:w-24"
+                    className="h-12 w-12 object-contain sm:h-14 sm:w-14 md:h-16 md:w-16"
                   />
                 </div>
               )}
-              <div className="min-w-0 flex-1 flex flex-col gap-3">
+              <div className="min-w-0 flex-1 flex flex-col gap-1.5">
                 {recentSessions.map(({ sessionDate, analyzedSessionLifts }, sessionIndex) => {
                   const liftEntries = Object.entries(analyzedSessionLifts);
                   if (liftEntries.length === 0) return null;
                   return (
                     <motion.div
                       key={sessionDate}
-                      initial={{ opacity: 0, y: 6 }}
+                      initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: sessionIndex * 0.04, duration: 0.2 }}
-                      className="flex flex-col gap-2 rounded-lg border bg-muted/20 px-3 py-2 sm:flex-row sm:items-center sm:gap-4"
+                      className="rounded-lg"
                     >
-                      <div className="shrink-0 text-sm font-medium text-muted-foreground">
-                        {getReadableDateString(sessionDate, true)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        {liftEntries.map(([lt, workouts]) => (
-                          <SessionExerciseBlock
-                            key={lt}
-                            variant="compact"
-                            liftType={lt}
-                            workouts={workouts}
-                            e1rmFormula={e1rmFormula}
-                          />
-                        ))}
-                      </div>
+                      {liftEntries.map(([lt, workouts]) => (
+                        <SessionExerciseBlock
+                          key={lt}
+                          variant="compact"
+                          liftType={lt}
+                          workouts={workouts}
+                          e1rmFormula={e1rmFormula}
+                          hideSvg
+                          label={getReadableDateString(sessionDate, true)}
+                        />
+                      ))}
                     </motion.div>
                   );
                 })}

@@ -31,6 +31,8 @@ export function SessionExerciseBlock({
   bodyWeight,
   sex,
   isMetric,
+  hideSvg = false,
+  label,
 }) {
   const formula = e1rmFormula || "Brzycki";
   let bestE1rm = 0;
@@ -96,16 +98,18 @@ export function SessionExerciseBlock({
   const isCompact = variant === "compact";
 
   // Compact: big four uses SVG; full always uses LiftTypeIndicator
-  const svgPath = isCompact ? getLiftSvgPath(liftType) : null;
+  const svgPath = isCompact && !hideSvg ? getLiftSvgPath(liftType) : null;
 
   const pills = (
-    <div className={isCompact ? "ml-4 flex min-w-0 flex-1 flex-wrap content-center gap-2" : "flex flex-wrap gap-2"}>
+    <div className={isCompact ? "flex min-w-0 flex-1 flex-wrap content-center items-center gap-2" : "flex flex-wrap gap-2"}>
+      {label && (
+        <span className="shrink-0 text-sm font-medium text-muted-foreground">{label}</span>
+      )}
       {workouts.map((workout, index) => {
-        const isTopSet = bestE1rmIndices.has(index);
-        const isHighlighted = !isCompact ? highlightedIndices.has(index) : isTopSet;
+        const isHighlighted = highlightedIndices.has(index);
         const size = isCompact ? { text: "text-sm", pad: "px-2.5 py-2" } : getSizeForE1rm(e1rms[index]);
         const padClass = isHighlighted && !isCompact ? "px-3.5 py-2.5" : size.pad;
-        const textClass = isCompact && isTopSet
+        const textClass = isCompact && isHighlighted
           ? "font-semibold text-emerald-600 dark:text-emerald-400"
           : isHighlighted && !isCompact
             ? "font-semibold"
@@ -205,19 +209,19 @@ export function SessionExerciseBlock({
           className="h-full w-auto max-h-24 object-contain"
         />
       </div>
-    ) : (
+    ) : !hideSvg ? (
       <LiftTypeIndicator liftType={liftType} className="text-base" />
-    );
+    ) : null;
 
     return (
-      <div className="flex h-full min-h-0 flex-row rounded-xl border bg-muted/20 p-4">
-        {svgPath && bigFourURLs[liftType] ? (
+      <div className={`flex h-full min-h-0 flex-row rounded-xl border bg-muted/20 ${liftTypeArea ? "p-4" : "px-2 py-1.5"} ${liftTypeArea ? "" : "gap-2"}`}>
+        {liftTypeArea && (svgPath && bigFourURLs[liftType] ? (
           <Link href={bigFourURLs[liftType]} className="flex shrink-0 transition-opacity hover:opacity-80">
             {liftTypeArea}
           </Link>
         ) : (
           liftTypeArea
-        )}
+        ))}
         {pills}
       </div>
     );

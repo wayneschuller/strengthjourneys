@@ -35,7 +35,7 @@ import {
 } from "@/components/analyzer/lift-achievements-card";
 import { LiftTypeRepPRsDisplay } from "@/components/analyzer/lift-type-prs-display";
 
-import { MostRecentSessionCard } from "@/components/most-recent-session-card";
+import { MostRecentSessionCard } from "@/components/home-dashboard/most-recent-session-card";
 import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
 import { VisualizerReps } from "@/components/visualizer/visualizer-reps";
 import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";

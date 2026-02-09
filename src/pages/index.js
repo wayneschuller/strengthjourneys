@@ -44,7 +44,7 @@ import { Testimonials } from "@/components/testimonials";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/hero-section";
-import { HomeDashboard } from "@/components/home-dashboard";
+import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
 import { BigFourLiftCards } from "@/components/big-four-lift-cards";
 import { StrengthUnwrappedBanner } from "@/components/year-recap/strength-unwrapped-banner";
 

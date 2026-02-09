@@ -8,11 +8,11 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { SectionTopCards } from "./section-top-cards";
 import { MostRecentSessionCard } from "./most-recent-session-card";
 import { useLocalStorage } from "usehooks-ts";
-import { Progress } from "./ui/progress";
-import { Skeleton } from "./ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
 import { format, differenceInSeconds, differenceInMinutes, differenceInHours, isToday } from "date-fns";
-import { OnBoardingDashboard } from "./instructions-cards";
+import { OnBoardingDashboard } from "@/components/instructions-cards";
 import { RefreshCw, Loader2 } from "lucide-react";
 
 export function HomeDashboard() {

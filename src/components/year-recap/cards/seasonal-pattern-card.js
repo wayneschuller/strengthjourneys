@@ -2,10 +2,7 @@
 
 import { useRef, useMemo } from "react";
 import { motion } from "motion/react";
-import {
-  pickQuirkyPhrase,
-  SEASONAL_PHRASES,
-} from "../phrases";
+import { pickQuirkyPhrase, SEASONAL_PHRASES } from "../phrases";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { BarChart3 } from "lucide-react";
 
@@ -32,21 +29,31 @@ export function SeasonalPatternCard({ year, isDemo, isActive = true }) {
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
         transition={{ type: "spring", stiffness: 220, damping: 22 }}
       >
-        <BarChart3 className="mb-4 h-12 w-12 text-chart-2" />
+        <BarChart3 className="text-chart-2 mb-4 h-12 w-12" />
       </motion.div>
       <motion.p
-        className="text-xl font-semibold text-chart-3"
+        className="text-chart-3 text-xl font-semibold"
         initial={{ opacity: 0, x: -16 }}
         animate={isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -16 }}
-        transition={{ type: "spring", stiffness: 200, damping: 20, delay: isActive ? 0.08 : 0 }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 20,
+          delay: isActive ? 0.08 : 0,
+        }}
       >
-        Busiest month
+        Busiest month in {year}
       </motion.p>
       <motion.p
-        className="mt-2 text-4xl font-bold text-foreground"
+        className="text-foreground mt-2 text-4xl font-bold"
         initial={{ opacity: 0, y: 16 }}
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
-        transition={{ type: "spring", stiffness: 200, damping: 20, delay: isActive ? 0.18 : 0 }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 20,
+          delay: isActive ? 0.18 : 0,
+        }}
       >
         {busiestMonth ?? "—"}
       </motion.p>
@@ -74,7 +81,7 @@ export function SeasonalPatternCard({ year, isDemo, isActive = true }) {
                   delay: isActive ? 0.25 + i * 0.04 : 0,
                 }}
               />
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-muted-foreground text-[10px]">
                 {m.month.slice(0, 3)}
               </span>
             </div>
@@ -82,7 +89,7 @@ export function SeasonalPatternCard({ year, isDemo, isActive = true }) {
         </div>
       )}
       <motion.p
-        className="mt-4 text-sm italic text-muted-foreground"
+        className="text-muted-foreground mt-4 text-sm italic"
         initial={{ opacity: 0, y: 8 }}
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
         transition={{ delay: isActive ? 0.5 : 0 }}
@@ -96,8 +103,18 @@ export function SeasonalPatternCard({ year, isDemo, isActive = true }) {
 // --- Supporting functions ---
 
 const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function computeSeasonalPatternForYear(parsedData, year) {
@@ -120,6 +137,7 @@ function computeSeasonalPatternForYear(parsedData, year) {
   }));
   const maxMonthCount = Math.max(...monthSessionCounts);
   const busiestMonthIndex = monthSessionCounts.indexOf(maxMonthCount);
-  const busiestMonth = busiestMonthIndex >= 0 ? MONTH_NAMES[busiestMonthIndex] : null;
+  const busiestMonth =
+    busiestMonthIndex >= 0 ? MONTH_NAMES[busiestMonthIndex] : null;
   return { busiestMonth, monthlySessions };
 }

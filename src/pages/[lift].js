@@ -7,6 +7,9 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { devLog } from "@/lib/processing-utils";
+import { useReadLocalStorage } from "usehooks-ts";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { StandardsSlider } from "@/components/standards-slider";
 import { NextSeo } from "next-seo";
 import { PortableText } from "@portabletext/react";
@@ -155,6 +158,12 @@ function BarbellInsightsMain({
   introductionArticle,
   resourcesArticle,
 }) {
+  const { data: session, status: authStatus } = useSession();
+  const { isLoading } = useUserLiftingData();
+  const ssid = useReadLocalStorage(LOCAL_STORAGE_KEYS.SSID, {
+    initializeWithValue: false,
+  });
+
   const bigFourIcons = {
     "Back Squat": Crown,
     "Bench Press": Shield,
@@ -168,6 +177,13 @@ function BarbellInsightsMain({
     Deadlift: "/deadlift.svg",
     "Strict Press": "/strict_press.svg",
   };
+
+  if (!isLoading && authStatus === "authenticated" && ssid === null)
+    return (
+      <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
+        <ChooseSheetInstructionsCard session={session} />
+      </div>
+    );
 
   return (
     <PageContainer>

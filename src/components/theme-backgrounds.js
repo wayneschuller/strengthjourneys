@@ -7,8 +7,34 @@ import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 // -----------------------------------------------------------------------------
-// Starry Night – Van Gogh–inspired subtle stars + light swirls
+// Starry Night – Large faint SVG sparkles (Lucide Sparkles), rotated in background
 // -----------------------------------------------------------------------------
+
+// Lucide Sparkles paths (24×24 viewBox), centered at 12,12
+const SPARKLES_MAIN =
+  "M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z";
+// Two accent couplets (top-right, bottom-left); each pair shown together or not
+const SPARKLES_ACCENT_PAIRS = [
+  ["M20 3v4", "M22 5h-4"],
+  ["M4 17v2", "M5 18H3"],
+];
+
+const STAR_PLACEMENTS = [
+  { x: 8, y: 15, scale: 1.15 },
+  { x: 92, y: 22, scale: 1.05 },
+  { x: 50, y: 28, scale: 1.35 },
+  { x: 15, y: 58, scale: 1.1 },
+  { x: 85, y: 52, scale: 1.2 },
+  { x: 28, y: 88, scale: 1.25 },
+  { x: 72, y: 82, scale: 1.05 },
+  { x: 50, y: 75, scale: 1.15 },
+];
+
+// Deterministic pseudo-random in [0, 1) from index + salt (stable for SSR/hydration)
+function seeded(index, salt) {
+  const n = Math.sin((index + 1) * 12.9898 + salt * 78.233) * 43758.5453;
+  return n - Math.floor(n);
+}
 
 export function StarryNightLayer({ className }) {
   return (
@@ -19,59 +45,35 @@ export function StarryNightLayer({ className }) {
       preserveAspectRatio="xMidYMid slice"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <defs>
-        <filter id="starry-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <radialGradient id="star-fade" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="currentColor" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      {/* Soft star dots – scattered, varying size */}
-      {[
-        [12, 8], [88, 14], [45, 22], [72, 28], [18, 35], [95, 42], [32, 48],
-        [68, 55], [8, 62], [52, 68], [78, 74], [25, 82], [60, 88], [42, 12],
-        [5, 45], [92, 70], [38, 38], [75, 18], [15, 75], [55, 52],
-      ].map(([x, y], i) => (
-        <circle
-          key={`star-${i}`}
-          cx={x}
-          cy={y}
-          r={i % 3 === 0 ? 1.2 : i % 3 === 1 ? 0.8 : 0.5}
-          fill="url(#star-fade)"
-          filter="url(#starry-glow)"
-        />
-      ))}
-      {/* Subtle swirl strokes – Van Gogh–like */}
-      <path
-        d="M 15 25 Q 22 18 28 22 T 32 28"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="0.4"
-        strokeLinecap="round"
-        opacity="0.12"
-      />
-      <path
-        d="M 72 32 Q 78 28 82 35 T 88 40"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="0.35"
-        strokeLinecap="round"
-        opacity="0.1"
-      />
-      <path
-        d="M 48 8 Q 52 12 50 18 T 55 22"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="0.3"
-        strokeLinecap="round"
-        opacity="0.08"
-      />
+      {STAR_PLACEMENTS.map(({ x, y, scale }, i) => {
+        const rotate = seeded(i, 1) * 60 - 30; // -30° to 30°
+        const showPair0 = seeded(i, 2) > 0.5;
+        const showPair1 = seeded(i, 3) > 0.5;
+        const accentPairsToShow = [
+          showPair0 ? SPARKLES_ACCENT_PAIRS[0] : null,
+          showPair1 ? SPARKLES_ACCENT_PAIRS[1] : null,
+        ].filter(Boolean);
+
+        return (
+          <g
+            key={i}
+            transform={`translate(${x}, ${y}) rotate(${rotate}) scale(${scale}) translate(-12, -12)`}
+            opacity="0.09"
+          >
+            <path d={SPARKLES_MAIN} fill="currentColor" stroke="none" />
+            {accentPairsToShow.flat().map((d, j) => (
+              <path
+                key={j}
+                d={d}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            ))}
+          </g>
+        );
+      })}
     </svg>
   );
 }

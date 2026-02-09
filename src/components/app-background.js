@@ -42,21 +42,25 @@ export function AppBackground() {
     { initializeWithValue: false }
   );
 
-  // Avoid theme-based SSR/CSR mismatch by only rendering
-  // theme-conditional backgrounds after the component mounts.
+  // Avoid theme-based SSR/CSR mismatch: until mounted, assume light theme for
+  // background so static output is identical on server and first client paint.
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  const themeForBackground = mounted ? currentTheme : "light";
+
   const isRetroArcade =
-    currentTheme === "retro-arcade" || currentTheme === "retro-arcade-dark";
+    themeForBackground === "retro-arcade" ||
+    themeForBackground === "retro-arcade-dark";
   const isNeoBrutalism =
-    currentTheme === "neo-brutalism" ||
-    currentTheme === "neo-brutalism-dark";
+    themeForBackground === "neo-brutalism" ||
+    themeForBackground === "neo-brutalism-dark";
   const isStarryNight =
-    currentTheme === "starry-night" || currentTheme === "starry-night-dark";
+    themeForBackground === "starry-night" ||
+    themeForBackground === "starry-night-dark";
 
   const showAnimated = animatedBackground ?? false;
   const isVanillaLightDark =
@@ -71,7 +75,9 @@ export function AppBackground() {
         <StarryNightLayer
           className={cn(
             "pointer-events-none absolute inset-0 h-full w-full",
-            "text-amber-200/70 dark:text-amber-100/60"
+            themeForBackground === "starry-night-dark"
+              ? "text-amber-100/60"
+              : "text-primary/85"
           )}
         />
       )}
@@ -104,10 +110,10 @@ export function AppBackground() {
             className="pointer-events-none absolute inset-0 h-full w-full"
             squareSize={10}
             gridGap={28}
-            flickerChance={currentTheme === "neo-brutalism" ? 0.06 : 0.12}
-            maxOpacity={currentTheme === "neo-brutalism" ? 0.16 : 0.2}
+            flickerChance={themeForBackground === "neo-brutalism" ? 0.06 : 0.12}
+            maxOpacity={themeForBackground === "neo-brutalism" ? 0.16 : 0.2}
             color={
-              currentTheme === "neo-brutalism"
+              themeForBackground === "neo-brutalism"
                 ? "hsl(0 100% 60%)" // primary red on light
                 : "hsl(0 100% 70%)" // primary red on dark
             }
@@ -117,10 +123,10 @@ export function AppBackground() {
             className="pointer-events-none absolute inset-0 h-full w-full"
             squareSize={12}
             gridGap={32}
-            flickerChance={currentTheme === "neo-brutalism" ? 0.05 : 0.1}
-            maxOpacity={currentTheme === "neo-brutalism" ? 0.13 : 0.17}
+            flickerChance={themeForBackground === "neo-brutalism" ? 0.05 : 0.1}
+            maxOpacity={themeForBackground === "neo-brutalism" ? 0.13 : 0.17}
             color={
-              currentTheme === "neo-brutalism"
+              themeForBackground === "neo-brutalism"
                 ? "hsl(60 100% 50%)" // secondary yellow on light
                 : "hsl(60 100% 60%)" // secondary yellow on dark
             }
@@ -139,7 +145,7 @@ export function AppBackground() {
           beamDelayMax={3}
           beamDuration={3.5}
           gridColor={
-            currentTheme === "retro-arcade"
+            themeForBackground === "retro-arcade"
               ? "rgba(95, 168, 163, 0.6)" // teal-ish grid for light retro
               : "rgba(214, 107, 122, 0.7)" // pink-ish grid for dark retro
           }

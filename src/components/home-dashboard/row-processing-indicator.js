@@ -49,7 +49,7 @@ export function DataSheetStatus({
   const rowLabel =
     rawRows != null ? `${rawRows.toLocaleString()} rows` : null;
 
-  const sheetLabel = sheetFilename || "Your Google Sheet";
+  const sheetLabel = (sheetFilename || "Your Google Sheet").trim();
   const timeSuffix = formatSyncTime(dataSyncedAt);
   const freshnessColor = isValidating ? "text-muted-foreground" : getFreshnessColor(dataSyncedAt);
   const tooltipText = dataSyncedAt

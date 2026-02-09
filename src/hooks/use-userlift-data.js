@@ -79,7 +79,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   // Call gsheets API via our backend api route using useSWR
   // (we used to do from client but got intermittent CORS problems)
   // -----------------------------------------------------------------------------------------------
-  const { data, error, isLoading, isValidating, dataUpdatedAt, mutate } = useSWR(
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
     shouldFetch ? apiURL : null,
     fetcher,
     {
@@ -248,7 +248,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         topTonnageByTypeLast12Months,
         sessionTonnageLookup,
         rawRows,
-        dataSyncedAt: dataUpdatedAt > 0 ? dataUpdatedAt : lastDataReceivedAt,
+        dataSyncedAt: lastDataReceivedAt,
         mutate,
       }}
     >

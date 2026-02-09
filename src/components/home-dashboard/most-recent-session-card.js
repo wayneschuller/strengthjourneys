@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { differenceInDays } from "date-fns";
@@ -48,6 +49,7 @@ export function MostRecentSessionCard({
   highlightDate: highlightDateProp = null,
   setHighlightDate: setHighlightDateProp,
 }) {
+  const { status: authStatus } = useSession();
   const [internalHighlightDate, setInternalHighlightDate] = useState(null);
 
   const isControlled = setHighlightDateProp != null;
@@ -191,7 +193,12 @@ export function MostRecentSessionCard({
         <Card className="mt-4 rounded-xl border">
           <CardHeader className="pb-1.5">
             <div className="flex items-start justify-between gap-4">
-              <CardTitle className="text-lg">{titlePrefix}</CardTitle>
+              <CardTitle className="text-lg">
+                {authStatus !== "authenticated" && (
+                  <span className="mr-2 font-bold">Demo Mode:</span>
+                )}
+                {titlePrefix}
+              </CardTitle>
               <Link
                 href="/analyzer"
                 className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -264,7 +271,12 @@ export function MostRecentSessionCard({
     return (
       <Card className="mt-4 rounded-xl border">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">{titlePrefix}</CardTitle>
+          <CardTitle className="text-lg">
+            {authStatus !== "authenticated" && (
+              <span className="mr-2 font-bold">Demo Mode:</span>
+            )}
+            {titlePrefix}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
@@ -282,7 +294,12 @@ export function MostRecentSessionCard({
     return (
       <Card className="mt-4 rounded-xl border">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">{titlePrefix}</CardTitle>
+          <CardTitle className="text-lg">
+            {authStatus !== "authenticated" && (
+              <span className="mr-2 font-bold">Demo Mode:</span>
+            )}
+            {titlePrefix}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
@@ -302,6 +319,9 @@ export function MostRecentSessionCard({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
+                {authStatus !== "authenticated" && (
+                  <span className="mr-2 font-bold">Demo Mode:</span>
+                )}
                 {titlePrefix} — {getReadableDateString(sessionDate, true)}
               </CardTitle>
             </div>

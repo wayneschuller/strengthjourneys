@@ -3,7 +3,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { devLog } from "@/lib/processing-utils";
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -47,7 +46,7 @@ import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
 import { BigFourLiftCards } from "@/components/big-four-lift-cards";
-import { StrengthUnwrappedBanner } from "@/components/year-recap/strength-unwrapped-banner";
+import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";
 
 // The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [
@@ -195,8 +194,6 @@ export default function Home() {
     "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
   const { data: session, status: authStatus } = useSession();
-  const router = useRouter();
-  const forceRecapBanner = router.query?.showRecapBanner === "1";
   const [showHeroSection, setShowHeroSection] = useState(true); // Ensure static generation of Hero Section
   const [isFadingHero, setIsFadingHero] = useState(false);
   const [bigFourAnimated, setBigFourAnimated] = useState(false);
@@ -273,11 +270,7 @@ export default function Home() {
           )}
         </div>
 
-        {(new Date().getMonth() === 11 || forceRecapBanner) && (
-          <div className="mt-8 mb-6">
-            <StrengthUnwrappedBanner />
-          </div>
-        )}
+        <StrengthUnwrappedDecemberBanner className="mt-8 mb-6" />
 
         <h2 class="mt-8 mb-4 text-xl font-semibold">
           🏋️ The Big Four Barbell Lifts

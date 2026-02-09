@@ -1,4 +1,7 @@
+"use client";
+
 import { cn } from "@/lib/utils";
+import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";
 
 /**
  * Centered page wrapper. Tailwind v4 container does not center by default; uses mx-auto per docs.
@@ -24,7 +27,7 @@ export function PageContainer({ className, children, ...props }) {
  * @param {React.ReactNode} props.children - Header content. Use PageHeaderRight as a child
  *   for right-aligned content (e.g. diagram, controls).
  */
-export function PageHeader({ className, children, ...props }) {
+export function PageHeader({ className, children, hideRecapBanner, ...props }) {
   // Find the right section if it exists
   const rightSection = children?.find(
     (child) => child?.type?.displayName === "PageHeaderRight",
@@ -43,7 +46,13 @@ export function PageHeader({ className, children, ...props }) {
       )}
       {...props}
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-1">{content}</div>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        {content}
+        <StrengthUnwrappedDecemberBanner
+          className="mt-6"
+          hidden={hideRecapBanner}
+        />
+      </div>
       {rightSection}
     </section>
   );

@@ -55,6 +55,9 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
   const grade = consistencyGrade?.grade ?? null;
   const showGrade = grade && grade !== ".";
 
+  const isCurrentYear = Number(year) === new Date().getFullYear();
+  const periodLabel = isCurrentYear ? "in the last year" : `in ${year}`;
+
   return (
     <div className="flex flex-col items-center justify-center gap-0 text-center">
       {/* Top: Calendar + sessions */}
@@ -81,6 +84,14 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
           transition={{ type: "spring", stiffness: 180, damping: 18, delay: isActive ? 0.12 : 0 }}
         >
           training sessions
+        </motion.p>
+        <motion.p
+          className="mt-0.5 text-base text-muted-foreground"
+          initial={{ opacity: 0 }}
+          animate={isActive ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ delay: isActive ? 0.15 : 0 }}
+        >
+          {periodLabel}
         </motion.p>
         {showGrade && (
           <motion.div

@@ -3,7 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
 import { format, differenceInSeconds, differenceInMinutes, differenceInHours, isToday } from "date-fns";
-import { RefreshCw, Loader2 } from "lucide-react";
+import { RefreshCw, Loader2, Sheet } from "lucide-react";
 
 function formatSyncTime(timestamp) {
   if (!timestamp) return null;
@@ -46,13 +46,7 @@ export function DataSheetStatus({
   mutate,
 }) {
   const rowLabel =
-    parsedData &&
-    rawRows != null &&
-    parsedData.length !== rawRows
-      ? `${parsedData.length.toLocaleString()} valid of ${rawRows.toLocaleString()} rows`
-      : rawRows != null
-        ? `${rawRows.toLocaleString()} rows`
-        : null;
+    rawRows != null ? `${rawRows.toLocaleString()} rows` : null;
 
   const sheetLabel = sheetFilename || "Your Google Sheet";
   const timeSuffix = formatSyncTime(dataSyncedAt);
@@ -88,6 +82,7 @@ export function DataSheetStatus({
 
   return (
     <div className="flex items-center justify-end gap-2 text-xs">
+      <Sheet className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
       <div className="text-right">
         {parts.map((part, i) => (
           <span key={i}>
@@ -228,7 +223,8 @@ export function RowProcessingIndicator({
           transition={{ type: "spring", stiffness: 180, damping: 22 }}
         >
           <Progress className="mb-2 h-2 w-4/5 md:w-3/5" value={percent} />
-          <div className="text-sm text-muted-foreground flex items-center">
+          <div className="text-sm text-muted-foreground flex items-center gap-2">
+            <Sheet className="h-4 w-4 shrink-0" aria-hidden />
             {isProgressDone ? "Processed" : "Reading your workout data"}:{" "}
             {animatedCount.toLocaleString()} / {rowCount?.toLocaleString()}
             <motion.span

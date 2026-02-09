@@ -71,7 +71,8 @@ export function MostTrainedLiftCard({ year, isDemo, isActive = true }) {
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
         transition={{ type: "spring", stiffness: 200, damping: 20, delay: isActive ? 0.25 : 0 }}
       >
-        {label}
+        <span className="block">{label}</span>
+        <span className="block">in {year}</span>
       </motion.p>
       <motion.p
         className="mt-2 text-4xl font-bold text-foreground md:text-5xl"

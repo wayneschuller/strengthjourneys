@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +17,10 @@ import {
   Trophy,
   Medal,
 } from "lucide-react";
-import { LiftTypeIndicator, bigFourURLs } from "@/components/lift-type-indicator";
+import {
+  LiftTypeIndicator,
+  bigFourURLs,
+} from "@/components/lift-type-indicator";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import {
   getStrengthLevelForWorkouts,
@@ -131,19 +135,31 @@ export function SessionExerciseBlock({
   const svgPath = isCompact && !hideSvg ? getLiftSvgPath(liftType) : null;
 
   const pills = (
-    <div className={isCompact ? "flex min-w-0 flex-1 flex-wrap content-center items-center gap-2" : "flex flex-wrap gap-2"}>
+    <div
+      className={
+        isCompact
+          ? "flex min-w-0 flex-1 flex-wrap content-center items-center gap-2"
+          : "flex flex-wrap gap-2"
+      }
+    >
       {label && (
-        <span className="shrink-0 text-sm font-medium text-muted-foreground">{label}</span>
+        <span className="text-muted-foreground shrink-0 text-sm font-medium">
+          {label}
+        </span>
       )}
       {workouts.map((workout, index) => {
         const isHighlighted = highlightedIndices.has(index);
-        const size = isCompact ? { text: "text-sm", pad: "px-2.5 py-2" } : getSizeForE1rm(e1rms[index]);
-        const padClass = isHighlighted && !isCompact ? "px-3.5 py-2.5" : size.pad;
-        const textClass = isCompact && isHighlighted
-          ? "font-semibold text-emerald-600 dark:text-emerald-400"
-          : isHighlighted && !isCompact
-            ? "font-semibold"
-            : "";
+        const size = isCompact
+          ? { text: "text-sm", pad: "px-2.5 py-2" }
+          : getSizeForE1rm(e1rms[index]);
+        const padClass =
+          isHighlighted && !isCompact ? "px-3.5 py-2.5" : size.pad;
+        const textClass =
+          isCompact && isHighlighted
+            ? "font-semibold text-emerald-600 dark:text-emerald-400"
+            : isHighlighted && !isCompact
+              ? "font-semibold"
+              : "";
 
         return (
           <div
@@ -159,8 +175,9 @@ export function SessionExerciseBlock({
               </span>
               <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
                 {workout.lifetimeRanking !== -1 && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                       <span
                         className="text-amber-600 transition-transform hover:scale-110 hover:text-amber-500 dark:text-amber-500 dark:hover:text-amber-400"
                         aria-label="Lifetime PR"
@@ -184,12 +201,14 @@ export function SessionExerciseBlock({
                           : ""}
                       </p>
                     </TooltipContent>
-                  </Tooltip>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
                 {workout.yearlyRanking != null &&
                   workout.yearlyRanking !== -1 && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
                         <span
                           className="text-blue-600 transition-transform hover:scale-110 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
                           aria-label="12-month PR"
@@ -213,13 +232,15 @@ export function SessionExerciseBlock({
                             : ""}
                         </p>
                       </TooltipContent>
-                    </Tooltip>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                 {workout.notes && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                       <span
-                        className="text-muted-foreground transition-transform hover:scale-110 hover:text-foreground"
+                        className="text-muted-foreground hover:text-foreground transition-transform hover:scale-110"
                         aria-label="Note"
                       >
                         <StickyNote
@@ -239,16 +260,18 @@ export function SessionExerciseBlock({
                         {workout.notes}
                       </p>
                     </TooltipContent>
-                  </Tooltip>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
                 {workout.URL && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                       <a
                         href={workout.URL}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex rounded p-0.5 text-muted-foreground transition-transform hover:scale-110 hover:bg-muted hover:text-foreground"
+                        className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex rounded p-0.5 transition-transform hover:scale-110"
                         aria-label="Video"
                       >
                         <PlayCircle
@@ -270,7 +293,8 @@ export function SessionExerciseBlock({
                           : ""}
                       </p>
                     </TooltipContent>
-                  </Tooltip>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
             </div>
@@ -280,8 +304,8 @@ export function SessionExerciseBlock({
                 <span
                   className={
                     isHighlighted
-                      ? "text-sm text-muted-foreground"
-                      : "text-xs text-muted-foreground"
+                      ? "text-muted-foreground text-sm"
+                      : "text-muted-foreground text-xs"
                   }
                 >
                   {workout.lifetimeSignificanceAnnotation}
@@ -304,7 +328,7 @@ export function SessionExerciseBlock({
         <img
           src={svgPath}
           alt={`${liftType} diagram`}
-          className="h-full w-auto max-h-24 object-contain"
+          className="h-full max-h-24 w-auto object-contain"
         />
       </div>
     ) : !hideSvg ? (
@@ -312,21 +336,27 @@ export function SessionExerciseBlock({
     ) : null;
 
     return (
-      <div className={`flex h-full min-h-0 flex-row rounded-xl border bg-muted/20 ${liftTypeArea ? "p-4" : "px-2 py-1.5"} ${liftTypeArea ? "" : "gap-2"}`}>
-        {liftTypeArea && (svgPath && bigFourURLs[liftType] ? (
-          <Link href={bigFourURLs[liftType]} className="flex shrink-0 transition-opacity hover:opacity-80">
-            {liftTypeArea}
-          </Link>
-        ) : (
-          liftTypeArea
-        ))}
+      <div
+        className={`bg-muted/20 flex h-full min-h-0 flex-row rounded-xl border ${liftTypeArea ? "p-4" : "px-2 py-1.5"} ${liftTypeArea ? "" : "gap-2"}`}
+      >
+        {liftTypeArea &&
+          (svgPath && bigFourURLs[liftType] ? (
+            <Link
+              href={bigFourURLs[liftType]}
+              className="flex shrink-0 transition-opacity hover:opacity-80"
+            >
+              {liftTypeArea}
+            </Link>
+          ) : (
+            liftTypeArea
+          ))}
         {pills}
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border bg-muted/20 p-4">
+    <div className="bg-muted/20 rounded-xl border p-4">
       <div className="space-y-3">
         <LiftTypeIndicator liftType={liftType} className="text-lg" />
         {pills}
@@ -372,7 +402,7 @@ function LiftTonnageRow({ liftType, stats }) {
     pctDiff === null
   ) {
     return (
-      <p className="text-xs text-muted-foreground">
+      <p className="text-muted-foreground text-xs">
         Not enough history yet to compare {liftType.toLowerCase()} tonnage over
         the last year.
       </p>
@@ -452,15 +482,15 @@ function LiftStrengthLevel({
   return (
     <Link
       href="/strength-level-calculator"
-      className="inline-flex items-center gap-1.5 rounded-md py-1 text-base font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline"
+      className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-md py-1 text-base font-medium transition-colors hover:underline"
     >
       {liftType} strength level:{" "}
       {isBeyondElite ? (
-        <span className="font-semibold text-foreground">
+        <span className="text-foreground font-semibold">
           {STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite
         </span>
       ) : (
-        <span className="font-semibold text-foreground">
+        <span className="text-foreground font-semibold">
           {STRENGTH_LEVEL_EMOJI[rating] ?? ""} {rating}
         </span>
       )}

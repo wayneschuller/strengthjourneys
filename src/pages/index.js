@@ -3,6 +3,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { devLog } from "@/lib/processing-utils";
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -194,6 +195,8 @@ export default function Home() {
     "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
   const { data: session, status: authStatus } = useSession();
+  const router = useRouter();
+  const forceRecapBanner = router.query?.showRecapBanner === "1";
   const [showHeroSection, setShowHeroSection] = useState(true); // Ensure static generation of Hero Section
   const [isFadingHero, setIsFadingHero] = useState(false);
   const [bigFourAnimated, setBigFourAnimated] = useState(false);
@@ -270,7 +273,7 @@ export default function Home() {
           )}
         </div>
 
-        {new Date().getMonth() === 11 && (
+        {(new Date().getMonth() === 11 || forceRecapBanner) && (
           <div className="mt-8 mb-6">
             <StrengthUnwrappedBanner />
           </div>

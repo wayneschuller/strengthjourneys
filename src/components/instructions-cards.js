@@ -35,13 +35,11 @@ import {
 // This is very similar to the ChooseSheetInstructionsCard but designed for the front page
 export function OnBoardingDashboard() {
   const [openPicker, setOpenPicker] = useState(null);
-  const [authResponse, setAuthResponse] = useState(null);
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
   const { data: session, status: authStatus } = useSession();
 
-  const handlePickerReady = useCallback((picker, auth) => {
+  const handlePickerReady = useCallback((picker) => {
     setOpenPicker(() => picker);
-    setAuthResponse(auth);
   }, []);
 
   // Load picker when component mounts (user needs it for onboarding)
@@ -73,6 +71,10 @@ export function OnBoardingDashboard() {
         <DrivePickerContainer
           onReady={handlePickerReady}
           trigger={shouldLoadPicker}
+          oauthToken={session?.accessToken}
+          setSsid={setSsid}
+          setSheetURL={setSheetURL}
+          setSheetFilename={setSheetFilename}
         />
       )}
       <div className="grid grid-cols-1 md:grid-cols-2">
@@ -108,15 +110,7 @@ export function OnBoardingDashboard() {
           <Button
             className="w-fit self-center disabled:cursor-wait disabled:opacity-70"
             onClick={() => {
-              if (openPicker) {
-                handleOpenFilePicker(
-                  openPicker,
-                  session.accessToken,
-                  setSsid,
-                  setSheetURL,
-                  setSheetFilename,
-                );
-              }
+              if (openPicker) handleOpenFilePicker(openPicker);
             }}
             disabled={!openPicker}
             title={
@@ -174,13 +168,11 @@ export function OnBoardingDashboard() {
 // This card is shown if the user goes to the visualizer or analyzer with google auth but no spreadsheet selected
 export function ChooseSheetInstructionsCard() {
   const [openPicker, setOpenPicker] = useState(null);
-  const [authResponse, setAuthResponse] = useState(null);
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
   const { data: session, status: authStatus } = useSession();
 
-  const handlePickerReady = useCallback((picker, auth) => {
+  const handlePickerReady = useCallback((picker) => {
     setOpenPicker(() => picker);
-    setAuthResponse(auth);
   }, []);
 
   // Load picker when component mounts (user needs it to choose sheet)
@@ -214,6 +206,10 @@ export function ChooseSheetInstructionsCard() {
         <DrivePickerContainer
           onReady={handlePickerReady}
           trigger={shouldLoadPicker}
+          oauthToken={session?.accessToken}
+          setSsid={setSsid}
+          setSheetURL={setSheetURL}
+          setSheetFilename={setSheetFilename}
         />
       )}
       <Card className="md:w-2/3">
@@ -271,15 +267,7 @@ export function ChooseSheetInstructionsCard() {
           <Button
             className="w-full disabled:cursor-wait disabled:opacity-70"
             onClick={() => {
-              if (openPicker) {
-                handleOpenFilePicker(
-                  openPicker,
-                  session.accessToken,
-                  setSsid,
-                  setSheetURL,
-                  setSheetFilename,
-                );
-              }
+              if (openPicker) handleOpenFilePicker(openPicker);
             }}
             disabled={!openPicker}
             title={
@@ -300,12 +288,10 @@ export function GettingStartedCard() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [openPicker, setOpenPicker] = useState(null);
-  const [authResponse, setAuthResponse] = useState(null);
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
 
-  const handlePickerReady = useCallback((picker, auth) => {
+  const handlePickerReady = useCallback((picker) => {
     setOpenPicker(() => picker);
-    setAuthResponse(auth);
   }, []);
 
   // Load picker when user is authenticated and might use it
@@ -338,6 +324,10 @@ export function GettingStartedCard() {
         <DrivePickerContainer
           onReady={handlePickerReady}
           trigger={shouldLoadPicker}
+          oauthToken={session?.accessToken}
+          setSsid={setSsid}
+          setSheetURL={setSheetURL}
+          setSheetFilename={setSheetFilename}
         />
       )}
       <Card className="hover:ring-0">
@@ -451,15 +441,7 @@ export function GettingStartedCard() {
           {authStatus === "authenticated" && !ssid ? (
             <button
               onClick={() => {
-                if (openPicker) {
-                  handleOpenFilePicker(
-                    openPicker,
-                    session.accessToken,
-                    setSsid,
-                    setSheetURL,
-                    setSheetFilename,
-                  );
-                }
+                if (openPicker) handleOpenFilePicker(openPicker);
               }}
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800 disabled:cursor-wait disabled:opacity-70"
               disabled={!openPicker}
@@ -549,7 +531,14 @@ export function GettingStartedCardCompact() {
   return (
     <>
       {shouldLoadPicker && (
-        <DrivePickerContainer onReady={handlePickerReady} trigger={shouldLoadPicker} />
+        <DrivePickerContainer
+          onReady={handlePickerReady}
+          trigger={shouldLoadPicker}
+          oauthToken={session?.accessToken}
+          setSsid={setSsid}
+          setSheetURL={setSheetURL}
+          setSheetFilename={setSheetFilename}
+        />
       )}
       <Card>
         <CardHeader>
@@ -593,15 +582,7 @@ export function GettingStartedCardCompact() {
           ) : !ssid ? (
             <Button
               onClick={() => {
-                if (openPicker && session?.accessToken) {
-                  handleOpenFilePicker(
-                    openPicker,
-                    session.accessToken,
-                    setSsid,
-                    setSheetURL,
-                    setSheetFilename,
-                  );
-                }
+                if (openPicker) handleOpenFilePicker(openPicker);
               }}
               disabled={!openPicker}
             >

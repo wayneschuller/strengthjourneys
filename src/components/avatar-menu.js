@@ -46,7 +46,6 @@ export function AvatarDropdown() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [openPicker, setOpenPicker] = useState(null);
-  const [authResponse, setAuthResponse] = useState(null);
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
   const { setTheme, theme } = useTheme();
 
@@ -66,9 +65,8 @@ export function AvatarDropdown() {
   const { parsedData, isLoading, isValidating, isError } = useUserLiftingData();
 
   // Initialize picker when needed (only loads when user might use it)
-  const handlePickerReady = useCallback((picker, auth) => {
+  const handlePickerReady = useCallback((picker) => {
     setOpenPicker(() => picker);
-    setAuthResponse(auth);
   }, []);
 
   // Load picker when user opens dropdown menu (anticipate they might use it)
@@ -108,6 +106,10 @@ export function AvatarDropdown() {
         <DrivePickerContainer
           onReady={handlePickerReady}
           trigger={shouldLoadPicker}
+          oauthToken={session?.accessToken}
+          setSsid={setSsid}
+          setSheetURL={setSheetURL}
+          setSheetFilename={setSheetFilename}
         />
       )}
       <TooltipProvider>
@@ -150,15 +152,7 @@ export function AvatarDropdown() {
                 {!ssid && (
                   <DropdownMenuItem
                     onClick={() => {
-                      if (openPicker) {
-                        handleOpenFilePicker(
-                          openPicker,
-                          session.accessToken,
-                          setSsid,
-                          setSheetURL,
-                          setSheetFilename,
-                        );
-                      }
+                      if (openPicker) handleOpenFilePicker(openPicker);
                     }}
                     disabled={!openPicker}
                     title={
@@ -182,15 +176,7 @@ export function AvatarDropdown() {
                 {ssid && (
                   <DropdownMenuItem
                     onClick={() => {
-                      if (openPicker) {
-                        handleOpenFilePicker(
-                          openPicker,
-                          session.accessToken,
-                          setSsid,
-                          setSheetURL,
-                          setSheetFilename,
-                        );
-                      }
+                      if (openPicker) handleOpenFilePicker(openPicker);
                     }}
                     disabled={!openPicker}
                     title={

@@ -1,39 +1,92 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import useDrivePicker from "react-google-drive-picker";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { DrivePicker, DrivePickerDocsView } from "@googleworkspace/drive-picker-react";
+import {
+  trackSheetPickerCancelled,
+  trackSheetSelected,
+  event,
+} from "@/lib/analytics";
 
 /**
- * Container that initializes the Google Drive Picker. Defers loading ~163 KiB of Google API
- * scripts until mounted. Only mount when the user actually needs the picker (e.g. during onboarding).
+ * Container that initializes the Google Drive Picker using the official
+ * @googleworkspace/drive-picker-react. Defers loading until mounted.
+ * Only mount when the user actually needs the picker (e.g. during onboarding).
  *
  * @param {Object} props
- * @param {function(function, Object)} [props.onReady] - Called when the picker is ready. Receives
- *   (openPicker, authResponse). openPicker is a function to show the picker; call it when the
+ * @param {function(function)} [props.onReady] - Called when the picker is ready. Receives
+ *   (openPicker) where openPicker is a function to show the picker; call it when the
  *   user clicks "Choose from Drive".
- * @param {boolean} [props.trigger=false] - When true, the component mounts and starts loading
- *   the picker. Typically tied to auth status so the picker loads only after sign-in.
+ * @param {boolean} [props.trigger=false] - When true, the component mounts and the
+ *   picker can be opened. Typically tied to auth status.
+ * @param {string} [props.oauthToken] - OAuth token from NextAuth session.
+ * @param {function(string)} [props.setSsid] - Callback to set the selected sheet ID.
+ * @param {function(string)} [props.setSheetURL] - Callback to set the sheet URL.
+ * @param {function(string)} [props.setSheetFilename] - Callback to set the sheet filename.
  */
-export function DrivePickerContainer({ onReady, trigger = false }) {
-  const result = useDrivePicker();
-  const openPicker = result[0];
-  const authResponse = result[1];
-  // Patched hook returns [openPicker, authRes, isReady]; only enable when scripts are loaded
-  const isReady = result[2] === true;
+export function DrivePickerContainer({
+  onReady,
+  trigger = false,
+  oauthToken,
+  setSsid,
+  setSheetURL,
+  setSheetFilename,
+}) {
+  const [showPicker, setShowPicker] = useState(false);
   const hasCalledReady = useRef(false);
 
-  useEffect(() => {
-    // Only call onReady when picker is actually ready (Google scripts loaded and picker API loaded).
-    // Previously we called onReady as soon as openPicker existed, but openPicker() does nothing
-    // until gapi/GSI scripts are loaded - so clicks appeared to "do nothing" for many users.
-    if (isReady && openPicker && onReady && !hasCalledReady.current) {
-      hasCalledReady.current = true;
-      onReady(openPicker, authResponse);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady, openPicker, authResponse]); // Don't include onReady to avoid infinite loops
+  const openPicker = useCallback(() => {
+    setShowPicker(true);
+  }, []);
 
-  // This component doesn't render anything visible
-  // It just initializes the picker hook and passes it to the parent
-  return null;
+  useEffect(() => {
+    if (trigger && oauthToken && openPicker && onReady && !hasCalledReady.current) {
+      hasCalledReady.current = true;
+      onReady(openPicker);
+    }
+  }, [trigger, oauthToken, openPicker, onReady]);
+
+  const handlePicked = useCallback(
+    (e) => {
+      const data = e.detail;
+      if (data.action === "cancel") return;
+      if (data.docs?.[0]) {
+        trackSheetSelected();
+        event("gdrive_picker_opened");
+        const doc = data.docs[0];
+        setSsid?.(doc.id);
+        setSheetURL?.(encodeURIComponent(doc.url));
+        setSheetFilename?.(doc.name);
+      }
+      setShowPicker(false);
+    },
+    [setSsid, setSheetURL, setSheetFilename],
+  );
+
+  const handleCanceled = useCallback(() => {
+    trackSheetPickerCancelled();
+    setShowPicker(false);
+  }, []);
+
+  if (!trigger) return null;
+
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const appId = process.env.NEXT_PUBLIC_GOOGLE_APP_ID;
+
+  return (
+    <>
+      {showPicker && oauthToken && clientId && (
+        <DrivePicker
+          client-id={clientId}
+          app-id={appId}
+          oauth-token={oauthToken}
+          scope="https://www.googleapis.com/auth/drive.file"
+          onPicked={handlePicked}
+          onCanceled={handleCanceled}
+        >
+          <DrivePickerDocsView viewId="SPREADSHEETS" enableDrives />
+        </DrivePicker>
+      )}
+    </>
+  );
 }

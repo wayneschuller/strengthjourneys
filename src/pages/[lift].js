@@ -223,10 +223,10 @@ function BarbellInsightsMain({
           <VisualizerMini liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">
-          <VisualizerReps liftType={liftInsightData.liftType} />
+          <TonnageChart liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">
-          <TonnageChart liftType={liftInsightData.liftType} />
+          <VisualizerReps liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">
           <MyLiftTypePRsCard liftType={liftInsightData.liftType} />

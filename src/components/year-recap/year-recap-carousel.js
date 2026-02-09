@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Share2, LoaderCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { trackShareCopy } from "@/lib/analytics";
 import { TitleCard } from "./cards/title-card";
 import { SessionsCard } from "./cards/sessions-card";
 import { TonnageCard } from "./cards/tonnage-card";
@@ -57,6 +58,17 @@ export function YearRecapCarousel({ year, isDemo }) {
     }
   }, [selectedIndex, year]);
 
+  const cards = [
+    { id: "title", Component: TitleCard },
+    { id: "sessions", Component: SessionsCard },
+    { id: "tonnage", Component: TonnageCard },
+    { id: "most-trained", Component: MostTrainedLiftCard },
+    { id: "lifetime-prs", Component: LifetimePRsCard },
+    { id: "notable-lifts", Component: NotableLiftsCard },
+    { id: "seasonal", Component: SeasonalPatternCard },
+    { id: "closing", Component: ClosingCard },
+  ];
+
   const handleShare = async () => {
     if (!shareRef.current) return;
     setIsSharing(true);
@@ -77,6 +89,8 @@ export function YearRecapCarousel({ year, isDemo }) {
           .write([new ClipboardItem({ "image/png": blob })])
           .then(() => {
             toast({ title: "Copied to clipboard! Paste into Instagram or anywhere." });
+            const slideId = cards[selectedIndex]?.id;
+            trackShareCopy("year_recap", { page: "/strength-year-in-review", slide: slideId });
           })
           .catch((err) => {
             console.error("Copy error:", err);
@@ -87,17 +101,6 @@ export function YearRecapCarousel({ year, isDemo }) {
       setIsSharing(false);
     }
   };
-
-  const cards = [
-    { id: "title", Component: TitleCard },
-    { id: "sessions", Component: SessionsCard },
-    { id: "tonnage", Component: TonnageCard },
-    { id: "most-trained", Component: MostTrainedLiftCard },
-    { id: "lifetime-prs", Component: LifetimePRsCard },
-    { id: "notable-lifts", Component: NotableLiftsCard },
-    { id: "seasonal", Component: SeasonalPatternCard },
-    { id: "closing", Component: ClosingCard },
-  ];
 
   return (
     <div className="relative">

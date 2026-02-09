@@ -3,6 +3,7 @@
 "use client";
 
 import { devLog } from "@/lib/processing-utils";
+import { event } from "@/lib/analytics";
 import { useState, useEffect } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { Moon, Sun } from "lucide-react";
@@ -111,15 +112,10 @@ export function DarkModeToggle() {
               const newTheme = theme === "dark" ? "light" : "dark";
               setTheme(newTheme);
 
-              if (
-                typeof window !== "undefined" &&
-                process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
-              ) {
-                window.gtag("event", "theme_changed", {
-                  event_category: "User Preferences",
-                  event_label: `Theme changed to ${newTheme}`,
-                });
-              }
+              event("theme_changed", {
+                event_category: "User Preferences",
+                event_label: `Theme changed to ${newTheme}`,
+              });
             }}
           >
             <Moon className={cn("absolute h-[1.2rem] w-[1.2rem] transition-all", isDark ? "rotate-0 scale-100" : "rotate-90 scale-0")} />

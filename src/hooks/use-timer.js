@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useUserLiftingData } from "./use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
+import { event } from "@/lib/analytics";
 
 const TimerContext = createContext();
 
@@ -46,36 +47,21 @@ export const TimerProvider = ({ children }) => {
   const handleStartStop = () => {
     setIsRunning((prevIsRunning) => !prevIsRunning);
 
-    if (
-      typeof window !== "undefined" &&
-      process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
-    ) {
-      window.gtag("event", "timer_start_stop_toggle");
-    }
+    event("timer_start_stop_toggle");
   };
 
   const handleReset = () => {
     setIsRunning(false);
     setTime(0);
 
-    if (
-      typeof window !== "undefined" &&
-      process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
-    ) {
-      window.gtag("event", "timer_reset");
-    }
+    event("timer_reset");
   };
 
   const handleRestart = () => {
     setIsRunning(true);
     setTime(0);
 
-    if (
-      typeof window !== "undefined" &&
-      process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development"
-    ) {
-      window.gtag("event", "timer_restarted");
-    }
+    event("timer_restarted");
   };
 
   return (

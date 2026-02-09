@@ -9,6 +9,7 @@ import {
   devLog,
   getReadableDateString,
 } from "@/lib/processing-utils";
+import { trackShareCopy } from "@/lib/analytics";
 import { Share2, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
@@ -83,6 +84,7 @@ export function ActivityHeatmapsCard() {
             .write([new ClipboardItem({ "image/png": blob })])
             .then(() => {
               console.log("Heatmap copied to clipboard");
+              trackShareCopy("heatmap", { page: "/analyzer" });
               // FIXME: toast update here
             })
             .catch((err) => console.error("Error in copying heatmap: ", err));
@@ -93,10 +95,6 @@ export function ActivityHeatmapsCard() {
         `generate html2canvas execution time: ` +
           `\x1b[1m${Math.round(performance.now() - startTime)}ms\x1b[0m`,
       );
-
-      if (typeof window !== "undefined") {
-        window.gtag("event", "heatmap_share_clipboard");
-      }
     } finally {
       setIsSharing(false);
     }

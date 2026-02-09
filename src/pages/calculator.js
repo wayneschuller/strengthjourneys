@@ -36,6 +36,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { devLog } from "@/lib/processing-utils";
+import { trackShareCopy } from "@/lib/analytics";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { cn } from "@/lib/utils";
 
@@ -365,9 +366,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
       description: "Result copied to clipboard.",
     });
 
-    if (typeof window !== "undefined") {
-      window.gtag("event", "calc_share_clipboard");
-    }
+    trackShareCopy("e1rm_calculator", { page: "/calculator" });
 
     // This fails in React - but it's the new API
     // if (navigator?.clipboard?.writeText) {

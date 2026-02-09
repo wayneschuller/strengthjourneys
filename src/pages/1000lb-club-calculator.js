@@ -32,6 +32,7 @@ import { Anvil, Trophy, LineChart, Calculator, BicepsFlexed, Bot, Share2 } from 
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { trackShareCopy } from "@/lib/analytics";
 
 const BIG_FOUR_URLS = {
   "Back Squat": "/barbell-squat-insights",
@@ -176,6 +177,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       url,
     ].filter(Boolean);
     navigator.clipboard?.writeText(lines.join("\n")).catch(() => {});
+    trackShareCopy("1000lb_club", { page: "/1000lb-club-calculator" });
   };
 
   return (

@@ -76,15 +76,20 @@ export function pageView(fullURL) {
   window.gtag("config", id, params);
 }
 
+/** Prefix for Strength Journeys custom events (distinguishes from GA default events like page_view, session_start). */
+const GA_EVENT_PREFIX = "SJ_";
+
 /**
  * Send a Google Analytics event with optional params. Merges stored UTM and optional page.
+ * All custom events are prefixed with SJ_ to distinguish from generic GA defaults.
  */
 export function event(name, params = {}) {
   if (!isEnabled()) return;
   const id = getMeasurementId();
   if (!id) return;
+  const prefixed = name.startsWith(GA_EVENT_PREFIX) ? name : `${GA_EVENT_PREFIX}${name}`;
   const merged = buildParams(params);
-  window.gtag("event", name, Object.keys(merged).length ? merged : undefined);
+  window.gtag("event", prefixed, Object.keys(merged).length ? merged : undefined);
 }
 
 // --- Google Analytics track* helpers (send funnel events to GA4; add page when provided) ---
@@ -111,4 +116,16 @@ export function trackSheetSelected() {
 
 export function trackSheetLinked() {
   event("funnel_sheet_linked");
+}
+
+/**
+ * Track share/copy-to-clipboard actions. Use to compare which features have the most social sharing value.
+ * @param {string} feature - Identifier for the feature (e.g. "e1rm_calculator", "1000lb_club", "year_recap", "heatmap")
+ * @param {object} [params] - Optional extra params (e.g. { page, slide })
+ */
+export function trackShareCopy(feature, params = {}) {
+  event("share_button_click", {
+    feature,
+    ...params,
+  });
 }

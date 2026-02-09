@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -49,7 +50,12 @@ export function MostRecentSessionCard({
   liftType = null,
   highlightDate: highlightDateProp = null,
   setHighlightDate: setHighlightDateProp,
+  isProgressDone = false,
 }) {
+  if (!isProgressDone) {
+    return <MostRecentSessionCardSkeleton />;
+  }
+
   const { status: authStatus } = useSession();
   const [internalHighlightDate, setInternalHighlightDate] = useState(null);
 
@@ -413,5 +419,30 @@ export function MostRecentSessionCard({
         </CardContent>
       </Card>
     </TooltipProvider>
+  );
+}
+
+function MostRecentSessionCardSkeleton() {
+  return (
+    <Card className="mt-4 rounded-xl border">
+      <CardHeader className="px-4 py-2 pb-1.5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <Skeleton className="h-5 w-40" />
+          </div>
+          <div className="hidden items-center gap-2 md:flex">
+            <Skeleton className="h-8 w-24" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="px-4 pt-1 pb-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch">
+          <div className="min-w-[160px] flex-1 rounded-lg border bg-muted/30 px-3 py-2">
+            <Skeleton className="mb-2 h-4 w-32" />
+            <Skeleton className="h-3 w-40" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -76,7 +76,7 @@ export function HomeDashboard() {
         />
       )}
       {ssid && <SectionTopCards isProgressDone={hasDataLoaded} />}
-      {ssid && hasDataLoaded && <MostRecentSessionCard />}
+      {ssid && <MostRecentSessionCard isProgressDone={hasDataLoaded} />}
     </div>
   );
 }

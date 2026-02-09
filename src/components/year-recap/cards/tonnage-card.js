@@ -35,15 +35,17 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
     return yearNum < currentYear || (yearNum === currentYear && isDecember);
   }, [year]);
 
+  const isCurrentYear = Number(year) === new Date().getFullYear();
+  const comparisonYearWord = isCurrentYear ? "last" : "previous";
+
   const comparisonText = useMemo(() => {
     if (!showPrevYearComparison || prevYearTonnage == null || prevYearTonnage <= 0) return null;
     const pct = Math.round(((tonnage - prevYearTonnage) / prevYearTonnage) * 100);
-    if (pct > 0) return `Up ${pct}% from last year`;
-    if (pct < 0) return `${Math.abs(pct)}% less than last year`;
-    return "Same as last year";
-  }, [showPrevYearComparison, tonnage, prevYearTonnage]);
+    if (pct > 0) return `Up ${pct}% from ${comparisonYearWord} year`;
+    if (pct < 0) return `${Math.abs(pct)}% less than ${comparisonYearWord} year`;
+    return `Same as ${comparisonYearWord} year`;
+  }, [showPrevYearComparison, tonnage, prevYearTonnage, comparisonYearWord]);
 
-  const isCurrentYear = Number(year) === new Date().getFullYear();
   const yearPhrase = isCurrentYear ? "this year" : `in ${year}`;
 
   const formattedCount =

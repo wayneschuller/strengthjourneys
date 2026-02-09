@@ -880,10 +880,12 @@ function calculateStreak(parsedData) {
   const thisWeekKey = getWeekKeyFromDateStr(todayStr);
   const sessionsThisWeek = weekSessionCount.get(thisWeekKey) || 0;
 
-  // --- Phase 3: Current streak (consecutive weeks with 3+ sessions, INCLUDING this week if it's already at 3+) ---
-  // We walk week-by-week starting from the current week backwards. A week with fewer than 3 sessions breaks the streak.
+  // --- Phase 3: Current streak (consecutive **completed** weeks with 3+ sessions, Option B) ---
+  // We treat only fully completed weeks as eligible for the streak.
+  // The current calendar week (the one containing "today") does NOT contribute to, or break, the streak until it is complete.
   let currentStreak = 0;
-  let weekKey = thisWeekKey;
+  const lastCompleteWeekKey = subtractDaysFromStr(thisWeekKey, 7); // Monday of the last fully completed week
+  let weekKey = lastCompleteWeekKey;
   while (weekKey >= oldestWeek) {
     const sessionCount = weekSessionCount.get(weekKey) || 0;
     if (sessionCount >= 3) {
@@ -894,11 +896,12 @@ function calculateStreak(parsedData) {
     weekKey = subtractDaysFromStr(weekKey, 7);
   }
 
-  // --- Phase 4: Best streak (longest run of consecutive weeks with 3+ sessions, over full history INCLUDING this week) ---
+  // --- Phase 4: Best streak (longest run of consecutive completed weeks with 3+ sessions, Option B) ---
   let bestStreak = 0;
   let tempStreak = 0;
   weekKey = oldestWeek;
-  while (weekKey <= thisWeekKey) {
+  const bestStreakEndWeek = lastCompleteWeekKey;
+  while (weekKey <= bestStreakEndWeek) {
     const sessionCount = weekSessionCount.get(weekKey) || 0;
     if (sessionCount >= 3) {
       tempStreak++;

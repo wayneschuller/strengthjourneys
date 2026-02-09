@@ -171,21 +171,24 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   });
 
   useEffect(() => {
-    // Get computed CSS variable values and convert to usable color strings
-    const root = document.documentElement;
-    const computedStyle = getComputedStyle(root);
-
-    // Helper to get HSL value and convert to a color string SVG can use
-    const getHSLColor = (varName) => {
-      const hslValue = computedStyle.getPropertyValue(varName).trim();
-      if (!hslValue) return null;
-      return `hsl(${hslValue})`;
+    // Resolve theme CSS variables to computed color strings (rgb/hex) so SVG and
+    // chart libs work with any format (hsl, oklch, etc.). getPropertyValue() returns
+    // raw values (e.g. "oklch(...)"), so we use a temp element to get computed color.
+    const getComputedColor = (varName) => {
+      const temp = document.createElement("div");
+      temp.style.color = `var(${varName})`;
+      temp.style.position = "absolute";
+      temp.style.visibility = "hidden";
+      document.body.appendChild(temp);
+      const color = getComputedStyle(temp).color;
+      document.body.removeChild(temp);
+      if (!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") return null;
+      return color;
     };
 
-    // Helper to get computed color value for background
     const getBackgroundColor = () => {
       const temp = document.createElement("div");
-      temp.style.backgroundColor = "hsl(var(--background))";
+      temp.style.backgroundColor = "var(--background)";
       temp.style.position = "absolute";
       temp.style.visibility = "hidden";
       document.body.appendChild(temp);
@@ -194,29 +197,30 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
       return color || "#ffffff";
     };
 
-    // Create lighter variants by adjusting lightness
-    const createLighterVariant = (hslString, lightnessIncrease = 10) => {
-      if (!hslString) return null;
-      // Extract HSL values: "hsl(12 76% 61%)" -> ["12", "76", "61"]
-      const match = hslString.match(/hsl\((\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%\)/);
-      if (!match) return hslString;
-      const [, h, s, l] = match;
-      const newL = Math.min(100, parseFloat(l) + lightnessIncrease);
-      return `hsl(${h} ${s}% ${newL}%)`;
+    // Create a lighter variant from any computed rgb/rgba string
+    const createLighterVariant = (rgbString, amount = 0.15) => {
+      if (!rgbString) return null;
+      const match = rgbString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+      if (!match) return rgbString;
+      const [, r, g, b] = match;
+      const scale = 1 + amount;
+      const nr = Math.min(255, Math.round(Number(r) * scale));
+      const ng = Math.min(255, Math.round(Number(g) * scale));
+      const nb = Math.min(255, Math.round(Number(b) * scale));
+      return `rgb(${nr}, ${ng}, ${nb})`;
     };
 
-    // Get chart colors (these are HSL values)
-    const chart1HSL = getHSLColor("--chart-1");
-    const chart3HSL = getHSLColor("--chart-3");
-    const mutedForegroundHSL = getHSLColor("--muted-foreground");
+    const chart1 = getComputedColor("--chart-1");
+    const chart3 = getComputedColor("--chart-3");
+    const mutedFg = getComputedColor("--muted-foreground");
 
     setThemeColors({
-      chart1: chart1HSL || "#3b82f6",
-      chart1Light: chart1HSL ? createLighterVariant(chart1HSL, 15) : "#60a5fa",
-      chart3: chart3HSL || "#f59e0b",
-      chart3Light: chart3HSL ? createLighterVariant(chart3HSL, 10) : "#facc15",
-      mutedForeground: mutedForegroundHSL || "#64748b",
-      border: mutedForegroundHSL || "#8884d8",
+      chart1: chart1 || "#3b82f6",
+      chart1Light: chart1 ? createLighterVariant(chart1, 0.15) : "#60a5fa",
+      chart3: chart3 || "#f59e0b",
+      chart3Light: chart3 ? createLighterVariant(chart3, 0.1) : "#facc15",
+      mutedForeground: mutedFg || "#64748b",
+      border: mutedFg || "#8884d8",
       background: getBackgroundColor(),
     });
   }, [theme, resolvedTheme]); // Re-run when theme changes

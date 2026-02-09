@@ -94,7 +94,7 @@ export function ThemeChooser() {
   );
 }
 
-const DARK_THEMES = ["dark", "neo-brutalism-dark", "retro-arcade-dark"];
+const DARK_THEMES = ["dark", "neo-brutalism-dark", "retro-arcade-dark", "starry-night-dark"];
 
 // This is the old dark mode toggle that is no longer used
 export function DarkModeToggle() {

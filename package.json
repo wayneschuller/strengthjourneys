@@ -19,6 +19,7 @@
     "@fontsource/amiko": "^5.2.7",
     "@fontsource/dm-sans": "^5.2.8",
     "@fontsource/geist-sans": "^5.2.5",
+    "@fontsource/libre-baskerville": "^5.2.10",
     "@fontsource/outfit": "^5.2.8",
     "@formkit/auto-animate": "^0.8.2",
     "@googleworkspace/drive-picker-react": "^0.2.0",

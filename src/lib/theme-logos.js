@@ -20,6 +20,8 @@ export const logoMap = {
   "neo-brutalism-dark": logoNeoBrutalism,
   "retro-arcade": logoRetroArcade,
   "retro-arcade-dark": logoRetroArcade,
+  "starry-night": fallbackLightLogo,
+  "starry-night-dark": fallbackDarkLogo,
 };
 
 /**

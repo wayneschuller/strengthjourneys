@@ -23,6 +23,7 @@ import { LiftColorsProvider } from "@/hooks/use-lift-colors";
 import "@fontsource/geist-sans/index.css"; // Used in: light, dark
 import "@fontsource/dm-sans/index.css"; // Used in: neo-brutalism, neo-brutalism-dark
 import "@fontsource/outfit/index.css"; // Used in: retro-arcade, retro-arcade-dark
+import "@fontsource/libre-baskerville/index.css"; // Used in: starry-night, starry-night-dark
 
 export default function App({ Component, pageProps, session }) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS;
@@ -51,6 +52,8 @@ export default function App({ Component, pageProps, session }) {
           "neo-brutalism-dark",
           "retro-arcade",
           "retro-arcade-dark",
+          "starry-night",
+          "starry-night-dark",
         ]}
         // I'm not sure about the next two options. Commenting out for now.
         // enableSystem

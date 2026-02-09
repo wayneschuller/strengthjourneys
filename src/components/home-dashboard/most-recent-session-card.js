@@ -15,6 +15,7 @@ import {
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { differenceInDays } from "date-fns";
 import {
@@ -65,6 +66,10 @@ export function MostRecentSessionCard({
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
       initializeWithValue: false,
     }) ?? "Brzycki";
+
+  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBioData();
+  const hasBioData =
+    age && bodyWeight && standards && Object.keys(standards).length > 0;
 
   const { recentSessions, singleSession, isFirstDate, isLastDate, datesForNav } =
     useMemo(() => {
@@ -239,6 +244,14 @@ export function MostRecentSessionCard({
                           workouts={workouts}
                           e1rmFormula={e1rmFormula}
                           hideSvg
+                          authStatus={authStatus}
+                          hasBioData={hasBioData}
+                          standards={standards}
+                          sessionDate={sessionDate}
+                          age={age}
+                          bodyWeight={bodyWeight}
+                          sex={sex}
+                          isMetric={isMetric}
                           label={getReadableDateString(sessionDate, true)}
                         />
                       ))}
@@ -385,6 +398,14 @@ export function MostRecentSessionCard({
                   liftType={lt}
                   workouts={workouts}
                   e1rmFormula={e1rmFormula}
+                  authStatus={authStatus}
+                  hasBioData={hasBioData}
+                  standards={standards}
+                  sessionDate={sessionDate}
+                  age={age}
+                  bodyWeight={bodyWeight}
+                  sex={sex}
+                  isMetric={isMetric}
                 />
               </motion.div>
             ))}

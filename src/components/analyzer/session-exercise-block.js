@@ -134,32 +134,25 @@ export function SessionExerciseBlock({
   // Compact: big four uses SVG; full always uses LiftTypeIndicator
   const svgPath = isCompact && !hideSvg ? getLiftSvgPath(liftType) : null;
 
-  const pills = (
-    <div
-      className={
-        isCompact
-          ? "flex min-w-0 flex-1 flex-wrap content-center items-center gap-2"
-          : "flex flex-wrap gap-2"
-      }
-    >
-      {label && (
-        <span className="text-muted-foreground shrink-0 text-sm font-medium">
-          {label}
-        </span>
-      )}
+   const canShowStrengthLevel =
+    authStatus === "authenticated" &&
+    hasBioData &&
+    (standards?.[liftType] ||
+      (sessionDate && age && bodyWeight != null && sex != null));
+
+  const bestE1rmLastIndex =
+    canShowStrengthLevel && bestE1rmIndices.size
+      ? Math.max(...bestE1rmIndices)
+      : null;
+
+  const basePills = (
+    <div className="flex flex-wrap gap-2">
       {workouts.map((workout, index) => {
         const isHighlighted = highlightedIndices.has(index);
-        const size = isCompact
-          ? { text: "text-sm", pad: "px-2.5 py-2" }
-          : getSizeForE1rm(e1rms[index]);
+        const size = getSizeForE1rm(e1rms[index]);
         const padClass =
           isHighlighted && !isCompact ? "px-3.5 py-2.5" : size.pad;
-        const textClass =
-          isCompact && isHighlighted
-            ? "font-semibold text-emerald-600 dark:text-emerald-400"
-            : isHighlighted && !isCompact
-              ? "font-semibold"
-              : "";
+        const textClass = isHighlighted ? "font-semibold" : "";
 
         return (
           <div
@@ -178,29 +171,21 @@ export function SessionExerciseBlock({
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                      <span
-                        className="text-amber-600 transition-transform hover:scale-110 hover:text-amber-500 dark:text-amber-500 dark:hover:text-amber-400"
-                        aria-label="Lifetime PR"
-                      >
-                        <Trophy
-                          className={
-                            isCompact
-                              ? "h-4 w-4 sm:h-3 sm:w-3"
-                              : isHighlighted
-                                ? "h-4 w-4 sm:h-4 sm:w-4"
-                                : "h-4 w-4 sm:h-3.5 sm:w-3.5"
-                          }
-                        />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        Lifetime PR
-                        {workout.lifetimeSignificanceAnnotation
-                          ? `: ${workout.lifetimeSignificanceAnnotation}`
-                          : ""}
-                      </p>
-                    </TooltipContent>
+                        <span
+                          className="text-amber-600 transition-transform hover:scale-110 hover:text-amber-500 dark:text-amber-500 dark:hover:text-amber-400"
+                          aria-label="Lifetime PR"
+                        >
+                          <Trophy className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          Lifetime PR
+                          {workout.lifetimeSignificanceAnnotation
+                            ? `: ${workout.lifetimeSignificanceAnnotation}`
+                            : ""}
+                        </p>
+                      </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
@@ -209,29 +194,21 @@ export function SessionExerciseBlock({
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                        <span
-                          className="text-blue-600 transition-transform hover:scale-110 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
-                          aria-label="12-month PR"
-                        >
-                          <Medal
-                            className={
-                              isCompact
-                                ? "h-4 w-4 sm:h-3 sm:w-3"
-                                : isHighlighted
-                                  ? "h-4 w-4 sm:h-4 sm:w-4"
-                                  : "h-4 w-4 sm:h-3.5 sm:w-3.5"
-                            }
-                          />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          12-month PR
-                          {workout.yearlySignificanceAnnotation
-                            ? `: ${workout.yearlySignificanceAnnotation} of the year`
-                            : ""}
-                        </p>
-                      </TooltipContent>
+                          <span
+                            className="text-blue-600 transition-transform hover:scale-110 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+                            aria-label="12-month PR"
+                          >
+                            <Medal className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            12-month PR
+                            {workout.yearlySignificanceAnnotation
+                              ? `: ${workout.yearlySignificanceAnnotation} of the year`
+                              : ""}
+                          </p>
+                        </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   )}
@@ -239,27 +216,19 @@ export function SessionExerciseBlock({
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                      <span
-                        className="text-muted-foreground hover:text-foreground transition-transform hover:scale-110"
-                        aria-label="Note"
-                      >
-                        <StickyNote
-                          className={
-                            isCompact
-                              ? "h-4 w-4 sm:h-3 sm:w-3"
-                              : isHighlighted
-                                ? "h-4 w-4 sm:h-4 sm:w-4"
-                                : "h-4 w-4 sm:h-3.5 sm:w-3.5"
-                          }
-                        />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">
-                        <span className="font-semibold">Note: </span>
-                        {workout.notes}
-                      </p>
-                    </TooltipContent>
+                        <span
+                          className="text-muted-foreground hover:text-foreground transition-transform hover:scale-110"
+                          aria-label="Note"
+                        >
+                          <StickyNote className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">
+                          <span className="font-semibold">Note: </span>
+                          {workout.notes}
+                        </p>
+                      </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
@@ -267,55 +236,203 @@ export function SessionExerciseBlock({
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                      <a
-                        href={workout.URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex rounded p-0.5 transition-transform hover:scale-110"
-                        aria-label="Video"
-                      >
-                        <PlayCircle
-                          className={
-                            isCompact
-                              ? "h-4 w-4 sm:h-3 sm:w-3"
-                              : isHighlighted
-                                ? "h-4 w-4 sm:h-4 sm:w-4"
-                                : "h-4 w-4 sm:h-3.5 sm:w-3.5"
-                          }
-                        />
-                      </a>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        Click to open video
-                        {workout.URL.length > 40
-                          ? ` (${workout.URL.slice(0, 37)}…)`
-                          : ""}
-                      </p>
-                    </TooltipContent>
+                        <a
+                          href={workout.URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex rounded p-0.5 transition-transform hover:scale-110"
+                          aria-label="Video"
+                        >
+                          <PlayCircle className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          Click to open video
+                          {workout.URL.length > 40
+                            ? ` (${workout.URL.slice(0, 37)}…)`
+                            : ""}
+                        </p>
+                      </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
               </div>
-            </div>
-            {!isCompact &&
-              (workout.lifetimeSignificanceAnnotation ||
-                workout.yearlySignificanceAnnotation) && (
-                <span
-                  className={
-                    isHighlighted
-                      ? "text-muted-foreground text-sm"
-                      : "text-muted-foreground text-xs"
-                  }
-                >
-                  {workout.lifetimeSignificanceAnnotation}
-                  {workout.lifetimeSignificanceAnnotation &&
-                    workout.yearlySignificanceAnnotation &&
-                    ", "}
-                  {workout.yearlySignificanceAnnotation &&
-                    `${workout.yearlySignificanceAnnotation} of the year`}
-                </span>
+              {canShowStrengthLevel && index === bestE1rmLastIndex && (
+                <div className="ml-1">
+                  <LiftStrengthLevel
+                    liftType={liftType}
+                    workouts={workouts}
+                    standards={standards}
+                    e1rmFormula={e1rmFormula}
+                    sessionDate={sessionDate}
+                    age={age}
+                    bodyWeight={bodyWeight}
+                    sex={sex}
+                    isMetric={isMetric}
+                    bestSetReps={workout.reps}
+                    bestSetWeight={workout.weight}
+                    inline
+                  />
+                </div>
               )}
+            </div>
+            {(workout.lifetimeSignificanceAnnotation ||
+              workout.yearlySignificanceAnnotation) && (
+              <span
+                className={
+                  isHighlighted
+                    ? "text-muted-foreground text-sm"
+                    : "text-muted-foreground text-xs"
+                }
+              >
+                {workout.lifetimeSignificanceAnnotation}
+                {workout.lifetimeSignificanceAnnotation &&
+                  workout.yearlySignificanceAnnotation &&
+                  ", "}
+                {workout.yearlySignificanceAnnotation &&
+                  `${workout.yearlySignificanceAnnotation} of the year`}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const compactPills = (
+    <div className="flex min-w-0 flex-1 flex-wrap content-center items-center gap-2">
+      {workouts.map((workout, index) => {
+        const isHighlighted = highlightedIndices.has(index);
+        const size = { text: "text-sm", pad: "px-2.5 py-2" };
+        const padClass = isHighlighted ? "px-3.5 py-2.5" : size.pad;
+        const textClass = isHighlighted
+          ? "font-semibold text-emerald-600 dark:text-emerald-400"
+          : "";
+
+        return (
+          <div
+            key={index}
+            className={`flex flex-col gap-1 rounded-lg border transition-colors ${padClass} ${
+              isHighlighted ? highlightClass : "border-border/60 bg-muted/30"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className={`tabular-nums ${size.text} ${textClass}`}>
+                {workout.reps}×{workout.weight}
+                {workout.unitType}
+              </span>
+              <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+                {workout.lifetimeRanking !== -1 && (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className="text-amber-600 transition-transform hover:scale-110 hover:text-amber-500 dark:text-amber-500 dark:hover:text-amber-400"
+                          aria-label="Lifetime PR"
+                        >
+                          <Trophy className="h-4 w-4 sm:h-3 sm:w-3" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          Lifetime PR
+                          {workout.lifetimeSignificanceAnnotation
+                            ? `: ${workout.lifetimeSignificanceAnnotation}`
+                            : ""}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {workout.yearlyRanking != null &&
+                  workout.yearlyRanking !== -1 && (
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            className="text-blue-600 transition-transform hover:scale-110 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+                            aria-label="12-month PR"
+                          >
+                            <Medal className="h-4 w-4 sm:h-3 sm:w-3" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            12-month PR
+                            {workout.yearlySignificanceAnnotation
+                              ? `: ${workout.yearlySignificanceAnnotation} of the year`
+                              : ""}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                {workout.notes && (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className="text-muted-foreground hover:text-foreground transition-transform hover:scale-110"
+                          aria-label="Note"
+                        >
+                          <StickyNote className="h-4 w-4 sm:h-3 sm:w-3" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">
+                          <span className="font-semibold">Note: </span>
+                          {workout.notes}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {workout.URL && (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={workout.URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex rounded p-0.5 transition-transform hover:scale-110"
+                          aria-label="Video"
+                        >
+                          <PlayCircle className="h-4 w-4 sm:h-3 sm:w-3" />
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          Click to open video
+                          {workout.URL.length > 40
+                            ? ` (${workout.URL.slice(0, 37)}…)`
+                            : ""}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+              {canShowStrengthLevel && index === bestE1rmLastIndex && (
+                <div className="ml-1">
+                  <LiftStrengthLevel
+                    liftType={liftType}
+                    workouts={workouts}
+                    standards={standards}
+                    e1rmFormula={e1rmFormula}
+                    sessionDate={sessionDate}
+                    age={age}
+                    bodyWeight={bodyWeight}
+                    sex={sex}
+                    isMetric={isMetric}
+                    bestSetReps={workout.reps}
+                    bestSetWeight={workout.weight}
+                    inline
+                  />
+                </div>
+              )}
+            </div>
           </div>
         );
       })}
@@ -337,7 +454,9 @@ export function SessionExerciseBlock({
 
     return (
       <div
-        className={`bg-muted/20 flex h-full min-h-0 flex-row rounded-xl border ${liftTypeArea ? "p-4" : "px-2 py-1.5"} ${liftTypeArea ? "" : "gap-2"}`}
+        className={`bg-muted/20 flex h-full min-h-0 flex-row rounded-xl border ${
+          liftTypeArea ? "items-center p-4" : "px-2 py-1.5 gap-2"
+        }`}
       >
         {liftTypeArea &&
           (svgPath && bigFourURLs[liftType] ? (
@@ -350,7 +469,14 @@ export function SessionExerciseBlock({
           ) : (
             liftTypeArea
           ))}
-        {pills}
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          {label && (
+            <span className="text-muted-foreground shrink-0 text-xs font-medium">
+              {label}
+            </span>
+          )}
+          {compactPills}
+        </div>
       </div>
     );
   }
@@ -358,29 +484,16 @@ export function SessionExerciseBlock({
   return (
     <div className="bg-muted/20 rounded-xl border p-4">
       <div className="space-y-3">
-        <LiftTypeIndicator liftType={liftType} className="text-lg" />
-        {pills}
+        <div className="flex flex-wrap items-baseline gap-2">
+          <LiftTypeIndicator liftType={liftType} className="text-lg" />
+        </div>
+        {basePills}
         {perLiftTonnageStats?.[liftType] && (
           <LiftTonnageRow
             liftType={liftType}
             stats={perLiftTonnageStats[liftType]}
           />
         )}
-        {authStatus === "authenticated" &&
-          hasBioData &&
-          standards[liftType] && (
-            <LiftStrengthLevel
-              liftType={liftType}
-              workouts={workouts}
-              standards={standards}
-              e1rmFormula={e1rmFormula}
-              sessionDate={sessionDate}
-              age={age}
-              bodyWeight={bodyWeight}
-              sex={sex}
-              isMetric={isMetric}
-            />
-          )}
       </div>
     </div>
   );
@@ -454,7 +567,11 @@ function LiftStrengthLevel({
   bodyWeight,
   sex,
   isMetric,
+  inline = false,
+  bestSetReps,
+  bestSetWeight,
 }) {
+  const formula = e1rmFormula || "Brzycki";
   const standard =
     sessionDate && age && bodyWeight != null && sex != null
       ? getStandardForLiftDate(
@@ -471,7 +588,7 @@ function LiftStrengthLevel({
     workouts,
     liftType,
     standardsForLift,
-    e1rmFormula || "Brzycki",
+    formula,
   );
   if (!result) return null;
 
@@ -479,20 +596,71 @@ function LiftStrengthLevel({
   const eliteMax = standard?.elite ?? 0;
   const isBeyondElite = rating === "Elite" && bestE1RM > eliteMax;
 
+  // Best set to prefill the calculator with: use explicit override when provided,
+  // otherwise fall back to scanning workouts for the highest e1RM.
+  let bestSet = null;
+  let bestSetE1RM = 0;
+  if (bestSetReps != null && bestSetWeight != null) {
+    bestSet = { reps: bestSetReps, weight: bestSetWeight };
+    bestSetE1RM = estimateE1RM(bestSetReps, bestSetWeight, formula);
+  } else if (Array.isArray(workouts)) {
+    for (const w of workouts) {
+      const reps = w.reps ?? 0;
+      const weight = w.weight ?? 0;
+      if (reps === 0 || weight === 0) continue;
+      const e1rm = estimateE1RM(reps, weight, formula);
+      if (e1rm > bestSetE1RM) {
+        bestSetE1RM = e1rm;
+        bestSet = { reps, weight };
+      }
+    }
+  }
+
+  const searchParams = new URLSearchParams();
+  if (bestSet) {
+    searchParams.set("reps", String(bestSet.reps));
+    searchParams.set("weight", String(bestSet.weight));
+  }
+  searchParams.set("calcIsMetric", (isMetric ?? false).toString());
+  searchParams.set("formula", formula);
+
+  if (age != null && bodyWeight != null && sex && liftType) {
+    searchParams.set("AthleteAge", String(age));
+    searchParams.set("AthleteBodyWeight", String(bodyWeight));
+    searchParams.set("AthleteSex", String(sex));
+    searchParams.set("AthleteLiftType", liftType);
+    searchParams.set("advanced", "true");
+  }
+
+  const href = `/calculator?${searchParams.toString()}`;
+  const ratingContent = isBeyondElite ? (
+    <span className="text-foreground font-semibold">
+      {STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite
+    </span>
+  ) : (
+    <span className="text-foreground font-semibold">
+      {STRENGTH_LEVEL_EMOJI[rating] ?? ""} {rating}
+    </span>
+  );
+
   return (
     <Link
-      href="/strength-level-calculator"
-      className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-md py-1 text-base font-medium transition-colors hover:underline"
+      href={href}
+      className={
+        inline
+          ? "text-muted-foreground hover:text-foreground inline-flex items-center gap-1 rounded-full border border-dashed px-2.5 py-0.5 text-xs font-medium transition-colors hover:bg-muted/40"
+          : "text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-md py-1 text-base font-medium transition-colors hover:underline"
+      }
     >
-      {liftType} strength level:{" "}
-      {isBeyondElite ? (
-        <span className="text-foreground font-semibold">
-          {STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite
-        </span>
+      {inline ? (
+        <>
+          <span className="sr-only">{liftType} strength level</span>
+          {ratingContent}
+        </>
       ) : (
-        <span className="text-foreground font-semibold">
-          {STRENGTH_LEVEL_EMOJI[rating] ?? ""} {rating}
-        </span>
+        <>
+          {liftType} strength level: {ratingContent}
+        </>
       )}
     </Link>
   );

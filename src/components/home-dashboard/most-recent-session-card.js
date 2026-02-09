@@ -50,7 +50,7 @@ export function MostRecentSessionCard({
   liftType = null,
   highlightDate: highlightDateProp = null,
   setHighlightDate: setHighlightDateProp,
-  isProgressDone = false,
+  isProgressDone = true,
 }) {
   if (!isProgressDone) {
     return <MostRecentSessionCardSkeleton />;

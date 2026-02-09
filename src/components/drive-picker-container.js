@@ -4,17 +4,15 @@ import { useEffect, useRef } from "react";
 import useDrivePicker from "react-google-drive-picker";
 
 /**
- * Container component that uses useDrivePicker hook
- * Only mount this component when you actually need the picker
- * This defers loading ~163 KiB of Google API scripts until needed
- * 
- * Usage:
- * <DrivePickerContainer
- *   onReady={(openPicker, authResponse) => {
- *     // Use openPicker when user clicks button
- *   }}
- *   trigger={shouldLoadPicker} // Only mount when this is true
- * />
+ * Container that initializes the Google Drive Picker. Defers loading ~163 KiB of Google API
+ * scripts until mounted. Only mount when the user actually needs the picker (e.g. during onboarding).
+ *
+ * @param {Object} props
+ * @param {function(function, Object)} [props.onReady] - Called when the picker is ready. Receives
+ *   (openPicker, authResponse). openPicker is a function to show the picker; call it when the
+ *   user clicks "Choose from Drive".
+ * @param {boolean} [props.trigger=false] - When true, the component mounts and starts loading
+ *   the picker. Typically tied to auth status so the picker loads only after sign-in.
  */
 export function DrivePickerContainer({ onReady, trigger = false }) {
   const result = useDrivePicker();

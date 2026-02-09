@@ -1,6 +1,12 @@
 import { cn } from "@/lib/utils";
 
-/** Centered page wrapper. Tailwind v4 container does not center by default; use mx-auto per docs. */
+/**
+ * Centered page wrapper. Tailwind v4 container does not center by default; uses mx-auto per docs.
+ *
+ * @param {Object} props
+ * @param {string} [props.className] - Additional CSS classes.
+ * @param {React.ReactNode} props.children - Page content.
+ */
 export function PageContainer({ className, children, ...props }) {
   return (
     <div className={cn("container mx-auto", className)} {...props}>
@@ -9,6 +15,15 @@ export function PageContainer({ className, children, ...props }) {
   );
 }
 
+/**
+ * Page header section with responsive layout. Accepts children; children with
+ * displayName "PageHeaderRight" are rendered in a right-aligned section on desktop.
+ *
+ * @param {Object} props
+ * @param {string} [props.className] - Additional CSS classes.
+ * @param {React.ReactNode} props.children - Header content. Use PageHeaderRight as a child
+ *   for right-aligned content (e.g. diagram, controls).
+ */
 export function PageHeader({ className, children, ...props }) {
   // Find the right section if it exists
   const rightSection = children?.find(
@@ -34,7 +49,14 @@ export function PageHeader({ className, children, ...props }) {
   );
 }
 
-// Use displayName to identify this component
+/**
+ * Right-aligned section for PageHeader. Use as a child of PageHeader to place
+ * content (e.g. diagram, controls) on the right side on desktop.
+ *
+ * @param {Object} props
+ * @param {string} [props.className] - Additional CSS classes.
+ * @param {React.ReactNode} props.children - Right-section content.
+ */
 export function PageHeaderRight({ className, children, ...props }) {
   return (
     <div
@@ -50,6 +72,14 @@ export function PageHeaderRight({ className, children, ...props }) {
 }
 PageHeaderRight.displayName = "PageHeaderRight";
 
+/**
+ * Page title (h1) with optional icon. Typically used inside PageHeader.
+ *
+ * @param {Object} props
+ * @param {string} [props.className] - Additional CSS classes.
+ * @param {React.Component} [props.icon] - Lucide icon component to show before the heading.
+ * @param {React.ReactNode} props.children - Heading text.
+ */
 export function PageHeaderHeading({ className, icon: Icon, ...props }) {
   return (
     <h1
@@ -65,6 +95,13 @@ export function PageHeaderHeading({ className, icon: Icon, ...props }) {
   );
 }
 
+/**
+ * Subtitle/description text for a page header. Typically used below PageHeaderHeading.
+ *
+ * @param {Object} props
+ * @param {string} [props.className] - Additional CSS classes.
+ * @param {React.ReactNode} props.children - Description content.
+ */
 export function PageHeaderDescription({ className, ...props }) {
   return (
     <div

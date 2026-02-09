@@ -60,6 +60,17 @@ import {
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionExerciseBlock } from "@/components/analyzer/session-exercise-block";
 
+/**
+ * Displays a detailed analysis of a single workout session. Shows exercises with sets,
+ * PR indicators, tonnage comparison vs last year, and a creative session rating.
+ * Used on the Analyzer page; highlight date can be driven by the Visualizer chart hover.
+ *
+ * @param {Object} props
+ * @param {string|null} [props.highlightDate=null] - ISO date string (YYYY-MM-DD) for the session
+ *   to display. When null, defaults to the most recent non-goal session in parsedData.
+ * @param {function(string)} props.setHighlightDate - Callback to update the displayed session date.
+ *   Called when user clicks prev/next or when parent (e.g. Visualizer) wants to sync.
+ */
 export function SessionAnalysisCard({
   highlightDate = null,
   setHighlightDate,

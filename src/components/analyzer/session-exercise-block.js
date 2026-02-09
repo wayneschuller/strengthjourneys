@@ -24,6 +24,29 @@ import {
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
 
+/**
+ * Renders a block of workout sets for a single lift type. Shows reps×weight pills with
+ * PR indicators (lifetime/yearly), notes, and video links. In "full" variant also shows
+ * tonnage comparison and strength level when bio data is available.
+ *
+ * @param {Object} props
+ * @param {"full"|"compact"} [props.variant="full"] - Display mode. "full" shows full layout with
+ *   tonnage and strength level; "compact" shows a condensed row of pills, used in MostRecentSessionCard.
+ * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
+ * @param {Array<{reps: number, weight: number, unitType?: string, lifetimeRanking?: number, yearlyRanking?: number, notes?: string, URL?: string, lifetimeSignificanceAnnotation?: string, yearlySignificanceAnnotation?: string}>} props.workouts - Array of set objects.
+ * @param {Object} [props.perLiftTonnageStats] - Map of liftType -> {currentLiftTonnage, avgLiftTonnage, sessionCount, pctDiff, unitType}. Used in full variant for tonnage comparison.
+ * @param {string} [props.authStatus] - Session auth status; strength level shown only when "authenticated".
+ * @param {boolean} [props.hasBioData] - Whether athlete bio (age, bodyweight, sex) is available for strength standards.
+ * @param {Object} [props.standards] - Map of liftType -> strength standard objects for age/bodyweight adjustment.
+ * @param {string} [props.e1rmFormula="Brzycki"] - E1RM formula for estimates (Brzycki, Epley, etc.).
+ * @param {string} [props.sessionDate] - Session date (YYYY-MM-DD) for age-at-time-of-lift in strength standards.
+ * @param {number} [props.age] - Athlete age for strength standards.
+ * @param {number} [props.bodyWeight] - Athlete bodyweight for strength standards.
+ * @param {string} [props.sex] - Athlete sex for strength standards.
+ * @param {boolean} [props.isMetric] - Whether to use kg for strength standards.
+ * @param {boolean} [props.hideSvg=false] - When true, hides the lift type SVG/diagram in compact variant.
+ * @param {string} [props.label] - Optional label (e.g. date string) shown before the pills.
+ */
 export function SessionExerciseBlock({
   variant = "full",
   liftType,

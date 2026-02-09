@@ -159,7 +159,16 @@ function StatCard({
   );
 }
 
-// Show a section row of key metrics with accent colors and icons
+/**
+ * Shows a row of stat cards with key metrics: journey length, most recent PR single,
+ * session momentum (90-day comparison), lifetime tonnage, and weekly consistency streak.
+ * Uses useUserLiftingData and useAthleteBioData internally.
+ *
+ * @param {Object} props
+ * @param {boolean} [props.isProgressDone=false] - When true, the actual stat cards are rendered.
+ *   When false, a skeleton placeholder is shown (e.g. while row-count animation is running
+ *   on the home dashboard).
+ */
 export function SectionTopCards({ isProgressDone = false }) {
   const {
     parsedData,

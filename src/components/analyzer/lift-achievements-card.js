@@ -47,6 +47,15 @@ import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
 import { findBestE1RM } from "@/lib/processing-utils";
 import { useReadLocalStorage } from "usehooks-ts";
 
+/**
+ * Card showing a lift's journey summary, PRs, recent highlights, and expandable detailed analysis.
+ * Used on the Analyzer page and can be expanded to full-width for focused analysis.
+ *
+ * @param {Object} props
+ * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
+ * @param {boolean} props.isExpanded - Whether the card is in expanded (full-width) mode.
+ * @param {function()} props.onToggle - Callback to toggle between expanded and collapsed states.
+ */
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
   const { liftTypes } = useUserLiftingData();
   const [parent, enableAnimations] = useAutoAnimate(/* optional config */);

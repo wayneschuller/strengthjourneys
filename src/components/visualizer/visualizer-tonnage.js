@@ -46,6 +46,16 @@ import {
 
 import { getYearLabels } from "./visualizer-processing";
 
+/**
+ * Chart showing session tonnage (weight × reps) over time. Supports per-session or per-week
+ * aggregation. Optional setHighlightDate syncs with SessionAnalysisCard for date hover.
+ *
+ * @param {Object} props
+ * @param {function(string)} [props.setHighlightDate] - Callback when user hovers a point; receives
+ *   ISO date string. Used to sync with SessionAnalysisCard on the Analyzer page.
+ * @param {string} [props.liftType] - Display name of the lift to filter tonnage. When omitted,
+ *   shows total tonnage across all lifts.
+ */
 export function TonnageChart({ setHighlightDate, liftType }) {
   const { parsedData } = useUserLiftingData();
   const { getColor } = useLiftColors();

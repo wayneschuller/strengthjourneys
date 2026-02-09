@@ -6,6 +6,12 @@ import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 import { AppBackground } from "@/components/app-background";
 
+/**
+ * Root layout wrapper for the app. Renders nav, main content area, footer, and app background.
+ *
+ * @param {Object} props
+ * @param {React.ReactNode} props.children - Page content rendered inside the main element.
+ */
 export function Layout({ children }) {
   return (
     <div className="relative min-h-screen w-full bg-background">

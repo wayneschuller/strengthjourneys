@@ -61,8 +61,13 @@ import {
 
 import { getYearLabels, processVisualizerData } from "./visualizer-processing";
 
-// VisualizerMini is used in the big four lift pages to show a single lift
-// only visualizer.
+/**
+ * E1RM over time chart for a single lift. Shows estimated 1RM progression with optional formula
+ * and time range controls. Used on lift pages (e.g. /bench-press).
+ *
+ * @param {Object} props
+ * @param {string} [props.liftType] - Display name of the lift to chart (e.g. "Bench Press").
+ */
 export function VisualizerMini({ liftType }) {
   const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
   const { status: authStatus } = useSession();

@@ -26,6 +26,23 @@ import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 
 const RECENT_SESSIONS_COUNT = 3;
 
+/**
+ * Displays the most recent workout session or recent sessions for a specific lift type.
+ * When used on a lift-specific page (e.g. /bench-press), shows the last 3 sessions for that lift.
+ * When used on the home dashboard, shows the single most recent session across all lifts with
+ * prev/next navigation to browse sessions.
+ *
+ * @param {Object} props
+ * @param {string|null} [props.liftType=null] - When set (e.g. "Bench Press"), filters to show only
+ *   that lift type. On lift pages this shows the last 3 sessions containing the lift; on home
+ *   it shows the most recent session filtered to that lift.
+ * @param {string|null} [props.highlightDate=null] - ISO date string (YYYY-MM-DD) for the session
+ *   to display. When used with setHighlightDate, enables controlled mode for parent-driven
+ *   session navigation (e.g. syncing with a chart hover).
+ * @param {function(string)|null} [props.setHighlightDate] - Callback to update the displayed session
+ *   date. When provided, the component runs in controlled mode. When omitted, uses internal state
+ *   for prev/next navigation.
+ */
 export function MostRecentSessionCard({
   liftType = null,
   highlightDate: highlightDateProp = null,

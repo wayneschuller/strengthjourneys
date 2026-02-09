@@ -104,6 +104,18 @@ function getFreshnessColor(dataSyncedAt) {
   return hoursAgo < 1 ? "text-green-600 dark:text-green-500" : "text-amber-600 dark:text-amber-500";
 }
 
+/**
+ * Shows sync status with the user's Google Sheet (last synced time, row count) and a refresh button.
+ *
+ * @param {Object} props
+ * @param {number|null} props.rawRows - Total raw rows from the sheet.
+ * @param {Array} props.parsedData - Parsed workout entries.
+ * @param {number|null} props.dataSyncedAt - Timestamp of last sync.
+ * @param {boolean} props.isValidating - Whether SWR is revalidating.
+ * @param {string|null} props.sheetURL - URL of the linked sheet.
+ * @param {string|null} props.sheetFilename - Display name of the sheet.
+ * @param {function} [props.mutate] - SWR mutate function for manual refresh.
+ */
 function DataSheetStatus({
   rawRows,
   parsedData,
@@ -186,6 +198,16 @@ function DataSheetStatus({
 
 const FADE_DELAY_MS = 2500;
 
+/**
+ * Animated progress bar showing "Reading your workout data" with row count. Fades out after
+ * progress completes. Re-triggers when isValidating becomes true.
+ *
+ * @param {Object} props
+ * @param {number|null} props.rowCount - Total rows to process.
+ * @param {boolean} props.isProgressDone - Whether the animation has finished.
+ * @param {function(boolean)} props.setIsProgressDone - Callback to mark progress complete.
+ * @param {boolean} props.isValidating - Whether SWR is revalidating (resets animation).
+ */
 function RowProcessingIndicator({
   rowCount,
   isProgressDone,

@@ -41,8 +41,14 @@ export const periodTargets = [
   // All Time option will be pushed manually
 ];
 
-// This component is used in the Visualizer page to select the time range for the chart
-// It will only show time ranges that have data available
+/**
+ * Dropdown to select the chart time range (e.g. 3 months, 1 year, All Time). Only shows
+ * options that have data available. Used in Visualizer and lift pages.
+ *
+ * @param {Object} props
+ * @param {string} props.timeRange - Current selection (e.g. "3M", "1Y", "MAX").
+ * @param {function(string)} props.setTimeRange - Callback to update the selection.
+ */
 export function TimeRangeSelect({ timeRange, setTimeRange }) {
   const { parsedData } = useUserLiftingData();
 

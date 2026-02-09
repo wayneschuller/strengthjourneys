@@ -27,6 +27,19 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+/**
+ * Renders a grid of cards for the "big four" barbell lifts (Back Squat, Bench Press,
+ * Deadlift, Strict Press). Each card shows lift info, stats (total sets/reps, best set),
+ * badges (recent PR, favorite, tonnage, etc.), and an SVG diagram.
+ *
+ * @param {Object} props
+ * @param {Array<{liftType: string, slug: string, liftDescription: string}>} props.lifts - Array of
+ *   lift config objects. Each must have liftType (display name), slug (URL path), and
+ *   liftDescription (short description shown before stats load).
+ * @param {boolean} [props.animated=true] - When true, stats and badges stagger in with a short
+ *   delay per card after auth and data load. Set to false to skip the animation (e.g. when
+ *   embedded elsewhere).
+ */
 export function BigFourLiftCards({ lifts, animated = true }) {
   const {
     topLiftsByTypeAndReps,

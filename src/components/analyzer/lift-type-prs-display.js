@@ -307,8 +307,11 @@ const RepRangeDetailView = ({ repRange, repIndex, liftType, liftColor, standards
 };
 
 /**
- * Main component: LiftTypeRepPRsDisplay
- * Implements hybrid approach: Card Grid (primary) + Tabs (detail view)
+ * Displays PRs by rep range (1RM through 10RM) for a single lift. Card grid for overview,
+ * tabs for detail view. Shows strength rating when bio data is available.
+ *
+ * @param {Object} props
+ * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
  */
 export const LiftTypeRepPRsDisplay = ({ liftType }) => {
   const { topLiftsByTypeAndReps } = useUserLiftingData();

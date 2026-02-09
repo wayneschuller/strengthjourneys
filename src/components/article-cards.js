@@ -44,6 +44,13 @@ const ArticleImage = ({ sanityImage, className }) => {
   );
 };
 
+/**
+ * Card linking to an article. Shows title, date, description, and main image.
+ *
+ * @param {Object} props
+ * @param {Object} props.article - Sanity article object with slug, title, publishedAt,
+ *   description, mainImage.
+ */
 export function ArticleSummaryCard({ article }) {
   // devLog(article);
 
@@ -80,6 +87,12 @@ export function ArticleSummaryCard({ article }) {
   );
 }
 
+/**
+ * Grid of related articles with links. Used on lift pages to show related content.
+ *
+ * @param {Object} props
+ * @param {Array<{slug: string, title: string, publishedAt: string, mainImage: Object}>} props.articles - Array of Sanity article objects.
+ */
 export function RelatedArticles({ articles }) {
   // devLog(articles);
   if (!articles || articles.length === 0) return null;

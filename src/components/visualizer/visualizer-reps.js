@@ -73,6 +73,13 @@ const repTabs = [
   { label: "Fives", reps: 5 },
 ];
 
+/**
+ * Chart showing weight progression over time for 1RM, 3RM, and 5RM. Used on lift pages.
+ *
+ * @param {Object} props
+ * @param {Array} [props.data] - Pre-computed chart data. When omitted, derives from useUserLiftingData.
+ * @param {string} [props.liftType] - Display name of the lift to chart (e.g. "Bench Press").
+ */
 export function VisualizerReps({ data, liftType }) {
   const { parsedData, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();

@@ -41,7 +41,7 @@ import { ChartColumnDecreasing, LoaderCircle } from "lucide-react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { parse } from "date-fns";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTheme } from "next-themes";
 
 export async function getStaticProps() {
@@ -230,75 +230,72 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   // return null;
   // }
 
-  const topLifts = topLiftsByTypeAndReps[liftType];
-  const startTime = performance.now();
+  const topLifts = topLiftsByTypeAndReps?.[liftType];
 
-  // Find the best e1RM across all rep schemes
-  let bestE1RMWeight = 0;
-  let bestLift = null;
-  let unitType = "lb"; // Default to lb if not specified
-  let chartData = [];
+  // useMemo with theme in deps forces chart data regeneration when theme changes,
+  // ensuring Recharts picks up the new theme colors
+  const { chartData, bestLift, unitType } = useMemo(() => {
+    let bestE1RMWeight = 0;
+    let best = null;
+    let unit = "lb";
+    let data = [];
 
-  if (parsedData) {
-    for (let reps = 0; reps < 10; reps++) {
-      if (topLifts[reps]?.[0]) {
-        const lift = topLifts[reps][0];
-        const currentE1RMweight = estimateE1RM(
-          reps + 1,
-          lift.weight,
+    if (parsedData && topLifts) {
+      for (let reps = 0; reps < 10; reps++) {
+        if (topLifts[reps]?.[0]) {
+          const lift = topLifts[reps][0];
+          const currentE1RMweight = estimateE1RM(
+            reps + 1,
+            lift.weight,
+            e1rmFormula,
+          );
+          if (currentE1RMweight > bestE1RMWeight) {
+            bestE1RMWeight = currentE1RMweight;
+            best = lift;
+          }
+          if (lift.unitType) unit = lift.unitType;
+        }
+      }
+
+      data = Array.from({ length: 10 }, (_, i) => {
+        const reps = i + 1;
+        const topLiftAtReps = topLifts[i]?.[0] || null;
+        const actualWeight = topLiftAtReps?.weight || 0;
+        const potentialMax = estimateWeightForReps(
+          bestE1RMWeight,
+          reps,
           e1rmFormula,
         );
-        if (currentE1RMweight > bestE1RMWeight) {
-          bestE1RMWeight = currentE1RMweight;
-          bestLift = lift;
-        }
-        if (lift.unitType) unitType = lift.unitType;
-      }
+        const extension = Math.max(0, potentialMax - actualWeight);
+
+        return {
+          reps: `${reps} ${reps === 1 ? "rep" : "reps"}`,
+          weight: actualWeight,
+          potentialMax,
+          extension,
+          actualLift: topLiftAtReps,
+          bestLift: best,
+        };
+      });
     }
 
-    // Convert `topLifts` into chart data (only for reps 1-10)
-    chartData = Array.from({ length: 10 }, (_, i) => {
-      const reps = i + 1;
-      const topLiftAtReps = topLifts[i]?.[0] || null; // Default to null if no lift exists
-
-      // Use 0 weight and the full potential if no lift exists at this rep range
-      // This allows us to have bar charts that are 100% potential
-      const actualWeight = topLiftAtReps?.weight || 0;
-
-      // Calculate potential max weight based on the best e1RM
-      const potentialMax = estimateWeightForReps(
-        bestE1RMWeight,
-        reps,
-        e1rmFormula,
-      );
-
-      // Calculate the "extension" piece (difference between potential max and actual lift)
-
-      const extension = Math.max(0, potentialMax - actualWeight);
-
-      return {
-        reps: `${reps} ${reps === 1 ? "rep" : "reps"}`, // X-axis label
-        weight: actualWeight, // Y-axis value (bar height)
-        potentialMax,
-        extension,
-        // actualLabel: "Best Lift Achieved", // Embedded label
-        // potentialLabel: "Untapped Potential Max", // Embedded label
-        // Tooltip-specific data
-        actualLift: topLiftAtReps,
-        bestLift: bestLift,
-      };
-    });
-
-    // devLog(chartData);
-  }
+    return { chartData: data, bestLift: best, unitType: unit };
+  }, [
+    parsedData,
+    topLifts,
+    e1rmFormula,
+    liftType,
+    resolvedTheme ?? theme ?? "light",
+  ]);
 
   return (
     <Card className="shadow-lg md:mx-2">
       <CardHeader>
         <CardTitle>{liftType} Strength Potential By Rep Range</CardTitle>
         <CardDescription>
-          Your best set: {bestLift.reps}@{bestLift.weight}
-          {bestLift.unitType} ({formatDate(bestLift.date)})
+          {bestLift
+            ? `Your best set: ${bestLift.reps}@${bestLift.weight}${bestLift.unitType} (${formatDate(bestLift.date)})`
+            : "No data yet"}
           {isValidating && (
             <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
           )}
@@ -308,7 +305,11 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
         {!topLiftsByTypeAndReps ? (
           <Skeleton className="h-[300px] w-full" /> // FIXME: This skeleton never shows
         ) : (
-          <ChartContainer config={{}} className="">
+          <ChartContainer
+            config={{}}
+            className=""
+            key={resolvedTheme ?? theme ?? "light"}
+          >
             <BarChart data={chartData}>
               <XAxis dataKey="reps" stroke={themeColors.border} />
               <YAxis

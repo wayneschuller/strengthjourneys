@@ -8,7 +8,14 @@ import {
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { PlayCircle, StickyNote, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import {
+  PlayCircle,
+  StickyNote,
+  ArrowUpRight,
+  ArrowDownRight,
+  Trophy,
+  Medal,
+} from "lucide-react";
 import { LiftTypeIndicator, bigFourURLs } from "@/components/lift-type-indicator";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import {
@@ -127,54 +134,122 @@ export function SessionExerciseBlock({
                 {workout.reps}×{workout.weight}
                 {workout.unitType}
               </span>
-              {!isCompact && workout.URL && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <a
-                      href={workout.URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded p-0.5 hover:bg-muted"
-                    >
-                      <PlayCircle
-                        className={
-                          isHighlighted
-                            ? "h-4 w-4 text-muted-foreground"
-                            : "h-3.5 w-3.5 text-muted-foreground"
-                        }
-                      />
-                    </a>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      Click to open user video (
-                      {workout.URL.length > 25
-                        ? `${workout.URL.slice(0, 22)}…`
-                        : workout.URL}
-                      )
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              {!isCompact && workout.notes && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="cursor-help text-muted-foreground">
-                      <StickyNote
-                        className={
-                          isHighlighted ? "h-4 w-4" : "h-3.5 w-3.5"
-                        }
-                      />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs">
-                      <span className="font-semibold">Note: </span>
-                      {workout.notes}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
+              <div className="flex shrink-0 items-center gap-1.5 sm:gap-0.5">
+                {workout.lifetimeRanking !== -1 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span
+                        className="text-amber-600 transition-transform hover:scale-110 hover:text-amber-500 dark:text-amber-500 dark:hover:text-amber-400"
+                        aria-label="Lifetime PR"
+                      >
+                        <Trophy
+                          className={
+                            isCompact
+                              ? "h-4 w-4 sm:h-3 sm:w-3"
+                              : isHighlighted
+                                ? "h-4 w-4 sm:h-4 sm:w-4"
+                                : "h-4 w-4 sm:h-3.5 sm:w-3.5"
+                          }
+                        />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Lifetime PR
+                        {workout.lifetimeSignificanceAnnotation
+                          ? `: ${workout.lifetimeSignificanceAnnotation}`
+                          : ""}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {workout.yearlyRanking != null &&
+                  workout.yearlyRanking !== -1 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className="text-blue-600 transition-transform hover:scale-110 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+                          aria-label="12-month PR"
+                        >
+                          <Medal
+                            className={
+                              isCompact
+                                ? "h-4 w-4 sm:h-3 sm:w-3"
+                                : isHighlighted
+                                  ? "h-4 w-4 sm:h-4 sm:w-4"
+                                  : "h-4 w-4 sm:h-3.5 sm:w-3.5"
+                            }
+                          />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          12-month PR
+                          {workout.yearlySignificanceAnnotation
+                            ? `: ${workout.yearlySignificanceAnnotation} of the year`
+                            : ""}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                {workout.notes && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span
+                        className="text-muted-foreground transition-transform hover:scale-110 hover:text-foreground"
+                        aria-label="Note"
+                      >
+                        <StickyNote
+                          className={
+                            isCompact
+                              ? "h-4 w-4 sm:h-3 sm:w-3"
+                              : isHighlighted
+                                ? "h-4 w-4 sm:h-4 sm:w-4"
+                                : "h-4 w-4 sm:h-3.5 sm:w-3.5"
+                          }
+                        />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        <span className="font-semibold">Note: </span>
+                        {workout.notes}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {workout.URL && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={workout.URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex rounded p-0.5 text-muted-foreground transition-transform hover:scale-110 hover:bg-muted hover:text-foreground"
+                        aria-label="Video"
+                      >
+                        <PlayCircle
+                          className={
+                            isCompact
+                              ? "h-4 w-4 sm:h-3 sm:w-3"
+                              : isHighlighted
+                                ? "h-4 w-4 sm:h-4 sm:w-4"
+                                : "h-4 w-4 sm:h-3.5 sm:w-3.5"
+                          }
+                        />
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Click to open video
+                        {workout.URL.length > 40
+                          ? ` (${workout.URL.slice(0, 37)}…)`
+                          : ""}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
             </div>
             {!isCompact &&
               (workout.lifetimeSignificanceAnnotation ||

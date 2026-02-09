@@ -44,18 +44,19 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
     return yearNum < currentYear || (yearNum === currentYear && isDecember);
   }, [year]);
 
+  const isCurrentYear = Number(year) === new Date().getFullYear();
+  const comparisonYearWord = isCurrentYear ? "last" : "previous";
+
   const comparisonText = useMemo(() => {
     if (!showPrevYearComparison || prevYearCount == null || prevYearCount === 0) return null;
     const diff = count - prevYearCount;
-    if (diff > 0) return `Up ${diff} from last year`;
-    if (diff < 0) return `${Math.abs(diff)} fewer than last year`;
-    return "Same as last year";
-  }, [showPrevYearComparison, count, prevYearCount]);
+    if (diff > 0) return `Up ${diff} from ${comparisonYearWord} year`;
+    if (diff < 0) return `${Math.abs(diff)} fewer than ${comparisonYearWord} year`;
+    return `Same as ${comparisonYearWord} year`;
+  }, [showPrevYearComparison, count, prevYearCount, comparisonYearWord]);
 
   const grade = consistencyGrade?.grade ?? null;
   const showGrade = grade && grade !== ".";
-
-  const isCurrentYear = Number(year) === new Date().getFullYear();
   const periodLabel = isCurrentYear ? "in the last year" : `in ${year}`;
 
   return (

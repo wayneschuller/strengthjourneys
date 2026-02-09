@@ -4,9 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
 import { format, differenceInSeconds, differenceInMinutes, differenceInHours, isToday } from "date-fns";
 import { RefreshCw, Loader2 } from "lucide-react";
-
-const GOOGLE_SHEETS_ICON =
-  "https://www.gstatic.com/marketing-cms/assets/images/6a/a3/2ecde2c245d5b9b88429cb47ee13/google-sheets.webp";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 
 function formatSyncTime(timestamp) {
   if (!timestamp) return null;
@@ -88,7 +86,7 @@ export function DataSheetStatus({
   return (
     <div className="flex items-center justify-end gap-2 text-xs">
       <img
-        src={GOOGLE_SHEETS_ICON}
+        src={GOOGLE_SHEETS_ICON_URL}
         alt=""
         className="h-3.5 w-3.5 shrink-0"
         aria-hidden
@@ -236,7 +234,7 @@ export function RowProcessingIndicator({
           <div className="text-sm text-muted-foreground grid grid-cols-[minmax(12rem,1fr)_auto] items-center gap-x-2">
             <div className="flex items-center justify-end gap-2 min-w-0">
               <img
-                src={GOOGLE_SHEETS_ICON}
+                src={GOOGLE_SHEETS_ICON_URL}
                 alt=""
                 className="h-4 w-4 shrink-0"
                 aria-hidden

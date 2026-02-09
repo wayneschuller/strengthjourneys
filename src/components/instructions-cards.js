@@ -21,6 +21,7 @@ import Link from "next/link";
 
 import SampleImage from "../../public/sample_google_sheet_fuzzy_border.png";
 import { GoogleLogo } from "@/components/hero-section";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 
 import {
   Card,
@@ -76,7 +77,13 @@ export function OnBoardingDashboard() {
       )}
       <div className="grid grid-cols-1 md:grid-cols-2">
       <div>
-        <h2 className="text-lg font-bold">
+        <h2 className="flex items-center gap-2 text-lg font-bold">
+          <img
+            src={GOOGLE_SHEETS_ICON_URL}
+            alt=""
+            className="h-6 w-6 shrink-0"
+            aria-hidden
+          />
           Successful sign-in! Let{"'"}s connect your lifting data
         </h2>
         <div className="flex flex-col gap-4">
@@ -211,7 +218,15 @@ export function ChooseSheetInstructionsCard() {
       )}
       <Card className="md:w-2/3">
         <CardHeader>
-          <CardTitle>Hello {session.user.name}! You are logged in.</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <img
+              src={GOOGLE_SHEETS_ICON_URL}
+              alt=""
+              className="h-5 w-5 shrink-0"
+              aria-hidden
+            />
+            Hello {session.user.name}! You are logged in.
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="">
@@ -327,7 +342,13 @@ export function GettingStartedCard() {
       )}
       <Card className="hover:ring-0">
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <img
+              src={GOOGLE_SHEETS_ICON_URL}
+              alt=""
+              className="h-6 w-6 shrink-0"
+              aria-hidden
+            />
             Getting Started: Set Up Google Sheets and Connect with Strength
             Journeys
           </CardTitle>
@@ -532,7 +553,15 @@ export function GettingStartedCardCompact() {
       )}
       <Card>
         <CardHeader>
-          <CardTitle>See this with your data: PRs, charts, and insights</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <img
+              src={GOOGLE_SHEETS_ICON_URL}
+              alt=""
+              className="h-5 w-5 shrink-0"
+              aria-hidden
+            />
+            See this with your data: PRs, charts, and insights
+          </CardTitle>
           <CardDescription>
             Log your lifts in a Google Sheet. Connect it once. We never store your data.
           </CardDescription>
@@ -634,7 +663,15 @@ export function DemoModeSignInCard() {
   return (
     <Card className="flex min-w-[14rem] flex-col md:min-w-[18rem]">
       <CardHeader className="space-y-2 pb-5 pt-6">
-        <CardTitle className="text-lg">See your year</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <img
+            src={GOOGLE_SHEETS_ICON_URL}
+            alt=""
+            className="h-5 w-5 shrink-0"
+            aria-hidden
+          />
+          See your year
+        </CardTitle>
         <CardDescription className="text-sm leading-relaxed">
           This is sample data. Sign in and connect your Google Sheet to get your
           personalized recap.

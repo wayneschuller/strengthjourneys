@@ -52,10 +52,6 @@ export function MostRecentSessionCard({
   setHighlightDate: setHighlightDateProp,
   isProgressDone = true,
 }) {
-  if (!isProgressDone) {
-    return <MostRecentSessionCardSkeleton />;
-  }
-
   const { status: authStatus } = useSession();
   const [internalHighlightDate, setInternalHighlightDate] = useState(null);
 
@@ -165,6 +161,10 @@ export function MostRecentSessionCard({
       highlightDate,
       liftType,
     ]);
+
+  if (!isProgressDone) {
+    return <MostRecentSessionCardSkeleton />;
+  }
 
   const prevDate = () => {
     const sessionDate = singleSession?.sessionDate;

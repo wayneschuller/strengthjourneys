@@ -3,7 +3,10 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
 import { format, differenceInSeconds, differenceInMinutes, differenceInHours, isToday } from "date-fns";
-import { RefreshCw, Loader2, Sheet } from "lucide-react";
+import { RefreshCw, Loader2 } from "lucide-react";
+
+const GOOGLE_SHEETS_ICON =
+  "https://www.gstatic.com/marketing-cms/assets/images/6a/a3/2ecde2c245d5b9b88429cb47ee13/google-sheets.webp";
 
 function formatSyncTime(timestamp) {
   if (!timestamp) return null;
@@ -84,7 +87,12 @@ export function DataSheetStatus({
 
   return (
     <div className="flex items-center justify-end gap-2 text-xs">
-      <Sheet className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+      <img
+        src={GOOGLE_SHEETS_ICON}
+        alt=""
+        className="h-3.5 w-3.5 shrink-0"
+        aria-hidden
+      />
       <div className="text-right">
         {parts.map((part, i) => (
           <span key={i}>
@@ -227,7 +235,12 @@ export function RowProcessingIndicator({
           <Progress className="mb-2 h-2 w-4/5 md:w-3/5" value={percent} />
           <div className="text-sm text-muted-foreground grid grid-cols-[minmax(12rem,1fr)_auto] items-center gap-x-2">
             <div className="flex items-center justify-end gap-2 min-w-0">
-              <Sheet className="h-4 w-4 shrink-0" aria-hidden />
+              <img
+                src={GOOGLE_SHEETS_ICON}
+                alt=""
+                className="h-4 w-4 shrink-0"
+                aria-hidden
+              />
               {isProgressDone ? "Processed" : "Reading your workout data"}:
             </div>
             <div className="flex items-center gap-2">

@@ -7,7 +7,7 @@ import { useLocalStorage } from "usehooks-ts";
 import GridPattern from "./magicui/grid-pattern";
 import { AnimatedGridPattern } from "@/components/ui/animated-grid-pattern";
 import FlickeringGrid from "./magicui/flickering-grid";
-import { WarpBackground } from "@/components/ui/warp-background";
+import { StarryNightLayer, WarpBackground } from "@/components/theme-backgrounds";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -55,15 +55,28 @@ export function AppBackground() {
   const isNeoBrutalism =
     currentTheme === "neo-brutalism" ||
     currentTheme === "neo-brutalism-dark";
+  const isStarryNight =
+    currentTheme === "starry-night" || currentTheme === "starry-night-dark";
 
   const showAnimated = animatedBackground ?? false;
-  const isVanillaLightDark = !isRetroArcade && !isNeoBrutalism;
-  const showStaticGrid = !showAnimated;
+  const isVanillaLightDark =
+    !isRetroArcade && !isNeoBrutalism && !isStarryNight;
+  const showStaticGrid = !showAnimated && !isStarryNight;
   const showAnimatedGrid = mounted && showAnimated && isVanillaLightDark;
 
   return (
     <div className="fixed inset-0 z-0">
-      {/* Static GridPattern when animated is disabled (all themes) */}
+      {/* Starry night theme: only star layer, no grid */}
+      {mounted && isStarryNight && (
+        <StarryNightLayer
+          className={cn(
+            "pointer-events-none absolute inset-0 h-full w-full",
+            "text-amber-200/70 dark:text-amber-100/60"
+          )}
+        />
+      )}
+
+      {/* Static GridPattern when animated is disabled (not for starry night) */}
       {showStaticGrid && (
         <GridPattern squares={GRID_SQUARES} className={staticGridClassName} />
       )}

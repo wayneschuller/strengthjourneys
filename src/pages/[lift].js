@@ -302,7 +302,12 @@ function MyLiftTypePRsCard({ liftType }) {
   );
 }
 
-const DARK_THEMES = ["dark", "neo-brutalism-dark", "retro-arcade-dark"];
+const DARK_THEMES = [
+  "dark",
+  "neo-brutalism-dark",
+  "retro-arcade-dark",
+  "starry-night-dark",
+];
 
 function SanityArticleCard({ article }) {
   const { resolvedTheme } = useTheme();

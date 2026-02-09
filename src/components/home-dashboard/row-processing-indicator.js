@@ -50,30 +50,32 @@ export function DataSheetStatus({
 
   const sheetLabel = sheetFilename || "Your Google Sheet";
   const timeSuffix = formatSyncTime(dataSyncedAt);
-  const syncText = isValidating
-    ? "Reading your workout data…"
-    : timeSuffix
-      ? `✓ Synced with ${sheetLabel} ${timeSuffix}`
-      : `✓ Up to date with ${sheetLabel}`;
-
   const freshnessColor = isValidating ? "text-muted-foreground" : getFreshnessColor(dataSyncedAt);
   const tooltipText = dataSyncedAt
     ? `Last synced: ${format(new Date(dataSyncedAt), "MMM d, h:mm a")}${rowLabel ? ` • ${rowLabel}` : ""}`
     : rowLabel || null;
 
-  const syncLabel = sheetURL ? (
+  const sheetLink = sheetURL ? (
     <a
       href={decodeURIComponent(sheetURL)}
       target="_blank"
       rel="noopener noreferrer"
       title={tooltipText}
-      className={`${freshnessColor} hover:text-foreground hover:underline`}
+      className={`underline ${freshnessColor} hover:text-foreground`}
     >
-      {syncText}
+      {sheetLabel}
     </a>
   ) : (
+    sheetLabel
+  );
+
+  const syncLabel = (
     <span title={tooltipText} className={freshnessColor}>
-      {syncText}
+      {isValidating
+        ? "Reading your workout data…"
+        : timeSuffix
+          ? <>✓ Synced with {sheetLink} {timeSuffix}</>
+          : <>✓ Up to date with {sheetLink}</>}
     </span>
   );
 
@@ -223,12 +225,17 @@ export function RowProcessingIndicator({
           transition={{ type: "spring", stiffness: 180, damping: 22 }}
         >
           <Progress className="mb-2 h-2 w-4/5 md:w-3/5" value={percent} />
-          <div className="text-sm text-muted-foreground flex items-center gap-2">
-            <Sheet className="h-4 w-4 shrink-0" aria-hidden />
-            {isProgressDone ? "Processed" : "Reading your workout data"}:{" "}
-            {animatedCount.toLocaleString()} / {rowCount?.toLocaleString()}
-            <motion.span
-              className={`ml-2 ${isProgressDone ? "text-green-500" : "text-amber-400"}`}
+          <div className="text-sm text-muted-foreground grid grid-cols-[minmax(12rem,1fr)_auto] items-center gap-x-2">
+            <div className="flex items-center justify-end gap-2 min-w-0">
+              <Sheet className="h-4 w-4 shrink-0" aria-hidden />
+              {isProgressDone ? "Processed" : "Reading your workout data"}:
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="tabular-nums min-w-[20ch] inline-block text-left">
+                {animatedCount.toLocaleString()} / {rowCount?.toLocaleString()}
+              </span>
+              <motion.span
+                className={`shrink-0 ${isProgressDone ? "text-green-500" : "text-amber-400"}`}
               animate={
                 isProgressDone
                   ? {}
@@ -245,6 +252,7 @@ export function RowProcessingIndicator({
             >
               ●
             </motion.span>
+            </div>
           </div>
         </motion.div>
       </div>

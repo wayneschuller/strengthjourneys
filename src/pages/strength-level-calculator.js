@@ -119,7 +119,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
     setBodyWeight,
     standards,
     toggleIsMetric,
-  } = useAthleteBio();
+  } = useAthleteBio({ modifyURLQuery: true });
   const { status: authStatus } = useSession();
   const [isYearly, setIsYearly] = useState(false);
 

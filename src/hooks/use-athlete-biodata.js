@@ -206,14 +206,108 @@ export const AthleteBioProvider = ({ children }) => {
   );
 };
 
-export const useAthleteBio = () => {
+export const useAthleteBio = (options = {}) => {
+  const { modifyURLQuery = false, isAdvancedAnalysis = true } = options;
   const ctx = useContext(AthleteBioContext);
+  const router = useRouter();
+  const syncAdvancedParams = modifyURLQuery && isAdvancedAnalysis;
+  const hasAdvancedInteractedRef = useRef(false);
+
   if (!ctx) {
     throw new Error(
       "useAthleteBio must be used within an AthleteBioProvider (see _app.js).",
     );
   }
-  return ctx;
+
+  const setAge = useCallback(
+    (value) => {
+      hasAdvancedInteractedRef.current = true;
+      ctx.setAge(value);
+    },
+    [ctx],
+  );
+  const setSex = useCallback(
+    (value) => {
+      hasAdvancedInteractedRef.current = true;
+      ctx.setSex(value);
+    },
+    [ctx],
+  );
+  const setBodyWeight = useCallback(
+    (value) => {
+      hasAdvancedInteractedRef.current = true;
+      ctx.setBodyWeight(value);
+    },
+    [ctx],
+  );
+  const setLiftType = useCallback(
+    (value) => {
+      hasAdvancedInteractedRef.current = true;
+      ctx.setLiftType(value);
+    },
+    [ctx],
+  );
+  const setIsMetric = useCallback(
+    (value) => {
+      hasAdvancedInteractedRef.current = true;
+      ctx.setIsMetric(value);
+    },
+    [ctx],
+  );
+  const toggleIsMetric = useCallback(
+    (value) => {
+      hasAdvancedInteractedRef.current = true;
+      ctx.toggleIsMetric(value);
+    },
+    [ctx],
+  );
+
+  useEffect(() => {
+    if (
+      !syncAdvancedParams ||
+      !hasAdvancedInteractedRef.current ||
+      !router.isReady
+    )
+      return;
+
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: {
+          ...router.query,
+          [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: JSON.stringify(ctx.age),
+          [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: JSON.stringify(ctx.sex),
+          [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: JSON.stringify(
+            ctx.bodyWeight,
+          ),
+          [LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE]: JSON.stringify(ctx.liftType),
+          [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: JSON.stringify(ctx.isMetric),
+          [ADVANCED_QUERY_PARAM]: "true",
+        },
+      },
+      undefined,
+      { shallow: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- router excluded to prevent infinite loop
+  }, [
+    ctx.age,
+    ctx.sex,
+    ctx.bodyWeight,
+    ctx.liftType,
+    ctx.isMetric,
+    syncAdvancedParams,
+    router.isReady,
+  ]);
+
+  return {
+    ...ctx,
+    setAge,
+    setSex,
+    setBodyWeight,
+    setLiftType,
+    setIsMetric,
+    toggleIsMetric,
+  };
 };
 
 const ADVANCED_QUERY_PARAM = "advanced";

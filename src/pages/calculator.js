@@ -136,7 +136,10 @@ function E1RMCalculatorMain({ relatedArticles }) {
     standards,
     liftType,
     setLiftType,
-  } = useAthleteBio();
+  } = useAthleteBio({
+    modifyURLQuery: true,
+    isAdvancedAnalysis,
+  });
   // Order matters: each includes the ones before it when syncing to URL.
   // Weight last so changing it syncs full state (reps, formula, unit type) → shareable URL.
   const [reps, setReps] = useStateFromQueryOrLocalStorage(

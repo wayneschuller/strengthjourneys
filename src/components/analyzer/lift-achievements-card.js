@@ -382,45 +382,82 @@ const LIFTS_PER_PAGE = 8;
 const ACCORDION_INITIAL = 10;
 const ACCORDION_PAGE_SIZE = 10;
 
+/** Grid template for accordion rows: Lift | Reps | Sets | 1RM | 3RM | 5RM. */
+const ACCORDION_ROW_GRID =
+  "md:grid md:grid-cols-[minmax(0,1fr)_auto_auto_minmax(5rem,auto)_minmax(5rem,auto)_minmax(5rem,auto)] md:gap-x-4";
+
+/** Center data columns on desktop (reps, sets, 1RM, 3RM, 5RM). */
+const ACCORDION_COL_CENTER = "md:text-center";
+
+/** Space reserved so header grid matches row grid width (chevron + gap). Row uses mr-8; header uses pr-12. */
+const ACCORDION_CHEVRON_GAP = "mr-8 md:mr-8";
+const ACCORDION_HEADER_RIGHT_SPACE = "pr-12 md:pr-12";
+
 /**
- * One-line summary for the accordion trigger: lift name + basic stats.
+ * One-line summary for the accordion trigger: lift name, reps, sets, and on larger screens 1RM / 3RM / 5RM (lifetime PRs). List is ordered by reps (desc).
  */
 function PopularLiftAccordionTriggerRow({ liftType }) {
   const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
   const { getColor } = useLiftColors();
-  const e1rmFormula =
-    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false }) ?? "Brzycki";
 
   const lift = liftTypes?.find((l) => l.liftType === liftType);
   const topLiftsByReps = topLiftsByTypeAndReps?.[liftType];
   const oneRM = topLiftsByReps?.[0]?.[0];
-  const { bestE1RMWeight, unitType } = findBestE1RM(
-    liftType,
-    topLiftsByTypeAndReps,
-    e1rmFormula,
-  );
+  const threeRM = topLiftsByReps?.[2]?.[0];
+  const fiveRM = topLiftsByReps?.[4]?.[0];
 
   const totalReps = lift?.totalReps ?? 0;
   const totalSets = lift?.totalSets ?? 0;
 
+  const prCell = (pr) =>
+    pr ? `${pr.weight}${pr.unitType}` : "—";
+
   return (
-    <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-left">
-      <span
-        className="font-semibold text-pretty underline decoration-2"
-        style={{ textDecorationColor: getColor(liftType) }}
-      >
-        {liftType}
-      </span>
-      <span className="text-muted-foreground text-sm">
-        {totalReps} reps · {totalSets} sets
-        {bestE1RMWeight > 0 && unitType && (
-          <> · best e1RM {bestE1RMWeight}{unitType}</>
-        )}
-        {(!bestE1RMWeight || bestE1RMWeight === 0) && oneRM && (
-          <> · best single {oneRM.weight}{oneRM.unitType}</>
-        )}
-      </span>
-    </span>
+    <div className="w-full min-w-0 text-left">
+      {/* Mobile: lift name + "X reps" only */}
+      <div className={`md:hidden ${ACCORDION_CHEVRON_GAP}`}>
+        <span
+          className="font-semibold text-pretty underline decoration-2"
+          style={{ textDecorationColor: getColor(liftType) }}
+        >
+          {liftType}
+        </span>
+        <span className="text-muted-foreground text-sm"> {totalReps.toLocaleString()} reps</span>
+      </div>
+      {/* Desktop: full grid */}
+      <div className={`hidden min-w-0 md:block ${ACCORDION_ROW_GRID} ${ACCORDION_CHEVRON_GAP}`}>
+        <span
+          className="font-semibold text-pretty underline decoration-2"
+          style={{ textDecorationColor: getColor(liftType) }}
+        >
+          {liftType}
+        </span>
+        <span className={`text-muted-foreground text-sm ${ACCORDION_COL_CENTER}`}>
+          {totalReps.toLocaleString()}
+        </span>
+        <span className={`text-muted-foreground text-sm ${ACCORDION_COL_CENTER}`}>
+          {totalSets.toLocaleString()}
+        </span>
+        <span
+          className={`text-muted-foreground text-sm ${ACCORDION_COL_CENTER}`}
+          title="1RM (lifetime)"
+        >
+          {prCell(oneRM)}
+        </span>
+        <span
+          className={`text-muted-foreground text-sm ${ACCORDION_COL_CENTER}`}
+          title="3RM (lifetime)"
+        >
+          {prCell(threeRM)}
+        </span>
+        <span
+          className={`text-muted-foreground text-sm ${ACCORDION_COL_CENTER}`}
+          title="5RM (lifetime)"
+        >
+          {prCell(fiveRM)}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -517,6 +554,17 @@ export function PopularLiftsAccordion() {
         </div>
       </CardHeader>
       <CardContent className="pt-0">
+        <div
+          className={`hidden border-b pb-2 text-muted-foreground text-sm font-medium md:block ${ACCORDION_ROW_GRID} ${ACCORDION_HEADER_RIGHT_SPACE}`}
+          aria-hidden
+        >
+          <span>Lift</span>
+          <span className={ACCORDION_COL_CENTER}>Reps</span>
+          <span className={ACCORDION_COL_CENTER}>Sets</span>
+          <span className={ACCORDION_COL_CENTER} title="1 rep max (lifetime)">1RM</span>
+          <span className={ACCORDION_COL_CENTER} title="3 rep max (lifetime)">3RM</span>
+          <span className={ACCORDION_COL_CENTER} title="5 rep max (lifetime)">5RM</span>
+        </div>
         <Accordion
           type="multiple"
           value={openItems}

@@ -32,7 +32,8 @@ import {
   differenceInYears,
 } from "date-fns";
 
-const fetcher = (...args) => fetch(...args).then((res) => res.json()); // Generic fetch for useSWR
+/** Generic JSON fetcher for useSWR. Pass-through to fetch().json(). */
+const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 // We use these to only trigger toast announcements once
 let demoToastInit = false;
@@ -40,8 +41,13 @@ let loadedToastInit = false;
 
 const UserLiftingDataContext = createContext();
 
+/** Consumes the lifting data context. Use inside UserLiftingDataProvider. */
 export const useUserLiftingData = () => useContext(UserLiftingDataContext);
 
+/**
+ * Provides lifting data from Google Sheets (or demo data) to the app.
+ * Handles auth, SWR fetch, parsing, toasts, and derived state (liftTypes, topLifts, tonnage, etc.).
+ */
 export const UserLiftingDataProvider = ({ children }) => {
   // These are our key global state variables.
   // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
@@ -257,10 +263,10 @@ export const UserLiftingDataProvider = ({ children }) => {
   );
 };
 
-// -----------------------------------------------------------------------------------------------
-// Helper to encapsulate parsing, demo-mode fallback, PR marking, and selected lift type logic.
-// This keeps the main effect in the provider smaller while preserving existing behavior.
-// -----------------------------------------------------------------------------------------------
+/**
+ * Orchestrates parsing raw sheet data, selecting default lift types, and returning both.
+ * Delegates to getParsedDataWithFallback (parse + demo fallback + PR marking) and buildSelectedLiftTypes.
+ */
 function buildParsedState({
   authStatus,
   data,
@@ -295,6 +301,11 @@ function buildParsedState({
   };
 }
 
+/**
+ * Parses raw gsheet values into parsedData. On success: shows "Data updated" toast once, fires analytics.
+ * On parse error: clears ssid/sheet from storage, shows error toast. Falls back to demo data when no real data.
+ * Also runs markHigherWeightAsHistoricalPRs on the result.
+ */
 function getParsedDataWithFallback({
   authStatus,
   data,
@@ -441,6 +452,10 @@ function getParsedDataWithFallback({
   return parsedData;
 }
 
+/**
+ * Resolves selectedLiftTypes from localStorage (filtered by current liftTypes) or defaults to first 4.
+ * Writes back to localStorage when setting defaults or when filtered result is empty.
+ */
 function buildSelectedLiftTypes({ authStatus, parsedData }) {
   // Calculate liftTypes locally for use in selectedLiftTypes logic
   // (liftTypes is also computed via useMemo for the context provider)

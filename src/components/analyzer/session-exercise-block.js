@@ -442,11 +442,11 @@ export function SessionExerciseBlock({
 
   if (isCompact) {
     const liftTypeArea = svgPath ? (
-      <div className="flex h-full min-h-16 shrink-0 items-center">
+      <div className="flex shrink-0 items-center justify-center py-2 sm:h-full sm:min-h-16 sm:py-0">
         <img
           src={svgPath}
           alt={`${liftType} diagram`}
-          className="h-full max-h-24 w-auto object-contain"
+          className="h-24 w-auto max-h-32 object-contain sm:h-full"
         />
       </div>
     ) : !hideSvg ? (
@@ -455,15 +455,15 @@ export function SessionExerciseBlock({
 
     return (
       <div
-        className={`bg-muted/20 flex h-full min-h-0 flex-row rounded-xl border ${
-          liftTypeArea ? "items-center p-4" : "px-2 py-1.5 gap-2"
+        className={`bg-muted/20 flex h-full min-h-0 flex-col gap-3 rounded-xl border sm:flex-row sm:items-center sm:gap-0 ${
+          liftTypeArea ? "p-4" : "px-2 py-1.5 gap-2"
         }`}
       >
         {liftTypeArea &&
           (svgPath && bigFourURLs[liftType] ? (
             <Link
               href={bigFourURLs[liftType]}
-              className="flex shrink-0 transition-opacity hover:opacity-80"
+              className="flex shrink-0 justify-center transition-opacity hover:opacity-80 sm:justify-start"
             >
               {liftTypeArea}
             </Link>

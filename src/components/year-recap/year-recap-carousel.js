@@ -86,7 +86,7 @@ export function YearRecapCarousel({ year, isDemo }) {
         watermarkEl.textContent = "strengthjourneys.xyz";
         Object.assign(watermarkEl.style, {
           position: "absolute",
-          right: "18px",
+          right: "10px",
           bottom: "10px",
           padding: "4px 12px",
           borderRadius: "9999px",

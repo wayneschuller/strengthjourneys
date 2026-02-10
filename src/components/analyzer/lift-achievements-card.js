@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 import {
@@ -36,8 +35,6 @@ import {
 import { devLog } from "@/lib/processing-utils";
 import { useWindowSize } from "usehooks-ts";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
-import { useSession } from "next-auth/react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { Button, buttonVariants } from "../ui/button";
@@ -77,11 +74,25 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
             <Tooltip>
               <TooltipTrigger asChild>
                 {isExpanded ? (
-                  <Button variant="ghost" size="icon" onClick={onToggle}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggle();
+                    }}
+                  >
                     <Minimize2 />
                   </Button>
                 ) : (
-                  <Button variant="ghost" size="icon" onClick={onToggle}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggle();
+                    }}
+                  >
                     <Maximize2 />
                   </Button>
                 )}
@@ -365,41 +376,47 @@ export const LiftTypeRecentHighlights = ({ liftType }) => {
   );
 };
 
-export function SelectedLiftsIndividualLiftCards() {
-  const { parsedData, selectedLiftTypes } = useUserLiftingData();
+const LIFTS_VISIBLE_INITIAL = 8;
+const LIFTS_PER_PAGE = 8;
+
+/**
+ * Renders lift achievement cards for the most popular lifts (by total reps),
+ * with a "Show more" button to reveal another 8 at a time. No dependency on
+ * SelectedLifts localStorage or the side-panel lift chooser.
+ */
+export function PopularLiftsIndividualLiftCards() {
+  const { parsedData, liftTypes } = useUserLiftingData();
   const [expandedCard, setExpandedCard] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(LIFTS_VISIBLE_INITIAL);
   const [parent] = useAutoAnimate(/* optional config */);
   const { width } = useWindowSize({ initializeWithValue: false });
-  let isMobile = false;
+  const isMobile = width !== undefined && width <= 768;
 
-  useEffect(() => {
-    // devLog(selectedLiftTypes);
-    if (selectedLiftTypes.length === 1) setExpandedCard(selectedLiftTypes[0]);
-  }, [selectedLiftTypes]);
+  const sortedByReps = useMemo(() => {
+    if (!liftTypes?.length) return [];
+    return [...liftTypes].sort((a, b) => (b.totalReps ?? 0) - (a.totalReps ?? 0));
+  }, [liftTypes]);
 
-  if (width <= 768) {
-    isMobile = true;
-  }
-
-  const toggleCard = (liftType) => {
-    // Collapse the current card if it's expanded
-    setExpandedCard(expandedCard === liftType ? null : liftType);
-  };
-
-  // Find the expanded card
-  const expandedCardData = selectedLiftTypes.find(
-    (lift) => lift === expandedCard,
+  const visibleLiftTypes = useMemo(
+    () => sortedByReps.slice(0, visibleCount).map((l) => l.liftType),
+    [sortedByReps, visibleCount],
   );
 
-  // Filter out the expanded card from the list
-  let otherCards = selectedLiftTypes;
-  if (!isMobile)
-    otherCards = selectedLiftTypes.filter((lift) => lift !== expandedCard);
+  const hasMore = visibleCount < sortedByReps.length;
+  const toggleCard = (liftType) => {
+    setExpandedCard((current) => (current === liftType ? null : liftType));
+  };
 
-  // For mobile a simple 1 col grid with an expanding lift card is fine and easy.
-  // For desktop we want a clicked lift card to rise and go full width at the top of the lift card section
-  // So expanded should mean we put it in it's own row.
-  // Do this before the grid starts so we don't even have to worry about grid cols.
+  useEffect(() => {
+    if (visibleLiftTypes.length === 1) setExpandedCard(visibleLiftTypes[0]);
+  }, [visibleLiftTypes.length]);
+
+  const expandedCardData = visibleLiftTypes.find((lift) => lift === expandedCard);
+  const otherCards = isMobile
+    ? visibleLiftTypes
+    : visibleLiftTypes.filter((lift) => lift !== expandedCard);
+
+  if (!liftTypes?.length) return null;
 
   return (
     <div
@@ -407,13 +424,13 @@ export function SelectedLiftsIndividualLiftCards() {
       className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4"
     >
       {!isMobile && expandedCardData && (
-        <div className={`col-span-1 md:col-span-2 xl:col-span-4`}>
+        <div className="col-span-1 md:col-span-2 xl:col-span-4">
           <LiftAchievementsCard
             key={`${expandedCard}-card`}
-            liftType={expandedCard}
+            liftType={expandedCardData}
             parsedData={parsedData}
             isExpanded={true}
-            onToggle={() => toggleCard(expandedCard)}
+            onToggle={() => toggleCard(expandedCardData)}
           />
         </div>
       )}
@@ -423,35 +440,21 @@ export function SelectedLiftsIndividualLiftCards() {
           key={`${lift}-card`}
           liftType={lift}
           parsedData={parsedData}
-          isExpanded={isMobile ? expandedCard === lift : false} // Allow mobile to expand in place
+          isExpanded={isMobile ? expandedCard === lift : false}
           onToggle={() => toggleCard(lift)}
         />
       ))}
 
-      <div className={`col-span-1 md:col-span-2 xl:col-span-4`}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Analyzing Other Lifts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="">
-              Click the dumbbell icon below for selecting which lifts appear in
-              this section, or use the dumbell icon in the top navigation bar.
-              These selected lifts are also used in the{" "}
-              <Link
-                href="/visualizer"
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                Visualizer
-              </Link>{" "}
-              chart.
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-around">
-            <SidePanelSelectLiftsButton isIconMode={false} />
-          </CardFooter>
-        </Card>
-      </div>
+      {hasMore && (
+        <div className="col-span-1 md:col-span-2 xl:col-span-4 flex justify-center">
+          <Button
+            variant="outline"
+            onClick={() => setVisibleCount((c) => c + LIFTS_PER_PAGE)}
+          >
+            Show more ({sortedByReps.length - visibleCount} remaining)
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

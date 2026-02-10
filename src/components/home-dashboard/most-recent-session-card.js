@@ -397,7 +397,7 @@ export function MostRecentSessionCard({
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.06, duration: 0.25 }}
-                className="min-w-[160px] flex-1"
+                className="w-full min-w-0 sm:min-w-[160px] sm:flex-1"
               >
                 <SessionExerciseBlock
                   variant="compact"

@@ -335,9 +335,9 @@ export function MostRecentSessionCard({
     <TooltipProvider delayDuration={300} skipDelayDuration={1000}>
       <Card className="mt-4 rounded-xl border">
         <CardHeader className="pb-2">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
             <div className="min-w-0 flex-1">
-              <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
+              <CardTitle className="flex flex-wrap items-center gap-2 text-lg leading-tight">
                 {authStatus !== "authenticated" && (
                   <span className="mr-2 font-bold">Demo Mode:</span>
                 )}

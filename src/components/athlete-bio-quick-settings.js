@@ -44,10 +44,10 @@ export function AthleteBioQuickSettings() {
     age !== 30 || bodyWeight !== 200 || sex !== "male" || isMetric !== false;
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DropdownMenu>
+    <DropdownMenu>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
               <Button
                 size="icon"
@@ -67,112 +67,106 @@ export function AthleteBioQuickSettings() {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-72">
-              <DropdownMenuLabel className="flex items-center justify-between">
-                <span>Athlete bio</span>
-                {!hasCustomBio && (
-                  <Badge
-                    variant="secondary"
-                    className="text-[0.6rem] font-semibold uppercase tracking-wide animate-pulse"
-                  >
-                    Recommended
-                  </Badge>
-                )}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="space-y-3 px-3 pt-2 pb-3 text-xs">
-                {/* Row 1: Age input + sex switch */}
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2">
-                    <Label
-                      htmlFor="nav-athlete-age"
-                      className="text-xs font-normal text-muted-foreground"
-                    >
-                      Age
-                    </Label>
-                    <Input
-                      id="nav-athlete-age"
-                      type="number"
-                      min={13}
-                      max={100}
-                      value={age}
-                      onChange={(event) => {
-                        const value = parseInt(event.target.value || "0", 10);
-                        if (!Number.isNaN(value)) {
-                          setAge(value);
-                        }
-                      }}
-                      className="h-7 w-16 px-2 text-xs"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-muted-foreground">
-                      M
-                    </span>
-                    <Switch
-                      id="nav-athlete-sex-switch"
-                      checked={sex === "female"}
-                      onCheckedChange={(checked) =>
-                        setSex(checked ? "female" : "male")
-                      }
-                      className="h-5 w-9 data-[state=checked]:bg-pink-500"
-                    />
-                    <span className="pl-1 text-xs font-semibold text-muted-foreground">
-                      F
-                    </span>
-                  </div>
-                </div>
+          </TooltipTrigger>
+          <TooltipContent>Set athlete age, weight, and sex</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <DropdownMenuContent className="w-72">
+        <DropdownMenuLabel className="flex items-center justify-between">
+          <span>Your bio data</span>
+          {!hasCustomBio && (
+            <Badge
+              variant="secondary"
+              className="text-[0.6rem] font-semibold uppercase tracking-wide animate-pulse"
+            >
+              Recommended
+            </Badge>
+          )}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <div className="space-y-3 px-3 pt-2 pb-3 text-xs">
+          {/* Row 1: Age input + sex switch */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Label
+                htmlFor="nav-athlete-age"
+                className="text-xs font-normal text-muted-foreground"
+              >
+                Age
+              </Label>
+              <Input
+                id="nav-athlete-age"
+                type="number"
+                min={13}
+                max={100}
+                value={age}
+                onChange={(event) => {
+                  const value = parseInt(event.target.value || "0", 10);
+                  if (!Number.isNaN(value)) {
+                    setAge(value);
+                  }
+                }}
+                className="h-7 w-16 px-2 text-xs"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-muted-foreground">
+                M
+              </span>
+              <Switch
+                id="nav-athlete-sex-switch"
+                checked={sex === "female"}
+                onCheckedChange={(checked) =>
+                  setSex(checked ? "female" : "male")
+                }
+                className="h-5 w-9 data-[state=checked]:bg-pink-500"
+              />
+              <span className="pl-1 text-xs font-semibold text-muted-foreground">
+                F
+              </span>
+            </div>
+          </div>
 
-                {/* Row 2: Bodyweight slider with inline unit chooser */}
-                <div className="space-y-2 pt-3">
-                  <div className="flex items-center justify-between">
-                    <Label
-                      htmlFor="nav-athlete-bodyweight-slider"
-                      className="text-xs font-normal text-muted-foreground"
-                    >
-                      Bodyweight
-                    </Label>
+          {/* Row 2: Bodyweight slider with inline unit chooser */}
+          <div className="space-y-2 pt-3">
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor="nav-athlete-bodyweight-slider"
+                className="text-xs font-normal text-muted-foreground"
+              >
+                Bodyweight
+              </Label>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium">
-                        {bodyWeight}
-                        {isMetric ? "kg" : "lb"}
-                      </span>
+                      <span className="text-sm font-semibold">{bodyWeight}</span>
                       <UnitChooser
                         isMetric={isMetric}
                         onSwitchChange={toggleIsMetric}
                       />
                     </div>
-                  </div>
-                  <div className="pt-0.5">
-                    <Slider
-                      id="nav-athlete-bodyweight-slider"
-                      min={isMetric ? 40 : 90}
-                      max={isMetric ? 230 : 500}
-                      step={1}
-                      value={[bodyWeight]}
-                      onValueChange={(values) => setBodyWeight(values[0])}
-                      aria-label="Bodyweight"
-                    />
-                  </div>
-                </div>
-                <p className="pt-1 text-[10px] leading-snug text-muted-foreground">
-                  We only store this in your browser to power strength level
-                  calculations. For more details, see our{" "}
-                  <Link
-                    href="/privacy"
-                    className="underline underline-offset-2"
-                  >
-                    privacy policy
-                  </Link>
-                  .
-                </p>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </TooltipTrigger>
-        <TooltipContent>Set athlete age, weight, and sex</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+            </div>
+            <div className="pt-0.5">
+                      <Slider
+                        id="nav-athlete-bodyweight-slider"
+                        min={isMetric ? 40 : 90}
+                        max={isMetric ? 180 : 400}
+                        step={1}
+                        value={[bodyWeight]}
+                        onValueChange={(values) => setBodyWeight(values[0])}
+                        aria-label="Bodyweight"
+                      />
+            </div>
+          </div>
+          <p className="pt-1 text-[10px] leading-snug text-muted-foreground">
+            We only store this in your browser to power strength level
+            calculations. For more details, see our{" "}
+            <Link href="/privacy" className="underline underline-offset-2">
+              privacy policy
+            </Link>
+            .
+          </p>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

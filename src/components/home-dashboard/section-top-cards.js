@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
-  useAthleteBioData,
+  useAthleteBio,
   getStrengthRatingForE1RM,
   getStandardForLiftDate,
   STRENGTH_LEVEL_EMOJI,
@@ -177,7 +177,7 @@ export function SectionTopCards({ isProgressDone = false }) {
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
 
-  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBioData();
+  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
 
   // Global-ish unit preference shared with calculator & strength-level pages.
   // Defaults to imperial (lb) when not set.

@@ -1,0 +1,178 @@
+/** @format */
+
+"use client";
+
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { UnitChooser } from "@/components/unit-type-chooser";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { cn } from "@/lib/utils";
+import { Activity } from "lucide-react";
+
+export function AthleteBioQuickSettings() {
+  const {
+    age,
+    setAge,
+    bodyWeight,
+    setBodyWeight,
+    sex,
+    setSex,
+    isMetric,
+    toggleIsMetric,
+  } = useAthleteBio();
+
+  // Heuristic: if bio matches initial defaults, assume user hasn't customized it yet.
+  const hasCustomBio =
+    age !== 30 || bodyWeight !== 200 || sex !== "male" || isMetric !== false;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="icon"
+                variant="outline"
+                aria-label="Set athlete bio data"
+                className={cn(
+                  "relative",
+                  !hasCustomBio && "ring-2 ring-amber-400/70",
+                )}
+              >
+                <Activity className="h-4 w-4" />
+                {!hasCustomBio && (
+                  <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75 animate-ping" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-72">
+              <DropdownMenuLabel className="flex items-center justify-between">
+                <span>Athlete bio</span>
+                {!hasCustomBio && (
+                  <Badge
+                    variant="secondary"
+                    className="text-[0.6rem] font-semibold uppercase tracking-wide animate-pulse"
+                  >
+                    Recommended
+                  </Badge>
+                )}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className="space-y-3 px-3 pt-2 pb-3 text-xs">
+                {/* Row 1: Age input + sex switch */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label
+                      htmlFor="nav-athlete-age"
+                      className="text-xs font-normal text-muted-foreground"
+                    >
+                      Age
+                    </Label>
+                    <Input
+                      id="nav-athlete-age"
+                      type="number"
+                      min={13}
+                      max={100}
+                      value={age}
+                      onChange={(event) => {
+                        const value = parseInt(event.target.value || "0", 10);
+                        if (!Number.isNaN(value)) {
+                          setAge(value);
+                        }
+                      }}
+                      className="h-7 w-16 px-2 text-xs"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      M
+                    </span>
+                    <Switch
+                      id="nav-athlete-sex-switch"
+                      checked={sex === "female"}
+                      onCheckedChange={(checked) =>
+                        setSex(checked ? "female" : "male")
+                      }
+                      className="h-5 w-9 data-[state=checked]:bg-pink-500"
+                    />
+                    <span className="pl-1 text-xs font-semibold text-muted-foreground">
+                      F
+                    </span>
+                  </div>
+                </div>
+
+                {/* Row 2: Bodyweight slider with inline unit chooser */}
+                <div className="space-y-2 pt-3">
+                  <div className="flex items-center justify-between">
+                    <Label
+                      htmlFor="nav-athlete-bodyweight-slider"
+                      className="text-xs font-normal text-muted-foreground"
+                    >
+                      Bodyweight
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium">
+                        {bodyWeight}
+                        {isMetric ? "kg" : "lb"}
+                      </span>
+                      <UnitChooser
+                        isMetric={isMetric}
+                        onSwitchChange={toggleIsMetric}
+                      />
+                    </div>
+                  </div>
+                  <div className="pt-0.5">
+                    <Slider
+                      id="nav-athlete-bodyweight-slider"
+                      min={isMetric ? 40 : 90}
+                      max={isMetric ? 230 : 500}
+                      step={1}
+                      value={[bodyWeight]}
+                      onValueChange={(values) => setBodyWeight(values[0])}
+                      aria-label="Bodyweight"
+                    />
+                  </div>
+                </div>
+                <p className="pt-1 text-[10px] leading-snug text-muted-foreground">
+                  We only store this in your browser to power strength level
+                  calculations. For more details, see our{" "}
+                  <Link
+                    href="/privacy"
+                    className="underline underline-offset-2"
+                  >
+                    privacy policy
+                  </Link>
+                  .
+                </p>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TooltipTrigger>
+        <TooltipContent>Set athlete age, weight, and sex</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+

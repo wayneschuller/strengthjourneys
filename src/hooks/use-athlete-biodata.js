@@ -1,4 +1,11 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useContext,
+  createContext,
+} from "react";
 import { useRouter } from "next/router";
 import { differenceInCalendarYears } from "date-fns";
 import {
@@ -179,6 +186,35 @@ export function getStrengthLevelForWorkouts(
   const rating = getStrengthRatingForE1RM(bestE1RM, standard);
   return { rating, bestE1RM };
 }
+
+// -----------------------------------------------------------------------------
+// Shared context so athlete biodata can be edited in one place (e.g. nav)
+// and used across the app (calculators, analyzers, etc.).
+// -----------------------------------------------------------------------------
+
+const AthleteBioContext = createContext(null);
+
+export const AthleteBioProvider = ({ children }) => {
+  // Global shared state for age/sex/bodyWeight/isMetric/liftType.
+  // We seed from query/localStorage once, then keep everything in sync via context.
+  // URL syncing for specific pages (like calculators) can be handled separately.
+  const value = useAthleteBioData(false);
+  return (
+    <AthleteBioContext.Provider value={value}>
+      {children}
+    </AthleteBioContext.Provider>
+  );
+};
+
+export const useAthleteBio = () => {
+  const ctx = useContext(AthleteBioContext);
+  if (!ctx) {
+    throw new Error(
+      "useAthleteBio must be used within an AthleteBioProvider (see _app.js).",
+    );
+  }
+  return ctx;
+};
 
 const ADVANCED_QUERY_PARAM = "advanced";
 

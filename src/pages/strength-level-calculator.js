@@ -38,7 +38,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { BicepsFlexed } from "lucide-react";
-import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { StandardsSlider } from "@/components/standards-slider";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
@@ -119,7 +119,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
     setBodyWeight,
     standards,
     toggleIsMetric,
-  } = useAthleteBioData(true);
+  } = useAthleteBio();
   const { status: authStatus } = useSession();
   const [isYearly, setIsYearly] = useState(false);
 

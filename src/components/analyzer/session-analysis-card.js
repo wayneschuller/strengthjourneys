@@ -14,7 +14,7 @@ import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
-  useAthleteBioData,
+  useAthleteBio,
   getStrengthLevelForWorkouts,
   getStandardForLiftDate,
   STRENGTH_LEVEL_EMOJI,
@@ -83,7 +83,7 @@ export function SessionAnalysisCard({
     isValidating,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
-  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBioData();
+  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
       initializeWithValue: false,

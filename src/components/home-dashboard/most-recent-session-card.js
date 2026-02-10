@@ -16,7 +16,7 @@ import {
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { differenceInDays } from "date-fns";
 import {
@@ -69,7 +69,7 @@ export function MostRecentSessionCard({
       initializeWithValue: false,
     }) ?? "Brzycki";
 
-  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBioData();
+  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
   const hasBioData =
     age && bodyWeight && standards && Object.keys(standards).length > 0;
 

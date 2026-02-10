@@ -61,9 +61,11 @@ import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { getLogoForTheme } from "@/lib/theme-logos";
 
 import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
+import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 
 export function NavBar() {
   const pathname = usePathname();
+  const { status: authStatus } = useSession();
 
   useEffect(() => {
     // Only run on client
@@ -113,6 +115,7 @@ export function NavBar() {
           <GitHubButton />
         </div>
 
+        {authStatus === "authenticated" && <AthleteBioQuickSettings />}
         <ThemeChooser />
         {/* <DarkModeToggle /> */}
         <AvatarDropdown />

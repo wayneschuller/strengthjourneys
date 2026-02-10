@@ -5,7 +5,7 @@ import { useReadLocalStorage } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import {
-  useAthleteBioData,
+  useAthleteBio,
   getStrengthRatingForE1RM,
   getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
@@ -355,7 +355,7 @@ const RepRangeDetailView = ({
 export const LiftTypeRepPRsDisplay = ({ liftType }) => {
   const { topLiftsByTypeAndReps } = useUserLiftingData();
   const { getColor } = useLiftColors();
-  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBioData();
+  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
   const [activeTab, setActiveTab] = useState("overview");
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {

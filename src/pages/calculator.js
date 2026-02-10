@@ -46,10 +46,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage, useIsClient } from "usehooks-ts";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import {
-  useAthleteBioData,
-  getStrengthRatingForE1RM,
-} from "@/hooks/use-athlete-biodata";
+import { useAthleteBio, getStrengthRatingForE1RM } from "@/hooks/use-athlete-biodata";
 import { useStateFromQueryOrLocalStorage } from "../hooks/use-state-from-query-or-localStorage";
 import { Calculator } from "lucide-react";
 
@@ -121,7 +118,7 @@ export default function E1RMCalculator({ relatedArticles }) {
 function E1RMCalculatorMain({ relatedArticles }) {
   const router = useRouter();
   const { toast } = useToast();
-  // Must be before useAthleteBioData so we can pass it; controls whether advanced params sync to URL
+  // Controls whether advanced UI/bio-based insights are shown
   const [isAdvancedAnalysis, setIsAdvancedAnalysis] = useLocalStorage(
     LOCAL_STORAGE_KEYS.E1RM_ADVANCED_ANALYSIS,
     false,
@@ -139,7 +136,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
     standards,
     liftType,
     setLiftType,
-  } = useAthleteBioData(true, { isAdvancedAnalysis });
+  } = useAthleteBio();
   // Order matters: each includes the ones before it when syncing to URL.
   // Weight last so changing it syncs full state (reps, formula, unit type) → shareable URL.
   const [reps, setReps] = useStateFromQueryOrLocalStorage(

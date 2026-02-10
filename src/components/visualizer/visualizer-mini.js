@@ -5,7 +5,7 @@ import { useLiftColors } from "@/hooks/use-lift-colors";
 import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { format } from "date-fns";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -74,18 +74,7 @@ export function VisualizerMini({ liftType }) {
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
 
-  const {
-    age,
-    setAge,
-    isMetric,
-    setIsMetric,
-    sex,
-    setSex,
-    bodyWeight,
-    setBodyWeight,
-    standards,
-    toggleIsMetric,
-  } = useAthleteBioData();
+  const { isMetric, bodyWeight, standards } = useAthleteBio();
 
   // devLog(parsedData);
 

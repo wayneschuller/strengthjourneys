@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 import { cn } from "@/lib/utils";
-import { useAthleteBioData } from "@/hooks/use-athlete-biodata";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
@@ -354,7 +354,7 @@ function HowStrong({ liftType }) {
 }
 
 function StrengthLevelsCard({ liftType }) {
-  const { age, sex, bodyWeight, standards, isMetric } = useAthleteBioData();
+  const { age, sex, bodyWeight, standards, isMetric } = useAthleteBio();
   const unitType = isMetric ? "kg" : "lb";
 
   return (

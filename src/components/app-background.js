@@ -73,6 +73,7 @@ export function AppBackground() {
       {/* Starry night theme: only star layer, no grid */}
       {mounted && isStarryNight && (
         <StarryNightLayer
+          animated={showAnimated}
           className={cn(
             "pointer-events-none absolute inset-0 h-full w-full",
             themeForBackground === "starry-night-dark"

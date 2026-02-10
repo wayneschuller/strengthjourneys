@@ -36,7 +36,87 @@ function seeded(index, salt) {
   return n - Math.floor(n);
 }
 
-export function StarryNightLayer({ className }) {
+function SparkleGroup({ i, x, y, scale, animated }) {
+  const rotate = seeded(i, 1) * 60 - 30; // -30° to 30°
+  const showPair0 = seeded(i, 2) > 0.5;
+  const showPair1 = seeded(i, 3) > 0.5;
+  const accentPairsToShow = [
+    showPair0 ? SPARKLES_ACCENT_PAIRS[0] : null,
+    showPair1 ? SPARKLES_ACCENT_PAIRS[1] : null,
+  ].filter(Boolean);
+
+  const content = (
+    <>
+      <path d={SPARKLES_MAIN} fill="currentColor" stroke="none" />
+      {accentPairsToShow.flat().map((d, j) => (
+        <path
+          key={j}
+          d={d}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      ))}
+    </>
+  );
+
+  const baseTransform = `translate(${x}, ${y}) scale(${scale}) translate(-12, -12)`;
+
+  if (!animated) {
+    return (
+      <g
+        transform={`${baseTransform} rotate(${rotate})`}
+        opacity="0.09"
+      >
+        {content}
+      </g>
+    );
+  }
+
+  const rotateDuration = 80 + seeded(i, 6) * 50;
+  const floatDuration = 15 + seeded(i, 7) * 12;
+  const floatX = (seeded(i, 4) - 0.5) * 2.5;
+  const floatY = (seeded(i, 5) - 0.5) * 2.5;
+  const delay = seeded(i, 8) * 8;
+
+  return (
+    <g transform={baseTransform} opacity="0.09">
+      <motion.g
+        initial={{ rotate, x: 0, y: 0 }}
+        animate={{
+          rotate: [rotate, rotate + 360],
+          x: [0, floatX, 0],
+          y: [0, floatY, 0],
+        }}
+        transition={{
+          rotate: {
+            duration: rotateDuration,
+            repeat: Infinity,
+            ease: "linear",
+            delay,
+          },
+          x: {
+            duration: floatDuration,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay,
+          },
+          y: {
+            duration: floatDuration * 1.1,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: delay + seeded(i, 9) * 2,
+          },
+        }}
+      >
+        {content}
+      </motion.g>
+    </g>
+  );
+}
+
+export function StarryNightLayer({ className, animated = false }) {
   return (
     <svg
       className={className}
@@ -45,35 +125,16 @@ export function StarryNightLayer({ className }) {
       preserveAspectRatio="xMidYMid slice"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {STAR_PLACEMENTS.map(({ x, y, scale }, i) => {
-        const rotate = seeded(i, 1) * 60 - 30; // -30° to 30°
-        const showPair0 = seeded(i, 2) > 0.5;
-        const showPair1 = seeded(i, 3) > 0.5;
-        const accentPairsToShow = [
-          showPair0 ? SPARKLES_ACCENT_PAIRS[0] : null,
-          showPair1 ? SPARKLES_ACCENT_PAIRS[1] : null,
-        ].filter(Boolean);
-
-        return (
-          <g
-            key={i}
-            transform={`translate(${x}, ${y}) rotate(${rotate}) scale(${scale}) translate(-12, -12)`}
-            opacity="0.09"
-          >
-            <path d={SPARKLES_MAIN} fill="currentColor" stroke="none" />
-            {accentPairsToShow.flat().map((d, j) => (
-              <path
-                key={j}
-                d={d}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            ))}
-          </g>
-        );
-      })}
+      {STAR_PLACEMENTS.map(({ x, y, scale }, i) => (
+        <SparkleGroup
+          key={i}
+          i={i}
+          x={x}
+          y={y}
+          scale={scale}
+          animated={animated}
+        />
+      ))}
     </svg>
   );
 }

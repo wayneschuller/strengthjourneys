@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
@@ -11,8 +11,19 @@ import { cn } from "@/lib/utils";
 // -----------------------------------------------------------------------------
 
 const SWIRL_IMAGE_HREF = "/swirls-medium.png";
+const NARROW_VIEWPORT_MAX_WIDTH = 1300;
 
 export function StarryNightLayer({ className, animated = false }) {
+  const [narrowViewport, setNarrowViewport] = useState(true);
+
+  useEffect(() => {
+    const check = () =>
+      setNarrowViewport(window.innerWidth < NARROW_VIEWPORT_MAX_WIDTH);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   const baseClassName = cn("relative h-full w-full overflow-hidden", className);
   const imageLayerClassName =
     "pointer-events-none absolute inset-0 select-none opacity-[0.03] dark:opacity-[0.055]";
@@ -32,6 +43,10 @@ export function StarryNightLayer({ className, animated = false }) {
       </div>
     );
   }
+
+  // On narrow viewports (e.g. mobile), use cover so the layer fills the screen
+  // vertically. On wide viewports use the larger size for the orbit animation.
+  const backgroundSize = narrowViewport ? "cover" : "111.12% auto";
 
   return (
     <div className={baseClassName} aria-hidden>
@@ -56,7 +71,7 @@ export function StarryNightLayer({ className, animated = false }) {
         style={{
           backgroundImage: `url(${SWIRL_IMAGE_HREF})`,
           backgroundRepeat: "no-repeat",
-          backgroundSize: "111.12% auto",
+          backgroundSize,
         }}
       />
     </div>

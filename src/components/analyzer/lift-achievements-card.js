@@ -379,6 +379,176 @@ export const LiftTypeRecentHighlights = ({ liftType }) => {
 const LIFTS_VISIBLE_INITIAL = 8;
 const LIFTS_PER_PAGE = 8;
 
+const ACCORDION_INITIAL = 10;
+const ACCORDION_PAGE_SIZE = 10;
+
+/**
+ * One-line summary for the accordion trigger: lift name + basic stats.
+ */
+function PopularLiftAccordionTriggerRow({ liftType }) {
+  const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
+  const { getColor } = useLiftColors();
+  const e1rmFormula =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false }) ?? "Brzycki";
+
+  const lift = liftTypes?.find((l) => l.liftType === liftType);
+  const topLiftsByReps = topLiftsByTypeAndReps?.[liftType];
+  const oneRM = topLiftsByReps?.[0]?.[0];
+  const { bestE1RMWeight, unitType } = findBestE1RM(
+    liftType,
+    topLiftsByTypeAndReps,
+    e1rmFormula,
+  );
+
+  const totalReps = lift?.totalReps ?? 0;
+  const totalSets = lift?.totalSets ?? 0;
+
+  return (
+    <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-left">
+      <span
+        className="font-semibold text-pretty underline decoration-2"
+        style={{ textDecorationColor: getColor(liftType) }}
+      >
+        {liftType}
+      </span>
+      <span className="text-muted-foreground text-sm">
+        {totalReps} reps · {totalSets} sets
+        {bestE1RMWeight > 0 && unitType && (
+          <> · best e1RM {bestE1RMWeight}{unitType}</>
+        )}
+        {(!bestE1RMWeight || bestE1RMWeight === 0) && oneRM && (
+          <> · best single {oneRM.weight}{oneRM.unitType}</>
+        )}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Full analysis card shown inside an accordion panel (reuses ExpandedLiftAchievements).
+ */
+function PopularLiftAccordionExpandedCard({ liftType }) {
+  const { getColor } = useLiftColors();
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle
+          className="text-xl text-pretty"
+          style={{
+            textDecoration: "underline",
+            textDecorationColor: getColor(liftType),
+          }}
+        >
+          {liftType} Detailed Analysis
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ExpandedLiftAchievements liftType={liftType} />
+      </CardContent>
+      <CardFooter className="text-sm font-extralight">
+        <LiftColorPicker liftType={liftType} />
+      </CardFooter>
+    </Card>
+  );
+}
+
+/**
+ * Accordion of most popular lifts (by total reps). Each row shows lift name and
+ * basic stats; expanding shows the full analysis (summary stats, recent
+ * highlights, rep-range PRs). Top 10 shown initially with "Show more" for 10 more.
+ */
+export function PopularLiftsAccordion() {
+  const { liftTypes } = useUserLiftingData();
+  const [visibleCount, setVisibleCount] = useState(ACCORDION_INITIAL);
+  const [openItems, setOpenItems] = useState([]);
+
+  const sortedByReps = useMemo(() => {
+    if (!liftTypes?.length) return [];
+    return [...liftTypes].sort((a, b) => (b.totalReps ?? 0) - (a.totalReps ?? 0));
+  }, [liftTypes]);
+
+  const visibleLifts = useMemo(
+    () => sortedByReps.slice(0, visibleCount),
+    [sortedByReps, visibleCount],
+  );
+  const hasMore = visibleCount < sortedByReps.length;
+  const remaining = sortedByReps.length - visibleCount;
+
+  const visibleIds = useMemo(
+    () => visibleLifts.map((l) => l.liftType),
+    [visibleLifts],
+  );
+  const allExpanded =
+    visibleIds.length > 0 &&
+    visibleIds.every((id) => openItems.includes(id));
+
+  const toggleExpandAll = () =>
+    setOpenItems(allExpanded ? [] : visibleIds);
+
+  const totalLiftTypes = sortedByReps.length;
+  const isAllLifts = totalLiftTypes <= 10;
+  const cardTitle = isAllLifts
+    ? "All your lifts"
+    : "Your most popular lifts";
+  const cardDescription =
+    !isAllLifts &&
+    "Top lifts by volume. Expand any row for full stats, PRs and highlights.";
+
+  if (!liftTypes?.length) return null;
+
+  return (
+    <Card className="mt-4">
+      <CardHeader>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <CardTitle>{cardTitle}</CardTitle>
+            {cardDescription && (
+              <CardDescription>{cardDescription}</CardDescription>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleExpandAll}
+            className="shrink-0"
+          >
+            {allExpanded ? "Collapse all" : "Expand all"}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <Accordion
+          type="multiple"
+          value={openItems}
+          onValueChange={setOpenItems}
+          className="w-full"
+        >
+          {visibleLifts.map((lift) => (
+            <AccordionItem key={lift.liftType} value={lift.liftType}>
+              <AccordionTrigger className="py-3 hover:no-underline">
+                <PopularLiftAccordionTriggerRow liftType={lift.liftType} />
+              </AccordionTrigger>
+              <AccordionContent className="pb-4 pt-0">
+                <PopularLiftAccordionExpandedCard liftType={lift.liftType} />
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+        {hasMore && (
+          <div className="mt-4 flex justify-center">
+            <Button
+              variant="outline"
+              onClick={() => setVisibleCount((c) => c + ACCORDION_PAGE_SIZE)}
+            >
+              Show more ({remaining} remaining)
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 /**
  * Renders lift achievement cards for the most popular lifts (by total reps),
  * with a "Show more" button to reveal another 8 at a time. No dependency on

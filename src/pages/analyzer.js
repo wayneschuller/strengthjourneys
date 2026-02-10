@@ -14,7 +14,7 @@ import { RelatedArticles } from "@/components/article-cards";
 
 // Here are the analyzer dashboard cards
 import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
-import { PopularLiftsIndividualLiftCards } from "@/components/analyzer/lift-achievements-card";
+import { PopularLiftsAccordion } from "@/components/analyzer/lift-achievements-card";
 import { ConsistencyCard } from "@/components/analyzer/consistency-card";
 import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-pie-card";
 import { MonthsHighlightsCard } from "@/components/analyzer/months-highlights-card";
@@ -139,7 +139,7 @@ function AnalyzerMain({ relatedArticles }) {
         </div>
         <Separator className="col-span-full" />
       </section>
-      <PopularLiftsIndividualLiftCards />
+      <PopularLiftsAccordion />
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );

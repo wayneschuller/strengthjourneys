@@ -79,23 +79,54 @@ export function YearRecapCarousel({ year, isDemo }) {
         toast({ variant: "destructive", title: "Could not capture slide" });
         return;
       }
-      const canvas = await html2canvas(activeSlide, {
-        backgroundColor: null,
-        scale: 2,
-      });
-      canvas.toBlob((blob) => {
-        navigator.clipboard
-          .write([new ClipboardItem({ "image/png": blob })])
-          .then(() => {
-            toast({ title: "Copied to clipboard! Paste into Instagram or anywhere." });
-            const slideId = cards[selectedIndex]?.id;
-            trackShareCopy("year_recap", { page: "/strength-year-in-review", slide: slideId });
-          })
-          .catch((err) => {
-            console.error("Copy error:", err);
-            toast({ variant: "destructive", title: "Could not copy to clipboard" });
-          });
-      }, "image/png");
+
+      let watermarkEl = null;
+      try {
+        watermarkEl = document.createElement("div");
+        watermarkEl.textContent = "strengthjourneys.xyz";
+        Object.assign(watermarkEl.style, {
+          position: "absolute",
+          right: "18px",
+          bottom: "10px",
+          padding: "4px 12px",
+          borderRadius: "9999px",
+          background: "rgba(15, 23, 42, 0.86)",
+          color: "rgba(248, 250, 252, 0.98)",
+          fontSize: "11px",
+          fontWeight: "500",
+          letterSpacing: "0.03em",
+          textTransform: "none",
+          fontFamily:
+            'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+          boxShadow: "0 6px 16px rgba(15, 23, 42, 0.55)",
+          pointerEvents: "none",
+          zIndex: "10",
+        });
+        activeSlide.appendChild(watermarkEl);
+
+        const canvas = await html2canvas(activeSlide, {
+          backgroundColor: null,
+          scale: 2,
+        });
+
+        canvas.toBlob((blob) => {
+          navigator.clipboard
+            .write([new ClipboardItem({ "image/png": blob })])
+            .then(() => {
+              toast({ title: "Copied to clipboard! Paste into Instagram or anywhere." });
+              const slideId = cards[selectedIndex]?.id;
+              trackShareCopy("year_recap", { page: "/strength-year-in-review", slide: slideId });
+            })
+            .catch((err) => {
+              console.error("Copy error:", err);
+              toast({ variant: "destructive", title: "Could not copy to clipboard" });
+            });
+        }, "image/png");
+      } finally {
+        if (watermarkEl && watermarkEl.parentNode) {
+          watermarkEl.parentNode.removeChild(watermarkEl);
+        }
+      }
     } finally {
       setIsSharing(false);
     }
@@ -110,7 +141,7 @@ export function YearRecapCarousel({ year, isDemo }) {
               <CarouselItem key={id} className="pl-0">
                 <div
                   data-recap-slide
-                  className="flex aspect-[9/16] w-full items-center justify-center rounded-xl border border-border bg-card p-6"
+                  className="relative flex aspect-[9/16] w-full items-center justify-center rounded-xl border border-border bg-card p-6"
                 >
                   <Component
                     key={`${id}-${year}`}

@@ -37,7 +37,7 @@ export function ThemeChooser() {
   const [animatedBackground, setAnimatedBackground] = useLocalStorage(
     LOCAL_STORAGE_KEYS.ANIMATED_BACKGROUND,
     false,
-    { initializeWithValue: false }
+    { initializeWithValue: false },
   );
 
   useEffect(() => {
@@ -94,7 +94,12 @@ export function ThemeChooser() {
   );
 }
 
-const DARK_THEMES = ["dark", "neo-brutalism-dark", "retro-arcade-dark", "starry-night-dark"];
+const DARK_THEMES = [
+  "dark",
+  "neo-brutalism-dark",
+  "retro-arcade-dark",
+  "starry-night-dark",
+];
 
 // This is the old dark mode toggle that is no longer used
 export function DarkModeToggle() {
@@ -118,8 +123,18 @@ export function DarkModeToggle() {
               });
             }}
           >
-            <Moon className={cn("absolute h-[1.2rem] w-[1.2rem] transition-all", isDark ? "rotate-0 scale-100" : "rotate-90 scale-0")} />
-            <Sun className={cn("h-[1.2rem] w-[1.2rem] transition-all", isDark ? "-rotate-90 scale-0" : "rotate-0 scale-100")} />
+            <Moon
+              className={cn(
+                "absolute h-[1.2rem] w-[1.2rem] transition-all",
+                isDark ? "scale-100 rotate-0" : "scale-0 rotate-90",
+              )}
+            />
+            <Sun
+              className={cn(
+                "h-[1.2rem] w-[1.2rem] transition-all",
+                isDark ? "scale-0 -rotate-90" : "scale-100 rotate-0",
+              )}
+            />
             <span className="sr-only">Toggle dark mode</span>
           </Button>
         </TooltipTrigger>

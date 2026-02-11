@@ -36,6 +36,7 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { BicepsFlexed } from "lucide-react";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 import { StandardsSlider } from "@/components/standards-slider";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
@@ -117,9 +118,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
     standards,
     toggleIsMetric,
   } = useAthleteBio({ modifyURLQuery: true });
-
-
-  // devLog(standards[`Back Squat`].beginner);
+  const { getColor } = useLiftColors();
 
   const unitType = isMetric ? "kg" : "lb";
 
@@ -234,7 +233,10 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
             {liftTypesFromStandards.map((liftType) => (
               <div key={liftType} className="">
                 <Link href={bigFourURLs[liftType]}>
-                  <h2 className="text-lg font-bold hover:underline">
+                  <h2
+                    className="text-lg font-bold underline decoration-2 underline-offset-2"
+                    style={{ textDecorationColor: getColor(liftType) }}
+                  >
                     {liftType} Standards:
                   </h2>
                 </Link>

@@ -32,18 +32,8 @@ import {
   differenceInYears,
 } from "date-fns";
 
-/** Generic JSON fetcher for useSWR. Pass-through to fetch().json() with timing logs. */
-const fetcher = (...args) => {
-  const t0 = Date.now();
-  return fetch(...args)
-    .then((res) => res.json())
-    .then((data) => {
-      devLog(
-        `read-gsheet roundtrip (client): ${Date.now() - t0}ms, hasMetadata: name=${!!data?.name}, webViewLink=${!!data?.webViewLink}`,
-      );
-      return data;
-    });
-};
+/** Generic JSON fetcher for useSWR. */
+const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 // We use these to only trigger toast announcements once
 let demoToastInit = false;

@@ -4,7 +4,7 @@ import { useContext, useState, useEffect, createContext, useMemo } from "react";
 import { useRouter } from "next/router";
 import { useSession, signIn } from "next-auth/react";
 import useSWR from "swr";
-import { getSelectedLiftsKey, LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { parseData } from "@/lib/parse-data";
 import { event, trackSignInClick } from "@/lib/analytics";
 import {
@@ -52,7 +52,6 @@ export const UserLiftingDataProvider = ({ children }) => {
   // These are our key global state variables.
   // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
   const [parsedData, setParsedData] = useState(null); // see @/lib/sample-parsed-data.js for data structure design
-  const [selectedLiftTypes, setSelectedLiftTypes] = useState([]);
   const [lastDataReceivedAt, setLastDataReceivedAt] = useState(null);
 
   const { data: session, status: authStatus } = useSession();
@@ -131,7 +130,7 @@ export const UserLiftingDataProvider = ({ children }) => {
       // setSheetURL(null);
     }
 
-    const { parsedData, selectedLiftTypes } = buildParsedState({
+    const parsedData = buildParsedState({
       authStatus,
       data,
       toast,
@@ -143,8 +142,6 @@ export const UserLiftingDataProvider = ({ children }) => {
       setSheetURL,
     });
 
-    // Now set it in state for useContext usage throughout the components
-    setSelectedLiftTypes(selectedLiftTypes);
     setParsedData(parsedData);
     if (authStatus === "authenticated" && data?.values) {
       setLastDataReceivedAt(Date.now());
@@ -245,8 +242,6 @@ export const UserLiftingDataProvider = ({ children }) => {
         isError,
         isValidating,
         liftTypes,
-        selectedLiftTypes,
-        setSelectedLiftTypes,
         parsedData,
         topLiftsByTypeAndReps,
         topLiftsByTypeAndRepsLast12Months,
@@ -264,8 +259,8 @@ export const UserLiftingDataProvider = ({ children }) => {
 };
 
 /**
- * Orchestrates parsing raw sheet data, selecting default lift types, and returning both.
- * Delegates to getParsedDataWithFallback (parse + demo fallback + PR marking) and buildSelectedLiftTypes.
+ * Orchestrates parsing raw sheet data.
+ * Delegates to getParsedDataWithFallback (parse + demo fallback + PR marking).
  */
 function buildParsedState({
   authStatus,
@@ -278,7 +273,7 @@ function buildParsedState({
   setSheetFilename,
   setSheetURL,
 }) {
-  const parsedData = getParsedDataWithFallback({
+  return getParsedDataWithFallback({
     authStatus,
     data,
     toast,
@@ -289,16 +284,6 @@ function buildParsedState({
     setSheetFilename,
     setSheetURL,
   });
-
-  const { selectedLiftTypes } = buildSelectedLiftTypes({
-    authStatus,
-    parsedData,
-  });
-
-  return {
-    parsedData,
-    selectedLiftTypes,
-  };
 }
 
 /**
@@ -450,61 +435,4 @@ function getParsedDataWithFallback({
   parsedData = markHigherWeightAsHistoricalPRs(parsedData);
 
   return parsedData;
-}
-
-/**
- * Resolves selectedLiftTypes from localStorage (filtered by current liftTypes) or defaults to first 4.
- * Writes back to localStorage when setting defaults or when filtered result is empty.
- */
-function buildSelectedLiftTypes({ authStatus, parsedData }) {
-  // Calculate liftTypes locally for use in selectedLiftTypes logic
-  // (liftTypes is also computed via useMemo for the context provider)
-  const liftTypes = calculateLiftTypes(parsedData);
-
-  // Check if selectedLifts exists in localStorage
-  // When in demo mode (auth unauthenticated) we have a separate localstorage
-  const localStorageKey = getSelectedLiftsKey(authStatus === "unauthenticated");
-  let selectedLiftTypes = localStorage.getItem(localStorageKey);
-
-  // Attempt to parse selectedLiftTypes from localStorage, or fall back to null if unavailable
-  selectedLiftTypes = selectedLiftTypes ? JSON.parse(selectedLiftTypes) : null;
-
-  // Check if selectedLiftTypes is not null and has elements after filtering; otherwise, set defaults
-  if (!selectedLiftTypes || !selectedLiftTypes.length) {
-    // Define the number of default lift types to select, with a minimum of 4 or the total number available
-    const defaultSelectionCount = Math.min(4, liftTypes.length);
-    // Select default lift types based on the calculated liftTypes array
-    selectedLiftTypes = liftTypes
-      .slice(0, defaultSelectionCount)
-      .map((lift) => lift.liftType);
-
-    // Log and update localStorage with the default selected lift types
-    devLog(
-      `Localstorage selectedLifts not found or invalid! Setting defaults for auth status ${authStatus}:`,
-      selectedLiftTypes,
-    );
-    localStorage.setItem(localStorageKey, JSON.stringify(selectedLiftTypes));
-  } else {
-    // Filter existing selectedLiftTypes to ensure they are all valid based on the current liftTypes data
-    selectedLiftTypes = selectedLiftTypes.filter((selectedLift) =>
-      liftTypes.some((lift) => lift.liftType === selectedLift),
-    );
-
-    // If filtering removes all items, revert to default selection logic
-    if (selectedLiftTypes.length === 0) {
-      const defaultSelectionCount = Math.min(4, liftTypes.length);
-      selectedLiftTypes = liftTypes
-        .slice(0, defaultSelectionCount)
-        .map((lift) => lift.liftType);
-
-      // Log and update localStorage with the default selected lift types
-      devLog(
-        `Filtered selectedLifts resulted in an empty array. Setting defaults for auth status ${authStatus}:`,
-        selectedLiftTypes,
-      );
-      localStorage.setItem(localStorageKey, JSON.stringify(selectedLiftTypes));
-    }
-  }
-
-  return { selectedLiftTypes };
 }

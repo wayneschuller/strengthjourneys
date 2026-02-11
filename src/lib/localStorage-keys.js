@@ -91,11 +91,19 @@ export const LOCAL_STORAGE_KEYS = {
 };
 
 /**
- * Returns the appropriate selected lifts key based on auth status.
+ * Returns the appropriate selected lifts key based on auth status and optional prefix.
+ * Use a prefix when the lift selector is scoped to a specific component (e.g. "visualizer").
  * @param {boolean} isDemoMode - Whether user is in demo mode (unauthenticated)
+ * @param {string|null} [prefix] - Optional prefix for component-scoped keys (e.g. "visualizer" → "visualizer_selectedLifts")
  * @returns {string}
  */
-export const getSelectedLiftsKey = (isDemoMode) =>
-  isDemoMode
+export const getSelectedLiftsKey = (isDemoMode, prefix = null) => {
+  if (prefix) {
+    return isDemoMode
+      ? `${prefix}_selectedLifts_demo`
+      : `${prefix}_selectedLifts`;
+  }
+  return isDemoMode
     ? LOCAL_STORAGE_KEYS.SELECTED_LIFTS_DEMO
     : LOCAL_STORAGE_KEYS.SELECTED_LIFTS;
+};

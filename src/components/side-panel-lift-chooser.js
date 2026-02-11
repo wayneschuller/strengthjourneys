@@ -28,7 +28,26 @@ import {
 } from "@/components/ui/tooltip";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
-export function SidePanelSelectLiftsButton({ isIconMode }) {
+/** Default prefix for component-scoped lift selection. Export for consumers that need to hydrate from the same key. */
+export const VISUALIZER_STORAGE_PREFIX = "visualizer";
+
+export function SidePanelSelectLiftsButton({
+  isIconMode,
+  selectedLiftTypes,
+  setSelectedLiftTypes,
+  storagePrefix = VISUALIZER_STORAGE_PREFIX,
+  title = "Choose Lifts",
+  description = (
+    <>
+      Select which lifts to show on your strength chart.
+      <p>
+        (numbers in parentheses show your total sets for each lift type)
+      </p>
+    </>
+  ),
+  tooltipLabel,
+}) {
+  const srLabel = tooltipLabel ?? title;
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -48,35 +67,35 @@ export function SidePanelSelectLiftsButton({ isIconMode }) {
                       Lifts
                     </Button>
                   )}
-                  <span className="sr-only">
-                    Choose lifts for special analysis
-                  </span>
+                  <span className="sr-only">{srLabel}</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Choose lifts for special analysis</TooltipContent>
+              <TooltipContent>{srLabel}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
       </SheetTrigger>
       <SheetContent side="left">
         <SheetHeader>
-          <SheetTitle>Choose Lifts</SheetTitle>
-          <SheetDescription>
-            Choose what lifts to analyze and visualize
-            <p>
-              (numbers in parentheses show your total sets for each lift type)
-            </p>
-          </SheetDescription>
+          <SheetTitle>{title}</SheetTitle>
+          <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
-        <CheckboxLifts />
+        <CheckboxLifts
+          selectedLiftTypes={selectedLiftTypes}
+          setSelectedLiftTypes={setSelectedLiftTypes}
+          storagePrefix={storagePrefix}
+        />
       </SheetContent>
     </Sheet>
   );
 }
 
-const CheckboxLifts = ({}) => {
-  const { liftTypes, selectedLiftTypes, setSelectedLiftTypes } =
-    useUserLiftingData();
+const CheckboxLifts = ({
+  selectedLiftTypes,
+  setSelectedLiftTypes,
+  storagePrefix,
+}) => {
+  const { liftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
 
   const handleCheckboxChange = (liftType) => {
@@ -98,7 +117,10 @@ const CheckboxLifts = ({}) => {
       .filter((liftType) => updatedSelected.includes(liftType));
 
     // Update localStorage
-    const localStorageKey = getSelectedLiftsKey(authStatus === "unauthenticated");
+    const localStorageKey = getSelectedLiftsKey(
+      authStatus === "unauthenticated",
+      storagePrefix
+    );
     localStorage.setItem(localStorageKey, JSON.stringify(updatedSelected));
 
     // Set the state

@@ -2,7 +2,6 @@
 
 import { useMemo, useEffect, useState } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
 import { format } from "date-fns";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -69,7 +68,7 @@ import { getYearLabels, processVisualizerData } from "./visualizer-processing";
  * @param {string} [props.liftType] - Display name of the lift to chart (e.g. "Bench Press").
  */
 export function VisualizerMini({ liftType }) {
-  const { parsedData, selectedLiftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
+  const { parsedData, topLiftsByTypeAndReps } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
@@ -204,14 +203,7 @@ export function VisualizerMini({ liftType }) {
   const roundedMaxWeightValue = weightMax * (width > 1280 ? 1.3 : 1.5);
 
   // Shadcn charts needs this for theming but we just do custom colors anyway
-  const chartConfig = Object.fromEntries(
-    selectedLiftTypes.map((liftType, index) => [
-      liftType,
-      {
-        label: liftType,
-      },
-    ]),
-  );
+  const chartConfig = { [liftType]: { label: liftType } };
 
   const handleMouseMove = (event) => {
     if (event && event.activePayload) {

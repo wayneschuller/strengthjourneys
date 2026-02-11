@@ -1,13 +1,20 @@
 "use client";
 
-import { useMemo, useEffect } from "react";
-import { SidePanelSelectLiftsButton } from "../side-panel-lift-chooser";
+import { useMemo, useEffect, useState } from "react";
+import {
+  SidePanelSelectLiftsButton,
+  VISUALIZER_STORAGE_PREFIX,
+} from "../side-panel-lift-chooser";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { useSession } from "next-auth/react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { devLog, getReadableDateString } from "@/lib/processing-utils";
+import { LOCAL_STORAGE_KEYS, getSelectedLiftsKey } from "@/lib/localStorage-keys";
+import {
+  BIG_FOUR_LIFT_TYPES,
+  devLog,
+  getReadableDateString,
+} from "@/lib/processing-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { subMonths } from "date-fns";
 import { Label } from "@/components/ui/label";
@@ -60,12 +67,44 @@ import {
 import { processVisualizerData, getYearLabels } from "./visualizer-processing";
 
 export function VisualizerShadcn({ setHighlightDate }) {
-  const { parsedData, selectedLiftTypes } = useUserLiftingData();
+  const { parsedData, liftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
 
+  const [selectedLiftTypes, setSelectedLiftTypes] = useState(BIG_FOUR_LIFT_TYPES);
+
+  // Hydrate from localStorage when liftTypes is available
+  useEffect(() => {
+    if (authStatus === "loading" || !liftTypes?.length) return;
+
+    const localStorageKey = getSelectedLiftsKey(
+      authStatus === "unauthenticated",
+      VISUALIZER_STORAGE_PREFIX
+    );
+    let stored = null;
+    try {
+      const raw = typeof window !== "undefined" && localStorage.getItem(localStorageKey);
+      stored = raw ? JSON.parse(raw) : null;
+    } catch {
+      stored = null;
+    }
+
+    const liftTypeSet = new Set(liftTypes.map((l) => l.liftType));
+    let resolved = Array.isArray(stored) && stored.length
+      ? stored.filter((lt) => liftTypeSet.has(lt))
+      : null;
+
+    if (!resolved?.length) {
+      resolved = BIG_FOUR_LIFT_TYPES.filter((lt) => liftTypeSet.has(lt));
+      if (typeof window !== "undefined") {
+        localStorage.setItem(localStorageKey, JSON.stringify(resolved));
+      }
+    }
+
+    setSelectedLiftTypes(resolved);
+  }, [authStatus, liftTypes]);
+
   // Get reactive colors for all selected lift types
-  // Create individual hooks for each lift type
   const liftColors = {};
   selectedLiftTypes.forEach((liftType) => {
     liftColors[liftType] = getColor(liftType);
@@ -168,7 +207,21 @@ export function VisualizerShadcn({ setHighlightDate }) {
           </CardDescription>
         </div>
         <div className="grid grid-cols-2 space-x-1">
-          <SidePanelSelectLiftsButton />
+          <SidePanelSelectLiftsButton
+            selectedLiftTypes={selectedLiftTypes}
+            setSelectedLiftTypes={setSelectedLiftTypes}
+            storagePrefix={VISUALIZER_STORAGE_PREFIX}
+            title="Choose Lifts"
+            description={
+              <>
+                Select which lifts to show on your strength visualizer chart.
+                <p>
+                  (numbers in parentheses show your total sets for each lift
+                  type)
+                </p>
+              </>
+            }
+          />
           <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
         </div>
       </CardHeader>

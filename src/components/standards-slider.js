@@ -16,6 +16,7 @@ export function StandardsSlider({
   isYearly = false,
   isMetric,
   standards,
+  extraNotches = [],
 }) {
   const {
     topLiftsByTypeAndReps,
@@ -205,6 +206,69 @@ export function StandardsSlider({
                 </TooltipContent>
               </Tooltip>
             )}
+          {/* Extra notches (e.g. recent best E1RMs) */}
+          {Array.isArray(extraNotches) &&
+            extraNotches.map((notch) => {
+              if (!notch || typeof notch.e1rm !== "number") return null;
+              const left = getPercent(notch.e1rm);
+              const notchUnit = notch.unitType || unitType;
+
+              // Short label for the bar (1M / 6M / 12M), fallback to provided label
+              const shortLabel =
+                notch.periodKey === "1M"
+                  ? "1M"
+                  : notch.periodKey === "6M"
+                  ? "6M"
+                  : notch.periodKey === "12M"
+                    ? "1Y"
+                    : notch.label;
+
+              return (
+                <Tooltip key={notch.periodKey || notch.label || left}>
+                  <div
+                    className="group absolute top-0 z-10 h-full w-6 -translate-x-1/2"
+                    style={{ left: `${left}%` }}
+                  >
+                    <TooltipTrigger asChild>
+                      <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-medium shadow bg-background/80 text-foreground group-hover:bg-primary group-hover:text-primary-foreground">
+                        {shortLabel}
+                      </span>
+                    </TooltipTrigger>
+                    <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 flex">
+                      <div className="w-[3px] bg-foreground/70 group-hover:bg-primary group-hover:bg-opacity-90" />
+                      <div className="w-px bg-background/90 opacity-90" />
+                    </div>
+                  </div>
+                  <TooltipContent side="bottom" sideOffset={6} className="max-w-xs text-xs">
+                    <div className="space-y-0.5">
+                      <div className="font-semibold">{notch.label}</div>
+                      <div>
+                        ~{Math.round(notch.e1rm)}
+                        {notchUnit} estimated 1RM
+                        {bodyWeight > 0 && (
+                          <span className="text-muted-foreground">
+                            {" "}
+                            ({(notch.e1rm / bodyWeight).toFixed(2)}xBW)
+                          </span>
+                        )}
+                      </div>
+                      {typeof notch.reps === "number" &&
+                        typeof notch.weight === "number" && (
+                          <div className="text-muted-foreground">
+                            Set: {notch.reps}×{notch.weight}
+                            {notchUnit}
+                          </div>
+                        )}
+                      {notch.date && (
+                        <div className="text-muted-foreground">
+                          {getReadableDateString(notch.date)}
+                        </div>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
         </TooltipProvider>
       </div>
       {authStatus === "authenticated" && strengthRating && (

@@ -42,16 +42,23 @@ export default async function handler(req, res) {
     let sheetsMs = null;
     let driveMs = null;
 
-    const sheetsPromise = fetch(sheetsUrl, { method: "GET", headers }).then((res) => {
-      sheetsMs = Date.now() - t0;
-      return res;
-    });
-    const drivePromise = fetch(driveUrl, { method: "GET", headers }).then((res) => {
-      driveMs = Date.now() - t0;
-      return res;
-    });
+    const sheetsPromise = fetch(sheetsUrl, { method: "GET", headers }).then(
+      (res) => {
+        sheetsMs = Date.now() - t0;
+        return res;
+      },
+    );
+    const drivePromise = fetch(driveUrl, { method: "GET", headers }).then(
+      (res) => {
+        driveMs = Date.now() - t0;
+        return res;
+      },
+    );
 
-    const [sheetsRes, driveRes] = await Promise.all([sheetsPromise, drivePromise]);
+    const [sheetsRes, driveRes] = await Promise.all([
+      sheetsPromise,
+      drivePromise,
+    ]);
 
     const totalMs = Date.now() - t0;
 

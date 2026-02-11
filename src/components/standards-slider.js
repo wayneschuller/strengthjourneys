@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   useAthleteBio,
@@ -7,7 +8,6 @@ import {
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { devLog, getReadableDateString } from "@/lib/processing-utils";
-import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useReadLocalStorage, useWindowSize } from "usehooks-ts";
 
@@ -85,6 +85,117 @@ export function StandardsSlider({
   // Level label data
   const levelLabels = Object.keys(liftTypeStandards);
 
+  // --- Build unified notch array & cluster nearby labels ---
+  const allNotches = [];
+
+  if (athleteRankingWeight > 0) {
+    allNotches.push({
+      key: "1RM",
+      percent: thumbPosition,
+      shortLabel: "1RM",
+      zIndex: 20,
+      tooltipContent: bestWeightTuple ? (
+        <div className="space-y-0.5">
+          <div className="font-semibold">Best single</div>
+          <div>
+            {bestWeightTuple.reps} rep{bestWeightTuple.reps > 1 ? "s" : ""} × {bestWeightTuple.weight}
+            {unitType}
+          </div>
+          {bestWeightTuple.date && (
+            <div className="text-muted-foreground">
+              {getReadableDateString(bestWeightTuple.date)}
+            </div>
+          )}
+        </div>
+      ) : (
+        <span>Best single: {athleteRankingWeight}{unitType}</span>
+      ),
+    });
+  }
+
+  if (authStatus === "authenticated" && highestE1RM > 0 && highestE1RM > athleteRankingWeight) {
+    allNotches.push({
+      key: "E1RM",
+      percent: getPercent(highestE1RM),
+      shortLabel: "E1RM",
+      zIndex: 30,
+      tooltipContent: bestE1RMTuple ? (
+        <div className="space-y-0.5">
+          <div className="font-semibold">Estimated 1RM</div>
+          <div>
+            {bestE1RMTuple.reps}×{bestE1RMTuple.weight}
+            {unitType} → ~{Math.round(bestE1RMTuple.e1rm)}{unitType}
+          </div>
+          {bestE1RMTuple.date && (
+            <div className="text-muted-foreground">
+              {getReadableDateString(bestE1RMTuple.date)}
+            </div>
+          )}
+        </div>
+      ) : (
+        <span>E1RM: ~{Math.round(highestE1RM)}{unitType}</span>
+      ),
+    });
+  }
+
+  if (Array.isArray(extraNotches)) {
+    for (const notch of extraNotches) {
+      if (!notch || typeof notch.e1rm !== "number") continue;
+      const notchUnit = notch.unitType || unitType;
+      const shortLabel =
+        notch.periodKey === "1M"
+          ? "1M"
+          : notch.periodKey === "6M"
+            ? "6M"
+            : notch.periodKey === "12M"
+              ? "1Y"
+              : notch.label;
+      allNotches.push({
+        key: notch.periodKey || notch.label || `extra-${getPercent(notch.e1rm)}`,
+        percent: getPercent(notch.e1rm),
+        shortLabel,
+        zIndex: 10,
+        tooltipContent: (
+          <div className="space-y-0.5">
+            <div className="font-semibold">{notch.label}</div>
+            <div>
+              ~{Math.round(notch.e1rm)}
+              {notchUnit} estimated 1RM
+              {bodyWeight > 0 && (
+                <span className="text-muted-foreground">
+                  {" "}({(notch.e1rm / bodyWeight).toFixed(2)}xBW)
+                </span>
+              )}
+            </div>
+            {typeof notch.reps === "number" && typeof notch.weight === "number" && (
+              <div className="text-muted-foreground">
+                Set: {notch.reps}×{notch.weight}{notchUnit}
+              </div>
+            )}
+            {notch.date && (
+              <div className="text-muted-foreground">
+                {getReadableDateString(notch.date)}
+              </div>
+            )}
+          </div>
+        ),
+      });
+    }
+  }
+
+  // Sort by percent position and group nearby notches into clusters
+  allNotches.sort((a, b) => a.percent - b.percent);
+  const MERGE_THRESHOLD = 4; // percent
+  const notchClusters = [];
+  for (const notch of allNotches) {
+    const last = notchClusters[notchClusters.length - 1];
+    if (last && Math.abs(notch.percent - last[last.length - 1].percent) <= MERGE_THRESHOLD) {
+      last.push(notch);
+    } else {
+      notchClusters.push([notch]);
+    }
+  }
+
   return (
     <div className="mx-auto w-full">
       {/* Lift level labels */}
@@ -134,143 +245,63 @@ export function StandardsSlider({
         <div className="relative h-2 w-full rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800" />
         {/* Lifetime 1RM and E1RM notches */}
         <TooltipProvider>
-          {athleteRankingWeight > 0 && (
-            <Tooltip>
-              <div
-                className="group absolute top-0 z-20 h-full w-6 -translate-x-1/2"
-                style={{ left: `${thumbPosition}%` }}
-              >
-                <TooltipTrigger asChild>
-                  <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-medium shadow bg-background/80 text-foreground group-hover:bg-primary group-hover:text-primary-foreground">
-                    1RM
-                  </span>
-                </TooltipTrigger>
-                <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 flex">
-                  <div className="w-[3px] bg-foreground/70 group-hover:bg-primary group-hover:bg-opacity-90" />
-                  <div className="w-px bg-background/90 opacity-90" />
-                </div>
-              </div>
-              <TooltipContent side="bottom" sideOffset={6} className="max-w-xs text-xs">
-                {bestWeightTuple ? (
-                  <div className="space-y-0.5">
-                    <div className="font-semibold">Best single</div>
-                    <div>
-                      {bestWeightTuple.reps} rep{bestWeightTuple.reps > 1 ? "s" : ""} × {bestWeightTuple.weight}
-                      {unitType}
-                    </div>
-                    {bestWeightTuple.date && (
-                      <div className="text-muted-foreground">
-                        {getReadableDateString(bestWeightTuple.date)}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <span>Best single: {athleteRankingWeight}{unitType}</span>
-                )}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {authStatus === "authenticated" &&
-            highestE1RM > 0 &&
-            highestE1RM > athleteRankingWeight && (
-              <Tooltip>
-                <div
-                  className="group absolute top-0 z-30 h-full w-6 -translate-x-1/2"
-                  style={{ left: `${getPercent(highestE1RM)}%` }}
-                >
-                  <TooltipTrigger asChild>
-                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-medium shadow bg-background/80 text-foreground group-hover:bg-primary group-hover:text-primary-foreground">
-                      E1RM
-                    </span>
-                  </TooltipTrigger>
-                  <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 flex">
-                    <div className="w-[3px] bg-foreground/70 group-hover:bg-primary group-hover:bg-opacity-90" />
-                    <div className="w-px bg-background/90 opacity-90" />
-                  </div>
-                </div>
-                <TooltipContent side="bottom" sideOffset={6} className="max-w-xs text-xs">
-                  {bestE1RMTuple ? (
-                    <div className="space-y-0.5">
-                      <div className="font-semibold">Estimated 1RM</div>
-                      <div>
-                        {bestE1RMTuple.reps}×{bestE1RMTuple.weight}
-                        {unitType} → ~{Math.round(bestE1RMTuple.e1rm)}{unitType}
-                      </div>
-                      {bestE1RMTuple.date && (
-                        <div className="text-muted-foreground">
-                          {getReadableDateString(bestE1RMTuple.date)}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <span>E1RM: ~{Math.round(highestE1RM)}{unitType}</span>
-                  )}
-                </TooltipContent>
-              </Tooltip>
-            )}
-          {/* Extra notches (e.g. recent best E1RMs) */}
-          {Array.isArray(extraNotches) &&
-            extraNotches.map((notch) => {
-              if (!notch || typeof notch.e1rm !== "number") return null;
-              const left = getPercent(notch.e1rm);
-              const notchUnit = notch.unitType || unitType;
+          {notchClusters.map((cluster) => {
+            const maxZ = Math.max(...cluster.map((n) => n.zIndex));
+            const centerPercent =
+              cluster.reduce((sum, n) => sum + n.percent, 0) / cluster.length;
+            const mergedLabel = cluster.map((n) => n.shortLabel).join(" · ");
+            const clusterKey = cluster.map((n) => n.key).join("-");
+            const isMerged = cluster.length > 1;
 
-              // Short label for the bar (1M / 6M / 12M), fallback to provided label
-              const shortLabel =
-                notch.periodKey === "1M"
-                  ? "1M"
-                  : notch.periodKey === "6M"
-                  ? "6M"
-                  : notch.periodKey === "12M"
-                    ? "1Y"
-                    : notch.label;
-
-              return (
-                <Tooltip key={notch.periodKey || notch.label || left}>
+            return (
+              <Fragment key={clusterKey}>
+                {/* For merged clusters, render individual lines outside the group */}
+                {isMerged &&
+                  cluster.map((notch) => (
+                    <div
+                      key={`line-${notch.key}`}
+                      className="absolute top-0 h-full"
+                      style={{ left: `${notch.percent}%`, zIndex: notch.zIndex }}
+                    >
+                      <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 flex">
+                        <div className="w-[3px] bg-foreground/70" />
+                        <div className="w-px bg-background/90 opacity-90" />
+                      </div>
+                    </div>
+                  ))}
+                <Tooltip>
                   <div
-                    className="group absolute top-0 z-10 h-full w-6 -translate-x-1/2"
-                    style={{ left: `${left}%` }}
+                    className="group absolute top-0 h-full w-6 -translate-x-1/2"
+                    style={{ left: `${centerPercent}%`, zIndex: maxZ }}
                   >
                     <TooltipTrigger asChild>
                       <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-medium shadow bg-background/80 text-foreground group-hover:bg-primary group-hover:text-primary-foreground">
-                        {shortLabel}
+                        {mergedLabel}
                       </span>
                     </TooltipTrigger>
-                    <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 flex">
-                      <div className="w-[3px] bg-foreground/70 group-hover:bg-primary group-hover:bg-opacity-90" />
-                      <div className="w-px bg-background/90 opacity-90" />
-                    </div>
+                    {/* For single notch, render line inside group for hover effect */}
+                    {!isMerged && (
+                      <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 flex">
+                        <div className="w-[3px] bg-foreground/70 group-hover:bg-primary group-hover:bg-opacity-90" />
+                        <div className="w-px bg-background/90 opacity-90" />
+                      </div>
+                    )}
                   </div>
                   <TooltipContent side="bottom" sideOffset={6} className="max-w-xs text-xs">
-                    <div className="space-y-0.5">
-                      <div className="font-semibold">{notch.label}</div>
-                      <div>
-                        ~{Math.round(notch.e1rm)}
-                        {notchUnit} estimated 1RM
-                        {bodyWeight > 0 && (
-                          <span className="text-muted-foreground">
-                            {" "}
-                            ({(notch.e1rm / bodyWeight).toFixed(2)}xBW)
-                          </span>
-                        )}
+                    {cluster.length === 1 ? (
+                      cluster[0].tooltipContent
+                    ) : (
+                      <div className="space-y-2">
+                        {cluster.map((notch) => (
+                          <div key={notch.key}>{notch.tooltipContent}</div>
+                        ))}
                       </div>
-                      {typeof notch.reps === "number" &&
-                        typeof notch.weight === "number" && (
-                          <div className="text-muted-foreground">
-                            Set: {notch.reps}×{notch.weight}
-                            {notchUnit}
-                          </div>
-                        )}
-                      {notch.date && (
-                        <div className="text-muted-foreground">
-                          {getReadableDateString(notch.date)}
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </TooltipContent>
                 </Tooltip>
-              );
-            })}
+              </Fragment>
+            );
+          })}
         </TooltipProvider>
       </div>
       {authStatus === "authenticated" && strengthRating && (

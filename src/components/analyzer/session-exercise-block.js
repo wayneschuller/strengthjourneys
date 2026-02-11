@@ -450,12 +450,15 @@ export function SessionExerciseBlock({
         />
       </div>
     ) : !hideSvg ? (
-      <LiftTypeIndicator liftType={liftType} className="text-base" />
+      <LiftTypeIndicator
+        liftType={liftType}
+        className="text-base max-w-36 leading-tight"
+      />
     ) : null;
 
     return (
       <div
-        className={`bg-muted/20 flex h-full min-h-0 flex-col gap-3 rounded-xl border sm:flex-row sm:items-center sm:gap-0 ${
+        className={`bg-muted/20 flex h-full min-h-0 flex-col gap-3 rounded-xl border sm:flex-row sm:items-center sm:gap-3 ${
           liftTypeArea ? "p-4" : "px-2 py-1.5 gap-2"
         }`}
       >

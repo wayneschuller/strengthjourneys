@@ -60,11 +60,9 @@ import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
 import { getLogoForTheme } from "@/lib/theme-logos";
 
-import { SidePanelSelectLiftsButton } from "@/components/side-panel-lift-chooser";
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 
 export function NavBar() {
-  const pathname = usePathname();
   const { status: authStatus } = useSession();
 
   useEffect(() => {
@@ -100,10 +98,6 @@ export function NavBar() {
         <MobileNav />
       </div>
       <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2">
-        {/* Only show the select lifts button on visualizer (barbell-strength-potential uses big four + dropdown; analyzer uses popular lifts by reps) */}
-        {pathname === "/visualizer" && (
-          <SidePanelSelectLiftsButton isIconMode={true} />
-        )}
         <MiniTimer />
         {/* We used to show an icon to open the user google sheet */}
         {/* <UserSheetIcon /> */}

@@ -229,7 +229,7 @@ export function StandardsSlider({
         })}
         {/* <div className="block md:hidden">Rating: </div> */}
       </div>
-      <div className="relative w-full">
+      <div className="relative mb-7 w-full">
         {/* Slider bar background */}
         <div className="relative h-2 w-full rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800" />
         {/* Lifetime 1RM and E1RM notches */}

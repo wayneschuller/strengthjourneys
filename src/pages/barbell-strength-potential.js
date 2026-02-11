@@ -14,12 +14,19 @@ import { E1RMFormulaRadioGroup } from "@/components/e1rm-formula-radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -43,7 +50,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-import { ChartColumnDecreasing, LoaderCircle } from "lucide-react";
+import { ChartColumnDecreasing, ChevronDown, LoaderCircle } from "lucide-react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { parse } from "date-fns";
@@ -121,6 +128,7 @@ function StrengthPotentialMain({ relatedArticles }) {
     initializeWithValue: false,
   });
   const [selectedOtherLift, setSelectedOtherLift] = useState("");
+  const [openOtherLift, setOpenOtherLift] = useState(false);
 
   // Big four: only those the user has data for (canonical order from BIG_FOUR_LIFT_TYPES)
   const bigFourToShow = useMemo(() => {
@@ -173,25 +181,46 @@ function StrengthPotentialMain({ relatedArticles }) {
       </section>
       {otherLiftTypes.length > 0 && (
         <section className="mt-8">
-          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-            <label htmlFor="other-lift-select" className="text-sm font-medium text-muted-foreground">
-              Another lift
+          <div className="mb-4 flex flex-col gap-2 px-4 sm:px-0 sm:flex-row sm:items-center">
+            <label htmlFor="other-lift-combobox" className="text-base font-semibold text-foreground">
+              View another lift
             </label>
-            <Select
-              value={displayOtherLift}
-              onValueChange={setSelectedOtherLift}
-            >
-              <SelectTrigger id="other-lift-select" className="w-full sm:w-[280px]">
-                <SelectValue placeholder="Choose a lift" />
-              </SelectTrigger>
-              <SelectContent>
-                {otherLiftTypes.map((liftType) => (
-                  <SelectItem key={liftType} value={liftType}>
-                    {liftType}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={openOtherLift} onOpenChange={setOpenOtherLift}>
+              <PopoverTrigger asChild>
+                <Button
+                  id="other-lift-combobox"
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openOtherLift}
+                  className="h-10 w-full justify-between font-normal sm:w-[280px]"
+                >
+                  {displayOtherLift || "Choose a lift"}
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[280px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search lifts..." />
+                  <CommandList>
+                    <CommandEmpty>No lift found.</CommandEmpty>
+                    <CommandGroup>
+                      {otherLiftTypes.map((liftType) => (
+                        <CommandItem
+                          key={liftType}
+                          value={liftType}
+                          onSelect={() => {
+                            setSelectedOtherLift(liftType);
+                            setOpenOtherLift(false);
+                          }}
+                        >
+                          {liftType}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           {displayOtherLift && (
             <div className="mx-auto max-w-4xl">

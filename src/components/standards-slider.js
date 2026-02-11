@@ -96,19 +96,16 @@ export function StandardsSlider({
       zIndex: 20,
       tooltipContent: bestWeightTuple ? (
         <div className="space-y-0.5">
-          <div className="font-semibold">Best single</div>
-          <div>
-            {bestWeightTuple.reps} rep{bestWeightTuple.reps > 1 ? "s" : ""} × {bestWeightTuple.weight}
-            {unitType}
+          <div className="font-semibold">
+            Lifetime best: {bestWeightTuple.weight}{unitType}
           </div>
-          {bestWeightTuple.date && (
-            <div className="text-muted-foreground">
-              {getReadableDateString(bestWeightTuple.date)}
-            </div>
-          )}
+          <div className="text-muted-foreground">
+            {bestWeightTuple.reps} × {bestWeightTuple.weight}{unitType}
+            {bestWeightTuple.date && <> · {getReadableDateString(bestWeightTuple.date)}</>}
+          </div>
         </div>
       ) : (
-        <span>Best single: {athleteRankingWeight}{unitType}</span>
+        <span>Lifetime best: {athleteRankingWeight}{unitType}</span>
       ),
     });
   }
@@ -121,19 +118,16 @@ export function StandardsSlider({
       zIndex: 30,
       tooltipContent: bestE1RMTuple ? (
         <div className="space-y-0.5">
-          <div className="font-semibold">Estimated 1RM</div>
-          <div>
-            {bestE1RMTuple.reps}×{bestE1RMTuple.weight}
-            {unitType} → ~{Math.round(bestE1RMTuple.e1rm)}{unitType}
+          <div className="font-semibold">
+            Lifetime best E1RM: ~{Math.round(bestE1RMTuple.e1rm)}{unitType}
           </div>
-          {bestE1RMTuple.date && (
-            <div className="text-muted-foreground">
-              {getReadableDateString(bestE1RMTuple.date)}
-            </div>
-          )}
+          <div className="text-muted-foreground">
+            {bestE1RMTuple.reps} × {bestE1RMTuple.weight}{unitType}
+            {bestE1RMTuple.date && <> · {getReadableDateString(bestE1RMTuple.date)}</>}
+          </div>
         </div>
       ) : (
-        <span>E1RM: ~{Math.round(highestE1RM)}{unitType}</span>
+        <span>Lifetime best E1RM: ~{Math.round(highestE1RM)}{unitType}</span>
       ),
     });
   }
@@ -157,26 +151,21 @@ export function StandardsSlider({
         zIndex: 10,
         tooltipContent: (
           <div className="space-y-0.5">
-            <div className="font-semibold">{notch.label}</div>
-            <div>
-              ~{Math.round(notch.e1rm)}
-              {notchUnit} estimated 1RM
+            <div className="font-semibold">
+              {notch.label} E1RM: ~{Math.round(notch.e1rm)}{notchUnit}
               {bodyWeight > 0 && (
-                <span className="text-muted-foreground">
-                  {" "}({(notch.e1rm / bodyWeight).toFixed(2)}xBW)
+                <span className="font-normal text-muted-foreground">
+                  {" "}({(notch.e1rm / bodyWeight).toFixed(2)}×BW)
                 </span>
               )}
             </div>
-            {typeof notch.reps === "number" && typeof notch.weight === "number" && (
-              <div className="text-muted-foreground">
-                Set: {notch.reps}×{notch.weight}{notchUnit}
-              </div>
-            )}
-            {notch.date && (
-              <div className="text-muted-foreground">
-                {getReadableDateString(notch.date)}
-              </div>
-            )}
+            <div className="text-muted-foreground">
+              {typeof notch.reps === "number" && typeof notch.weight === "number" && (
+                <>{notch.reps} × {notch.weight}{notchUnit}</>
+              )}
+              {typeof notch.reps === "number" && typeof notch.weight === "number" && notch.date && " · "}
+              {notch.date && getReadableDateString(notch.date)}
+            </div>
           </div>
         ),
       });

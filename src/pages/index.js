@@ -280,7 +280,7 @@ export default function Home() {
         <Separator className="my-8" />
 
         <h2 class="mt-8 text-xl font-semibold">🛠️ Strength Insights & Tools</h2>
-        <div className="mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <div className="mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {featurePages.map((card, index) => (
             <FeatureCard key={index} index={index} {...card} />
           ))}

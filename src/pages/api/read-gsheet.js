@@ -39,18 +39,27 @@ export default async function handler(req, res) {
     const sheetsUrl = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
     const driveUrl = `https://www.googleapis.com/drive/v3/files/${ssid}?fields=name,webViewLink,modifiedTime,modifiedByMeTime`;
 
+    let sheetsMs = null;
+    let driveMs = null;
+
     const sheetsPromise = fetch(sheetsUrl, { method: "GET", headers }).then((res) => {
-      devLog(`read-gsheet: Sheets API responded in ${Date.now() - t0}ms`);
+      sheetsMs = Date.now() - t0;
       return res;
     });
     const drivePromise = fetch(driveUrl, { method: "GET", headers }).then((res) => {
-      devLog(`read-gsheet: Drive API responded in ${Date.now() - t0}ms`);
+      driveMs = Date.now() - t0;
       return res;
     });
 
     const [sheetsRes, driveRes] = await Promise.all([sheetsPromise, drivePromise]);
 
-    devLog(`read-gsheet: both APIs done in ${Date.now() - t0}ms total`);
+    const totalMs = Date.now() - t0;
+
+    if (driveMs !== null && sheetsMs !== null && driveMs > sheetsMs) {
+      devLog(
+        `read-gsheet ANOMALY: Drive slower than Sheets (sheets=${sheetsMs}ms, drive=${driveMs}ms, total=${totalMs}ms) - Drive metadata must not be the bottleneck; investigate Drive slowness.`,
+      );
+    }
 
     const data = await sheetsRes.json();
 
@@ -68,9 +77,6 @@ export default async function handler(req, res) {
         modifiedTime: driveData.modifiedTime,
         modifiedByMeTime: driveData.modifiedByMeTime,
       });
-      devLog(`read-gsheet: merged Drive metadata (name, webViewLink, modifiedTime, modifiedByMeTime)`);
-    } else {
-      devLog(`read-gsheet: Drive API failed (${driveRes.status}), returning Sheets data only`);
     }
 
     res.status(200).json(data);

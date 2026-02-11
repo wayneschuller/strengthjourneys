@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo } from "react";
+
 
 import { cn } from "@/lib/utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -63,8 +63,6 @@ const StrengthJourneys = () => (
 import { fetchRelatedArticles, fetchArticleById } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { subMonths } from "date-fns";
 
 export async function getStaticPaths() {
   const paths = bigFourLiftInsightData.map((lift) => ({
@@ -359,82 +357,6 @@ function HowStrong({ liftType }) {
 function StrengthLevelsCard({ liftType }) {
   const { age, sex, bodyWeight, standards, isMetric } = useAthleteBio();
   const unitType = isMetric ? "kg" : "lb";
-  const { parsedData } = useUserLiftingData();
-  const storedFormula = useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
-    initializeWithValue: false,
-  });
-  const e1rmFormula = storedFormula || "Brzycki";
-
-  const bestE1RMs = useMemo(() => {
-    if (!parsedData || !parsedData.length || !e1rmFormula) return null;
-
-    const now = new Date();
-    const thresholds = {
-      "1M": subMonths(now, 1),
-      "6M": subMonths(now, 6),
-      "12M": subMonths(now, 12),
-    };
-
-    const bestByPeriod = {
-      "1M": null,
-      "6M": null,
-      "12M": null,
-    };
-
-    parsedData.forEach((entry) => {
-      if (entry.liftType !== liftType || !entry.reps || !entry.weight) return;
-
-      const dateStr = entry.date;
-      const dateObj = new Date(dateStr);
-      if (Number.isNaN(dateObj.getTime())) return;
-
-      const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
-      const id = `${dateObj.getTime()}-${entry.reps}-${entry.weight}-${entry.unitType || ""}`;
-
-      ["1M", "6M", "12M"].forEach((key) => {
-        if (dateObj < thresholds[key]) return;
-        const current = bestByPeriod[key];
-        if (!current || e1rm > current.e1rm) {
-          bestByPeriod[key] = {
-            e1rm,
-            unitType: entry.unitType || unitType,
-            date: dateStr,
-            reps: entry.reps,
-            weight: entry.weight,
-            id,
-          };
-        }
-      });
-    });
-
-    const periodMeta = {
-      "1M": { label: "Last month" },
-      "6M": { label: "Last 6 months" },
-      "12M": { label: "Last 12 months" },
-    };
-
-    const seenIds = new Set();
-    const orderedKeys = ["12M", "6M", "1M"];
-    const summaries = [];
-
-    orderedKeys.forEach((key) => {
-      const best = bestByPeriod[key];
-      if (!best || seenIds.has(best.id)) return;
-      seenIds.add(best.id);
-      summaries.push({
-        periodKey: key,
-        label: periodMeta[key].label,
-        e1rm: best.e1rm,
-        unitType: best.unitType,
-        reps: best.reps,
-        weight: best.weight,
-        date: best.date,
-      });
-    });
-
-    if (!summaries.length) return null;
-    return summaries;
-  }, [parsedData, liftType, e1rmFormula, unitType]);
 
   return (
     <Card>
@@ -452,10 +374,8 @@ function StrengthLevelsCard({ liftType }) {
       <CardContent>
         <StandardsSlider
           liftType={liftType}
-          // isYearly={isYearly}
           standards={standards}
           isMetric={isMetric}
-          extraNotches={bestE1RMs || []}
         />
       </CardContent>
     </Card>

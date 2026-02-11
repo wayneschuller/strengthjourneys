@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import { devLog } from "@/lib/processing-utils";
 import { NextSeo } from "next-seo";
 import { sanityIOClient } from "@/lib/sanity-io.js";
@@ -25,7 +23,6 @@ import {
   PageHeaderRight,
 } from "@/components/page-header";
 
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import { Label } from "@/components/ui/label";
 import {
@@ -120,8 +117,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
     standards,
     toggleIsMetric,
   } = useAthleteBio({ modifyURLQuery: true });
-  const { status: authStatus } = useSession();
-  const [isYearly, setIsYearly] = useState(false);
+
 
   // devLog(standards[`Back Squat`].beginner);
 
@@ -233,27 +229,6 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
                 </SelectContent>
               </Select>
             </div>
-            {authStatus === "authenticated" && (
-              <div>
-                Select PR Period:
-                <div className="mt-1 flex flex-row gap-4">
-                  <RadioGroup
-                    value={isYearly ? "true" : "false"} // Set the value as string for RadioGroupItem
-                    onValueChange={(val) => setIsYearly(val === "true")} // Convert to boolean
-                    className="flex space-x-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="false" id="lifetime" />
-                      <Label htmlFor="lifetime">Lifetime</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="true" id="yearly" />
-                      <Label htmlFor="yearly">12 Months</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              </div>
-            )}
           </div>
           <div className="flex flex-col gap-8 md:ml-4">
             {liftTypesFromStandards.map((liftType) => (
@@ -265,7 +240,6 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
                 </Link>
                 <StandardsSlider
                   liftType={liftType}
-                  isYearly={isYearly}
                   standards={standards}
                   isMetric={isMetric}
                 />

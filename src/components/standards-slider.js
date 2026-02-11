@@ -1,4 +1,5 @@
-import { Fragment } from "react";
+import { Fragment, useMemo } from "react";
+import { subMonths } from "date-fns";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   useAthleteBio,
@@ -7,7 +8,8 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
-import { devLog, getReadableDateString } from "@/lib/processing-utils";
+import { getReadableDateString } from "@/lib/processing-utils";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useReadLocalStorage, useWindowSize } from "usehooks-ts";
 
@@ -16,9 +18,9 @@ export function StandardsSlider({
   isYearly = false,
   isMetric,
   standards,
-  extraNotches = [],
 }) {
   const {
+    parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
@@ -28,12 +30,68 @@ export function StandardsSlider({
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false }) ?? "Brzycki";
 
+  const unitType = isMetric ? "kg" : "lb";
+
+  // --- Compute period-best E1RMs (1M / 6M / 12M) ---
+  const periodBestNotches = useMemo(() => {
+    if (authStatus !== "authenticated" || !parsedData?.length || !e1rmFormula)
+      return [];
+
+    const now = new Date();
+    const thresholds = {
+      "1M": subMonths(now, 1),
+      "6M": subMonths(now, 6),
+      "12M": subMonths(now, 12),
+    };
+
+    const bestByPeriod = { "1M": null, "6M": null, "12M": null };
+
+    parsedData.forEach((entry) => {
+      if (entry.liftType !== liftType || !entry.reps || !entry.weight) return;
+      const dateObj = new Date(entry.date);
+      if (Number.isNaN(dateObj.getTime())) return;
+
+      const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
+      const id = `${dateObj.getTime()}-${entry.reps}-${entry.weight}-${entry.unitType || ""}`;
+
+      ["1M", "6M", "12M"].forEach((key) => {
+        if (dateObj < thresholds[key]) return;
+        const current = bestByPeriod[key];
+        if (!current || e1rm > current.e1rm) {
+          bestByPeriod[key] = {
+            e1rm,
+            unitType: entry.unitType || unitType,
+            date: entry.date,
+            reps: entry.reps,
+            weight: entry.weight,
+            id,
+          };
+        }
+      });
+    });
+
+    const periodMeta = {
+      "1M": { label: "Last month" },
+      "6M": { label: "Last 6 months" },
+      "12M": { label: "Last 12 months" },
+    };
+
+    const seenIds = new Set();
+    const summaries = [];
+    ["12M", "6M", "1M"].forEach((key) => {
+      const best = bestByPeriod[key];
+      if (!best || seenIds.has(best.id)) return;
+      seenIds.add(best.id);
+      summaries.push({ periodKey: key, label: periodMeta[key].label, ...best });
+    });
+
+    return summaries;
+  }, [authStatus, parsedData, liftType, e1rmFormula, unitType]);
+
   if (!standards) return null;
   const originalData = standards[liftType];
   if (!originalData) return null;
   const liftTypeStandards = readableLabels(originalData);
-
-  const unitType = isMetric ? "kg" : "lb";
 
   // Get all standard values for scale
   const standardValues = Object.values(originalData);
@@ -132,9 +190,8 @@ export function StandardsSlider({
     });
   }
 
-  if (Array.isArray(extraNotches)) {
-    for (const notch of extraNotches) {
-      if (!notch || typeof notch.e1rm !== "number") continue;
+  if (periodBestNotches.length > 0) {
+    for (const notch of periodBestNotches) {
       const notchUnit = notch.unitType || unitType;
       const shortLabel =
         notch.periodKey === "1M"

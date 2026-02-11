@@ -38,6 +38,7 @@ import { BicepsFlexed } from "lucide-react";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { StandardsSlider } from "@/components/standards-slider";
+import { bigFourURLs } from "@/components/lift-type-indicator";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { SignInInvite } from "@/components/instructions-cards";
@@ -121,14 +122,6 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
   const { getColor } = useLiftColors();
 
   const unitType = isMetric ? "kg" : "lb";
-
-  const bigFourURLs = {
-    "Back Squat": "/barbell-squat-insights",
-    "Bench Press": "/barbell-bench-press-insights",
-    Deadlift: "/barbell-deadlift-insights",
-    "Strict Press": "/barbell-strict-press-insights",
-  };
-
   const liftTypesFromStandards = Object.keys(standards);
 
   return (
@@ -232,7 +225,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
           <div className="flex flex-col gap-8 md:ml-4">
             {liftTypesFromStandards.map((liftType) => (
               <div key={liftType} className="">
-                <Link href={bigFourURLs[liftType]}>
+                <Link href={bigFourURLs[liftType]} className="transition-opacity hover:opacity-70">
                   <h2
                     className="text-lg font-bold underline decoration-2 underline-offset-2"
                     style={{ textDecorationColor: getColor(liftType) }}

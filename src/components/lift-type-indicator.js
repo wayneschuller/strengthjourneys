@@ -27,7 +27,7 @@ export const LiftTypeIndicator = ({ liftType, className = "" }) => {
 
   // Conditionally wrap content in a Link for big four lifts
   return bigFourURLs[liftType] ? (
-    <Link href={bigFourURLs[liftType]} className="underline">
+    <Link href={bigFourURLs[liftType]} className="underline transition-opacity hover:opacity-70">
       {content}
     </Link>
   ) : (

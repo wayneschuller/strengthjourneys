@@ -61,7 +61,7 @@ export const featurePages = [
     href: "/visualizer",
     title: "Strength Visualizer",
     description:
-      "Interactive lifetime charts of all lifts. See your strength journey.",
+      "Your E1RMs across every rep range over time. See your strength journey.",
     IconComponent: LineChart,
   },
   {

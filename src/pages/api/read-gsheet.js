@@ -17,9 +17,6 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Build URL immediately since it only depends on ssid (synchronous)
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
-
   // Now await session (we've done all synchronous work first)
   const session = await sessionPromise;
 
@@ -33,23 +30,47 @@ export default async function handler(req, res) {
     return;
   }
 
+  const headers = {
+    Authorization: `Bearer ${session.accessToken}`,
+  };
+
   try {
-    // Fetch from Google Sheets API
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
+    const t0 = Date.now();
+    const sheetsUrl = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
+    const driveUrl = `https://www.googleapis.com/drive/v3/files/${ssid}?fields=name,webViewLink,modifiedTime,modifiedByMeTime`;
+
+    const sheetsPromise = fetch(sheetsUrl, { method: "GET", headers }).then((res) => {
+      devLog(`read-gsheet: Sheets API responded in ${Date.now() - t0}ms`);
+      return res;
+    });
+    const drivePromise = fetch(driveUrl, { method: "GET", headers }).then((res) => {
+      devLog(`read-gsheet: Drive API responded in ${Date.now() - t0}ms`);
+      return res;
     });
 
-    const data = await response.json();
+    const [sheetsRes, driveRes] = await Promise.all([sheetsPromise, drivePromise]);
 
-    // devLog(response);
+    devLog(`read-gsheet: both APIs done in ${Date.now() - t0}ms total`);
 
-    if (response.statusText !== "OK") {
+    const data = await sheetsRes.json();
+
+    if (!sheetsRes.ok) {
       throw new Error(
-        `Non-OK response from Google API: ${response.statusText} (${response.status}) (token: ${session.accessToken}).`,
+        `Non-OK response from Google Sheets API: ${sheetsRes.statusText} (${sheetsRes.status})`,
       );
+    }
+
+    if (driveRes.ok) {
+      const driveData = await driveRes.json();
+      Object.assign(data, {
+        name: driveData.name,
+        webViewLink: driveData.webViewLink,
+        modifiedTime: driveData.modifiedTime,
+        modifiedByMeTime: driveData.modifiedByMeTime,
+      });
+      devLog(`read-gsheet: merged Drive metadata (name, webViewLink, modifiedTime, modifiedByMeTime)`);
+    } else {
+      devLog(`read-gsheet: Drive API failed (${driveRes.status}), returning Sheets data only`);
     }
 
     res.status(200).json(data);

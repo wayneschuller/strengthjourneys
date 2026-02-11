@@ -6,10 +6,9 @@ import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { trackSignInClick } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
 import Image from "next/image";
-import { useLocalStorage } from "usehooks-ts";
 import {
   ArrowDown,
   ArrowRight,
@@ -37,6 +36,7 @@ export function OnBoardingDashboard() {
   const [openPicker, setOpenPicker] = useState(null);
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
   const { data: session, status: authStatus } = useSession();
+  const { setSsid, setSheetURL, setSheetFilename } = useUserLiftingData();
 
   const handlePickerReady = useCallback((picker) => {
     setOpenPicker(() => picker);
@@ -48,22 +48,6 @@ export function OnBoardingDashboard() {
       setShouldLoadPicker(true);
     }
   }, [authStatus, shouldLoadPicker]);
-
-  // We need the next 3 for the file picker button we give with instructions
-  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, {
-    initializeWithValue: false,
-  });
-  const [sheetURL, setSheetURL] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SHEET_URL,
-    null,
-
-    { initializeWithValue: false },
-  );
-  const [sheetFilename, setSheetFilename] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SHEET_FILENAME,
-    null,
-    { initializeWithValue: false },
-  );
 
   return (
     <>
@@ -182,21 +166,7 @@ export function ChooseSheetInstructionsCard() {
     }
   }, [session, shouldLoadPicker]);
 
-  // We need the next 3 for the file picker button we give with instructions
-  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, {
-    initializeWithValue: false,
-  });
-  const [sheetURL, setSheetURL] = useLocalStorage(
-    "sheetURL",
-    null,
-
-    { initializeWithValue: false },
-  );
-  const [sheetFilename, setSheetFilename] = useLocalStorage(
-    "sheetFilename",
-    null,
-    { initializeWithValue: false },
-  );
+  const { setSsid, setSheetURL, setSheetFilename } = useUserLiftingData();
 
   if (!session) return null;
 
@@ -301,21 +271,7 @@ export function GettingStartedCard() {
     }
   }, [authStatus, shouldLoadPicker]);
 
-  // We need the next 3 for the file picker button we give with instructions
-  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, {
-    initializeWithValue: false,
-  });
-  const [sheetURL, setSheetURL] = useLocalStorage(
-    "sheetURL",
-    null,
-
-    { initializeWithValue: false },
-  );
-  const [sheetFilename, setSheetFilename] = useLocalStorage(
-    "sheetFilename",
-    null,
-    { initializeWithValue: false },
-  );
+  const { ssid, setSsid, setSheetURL, setSheetFilename } = useUserLiftingData();
 
   const arrowSize = 75;
   return (
@@ -524,9 +480,7 @@ export function GettingStartedCardCompact() {
     }
   }, [authStatus, shouldLoadPicker]);
 
-  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, { initializeWithValue: false });
-  const [, setSheetURL] = useLocalStorage(LOCAL_STORAGE_KEYS.SHEET_URL, null, { initializeWithValue: false });
-  const [, setSheetFilename] = useLocalStorage(LOCAL_STORAGE_KEYS.SHEET_FILENAME, null, { initializeWithValue: false });
+  const { ssid, setSsid, setSheetURL, setSheetFilename } = useUserLiftingData();
 
   return (
     <>

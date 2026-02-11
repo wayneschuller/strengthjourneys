@@ -32,8 +32,18 @@ import {
   differenceInYears,
 } from "date-fns";
 
-/** Generic JSON fetcher for useSWR. Pass-through to fetch().json(). */
-const fetcher = (...args) => fetch(...args).then((res) => res.json());
+/** Generic JSON fetcher for useSWR. Pass-through to fetch().json() with timing logs. */
+const fetcher = (...args) => {
+  const t0 = Date.now();
+  return fetch(...args)
+    .then((res) => res.json())
+    .then((data) => {
+      devLog(
+        `read-gsheet roundtrip (client): ${Date.now() - t0}ms, hasMetadata: name=${!!data?.name}, webViewLink=${!!data?.webViewLink}`,
+      );
+      return data;
+    });
+};
 
 // We use these to only trigger toast announcements once
 let demoToastInit = false;
@@ -130,13 +140,29 @@ export const UserLiftingDataProvider = ({ children }) => {
       // setSheetURL(null);
     }
 
+    // Sync API metadata to localStorage when we have fresh values
+    if (authStatus === "authenticated" && data?.values) {
+      if (data.name != null && data.name !== sheetFilename) {
+        setSheetFilename(data.name);
+      }
+      if (data.webViewLink != null) {
+        const encoded = encodeURIComponent(data.webViewLink);
+        if (encoded !== sheetURL) {
+          setSheetURL(encoded);
+        }
+      }
+    }
+
+    const effectiveName = data?.name ?? sheetFilename;
+    const effectiveUrl = data?.webViewLink ?? (sheetURL ? decodeURIComponent(sheetURL) : null);
+
     const parsedData = buildParsedState({
       authStatus,
       data,
       toast,
       router,
-      sheetURL,
-      sheetFilename,
+      sheetURL: effectiveUrl,
+      sheetFilename: effectiveName,
       setSsid,
       setSheetFilename,
       setSheetURL,
@@ -195,6 +221,19 @@ export const UserLiftingDataProvider = ({ children }) => {
     [data]
   );
 
+  // Sheet metadata from API (or localStorage fallback for name/url). null when no sheet selected.
+  const sheetMetadata = useMemo(() => {
+    if (!ssid) return null;
+    const name = data?.name ?? sheetFilename ?? "Your Google Sheet";
+    const webViewLink = data?.webViewLink ?? (sheetURL ? decodeURIComponent(sheetURL) : null);
+    return {
+      name,
+      webViewLink,
+      modifiedTime: data?.modifiedTime ?? null,
+      modifiedByMeTime: data?.modifiedByMeTime ?? null,
+    };
+  }, [ssid, data?.name, data?.webViewLink, data?.modifiedTime, data?.modifiedByMeTime, sheetFilename, sheetURL]);
+
   // useEffect for reminding the user when they are looking at demo data
   useEffect(() => {
     if (authStatus === "loading") return;
@@ -251,6 +290,13 @@ export const UserLiftingDataProvider = ({ children }) => {
         rawRows,
         dataSyncedAt: lastDataReceivedAt,
         mutate,
+        ssid,
+        setSsid,
+        sheetURL: sheetMetadata?.webViewLink ?? (sheetURL ? decodeURIComponent(sheetURL) : null),
+        setSheetURL,
+        sheetFilename: sheetMetadata?.name ?? sheetFilename,
+        setSheetFilename,
+        sheetMetadata,
       }}
     >
       {children}
@@ -365,7 +411,7 @@ function getParsedDataWithFallback({
             <>
               {sheetURL ? (
                 <a
-                  href={decodeURIComponent(sheetURL)}
+                  href={sheetURL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"

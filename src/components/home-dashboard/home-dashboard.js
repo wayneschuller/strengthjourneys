@@ -1,33 +1,21 @@
 // A home dashboard for the top level of the site, shown only when user is logged in.
 // This will also help with onboarding.
 
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { SectionTopCards } from "./section-top-cards";
 import { MostRecentSessionCard } from "./most-recent-session-card";
 import { DataSheetStatus, RowProcessingIndicator } from "./row-processing-indicator";
-import { useLocalStorage } from "usehooks-ts";
 import { OnBoardingDashboard } from "@/components/instructions-cards";
 
 export function HomeDashboard() {
   const { data: session, status: authStatus } = useSession();
 
-  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, {
-    initializeWithValue: false,
-  });
-
-  const [sheetURL, setSheetURL] = useLocalStorage(LOCAL_STORAGE_KEYS.SHEET_URL, null, {
-    initializeWithValue: false,
-  });
-  const [sheetFilename, setSheetFilename] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SHEET_FILENAME,
-    null,
-    { initializeWithValue: false },
-  );
-
   const {
+    ssid,
+    sheetURL,
+    sheetFilename,
     parsedData,
     liftTypes,
     topLiftsByTypeAndReps,

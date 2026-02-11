@@ -210,24 +210,9 @@ export function DesktopNav() {
 // When user is logged in with data, give a link to their google sheet
 // Also we have a subtle pulse animation when we are trying to look for new data from google (via useSWR isValidating)
 export function UserSheetIcon() {
-  // We need the next 3 for the file picker button
-  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, {
-    initializeWithValue: false,
-  });
-  const [sheetURL, setSheetURL] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SHEET_URL,
-    null,
-
-    { initializeWithValue: false },
-  );
-  const [sheetFilename, setSheetFilename] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SHEET_FILENAME,
-    null,
-    { initializeWithValue: false },
-  );
-
   const { data: session, status: authStatus } = useSession();
-  const { parsedData, isLoading, isValidating, isError } = useUserLiftingData();
+  const { ssid, sheetURL, sheetFilename, isLoading, isValidating, isError } =
+    useUserLiftingData();
 
   // devLog( `<UserSheetIcon /> isLoading: ${isLoading}, isValidating ${isValidating}, isError: ${isError}, authStatus: ${authStatus}`,);
 
@@ -247,7 +232,7 @@ export function UserSheetIcon() {
               size="icon"
               onClick={() => {
                 devLog(sheetURL);
-                window.open(decodeURIComponent(sheetURL));
+                window.open(sheetURL);
               }}
             >
               {!isValidating && <Table2 className="h-[1.2rem] w-[1.2rem]" />}

@@ -58,7 +58,7 @@ export function DataSheetStatus({
 
   const sheetLink = sheetURL ? (
     <a
-      href={decodeURIComponent(sheetURL)}
+      href={sheetURL}
       target="_blank"
       rel="noopener noreferrer"
       title={tooltipText}

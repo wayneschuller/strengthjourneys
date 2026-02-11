@@ -8,7 +8,6 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { trackSignInClick } from "@/lib/analytics";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
-import { useLocalStorage } from "usehooks-ts";
 import { devLog } from "@/lib/processing-utils";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,6 @@ import {
   PaintRoller,
   Coffee,
 } from "lucide-react";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
 import {
@@ -49,20 +47,18 @@ export function AvatarDropdown() {
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
   const { setTheme, theme } = useTheme();
 
-  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, {
-    initializeWithValue: false,
-  });
-
-  const [sheetURL, setSheetURL] = useLocalStorage(LOCAL_STORAGE_KEYS.SHEET_URL, null, {
-    initializeWithValue: false,
-  });
-  const [sheetFilename, setSheetFilename] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SHEET_FILENAME,
-    null,
-    { initializeWithValue: false },
-  );
-
-  const { parsedData, isLoading, isValidating, isError } = useUserLiftingData();
+  const {
+    ssid,
+    setSsid,
+    sheetURL,
+    setSheetURL,
+    sheetFilename,
+    setSheetFilename,
+    parsedData,
+    isLoading,
+    isValidating,
+    isError,
+  } = useUserLiftingData();
 
   // Initialize picker when needed (only loads when user might use it)
   const handlePickerReady = useCallback((picker) => {
@@ -165,9 +161,9 @@ export function AvatarDropdown() {
                     {openPicker ? "Choose Google Sheet" : "Choose Google Sheet (loading…)"}
                   </DropdownMenuItem>
                 )}
-                {ssid && (
+                {ssid && sheetURL && (
                   <DropdownMenuItem
-                    onClick={() => window.open(decodeURIComponent(sheetURL))}
+                    onClick={() => window.open(sheetURL)}
                   >
                     <Table2 className="mr-2 h-4 w-4" />
                     Open Google Sheet

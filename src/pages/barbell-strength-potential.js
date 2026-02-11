@@ -5,15 +5,21 @@ import { NextSeo } from "next-seo";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { useReadLocalStorage } from "usehooks-ts";
-import { Separator } from "@/components/ui/separator";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { devLog } from "@/lib/processing-utils";
+import { devLog, BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 import { useLocalStorage } from "usehooks-ts";
 import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
 import { E1RMFormulaRadioGroup } from "@/components/e1rm-formula-radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -107,13 +113,32 @@ export default function StrengthPotential({ relatedArticles }) {
 
 function StrengthPotentialMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
-  const { selectedLiftTypes, isLoading } = useUserLiftingData();
+  const { liftTypes, isLoading } = useUserLiftingData();
   const ssid = useReadLocalStorage(LOCAL_STORAGE_KEYS.SSID, {
     initializeWithValue: false,
   });
   const [e1rmFormula, setE1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
+  const [selectedOtherLift, setSelectedOtherLift] = useState("");
+
+  // Big four: only those the user has data for (canonical order from BIG_FOUR_LIFT_TYPES)
+  const bigFourToShow = useMemo(() => {
+    if (!liftTypes?.length) return [];
+    return BIG_FOUR_LIFT_TYPES.filter((name) =>
+      liftTypes.some((l) => l.liftType === name)
+    );
+  }, [liftTypes]);
+
+  // Other lifts (not in big four), by popularity
+  const otherLiftTypes = useMemo(() => {
+    if (!liftTypes?.length) return [];
+    return liftTypes
+      .filter((l) => !BIG_FOUR_LIFT_TYPES.includes(l.liftType))
+      .map((l) => l.liftType);
+  }, [liftTypes]);
+
+  const displayOtherLift = selectedOtherLift || otherLiftTypes[0] || null;
 
   if (!isLoading && authStatus === "authenticated" && ssid === null)
     return (
@@ -142,10 +167,39 @@ function StrengthPotentialMain({ relatedArticles }) {
         </div>
       </PageHeader>
       <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {selectedLiftTypes.map((liftType) => (
+        {bigFourToShow.map((liftType) => (
           <StrengthPotentialBarChart key={liftType} liftType={liftType} />
         ))}
       </section>
+      {otherLiftTypes.length > 0 && (
+        <section className="mt-8">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <label htmlFor="other-lift-select" className="text-sm font-medium text-muted-foreground">
+              Another lift
+            </label>
+            <Select
+              value={displayOtherLift}
+              onValueChange={setSelectedOtherLift}
+            >
+              <SelectTrigger id="other-lift-select" className="w-full sm:w-[280px]">
+                <SelectValue placeholder="Choose a lift" />
+              </SelectTrigger>
+              <SelectContent>
+                {otherLiftTypes.map((liftType) => (
+                  <SelectItem key={liftType} value={liftType}>
+                    {liftType}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {displayOtherLift && (
+            <div className="mx-auto max-w-4xl">
+              <StrengthPotentialBarChart key={displayOtherLift} liftType={displayOtherLift} />
+            </div>
+          )}
+        </section>
+      )}
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );

@@ -100,9 +100,8 @@ export function NavBar() {
         <MobileNav />
       </div>
       <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2">
-        {/* Only show the select lifts button on visualizer and barbell-strength-potential (analyzer uses popular lifts by reps) */}
-        {(pathname === "/visualizer" ||
-          pathname === "/barbell-strength-potential") && (
+        {/* Only show the select lifts button on visualizer (barbell-strength-potential uses big four + dropdown; analyzer uses popular lifts by reps) */}
+        {pathname === "/visualizer" && (
           <SidePanelSelectLiftsButton isIconMode={true} />
         )}
         <MiniTimer />

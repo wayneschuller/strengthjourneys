@@ -252,9 +252,8 @@ export function StandardsSlider({
                       className="absolute top-0 h-full"
                       style={{ left: `${notch.percent}%`, zIndex: notch.zIndex }}
                     >
-                      <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 flex">
-                        <div className="w-[3px] bg-foreground/70" />
-                        <div className="w-px bg-background/90 opacity-90" />
+                      <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2">
+                        <div className="h-full w-px bg-foreground ring-1 ring-background/70" />
                       </div>
                     </div>
                   ))}
@@ -270,9 +269,8 @@ export function StandardsSlider({
                     </TooltipTrigger>
                     {/* For single notch, render line inside group for hover effect */}
                     {!isMerged && (
-                      <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 flex">
-                        <div className="w-[3px] bg-foreground/70 group-hover:bg-primary group-hover:bg-opacity-90" />
-                        <div className="w-px bg-background/90 opacity-90" />
+                      <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2">
+                        <div className="h-full w-px bg-foreground ring-1 ring-background/70 group-hover:bg-primary group-hover:ring-primary/30" />
                       </div>
                     )}
                   </div>

@@ -47,50 +47,50 @@ export function ThemeChooser() {
   }, [theme]);
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DropdownMenu>
+    <DropdownMenu>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
               <Button size="icon" variant="outline" aria-label="Choose theme">
                 <Palette className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuLabel>Choose theme:</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuRadioGroup
-                value={position}
-                onValueChange={setPosition}
-              >
-                {themes.map((t) => (
-                  <DropdownMenuRadioItem
-                    key={t}
-                    value={t}
-                    onClick={() => setTheme(t)}
-                  >
-                    {/* Optionally prettify label */}
-                    {t
-                      .replace(/-/g, " ")
-                      .replace(/\b\w/g, (c) => c.toUpperCase())}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                checked={animatedBackground ?? false}
-                onCheckedChange={(checked) =>
-                  setAnimatedBackground(checked === true)
-                }
-              >
-                Animated background
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </TooltipTrigger>
-        <TooltipContent>Choose visual theme</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+          </TooltipTrigger>
+          <TooltipContent>Choose visual theme</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>Choose theme:</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuRadioGroup
+          value={position}
+          onValueChange={setPosition}
+        >
+          {themes.map((t) => (
+            <DropdownMenuRadioItem
+              key={t}
+              value={t}
+              onClick={() => setTheme(t)}
+            >
+              {/* Optionally prettify label */}
+              {t
+                .replace(/-/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase())}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuCheckboxItem
+          checked={animatedBackground ?? false}
+          onCheckedChange={(checked) =>
+            setAnimatedBackground(checked === true)
+          }
+        >
+          Animated background
+        </DropdownMenuCheckboxItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

@@ -122,7 +122,7 @@ export function AvatarDropdown() {
             <DropdownMenuTrigger asChild aria-label="User menu">
               <Avatar className="ml-2 h-8 w-8 ring-muted-foreground hover:ring-2">
                 <AvatarImage src={session.user.image} />
-                <AvatarFallback>session.user.name</AvatarFallback>
+                <AvatarFallback>{session.user.name}</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end">

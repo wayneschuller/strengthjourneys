@@ -25,13 +25,13 @@ function formatCount(value) {
 }
 
 function getBaseUrl(req) {
-  if (process.env.NEXTAUTH_URL) {
-    return process.env.NEXTAUTH_URL.replace(/\/$/, "");
-  }
-
-  const host = req.headers.host;
+  // Prefer request host/proxy headers so preview/prod domains resolve correctly in email clients.
+  const host = req.headers["x-forwarded-host"] || req.headers.host;
   if (!host) return "";
-  const protocol = req.headers["x-forwarded-proto"] || "https";
+  const protocol =
+    (typeof req.headers["x-forwarded-proto"] === "string"
+      ? req.headers["x-forwarded-proto"].split(",")[0].trim()
+      : "") || "https";
   return `${protocol}://${host}`;
 }
 
@@ -103,6 +103,7 @@ export default async function handler(req, res) {
   const hasProfanity = containsProfanity(message);
   const subjectPrefix = hasProfanity ? "[PROFANITY] [Feedback]" : "[Feedback]";
   const sentimentLabel = sentiment === "positive" ? "thumbs up" : "thumbs down";
+  const sentimentEmoji = sentiment === "positive" ? "👍" : "👎";
   const pagePath = typeof page === "string" && page.startsWith("/") ? page : "/";
   const baseUrl = getBaseUrl(req);
   const pageUrl = toAbsolutePageUrl(req, pagePath);
@@ -123,9 +124,9 @@ export default async function handler(req, res) {
     const emailPayload = {
       from: "Strength Journeys <feedback@updates.strengthjourneys.xyz>",
       to,
-      subject: `${subjectPrefix} from ${userName} — ${sentimentLabel} — ${pagePath}`,
+      subject: `${sentimentEmoji} ${subjectPrefix} from ${userName} — ${sentimentLabel} — ${pagePath}`,
       text: [
-        `Sentiment: ${sentimentLabel}`,
+        `Sentiment: ${sentimentLabel} ${sentimentEmoji}`,
         `Authentication: ${safeAuthStatus}`,
         `Page: ${pagePath}`,
         `Page URL: ${pageUrl}`,
@@ -147,6 +148,7 @@ export default async function handler(req, res) {
                   ? `<img src="${safeLogoUrl}" alt="Strength Journeys logo" width="170" style="display:block;max-width:170px;height:auto;margin-bottom:10px;" />`
                   : ""
               }
+              <div style="font-size:34px;line-height:1;margin-bottom:8px;">${sentimentEmoji}</div>
               <div style="font-size:18px;font-weight:700;">New Feedback</div>
               <div style="font-size:13px;opacity:0.9;margin-top:4px;">${escapeHtml(sentimentLabel)} from ${safeName}</div>
             </div>

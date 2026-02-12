@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { cloneElement, useState, useEffect, useContext, useRef } from "react";
+import { cloneElement, useState, useEffect, useRef, useCallback } from "react";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
 import {
@@ -15,8 +15,8 @@ import { ShareCopyButton } from "@/components/share-copy-button";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { Skeleton } from "@/components/ui/skeleton";
-// Dynamically import html2canvas only when needed (share feature)
-// This is a large library (~200KB) that's only used when user clicks share
+import { LiftTypeIndicator } from "@/components/lift-type-indicator";
+import { SessionRow } from "@/components/visualizer/visualizer-utils";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
@@ -29,6 +29,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+const MAX_LIFTS_SHOWN = 6;
 
 export function ActivityHeatmapsCard() {
   const { parsedData, isLoading } = useUserLiftingData();
@@ -120,7 +122,6 @@ export function ActivityHeatmapsCard() {
               Your strength journey from{" "}
               {new Date(intervals[0].startDate).getFullYear()} -{" "}
               {new Date(intervals[intervals.length - 1].endDate).getFullYear()}.
-              Historical PRs are highlighted.
             </CardDescription>
           )}
         </CardHeader>
@@ -139,6 +140,7 @@ export function ActivityHeatmapsCard() {
                         parsedData={parsedData}
                         startDate={interval.startDate}
                         endDate={interval.endDate}
+                        isSharing={isSharing}
                       />
                     </div>
                   );
@@ -180,10 +182,15 @@ export function ActivityHeatmapsCard() {
   );
 }
 
-function Heatmap({ parsedData, startDate, endDate }) {
-  const { theme } = useTheme();
+function Heatmap({ parsedData, startDate, endDate, isSharing }) {
   const { status: authStatus } = useSession();
   const [heatmapData, setHeatmapData] = useState(null);
+  const [hoveredValue, setHoveredValue] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({
+    x: 0,
+    y: 0,
+    showBelow: false,
+  });
 
   useEffect(() => {
     if (!parsedData) return;
@@ -196,30 +203,123 @@ function Heatmap({ parsedData, startDate, endDate }) {
     setHeatmapData(heatmapData);
   }, [parsedData, startDate, endDate, authStatus]);
 
+  const handleMouseOver = useCallback((e, value) => {
+    if (!value || !value.sessionData) return;
+    const cellRect = e.target.getBoundingClientRect();
+    const x = cellRect.left + cellRect.width / 2;
+    const y = cellRect.top;
+    const showBelow = y < 200;
+    setTooltipPos({
+      x: Math.max(140, Math.min(x, window.innerWidth - 140)),
+      y: showBelow ? cellRect.bottom + 8 : y - 8,
+      showBelow,
+    });
+    setHoveredValue(value);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredValue(null);
+  }, []);
+
   if (!heatmapData || !startDate || !endDate) {
     return <Skeleton className="h-24 flex-1" />;
   }
 
   return (
-    <CalendarHeatmap
-      startDate={startDate}
-      endDate={endDate}
-      values={heatmapData}
-      showMonthLabels={true}
-      classForValue={(value) => {
-        if (!value) {
-          return `color-heatmap-0`; // Uses CSS variables from theme
+    <div className="relative">
+      <CalendarHeatmap
+        startDate={startDate}
+        endDate={endDate}
+        values={heatmapData}
+        showMonthLabels={true}
+        classForValue={(value) => {
+          if (!value) return `color-heatmap-0`;
+          return `color-heatmap-${value.count}`;
+        }}
+        titleForValue={() => null}
+        onMouseOver={handleMouseOver}
+        onMouseLeave={handleMouseLeave}
+        transformDayElement={(element, value, index) =>
+          cloneElement(element, { rx: 3, ry: 3 })
         }
-        return `color-heatmap-${value.count}`; // Uses CSS variables from theme
-      }}
-      titleForValue={(value) => {
-        if (value?.tooltip) return value.tooltip;
-      }}
-      // Roundedness
-      transformDayElement={(element, value, index) =>
-        cloneElement(element, { rx: 3, ry: 3 })
+      />
+      {hoveredValue && !isSharing && (
+        <div
+          className="pointer-events-none fixed z-50"
+          style={{
+            left: tooltipPos.x,
+            top: tooltipPos.y,
+            transform: tooltipPos.showBelow
+              ? "translate(-50%, 0)"
+              : "translate(-50%, -100%)",
+          }}
+        >
+          <HeatmapTooltipContent value={hoveredValue} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HeatmapTooltipContent({ value }) {
+  const { sessionData, date } = value;
+  if (!sessionData) return null;
+
+  const { totalSets, uniqueLifts, prs, liftsByType } = sessionData;
+  const dateLabel = getReadableDateString(date, true);
+  const liftTypes = Object.keys(liftsByType);
+  const visibleLifts = liftTypes.slice(0, MAX_LIFTS_SHOWN);
+  const hiddenCount = liftTypes.length - MAX_LIFTS_SHOWN;
+
+  // Keep only the heaviest PR per lift type
+  const bestPrs = Object.values(
+    prs.reduce((acc, pr) => {
+      if (!acc[pr.liftType] || pr.weight > acc[pr.liftType].weight) {
+        acc[pr.liftType] = pr;
       }
-    />
+      return acc;
+    }, {}),
+  );
+
+  return (
+    <div className="grid min-w-[10rem] max-w-[20rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+      <p className="font-bold">{dateLabel}</p>
+      <p className="text-muted-foreground">
+        {totalSets} {totalSets === 1 ? "set" : "sets"} across {uniqueLifts}{" "}
+        {uniqueLifts === 1 ? "lift" : "lifts"}
+      </p>
+
+      {bestPrs.length > 0 && (
+        <div className="flex flex-col gap-1">
+          {bestPrs.map((pr, i) => (
+            <div key={i} className="flex items-center gap-1.5">
+              <span className="shrink-0 rounded bg-amber-500/20 px-1 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                PR
+              </span>
+              <LiftTypeIndicator liftType={pr.liftType} />
+              <span className="text-muted-foreground">
+                {pr.reps}@{pr.weight}
+                {pr.unitType}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1">
+        {visibleLifts.map((liftType) => (
+          <div key={liftType}>
+            <LiftTypeIndicator liftType={liftType} />
+            <SessionRow lifts={liftsByType[liftType]} showDate={false} />
+          </div>
+        ))}
+        {hiddenCount > 0 && (
+          <p className="text-muted-foreground">
+            +{hiddenCount} more {hiddenCount === 1 ? "lift" : "lifts"}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -279,12 +379,21 @@ function generateYearRanges(startDateStr, endDateStr) {
   return yearRanges;
 }
 
-// Create heatmapData
-// If we find activity we set: {date: lift.date, count: 1}
-// If we find isHistoricalPR we set: {date: lift.date, count: 2}
-// If the historicalPR is a coreLift we set: {date: lift.date, count: 4}
-// We also set some tooltips.
-// The heatmap can take colors 0..4
+// Volume-based heatmap level:
+// Level 0: No activity (no entry)
+// Level 1: Light session (1-3 sets)
+// Level 2: Moderate session (4-8 sets)
+// Level 3: Heavy session (9+ sets) OR non-core lift PR
+// Level 4: Core lift PR (strongest visual emphasis)
+function getHeatmapLevel(totalSets, hasPR, hasCoreLiftPR) {
+  if (hasCoreLiftPR) return 4;
+  if (totalSets >= 9 || hasPR) return 3;
+  if (totalSets >= 4) return 2;
+  return 1;
+}
+
+// Create heatmapData with structured session info for rich tooltips
+// Single O(n) pass replaces the old O(n^2) approach
 function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
   const startTime = performance.now();
 
@@ -299,9 +408,10 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
     const getRandomCount = () => {
       const rand = Math.random();
       if (rand < 0.6) return 0; // 60% chance of being 0
-      if (rand < 0.8) return 1; // 30% chance of being 1
-      if (rand < 0.95) return 2; // 15% chance of being 2
-      return 4; // 5% chance of being 4 (note: 3 is never chosen)
+      if (rand < 0.75) return 1;
+      if (rand < 0.88) return 2;
+      if (rand < 0.96) return 3;
+      return 4;
     };
 
     for (let currentTime = start; currentTime <= end; currentTime += oneDay) {
@@ -309,7 +419,7 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
       demoHeatmapData.push({
         date: format(new Date(currentTime), "yyyy-MM-dd"),
         count: count,
-        tooltip: "Random data for demo mode",
+        sessionData: null,
       });
     }
 
@@ -320,49 +430,60 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
     return demoHeatmapData;
   }
 
-  // Normal heatmap data generation logic
+  // Build per-day data in a single O(n) pass
+  const dayMap = {};
 
-  // Filter data based on the date range (assumes "YYYY-MM-DD" strings)
-  const filteredData = parsedData.filter(
-    (lift) => lift.date >= startDate && lift.date <= endDate,
-  );
+  for (const lift of parsedData) {
+    if (lift.date < startDate || lift.date > endDate) continue;
+    if (lift.isGoal) continue;
 
-  // Use an object to track unique dates
-  const uniqueDates = {};
-
-  // Create heatmapData
-  const heatmapData = filteredData.reduce((accumulator, lift) => {
-    const currentDate = lift.date;
-    if (!uniqueDates[currentDate]) {
-      uniqueDates[currentDate] = true;
-
-      const isHistoricalPR = filteredData.some(
-        (pr) => pr.date === currentDate && pr.isHistoricalPR,
-      );
-
-      // Initialize liftTypeCount to 1 (we have a normal lift session data on this date)
-      let liftTypeCount = 1;
-
-      if (isHistoricalPR) {
-        // Check if it's a core lift
-        if (coreLiftTypes.some((coreLift) => coreLift === lift.liftType)) {
-          liftTypeCount = 4; // Historical PR for core lift
-        } else {
-          liftTypeCount = 2; // Historical PR, but not a core lift
-        }
-      }
-
-      accumulator.push({
-        date: currentDate,
-        count: liftTypeCount,
-        tooltip: isHistoricalPR
-          ? getHistoricalPrTooltip(filteredData, currentDate)
-          : `Date: ${currentDate}`,
-      });
+    const dateStr = lift.date;
+    if (!dayMap[dateStr]) {
+      dayMap[dateStr] = {
+        totalSets: 0,
+        prs: [],
+        liftsByType: {},
+        hasPR: false,
+        hasCoreLiftPR: false,
+      };
     }
 
-    return accumulator;
-  }, []);
+    const day = dayMap[dateStr];
+    day.totalSets++;
+
+    if (!day.liftsByType[lift.liftType]) {
+      day.liftsByType[lift.liftType] = [];
+    }
+    day.liftsByType[lift.liftType].push({
+      reps: lift.reps,
+      weight: lift.weight,
+      unitType: lift.unitType,
+    });
+
+    if (lift.isHistoricalPR) {
+      day.hasPR = true;
+      day.prs.push({
+        liftType: lift.liftType,
+        reps: lift.reps,
+        weight: lift.weight,
+        unitType: lift.unitType,
+      });
+      if (coreLiftTypes.includes(lift.liftType)) {
+        day.hasCoreLiftPR = true;
+      }
+    }
+  }
+
+  const heatmapData = Object.entries(dayMap).map(([date, day]) => ({
+    date,
+    count: getHeatmapLevel(day.totalSets, day.hasPR, day.hasCoreLiftPR),
+    sessionData: {
+      totalSets: day.totalSets,
+      uniqueLifts: Object.keys(day.liftsByType).length,
+      prs: day.prs,
+      liftsByType: day.liftsByType,
+    },
+  }));
 
   devLog(
     `generateHeatmapData(${startDate} to ${endDate}) execution time: ` +
@@ -371,17 +492,4 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
   );
 
   return heatmapData;
-}
-
-// Helper function to get tooltip for historical PRs on a specific date
-function getHistoricalPrTooltip(data, currentDate) {
-  const prsOnDate = data
-    .filter((pr) => pr.date === currentDate && pr.isHistoricalPR)
-    .map(
-      (pr) =>
-        `${pr.liftType} Historical PR ${pr.reps}@${pr.weight}${pr.unitType}`,
-    )
-    .join("\n");
-
-  return `Date: ${getReadableDateString(currentDate)}\n${prsOnDate}`;
 }

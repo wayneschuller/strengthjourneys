@@ -24,7 +24,7 @@ export function Layout({ children }) {
           {children}
         </main>
         <Footer />
-        {process.env.NEXT_PUBLIC_FEEDBACK_WIDGET === "true" && <FeedbackWidget />}
+        {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development" && <FeedbackWidget />}
       </div>
     </div>
   );

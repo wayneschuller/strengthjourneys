@@ -205,7 +205,7 @@ export function AvatarDropdown() {
                       <span>Forget Google Sheet</span>
                     </DropdownMenuItem>
                   )}
-                {process.env.NEXT_PUBLIC_FEEDBACK_WIDGET === "true" && (
+                {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development" && (
                   <DropdownMenuItem
                     onClick={() =>
                       window.dispatchEvent(new Event("open-feedback"))

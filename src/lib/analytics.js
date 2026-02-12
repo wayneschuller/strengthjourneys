@@ -132,9 +132,11 @@ export function trackShareCopy(feature, params = {}) {
 
 /**
  * Track feedback sentiment (thumbs up/down) from the floating feedback widget.
+ * Gated to development only — remove the guard when the feature goes live.
  * @param {"positive"|"negative"} sentiment
  * @param {string} page - Current page pathname
  */
 export function trackFeedbackSentiment(sentiment, page) {
+  if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development") return;
   event("feedback_sentiment", { sentiment, page });
 }

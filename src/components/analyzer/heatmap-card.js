@@ -41,6 +41,7 @@ export function ActivityHeatmapsCard() {
   const { theme } = useTheme();
   const shareRef = useRef(null);
   const [isSharing, setIsSharing] = useState(false);
+  const [shareReady, setShareReady] = useState(false);
 
   // FIXME: I think we have the skills to not need this useEffect anymore
   useEffect(() => {
@@ -76,22 +77,21 @@ export function ActivityHeatmapsCard() {
           ignoreElements: (element) => element.id === "ignoreCopy",
         });
 
-        canvas.toBlob((blob) => {
-          navigator.clipboard
-            .write([new ClipboardItem({ "image/png": blob })])
-            .then(() => {
-              console.log("Heatmap copied to clipboard");
-              trackShareCopy("heatmap", { page: "/analyzer" });
-              // FIXME: toast update here
-            })
-            .catch((err) => console.error("Error in copying heatmap: ", err));
-        }, "image/png");
+        const blob = await new Promise((r) => canvas.toBlob(r, "image/png"));
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": blob }),
+        ]);
+        console.log("Heatmap copied to clipboard");
+        trackShareCopy("heatmap", { page: "/analyzer" });
       }
 
       devLog(
         `generate html2canvas execution time: ` +
           `\x1b[1m${Math.round(performance.now() - startTime)}ms\x1b[0m`,
       );
+      setShareReady(true);
+    } catch (err) {
+      console.error("Error in copying heatmap: ", err);
     } finally {
       setIsSharing(false);
     }
@@ -99,16 +99,42 @@ export function ActivityHeatmapsCard() {
 
   return (
     <>
-      {isSharing && (
+      {(isSharing || shareReady) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <div className="flex flex-col items-center gap-4 rounded-lg border bg-background p-6 shadow-lg">
-            <LoaderCircle className="h-8 w-8 animate-spin" />
-            <div className="text-center">
-              <h3 className="text-lg font-semibold">Generating Image</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {getSharingMessage(intervals?.length || 1)}
-              </p>
-            </div>
+            {isSharing ? (
+              <>
+                <LoaderCircle className="h-8 w-8 animate-spin" />
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold">Generating Image</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {getSharingMessage(intervals?.length || 1)}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="text-center">
+                <h3 className="text-lg font-semibold">
+                  Heatmap Copied to Clipboard
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Paste it anywhere — social media, Discord, messages, or a
+                  Google Doc.
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Use <kbd className="rounded border bg-muted px-1.5 py-0.5 text-xs font-semibold">Ctrl+V</kbd> on
+                  Windows/Linux
+                  or <kbd className="rounded border bg-muted px-1.5 py-0.5 text-xs font-semibold">Cmd+V</kbd> on
+                  Mac.
+                </p>
+                <button
+                  className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  onClick={() => setShareReady(false)}
+                >
+                  Got it
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

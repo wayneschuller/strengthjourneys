@@ -16,9 +16,7 @@ import {
   LogOut,
   Table2,
   FolderOpenDot,
-  Mail,
-  Bug,
-  PaintRoller,
+  MessageSquarePlus,
   Coffee,
 } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -207,16 +205,16 @@ export function AvatarDropdown() {
                       <span>Forget Google Sheet</span>
                     </DropdownMenuItem>
                   )}
-                <DropdownMenuItem
-                  onClick={() =>
-                    window.open(
-                      "https://strengthjourneys.canny.io/feature-requests",
-                    )
-                  }
-                >
-                  <Bug className="mr-2 h-4 w-4" />
-                  Report bugs or feature requests
-                </DropdownMenuItem>
+                {process.env.NEXT_PUBLIC_FEEDBACK_WIDGET === "true" && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      window.dispatchEvent(new Event("open-feedback"))
+                    }
+                  >
+                    <MessageSquarePlus className="mr-2 h-4 w-4" />
+                    Send Feedback
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={() =>
                     window.open("https://buymeacoffee.com/lrhvbjxzqr")
@@ -224,26 +222,6 @@ export function AvatarDropdown() {
                 >
                   <Coffee className="mr-2 h-4 w-4" />
                   Buy Me A Coffee
-                </DropdownMenuItem>
-                {/* <DropdownMenuItem
-                  onClick={() =>
-                    window.open(
-                      "https://github.com/wayneschuller/strengthjourneys/issues",
-                    )
-                  }
-                >
-                  <Bug className="mr-2 h-4 w-4" />
-                  Report Issue via Github
-                </DropdownMenuItem> */}
-                <DropdownMenuItem
-                  onClick={() =>
-                    window.open(
-                      "mailto:info@strengthjourneys.xyz?subject=Thank you for Strength Journeys it is the best!",
-                    )
-                  }
-                >
-                  <Mail className="mr-2 h-4 w-4" />
-                  Email Feedback
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

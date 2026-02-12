@@ -129,3 +129,12 @@ export function trackShareCopy(feature, params = {}) {
     ...params,
   });
 }
+
+/**
+ * Track feedback sentiment (thumbs up/down) from the floating feedback widget.
+ * @param {"positive"|"negative"} sentiment
+ * @param {string} page - Current page pathname
+ */
+export function trackFeedbackSentiment(sentiment, page) {
+  event("feedback_sentiment", { sentiment, page });
+}

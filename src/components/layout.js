@@ -5,6 +5,7 @@
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 import { AppBackground } from "@/components/app-background";
+import { FeedbackWidget } from "@/components/feedback-widget";
 
 /**
  * Root layout wrapper for the app. Renders nav, main content area, footer, and app background.
@@ -23,6 +24,7 @@ export function Layout({ children }) {
           {children}
         </main>
         <Footer />
+        {process.env.NEXT_PUBLIC_FEEDBACK_WIDGET === "true" && <FeedbackWidget />}
       </div>
     </div>
   );

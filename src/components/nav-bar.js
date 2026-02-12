@@ -156,7 +156,7 @@ export function DesktopNav() {
           key={logoSrc}
           width={100}
           height="auto"
-          alt="app logo"
+          alt="Strength Journeys logo"
           className="inline-block rounded-lg"
           priority={true}
         />

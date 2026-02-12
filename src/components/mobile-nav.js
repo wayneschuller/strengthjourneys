@@ -99,7 +99,7 @@ export function MobileNav() {
                   key={logoSrc}
                   width={logoWidth}
                   height="auto"
-                  alt="logo"
+                  alt="Strength Journeys logo"
                   className="inline-block rounded-lg"
                 />
               </Link>

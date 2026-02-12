@@ -20,7 +20,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useToast } from "@/hooks/use-toast";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { trackFeedbackSentiment } from "@/lib/analytics";
 
@@ -28,7 +27,6 @@ export function FeedbackWidget() {
   const router = useRouter();
   const { data: session } = useSession();
   const { ssid, parsedData } = useUserLiftingData();
-  const { toast } = useToast();
 
   const [open, setOpen] = useState(false);
   const [layer, setLayer] = useState(1); // 1=thumbs, 2=comment, 3=email+submit
@@ -42,6 +40,8 @@ export function FeedbackWidget() {
   // Auto-close countdown (layer 2 only, cancelled once they type)
   const AUTO_CLOSE_SECONDS = 15;
   const [countdown, setCountdown] = useState(null);
+  const SUCCESS_CLOSE_SECONDS = 4;
+  const [successCountdown, setSuccessCountdown] = useState(null);
 
   function startCountdown() {
     setCountdown(AUTO_CLOSE_SECONDS);
@@ -49,6 +49,14 @@ export function FeedbackWidget() {
 
   function cancelCountdown() {
     setCountdown(null);
+  }
+
+  function startSuccessCountdown() {
+    setSuccessCountdown(SUCCESS_CLOSE_SECONDS);
+  }
+
+  function cancelSuccessCountdown() {
+    setSuccessCountdown(null);
   }
 
   // Listen for open-feedback event from avatar menu
@@ -60,6 +68,7 @@ export function FeedbackWidget() {
 
   const resetState = useCallback(() => {
     cancelCountdown();
+    cancelSuccessCountdown();
     setLayer(1);
     setSentiment(null);
     setMessage("");
@@ -86,6 +95,24 @@ export function FeedbackWidget() {
 
     return () => clearTimeout(timer);
   }, [countdown, resetState]);
+
+  // Auto-close after successful submit
+  useEffect(() => {
+    if (successCountdown === null) return;
+
+    if (successCountdown <= 0) {
+      setSuccessCountdown(null);
+      setOpen(false);
+      resetState();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setSuccessCountdown((prev) => (prev !== null ? prev - 1 : null));
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [successCountdown, resetState]);
 
   const handleOpenChange = useCallback(
     (isOpen) => {
@@ -132,9 +159,8 @@ export function FeedbackWidget() {
 
       if (!res.ok) throw new Error("Failed to send");
 
-      toast({ title: "Thanks for your feedback!" });
-      setOpen(false);
-      resetState();
+      setLayer(4);
+      startSuccessCountdown();
     } catch {
       setError("Couldn't send feedback. Please try again later.");
     } finally {
@@ -170,12 +196,16 @@ export function FeedbackWidget() {
           <DialogHeader>
             <DialogTitle>
               {layer === 1 && "How's your experience on this page?"}
-              {layer >= 2 && "Thanks! Anything you'd like to tell us?"}
+              {layer >= 2 && layer <= 3 && "Thanks! Anything you'd like to tell us?"}
+              {layer === 4 && "Feedback sent"}
             </DialogTitle>
             <DialogDescription>
               {layer === 1 && "Your feedback helps us improve."}
               {layer === 2 && countdown !== null && `Closing in ${countdown}s — start typing to keep open.`}
-              {layer >= 3 && "Optional — skip anytime."}
+              {layer === 3 && "Optional — skip anytime."}
+              {layer === 4 && (successCountdown !== null
+                ? `Thanks for helping us improve. Closing in ${successCountdown}s.`
+                : "Thanks for helping us improve.")}
             </DialogDescription>
           </DialogHeader>
 
@@ -275,6 +305,25 @@ export function FeedbackWidget() {
                     {isSubmitting ? "Sending..." : "Send feedback"}
                   </Button>
                 )}
+              </div>
+            </div>
+          )}
+
+          {layer === 4 && (
+            <div className="space-y-4 py-2">
+              <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                Thanks for your feedback.
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setOpen(false);
+                    resetState();
+                  }}
+                >
+                  Close now
+                </Button>
               </div>
             </div>
           )}

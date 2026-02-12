@@ -106,8 +106,7 @@ export function ActivityHeatmapsCard() {
             <div className="text-center">
               <h3 className="text-lg font-semibold">Generating Image</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                This may take a few seconds, especially with many years of data.
-                Please wait...
+                {getSharingMessage(intervals?.length || 1)}
               </p>
             </div>
           </div>
@@ -379,6 +378,53 @@ function generateYearRanges(startDateStr, endDateStr) {
   }
 
   return yearRanges;
+}
+
+function getSharingMessage(years) {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+  if (years <= 1)
+    return pick([
+      "Generating your heatmap, get ready to brag.",
+      "Rendering your heatmap. Newbie gains are the best gains.",
+      "Packaging your gains for maximum flex.",
+      "Every PR journey starts with a single plate.",
+    ]);
+
+  if (years <= 3)
+    return pick([
+      `Rendering ${years} years of heatmap. This won't take long.`,
+      `${years} years of heatmap. You're past the 'just trying it out' phase.`,
+      `${years} years in, and still adding plates. Nice.`,
+      "Dedicated. Your heatmap is about to prove it.",
+      "Generating your heatmap. We see you love a good spreadsheet.",
+    ]);
+
+  if (years <= 5)
+    return pick([
+      `Rendering ${years} years of heatmap. This might take a moment.`,
+      `${years} years of heatmap is no joke. Hang tight.`,
+      "Your heatmap consistency is showing. Give us a sec.",
+      `${years} years under the bar. That's a lot of chalk dust.`,
+      `Building ${years} years of heatmap. Bear with us.`,
+    ]);
+
+  if (years <= 7)
+    return pick([
+      `${years} years of heatmap! This is going to take a minute.`,
+      `Rendering ${years} years of heatmap. You've earned this wait.`,
+      `${years} years! Most gym memberships don't survive ${years} months.`,
+      "Veteran status confirmed. Patience, champion.",
+      `${years} years of heatmap. We know you love your Google Sheets.`,
+    ]);
+
+  return pick([
+    `${years} years of heatmap?! We need a moment for this legend.`,
+    `Rendering ${years} years. At this point it's a historical document.`,
+    `${years} years of heatmap. Your spreadsheet must be a novel by now.`,
+    `${years} years! Your heatmap is older than some lifters at your gym.`,
+    `${years} years under the bar. The barbell knows your name by now.`,
+  ]);
 }
 
 // Volume-based heatmap level:

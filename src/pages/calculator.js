@@ -455,6 +455,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
               min={1}
               max={isMetric ? 250 : 600}
               onValueChange={handleWeightSliderChange}
+              aria-label="Weight"
             />
             <div className="ml-1 hidden w-[8rem] justify-self-center md:block md:justify-self-start">
               <div className="flex items-center gap-1">

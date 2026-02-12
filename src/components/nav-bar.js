@@ -69,7 +69,11 @@ export function NavBar() {
     // Only run on client
     if (typeof window === "undefined") return;
 
+    // Guard against double-init (React Strict Mode runs effects twice in dev)
+    if (window.__cannyInitialized) return;
+
     function initCannyChangelog() {
+      window.__cannyInitialized = true;
       window.Canny("initChangelog", {
         appID: "65ae4d4c921071bb0aae99c3",
         position: "bottom",
@@ -86,7 +90,7 @@ export function NavBar() {
       script.onload = initCannyChangelog;
       document.body.appendChild(script);
     } else {
-      // If SDK already there, just init as before
+      // If SDK already there, just init
       initCannyChangelog();
     }
   }, []);

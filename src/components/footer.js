@@ -18,7 +18,7 @@ export function Footer() {
             rel="noreferrer"
             className="font-medium underline underline-offset-4"
           >
-            Wayne Schuller
+            Wayne Schuller<span className="sr-only"> (opens in new tab)</span>
           </a>
           .
         </p>
@@ -30,7 +30,7 @@ export function Footer() {
             rel="noreferrer"
             className="font-medium underline underline-offset-4"
           >
-            GitHub
+            GitHub<span className="sr-only"> (opens in new tab)</span>
           </a>
           .
         </p>
@@ -42,7 +42,7 @@ export function Footer() {
             rel="noreferrer"
             className="font-medium underline underline-offset-4"
           >
-            coffee
+            coffee<span className="sr-only"> (opens in new tab)</span>
           </a>
           .
         </p>
@@ -62,7 +62,7 @@ export function Footer() {
             rel="noreferrer"
             className="font-medium underline underline-offset-4"
           >
-            Full Changelog
+            Full Changelog<span className="sr-only"> (opens in new tab)</span>
           </a>
         </p>
       </PageContainer>

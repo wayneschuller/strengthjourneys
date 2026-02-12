@@ -104,7 +104,7 @@ export function ActivityHeatmapsCard() {
           <div className="flex flex-col items-center gap-4 rounded-lg border bg-background p-6 shadow-lg">
             {isSharing ? (
               <>
-                <LoaderCircle className="h-8 w-8 animate-spin" />
+                <LoaderCircle className="h-8 w-8 animate-spin" aria-label="Loading" role="status" />
                 <div className="text-center">
                   <h3 className="text-lg font-semibold">Generating Image</h3>
                   <p className="mt-2 text-sm text-muted-foreground">

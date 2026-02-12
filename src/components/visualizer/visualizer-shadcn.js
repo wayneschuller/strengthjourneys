@@ -386,7 +386,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
             />
           </div>
           <div className="flex items-center space-x-1">
-            <Label className="font-light" htmlFor="show-values">
+            <Label className="font-light" htmlFor="all-data">
               Weekly Bests
             </Label>
             <Switch
@@ -395,7 +395,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
               checked={showAllData}
               onCheckedChange={(show) => setShowAllData(show)}
             />
-            <Label className="font-light" htmlFor="show-values">
+            <Label className="font-light" htmlFor="all-data">
               All Data
             </Label>
           </div>

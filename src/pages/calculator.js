@@ -652,7 +652,7 @@ function OptionalAtheleBioData({
           value={[age]}
           onValueChange={(values) => setAge(values[0])}
           className="mt-2 flex-1"
-          aria-label="Number of repetitions"
+          aria-label="Age"
         />
       </div>
       <div className="mt-1 flex flex-row gap-4">

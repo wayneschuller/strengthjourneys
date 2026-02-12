@@ -38,9 +38,6 @@ next-env.d.ts
 
 .vscode
 
-# WS 20231217 
-dependencies/react-google-drive-picker/node_modules
-
 # Sentry Config File
 .env.sentry-build-plugin
 
@@ -76,3 +73,6 @@ public/robots.txt
 /.windsurf/
 /.zencoder/
 /skills/
+
+# Claude Code project docs
+CLAUDE.md

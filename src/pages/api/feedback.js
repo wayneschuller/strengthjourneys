@@ -107,7 +107,8 @@ export default async function handler(req, res) {
   const pagePath = typeof page === "string" && page.startsWith("/") ? page : "/";
   const baseUrl = getBaseUrl(req);
   const pageUrl = toAbsolutePageUrl(req, pagePath);
-  const logoUrl = baseUrl ? `${baseUrl}/nav_logo_light.png` : "";
+  const logoUrl =
+    "https://www.strengthjourneys.xyz/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fnav_logo_light.14bdfd15.png&w=256&q=75";
   const safeMessage = message.trim();
   const safeName = escapeHtml(userName);
   const safeContactEmail = escapeHtml(contactEmailLabel);
@@ -117,6 +118,8 @@ export default async function handler(req, res) {
   const safeUserType = escapeHtml(userType || "unknown");
   const safeLogoUrl = escapeHtml(logoUrl);
   const meta = normalizeMetadata(metadata);
+  const nameWithParsedRows = `${userName} [${meta.parsedRowCount}]`;
+  const safeNameWithParsedRows = escapeHtml(nameWithParsedRows);
 
   const resend = new Resend(apiKey);
 
@@ -131,8 +134,7 @@ export default async function handler(req, res) {
         `Page: ${pagePath}`,
         `Page URL: ${pageUrl}`,
         `User type: ${userType || "unknown"}`,
-        `Parsed rows: ${meta.parsedRowCount}`,
-        `Name: ${userName}`,
+        `Name: ${nameWithParsedRows}`,
         `Contact email: ${contactEmailLabel}`,
         `User agent: ${req.headers["user-agent"] || "unknown"}`,
         "",
@@ -142,15 +144,23 @@ export default async function handler(req, res) {
       html: `
         <div style="background:#f3f4f6;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">
           <div style="max-width:680px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
-            <div style="background:#111827;color:#ffffff;padding:16px 20px;">
-              ${
-                safeLogoUrl
-                  ? `<img src="${safeLogoUrl}" alt="Strength Journeys logo" width="170" style="display:block;max-width:170px;height:auto;margin-bottom:10px;" />`
-                  : ""
-              }
-              <div style="font-size:34px;line-height:1;margin-bottom:8px;">${sentimentEmoji}</div>
-              <div style="font-size:18px;font-weight:700;">New Feedback</div>
-              <div style="font-size:13px;opacity:0.9;margin-top:4px;">${escapeHtml(sentimentLabel)} from ${safeName}</div>
+            <div style="background:#111827;color:#ffffff;padding:18px 20px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse;">
+                <tr>
+                  <td style="vertical-align:middle;padding:0;">
+                    <div style="font-size:56px;line-height:1;margin:0 0 8px 0;">${sentimentEmoji}</div>
+                    <div style="font-size:42px;line-height:1.05;font-weight:800;letter-spacing:-0.02em;">New Feedback</div>
+                    <div style="font-size:22px;line-height:1.25;opacity:0.92;margin-top:8px;">${escapeHtml(sentimentLabel)} from ${safeNameWithParsedRows}</div>
+                  </td>
+                  <td style="vertical-align:top;text-align:right;padding:0 0 0 16px;width:210px;">
+                    ${
+                      safeLogoUrl
+                        ? `<img src="${safeLogoUrl}" alt="Strength Journeys logo" width="190" style="display:inline-block;max-width:190px;height:auto;" />`
+                        : ""
+                    }
+                  </td>
+                </tr>
+              </table>
             </div>
             <div style="padding:20px;">
               <table role="presentation" cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse;">
@@ -158,7 +168,6 @@ export default async function handler(req, res) {
                 <tr><td style="padding:6px 0;color:#6b7280;width:140px;">Page</td><td style="padding:6px 0;"><a href="${safePageUrl}" style="color:#2563eb;text-decoration:underline;">${safePagePath}</a></td></tr>
                 <tr><td style="padding:6px 0;color:#6b7280;">User type</td><td style="padding:6px 0;">${safeUserType}</td></tr>
                 <tr><td style="padding:6px 0;color:#6b7280;">Contact email</td><td style="padding:6px 0;">${safeContactEmail}</td></tr>
-                <tr><td style="padding:6px 0;color:#6b7280;">Parsed rows</td><td style="padding:6px 0;">${escapeHtml(meta.parsedRowCount)}</td></tr>
               </table>
 
               <div style="margin-top:20px;">

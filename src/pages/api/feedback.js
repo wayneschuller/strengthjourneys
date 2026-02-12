@@ -19,7 +19,12 @@ export default async function handler(req, res) {
   const to = process.env.FEEDBACK_EMAIL_TO;
 
   if (!apiKey || !to) {
-    console.error("Feedback env vars missing — RESEND_API_KEY:", !!apiKey, "FEEDBACK_EMAIL_TO:", !!to);
+    console.error(
+      "Feedback env vars missing — RESEND_API_KEY:",
+      !!apiKey,
+      "FEEDBACK_EMAIL_TO:",
+      !!to,
+    );
     return res.status(503).json({ error: "Feedback service not configured" });
   }
 
@@ -46,7 +51,7 @@ export default async function handler(req, res) {
 
   try {
     const { data, error: sendError } = await resend.emails.send({
-      from: "Strength Journeys <onboarding@resend.dev>",
+      from: "Strength Journeys <feedback@updates.strengthjourneys.xyz>",
       to,
       subject: `${subjectPrefix} from ${userName} — ${sentimentLabel} — ${page || "/"}`,
       text: [

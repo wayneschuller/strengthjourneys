@@ -108,24 +108,30 @@ export function AvatarDropdown() {
           setSheetFilename={setSheetFilename}
         />
       )}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger>
-            <DropdownMenu
-            onOpenChange={(open) => {
-              // Load picker when dropdown opens (user might use it)
-              if (open && !shouldLoadPicker) {
-                setShouldLoadPicker(true);
-              }
-            }}
-          >
-            <DropdownMenuTrigger asChild aria-label="User menu">
-              <Avatar className="ml-2 h-8 w-8 ring-muted-foreground hover:ring-2">
-                <AvatarImage src={session.user.image} />
-                <AvatarFallback>{session.user.name}</AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end">
+      <DropdownMenu
+        onOpenChange={(open) => {
+          // Load picker when dropdown opens (user might use it)
+          if (open && !shouldLoadPicker) {
+            setShouldLoadPicker(true);
+          }
+        }}
+      >
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild aria-label="User menu">
+                <Avatar className="ml-2 h-8 w-8 ring-muted-foreground hover:ring-2">
+                  <AvatarImage src={session.user.image} />
+                  <AvatarFallback>{session.user.name}</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Open user menu</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <DropdownMenuContent className="w-56" align="end">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="font-bold">Athlete: </p>
@@ -250,13 +256,7 @@ export function AvatarDropdown() {
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
-          </DropdownMenu>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Open user menu</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+      </DropdownMenu>
     </>
   );
 }

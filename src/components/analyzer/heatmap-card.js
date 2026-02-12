@@ -65,6 +65,8 @@ export function ActivityHeatmapsCard() {
   const handleShare = async () => {
     const startTime = performance.now();
     setIsSharing(true);
+    // Wait one frame so the browser paints the loading overlay before html2canvas blocks the thread
+    await new Promise((r) => requestAnimationFrame(r));
 
     try {
       if (shareRef.current) {

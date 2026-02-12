@@ -36,13 +36,6 @@ export function getLogoForTheme(theme) {
     return fallbackLightLogo;
   }
 
-  // Debug logging (remove in production if needed)
-  if (process.env.NODE_ENV === "development") {
-    console.log("[theme-logos] Current theme:", theme);
-    console.log("[theme-logos] Available themes:", Object.keys(logoMap));
-    console.log("[theme-logos] Theme in map?", logoMap[theme] ? "YES" : "NO");
-  }
-
   // Check if theme-specific logo exists
   if (logoMap[theme]) {
     return logoMap[theme];

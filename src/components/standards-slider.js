@@ -1,5 +1,5 @@
 import { Fragment, useMemo } from "react";
-import { subMonths } from "date-fns";
+import { subMonths, subYears } from "date-fns";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   useAthleteBio,
@@ -12,6 +12,8 @@ import { getReadableDateString } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useReadLocalStorage, useWindowSize } from "usehooks-ts";
+
+const PERIOD_KEYS = ["1M", "6M", "1Y", "2Y", "5Y", "10Y"];
 
 export function StandardsSlider({
   liftType,
@@ -32,7 +34,7 @@ export function StandardsSlider({
 
   const unitType = isMetric ? "kg" : "lb";
 
-  // --- Compute period-best E1RMs (1M / 6M / 12M) ---
+  // --- Compute period-best E1RMs (1M / 6M / 1Y / 2Y / 5Y / 10Y) ---
   const periodBestNotches = useMemo(() => {
     if (authStatus !== "authenticated" || !parsedData?.length || !e1rmFormula)
       return [];
@@ -41,10 +43,14 @@ export function StandardsSlider({
     const thresholds = {
       "1M": subMonths(now, 1),
       "6M": subMonths(now, 6),
-      "12M": subMonths(now, 12),
+      "1Y": subYears(now, 1),
+      "2Y": subYears(now, 2),
+      "5Y": subYears(now, 5),
+      "10Y": subYears(now, 10),
     };
 
-    const bestByPeriod = { "1M": null, "6M": null, "12M": null };
+    const bestByPeriod = {};
+    PERIOD_KEYS.forEach((key) => (bestByPeriod[key] = null));
 
     parsedData.forEach((entry) => {
       if (entry.liftType !== liftType || !entry.reps || !entry.weight) return;
@@ -54,7 +60,7 @@ export function StandardsSlider({
       const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
       const id = `${dateObj.getTime()}-${entry.reps}-${entry.weight}-${entry.unitType || ""}`;
 
-      ["1M", "6M", "12M"].forEach((key) => {
+      PERIOD_KEYS.forEach((key) => {
         if (dateObj < thresholds[key]) return;
         const current = bestByPeriod[key];
         if (!current || e1rm > current.e1rm) {
@@ -71,18 +77,28 @@ export function StandardsSlider({
     });
 
     const periodMeta = {
-      "1M": { label: "Last month" },
-      "6M": { label: "Last 6 months" },
-      "12M": { label: "Last 12 months" },
+      "1M": { label: "Last month", shortLabel: "1M" },
+      "6M": { label: "Last 6 months", shortLabel: "6M" },
+      "1Y": { label: "Last year", shortLabel: "1Y" },
+      "2Y": { label: "Last 2 years", shortLabel: "2Y" },
+      "5Y": { label: "Last 5 years", shortLabel: "5Y" },
+      "10Y": { label: "Last 10 years", shortLabel: "10Y" },
     };
 
+    // Iterate longest→shortest so deduplication keeps only the shortest
+    // period where a given best lift first appears
     const seenIds = new Set();
     const summaries = [];
-    ["12M", "6M", "1M"].forEach((key) => {
+    [...PERIOD_KEYS].reverse().forEach((key) => {
       const best = bestByPeriod[key];
       if (!best || seenIds.has(best.id)) return;
       seenIds.add(best.id);
-      summaries.push({ periodKey: key, label: periodMeta[key].label, ...best });
+      summaries.push({
+        periodKey: key,
+        label: periodMeta[key].label,
+        shortLabel: periodMeta[key].shortLabel,
+        ...best,
+      });
     });
 
     return summaries;
@@ -148,14 +164,14 @@ export function StandardsSlider({
 
   if (athleteRankingWeight > 0) {
     allNotches.push({
-      key: "1RM",
+      key: "PR",
       percent: thumbPosition,
-      shortLabel: "1RM",
+      shortLabel: "PR",
       zIndex: 20,
       tooltipContent: bestWeightTuple ? (
         <div className="space-y-0.5">
           <div className="font-semibold">
-            Lifetime best: {bestWeightTuple.weight}{unitType}
+            Lifetime PR: {bestWeightTuple.weight}{unitType}
           </div>
           <div className="text-muted-foreground">
             {bestWeightTuple.reps} × {bestWeightTuple.weight}{unitType}
@@ -163,7 +179,7 @@ export function StandardsSlider({
           </div>
         </div>
       ) : (
-        <span>Lifetime best: {athleteRankingWeight}{unitType}</span>
+        <span>Lifetime PR: {athleteRankingWeight}{unitType}</span>
       ),
     });
   }
@@ -190,21 +206,19 @@ export function StandardsSlider({
     });
   }
 
+  // Skip period notches that duplicate the lifetime PR or E1RM
+  const isSameLift = (a, b) =>
+    a && b && a.date === b.date && a.reps === b.reps && a.weight === b.weight;
+
   if (periodBestNotches.length > 0) {
     for (const notch of periodBestNotches) {
+      if (isSameLift(notch, bestWeightTuple) || isSameLift(notch, bestE1RMTuple))
+        continue;
       const notchUnit = notch.unitType || unitType;
-      const shortLabel =
-        notch.periodKey === "1M"
-          ? "1M"
-          : notch.periodKey === "6M"
-            ? "6M"
-            : notch.periodKey === "12M"
-              ? "1Y"
-              : notch.label;
       allNotches.push({
         key: notch.periodKey || notch.label || `extra-${getPercent(notch.e1rm)}`,
         percent: getPercent(notch.e1rm),
-        shortLabel,
+        shortLabel: notch.shortLabel || notch.periodKey,
         zIndex: 10,
         tooltipContent: (
           <div className="space-y-0.5">

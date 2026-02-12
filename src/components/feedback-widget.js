@@ -27,7 +27,7 @@ import { trackFeedbackSentiment } from "@/lib/analytics";
 export function FeedbackWidget() {
   const router = useRouter();
   const { data: session } = useSession();
-  const { ssid } = useUserLiftingData();
+  const { ssid, parsedData } = useUserLiftingData();
   const { toast } = useToast();
 
   const [open, setOpen] = useState(false);
@@ -121,8 +121,12 @@ export function FeedbackWidget() {
           message: message.trim(),
           sentiment,
           page: router.pathname,
+          includeEmail,
           email: includeEmail ? (session?.user?.email || email || "") : "",
           userType: getUserType(),
+          metadata: {
+            parsedRowCount: ssid && Array.isArray(parsedData) ? parsedData.length : null,
+          },
         }),
       });
 

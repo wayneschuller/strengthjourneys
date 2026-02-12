@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { RegExpMatcher, englishDataset } from "obscenity";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const matcher = new RegExpMatcher({ ...englishDataset.build() });
 
 function containsProfanity(text) {
@@ -14,6 +13,14 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
+
+  const apiKey = process.env.RESEND_API_KEY;
+  const to = process.env.FEEDBACK_EMAIL_TO;
+
+  if (!apiKey || !to) {
+    console.error("Feedback env vars missing — RESEND_API_KEY:", !!apiKey, "FEEDBACK_EMAIL_TO:", !!to);
+    return res.status(503).json({ error: "Feedback service not configured" });
   }
 
   const { message, sentiment, page, email, userType } = req.body;
@@ -35,11 +42,7 @@ export default async function handler(req, res) {
   const subjectPrefix = hasProfanity ? "[PROFANITY] [Feedback]" : "[Feedback]";
   const sentimentLabel = sentiment === "positive" ? "thumbs up" : "thumbs down";
 
-  const to = process.env.FEEDBACK_EMAIL_TO;
-  if (!to) {
-    console.error("FEEDBACK_EMAIL_TO env var is not set");
-    return res.status(500).json({ error: "Feedback service not configured" });
-  }
+  const resend = new Resend(apiKey);
 
   try {
     const { data, error: sendError } = await resend.emails.send({

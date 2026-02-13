@@ -130,7 +130,7 @@ export const LiftColorsProvider = ({ children }) => {
     }));
   };
 
-  // Resets the override for a given liftType, returning it to the default color (or random if not listed)
+  // Resets the override for a given liftType, returning it to the default or hash color
   const resetColor = (liftType) => {
     setOverrides((prev) => {
       const next = { ...prev };

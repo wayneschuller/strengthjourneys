@@ -2,15 +2,40 @@
 "use client";
 
 /**
- * Central Google Analytics (GA4) helper: gtag wrapper, UTM persistence, and track* helpers.
- * Events with debug_mode: true appear in GA4 DebugView only (not regular reports).
+ * Central Google Analytics (GA4) helper for Strength Journeys.
+ *
+ * How it works:
+ * - The gtag script is loaded in _app.js via next/script.
+ * - All custom events are prefixed with "SJ_" to distinguish them from
+ *   GA4 built-in events (page_view, session_start, etc.).
+ * - UTM params (?utm_source=...) are captured on first page load and
+ *   merged into every event so GA4 keeps campaign attribution across
+ *   client-side navigations.
+ * - Page views use gtag("config", ...) and are skipped in dev to avoid
+ *   polluting production data.
+ *
+ * debug_mode (GA4 DebugView):
+ * - Any event sent with { debug_mode: true } in its params is routed to
+ *   GA4 DebugView (Admin > DebugView) instead of regular reports.
+ * - This is GA4's built-in mechanism for testing new events without
+ *   polluting production analytics data.
+ * - Use it when adding new tracking: pass debug_mode: true, verify in
+ *   DebugView, then remove the flag to promote to production.
+ * - See gaTrackFeedbackSentiment() at the bottom for an example.
+ *
+ * Adding a new tracked event:
+ * 1. Create a gaTrack*() helper function at the bottom of this file.
+ * 2. Call gaEvent("your_event_name", { ...params, debug_mode: true }).
+ * 3. Verify the event appears in GA4 DebugView.
+ * 4. Remove debug_mode: true when you're happy with the data.
  */
 
 const UTM_STORAGE_KEY = "ga_utm";
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
 
 /**
- * Send a custom GA4 event. Pass debug_mode: true in params to route to DebugView only.
+ * Send a custom GA4 event. All events are auto-prefixed with "SJ_".
+ * Pass { debug_mode: true } in params to route to GA4 DebugView only.
  */
 export function gaEvent(name, params = {}) {
   if (typeof window === "undefined") return;

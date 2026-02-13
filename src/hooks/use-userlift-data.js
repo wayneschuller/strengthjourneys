@@ -71,8 +71,27 @@ if (typeof window !== "undefined") {
   }
 }
 
-/** Generic JSON fetcher for useSWR. */
-const fetcher = (...args) => fetch(...args).then((res) => res.json());
+/**
+ * Generic JSON fetcher for useSWR.
+ * Throws on non-2xx so SWR sets `error` and the UI can surface real failures.
+ */
+const fetcher = async (...args) => {
+  const res = await fetch(...args);
+  const json = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    const message =
+      (json && typeof json.error === "string" && json.error) ||
+      `${res.status} ${res.statusText || "Request failed"}`;
+    const error = new Error(message);
+    error.status = res.status;
+    error.statusText = res.statusText || null;
+    error.responseBody = json;
+    throw error;
+  }
+
+  return json;
+};
 
 const UserLiftingDataContext = createContext();
 
@@ -141,6 +160,15 @@ export const UserLiftingDataProvider = ({ children }) => {
       "color:inherit",
     );
   const isError = !!error; // FIXME: We could send back error details
+  const apiError = useMemo(() => {
+    if (!error) return null;
+    return {
+      status: typeof error.status === "number" ? error.status : null,
+      statusText:
+        typeof error.statusText === "string" ? error.statusText : null,
+      message: error.message || "Unknown API error",
+    };
+  }, [error]);
 
   // -----------------------------------------------------------------------------------------------
   // Effect A: When useSWR gives new Google sheet data, parse it
@@ -190,6 +218,8 @@ export const UserLiftingDataProvider = ({ children }) => {
         "color:#ef4444;font-weight:bold",
         "color:inherit",
       );
+      setParseError(null);
+      return;
     }
 
     const result = getParsedDataWithFallback({ authStatus, data });
@@ -288,6 +318,7 @@ export const UserLiftingDataProvider = ({ children }) => {
       value={{
         isLoading,
         isError,
+        apiError,
         isValidating,
         isDemoMode,
         parseError,

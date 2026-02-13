@@ -36,6 +36,7 @@ import {
 export function Layout({ children }) {
   const {
     isError,
+    apiError,
     isDemoMode,
     parseError,
     parsedData,
@@ -56,14 +57,17 @@ export function Layout({ children }) {
   useEffect(() => {
     if (apiErrorShown.current) return;
     if (isError && authStatus === "authenticated") {
+      const statusLabel = apiError?.status
+        ? `HTTP ${apiError.status}${apiError?.statusText ? ` ${apiError.statusText}` : ""}`
+        : "Request failed";
       apiErrorShown.current = true;
       toast({
         variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description: "Lift some weights and come back later.",
+        title: `Google Sheet sync failed (${statusLabel})`,
+        description: apiError?.message || "No error details were provided.",
       });
     }
-  }, [isError, authStatus, toast]);
+  }, [isError, authStatus, apiError, toast]);
 
   // Toast 2: Data Loaded (once per session, but not on "/" because home has
   // dedicated data-loading/status widgets with richer detail)

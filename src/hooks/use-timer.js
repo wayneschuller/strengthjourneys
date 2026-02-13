@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useUserLiftingData } from "./use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
-import { gaEvent } from "@/lib/analytics";
+import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 
 const TimerContext = createContext();
 
@@ -47,21 +47,21 @@ export const TimerProvider = ({ children }) => {
   const handleStartStop = () => {
     setIsRunning((prevIsRunning) => !prevIsRunning);
 
-    gaEvent("timer_start_stop_toggle");
+    gaEvent(GA_EVENT_TAGS.TIMER_START_STOP_TOGGLE);
   };
 
   const handleReset = () => {
     setIsRunning(false);
     setTime(0);
 
-    gaEvent("timer_reset");
+    gaEvent(GA_EVENT_TAGS.TIMER_RESET);
   };
 
   const handleRestart = () => {
     setIsRunning(true);
     setTime(0);
 
-    gaEvent("timer_restarted");
+    gaEvent(GA_EVENT_TAGS.TIMER_RESTARTED);
   };
 
   return (

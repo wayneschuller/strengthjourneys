@@ -6,6 +6,7 @@ import {
   gaTrackSheetPickerCancelled,
   gaTrackSheetSelected,
   gaEvent,
+  GA_EVENT_TAGS,
 } from "@/lib/analytics";
 
 /**
@@ -52,7 +53,7 @@ export function DrivePickerContainer({
       if (data.action === "cancel") return;
       if (data.docs?.[0]) {
         gaTrackSheetSelected();
-        gaEvent("gdrive_picker_opened");
+        gaEvent(GA_EVENT_TAGS.GDRIVE_PICKER_OPENED);
         const doc = data.docs[0];
         setSsid?.(doc.id);
         setSheetURL?.(encodeURIComponent(doc.url));

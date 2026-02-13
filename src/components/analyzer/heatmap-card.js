@@ -11,7 +11,7 @@ import {
   getReadableDateString,
 } from "@/lib/processing-utils";
 import { LoaderCircle } from "lucide-react";
-import { gaTrackShareCopy } from "@/lib/analytics";
+import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -83,7 +83,7 @@ export function ActivityHeatmapsCard() {
           new ClipboardItem({ "image/png": blob }),
         ]);
         console.log("Heatmap copied to clipboard");
-        gaTrackShareCopy("heatmap", { page: "/analyzer" });
+        gaEvent(GA_EVENT_TAGS.HEATMAP_SHARE_CLIPBOARD, { page: "/analyzer" });
       }
 
       logTiming("html2canvas", performance.now() - startTime);

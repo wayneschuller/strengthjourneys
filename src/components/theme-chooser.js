@@ -3,7 +3,7 @@
 "use client";
 
 import { devLog } from "@/lib/processing-utils";
-import { gaEvent } from "@/lib/analytics";
+import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { useState, useEffect } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { Moon, Sun } from "lucide-react";
@@ -117,7 +117,7 @@ export function DarkModeToggle() {
               const newTheme = theme === "dark" ? "light" : "dark";
               setTheme(newTheme);
 
-              gaEvent("theme_changed", {
+              gaEvent(GA_EVENT_TAGS.THEME_CHANGED, {
                 event_category: "User Preferences",
                 event_label: `Theme changed to ${newTheme}`,
               });

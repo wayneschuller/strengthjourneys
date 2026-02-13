@@ -6,7 +6,7 @@ import { useSession, signIn } from "next-auth/react";
 import useSWR from "swr";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { parseData } from "@/lib/parse-data";
-import { gaEvent, gaTrackSignInClick } from "@/lib/analytics";
+import { gaEvent, gaTrackSignInClick, GA_EVENT_TAGS } from "@/lib/analytics";
 import {
   devLog,
   flushTimings,
@@ -131,7 +131,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         description: "Lift some weights and come back later.",
       });
 
-      gaEvent("gSheetAPIError"); // Google Analytics: sheet API error
+      gaEvent(GA_EVENT_TAGS.GSHEET_API_ERROR); // Google Analytics: sheet API error
       devLog(`%c✗ GSheet API rejected by Google%c — will retry on next revalidation`, "color:#ef4444;font-weight:bold", "color:inherit");
 
       // FIXME: We used to clear the ssid but it happened too often. There are occasional weird errors (wifi loading etc)
@@ -447,7 +447,7 @@ function getParsedDataWithFallback({
         });
       }
 
-      gaEvent("gSheetDataUpdated"); // Google Analytics: sheet data loaded successfully
+      gaEvent(GA_EVENT_TAGS.GSHEET_DATA_UPDATED); // Google Analytics: sheet data loaded successfully
     } catch (error) {
       // Parsing error. Tell the user.
       console.error("Data parsing error:", error.message);
@@ -466,7 +466,7 @@ function getParsedDataWithFallback({
       setSheetURL(null);
       // Don't sign out, just go gracefully into demo mode below.
 
-      gaEvent("gSheetReadRejected"); // Google Analytics: sheet parse rejected
+      gaEvent(GA_EVENT_TAGS.GSHEET_READ_REJECTED); // Google Analytics: sheet parse rejected
     }
   }
 

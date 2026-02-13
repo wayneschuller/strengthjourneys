@@ -6,8 +6,9 @@
  *
  * How it works:
  * - The gtag script is loaded in _app.js via next/script.
- * - All custom events are prefixed with "SJ_" to distinguish them from
- *   GA4 built-in events (page_view, session_start, etc.).
+ * - Event names are sent exactly as provided to gaEvent(...).
+ * - Historical events must keep their original names to preserve GA continuity.
+ * - New events should use an explicit "SJ_" prefix (do not rely on auto-prefixing).
  * - UTM params (?utm_source=...) are captured on first page load and
  *   merged into every event so GA4 keeps campaign attribution across
  *   client-side navigations.
@@ -30,11 +31,40 @@
  * 4. Remove debug_mode: true when you're happy with the data.
  */
 
+/**
+ * GA custom event tags (single source of truth).
+ *
+ * IMPORTANT:
+ * - Do not rename existing tags: historical GA reporting depends on stable names.
+ * - For new events, add a new constant (prefer explicit "SJ_" prefix for new taxonomy).
+ * - If a rename is truly required, add a brand-new tag instead of mutating an old one.
+ */
+export const GA_EVENT_TAGS = Object.freeze({
+  FUNNEL_SIGN_IN_CLICK: "funnel_sign_in_click", // ~Feb 2026: User clicked a Google sign-in CTA.
+  FUNNEL_SIGN_IN_SUCCESS: "funnel_sign_in_success", // ~Feb 2026: Session transitioned to authenticated.
+  FUNNEL_SHEET_CONNECT_CLICK: "funnel_sheet_connect_click", // ~Feb 2026: User clicked connect/select sheet.
+  FUNNEL_SHEET_PICKER_CANCELLED: "funnel_sheet_picker_cancelled", // ~Feb 2026: User closed Drive picker without selecting.
+  FUNNEL_SHEET_SELECTED: "funnel_sheet_selected", // ~Feb 2026: User selected a spreadsheet in Drive picker.
+  FUNNEL_SHEET_LINKED: "funnel_sheet_linked", // ~Feb 2026: App linked selected sheet into local app state.
+  SHARE_BUTTON_CLICK: "share_button_click", // ~Feb 2026: Generic share/copy action with feature metadata.
+  THEME_CHANGED: "theme_changed", // ~Apr 2024: Theme toggle changed between light/dark variants.
+  TIMER_START_STOP_TOGGLE: "timer_start_stop_toggle", // ~May 2024: Timer play/pause toggled.
+  TIMER_RESET: "timer_reset", // ~May 2024: Timer reset to zero and stopped.
+  TIMER_RESTARTED: "timer_restarted", // ~Apr 2024: Timer restarted from zero and running.
+  GSHEET_API_ERROR: "gSheetAPIError", // ~Apr 2024: Google Sheets API request failed.
+  GSHEET_DATA_UPDATED: "gSheetDataUpdated", // ~Dec 2023: Sheet data loaded and parsed successfully.
+  GSHEET_READ_REJECTED: "gSheetReadRejected", // ~Mar 2024: Sheet read/parse rejected as invalid.
+  GDRIVE_PICKER_OPENED: "gdrive_picker_opened", // ~Apr 2024: Drive picker returned a selected document.
+  CALC_SHARE_CLIPBOARD: "calc_share_clipboard", // ~Apr 2024: E1RM calculator result copied to clipboard.
+  HEATMAP_SHARE_CLIPBOARD: "heatmap_share_clipboard", // ~Apr 2024: Analyzer heatmap image copied to clipboard.
+  FEEDBACK_SENTIMENT: "SJ_feedback_sentiment", // ~Feb 2026: Feedback thumbs sentiment (explicit SJ-prefixed new tag).
+});
+
 const UTM_STORAGE_KEY = "ga_utm";
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
 
 /**
- * Send a custom GA4 event. All events are auto-prefixed with "SJ_".
+ * Send a custom GA4 event using the exact event name provided.
  * Pass { debug_mode: true } in params to route to GA4 DebugView only.
  */
 export function gaEvent(name, params = {}) {
@@ -42,9 +72,8 @@ export function gaEvent(name, params = {}) {
   if (typeof window.gtag !== "function") return;
   if (!getMeasurementId()) return;
 
-  const prefixed = name.startsWith(GA_EVENT_PREFIX) ? name : `${GA_EVENT_PREFIX}${name}`;
   const merged = buildParams(params);
-  window.gtag("event", prefixed, Object.keys(merged).length ? merged : undefined);
+  window.gtag("event", name, Object.keys(merged).length ? merged : undefined);
 }
 
 function isDevelopmentEnv() {
@@ -119,33 +148,30 @@ export function pageView(fullURL) {
   window.gtag("config", id, params);
 }
 
-/** Prefix for Strength Journeys custom events (distinguishes from GA default events like page_view, session_start). */
-const GA_EVENT_PREFIX = "SJ_";
-
 // --- Google Analytics track* helpers (send funnel events to GA4; add page when provided) ---
 
 export function gaTrackSignInClick(page) {
-  gaEvent("funnel_sign_in_click", typeof page === "string" ? { page } : {});
+  gaEvent(GA_EVENT_TAGS.FUNNEL_SIGN_IN_CLICK, typeof page === "string" ? { page } : {});
 }
 
 export function gaTrackSignInSuccess() {
-  gaEvent("funnel_sign_in_success");
+  gaEvent(GA_EVENT_TAGS.FUNNEL_SIGN_IN_SUCCESS);
 }
 
 export function gaTrackSheetConnectClick(page) {
-  gaEvent("funnel_sheet_connect_click", typeof page === "string" ? { page } : {});
+  gaEvent(GA_EVENT_TAGS.FUNNEL_SHEET_CONNECT_CLICK, typeof page === "string" ? { page } : {});
 }
 
 export function gaTrackSheetPickerCancelled() {
-  gaEvent("funnel_sheet_picker_cancelled");
+  gaEvent(GA_EVENT_TAGS.FUNNEL_SHEET_PICKER_CANCELLED);
 }
 
 export function gaTrackSheetSelected() {
-  gaEvent("funnel_sheet_selected");
+  gaEvent(GA_EVENT_TAGS.FUNNEL_SHEET_SELECTED);
 }
 
 export function gaTrackSheetLinked() {
-  gaEvent("funnel_sheet_linked");
+  gaEvent(GA_EVENT_TAGS.FUNNEL_SHEET_LINKED);
 }
 
 /**
@@ -154,7 +180,7 @@ export function gaTrackSheetLinked() {
  * @param {object} [params] - Optional extra params (e.g. { page, slide })
  */
 export function gaTrackShareCopy(feature, params = {}) {
-  gaEvent("share_button_click", {
+  gaEvent(GA_EVENT_TAGS.SHARE_BUTTON_CLICK, {
     feature,
     ...params,
   });
@@ -167,5 +193,5 @@ export function gaTrackShareCopy(feature, params = {}) {
  * @param {object} [extra] - Optional extra params (e.g. { logged_in, seconds_on_page })
  */
 export function gaTrackFeedbackSentiment(sentiment, page, extra = {}) {
-  gaEvent("feedback_sentiment", { sentiment, page, ...extra });
+  gaEvent(GA_EVENT_TAGS.FEEDBACK_SENTIMENT, { sentiment, page, ...extra });
 }

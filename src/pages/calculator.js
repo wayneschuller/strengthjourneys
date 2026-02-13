@@ -36,7 +36,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { devLog } from "@/lib/processing-utils";
-import { gaTrackShareCopy } from "@/lib/analytics";
+import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { cn } from "@/lib/utils";
@@ -367,7 +367,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
       description: "Result copied to clipboard.",
     });
 
-    gaTrackShareCopy("e1rm_calculator", { page: "/calculator" });
+    gaEvent(GA_EVENT_TAGS.CALC_SHARE_CLIPBOARD, { page: "/calculator" });
 
     // This fails in React - but it's the new API
     // if (navigator?.clipboard?.writeText) {

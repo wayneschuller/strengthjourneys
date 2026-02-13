@@ -139,7 +139,7 @@ export function VisualizerMini({ liftType }) {
         rangeFirstDate,
         showAllData,
       ),
-    [parsedData, e1rmFormula, timeRange, showAllData],
+    [parsedData, e1rmFormula, liftType, rangeFirstDate, showAllData],
   );
 
   // if (authStatus !== "authenticated") return; // Don't show at all for anon mode

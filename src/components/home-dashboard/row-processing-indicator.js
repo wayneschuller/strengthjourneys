@@ -164,7 +164,7 @@ export function RowProcessingIndicator({
       setIsProgressDone(false);
       setAnimationKey((k) => k + 1);
     }
-  }, [isValidating, rowCount]);
+  }, [isValidating, rowCount, setIsProgressDone]);
 
   useEffect(() => {
     // Reset whenever the incoming row count changes or animation is re-triggered

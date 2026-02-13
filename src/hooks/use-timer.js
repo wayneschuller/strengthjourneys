@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { useUserLiftingData } from "./use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
@@ -12,6 +12,7 @@ export const TimerProvider = ({ children }) => {
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [entriesForToday, setEntriesForToday] = useState(0);
+  const entriesForTodayRef = useRef(0);
   const { parsedData } = useUserLiftingData();
 
   useEffect(() => {
@@ -22,13 +23,11 @@ export const TimerProvider = ({ children }) => {
       (item) => item.date === todayString,
     ).length;
 
-    if (newEntriesForToday > entriesForToday) {
-      // devLog(`A new object was added today (${todayString}).`);
-      // setIsRunning(true);
+    if (newEntriesForToday > entriesForTodayRef.current) {
       setTime(0);
     }
 
-    // Update the state variable to track the number of entries for today's date
+    entriesForTodayRef.current = newEntriesForToday;
     setEntriesForToday(newEntriesForToday);
   }, [parsedData]);
 

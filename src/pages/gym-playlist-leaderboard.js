@@ -113,23 +113,32 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   // On mount - delete all the localstorage votes older than 10 minutes so the user can vote again
   // FIXME: implement the 10 minute timeout on the server using IP throttling
   useEffect(() => {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEYS.PLAYLIST_VOTES);
+    if (!raw) return;
+
+    let stored;
+    try {
+      stored = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
     const currentTime = Date.now();
     const tenMinutesInMs = 10 * 60 * 1000;
-    const updatedVotes = { ...clientVotes };
     let hasChanges = false;
 
-    Object.keys(updatedVotes).forEach((playlistId) => {
-      const vote = updatedVotes[playlistId];
+    Object.keys(stored).forEach((playlistId) => {
+      const vote = stored[playlistId];
       if (!vote.timestamp || currentTime - vote.timestamp > tenMinutesInMs) {
-        delete updatedVotes[playlistId];
+        delete stored[playlistId];
         hasChanges = true;
       }
     });
 
     if (hasChanges) {
-      setClientVotes(updatedVotes);
+      setClientVotes(stored);
     }
-  }, []);
+  }, [setClientVotes]);
 
   // Reset to first page when changing tabs or applying filters
   useEffect(() => {

@@ -154,7 +154,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
         rangeFirstDate,
         showAllData,
       ),
-    [parsedData, e1rmFormula, selectedLiftTypes, timeRange, showAllData],
+    [parsedData, e1rmFormula, selectedLiftTypes, rangeFirstDate, showAllData],
   );
 
   // devLog("Rendering <VisualizerShadcn />...");

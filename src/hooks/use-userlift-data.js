@@ -230,7 +230,7 @@ export const UserLiftingDataProvider = ({ children }) => {
     setParsedData(result.parsedData);
     setIsDemoMode(result.isDemoMode);
     setParseError(result.parseError);
-  }, [data, isLoading, isError, authStatus, clearSheet]);
+  }, [data, isLoading, isError, error, authStatus, clearSheet]);
 
   // -----------------------------------------------------------------------------------------------
   // Effect B: Sync API metadata into sheetInfo when fresh data arrives

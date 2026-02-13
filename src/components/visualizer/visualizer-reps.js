@@ -124,7 +124,7 @@ export function VisualizerReps({ data, liftType }) {
       );
     });
     return result;
-  }, [parsedData, liftType, timeRange]);
+  }, [parsedData, liftType, timeRange, setTimeRange]);
 
   // Merge all dates for X axis
   const allDates = Array.from(

@@ -88,7 +88,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       liftType,
       aggregationType,
     );
-  }, [parsedData, rangeFirstDate, liftType, aggregationType]);
+  }, [parsedData, rangeFirstDate, timeRange, liftType, aggregationType]);
 
   // Calculate Y-axis values with nice round numbers
   const yAxisConfig = useMemo(() => {

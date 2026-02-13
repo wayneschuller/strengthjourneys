@@ -31,6 +31,10 @@ export const useStateFromQueryOrLocalStorage = (
   const [state, setState] = useState(defaultValue);
   const [isInitialized, setIsInitialized] = useState(false);
   const hasUserInteractedRef = useRef(false); // Gates URL sync: only after user interaction
+  const routerRef = useRef(router); // Stable ref to avoid depending on router/includeWhenSyncing in effects
+  routerRef.current = router;
+  const includeWhenSyncingRef = useRef(includeWhenSyncing);
+  includeWhenSyncingRef.current = includeWhenSyncing;
 
   // Query/localStorage store strings; JSON.parse for numbers, booleans, objects
   const parseValue = (value) => {
@@ -49,19 +53,20 @@ export const useStateFromQueryOrLocalStorage = (
   useEffect(() => {
     if (!router.isReady) return;
 
-    const getInitialState = () => {
-      const queryValue = router.query[key];
-      if (queryValue !== undefined) return parseValue(queryValue);
+    const query = routerRef.current.query;
+    const queryValue = query[key];
+    let initialState;
 
-      if (typeof window !== "undefined") {
-        const localStorageValue = localStorage.getItem(key);
-        if (localStorageValue !== null) return parseValue(localStorageValue);
-      }
+    if (queryValue !== undefined) {
+      initialState = parseValue(queryValue);
+    } else if (typeof window !== "undefined") {
+      const localStorageValue = localStorage.getItem(key);
+      initialState =
+        localStorageValue !== null ? parseValue(localStorageValue) : defaultValue;
+    } else {
+      initialState = defaultValue;
+    }
 
-      return defaultValue;
-    };
-
-    const initialState = getInitialState();
     setState(initialState);
     setIsInitialized(true);
 
@@ -70,26 +75,28 @@ export const useStateFromQueryOrLocalStorage = (
     }
   }, [router.isReady, key, defaultValue]);
 
-  // Persist to localStorage; sync to URL when syncQuery + user interacted. router excluded from deps (avoids infinite loop).
+  // Persist to localStorage; sync to URL when syncQuery + user interacted.
   useEffect(() => {
     if (!isInitialized) return;
 
     if (syncQuery && hasUserInteractedRef.current) {
+      const r = routerRef.current;
+      const extras = includeWhenSyncingRef.current;
       const newQueryParams = {
-        ...router.query,
+        ...r.query,
         [key]: stringifyValue(state),
-        ...(includeWhenSyncing &&
+        ...(extras &&
           Object.fromEntries(
-            Object.entries(includeWhenSyncing).map(([k, v]) => [
+            Object.entries(extras).map(([k, v]) => [
               k,
               stringifyValue(v),
             ]),
           )),
       };
 
-      router.replace(
+      r.replace(
         {
-          pathname: router.pathname,
+          pathname: r.pathname,
           query: newQueryParams,
         },
         undefined,
@@ -100,7 +107,6 @@ export const useStateFromQueryOrLocalStorage = (
     if (typeof window !== "undefined") {
       localStorage.setItem(key, stringifyValue(state));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- router excluded to prevent infinite loop
   }, [state, isInitialized, syncQuery, key]);
 
   const setStateWithInteraction = useCallback((valueOrUpdater) => {

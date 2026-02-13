@@ -1,6 +1,18 @@
 import { format } from "date-fns";
 import { estimateE1RM } from "./estimate-e1rm";
 
+// ---------------------------------------------------------------------------
+// PERFORMANCE NOTE — date comparisons
+//
+// All dates in parsedData are "YYYY-MM-DD" strings. This format sorts
+// correctly with plain string comparison (< > === localeCompare), so
+// there is NEVER a need to wrap them in new Date() for ordering.
+//
+// Avoid new Date() inside loops and sort comparators — each call allocates
+// an object and parses a string. In a sort with O(n log n) comparisons
+// that adds up fast. Prefer simple string compares instead.
+// ---------------------------------------------------------------------------
+
 // Simple wrapper for console.log
 export function devLog(...messages) {
   // Keep most dev logs gated to explicit development env
@@ -459,7 +471,7 @@ export function processTopLiftsByTypeAndReps(parsedData, liftTypes) {
       dataStructure[liftType].forEach((repArray) => {
         repArray.sort((a, b) => {
           if (b.weight !== a.weight) return b.weight - a.weight;
-          return new Date(a.date) - new Date(b.date); // earlier date wins
+          return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; // earlier date wins
         });
         if (repArray.length > maxEntries) {
           repArray.length = maxEntries;

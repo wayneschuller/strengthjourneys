@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { motion } from "motion/react";
 import { useMemo, useRef } from "react";
-import { devLogTiming } from "@/lib/processing-utils";
+import { logTiming } from "@/lib/processing-utils";
 import {
   format,
   parseISO,
@@ -555,7 +555,7 @@ function calculateLifetimeTonnage(parsedData, preferredUnit = "lb") {
     }
   }
 
-  devLogTiming("calculateLifetimeTonnage", performance.now() - startTime);
+  logTiming("calculateLifetimeTonnage", performance.now() - startTime);
 
   const unitKeys = Object.keys(totalByUnit);
   const primaryUnit = preferredUnit || unitKeys[0] || "lb";
@@ -910,7 +910,7 @@ function calculateStreak(parsedData) {
     weekKey = addDaysFromStr(weekKey, 7);
   }
 
-  devLogTiming("calculateStreak", performance.now() - startTime);
+  logTiming("calculateStreak", performance.now() - startTime);
 
   return { currentStreak, bestStreak, sessionsThisWeek };
 }

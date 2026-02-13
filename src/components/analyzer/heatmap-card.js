@@ -7,7 +7,7 @@ import CalendarHeatmap from "react-calendar-heatmap";
 import {
   coreLiftTypes,
   devLog,
-  devLogTiming,
+  logTiming,
   getReadableDateString,
 } from "@/lib/processing-utils";
 import { LoaderCircle } from "lucide-react";
@@ -86,7 +86,7 @@ export function ActivityHeatmapsCard() {
         gaTrackShareCopy("heatmap", { page: "/analyzer" });
       }
 
-      devLogTiming("html2canvas", performance.now() - startTime);
+      logTiming("html2canvas", performance.now() - startTime);
       setShareReady(true);
     } catch (err) {
       console.error("Error in copying heatmap: ", err);
@@ -495,7 +495,7 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
       });
     }
 
-    devLogTiming("generateHeatmapData", performance.now() - startTime, "demo");
+    logTiming("generateHeatmapData", performance.now() - startTime, "demo");
     return demoHeatmapData;
   }
 
@@ -554,7 +554,7 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
     },
   }));
 
-  devLogTiming("generateHeatmapData", performance.now() - startTime, `${startDate} to ${endDate}`);
+  logTiming("generateHeatmapData", performance.now() - startTime, `${startDate} to ${endDate}`);
 
   return heatmapData;
 }

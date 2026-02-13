@@ -12,8 +12,7 @@ export function devLog(...messages) {
 }
 
 // Color-coded timing log: green <10ms, orange <25ms, red >=25ms
-export function devLogTiming(name, ms, extra) {
-  if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development") return;
+export function logTiming(name, ms, extra) {
   const rounded = Math.round(ms);
   const color = rounded < 10 ? "#22c55e" : rounded < 25 ? "#f59e0b" : "#ef4444";
   const suffix = extra ? `  (${extra})` : "";
@@ -33,10 +32,6 @@ export function recordTiming(name, ms, extra) {
 }
 
 export function flushTimings(label = "\u{1F3CB}\uFE0F Processing Pipeline") {
-  if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development") {
-    _perfTimings.length = 0;
-    return;
-  }
   if (_perfTimings.length === 0) return;
 
   // Table-like grouped output with color-coded timings and a total
@@ -959,7 +954,7 @@ export function getPRHighlightsForYear(parsedData, year, e1rmFormula = "Brzycki"
     }
   });
   const out = BIG_FOUR_LIFT_TYPES.flatMap((lt) => byLiftType[lt] || []);
-  devLogTiming("getPRHighlightsForYear", performance.now() - startTime);
+  logTiming("getPRHighlightsForYear", performance.now() - startTime);
   return out;
 }
 
@@ -1027,7 +1022,7 @@ export function getLifetimePRsAchievedInYear(parsedData, year) {
     }
   });
   const out = BIG_FOUR_LIFT_TYPES.flatMap((lt) => byLiftType[lt] || []);
-  devLogTiming("getLifetimePRsAchievedInYear", performance.now() - startTime);
+  logTiming("getLifetimePRsAchievedInYear", performance.now() - startTime);
   return out;
 }
 

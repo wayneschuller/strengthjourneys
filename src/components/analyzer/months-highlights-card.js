@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import {
   coreLiftTypes,
-  devLogTiming,
+  logTiming,
   getReadableDateString,
 } from "@/lib/processing-utils";
 
@@ -175,7 +175,7 @@ function getRecentMonthHighlights(
     return a.yearlyRanking - b.yearlyRanking;
   });
 
-  devLogTiming("getRecentMonthHighlights", performance.now() - startTime);
+  logTiming("getRecentMonthHighlights", performance.now() - startTime);
 
   recentMonthHighlights.length = 15; // Cap at top 15 entries
   // devLog(recentMonthHighlights);

@@ -1,6 +1,6 @@
 "use client";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { devLog, devLogTiming } from "@/lib/processing-utils";
+import { devLog, logTiming } from "@/lib/processing-utils";
 
 export function processVisualizerData(
   parsedData,
@@ -88,7 +88,7 @@ export function processVisualizerData(
   });
   // devLog(`${dataset.length} points of chart data`);
 
-  devLogTiming("processVisualizerData", performance.now() - startTime);
+  logTiming("processVisualizerData", performance.now() - startTime);
 
   return { dataset, weightMax, weightMin };
 }

@@ -330,20 +330,17 @@ export const LiftTypeRecentHighlights = ({ liftType }) => {
   const { topLiftsByTypeAndReps } = useUserLiftingData();
   if (!topLiftsByTypeAndReps) return null;
 
-  // Helper function to check if a date is within the last month
-  const isWithinLastMonth = (dateString) => {
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-
-    return new Date(dateString) >= oneMonthAgo;
-  };
+  // Compute cutoff once, then use string comparison in the filter
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  const oneMonthAgoStr = oneMonthAgo.toISOString().slice(0, 10); // "YYYY-MM-DD"
 
   // Map the lifts for the given type to include their index, then filter for recent highlights
   const recentHighlights = topLiftsByTypeAndReps[liftType]
     ?.flatMap((repRange, repIndex) =>
       repRange.map((entry, entryIndex) => ({ ...entry, repIndex, entryIndex })),
     )
-    .filter((entry) => isWithinLastMonth(entry.date))
+    .filter((entry) => entry.date >= oneMonthAgoStr)
     .sort((a, b) => a.entryIndex - b.entryIndex) // Sort by entryIndex in ascending order
     .slice(0, 10); // Only show top n highlights per card
 

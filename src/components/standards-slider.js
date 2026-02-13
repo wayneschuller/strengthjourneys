@@ -1,5 +1,5 @@
 import { Fragment, useMemo } from "react";
-import { subMonths, subYears } from "date-fns";
+import { subMonths, subYears, format } from "date-fns";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   useAthleteBio,
@@ -40,13 +40,14 @@ export function StandardsSlider({
       return [];
 
     const now = new Date();
+    // Convert thresholds to "YYYY-MM-DD" strings for fast string comparison in the loop
     const thresholds = {
-      "1M": subMonths(now, 1),
-      "6M": subMonths(now, 6),
-      "1Y": subYears(now, 1),
-      "2Y": subYears(now, 2),
-      "5Y": subYears(now, 5),
-      "10Y": subYears(now, 10),
+      "1M": format(subMonths(now, 1), "yyyy-MM-dd"),
+      "6M": format(subMonths(now, 6), "yyyy-MM-dd"),
+      "1Y": format(subYears(now, 1), "yyyy-MM-dd"),
+      "2Y": format(subYears(now, 2), "yyyy-MM-dd"),
+      "5Y": format(subYears(now, 5), "yyyy-MM-dd"),
+      "10Y": format(subYears(now, 10), "yyyy-MM-dd"),
     };
 
     const bestByPeriod = {};
@@ -54,14 +55,13 @@ export function StandardsSlider({
 
     parsedData.forEach((entry) => {
       if (entry.liftType !== liftType || !entry.reps || !entry.weight) return;
-      const dateObj = new Date(entry.date);
-      if (Number.isNaN(dateObj.getTime())) return;
+      if (!entry.date) return;
 
       const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
-      const id = `${dateObj.getTime()}-${entry.reps}-${entry.weight}-${entry.unitType || ""}`;
+      const id = `${entry.date}-${entry.reps}-${entry.weight}-${entry.unitType || ""}`;
 
       PERIOD_KEYS.forEach((key) => {
-        if (dateObj < thresholds[key]) return;
+        if (entry.date < thresholds[key]) return;
         const current = bestByPeriod[key];
         if (!current || e1rm > current.e1rm) {
           bestByPeriod[key] = {

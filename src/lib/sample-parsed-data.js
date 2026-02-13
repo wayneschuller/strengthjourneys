@@ -61,7 +61,7 @@ export function transposeDatesToToday(parsedData, addJitter) {
   });
 
   // Sorting the updated data by date
-  updatedData.sort((a, b) => new Date(a.date) - new Date(b.date));
+  updatedData.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
   return updatedData;
 }

@@ -37,22 +37,37 @@ export function HomeDashboard() {
 
   return (
     <div>
-      <div className="mb-4 grid grid-cols-1 items-center gap-2 text-xl lg:grid-cols-[auto_1fr_auto]">
-        <span className="hidden whitespace-nowrap lg:block">
-          Welcome <span className="font-bold">{session.user.name}</span>
-        </span>
-        {sheetInfo?.ssid ? (
-          <div className="flex justify-center">
-            <ConsistencyGradesRow
+      <div className="relative mb-4 text-xl">
+        {/* Desktop: welcome left, circles absolute-centered, status right */}
+        <div className="hidden items-center justify-between gap-2 lg:flex">
+          <span className="whitespace-nowrap">
+            Welcome <span className="font-bold">{session.user.name}</span>
+          </span>
+          {sheetInfo?.ssid && hasDataLoaded && (
+            <DataSheetStatus
+              rawRows={rawRows}
               parsedData={parsedData}
-              isVisible={hasDataLoaded}
+              dataSyncedAt={dataSyncedAt}
+              isValidating={isValidating}
+              sheetURL={sheetInfo?.url}
+              sheetFilename={sheetInfo?.filename}
+              mutate={mutate}
             />
+          )}
+        </div>
+        {sheetInfo?.ssid && (
+          <div className="flex justify-center lg:pointer-events-none lg:absolute lg:inset-0 lg:items-center">
+            <div className="lg:pointer-events-auto">
+              <ConsistencyGradesRow
+                parsedData={parsedData}
+                isVisible={hasDataLoaded}
+              />
+            </div>
           </div>
-        ) : (
-          <div className="hidden lg:block" />
         )}
-        {sheetInfo?.ssid && hasDataLoaded ? (
-          <div className="flex justify-center lg:justify-end">
+        {/* Mobile: status below circles */}
+        {sheetInfo?.ssid && hasDataLoaded && (
+          <div className="mt-2 flex justify-center lg:hidden">
             <DataSheetStatus
               rawRows={rawRows}
               parsedData={parsedData}
@@ -63,8 +78,6 @@ export function HomeDashboard() {
               mutate={mutate}
             />
           </div>
-        ) : (
-          <div className="hidden lg:block" />
         )}
       </div>
       {!sheetInfo?.ssid && <OnBoardingDashboard />}

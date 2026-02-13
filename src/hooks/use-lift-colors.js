@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { SliderPicker } from "react-color";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,11 +45,13 @@ const isValidHexColor = (color) => {
   return true;
 };
 
-// Generate random hex color
-const generateRandomColor = () => {
-  return `#${Math.floor(Math.random() * 16777215)
-    .toString(16)
-    .padStart(6, "0")}`;
+// Deterministic color from lift name — same name always gives the same color
+const hashLiftColor = (liftType) => {
+  let hash = 0;
+  for (let i = 0; i < liftType.length; i++) {
+    hash = liftType.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return `#${(hash & 0xFFFFFF).toString(16).padStart(6, "0")}`;
 };
 
 // Default context value
@@ -111,29 +113,9 @@ export const LiftColorsProvider = ({ children }) => {
     }
   }, [overrides]);
 
-  // Merge defaults with overrides
-  const activeColors = { ...DEFAULT_COLORS, ...overrides };
-
-  // Pending random colors assigned during render — flushed via useEffect
-  const pendingRef = useRef({});
-
-  // Flush any colors assigned during render into state
-  useEffect(() => {
-    const pending = pendingRef.current;
-    if (Object.keys(pending).length === 0) return;
-    pendingRef.current = {};
-    setOverrides((prev) => ({ ...prev, ...pending }));
-  });
-
-  // Get color for a lift type — pure read, safe to call during render
+  // Pure read: user pick > default > deterministic hash
   const getActiveColor = (liftType) => {
-    if (activeColors[liftType]) return activeColors[liftType];
-    // Already queued a random color this render cycle
-    if (pendingRef.current[liftType]) return pendingRef.current[liftType];
-    // Assign a random color and queue it for persistence
-    const randomColor = generateRandomColor();
-    pendingRef.current[liftType] = randomColor;
-    return randomColor;
+    return overrides[liftType] || DEFAULT_COLORS[liftType] || hashLiftColor(liftType);
   };
 
   // Set a color override and update localStorage

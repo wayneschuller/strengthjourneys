@@ -229,7 +229,6 @@ export const UserLiftingDataProvider = ({ children }) => {
     if (authStatus === "loading") return;
 
     // A list of pages with demo data that need this reminder toast
-    devLog(currentPath);
     const demoDataPaths = [
       "/visualizer",
       "/analyzer",

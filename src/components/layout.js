@@ -75,10 +75,12 @@ export function Layout({ children }) {
   useEffect(() => {
     if (rawRows == null) return;
     if (!parsedData || !parsedData.length) return;
-    if (router.pathname === "/") return;
-    if (rawRows === prevRawRowsRef.current) return;
 
+    const isNewData = rawRows !== prevRawRowsRef.current;
     prevRawRowsRef.current = rawRows;
+
+    if (!isNewData) return;
+    if (router.pathname === "/") return;
 
     // Build relative date copy from the latest entry
     const latestDate = parsedData[parsedData.length - 1].date;

@@ -130,23 +130,20 @@ const FADE_DELAY_MS = 2500;
 
 /**
  * Animated progress bar showing "Reading your workout data" with row count. Fades out after
- * progress completes. Re-triggers when isValidating becomes true.
+ * progress completes. Re-triggers only when rowCount changes (new data arrived).
  *
  * @param {Object} props
  * @param {number|null} props.rowCount - Total rows to process.
  * @param {boolean} props.isProgressDone - Whether the animation has finished.
  * @param {function(boolean)} props.setIsProgressDone - Callback to mark progress complete.
- * @param {boolean} props.isValidating - Whether SWR is revalidating (resets animation).
  */
 export function RowProcessingIndicator({
   rowCount,
   isProgressDone,
   setIsProgressDone,
-  isValidating,
 }) {
   const [animatedCount, setAnimatedCount] = useState(0);
   const [shouldFadeOut, setShouldFadeOut] = useState(false);
-  const [animationKey, setAnimationKey] = useState(0);
 
   useEffect(() => {
     if (!isProgressDone) {
@@ -157,17 +154,8 @@ export function RowProcessingIndicator({
     return () => clearTimeout(timer);
   }, [isProgressDone]);
 
-  // When SWR starts revalidating, reappear and re-run the animation
   useEffect(() => {
-    if (isValidating && rowCount != null && rowCount > 0) {
-      setShouldFadeOut(false);
-      setIsProgressDone(false);
-      setAnimationKey((k) => k + 1);
-    }
-  }, [isValidating, rowCount, setIsProgressDone]);
-
-  useEffect(() => {
-    // Reset whenever the incoming row count changes or animation is re-triggered
+    // Reset whenever the incoming row count changes
     setAnimatedCount(0);
     setIsProgressDone(false);
 
@@ -204,7 +192,7 @@ export function RowProcessingIndicator({
     return () => {
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, [rowCount, animationKey, setIsProgressDone]);
+  }, [rowCount, setIsProgressDone]);
 
   const percent =
     rowCount && rowCount > 0

@@ -150,7 +150,6 @@ export function HomeDashboard() {
           rowCount={rawRows}
           isProgressDone={isProgressDone}
           setIsProgressDone={setIsProgressDone}
-          isValidating={isValidating}
         />
       )}
       {sheetInfo?.ssid && <SectionTopCards isProgressDone={hasDataLoaded} />}

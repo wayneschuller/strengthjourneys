@@ -873,11 +873,15 @@ function calculateStreakFromDates(allSessionDates) {
   const thisWeekKey = getWeekKeyFromDateStr(todayStr);
   const sessionsThisWeek = weekSessionCount.get(thisWeekKey) || 0;
 
-  // --- Phase 3: Current streak (consecutive **completed** weeks with 3+ sessions, Option B) ---
-  // We treat only fully completed weeks as eligible for the streak.
-  // The current calendar week (the one containing "today") does NOT contribute to, or break, the streak until it is complete.
+  // --- Phase 3: Current streak (consecutive weeks with 3+ sessions) ---
+  // Count the current week immediately once it reaches 3+ sessions.
+  // If current week is below 3, it does not break the streak yet.
   let currentStreak = 0;
-  const lastCompleteWeekKey = subtractDaysFromStr(thisWeekKey, 7); // Monday of the last fully completed week
+  const thisWeekIsQualified = sessionsThisWeek >= 3;
+  if (thisWeekIsQualified) {
+    currentStreak = 1;
+  }
+  const lastCompleteWeekKey = subtractDaysFromStr(thisWeekKey, 7); // Monday of the last completed week
   let weekKey = lastCompleteWeekKey;
   while (weekKey >= oldestWeek) {
     const sessionCount = weekSessionCount.get(weekKey) || 0;
@@ -889,11 +893,12 @@ function calculateStreakFromDates(allSessionDates) {
     weekKey = subtractDaysFromStr(weekKey, 7);
   }
 
-  // --- Phase 4: Best streak (longest run of consecutive completed weeks with 3+ sessions, Option B) ---
+  // --- Phase 4: Best streak (longest run of consecutive 3+ session weeks) ---
+  // Include this week only when it has already reached 3+ sessions.
   let bestStreak = 0;
   let tempStreak = 0;
   weekKey = oldestWeek;
-  const bestStreakEndWeek = lastCompleteWeekKey;
+  const bestStreakEndWeek = thisWeekIsQualified ? thisWeekKey : lastCompleteWeekKey;
   while (weekKey <= bestStreakEndWeek) {
     const sessionCount = weekSessionCount.get(weekKey) || 0;
     if (sessionCount >= 3) {

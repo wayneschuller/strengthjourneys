@@ -272,14 +272,14 @@ export default function Home() {
 
         <StrengthUnwrappedDecemberBanner className="mt-8 mb-6" />
 
-        <h2 class="mt-8 mb-4 text-xl font-semibold">
+        <h2 className="mt-8 mb-4 text-xl font-semibold">
           🏋️ The Big Four Barbell Lifts
         </h2>
 
         <BigFourLiftCards lifts={mainBarbellLifts} animated={bigFourAnimated} />
         <Separator className="my-8" />
 
-        <h2 class="mt-8 text-xl font-semibold">🛠️ Strength Insights & Tools</h2>
+        <h2 className="mt-8 text-xl font-semibold">🛠️ Strength Insights & Tools</h2>
         <div className="mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {featurePages.map((card, index) => (
             <FeatureCard key={index} index={index} {...card} />

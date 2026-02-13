@@ -89,11 +89,11 @@ export function HomeDashboard() {
 
   return (
     <div>
-      <div className="relative mb-4 text-xl">
-        {/* Desktop: welcome left, circles absolute-centered, status right */}
-        <div className="hidden items-center justify-between gap-2 lg:flex">
-          <motion.span
-            className="whitespace-nowrap"
+      <div className="relative mb-4 2xl:mb-6 text-xl">
+        {/* 2xl: welcome left + status right in one row, vertically centered with circles */}
+        <div className="2xl:flex 2xl:items-start 2xl:justify-between">
+          <motion.div
+            className="mb-2 text-center 2xl:mb-0 2xl:text-left"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
@@ -104,22 +104,24 @@ export function HomeDashboard() {
             <span className="font-bold">
               {session.user.name?.split(" ")[0]}
             </span>
-          </motion.span>
+          </motion.div>
           {sheetInfo?.ssid && hasDataLoaded && (
-            <DataSheetStatus
-              rawRows={rawRows}
-              parsedData={parsedData}
-              dataSyncedAt={dataSyncedAt}
-              isValidating={isValidating}
-              sheetURL={sheetInfo?.url}
-              sheetFilename={sheetInfo?.filename}
-              mutate={mutate}
-            />
+            <div className="hidden 2xl:block">
+              <DataSheetStatus
+                rawRows={rawRows}
+                parsedData={parsedData}
+                dataSyncedAt={dataSyncedAt}
+                isValidating={isValidating}
+                sheetURL={sheetInfo?.url}
+                sheetFilename={sheetInfo?.filename}
+                mutate={mutate}
+              />
+            </div>
           )}
         </div>
         {sheetInfo?.ssid && (
-          <div className="flex justify-center lg:pointer-events-none lg:absolute lg:inset-0 lg:items-center">
-            <div className="lg:pointer-events-auto">
+          <div className="flex justify-center 2xl:pointer-events-none 2xl:absolute 2xl:inset-0 2xl:items-start 2xl:justify-center">
+            <div className="2xl:pointer-events-auto">
               <ConsistencyGradesRow
                 parsedData={parsedData}
                 isVisible={hasDataLoaded}
@@ -129,7 +131,7 @@ export function HomeDashboard() {
         )}
         {/* Mobile: status below circles */}
         {sheetInfo?.ssid && hasDataLoaded && (
-          <div className="mt-2 flex justify-center lg:hidden">
+          <div className="mt-2 flex justify-center 2xl:hidden">
             <DataSheetStatus
               rawRows={rawRows}
               parsedData={parsedData}

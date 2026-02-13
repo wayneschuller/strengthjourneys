@@ -58,8 +58,8 @@ export function DataSheetStatus({
 
   const sheetLinkContent = (
     <>
-      <span className="lg:hidden">Google Sheet</span>
-      <span className="hidden lg:inline">{sheetLabel}</span>
+      <span className="2xl:hidden">Google Sheet</span>
+      <span className="hidden 2xl:inline-block max-w-[20ch] min-[1920px]:max-w-none truncate align-bottom">{sheetLabel}</span>
     </>
   );
 

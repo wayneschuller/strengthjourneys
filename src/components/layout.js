@@ -203,7 +203,7 @@ export function Layout({ children }) {
           {children}
         </main>
         <Footer />
-        {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development" && <FeedbackWidget />}
+        <FeedbackWidget />
       </div>
     </div>
   );

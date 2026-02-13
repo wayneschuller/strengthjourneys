@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useSession, signIn } from "next-auth/react";
-import { trackSignInClick } from "@/lib/analytics";
+import { gaTrackSignInClick } from "@/lib/analytics";
 import { SloganCarousel } from "./slogan-carousel";
 import { Button } from "./ui/button";
 
@@ -60,7 +60,7 @@ function GoogleSignInButton() {
         <Button
           className="w-2/3 hover:ring-2"
           onClick={() => {
-            trackSignInClick(router.pathname);
+            gaTrackSignInClick(router.pathname);
             signIn("google");
           }}
         >

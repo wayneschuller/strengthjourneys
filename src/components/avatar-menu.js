@@ -5,7 +5,7 @@ import { useContext, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { trackSignInClick } from "@/lib/analytics";
+import { gaTrackSignInClick } from "@/lib/analytics";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { devLog } from "@/lib/processing-utils";
@@ -76,7 +76,7 @@ export function AvatarDropdown() {
       <Button
         variant="outline"
         onClick={() => {
-          trackSignInClick(router.pathname);
+          gaTrackSignInClick(router.pathname);
           signIn("google");
         }}
       >

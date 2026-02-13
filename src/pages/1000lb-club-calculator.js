@@ -33,7 +33,7 @@ import { Anvil, Trophy, LineChart, Calculator, BicepsFlexed, Bot } from "lucide-
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
-import { trackShareCopy } from "@/lib/analytics";
+import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 
 const BIG_FOUR_URLS = {
@@ -183,7 +183,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       ?.writeText(lines.join("\n"))
       .then(() => {
         toast({ description: "Result copied to clipboard." });
-        trackShareCopy("1000lb_club", { page: "/1000lb-club-calculator" });
+        gaTrackShareCopy("1000lb_club", { page: "/1000lb-club-calculator" });
       })
       .catch(() => {
         toast({ variant: "destructive", title: "Could not copy to clipboard" });

@@ -4,7 +4,7 @@ import { useState, useEffect, useContext, useCallback } from "react";
 import { useRouter } from "next/router";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
-import { trackSignInClick } from "@/lib/analytics";
+import { gaTrackSignInClick } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
@@ -383,7 +383,7 @@ export function GettingStartedCard() {
           {authStatus !== "authenticated" ? (
             <button
               onClick={() => {
-                trackSignInClick(router.pathname);
+                gaTrackSignInClick(router.pathname);
                 signIn("google");
               }}
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
@@ -527,7 +527,7 @@ export function GettingStartedCardCompact() {
           {authStatus !== "authenticated" ? (
             <Button
               onClick={() => {
-                trackSignInClick(router.pathname);
+                gaTrackSignInClick(router.pathname);
                 signIn("google");
               }}
             >
@@ -572,7 +572,7 @@ export const SignInInvite = () => {
     <div>
       <button
         onClick={() => {
-          trackSignInClick(router.pathname);
+          gaTrackSignInClick(router.pathname);
           signIn("google");
         }}
         className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
@@ -617,7 +617,7 @@ export function DemoModeSignInCard() {
           size="default"
           className="flex w-full items-center justify-center gap-2"
           onClick={() => {
-            trackSignInClick(router.pathname);
+            gaTrackSignInClick(router.pathname);
             signIn("google");
           }}
         >

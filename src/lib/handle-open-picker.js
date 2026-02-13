@@ -1,7 +1,7 @@
 /** @format */
 "use client";
 
-import { trackSheetConnectClick } from "@/lib/analytics";
+import { gaTrackSheetConnectClick } from "@/lib/analytics";
 
 /**
  * Opens the Google Drive picker and tracks the click for analytics.
@@ -12,6 +12,6 @@ import { trackSheetConnectClick } from "@/lib/analytics";
  */
 export function handleOpenFilePicker(openPicker) {
   const page = typeof window !== "undefined" ? window.location.pathname : "";
-  trackSheetConnectClick(page);
+  gaTrackSheetConnectClick(page);
   openPicker();
 }

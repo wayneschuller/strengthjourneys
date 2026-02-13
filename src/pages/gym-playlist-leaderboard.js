@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import shortUUID from "short-uuid";
 import { useLocalStorage } from "usehooks-ts";
 import { useSession, signIn } from "next-auth/react";
-import { trackSignInClick } from "@/lib/analytics";
+import { gaTrackSignInClick } from "@/lib/analytics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -463,7 +463,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
                 are{" "}
                 <button
                   onClick={() => {
-                    trackSignInClick(router.pathname);
+                    gaTrackSignInClick(router.pathname);
                     signIn("google");
                   }}
                   className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"

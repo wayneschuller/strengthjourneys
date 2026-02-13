@@ -21,7 +21,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { trackFeedbackSentiment } from "@/lib/analytics";
+import { gaTrackFeedbackSentiment } from "@/lib/analytics";
 
 export function FeedbackWidget() {
   const router = useRouter();
@@ -130,7 +130,7 @@ export function FeedbackWidget() {
 
   function handleThumbClick(value) {
     setSentiment(value);
-    trackFeedbackSentiment(value, router.pathname);
+    gaTrackFeedbackSentiment(value, router.pathname);
     setLayer(2);
     startCountdown();
   }

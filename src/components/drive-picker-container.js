@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { DrivePicker, DrivePickerDocsView } from "@googleworkspace/drive-picker-react";
 import {
-  trackSheetPickerCancelled,
-  trackSheetSelected,
-  event,
+  gaTrackSheetPickerCancelled,
+  gaTrackSheetSelected,
+  gaEvent,
 } from "@/lib/analytics";
 
 /**
@@ -51,8 +51,8 @@ export function DrivePickerContainer({
       const data = e.detail;
       if (data.action === "cancel") return;
       if (data.docs?.[0]) {
-        trackSheetSelected();
-        event("gdrive_picker_opened");
+        gaTrackSheetSelected();
+        gaEvent("gdrive_picker_opened");
         const doc = data.docs[0];
         setSsid?.(doc.id);
         setSheetURL?.(encodeURIComponent(doc.url));
@@ -64,7 +64,7 @@ export function DrivePickerContainer({
   );
 
   const handleCanceled = useCallback(() => {
-    trackSheetPickerCancelled();
+    gaTrackSheetPickerCancelled();
     setShowPicker(false);
   }, []);
 

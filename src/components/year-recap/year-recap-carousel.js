@@ -9,7 +9,7 @@ import {
   CarouselNext,
 } from "@/components/ui/carousel";
 import { useToast } from "@/hooks/use-toast";
-import { trackShareCopy } from "@/lib/analytics";
+import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { TitleCard } from "./cards/title-card";
 import { SessionsCard } from "./cards/sessions-card";
@@ -115,7 +115,7 @@ export function YearRecapCarousel({ year, isDemo }) {
             .then(() => {
               toast({ title: "Copied to clipboard! Paste into Instagram or anywhere." });
               const slideId = cards[selectedIndex]?.id;
-              trackShareCopy("year_recap", { page: "/strength-year-in-review", slide: slideId });
+              gaTrackShareCopy("year_recap", { page: "/strength-year-in-review", slide: slideId });
             })
             .catch((err) => {
               console.error("Copy error:", err);

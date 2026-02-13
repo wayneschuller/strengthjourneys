@@ -10,7 +10,7 @@ import {
   getReadableDateString,
 } from "@/lib/processing-utils";
 import { LoaderCircle } from "lucide-react";
-import { trackShareCopy } from "@/lib/analytics";
+import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -82,7 +82,7 @@ export function ActivityHeatmapsCard() {
           new ClipboardItem({ "image/png": blob }),
         ]);
         console.log("Heatmap copied to clipboard");
-        trackShareCopy("heatmap", { page: "/analyzer" });
+        gaTrackShareCopy("heatmap", { page: "/analyzer" });
       }
 
       devLog(

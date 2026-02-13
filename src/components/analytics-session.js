@@ -3,10 +3,10 @@
 
 import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { trackSignInSuccess } from "@/lib/analytics";
+import { gaTrackSignInSuccess } from "@/lib/analytics";
 
 /**
- * Calls trackSignInSuccess() to send Google Analytics funnel_sign_in_success when the user becomes authenticated (client-side only).
+ * Calls gaTrackSignInSuccess() to send Google Analytics funnel_sign_in_success when the user becomes authenticated (client-side only).
  * Mount inside SessionProvider. Fires once per transition to authenticated.
  */
 export function AnalyticsSession() {
@@ -15,7 +15,7 @@ export function AnalyticsSession() {
 
   useEffect(() => {
     if (status === "authenticated" && prevStatusRef.current !== "authenticated") {
-      trackSignInSuccess();
+      gaTrackSignInSuccess();
     }
     prevStatusRef.current = status;
   }, [status]);

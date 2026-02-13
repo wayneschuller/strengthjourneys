@@ -11,10 +11,18 @@ export function devLog(...messages) {
   }
 }
 
-// Color-coded timing log: green <10ms, orange <25ms, red >=25ms
+// Color thresholds scale with data size so 60ms over 18k rows stays green.
+// Base: green <10ms, orange <25ms. Scales up ~5µs/row green, ~15µs/row orange.
+function timingColor(ms, rows) {
+  const greenMax = rows ? Math.max(10, Math.round(rows * 0.005)) : 10;
+  const orangeMax = rows ? Math.max(25, Math.round(rows * 0.015)) : 25;
+  return ms < greenMax ? "#22c55e" : ms < orangeMax ? "#f59e0b" : "#ef4444";
+}
+
+// Color-coded timing log for standalone (page-specific) measurements
 export function logTiming(name, ms, extra) {
   const rounded = Math.round(ms);
-  const color = rounded < 10 ? "#22c55e" : rounded < 25 ? "#f59e0b" : "#ef4444";
+  const color = timingColor(rounded);
   const suffix = extra ? `  (${extra})` : "";
   console.log(
     `%c⏱ ${name}%c ${rounded}ms${suffix}`,
@@ -34,18 +42,27 @@ export function recordTiming(name, ms, extra) {
 export function flushTimings(label = "\u{1F3CB}\uFE0F Processing Pipeline") {
   if (_perfTimings.length === 0) return;
 
+  // Extract row count from the first extra that has "N lifts" (set by Parse step)
+  let rows = 0;
+  for (const t of _perfTimings) {
+    const match = t.extra?.match(/^(\d+) lifts/);
+    if (match) { rows = parseInt(match[1], 10); break; }
+  }
+
   // Table-like grouped output with color-coded timings and a total
   const nameWidth = Math.max(..._perfTimings.map((t) => t.name.length));
   const totalMs = _perfTimings.reduce((sum, t) => sum + t.ms, 0);
 
+  const totalColor = timingColor(totalMs, rows);
   console.groupCollapsed(
-    `%c${label}%c  ${totalMs}ms`,
+    `%c${label}%c  %c${totalMs}ms`,
     "color:#22c55e;font-weight:bold",
     "color:inherit;font-weight:normal",
+    `color:${totalColor};font-weight:bold`,
   );
 
   _perfTimings.forEach((t) => {
-    const color = t.ms < 10 ? "#22c55e" : t.ms < 25 ? "#f59e0b" : "#ef4444";
+    const color = timingColor(t.ms, rows);
     const extra = t.extra ? `  (${t.extra})` : "";
     const padded = t.name.padEnd(nameWidth);
     console.log(
@@ -57,7 +74,6 @@ export function flushTimings(label = "\u{1F3CB}\uFE0F Processing Pipeline") {
     );
   });
 
-  const totalColor = totalMs < 50 ? "#22c55e" : totalMs < 100 ? "#f59e0b" : "#ef4444";
   const divider = "─".repeat(nameWidth + 10);
   console.log(`  ${divider}`);
   console.log(

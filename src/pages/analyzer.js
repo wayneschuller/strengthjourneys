@@ -9,7 +9,6 @@ import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { useReadLocalStorage } from "usehooks-ts";
 import { Separator } from "@/components/ui/separator";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { devLog } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
 
 // Here are the analyzer dashboard cards

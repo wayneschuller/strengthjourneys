@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMemo } from "react";
-import { devLog } from "@/lib/processing-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
@@ -151,7 +150,6 @@ export function LiftTypeFrequencyPieCard() {
   topLifts.forEach((item) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const color = getColor(item.liftType);
-    devLog(`type: ${item.liftType}, color: ${color}`);
     liftColors[item.liftType] = color;
   });
 

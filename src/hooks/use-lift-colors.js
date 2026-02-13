@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { SliderPicker } from "react-color";
 import { Button } from "@/components/ui/button";
 import {
@@ -114,20 +114,25 @@ export const LiftColorsProvider = ({ children }) => {
   // Merge defaults with overrides
   const activeColors = { ...DEFAULT_COLORS, ...overrides };
 
-  // Get color for a lift type, using exact match or random
+  // Pending random colors assigned during render — flushed via useEffect
+  const pendingRef = useRef({});
+
+  // Flush any colors assigned during render into state
+  useEffect(() => {
+    const pending = pendingRef.current;
+    if (Object.keys(pending).length === 0) return;
+    pendingRef.current = {};
+    setOverrides((prev) => ({ ...prev, ...pending }));
+  });
+
+  // Get color for a lift type — pure read, safe to call during render
   const getActiveColor = (liftType) => {
-    // Exact match in activeColors (includes overrides or defaults)
-    if (activeColors[liftType]) {
-      return activeColors[liftType];
-    }
-    // Fallback to random color for unknown lift types
-    // Auto-save it to localStorage and state so it persists
+    if (activeColors[liftType]) return activeColors[liftType];
+    // Already queued a random color this render cycle
+    if (pendingRef.current[liftType]) return pendingRef.current[liftType];
+    // Assign a random color and queue it for persistence
     const randomColor = generateRandomColor();
-    const newOverrides = { ...overrides, [liftType]: randomColor };
-    setOverrides(newOverrides);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(LOCAL_STORAGE_KEYS.LIFT_COLOR_OVERRIDES, JSON.stringify(newOverrides));
-    }
+    pendingRef.current[liftType] = randomColor;
     return randomColor;
   };
 

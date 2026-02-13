@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/card";
 import {
   coreLiftTypes,
-  logTiming,
   getReadableDateString,
 } from "@/lib/processing-utils";
 
@@ -109,7 +108,6 @@ function getRecentMonthHighlights(
   topLiftsByTypeAndRepsLast12Months,
 ) {
   if (!parsedData) return null;
-  const startTime = performance.now();
 
   const lastMonth = new Date();
   lastMonth.setMonth(lastMonth.getMonth() - 1);
@@ -174,8 +172,6 @@ function getRecentMonthHighlights(
     }
     return a.yearlyRanking - b.yearlyRanking;
   });
-
-  logTiming("getRecentMonthHighlights", performance.now() - startTime);
 
   recentMonthHighlights.length = 15; // Cap at top 15 entries
   // devLog(recentMonthHighlights);

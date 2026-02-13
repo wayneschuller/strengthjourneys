@@ -8,7 +8,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useMemo, useRef, useEffect } from "react";
-import { logTiming } from "@/lib/processing-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 import {
@@ -172,7 +171,6 @@ function subtractDays(dateStr, days) {
 export function processConsistency(parsedData) {
   if (!parsedData || parsedData.length === 0) return null;
 
-  const startTime = performance.now();
   const today = format(new Date(), "yyyy-MM-dd"); // Local date, not UTC
 
   const workoutRangeDays = differenceInCalendarDays(
@@ -249,8 +247,6 @@ export function processConsistency(parsedData) {
       tooltip: tooltip,
     };
   });
-
-  logTiming("processConsistency", performance.now() - startTime);
 
   return results;
 }

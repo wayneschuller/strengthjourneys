@@ -226,7 +226,7 @@ export function SectionTopCards({ isProgressDone = false }) {
   const encouragementMessage = streakEncouragementRef.current;
 
   return (
-    <div className="col-span-full grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+    <div className="col-span-full grid grid-cols-2 gap-5 xl:grid-cols-3 2xl:grid-cols-5">
       {!isProgressDone && <SectionTopCardsSkeleton />}
       {isProgressDone && (
         <>

@@ -37,30 +37,34 @@ export function HomeDashboard() {
 
   return (
     <div>
-      <div className="relative mb-4 flex items-center justify-between gap-2 text-xl">
-        <span className="whitespace-nowrap">
+      <div className="mb-4 grid grid-cols-1 items-center gap-2 text-xl lg:grid-cols-[auto_1fr_auto]">
+        <span className="hidden whitespace-nowrap lg:block">
           Welcome <span className="font-bold">{session.user.name}</span>
         </span>
-        {sheetInfo?.ssid && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className="pointer-events-auto">
-              <ConsistencyGradesRow
-                parsedData={parsedData}
-                isVisible={hasDataLoaded}
-              />
-            </div>
+        {sheetInfo?.ssid ? (
+          <div className="flex justify-center">
+            <ConsistencyGradesRow
+              parsedData={parsedData}
+              isVisible={hasDataLoaded}
+            />
           </div>
+        ) : (
+          <div className="hidden lg:block" />
         )}
-        {sheetInfo?.ssid && hasDataLoaded && (
-          <DataSheetStatus
-            rawRows={rawRows}
-            parsedData={parsedData}
-            dataSyncedAt={dataSyncedAt}
-            isValidating={isValidating}
-            sheetURL={sheetInfo?.url}
-            sheetFilename={sheetInfo?.filename}
-            mutate={mutate}
-          />
+        {sheetInfo?.ssid && hasDataLoaded ? (
+          <div className="flex justify-center lg:justify-end">
+            <DataSheetStatus
+              rawRows={rawRows}
+              parsedData={parsedData}
+              dataSyncedAt={dataSyncedAt}
+              isValidating={isValidating}
+              sheetURL={sheetInfo?.url}
+              sheetFilename={sheetInfo?.filename}
+              mutate={mutate}
+            />
+          </div>
+        ) : (
+          <div className="hidden lg:block" />
         )}
       </div>
       {!sheetInfo?.ssid && <OnBoardingDashboard />}

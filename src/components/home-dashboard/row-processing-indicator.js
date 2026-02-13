@@ -56,20 +56,25 @@ export function DataSheetStatus({
     ? `Last synced: ${format(new Date(dataSyncedAt), "MMM d, h:mm a")}${rowLabel ? ` • ${rowLabel}` : ""}`
     : rowLabel || null;
 
+  const sheetLinkContent = (
+    <>
+      <span className="lg:hidden">Google Sheet</span>
+      <span className="hidden lg:inline">{sheetLabel}</span>
+    </>
+  );
+
   const sheetLink = sheetURL ? (
     <a
       href={sheetURL}
       target="_blank"
       rel="noopener noreferrer"
       title={tooltipText}
-      className={`inline-block max-w-[14rem] truncate align-bottom underline ${freshnessColor} hover:text-foreground`}
+      className={`underline ${freshnessColor} hover:text-foreground`}
     >
-      {sheetLabel}
+      {sheetLinkContent}
     </a>
   ) : (
-    <span className="inline-block max-w-[14rem] truncate align-bottom">
-      {sheetLabel}
-    </span>
+    <span>{sheetLinkContent}</span>
   );
 
   const syncLabel = (

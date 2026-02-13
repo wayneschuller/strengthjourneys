@@ -71,7 +71,7 @@ function GradeCircle({ percentage, label, size = 28, delay = 0, isVisible }) {
           textAnchor="middle"
           dominantBaseline="central"
           fill={color}
-          fontSize={grade.length > 1 ? 9 : 11}
+          fontSize={grade.length > 1 ? size * 0.32 : size * 0.39}
           fontWeight="600"
         >
           {grade}
@@ -93,12 +93,13 @@ export function ConsistencyGradesRow({ parsedData, isVisible = false }) {
   if (!consistency || consistency.length === 0) return null;
 
   return (
-    <div className="flex items-start justify-center gap-2">
+    <div className="flex items-start justify-center gap-3">
       {consistency.map((item, index) => (
         <GradeCircle
           key={item.label}
           percentage={item.percentage}
           label={item.label}
+          size={36}
           delay={index * 0.05}
           isVisible={isVisible}
         />

@@ -130,7 +130,7 @@ export function Layout({ children }) {
     });
   }, [parseError, toast]);
 
-  // Toast 4: Demo Mode (on specific pages when unauthenticated)
+  // Toast 4: Demo mode nudge (delayed, on data pages when unauthenticated)
   useEffect(() => {
     if (demoShown.current) return;
     if (authStatus === "loading") return;
@@ -138,23 +138,31 @@ export function Layout({ children }) {
 
     if (!DATA_ACCESS_BANNER_PATHS.includes(router.pathname)) return;
 
-    demoShown.current = true;
-    toast({
-      title: "Demo Mode",
-      description:
-        "Sign in via Google to visualize your personal Google Sheet lifting data.",
-      action: (
-        <ToastAction
-          altText="Google Login"
-          onClick={() => {
-            gaTrackSignInClick(router.pathname);
-            signIn("google");
-          }}
-        >
-          Google Sign in
-        </ToastAction>
-      ),
-    });
+    const timeoutId = setTimeout(() => {
+      if (demoShown.current) return;
+      demoShown.current = true;
+      const nudgeMessage = getRandomDemoModeNudgeMessage();
+      toast({
+        title: nudgeMessage.title,
+        description: nudgeMessage.description,
+        duration: DEMO_MODE_NUDGE_TOAST_DURATION_MS,
+        action: (
+          <ToastAction
+            altText="Google Login"
+            className="inline-flex items-center gap-2"
+            onClick={() => {
+              gaTrackSignInClick(router.pathname);
+              signIn("google");
+            }}
+          >
+            <GoogleLogo size={14} />
+            Google Sign in
+          </ToastAction>
+        ),
+      });
+    }, getRandomDemoModeNudgeDelayMs());
+
+    return () => clearTimeout(timeoutId);
   }, [authStatus, isDemoMode, router.pathname, toast]);
 
   return (
@@ -245,6 +253,53 @@ const DATA_ACCESS_BANNER_PATHS = [
   "/[lift]",
   "/strength-year-in-review",
 ];
+const DEMO_MODE_NUDGE_DELAY_MIN_MS = 20000;
+const DEMO_MODE_NUDGE_DELAY_MAX_MS = 30000;
+const DEMO_MODE_NUDGE_TOAST_DURATION_MS = 12000;
+const DEMO_MODE_NUDGE_MESSAGES = [
+  {
+    title: "Demo Data",
+    description:
+      "You are exploring demo data. Sign in to see your own lifting history here.",
+  },
+  {
+    title: "Sample Lifts",
+    description:
+      "This chart is using sample lifts. Connect your data to make it personal.",
+  },
+  {
+    title: "Your Numbers",
+    description:
+      "Most lifters want to see their numbers here. Sign in when you are ready.",
+  },
+  {
+    title: "Make It Yours",
+    description:
+      "This gets more interesting once it is your training history.",
+  },
+  {
+    title: "Strength Over Time",
+    description:
+      "See how your strength has changed over time. Sign in to unlock it.",
+  },
+  {
+    title: "Best With Your Data",
+    description:
+      "These insights work best with your own lifts behind them.",
+  },
+  {
+    title: "How Would Yours Look?",
+    description: "Wondering how this would look with your data?",
+  },
+  {
+    title: "Personal Best Sessions",
+    description: "Curious what your best sessions would look like here?",
+  },
+  {
+    title: "Viewing Demo Data",
+    description: "Viewing demo data. Sign in to personalize.",
+  },
+];
 
 function DataAccessBanner({ pathname }) {
   const { data: session, status: authStatus } = useSession();
@@ -314,5 +369,19 @@ function DataAccessBanner({ pathname }) {
         </div>
       </section>
     </>
+  );
+}
+
+function getRandomDemoModeNudgeMessage() {
+  const index = Math.floor(Math.random() * DEMO_MODE_NUDGE_MESSAGES.length);
+  return DEMO_MODE_NUDGE_MESSAGES[index];
+}
+
+function getRandomDemoModeNudgeDelayMs() {
+  return (
+    Math.floor(
+      Math.random() *
+        (DEMO_MODE_NUDGE_DELAY_MAX_MS - DEMO_MODE_NUDGE_DELAY_MIN_MS + 1),
+    ) + DEMO_MODE_NUDGE_DELAY_MIN_MS
   );
 }

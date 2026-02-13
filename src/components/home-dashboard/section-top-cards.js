@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { motion } from "motion/react";
 import { useMemo, useRef } from "react";
-import { devLog } from "@/lib/processing-utils";
+import { devLogTiming } from "@/lib/processing-utils";
 import {
   format,
   parseISO,
@@ -231,18 +231,18 @@ export function SectionTopCards({ isProgressDone = false }) {
 
   // Calculate lifetime tonnage (all-time total weight moved) in preferred units.
   const lifetimeTonnage = useMemo(
-    () => calculateLifetimeTonnage(parsedData, preferredUnit),
+    () => parsedData?.length ? calculateLifetimeTonnage(parsedData, preferredUnit) : calculateLifetimeTonnage(null),
     [parsedData, preferredUnit],
   );
 
   // Calculate session momentum
   const { recentSessions, previousSessions, percentageChange } = useMemo(
-    () => calculateSessionMomentum(parsedData),
+    () => parsedData?.length ? calculateSessionMomentum(parsedData) : { recentSessions: 0, previousSessions: 0, percentageChange: 0 },
     [parsedData],
   );
 
   const { currentStreak, bestStreak, sessionsThisWeek } = useMemo(
-    () => calculateStreak(parsedData),
+    () => parsedData?.length ? calculateStreak(parsedData) : { currentStreak: 0, bestStreak: 0, sessionsThisWeek: 0 },
     [parsedData],
   );
   const sessionsNeededThisWeek = Math.max(0, 3 - (sessionsThisWeek ?? 0));
@@ -507,7 +507,6 @@ function calculateLifetimeTonnage(parsedData, preferredUnit = "lb") {
   const startTime = performance.now();
 
   if (!parsedData || parsedData.length === 0) {
-    devLog("calculateLifetimeTonnage execution time: 0ms");
     return {
       totalByUnit: {},
       primaryUnit: preferredUnit || "lb",
@@ -556,8 +555,7 @@ function calculateLifetimeTonnage(parsedData, preferredUnit = "lb") {
     }
   }
 
-  const elapsedMs = Math.round(performance.now() - startTime);
-  devLog(`calculateLifetimeTonnage execution time: ${elapsedMs}ms`);
+  devLogTiming("calculateLifetimeTonnage", performance.now() - startTime);
 
   const unitKeys = Object.keys(totalByUnit);
   const primaryUnit = preferredUnit || unitKeys[0] || "lb";
@@ -912,10 +910,7 @@ function calculateStreak(parsedData) {
     weekKey = addDaysFromStr(weekKey, 7);
   }
 
-  devLog(
-    "calculateStreak execution time: " +
-      `${Math.round(performance.now() - startTime)}ms`,
-  );
+  devLogTiming("calculateStreak", performance.now() - startTime);
 
   return { currentStreak, bestStreak, sessionsThisWeek };
 }

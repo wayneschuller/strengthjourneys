@@ -11,6 +11,71 @@ export function devLog(...messages) {
   }
 }
 
+// Color-coded timing log: green <10ms, orange <25ms, red >=25ms
+export function devLogTiming(name, ms, extra) {
+  if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development") return;
+  const rounded = Math.round(ms);
+  const color = rounded < 10 ? "#22c55e" : rounded < 25 ? "#f59e0b" : "#ef4444";
+  const suffix = extra ? `  (${extra})` : "";
+  console.log(
+    `%c⏱ ${name}%c ${rounded}ms${suffix}`,
+    "font-weight:bold",
+    `color:${color};font-weight:bold`,
+  );
+}
+
+// Pipeline timing accumulator — core pipeline functions push timings here,
+// then flushTimings() prints them as one grouped line.
+const _perfTimings = [];
+
+export function recordTiming(name, ms, extra) {
+  _perfTimings.push({ name, ms: Math.round(ms), extra });
+}
+
+export function flushTimings(label = "\u{1F3CB}\uFE0F Processing Pipeline") {
+  if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV !== "development") {
+    _perfTimings.length = 0;
+    return;
+  }
+  if (_perfTimings.length === 0) return;
+
+  // Table-like grouped output with color-coded timings and a total
+  const nameWidth = Math.max(..._perfTimings.map((t) => t.name.length));
+  const totalMs = _perfTimings.reduce((sum, t) => sum + t.ms, 0);
+
+  console.groupCollapsed(
+    `%c${label}%c  ${totalMs}ms`,
+    "color:#22c55e;font-weight:bold",
+    "color:inherit;font-weight:normal",
+  );
+
+  _perfTimings.forEach((t) => {
+    const color = t.ms < 10 ? "#22c55e" : t.ms < 25 ? "#f59e0b" : "#ef4444";
+    const extra = t.extra ? `  (${t.extra})` : "";
+    const padded = t.name.padEnd(nameWidth);
+    console.log(
+      `  %c${padded}%c  %c${String(t.ms).padStart(4)}ms%c${extra}`,
+      "font-weight:bold",
+      "color:inherit",
+      `color:${color};font-weight:bold`,
+      "color:inherit;font-weight:normal",
+    );
+  });
+
+  const totalColor = totalMs < 50 ? "#22c55e" : totalMs < 100 ? "#f59e0b" : "#ef4444";
+  const divider = "─".repeat(nameWidth + 10);
+  console.log(`  ${divider}`);
+  console.log(
+    `  %c${"Total".padEnd(nameWidth)}%c  %c${String(totalMs).padStart(4)}ms`,
+    "font-weight:bold",
+    "color:inherit",
+    `color:${totalColor};font-weight:bold`,
+  );
+
+  console.groupEnd();
+  _perfTimings.length = 0;
+}
+
 export const coreLiftTypes = [
   "Back Squat",
   "Deadlift",
@@ -397,11 +462,7 @@ export function processTopLiftsByTypeAndReps(parsedData, liftTypes) {
   sortAndTrimArrays(topLiftsByTypeAndReps, maxEntries);
   sortAndTrimArrays(topLiftsByTypeAndRepsLast12Months, maxEntries);
 
-  devLog(
-    `processTopLiftsByTypeAndReps() execution time: \x1b[1m${Math.round(
-      performance.now() - startTime,
-    )}ms\x1b[0m`,
-  );
+  recordTiming("Top Lifts", performance.now() - startTime);
 
   return { topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months };
 }
@@ -474,11 +535,7 @@ export function processTopTonnageByType(parsedData, liftTypes) {
     topTonnageByTypeLast12Months[liftType] = last12.slice(0, 20);
   });
 
-  devLog(
-    `processTopTonnageByType() execution time: \x1b[1m${Math.round(
-      performance.now() - startTime,
-    )}ms\x1b[0m`,
-  );
+  recordTiming("Top Tonnage", performance.now() - startTime);
 
   return { topTonnageByType, topTonnageByTypeLast12Months };
 }
@@ -525,11 +582,7 @@ export function processSessionTonnageLookup(parsedData) {
 
   const allSessionDates = Array.from(allSessionDatesSet).sort();
 
-  devLog(
-    `processSessionTonnageLookup() execution time: \x1b[1m${Math.round(
-      performance.now() - startTime,
-    )}ms\x1b[0m`,
-  );
+  recordTiming("Session Lookup", performance.now() - startTime);
 
   return {
     sessionTonnageByDateAndLift,
@@ -714,7 +767,6 @@ export function getSessionTonnagePercentileRangeFromPrecomputed(
 export function calculateLiftTypes(parsedData) {
   const startTime = performance.now();
 
-  devLog(`calculateLiftTypes length: ${parsedData.length}`);
   const liftTypeStats = {};
   parsedData.forEach((lift) => {
     if (lift.isGoal) return; // Don't include goals here
@@ -745,11 +797,7 @@ export function calculateLiftTypes(parsedData) {
     }))
     .sort((a, b) => b.totalSets - a.totalSets);
 
-  devLog(
-    `calculateLiftTypes() execution time: ` +
-      `\x1b[1m${Math.round(performance.now() - startTime)}` +
-      `ms\x1b[0m`,
-  );
+  recordTiming("Lift Types", performance.now() - startTime, `${sortedLiftTypes.length} types`);
 
   return sortedLiftTypes;
 }
@@ -777,11 +825,7 @@ export const markHigherWeightAsHistoricalPRs = (parsedData) => {
 
   // No need to re-sort if parsedData is already sorted by date
 
-  devLog(
-    `markPRs() execution time: ` +
-      `\x1b[1m${Math.round(performance.now() - startTime)}` +
-      `ms\x1b[0m`,
-  );
+  recordTiming("Mark PRs", performance.now() - startTime);
 
   return parsedData;
 };
@@ -915,11 +959,7 @@ export function getPRHighlightsForYear(parsedData, year, e1rmFormula = "Brzycki"
     }
   });
   const out = BIG_FOUR_LIFT_TYPES.flatMap((lt) => byLiftType[lt] || []);
-  devLog(
-    `getPRHighlightsForYear() execution time: \x1b[1m${Math.round(
-      performance.now() - startTime,
-    )}ms\x1b[0m`,
-  );
+  devLogTiming("getPRHighlightsForYear", performance.now() - startTime);
   return out;
 }
 
@@ -987,11 +1027,7 @@ export function getLifetimePRsAchievedInYear(parsedData, year) {
     }
   });
   const out = BIG_FOUR_LIFT_TYPES.flatMap((lt) => byLiftType[lt] || []);
-  devLog(
-    `getLifetimePRsAchievedInYear() execution time: \x1b[1m${Math.round(
-      performance.now() - startTime,
-    )}ms\x1b[0m`,
-  );
+  devLogTiming("getLifetimePRsAchievedInYear", performance.now() - startTime);
   return out;
 }
 

@@ -9,6 +9,7 @@ import { parseData } from "@/lib/parse-data";
 import { gaEvent, gaTrackSignInClick } from "@/lib/analytics";
 import {
   devLog,
+  flushTimings,
   processTopLiftsByTypeAndReps,
   processTopTonnageByType,
   processSessionTonnageLookup,
@@ -214,26 +215,11 @@ export const UserLiftingDataProvider = ({ children }) => {
     return processSessionTonnageLookup(parsedData);
   }, [parsedData]);
 
-  // Processing pipeline progress log
+  // Flush accumulated pipeline timings once all processing is done
   useEffect(() => {
-    if (!parsedData) return;
-    const steps = [
-      { label: "Parsed", done: true, status: `${parsedData.length} lifts` },
-      { label: "Lift Types", done: liftTypes.length > 0, status: liftTypes.length > 0 ? `${liftTypes.length} types` : "waiting" },
-      { label: "PRs & Top Lifts", done: !!topLiftsByTypeAndReps },
-      { label: "Tonnage", done: !!sessionTonnageLookup },
-    ];
-    const pipeline = steps.map(s => {
-      const icon = s.done ? "✓" : "○";
-      const detail = s.status ? ` (${s.status})` : "";
-      return `${icon} ${s.label}${detail}`;
-    }).join("  →  ");
-    devLog(
-      `%c🏋️ Processing%c    ${pipeline}`,
-      "color:#22c55e;font-weight:bold",
-      "color:inherit",
-    );
-  }, [parsedData, liftTypes, topLiftsByTypeAndReps, sessionTonnageLookup]);
+    if (!parsedData || !sessionTonnageLookup) return;
+    flushTimings();
+  }, [parsedData, sessionTonnageLookup]);
 
   // Calculate rawRows from useSWR data (computed automatically when data changes)
   const rawRows = useMemo(() =>

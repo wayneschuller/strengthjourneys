@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useMemo, useRef, useEffect } from "react";
-import { devLog } from "@/lib/processing-utils";
+import { devLogTiming } from "@/lib/processing-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 import {
@@ -250,10 +250,7 @@ export function processConsistency(parsedData) {
     };
   });
 
-  devLog(
-    "processConsistency execution time: " +
-      `${Math.round(performance.now() - startTime)}ms`,
-  );
+  devLogTiming("processConsistency", performance.now() - startTime);
 
   return results;
 }

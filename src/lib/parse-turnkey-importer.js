@@ -1,4 +1,4 @@
-import { devLog } from "@/lib/processing-utils";
+import { devLog, recordTiming } from "@/lib/processing-utils";
 
 // Parse Turnkey data format
 //
@@ -97,12 +97,7 @@ export function parseTurnKeyData(data) {
     return 0;
   });
 
-  devLog(
-    "parseTurnKeyData() execution time: " +
-      `\x1b[1m${Math.round(performance.now() - startTime)}` +
-      `ms\x1b[0m` +
-      ` (${parsedData.length} tuples)`,
-  );
+  recordTiming("Parse TurnKey", performance.now() - startTime, `${parsedData.length} lifts`);
 
   return parsedData;
 }

@@ -5,7 +5,7 @@ import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { devLog, getReadableDateString } from "@/lib/processing-utils";
+import { devLog, devLogTiming, getReadableDateString } from "@/lib/processing-utils";
 import { parseISO, startOfWeek, startOfMonth, format } from "date-fns";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "./visualizer-utils";
@@ -523,11 +523,7 @@ function processTonnageData(
     chartData[i].rollingAverageTonnage = isNaN(avg) ? null : Math.round(avg);
   }
 
-  devLog(
-    `processTonnageData() execution time: \x1b[1m${Math.round(
-      performance.now() - startTime,
-    )}ms\x1b[0m`,
-  );
+  devLogTiming("processTonnageData", performance.now() - startTime);
 
   return chartData;
 }

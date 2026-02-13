@@ -161,10 +161,11 @@ export function gaTrackShareCopy(feature, params = {}) {
 }
 
 /**
- * Track feedback sentiment (thumbs up/down) from the floating feedback widget.
+ * Track feedback sentiment (thumbs up/down).
  * @param {"positive"|"negative"} sentiment
  * @param {string} page - Current page pathname
+ * @param {object} [extra] - Optional extra params (e.g. { logged_in, seconds_on_page })
  */
-export function gaTrackFeedbackSentiment(sentiment, page) {
-  gaEvent("feedback_sentiment", { sentiment, page });
+export function gaTrackFeedbackSentiment(sentiment, page, extra = {}) {
+  gaEvent("feedback_sentiment", { sentiment, page, ...extra });
 }

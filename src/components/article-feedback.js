@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { gaTrackFeedbackSentiment } from "@/lib/analytics";
@@ -8,7 +9,9 @@ import { gaTrackFeedbackSentiment } from "@/lib/analytics";
 const STORAGE_KEY_PREFIX = "article_feedback_";
 
 export function ArticleFeedback({ slug }) {
+  const { status } = useSession();
   const [vote, setVote] = useState(null); // "positive" | "negative" | null
+  const mountTime = useRef(Date.now());
 
   useEffect(() => {
     try {
@@ -25,7 +28,11 @@ export function ArticleFeedback({ slug }) {
     try {
       sessionStorage.setItem(`${STORAGE_KEY_PREFIX}${slug}`, sentiment);
     } catch (_) {}
-    gaTrackFeedbackSentiment(sentiment, `/articles/${slug}`);
+    const secondsOnPage = Math.round((Date.now() - mountTime.current) / 1000);
+    gaTrackFeedbackSentiment(sentiment, `/articles/${slug}`, {
+      logged_in: status === "authenticated",
+      seconds_on_page: secondsOnPage,
+    });
   }
 
   return (

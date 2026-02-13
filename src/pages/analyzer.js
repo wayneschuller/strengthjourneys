@@ -6,9 +6,7 @@ import { useState, useEffect } from "react";
 import { NextSeo } from "next-seo";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
-import { useReadLocalStorage } from "usehooks-ts";
 import { Separator } from "@/components/ui/separator";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { RelatedArticles } from "@/components/article-cards";
 
 // Here are the analyzer dashboard cards
@@ -91,13 +89,10 @@ export default function Analyzer({ relatedArticles }) {
 
 function AnalyzerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
-  const { isLoading } = useUserLiftingData();
+  const { isLoading, sheetInfo } = useUserLiftingData();
   const [highlightDate, setHighlightDate] = useState(null);
-  const ssid = useReadLocalStorage(LOCAL_STORAGE_KEYS.SSID, {
-    initializeWithValue: false,
-  });
 
-  if (!isLoading && authStatus === "authenticated" && ssid === null)
+  if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
         <ChooseSheetInstructionsCard session={session} />

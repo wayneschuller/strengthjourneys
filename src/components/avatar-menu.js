@@ -46,12 +46,9 @@ export function AvatarDropdown() {
   const { setTheme, theme } = useTheme();
 
   const {
-    ssid,
-    setSsid,
-    sheetURL,
-    setSheetURL,
-    sheetFilename,
-    setSheetFilename,
+    sheetInfo,
+    selectSheet,
+    clearSheet,
     parsedData,
     isLoading,
     isValidating,
@@ -66,10 +63,10 @@ export function AvatarDropdown() {
   // Load picker when user opens dropdown menu (anticipate they might use it)
   // Or when they need to choose a sheet (ssid is missing)
   useEffect(() => {
-    if (authStatus === "authenticated" && (!ssid || shouldLoadPicker)) {
+    if (authStatus === "authenticated" && (!sheetInfo?.ssid || shouldLoadPicker)) {
       setShouldLoadPicker(true);
     }
-  }, [authStatus, ssid, shouldLoadPicker]);
+  }, [authStatus, sheetInfo?.ssid, shouldLoadPicker]);
 
   if (authStatus !== "authenticated")
     return (
@@ -101,9 +98,7 @@ export function AvatarDropdown() {
           onReady={handlePickerReady}
           trigger={shouldLoadPicker}
           oauthToken={session?.accessToken}
-          setSsid={setSsid}
-          setSheetURL={setSheetURL}
-          setSheetFilename={setSheetFilename}
+          selectSheet={selectSheet}
         />
       )}
       <DropdownMenu
@@ -137,11 +132,11 @@ export function AvatarDropdown() {
                   <p className="pl-2 text-xs leading-none text-muted-foreground">
                     {session.user.email}
                   </p>
-                  {sheetFilename && (
+                  {sheetInfo?.filename && (
                     <>
                       <p className="font-bold">Data source loaded: </p>
                       <p className="pl-2 text-xs leading-none text-muted-foreground">
-                        {sheetFilename}
+                        {sheetInfo.filename}
                       </p>
                     </>
                   )}
@@ -149,7 +144,7 @@ export function AvatarDropdown() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                {!ssid && (
+                {!sheetInfo?.ssid && (
                   <DropdownMenuItem
                     onClick={() => {
                       if (openPicker) handleOpenFilePicker(openPicker);
@@ -165,15 +160,15 @@ export function AvatarDropdown() {
                     {openPicker ? "Choose Google Sheet" : "Choose Google Sheet (loading…)"}
                   </DropdownMenuItem>
                 )}
-                {ssid && sheetURL && (
+                {sheetInfo?.ssid && sheetInfo?.url && (
                   <DropdownMenuItem
-                    onClick={() => window.open(sheetURL)}
+                    onClick={() => window.open(sheetInfo.url)}
                   >
                     <Table2 className="mr-2 h-4 w-4" />
                     Open Google Sheet
                   </DropdownMenuItem>
                 )}
-                {ssid && (
+                {sheetInfo?.ssid && (
                   <DropdownMenuItem
                     onClick={() => {
                       if (openPicker) handleOpenFilePicker(openPicker);
@@ -193,12 +188,10 @@ export function AvatarDropdown() {
                 {/* In dev environment offer a 'forget sheet' menu option. Good for testing onboarding. */}
                 {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV ===
                   "development" &&
-                  ssid && (
+                  sheetInfo?.ssid && (
                     <DropdownMenuItem
                       onClick={() => {
-                        setSheetURL(null);
-                        setSheetFilename(null);
-                        setSsid(null);
+                        clearSheet();
                       }}
                     >
                       <FolderX className="mr-2 h-4 w-4" />

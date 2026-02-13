@@ -13,9 +13,7 @@ export function HomeDashboard() {
   const { data: session, status: authStatus } = useSession();
 
   const {
-    ssid,
-    sheetURL,
-    sheetFilename,
+    sheetInfo,
     parsedData,
     liftTypes,
     topLiftsByTypeAndReps,
@@ -33,8 +31,8 @@ export function HomeDashboard() {
   }, [isProgressDone]);
 
   useEffect(() => {
-    if (!ssid) setHasDataLoaded(false);
-  }, [ssid]);
+    if (!sheetInfo?.ssid) setHasDataLoaded(false);
+  }, [sheetInfo?.ssid]);
 
   return (
     <div>
@@ -42,20 +40,20 @@ export function HomeDashboard() {
         <div>
           Welcome <span className="font-bold">{session.user.name}</span>
         </div>
-        {ssid && hasDataLoaded && (
+        {sheetInfo?.ssid && hasDataLoaded && (
           <DataSheetStatus
             rawRows={rawRows}
             parsedData={parsedData}
             dataSyncedAt={dataSyncedAt}
             isValidating={isValidating}
-            sheetURL={sheetURL}
-            sheetFilename={sheetFilename}
+            sheetURL={sheetInfo?.url}
+            sheetFilename={sheetInfo?.filename}
             mutate={mutate}
           />
         )}
       </div>
-      {!ssid && <OnBoardingDashboard />}
-      {ssid && (
+      {!sheetInfo?.ssid && <OnBoardingDashboard />}
+      {sheetInfo?.ssid && (
         <RowProcessingIndicator
           rowCount={rawRows}
           isProgressDone={isProgressDone}
@@ -63,8 +61,8 @@ export function HomeDashboard() {
           isValidating={isValidating}
         />
       )}
-      {ssid && <SectionTopCards isProgressDone={hasDataLoaded} />}
-      {ssid && <MostRecentSessionCard isProgressDone={hasDataLoaded} />}
+      {sheetInfo?.ssid && <SectionTopCards isProgressDone={hasDataLoaded} />}
+      {sheetInfo?.ssid && <MostRecentSessionCard isProgressDone={hasDataLoaded} />}
     </div>
   );
 }

@@ -36,8 +36,7 @@ export function Layout({ children }) {
     parseError,
     parsedData,
     dataSyncedAt,
-    sheetURL,
-    sheetFilename,
+    sheetInfo,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const router = useRouter();
@@ -113,17 +112,17 @@ export function Layout({ children }) {
       title: "Data updated from Google Sheets",
       description: (
         <>
-          {sheetURL ? (
+          {sheetInfo?.url ? (
             <a
-              href={sheetURL}
+              href={sheetInfo.url}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
-              {sheetFilename || "File name unknown"}
+              {sheetInfo?.filename || "File name unknown"}
             </a>
           ) : (
-            sheetFilename || "File name unknown"
+            sheetInfo?.filename || "File name unknown"
           )}
           <br />
           {parsedData.length} valid rows
@@ -144,7 +143,7 @@ export function Layout({ children }) {
         </>
       ),
     });
-  }, [dataSyncedAt, parsedData, sheetURL, sheetFilename, router.pathname, toast]);
+  }, [dataSyncedAt, parsedData, sheetInfo, router.pathname, toast]);
 
   // Toast 3: Parse Error
   useEffect(() => {

@@ -61,9 +61,10 @@ export const LOCAL_STORAGE_KEYS = {
   ATHLETE_HEIGHT: "AthleteHeight",
 
   // Google Sheet / data source
-  SSID: "ssid",
-  SHEET_URL: "sheetURL",
-  SHEET_FILENAME: "sheetFilename",
+  SHEET_INFO: "SJ_sheetInfo",
+  SSID: "ssid", // deprecated — migrated to SHEET_INFO
+  SHEET_URL: "sheetURL", // deprecated — migrated to SHEET_INFO
+  SHEET_FILENAME: "sheetFilename", // deprecated — migrated to SHEET_INFO
 
   // 1000 lb club
   THOUSAND_SQUAT: "SJ_thousand_squat",

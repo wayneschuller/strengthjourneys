@@ -21,17 +21,13 @@ import {
  * @param {boolean} [props.trigger=false] - When true, the component mounts and the
  *   picker can be opened. Typically tied to auth status.
  * @param {string} [props.oauthToken] - OAuth token from NextAuth session.
- * @param {function(string)} [props.setSsid] - Callback to set the selected sheet ID.
- * @param {function(string)} [props.setSheetURL] - Callback to set the sheet URL.
- * @param {function(string)} [props.setSheetFilename] - Callback to set the sheet filename.
+ * @param {function(string)} [props.selectSheet] - Callback to select a sheet by ssid.
  */
 export function DrivePickerContainer({
   onReady,
   trigger = false,
   oauthToken,
-  setSsid,
-  setSheetURL,
-  setSheetFilename,
+  selectSheet,
 }) {
   const [showPicker, setShowPicker] = useState(false);
   const hasCalledReady = useRef(false);
@@ -55,13 +51,11 @@ export function DrivePickerContainer({
         gaTrackSheetSelected();
         gaEvent(GA_EVENT_TAGS.GDRIVE_PICKER_OPENED);
         const doc = data.docs[0];
-        setSsid?.(doc.id);
-        setSheetURL?.(encodeURIComponent(doc.url));
-        setSheetFilename?.(doc.name);
+        selectSheet?.(doc.id);
       }
       setShowPicker(false);
     },
-    [setSsid, setSheetURL, setSheetFilename],
+    [selectSheet],
   );
 
   const handleCanceled = useCallback(() => {

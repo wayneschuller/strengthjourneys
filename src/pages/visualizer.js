@@ -6,9 +6,7 @@ import { NextSeo } from "next-seo";
 import { useSession, signIn } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
-import { useReadLocalStorage } from "usehooks-ts";
 import { VisualizerShadcn } from "@/components/visualizer/visualizer-shadcn";
 import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
 import {
@@ -84,13 +82,10 @@ export default function Visualizer({ relatedArticles }) {
 
 function VisualizerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
-  const { isLoading } = useUserLiftingData();
-  const ssid = useReadLocalStorage(LOCAL_STORAGE_KEYS.SSID, {
-    initializeWithValue: false,
-  });
+  const { isLoading, sheetInfo } = useUserLiftingData();
   const [highlightDate, setHighlightDate] = useState(null);
 
-  if (!isLoading && authStatus === "authenticated" && ssid === null)
+  if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
         <ChooseSheetInstructionsCard session={session} />

@@ -36,7 +36,7 @@ export function OnBoardingDashboard() {
   const [openPicker, setOpenPicker] = useState(null);
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
   const { data: session, status: authStatus } = useSession();
-  const { setSsid, setSheetURL, setSheetFilename } = useUserLiftingData();
+  const { selectSheet } = useUserLiftingData();
 
   const handlePickerReady = useCallback((picker) => {
     setOpenPicker(() => picker);
@@ -56,9 +56,7 @@ export function OnBoardingDashboard() {
           onReady={handlePickerReady}
           trigger={shouldLoadPicker}
           oauthToken={session?.accessToken}
-          setSsid={setSsid}
-          setSheetURL={setSheetURL}
-          setSheetFilename={setSheetFilename}
+          selectSheet={selectSheet}
         />
       )}
       <div className="grid grid-cols-1 md:grid-cols-2">
@@ -166,7 +164,7 @@ export function ChooseSheetInstructionsCard() {
     }
   }, [session, shouldLoadPicker]);
 
-  const { setSsid, setSheetURL, setSheetFilename } = useUserLiftingData();
+  const { selectSheet } = useUserLiftingData();
 
   if (!session) return null;
 
@@ -177,9 +175,7 @@ export function ChooseSheetInstructionsCard() {
           onReady={handlePickerReady}
           trigger={shouldLoadPicker}
           oauthToken={session?.accessToken}
-          setSsid={setSsid}
-          setSheetURL={setSheetURL}
-          setSheetFilename={setSheetFilename}
+          selectSheet={selectSheet}
         />
       )}
       <Card className="md:w-2/3">
@@ -271,7 +267,7 @@ export function GettingStartedCard() {
     }
   }, [authStatus, shouldLoadPicker]);
 
-  const { ssid, setSsid, setSheetURL, setSheetFilename } = useUserLiftingData();
+  const { sheetInfo, selectSheet } = useUserLiftingData();
 
   const arrowSize = 75;
   return (
@@ -281,9 +277,7 @@ export function GettingStartedCard() {
           onReady={handlePickerReady}
           trigger={shouldLoadPicker}
           oauthToken={session?.accessToken}
-          setSsid={setSsid}
-          setSheetURL={setSheetURL}
-          setSheetFilename={setSheetFilename}
+          selectSheet={selectSheet}
         />
       )}
       <Card className="hover:ring-0">
@@ -394,7 +388,7 @@ export function GettingStartedCard() {
             "Sign in via Google"
           )}{" "}
           and{" "}
-          {authStatus === "authenticated" && !ssid ? (
+          {authStatus === "authenticated" && !sheetInfo?.ssid ? (
             <button
               onClick={() => {
                 if (openPicker) handleOpenFilePicker(openPicker);
@@ -480,7 +474,7 @@ export function GettingStartedCardCompact() {
     }
   }, [authStatus, shouldLoadPicker]);
 
-  const { ssid, setSsid, setSheetURL, setSheetFilename } = useUserLiftingData();
+  const { sheetInfo, selectSheet } = useUserLiftingData();
 
   return (
     <>
@@ -489,9 +483,7 @@ export function GettingStartedCardCompact() {
           onReady={handlePickerReady}
           trigger={shouldLoadPicker}
           oauthToken={session?.accessToken}
-          setSsid={setSsid}
-          setSheetURL={setSheetURL}
-          setSheetFilename={setSheetFilename}
+          selectSheet={selectSheet}
         />
       )}
       <Card>
@@ -533,7 +525,7 @@ export function GettingStartedCardCompact() {
             >
               Sign in with Google
             </Button>
-          ) : !ssid ? (
+          ) : !sheetInfo?.ssid ? (
             <Button
               onClick={() => {
                 if (openPicker) handleOpenFilePicker(openPicker);

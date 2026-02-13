@@ -215,7 +215,7 @@ export function DesktopNav() {
 // Also we have a subtle pulse animation when we are trying to look for new data from google (via useSWR isValidating)
 export function UserSheetIcon() {
   const { data: session, status: authStatus } = useSession();
-  const { ssid, sheetURL, sheetFilename, isLoading, isValidating, isError } =
+  const { sheetInfo, isLoading, isValidating, isError } =
     useUserLiftingData();
 
   // devLog( `<UserSheetIcon /> isLoading: ${isLoading}, isValidating ${isValidating}, isError: ${isError}, authStatus: ${authStatus}`,);
@@ -225,9 +225,9 @@ export function UserSheetIcon() {
   if (isLoading) return null;
 
   return (
-    ssid &&
-    sheetURL &&
-    sheetFilename && (
+    sheetInfo?.ssid &&
+    sheetInfo?.url &&
+    sheetInfo?.filename && (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -235,8 +235,8 @@ export function UserSheetIcon() {
               variant="outline"
               size="icon"
               onClick={() => {
-                devLog(sheetURL);
-                window.open(sheetURL);
+                devLog(sheetInfo.url);
+                window.open(sheetInfo.url);
               }}
             >
               {!isValidating && <Table2 className="h-[1.2rem] w-[1.2rem]" />}
@@ -245,7 +245,7 @@ export function UserSheetIcon() {
               )}
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Click to open {sheetFilename} </TooltipContent>
+          <TooltipContent>Click to open {sheetInfo.filename} </TooltipContent>
         </Tooltip>
       </TooltipProvider>
     )

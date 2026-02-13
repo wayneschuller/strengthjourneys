@@ -1,6 +1,13 @@
 "use client";
 
-import { useContext, useState, useEffect, createContext, useMemo } from "react";
+import {
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  createContext,
+  useMemo,
+} from "react";
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -19,6 +26,50 @@ import {
   transposeDatesToToday,
 } from "@/lib/sample-parsed-data";
 import { useLocalStorage } from "usehooks-ts";
+
+// ---------------------------------------------------------------------------
+// Migration: consolidate old ssid/sheetURL/sheetFilename into SJ_sheetInfo
+// Runs once on first client-side load before React mounts.
+// ---------------------------------------------------------------------------
+if (typeof window !== "undefined") {
+  const NEW_KEY = LOCAL_STORAGE_KEYS.SHEET_INFO;
+  const existing = localStorage.getItem(NEW_KEY);
+
+  if (!existing) {
+    try {
+      const rawSsid = localStorage.getItem(LOCAL_STORAGE_KEYS.SSID);
+      const ssid = rawSsid ? JSON.parse(rawSsid) : null;
+
+      if (ssid) {
+        const rawUrl = localStorage.getItem(LOCAL_STORAGE_KEYS.SHEET_URL);
+        const rawFilename = localStorage.getItem(
+          LOCAL_STORAGE_KEYS.SHEET_FILENAME,
+        );
+        const encodedUrl = rawUrl ? JSON.parse(rawUrl) : null;
+        const url = encodedUrl ? decodeURIComponent(encodedUrl) : null;
+        const filename = rawFilename ? JSON.parse(rawFilename) : null;
+
+        localStorage.setItem(
+          NEW_KEY,
+          JSON.stringify({
+            ssid,
+            url,
+            filename,
+            modifiedTime: null,
+            modifiedByMeTime: null,
+          }),
+        );
+      }
+    } catch {
+      // Silently ignore corrupt data — user will re-pick their sheet
+    }
+
+    // Always remove old keys (even if migration had nothing to migrate)
+    localStorage.removeItem(LOCAL_STORAGE_KEYS.SSID);
+    localStorage.removeItem(LOCAL_STORAGE_KEYS.SHEET_URL);
+    localStorage.removeItem(LOCAL_STORAGE_KEYS.SHEET_FILENAME);
+  }
+}
 
 /** Generic JSON fetcher for useSWR. */
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
@@ -42,25 +93,33 @@ export const UserLiftingDataProvider = ({ children }) => {
 
   const { data: session, status: authStatus } = useSession();
 
-  const [ssid, setSsid] = useLocalStorage(LOCAL_STORAGE_KEYS.SSID, null, {
-    initializeWithValue: false,
-  });
-  const [sheetURL, setSheetURL] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SHEET_URL,
+  // Single consolidated sheet state
+  const [sheetInfo, setSheetInfo] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.SHEET_INFO,
     null,
+    { initializeWithValue: false },
+  );
 
-    { initializeWithValue: false },
+  const selectSheet = useCallback(
+    (ssid) =>
+      setSheetInfo({
+        ssid,
+        url: null,
+        filename: null,
+        modifiedTime: null,
+        modifiedByMeTime: null,
+      }),
+    [setSheetInfo],
   );
-  const [sheetFilename, setSheetFilename] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SHEET_FILENAME,
-    null,
-    { initializeWithValue: false },
-  );
+
+  const clearSheet = useCallback(() => setSheetInfo(null), [setSheetInfo]);
 
   const shouldFetch =
-    authStatus === "authenticated" && !!session?.accessToken && !!ssid;
+    authStatus === "authenticated" &&
+    !!session?.accessToken &&
+    !!sheetInfo?.ssid;
 
-  const apiURL = `/api/read-gsheet?ssid=${ssid}`;
+  const apiURL = `/api/read-gsheet?ssid=${sheetInfo?.ssid}`;
 
   // -----------------------------------------------------------------------------------------------
   // Call gsheets API via our backend api route using useSWR
@@ -84,7 +143,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   const isError = !!error; // FIXME: We could send back error details
 
   // -----------------------------------------------------------------------------------------------
-  // When useSWR (just above) gives new Google sheet data, parse it
+  // Effect A: When useSWR gives new Google sheet data, parse it
   // -----------------------------------------------------------------------------------------------
   useEffect(() => {
     // Pretty pipeline progress log
@@ -134,26 +193,11 @@ export const UserLiftingDataProvider = ({ children }) => {
       );
     }
 
-    // Sync API metadata to localStorage when we have fresh values
-    if (authStatus === "authenticated" && data?.values) {
-      if (data.name != null && data.name !== sheetFilename) {
-        setSheetFilename(data.name);
-      }
-      if (data.webViewLink != null) {
-        const encoded = encodeURIComponent(data.webViewLink);
-        if (encoded !== sheetURL) {
-          setSheetURL(encoded);
-        }
-      }
-    }
+    const result = getParsedDataWithFallback({ authStatus, data });
 
-    const result = buildParsedState({
-      authStatus,
-      data,
-      setSsid,
-      setSheetFilename,
-      setSheetURL,
-    });
+    if (result.parseError) {
+      clearSheet();
+    }
 
     setParsedData(result.parsedData);
     setIsDemoMode(result.isDemoMode);
@@ -161,16 +205,42 @@ export const UserLiftingDataProvider = ({ children }) => {
     if (authStatus === "authenticated" && data?.values) {
       setLastDataReceivedAt(Date.now());
     }
+  }, [data, isLoading, isError, authStatus, clearSheet]);
+
+  // -----------------------------------------------------------------------------------------------
+  // Effect B: Sync API metadata into sheetInfo when fresh data arrives
+  // -----------------------------------------------------------------------------------------------
+  useEffect(() => {
+    if (authStatus !== "authenticated" || !data?.values) return;
+
+    setSheetInfo((prev) => {
+      if (!prev) return prev; // no sheet selected
+
+      const url = data.webViewLink ?? prev.url;
+      const filename = data.name ?? prev.filename;
+      const modifiedTime = data.modifiedTime ?? prev.modifiedTime;
+      const modifiedByMeTime = data.modifiedByMeTime ?? prev.modifiedByMeTime;
+
+      // Skip update if nothing changed (avoids unnecessary re-renders)
+      if (
+        url === prev.url &&
+        filename === prev.filename &&
+        modifiedTime === prev.modifiedTime &&
+        modifiedByMeTime === prev.modifiedByMeTime
+      ) {
+        return prev;
+      }
+
+      return { ...prev, url, filename, modifiedTime, modifiedByMeTime };
+    });
   }, [
-    data,
-    isLoading,
-    isError,
     authStatus,
-    sheetURL,
-    sheetFilename,
-    setSsid,
-    setSheetFilename,
-    setSheetURL,
+    data?.values,
+    data?.name,
+    data?.webViewLink,
+    data?.modifiedTime,
+    data?.modifiedByMeTime,
+    setSheetInfo,
   ]);
 
   // Calculate liftTypes from parsedData (computed automatically when parsedData changes)
@@ -214,28 +284,6 @@ export const UserLiftingDataProvider = ({ children }) => {
   // Calculate rawRows from useSWR data (computed automatically when data changes)
   const rawRows = useMemo(() => data?.values?.length ?? null, [data]);
 
-  // Sheet metadata from API (or localStorage fallback for name/url). null when no sheet selected.
-  const sheetMetadata = useMemo(() => {
-    if (!ssid) return null;
-    const name = data?.name ?? sheetFilename ?? "Your Google Sheet";
-    const webViewLink =
-      data?.webViewLink ?? (sheetURL ? decodeURIComponent(sheetURL) : null);
-    return {
-      name,
-      webViewLink,
-      modifiedTime: data?.modifiedTime ?? null,
-      modifiedByMeTime: data?.modifiedByMeTime ?? null,
-    };
-  }, [
-    ssid,
-    data?.name,
-    data?.webViewLink,
-    data?.modifiedTime,
-    data?.modifiedByMeTime,
-    sheetFilename,
-    sheetURL,
-  ]);
-
   return (
     <UserLiftingDataContext.Provider
       value={{
@@ -254,15 +302,9 @@ export const UserLiftingDataProvider = ({ children }) => {
         rawRows,
         dataSyncedAt: lastDataReceivedAt,
         mutate,
-        ssid,
-        setSsid,
-        sheetURL:
-          sheetMetadata?.webViewLink ??
-          (sheetURL ? decodeURIComponent(sheetURL) : null),
-        setSheetURL,
-        sheetFilename: sheetMetadata?.name ?? sheetFilename,
-        setSheetFilename,
-        sheetMetadata,
+        sheetInfo,
+        selectSheet,
+        clearSheet,
       }}
     >
       {children}
@@ -271,39 +313,12 @@ export const UserLiftingDataProvider = ({ children }) => {
 };
 
 /**
- * Orchestrates parsing raw sheet data.
- * Delegates to getParsedDataWithFallback (parse + demo fallback + PR marking).
- * Returns { parsedData, isDemoMode, parseError }.
- */
-function buildParsedState({
-  authStatus,
-  data,
-  setSsid,
-  setSheetFilename,
-  setSheetURL,
-}) {
-  return getParsedDataWithFallback({
-    authStatus,
-    data,
-    setSsid,
-    setSheetFilename,
-    setSheetURL,
-  });
-}
-
-/**
  * Parses raw gsheet values into parsedData. Fires analytics on success/failure.
- * On parse error: clears ssid/sheet from storage, returns parseError string.
+ * On parse error: returns parseError string (caller handles clearing sheet).
  * Falls back to demo data when no real data available.
  * Returns { parsedData, isDemoMode, parseError }.
  */
-function getParsedDataWithFallback({
-  authStatus,
-  data,
-  setSsid,
-  setSheetFilename,
-  setSheetURL,
-}) {
+function getParsedDataWithFallback({ authStatus, data }) {
   let parsedData = null; // A local version for this scope only
   let parseError = null;
 
@@ -316,15 +331,11 @@ function getParsedDataWithFallback({
       console.error("Data parsing error:", error.message);
       parseError = error.message;
 
-      // Forget their chosen file, we have access but we cannot parse it
       console.error(
         `%c✗ Parse failed%c — clearing saved sheet from localStorage`,
         "color:#ef4444;font-weight:bold",
         "color:inherit",
       );
-      setSsid(null);
-      setSheetFilename(null);
-      setSheetURL(null);
       // Don't sign out, just go gracefully into demo mode below.
 
       gaEvent(GA_EVENT_TAGS.GSHEET_READ_REJECTED); // Google Analytics: sheet parse rejected

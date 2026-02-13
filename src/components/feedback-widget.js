@@ -26,7 +26,7 @@ import { gaTrackFeedbackSentiment } from "@/lib/analytics";
 export function FeedbackWidget() {
   const router = useRouter();
   const { data: session } = useSession();
-  const { ssid, parsedData } = useUserLiftingData();
+  const { sheetInfo, parsedData } = useUserLiftingData();
 
   const [open, setOpen] = useState(false);
   const [layer, setLayer] = useState(1); // 1=thumbs, 2=comment, 3=email+submit
@@ -123,7 +123,7 @@ export function FeedbackWidget() {
   );
 
   function getUserType() {
-    if (session && ssid) return "auth-with-sheet";
+    if (session && sheetInfo?.ssid) return "auth-with-sheet";
     if (session) return "auth-no-sheet";
     return "anonymous";
   }
@@ -152,7 +152,7 @@ export function FeedbackWidget() {
           email: includeEmail ? (session?.user?.email || email || "") : "",
           userType: getUserType(),
           metadata: {
-            parsedRowCount: ssid && Array.isArray(parsedData) ? parsedData.length : null,
+            parsedRowCount: sheetInfo?.ssid && Array.isArray(parsedData) ? parsedData.length : null,
           },
         }),
       });

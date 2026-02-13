@@ -181,10 +181,9 @@ export const UserLiftingDataProvider = ({ children }) => {
     if (authStatus === "loading") return; // Wait for auth. Don't prematurely go into demo mode
     if (isLoading) return; // Wait for useSWR. Don't prematurely go into demo mode
 
-    // isError happens when Google decides they don't love us
-    // There was an edge case where it will ping during token refresh and get a 401 error once
-    // Checking for !data tends to step over this error
-    if (isError && !data) {
+    // Any API error is now treated as user-visible (layout shows a toast), tracked in GA,
+    // and still allowed to recover via normal SWR revalidation retries.
+    if (isError) {
       gaEvent(GA_EVENT_TAGS.GSHEET_API_ERROR); // Google Analytics: sheet API error
       console.error(
         `%c✗ GSheet API rejected by Google%c — will retry on next revalidation`,

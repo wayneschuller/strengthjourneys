@@ -61,7 +61,8 @@ export function Layout({ children }) {
     }
   }, [isError, authStatus, toast]);
 
-  // Toast 2: Data Loaded (once per session, not on the home page)
+  // Toast 2: Data Loaded (once per session, but not on "/" because home has
+  // dedicated data-loading/status widgets with richer detail)
   useEffect(() => {
     if (dataLoadedShown.current) return;
     if (!dataSyncedAt) return;
@@ -70,43 +71,10 @@ export function Layout({ children }) {
 
     dataLoadedShown.current = true;
 
-    // Build relative date string from the latest entry
+    // Build relative date copy from the latest entry
     const latestDate = parsedData[parsedData.length - 1].date;
-    const parsed = parseISO(latestDate);
-    const now = new Date();
-    const daysAgo = differenceInDays(now, parsed);
-    const weeksAgo = differenceInWeeks(now, parsed);
-    const monthsAgo = differenceInMonths(now, parsed);
-    const yearsAgo = differenceInYears(now, parsed);
-
-    let latestDateString = "";
-    let gymInviteString = "";
-
-    if (isToday(parsed)) {
-      latestDateString = "Latest data: Today";
-      gymInviteString = "💪 You're crushing it today! Keep going!";
-    } else if (daysAgo === 1) {
-      latestDateString = "Latest data: Yesterday";
-    } else if (daysAgo <= 7) {
-      latestDateString = `Latest data: ${daysAgo} days ago`;
-      gymInviteString = "Heading into the gym today, right?";
-    } else if (weeksAgo === 1) {
-      latestDateString = "Latest data: 1 week ago";
-    } else if (weeksAgo <= 3) {
-      latestDateString = `Latest data: ${weeksAgo} weeks ago`;
-    } else if (monthsAgo === 1) {
-      latestDateString = "Latest data: 1 month ago";
-    } else if (monthsAgo <= 11) {
-      latestDateString = `Latest data: ${monthsAgo} months ago`;
-    } else if (yearsAgo === 1) {
-      latestDateString = "Latest data: 1 year ago";
-    } else {
-      latestDateString = `Latest data: ${yearsAgo} years ago`;
-    }
-
-    if (daysAgo > 7) {
-      gymInviteString = "🏋️‍♂️ It's been a while! Time to hit the gym?";
-    }
+    const { latestDateString, gymInviteString } =
+      buildLatestDataMessages(latestDate);
 
     toast({
       title: "Data updated from Google Sheets",
@@ -207,4 +175,67 @@ export function Layout({ children }) {
       </div>
     </div>
   );
+}
+
+function buildLatestDataMessages(latestDateISO) {
+  const parsed = parseISO(latestDateISO);
+  const now = new Date();
+  const daysAgo = differenceInDays(now, parsed);
+
+  if (isToday(parsed)) {
+    return {
+      latestDateString: "Latest data: Today",
+      gymInviteString: getTodayInviteMessage(now),
+    };
+  }
+
+  if (daysAgo === 1) {
+    return {
+      latestDateString: "Latest data: Yesterday",
+      gymInviteString: "",
+    };
+  }
+
+  const relativeUnits = [
+    { value: daysAgo, max: 7, label: "day" },
+    { value: differenceInWeeks(now, parsed), max: 3, label: "week" },
+    { value: differenceInMonths(now, parsed), max: 11, label: "month" },
+    { value: differenceInYears(now, parsed), max: Number.POSITIVE_INFINITY, label: "year" },
+  ];
+
+  const selected = relativeUnits.find(
+    (unit) => unit.value >= 1 && unit.value <= unit.max,
+  ) || { value: daysAgo, label: "day" };
+
+  const latestDateString = `Latest data: ${selected.value} ${pluralizeUnit(selected.label, selected.value)} ago`;
+
+  const gymInviteString =
+    daysAgo > 7
+      ? "🏋️‍♂️ It's been a while! Time to hit the gym?"
+      : "Heading into the gym today, right?";
+
+  return { latestDateString, gymInviteString };
+}
+
+function pluralizeUnit(unit, value) {
+  return value === 1 ? unit : `${unit}s`;
+}
+
+const TODAY_INVITE_MESSAGES = [
+  "💪 You're crushing it today! Keep going!",
+  "🔥 Great momentum today. Keep stacking quality reps.",
+  "🏋️ Nice work showing up today. Your future self will thank you.",
+  "⚡ You're on a roll today. Keep the bar moving.",
+  "✅ Solid session today. Keep building that consistency.",
+  "🎯 You're dialed in today. Stay sharp and finish strong.",
+  "🚀 Big energy today. Keep that training focus.",
+  "👏 You're putting in real work today. One set at a time.",
+  "📈 Strong progress today. Keep owning the session.",
+  "💥 Excellent effort today. Keep the streak alive.",
+];
+
+function getTodayInviteMessage(now = new Date()) {
+  const startOfYear = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now - startOfYear) / 86400000);
+  return TODAY_INVITE_MESSAGES[dayOfYear % TODAY_INVITE_MESSAGES.length];
 }

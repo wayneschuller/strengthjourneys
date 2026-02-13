@@ -150,6 +150,13 @@ export const UserLiftingDataProvider = ({ children }) => {
     {
       // SWR options
       // refreshInterval: 5000, // Polling interval in milliseconds (e.g., 5000 for every 5 seconds)
+      onSuccess: (freshData) => {
+        // Update sync timestamp on every successful SWR fetch/revalidation,
+        // including tab-focus revalidations where data content may be unchanged.
+        if (authStatus === "authenticated" && freshData?.values) {
+          setLastDataReceivedAt(Date.now());
+        }
+      },
     },
   );
 
@@ -231,9 +238,6 @@ export const UserLiftingDataProvider = ({ children }) => {
     setParsedData(result.parsedData);
     setIsDemoMode(result.isDemoMode);
     setParseError(result.parseError);
-    if (authStatus === "authenticated" && data?.values) {
-      setLastDataReceivedAt(Date.now());
-    }
   }, [data, isLoading, isError, authStatus, clearSheet]);
 
   // -----------------------------------------------------------------------------------------------

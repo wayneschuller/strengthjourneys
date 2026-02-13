@@ -3,9 +3,7 @@ import { estimateE1RM } from "./estimate-e1rm";
 
 // Simple wrapper for console.log
 export function devLog(...messages) {
-  // We setup this special env variable on Vercel dev and preview but NOT production builds
-  // This is so non-localhost clients can see devLogs on Vercel preview builds
-  // Development machines should add this to their .env or .env.local
+  // Keep most dev logs gated to explicit development env
   if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development") {
     console.log(...messages);
   }

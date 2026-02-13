@@ -94,7 +94,7 @@ export const UserLiftingDataProvider = ({ children }) => {
     },
   );
 
-  if (error) devLog(`%c⚠ GSheet API Error%c ${error}`, "color:#ef4444;font-weight:bold", "color:inherit");
+  if (error) console.log(`%c⚠ GSheet API Error%c ${error}`, "color:#ef4444;font-weight:bold", "color:inherit");
   const isError = !!error; // FIXME: We could send back error details
 
   // -----------------------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ export const UserLiftingDataProvider = ({ children }) => {
       const detail = s.status ? ` (${s.status})` : "";
       return `${icon} ${s.label}${detail}`;
     }).join("  →  ");
-    devLog(
+    console.log(
       `%c🏋️ Data Pipeline%c  ${pipeline}`,
       "color:#f59e0b;font-weight:bold",
       "color:inherit",
@@ -132,7 +132,7 @@ export const UserLiftingDataProvider = ({ children }) => {
       });
 
       gaEvent(GA_EVENT_TAGS.GSHEET_API_ERROR); // Google Analytics: sheet API error
-      devLog(`%c✗ GSheet API rejected by Google%c — will retry on next revalidation`, "color:#ef4444;font-weight:bold", "color:inherit");
+      console.log(`%c✗ GSheet API rejected by Google%c — will retry on next revalidation`, "color:#ef4444;font-weight:bold", "color:inherit");
 
       // FIXME: We used to clear the ssid but it happened too often. There are occasional weird errors (wifi loading etc)
       // setSsid(null);
@@ -460,7 +460,7 @@ function getParsedDataWithFallback({
       demoToastInit = true; // Don't run another toast
 
       // Forget their chosen file, we have access but we cannot parse it
-      devLog(`%c✗ Parse failed%c — clearing saved sheet from localStorage`, "color:#ef4444;font-weight:bold", "color:inherit");
+      console.log(`%c✗ Parse failed%c — clearing saved sheet from localStorage`, "color:#ef4444;font-weight:bold", "color:inherit");
       setSsid(null);
       setSheetFilename(null);
       setSheetURL(null);

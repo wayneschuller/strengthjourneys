@@ -84,11 +84,21 @@ function GradeCircle({ percentage, label, size = 28, delay = 0, isVisible }) {
   );
 }
 
+// Trim trailing "." grades (percentage < 30) from the end.
+// Keeps interior dots so only the "not in the game yet" tail is hidden.
+function trimTrailingDots(items) {
+  let lastReal = items.length - 1;
+  while (lastReal >= 0 && getGradeAndColor(items[lastReal].percentage).grade === ".") {
+    lastReal--;
+  }
+  return items.slice(0, lastReal + 1);
+}
+
 export function ConsistencyGradesRow({ parsedData, isVisible = false }) {
-  const consistency = useMemo(
-    () => processConsistency(parsedData),
-    [parsedData],
-  );
+  const consistency = useMemo(() => {
+    const raw = processConsistency(parsedData);
+    return raw ? trimTrailingDots(raw) : null;
+  }, [parsedData]);
 
   if (!consistency || consistency.length === 0) return null;
 

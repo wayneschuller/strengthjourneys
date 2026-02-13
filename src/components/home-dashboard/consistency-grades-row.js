@@ -37,9 +37,9 @@ function GradeCircle({ percentage, label, tooltip, size = 28, delay = 0, isVisib
         <TooltipTrigger asChild>
           <motion.div
             className="flex flex-col items-center gap-0.5"
-            initial={{ opacity: 0, scale: 0.5 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={
-              isVisible ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.5 }
+              isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }
             }
             transition={{
               type: "spring",

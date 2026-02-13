@@ -1,7 +1,7 @@
 // A home dashboard for the top level of the site, shown only when user is logged in.
 // This will also help with onboarding.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { SectionTopCards } from "./section-top-cards";
@@ -9,9 +9,61 @@ import { MostRecentSessionCard } from "./most-recent-session-card";
 import { DataSheetStatus, RowProcessingIndicator } from "./row-processing-indicator";
 import { OnBoardingDashboard } from "@/components/instructions-cards";
 import { ConsistencyGradesRow } from "./consistency-grades-row";
+import { motion } from "motion/react";
+
+// Short, subtle quips that incorporate the user's first name.
+// {name} is replaced at render time.
+const WELCOME_QUIPS = [
+  "Welcome back, {name}",
+  "Good to see you, {name}",
+  "Stay strong, {name}",
+  "Built different, {name}",
+  "Iron sharpens iron, {name}",
+  "Brave choices, {name}",
+  "Strong looks good on you, {name}",
+  "Keep showing up, {name}",
+  "One rep at a time, {name}",
+  "Fortitude suits you, {name}",
+  "No shortcuts, {name}",
+  "Earned, not given, {name}",
+  "Grit and grace, {name}",
+  "Bold move logging in, {name}",
+  "Discipline on display, {name}",
+  "Steel resolve, {name}",
+  "The bar doesn't lie, {name}",
+  "Heart of a lifter, {name}",
+  "Respect the process, {name}",
+  "You showed up, {name}",
+  "Stronger every week, {name}",
+  "The weights remember you, {name}",
+  "Consistency is your superpower, {name}",
+  "Another day, another PR, {name}",
+  "The rack awaits, {name}",
+  "Not just lifting, living, {name}",
+  "Quiet strength, {name}",
+  "Trust the training, {name}",
+  "Your future self thanks you, {name}",
+  "Progress over perfection, {name}",
+  "Relentless, {name}",
+  "Hard things make strong people, {name}",
+  "Still here, still growing, {name}",
+  "Gravity fears you, {name}",
+  "Uncommon discipline, {name}",
+  "Plates don't move themselves, {name}",
+  "The grind looks good on you, {name}",
+  "Nothing worth having comes easy, {name}",
+  "Proof is in the logbook, {name}",
+  "Built with patience, {name}",
+];
 
 export function HomeDashboard() {
   const { data: session, status: authStatus } = useSession();
+
+  const quipRef = useRef(null);
+  if (quipRef.current === null) {
+    quipRef.current =
+      WELCOME_QUIPS[Math.floor(Math.random() * WELCOME_QUIPS.length)];
+  }
 
   const {
     sheetInfo,
@@ -40,9 +92,19 @@ export function HomeDashboard() {
       <div className="relative mb-4 text-xl">
         {/* Desktop: welcome left, circles absolute-centered, status right */}
         <div className="hidden items-center justify-between gap-2 lg:flex">
-          <span className="whitespace-nowrap">
-            Welcome <span className="font-bold">{session.user.name}</span>
-          </span>
+          <motion.span
+            className="whitespace-nowrap"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="text-muted-foreground">
+              {quipRef.current.split("{name}")[0]}
+            </span>
+            <span className="font-bold">
+              {session.user.name?.split(" ")[0]}
+            </span>
+          </motion.span>
           {sheetInfo?.ssid && hasDataLoaded && (
             <DataSheetStatus
               rawRows={rawRows}

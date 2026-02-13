@@ -37,16 +37,18 @@ export function HomeDashboard() {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xl">
-        <span>
+      <div className="relative mb-4 flex items-center justify-between gap-2 text-xl">
+        <span className="whitespace-nowrap">
           Welcome <span className="font-bold">{session.user.name}</span>
         </span>
         {sheetInfo?.ssid && (
-          <div className="flex flex-1 justify-center">
-            <ConsistencyGradesRow
-              parsedData={parsedData}
-              isVisible={hasDataLoaded}
-            />
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className="pointer-events-auto">
+              <ConsistencyGradesRow
+                parsedData={parsedData}
+                isVisible={hasDataLoaded}
+              />
+            </div>
           </div>
         )}
         {sheetInfo?.ssid && hasDataLoaded && (

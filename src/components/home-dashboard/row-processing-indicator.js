@@ -62,12 +62,14 @@ export function DataSheetStatus({
       target="_blank"
       rel="noopener noreferrer"
       title={tooltipText}
-      className={`underline ${freshnessColor} hover:text-foreground`}
+      className={`inline-block max-w-[14rem] truncate align-bottom underline ${freshnessColor} hover:text-foreground`}
     >
       {sheetLabel}
     </a>
   ) : (
-    sheetLabel
+    <span className="inline-block max-w-[14rem] truncate align-bottom">
+      {sheetLabel}
+    </span>
   );
 
   const syncLabel = (
@@ -84,7 +86,7 @@ export function DataSheetStatus({
   if (rowLabel) parts.push(rowLabel);
 
   return (
-    <div className="flex items-center justify-end gap-2 text-xs">
+    <div className="flex items-center justify-end gap-2 text-xs whitespace-nowrap">
       <img
         src={GOOGLE_SHEETS_ICON_URL}
         alt=""

@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { motion } from "motion/react";
 import { useMemo, useRef } from "react";
-import { logTiming } from "@/lib/processing-utils";
 import {
   format,
   parseISO,
@@ -521,8 +520,6 @@ function calculateTotalStats(liftTypes) {
  * Returns totals per unit plus a primary unit/total for display.
  */
 function calculateLifetimeTonnageFromLookup(sessionTonnageLookup, preferredUnit = "lb") {
-  const startTime = performance.now();
-
   const allSessionDates = sessionTonnageLookup?.allSessionDates ?? [];
   const sessionTonnageByDate = sessionTonnageLookup?.sessionTonnageByDate ?? {};
 
@@ -561,8 +558,6 @@ function calculateLifetimeTonnageFromLookup(sessionTonnageLookup, preferredUnit 
       }
     }
   }
-
-  logTiming("calculateLifetimeTonnageFromLookup", performance.now() - startTime);
 
   const unitKeys = Object.keys(totalByUnit);
   const primaryUnit = preferredUnit || unitKeys[0] || "lb";
@@ -834,8 +829,6 @@ function calculateStreakFromDates(allSessionDates) {
     return { currentStreak: 0, bestStreak: 0, sessionsThisWeek: 0 };
   }
 
-  const startTime = performance.now();
-
   // --- Phase 1: Build "sessions per week" (unique days per week) ---
   // weekMap: for each week (Monday's date as "YYYY-MM-DD"), we store the Set of *dates* that had
   // at least one gym session that week. So if you trained Mon/Wed/Fri, that week key maps to 3 dates.
@@ -909,8 +902,6 @@ function calculateStreakFromDates(allSessionDates) {
     }
     weekKey = addDaysFromStr(weekKey, 7);
   }
-
-  logTiming("calculateStreak", performance.now() - startTime);
 
   return { currentStreak, bestStreak, sessionsThisWeek };
 }

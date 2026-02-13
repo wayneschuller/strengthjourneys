@@ -93,19 +93,28 @@ export const UserLiftingDataProvider = ({ children }) => {
     },
   );
 
-  if (error) devLog(`Local fetch to GSheet servers error: ${error}`);
+  if (error) devLog(`%c⚠ GSheet API Error%c ${error}`, "color:#ef4444;font-weight:bold", "color:inherit");
   const isError = !!error; // FIXME: We could send back error details
 
   // -----------------------------------------------------------------------------------------------
   // When useSWR (just above) gives new Google sheet data, parse it
   // -----------------------------------------------------------------------------------------------
   useEffect(() => {
-    const loadingMessage = isLoading ? "isLoading, " : "";
-    const errorMessage = isError ? "isError, " : "";
-    const dataMessage = `gsheet ${data ? "LOADED" : "NOT received yet"}`;
-
+    // Pretty pipeline progress log
+    const steps = [
+      { label: "Auth", done: authStatus === "authenticated", status: authStatus },
+      { label: "Fetch", done: !isLoading && !isError, loading: isLoading, error: isError },
+      { label: "Data", done: !!data?.values, status: data?.values ? `${data.values.length} rows` : "waiting" },
+    ];
+    const pipeline = steps.map(s => {
+      const icon = s.error ? "✗" : s.loading ? "⏳" : s.done ? "✓" : "○";
+      const detail = s.status ? ` (${s.status})` : "";
+      return `${icon} ${s.label}${detail}`;
+    }).join("  →  ");
     devLog(
-      `useUserLiftingData useEffect: authStatus: ${authStatus}, ${loadingMessage}${errorMessage}${dataMessage}`,
+      `%c🏋️ Data Pipeline%c  ${pipeline}`,
+      "color:#f59e0b;font-weight:bold",
+      "color:inherit",
     );
 
     if (authStatus === "loading") return; // Wait for auth. Don't prematurely go into demo mode
@@ -122,7 +131,7 @@ export const UserLiftingDataProvider = ({ children }) => {
       });
 
       gaEvent("gSheetAPIError"); // Google Analytics: sheet API error
-      devLog(`useSWR isError from google`);
+      devLog(`%c✗ GSheet API rejected by Google%c — will retry on next revalidation`, "color:#ef4444;font-weight:bold", "color:inherit");
 
       // FIXME: We used to clear the ssid but it happened too often. There are occasional weird errors (wifi loading etc)
       // setSsid(null);
@@ -205,9 +214,30 @@ export const UserLiftingDataProvider = ({ children }) => {
     return processSessionTonnageLookup(parsedData);
   }, [parsedData]);
 
+  // Processing pipeline progress log
+  useEffect(() => {
+    if (!parsedData) return;
+    const steps = [
+      { label: "Parsed", done: true, status: `${parsedData.length} lifts` },
+      { label: "Lift Types", done: liftTypes.length > 0, status: liftTypes.length > 0 ? `${liftTypes.length} types` : "waiting" },
+      { label: "PRs & Top Lifts", done: !!topLiftsByTypeAndReps },
+      { label: "Tonnage", done: !!sessionTonnageLookup },
+    ];
+    const pipeline = steps.map(s => {
+      const icon = s.done ? "✓" : "○";
+      const detail = s.status ? ` (${s.status})` : "";
+      return `${icon} ${s.label}${detail}`;
+    }).join("  →  ");
+    devLog(
+      `%c🏋️ Processing%c    ${pipeline}`,
+      "color:#22c55e;font-weight:bold",
+      "color:inherit",
+    );
+  }, [parsedData, liftTypes, topLiftsByTypeAndReps, sessionTonnageLookup]);
+
   // Calculate rawRows from useSWR data (computed automatically when data changes)
-  const rawRows = useMemo(() => 
-    data?.values?.length ?? null, 
+  const rawRows = useMemo(() =>
+    data?.values?.length ?? null,
     [data]
   );
 
@@ -444,9 +474,7 @@ function getParsedDataWithFallback({
       demoToastInit = true; // Don't run another toast
 
       // Forget their chosen file, we have access but we cannot parse it
-      devLog(
-        `Could not parse data - deleting gsheet details from localstorage.`,
-      );
+      devLog(`%c✗ Parse failed%c — clearing saved sheet from localStorage`, "color:#ef4444;font-weight:bold", "color:inherit");
       setSsid(null);
       setSheetFilename(null);
       setSheetURL(null);

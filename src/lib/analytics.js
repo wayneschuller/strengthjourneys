@@ -3,78 +3,33 @@
 
 /**
  * Central Google Analytics (GA4) helper: gtag wrapper, UTM persistence, and track* helpers.
- * Supports two event modes:
- * 1) trusted events: production/staging only (default)
- * 2) development-only events: sent only in local development while building new tracking
+ * Events with debug_mode: true appear in GA4 DebugView only (not regular reports).
  */
 
 const UTM_STORAGE_KEY = "ga_utm";
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
 
-const ANALYTICS_MODE = {
-  TRUSTED: "trusted",
-  DEVELOPMENT_ONLY: "development-only",
-};
+/**
+ * Send a custom GA4 event. Pass debug_mode: true in params to route to DebugView only.
+ */
+export function gaEvent(name, params = {}) {
+  if (typeof window === "undefined") return;
+  if (typeof window.gtag !== "function") return;
+  if (!getMeasurementId()) return;
+
+  const prefixed = name.startsWith(GA_EVENT_PREFIX) ? name : `${GA_EVENT_PREFIX}${name}`;
+  const merged = buildParams(params);
+  window.gtag("event", prefixed, Object.keys(merged).length ? merged : undefined);
+}
 
 function isDevelopmentEnv() {
   return process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 }
 
-function isEnabledForMode(mode = ANALYTICS_MODE.TRUSTED) {
-  if (typeof window === "undefined") return false;
-  if (typeof window.gtag !== "function") return false;
-
-  const isDev = isDevelopmentEnv();
-  if (mode === ANALYTICS_MODE.DEVELOPMENT_ONLY) return isDev;
-  if (mode === ANALYTICS_MODE.TRUSTED) return !isDev;
-
-  // Unknown mode: fail closed.
-  return false;
-}
-
-function sendEvent(name, params = {}, mode = ANALYTICS_MODE.TRUSTED) {
-  if (!isEnabledForMode(mode)) return;
-  const id = getMeasurementId();
-  if (!id) return;
-
-  const prefixed = name.startsWith(GA_EVENT_PREFIX) ? name : `${GA_EVENT_PREFIX}${name}`;
-  const baseParams = buildParams(params);
-  const merged =
-    mode === ANALYTICS_MODE.DEVELOPMENT_ONLY
-      ? { ...baseParams, debug_mode: true }
-      : baseParams;
-
-  window.gtag("event", prefixed, Object.keys(merged).length ? merged : undefined);
-}
-
-/**
- * Trusted GA event helper (production/staging only).
- * Most analytics events should use this path.
- */
-export function gaTrustedEvent(name, params = {}) {
-  sendEvent(name, params, ANALYTICS_MODE.TRUSTED);
-}
-
-/**
- * Development-only GA event helper (local development only).
- * Use this while validating new event schemas before promoting to gaTrustedEvent.
- */
-export function gaDevEvent(name, params = {}) {
-  sendEvent(name, params, ANALYTICS_MODE.DEVELOPMENT_ONLY);
-}
-
-/**
- * Backward-compatible alias for trusted GA events.
- * Existing call sites can keep using gaEvent(...).
- */
-export function gaEvent(name, params = {}) {
-  gaTrustedEvent(name, params);
-}
-
 function isPageViewEnabled() {
   if (typeof window === "undefined") return false;
   if (typeof window.gtag !== "function") return false;
-  if (isDevelopmentEnv()) return false;
+  if (isDevelopmentEnv()) return false; // skip page_view in dev to avoid polluting production GA data
   return true;
 }
 
@@ -145,27 +100,27 @@ const GA_EVENT_PREFIX = "SJ_";
 // --- Google Analytics track* helpers (send funnel events to GA4; add page when provided) ---
 
 export function gaTrackSignInClick(page) {
-  gaTrustedEvent("funnel_sign_in_click", typeof page === "string" ? { page } : {});
+  gaEvent("funnel_sign_in_click", typeof page === "string" ? { page } : {});
 }
 
 export function gaTrackSignInSuccess() {
-  gaTrustedEvent("funnel_sign_in_success");
+  gaEvent("funnel_sign_in_success");
 }
 
 export function gaTrackSheetConnectClick(page) {
-  gaTrustedEvent("funnel_sheet_connect_click", typeof page === "string" ? { page } : {});
+  gaEvent("funnel_sheet_connect_click", typeof page === "string" ? { page } : {});
 }
 
 export function gaTrackSheetPickerCancelled() {
-  gaTrustedEvent("funnel_sheet_picker_cancelled");
+  gaEvent("funnel_sheet_picker_cancelled");
 }
 
 export function gaTrackSheetSelected() {
-  gaTrustedEvent("funnel_sheet_selected");
+  gaEvent("funnel_sheet_selected");
 }
 
 export function gaTrackSheetLinked() {
-  gaTrustedEvent("funnel_sheet_linked");
+  gaEvent("funnel_sheet_linked");
 }
 
 /**
@@ -174,7 +129,7 @@ export function gaTrackSheetLinked() {
  * @param {object} [params] - Optional extra params (e.g. { page, slide })
  */
 export function gaTrackShareCopy(feature, params = {}) {
-  gaTrustedEvent("share_button_click", {
+  gaEvent("share_button_click", {
     feature,
     ...params,
   });
@@ -182,10 +137,11 @@ export function gaTrackShareCopy(feature, params = {}) {
 
 /**
  * Track feedback sentiment (thumbs up/down) from the floating feedback widget.
- * Development-only while validating schema/volume; promote by switching gaDevEvent -> gaTrustedEvent.
+ * Uses debug_mode so events go to GA4 DebugView only while validating.
+ * Remove debug_mode to promote to production tracking.
  * @param {"positive"|"negative"} sentiment
  * @param {string} page - Current page pathname
  */
 export function gaTrackFeedbackSentiment(sentiment, page) {
-  gaDevEvent("feedback_sentiment", { sentiment, page });
+  gaEvent("feedback_sentiment", { sentiment, page, debug_mode: true });
 }

@@ -627,7 +627,7 @@ export function PopularLiftsIndividualLiftCards() {
 
   useEffect(() => {
     if (visibleLiftTypes.length === 1) setExpandedCard(visibleLiftTypes[0]);
-  }, [visibleLiftTypes.length]);
+  }, [visibleLiftTypes]);
 
   const expandedCardData = visibleLiftTypes.find((lift) => lift === expandedCard);
   const otherCards = isMobile

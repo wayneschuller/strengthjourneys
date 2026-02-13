@@ -22,7 +22,6 @@ import {
   Pie,
   PieChart,
   Cell,
-  ResponsiveContainer,
   Legend,
   Tooltip,
 } from "recharts";
@@ -199,7 +198,6 @@ export function LiftTypeFrequencyPieCard() {
           // className="mx-auto aspect-square min-h-[300px]"
           className="mx-auto h-[280px] w-full max-w-[400px] sm:h-[320px] md:h-[360px]"
         >
-          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={pieData}
@@ -259,7 +257,6 @@ export function LiftTypeFrequencyPieCard() {
                 }}
               />
             </PieChart>
-          </ResponsiveContainer>
         </ChartContainer>
 
         {/* <Separator className="my-6" /> */}

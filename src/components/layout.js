@@ -2,17 +2,21 @@
 
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { useSession, signIn } from "next-auth/react";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 import { AppBackground } from "@/components/app-background";
 import { FeedbackWidget } from "@/components/feedback-widget";
+import { DrivePickerContainer } from "@/components/drive-picker-container";
+import { GoogleLogo } from "@/components/hero-section";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
 import { gaTrackSignInClick } from "@/lib/analytics";
+import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import {
   isToday,
   parseISO,
@@ -132,15 +136,7 @@ export function Layout({ children }) {
     if (authStatus === "loading") return;
     if (!isDemoMode || authStatus !== "unauthenticated") return;
 
-    const demoDataPaths = [
-      "/visualizer",
-      "/analyzer",
-      "/barbell-strength-potential",
-      "/tonnage",
-      "/[lift]",
-      "/strength-year-in-review",
-    ];
-    if (!demoDataPaths.includes(router.pathname)) return;
+    if (!DATA_ACCESS_BANNER_PATHS.includes(router.pathname)) return;
 
     demoShown.current = true;
     toast({
@@ -167,6 +163,7 @@ export function Layout({ children }) {
 
       <div className="relative z-10">
         <NavBar />
+        <DataAccessBanner pathname={router.pathname} />
         <main className="mx-0 md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
           {children}
         </main>
@@ -238,4 +235,84 @@ function getTodayInviteMessage(now = new Date()) {
   const startOfYear = new Date(now.getFullYear(), 0, 0);
   const dayOfYear = Math.floor((now - startOfYear) / 86400000);
   return TODAY_INVITE_MESSAGES[dayOfYear % TODAY_INVITE_MESSAGES.length];
+}
+
+const DATA_ACCESS_BANNER_PATHS = [
+  "/visualizer",
+  "/analyzer",
+  "/barbell-strength-potential",
+  "/tonnage",
+  "/[lift]",
+  "/strength-year-in-review",
+];
+
+function DataAccessBanner({ pathname }) {
+  const { data: session, status: authStatus } = useSession();
+  const { sheetInfo, selectSheet } = useUserLiftingData();
+  const [openPicker, setOpenPicker] = useState(null);
+  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
+
+  const isDataPage = DATA_ACCESS_BANNER_PATHS.includes(pathname);
+  const showSignInCta = isDataPage && authStatus === "unauthenticated";
+  const showConnectSheetCta =
+    isDataPage && authStatus === "authenticated" && !sheetInfo?.ssid;
+
+  useEffect(() => {
+    if (showConnectSheetCta) {
+      setShouldLoadPicker(true);
+    }
+  }, [showConnectSheetCta]);
+
+  const handlePickerReady = useCallback((picker) => {
+    setOpenPicker(() => picker);
+  }, []);
+
+  if (!showSignInCta && !showConnectSheetCta) return null;
+
+  return (
+    <>
+      {showConnectSheetCta && shouldLoadPicker && (
+        <DrivePickerContainer
+          onReady={handlePickerReady}
+          trigger={shouldLoadPicker}
+          oauthToken={session?.accessToken}
+          selectSheet={selectSheet}
+        />
+      )}
+      <section className="mb-3 border-y bg-amber-100/60">
+        <div className="mx-0 flex flex-col items-center justify-center gap-3 px-4 py-3 text-center md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
+          <p className="text-sm leading-tight text-amber-950">
+            {showSignInCta
+              ? "You are viewing demo data. Sign in with Google to unlock your personal lifting history."
+              : "You are signed in. Connect your Google Sheet to load your own lifting history."}
+          </p>
+          {showSignInCta ? (
+            <Button
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={() => {
+                gaTrackSignInClick(pathname);
+                signIn("google");
+              }}
+            >
+              <GoogleLogo size={16} />
+              Sign in with Google
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              disabled={!openPicker}
+              onClick={() => {
+                if (openPicker) {
+                  handleOpenFilePicker(openPicker);
+                }
+              }}
+            >
+              {openPicker ? "Connect Google Sheet" : "Loading Google Sheet picker..."}
+            </Button>
+          )}
+        </div>
+      </section>
+    </>
+  );
 }

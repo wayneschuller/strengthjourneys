@@ -40,6 +40,7 @@ export function Layout({ children }) {
     isDemoMode,
     parseError,
     parsedData,
+    rawRows,
     dataSyncedAt,
     sheetInfo,
   } = useUserLiftingData();
@@ -49,7 +50,7 @@ export function Layout({ children }) {
 
   // Once-per-session guards
   const apiErrorShown = useRef(false);
-  const dataLoadedShown = useRef(false);
+  const prevRawRowsRef = useRef(null);
   const parseErrorShown = useRef(false);
   const demoShown = useRef(false);
 
@@ -69,15 +70,15 @@ export function Layout({ children }) {
     }
   }, [isError, authStatus, apiError, toast]);
 
-  // Toast 2: Data Loaded (once per session, but not on "/" because home has
-  // dedicated data-loading/status widgets with richer detail)
+  // Toast 2: Data Loaded — fires when rawRows changes (new data arrived),
+  // not on every SWR revalidation. Skipped on "/" (home has its own widgets).
   useEffect(() => {
-    if (dataLoadedShown.current) return;
-    if (!dataSyncedAt) return;
+    if (rawRows == null) return;
     if (!parsedData || !parsedData.length) return;
     if (router.pathname === "/") return;
+    if (rawRows === prevRawRowsRef.current) return;
 
-    dataLoadedShown.current = true;
+    prevRawRowsRef.current = rawRows;
 
     // Build relative date copy from the latest entry
     const latestDate = parsedData[parsedData.length - 1].date;
@@ -119,7 +120,7 @@ export function Layout({ children }) {
         </>
       ),
     });
-  }, [dataSyncedAt, parsedData, sheetInfo, router.pathname, toast]);
+  }, [rawRows, parsedData, sheetInfo, router.pathname, toast]);
 
   // Toast 3: Parse Error
   useEffect(() => {

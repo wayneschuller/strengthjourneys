@@ -9,6 +9,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { devLog } from "@/lib/processing-utils";
+import { ArticleFeedback } from "@/components/article-feedback";
 import { format } from "date-fns";
 
 import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
@@ -165,8 +166,9 @@ export default function ArticlePost({ article }) {
             )}
           </article>
         </CardContent>
-        <CardFooter>
-          <div className="mt-8 text-center">
+        <CardFooter className="flex flex-col items-start gap-6">
+          <ArticleFeedback slug={article.slug.current} />
+          <div className="text-center">
             <Link href="/articles" className="text-blue-600 hover:underline">
               ← Back to the Strength and Lifting Articles Library
             </Link>

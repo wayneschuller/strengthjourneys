@@ -93,10 +93,7 @@ function GradeCircle({ percentage, label, tooltip, size = 28, delay = 0, isVisib
           </motion.div>
         </TooltipTrigger>
         <TooltipContent>
-          <div className="w-40">
-            <div className="text-center text-lg">{label}: {percentage}%</div>
-            <div>{tooltip}</div>
-          </div>
+          <div className="text-xs">{tooltip}</div>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

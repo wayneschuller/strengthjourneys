@@ -1,13 +1,5 @@
 "use client";
 
-import {
-  Card,
-  CardFooter,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardAction,
-} from "@/components/ui/card";
 import { motion } from "motion/react";
 import { useMemo, useRef } from "react";
 import {
@@ -24,7 +16,6 @@ import {
   Calendar,
   Trophy,
   Activity,
-  Award,
   Flame,
   Anvil,
 } from "lucide-react";
@@ -39,35 +30,12 @@ import { useLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const statCardBase =
-  "flex h-full flex-col justify-between rounded-xl border shadow-none";
-
 const ACCENTS = {
-  primary: {
-    card: "border-l-primary bg-primary/5",
-    iconBg: "bg-primary/10",
-    icon: "text-primary",
-  },
-  amber: {
-    card: "border-l-amber-500 bg-amber-500/5",
-    iconBg: "bg-amber-500/10",
-    icon: "text-amber-500",
-  },
-  emerald: {
-    card: "border-l-emerald-500 bg-emerald-500/5",
-    iconBg: "bg-emerald-500/10",
-    icon: "text-emerald-500",
-  },
-  violet: {
-    card: "border-l-violet-500 bg-violet-500/5",
-    iconBg: "bg-violet-500/10",
-    icon: "text-violet-500",
-  },
-  orange: {
-    card: "border-l-orange-500 bg-orange-500/5",
-    iconBg: "bg-orange-500/10",
-    icon: "text-orange-500",
-  },
+  primary: "text-primary",
+  amber: "text-amber-500",
+  emerald: "text-emerald-500",
+  violet: "text-violet-500",
+  orange: "text-orange-500",
 };
 
 const STREAK_ENCOURAGMENTS = [
@@ -94,15 +62,7 @@ const STREAK_ENCOURAGMENTS = [
 ];
 
 /**
- * Reusable stat card with icon, description, title, and footer.
- * @param {Object} props
- * @param {"primary"|"amber"|"emerald"|"violet"|"orange"} props.accent - Accent preset key
- * @param {React.Component} props.icon - Lucide icon component
- * @param {string} props.description - CardDescription text
- * @param {React.ReactNode} props.title - CardTitle content
- * @param {React.ReactNode} props.footer - CardFooter content
- * @param {React.ReactNode} [props.action] - Optional CardAction (e.g. percentage badge)
- * @param {number} props.animationDelay - Delay in ms for left-to-right stagger
+ * Compact stat row with icon, label, value, and optional subtext.
  */
 function StatCard({
   accent,
@@ -113,47 +73,40 @@ function StatCard({
   action,
   animationDelay,
 }) {
-  const { card, iconBg, icon } = ACCENTS[accent] ?? ACCENTS.primary;
+  const iconColor = ACCENTS[accent] ?? ACCENTS.primary;
   return (
     <motion.div
-      initial={{ opacity: 0, x: -24 }}
+      className="flex flex-col gap-0.5 py-1.5"
+      initial={{ opacity: 0, x: -16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{
         type: "spring",
-        stiffness: 180,
-        damping: 20,
+        stiffness: 220,
+        damping: 22,
         delay: animationDelay / 1000,
       }}
     >
-    <Card
-      className={`${statCardBase} relative border-l-4 ${card}`}
-    >
-      {action}
-      <CardHeader className="flex flex-row items-start gap-2.5 p-3">
-        <div className={`rounded-lg p-1.5 ${iconBg}`}>
-          <Icon className={`h-4 w-4 ${icon}`} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <CardDescription className="text-xs">{description}</CardDescription>
-          <CardTitle className="mt-1 min-h-10 text-lg leading-tight font-semibold tabular-nums sm:text-xl">
-            {title}
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardFooter className="min-h-8 flex-col items-start gap-1.5 px-3 pt-0 pb-3 text-xs">
+      <div className="flex items-center gap-2">
+        <Icon className={`h-3.5 w-3.5 shrink-0 ${iconColor}`} />
+        <span className="text-muted-foreground text-xs">{description}</span>
+        {action && <span className="ml-1">{action}</span>}
+      </div>
+      <div className="text-sm font-semibold leading-snug tabular-nums sm:text-base">
+        {title}
+      </div>
+      {footer && (
         <motion.div
-          className="w-full"
+          className="text-muted-foreground text-[11px] leading-tight line-clamp-1"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{
-            duration: 0.35,
-            delay: animationDelay / 1000 + 0.15,
+            duration: 0.3,
+            delay: animationDelay / 1000 + 0.1,
           }}
         >
           {footer}
         </motion.div>
-      </CardFooter>
-    </Card>
+      )}
     </motion.div>
   );
 }
@@ -273,7 +226,7 @@ export function SectionTopCards({ isProgressDone = false }) {
   const encouragementMessage = streakEncouragementRef.current;
 
   return (
-    <div className="col-span-full grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+    <div className="col-span-full grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
       {!isProgressDone && <SectionTopCardsSkeleton />}
       {isProgressDone && (
         <>
@@ -287,10 +240,10 @@ export function SectionTopCards({ isProgressDone = false }) {
                 : "Starting your journey"
             }
             footer={
-              <div className="text-muted-foreground line-clamp-1">
-                {totalStats.totalReps.toLocaleString()} reps and{" "}
-                {totalStats.totalSets.toLocaleString()} sets lifted
-              </div>
+              <span>
+                {totalStats.totalReps.toLocaleString()} reps ·{" "}
+                {totalStats.totalSets.toLocaleString()} sets
+              </span>
             }
             animationDelay={0}
           />
@@ -305,55 +258,37 @@ export function SectionTopCards({ isProgressDone = false }) {
                 : "No PRs yet"
             }
             footer={
-              <div className="text-muted-foreground space-y-1">
-                <div>
-                  {mostRecentPR
-                    ? `Performed on ${format(
-                        new Date(mostRecentPR.date),
-                        "d MMMM yyyy",
-                      )}`
+              mostRecentPR ? (
+                <span>
+                  {format(new Date(mostRecentPR.date), "d MMMM yyyy")}
+                  {mostRecentPRStrengthRating
+                    ? ` · ${STRENGTH_LEVEL_EMOJI[mostRecentPRStrengthRating] ?? ""} ${mostRecentPRStrengthRating}`
                     : ""}
-                </div>
-                {mostRecentPRStrengthRating && (
-                  <div>
-                    Strength level:{" "}
-                    {STRENGTH_LEVEL_EMOJI[mostRecentPRStrengthRating] ?? ""}{" "}
-                    {mostRecentPRStrengthRating}
-                  </div>
-                )}
-              </div>
+                </span>
+              ) : null
             }
-            animationDelay={400}
+            animationDelay={200}
           />
 
           <StatCard
             accent="emerald"
             icon={Activity}
             description="Session Momentum"
-            title={
-              <span className="flex flex-col gap-0.5">
-                <span>{recentSessions} sessions</span>
-                <span className="text-sm font-semibold text-muted-foreground">
-                  in the last 90 days
-                </span>
-              </span>
-            }
+            title={`${recentSessions} sessions in 90 days`}
             action={
               percentageChange !== 0 ? (
-                <CardAction>
-                  <span
-                    className={`flex items-center text-xs font-normal ${
-                      percentageChange > 0 ? "text-emerald-600" : "text-red-500"
-                    }`}
-                  >
-                    {percentageChange > 0 ? (
-                      <TrendingUp className="mr-1 h-3.5 w-3.5" />
-                    ) : (
-                      <TrendingDown className="mr-1 h-3.5 w-3.5" />
-                    )}
-                    {Math.abs(percentageChange)}%
-                  </span>
-                </CardAction>
+                <span
+                  className={`flex items-center text-[11px] font-normal ${
+                    percentageChange > 0 ? "text-emerald-600" : "text-red-500"
+                  }`}
+                >
+                  {percentageChange > 0 ? (
+                    <TrendingUp className="mr-0.5 h-3 w-3" />
+                  ) : (
+                    <TrendingDown className="mr-0.5 h-3 w-3" />
+                  )}
+                  {Math.abs(percentageChange)}%
+                </span>
               ) : null
             }
             footer={(() => {
@@ -363,13 +298,12 @@ export function SectionTopCards({ isProgressDone = false }) {
                   ? Math.round(avgPerWeek)
                   : avgPerWeek.toFixed(1);
               return (
-                <div className="flex flex-col gap-1.5 text-muted-foreground">
-                  <div>Average {avgFormatted} sessions per week</div>
-                  <div>{previousSessions} sessions in previous 90 days</div>
-                </div>
+                <span>
+                  Avg {avgFormatted}/wk · {previousSessions} prev 90 days
+                </span>
               );
             })()}
-            animationDelay={800}
+            animationDelay={400}
           />
 
           <StatCard
@@ -385,35 +319,14 @@ export function SectionTopCards({ isProgressDone = false }) {
             }
             footer={
               lifetimeTonnage.primaryTotal > 0 ? (
-                <>
-                  <div className="text-muted-foreground">
-                    Across {lifetimeTonnage.sessionCount.toLocaleString()}{" "}
-                    logged sessions
-                  </div>
-                  <div className="text-muted-foreground">
-                    Avg per session:{" "}
-                    {formatLifetimeTonnage(lifetimeTonnage.averagePerSession)}{" "}
-                    {lifetimeTonnage.primaryUnit}
-                  </div>
-                  {lifetimeTonnage.hasTwelveMonthsOfData &&
-                    lifetimeTonnage.lastYearPrimaryTotal > 0 && (
-                      <div className="text-muted-foreground">
-                        In the last 12 months:{" "}
-                        {formatLifetimeTonnage(
-                          lifetimeTonnage.lastYearPrimaryTotal,
-                        )}{" "}
-                        {lifetimeTonnage.primaryUnit}
-                      </div>
-                    )}
-                </>
-              ) : (
-                <div className="text-muted-foreground">
-                  Once you start logging training, we&apos;ll track your lifetime
-                  tonnage here.
-                </div>
-              )
+                <span>
+                  {lifetimeTonnage.sessionCount.toLocaleString()} sessions · avg{" "}
+                  {formatLifetimeTonnage(lifetimeTonnage.averagePerSession)}{" "}
+                  {lifetimeTonnage.primaryUnit}/session
+                </span>
+              ) : null
             }
-            animationDelay={1200}
+            animationDelay={600}
           />
 
           <StatCard
@@ -422,29 +335,16 @@ export function SectionTopCards({ isProgressDone = false }) {
             description="Weekly consistency"
             title={`${currentStreak} week${currentStreak === 1 ? "" : "s"} in a row`}
             footer={
-              <>
-                <div className="text-muted-foreground">
-                  {currentStreak > 0
-                    ? `You're on a ${currentStreak}-week streak of 3+ sessions. Your best run: ${bestStreak} week${bestStreak === 1 ? "" : "s"}.`
-                    : `Aim for 3+ sessions per week. Your best so far: ${bestStreak} week${bestStreak === 1 ? "" : "s"} in a row.`}
-                </div>
-                {sessionsNeededThisWeek > 0 && (
-                  <div className="text-muted-foreground">
-                    {sessionsNeededThisWeek === 1
-                      ? "One more session by Sunday night and you keep the streak going."
-                      : `${sessionsNeededThisWeek} more sessions by Sunday night and you're still on track.`}
-                  </div>
-                )}
-                {sessionsNeededThisWeek === 0 &&
-                  (sessionsThisWeek ?? 0) >= 3 && (
-                    <div className="text-muted-foreground">
-                      This week: {sessionsThisWeek} sessions.{" "}
-                      {encouragementMessage}
-                    </div>
-                  )}
-              </>
+              <span>
+                {`Best: ${bestStreak}wk`}
+                {sessionsNeededThisWeek > 0
+                  ? ` · ${sessionsNeededThisWeek} more this week`
+                  : sessionsThisWeek >= 3
+                    ? ` · ${sessionsThisWeek} this week. ${encouragementMessage}`
+                    : ""}
+              </span>
             }
-            animationDelay={1600}
+            animationDelay={800}
           />
         </>
       )}
@@ -456,19 +356,14 @@ function SectionTopCardsSkeleton() {
   return Array.from({ length: 5 }).map((_, index) => (
     <div
       key={`section-top-card-skeleton-${index}`}
-      className="border-border/60 bg-card/30 flex min-h-[220px] flex-col justify-between rounded-xl border p-3 md:min-h-[240px]"
+      className="flex flex-col gap-1 py-1.5"
     >
-      <div className="flex items-start gap-3">
-        <Skeleton className="h-8 w-8 rounded-lg" />
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-6 w-28" />
-        </div>
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-3.5 w-3.5 rounded" />
+        <Skeleton className="h-3 w-24" />
       </div>
-      <div className="mt-4 space-y-2">
-        <Skeleton className="h-3 w-40" />
-        <Skeleton className="h-3 w-28" />
-      </div>
+      <Skeleton className="h-4 w-32" />
+      <Skeleton className="h-2.5 w-28" />
     </div>
   ));
 }

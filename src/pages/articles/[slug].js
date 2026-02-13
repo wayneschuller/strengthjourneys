@@ -49,7 +49,7 @@ export default function ArticlePost({ article }) {
   const publishDate = new Date(article.publishedAt).toISOString();
   const formattedDate = format(new Date(article.publishedAt), "MMMM d, yyyy");
 
-  devLog(article);
+  // devLog(article);
 
   let bannerImageUrl = null;
   let ogImageUrl = null;
@@ -116,7 +116,7 @@ export default function ArticlePost({ article }) {
         </script>
       </Head>
 
-      <Card className="shadow-lg shadow-primary-foreground ring-0 ring-border hover:ring-1">
+      <Card className="shadow-primary-foreground ring-border shadow-lg ring-0 hover:ring-1">
         <CardHeader className="px-3 md:px-6">
           <div className="mb-4">
             <Link
@@ -142,12 +142,12 @@ export default function ArticlePost({ article }) {
           {bannerImageUrl && <Banner imageUrl={bannerImageUrl} />}
         </CardHeader>
         <CardContent className="px-3 md:px-6">
-          <article className="prose max-w-3xl text-foreground prose-headings:text-foreground prose-strong:text-foreground">
+          <article className="prose text-foreground prose-headings:text-foreground prose-strong:text-foreground max-w-3xl">
             <header>
-              <h1 className="tracking-tighter text-foreground">
+              <h1 className="text-foreground tracking-tighter">
                 {article.title}
               </h1>
-              <h3 className="mt-2 text-sm font-light text-muted-foreground">
+              <h3 className="text-muted-foreground mt-2 text-sm font-light">
                 Published at: {formattedDate}
               </h3>
 
@@ -198,7 +198,7 @@ export async function getStaticPaths() {
     `*[_type == "post" && defined(slug.current) && publishedAt < now() && defined(body)][].slug.current`,
   );
 
-  devLog(paths);
+  // devLog(paths);
 
   return {
     paths: paths.map((slug) => ({ params: { slug } })),

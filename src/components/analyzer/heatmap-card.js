@@ -154,7 +154,7 @@ export function ActivityHeatmapsCard() {
           {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
           {intervals && (
             <>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
                 {intervals.map((interval, index) => {
                   return (
                     <div key={`${index}-heatmap`}>
@@ -467,8 +467,6 @@ function getHeatmapLevel(totalSets, hasPR, hasCoreLiftPR) {
 // Create heatmapData with structured session info for rich tooltips
 // Single O(n) pass replaces the old O(n^2) approach
 function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
-  const startTime = performance.now();
-
   // Generate a full interval of random data for demo mode because it looks good
   if (isDemoMode) {
     const demoHeatmapData = [];
@@ -495,7 +493,6 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
       });
     }
 
-    logTiming("generateHeatmapData", performance.now() - startTime, "demo");
     return demoHeatmapData;
   }
 
@@ -553,8 +550,6 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
       liftsByType: day.liftsByType,
     },
   }));
-
-  logTiming("generateHeatmapData", performance.now() - startTime, `${startDate} to ${endDate}`);
 
   return heatmapData;
 }

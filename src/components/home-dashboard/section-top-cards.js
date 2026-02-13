@@ -174,7 +174,7 @@ export function SectionTopCards({ isProgressDone = false }) {
     parsedData,
     liftTypes,
     topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
+    sessionTonnageLookup,
   } = useUserLiftingData();
 
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
@@ -188,8 +188,16 @@ export function SectionTopCards({ isProgressDone = false }) {
   );
   const preferredUnit = isMetricPreference ? "kg" : "lb";
 
+  const allSessionDates = useMemo(
+    () => sessionTonnageLookup?.allSessionDates ?? [],
+    [sessionTonnageLookup],
+  );
+
   // Find the most recent PR single from top 5 most frequent lifts
-  const mostRecentPR = findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes);
+  const mostRecentPR = useMemo(
+    () => findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes),
+    [topLiftsByTypeAndReps, liftTypes],
+  );
 
   // Check if we have the necessary bio data and standards to calculate a strength rating
   const hasBioData =
@@ -231,21 +239,30 @@ export function SectionTopCards({ isProgressDone = false }) {
 
   // Calculate lifetime tonnage (all-time total weight moved) in preferred units.
   const lifetimeTonnage = useMemo(
-    () => parsedData?.length ? calculateLifetimeTonnage(parsedData, preferredUnit) : calculateLifetimeTonnage(null),
-    [parsedData, preferredUnit],
+    () =>
+      calculateLifetimeTonnageFromLookup(sessionTonnageLookup, preferredUnit),
+    [sessionTonnageLookup, preferredUnit],
   );
 
   // Calculate session momentum
   const { recentSessions, previousSessions, percentageChange } = useMemo(
-    () => parsedData?.length ? calculateSessionMomentum(parsedData) : { recentSessions: 0, previousSessions: 0, percentageChange: 0 },
-    [parsedData],
+    () =>
+      allSessionDates.length
+        ? calculateSessionMomentumFromDates(allSessionDates)
+        : { recentSessions: 0, previousSessions: 0, percentageChange: 0 },
+    [allSessionDates],
   );
 
   const { currentStreak, bestStreak, sessionsThisWeek } = useMemo(
-    () => parsedData?.length ? calculateStreak(parsedData) : { currentStreak: 0, bestStreak: 0, sessionsThisWeek: 0 },
-    [parsedData],
+    () =>
+      allSessionDates.length
+        ? calculateStreakFromDates(allSessionDates)
+        : { currentStreak: 0, bestStreak: 0, sessionsThisWeek: 0 },
+    [allSessionDates],
   );
   const sessionsNeededThisWeek = Math.max(0, 3 - (sessionsThisWeek ?? 0));
+
+  const totalStats = useMemo(() => calculateTotalStats(liftTypes), [liftTypes]);
 
   const streakEncouragementRef = useRef(null);
   if (streakEncouragementRef.current === null) {
@@ -272,9 +289,8 @@ export function SectionTopCards({ isProgressDone = false }) {
             }
             footer={
               <div className="text-muted-foreground line-clamp-1">
-                {calculateTotalStats(liftTypes).totalReps.toLocaleString()} reps
-                and {calculateTotalStats(liftTypes).totalSets.toLocaleString()}{" "}
-                sets lifted
+                {totalStats.totalReps.toLocaleString()} reps and{" "}
+                {totalStats.totalSets.toLocaleString()} sets lifted
               </div>
             }
             animationDelay={0}
@@ -500,13 +516,17 @@ function calculateTotalStats(liftTypes) {
 }
 
 /**
- * Calculates lifetime tonnage (sum of weight × reps) across all non-goal lifts.
+ * Calculates lifetime tonnage using precomputed session lookup
+ * (sum of weight × reps across all non-goal lifts).
  * Returns totals per unit plus a primary unit/total for display.
  */
-function calculateLifetimeTonnage(parsedData, preferredUnit = "lb") {
+function calculateLifetimeTonnageFromLookup(sessionTonnageLookup, preferredUnit = "lb") {
   const startTime = performance.now();
 
-  if (!parsedData || parsedData.length === 0) {
+  const allSessionDates = sessionTonnageLookup?.allSessionDates ?? [];
+  const sessionTonnageByDate = sessionTonnageLookup?.sessionTonnageByDate ?? {};
+
+  if (allSessionDates.length === 0) {
     return {
       totalByUnit: {},
       primaryUnit: preferredUnit || "lb",
@@ -519,43 +539,30 @@ function calculateLifetimeTonnage(parsedData, preferredUnit = "lb") {
   }
 
   const totalByUnit = {};
-  const sessionDates = new Set();
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const twelveMonthsAgoStr = subtractDaysFromStr(todayStr, 365);
   const lastYearByUnit = {};
-  let earliestDateStr = null;
-  let latestDateStr = null;
+  const earliestDateStr = allSessionDates[0] ?? null;
+  const latestDateStr = allSessionDates[allSessionDates.length - 1] ?? null;
 
-  for (let i = 0; i < parsedData.length; i++) {
-    const entry = parsedData[i];
-    if (!entry || entry.isGoal) continue;
+  for (let i = 0; i < allSessionDates.length; i++) {
+    const date = allSessionDates[i];
+    const tonnageByUnit = sessionTonnageByDate[date];
+    if (!tonnageByUnit) continue;
 
-    const { date, weight, reps, unitType } = entry;
-    if (!date) continue;
-
-    sessionDates.add(date);
-
-    if (!earliestDateStr || date < earliestDateStr) {
-      earliestDateStr = date;
-    }
-    if (!latestDateStr || date > latestDateStr) {
-      latestDateStr = date;
-    }
-
-    const repsSafe = typeof reps === "number" ? reps : 0;
-    const weightSafe = typeof weight === "number" ? weight : 0;
-    const tonnage = repsSafe * weightSafe;
-    if (!tonnage) continue;
-
-    const unit = unitType || "lb";
-    totalByUnit[unit] = (totalByUnit[unit] ?? 0) + tonnage;
-
-    if (date >= twelveMonthsAgoStr && date <= todayStr) {
-      lastYearByUnit[unit] = (lastYearByUnit[unit] ?? 0) + tonnage;
+    const unitKeys = Object.keys(tonnageByUnit);
+    for (let j = 0; j < unitKeys.length; j++) {
+      const unit = unitKeys[j];
+      const tonnage = tonnageByUnit[unit] ?? 0;
+      if (!tonnage) continue;
+      totalByUnit[unit] = (totalByUnit[unit] ?? 0) + tonnage;
+      if (date >= twelveMonthsAgoStr && date <= todayStr) {
+        lastYearByUnit[unit] = (lastYearByUnit[unit] ?? 0) + tonnage;
+      }
     }
   }
 
-  logTiming("calculateLifetimeTonnage", performance.now() - startTime);
+  logTiming("calculateLifetimeTonnageFromLookup", performance.now() - startTime);
 
   const unitKeys = Object.keys(totalByUnit);
   const primaryUnit = preferredUnit || unitKeys[0] || "lb";
@@ -615,13 +622,13 @@ function calculateLifetimeTonnage(parsedData, preferredUnit = "lb") {
   }
 
   const averagePerSession =
-    sessionDates.size > 0 ? Math.round(primaryTotal / sessionDates.size) : 0;
+    allSessionDates.length > 0 ? Math.round(primaryTotal / allSessionDates.length) : 0;
 
   return {
     totalByUnit,
     primaryUnit,
     primaryTotal,
-    sessionCount: sessionDates.size,
+    sessionCount: allSessionDates.length,
     averagePerSession,
     hasTwelveMonthsOfData,
     lastYearPrimaryTotal,
@@ -712,11 +719,12 @@ function calculatePRsInLast12Months(topLiftsByTypeAndReps) {
 
 /**
  * Calculates session momentum by comparing the last 90 days to the previous 90 days.
- * @param {Array} parsedData - Array of workout entries sorted chronologically
+ * Uses precomputed unique session dates from sessionTonnageLookup.
+ * @param {Array<string>} allSessionDates - Sorted unique session dates (YYYY-MM-DD)
  * @returns {Object} Object containing session counts and percentage change
  */
-function calculateSessionMomentum(parsedData) {
-  if (!parsedData || parsedData.length === 0) {
+function calculateSessionMomentumFromDates(allSessionDates) {
+  if (!allSessionDates || allSessionDates.length === 0) {
     return { recentSessions: 0, previousSessions: 0, percentageChange: 0 };
   }
 
@@ -727,15 +735,8 @@ function calculateSessionMomentum(parsedData) {
   const recentSessionDates = new Set();
   const previousSessionDates = new Set();
 
-  for (const entry of parsedData) {
-    if (entry.isGoal) continue;
-
-    const dateStr = entry.date;
-    if (!dateStr || typeof dateStr !== "string") {
-      console.warn("Invalid entry.date in parsedData:", entry);
-      continue;
-    }
-
+  for (let i = 0; i < allSessionDates.length; i++) {
+    const dateStr = allSessionDates[i];
     // YYYY-MM-DD string comparison
     if (dateStr >= ninetyDaysAgoStr && dateStr <= todayStr) {
       recentSessionDates.add(dateStr);
@@ -825,11 +826,11 @@ function addDaysFromStr(dateStr, n) {
  * A "session" = one calendar day with at least one gym visit (we count unique days, not sets/lifts).
  * Uses string comparison for dates (YYYY-MM-DD) and caches week key per unique date.
  *
- * @param {Array} parsedData - Array of workout entries sorted chronologically
+ * @param {Array<string>} allSessionDates - Sorted unique session dates (YYYY-MM-DD)
  * @returns {Object} Object containing currentStreak, bestStreak (weeks), and sessionsThisWeek (unique days)
  */
-function calculateStreak(parsedData) {
-  if (!parsedData || parsedData.length === 0) {
+function calculateStreakFromDates(allSessionDates) {
+  if (!allSessionDates || allSessionDates.length === 0) {
     return { currentStreak: 0, bestStreak: 0, sessionsThisWeek: 0 };
   }
 
@@ -839,17 +840,11 @@ function calculateStreak(parsedData) {
   // weekMap: for each week (Monday's date as "YYYY-MM-DD"), we store the Set of *dates* that had
   // at least one gym session that week. So if you trained Mon/Wed/Fri, that week key maps to 3 dates.
   // We do NOT count lift entries — one workout with 20 sets still counts as 1 session (one day).
-  const dateToWeekKey = new Map(); // cache: dateStr -> Monday of that week (so we compute once per unique day)
+  const dateToWeekKey = new Map(); // cache: dateStr -> Monday of that week
   const weekMap = new Map(); // weekKey (Monday YYYY-MM-DD) -> Set of date strings (unique session days in that week)
 
-  for (let i = 0; i < parsedData.length; i++) {
-    const entry = parsedData[i];
-    if (entry.isGoal) continue;
-    const dateStr = entry.date;
-    if (!dateStr || typeof dateStr !== "string") {
-      console.warn("Invalid entry.date in parsedData:", entry);
-      continue;
-    }
+  for (let i = 0; i < allSessionDates.length; i++) {
+    const dateStr = allSessionDates[i];
     // Resolve which week (Monday) this session falls into; cache so we only compute once per unique date
     let weekKey = dateToWeekKey.get(dateStr);
     if (weekKey === undefined) {

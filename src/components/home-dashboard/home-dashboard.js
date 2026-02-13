@@ -8,6 +8,7 @@ import { SectionTopCards } from "./section-top-cards";
 import { MostRecentSessionCard } from "./most-recent-session-card";
 import { DataSheetStatus, RowProcessingIndicator } from "./row-processing-indicator";
 import { OnBoardingDashboard } from "@/components/instructions-cards";
+import { ConsistencyGradesRow } from "./consistency-grades-row";
 
 export function HomeDashboard() {
   const { data: session, status: authStatus } = useSession();
@@ -37,9 +38,17 @@ export function HomeDashboard() {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xl">
-        <div>
+        <span>
           Welcome <span className="font-bold">{session.user.name}</span>
-        </div>
+        </span>
+        {sheetInfo?.ssid && (
+          <div className="flex flex-1 justify-center">
+            <ConsistencyGradesRow
+              parsedData={parsedData}
+              isVisible={hasDataLoaded}
+            />
+          </div>
+        )}
         {sheetInfo?.ssid && hasDataLoaded && (
           <DataSheetStatus
             rawRows={rawRows}

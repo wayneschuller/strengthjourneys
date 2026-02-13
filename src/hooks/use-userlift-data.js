@@ -160,13 +160,7 @@ export const UserLiftingDataProvider = ({ children }) => {
     },
   );
 
-  if (error)
-    console.log(
-      `%c⚠ GSheet API Error%c ${error}`,
-      "color:#ef4444;font-weight:bold",
-      "color:inherit",
-    );
-  const isError = !!error; // FIXME: We could send back error details
+  const isError = !!error;
   const apiError = useMemo(() => {
     if (!error) return null;
     return {
@@ -221,7 +215,7 @@ export const UserLiftingDataProvider = ({ children }) => {
     if (isError) {
       gaEvent(GA_EVENT_TAGS.GSHEET_API_ERROR); // Google Analytics: sheet API error
       console.error(
-        `%c✗ GSheet API rejected by Google%c — will retry on next revalidation`,
+        `%c✗ GSheet API Error%c ${error} — will retry on next revalidation`,
         "color:#ef4444;font-weight:bold",
         "color:inherit",
       );

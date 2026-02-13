@@ -162,11 +162,9 @@ export function gaTrackShareCopy(feature, params = {}) {
 
 /**
  * Track feedback sentiment (thumbs up/down) from the floating feedback widget.
- * Uses debug_mode so events go to GA4 DebugView only while validating.
- * Remove debug_mode to promote to production tracking.
  * @param {"positive"|"negative"} sentiment
  * @param {string} page - Current page pathname
  */
 export function gaTrackFeedbackSentiment(sentiment, page) {
-  gaEvent("feedback_sentiment", { sentiment, page, debug_mode: true });
+  gaEvent("feedback_sentiment", { sentiment, page });
 }

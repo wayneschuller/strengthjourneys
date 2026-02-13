@@ -315,8 +315,6 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
 
   const topLifts = topLiftsByTypeAndReps?.[liftType];
 
-  // useMemo with theme in deps forces chart data regeneration when theme changes,
-  // ensuring Recharts picks up the new theme colors
   const { chartData, bestLift, unitType } = useMemo(() => {
     let bestE1RMWeight = 0;
     let best = null;
@@ -363,13 +361,7 @@ function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
     }
 
     return { chartData: data, bestLift: best, unitType: unit };
-  }, [
-    parsedData,
-    topLifts,
-    e1rmFormula,
-    liftType,
-    resolvedTheme ?? theme ?? "light",
-  ]);
+  }, [parsedData, topLifts, e1rmFormula]);
 
   return (
     <Card className="shadow-lg md:mx-2">

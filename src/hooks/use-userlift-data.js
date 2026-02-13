@@ -132,7 +132,7 @@ export const UserLiftingDataProvider = ({ children }) => {
       });
 
       gaEvent(GA_EVENT_TAGS.GSHEET_API_ERROR); // Google Analytics: sheet API error
-      console.log(`%c✗ GSheet API rejected by Google%c — will retry on next revalidation`, "color:#ef4444;font-weight:bold", "color:inherit");
+      console.error(`%c✗ GSheet API rejected by Google%c — will retry on next revalidation`, "color:#ef4444;font-weight:bold", "color:inherit");
 
       // FIXME: We used to clear the ssid but it happened too often. There are occasional weird errors (wifi loading etc)
       // setSsid(null);
@@ -460,7 +460,7 @@ function getParsedDataWithFallback({
       demoToastInit = true; // Don't run another toast
 
       // Forget their chosen file, we have access but we cannot parse it
-      console.log(`%c✗ Parse failed%c — clearing saved sheet from localStorage`, "color:#ef4444;font-weight:bold", "color:inherit");
+      console.error(`%c✗ Parse failed%c — clearing saved sheet from localStorage`, "color:#ef4444;font-weight:bold", "color:inherit");
       setSsid(null);
       setSheetFilename(null);
       setSheetURL(null);

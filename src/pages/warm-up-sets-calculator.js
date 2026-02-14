@@ -7,7 +7,13 @@ import { Flame } from "lucide-react";
 
 import { RelatedArticles } from "@/components/article-cards";
 import { UnitChooser } from "@/components/unit-type-chooser";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   PageContainer,
   PageHeader,
@@ -22,16 +28,13 @@ import { Button } from "@/components/ui/button";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 
-import {
-  generateSessionSets,
-  formatPlateBreakdown,
-} from "@/lib/warmups";
+import { generateSessionSets, formatPlateBreakdown } from "@/lib/warmups";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
 export async function getStaticProps() {
-  const RELATED_ARTICLES_CATEGORY = "Warm Ups Calculator";
+  const RELATED_ARTICLES_CATEGORY = "Warm Ups";
   const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {
@@ -43,12 +46,14 @@ export async function getStaticProps() {
 }
 
 export default function WarmUpSetsCalculator({ relatedArticles }) {
-  const title = "Barbell Warm Up Sets Calculator | Free tool, no login required";
+  const title =
+    "Barbell Warm Up Sets Calculator | Free tool, no login required";
   const description =
     "Generate warmup sets for your barbell workouts using progressive warmup methodology. Calculate warmup weights, reps, and see plate breakdowns with visual diagrams.";
   const keywords =
     "warmup sets calculator, barbell warmup calculator, progressive warmup, warmup sets generator, barbell warmup sets, strength training warmup, powerlifting warmup calculator, workout warmup calculator, warmup reps calculator";
-  const canonicalURL = "https://www.strengthjourneys.xyz/warm-up-sets-calculator";
+  const canonicalURL =
+    "https://www.strengthjourneys.xyz/warm-up-sets-calculator";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_warm_up_sets_calculator_og.png";
 
@@ -214,18 +219,21 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
 
   // Changes whenever sliders/options change – used to retrigger barbell animations
   const animationKey = useMemo(
-    () => `${weight}-${reps}-${warmupSetCount}-${barType}-${platePreference}-${isMetric}`,
+    () =>
+      `${weight}-${reps}-${warmupSetCount}-${barType}-${platePreference}-${isMetric}`,
     [weight, reps, warmupSetCount, barType, platePreference, isMetric],
   );
 
   return (
     <PageContainer>
       <PageHeader>
-        <PageHeaderHeading icon={Flame}>Barbell Warm Ups Calculator</PageHeaderHeading>
+        <PageHeaderHeading icon={Flame}>
+          Barbell Warm Ups Calculator
+        </PageHeaderHeading>
         <PageHeaderDescription>
-          Generate warmup sets for your barbell workouts using progressive warmup
-          methodology. Enter your target top set weight and reps, and we&apos;ll
-          calculate the warmup progression with plate breakdowns.
+          Generate warmup sets for your barbell workouts using progressive
+          warmup methodology. Enter your target top set weight and reps, and
+          we&apos;ll calculate the warmup progression with plate breakdowns.
         </PageHeaderDescription>
       </PageHeader>
 
@@ -255,7 +263,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
               {reps} reps
             </div>
 
-            <div className="ml-2 mt-6 w-[9rem] justify-self-center md:hidden">
+            <div className="mt-6 ml-2 w-[9rem] justify-self-center md:hidden">
               <div className="flex items-center gap-1 text-2xl">
                 <Input
                   className="text-2xl"
@@ -269,7 +277,10 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
                   onKeyDown={handleKeyDown}
                   aria-label="Weight"
                 />
-                <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={toggleIsMetric}
+                />
               </div>
             </div>
             <Slider
@@ -294,7 +305,10 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
                   onKeyDown={handleKeyDown}
                   aria-label="Weight"
                 />
-                <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={toggleIsMetric}
+                />
               </div>
             </div>
           </div>
@@ -323,7 +337,10 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
             {/* Plate Preference Selection */}
             <div>
               <Label className="mb-2 block">Plate Preference</Label>
-              <RadioGroup value={platePreference} onValueChange={setPlatePreference}>
+              <RadioGroup
+                value={platePreference}
+                onValueChange={setPlatePreference}
+              >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="red" id="prefer-red" />
                   <Label htmlFor="prefer-red">
@@ -373,7 +390,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
                   +
                 </Button>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-xs">
                 Fewer sets = bigger jumps, more sets = smaller jumps.
               </p>
             </div>
@@ -412,7 +429,9 @@ function WarmupSetsDisplayCard({
   isMetric,
   animationKey,
 }) {
-  const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
+  const isDesktop = useMediaQuery("(min-width: 768px)", {
+    initializeWithValue: false,
+  });
   const useScrollTrigger = !isDesktop;
 
   if (sessionSets.length === 0) {
@@ -440,25 +459,29 @@ function WarmupSetsDisplayCard({
               <div
                 key={idx}
                 className={`flex h-64 flex-col justify-between gap-3 rounded-lg p-4 ${
-                  isTopSet ? "border-4 border-primary" : "border"
+                  isTopSet ? "border-primary border-4" : "border"
                 }`}
               >
                 <div>
-                  <div className={isTopSet ? "text-xl font-bold" : "text-lg font-semibold"}>
+                  <div
+                    className={
+                      isTopSet ? "text-xl font-bold" : "text-lg font-semibold"
+                    }
+                  >
                     {isTopSet
                       ? `Top Set: ${set.reps}@${set.weight}${unit}`
                       : `Set ${idx + 1}: ${set.reps}@${set.weight}${unit}`}
                   </div>
                   {!isTopSet && set.percentage > 0 && (
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-muted-foreground text-sm">
                       ~{set.percentage}% of top set
                     </div>
                   )}
-                  <div className="mt-1 h-10 text-sm text-muted-foreground">
+                  <div className="text-muted-foreground mt-1 h-10 text-sm">
                     {formatPlateBreakdown(breakdown, barWeight, isMetric)}
                   </div>
                   {isTopSet && breakdown.remainder !== 0 && (
-                    <div className="mt-1 text-xs text-muted-foreground">
+                    <div className="text-muted-foreground mt-1 text-xs">
                       Closest load: {breakdown.closestWeight}
                       {unit}
                       {breakdown.remainder > 0

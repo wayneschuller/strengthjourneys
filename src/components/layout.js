@@ -42,6 +42,7 @@ export function Layout({ children }) {
     parsedData,
     rawRows,
     dataSyncedAt,
+    isValidating,
     sheetInfo,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
@@ -54,21 +55,30 @@ export function Layout({ children }) {
   const parseErrorShown = useRef(false);
   const demoShown = useRef(false);
 
-  // Toast 1: API Error
+  // Toast 1: API Error — destructive red when no cached data (initial load failure),
+  // gentle warning when cached data exists (revalidation hiccup).
   useEffect(() => {
     if (apiErrorShown.current) return;
-    if (isError && authStatus === "authenticated") {
+    if (isError && !isValidating && authStatus === "authenticated") {
       const statusLabel = apiError?.status
         ? `HTTP ${apiError.status}${apiError?.statusText ? ` ${apiError.statusText}` : ""}`
         : "Request failed";
       apiErrorShown.current = true;
-      toast({
-        variant: "destructive",
-        title: `Google Sheet sync failed (${statusLabel})`,
-        description: apiError?.message || "No error details were provided.",
-      });
+
+      if (rawRows == null) {
+        toast({
+          variant: "destructive",
+          title: `Google Sheet sync failed (${statusLabel})`,
+          description: apiError?.message || "No error details were provided.",
+        });
+      } else {
+        toast({
+          title: "Google Sheet sync issue",
+          description: `Using cached data. Sync failed: ${apiError?.message || statusLabel}`,
+        });
+      }
     }
-  }, [isError, authStatus, apiError, toast]);
+  }, [isError, isValidating, authStatus, apiError, rawRows, toast]);
 
   // Toast 2: Data Loaded — fires when rawRows changes (new data arrived),
   // not on every SWR revalidation. Skipped on "/" (home has its own widgets).

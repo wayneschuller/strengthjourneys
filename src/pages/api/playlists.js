@@ -20,12 +20,15 @@ export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
   const { method } = req;
 
-  const adminEmails = process.env
-    .NEXT_PUBLIC_STRENGTH_JOURNEYS_LEADERBOARD_ADMINS
-    ? process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_LEADERBOARD_ADMINS.split(",")
-    : [];
+  const adminEmails = (
+    process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_LEADERBOARD_ADMINS || ""
+  )
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
 
-  const isAdmin = adminEmails.includes(session?.user?.email);
+  const sessionEmail = session?.user?.email?.trim().toLowerCase();
+  const isAdmin = sessionEmail ? adminEmails.includes(sessionEmail) : false;
 
   switch (method) {
     case "GET":
@@ -151,7 +154,12 @@ export default async function handler(req, res) {
           .json({ error: "Not authenticated - only admins can delete" });
 
       try {
-        const { id } = req.query;
+        const rawId = req.query.id;
+        const id = Array.isArray(rawId) ? rawId[0] : rawId;
+        if (!id || typeof id !== "string") {
+          return res.status(400).json({ error: "Missing or invalid playlist ID" });
+        }
+
         const existingPlaylist = await kv.hget("playlists", id);
         if (!existingPlaylist) {
           return res.status(404).json({ error: "Playlist not found" });

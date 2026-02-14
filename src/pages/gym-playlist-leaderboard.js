@@ -103,12 +103,16 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
 
   const { toast } = useToast();
   const [parent] = useAutoAnimate();
-  const adminEmails = process.env
-    .NEXT_PUBLIC_STRENGTH_JOURNEYS_LEADERBOARD_ADMINS
-    ? process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_LEADERBOARD_ADMINS.split(",")
-    : [];
+  const adminEmails = (
+    process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_LEADERBOARD_ADMINS || ""
+  )
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
 
-  const isAdmin = adminEmails.includes(session?.user?.email);
+  const isAdmin = adminEmails.includes(
+    session?.user?.email?.trim().toLowerCase(),
+  );
 
   // On mount - delete all the localstorage votes older than 10 minutes so the user can vote again
   // FIXME: implement the 10 minute timeout on the server using IP throttling

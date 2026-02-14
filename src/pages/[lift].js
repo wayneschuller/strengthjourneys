@@ -41,6 +41,7 @@ import { MostRecentSessionCard } from "@/components/home-dashboard/most-recent-s
 import { VisualizerMini } from "@/components/visualizer/visualizer-mini";
 import { VisualizerReps } from "@/components/visualizer/visualizer-reps";
 import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
+import { StrengthPotentialBarChart } from "@/components/visualizer/strength-potential-bar-chart";
 import { RelatedArticles } from "@/components/article-cards";
 
 import {
@@ -207,10 +208,20 @@ function BarbellInsightsMain({
           <StrengthLevelsCard liftType={liftInsightData.liftType} />
         </div>
         {/* <div className="col-span-3 flex flex-col gap-6 lg:flex-row"> */}
-        <div className="col-span-3 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="col-span-3 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-stretch">
           <MyLiftTypeSummaryCard liftType={liftInsightData.liftType} />
           <SanityArticleCard article={introductionArticle} />
-          <SanityArticleCard article={resourcesArticle} />
+          <div className="flex flex-col gap-6 lg:h-full">
+            <SanityArticleCard
+              article={resourcesArticle}
+              className={cn(
+                liftInsightData.liftType === "Back Squat" && "lg:flex-1",
+              )}
+            />
+            {liftInsightData.liftType === "Back Squat" && (
+              <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
+            )}
+          </div>
         </div>
         <div className="col-span-3">
           <MostRecentSessionCard liftType={liftInsightData.liftType} />
@@ -305,11 +316,11 @@ const DARK_THEMES = [
   "starry-night-dark",
 ];
 
-function SanityArticleCard({ article }) {
+function SanityArticleCard({ article, className }) {
   const { resolvedTheme } = useTheme();
   const isDarkTheme = DARK_THEMES.includes(resolvedTheme ?? "");
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>{article.title}</CardTitle>
       </CardHeader>

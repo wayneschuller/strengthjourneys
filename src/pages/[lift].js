@@ -214,13 +214,9 @@ function BarbellInsightsMain({
           <div className="flex flex-col gap-6 lg:h-full">
             <SanityArticleCard
               article={resourcesArticle}
-              className={cn(
-                liftInsightData.liftType === "Back Squat" && "lg:flex-1",
-              )}
+              className="lg:flex-1"
             />
-            {liftInsightData.liftType === "Back Squat" && (
-              <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
-            )}
+            <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
           </div>
         </div>
         <div className="col-span-3">

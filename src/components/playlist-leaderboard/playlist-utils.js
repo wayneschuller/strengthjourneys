@@ -102,6 +102,66 @@ export function isWhitelistedUrl(url) {
   }
 }
 
+export function getPlaylistPlatform(url) {
+  const fallback = {
+    name: "Music Platform",
+    logoUrl: null,
+  };
+
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+
+    if (hostname.includes("spotify.com")) {
+      return {
+        name: "Spotify",
+        logoUrl: "https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png",
+      };
+    }
+
+    if (hostname.includes("music.youtube.com")) {
+      return {
+        name: "YouTube Music",
+        logoUrl: "https://music.youtube.com/favicon.ico",
+      };
+    }
+
+    if (hostname === "youtube.com" || hostname.endsWith(".youtube.com")) {
+      return {
+        name: "YouTube",
+        logoUrl: "https://www.youtube.com/favicon.ico",
+      };
+    }
+
+    if (hostname.includes("music.apple.com")) {
+      return {
+        name: "Apple Music",
+        logoUrl: "https://music.apple.com/favicon.ico",
+      };
+    }
+
+    if (hostname.includes("soundcloud.com")) {
+      return {
+        name: "SoundCloud",
+        logoUrl: "https://soundcloud.com/favicon.ico",
+      };
+    }
+
+    if (hostname.includes("tidal.com")) {
+      return {
+        name: "TIDAL",
+        logoUrl: "https://tidal.com/favicon.ico",
+      };
+    }
+
+    return {
+      name: hostname.replace(/^www\./, ""),
+      logoUrl: `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 export function sanitizeText(text, isServer = false) {
   if (isServer) {
     // Simple server-side sanitization

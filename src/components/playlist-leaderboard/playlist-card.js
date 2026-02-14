@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { PlaylistAdminTools } from "./playlist-admin";
+import { getPlaylistPlatform } from "./playlist-utils";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,12 +19,8 @@ import {
   ArrowBigDown,
   Music,
   ExternalLink,
-  Bookmark,
-  BookmarkCheck,
   Heart,
 } from "lucide-react";
-
-import { useIsClient } from "usehooks-ts";
 
 // ---------------------------------------------------------------------------------------------------
 // <PlaylistCard /> - Upvotable info card about a good gym music playlist
@@ -40,7 +38,12 @@ export function PlaylistCard({
 }) {
   const inTimeout = isAdmin ? false : checkTimeout(votes, playlist.id);
   const userVote = votes[playlist.id]?.vote;
-  const isClient = useIsClient();
+  const platform = getPlaylistPlatform(playlist.url);
+  const [hasLogoError, setHasLogoError] = useState(false);
+
+  useEffect(() => {
+    setHasLogoError(false);
+  }, [playlist.url]);
 
   const VoteButton = ({ isUpvote = true, onClick, className }) => {
     const isUserVote =
@@ -71,8 +74,6 @@ export function PlaylistCard({
     );
   };
 
-  // if (!isClient) return; // Workaround because of hydration mismatch on localstorage isSaved
-
   return (
     <Card
       className={cn("flex flex-col gap-2 bg-muted/60 md:flex-row", className)}
@@ -81,7 +82,19 @@ export function PlaylistCard({
         <CardHeader className="">
           <CardTitle className="">
             <div className="flex flex-row items-center gap-2 font-semibold">
-              <Music className="h-5 w-5 text-primary" />
+              {platform.logoUrl && !hasLogoError ? (
+                <Image
+                  src={platform.logoUrl}
+                  alt={`${platform.name} logo`}
+                  width={20}
+                  height={20}
+                  unoptimized
+                  className="h-5 w-5 rounded-sm object-cover"
+                  onError={() => setHasLogoError(true)}
+                />
+              ) : (
+                <Music className="h-5 w-5 text-primary" />
+              )}
               <a
                 href={playlist.url}
                 target="_blank"
@@ -90,6 +103,9 @@ export function PlaylistCard({
               >
                 {playlist.title}
               </a>
+              <Badge variant="secondary" className="ml-1 hidden sm:inline-flex">
+                {platform.name}
+              </Badge>
             </div>
           </CardTitle>
           <CardDescription className="flex flex-row items-center gap-1">

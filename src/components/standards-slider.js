@@ -111,7 +111,7 @@ export function StandardsSlider({
 
   // Get all standard values for scale
   const standardValues = Object.values(originalData);
-  const minLift = Math.min(...standardValues); // Usually 'physicallyActive'
+  const standardsMin = Math.min(...standardValues); // Usually 'physicallyActive'
   const eliteMax = originalData.elite; // Elite standard value
 
   // Use shared hook helper for top-lift stats (authenticated users only)
@@ -141,6 +141,28 @@ export function StandardsSlider({
     bestWeightTuple = stats.bestWeightTuple;
     bestE1RMTuple = stats.bestE1RMTuple;
   }
+
+  const periodMinE1RM =
+    periodBestNotches.length > 0
+      ? Math.min(...periodBestNotches.map((notch) => notch.e1rm))
+      : Infinity;
+  const userMin =
+    authStatus === "authenticated"
+      ? Math.min(
+          athleteRankingWeight > 0 ? athleteRankingWeight : Infinity,
+          periodMinE1RM,
+        )
+      : Infinity;
+  const effectiveMin = Number.isFinite(userMin)
+    ? Math.min(standardsMin, userMin)
+    : standardsMin;
+  const shouldExtendLowerBound = effectiveMin < standardsMin;
+  const lowerBuffer = shouldExtendLowerBound
+    ? Math.max(1, Math.ceil(effectiveMin * 0.08)) // keep a little breathing room below the lowest point
+    : 0;
+  const minLift = shouldExtendLowerBound
+    ? Math.max(0, Math.floor(effectiveMin - lowerBuffer))
+    : standardsMin;
 
   // Extend max beyond Elite when user's record exceeds it (so E1RM/thumb stay on bar)
   const userMax = Math.max(highestE1RM || 0, athleteRankingWeight || 0);
@@ -274,7 +296,7 @@ export function StandardsSlider({
 
           // Alignment rules
           let labelStyle, labelClass;
-          if (index === 0) {
+          if (index === 0 && minLift === standardsMin) {
             // First (flush left)
             labelStyle = { left: "0%" };
             labelClass = "absolute flex flex-col items-start text-left";

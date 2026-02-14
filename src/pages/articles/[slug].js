@@ -14,6 +14,10 @@ import { format } from "date-fns";
 
 import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
 
+const SITE_NAME = "Strength Journeys";
+const DEFAULT_OG_IMAGE_URL =
+  "https://www.strengthjourneys.xyz/strength_journeys_articles_og.png";
+
 const components = {
   types: {
     image: ({ value }) => {
@@ -52,7 +56,7 @@ export default function ArticlePost({ article }) {
   // devLog(article);
 
   let bannerImageUrl = null;
-  let ogImageUrl = null;
+  let ogImageUrl = DEFAULT_OG_IMAGE_URL;
 
   if (article.mainImage) {
     bannerImageUrl = urlFor(article.mainImage)
@@ -64,30 +68,44 @@ export default function ArticlePost({ article }) {
       .url();
 
     ogImageUrl = urlFor(article.mainImage)
-      .width(400)
-      .height(400)
-      .fit("clip")
-      .quality(70)
+      .width(1200)
+      .height(630)
+      .fit("fill")
+      .quality(80)
       .auto("format")
       .url();
   }
 
-  const description = article.description ?? article.title;
+  const description =
+    article.description ??
+    article.title ??
+    "Strength and lifting article from Strength Journeys";
+  const pageTitle = `${article.title} | ${SITE_NAME}`;
+  const ogImageAlt = article.mainImage?.alt ?? article.title;
+  const modifiedDate = article._updatedAt
+    ? new Date(article._updatedAt).toISOString()
+    : null;
 
   return (
     <div className="mx-2 mb-10 flex items-center justify-center">
       <Head>
-        <title>{article.title}</title>
+        <title>{pageTitle}</title>
         <meta name="description" content={description} />
+        <meta name="robots" content="index, follow" />
         <link rel="canonical" href={canonicalUrl} />
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="article" />
+        <meta property="og:site_name" content={SITE_NAME} />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:title" content={article.title} />
         <meta property="og:image" content={ogImageUrl} />
+        <meta property="og:image:alt" content={ogImageAlt} />
         <meta property="og:description" content={description} />
         <meta property="article:published_time" content={publishDate} />
+        {modifiedDate && (
+          <meta property="article:modified_time" content={modifiedDate} />
+        )}
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
@@ -103,7 +121,9 @@ export default function ArticlePost({ article }) {
             "@type": "Article",
             headline: article.title,
             datePublished: publishDate,
+            ...(modifiedDate && { dateModified: modifiedDate }),
             url: canonicalUrl,
+            image: ogImageUrl,
             author: {
               "@type": "Organization",
               name: "Strength Journeys Staff",

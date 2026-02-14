@@ -300,10 +300,10 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
       });
 
       toast({
-        title: "Success",
+        title: isEditMode ? "Playlist Updated" : "Playlist Added",
         description: isEditMode
-          ? "Playlist updated successfully!"
-          : "New playlist added successfully! Thanks for contributing - please click `Give fast feedback` to help more.",
+          ? "Your playlist changes are now live on the leaderboard."
+          : "Thanks for the submission. Your playlist is now live in the leaderboard. If you have 10 seconds, tap Give fast feedback to help improve this page.",
       });
     } catch (error) {
       console.error(
@@ -311,8 +311,10 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
         error,
       );
       toast({
-        title: "Error",
-        description: error.message,
+        title: isEditMode ? "Update Failed" : "Could Not Add Playlist",
+        description:
+          error.message ||
+          "Something went wrong while saving your playlist. Please try again.",
         variant: "destructive",
       });
     }

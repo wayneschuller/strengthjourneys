@@ -21,7 +21,7 @@ import { RelatedArticles } from "@/components/article-cards";
 import { TonnageChart } from "@/components/visualizer/visualizer-tonnage";
 
 export async function getStaticProps() {
-  const RELATED_ARTICLES_CATEGORY = "Strength Visualizer";
+  const RELATED_ARTICLES_CATEGORY = "Tonnage Metrics";
   const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
   return {

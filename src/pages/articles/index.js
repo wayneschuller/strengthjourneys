@@ -1,24 +1,23 @@
 // File: pages/articles/index.js
-// File: pages/articles/index.js
-
-import Link from "next/link";
-import { devLog } from "@/lib/processing-utils";
+import { useState } from "react";
 import Head from "next/head";
-import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
+import { sanityIOClient } from "@/lib/sanity-io.js";
 import { ArticleSummaryCard } from "@/components/article-cards";
-import { format } from "date-fns";
 import {
   PageContainer,
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { LibraryBig } from "lucide-react";
 
 const pageTitle = "Strength and Lifting Articles Library";
 const siteName = "Strength Journeys";
 const description = `Browse our collection of strength, lifting and fitness articles on various topics. Updated regularly with the latest insights and information.`;
 const canonicalUrl = "https://www.strengthjourneys.xyz/articles";
+const REGULAR_ARTICLES_PAGE_SIZE = 6;
+const MAX_REGULAR_ARTICLES = 12;
 
 export async function getStaticProps() {
   const articles = await sanityIOClient.fetch(`
@@ -61,6 +60,22 @@ export default function ArticleListingPage({
   regularArticles,
 }) {
   const fullTitle = `${pageTitle} | ${siteName}`;
+  const cappedRegularArticles = regularArticles.slice(0, MAX_REGULAR_ARTICLES);
+  const [visibleRegularArticlesCount, setVisibleRegularArticlesCount] = useState(
+    REGULAR_ARTICLES_PAGE_SIZE,
+  );
+  const hasMoreRegularArticles =
+    visibleRegularArticlesCount < cappedRegularArticles.length;
+  const remainingRegularArticles = Math.max(
+    cappedRegularArticles.length - visibleRegularArticlesCount,
+    0,
+  );
+
+  function handleLoadMoreRegularArticles() {
+    setVisibleRegularArticlesCount(
+      (currentCount) => currentCount + REGULAR_ARTICLES_PAGE_SIZE,
+    );
+  }
 
   return (
     <PageContainer>
@@ -90,7 +105,10 @@ export default function ArticleListingPage({
               "@type": "CollectionPage",
               mainEntity: {
                 "@type": "ItemList",
-                itemListElement: [...featuredArticles, ...regularArticles].map(
+                itemListElement: [
+                  ...featuredArticles,
+                  ...cappedRegularArticles,
+                ].map(
                   (article, index) => ({
                     "@type": "ListItem",
                     position: index + 1,
@@ -99,7 +117,7 @@ export default function ArticleListingPage({
                       url: `${canonicalUrl}/${article.slug}`,
                       headline: article.title,
                       author: "Strength Journeys Staff",
-                      datePublished: article.date,
+                      datePublished: article.publishedAt,
                     },
                   }),
                 ),
@@ -149,10 +167,22 @@ export default function ArticleListingPage({
           </p>
         </div>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {regularArticles.map((article) => (
-            <ArticleSummaryCard key={article.slug} article={article} />
+          {cappedRegularArticles.map((article, index) => (
+            <div
+              key={article.slug}
+              className={index < visibleRegularArticlesCount ? "" : "hidden"}
+            >
+              <ArticleSummaryCard article={article} />
+            </div>
           ))}
         </div>
+        {hasMoreRegularArticles && (
+          <div className="mt-6 flex justify-center">
+            <Button onClick={handleLoadMoreRegularArticles} variant="outline">
+              Load More Articles ({remainingRegularArticles} remaining)
+            </Button>
+          </div>
+        )}
       </section>
     </PageContainer>
   );

@@ -28,6 +28,7 @@ const SHARE_NUDGES = [
   "Put this in your lifting chat if it helped.",
   "Share this article with someone who wants to get stronger.",
 ];
+const GENERIC_SHARE_TEXT = "Check out this article from Strength Journeys.";
 
 function isAbortError(error) {
   return (
@@ -74,7 +75,7 @@ function useArticleShare({ title, slug, url }) {
 
     const sharePayload = {
       title,
-      text: "Found this useful? Share it with someone who lifts.",
+      text: GENERIC_SHARE_TEXT,
       url,
     };
 

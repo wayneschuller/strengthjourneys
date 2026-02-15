@@ -112,12 +112,12 @@ export default function BigFourBarbellInsights({
   return (
     <>
       <NextSeo
-        title={liftInsightData.pageTitle}
+        title={liftInsightData.seoTitle}
         description={liftInsightData.pageDescription}
         canonical={liftInsightData.canonicalURL}
         openGraph={{
           url: liftInsightData.canonicalURL,
-          title: liftInsightData.pageTitle,
+          title: liftInsightData.seoTitle,
           description: liftInsightData.pageDescription,
           type: "website",
           images: [

@@ -2,7 +2,8 @@ export const bigFourLiftInsightData = [
   {
     liftType: "Back Squat",
     canonicalURL: "https://www.strengthjourneys.xyz/barbell-squat-insights",
-    pageTitle: "Back Squat Strength Standards & Progress Tracker",
+    seoTitle: "Back Squat Strength Standards & Progress Tracker",
+    pageTitle: "Barbell Back Squat - The King of Lifts",
     pageDescription:
       "How strong should your back squat be? Check squat strength levels for your age, sex, and bodyweight. Track your squat E1RM, tonnage, and rep PRs over time with free analysis tools.",
     pageKeywords:
@@ -25,7 +26,8 @@ export const bigFourLiftInsightData = [
     liftType: "Bench Press",
     canonicalURL:
       "https://www.strengthjourneys.xyz/barbell-bench-press-insights",
-    pageTitle: "Bench Press Strength Standards & Progress Tracker",
+    seoTitle: "Bench Press Strength Standards & Progress Tracker",
+    pageTitle: "Barbell Bench Press - Building Upper Body Dominance",
     pageDescription:
       "How strong should your bench press be? Check bench press strength levels for your age, sex, and bodyweight. Track your bench E1RM, tonnage, and rep PRs over time with free analysis tools.",
     pageKeywords:
@@ -47,7 +49,8 @@ export const bigFourLiftInsightData = [
   {
     liftType: "Deadlift",
     canonicalURL: "https://www.strengthjourneys.xyz/barbell-deadlift-insights",
-    pageTitle: "Deadlift Strength Standards & Progress Tracker",
+    seoTitle: "Deadlift Strength Standards & Progress Tracker",
+    pageTitle: "Barbell Deadlift - Building Power from the Ground Up",
     pageDescription:
       "How strong should your deadlift be? Check deadlift strength levels for your age, sex, and bodyweight. Track your deadlift E1RM, tonnage, and rep PRs over time with free analysis tools.",
     pageKeywords:
@@ -69,7 +72,8 @@ export const bigFourLiftInsightData = [
     liftType: "Strict Press",
     canonicalURL:
       "https://www.strengthjourneys.xyz/barbell-strict-press-insights",
-    pageTitle: "Overhead Press Strength Standards & Progress Tracker",
+    seoTitle: "Overhead Press Strength Standards & Progress Tracker",
+    pageTitle: "Barbell Strict Press - For When Your Suitcase Just Won't Fit",
     pageDescription:
       "How strong should your overhead press be? Check strict press strength levels for your age, sex, and bodyweight. Track your press E1RM, tonnage, and rep PRs over time with free analysis tools.",
     pageKeywords:

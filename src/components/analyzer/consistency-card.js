@@ -224,22 +224,37 @@ export function processConsistency(parsedData) {
     const rawPercentage = (actualWorkouts / totalWorkoutsExpected) * 100;
     const consistencyPercentage = Math.min(Math.round(rawPercentage), 100); // Cap the percentage at 100
 
+    // For the Week period, check if grade depends on the grace-day buffer
+    let graceDayWarning = false;
+    if (period.label === "Week" && actualWorkouts >= totalWorkoutsExpected) {
+      const strictStartDate = subtractDays(today, 6); // strict 7-day window
+      let strictCount = 0;
+      for (const date of periodDates[period.label]) {
+        if (date >= strictStartDate) strictCount++;
+      }
+      graceDayWarning = strictCount < totalWorkoutsExpected;
+    }
+
     let tooltip = "";
-    switch (true) {
-      case actualWorkouts > totalWorkoutsExpected:
-        tooltip = `Achieved ${
-          actualWorkouts - totalWorkoutsExpected
-        } more than the minimum # of sessions required for 3 per week average`;
-        break;
-      case actualWorkouts === totalWorkoutsExpected:
-        tooltip = `Achieved exactly the required # of sessions for 3 per week average. You can stop lifting now.`;
-        break;
-      case actualWorkouts < totalWorkoutsExpected:
-        tooltip = `Achieved ${actualWorkouts} sessions (get ${calculateGradeJump(
-          actualWorkouts,
-          totalWorkoutsExpected,
-        )} more in this period to improve your grade)`;
-        break;
+    if (graceDayWarning) {
+      tooltip = `${actualWorkouts} sessions this week — lift today to maintain your grade`;
+    } else {
+      switch (true) {
+        case actualWorkouts > totalWorkoutsExpected:
+          tooltip = `Achieved ${
+            actualWorkouts - totalWorkoutsExpected
+          } more than the minimum # of sessions required for 3 per week average`;
+          break;
+        case actualWorkouts === totalWorkoutsExpected:
+          tooltip = `Achieved exactly the required # of sessions for 3 per week average. You can stop lifting now.`;
+          break;
+        case actualWorkouts < totalWorkoutsExpected:
+          tooltip = `Achieved ${actualWorkouts} sessions (get ${calculateGradeJump(
+            actualWorkouts,
+            totalWorkoutsExpected,
+          )} more in this period to improve your grade)`;
+          break;
+      }
     }
 
     return {
@@ -259,7 +274,7 @@ export function processConsistency(parsedData) {
 const periodTargets = [
   {
     label: "Week",
-    days: 7,
+    days: 8, // 8-day window so the current day doesn't penalize before you've had a chance to lift
   },
   {
     label: "Month",

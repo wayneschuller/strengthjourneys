@@ -2,10 +2,11 @@ export const bigFourLiftInsightData = [
   {
     liftType: "Back Squat",
     canonicalURL: "https://www.strengthjourneys.xyz/barbell-squat-insights",
-    pageTitle: "Barbell Back Squat - The King of Lifts",
-    pageDescription: `Barbell Back Squat insights, strength levels, and free tools.`,
+    pageTitle: "Back Squat Strength Standards & Progress Tracker",
+    pageDescription:
+      "How strong should your back squat be? Check squat strength levels for your age, sex, and bodyweight. Track your squat E1RM, tonnage, and rep PRs over time with free analysis tools.",
     pageKeywords:
-      "Barbell, back squat, squat, high bar, low bar, strength levels, back squat performance",
+      "back squat, barbell squat, squat strength standards, squat strength levels, squat progress tracker, E1RM squat, squat PR",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_back_squat_insights.png",
     liftQuote:
@@ -24,10 +25,11 @@ export const bigFourLiftInsightData = [
     liftType: "Bench Press",
     canonicalURL:
       "https://www.strengthjourneys.xyz/barbell-bench-press-insights",
-    pageTitle: "Barbell Bench Press - Building Upper Body Dominance",
-    pageDescription: `Barbell Bench Press insights, strength levels and free tools.`,
+    pageTitle: "Bench Press Strength Standards & Progress Tracker",
+    pageDescription:
+      "How strong should your bench press be? Check bench press strength levels for your age, sex, and bodyweight. Track your bench E1RM, tonnage, and rep PRs over time with free analysis tools.",
     pageKeywords:
-      "Barbell, bench press, upper body, strength levels, NFL combine test",
+      "bench press, barbell bench press, bench press strength standards, bench press strength levels, bench press progress tracker, E1RM bench, bench PR",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_bench_insights.png",
     liftQuote:
@@ -45,9 +47,11 @@ export const bigFourLiftInsightData = [
   {
     liftType: "Deadlift",
     canonicalURL: "https://www.strengthjourneys.xyz/barbell-deadlift-insights",
-    pageTitle: "Barbell Deadlift - Building Power from the Ground Up",
-    pageDescription: `Barbell Deadlift insights, strength levels and free tools.`,
-    pageKeywords: "Barbell, deadlift, back pain, strength levels",
+    pageTitle: "Deadlift Strength Standards & Progress Tracker",
+    pageDescription:
+      "How strong should your deadlift be? Check deadlift strength levels for your age, sex, and bodyweight. Track your deadlift E1RM, tonnage, and rep PRs over time with free analysis tools.",
+    pageKeywords:
+      "deadlift, barbell deadlift, deadlift strength standards, deadlift strength levels, deadlift progress tracker, E1RM deadlift, deadlift PR",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_deadlift_insights.png",
     liftQuote: "There is no reason to be alive if you can't do deadlift!",
@@ -65,9 +69,11 @@ export const bigFourLiftInsightData = [
     liftType: "Strict Press",
     canonicalURL:
       "https://www.strengthjourneys.xyz/barbell-strict-press-insights",
-    pageTitle: "Barbell Strict Press - For When Your Suitcase Just Won't Fit",
-    pageDescription: `Barbell Strict Press insights, strength levels and free tools.`,
-    pageKeywords: "Barbell, strict press, overhead press, strength levels",
+    pageTitle: "Overhead Press Strength Standards & Progress Tracker",
+    pageDescription:
+      "How strong should your overhead press be? Check strict press strength levels for your age, sex, and bodyweight. Track your press E1RM, tonnage, and rep PRs over time with free analysis tools.",
+    pageKeywords:
+      "overhead press, strict press, barbell press, OHP strength standards, overhead press strength levels, press progress tracker, E1RM press, OHP PR",
     ogImageURL:
       "https://www.strengthjourneys.xyz/strength_journeys_strict_press_insights.png",
     liftQuote:

@@ -18,9 +18,7 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
 import {
@@ -253,8 +251,8 @@ function MyLiftTypeSummaryCard({ liftType }) {
   return (
     <Card className="min-h-[300px]">
       <CardHeader>
-        <CardTitle
-          className="mr-5 text-pretty"
+        <h2
+          className="mr-5 text-pretty text-2xl font-semibold leading-none tracking-tight"
           style={{
             textDecoration: "underline",
             textDecorationColor: `${getColor(liftType)}`,
@@ -264,7 +262,7 @@ function MyLiftTypeSummaryCard({ liftType }) {
             <span className="mr-2 font-bold">Demo Mode:</span>
           )}
           My {liftType} Journey
-        </CardTitle>
+        </h2>
       </CardHeader>
       <CardContent className="">
         {authStatus !== "authenticated" && (
@@ -318,7 +316,7 @@ function SanityArticleCard({ article, className }) {
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>{article.title}</CardTitle>
+        <h2 className="text-2xl font-semibold leading-none tracking-tight">{article.title}</h2>
       </CardHeader>
       <CardContent className={cn("prose prose-orange", isDarkTheme && "prose-invert")}>
         <PortableText value={article.body} components={components} />
@@ -331,7 +329,7 @@ function HowStrong({ liftType }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>How Strong Should My {liftType} Be?</CardTitle>
+        <h2 className="text-2xl font-semibold leading-none tracking-tight">How Strong Should My {liftType} Be?</h2>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
         <p>
@@ -363,7 +361,7 @@ function StrengthLevelsCard({ liftType }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My {liftType} Strength Rating</CardTitle>
+        <h2 className="text-2xl font-semibold leading-none tracking-tight">My {liftType} Strength Rating</h2>
         <CardDescription>
           Standards for a {age} year old {sex}, weighing {bodyWeight}
           {unitType}. Go to the{" "}
@@ -388,7 +386,7 @@ function VideoCard({ liftType, videos }) {
   return (
     <Card className="">
       <CardHeader>
-        <CardTitle>{liftType} Video Guides</CardTitle>
+        <h2 className="text-2xl font-semibold leading-none tracking-tight">{liftType} Video Guides</h2>
       </CardHeader>
       <CardContent>
         <div className="flex h-fit flex-col gap-8 lg:flex-row">

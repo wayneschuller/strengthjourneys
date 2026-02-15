@@ -9,6 +9,7 @@ import { useLocalStorage } from "usehooks-ts";
 import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { Moon, Sun } from "lucide-react";
+import { GoogleLogo } from "@/components/hero-section";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -113,17 +114,20 @@ export function ThemeChooser() {
         {!isAuthenticated && (
           <>
             <DropdownMenuSeparator />
-            <div className="px-2 py-1.5 text-xs text-muted-foreground">
-              Sign in with Google to unlock all themes and animated background.
-            </div>
             <DropdownMenuItem
               onSelect={() => {
                 gaTrackSignInClick(router.pathname);
                 signIn("google");
               }}
-              className="text-primary font-medium cursor-pointer"
+              className="cursor-pointer"
             >
-              Sign in with Google
+              <GoogleLogo size={16} />
+              <span>
+                <span className="font-medium">Sign in with Google</span>
+                <span className="text-muted-foreground text-xs block">
+                  Unlock all themes and animated background
+                </span>
+              </span>
             </DropdownMenuItem>
           </>
         )}

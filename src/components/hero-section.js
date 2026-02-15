@@ -15,11 +15,13 @@ export function HeroSection() {
       </div>
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div>
-          <h1 className="mb-4 mt-4 space-x-2 text-balance text-center text-5xl font-extrabold leading-tight tracking-tight md:mb-8 md:mt-8 lg:text-left lg:text-6xl xl:text-7xl">
+          <p className="mt-4 text-center text-2xl font-bold tracking-tight md:text-3xl lg:text-left">
             Welcome to Strength Journeys
+          </p>
+          <h1 className="mb-4 mt-2 text-balance text-center text-3xl font-extrabold leading-tight tracking-tight md:mb-8 lg:text-left lg:text-4xl xl:text-5xl">
+            Free barbell lifting analysis tools that turn your Google Sheet into
+            powerful, visual insights.
           </h1>
-
-          <PageDescription />
           <GoogleSignInButton />
         </div>
         <SpreadsheetShowcase />
@@ -29,25 +31,26 @@ export function HeroSection() {
 }
 
 const PageDescription = () => (
-  <h2 className="mb-10 mt-2 text-center text-xl tracking-tight md:text-left md:text-3xl lg:w-4/5">
-    A free{" "}
-    <a
-      className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-      target="_blank"
-      href="https://github.com/wayneschuller/strengthjourneys"
-    >
-      open source
-    </a>{" "}
-    dashboard that turns your{" "}
+  <p className="mb-10 mt-2 text-center text-xl tracking-tight md:text-left md:text-2xl lg:w-4/5">
+    Track PRs, visualize E1RM progress, and analyze your strength — all from a
+    simple{" "}
     <a
       className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
       target="_blank"
       href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
     >
-      Google Sheet lifting log
-    </a>{" "}
-    into powerful, visual insights for barbell training.
-  </h2>
+      Google Sheet
+    </a>
+    .{" "}
+    <a
+      className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+      target="_blank"
+      href="https://github.com/wayneschuller/strengthjourneys"
+    >
+      Free and open source
+    </a>
+    .
+  </p>
 );
 
 function GoogleSignInButton() {

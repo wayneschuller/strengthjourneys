@@ -186,7 +186,7 @@ const mainBarbellLifts = [
 // },
 
 export default function Home() {
-  const title = "Strength Journeys | Free Barbell Lifting Analysis Tools";
+  const title = "Free Barbell Lifting Analysis Tools | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/";
   const description =
     "Track and analyze your barbell lifting with Strength Journeys. Free PR analyzer, 1RM calculator, and more. Integrates with Google Sheets. Open source.";

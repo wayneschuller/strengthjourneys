@@ -110,6 +110,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [parseError, setParseError] = useState(null);
   const [rawRows, setRawRows] = useState(null);
+  const [fetchFailed, setFetchFailed] = useState(false);
 
   const { data: session, status: authStatus } = useSession();
 
@@ -145,15 +146,42 @@ export const UserLiftingDataProvider = ({ children }) => {
   // Call gsheets API via our backend api route using useSWR
   // (we used to do from client but got intermittent CORS problems)
   // -----------------------------------------------------------------------------------------------
+  // Why custom onErrorRetry instead of relying on SWR defaults + useEffect?
+  //
+  // SWR's default retry has a gap between each error and retry where
+  // isError=true and isValidating=false simultaneously. A useEffect watching
+  // those values fires in that gap — showing an error toast before the retry
+  // succeeds. This is especially problematic on mobile where reopening Chrome
+  // triggers a focus revalidation before WiFi has fully reconnected.
+  //
+  // By using onErrorRetry we control exactly when to surface errors:
+  // - 4xx (auth revoked, sheet deleted): fail immediately, no retry
+  // - Network/5xx: retry with backoff, only set fetchFailed after exhausting retries
+  // - onSuccess clears fetchFailed so revalidateOnReconnect recovery works naturally
+  //
+  // Layout.js reads fetchFailed (not isError) for the error toast.
+  const MAX_RETRIES = 3;
+
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     shouldFetch ? `/api/read-gsheet?ssid=${sheetInfo.ssid}` : null,
     fetcher,
     {
-      // SWR options
-      // refreshInterval: 5000, // Polling interval in milliseconds (e.g., 5000 for every 5 seconds)
+      onErrorRetry: (err, _key, _config, revalidate, { retryCount }) => {
+        if (err.status >= 400 && err.status < 500) {
+          setFetchFailed(true);
+          return;
+        }
+        if (retryCount >= MAX_RETRIES) {
+          setFetchFailed(true);
+          return;
+        }
+        setTimeout(
+          () => revalidate({ retryCount }),
+          Math.min(1000 * 2 ** retryCount, 30000),
+        );
+      },
       onSuccess: (freshData) => {
-        // Update sync timestamp on every successful SWR fetch/revalidation,
-        // including tab-focus revalidations where data content may be unchanged.
+        setFetchFailed(false);
         if (authStatus === "authenticated" && freshData?.values) {
           setLastDataReceivedAt(Date.now());
         }
@@ -315,6 +343,7 @@ export const UserLiftingDataProvider = ({ children }) => {
       value={{
         isLoading,
         isError,
+        fetchFailed,
         apiError,
         isValidating,
         isDemoMode,

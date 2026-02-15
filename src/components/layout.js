@@ -36,14 +36,13 @@ import {
  */
 export function Layout({ children }) {
   const {
-    isError,
+    fetchFailed,
     apiError,
     isDemoMode,
     parseError,
     parsedData,
     rawRows,
     dataSyncedAt,
-    isValidating,
     sheetInfo,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
@@ -56,30 +55,30 @@ export function Layout({ children }) {
   const parseErrorShown = useRef(false);
   const demoShown = useRef(false);
 
-  // Toast 1: API Error — destructive red when no cached data (initial load failure),
-  // gentle warning when cached data exists (revalidation hiccup).
+  // Toast 1: API Error — uses fetchFailed from useSWR's onErrorRetry callback,
+  // which only fires after retries are exhausted (not during transient gaps
+  // between SWR's error/retry cycles). See use-userlift-data.js for details.
+  //
+  // When data is already loaded (rawRows != null), revalidation failures are
+  // silent — the user has working data and SWR will recover via retry or
+  // revalidateOnReconnect. Monitor: if users report stale data without
+  // realizing sync is broken, consider adding a subtle sync-status indicator.
   useEffect(() => {
     if (apiErrorShown.current) return;
-    if (isError && !isValidating && authStatus === "authenticated") {
-      const statusLabel = apiError?.status
-        ? `HTTP ${apiError.status}${apiError?.statusText ? ` ${apiError.statusText}` : ""}`
-        : "Request failed";
-      apiErrorShown.current = true;
+    if (!fetchFailed || authStatus !== "authenticated") return;
+    if (rawRows != null) return;
 
-      if (rawRows == null) {
-        toast({
-          variant: "destructive",
-          title: `Google Sheet sync failed (${statusLabel})`,
-          description: apiError?.message || "No error details were provided.",
-        });
-      } else {
-        toast({
-          title: "Google Sheet sync issue",
-          description: `Using cached data. Sync failed: ${apiError?.message || statusLabel}`,
-        });
-      }
-    }
-  }, [isError, isValidating, authStatus, apiError, rawRows, toast]);
+    const statusLabel = apiError?.status
+      ? `HTTP ${apiError.status}${apiError?.statusText ? ` ${apiError.statusText}` : ""}`
+      : "Request failed";
+    apiErrorShown.current = true;
+
+    toast({
+      variant: "destructive",
+      title: `Google Sheet sync failed (${statusLabel})`,
+      description: apiError?.message || "No error details were provided.",
+    });
+  }, [fetchFailed, authStatus, apiError, rawRows, toast]);
 
   // Toast 2: Data Loaded — fires when rawRows changes (new data arrived),
   // not on every SWR revalidation. Skipped on "/" (home has its own widgets).

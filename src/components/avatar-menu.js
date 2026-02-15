@@ -8,6 +8,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { gaTrackSignInClick } from "@/lib/analytics";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { devLog } from "@/lib/processing-utils";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,6 @@ import {
   FolderX,
   LogOut,
   Table2,
-  FolderOpenDot,
   MessageSquarePlus,
   Coffee,
 } from "lucide-react";
@@ -156,7 +156,12 @@ export function AvatarDropdown() {
                         : undefined
                     }
                   >
-                    <FolderOpenDot className="mr-2 h-4 w-4" />
+                    <img
+                      src={GOOGLE_SHEETS_ICON_URL}
+                      alt=""
+                      className="mr-2 h-4 w-4 shrink-0"
+                      aria-hidden
+                    />
                     {openPicker ? "Choose Google Sheet" : "Choose Google Sheet (loading…)"}
                   </DropdownMenuItem>
                 )}
@@ -180,7 +185,12 @@ export function AvatarDropdown() {
                         : undefined
                     }
                   >
-                    <FolderOpenDot className="mr-2 h-4 w-4" />
+                    <img
+                      src={GOOGLE_SHEETS_ICON_URL}
+                      alt=""
+                      className="mr-2 h-4 w-4 shrink-0"
+                      aria-hidden
+                    />
                     {openPicker ? "Choose New Google Sheet" : "Choose New Google Sheet (loading…)"}
                   </DropdownMenuItem>
                 )}

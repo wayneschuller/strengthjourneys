@@ -90,7 +90,7 @@ export function OnBoardingDashboard() {
             name and start entering your own lifts.
           </div>
           <Button
-            className="w-fit self-center disabled:cursor-wait disabled:opacity-70"
+            className="flex w-fit items-center gap-2 self-center disabled:cursor-wait disabled:opacity-70"
             onClick={() => {
               if (openPicker) handleOpenFilePicker(openPicker);
             }}
@@ -101,6 +101,12 @@ export function OnBoardingDashboard() {
                 : undefined
             }
           >
+            <img
+              src={GOOGLE_SHEETS_ICON_URL}
+              alt=""
+              className="h-4 w-4 shrink-0"
+              aria-hidden
+            />
             {openPicker
               ? "Step 2 - Connect your Google Sheet to Strength Journeys"
               : "Step 2 - Connect your Google Sheet (loading…)"}
@@ -231,7 +237,7 @@ export function ChooseSheetInstructionsCard() {
         </CardContent>
         <CardFooter>
           <Button
-            className="w-full disabled:cursor-wait disabled:opacity-70"
+            className="flex w-full items-center justify-center gap-2 disabled:cursor-wait disabled:opacity-70"
             onClick={() => {
               if (openPicker) handleOpenFilePicker(openPicker);
             }}
@@ -242,6 +248,12 @@ export function ChooseSheetInstructionsCard() {
                 : undefined
             }
           >
+            <img
+              src={GOOGLE_SHEETS_ICON_URL}
+              alt=""
+              className="h-4 w-4 shrink-0"
+              aria-hidden
+            />
             {openPicker ? "Choose Google Sheet" : "Choose Google Sheet (loading…)"}
           </Button>
         </CardFooter>
@@ -393,7 +405,7 @@ export function GettingStartedCard() {
               onClick={() => {
                 if (openPicker) handleOpenFilePicker(openPicker);
               }}
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800 disabled:cursor-wait disabled:opacity-70"
+              className="inline-flex items-center gap-1 text-blue-600 underline visited:text-purple-600 hover:text-blue-800 disabled:cursor-wait disabled:opacity-70"
               disabled={!openPicker}
               title={
                 !openPicker
@@ -401,6 +413,12 @@ export function GettingStartedCard() {
                   : undefined
               }
             >
+              <img
+                src={GOOGLE_SHEETS_ICON_URL}
+                alt=""
+                className="h-4 w-4 shrink-0"
+                aria-hidden
+              />
               {openPicker ? "select your Google Sheet" : "select your Google Sheet (loading…)"}
             </button>
           ) : (
@@ -527,11 +545,18 @@ export function GettingStartedCardCompact() {
             </Button>
           ) : !sheetInfo?.ssid ? (
             <Button
+              className="flex items-center gap-2"
               onClick={() => {
                 if (openPicker) handleOpenFilePicker(openPicker);
               }}
               disabled={!openPicker}
             >
+              <img
+                src={GOOGLE_SHEETS_ICON_URL}
+                alt=""
+                className="h-4 w-4 shrink-0"
+                aria-hidden
+              />
               {openPicker ? "Connect your Google Sheet" : "Connect your sheet (loading…)"}
             </Button>
           ) : (
@@ -640,6 +665,12 @@ export function ConnectSheetRecapCard() {
                 : undefined
             }
           >
+            <img
+              src={GOOGLE_SHEETS_ICON_URL}
+              alt=""
+              className="h-4 w-4 shrink-0"
+              aria-hidden
+            />
             {openPicker ? "Connect your Google Sheet" : "Connect your sheet (loading…)"}
           </Button>
           <p className="text-sm leading-relaxed text-muted-foreground">

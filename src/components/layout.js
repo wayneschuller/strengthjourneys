@@ -17,6 +17,7 @@ import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { gaTrackSignInClick } from "@/lib/analytics";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import {
   isToday,
   parseISO,
@@ -375,6 +376,7 @@ function DataAccessBanner({ pathname }) {
           ) : (
             <Button
               size="sm"
+              className="flex items-center gap-2"
               disabled={!openPicker}
               onClick={() => {
                 if (openPicker) {
@@ -382,6 +384,12 @@ function DataAccessBanner({ pathname }) {
                 }
               }}
             >
+              <img
+                src={GOOGLE_SHEETS_ICON_URL}
+                alt=""
+                className="h-4 w-4 shrink-0"
+                aria-hidden
+              />
               {openPicker
                 ? "Connect Google Sheet"
                 : "Loading Google Sheet picker..."}

@@ -17,6 +17,7 @@ import { useSession, signIn } from "next-auth/react";
 import { GoogleLogo } from "@/components/hero-section";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 
 export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
   const { parsedData, isLoading, isDemoMode, sheetInfo, selectSheet } =
@@ -113,6 +114,7 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
             </p>
             <Button
               size="sm"
+              className="flex items-center gap-2"
               disabled={!openPicker}
               onClick={() => {
                 if (openPicker) {
@@ -120,6 +122,12 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
                 }
               }}
             >
+              <img
+                src={GOOGLE_SHEETS_ICON_URL}
+                alt=""
+                className="h-4 w-4 shrink-0"
+                aria-hidden
+              />
               {openPicker
                 ? "Connect Google Sheet"
                 : "Loading sheet picker..."}

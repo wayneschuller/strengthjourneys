@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import {
   Card,
   CardContent,
@@ -14,12 +15,14 @@ import { Separator } from "../ui/separator";
 import { cn } from "@/lib/utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession, signIn } from "next-auth/react";
+import { gaTrackSignInClick } from "@/lib/analytics";
 import { GoogleLogo } from "@/components/hero-section";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 
 export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
+  const router = useRouter();
   const { parsedData, isLoading, isDemoMode, sheetInfo, selectSheet } =
     useUserLiftingData();
   const { data: session, status: authStatus } = useSession();
@@ -97,7 +100,10 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
             <Button
               size="sm"
               className="flex items-center gap-2"
-              onClick={() => signIn("google")}
+              onClick={() => {
+                gaTrackSignInClick(router.pathname);
+                signIn("google");
+              }}
             >
               <GoogleLogo size={16} />
               Sign in with Google

@@ -3,10 +3,11 @@
 "use client";
 
 import { devLog } from "@/lib/processing-utils";
-import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
+import { gaEvent, GA_EVENT_TAGS, gaTrackSignInClick } from "@/lib/analytics";
 import { useState, useEffect } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { useSession, signIn } from "next-auth/react";
+import { useRouter } from "next/router";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ import { cn } from "@/lib/utils";
 const BASIC_THEMES = ["light", "dark"];
 
 export function ThemeChooser() {
+  const router = useRouter();
   const { theme, setTheme, themes } = useTheme();
   const { status: authStatus } = useSession();
   const isAuthenticated = authStatus === "authenticated";
@@ -115,7 +117,10 @@ export function ThemeChooser() {
               Sign in with Google to unlock all themes and animated background.
             </div>
             <DropdownMenuItem
-              onSelect={() => signIn("google")}
+              onSelect={() => {
+                gaTrackSignInClick(router.pathname);
+                signIn("google");
+              }}
               className="text-primary font-medium cursor-pointer"
             >
               Sign in with Google

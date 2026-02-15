@@ -8,18 +8,18 @@ Powerlifters and barbell weirdos will love this app, but our real target audienc
 
 ## Features
 
-- **Big four lift cards** — at-a-glance dashboard for squat, bench press, deadlift, and strict press showing PRs, estimated 1RM, tonnage, and recent activity
-- **Visualizer** — interactive line charts of your lift history over time with E1RM (estimated one-rep max) curves
-- **Analyzer** — activity heatmaps and PR tracking across all your lifts
-- **Tonnage tracking** — volume analysis showing total weight moved over time
-- **One rep max calculator** — estimate your 1RM from any rep/weight combination
-- **Strength level calculator** — see how your lifts compare to strength standards
-- **1000lb club calculator** — track your squat/bench/deadlift total
-- **Warm-up sets calculator** — generate warm-up ramp sets for any working weight
-- **Strength year in review** — annual recap of your lifting highlights
-- **AI lifting assistant** — chat-based analysis of your training data
-- **Gym timer** — rest timer with audio cues
-- **Gym playlist leaderboard** — community-voted workout playlists
+- **Big four lift cards** — at-a-glance dashboard showing PRs, estimated 1RM, tonnage, and recent activity for [squat](https://www.strengthjourneys.xyz/barbell-squat-insights), [bench press](https://www.strengthjourneys.xyz/barbell-bench-press-insights), [deadlift](https://www.strengthjourneys.xyz/barbell-deadlift-insights), and [strict press](https://www.strengthjourneys.xyz/barbell-strict-press-insights)
+- **[Visualizer](https://www.strengthjourneys.xyz/visualizer)** — interactive line charts of your lift history over time with E1RM (estimated one-rep max) curves
+- **[Analyzer](https://www.strengthjourneys.xyz/analyzer)** — activity heatmaps and PR tracking across all your lifts
+- **[Tonnage tracking](https://www.strengthjourneys.xyz/tonnage)** — volume analysis showing total weight moved over time
+- **[One rep max calculator](https://www.strengthjourneys.xyz/calculator)** — estimate your 1RM from any rep/weight combination
+- **[Strength level calculator](https://www.strengthjourneys.xyz/strength-level-calculator)** — see how your lifts compare to strength standards
+- **[1000lb club calculator](https://www.strengthjourneys.xyz/1000lb-club-calculator)** — track your squat/bench/deadlift total
+- **[Warm-up sets calculator](https://www.strengthjourneys.xyz/warm-up-sets-calculator)** — generate warm-up ramp sets for any working weight
+- **[Strength year in review](https://www.strengthjourneys.xyz/strength-year-in-review)** — annual recap of your lifting highlights
+- **[AI lifting assistant](https://www.strengthjourneys.xyz/ai-lifting-assistant)** — chat-based analysis of your training data
+- **[Gym timer](https://www.strengthjourneys.xyz/timer)** — rest timer with audio cues
+- **[Gym playlist leaderboard](https://www.strengthjourneys.xyz/gym-playlist-leaderboard)** — community-voted workout playlists
 
 ## Google Sheets as data source
 

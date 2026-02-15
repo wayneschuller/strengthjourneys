@@ -47,6 +47,7 @@ export function ConsistencyCard() {
 
   // Fire confetti for A grades when card first appears (once per mount)
   useEffect(() => {
+    if (authStatus !== "authenticated") return;
     if (!consistency || hasFiredConfettiRef.current) return;
 
     const aGradeIndices = consistency
@@ -98,7 +99,7 @@ export function ConsistencyCard() {
       clearTimeout(mainTimer);
       timeouts.forEach(clearTimeout);
     };
-  }, [consistency]);
+  }, [consistency, authStatus]);
 
   return (
     <Card className="flex-1">

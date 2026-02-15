@@ -50,12 +50,13 @@ export function YearRecapCarousel({ year, isDemo }) {
   }, [year]);
 
   useEffect(() => {
+    if (isDemo) return;
     if (selectedIndex === 0 && !hasFiredConfettiRef.current) {
       hasFiredConfettiRef.current = true;
       const timer = setTimeout(fireTitleConfetti, 600);
       return () => clearTimeout(timer);
     }
-  }, [selectedIndex, year]);
+  }, [selectedIndex, year, isDemo]);
 
   const cards = [
     { id: "title", Component: TitleCard },

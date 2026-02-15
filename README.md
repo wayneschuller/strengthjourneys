@@ -46,13 +46,41 @@ Other commands:
 
 ## Tech stack
 
-- JavaScript (no TypeScript)
-- [Next.js](https://nextjs.org/) (Pages Router)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [shadcn/ui](https://ui.shadcn.com/) components (Radix primitives)
-- [Recharts](https://recharts.org/) for data visualization
-- [NextAuth.js](https://next-auth.js.org/) for Google OAuth
-- Deployed on [Vercel](https://vercel.com/)
+**Framework & language:**
+- JavaScript (no TypeScript) with [JSDoc](https://jsdoc.app/) for key function documentation
+- [Next.js 14](https://nextjs.org/) (Pages Router)
+- [React 18](https://react.dev/)
+- Deployed on [Vercel](https://vercel.com/) with [Vercel Analytics](https://vercel.com/analytics) and [Speed Insights](https://vercel.com/docs/speed-insights)
+
+**UI & styling:**
+- [Tailwind CSS v4](https://tailwindcss.com/) with 8 custom themes via CSS variables
+- [shadcn/ui](https://ui.shadcn.com/) components ([Radix](https://www.radix-ui.com/) primitives)
+- [Lucide React](https://lucide.dev/) icons
+- [Motion](https://motion.dev/) (Framer Motion) for animations
+- [Embla Carousel](https://www.embla-carousel.com/) for carousels
+- [next-themes](https://github.com/pacocoursey/next-themes) for theme switching
+
+**Data visualization:**
+- [Recharts](https://recharts.org/) for line, area, and bar charts
+- [react-calendar-heatmap](https://github.com/kevinsqi/react-calendar-heatmap) for activity heatmaps
+- [html2canvas-pro](https://github.com/nicolo-ribaudo/html2canvas-pro) for share-to-clipboard image capture
+
+**Auth & data:**
+- [NextAuth.js v4](https://next-auth.js.org/) with Google OAuth
+- Google Sheets API for user lifting data (read-only)
+- [SWR](https://swr.vercel.app/) for data fetching and caching
+- [Vercel KV](https://vercel.com/storage/kv) for server-side storage (playlists, leaderboard)
+
+**AI features:**
+- [Vercel AI SDK](https://sdk.vercel.ai/) with OpenAI provider
+- [Streamdown](https://github.com/nicolo-ribaudo/streamdown) for streaming markdown rendering
+- [Shiki](https://shiki.style/) for code syntax highlighting in AI responses
+
+**Content & SEO:**
+- [Sanity](https://www.sanity.io/) CMS for articles
+- [next-seo](https://github.com/garmeeh/next-seo) and [next-sitemap](https://github.com/iamvishnusankar/next-sitemap) for SEO
+
+See [package.json](https://github.com/wayneschuller/strengthjourneys/blob/main/package.json) for the full list of dependencies.
 
 ## Branch strategy
 

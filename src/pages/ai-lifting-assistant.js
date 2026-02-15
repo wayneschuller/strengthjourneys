@@ -141,9 +141,13 @@ function AILiftingAssistantMain({ relatedArticles }) {
     toggleIsMetric,
   } = useAthleteBio();
 
-  const [height, setHeight] = useLocalStorage(LOCAL_STORAGE_KEYS.ATHLETE_HEIGHT, 170, {
-    initializeWithValue: false,
-  }); // Default height in cm
+  const [height, setHeight] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.ATHLETE_HEIGHT,
+    170,
+    {
+      initializeWithValue: false,
+    },
+  ); // Default height in cm
 
   const [userLiftingMetadata, setUserLiftingMetaData] = useLocalStorage(
     LOCAL_STORAGE_KEYS.USER_LIFTING_METADATA,
@@ -299,7 +303,7 @@ function AILiftingAssistantMain({ relatedArticles }) {
             userProvidedProfileData={userProvidedProfileData}
           />
         </div>
-        <div className="md:max-w-3/5 flex flex-col gap-5">
+        <div className="flex flex-col gap-5 md:max-w-3/5">
           <BioDetailsCard
             age={age}
             setAge={setAge}
@@ -488,13 +492,13 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   };
 
   return (
-    <Card className="max-h-full bg-background text-foreground">
+    <Card className="bg-background text-foreground max-h-full">
       <CardHeader className="flex flex-1 flex-col md:flex-row">
         <div className="flex flex-1 flex-col">
-          <CardTitle className="text-balance text-2xl font-bold">
+          <CardTitle className="text-2xl font-bold text-balance">
             Your Personal Lifting AI Assistant
           </CardTitle>
-          <CardDescription className="text-balance text-muted-foreground">
+          <CardDescription className="text-muted-foreground text-balance">
             Discussions are streamed to your device and not stored on our
             servers. Please leave{" "}
             <a
@@ -521,7 +525,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
         </div>
       </CardHeader>
       <CardContent className="flex h-[55vh] flex-col overflow-y-auto pb-5 align-middle">
-        <Conversation className="overflow-y-hidden overflow-x-visible">
+        <Conversation className="overflow-x-visible overflow-y-hidden">
           <ConversationContent>
             {messages.length === 0 ? (
               <ConversationEmptyState

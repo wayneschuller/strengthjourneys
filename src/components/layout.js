@@ -183,7 +183,7 @@ export function Layout({ children }) {
   }, [authStatus, isDemoMode, router.pathname, toast]);
 
   return (
-    <div className="relative min-h-screen w-full bg-background">
+    <div className="bg-background relative min-h-screen w-full">
       <AppBackground />
 
       <div className="relative z-10">
@@ -222,7 +222,11 @@ function buildLatestDataMessages(latestDateISO) {
     { value: daysAgo, max: 7, label: "day" },
     { value: differenceInWeeks(now, parsed), max: 3, label: "week" },
     { value: differenceInMonths(now, parsed), max: 11, label: "month" },
-    { value: differenceInYears(now, parsed), max: Number.POSITIVE_INFINITY, label: "year" },
+    {
+      value: differenceInYears(now, parsed),
+      max: Number.POSITIVE_INFINITY,
+      label: "year",
+    },
   ];
 
   const selected = relativeUnits.find(
@@ -291,8 +295,7 @@ const DEMO_MODE_NUDGE_MESSAGES = [
   },
   {
     title: "Make It Yours",
-    description:
-      "This gets more interesting once it is your training history.",
+    description: "This gets more interesting once it is your training history.",
   },
   {
     title: "Strength Over Time",
@@ -301,8 +304,7 @@ const DEMO_MODE_NUDGE_MESSAGES = [
   },
   {
     title: "Best With Your Data",
-    description:
-      "These insights work best with your own lifts behind them.",
+    description: "These insights work best with your own lifts behind them.",
   },
   {
     title: "How Would Yours Look?",
@@ -380,7 +382,9 @@ function DataAccessBanner({ pathname }) {
                 }
               }}
             >
-              {openPicker ? "Connect Google Sheet" : "Loading Google Sheet picker..."}
+              {openPicker
+                ? "Connect Google Sheet"
+                : "Loading Google Sheet picker..."}
             </Button>
           )}
         </div>

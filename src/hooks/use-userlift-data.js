@@ -169,10 +169,12 @@ export const UserLiftingDataProvider = ({ children }) => {
       onErrorRetry: (err, _key, _config, revalidate, { retryCount }) => {
         if (err.status >= 400 && err.status < 500) {
           setFetchFailed(true);
+          gaEvent(GA_EVENT_TAGS.GSHEET_API_ERROR);
           return;
         }
         if (retryCount >= MAX_RETRIES) {
           setFetchFailed(true);
+          gaEvent(GA_EVENT_TAGS.GSHEET_API_ERROR);
           return;
         }
         setTimeout(
@@ -239,10 +241,9 @@ export const UserLiftingDataProvider = ({ children }) => {
     if (authStatus === "loading") return; // Wait for auth. Don't prematurely go into demo mode
     if (isLoading) return; // Wait for useSWR. Don't prematurely go into demo mode
 
-    // Any API error is now treated as user-visible (layout shows a toast), tracked in GA,
-    // and still allowed to recover via normal SWR revalidation retries.
+    // API errors: GA tracking is handled in onErrorRetry (only fires on genuine
+    // failures, not transient retry gaps). Effect just logs and bails.
     if (isError) {
-      gaEvent(GA_EVENT_TAGS.GSHEET_API_ERROR); // Google Analytics: sheet API error
       console.error(
         `%c✗ GSheet API Error%c ${error} — will retry on next revalidation`,
         "color:#ef4444;font-weight:bold",

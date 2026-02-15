@@ -340,7 +340,8 @@ export const UserLiftingDataProvider = ({ children }) => {
 /**
  * Parses raw gsheet values into parsedData. Fires analytics on success/failure.
  * On parse error: returns parseError string (caller handles clearing sheet).
- * Falls back to demo data when no real data available.
+ * Uses demo data only when unauthenticated.
+ * When authenticated without usable sheet data, returns empty data so UI can nudge sheet connection.
  * Returns { parsedData, isDemoMode, parseError }.
  */
 function getParsedDataWithFallback({ authStatus, data }) {
@@ -361,15 +362,21 @@ function getParsedDataWithFallback({ authStatus, data }) {
         "color:#ef4444;font-weight:bold",
         "color:inherit",
       );
-      // Don't sign out, just go gracefully into demo mode below.
+      // Don't sign out; clear sheet and return empty data for authenticated users.
 
       gaEvent(GA_EVENT_TAGS.GSHEET_READ_REJECTED); // Google Analytics: sheet parse rejected
     }
   }
 
-  // If there have been any problems we will switch into demo mode with sample data
-  const isDemoMode = !parsedData;
-  if (!parsedData) parsedData = transposeDatesToToday(sampleParsedData, true); // Transpose demo dates to recent, add jitter
+  const shouldUseDemoData = authStatus === "unauthenticated";
+  const isDemoMode = shouldUseDemoData;
+
+  if (shouldUseDemoData) {
+    parsedData = transposeDatesToToday(sampleParsedData, true); // Transpose demo dates to recent, add jitter
+  } else if (!parsedData) {
+    // Authenticated users without a selected/valid sheet should not see demo data.
+    parsedData = [];
+  }
 
   // As far as possible try to get components to do their own unique processing of parsedData
   // However if there are metrics commonly needed we can do it here just once to save CPU later

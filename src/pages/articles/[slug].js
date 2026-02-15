@@ -10,6 +10,11 @@ import {
 } from "@/components/ui/card";
 import { devLog } from "@/lib/processing-utils";
 import { ArticleFeedback } from "@/components/article-feedback";
+import {
+  TopArticleShareButton,
+  ArticleShareFooterCta,
+  MobileFloatingArticleShareButton,
+} from "@/components/article-share-controls";
 import { format } from "date-fns";
 
 import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
@@ -164,9 +169,16 @@ export default function ArticlePost({ article }) {
         <CardContent className="px-3 md:px-6">
           <article className="prose text-foreground prose-headings:text-foreground prose-strong:text-foreground max-w-3xl">
             <header>
-              <h1 className="text-foreground tracking-tighter">
-                {article.title}
-              </h1>
+              <div className="flex items-start justify-between gap-4">
+                <h1 className="text-foreground tracking-tighter">
+                  {article.title}
+                </h1>
+                <TopArticleShareButton
+                  title={article.title}
+                  slug={article.slug.current}
+                  url={canonicalUrl}
+                />
+              </div>
               <h3 className="text-muted-foreground mt-2 text-sm font-light">
                 Published at: {formattedDate}
               </h3>
@@ -186,8 +198,15 @@ export default function ArticlePost({ article }) {
             )}
           </article>
         </CardContent>
-        <CardFooter className="flex flex-col items-start gap-6">
-          <ArticleFeedback slug={article.slug.current} />
+        <CardFooter className="flex w-full flex-col items-start gap-6">
+          <div className="flex w-full flex-col gap-4 border-t pt-6 md:flex-row md:items-center md:justify-between">
+            <ArticleFeedback slug={article.slug.current} />
+            <ArticleShareFooterCta
+              title={article.title}
+              slug={article.slug.current}
+              url={canonicalUrl}
+            />
+          </div>
           <div className="text-center">
             <Link href="/articles" className="text-blue-600 hover:underline">
               ← Back to the Strength and Lifting Articles Library
@@ -195,6 +214,11 @@ export default function ArticlePost({ article }) {
           </div>
         </CardFooter>
       </Card>
+      <MobileFloatingArticleShareButton
+        title={article.title}
+        slug={article.slug.current}
+        url={canonicalUrl}
+      />
     </div>
   );
 }

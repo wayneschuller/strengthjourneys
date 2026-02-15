@@ -76,6 +76,7 @@ export function DrivePickerContainer({
           app-id={appId}
           oauth-token={oauthToken}
           scope="https://www.googleapis.com/auth/drive.file"
+          title="Select your lifting spreadsheet"
           onPicked={handlePicked}
           onCanceled={handleCanceled}
         >

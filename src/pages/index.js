@@ -1,7 +1,5 @@
 /** @format */
 
-"use client";
-
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { devLog } from "@/lib/processing-utils";

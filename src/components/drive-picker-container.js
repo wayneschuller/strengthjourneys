@@ -79,7 +79,11 @@ export function DrivePickerContainer({
           onPicked={handlePicked}
           onCanceled={handleCanceled}
         >
-          <DrivePickerDocsView viewId="SPREADSHEETS" enableDrives />
+          <DrivePickerDocsView
+            view-id="SPREADSHEETS"
+            mime-types="application/vnd.google-apps.spreadsheet"
+            enableDrives
+          />
         </DrivePicker>
       )}
     </>

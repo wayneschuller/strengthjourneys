@@ -12,7 +12,7 @@ import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { parseData } from "@/lib/parse-data";
-import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
+import { gaEvent, GA_EVENT_TAGS, gaTrackSheetLinked } from "@/lib/analytics";
 import {
   flushTimings,
   processTopLiftsByTypeAndReps,
@@ -121,14 +121,16 @@ export const UserLiftingDataProvider = ({ children }) => {
   );
 
   const selectSheet = useCallback(
-    (ssid) =>
+    (ssid) => {
+      gaTrackSheetLinked();
       setSheetInfo({
         ssid,
         url: null,
         filename: null,
         modifiedTime: null,
         modifiedByMeTime: null,
-      }),
+      });
+    },
     [setSheetInfo],
   );
 

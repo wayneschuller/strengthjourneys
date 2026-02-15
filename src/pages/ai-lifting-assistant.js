@@ -231,16 +231,18 @@ function AILiftingAssistantMain({ relatedArticles }) {
   }
 
   if (userLiftingMetadata.consistency && parsedData) {
-    const consistency = processConsistency(parsedData);
+    const consistency = processConsistency(parsedData) ?? [];
 
-    const formattedString = consistency?.map((item) => {
+    const formattedString = consistency.map((item) => {
       const { label, percentage } = item;
       return `Consistency score over period of ${label}: ${percentage}% `;
     });
 
-    userProvidedProfileData +=
-      "Here is user consistency data - rated against an ideal of 3 sessions per week: " +
-      formattedString.join(", ");
+    if (formattedString.length > 0) {
+      userProvidedProfileData +=
+        "Here is user consistency data - rated against an ideal of 3 sessions per week: " +
+        formattedString.join(", ");
+    }
   }
 
   if (userLiftingMetadata.frequency) {

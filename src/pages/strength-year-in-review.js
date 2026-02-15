@@ -238,7 +238,7 @@ function StrengthYearInReviewMain() {
             )}
             {showCarousel && (
               <div className="order-3 flex flex-col gap-6 pt-2 xl:col-start-3 xl:pt-2">
-                <RecapCustomiseSidebar />
+                {authStatus === "authenticated" && <RecapCustomiseSidebar />}
                 {authStatus === "unauthenticated" ? (
                   <DemoModeSignInCard />
                 ) : null}

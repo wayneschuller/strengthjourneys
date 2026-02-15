@@ -6,6 +6,7 @@ import { devLog } from "@/lib/processing-utils";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { useState, useEffect } from "react";
 import { useLocalStorage } from "usehooks-ts";
+import { useSession, signIn } from "next-auth/react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -31,8 +32,12 @@ import {
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 
+const BASIC_THEMES = ["light", "dark"];
+
 export function ThemeChooser() {
   const { theme, setTheme, themes } = useTheme();
+  const { status: authStatus } = useSession();
+  const isAuthenticated = authStatus === "authenticated";
   const [position, setPosition] = useState("light");
   const [animatedBackground, setAnimatedBackground] = useLocalStorage(
     LOCAL_STORAGE_KEYS.ANIMATED_BACKGROUND,
@@ -65,30 +70,58 @@ export function ThemeChooser() {
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup
           value={position}
-          onValueChange={setPosition}
+          onValueChange={(value) => {
+            if (isAuthenticated || BASIC_THEMES.includes(value)) {
+              setPosition(value);
+              setTheme(value);
+            }
+          }}
         >
-          {themes.map((t) => (
-            <DropdownMenuRadioItem
-              key={t}
-              value={t}
-              onClick={() => setTheme(t)}
-            >
-              {/* Optionally prettify label */}
-              {t
-                .replace(/-/g, " ")
-                .replace(/\b\w/g, (c) => c.toUpperCase())}
-            </DropdownMenuRadioItem>
-          ))}
+          {themes.map((t) => {
+            const isBasicTheme = BASIC_THEMES.includes(t);
+            const isLocked = !isAuthenticated && !isBasicTheme;
+            return (
+              <DropdownMenuRadioItem
+                key={t}
+                value={t}
+                className={cn(
+                  isLocked && "opacity-50 pointer-events-none cursor-default"
+                )}
+              >
+                {/* Optionally prettify label */}
+                {t
+                  .replace(/-/g, " ")
+                  .replace(/\b\w/g, (c) => c.toUpperCase())}
+              </DropdownMenuRadioItem>
+            );
+          })}
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
         <DropdownMenuCheckboxItem
           checked={animatedBackground ?? false}
           onCheckedChange={(checked) =>
-            setAnimatedBackground(checked === true)
+            isAuthenticated && setAnimatedBackground(checked === true)
           }
+          className={cn(
+            !isAuthenticated && "opacity-50 pointer-events-none cursor-default"
+          )}
         >
           Animated background
         </DropdownMenuCheckboxItem>
+        {!isAuthenticated && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1.5 text-xs text-muted-foreground">
+              Sign in with Google to unlock all themes and animated background.
+            </div>
+            <DropdownMenuItem
+              onSelect={() => signIn("google")}
+              className="text-primary font-medium cursor-pointer"
+            >
+              Sign in with Google
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

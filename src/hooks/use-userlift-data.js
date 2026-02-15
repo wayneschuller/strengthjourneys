@@ -109,6 +109,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   const [lastDataReceivedAt, setLastDataReceivedAt] = useState(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [parseError, setParseError] = useState(null);
+  const [rawRows, setRawRows] = useState(null);
 
   const { data: session, status: authStatus } = useSession();
 
@@ -230,6 +231,7 @@ export const UserLiftingDataProvider = ({ children }) => {
     setParsedData(result.parsedData);
     setIsDemoMode(result.isDemoMode);
     setParseError(result.parseError);
+    setRawRows(data?.values?.length ?? null);
   }, [data, isLoading, isError, error, authStatus, clearSheet]);
 
   // -----------------------------------------------------------------------------------------------
@@ -305,9 +307,6 @@ export const UserLiftingDataProvider = ({ children }) => {
     if (!parsedData || !sessionTonnageLookup) return;
     flushTimings();
   }, [parsedData, sessionTonnageLookup]);
-
-  // Calculate rawRows from useSWR data (computed automatically when data changes)
-  const rawRows = useMemo(() => data?.values?.length ?? null, [data]);
 
   return (
     <UserLiftingDataContext.Provider

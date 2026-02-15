@@ -124,4 +124,32 @@ const testimonialData = [
     comment: "I trust putting my data into Google Sheets over other apps.",
     avatarUrl: "/avatars/avatar_jerry.jpg",
   },
+  {
+    name: "Dana",
+    description: "45, returning lifter.",
+    comment:
+      "I came back to barbells at 45. This tool makes every session feel like progress.",
+    icon: Heart,
+  },
+  {
+    name: "Ryan",
+    description: "28, switched from a paid app.",
+    comment:
+      "I switched from a $10/month app. My data in Google Sheets just makes more sense.",
+    icon: Star,
+  },
+  {
+    name: "Priya",
+    description: "33, data nerd.",
+    comment:
+      "The tonnage charts and E1RM tracking scratch my data brain perfectly.",
+    icon: Sun,
+  },
+  {
+    name: "Coach Mike",
+    description: "52, strength coach.",
+    comment:
+      "Free, open source, and I can see my clients' progress without them installing anything.",
+    icon: CheckCircle,
+  },
 ];

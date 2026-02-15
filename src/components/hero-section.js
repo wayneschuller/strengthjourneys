@@ -4,8 +4,15 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useSession, signIn } from "next-auth/react";
 import { gaTrackSignInClick } from "@/lib/analytics";
+import { motion } from "motion/react";
 import { SloganCarousel } from "./slogan-carousel";
 import { Button } from "./ui/button";
+
+const springTransition = {
+  type: "spring",
+  stiffness: 400,
+  damping: 18,
+};
 
 export function HeroSection() {
   return (
@@ -15,14 +22,39 @@ export function HeroSection() {
       </div>
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div>
-          <p className="mt-4 text-center text-2xl font-bold tracking-tight md:text-3xl lg:text-left">
+          <motion.p
+            className="mt-4 text-center text-2xl font-bold tracking-tight md:text-3xl lg:text-left"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={springTransition}
+          >
             Welcome to Strength Journeys
-          </p>
-          <h1 className="mb-4 mt-2 text-balance text-center text-3xl font-extrabold leading-tight tracking-tight md:mb-8 lg:text-left lg:text-4xl xl:text-5xl">
-            Free barbell lifting analysis tools that turn your Google Sheet into
-            powerful, visual insights.
-          </h1>
-          <GoogleSignInButton />
+          </motion.p>
+          <motion.h1
+            className="mb-4 mt-2 text-balance text-center text-3xl font-extrabold leading-tight tracking-tight md:mb-8 lg:text-left lg:text-4xl xl:text-5xl"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...springTransition, delay: 0.08 }}
+          >
+            Free barbell strength tools that turn your Google Sheet into
+            powerful, visual insights — for a lifetime of lifting.
+          </motion.h1>
+          <motion.p
+            className="mb-6 text-center text-base text-muted-foreground lg:text-left"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...springTransition, delay: 0.16 }}
+          >
+            Track consistency with heatmaps. See your tonnage grow over time.
+            Own your data forever in a simple Google Sheet.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...springTransition, delay: 0.24 }}
+          >
+            <GoogleSignInButton />
+          </motion.div>
         </div>
         <SpreadsheetShowcase />
       </div>

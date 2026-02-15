@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
-import { format } from "date-fns";
+import { todayStr } from "@/lib/date-utils";
 import { useUserLiftingData } from "./use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
@@ -18,7 +18,7 @@ export const TimerProvider = ({ children }) => {
   useEffect(() => {
     if (parsedData === null) return; // Still pending data
 
-    const todayString = format(new Date(), "yyyy-MM-dd"); // Local date, not UTC
+    const todayString = todayStr();
     const newEntriesForToday = parsedData.filter(
       (item) => item.date === todayString,
     ).length;

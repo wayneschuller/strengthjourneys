@@ -7,7 +7,6 @@ import {
   createContext,
 } from "react";
 import { useRouter } from "next/router";
-import { differenceInCalendarYears } from "date-fns";
 import {
   interpolateStandardKG,
   LiftingStandardsKG,
@@ -62,10 +61,8 @@ export function getStandardForLiftDate(
   isMetric,
 ) {
   if (!currentAge || !liftDate || !bodyWeight || !sex || !liftType) return null;
-  const today = new Date();
-  const date = new Date(liftDate);
-  if (isNaN(date.getTime())) return null;
-  const yearsAgo = differenceInCalendarYears(today, date);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(liftDate)) return null;
+  const yearsAgo = new Date().getFullYear() - parseInt(liftDate.slice(0, 4), 10);
   const ageAtLift = Math.max(0, currentAge - yearsAgo);
   const bodyWeightKG = isMetric
     ? bodyWeight

@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { dateToStr } from "@/lib/date-utils";
 import { estimateE1RM } from "./estimate-e1rm";
 
 // ---------------------------------------------------------------------------
@@ -420,8 +420,9 @@ export function processTopLiftsByTypeAndReps(parsedData, liftTypes) {
   }
 
   const now = new Date();
-  const last12Months = new Date(now.setFullYear(now.getFullYear() - 1));
-  const last12MonthsStr = format(last12Months, "yyyy-MM-dd"); // Local date, not UTC
+  const last12Months = new Date(now);
+  last12Months.setFullYear(now.getFullYear() - 1);
+  const last12MonthsStr = dateToStr(last12Months);
 
   // Precreate the data structures for each lift type
   liftTypes.forEach((type) => {
@@ -514,7 +515,7 @@ export function processTopTonnageByType(parsedData, liftTypes) {
   const now = new Date();
   const last12Months = new Date(now);
   last12Months.setFullYear(now.getFullYear() - 1);
-  const last12MonthsStr = format(last12Months, "yyyy-MM-dd"); // Local date, not UTC
+  const last12MonthsStr = dateToStr(last12Months);
 
   liftTypes.forEach((t) => {
     topTonnageByType[t.liftType] = [];

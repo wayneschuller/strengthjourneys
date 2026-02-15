@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect, useState } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-import { format } from "date-fns";
+import { dateToStr } from "@/lib/date-utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
@@ -10,7 +10,7 @@ import { useSession } from "next-auth/react";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { e1rmFormulae, estimateE1RM } from "@/lib/estimate-e1rm";
-import { subMonths } from "date-fns";
+
 
 import {
   E1RMFormulaSelect,
@@ -163,7 +163,7 @@ export function VisualizerMini({ liftType }) {
       const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
       const dateStr =
         typeof entry.date === "number"
-          ? format(new Date(entry.date), "yyyy-MM-dd")
+          ? dateToStr(new Date(entry.date))
           : String(entry.date).slice(0, 10);
       candidates.push({
         dateStr,
@@ -177,7 +177,7 @@ export function VisualizerMini({ liftType }) {
       chartData.map((d) => {
         const k =
           typeof d.date === "number"
-            ? format(new Date(d.date), "yyyy-MM-dd")
+            ? dateToStr(new Date(d.date))
             : String(d.date).slice(0, 10);
         return [k, d];
       }),

@@ -1,6 +1,6 @@
 /** @format */
 
-import { format } from "date-fns";
+import { dateToStr } from "@/lib/date-utils";
 
 // A function we call on the demo data to always keep it fresh
 // Don't let it jitter the final date to keep the most recent session card fairly predictable in height
@@ -55,7 +55,7 @@ export function transposeDatesToToday(parsedData, addJitter) {
 
     return {
       ...item,
-      date: format(itemDate, "yyyy-MM-dd"), // Local date, not UTC
+      date: dateToStr(itemDate),
       reps: jitteredReps,
     };
   });

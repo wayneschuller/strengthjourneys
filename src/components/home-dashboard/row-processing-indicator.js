@@ -2,26 +2,27 @@ import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
-import { format, differenceInSeconds, differenceInMinutes, differenceInHours, isToday } from "date-fns";
+import { isDateToday, formatTime, formatShort, dateToStr } from "@/lib/date-utils";
 import { RefreshCw, Loader2 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 
 function formatSyncTime(timestamp) {
   if (!timestamp) return null;
   const date = new Date(timestamp);
-  const secsAgo = differenceInSeconds(Date.now(), date);
-  const minsAgo = differenceInMinutes(Date.now(), date);
+  const diffMs = Date.now() - date.getTime();
+  const secsAgo = Math.floor(diffMs / 1000);
+  const minsAgo = Math.floor(diffMs / 60000);
 
   if (secsAgo < 60) return "just now";
   if (minsAgo === 1) return "1 minute ago";
   if (minsAgo <= 15) return `${minsAgo} minutes ago`;
-  if (isToday(date)) return `at ${format(date, "h:mm a")} today`;
-  return `${format(date, "MMM d")} at ${format(date, "h:mm a")}`;
+  if (isDateToday(date)) return `at ${formatTime(date)} today`;
+  return `${formatShort(dateToStr(date))} at ${formatTime(date)}`;
 }
 
 function getFreshnessColor(dataSyncedAt) {
   if (!dataSyncedAt) return "text-muted-foreground";
-  const hoursAgo = differenceInHours(Date.now(), dataSyncedAt);
+  const hoursAgo = Math.floor((Date.now() - new Date(dataSyncedAt).getTime()) / 3600000);
   return hoursAgo < 1 ? "text-green-600 dark:text-green-500" : "text-amber-600 dark:text-amber-500";
 }
 
@@ -53,7 +54,7 @@ export function DataSheetStatus({
   const timeSuffix = formatSyncTime(dataSyncedAt);
   const freshnessColor = isValidating ? "text-muted-foreground" : getFreshnessColor(dataSyncedAt);
   const tooltipText = dataSyncedAt
-    ? `Last synced: ${format(new Date(dataSyncedAt), "MMM d, h:mm a")}${rowLabel ? ` • ${rowLabel}` : ""}`
+    ? `Last synced: ${formatShort(dateToStr(new Date(dataSyncedAt)))}, ${formatTime(new Date(dataSyncedAt))}${rowLabel ? ` • ${rowLabel}` : ""}`
     : rowLabel || null;
 
   const sheetLinkContent = (

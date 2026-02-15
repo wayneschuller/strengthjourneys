@@ -10,12 +10,7 @@ import {
 import { useMemo, useRef, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
-import {
-  format,
-  parseISO,
-  subDays,
-  differenceInCalendarDays,
-} from "date-fns";
+import { todayStr, subtractDays, diffInDays } from "@/lib/date-utils";
 import { motion } from "motion/react";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -163,20 +158,12 @@ export function ConsistencyCard() {
   );
 }
 
-function subtractDays(dateStr, days) {
-  const date = parseISO(dateStr);
-  return format(subDays(date, days), "yyyy-MM-dd");
-}
-
 export function processConsistency(parsedData) {
   if (!parsedData || parsedData.length === 0) return null;
 
-  const today = format(new Date(), "yyyy-MM-dd"); // Local date, not UTC
+  const today = todayStr();
 
-  const workoutRangeDays = differenceInCalendarDays(
-    parseISO(today),
-    parseISO(parsedData[0].date),
-  );
+  const workoutRangeDays = diffInDays(today, parsedData[0].date);
 
   // Determine the relevant periods
   const relevantPeriods = [];

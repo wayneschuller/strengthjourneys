@@ -16,7 +16,7 @@ import {
   getReadableDateString,
 } from "@/lib/processing-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
-import { subMonths } from "date-fns";
+
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ReferenceLine } from "recharts";

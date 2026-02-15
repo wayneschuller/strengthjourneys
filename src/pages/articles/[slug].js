@@ -15,7 +15,7 @@ import {
   ArticleShareFooterCta,
   MobileFloatingArticleShareButton,
 } from "@/components/article-share-controls";
-import { format } from "date-fns";
+import { formatLong, dateToStr } from "@/lib/date-utils";
 
 import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
 
@@ -56,7 +56,7 @@ const components = {
 export default function ArticlePost({ article }) {
   const canonicalUrl = `https://www.strengthjourneys.xyz/articles/${article.slug.current}`;
   const publishDate = new Date(article.publishedAt).toISOString();
-  const formattedDate = format(new Date(article.publishedAt), "MMMM d, yyyy");
+  const formattedDate = formatLong(dateToStr(new Date(article.publishedAt)));
 
   // devLog(article);
 

@@ -18,7 +18,7 @@ import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { differenceInDays } from "date-fns";
+import { diffInDays, todayStr } from "@/lib/date-utils";
 import {
   getReadableDateString,
   getAnalyzedSessionLifts,
@@ -276,7 +276,7 @@ export function MostRecentSessionCard({
   const analyzedSessionLifts = singleSession?.analyzedSessionLifts;
   const isWithinLastMonth =
     sessionDate &&
-    differenceInDays(new Date(), new Date(sessionDate + "T00:00:00")) <= 30;
+    diffInDays(todayStr(), sessionDate) <= 30;
   const titlePrefix =
     sessionDate
       ? isLastDate

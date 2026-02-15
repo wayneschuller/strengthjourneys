@@ -15,7 +15,7 @@ import {
 } from "@/lib/processing-utils";
 import { motion } from "motion/react";
 
-import { format } from "date-fns";
+import { todayStr, dateToStr } from "@/lib/date-utils";
 import {
   Card,
   CardContent,
@@ -178,14 +178,14 @@ export function BigFourLiftCards({ lifts, animated = true }) {
     const today = new Date();
     const cutoff = new Date(today);
     cutoff.setDate(today.getDate() - RECENT_PR_WINDOW_DAYS);
-    return format(cutoff, "yyyy-MM-dd"); // Use local date, not UTC
+    return dateToStr(cutoff);
   })();
 
   const tonnageBadgeCutoffStr = (() => {
     const today = new Date();
     const cutoff = new Date(today);
     cutoff.setDate(today.getDate() - TONNAGE_BADGE_WINDOW_DAYS);
-    return format(cutoff, "yyyy-MM-dd"); // Use local date, not UTC
+    return dateToStr(cutoff);
   })();
 
   return (
@@ -672,8 +672,8 @@ function buildBadgesForLiftType(
   const badges = [];
 
   const lastDate = lastDateByLiftType?.[liftType];
-  const todayStr = format(new Date(), "yyyy-MM-dd"); // Use local date, not UTC
-  if (lastDate === todayStr && getTodayBadgeLabel) {
+  const today = todayStr();
+  if (lastDate === today && getTodayBadgeLabel) {
     badges.push({
       type: "did-today",
       label: getTodayBadgeLabel(liftType, allLiftTypes),

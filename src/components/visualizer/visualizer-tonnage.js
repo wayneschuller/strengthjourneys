@@ -6,7 +6,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog, logTiming, getReadableDateString } from "@/lib/processing-utils";
-import { parseISO, startOfWeek, startOfMonth, format } from "date-fns";
+import { startOfWeekStr, startOfMonthStr, formatShort, formatShortYear, formatMonthYear, dateToStr, addDays } from "@/lib/date-utils";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "./visualizer-utils";
 import { Label } from "@/components/ui/label";
@@ -481,16 +481,11 @@ function processTonnageData(
 
       if (aggregationType === "perWeek") {
         // Group by week (Monday as start of week)
-        const entryDate = parseISO(dateKey);
-        const weekStart = format(
-          startOfWeek(entryDate, { weekStartsOn: 1 }),
-          "yyyy-MM-dd",
-        );
+        const weekStart = startOfWeekStr(dateKey);
         tonnageMap.set(weekStart, (tonnageMap.get(weekStart) || 0) + tonnage);
       } else if (aggregationType === "perMonth") {
         // Group by month (first day of month)
-        const entryDate = parseISO(dateKey);
-        const monthStart = format(startOfMonth(entryDate), "yyyy-MM-dd");
+        const monthStart = startOfMonthStr(dateKey);
         tonnageMap.set(monthStart, (tonnageMap.get(monthStart) || 0) + tonnage);
       } else {
         // Group by session (per date)
@@ -566,10 +561,7 @@ function getWeekLiftsData(parsedData, weekStartStr, chartLiftType) {
     };
   }
 
-  const weekStart = parseISO(weekStartStr);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 6);
-  const weekEndStr = format(weekEnd, "yyyy-MM-dd");
+  const weekEndStr = addDays(weekStartStr, 6);
 
   // Filter lifts for the week, excluding goals
   const weekLifts = parsedData.filter(
@@ -645,13 +637,10 @@ function getMonthLiftsData(parsedData, monthStartStr, chartLiftType) {
     };
   }
 
-  const monthStart = parseISO(monthStartStr);
-  const monthEnd = new Date(
-    monthStart.getFullYear(),
-    monthStart.getMonth() + 1,
-    0,
-  );
-  const monthEndStr = format(monthEnd, "yyyy-MM-dd");
+  const y = parseInt(monthStartStr.slice(0, 4), 10);
+  const m = parseInt(monthStartStr.slice(5, 7), 10);
+  const monthEnd = new Date(y, m, 0); // last day of month
+  const monthEndStr = dateToStr(monthEnd);
 
   // Filter lifts for the month, excluding goals
   const monthLifts = parsedData.filter(
@@ -685,22 +674,17 @@ function getMonthLiftsData(parsedData, monthStartStr, chartLiftType) {
 
   // Calculate weekly breakdown
   const weeklyBreakdown = [];
-  let currentWeekStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  let curWeekStartStr = startOfWeekStr(monthStartStr);
 
-  while (currentWeekStart <= monthEnd) {
-    const currentWeekEnd = new Date(currentWeekStart);
-    currentWeekEnd.setDate(currentWeekEnd.getDate() + 6);
+  while (curWeekStartStr <= monthEndStr) {
+    const curWeekEndStr = addDays(curWeekStartStr, 6);
 
     // Only include weeks that overlap with the month
-    if (currentWeekEnd >= monthStart && currentWeekStart <= monthEnd) {
-      const weekStartStr = format(currentWeekStart, "yyyy-MM-dd");
-      const weekEndStr = format(
-        currentWeekEnd > monthEnd ? monthEnd : currentWeekEnd,
-        "yyyy-MM-dd",
-      );
+    if (curWeekEndStr >= monthStartStr && curWeekStartStr <= monthEndStr) {
+      const weekEndStr = curWeekEndStr > monthEndStr ? monthEndStr : curWeekEndStr;
 
       const weekLifts = monthLifts.filter(
-        (lift) => lift.date >= weekStartStr && lift.date <= weekEndStr,
+        (lift) => lift.date >= curWeekStartStr && lift.date <= weekEndStr,
       );
       const weekTonnage = weekLifts.reduce(
         (sum, lift) => sum + lift.weight * lift.reps,
@@ -709,7 +693,7 @@ function getMonthLiftsData(parsedData, monthStartStr, chartLiftType) {
       const weekSessionDates = [...new Set(weekLifts.map((lift) => lift.date))];
 
       weeklyBreakdown.push({
-        weekStart: weekStartStr,
+        weekStart: curWeekStartStr,
         weekEnd: weekEndStr,
         tonnage: weekTonnage,
         sessionCount: weekSessionDates.length,
@@ -717,7 +701,7 @@ function getMonthLiftsData(parsedData, monthStartStr, chartLiftType) {
     }
 
     // Move to next week
-    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+    curWeekStartStr = addDays(curWeekStartStr, 7);
   }
 
   // Group by lift type
@@ -762,18 +746,17 @@ const TonnageTooltipContent = ({
 
   const tonnage = payload[0].value;
   const date = new Date(label);
+  const dateStr0 = dateToStr(date);
 
   let dateLabel;
   if (aggregationType === "perWeek") {
     // Show week range (Monday to Sunday)
-    const weekStart = startOfWeek(date, { weekStartsOn: 1 });
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + 6);
-
-    dateLabel = `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
+    const wsStr = startOfWeekStr(dateStr0);
+    const weStr = addDays(wsStr, 6);
+    dateLabel = `${formatShort(wsStr)} - ${formatShortYear(weStr)}`;
   } else if (aggregationType === "perMonth") {
     // Show month (e.g., "January 2024")
-    dateLabel = format(date, "MMMM yyyy");
+    dateLabel = formatMonthYear(dateStr0);
   } else {
     dateLabel = date.toLocaleDateString("en-US", {
       weekday: "short",
@@ -947,9 +930,7 @@ const TonnageTooltipContent = ({
                   </div>
                   <div className="space-y-0.5">
                     {monthData.weeklyBreakdown.map((week, index) => {
-                      const weekStartDate = new Date(week.weekStart);
-                      const weekEndDate = new Date(week.weekEnd);
-                      const weekLabel = `${format(weekStartDate, "MMM d")} - ${format(weekEndDate, "MMM d")}`;
+                      const weekLabel = `${formatShort(week.weekStart)} - ${formatShort(week.weekEnd)}`;
                       return (
                         <div
                           key={week.weekStart}

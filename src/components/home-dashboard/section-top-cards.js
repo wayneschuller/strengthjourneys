@@ -3,12 +3,14 @@
 import { motion } from "motion/react";
 import { useMemo, useRef } from "react";
 import {
-  format,
-  parseISO,
-  differenceInCalendarYears,
-  differenceInCalendarMonths,
-  differenceInCalendarDays,
-} from "date-fns";
+  todayStr,
+  formatDMY,
+  diffInCalendarYears,
+  diffInCalendarMonths,
+  diffInDays,
+  subtractDays,
+  addDays,
+} from "@/lib/date-utils";
 
 import {
   TrendingUp,
@@ -260,7 +262,7 @@ export function SectionTopCards({ isProgressDone = false }) {
             footer={
               mostRecentPR ? (
                 <span>
-                  {format(new Date(mostRecentPR.date), "d MMMM yyyy")}
+                  {formatDMY(mostRecentPR.date)}
                   {mostRecentPRStrengthRating
                     ? ` · ${STRENGTH_LEVEL_EMOJI[mostRecentPRStrengthRating] ?? ""} ${mostRecentPRStrengthRating}`
                     : ""}
@@ -369,12 +371,11 @@ function SectionTopCardsSkeleton() {
 }
 
 function formatJourneyLength(startDate) {
-  const today = new Date();
-  const start = parseISO(startDate);
+  const today = todayStr();
 
-  const years = differenceInCalendarYears(today, start);
-  const months = differenceInCalendarMonths(today, start) % 12;
-  const days = differenceInCalendarDays(today, start) % 30;
+  const years = diffInCalendarYears(today, startDate);
+  const months = diffInCalendarMonths(today, startDate) % 12;
+  const days = diffInDays(today, startDate) % 30;
 
   if (years > 0) {
     if (years >= 10) {
@@ -431,8 +432,8 @@ function calculateLifetimeTonnageFromLookup(sessionTonnageLookup, preferredUnit 
   }
 
   const totalByUnit = {};
-  const todayStr = format(new Date(), "yyyy-MM-dd");
-  const twelveMonthsAgoStr = subtractDaysFromStr(todayStr, 365);
+  const today = todayStr();
+  const twelveMonthsAgoStr = subtractDays(today, 365);
   const lastYearByUnit = {};
   const earliestDateStr = allSessionDates[0] ?? null;
   const latestDateStr = allSessionDates[allSessionDates.length - 1] ?? null;
@@ -448,7 +449,7 @@ function calculateLifetimeTonnageFromLookup(sessionTonnageLookup, preferredUnit 
       const tonnage = tonnageByUnit[unit] ?? 0;
       if (!tonnage) continue;
       totalByUnit[unit] = (totalByUnit[unit] ?? 0) + tonnage;
-      if (date >= twelveMonthsAgoStr && date <= todayStr) {
+      if (date >= twelveMonthsAgoStr && date <= today) {
         lastYearByUnit[unit] = (lastYearByUnit[unit] ?? 0) + tonnage;
       }
     }
@@ -584,8 +585,8 @@ function findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes) {
 function calculatePRsInLast12Months(topLiftsByTypeAndReps) {
   if (!topLiftsByTypeAndReps) return { count: 0, liftTypes: [] };
 
-  const todayStr = format(new Date(), "yyyy-MM-dd");
-  const twelveMonthsAgo = subtractDaysFromStr(todayStr, 365);
+  const today = todayStr();
+  const twelveMonthsAgo = subtractDays(today, 365);
   const prLiftTypes = new Set();
 
   Object.entries(topLiftsByTypeAndReps).forEach(([liftType, repRanges]) => {
@@ -618,9 +619,9 @@ function calculateSessionMomentumFromDates(allSessionDates) {
     return { recentSessions: 0, previousSessions: 0, percentageChange: 0 };
   }
 
-  const todayStr = format(new Date(), "yyyy-MM-dd");
-  const ninetyDaysAgoStr = subtractDaysFromStr(todayStr, 90);
-  const oneEightyDaysAgoStr = subtractDaysFromStr(todayStr, 180);
+  const today = todayStr();
+  const ninetyDaysAgoStr = subtractDays(today, 90);
+  const oneEightyDaysAgoStr = subtractDays(today, 180);
 
   const recentSessionDates = new Set();
   const previousSessionDates = new Set();
@@ -628,7 +629,7 @@ function calculateSessionMomentumFromDates(allSessionDates) {
   for (let i = 0; i < allSessionDates.length; i++) {
     const dateStr = allSessionDates[i];
     // YYYY-MM-DD string comparison
-    if (dateStr >= ninetyDaysAgoStr && dateStr <= todayStr) {
+    if (dateStr >= ninetyDaysAgoStr && dateStr <= today) {
       recentSessionDates.add(dateStr);
     } else if (dateStr >= oneEightyDaysAgoStr && dateStr < ninetyDaysAgoStr) {
       previousSessionDates.add(dateStr);
@@ -660,55 +661,6 @@ function getWeekKeyFromDateStr(dateStr) {
   const m = String(d.getUTCMonth() + 1).padStart(2, "0");
   const day = String(d.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
-}
-
-// Days in month (1-12); Feb uses 28, caller can pass 29 for leap year.
-function daysInMonth(y, month1Based) {
-  if (month1Based === 2) {
-    const isLeap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
-    return isLeap ? 29 : 28;
-  }
-  if ([4, 6, 9, 11].includes(month1Based)) return 30;
-  return 31;
-}
-
-// YYYY-MM-DD minus n days, returns "YYYY-MM-DD". Pure string/math, no Date.
-function subtractDaysFromStr(dateStr, n) {
-  let y = parseInt(dateStr.slice(0, 4), 10);
-  let m = parseInt(dateStr.slice(5, 7), 10);
-  let d = parseInt(dateStr.slice(8, 10), 10);
-  for (let i = 0; i < n; i++) {
-    d--;
-    if (d < 1) {
-      m--;
-      if (m < 1) {
-        m = 12;
-        y--;
-      }
-      d = daysInMonth(y, m);
-    }
-  }
-  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-}
-
-// YYYY-MM-DD plus n days, returns "YYYY-MM-DD". Pure string/math, no Date.
-function addDaysFromStr(dateStr, n) {
-  let y = parseInt(dateStr.slice(0, 4), 10);
-  let m = parseInt(dateStr.slice(5, 7), 10);
-  let d = parseInt(dateStr.slice(8, 10), 10);
-  for (let i = 0; i < n; i++) {
-    const maxD = daysInMonth(y, m);
-    d++;
-    if (d > maxD) {
-      d = 1;
-      m++;
-      if (m > 12) {
-        m = 1;
-        y++;
-      }
-    }
-  }
-  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
 /**
@@ -757,8 +709,8 @@ function calculateStreakFromDates(allSessionDates) {
   const oldestWeek = weekKeys[0];
 
   // --- Phase 2: Reference weeks (this week, last week) ---
-  const todayStr = format(new Date(), "yyyy-MM-dd");
-  const thisWeekKey = getWeekKeyFromDateStr(todayStr);
+  const today = todayStr();
+  const thisWeekKey = getWeekKeyFromDateStr(today);
   const sessionsThisWeek = weekSessionCount.get(thisWeekKey) || 0;
 
   // --- Phase 3: Current streak (consecutive weeks with 3+ sessions) ---
@@ -769,7 +721,7 @@ function calculateStreakFromDates(allSessionDates) {
   if (thisWeekIsQualified) {
     currentStreak = 1;
   }
-  const lastCompleteWeekKey = subtractDaysFromStr(thisWeekKey, 7); // Monday of the last completed week
+  const lastCompleteWeekKey = subtractDays(thisWeekKey, 7); // Monday of the last completed week
   let weekKey = lastCompleteWeekKey;
   while (weekKey >= oldestWeek) {
     const sessionCount = weekSessionCount.get(weekKey) || 0;
@@ -778,7 +730,7 @@ function calculateStreakFromDates(allSessionDates) {
     } else {
       break;
     }
-    weekKey = subtractDaysFromStr(weekKey, 7);
+    weekKey = subtractDays(weekKey, 7);
   }
 
   // --- Phase 4: Best streak (longest run of consecutive 3+ session weeks) ---
@@ -795,7 +747,7 @@ function calculateStreakFromDates(allSessionDates) {
     } else {
       tempStreak = 0;
     }
-    weekKey = addDaysFromStr(weekKey, 7);
+    weekKey = addDays(weekKey, 7);
   }
 
   return { currentStreak, bestStreak, sessionsThisWeek };

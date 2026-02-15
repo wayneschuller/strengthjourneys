@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FileText, ArrowRight, Newspaper } from "lucide-react";
-import { format } from "date-fns";
+import { formatLong, dateToStr } from "@/lib/date-utils";
 import Image from "next/image";
 import { urlFor } from "@/lib/sanity-io.js";
 
@@ -63,7 +63,7 @@ export function ArticleSummaryCard({ article }) {
               {article.title}
             </CardTitle>
             <CardDescription>
-              {format(new Date(article.publishedAt), "MMMM d, yyyy")}
+              {formatLong(dateToStr(new Date(article.publishedAt)))}
             </CardDescription>
             {/* <p className="text-sm text-gray-500"> Published on {new Date(article.publishedAt).toLocaleDateString()} </p> */}
             {article.description && (
@@ -117,7 +117,7 @@ export function RelatedArticles({ articles }) {
                 <span className="mr-3 w-2/3 flex-grow text-balance group-hover:text-primary">
                   {article.title}
                   <div className="text-muted-foreground">
-                    {format(new Date(article.publishedAt), "MMMM d, yyyy")}
+                    {formatLong(dateToStr(new Date(article.publishedAt)))}
                   </div>
                 </span>
                 <ArticleImage

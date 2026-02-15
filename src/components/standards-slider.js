@@ -1,5 +1,5 @@
 import { Fragment, useMemo } from "react";
-import { subMonths, subYears, format } from "date-fns";
+import { monthsAgo, yearsAgo } from "@/lib/date-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   useAthleteBio,
@@ -39,15 +39,14 @@ export function StandardsSlider({
     if (authStatus !== "authenticated" || !parsedData?.length || !e1rmFormula)
       return [];
 
-    const now = new Date();
     // Convert thresholds to "YYYY-MM-DD" strings for fast string comparison in the loop
     const thresholds = {
-      "1M": format(subMonths(now, 1), "yyyy-MM-dd"),
-      "6M": format(subMonths(now, 6), "yyyy-MM-dd"),
-      "1Y": format(subYears(now, 1), "yyyy-MM-dd"),
-      "2Y": format(subYears(now, 2), "yyyy-MM-dd"),
-      "5Y": format(subYears(now, 5), "yyyy-MM-dd"),
-      "10Y": format(subYears(now, 10), "yyyy-MM-dd"),
+      "1M": monthsAgo(1),
+      "6M": monthsAgo(6),
+      "1Y": yearsAgo(1),
+      "2Y": yearsAgo(2),
+      "5Y": yearsAgo(5),
+      "10Y": yearsAgo(10),
     };
 
     const bestByPeriod = {};

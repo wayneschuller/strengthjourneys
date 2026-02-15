@@ -1,6 +1,6 @@
 "use client";
 
-import { format } from "date-fns";
+import { dateToStr } from "@/lib/date-utils";
 import { cloneElement, useState, useEffect, useRef, useCallback } from "react";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
@@ -371,8 +371,8 @@ function findStartEndDates(parsedData) {
   });
 
   return {
-    startDate: format(startDate, "yyyy-MM-dd"),
-    endDate: format(endDate, "yyyy-MM-dd"),
+    startDate: dateToStr(startDate),
+    endDate: dateToStr(endDate),
   };
 }
 
@@ -487,7 +487,7 @@ function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
     for (let currentTime = start; currentTime <= end; currentTime += oneDay) {
       const count = getRandomCount();
       demoHeatmapData.push({
-        date: format(new Date(currentTime), "yyyy-MM-dd"),
+        date: dateToStr(new Date(currentTime)),
         count: count,
         sessionData: null,
       });

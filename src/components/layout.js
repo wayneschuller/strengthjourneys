@@ -18,14 +18,7 @@ import { Button } from "@/components/ui/button";
 import { gaTrackSignInClick } from "@/lib/analytics";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
-import {
-  isToday,
-  parseISO,
-  differenceInDays,
-  differenceInWeeks,
-  differenceInMonths,
-  differenceInYears,
-} from "date-fns";
+import { todayStr, isTodayStr, diffInDays, diffInWeeks, diffInCalendarMonths, diffInCalendarYears } from "@/lib/date-utils";
 
 /**
  * Root layout wrapper for the app. Renders nav, main content area, footer, and app background.
@@ -201,14 +194,13 @@ export function Layout({ children }) {
 }
 
 function buildLatestDataMessages(latestDateISO) {
-  const parsed = parseISO(latestDateISO);
-  const now = new Date();
-  const daysAgo = differenceInDays(now, parsed);
+  const today = todayStr();
+  const daysAgo = diffInDays(today, latestDateISO);
 
-  if (isToday(parsed)) {
+  if (isTodayStr(latestDateISO)) {
     return {
       latestDateString: "Latest data: Today",
-      gymInviteString: getTodayInviteMessage(now),
+      gymInviteString: getTodayInviteMessage(new Date()),
     };
   }
 
@@ -221,10 +213,10 @@ function buildLatestDataMessages(latestDateISO) {
 
   const relativeUnits = [
     { value: daysAgo, max: 7, label: "day" },
-    { value: differenceInWeeks(now, parsed), max: 3, label: "week" },
-    { value: differenceInMonths(now, parsed), max: 11, label: "month" },
+    { value: diffInWeeks(today, latestDateISO), max: 3, label: "week" },
+    { value: diffInCalendarMonths(today, latestDateISO), max: 11, label: "month" },
     {
-      value: differenceInYears(now, parsed),
+      value: diffInCalendarYears(today, latestDateISO),
       max: Number.POSITIVE_INFINITY,
       label: "year",
     },

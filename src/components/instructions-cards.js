@@ -578,6 +578,81 @@ export const SignInInvite = () => {
 };
 
 /**
+ * Vertical card for the Strength Year in Review sidebar when user is signed in
+ * but has not connected a Google Sheet yet. Prompts them to connect so they
+ * can see their real recap instead of demo data.
+ */
+export function ConnectSheetRecapCard() {
+  const { data: session, status: authStatus } = useSession();
+  const { sheetInfo, selectSheet } = useUserLiftingData();
+  const [openPicker, setOpenPicker] = useState(null);
+  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
+
+  const handlePickerReady = useCallback((picker) => {
+    setOpenPicker(() => picker);
+  }, []);
+
+  useEffect(() => {
+    if (authStatus === "authenticated" && !sheetInfo?.ssid && !shouldLoadPicker) {
+      setShouldLoadPicker(true);
+    }
+  }, [authStatus, sheetInfo?.ssid, shouldLoadPicker]);
+
+  if (authStatus !== "authenticated" || sheetInfo?.ssid) return null;
+
+  return (
+    <>
+      {shouldLoadPicker && (
+        <DrivePickerContainer
+          onReady={handlePickerReady}
+          trigger={shouldLoadPicker}
+          oauthToken={session?.accessToken}
+          selectSheet={selectSheet}
+        />
+      )}
+      <Card className="flex min-w-[14rem] flex-col md:min-w-[18rem]">
+        <CardHeader className="space-y-2 pb-5 pt-6">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <img
+              src={GOOGLE_SHEETS_ICON_URL}
+              alt=""
+              className="h-5 w-5 shrink-0"
+              aria-hidden
+            />
+            See your year in review
+          </CardTitle>
+          <CardDescription className="text-sm leading-relaxed">
+            Connect your Google Sheet to load your lifting history and get your
+            personalized recap.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6 pb-8 pt-2">
+          <Button
+            size="default"
+            className="flex w-full items-center justify-center gap-2"
+            onClick={() => {
+              if (openPicker) handleOpenFilePicker(openPicker);
+            }}
+            disabled={!openPicker}
+            title={
+              !openPicker
+                ? "Loading Google Picker… (allow Google scripts if blocked)"
+                : undefined
+            }
+          >
+            {openPicker ? "Connect your Google Sheet" : "Connect your sheet (loading…)"}
+          </Button>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Your recap will show sessions, tonnage, PRs, most-trained lifts, and
+            seasonal patterns — all from your own data.
+          </p>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+/**
  * Vertical card for demo mode sidebars (e.g. Strength Year in Review).
  * Compact layout to fit narrow columns; other instruction cards are horizontal.
  */

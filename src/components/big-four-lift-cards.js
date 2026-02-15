@@ -42,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
  */
 export function BigFourLiftCards({ lifts, animated = true }) {
   const {
+    sheetInfo,
     topLiftsByTypeAndReps,
     liftTypes,
     sessionTonnageLookup,
@@ -147,10 +148,14 @@ export function BigFourLiftCards({ lifts, animated = true }) {
   };
 
   // Stagger the description→stats fade per card, left to right.
-  // Tied to the `animated` flag from the home page so the sequence
-  // starts after the dashboard intro.
+  // Only run when user has a connected sheet (real data), not demo.
   useEffect(() => {
-    if (authStatus === "authenticated" && topLiftsByTypeAndReps && animated) {
+    if (
+      authStatus === "authenticated" &&
+      sheetInfo?.ssid &&
+      topLiftsByTypeAndReps &&
+      animated
+    ) {
       const timeouts = [0, 1, 2, 3].map((i) =>
         setTimeout(
           () => setStatsVisibleCount((c) => Math.max(c, i + 1)),
@@ -160,7 +165,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
       return () => timeouts.forEach(clearTimeout);
     }
     setStatsVisibleCount(0);
-  }, [authStatus, topLiftsByTypeAndReps, animated]);
+  }, [authStatus, sheetInfo?.ssid, topLiftsByTypeAndReps, animated]);
 
   const {
     liftTonnageMap,
@@ -190,7 +195,11 @@ export function BigFourLiftCards({ lifts, animated = true }) {
         const hasAnyData =
           stats &&
           (stats.totalSets > 0 || stats.totalReps > 0 || stats.bestLift);
-        const isStatsMode = authStatus === "authenticated" && hasAnyData;
+        // Only show personal stats when user has connected a sheet (avoid demo data on cards).
+        const isStatsMode =
+          authStatus === "authenticated" &&
+          !!sheetInfo?.ssid &&
+          hasAnyData;
 
         const recentPRTier = topLiftsByTypeAndReps
           ? getRecentPRTier(

@@ -17,7 +17,7 @@ import { Sparkles, Palette, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YearRecapCarousel } from "@/components/year-recap/year-recap-carousel";
 import { YearSelector } from "@/components/year-recap/year-selector";
-import { DemoModeSignInCard } from "@/components/instructions-cards";
+import { DemoModeSignInCard, ConnectSheetRecapCard } from "@/components/instructions-cards";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
@@ -139,12 +139,17 @@ function RecapCustomiseSidebar() {
 function StrengthYearInReviewMain() {
   const router = useRouter();
   const { status: authStatus } = useSession();
-  const { parsedData, isLoading } = useUserLiftingData();
+  const { parsedData, isLoading, sheetInfo } = useUserLiftingData();
+
+  // Signed in but no sheet connected: we still have demo data in parsedData.
+  // Treat as "no data" and show connect-sheet instructions instead of demo recap.
+  const needsToConnectSheet =
+    authStatus === "authenticated" && !sheetInfo?.ssid;
 
   const yearsWithData = useMemo(() => {
-    if (!parsedData) return [];
+    if (!parsedData || needsToConnectSheet) return [];
     return getYearsWithData(parsedData);
-  }, [parsedData]);
+  }, [parsedData, needsToConnectSheet]);
 
   const yearFromQuery = router.query?.year
     ? parseInt(router.query.year, 10)
@@ -203,9 +208,24 @@ function StrengthYearInReviewMain() {
           </div>
         )}
 
-        {!isLoading && yearsWithData.length === 0 && (
+        {!isLoading && yearsWithData.length === 0 && !needsToConnectSheet && (
           <div className="rounded-lg border p-6 text-center text-muted-foreground">
             <p>No training data yet. Connect your Google Sheet to get started.</p>
+          </div>
+        )}
+
+        {!isLoading && needsToConnectSheet && (
+          <div className="flex flex-col gap-6 xl:gap-8 xl:grid xl:grid-cols-[13rem_1fr_minmax(18rem,22rem)] xl:items-start">
+            <div className="xl:col-start-2 flex flex-col items-center justify-center rounded-lg border p-6 text-center text-muted-foreground xl:min-h-[280px]">
+              <p>
+                Connect your Google Sheet using the button above to load your
+                lifting history. Your year in review will appear here once
+                connected.
+              </p>
+            </div>
+            <div className="flex flex-col gap-6 pt-2 xl:col-start-3 xl:pt-2">
+              <ConnectSheetRecapCard />
+            </div>
           </div>
         )}
 
@@ -238,9 +258,13 @@ function StrengthYearInReviewMain() {
             )}
             {showCarousel && (
               <div className="order-3 flex flex-col gap-6 pt-2 xl:col-start-3 xl:pt-2">
-                {authStatus === "authenticated" && <RecapCustomiseSidebar />}
+                {authStatus === "authenticated" && sheetInfo?.ssid && (
+                  <RecapCustomiseSidebar />
+                )}
                 {authStatus === "unauthenticated" ? (
                   <DemoModeSignInCard />
+                ) : needsToConnectSheet ? (
+                  <ConnectSheetRecapCard />
                 ) : null}
               </div>
             )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { MessageSquarePlus, ThumbsUp, ThumbsDown } from "lucide-react";
@@ -23,6 +23,45 @@ import {
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { gaTrackFeedbackSentiment } from "@/lib/analytics";
 
+const TITLE_PREFIXES = [
+  "How are you finding",
+  "What do you think of",
+  "How's your experience with",
+  "Got any thoughts on",
+  "How are you liking",
+  "What's your take on",
+  "How's it going with",
+  "Any feelings about",
+  "What do you make of",
+  "How are we doing with",
+];
+
+const SUBTITLES = [
+  "Your feedback helps us improve.",
+  "We read every single response. Seriously. It's a small team.",
+  "Even a thumbs up makes our day. We're not needy, just... emotionally invested.",
+  "Tell us what you really think. We can take it. Probably.",
+  "Your feedback is like a new PR — it makes everything worth it.",
+  "Be honest. We promise not to cry. Much.",
+  "Think of this as your spotter. We've got your back if you've got ours.",
+  "We built this instead of going to the gym. Was it worth it? You tell us.",
+  "Feedback is the progressive overload of product development.",
+  "One rep of feedback can change everything.",
+  "Your opinion matters more than your one rep max. Almost.",
+  "Help us help you get stronger. It's a virtuous cycle.",
+  "We check for feedback more often than we check our phone. Don't judge.",
+  "Every piece of feedback adds 5kg to our motivation.",
+  "This is a one-person dev team running on coffee and validation.",
+  "Fun fact: zero people have told us this app is perfect. Be the first?",
+  "Constructive criticism welcome. Unconstructive praise also welcome.",
+  "Your feedback fuels development more than pre-workout ever could.",
+  "We lift your data. You lift our spirits. Fair trade?",
+  "Stronger feedback = stronger app. It's basically science.",
+];
+
+const AUTO_CLOSE_SECONDS = 15;
+const SUCCESS_CLOSE_SECONDS = 4;
+
 export function FeedbackWidget() {
   const router = useRouter();
   const { data: session } = useSession();
@@ -37,10 +76,7 @@ export function FeedbackWidget() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  // Auto-close countdown (layer 2 only, cancelled once they type)
-  const AUTO_CLOSE_SECONDS = 15;
   const [countdown, setCountdown] = useState(null);
-  const SUCCESS_CLOSE_SECONDS = 4;
   const [successCountdown, setSuccessCountdown] = useState(null);
 
   function startCountdown() {
@@ -76,6 +112,10 @@ export function FeedbackWidget() {
     setIncludeEmail(false);
     setIsSubmitting(false);
     setError(null);
+    phraseIndexRef.current = {
+      title: Math.floor(Math.random() * TITLE_PREFIXES.length),
+      subtitle: Math.floor(Math.random() * SUBTITLES.length),
+    };
   }, []);
 
   // Tick the countdown every second
@@ -122,6 +162,15 @@ export function FeedbackWidget() {
     [resetState],
   );
 
+  // Pick random phrases — re-randomized on close so next open is fresh
+  const phraseIndexRef = useRef({
+    title: Math.floor(Math.random() * TITLE_PREFIXES.length),
+    subtitle: Math.floor(Math.random() * SUBTITLES.length),
+  });
+
+  const titlePrefix = TITLE_PREFIXES[phraseIndexRef.current.title];
+  const subtitle = SUBTITLES[phraseIndexRef.current.subtitle];
+
   const PAGE_NAMES = {
     "/": session ? "the Home Dashboard" : "the Landing Page",
     "/analyzer": "the PR Analyzer",
@@ -138,7 +187,17 @@ export function FeedbackWidget() {
     "/barbell-strength-potential": "Strength Potential",
   };
 
-  const pageName = PAGE_NAMES[router.pathname] || "Strength Journeys";
+  const LIFT_SLUG_NAMES = {
+    "barbell-squat-insights": "Back Squat Insights",
+    "barbell-bench-press-insights": "Bench Press Insights",
+    "barbell-deadlift-insights": "Deadlift Insights",
+    "barbell-strict-press-insights": "Strict Press Insights",
+  };
+
+  const pageName =
+    router.pathname === "/[lift]"
+      ? LIFT_SLUG_NAMES[router.query.lift] || "Lift Insights"
+      : PAGE_NAMES[router.pathname] || "Strength Journeys";
 
   function getUserType() {
     if (session && sheetInfo?.ssid) return "auth-with-sheet";
@@ -215,12 +274,12 @@ export function FeedbackWidget() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {layer === 1 && `How are you finding ${pageName}?`}
+              {layer === 1 && `${titlePrefix} ${pageName}?`}
               {layer >= 2 && layer <= 3 && "Thanks! Anything you'd like to tell us?"}
               {layer === 4 && "Feedback sent"}
             </DialogTitle>
             <DialogDescription>
-              {layer === 1 && "Your feedback helps us improve."}
+              {layer === 1 && subtitle}
               {layer === 2 && countdown !== null && `Closing in ${countdown}s — start typing to keep open.`}
               {layer === 3 && "Optional — skip anytime."}
               {layer === 4 && (successCountdown !== null

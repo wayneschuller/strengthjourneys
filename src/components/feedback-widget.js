@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
-import { MessageSquarePlus, ThumbsUp, ThumbsDown } from "lucide-react";
+import { MessageCircleHeart, ThumbsUp, ThumbsDown } from "lucide-react";
+import { motion, useAnimationControls } from "motion/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -226,6 +227,33 @@ export function FeedbackWidget() {
     "barbell-strict-press-insights": "Strict Press Insights",
   };
 
+  // Subtle spring animation at random intervals to draw attention
+  // Stops for the session once the user submits feedback
+  const controls = useAnimationControls();
+  const [hasFeedback, setHasFeedback] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !!sessionStorage.getItem("sj-feedback-given");
+  });
+
+  useEffect(() => {
+    if (hasFeedback) return;
+    function scheduleNudge() {
+      const delay = 15000 + Math.random() * 30000; // 15-45s
+      return setTimeout(() => {
+        if (!open) {
+          controls.start({
+            scale: [1, 1.15, 0.95, 1.05, 1],
+            rotate: [0, -5, 5, -3, 0],
+            transition: { duration: 0.5, ease: "easeInOut" },
+          });
+        }
+        timeoutId = scheduleNudge();
+      }, delay);
+    }
+    let timeoutId = scheduleNudge();
+    return () => clearTimeout(timeoutId);
+  }, [controls, open, hasFeedback]);
+
   const pageName =
     router.pathname === "/[lift]"
       ? LIFT_SLUG_NAMES[router.query.lift] || "Lift Insights"
@@ -269,6 +297,8 @@ export function FeedbackWidget() {
       if (!res.ok) throw new Error("Failed to send");
 
       setLayer(4);
+      setHasFeedback(true);
+      sessionStorage.setItem("sj-feedback-given", new Date().toISOString());
       startSuccessCountdown();
     } catch {
       setError("Couldn't send feedback. Please try again later.");
@@ -283,17 +313,22 @@ export function FeedbackWidget() {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              className="fixed bottom-6 right-6 z-40 h-12 w-12 rounded-full border-amber-300 bg-amber-400 shadow-lg hover:bg-amber-500 lg:h-auto lg:w-auto lg:gap-2 lg:rounded-full lg:px-4 lg:py-2.5"
-              onClick={() => setOpen(true)}
-              aria-label="Give feedback"
+            <motion.div
+              animate={controls}
+              className="fixed bottom-6 right-6 z-40"
             >
-              <span className="text-lg">💬</span>
-              <span className="hidden text-sm font-semibold text-amber-950 lg:inline">
-                Thoughts?
-              </span>
-            </Button>
+              <Button
+                variant="outline"
+                className="h-12 w-12 rounded-full border-amber-300 bg-amber-400 shadow-lg hover:bg-amber-500 lg:h-auto lg:w-auto lg:gap-2 lg:rounded-full lg:px-4 lg:py-2.5"
+                onClick={() => setOpen(true)}
+                aria-label="Give feedback"
+              >
+                <MessageCircleHeart className="h-5 w-5 text-amber-950 lg:h-5 lg:w-5" />
+                <span className="hidden text-sm font-semibold text-amber-950 lg:inline">
+                  Thoughts?
+                </span>
+              </Button>
+            </motion.div>
           </TooltipTrigger>
           <TooltipContent side="left" className="lg:hidden">
             <p>Share your thoughts</p>

@@ -323,6 +323,19 @@ export function FeedbackWidget() {
     }
   }
 
+  // Delay appearance on the home page for unauthenticated visitors
+  const isHomePage = router.pathname === "/";
+  const delayButton = isHomePage && !session;
+  const [visible, setVisible] = useState(!delayButton);
+  useEffect(() => {
+    if (!delayButton) {
+      setVisible(true);
+      return;
+    }
+    const timer = setTimeout(() => setVisible(true), 20000);
+    return () => clearTimeout(timer);
+  }, [delayButton]);
+
   return (
     <>
       {/* Floating trigger button */}
@@ -331,7 +344,11 @@ export function FeedbackWidget() {
           <TooltipTrigger asChild>
             <motion.div
               animate={controls}
-              className="fixed bottom-6 right-6 z-40"
+              className="fixed bottom-6 right-6 z-40 transition-opacity duration-300"
+              style={{
+                opacity: visible ? 1 : 0,
+                pointerEvents: visible ? "auto" : "none",
+              }}
             >
               <Button
                 variant="outline"

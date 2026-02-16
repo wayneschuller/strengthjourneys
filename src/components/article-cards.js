@@ -96,6 +96,7 @@ export function ArticleSummaryCard({ article }) {
 export function RelatedArticles({ articles }) {
   // devLog(articles);
   if (!articles || articles.length === 0) return null;
+  const limitedArticles = articles.slice(0, 5);
 
   return (
     <Card className="mt-8">
@@ -107,7 +108,7 @@ export function RelatedArticles({ articles }) {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 items-center justify-center gap-4 md:grid-cols-3 xl:grid-cols-4">
-          {articles.map((article) => (
+          {limitedArticles.map((article) => (
             <div key={article.slug} className="group h-full rounded-lg border">
               <Link
                 href={`/articles/${article.slug}`}

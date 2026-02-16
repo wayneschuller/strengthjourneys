@@ -23,6 +23,32 @@ const SITE_NAME = "Strength Journeys";
 const DEFAULT_OG_IMAGE_URL =
   "https://www.strengthjourneys.xyz/strength_journeys_articles_og.png";
 
+const getImageLinkUrl = (url) => {
+  if (typeof url !== "string") {
+    return null;
+  }
+
+  const trimmedUrl = url.trim();
+  if (!trimmedUrl) {
+    return null;
+  }
+
+  if (trimmedUrl.startsWith("/")) {
+    return trimmedUrl;
+  }
+
+  try {
+    const parsedUrl = new URL(trimmedUrl);
+    if (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:") {
+      return parsedUrl.href;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
 const components = {
   types: {
     image: ({ value }) => {
@@ -39,14 +65,35 @@ const components = {
         .auto("format")
         .url();
 
+      const imageLinkUrl = getImageLinkUrl(value?.url);
+      const isExternalImageLink = typeof imageLinkUrl === "string"
+        ? /^https?:\/\//i.test(imageLinkUrl)
+        : false;
+
+      const image = (
+        <Image
+          src={imageUrl}
+          alt={value.alt || " "}
+          fill
+          style={{ objectFit: "contain" }}
+        />
+      );
+
       return (
         <div className="relative my-8 h-96 w-full">
-          <Image
-            src={imageUrl}
-            alt={value.alt || " "}
-            fill
-            style={{ objectFit: "contain" }}
-          />
+          {imageLinkUrl ? (
+            <a
+              href={imageLinkUrl}
+              target={isExternalImageLink ? "_blank" : undefined}
+              rel={isExternalImageLink ? "noopener noreferrer" : undefined}
+              className="block h-full w-full"
+              aria-label="Open image link"
+            >
+              {image}
+            </a>
+          ) : (
+            image
+          )}
         </div>
       );
     },

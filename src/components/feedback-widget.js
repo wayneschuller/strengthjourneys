@@ -122,6 +122,24 @@ export function FeedbackWidget() {
     [resetState],
   );
 
+  const PAGE_NAMES = {
+    "/": session ? "the Home Dashboard" : "the Landing Page",
+    "/analyzer": "the PR Analyzer",
+    "/visualizer": "the Visualizer",
+    "/tonnage": "Tonnage Tracking",
+    "/calculator": "the 1RM Calculator",
+    "/strength-level-calculator": "the Strength Level Calculator",
+    "/1000lb-club-calculator": "the 1000lb Club Calculator",
+    "/warm-up-sets-calculator": "the Warm-up Calculator",
+    "/strength-year-in-review": "your Year in Review",
+    "/ai-lifting-assistant": "the AI Lifting Assistant",
+    "/timer": "the Gym Timer",
+    "/gym-playlist-leaderboard": "the Playlist Leaderboard",
+    "/barbell-strength-potential": "Strength Potential",
+  };
+
+  const pageName = PAGE_NAMES[router.pathname] || "Strength Journeys";
+
   function getUserType() {
     if (session && sheetInfo?.ssid) return "auth-with-sheet";
     if (session) return "auth-no-sheet";
@@ -176,16 +194,18 @@ export function FeedbackWidget() {
           <TooltipTrigger asChild>
             <Button
               variant="outline"
-              size="icon"
-              className="fixed bottom-6 right-6 z-40 h-12 w-12 rounded-full shadow-lg"
+              className="fixed bottom-6 right-6 z-40 h-12 w-12 rounded-full border-amber-300 bg-amber-400 shadow-lg hover:bg-amber-500 lg:h-auto lg:w-auto lg:gap-2 lg:rounded-full lg:px-4 lg:py-2.5"
               onClick={() => setOpen(true)}
               aria-label="Give feedback"
             >
-              <MessageSquarePlus className="h-5 w-5" />
+              <span className="text-lg">💬</span>
+              <span className="hidden text-sm font-semibold text-amber-950 lg:inline">
+                Thoughts?
+              </span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="left">
-            <p>Give feedback</p>
+          <TooltipContent side="left" className="lg:hidden">
+            <p>Share your thoughts</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -195,7 +215,7 @@ export function FeedbackWidget() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {layer === 1 && "How's your experience on this page?"}
+              {layer === 1 && `How are you finding ${pageName}?`}
               {layer >= 2 && layer <= 3 && "Thanks! Anything you'd like to tell us?"}
               {layer === 4 && "Feedback sent"}
             </DialogTitle>

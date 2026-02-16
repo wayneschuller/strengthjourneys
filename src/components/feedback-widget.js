@@ -60,7 +60,33 @@ const SUBTITLES = [
 ];
 
 const AUTO_CLOSE_SECONDS = 15;
-const SUCCESS_CLOSE_SECONDS = 4;
+const SUCCESS_CLOSE_SECONDS = 15;
+
+const DONATION_ASKS = [
+  "Strength Journeys is built by one person fuelled entirely by coffee. If you\u2019d like to keep the lights on:",
+  "This app runs on caffeine and stubbornness. You can help with the caffeine part:",
+  "No ads, no tracking, no venture capital. Just one dev and a dream. And coffee. Mostly coffee:",
+  "Every coffee donated goes directly into late-night coding sessions and questionable programming decisions:",
+  "I could be charging a subscription but I\u2019d rather just ask nicely:",
+  "Building free software is expensive. Ironic, right? A coffee goes a long way:",
+  "Behind every bug fix is a mass-market cup of coffee. Help fund the next one:",
+  "This app is free because I believe strength tools should be. But my barista disagrees:",
+  "One coffee = one more feature nobody asked for but everyone secretly needed:",
+  "Server costs, domain fees, and an unhealthy coffee dependency. You can help with at least one:",
+];
+
+const DONATION_NUDGES = [
+  "You clearly care about this app.",
+  "People like you are the reason this app exists.",
+  "That feedback was stronger than a 5-plate deadlift.",
+  "You just made a solo developer's day. Seriously.",
+  "Feedback like yours is rarer than a gym with enough squat racks.",
+  "Most people scroll past. You stopped and helped. Legend.",
+  "You're the kind of user I built this for.",
+  "That feedback hit harder than a PR attempt.",
+  "If feedback were reps, you just set a personal record.",
+  "You're officially in the top 1% of users who actually care.",
+];
 
 export function FeedbackWidget() {
   const router = useRouter();
@@ -115,6 +141,8 @@ export function FeedbackWidget() {
     phraseIndexRef.current = {
       title: Math.floor(Math.random() * TITLE_PREFIXES.length),
       subtitle: Math.floor(Math.random() * SUBTITLES.length),
+      nudge: Math.floor(Math.random() * DONATION_NUDGES.length),
+      ask: Math.floor(Math.random() * DONATION_ASKS.length),
     };
   }, []);
 
@@ -166,10 +194,14 @@ export function FeedbackWidget() {
   const phraseIndexRef = useRef({
     title: Math.floor(Math.random() * TITLE_PREFIXES.length),
     subtitle: Math.floor(Math.random() * SUBTITLES.length),
+    nudge: Math.floor(Math.random() * DONATION_NUDGES.length),
+    ask: Math.floor(Math.random() * DONATION_ASKS.length),
   });
 
   const titlePrefix = TITLE_PREFIXES[phraseIndexRef.current.title];
   const subtitle = SUBTITLES[phraseIndexRef.current.subtitle];
+  const donationNudge = DONATION_NUDGES[phraseIndexRef.current.nudge];
+  const donationAsk = DONATION_ASKS[phraseIndexRef.current.ask];
 
   const PAGE_NAMES = {
     "/": session ? "the Home Dashboard" : "the Landing Page",
@@ -313,7 +345,7 @@ export function FeedbackWidget() {
           )}
 
           {/* Layer 2: Comment */}
-          {layer >= 2 && (
+          {layer >= 2 && layer <= 3 && (
             <div className="space-y-4">
               <Textarea
                 placeholder="Bug report, feature idea, or just say hi..."
@@ -393,6 +425,20 @@ export function FeedbackWidget() {
               <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
                 Thanks for your feedback.
               </div>
+              {includeEmail && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  <p className="font-medium">{donationNudge}</p>
+                  <p className="mt-1">{donationAsk}</p>
+                  <a
+                    href="https://buymeacoffee.com/lrhvbjxzqr"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-2 rounded-md bg-amber-400 px-3 py-1.5 font-medium text-amber-950 transition-colors hover:bg-amber-500"
+                  >
+                    ☕ Buy me a coffee
+                  </a>
+                </div>
+              )}
               <div className="flex justify-end">
                 <Button
                   variant="ghost"

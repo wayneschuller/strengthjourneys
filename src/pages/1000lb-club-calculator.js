@@ -235,13 +235,19 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                   <img
                     src={LIFT_GRAPHICS[liftType]}
                     alt={`${liftType} exercise illustration`}
-                    className="h-20 w-20 object-contain sm:h-24 sm:w-24"
+                    className="h-20 w-20 object-contain sm:h-24 sm:w-24 xl:h-32 xl:w-32"
                   />
                 </Link>
                 <div className="min-w-0 flex-1">
-                  <label className="text-lg font-semibold">
-                    {liftType}: {value} lbs ({toKgF(value)} kg)
-                  </label>
+                  <div className="text-lg font-semibold">
+                    <Link
+                      href={BIG_FOUR_URLS[liftType]}
+                      className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
+                    >
+                      {liftType}
+                    </Link>
+                    : {value} lbs ({toKgF(value)} kg)
+                  </div>
                   <Slider
                     value={[value]}
                     min={0}

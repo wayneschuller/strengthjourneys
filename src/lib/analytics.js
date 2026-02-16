@@ -70,6 +70,7 @@ const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_c
 export function gaEvent(name, params = {}) {
   if (typeof window === "undefined") return;
   if (typeof window.gtag !== "function") return;
+  if (isDevelopmentEnv()) return; // skip all custom events in dev to avoid polluting production GA data
   if (!getMeasurementId()) return;
 
   const merged = buildParams(params);

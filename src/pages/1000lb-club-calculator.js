@@ -234,7 +234,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                 <Link href={BIG_FOUR_URLS[liftType]} className="flex-shrink-0" aria-hidden>
                   <img
                     src={LIFT_GRAPHICS[liftType]}
-                    alt=""
+                    alt={`${liftType} exercise illustration`}
                     className="h-20 w-20 object-contain sm:h-24 sm:w-24"
                   />
                 </Link>

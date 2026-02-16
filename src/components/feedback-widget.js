@@ -76,6 +76,19 @@ const DONATION_ASKS = [
   "Server costs, domain fees, and an unhealthy coffee dependency. You can help with at least one:",
 ];
 
+const TOOLTIP_MESSAGES = [
+  "Quick feedback? Takes 5 seconds",
+  "Tap to guide what we build next",
+  "One click to steer the roadmap",
+  "30 seconds to make this app better",
+  "Your input shapes the next update",
+  "Quick thumbs up or down?",
+  "Help us fix what bugs you",
+  "Tell us what to build next",
+  "Two taps. That's all we need",
+  "Point us in the right direction",
+];
+
 const DONATION_NUDGES = [
   "You clearly care about this app.",
   "People like you are the reason this app exists.",
@@ -144,6 +157,7 @@ export function FeedbackWidget() {
       subtitle: Math.floor(Math.random() * SUBTITLES.length),
       nudge: Math.floor(Math.random() * DONATION_NUDGES.length),
       ask: Math.floor(Math.random() * DONATION_ASKS.length),
+      tooltip: Math.floor(Math.random() * TOOLTIP_MESSAGES.length),
     };
   }, []);
 
@@ -197,12 +211,14 @@ export function FeedbackWidget() {
     subtitle: Math.floor(Math.random() * SUBTITLES.length),
     nudge: Math.floor(Math.random() * DONATION_NUDGES.length),
     ask: Math.floor(Math.random() * DONATION_ASKS.length),
+    tooltip: Math.floor(Math.random() * TOOLTIP_MESSAGES.length),
   });
 
   const titlePrefix = TITLE_PREFIXES[phraseIndexRef.current.title];
   const subtitle = SUBTITLES[phraseIndexRef.current.subtitle];
   const donationNudge = DONATION_NUDGES[phraseIndexRef.current.nudge];
   const donationAsk = DONATION_ASKS[phraseIndexRef.current.ask];
+  const tooltipMessage = TOOLTIP_MESSAGES[phraseIndexRef.current.tooltip];
 
   const PAGE_NAMES = {
     "/": session ? "the Home Dashboard" : "the Landing Page",
@@ -330,8 +346,8 @@ export function FeedbackWidget() {
               </Button>
             </motion.div>
           </TooltipTrigger>
-          <TooltipContent side="left" className="lg:hidden">
-            <p>Share your thoughts</p>
+          <TooltipContent side="left">
+            <p>{tooltipMessage}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

@@ -284,7 +284,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                   debounceMs={tooltipDebounceMs}
                 />
               }
-              position={{ y: 30 }}
+              position={{ y: 40 }}
               cursor={{
                 stroke: "#8884d8",
                 strokeWidth: 2,

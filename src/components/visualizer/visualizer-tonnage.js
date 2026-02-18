@@ -115,9 +115,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
   if (!parsedData) return null; // <-- gracefully handle null loading state
 
-  // devLog(chartData);
-
-  // devLog(timeRange);
+  devLog(`TonnageChart: ${chartData.length} chart data points, debounceMs=${Math.min(50, Math.floor(chartData.length / 12))}`);
 
   const unitType = parsedData?.[0]?.unitType ?? "";
 

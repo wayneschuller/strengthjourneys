@@ -190,6 +190,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
     ]),
   );
 
+  devLog(`VisualizerShadcn: ${chartData.length} chart data points, debounceMs=${Math.min(50, Math.floor(chartData.length / 12))}`);
+
   let tickJump = 100; // 100 for pound jumps on y-Axis.
   if (chartData?.[0]?.unitType === "kg") tickJump = 50; // 50 for kg jumps on y-Axis
 

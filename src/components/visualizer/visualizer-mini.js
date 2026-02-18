@@ -328,6 +328,7 @@ export function VisualizerMini({ liftType }) {
                   axisLine={false}
                   tickLine={false}
                   width={185}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                   ticks={strengthRanges ? Object.values(strengthRanges) : []}
                   tickFormatter={(value) => {
                     if (!strengthRanges) return "";
@@ -348,6 +349,7 @@ export function VisualizerMini({ liftType }) {
                   axisLine={false}
                   tickLine={false}
                   width={65}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                   ticks={validBodyweightMultiples ? validBodyweightMultiples.map((m) => m * bodyWeight) : []}
                   tickFormatter={(value) => {
                     if (!bodyWeight) return "";

@@ -122,7 +122,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   const unitType = parsedData?.[0]?.unitType ?? "";
 
   const handleMouseMove = (event) => {
-    if (event && event.activePayload && setHighlightDate) {
+    if (event?.activePayload?.length > 0 && setHighlightDate) {
       setHighlightDate(event.activePayload[0]?.payload?.date);
     }
   };

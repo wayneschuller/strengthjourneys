@@ -176,11 +176,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
   );
 
   const handleMouseMove = (event) => {
-    if (event && event.activePayload) {
-      const activeIndex = event.activeTooltipIndex;
-      // devLog(event);
-      // setHighlightDate(event.activeLabel);
-      setHighlightDate(event.activePayload[0]?.payload?.date); // Set the date string payload precisely
+    if (event?.activePayload?.length > 0) {
+      setHighlightDate(event.activePayload[0]?.payload?.date);
     }
   };
 

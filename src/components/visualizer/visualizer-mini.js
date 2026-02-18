@@ -279,8 +279,7 @@ export function VisualizerMini({ liftType }) {
 
       <CardContent className="pl-0 pr-2">
         {chartData && (
-          <ResponsiveContainer width="100%" height={400} className="">
-            <ChartContainer config={chartConfig} className="">
+            <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
               <AreaChart
                 accessibilityLayer
                 data={chartData}
@@ -408,7 +407,7 @@ export function VisualizerMini({ liftType }) {
                   stroke={liftColor}
                   name={liftType}
                   strokeWidth={2}
-                  fill={`url(#fill`}
+                  fill={`url(#fill)`}
                   fillOpacity={0.4}
                   dot={false}
                   connectNulls
@@ -493,7 +492,6 @@ export function VisualizerMini({ liftType }) {
                 )}
               </AreaChart>
             </ChartContainer>
-          </ResponsiveContainer>
         )}
       </CardContent>
       <CardFooter>

@@ -66,6 +66,19 @@ import {
 
 import { processVisualizerData, getYearLabels } from "./visualizer-processing";
 
+// Wraps MultiLiftTooltipContent to sync chart hover → SessionAnalysisCard.
+// recharts v3 doesn't reliably populate activePayload in onMouseMove for numeric/time XAxis,
+// but it always calls Tooltip content when a data point is active.
+function SyncedMultiLiftTooltip({ active, payload, label, selectedLiftTypes, setHighlightDate }) {
+  const date = active && payload?.length > 0 ? payload[0]?.payload?.date : null;
+
+  useEffect(() => {
+    if (date && setHighlightDate) setHighlightDate(date);
+  }, [date, setHighlightDate]);
+
+  return <MultiLiftTooltipContent active={active} payload={payload} label={label} selectedLiftTypes={selectedLiftTypes} />;
+}
+
 export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, liftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
@@ -175,12 +188,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
     ]),
   );
 
-  const handleMouseMove = (event) => {
-    if (event?.activePayload?.length > 0) {
-      setHighlightDate(event.activePayload[0]?.payload?.date);
-    }
-  };
-
   let tickJump = 100; // 100 for pound jumps on y-Axis.
   if (chartData?.[0]?.unitType === "kg") tickJump = 50; // 50 for kg jumps on y-Axis
 
@@ -229,7 +236,6 @@ export function VisualizerShadcn({ setHighlightDate }) {
             accessibilityLayer
             data={chartData}
             margin={{ left: 5, right: 20 }}
-            onMouseMove={handleMouseMove}
           >
             <CartesianGrid vertical={false} />
             <XAxis
@@ -264,20 +270,17 @@ export function VisualizerShadcn({ setHighlightDate }) {
             />
             <Tooltip
               content={
-                <MultiLiftTooltipContent
+                <SyncedMultiLiftTooltip
                   selectedLiftTypes={selectedLiftTypes}
-                  e1rmFormula={e1rmFormula}
+                  setHighlightDate={setHighlightDate}
                 />
-              }
-              formatter={(value, name, props) =>
-                `${value} ${props.payload.unitType}`
               }
               position={{ y: 10 }}
               cursor={{
                 stroke: "#8884d8",
                 strokeWidth: 2,
                 strokeDasharray: "5 5",
-              }} // Recharts tooltip cursor is the vertical reference line that follows the mouse
+              }}
             />
             <defs>
               {selectedLiftTypes.map((liftType, index) => {

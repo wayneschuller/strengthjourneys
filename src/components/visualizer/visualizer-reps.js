@@ -36,14 +36,11 @@ import {
 } from "./time-range-select";
 
 import {
-  ResponsiveContainer,
-  LineChart,
   AreaChart,
   CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
-  Line,
   Area,
   Legend,
   ReferenceLine,
@@ -228,8 +225,7 @@ export function VisualizerReps({ data, liftType }) {
         ) : !allDates.length ? (
           <p className="text-muted-foreground">No data for {liftType}.</p>
         ) : (
-          <ResponsiveContainer width="100%" height={400} className="">
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+          <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
               <AreaChart data={chartData} margin={{ left: 5, right: 20 }}>
                 <defs>
                   {repTabs.map((t) => {
@@ -343,7 +339,6 @@ export function VisualizerReps({ data, liftType }) {
                 ))}
               </AreaChart>
             </ChartContainer>
-          </ResponsiveContainer>
         )}
       </CardContent>
     </Card>

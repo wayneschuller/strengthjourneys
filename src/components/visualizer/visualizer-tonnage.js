@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
@@ -12,7 +12,7 @@ import { SessionRow } from "./visualizer-utils";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ReferenceLine, Line, ResponsiveContainer } from "recharts";
+import { ReferenceLine } from "recharts";
 import {
   TimeRangeSelect,
   calculateThresholdDate,
@@ -121,12 +121,6 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
   const unitType = parsedData?.[0]?.unitType ?? "";
 
-  const handleMouseMove = (event) => {
-    if (event?.activePayload?.length > 0 && setHighlightDate) {
-      setHighlightDate(event.activePayload[0]?.payload?.date);
-    }
-  };
-
   const formatXAxisDate = (tickItem) => {
     const date = new Date(tickItem);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -161,12 +155,10 @@ export function TonnageChart({ setHighlightDate, liftType }) {
 
       <CardContent className="pl-0 pr-2">
         {liftType ? (
-          <ResponsiveContainer width="100%" height={400} className="">
-            <ChartContainer config={chartConfig} className="">
+          <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
               <AreaChart
                 data={chartData}
                 margin={{ left: 5, right: 20 }}
-                onMouseMove={handleMouseMove}
               >
                 <CartesianGrid vertical={false} />
                 <XAxis
@@ -194,6 +186,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                       aggregationType={aggregationType}
                       parsedData={parsedData}
                       liftColor={liftColor}
+                      setHighlightDate={setHighlightDate}
                     />
                   )}
                 />
@@ -263,13 +256,11 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 ))}
               </AreaChart>
             </ChartContainer>
-          </ResponsiveContainer>
         ) : (
           <ChartContainer config={chartConfig}>
             <AreaChart
               data={chartData}
               margin={{ left: 5, right: 20 }}
-              onMouseMove={handleMouseMove}
             >
               <CartesianGrid vertical={false} />
               <XAxis
@@ -297,6 +288,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     aggregationType={aggregationType}
                     parsedData={parsedData}
                     liftColor={liftColor}
+                    setHighlightDate={setHighlightDate}
                   />
                 )}
               />
@@ -757,7 +749,14 @@ const TonnageTooltipContent = ({
   aggregationType = "perSession",
   parsedData,
   liftColor,
+  setHighlightDate,
 }) => {
+  // Sync hover → SessionAnalysisCard via Tooltip content (more reliable than onMouseMove in recharts v3)
+  const highlightDateStr = payload?.length > 0 ? payload[0]?.payload?.date : null;
+  useEffect(() => {
+    if (highlightDateStr && setHighlightDate) setHighlightDate(highlightDateStr);
+  }, [highlightDateStr, setHighlightDate]);
+
   if (!payload || payload.length === 0) return null;
 
   const tonnage = payload[0].value;

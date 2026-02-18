@@ -222,18 +222,6 @@ export function VisualizerMini({ liftType }) {
     return date.toLocaleString("en-US", { month: "short", day: "numeric" });
   };
 
-  // Calculate dynamic bodyweight multiples based on weightMin and roundedMaxWeightValue, only if bodyWeight is valid
-  let validBodyweightMultiples = null;
-
-  if (bodyWeight && bodyWeight > 0) {
-    // Generate ticks based on the main axis tick jump
-    const numTicks = Math.ceil(roundedMaxWeightValue / tickJump);
-    validBodyweightMultiples = Array.from(
-      { length: numTicks },
-      (_, i) => (i * tickJump) / bodyWeight,
-    );
-  }
-
   const strokeWidth = 1;
   const strokeDashArray = "5 15";
 
@@ -317,44 +305,6 @@ export function VisualizerMini({ liftType }) {
                     (v, i) => i * tickJump,
                   )}
                   // allowDataOverflow
-                />
-                {/* Right Y-axes are always rendered — recharts v3 crashes when axes are
-                    dynamically added/removed. Use hide prop to toggle visibility instead. */}
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  domain={[0, Math.max(100, roundedMaxWeightValue)]}
-                  hide={!showStandards || !strengthRanges || width < 768}
-                  axisLine={false}
-                  tickLine={false}
-                  width={185}
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                  ticks={strengthRanges ? Object.values(strengthRanges) : []}
-                  tickFormatter={(value) => {
-                    if (!strengthRanges) return "";
-                    const unitType = isMetric ? "kg" : "lb";
-                    if (value === strengthRanges.physicallyActive) return `Physically Active (${value}${unitType})`;
-                    if (value === strengthRanges.beginner) return `Beginner (${value}${unitType})`;
-                    if (value === strengthRanges.intermediate) return `Intermediate (${value}${unitType})`;
-                    if (value === strengthRanges.advanced) return `Advanced (${value}${unitType})`;
-                    if (value === strengthRanges.elite) return `Elite (${value}${unitType})`;
-                    return "";
-                  }}
-                />
-                <YAxis
-                  yAxisId="bodyweight-multiples"
-                  orientation="right"
-                  domain={[0, Math.max(100, roundedMaxWeightValue)]}
-                  hide={!showBodyweightMultiples || !bodyWeight || bodyWeight <= 0 || width < 1280}
-                  axisLine={false}
-                  tickLine={false}
-                  width={65}
-                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                  ticks={validBodyweightMultiples ? validBodyweightMultiples.map((m) => m * bodyWeight) : []}
-                  tickFormatter={(value) => {
-                    if (!bodyWeight) return "";
-                    return `${(value / bodyWeight).toFixed(1)}xBW`;
-                  }}
                 />
                 <Tooltip
                   content={(props) => (
@@ -452,36 +402,73 @@ export function VisualizerMini({ liftType }) {
                   />
                 ))}
 
-                {/* Horizontal reference lines on the secondary Y-axis */}
-                {strengthRanges && showStandards && width > 768 && (
-                  <>
-                    <ReferenceLine
-                      y={strengthRanges.physicallyActive}
-                      strokeWidth={strokeWidth}
-                      strokeDasharray={strokeDashArray}
-                    />
-                    <ReferenceLine
-                      y={strengthRanges.beginner}
-                      strokeWidth={strokeWidth}
-                      strokeDasharray={strokeDashArray}
-                    />
-                    <ReferenceLine
-                      y={strengthRanges.intermediate}
-                      strokeWidth={strokeWidth}
-                      strokeDasharray={strokeDashArray}
-                    />
-                    <ReferenceLine
-                      y={strengthRanges.advanced}
-                      strokeWidth={strokeWidth}
-                      strokeDasharray={strokeDashArray}
-                    />
-                    <ReferenceLine
-                      y={strengthRanges.elite}
-                      strokeWidth={strokeWidth}
-                      strokeDasharray={strokeDashArray}
-                    />
-                  </>
-                )}
+                {/* Strength standards: horizontal lines with inline right-edge labels.
+                    recharts v3 doesn't render tick labels on unlinked secondary YAxis,
+                    so we use the ReferenceLine label content prop instead. */}
+                {strengthRanges && showStandards && width > 768 &&
+                  [
+                    { key: "physicallyActive", label: "Physically Active" },
+                    { key: "beginner", label: "Beginner" },
+                    { key: "intermediate", label: "Intermediate" },
+                    { key: "advanced", label: "Advanced" },
+                    { key: "elite", label: "Elite" },
+                  ].map(({ key, label: levelLabel }) => {
+                    const val = strengthRanges[key];
+                    if (val == null) return null;
+                    const unitType = isMetric ? "kg" : "lb";
+                    return (
+                      <ReferenceLine
+                        key={key}
+                        y={val}
+                        strokeWidth={strokeWidth}
+                        strokeDasharray={strokeDashArray}
+                        label={{
+                          content: ({ viewBox }) => (
+                            <text
+                              x={viewBox.x + viewBox.width - 4}
+                              y={viewBox.y - 4}
+                              textAnchor="end"
+                              fontSize={11}
+                              style={{ fill: "var(--muted-foreground)" }}
+                            >
+                              {`${levelLabel} (${val}${unitType})`}
+                            </text>
+                          ),
+                        }}
+                      />
+                    );
+                  })
+                }
+                {/* Bodyweight multiples: horizontal lines at clean 0.5x/1x/1.5x/2x/2.5x/3x BW
+                    with inline right-edge labels, filtered to values within the chart range. */}
+                {showBodyweightMultiples && bodyWeight > 0 && width >= 1280 &&
+                  [0.5, 1.0, 1.5, 2.0, 2.5, 3.0].map((multiple) => {
+                    const weightValue = Math.round(multiple * bodyWeight);
+                    if (weightValue > roundedMaxWeightValue || weightValue <= 0) return null;
+                    return (
+                      <ReferenceLine
+                        key={`bw-${multiple}`}
+                        y={weightValue}
+                        strokeWidth={1}
+                        strokeDasharray="3 10"
+                        strokeOpacity={0.5}
+                        label={{
+                          content: ({ viewBox }) => (
+                            <text
+                              x={viewBox.x + viewBox.width - 4}
+                              y={viewBox.y - 4}
+                              textAnchor="end"
+                              fontSize={11}
+                              style={{ fill: "var(--muted-foreground)" }}
+                            >
+                              {`${multiple}xBW`}
+                            </text>
+                          ),
+                        }}
+                      />
+                    );
+                  })
+                }
               </AreaChart>
             </ChartContainer>
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useTransition } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
@@ -753,8 +753,9 @@ const TonnageTooltipContent = ({
 }) => {
   // Sync hover → SessionAnalysisCard via Tooltip content (more reliable than onMouseMove in recharts v3)
   const highlightDateStr = payload?.length > 0 ? payload[0]?.payload?.date : null;
+  const [, startTransition] = useTransition();
   useEffect(() => {
-    if (highlightDateStr && setHighlightDate) setHighlightDate(highlightDateStr);
+    if (highlightDateStr && setHighlightDate) startTransition(() => setHighlightDate(highlightDateStr));
   }, [highlightDateStr, setHighlightDate]);
 
   if (!payload || payload.length === 0) return null;

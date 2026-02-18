@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useTransition } from "react";
 import {
   SidePanelSelectLiftsButton,
   VISUALIZER_STORAGE_PREFIX,
@@ -71,9 +71,10 @@ import { processVisualizerData, getYearLabels } from "./visualizer-processing";
 // but it always calls Tooltip content when a data point is active.
 function SyncedMultiLiftTooltip({ active, payload, label, selectedLiftTypes, setHighlightDate }) {
   const date = active && payload?.length > 0 ? payload[0]?.payload?.date : null;
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
-    if (date && setHighlightDate) setHighlightDate(date);
+    if (date && setHighlightDate) startTransition(() => setHighlightDate(date));
   }, [date, setHighlightDate]);
 
   return <MultiLiftTooltipContent active={active} payload={payload} label={label} selectedLiftTypes={selectedLiftTypes} />;

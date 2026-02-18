@@ -190,7 +190,11 @@ export function VisualizerShadcn({ setHighlightDate }) {
     ]),
   );
 
-  devLog(`VisualizerShadcn: ${chartData.length} chart data points, debounceMs=${Math.min(50, Math.floor(chartData.length / 12))}`);
+  // Scale debounce with dataset size so small datasets feel instant while large datasets
+  // avoid cascading SessionAnalysisCard re-renders during fast mouse scrubbing.
+  // Formula: ~10ms at 120 pts, ~25ms at 300 pts, capped at 50ms at 600+ pts.
+  const tooltipDebounceMs = Math.min(50, Math.floor(chartData.length / 12));
+  devLog(`VisualizerShadcn: ${chartData.length} chart data points, debounceMs=${tooltipDebounceMs}`);
 
   let tickJump = 100; // 100 for pound jumps on y-Axis.
   if (chartData?.[0]?.unitType === "kg") tickJump = 50; // 50 for kg jumps on y-Axis
@@ -277,7 +281,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 <SyncedMultiLiftTooltip
                   selectedLiftTypes={selectedLiftTypes}
                   setHighlightDate={setHighlightDate}
-                  debounceMs={Math.min(50, Math.floor(chartData.length / 12))}
+                  debounceMs={tooltipDebounceMs}
                 />
               }
               position={{ y: 10 }}

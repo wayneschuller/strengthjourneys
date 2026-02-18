@@ -50,7 +50,6 @@
     "@radix-ui/react-toggle-group": "^1.1.6",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
-    "@rive-app/react-webgl2": "^4.26.2",
     "@sanity/client": "^7.15.0",
     "@sanity/image-url": "^2.0.3",
     "@streamdown/cjk": "^1.0.1",

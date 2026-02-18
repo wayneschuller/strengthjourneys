@@ -74,13 +74,15 @@ export function ActivityHeatmapsCard() {
       if (shareRef.current) {
         // Dynamically import html2canvas only when user clicks share
         const html2canvas = (await import("html2canvas-pro")).default;
-        const canvas = await html2canvas(shareRef.current, {
+        // Pass a Promise directly to ClipboardItem so navigator.clipboard.write()
+        // is called while the document is still focused. The browser holds the
+        // clipboard operation open while html2canvas renders — safe to switch apps.
+        const blobPromise = html2canvas(shareRef.current, {
           ignoreElements: (element) => element.id === "ignoreCopy",
-        });
+        }).then((canvas) => new Promise((resolve) => canvas.toBlob(resolve, "image/png")));
 
-        const blob = await new Promise((r) => canvas.toBlob(r, "image/png"));
         await navigator.clipboard.write([
-          new ClipboardItem({ "image/png": blob }),
+          new ClipboardItem({ "image/png": blobPromise }),
         ]);
         console.log("Heatmap copied to clipboard");
         gaEvent(GA_EVENT_TAGS.HEATMAP_SHARE_CLIPBOARD, { page: "/analyzer" });

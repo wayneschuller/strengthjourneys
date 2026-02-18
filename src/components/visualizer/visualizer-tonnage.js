@@ -187,6 +187,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                       parsedData={parsedData}
                       liftColor={liftColor}
                       setHighlightDate={setHighlightDate}
+                      debounceMs={Math.min(50, Math.floor(chartData.length / 12))}
                     />
                   )}
                 />
@@ -289,6 +290,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     parsedData={parsedData}
                     liftColor={liftColor}
                     setHighlightDate={setHighlightDate}
+                    debounceMs={Math.min(50, Math.floor(chartData.length / 12))}
                   />
                 )}
               />
@@ -750,14 +752,15 @@ const TonnageTooltipContent = ({
   parsedData,
   liftColor,
   setHighlightDate,
+  debounceMs = 0,
 }) => {
   // Sync hover → SessionAnalysisCard via Tooltip content (more reliable than onMouseMove in recharts v3)
   const highlightDateStr = payload?.length > 0 ? payload[0]?.payload?.date : null;
   useEffect(() => {
     if (!highlightDateStr || !setHighlightDate) return;
-    const timer = setTimeout(() => setHighlightDate(highlightDateStr), 50);
+    const timer = setTimeout(() => setHighlightDate(highlightDateStr), debounceMs);
     return () => clearTimeout(timer);
-  }, [highlightDateStr, setHighlightDate]);
+  }, [highlightDateStr, setHighlightDate, debounceMs]);
 
   if (!payload || payload.length === 0) return null;
 

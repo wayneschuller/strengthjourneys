@@ -69,14 +69,14 @@ import { processVisualizerData, getYearLabels } from "./visualizer-processing";
 // Wraps MultiLiftTooltipContent to sync chart hover → SessionAnalysisCard.
 // recharts v3 doesn't reliably populate activePayload in onMouseMove for numeric/time XAxis,
 // but it always calls Tooltip content when a data point is active.
-function SyncedMultiLiftTooltip({ active, payload, label, selectedLiftTypes, setHighlightDate }) {
+function SyncedMultiLiftTooltip({ active, payload, label, selectedLiftTypes, setHighlightDate, debounceMs = 0 }) {
   const date = active && payload?.length > 0 ? payload[0]?.payload?.date : null;
 
   useEffect(() => {
     if (!date || !setHighlightDate) return;
-    const timer = setTimeout(() => setHighlightDate(date), 50);
+    const timer = setTimeout(() => setHighlightDate(date), debounceMs);
     return () => clearTimeout(timer);
-  }, [date, setHighlightDate]);
+  }, [date, setHighlightDate, debounceMs]);
 
   return <MultiLiftTooltipContent active={active} payload={payload} label={label} selectedLiftTypes={selectedLiftTypes} />;
 }
@@ -275,6 +275,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                 <SyncedMultiLiftTooltip
                   selectedLiftTypes={selectedLiftTypes}
                   setHighlightDate={setHighlightDate}
+                  debounceMs={Math.min(50, Math.floor(chartData.length / 12))}
                 />
               }
               position={{ y: 10 }}

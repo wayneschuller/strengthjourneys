@@ -222,8 +222,14 @@ export function VisualizerMini({ liftType }) {
     return date.toLocaleString("en-US", { month: "short", day: "numeric" });
   };
 
-  const strokeWidth = 1;
-  const strokeDashArray = "5 15";
+  // Semantic color progression: cool (easy) → warm (elite). Works across all themes.
+  const strengthStandardColors = {
+    physicallyActive: "#3b82f6", // blue-500
+    beginner: "#22c55e",        // green-500
+    intermediate: "#f59e0b",    // amber-500
+    advanced: "#f97316",        // orange-500
+    elite: "#ef4444",           // red-500
+  };
 
   return (
     <Card className="">
@@ -402,9 +408,8 @@ export function VisualizerMini({ liftType }) {
                   />
                 ))}
 
-                {/* Strength standards: horizontal lines with inline right-edge labels.
-                    recharts v3 doesn't render tick labels on unlinked secondary YAxis,
-                    so we use the ReferenceLine label content prop instead. */}
+                {/* Strength standards: color-coded by level (blue→green→amber→orange→red)
+                    so users can instantly read the level without needing the label. */}
                 {strengthRanges && showStandards && width > 768 &&
                   [
                     { key: "physicallyActive", label: "Physically Active" },
@@ -416,12 +421,14 @@ export function VisualizerMini({ liftType }) {
                     const val = strengthRanges[key];
                     if (val == null) return null;
                     const unitType = isMetric ? "kg" : "lb";
+                    const color = strengthStandardColors[key];
                     return (
                       <ReferenceLine
                         key={key}
                         y={val}
-                        strokeWidth={strokeWidth}
-                        strokeDasharray={strokeDashArray}
+                        stroke={color}
+                        strokeWidth={1.5}
+                        strokeDasharray="6 4"
                         label={{
                           content: ({ viewBox }) => (
                             <text
@@ -429,7 +436,8 @@ export function VisualizerMini({ liftType }) {
                               y={viewBox.y - 4}
                               textAnchor="end"
                               fontSize={11}
-                              style={{ fill: "var(--muted-foreground)" }}
+                              fontWeight="500"
+                              style={{ fill: color }}
                             >
                               {`${levelLabel} (${val}${unitType})`}
                             </text>
@@ -439,8 +447,7 @@ export function VisualizerMini({ liftType }) {
                     );
                   })
                 }
-                {/* Bodyweight multiples: horizontal lines at clean 0.5x/1x/1.5x/2x/2.5x/3x BW
-                    with inline right-edge labels, filtered to values within the chart range. */}
+                {/* Bodyweight multiples: use liftColor so lines feel tied to the chart area. */}
                 {showBodyweightMultiples && bodyWeight > 0 && width >= 1280 &&
                   [0.5, 1.0, 1.5, 2.0, 2.5, 3.0].map((multiple) => {
                     const weightValue = Math.round(multiple * bodyWeight);
@@ -449,9 +456,10 @@ export function VisualizerMini({ liftType }) {
                       <ReferenceLine
                         key={`bw-${multiple}`}
                         y={weightValue}
-                        strokeWidth={1}
-                        strokeDasharray="3 10"
-                        strokeOpacity={0.5}
+                        stroke={liftColor}
+                        strokeWidth={1.5}
+                        strokeDasharray="3 6"
+                        strokeOpacity={0.7}
                         label={{
                           content: ({ viewBox }) => (
                             <text
@@ -459,7 +467,8 @@ export function VisualizerMini({ liftType }) {
                               y={viewBox.y - 4}
                               textAnchor="end"
                               fontSize={11}
-                              style={{ fill: "var(--muted-foreground)" }}
+                              fontWeight="500"
+                              style={{ fill: liftColor }}
                             >
                               {`${multiple}xBW`}
                             </text>

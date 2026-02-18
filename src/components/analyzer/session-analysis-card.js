@@ -6,7 +6,6 @@ import {
   useEffect,
   useContext,
   useMemo,
-  useDeferredValue,
 } from "react";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import Link from "next/link";
@@ -102,13 +101,11 @@ export function SessionAnalysisCard({
   const [persistCacheTrigger, setPersistCacheTrigger] = useState(0);
   const pendingCacheUpdateRef = useRef(null);
 
-  const deferredHighlightDate = useDeferredValue(highlightDate);
-
   useEffect(() => {
     sessionRatingRef.current = null; // Reset the session rating when the highlight date changes
-  }, [deferredHighlightDate]);
+  }, [highlightDate]);
 
-  let sessionDate = deferredHighlightDate;
+  let sessionDate = highlightDate;
   const isFirstDate =
     parsedData?.length > 0 && sessionDate === parsedData[0]?.date;
   let isLastDate =

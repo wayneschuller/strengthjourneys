@@ -251,7 +251,7 @@ export default function Home() {
           },
         ]}
       />
-      <main className="mx-4 mb-4 md:mx-[5vw]">
+      <main className="mb-4 px-3 md:px-0">
         <div className="flex flex-col items-center justify-center transition-all duration-800">
           {showHeroSection ? (
             <div

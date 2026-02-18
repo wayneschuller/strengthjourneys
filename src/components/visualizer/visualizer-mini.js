@@ -318,51 +318,42 @@ export function VisualizerMini({ liftType }) {
                   )}
                   // allowDataOverflow
                 />
-                {/* Additional Right Y-Axis for strength levels */}
-                {showStandards && strengthRanges && (
-                  <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    // domain={[1, roundedMaxWeightValue]}
-                    domain={[0, Math.max(100, roundedMaxWeightValue)]} // Sync with left Y-axis
-                    hide={width < 768}
-                    axisLine={false}
-                    tickLine={false}
-                    ticks={Object.values(strengthRanges)} // Use the strength ranges as ticks
-                    tickFormatter={(value) => {
-                      const unitType = isMetric ? "kg" : "lb";
-                      // Map the value to the corresponding label and include the value + unitType
-                      if (value === strengthRanges.physicallyActive)
-                        return `Physically Active (${value}${unitType})`;
-                      if (value === strengthRanges.beginner)
-                        return `Beginner (${value}${unitType})`;
-                      if (value === strengthRanges.intermediate)
-                        return `Intermediate (${value}${unitType})`;
-                      if (value === strengthRanges.advanced)
-                        return `Advanced (${value}${unitType})`;
-                      if (value === strengthRanges.elite)
-                        return `Elite (${value}${unitType})`;
-                    }}
-                  />
-                )}
-                {/* Additional Right Y-Axis for bodyweight multiples */}
-                {showBodyweightMultiples && bodyWeight && bodyWeight > 0 && (
-                  <YAxis
-                    yAxisId="bodyweight-multiples"
-                    orientation="right"
-                    hide={width < 1280}
-                    axisLine={false}
-                    tickLine={false}
-                    domain={[0, Math.max(100, roundedMaxWeightValue)]} // Sync with left Y-axis
-                    ticks={validBodyweightMultiples.map(
-                      (multiple) => multiple * bodyWeight,
-                    )} // Multiples of bodyweight
-                    tickFormatter={(value) => {
-                      const multiple = value / bodyWeight;
-                      return `${multiple.toFixed(1)}xBW`;
-                    }}
-                  />
-                )}
+                {/* Right Y-axes are always rendered — recharts v3 crashes when axes are
+                    dynamically added/removed. Use hide prop to toggle visibility instead. */}
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  domain={[0, Math.max(100, roundedMaxWeightValue)]}
+                  hide={!showStandards || !strengthRanges || width < 768}
+                  axisLine={false}
+                  tickLine={false}
+                  width={185}
+                  ticks={strengthRanges ? Object.values(strengthRanges) : []}
+                  tickFormatter={(value) => {
+                    if (!strengthRanges) return "";
+                    const unitType = isMetric ? "kg" : "lb";
+                    if (value === strengthRanges.physicallyActive) return `Physically Active (${value}${unitType})`;
+                    if (value === strengthRanges.beginner) return `Beginner (${value}${unitType})`;
+                    if (value === strengthRanges.intermediate) return `Intermediate (${value}${unitType})`;
+                    if (value === strengthRanges.advanced) return `Advanced (${value}${unitType})`;
+                    if (value === strengthRanges.elite) return `Elite (${value}${unitType})`;
+                    return "";
+                  }}
+                />
+                <YAxis
+                  yAxisId="bodyweight-multiples"
+                  orientation="right"
+                  domain={[0, Math.max(100, roundedMaxWeightValue)]}
+                  hide={!showBodyweightMultiples || !bodyWeight || bodyWeight <= 0 || width < 1280}
+                  axisLine={false}
+                  tickLine={false}
+                  width={65}
+                  ticks={validBodyweightMultiples ? validBodyweightMultiples.map((m) => m * bodyWeight) : []}
+                  tickFormatter={(value) => {
+                    if (!bodyWeight) return "";
+                    return `${(value / bodyWeight).toFixed(1)}xBW`;
+                  }}
+                />
                 <Tooltip
                   content={(props) => (
                     <SingleLiftTooltipContent
@@ -398,7 +389,6 @@ export function VisualizerMini({ liftType }) {
                       stopOpacity={0.05}
                     />
                   </linearGradient>
-                  );
                 </defs>
                 <Area
                   key={liftType}

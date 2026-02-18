@@ -230,6 +230,25 @@ export function VisualizerMini({ liftType }) {
     advanced: "#f97316",        // orange-500
     elite: "#ef4444",           // red-500
   };
+  const strengthStandardLabels = {
+    physicallyActive: "Physically Active",
+    beginner: "Beginner",
+    intermediate: "Intermediate",
+    advanced: "Advanced",
+    elite: "Elite",
+  };
+
+  // Show all standards the user has reached + exactly one next target.
+  // No point showing Elite to a beginner — keep the chart focused and motivating.
+  const orderedStandardKeys = ["physicallyActive", "beginner", "intermediate", "advanced", "elite"];
+  const orderedStandards = strengthRanges
+    ? orderedStandardKeys.map((key) => ({ key, val: strengthRanges[key] })).filter((s) => s.val != null)
+    : [];
+  const nextStandardIndex = orderedStandards.findIndex((s) => weightMax < s.val);
+  const visibleStandardCount = nextStandardIndex === -1 ? orderedStandards.length : nextStandardIndex + 1;
+  const visibleStandards = orderedStandards.slice(0, visibleStandardCount);
+  // Bands: one per zone the user has passed through (not including the next target's zone)
+  const visibleBandCount = nextStandardIndex === -1 ? orderedStandards.length : nextStandardIndex;
 
   return (
     <Card className="">
@@ -281,6 +300,25 @@ export function VisualizerMini({ liftType }) {
                 // onMouseMove={handleMouseMove}
               >
                 <CartesianGrid vertical={false} />
+                {/* Strength standard background bands — rendered first so they sit behind
+                    the chart data. Only zones the user has passed through are shown;
+                    the next unreached standard gets a line but no band beyond it. */}
+                {strengthRanges && showStandards && width > 768 &&
+                  Array.from({ length: visibleBandCount }, (_, i) => ({
+                    y1: visibleStandards[i].val,
+                    y2: visibleStandards[i + 1]?.val ?? Math.max(100, roundedMaxWeightValue),
+                    color: strengthStandardColors[visibleStandards[i].key],
+                  })).map(({ y1, y2, color }) => (
+                    <ReferenceArea
+                      key={`band-${y1}`}
+                      y1={y1}
+                      y2={y2}
+                      fill={color}
+                      fillOpacity={0.08}
+                      stroke="none"
+                    />
+                  ))
+                }
                 <XAxis
                   dataKey="rechartsDate"
                   type="number"
@@ -408,18 +446,9 @@ export function VisualizerMini({ liftType }) {
                   />
                 ))}
 
-                {/* Strength standards: color-coded by level (blue→green→amber→orange→red)
-                    so users can instantly read the level without needing the label. */}
+                {/* Strength standards: color-coded lines for all reached levels + one next target. */}
                 {strengthRanges && showStandards && width > 768 &&
-                  [
-                    { key: "physicallyActive", label: "Physically Active" },
-                    { key: "beginner", label: "Beginner" },
-                    { key: "intermediate", label: "Intermediate" },
-                    { key: "advanced", label: "Advanced" },
-                    { key: "elite", label: "Elite" },
-                  ].map(({ key, label: levelLabel }) => {
-                    const val = strengthRanges[key];
-                    if (val == null) return null;
+                  visibleStandards.map(({ key, val }) => {
                     const unitType = isMetric ? "kg" : "lb";
                     const color = strengthStandardColors[key];
                     return (
@@ -439,7 +468,7 @@ export function VisualizerMini({ liftType }) {
                               fontWeight="500"
                               style={{ fill: color }}
                             >
-                              {`${levelLabel} (${val}${unitType})`}
+                              {`${strengthStandardLabels[key]} (${val}${unitType})`}
                             </text>
                           ),
                         }}

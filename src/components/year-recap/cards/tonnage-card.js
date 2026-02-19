@@ -3,8 +3,7 @@
 import { useRef, useMemo } from "react";
 import { motion } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useLocalStorage } from "usehooks-ts";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Dumbbell } from "lucide-react";
 import { BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
 import { getLiftSvgPath } from "../lift-svg";
@@ -13,16 +12,11 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
   const equivRef = useRef(null);
 
   const { parsedData } = useUserLiftingData();
-  const [isMetricPreference] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
-    false,
-    { initializeWithValue: false },
-  );
-  const preferredUnit = isMetricPreference ? "kg" : "lb";
+  const { isMetric } = useAthleteBio();
 
   const { tonnage, primaryUnit, prevYearTonnage, tonnageByLift } = useMemo(
-    () => computeTonnageForYear(parsedData, year, preferredUnit),
-    [parsedData, year, preferredUnit],
+    () => computeTonnageForYear(parsedData, year, isMetric ? "kg" : "lb"),
+    [parsedData, year, isMetric],
   );
 
   const equiv = pickTonnageEquivalent(tonnage, primaryUnit, equivRef, `tonnage-${year}`);

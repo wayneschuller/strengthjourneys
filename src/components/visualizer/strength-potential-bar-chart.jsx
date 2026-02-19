@@ -5,7 +5,9 @@ import { Bar, BarChart, XAxis, YAxis, Legend } from "recharts";
 import { LoaderCircle } from "lucide-react";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
+import { getDisplayWeight } from "@/lib/processing-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -23,6 +25,7 @@ import {
 export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   const { parsedData, topLiftsByTypeAndReps, isValidating } =
     useUserLiftingData();
+  const { isMetric } = useAthleteBio();
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
@@ -96,10 +99,10 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
 
   const topLifts = topLiftsByTypeAndReps?.[liftType];
 
-  const { chartData, bestLift, unitType } = useMemo(() => {
+  const { chartData, bestLift, displayUnit } = useMemo(() => {
     let bestE1RMWeight = 0;
     let best = null;
-    let unit = "lb";
+    let nativeUnit = "lb";
     let data = [];
 
     if (parsedData && topLifts) {
@@ -115,19 +118,20 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
             bestE1RMWeight = currentE1RMweight;
             best = lift;
           }
-          if (lift.unitType) unit = lift.unitType;
+          if (lift.unitType) nativeUnit = lift.unitType;
         }
       }
 
       data = Array.from({ length: 10 }, (_, i) => {
         const reps = i + 1;
         const topLiftAtReps = topLifts[i]?.[0] || null;
-        const actualWeight = topLiftAtReps?.weight || 0;
-        const potentialMax = estimateWeightForReps(
-          bestE1RMWeight,
-          reps,
-          e1rmFormula,
-        );
+        const rawWeight = topLiftAtReps?.weight || 0;
+        const rawPotentialMax = estimateWeightForReps(bestE1RMWeight, reps, e1rmFormula);
+
+        const actualWeight = rawWeight > 0
+          ? getDisplayWeight({ weight: rawWeight, unitType: nativeUnit }, isMetric).value
+          : 0;
+        const potentialMax = getDisplayWeight({ weight: rawPotentialMax, unitType: nativeUnit }, isMetric).value;
         const extension = Math.max(0, potentialMax - actualWeight);
 
         return {
@@ -141,8 +145,8 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
       });
     }
 
-    return { chartData: data, bestLift: best, unitType: unit };
-  }, [parsedData, topLifts, e1rmFormula]);
+    return { chartData: data, bestLift: best, displayUnit: isMetric ? "kg" : "lb" };
+  }, [parsedData, topLifts, e1rmFormula, isMetric]);
 
   return (
     <Card className="shadow-lg md:mx-2">
@@ -150,7 +154,7 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
         <CardTitle>{liftType} Strength Potential By Rep Range</CardTitle>
         <CardDescription>
           {bestLift
-            ? `Your best set: ${bestLift.reps}@${bestLift.weight}${bestLift.unitType} (${formatDate(bestLift.date)})`
+            ? `Your best set: ${bestLift.reps}@${getDisplayWeight(bestLift, isMetric).value}${getDisplayWeight(bestLift, isMetric).unit} (${formatDate(bestLift.date)})`
             : "No data yet"}
           {isValidating && (
             <LoaderCircle className="ml-3 inline-flex h-5 w-5 animate-spin" />
@@ -171,13 +175,15 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
               <YAxis
                 stroke={themeColors.border}
                 domain={[0, "auto"]}
-                tickFormatter={(tick) => `${tick}${unitType}`}
+                tickFormatter={(tick) => `${tick}${displayUnit}`}
               />
               <ChartTooltip
                 content={
                   <CustomTooltip
                     actualColor={themeColors.chart1}
                     potentialColor={themeColors.chart3}
+                    isMetric={isMetric}
+                    displayUnit={displayUnit}
                   />
                 }
               />
@@ -270,6 +276,8 @@ const CustomTooltip = ({
   payload,
   actualColor = "#3b82f6",
   potentialColor = "#f59e0b",
+  isMetric = false,
+  displayUnit = "lb",
 }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload; // Get the data for the hovered bar
@@ -279,11 +287,15 @@ const CustomTooltip = ({
     const actualLift = data.actualLift || {};
     const bestLift = data.bestLift || {};
 
-    const actualWeight = actualLift.weight || 0;
     const actualDate = actualLift.date ? formatDate(actualLift.date) : "N/A";
-    const bestWeight = bestLift.weight || 0;
     const bestDate = bestLift.date ? formatDate(bestLift.date) : "N/A";
-    const unitType = actualLift.unitType || "lb"; // Default to "lb" if not specified
+
+    // Use already-converted chart values for display (data.weight and data.potentialMax
+    // are pre-converted in the useMemo above)
+    const actualWeight = data.weight || 0;
+    const bestDisplayWeight = bestLift.weight
+      ? getDisplayWeight(bestLift, isMetric).value
+      : 0;
 
     return (
       <div className="w-48 rounded border border-border bg-card p-2 shadow-lg md:w-64">
@@ -300,7 +312,7 @@ const CustomTooltip = ({
               style={{ backgroundColor: actualColor }}
             ></span>
             {reps}@{actualWeight}
-            {unitType} achieved {actualDate}.
+            {displayUnit} achieved {actualDate}.
           </p>
         )}
 
@@ -313,11 +325,11 @@ const CustomTooltip = ({
                 style={{ backgroundColor: potentialColor }}
               ></span>
               Potential: {reps}@{data.potentialMax}
-              {unitType}
+              {displayUnit}
             </p>
             <p className="text-xs text-gray-500">
-              (Based on best: {bestLift.reps}@{bestWeight}
-              {unitType}, {bestDate})
+              (Based on best: {bestLift.reps}@{bestDisplayWeight}
+              {displayUnit}, {bestDate})
             </p>
           </>
         )}

@@ -6,12 +6,14 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import {
   getAverageLiftSessionTonnageFromPrecomputed,
   getLiftVolumeMultiplier,
+  getDisplayWeight,
 } from "@/lib/processing-utils";
 import { motion } from "motion/react";
 
@@ -52,6 +54,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
+  const { isMetric } = useAthleteBio();
   const { status: authStatus } = useSession();
   const isMobile = useMediaQuery("(max-width: 1279px)", {
     initializeWithValue: false,
@@ -116,7 +119,6 @@ export function BigFourLiftCards({ lifts, animated = true }) {
     const repRanges = topLiftsByTypeAndReps[liftType];
     let bestE1RMWeight = 0;
     let bestLift = null;
-    let unitType = "lb";
 
     // Mirror the barbell-strength-potential "best lift" logic:
     // scan rep ranges 1–10 and pick the set with highest estimated 1RM
@@ -131,17 +133,12 @@ export function BigFourLiftCards({ lifts, animated = true }) {
         bestE1RMWeight = currentE1RM;
         bestLift = topAtReps;
       }
-
-      if (topAtReps.unitType) {
-        unitType = topAtReps.unitType;
-      }
     }
 
     const liftTotals = liftTypes?.find((lift) => lift.liftType === liftType);
 
     return {
       bestLift,
-      unitType,
       totalSets: liftTotals?.totalSets ?? 0,
       totalReps: liftTotals?.totalReps ?? 0,
     };
@@ -320,8 +317,8 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                         {stats.bestLift && (
                           <span className="block">
                             Best set: {stats.bestLift.reps}@
-                            {stats.bestLift.weight}
-                            {stats.bestLift.unitType || stats.unitType}
+                            {getDisplayWeight(stats.bestLift, isMetric ?? false).value}
+                            {getDisplayWeight(stats.bestLift, isMetric ?? false).unit}
                             {stats.bestLift.date && (
                               <> on {formatLiftDate(stats.bestLift.date)}</>
                             )}

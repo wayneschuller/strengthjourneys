@@ -199,6 +199,7 @@ function WarmUpSetsCalculatorMain({ relatedArticles }) {
   };
 
   const toggleIsMetric = (newIsMetric) => {
+    localStorage.setItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET, "1");
     let newWeight;
     if (!newIsMetric) {
       // Going from kg to lb

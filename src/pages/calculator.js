@@ -264,6 +264,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
   };
 
   const toggleIsMetric = (isMetric) => {
+    localStorage.setItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET, "1");
     let newWeight;
     let newBodyWeight;
 

@@ -33,6 +33,7 @@ import { ChevronDown, ChevronUp, Play } from "lucide-react";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { LiftStrengthLevel } from "@/components/analyzer/session-exercise-block";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { getDisplayWeight } from "@/lib/processing-utils";
 
 /** Helper: strength rating from reps/weight. Uses age-at-lift when bio+liftDate provided for accurate historical ratings. */
 const getStrengthRating = (
@@ -177,8 +178,8 @@ const PRCard = ({
               className="text-3xl font-bold"
               style={{ color: liftColor }}
             >
-              {pr.weight}
-              {pr.unitType}
+              {getDisplayWeight(pr, isMetric ?? false).value}
+              {getDisplayWeight(pr, isMetric ?? false).unit}
             </div>
             {pr.URL && (
               <TooltipProvider>
@@ -277,8 +278,8 @@ const RepRangeDetailView = ({
                         {getCelebrationEmoji(liftIndex)} #{liftIndex + 1}
                       </span>
                       <span className="text-xl font-bold text-foreground">
-                        {repCount}@{lift.weight}
-                        {lift.unitType}
+                        {repCount}@{getDisplayWeight(lift, bioForDateRating?.isMetric ?? false).value}
+                        {getDisplayWeight(lift, bioForDateRating?.isMetric ?? false).unit}
                       </span>
                       {bioForDateRating && (
                         <LiftStrengthLevel

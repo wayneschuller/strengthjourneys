@@ -162,9 +162,10 @@ function parseBespokeData(data) {
 
     // Process required fields
     obj.reps = convertStringToInt(row[repsCol]);
-    const { value, unitType } = convertWeightAndUnitType(row[weightCol]);
+    const { value, unitType, _explicitUnit } = convertWeightAndUnitType(row[weightCol]);
     obj.weight = value;
     obj.unitType = unitType;
+    if (_explicitUnit !== null) obj._explicitUnit = _explicitUnit; // true=explicit, null=ambiguous
 
     // Validate that we have valid numbers for required fields
     if (obj.reps === undefined || obj.weight === undefined) {
@@ -178,6 +179,24 @@ function parseBespokeData(data) {
     if (row[urlCol]) obj.URL = row[urlCol];
 
     objectsArray.push(obj);
+  }
+
+  // Two-pass smart default: count explicit unit declarations, assign majority to ambiguous entries
+  let explicitKg = 0;
+  let explicitLb = 0;
+  objectsArray.forEach((obj) => {
+    if (obj._explicitUnit) {
+      if (obj.unitType === "kg") explicitKg++;
+      else explicitLb++;
+    }
+    delete obj._explicitUnit; // Clean up temp field
+  });
+  // If majority of explicit entries are kg, treat ambiguous entries as kg too (tie → lb)
+  const smartDefault = explicitKg > explicitLb ? "kg" : "lb";
+  if (smartDefault === "kg" && explicitKg > 0) {
+    objectsArray.forEach((obj) => {
+      if (!obj.unitType) obj.unitType = smartDefault;
+    });
   }
 
   // FIXME: if there are no entries we could throw an error to prompt them to sheet docs article?
@@ -214,10 +233,11 @@ function convertStringToInt(repsString) {
 
 // Used to convert strings like "226lb" to {225, "lb"}
 // Handles Google Sheets API format where weights come as strings
+// Returns _explicitUnit: true if unit was explicitly stated, null if ambiguous (no suffix)
 function convertWeightAndUnitType(weightString) {
   // Google Sheets API returns empty string for empty cells
   if (!weightString || weightString === "") {
-    return { value: undefined, unitType: undefined };
+    return { value: undefined, unitType: undefined, _explicitUnit: null };
   }
 
   // Trim whitespace
@@ -226,14 +246,19 @@ function convertWeightAndUnitType(weightString) {
   // Try to parse the number part
   const num = parseFloat(weightString);
   if (isNaN(num)) {
-    return { value: undefined, unitType: undefined };
+    return { value: undefined, unitType: undefined, _explicitUnit: null };
   }
 
   // Simple string check for unit
-  const hasKg = weightString.toLowerCase().includes("kg");
+  const lower = weightString.toLowerCase();
+  const hasKg = lower.includes("kg");
+  const hasLb = lower.includes("lb");
+  const hasExplicitUnit = hasKg || hasLb;
+
   return {
     value: num,
-    unitType: hasKg ? "kg" : "lb",
+    unitType: hasKg ? "kg" : "lb", // default to "lb" if ambiguous; two-pass will fix
+    _explicitUnit: hasExplicitUnit ? true : null,
   };
 }
 

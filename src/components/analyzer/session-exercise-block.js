@@ -27,6 +27,7 @@ import {
   getStandardForLiftDate,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
+import { getDisplayWeight } from "@/lib/processing-utils";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 
 /**
@@ -164,8 +165,8 @@ export function SessionExerciseBlock({
           >
             <div className="flex items-center gap-2">
               <span className={`tabular-nums ${size.text} ${textClass}`}>
-                {workout.reps}×{workout.weight}
-                {workout.unitType}
+                {workout.reps}×{getDisplayWeight(workout, isMetric ?? false).value}
+                {getDisplayWeight(workout, isMetric ?? false).unit}
               </span>
               <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
                 {workout.lifetimeRanking !== -1 && (
@@ -320,8 +321,8 @@ export function SessionExerciseBlock({
           >
             <div className="flex items-center gap-2">
               <span className={`tabular-nums ${size.text} ${textClass}`}>
-                {workout.reps}×{workout.weight}
-                {workout.unitType}
+                {workout.reps}×{getDisplayWeight(workout, isMetric ?? false).value}
+                {getDisplayWeight(workout, isMetric ?? false).unit}
               </span>
               <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
                 {workout.lifetimeRanking !== -1 && (

@@ -16,6 +16,7 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useStateFromQueryOrLocalStorage } from "./use-state-from-query-or-localStorage";
+import { useUserLiftingData } from "./use-userlift-data";
 
 /** Emoji for each strength level, shared across UI */
 export const STRENGTH_LEVEL_EMOJI = {
@@ -198,7 +199,10 @@ export const AthleteBioProvider = ({ children }) => {
   // Global shared state for age/sex/bodyWeight/isMetric/liftType.
   // We seed from query/localStorage once, then keep everything in sync via context.
   // URL syncing for specific pages (like calculators) can be handled separately.
-  const value = useAthleteBioData(false);
+  // Import parsedData here so we can auto-initialize isMetric from the user's data.
+  // AthleteBioProvider is nested inside UserLiftingDataProvider so this hook call is valid.
+  const { parsedData } = useUserLiftingData();
+  const value = useAthleteBioData(false, { parsedData });
   return (
     <AthleteBioContext.Provider value={value}>
       {children}
@@ -250,6 +254,10 @@ export const useAthleteBio = (options = {}) => {
   const setIsMetric = useCallback(
     (value) => {
       hasAdvancedInteractedRef.current = true;
+      // Mark explicit user preference so auto-init from data doesn't override it later
+      if (typeof window !== "undefined") {
+        localStorage.setItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET, "1");
+      }
       ctx.setIsMetric(value);
     },
     [ctx],
@@ -317,9 +325,11 @@ const ADVANCED_QUERY_PARAM = "advanced";
 // modifyURLQuery controls whether query parameters are updated (defaults to false)
 // options.isAdvancedAnalysis: when false (e.g. calculator with advanced off), age/sex/bodyWeight/liftType
 // are not synced to URL. When true or undefined, they sync together so shared URLs are complete.
+// options.parsedData: when provided, auto-initializes isMetric from the majority unit in the data
+//   (only on first load, before the user has explicitly set a preference).
 export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
   const router = useRouter();
-  const { isAdvancedAnalysis = true } = options;
+  const { isAdvancedAnalysis = true, parsedData = null } = options;
   const syncAdvancedParams = modifyURLQuery && isAdvancedAnalysis;
   // Gate URL sync: only after user changes a value, never on initial load (avoids polluting shared links)
   const hasAdvancedInteractedRef = useRef(false);
@@ -450,8 +460,48 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     setStandards(newStandards);
   }, [age, sex, bodyWeight, isMetric]);
 
+  // Auto-initialize isMetric from the majority unit in the user's data.
+  // Only runs once, and only when no explicit user preference has been set yet.
+  // Priority: URL query param > localStorage preference > data-driven default > false (lb)
+  const hasAutoInitRef = useRef(false);
+  useEffect(() => {
+    if (hasAutoInitRef.current) return;
+    if (!parsedData?.length) return;
+    if (typeof window === "undefined") return;
+    hasAutoInitRef.current = true;
+
+    // Skip if user (or URL param) has already set an explicit preference
+    if (localStorage.getItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET)) return;
+
+    // Skip if the current URL has a calcIsMetric param (shared link) — respect it
+    if (router.isReady && router.query[LOCAL_STORAGE_KEYS.CALC_IS_METRIC] !== undefined) {
+      localStorage.setItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET, "1");
+      return;
+    }
+
+    // Count units across all lifts and use the majority
+    let kgCount = 0;
+    let lbCount = 0;
+    parsedData.forEach((lift) => {
+      if (lift.unitType === "kg") kgCount++;
+      else lbCount++;
+    });
+
+    if (kgCount > lbCount) {
+      setIsMetric(true);
+    }
+    // Mark as initialized so future loads don't override the user's subsequent choices
+    localStorage.setItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET, "1");
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- router excluded to prevent infinite loop
+  }, [parsedData, router.isReady]);
+
   // Helper function - if user toggles unit type, update isMetric and bodyweight state
   const toggleIsMetric = (isMetric) => {
+    // Mark that the user has consciously chosen their unit preference
+    if (typeof window !== "undefined") {
+      localStorage.setItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET, "1");
+    }
+
     let newBodyWeight;
 
     if (!isMetric) {

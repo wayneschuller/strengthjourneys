@@ -1,6 +1,27 @@
 import { format } from "date-fns";
 import { estimateE1RM } from "./estimate-e1rm";
 
+/**
+ * Convert a lift's weight to the display unit preferred by the user.
+ * Returns exact native values when no conversion is needed to avoid rounding artifacts.
+ *
+ * @param {{ weight: number, unitType: string }} lift - Lift object with weight + unitType
+ * @param {boolean} isMetric - User's display preference (true = kg, false = lb)
+ * @returns {{ value: number, unit: string }}
+ */
+export function getDisplayWeight(lift, isMetric) {
+  const nativeIsKg = lift.unitType === "kg";
+  if (Boolean(isMetric) === nativeIsKg) {
+    // Preferred unit matches native unit — return exact value, no rounding
+    return { value: lift.weight, unit: lift.unitType };
+  }
+  const kg = nativeIsKg ? lift.weight : lift.weight / 2.2046;
+  if (isMetric) {
+    return { value: Math.round(kg * 10) / 10, unit: "kg" };
+  }
+  return { value: Math.round(kg * 2.2046 * 10) / 10, unit: "lb" };
+}
+
 // ---------------------------------------------------------------------------
 // PERFORMANCE NOTE — date comparisons
 //

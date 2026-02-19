@@ -1,4 +1,4 @@
-import { devLog, getReadableDateString } from "@/lib/processing-utils";
+import { devLog, getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { brightenHexColor, saturateHexColor } from "@/lib/color-tools";
 import {
@@ -12,13 +12,10 @@ import {
 import { useLiftColors } from "@/hooks/use-lift-colors";
 
 // Reusable component to render a session row with date, tonnage, and sets
-export const SessionRow = ({ date, lifts, unitType, showDate = true }) => {
+// isMetric: user's display preference (true = kg, false = lb). Defaults to reading native lift.unitType.
+export const SessionRow = ({ date, lifts, isMetric, showDate = true }) => {
   if (!lifts || lifts.length === 0) return null;
 
-  const sessionTonnage = lifts.reduce(
-    (sum, lift) => sum + lift.weight * lift.reps,
-    0,
-  );
   const formattedDate = date
     ? new Date(date).toLocaleDateString("en-US", {
         weekday: "short",
@@ -35,30 +32,34 @@ export const SessionRow = ({ date, lifts, unitType, showDate = true }) => {
         </>
       )}
       <span className="mr-1 font-semibold">Sets:</span>
-      {lifts.map((lift, index) => (
-        <span key={index}>
-          {lift.reps}@{lift.weight}
-          {lift.unitType}
-          {index < lifts.length - 1 && ", "}
-        </span>
-      ))}
+      {lifts.map((lift, index) => {
+        const { value, unit } = getDisplayWeight(lift, isMetric ?? false);
+        return (
+          <span key={index}>
+            {lift.reps}@{value}
+            {unit}
+            {index < lifts.length - 1 && ", "}
+          </span>
+        );
+      })}
     </div>
   );
 };
 
 // Shared function to create tooltip content for a lift
+// tuple.displayUnit is set by processVisualizerData (already converted to user's preferred unit)
 const createLiftTooltipContent = (liftType, tuple, color) => {
   const reps = tuple[`${liftType}_reps`];
   const weight = tuple[`${liftType}_weight`];
   const oneRepMax = tuple[`${liftType}`];
-  const unitType = tuple.unitType;
+  const displayUnit = tuple.displayUnit || "";
 
   if (!reps || !weight || !oneRepMax) return null;
 
   const labelContent =
     reps === 1
-      ? `Lifted ${reps}@${weight}${unitType}`
-      : `Potential 1@${oneRepMax}${unitType} from lifting ${reps}@${weight}${unitType}`;
+      ? `Lifted ${reps}@${weight}${displayUnit}`
+      : `Potential 1@${oneRepMax}${displayUnit} from lifting ${reps}@${weight}${displayUnit}`;
 
   return {
     liftType,
@@ -139,13 +140,13 @@ export const SingleLiftTooltipContent = ({
   liftType,
   parsedData,
   liftColor,
+  isMetric,
 }) => {
   const { getColor } = useLiftColors();
   if (!active || !payload?.length) return null;
 
   const tuple = payload[0].payload;
   const dateStr = tuple.date; // "YYYY-MM-DD" format
-  const unitType = tuple.unitType || "";
   const dateLabel = getReadableDateString(tuple.date);
   const tooltipContent = createLiftTooltipContent(
     liftType,
@@ -179,7 +180,7 @@ export const SingleLiftTooltipContent = ({
           <SessionRow
             date={dateStr}
             lifts={lifts}
-            unitType={unitType}
+            isMetric={isMetric ?? false}
             showDate={false}
           />
         </div>
@@ -241,7 +242,7 @@ function getRepColor(reps, liftColor) {
 }
 
 // Tooltip for VisualizerReps (singles, triples, fives chart card)
-export const VisualizerRepsTooltip = ({ active, payload, label }) => {
+export const VisualizerRepsTooltip = ({ active, payload, label, isMetric }) => {
   if (!active || !payload?.length) return null;
   // devLog(payload);
   const tuple = payload[0].payload;
@@ -264,10 +265,11 @@ export const VisualizerRepsTooltip = ({ active, payload, label }) => {
     .map((tab) => {
       const t = tuple[`reps${tab.reps}_tuple`];
       if (!t) return null;
+      const { value: displayWeight, unit: displayUnit } = getDisplayWeight(t, isMetric ?? false);
       return {
         ...tab,
-        weight: t.weight,
-        unitType: t.unitType,
+        weight: displayWeight,
+        unitType: displayUnit,
         liftType: t.liftType, // Add liftType from the tuple
         color: getRepColor(tab.reps, payload[0].color),
         // Add more fields as needed

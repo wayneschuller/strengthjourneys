@@ -5,10 +5,11 @@ import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { devLog, logTiming, getReadableDateString } from "@/lib/processing-utils";
+import { devLog, logTiming, getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
 import { parseISO, startOfWeek, startOfMonth, format } from "date-fns";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "./visualizer-utils";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -59,6 +60,7 @@ import { getYearLabels } from "./visualizer-processing";
 export function TonnageChart({ setHighlightDate, liftType }) {
   const { parsedData } = useUserLiftingData();
   const { getColor } = useLiftColors();
+  const { isMetric } = useAthleteBio();
   const liftColor = liftType ? getColor(liftType) : null;
   const [timeRange, setTimeRange] = useLocalStorage(LOCAL_STORAGE_KEYS.TIME_RANGE, "MAX", {
     initializeWithValue: false,
@@ -87,8 +89,9 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       timeRange,
       liftType,
       aggregationType,
+      isMetric,
     );
-  }, [parsedData, rangeFirstDate, timeRange, liftType, aggregationType]);
+  }, [parsedData, rangeFirstDate, timeRange, liftType, aggregationType, isMetric]);
 
   // Calculate Y-axis values with nice round numbers
   const yAxisConfig = useMemo(() => {
@@ -121,7 +124,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   const tooltipDebounceMs = Math.min(50, Math.floor(chartData.length / 12));
   devLog(`TonnageChart: ${chartData.length} chart data points, debounceMs=${tooltipDebounceMs}`);
 
-  const unitType = parsedData?.[0]?.unitType ?? "";
+  const displayUnit = isMetric ? "kg" : "lb";
 
   const formatXAxisDate = (tickItem) => {
     const date = new Date(tickItem);
@@ -174,7 +177,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                   tickFormatter={formatXAxisDate}
                 />
                 <YAxis
-                  tickFormatter={(value) => `${value}${unitType}`}
+                  tickFormatter={(value) => `${value}${displayUnit}`}
                   domain={[0, yAxisConfig.roundedMax]}
                   ticks={yAxisConfig.ticks}
                   hide={width < 1280}
@@ -191,6 +194,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                       liftColor={liftColor}
                       setHighlightDate={setHighlightDate}
                       debounceMs={tooltipDebounceMs}
+                      isMetric={isMetric}
                     />
                   )}
                 />
@@ -237,7 +241,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                           textAnchor="middle"
                           className="fill-foreground"
                         >
-                          {`${Math.round(value)}${unitType}`}
+                          {`${Math.round(value)}${displayUnit}`}
                         </text>
                       )}
                     />
@@ -278,7 +282,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                 tickFormatter={formatXAxisDate}
               />
               <YAxis
-                tickFormatter={(value) => `${value}${unitType}`}
+                tickFormatter={(value) => `${value}${displayUnit}`}
                 domain={[0, yAxisConfig.roundedMax]}
                 ticks={yAxisConfig.ticks}
                 hide={width < 1280}
@@ -295,6 +299,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                     liftColor={liftColor}
                     setHighlightDate={setHighlightDate}
                     debounceMs={Math.min(50, Math.floor(chartData.length / 12))}
+                    isMetric={isMetric}
                   />
                 )}
               />
@@ -334,7 +339,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
                         textAnchor="middle"
                         className="fill-foreground"
                       >
-                        {`${Math.round(value)}${unitType}`}
+                        {`${Math.round(value)}${displayUnit}`}
                       </text>
                     )}
                   />
@@ -463,6 +468,7 @@ function processTonnageData(
   timeRange,
   liftType,
   aggregationType = "perSession",
+  isMetric = false,
 ) {
   const startTime = performance.now();
   const tonnageMap = new Map();
@@ -475,7 +481,8 @@ function processTonnageData(
 
     const dateKey = tuple.date; // already "YYYY-MM-DD"
     if (dateKey >= thresholdDateStr) {
-      const tonnage = tuple.weight * tuple.reps;
+      const { value: displayWeight } = getDisplayWeight(tuple, isMetric);
+      const tonnage = displayWeight * tuple.reps;
 
       if (aggregationType === "perWeek") {
         // Group by week (Monday as start of week)
@@ -757,6 +764,7 @@ const TonnageTooltipContent = ({
   liftColor,
   setHighlightDate,
   debounceMs = 0,
+  isMetric = false,
 }) => {
   // Sync hover → SessionAnalysisCard via Tooltip content (more reliable than onMouseMove in recharts v3)
   const highlightDateStr = payload?.length > 0 ? payload[0]?.payload?.date : null;
@@ -790,8 +798,7 @@ const TonnageTooltipContent = ({
     });
   }
 
-  // Get unit type from parsedData or default to empty string
-  const unitType = parsedData?.[0]?.unitType ?? "";
+  const unitType = isMetric ? "kg" : "lb";
 
   // Extract date string from payload (format: "YYYY-MM-DD")
   const dateStr = payload[0]?.payload?.date || null;
@@ -833,7 +840,7 @@ const TonnageTooltipContent = ({
                 <SessionRow
                   date={dateStr}
                   lifts={lifts}
-                  unitType={lifts[0]?.unitType ?? ""}
+                  isMetric={isMetric}
                   showDate={false}
                 />
               </div>
@@ -860,7 +867,7 @@ const TonnageTooltipContent = ({
                     key={session.date}
                     date={session.date}
                     lifts={session.lifts}
-                    unitType={unitType}
+                    isMetric={isMetric}
                   />
                 );
               })}
@@ -915,7 +922,7 @@ const TonnageTooltipContent = ({
                     key={session.date}
                     date={session.date}
                     lifts={session.lifts}
-                    unitType={unitType}
+                    isMetric={isMetric}
                   />
                 );
               })}

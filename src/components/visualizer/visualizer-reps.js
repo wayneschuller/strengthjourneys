@@ -58,6 +58,8 @@ import {
 import { useSession } from "next-auth/react";
 // import { brightenHexColor, saturateHexColor } from "@/lib/get-lift-color";
 import { useLiftColors } from "@/hooks/use-lift-colors";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { getDisplayWeight } from "@/lib/processing-utils";
 import { getYearLabels } from "./visualizer-processing";
 import { ChartContainer } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -82,6 +84,7 @@ export function VisualizerReps({ data, liftType }) {
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
+  const { isMetric } = useAthleteBio();
 
   const [timeRange, setTimeRange] = useLocalStorage(
     LOCAL_STORAGE_KEYS.TIME_RANGE,
@@ -135,8 +138,9 @@ export function VisualizerReps({ data, liftType }) {
     const entry = { date };
     repTabs.forEach((t) => {
       const found = chartDataByReps[t.reps].find((d) => d.date === date);
-      entry[`reps${t.reps}`] = found ? found.weight : null;
-      entry[`reps${t.reps}_tuple`] = found || null; // Store the full tuple
+      // Convert to display unit so y-axis and tooltip show the user's preferred unit
+      entry[`reps${t.reps}`] = found ? getDisplayWeight(found, isMetric).value : null;
+      entry[`reps${t.reps}_tuple`] = found || null; // Store the full tuple (raw) for tooltip
     });
     // Add rechartsDate field for consistency with visualizer-processing.js
     entry.rechartsDate = Date.UTC(
@@ -275,20 +279,12 @@ export function VisualizerReps({ data, liftType }) {
                   domain={["auto", "auto"]}
                   hide={width < 1280}
                   axisLine={false}
-                  tickFormatter={(value, index) => {
-                    const d = chartData[index] || {};
-                    const unitType =
-                      d.reps1_tuple?.unitType ||
-                      d.reps3_tuple?.unitType ||
-                      d.reps5_tuple?.unitType ||
-                      "";
-                    return `${value}${unitType}`;
-                  }}
+                  tickFormatter={(value) => `${value}${isMetric ? "kg" : "lb"}`}
                   // width={60}
                   // tick={{ fill: "#d1d5db", fontSize: 12 }}
                 />
                 <Tooltip
-                  content={<VisualizerRepsTooltip />}
+                  content={<VisualizerRepsTooltip isMetric={isMetric} />}
                   position={{ y: 10 }}
                   cursor={{
                     stroke: "#8884d8",

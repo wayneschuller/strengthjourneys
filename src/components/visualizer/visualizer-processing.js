@@ -1,6 +1,6 @@
 "use client";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { devLog, logTiming } from "@/lib/processing-utils";
+import { devLog, logTiming, getDisplayWeight } from "@/lib/processing-utils";
 
 export function processVisualizerData(
   parsedData,
@@ -8,6 +8,7 @@ export function processVisualizerData(
   selectedLiftTypes,
   timeRange,
   showAllData = false,
+  isMetric = false,
 ) {
   if (!parsedData) return {};
 
@@ -22,7 +23,8 @@ export function processVisualizerData(
   let weightMin = 1000;
 
   parsedData.forEach(
-    ({ date, liftType, reps, weight, isGoal, unitType, label }) => {
+    (lift) => {
+      const { date, liftType, reps, isGoal, label } = lift;
       if (date < timeRange) return; // Skip if date out of range of chart
       if (isGoal) return; // FIXME: implement goal dashed lines at some point
 
@@ -31,7 +33,8 @@ export function processVisualizerData(
         return;
       }
 
-      const oneRepMax = estimateE1RM(reps, weight, e1rmFormula);
+      const { value: displayWeight, unit: displayUnit } = getDisplayWeight(lift, isMetric);
+      const oneRepMax = Math.round(estimateE1RM(reps, displayWeight, e1rmFormula));
 
       if (!dataMap.has(date)) {
         dataMap.set(date, {});
@@ -39,7 +42,7 @@ export function processVisualizerData(
       const liftData = dataMap.get(date);
 
       if (weightMax < oneRepMax) weightMax = oneRepMax;
-      if (weight < weightMin) weightMin = weight;
+      if (displayWeight < weightMin) weightMin = displayWeight;
 
       // Data decimation - skip lower lifts if there was something much bigger the last N day window
       // Don't decimate the most recent session because it's confusing to the user
@@ -60,9 +63,9 @@ export function processVisualizerData(
       // Check if this is the best lift oneRepMax for this date and if so store it
       if (!liftData[liftType] || oneRepMax > liftData[liftType]) {
         liftData[liftType] = oneRepMax;
-        liftData.unitType = unitType;
+        liftData.displayUnit = displayUnit;
         liftData[`${liftType}_reps`] = reps;
-        liftData[`${liftType}_weight`] = weight;
+        liftData[`${liftType}_weight`] = displayWeight;
         if (label) {
           liftData.label = label;
           devLog(`Special user label inserted: ${label} (date: ${date})`);

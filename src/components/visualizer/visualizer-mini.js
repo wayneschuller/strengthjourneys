@@ -138,8 +138,9 @@ export function VisualizerMini({ liftType }) {
         [liftType],
         rangeFirstDate,
         showAllData,
+        isMetric,
       ),
-    [parsedData, e1rmFormula, liftType, rangeFirstDate, showAllData],
+    [parsedData, e1rmFormula, liftType, rangeFirstDate, showAllData, isMetric],
   );
 
   // if (authStatus !== "authenticated") return; // Don't show at all for anon mode
@@ -213,8 +214,7 @@ export function VisualizerMini({ liftType }) {
     }
   };
 
-  let tickJump = 100; // 100 for pound jumps on y-Axis.
-  if (chartData?.[0]?.unitType === "kg") tickJump = 50; // 50 for kg jumps on y-Axis
+  let tickJump = isMetric ? 50 : 100; // 50 for kg, 100 for lb
 
   // FIXME: We need more dynamic x-axis ticks
   const formatXAxisDateString = (tickItem) => {
@@ -342,7 +342,7 @@ export function VisualizerMini({ liftType }) {
                   hide={width < 1280}
                   axisLine={false}
                   tickFormatter={
-                    (value) => `${value}${chartData[0]?.unitType || ""}` // Default to first item's unitType
+                    (value) => `${value}${chartData[0]?.displayUnit || ""}` // Default to first item's displayUnit
                   }
                   ticks={Array.from(
                     { length: Math.ceil(roundedMaxWeightValue / tickJump) },
@@ -357,10 +357,11 @@ export function VisualizerMini({ liftType }) {
                       liftType={liftType}
                       parsedData={parsedData}
                       liftColor={liftColor}
+                      isMetric={isMetric}
                     />
                   )}
                   formatter={(value, name, props) =>
-                    `${value} ${props.payload.unitType}`
+                    `${value} ${props.payload.displayUnit || ""}`
                   }
                   position={{ y: 10 }}
                   cursor={{
@@ -411,7 +412,7 @@ export function VisualizerMini({ liftType }) {
                           textAnchor="middle"
                           className="fill-foreground"
                         >
-                          {`${value}${chartData[index].unitType}`}
+                          {`${value}${chartData[index].displayUnit || ""}`}
                         </text>
                       )}
                     />

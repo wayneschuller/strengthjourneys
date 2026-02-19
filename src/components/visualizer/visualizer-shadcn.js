@@ -15,6 +15,7 @@ import {
   devLog,
   getReadableDateString,
 } from "@/lib/processing-utils";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { subMonths } from "date-fns";
 import { Label } from "@/components/ui/label";
@@ -85,6 +86,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, liftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
+  const { isMetric } = useAthleteBio();
 
   const [selectedLiftTypes, setSelectedLiftTypes] = useState(BIG_FOUR_LIFT_TYPES);
 
@@ -168,8 +170,9 @@ export function VisualizerShadcn({ setHighlightDate }) {
         selectedLiftTypes,
         rangeFirstDate,
         showAllData,
+        isMetric,
       ),
-    [parsedData, e1rmFormula, selectedLiftTypes, rangeFirstDate, showAllData],
+    [parsedData, e1rmFormula, selectedLiftTypes, rangeFirstDate, showAllData, isMetric],
   );
 
   // devLog("Rendering <VisualizerShadcn />...");
@@ -196,8 +199,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   const tooltipDebounceMs = Math.min(50, Math.floor(chartData.length / 12));
   devLog(`VisualizerShadcn: ${chartData.length} chart data points, debounceMs=${tooltipDebounceMs}`);
 
-  let tickJump = 100; // 100 for pound jumps on y-Axis.
-  if (chartData?.[0]?.unitType === "kg") tickJump = 50; // 50 for kg jumps on y-Axis
+  let tickJump = isMetric ? 50 : 100; // 50 for kg, 100 for lb
 
   // FIXME: We need more dynamic x-axis ticks
   const formatXAxisDateString = (tickItem) => {
@@ -268,7 +270,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
               hide={width < 1280}
               axisLine={false}
               tickFormatter={
-                (value) => `${value}${chartData[0]?.unitType || ""}` // Default to first item's unitType
+                (value) => `${value}${chartData[0]?.displayUnit || ""}` // Use displayUnit from processed chart data
               }
               ticks={Array.from(
                 { length: Math.ceil(roundedMaxWeightValue / tickJump) },
@@ -345,7 +347,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
                           textAnchor="middle"
                           className="fill-foreground"
                         >
-                          {`${value}${chartData[index].unitType}`}
+                          {`${value}${chartData[index].displayUnit || ""}`}
                         </text>
                       )}
                     />

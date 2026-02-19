@@ -59,6 +59,9 @@ export const LOCAL_STORAGE_KEYS = {
   ATHLETE_BODY_WEIGHT: "AthleteBodyWeight",
   ATHLETE_LIFT_TYPE: "AthleteLiftType",
   ATHLETE_HEIGHT: "AthleteHeight",
+  // Set to "1" when the user (or a shared URL) explicitly provides a unit preference.
+  // Prevents the data-driven auto-init from overriding an intentional choice.
+  UNIT_PREFERENCE_SET: "SJ_unitPreferenceSet",
 
   // Google Sheet / data source
   SHEET_INFO: "SJ_sheetInfo",

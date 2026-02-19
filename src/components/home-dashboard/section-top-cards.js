@@ -26,8 +26,7 @@ import {
   getStandardForLiftDate,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
-import { useLocalStorage } from "usehooks-ts";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { getDisplayWeight } from "@/lib/processing-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ACCENTS = {
@@ -131,15 +130,6 @@ export function SectionTopCards({ isProgressDone = false }) {
 
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
 
-  // Global-ish unit preference shared with calculator & strength-level pages.
-  // Defaults to imperial (lb) when not set.
-  const [isMetricPreference] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
-    false,
-    { initializeWithValue: false },
-  );
-  const preferredUnit = isMetricPreference ? "kg" : "lb";
-
   const allSessionDates = useMemo(
     () => sessionTonnageLookup?.allSessionDates ?? [],
     [sessionTonnageLookup],
@@ -192,8 +182,8 @@ export function SectionTopCards({ isProgressDone = false }) {
   // Calculate lifetime tonnage (all-time total weight moved) in preferred units.
   const lifetimeTonnage = useMemo(
     () =>
-      calculateLifetimeTonnageFromLookup(sessionTonnageLookup, preferredUnit),
-    [sessionTonnageLookup, preferredUnit],
+      calculateLifetimeTonnageFromLookup(sessionTonnageLookup, isMetric ? "kg" : "lb"),
+    [sessionTonnageLookup, isMetric],
   );
 
   // Calculate session momentum
@@ -254,7 +244,7 @@ export function SectionTopCards({ isProgressDone = false }) {
             description="Most Recent PR Single"
             title={
               mostRecentPR
-                ? `${mostRecentPR.liftType} 1@${mostRecentPR.weight}${mostRecentPR.unitType}`
+                ? `${mostRecentPR.liftType} 1@${getDisplayWeight(mostRecentPR, isMetric ?? false).value}${getDisplayWeight(mostRecentPR, isMetric ?? false).unit}`
                 : "No PRs yet"
             }
             footer={

@@ -867,38 +867,29 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
   return (
     <div className="select-none space-y-5 px-1">
 
-      {/* ── Overview track (full scale, no labels) ── */}
+      {/* ── Overview track (full scale, bracket notches at min/max) ── */}
       <div>
-        <div className="relative" style={{ height: "12px" }}>
-          <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-muted" />
+        <div className="relative" style={{ height: "24px" }}>
+          {/* Track */}
+          <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
+          {/* Filled band */}
           <motion.div
-            className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full"
-            style={{ backgroundColor: accentColor, opacity: 0.5 }}
+            style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", height: "12px", backgroundColor: accentColor, opacity: 0.35, borderRadius: "4px" }}
             animate={{ left: `${overviewBandLeft}%`, width: `${Math.max(overviewBandWidth, 0.3)}%` }}
             transition={springConfig}
           />
-          {estimates.map(({ formula, value }) => {
-            const isSelected = formula === e1rmFormula;
-            return (
-              <motion.button
-                key={formula}
-                onClick={() => setE1rmFormula(formula)}
-                animate={{ width: isSelected ? "10px" : "6px", height: isSelected ? "10px" : "6px", opacity: isSelected ? 1 : 0.5 }}
-                transition={dotSpring}
-                style={{
-                  position: "absolute",
-                  left: `${overviewPct(value)}%`,
-                  top: "50%",
-                  transform: "translate(-50%, -50%)",
-                  borderRadius: "9999px",
-                  backgroundColor: isSelected ? accentColor : "hsl(var(--muted-foreground))",
-                  zIndex: isSelected ? 10 : 1,
-                  cursor: "pointer",
-                  border: "none",
-                }}
-              />
-            );
-          })}
+          {/* Left bracket notch */}
+          <motion.div
+            style={{ position: "absolute", top: "50%", transform: "translate(-50%, -50%)", width: "3px", height: "20px", borderRadius: "2px", backgroundColor: accentColor }}
+            animate={{ left: `${overviewBandLeft}%` }}
+            transition={springConfig}
+          />
+          {/* Right bracket notch */}
+          <motion.div
+            style={{ position: "absolute", top: "50%", transform: "translate(-50%, -50%)", width: "3px", height: "20px", borderRadius: "2px", backgroundColor: accentColor }}
+            animate={{ left: `${overviewBandLeft + Math.max(overviewBandWidth, 0.3)}%` }}
+            transition={springConfig}
+          />
         </div>
         <div className="mt-1.5 flex justify-between text-[10px] text-muted-foreground/40">
           <span>0{unit}</span>
@@ -928,10 +919,10 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
         </div>
 
         {/* Track */}
-        <div className="relative" style={{ height: "16px" }}>
-          <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-muted" />
+        <div className="relative" style={{ height: "20px" }}>
+          <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
           <motion.div
-            className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full"
+            className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full"
             style={{ backgroundColor: accentColor, opacity: 0.4 }}
             animate={{ left: `${detailBandLeft}%`, width: `${Math.max(detailBandWidth, 0.5)}%` }}
             transition={springConfig}

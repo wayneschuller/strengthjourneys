@@ -1,6 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 
@@ -56,7 +56,6 @@ import {
 } from "motion/react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
-import { E1RMFormulaRadioGroup } from "@/components/e1rm-formula-radio-group";
 
 const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 
@@ -455,6 +454,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
   const sortedFormulae = getSortedFormulae(reps, weight);
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const liftColor = isAdvancedAnalysis ? getColor(liftType) : null;
+  const unit = getUnitSuffix(isMetric);
 
   let liftRating = "";
 
@@ -632,19 +632,24 @@ function E1RMCalculatorMain({ relatedArticles }) {
 
           {/* Secondary row: Algorithm Comparison + Strength Analysis */}
           <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Algorithm Comparison */}
+            {/* Algorithm Range visualization */}
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Algorithm Comparison</CardTitle>
+              <CardHeader className="pb-2">
+                <div className="flex items-baseline justify-between gap-2">
+                  <CardTitle className="text-base">Algorithm Range</CardTitle>
+                  <span className="text-sm font-semibold tabular-nums">
+                    {e1rmFormula}: {e1rmWeight}{unit}
+                  </span>
+                </div>
               </CardHeader>
               <CardContent>
-                <E1RMFormulaRadioGroup
-                  formulae={sortedFormulae}
-                  e1rmFormula={e1rmFormula}
-                  setE1rmFormula={setE1rmFormula}
+                <AlgorithmRangeBar
                   reps={reps}
                   weight={weight}
                   isMetric={isMetric}
+                  e1rmFormula={e1rmFormula}
+                  setE1rmFormula={setE1rmFormula}
+                  liftColor={liftColor}
                 />
               </CardContent>
             </Card>
@@ -815,6 +820,132 @@ const E1RMSummaryCard = ({
     </Card>
   );
 };
+
+function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula, liftColor }) {
+  const unit = isMetric ? "kg" : "lb";
+  const accentColor = liftColor || "hsl(var(--primary))";
+
+  // All 7 formulae sorted low→high by their estimate for this reps/weight
+  const estimates = useMemo(
+    () =>
+      e1rmFormulae
+        .map((formula) => ({ formula, value: estimateE1RM(reps, weight, formula) }))
+        .sort((a, b) => a.value - b.value),
+    [reps, weight],
+  );
+
+  const minVal = estimates[0].value;
+  const maxVal = estimates[estimates.length - 1].value;
+  const range = maxVal - minVal;
+  // Extra padding so labels at the edges don't get clipped
+  const pad = Math.max(range * 0.55, isMetric ? 3 : 5);
+  const axisMin = Math.max(0, minVal - pad);
+  const axisMax = maxVal + pad;
+  const axisRange = axisMax - axisMin;
+  const pct = (v) => ((v - axisMin) / axisRange) * 100;
+
+  const bandLeft = pct(minVal);
+  const bandWidth = pct(maxVal) - bandLeft;
+
+  // Alternating above/below rows — de-dupe at identical values, preferring selected formula
+  const aboveRaw = estimates.filter((_, i) => i % 2 === 0);
+  const belowRaw = estimates.filter((_, i) => i % 2 !== 0);
+  const dedupe = (arr) => {
+    const seen = new Map();
+    arr.forEach((e) => {
+      if (!seen.has(e.value) || e.formula === e1rmFormula) seen.set(e.value, e);
+    });
+    return Array.from(seen.values());
+  };
+  const aboveLabels = dedupe(aboveRaw);
+  const belowLabels = dedupe(belowRaw);
+
+  return (
+    <div className="select-none px-1">
+      {/* Labels above track */}
+      <div className="relative mb-1" style={{ height: "20px" }}>
+        {aboveLabels.map(({ formula, value }) => (
+          <button
+            key={formula}
+            onClick={() => setE1rmFormula(formula)}
+            style={{ left: `${pct(value)}%` }}
+            className={cn(
+              "absolute bottom-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-[10px] leading-none transition-colors",
+              formula === e1rmFormula
+                ? "font-semibold text-foreground"
+                : "text-muted-foreground/50 hover:text-muted-foreground",
+            )}
+          >
+            {formula}
+          </button>
+        ))}
+      </div>
+
+      {/* Track with animated band + clickable dots */}
+      <div className="relative" style={{ height: "16px" }}>
+        <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-muted" />
+        <motion.div
+          className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full"
+          style={{ backgroundColor: accentColor, opacity: 0.4 }}
+          animate={{ left: `${bandLeft}%`, width: `${Math.max(bandWidth, 0.5)}%` }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        />
+        {estimates.map(({ formula, value }) => {
+          const isSelected = formula === e1rmFormula;
+          return (
+            <motion.button
+              key={formula}
+              onClick={() => setE1rmFormula(formula)}
+              animate={{
+                width: isSelected ? "14px" : "10px",
+                height: isSelected ? "14px" : "10px",
+                opacity: isSelected ? 1 : 0.45,
+              }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              style={{
+                position: "absolute",
+                left: `${pct(value)}%`,
+                top: "50%",
+                transform: "translate(-50%, -50%)",
+                borderRadius: "9999px",
+                backgroundColor: isSelected ? accentColor : "hsl(var(--muted-foreground))",
+                zIndex: isSelected ? 10 : 1,
+                boxShadow: isSelected ? `0 0 0 3px ${accentColor}30` : "none",
+                cursor: "pointer",
+                border: "none",
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Labels below track */}
+      <div className="relative mt-1" style={{ height: "20px" }}>
+        {belowLabels.map(({ formula, value }) => (
+          <button
+            key={formula}
+            onClick={() => setE1rmFormula(formula)}
+            style={{ left: `${pct(value)}%` }}
+            className={cn(
+              "absolute top-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-[10px] leading-none transition-colors",
+              formula === e1rmFormula
+                ? "font-semibold text-foreground"
+                : "text-muted-foreground/50 hover:text-muted-foreground",
+            )}
+          >
+            {formula}
+          </button>
+        ))}
+      </div>
+
+      {/* Axis: min / max values */}
+      <div className="mt-2 flex justify-between text-[10px] text-muted-foreground/40">
+        <span>{minVal}{unit}</span>
+        <span>{maxVal}{unit}</span>
+      </div>
+    </div>
+  );
+}
 
 function RepRangeTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalysis, liftType }) {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);

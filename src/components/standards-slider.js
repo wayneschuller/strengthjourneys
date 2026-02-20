@@ -342,7 +342,9 @@ export function StandardsSlider({
 
           return (
             <span key={level} className={labelClass} style={labelStyle}>
-              <div className="md:text-base">{level}</div>
+              <div className="md:text-base">
+                {width < 800 && level === "Physically Active" ? "Active" : level}
+              </div>
               <div className="font-bold md:text-lg lg:text-xl">
                 {liftTypeStandards[level]}
                 {unitType}

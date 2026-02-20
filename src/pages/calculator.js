@@ -175,6 +175,12 @@ function E1RMCalculatorMain({ relatedArticles }) {
   const isClient = useIsClient();
   const [isCapturingImage, setIsCapturingImage] = useState(false);
   const portraitRef = useRef(null);
+  // Capture the resolved theme font at mount time so html2canvas gets the actual
+  // font name (not just the unresolved --font-sans CSS variable)
+  const [themeFontFamily, setThemeFontFamily] = useState("system-ui, sans-serif");
+  useEffect(() => {
+    setThemeFontFamily(window.getComputedStyle(document.body).fontFamily);
+  }, []);
   const { getColor } = useLiftColors();
 
   // When opening a shared link: turn on advanced UI if URL has all four athlete params or explicit advanced flag
@@ -421,7 +427,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
 
         const canvas = await html2canvas(portraitRef.current, {
           backgroundColor: null,
-          scale: 2,
+          scale: 3,
         });
 
         canvas.toBlob((blob) => {
@@ -569,7 +575,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
             </div>
           </div>
 
-          {/* Hidden portrait card — 9:16 for Instagram Stories image capture */}
+          {/* Hidden portrait card — 9:16 for Instagram Stories image capture (360×640 → 1080×1920 at scale:3) */}
           <div
             ref={portraitRef}
             style={{
@@ -578,46 +584,48 @@ function E1RMCalculatorMain({ relatedArticles }) {
               top: 0,
               width: "360px",
               height: "640px",
+              fontFamily: themeFontFamily,
               ...(liftColor ? { borderTopColor: liftColor, borderTopWidth: 8 } : {}),
             }}
-            className="relative flex flex-col items-center justify-center gap-5 rounded-xl border-4 bg-card p-10 text-card-foreground"
+            className="relative flex flex-col items-center justify-center gap-6 rounded-xl border-4 bg-card px-8 py-10 text-card-foreground"
           >
-            <div className="w-full text-center space-y-2">
-              <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            {/* Label + context */}
+            <div className="w-full text-center" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
                 One Rep Max
               </div>
               {isAdvancedAnalysis && (
-                <div
-                  className="text-xl font-semibold"
-                  style={liftColor ? { color: liftColor } : {}}
-                >
+                <div style={{ fontSize: "26px", fontWeight: 700, color: liftColor || "inherit" }}>
                   {liftType}
                 </div>
               )}
-              <div className="text-lg text-muted-foreground">
+              <div style={{ fontSize: "20px", opacity: 0.6 }}>
                 {reps} reps @ {weight}{isMetric ? "kg" : "lb"}
               </div>
             </div>
-            <div className="text-center">
-              <div
-                className="text-[96px] font-bold leading-none tracking-tight"
-                style={liftColor ? { color: liftColor } : {}}
-              >
+
+            {/* Hero number */}
+            <div style={{ textAlign: "center", lineHeight: 1 }}>
+              <div style={{ fontSize: "128px", fontWeight: 800, letterSpacing: "-0.04em", color: liftColor || "inherit" }}>
                 {e1rmWeight}
               </div>
-              <div className="text-3xl font-semibold text-muted-foreground mt-1">
+              <div style={{ fontSize: "40px", fontWeight: 700, opacity: 0.55, marginTop: "4px" }}>
                 {isMetric ? "kg" : "lb"}
               </div>
             </div>
+
+            {/* Strength rating (advanced only) */}
             {isAdvancedAnalysis && liftRating && (
-              <div className="text-center">
-                <div className="text-xs uppercase tracking-wider text-muted-foreground">
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
                   Strength Rating
                 </div>
-                <div className="text-2xl font-semibold mt-1">{liftRating}</div>
+                <div style={{ fontSize: "30px", fontWeight: 700, marginTop: "4px" }}>{liftRating}</div>
               </div>
             )}
-            <div className="text-xs text-muted-foreground mt-2">
+
+            {/* Formula */}
+            <div style={{ fontSize: "15px", opacity: 0.45 }}>
               {e1rmFormula} formula
             </div>
           </div>

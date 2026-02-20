@@ -49,6 +49,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useAthleteBio, getStrengthRatingForE1RM } from "@/hooks/use-athlete-biodata";
 import { useStateFromQueryOrLocalStorage } from "../hooks/use-state-from-query-or-localStorage";
 import { Calculator } from "lucide-react";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 
 const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 
@@ -559,6 +560,13 @@ function E1RMCalculatorMain({ relatedArticles }) {
   );
 }
 
+const liftSlugMap = {
+  "Back Squat": "barbell-squat-insights",
+  "Bench Press": "barbell-bench-press-insights",
+  "Deadlift": "barbell-deadlift-insights",
+  "Strict Press": "barbell-strict-press-insights",
+};
+
 const getSortedFormulae = (reps, weight) => {
   return e1rmFormulae.slice().sort((a, b) => {
     const e1rmA = estimateE1RM(reps, weight, a);
@@ -579,9 +587,14 @@ const E1RMSummaryCard = ({
   bodyWeight,
 }) => {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
+  const { getColor } = useLiftColors();
+  const liftColor = isAdvancedAnalysis ? getColor(liftType) : null;
 
   return (
-    <Card className="border-4">
+    <Card
+      className="border-4"
+      style={liftColor ? { borderTopColor: liftColor, borderTopWidth: 6 } : {}}
+    >
       <CardHeader>
         <CardTitle className="text-center md:text-3xl">
           Estimated One Rep Max
@@ -589,7 +602,21 @@ const E1RMSummaryCard = ({
       </CardHeader>
       <CardContent className="pb-2">
         <div className="text-center text-lg md:text-xl">
-          {isAdvancedAnalysis && `${liftType} `}
+          {isAdvancedAnalysis && (
+            <>
+              <Link
+                href={liftSlugMap[liftType] ? `/${liftSlugMap[liftType]}` : "#"}
+                style={{
+                  textDecoration: "underline",
+                  textDecorationColor: liftColor,
+                  textDecorationThickness: "2px",
+                  textUnderlineOffset: "3px",
+                }}
+              >
+                {liftType}
+              </Link>{" "}
+            </>
+          )}
           {reps}@{weight}
           {isMetric ? "kg" : "lb"}
         </div>
@@ -640,6 +667,7 @@ function OptionalAtheleBioData({
   const uniqueLiftNames = Array.from(
     new Set(LiftingStandardsKG.map((item) => item.liftType)),
   );
+  const { getColor } = useLiftColors();
 
   return (
     <div className="flex flex-col gap-4 px-4">
@@ -698,7 +726,24 @@ function OptionalAtheleBioData({
           {uniqueLiftNames.map((lift) => (
             <div key={lift} className="flex items-center space-x-2">
               <RadioGroupItem value={lift} id={lift} />
-              <Label htmlFor={lift}>{lift}</Label>
+              <Label htmlFor={lift}>
+                {liftSlugMap[lift] ? (
+                  <Link
+                    href={`/${liftSlugMap[lift]}`}
+                    style={{
+                      textDecoration: "underline",
+                      textDecorationColor: getColor(lift),
+                      textDecorationThickness: "2px",
+                      textUnderlineOffset: "3px",
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {lift}
+                  </Link>
+                ) : (
+                  lift
+                )}
+              </Label>
             </div>
           ))}
         </RadioGroup>

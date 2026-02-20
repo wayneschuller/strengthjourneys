@@ -206,6 +206,15 @@ export function VisualizerMini({ liftType }) {
   // Shadcn charts needs this for theming but we just do custom colors anyway
   const chartConfig = { [liftType]: { label: liftType } };
 
+  // Guard against Recharts' width/height(-1) warning. Recharts initialises
+  // containerWidth/Height as -1 and fires the warning before ResizeObserver
+  // measures real dimensions. This only bites here (not other charts) because
+  // demo parsedData is available synchronously, so chartData is truthy on the
+  // very first render — before the DOM has been laid out.
+  //
+  // Note: usehooks-ts useIsMounted() returns a ref-backed function, so calling
+  // it doesn't trigger a re-render on mount. We need useState so the chart
+  // re-renders once the DOM is ready.
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
 

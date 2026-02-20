@@ -26,19 +26,26 @@ const LB_QUIPS = [
 ];
 
 const KG_QUIPS = [
-  "🌍 Joined the rest of the world.",
+  "🇪🇺 Joined the rest of the world.",
   "🔬 Science approves.",
-  "🌏 97% of the planet welcomes you.",
+  "⚽ 97% of the planet welcomes you.",
   "🧪 The metric system: because 10s are nice.",
-  "🌍 Even the moon landings used metric internally.",
+  "🏋️ Even the moon landings used metric internally.",
   "🏋️ IPF-legal units. Very official.",
-  "🌎 Your European gym friends are proud.",
+  "🥐 Your European gym friends are proud.",
   "🔢 Base-10 superiority unlocked.",
-  "🌍 Celsius users and kg users: kindred spirits.",
+  "🥖 Celsius users and kg users: kindred spirits.",
   "🧬 SI units. As nature intended.",
 ];
 
+const LB_EMOJIS = ["🇺🇸", "🦅", "🏈", "🗽"];
+const KG_EMOJIS = ["🏋️", "🥐", "🇪🇺", "⚽", "🥖"];
+
 function randomQuip(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomEmoji(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
@@ -70,17 +77,17 @@ export function UnitChooser({ isMetric, onSwitchChange }) {
     if (isMetric) {
       // Switching to lb — freedom units deserve fireworks
       import("canvas-confetti").then(({ default: confetti }) => {
-        const flag = confetti.shapeFromText({ text: "🇺🇸", scalar: 2 });
-        const burst = { shapes: [flag], scalar: 2, spread: 60, origin };
-        confetti({ ...burst, particleCount: 20 });
-        setTimeout(() => confetti({ ...burst, particleCount: 15, spread: 90, startVelocity: 35 }), 150);
-        setTimeout(() => confetti({ ...burst, particleCount: 10, spread: 50, startVelocity: 45 }), 280);
+        const shape = () => confetti.shapeFromText({ text: randomEmoji(LB_EMOJIS), scalar: 2 });
+        confetti({ shapes: [shape()], scalar: 2, particleCount: 20, spread: 60, origin });
+        setTimeout(() => confetti({ shapes: [shape()], scalar: 2, particleCount: 15, spread: 90, origin, startVelocity: 35 }), 150);
+        setTimeout(() => confetti({ shapes: [shape()], scalar: 2, particleCount: 10, spread: 50, origin, startVelocity: 45 }), 280);
       });
     } else {
-      // Switching to kg — a gentle globe shower
+      // Switching to kg — European celebration
       import("canvas-confetti").then(({ default: confetti }) => {
-        const globe = confetti.shapeFromText({ text: "🌍", scalar: 2 });
-        confetti({ shapes: [globe], scalar: 2, particleCount: 18, spread: 80, origin, startVelocity: 28 });
+        const shape = () => confetti.shapeFromText({ text: randomEmoji(KG_EMOJIS), scalar: 2 });
+        confetti({ shapes: [shape()], scalar: 2, particleCount: 18, spread: 80, origin, startVelocity: 28 });
+        setTimeout(() => confetti({ shapes: [shape()], scalar: 2, particleCount: 14, spread: 60, origin, startVelocity: 35 }), 200);
       });
     }
   };

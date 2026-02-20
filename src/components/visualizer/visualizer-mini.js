@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { format } from "date-fns";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -18,6 +18,7 @@ import {
   SingleLiftTooltipContent,
 } from "./visualizer-utils";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -68,7 +69,9 @@ import { getYearLabels, processVisualizerData } from "./visualizer-processing";
  * @param {string} [props.liftType] - Display name of the lift to chart (e.g. "Bench Press").
  */
 export function VisualizerMini({ liftType }) {
-  const { parsedData, topLiftsByTypeAndReps } = useUserLiftingData();
+  const { parsedData, topLiftsByTypeAndReps, isLoading } = useUserLiftingData();
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => { setIsMounted(true); }, []);
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
@@ -291,7 +294,9 @@ export function VisualizerMini({ liftType }) {
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">
-        {chartData && (
+        {isLoading || !parsedData || !isMounted ? (
+          <Skeleton className="h-[400px] w-full" />
+        ) : chartData && (
             <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
               <AreaChart
                 accessibilityLayer

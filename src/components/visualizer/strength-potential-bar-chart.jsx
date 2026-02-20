@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/card";
 
 export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
-  const { parsedData, topLiftsByTypeAndReps, isValidating } =
+  const { parsedData, topLiftsByTypeAndReps, isValidating, isLoading } =
     useUserLiftingData();
   const { isMetric } = useAthleteBio();
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
@@ -162,12 +162,12 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {!topLiftsByTypeAndReps ? (
-          <Skeleton className="h-[300px] w-full" /> // FIXME: This skeleton never shows
+        {isLoading || !topLiftsByTypeAndReps ? (
+          <Skeleton className="h-[300px] w-full" />
         ) : (
           <ChartContainer
             config={{}}
-            className=""
+            className="h-[300px] !aspect-auto"
             key={resolvedTheme ?? theme ?? "light"}
           >
             <BarChart data={chartData}>

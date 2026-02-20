@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
@@ -10,6 +10,7 @@ import { parseISO, startOfWeek, startOfMonth, format } from "date-fns";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "./visualizer-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -58,7 +59,9 @@ import { getYearLabels } from "./visualizer-processing";
  *   shows total tonnage across all lifts.
  */
 export function TonnageChart({ setHighlightDate, liftType }) {
-  const { parsedData } = useUserLiftingData();
+  const { parsedData, isLoading } = useUserLiftingData();
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => { setIsMounted(true); }, []);
   const { getColor } = useLiftColors();
   const { isMetric } = useAthleteBio();
   const liftColor = liftType ? getColor(liftType) : null;
@@ -82,7 +85,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   const rangeFirstDate = calculateThresholdDate(timeRange, setTimeRange);
 
   const chartData = useMemo(() => {
-    if (!parsedData || parsedData.length === 0) return [];
+    if (!parsedData || parsedData.length === 0) return null;
     return processTonnageData(
       parsedData,
       rangeFirstDate,
@@ -116,13 +119,10 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     return { roundedMax, tickInterval, ticks };
   }, [chartData]);
 
-  if (!parsedData) return null; // <-- gracefully handle null loading state
-
   // Scale debounce with dataset size so small datasets feel instant while large datasets
   // avoid cascading SessionAnalysisCard re-renders during fast mouse scrubbing.
   // Formula: ~10ms at 120 pts, ~25ms at 300 pts, capped at 50ms at 600+ pts.
-  const tooltipDebounceMs = Math.min(50, Math.floor(chartData.length / 12));
-  devLog(`TonnageChart: ${chartData.length} chart data points, debounceMs=${tooltipDebounceMs}`);
+  const tooltipDebounceMs = Math.min(50, Math.floor((chartData?.length ?? 0) / 12));
 
   const displayUnit = isMetric ? "kg" : "lb";
 
@@ -159,7 +159,9 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">
-        {liftType ? (
+        {isLoading || !parsedData || !isMounted || !chartData ? (
+          <Skeleton className="h-[400px] w-full" />
+        ) : liftType ? (
           <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
               <AreaChart
                 data={chartData}
@@ -265,7 +267,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               </AreaChart>
             </ChartContainer>
         ) : (
-          <ChartContainer config={chartConfig}>
+          <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
             <AreaChart
               data={chartData}
               margin={{ left: 5, right: 20 }}

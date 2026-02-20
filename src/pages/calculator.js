@@ -1,6 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 
@@ -173,6 +173,9 @@ function E1RMCalculatorMain({ relatedArticles }) {
     },
   ); // Will be a string
   const isClient = useIsClient();
+  const [isCapturingImage, setIsCapturingImage] = useState(false);
+  const portraitRef = useRef(null);
+  const { getColor } = useLiftColors();
 
   // When opening a shared link: turn on advanced UI if URL has all four athlete params or explicit advanced flag
   useEffect(() => {
@@ -372,7 +375,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
       description: "Result copied to clipboard.",
     });
 
-    gaEvent(GA_EVENT_TAGS.CALC_SHARE_CLIPBOARD, { page: "/calculator" });
+    gaEvent(GA_EVENT_TAGS.CALC_SHARE_CLIPBOARD, { page: "/calculator", type: "text" });
 
     // This fails in React - but it's the new API
     // if (navigator?.clipboard?.writeText) {
@@ -388,7 +391,64 @@ function E1RMCalculatorMain({ relatedArticles }) {
     // }
   };
 
+  const handleCopyImage = async () => {
+    if (!portraitRef.current) return;
+    setIsCapturingImage(true);
+    try {
+      const html2canvas = (await import("html2canvas-pro")).default;
+
+      let watermarkEl = null;
+      try {
+        watermarkEl = document.createElement("div");
+        watermarkEl.textContent = "strengthjourneys.xyz";
+        Object.assign(watermarkEl.style, {
+          position: "absolute",
+          right: "12px",
+          bottom: "12px",
+          padding: "4px 12px",
+          borderRadius: "9999px",
+          background: "rgba(15, 23, 42, 0.86)",
+          color: "rgba(248, 250, 252, 0.98)",
+          fontSize: "11px",
+          fontWeight: "500",
+          letterSpacing: "0.03em",
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+          boxShadow: "0 6px 16px rgba(15, 23, 42, 0.55)",
+          pointerEvents: "none",
+          zIndex: "10",
+        });
+        portraitRef.current.appendChild(watermarkEl);
+
+        const canvas = await html2canvas(portraitRef.current, {
+          backgroundColor: null,
+          scale: 2,
+        });
+
+        canvas.toBlob((blob) => {
+          navigator.clipboard
+            .write([new ClipboardItem({ "image/png": blob })])
+            .then(() => {
+              toast({ title: "Image copied! Paste into Instagram or anywhere." });
+              gaEvent(GA_EVENT_TAGS.CALC_SHARE_CLIPBOARD, { page: "/calculator", type: "image" });
+            })
+            .catch((err) => {
+              console.error("Copy image error:", err);
+              toast({ variant: "destructive", title: "Could not copy image to clipboard" });
+            });
+        }, "image/png");
+      } finally {
+        if (watermarkEl && watermarkEl.parentNode) {
+          watermarkEl.parentNode.removeChild(watermarkEl);
+        }
+      }
+    } finally {
+      setIsCapturingImage(false);
+    }
+  };
+
   const sortedFormulae = getSortedFormulae(reps, weight);
+  const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
+  const liftColor = isAdvancedAnalysis ? getColor(liftType) : null;
 
   let liftRating = "";
 
@@ -485,7 +545,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
           </div>
 
           {/* Hero: E1RM Result Card — centered, full visual weight */}
-          <div className="my-8 flex justify-center">
+          <div className="my-8 flex flex-col items-center gap-3">
             <E1RMSummaryCard
               reps={reps}
               weight={weight}
@@ -497,6 +557,69 @@ function E1RMCalculatorMain({ relatedArticles }) {
               liftRating={liftRating}
               bodyWeight={bodyWeight}
             />
+            <div className="flex gap-2">
+              <ShareCopyButton label="Copy Text" onClick={handleCopyToClipboard} />
+              <ShareCopyButton
+                label="Copy Image"
+                onClick={handleCopyImage}
+                isLoading={isCapturingImage}
+                disabled={isCapturingImage}
+                tooltip="Copy portrait image for Instagram Stories"
+              />
+            </div>
+          </div>
+
+          {/* Hidden portrait card — 9:16 for Instagram Stories image capture */}
+          <div
+            ref={portraitRef}
+            style={{
+              position: "fixed",
+              left: "-9999px",
+              top: 0,
+              width: "360px",
+              height: "640px",
+              ...(liftColor ? { borderTopColor: liftColor, borderTopWidth: 8 } : {}),
+            }}
+            className="relative flex flex-col items-center justify-center gap-5 rounded-xl border-4 bg-card p-10 text-card-foreground"
+          >
+            <div className="w-full text-center space-y-2">
+              <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                One Rep Max
+              </div>
+              {isAdvancedAnalysis && (
+                <div
+                  className="text-xl font-semibold"
+                  style={liftColor ? { color: liftColor } : {}}
+                >
+                  {liftType}
+                </div>
+              )}
+              <div className="text-lg text-muted-foreground">
+                {reps} reps @ {weight}{isMetric ? "kg" : "lb"}
+              </div>
+            </div>
+            <div className="text-center">
+              <div
+                className="text-[96px] font-bold leading-none tracking-tight"
+                style={liftColor ? { color: liftColor } : {}}
+              >
+                {e1rmWeight}
+              </div>
+              <div className="text-3xl font-semibold text-muted-foreground mt-1">
+                {isMetric ? "kg" : "lb"}
+              </div>
+            </div>
+            {isAdvancedAnalysis && liftRating && (
+              <div className="text-center">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Strength Rating
+                </div>
+                <div className="text-2xl font-semibold mt-1">{liftRating}</div>
+              </div>
+            )}
+            <div className="text-xs text-muted-foreground mt-2">
+              {e1rmFormula} formula
+            </div>
           </div>
 
           {/* Secondary row: Algorithm Comparison + Strength Analysis */}
@@ -577,9 +700,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
             liftType={liftType}
           />
 
-          <div className="mt-4 flex justify-center gap-4">
-            <ShareCopyButton label="Copy to clipboard" onClick={handleCopyToClipboard} />
-          </div>
         </CardContent>
       </Card>
       <RelatedArticles articles={relatedArticles} />

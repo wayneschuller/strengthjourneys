@@ -868,8 +868,8 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
   const aboveLabels = dedupe(aboveRaw);
   const belowLabels = dedupe(belowRaw);
 
-  const springConfig = { type: "spring", stiffness: 300, damping: 30 };
-  const dotSpring = { type: "spring", stiffness: 400, damping: 30 };
+  const springConfig = { duration: 0 };
+  const dotSpring = { duration: 0 };
 
   return (
     <div className="select-none space-y-5 px-1">
@@ -1125,7 +1125,7 @@ function StrengthStandardsBar({ e1rmWeight, standards, liftType, isMetric, liftC
             boxShadow: `0 0 0 2px ${accentColor}30`,
           }}
           animate={{ left: `${pct(e1rmWeight)}%` }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          transition={{ duration: 0 }}
         />
       </div>
 

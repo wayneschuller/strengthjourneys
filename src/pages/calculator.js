@@ -831,16 +831,24 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
 
   const minVal = estimates[0].value;
   const maxVal = estimates[estimates.length - 1].value;
-  // Fixed axis matching the weight slider range so the window visibly slides
-  const axisMin = 0;
-  const axisMax = isMetric ? 250 : 600;
-  const axisRange = axisMax - axisMin;
-  const pct = (v) => Math.min(100, Math.max(0, (v / axisRange) * 100));
+  const range = maxVal - minVal;
 
-  const bandLeft = pct(minVal);
-  const bandWidth = pct(maxVal) - bandLeft;
+  // ── Overview track: fixed axis matching the weight slider ──────────────
+  const overviewMax = isMetric ? 250 : 600;
+  const overviewPct = (v) => Math.min(100, Math.max(0, (v / overviewMax) * 100));
+  const overviewBandLeft = overviewPct(minVal);
+  const overviewBandWidth = overviewPct(maxVal) - overviewBandLeft;
 
-  // Alternating above/below rows — de-dupe at identical values, preferring selected formula
+  // ── Detail track: zoomed into the algorithm cluster ────────────────────
+  const pad = Math.max(range * 0.55, isMetric ? 3 : 5);
+  const detailMin = Math.max(0, minVal - pad);
+  const detailMax = maxVal + pad;
+  const detailRange = detailMax - detailMin;
+  const detailPct = (v) => ((v - detailMin) / detailRange) * 100;
+  const detailBandLeft = detailPct(minVal);
+  const detailBandWidth = detailPct(maxVal) - detailBandLeft;
+
+  // Alternating above/below rows for detail labels
   const aboveRaw = estimates.filter((_, i) => i % 2 === 0);
   const belowRaw = estimates.filter((_, i) => i % 2 !== 0);
   const dedupe = (arr) => {
@@ -853,89 +861,136 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
   const aboveLabels = dedupe(aboveRaw);
   const belowLabels = dedupe(belowRaw);
 
+  const springConfig = { type: "spring", stiffness: 300, damping: 30 };
+  const dotSpring = { type: "spring", stiffness: 400, damping: 30 };
+
   return (
-    <div className="select-none px-1">
-      {/* Labels above track */}
-      <div className="relative mb-1" style={{ height: "20px" }}>
-        {aboveLabels.map(({ formula, value }) => (
-          <button
-            key={formula}
-            onClick={() => setE1rmFormula(formula)}
-            style={{ left: `${pct(value)}%` }}
-            className={cn(
-              "absolute bottom-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-[10px] leading-none transition-colors",
-              formula === e1rmFormula
-                ? "font-semibold text-foreground"
-                : "text-muted-foreground/50 hover:text-muted-foreground",
-            )}
-          >
-            {formula}
-          </button>
-        ))}
+    <div className="select-none space-y-5 px-1">
+
+      {/* ── Overview track (full scale, no labels) ── */}
+      <div>
+        <div className="relative" style={{ height: "12px" }}>
+          <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-muted" />
+          <motion.div
+            className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full"
+            style={{ backgroundColor: accentColor, opacity: 0.5 }}
+            animate={{ left: `${overviewBandLeft}%`, width: `${Math.max(overviewBandWidth, 0.3)}%` }}
+            transition={springConfig}
+          />
+          {estimates.map(({ formula, value }) => {
+            const isSelected = formula === e1rmFormula;
+            return (
+              <motion.button
+                key={formula}
+                onClick={() => setE1rmFormula(formula)}
+                animate={{ width: isSelected ? "10px" : "6px", height: isSelected ? "10px" : "6px", opacity: isSelected ? 1 : 0.5 }}
+                transition={dotSpring}
+                style={{
+                  position: "absolute",
+                  left: `${overviewPct(value)}%`,
+                  top: "50%",
+                  transform: "translate(-50%, -50%)",
+                  borderRadius: "9999px",
+                  backgroundColor: isSelected ? accentColor : "hsl(var(--muted-foreground))",
+                  zIndex: isSelected ? 10 : 1,
+                  cursor: "pointer",
+                  border: "none",
+                }}
+              />
+            );
+          })}
+        </div>
+        <div className="mt-1.5 flex justify-between text-[10px] text-muted-foreground/40">
+          <span>0{unit}</span>
+          <span>{overviewMax}{unit}</span>
+        </div>
       </div>
 
-      {/* Track with animated band + clickable dots */}
-      <div className="relative" style={{ height: "16px" }}>
-        <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-muted" />
-        <motion.div
-          className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full"
-          style={{ backgroundColor: accentColor, opacity: 0.4 }}
-          animate={{ left: `${bandLeft}%`, width: `${Math.max(bandWidth, 0.5)}%` }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        />
-        {estimates.map(({ formula, value }) => {
-          const isSelected = formula === e1rmFormula;
-          return (
-            <motion.button
+      {/* ── Detail track (zoomed, with labels) ── */}
+      <div>
+        {/* Labels above */}
+        <div className="relative mb-1" style={{ height: "20px" }}>
+          {aboveLabels.map(({ formula, value }) => (
+            <button
               key={formula}
               onClick={() => setE1rmFormula(formula)}
-              animate={{
-                width: isSelected ? "14px" : "10px",
-                height: isSelected ? "14px" : "10px",
-                opacity: isSelected ? 1 : 0.45,
-              }}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              style={{
-                position: "absolute",
-                left: `${pct(value)}%`,
-                top: "50%",
-                transform: "translate(-50%, -50%)",
-                borderRadius: "9999px",
-                backgroundColor: isSelected ? accentColor : "hsl(var(--muted-foreground))",
-                zIndex: isSelected ? 10 : 1,
-                boxShadow: isSelected ? `0 0 0 3px ${accentColor}30` : "none",
-                cursor: "pointer",
-                border: "none",
-              }}
-            />
-          );
-        })}
+              style={{ left: `${detailPct(value)}%` }}
+              className={cn(
+                "absolute bottom-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-[10px] leading-none transition-colors",
+                formula === e1rmFormula
+                  ? "font-semibold text-foreground"
+                  : "text-muted-foreground/50 hover:text-muted-foreground",
+              )}
+            >
+              {formula}
+            </button>
+          ))}
+        </div>
+
+        {/* Track */}
+        <div className="relative" style={{ height: "16px" }}>
+          <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-muted" />
+          <motion.div
+            className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full"
+            style={{ backgroundColor: accentColor, opacity: 0.4 }}
+            animate={{ left: `${detailBandLeft}%`, width: `${Math.max(detailBandWidth, 0.5)}%` }}
+            transition={springConfig}
+          />
+          {estimates.map(({ formula, value }) => {
+            const isSelected = formula === e1rmFormula;
+            return (
+              <motion.button
+                key={formula}
+                onClick={() => setE1rmFormula(formula)}
+                animate={{
+                  width: isSelected ? "14px" : "10px",
+                  height: isSelected ? "14px" : "10px",
+                  opacity: isSelected ? 1 : 0.45,
+                }}
+                transition={dotSpring}
+                style={{
+                  position: "absolute",
+                  left: `${detailPct(value)}%`,
+                  top: "50%",
+                  transform: "translate(-50%, -50%)",
+                  borderRadius: "9999px",
+                  backgroundColor: isSelected ? accentColor : "hsl(var(--muted-foreground))",
+                  zIndex: isSelected ? 10 : 1,
+                  boxShadow: isSelected ? `0 0 0 3px ${accentColor}30` : "none",
+                  cursor: "pointer",
+                  border: "none",
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Labels below */}
+        <div className="relative mt-1" style={{ height: "20px" }}>
+          {belowLabels.map(({ formula, value }) => (
+            <button
+              key={formula}
+              onClick={() => setE1rmFormula(formula)}
+              style={{ left: `${detailPct(value)}%` }}
+              className={cn(
+                "absolute top-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-[10px] leading-none transition-colors",
+                formula === e1rmFormula
+                  ? "font-semibold text-foreground"
+                  : "text-muted-foreground/50 hover:text-muted-foreground",
+              )}
+            >
+              {formula}
+            </button>
+          ))}
+        </div>
+
+        {/* Detail axis endpoints */}
+        <div className="mt-2 flex justify-between text-[10px] text-muted-foreground/40">
+          <span>{Math.round(detailMin)}{unit}</span>
+          <span>{Math.round(detailMax)}{unit}</span>
+        </div>
       </div>
 
-      {/* Labels below track */}
-      <div className="relative mt-1" style={{ height: "20px" }}>
-        {belowLabels.map(({ formula, value }) => (
-          <button
-            key={formula}
-            onClick={() => setE1rmFormula(formula)}
-            style={{ left: `${pct(value)}%` }}
-            className={cn(
-              "absolute top-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-[10px] leading-none transition-colors",
-              formula === e1rmFormula
-                ? "font-semibold text-foreground"
-                : "text-muted-foreground/50 hover:text-muted-foreground",
-            )}
-          >
-            {formula}
-          </button>
-        ))}
-      </div>
-
-      {/* Axis: fixed scale endpoints */}
-      <div className="mt-2 flex justify-between text-[10px] text-muted-foreground/40">
-        <span>0{unit}</span>
-        <span>{axisMax}{unit}</span>
-      </div>
     </div>
   );
 }

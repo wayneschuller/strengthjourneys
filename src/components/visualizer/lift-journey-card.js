@@ -24,24 +24,34 @@ import { cn } from "@/lib/utils";
 // Tier system
 // Both minReps AND minYears must be met to reach a tier.
 // ─────────────────────────────────────────────────────────────────────────────
+// One tier per year 0–15, then 5-year jumps to 30.
+// Reps thresholds are ~75% of what a 2,000 reps/year lifter accumulates by
+// that year, so dedicated lifters clear reps before years at higher tiers.
 const TIERS = [
-  { name: "Initiate",      minReps: 0,     minYears: 0,    icon: "🌱", bg: "bg-gray-100 dark:bg-gray-800",            text: "text-gray-600 dark:text-gray-400" },
-  { name: "Beginner",      minReps: 100,   minYears: 0.25, icon: "🌿", bg: "bg-emerald-50 dark:bg-emerald-950",       text: "text-emerald-700 dark:text-emerald-400" },
-  { name: "Novice",        minReps: 300,   minYears: 0.5,  icon: "💡", bg: "bg-sky-50 dark:bg-sky-950",               text: "text-sky-700 dark:text-sky-400" },
-  { name: "Apprentice",    minReps: 750,   minYears: 1,    icon: "🔧", bg: "bg-blue-100 dark:bg-blue-950",            text: "text-blue-700 dark:text-blue-400" },
-  { name: "Practitioner",  minReps: 1500,  minYears: 2,    icon: "⚡", bg: "bg-indigo-50 dark:bg-indigo-950",         text: "text-indigo-700 dark:text-indigo-400" },
-  { name: "Adept",         minReps: 3000,  minYears: 3,    icon: "🎯", bg: "bg-violet-100 dark:bg-violet-950",        text: "text-violet-700 dark:text-violet-400" },
-  { name: "Dedicated",     minReps: 5000,  minYears: 4,    icon: "💪", bg: "bg-purple-100 dark:bg-purple-950",        text: "text-purple-700 dark:text-purple-400" },
-  { name: "Veteran",       minReps: 8000,  minYears: 5,    icon: "🎖️", bg: "bg-fuchsia-100 dark:bg-fuchsia-950",      text: "text-fuchsia-700 dark:text-fuchsia-400" },
-  { name: "Expert",        minReps: 12000, minYears: 7,    icon: "⭐", bg: "bg-amber-100 dark:bg-amber-950",          text: "text-amber-700 dark:text-amber-400" },
-  { name: "Elite",         minReps: 16000, minYears: 8,    icon: "🌟", bg: "bg-orange-100 dark:bg-orange-950",        text: "text-orange-700 dark:text-orange-400" },
-  { name: "Master",        minReps: 20000, minYears: 10,   icon: "🏆", bg: "bg-yellow-100 dark:bg-yellow-950",        text: "text-yellow-700 dark:text-yellow-500" },
-  { name: "Legend",        minReps: 28000, minYears: 12,   icon: "👑", bg: "bg-yellow-200 dark:bg-yellow-900",        text: "text-yellow-800 dark:text-yellow-400" },
+  { name: "Initiate",     minReps: 0,     minYears: 0,  icon: "🌱", bg: "bg-stone-100 dark:bg-stone-800",         text: "text-stone-500 dark:text-stone-400" },
+  { name: "Beginner",     minReps: 200,   minYears: 1,  icon: "🌿", bg: "bg-green-50 dark:bg-green-950",          text: "text-green-700 dark:text-green-400" },
+  { name: "Novice",       minReps: 800,   minYears: 2,  icon: "💡", bg: "bg-teal-50 dark:bg-teal-950",            text: "text-teal-700 dark:text-teal-400" },
+  { name: "Apprentice",   minReps: 1500,  minYears: 3,  icon: "🔧", bg: "bg-sky-100 dark:bg-sky-950",             text: "text-sky-700 dark:text-sky-400" },
+  { name: "Practitioner", minReps: 2500,  minYears: 4,  icon: "⚡", bg: "bg-blue-100 dark:bg-blue-950",           text: "text-blue-700 dark:text-blue-400" },
+  { name: "Adept",        minReps: 4000,  minYears: 5,  icon: "🎯", bg: "bg-indigo-100 dark:bg-indigo-950",       text: "text-indigo-700 dark:text-indigo-400" },
+  { name: "Journeyman",   minReps: 5500,  minYears: 6,  icon: "🛤️", bg: "bg-violet-100 dark:bg-violet-950",       text: "text-violet-700 dark:text-violet-400" },
+  { name: "Dedicated",    minReps: 7500,  minYears: 7,  icon: "💪", bg: "bg-purple-100 dark:bg-purple-950",       text: "text-purple-700 dark:text-purple-400" },
+  { name: "Veteran",      minReps: 9500,  minYears: 8,  icon: "🎖️", bg: "bg-fuchsia-100 dark:bg-fuchsia-950",     text: "text-fuchsia-700 dark:text-fuchsia-400" },
+  { name: "Expert",       minReps: 11500, minYears: 9,  icon: "⭐", bg: "bg-pink-100 dark:bg-pink-950",           text: "text-pink-700 dark:text-pink-400" },
+  { name: "Elite",        minReps: 14000, minYears: 10, icon: "🌟", bg: "bg-rose-100 dark:bg-rose-950",           text: "text-rose-700 dark:text-rose-400" },
+  { name: "Master",       minReps: 16500, minYears: 11, icon: "🏆", bg: "bg-amber-100 dark:bg-amber-950",         text: "text-amber-700 dark:text-amber-400" },
+  { name: "Grandmaster",  minReps: 19000, minYears: 12, icon: "👑", bg: "bg-amber-200 dark:bg-amber-900",         text: "text-amber-800 dark:text-amber-300" },
+  { name: "Champion",     minReps: 21500, minYears: 13, icon: "🥇", bg: "bg-orange-100 dark:bg-orange-950",       text: "text-orange-700 dark:text-orange-400" },
+  { name: "Luminary",     minReps: 24000, minYears: 14, icon: "✨", bg: "bg-orange-200 dark:bg-orange-900",       text: "text-orange-800 dark:text-orange-300" },
+  { name: "Legend",       minReps: 27000, minYears: 15, icon: "🔱", bg: "bg-red-100 dark:bg-red-950",             text: "text-red-700 dark:text-red-400" },
+  { name: "Titan",        minReps: 35000, minYears: 20, icon: "🏔️", bg: "bg-slate-700 dark:bg-slate-800",         text: "text-slate-100" },
+  { name: "Immortal",     minReps: 44000, minYears: 25, icon: "🌌", bg: "bg-gray-800 dark:bg-gray-900",           text: "text-amber-300" },
+  { name: "Eternal",      minReps: 53000, minYears: 30, icon: "🌠", bg: "bg-zinc-900 dark:bg-zinc-950",           text: "text-yellow-400" },
 ];
 
-// Max rep/set counts that fill the rings to 100% (Legend-tier thresholds)
-const RING_MAX_REPS = 28000;
-const RING_MAX_SETS = 5600;
+// Rings fill to 100% at the Legend threshold; higher tiers show a full ring.
+const RING_MAX_REPS = 27000;
+const RING_MAX_SETS = 5400;
 
 function computeTier(totalReps, yearsTraining) {
   let tier = TIERS[0];

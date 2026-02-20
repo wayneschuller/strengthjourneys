@@ -6,13 +6,11 @@ import { NextSeo } from "next-seo";
 
 import { RelatedArticles } from "@/components/article-cards";
 
-import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { Button } from "@/components/ui/button";
+import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -38,7 +36,6 @@ import { useToast } from "@/hooks/use-toast";
 import { devLog } from "@/lib/processing-utils";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { cn } from "@/lib/utils";
 
 import { Label } from "@/components/ui/label";
@@ -50,11 +47,18 @@ import { useAthleteBio, getStrengthRatingForE1RM } from "@/hooks/use-athlete-bio
 import { useStateFromQueryOrLocalStorage } from "../hooks/use-state-from-query-or-localStorage";
 import { Calculator } from "lucide-react";
 import { useLiftColors } from "@/hooks/use-lift-colors";
-
-const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "motion/react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { E1RMFormulaRadioGroup } from "@/components/e1rm-formula-radio-group";
+
+const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
@@ -168,7 +172,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
       [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
     },
   ); // Will be a string
-  const [parent] = useAutoAnimate(/* optional config */);
   const isClient = useIsClient();
 
   // When opening a shared link: turn on advanced UI if URL has all four athlete params or explicit advanced flag
@@ -481,78 +484,102 @@ function E1RMCalculatorMain({ relatedArticles }) {
             </div>
           </div>
 
-          <div className="my-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="order-3 lg:order-1" ref={parent}>
-              <div className="mb-4 flex flex-row gap-2">
-                <Checkbox
-                  id="advanced"
-                  checked={isAdvancedAnalysis}
-                  // onCheckedChange={setIsAdvancedAnalysis}
-                  onCheckedChange={handleAdvancedAnalysisChange}
-                />
-                <label
-                  htmlFor="advanced"
-                  className={cn(
-                    "text-sm font-medium leading-none",
-                    isAdvancedAnalysis ? "opacity-100" : "opacity-50",
-                  )}
-                >
-                  Strength Level Insights
-                </label>
-              </div>
-              {isAdvancedAnalysis && (
-                <OptionalAtheleBioData
-                  isMetric={isMetric}
-                  bodyWeight={bodyWeight}
-                  setBodyWeight={setBodyWeight}
-                  liftType={liftType}
-                  setLiftType={setLiftType}
-                  age={age}
-                  setAge={setAge}
-                  sex={sex}
-                  setSex={setSex}
-                />
-              )}
-            </div>
-            <div className="order-1 place-self-center lg:order-2">
-              <E1RMSummaryCard
-                reps={reps}
-                weight={weight}
-                isMetric={isMetric}
-                e1rmFormula={e1rmFormula}
-                estimateE1RM={estimateE1RM}
-                isAdvancedAnalysis={isAdvancedAnalysis}
-                liftType={liftType}
-                liftRating={liftRating}
-                bodyWeight={bodyWeight}
-              />
-            </div>
-            <div className="order-2 place-self-center md:pl-4 lg:order-3 lg:place-self-auto">
-              <E1RMFormulaRadioGroup
-                formulae={sortedFormulae}
-                e1rmFormula={e1rmFormula}
-                setE1rmFormula={setE1rmFormula}
-                reps={reps}
-                weight={weight}
-                isMetric={isMetric}
-              />
-            </div>
+          {/* Hero: E1RM Result Card — centered, full visual weight */}
+          <div className="my-8 flex justify-center">
+            <E1RMSummaryCard
+              reps={reps}
+              weight={weight}
+              isMetric={isMetric}
+              e1rmFormula={e1rmFormula}
+              estimateE1RM={estimateE1RM}
+              isAdvancedAnalysis={isAdvancedAnalysis}
+              liftType={liftType}
+              liftRating={liftRating}
+              bodyWeight={bodyWeight}
+            />
           </div>
+
+          {/* Secondary row: Algorithm Comparison + Strength Analysis */}
+          <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* Algorithm Comparison */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Algorithm Comparison</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <E1RMFormulaRadioGroup
+                  formulae={sortedFormulae}
+                  e1rmFormula={e1rmFormula}
+                  setE1rmFormula={setE1rmFormula}
+                  reps={reps}
+                  weight={weight}
+                  isMetric={isMetric}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Strength Analysis — checkbox lives in card header */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="advanced"
+                    checked={isAdvancedAnalysis}
+                    onCheckedChange={handleAdvancedAnalysisChange}
+                  />
+                  <label
+                    htmlFor="advanced"
+                    className={cn(
+                      "cursor-pointer select-none text-base font-semibold leading-none",
+                      isAdvancedAnalysis ? "opacity-100" : "opacity-60",
+                    )}
+                  >
+                    Strength Level Insights
+                  </label>
+                </div>
+              </CardHeader>
+              <AnimatePresence>
+                {isAdvancedAnalysis && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                    style={{ overflow: "hidden" }}
+                  >
+                    <CardContent className="pt-0">
+                      <OptionalAtheleBioData
+                        isMetric={isMetric}
+                        bodyWeight={bodyWeight}
+                        setBodyWeight={setBodyWeight}
+                        liftType={liftType}
+                        setLiftType={setLiftType}
+                        age={age}
+                        setAge={setAge}
+                        sex={sex}
+                        setSex={setSex}
+                      />
+                    </CardContent>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Card>
+          </div>
+
+          {/* Rep Range Projection Table — re-animates when formula/weight/reps changes */}
+          <RepRangeTable
+            key={`${e1rmFormula}-${weight}-${reps}`}
+            reps={reps}
+            weight={weight}
+            e1rmFormula={e1rmFormula}
+            isMetric={isMetric}
+            isAdvancedAnalysis={isAdvancedAnalysis}
+            liftType={liftType}
+          />
+
           <div className="mt-4 flex justify-center gap-4">
             <ShareCopyButton label="Copy to clipboard" onClick={handleCopyToClipboard} />
           </div>
-
-          {/* <h4 className="mt-10 scroll-m-20 text-xl font-semibold tracking-tight">
-            Citations and background for these exercise science formulae are
-            found in this{" "}
-            <a
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              href="https://en.wikipedia.org/wiki/One-repetition_maximum"
-              target="_blank"
-            >
-              Wikipedia article
-            </a>
-          </h4> */}
         </CardContent>
       </Card>
       <RelatedArticles articles={relatedArticles} />
@@ -590,9 +617,18 @@ const E1RMSummaryCard = ({
   const { getColor } = useLiftColors();
   const liftColor = isAdvancedAnalysis ? getColor(liftType) : null;
 
+  // Animated count-up/count-down when e1rm changes
+  const motionVal = useMotionValue(e1rmWeight);
+  const springVal = useSpring(motionVal, { stiffness: 200, damping: 20 });
+  const displayVal = useTransform(springVal, (v) => Math.round(v));
+
+  useEffect(() => {
+    motionVal.set(e1rmWeight);
+  }, [e1rmWeight, motionVal]);
+
   return (
     <Card
-      className="border-4"
+      className="w-full max-w-sm border-4"
       style={liftColor ? { borderTopColor: liftColor, borderTopWidth: 6 } : {}}
     >
       <CardHeader>
@@ -621,7 +657,7 @@ const E1RMSummaryCard = ({
           {isMetric ? "kg" : "lb"}
         </div>
         <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
-          {e1rmWeight}
+          <motion.span className="tabular-nums">{displayVal}</motion.span>
           {isMetric ? "kg" : "lb"}
         </div>
         {isAdvancedAnalysis && (
@@ -652,6 +688,68 @@ const E1RMSummaryCard = ({
   );
 };
 
+function RepRangeTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalysis, liftType }) {
+  const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
+  const { getColor } = useLiftColors();
+  const liftColor = isAdvancedAnalysis ? getColor(liftType) : null;
+  const unit = isMetric ? "kg" : "lb";
+  const currentReps = Number(reps);
+
+  const rows = Array.from({ length: 10 }, (_, i) => {
+    const r = i + 1;
+    return { reps: r, weight: estimateWeightForReps(e1rmWeight, r, e1rmFormula) };
+  });
+
+  return (
+    <div className="mb-8">
+      <h3 className="mb-1 text-base font-semibold">Rep Max Projections</h3>
+      <p className="mb-3 text-sm text-muted-foreground">{e1rmFormula} algorithm</p>
+      <div className="overflow-hidden rounded-lg border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="px-4 py-2 text-left font-medium">Reps</th>
+              <th className="px-4 py-2 text-right font-medium">Weight ({unit})</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(({ reps: r, weight: w }, i) => {
+              const isCurrentReps = r === currentReps;
+              return (
+                <motion.tr
+                  key={r}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04, ease: "easeOut" }}
+                  className={cn(
+                    "border-b last:border-b-0",
+                    isCurrentReps ? "font-semibold" : "",
+                    isCurrentReps && !liftColor ? "bg-accent" : "",
+                  )}
+                  style={
+                    isCurrentReps && liftColor
+                      ? { backgroundColor: liftColor + "20" }
+                      : {}
+                  }
+                >
+                  <td className="px-4 py-2">
+                    {r}RM
+                    {isCurrentReps && (
+                      <span className="ml-2 text-xs text-muted-foreground">(current)</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {w}{unit}
+                  </td>
+                </motion.tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 function OptionalAtheleBioData({
   isMetric,
@@ -783,8 +881,6 @@ export const getStandardRatingString = (
       elite: Math.round(standard.elite * 2.204),
     };
   }
-
-  let liftRating;
 
   const oneRepMax = estimateE1RM(reps, weight, e1rmFormula);
   return standard ? getStrengthRatingForE1RM(oneRepMax, standard) : undefined;

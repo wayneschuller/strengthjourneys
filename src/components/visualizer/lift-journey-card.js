@@ -54,6 +54,108 @@ function computeTier(totalReps, yearsTraining) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Tier progress section
+// ─────────────────────────────────────────────────────────────────────────────
+
+function formatYears(years) {
+  const y = Math.floor(years);
+  const months = Math.round((years - y) * 12);
+  if (months === 0 || y >= 10) return `${y} yr`;
+  if (y === 0) return `${months} mo`;
+  return `${y} yr ${months} mo`;
+}
+
+function ProgressBar({ pct, color, isMounted, delay = 0.3 }) {
+  const isDone = pct >= 1;
+  return (
+    <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+      <motion.div
+        className="h-full rounded-full"
+        style={{
+          transformOrigin: "left",
+          backgroundColor: isDone ? "#22c55e" : color,
+          width: "100%",
+        }}
+        initial={{ scaleX: 0 }}
+        animate={isMounted ? { scaleX: Math.min(1, pct) } : { scaleX: 0 }}
+        transition={{ duration: 1.0, ease: "easeOut", delay }}
+      />
+    </div>
+  );
+}
+
+function TierProgressSection({ totalReps, yearsTraining, tier, liftType, liftColor, isMounted }) {
+  const currentIndex = TIERS.findIndex((t) => t.name === tier.name);
+  const nextTier = TIERS[currentIndex + 1] ?? null;
+
+  if (!nextTier) {
+    return (
+      <p className="text-center text-sm text-muted-foreground">
+        👑 You&apos;ve reached the highest tier for {liftType}!
+      </p>
+    );
+  }
+
+  const repsPct = nextTier.minReps > 0 ? totalReps / nextTier.minReps : 1;
+  const yearsPct = nextTier.minYears > 0 ? yearsTraining / nextTier.minYears : 1;
+  const repsNeeded = Math.max(0, nextTier.minReps - totalReps);
+  const yearsNeeded = Math.max(0, nextTier.minYears - yearsTraining);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-sm">
+        <span className="text-muted-foreground">Next tier:</span>
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold",
+            nextTier.bg,
+            nextTier.text,
+          )}
+        >
+          {nextTier.icon} {liftType} {nextTier.name}
+        </span>
+      </div>
+
+      {/* Reps axis */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">
+            Reps &mdash; {totalReps.toLocaleString()} / {nextTier.minReps.toLocaleString()}
+          </span>
+          {repsPct >= 1 ? (
+            <span className="font-medium text-green-600">✓ Done</span>
+          ) : (
+            <span className="text-muted-foreground">
+              {repsNeeded.toLocaleString()} to go
+            </span>
+          )}
+        </div>
+        <ProgressBar pct={repsPct} color={liftColor} isMounted={isMounted} delay={0.3} />
+      </div>
+
+      {/* Years axis */}
+      {nextTier.minYears > 0 && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">
+              Time &mdash; {formatYears(yearsTraining)} / {formatYears(nextTier.minYears)}
+            </span>
+            {yearsPct >= 1 ? (
+              <span className="font-medium text-green-600">✓ Done</span>
+            ) : (
+              <span className="text-muted-foreground">
+                {formatYears(yearsNeeded)} to go
+              </span>
+            )}
+          </div>
+          <ProgressBar pct={yearsPct} color={liftColor} isMounted={isMounted} delay={0.5} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Animated donut ring
 // ─────────────────────────────────────────────────────────────────────────────
 function StatRing({ value, fill, label, color, isMounted }) {
@@ -150,7 +252,9 @@ export function LiftJourneyCard({ liftType }) {
   const fiveRM = topLiftsByReps?.[4]?.[0];
 
   const { bestLift, bestE1RMWeight } =
-    findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula) ?? {};
+    (topLiftsByTypeAndReps
+      ? findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula)
+      : null) ?? {};
 
   const heaviestSession = topTonnageByType?.[liftType]?.[0];
   const heaviestLast12 = topTonnageByTypeLast12Months?.[liftType]?.[0];
@@ -294,6 +398,18 @@ export function LiftJourneyCard({ liftType }) {
                 {bestLiftDisplay.unit} ({getReadableDateString(bestLift.date)},{" "}
                 {e1rmFormula})
               </p>
+            )}
+
+            {/* Tier progress */}
+            {totalReps > 0 && (
+              <TierProgressSection
+                totalReps={totalReps}
+                yearsTraining={yearsTraining}
+                tier={tier}
+                liftType={liftType}
+                liftColor={liftColor}
+                isMounted={isMounted}
+              />
             )}
 
             {/* Commitment rings */}

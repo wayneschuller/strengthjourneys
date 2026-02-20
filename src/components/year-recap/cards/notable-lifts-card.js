@@ -11,8 +11,10 @@ import {
   getReadableDateString,
   getPRHighlightsForYear,
   getLifetimePRsAchievedInYear,
+  getDisplayWeight,
 } from "@/lib/processing-utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Sparkles } from "lucide-react";
 import { motion } from "motion/react";
@@ -21,6 +23,7 @@ import { LiftSvg, getLiftSvgPath } from "../lift-svg";
 export function NotableLiftsCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const { parsedData } = useUserLiftingData();
+  const { isMetric } = useAthleteBio();
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
@@ -83,8 +86,8 @@ export function NotableLiftsCard({ year, isDemo, isActive = true }) {
                 </span>
               ) : null}
               <span>
-                {pr.liftType} {pr.reps}@{pr.weight}
-                {pr.unitType} — {getReadableDateString(pr.date)}
+                {pr.liftType} {pr.reps}@{getDisplayWeight(pr, isMetric).value}
+                {getDisplayWeight(pr, isMetric).unit} — {getReadableDateString(pr.date)}
               </span>
             </motion.li>
             );

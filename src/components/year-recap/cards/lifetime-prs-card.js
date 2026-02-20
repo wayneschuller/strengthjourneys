@@ -6,8 +6,9 @@ import {
   PR_HIGHLIGHTS_PHRASES,
   PR_EMPTY_PHRASES,
 } from "../phrases";
-import { getReadableDateString, getLifetimePRsAchievedInYear } from "@/lib/processing-utils";
+import { getReadableDateString, getLifetimePRsAchievedInYear, getDisplayWeight } from "@/lib/processing-utils";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Trophy } from "lucide-react";
 import { motion } from "motion/react";
 import { LiftSvg, getLiftSvgPath } from "../lift-svg";
@@ -15,6 +16,7 @@ import { LiftSvg, getLiftSvgPath } from "../lift-svg";
 export function LifetimePRsCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const { parsedData } = useUserLiftingData();
+  const { isMetric } = useAthleteBio();
   const prs = useMemo(
     () => getLifetimePRsAchievedInYear(parsedData, year),
     [year, parsedData],
@@ -63,8 +65,8 @@ export function LifetimePRsCard({ year, isDemo, isActive = true }) {
                 </span>
               ) : null}
               <span>
-                {pr.liftType} {pr.reps}@{pr.weight}
-                {pr.unitType} — {getReadableDateString(pr.date)}
+                {pr.liftType} {pr.reps}@{getDisplayWeight(pr, isMetric).value}
+                {getDisplayWeight(pr, isMetric).unit} — {getReadableDateString(pr.date)}
               </span>
             </motion.li>
             );

@@ -45,9 +45,9 @@ function randomQuip(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function randomEmoji(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+// Module-level counters so the emoji cycles across clicks even if the component remounts
+let lbEmojiIndex = 0;
+let kgEmojiIndex = 0;
 
 /** Returns canvas-confetti origin {x, y} (0–1) from the center of a DOM element. */
 function getOriginFromRef(ref) {
@@ -75,19 +75,23 @@ export function UnitChooser({ isMetric, onSwitchChange }) {
     const origin = getOriginFromRef(buttonRef);
 
     if (isMetric) {
-      // Switching to lb — freedom units deserve fireworks
+      // Switching to lb — pick one emoji for this click, then advance the cycle
+      const emoji = LB_EMOJIS[lbEmojiIndex % LB_EMOJIS.length];
+      lbEmojiIndex++;
       import("canvas-confetti").then(({ default: confetti }) => {
-        const shape = () => confetti.shapeFromText({ text: randomEmoji(LB_EMOJIS), scalar: 4 });
-        confetti({ shapes: [shape()], scalar: 4, particleCount: 20, spread: 60, origin });
-        setTimeout(() => confetti({ shapes: [shape()], scalar: 4, particleCount: 15, spread: 90, origin, startVelocity: 35 }), 150);
-        setTimeout(() => confetti({ shapes: [shape()], scalar: 4, particleCount: 10, spread: 50, origin, startVelocity: 45 }), 280);
+        const shape = confetti.shapeFromText({ text: emoji, scalar: 3 });
+        confetti({ shapes: [shape], scalar: 3, particleCount: 20, spread: 60, origin });
+        setTimeout(() => confetti({ shapes: [shape], scalar: 3, particleCount: 15, spread: 90, origin, startVelocity: 35 }), 150);
+        setTimeout(() => confetti({ shapes: [shape], scalar: 3, particleCount: 10, spread: 50, origin, startVelocity: 45 }), 280);
       });
     } else {
-      // Switching to kg — European celebration
+      // Switching to kg — pick one emoji for this click, then advance the cycle
+      const emoji = KG_EMOJIS[kgEmojiIndex % KG_EMOJIS.length];
+      kgEmojiIndex++;
       import("canvas-confetti").then(({ default: confetti }) => {
-        const shape = () => confetti.shapeFromText({ text: randomEmoji(KG_EMOJIS), scalar: 4 });
-        confetti({ shapes: [shape()], scalar: 4, particleCount: 18, spread: 80, origin, startVelocity: 28 });
-        setTimeout(() => confetti({ shapes: [shape()], scalar: 4, particleCount: 14, spread: 60, origin, startVelocity: 35 }), 200);
+        const shape = confetti.shapeFromText({ text: emoji, scalar: 3 });
+        confetti({ shapes: [shape], scalar: 3, particleCount: 18, spread: 80, origin, startVelocity: 28 });
+        setTimeout(() => confetti({ shapes: [shape], scalar: 3, particleCount: 14, spread: 60, origin, startVelocity: 35 }), 200);
       });
     }
   };

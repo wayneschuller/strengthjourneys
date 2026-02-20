@@ -497,6 +497,7 @@ export function SessionExerciseBlock({
           <LiftTonnageRow
             liftType={liftType}
             stats={perLiftTonnageStats[liftType]}
+            isMetric={isMetric}
           />
         )}
       </div>
@@ -504,7 +505,7 @@ export function SessionExerciseBlock({
   );
 }
 
-function LiftTonnageRow({ liftType, stats }) {
+function LiftTonnageRow({ liftType, stats, isMetric = false }) {
   const {
     currentLiftTonnage,
     avgLiftTonnage,
@@ -512,6 +513,9 @@ function LiftTonnageRow({ liftType, stats }) {
     pctDiff,
     unitType,
   } = stats;
+  const displayUnit = isMetric ? "kg" : "lb";
+  const currentDisplay = getDisplayWeight({ weight: currentLiftTonnage, unitType }, isMetric).value;
+  const avgDisplay = getDisplayWeight({ weight: avgLiftTonnage, unitType }, isMetric).value;
 
   if (
     !currentLiftTonnage ||
@@ -534,9 +538,9 @@ function LiftTonnageRow({ liftType, stats }) {
       className={`flex flex-wrap items-center gap-2 ${isUp ? "text-sm" : "text-xs"}`}
     >
       <span className="text-muted-foreground">
-        Tonnage: {Math.round(currentLiftTonnage).toLocaleString()}
-        {unitType} vs {Math.round(avgLiftTonnage).toLocaleString()}
-        {unitType} avg
+        Tonnage: {Math.round(currentDisplay).toLocaleString()}
+        {displayUnit} vs {Math.round(avgDisplay).toLocaleString()}
+        {displayUnit} avg
       </span>
       <Badge
         variant="outline"

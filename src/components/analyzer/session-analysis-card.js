@@ -48,6 +48,7 @@ import {
   getAverageSessionTonnageFromPrecomputed,
   getAverageLiftSessionTonnageFromPrecomputed,
   getSessionTonnagePercentileRangeFromPrecomputed,
+  getDisplayWeight,
 } from "@/lib/processing-utils";
 import {
   LoaderCircle,
@@ -382,6 +383,7 @@ export function SessionAnalysisCard({
                 analyzedSessionLifts={analyzedSessionLifts}
                 sessionTonnageLookup={sessionTonnageLookup}
                 sessionDate={sessionDate}
+                isMetric={isMetric}
               />
           )}
         </CardFooter>
@@ -396,6 +398,7 @@ function SessionTonnage({
   analyzedSessionLifts,
   sessionTonnageLookup,
   sessionDate,
+  isMetric = false,
 }) {
   const equivalentRef = useRef(null);
 
@@ -409,16 +412,18 @@ function SessionTonnage({
   );
 
   const firstLift = flatLifts?.[0];
-  const unitType = firstLift?.unitType ?? "lb"; // default to lb
+  const nativeUnitType = firstLift?.unitType ?? "lb";
+  const displayUnit = isMetric ? "kg" : "lb";
+  const tonnageDisplay = getDisplayWeight({ weight: tonnage, unitType: nativeUnitType }, isMetric).value;
 
-  // Rolling 365-day session-level baseline (from precomputed lookup)
+  // Rolling 365-day session-level baseline (from precomputed lookup, in native unit)
   const { average: avgSessionTonnage, sessionCount: sessionCountLastYear } =
     sessionTonnageLookup
       ? getAverageSessionTonnageFromPrecomputed(
           sessionTonnageLookup.sessionTonnageByDate,
           sessionTonnageLookup.allSessionDates,
           sessionDate,
-          unitType,
+          nativeUnitType,
         )
       : { average: 0, sessionCount: 0 };
 
@@ -427,13 +432,24 @@ function SessionTonnage({
         sessionTonnageLookup.sessionTonnageByDate,
         sessionTonnageLookup.allSessionDates,
         sessionDate,
-        unitType,
+        nativeUnitType,
       )
     : { low: 0, high: 0 };
 
+  // Convert comparison values to display unit
+  const avgSessionTonnageDisplay = avgSessionTonnage
+    ? getDisplayWeight({ weight: avgSessionTonnage, unitType: nativeUnitType }, isMetric).value
+    : 0;
+  const rangeMinDisplay = rangeMin
+    ? getDisplayWeight({ weight: rangeMin, unitType: nativeUnitType }, isMetric).value
+    : 0;
+  const rangeMaxDisplay = rangeMax
+    ? getDisplayWeight({ weight: rangeMax, unitType: nativeUnitType }, isMetric).value
+    : 0;
+
   const overallPctDiff =
-    avgSessionTonnage > 0
-      ? ((tonnage - avgSessionTonnage) / avgSessionTonnage) * 100
+    avgSessionTonnageDisplay > 0
+      ? ((tonnageDisplay - avgSessionTonnageDisplay) / avgSessionTonnageDisplay) * 100
       : null;
 
   // real-world equivalents (per unit type)
@@ -462,13 +478,13 @@ function SessionTonnage({
     ],
   };
 
-  const unitEquivalents = equivalents[unitType] ?? equivalents["lb"]; // defult to lb
-  const equivalentKey = `${sessionDate}-${unitType}`;
+  const unitEquivalents = equivalents[displayUnit] ?? equivalents["lb"];
+  const equivalentKey = `${sessionDate}-${displayUnit}`;
 
   if (!equivalentRef.current || equivalentRef.current.key !== equivalentKey) {
     // Filter to only equivalents that would give >= 0.1 when divided
     const validEquivalents = unitEquivalents.filter(
-      (eq) => tonnage / eq.weight >= 0.1,
+      (eq) => tonnageDisplay / eq.weight >= 0.1,
     );
 
     // If no valid equivalents (tonnage is very small), use the smallest one
@@ -477,7 +493,7 @@ function SessionTonnage({
 
     const randomIndex = Math.floor(Math.random() * candidates.length);
     const chosenEquivalent = candidates[randomIndex];
-    const chosenCount = tonnage / chosenEquivalent.weight;
+    const chosenCount = tonnageDisplay / chosenEquivalent.weight;
 
     equivalentRef.current = {
       key: equivalentKey,
@@ -495,14 +511,14 @@ function SessionTonnage({
     maximumFractionDigits: countValue >= 100 ? 0 : 1,
   });
 
-  const hasRange = sessionCountLastYear > 1 && rangeMax > 0;
+  const hasRange = sessionCountLastYear > 1 && rangeMaxDisplay > 0;
   const scaleMax = hasRange
-    ? Math.max(tonnage, rangeMax) * 1.3 || 1
-    : Math.max(tonnage * 1.3, 1);
-  const currentPct = Math.min(100, (tonnage / scaleMax) * 100);
+    ? Math.max(tonnageDisplay, rangeMaxDisplay) * 1.3 || 1
+    : Math.max(tonnageDisplay * 1.3, 1);
+  const currentPct = Math.min(100, (tonnageDisplay / scaleMax) * 100);
   const rawRangeWidth =
-    hasRange && rangeMax > 0 ? (rangeMax - rangeMin) / scaleMax : 0;
-  const rangeLeftPct = hasRange ? (rangeMin / scaleMax) * 100 : 0;
+    hasRange && rangeMaxDisplay > 0 ? (rangeMaxDisplay - rangeMinDisplay) / scaleMax : 0;
+  const rangeLeftPct = hasRange ? (rangeMinDisplay / scaleMax) * 100 : 0;
   const rangeWidthPct = hasRange
     ? (rawRangeWidth > 0 ? rawRangeWidth * 100 : 3)
     : 0;
@@ -514,14 +530,14 @@ function SessionTonnage({
           Session Tonnage:
         </span>
         <span className="tabular-nums font-bold">
-          {Math.round(tonnage).toLocaleString()}
-          {unitType}
+          {Math.round(tonnageDisplay).toLocaleString()}
+          {displayUnit}
         </span>
         {hasRange && overallPctDiff !== null ? (
           <>
             <span className="text-muted-foreground">
-              vs {Math.round(avgSessionTonnage).toLocaleString()}
-              {unitType} avg over last 12 months
+              vs {Math.round(avgSessionTonnageDisplay).toLocaleString()}
+              {displayUnit} avg over last 12 months
             </span>
             <Badge
               variant="outline"
@@ -557,9 +573,9 @@ function SessionTonnage({
           rangeLeftPct={rangeLeftPct}
           rangeWidthPct={rangeWidthPct}
           showRange={hasRange}
-          rangeMin={rangeMin}
-          rangeMax={rangeMax}
-          unitType={unitType}
+          rangeMin={rangeMinDisplay}
+          rangeMax={rangeMaxDisplay}
+          unitType={displayUnit}
         />
         {hasRange ? (
           <p className="text-lg text-foreground">

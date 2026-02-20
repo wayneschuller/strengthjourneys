@@ -77,17 +77,17 @@ export function UnitChooser({ isMetric, onSwitchChange }) {
     if (isMetric) {
       // Switching to lb — freedom units deserve fireworks
       import("canvas-confetti").then(({ default: confetti }) => {
-        const shape = () => confetti.shapeFromText({ text: randomEmoji(LB_EMOJIS), scalar: 2 });
-        confetti({ shapes: [shape()], scalar: 2, particleCount: 20, spread: 60, origin });
-        setTimeout(() => confetti({ shapes: [shape()], scalar: 2, particleCount: 15, spread: 90, origin, startVelocity: 35 }), 150);
-        setTimeout(() => confetti({ shapes: [shape()], scalar: 2, particleCount: 10, spread: 50, origin, startVelocity: 45 }), 280);
+        const shape = () => confetti.shapeFromText({ text: randomEmoji(LB_EMOJIS), scalar: 4 });
+        confetti({ shapes: [shape()], scalar: 4, particleCount: 20, spread: 60, origin });
+        setTimeout(() => confetti({ shapes: [shape()], scalar: 4, particleCount: 15, spread: 90, origin, startVelocity: 35 }), 150);
+        setTimeout(() => confetti({ shapes: [shape()], scalar: 4, particleCount: 10, spread: 50, origin, startVelocity: 45 }), 280);
       });
     } else {
       // Switching to kg — European celebration
       import("canvas-confetti").then(({ default: confetti }) => {
-        const shape = () => confetti.shapeFromText({ text: randomEmoji(KG_EMOJIS), scalar: 2 });
-        confetti({ shapes: [shape()], scalar: 2, particleCount: 18, spread: 80, origin, startVelocity: 28 });
-        setTimeout(() => confetti({ shapes: [shape()], scalar: 2, particleCount: 14, spread: 60, origin, startVelocity: 35 }), 200);
+        const shape = () => confetti.shapeFromText({ text: randomEmoji(KG_EMOJIS), scalar: 4 });
+        confetti({ shapes: [shape()], scalar: 4, particleCount: 18, spread: 80, origin, startVelocity: 28 });
+        setTimeout(() => confetti({ shapes: [shape()], scalar: 4, particleCount: 14, spread: 60, origin, startVelocity: 35 }), 200);
       });
     }
   };

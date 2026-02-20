@@ -80,9 +80,7 @@ export function UnitChooser({ isMetric, onSwitchChange }) {
       lbEmojiIndex++;
       import("canvas-confetti").then(({ default: confetti }) => {
         const shape = confetti.shapeFromText({ text: emoji, scalar: 3 });
-        confetti({ shapes: [shape], scalar: 3, particleCount: 20, spread: 60, origin });
-        setTimeout(() => confetti({ shapes: [shape], scalar: 3, particleCount: 15, spread: 90, origin, startVelocity: 35 }), 150);
-        setTimeout(() => confetti({ shapes: [shape], scalar: 3, particleCount: 10, spread: 50, origin, startVelocity: 45 }), 280);
+        confetti({ shapes: [shape], scalar: 3, particleCount: 30, spread: 70, origin });
       });
     } else {
       // Switching to kg — pick one emoji for this click, then advance the cycle
@@ -90,8 +88,7 @@ export function UnitChooser({ isMetric, onSwitchChange }) {
       kgEmojiIndex++;
       import("canvas-confetti").then(({ default: confetti }) => {
         const shape = confetti.shapeFromText({ text: emoji, scalar: 3 });
-        confetti({ shapes: [shape], scalar: 3, particleCount: 18, spread: 80, origin, startVelocity: 28 });
-        setTimeout(() => confetti({ shapes: [shape], scalar: 3, particleCount: 14, spread: 60, origin, startVelocity: 35 }), 200);
+        confetti({ shapes: [shape], scalar: 3, particleCount: 30, spread: 70, origin });
       });
     }
   };

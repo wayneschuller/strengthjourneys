@@ -630,77 +630,72 @@ function E1RMCalculatorMain({ relatedArticles }) {
             </div>
           </div>
 
-          {/* Secondary row: Algorithm Comparison + Strength Analysis */}
-          <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Algorithm Range visualization */}
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-baseline justify-between gap-2">
-                  <CardTitle className="text-base">Algorithm Range</CardTitle>
-                  <span className="text-sm font-semibold tabular-nums">
-                    {e1rmFormula}: {e1rmWeight}{unit}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <AlgorithmRangeBar
-                  reps={reps}
-                  weight={weight}
-                  isMetric={isMetric}
-                  e1rmFormula={e1rmFormula}
-                  setE1rmFormula={setE1rmFormula}
-                  liftColor={liftColor}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Strength Analysis — checkbox lives in card header */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="advanced"
-                    checked={isAdvancedAnalysis}
-                    onCheckedChange={handleAdvancedAnalysisChange}
-                  />
-                  <label
-                    htmlFor="advanced"
-                    className={cn(
-                      "cursor-pointer select-none text-base font-semibold leading-none",
-                      isAdvancedAnalysis ? "opacity-100" : "opacity-60",
-                    )}
-                  >
-                    Strength Level Insights
-                  </label>
-                </div>
-              </CardHeader>
-              <AnimatePresence>
-                {isAdvancedAnalysis && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                    style={{ overflow: "hidden" }}
-                  >
-                    <CardContent className="pt-0">
-                      <OptionalAtheleBioData
-                        isMetric={isMetric}
-                        bodyWeight={bodyWeight}
-                        setBodyWeight={setBodyWeight}
-                        liftType={liftType}
-                        setLiftType={setLiftType}
-                        age={age}
-                        setAge={setAge}
-                        sex={sex}
-                        setSex={setSex}
-                      />
-                    </CardContent>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </Card>
+          {/* Algorithm Range — full width, directly below hero */}
+          <div className="mb-6">
+            <div className="mb-3 flex items-baseline justify-between gap-2">
+              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Algorithm Range
+              </span>
+              <span className="text-sm font-semibold tabular-nums">
+                {e1rmFormula}: {e1rmWeight}{unit}
+              </span>
+            </div>
+            <AlgorithmRangeBar
+              reps={reps}
+              weight={weight}
+              isMetric={isMetric}
+              e1rmFormula={e1rmFormula}
+              setE1rmFormula={setE1rmFormula}
+              liftColor={liftColor}
+            />
           </div>
+
+          {/* Strength Analysis */}
+          <Card className="mb-8">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="advanced"
+                  checked={isAdvancedAnalysis}
+                  onCheckedChange={handleAdvancedAnalysisChange}
+                />
+                <label
+                  htmlFor="advanced"
+                  className={cn(
+                    "cursor-pointer select-none text-base font-semibold leading-none",
+                    isAdvancedAnalysis ? "opacity-100" : "opacity-60",
+                  )}
+                >
+                  Strength Level Insights
+                </label>
+              </div>
+            </CardHeader>
+            <AnimatePresence>
+              {isAdvancedAnalysis && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  style={{ overflow: "hidden" }}
+                >
+                  <CardContent className="pt-0">
+                    <OptionalAtheleBioData
+                      isMetric={isMetric}
+                      bodyWeight={bodyWeight}
+                      setBodyWeight={setBodyWeight}
+                      liftType={liftType}
+                      setLiftType={setLiftType}
+                      age={age}
+                      setAge={setAge}
+                      sex={sex}
+                      setSex={setSex}
+                    />
+                  </CardContent>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Card>
 
           {/* Rep Range Projection Table — re-animates when formula/weight/reps changes */}
           <RepRangeTable

@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import { useTheme } from "next-themes";
+import { useId, useMemo } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { Bar, BarChart, XAxis, YAxis, Legend } from "recharts";
 import { LoaderCircle } from "lucide-react";
@@ -9,6 +8,7 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ChartContainer,
@@ -26,76 +26,31 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   const { parsedData, topLiftsByTypeAndReps, isValidating, isLoading } =
     useUserLiftingData();
   const { isMetric } = useAthleteBio();
+  const { getColor } = useLiftColors();
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
-  const { theme, resolvedTheme } = useTheme();
+  const gradientId = useId().replace(/:/g, "");
+  const actualGradientId = `actualGradient-${gradientId}`;
+  const potentialPatternId = `potentialPattern-${gradientId}`;
 
-  // Get theme colors from CSS variables
-  const [themeColors, setThemeColors] = useState({
-    chart1: "#3b82f6", // fallback blue
-    chart1Light: "#60a5fa", // fallback light blue
-    chart3: "#f59e0b", // fallback orange
-    chart3Light: "#facc15", // fallback light orange
-    mutedForeground: "#64748b", // fallback gray
-    border: "#8884d8", // fallback purple-gray
-    background: "#ffffff", // fallback white
-  });
+  const chartColors = useMemo(() => {
+    const baseColor = getColor(liftType) || "#3b82f6";
+    const actual = normalizeHex(baseColor) || "#3b82f6";
+    const potential = mixHex(actual, "#111827", 0.18);
+    const axis = mixHex(actual, "#111827", 0.36);
+    const stripe = isLightHex(actual)
+      ? "rgba(0, 0, 0, 0.22)"
+      : "rgba(255, 255, 255, 0.34)";
 
-  useEffect(() => {
-    // Resolve theme CSS variables to computed color strings (rgb/hex) so SVG and
-    // chart libs work with any format (hsl, oklch, etc.). getPropertyValue() returns
-    // raw values (e.g. "oklch(...)"), so we use a temp element to get computed color.
-    const getComputedColor = (varName) => {
-      const temp = document.createElement("div");
-      temp.style.color = `var(${varName})`;
-      temp.style.position = "absolute";
-      temp.style.visibility = "hidden";
-      document.body.appendChild(temp);
-      const color = getComputedStyle(temp).color;
-      document.body.removeChild(temp);
-      if (!color || color === "rgba(0, 0, 0, 0)" || color === "transparent") return null;
-      return color;
+    return {
+      actual,
+      actualLight: mixHex(actual, "#ffffff", 0.24),
+      potential,
+      axis,
+      stripe,
     };
-
-    const getBackgroundColor = () => {
-      const temp = document.createElement("div");
-      temp.style.backgroundColor = "var(--background)";
-      temp.style.position = "absolute";
-      temp.style.visibility = "hidden";
-      document.body.appendChild(temp);
-      const color = getComputedStyle(temp).backgroundColor;
-      document.body.removeChild(temp);
-      return color || "#ffffff";
-    };
-
-    // Create a lighter variant from any computed rgb/rgba string
-    const createLighterVariant = (rgbString, amount = 0.15) => {
-      if (!rgbString) return null;
-      const match = rgbString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
-      if (!match) return rgbString;
-      const [, r, g, b] = match;
-      const scale = 1 + amount;
-      const nr = Math.min(255, Math.round(Number(r) * scale));
-      const ng = Math.min(255, Math.round(Number(g) * scale));
-      const nb = Math.min(255, Math.round(Number(b) * scale));
-      return `rgb(${nr}, ${ng}, ${nb})`;
-    };
-
-    const chart1 = getComputedColor("--chart-1");
-    const chart3 = getComputedColor("--chart-3");
-    const mutedFg = getComputedColor("--muted-foreground");
-
-    setThemeColors({
-      chart1: chart1 || "#3b82f6",
-      chart1Light: chart1 ? createLighterVariant(chart1, 0.15) : "#60a5fa",
-      chart3: chart3 || "#f59e0b",
-      chart3Light: chart3 ? createLighterVariant(chart3, 0.1) : "#facc15",
-      mutedForeground: mutedFg || "#64748b",
-      border: mutedFg || "#8884d8",
-      background: getBackgroundColor(),
-    });
-  }, [theme, resolvedTheme]); // Re-run when theme changes
+  }, [getColor, liftType]);
 
   const topLifts = topLiftsByTypeAndReps?.[liftType];
 
@@ -168,20 +123,19 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
           <ChartContainer
             config={{}}
             className="h-[300px] !aspect-auto"
-            key={resolvedTheme ?? theme ?? "light"}
           >
             <BarChart data={chartData}>
-              <XAxis dataKey="reps" stroke={themeColors.border} />
+              <XAxis dataKey="reps" stroke={chartColors.axis} />
               <YAxis
-                stroke={themeColors.border}
+                stroke={chartColors.axis}
                 domain={[0, "auto"]}
                 tickFormatter={(tick) => `${tick}${displayUnit}`}
               />
               <ChartTooltip
                 content={
                   <CustomTooltip
-                    actualColor={themeColors.chart1}
-                    potentialColor={themeColors.chart3}
+                    actualColor={chartColors.actual}
+                    potentialColor={chartColors.potential}
                     isMetric={isMetric}
                     displayUnit={displayUnit}
                   />
@@ -192,7 +146,7 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
                 height={36}
                 wrapperStyle={{
                   fontSize: "12px",
-                  color: themeColors.mutedForeground,
+                  color: chartColors.axis,
                 }}
               />
 
@@ -200,7 +154,7 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
               <Bar
                 dataKey="weight"
                 stackId="a"
-                fill="url(#actualGradient)"
+                fill={`url(#${actualGradientId})`}
                 name="Best Lift Achieved"
               />
 
@@ -208,7 +162,7 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
               <Bar
                 dataKey="extension"
                 stackId="a"
-                fill="url(#potentialPattern)" // Use pattern instead of solid color
+                fill={`url(#${potentialPatternId})`}
                 radius={[4, 4, 0, 0]}
                 animationDuration={800}
                 animationEasing="ease-out"
@@ -217,49 +171,35 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
 
               {/* Gradient Definitions */}
               <defs>
-                <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id={actualGradientId} x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="0%"
-                    stopColor={themeColors.chart1Light}
+                    stopColor={chartColors.actualLight}
                     stopOpacity={1}
                   />
-                  <stop offset="100%" stopColor={themeColors.chart1} stopOpacity={1} />
-                </linearGradient>
-                <linearGradient
-                  id="potentialGradient"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="0%"
-                    stopColor={themeColors.chart3Light}
-                    stopOpacity={1}
-                  />
-                  <stop offset="100%" stopColor={themeColors.chart3} stopOpacity={1} />
+                  <stop offset="100%" stopColor={chartColors.actual} stopOpacity={1} />
                 </linearGradient>
                 <pattern
-                  id="potentialPattern"
+                  id={potentialPatternId}
                   width="8"
                   height="8"
                   patternUnits="userSpaceOnUse"
-                  patternTransform="rotate(45)" // Diagonal lines
+                  patternTransform="rotate(45)"
                 >
                   <rect
                     width="8"
                     height="8"
-                    fill={themeColors.chart3} // Base color from theme
-                    opacity={0.8} // Slightly faded
+                    fill={chartColors.potential}
+                    opacity={0.84}
                   />
                   <line
                     x1="0"
                     y1="0"
                     x2="0"
                     y2="8"
-                    stroke={themeColors.background} // Use theme background for contrast
+                    stroke={chartColors.stripe}
                     strokeWidth="1"
-                    opacity={0.5} // Subtle pattern
+                    opacity={0.7}
                   />
                 </pattern>
               </defs>
@@ -348,4 +288,44 @@ const formatDate = (dateStr) => {
     month: "short",
     year: "numeric",
   });
+};
+
+const normalizeHex = (value) => {
+  if (typeof value !== "string" || !value.startsWith("#")) return null;
+  const hex = value.slice(1);
+  if (hex.length === 3) {
+    return `#${hex.split("").map((c) => c + c).join("")}`.toLowerCase();
+  }
+  if (hex.length === 6) {
+    return `#${hex}`.toLowerCase();
+  }
+  return null;
+};
+
+const hexToRgb = (hex) => {
+  const normalized = normalizeHex(hex);
+  if (!normalized) return null;
+  return {
+    r: parseInt(normalized.slice(1, 3), 16),
+    g: parseInt(normalized.slice(3, 5), 16),
+    b: parseInt(normalized.slice(5, 7), 16),
+  };
+};
+
+const mixHex = (hexA, hexB, amount = 0.5) => {
+  const a = hexToRgb(hexA);
+  const b = hexToRgb(hexB);
+  if (!a || !b) return hexA;
+
+  const clamped = Math.max(0, Math.min(1, amount));
+  const mix = (x, y) => Math.round(x + (y - x) * clamped);
+  const toHex = (n) => n.toString(16).padStart(2, "0");
+
+  return `#${toHex(mix(a.r, b.r))}${toHex(mix(a.g, b.g))}${toHex(mix(a.b, b.b))}`;
+};
+
+const isLightHex = (hex) => {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return false;
+  return (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) > 160;
 };

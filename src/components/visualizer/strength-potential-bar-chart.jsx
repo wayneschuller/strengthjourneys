@@ -167,7 +167,7 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
         ) : (
           <ChartContainer
             config={{}}
-            className=""
+            className="h-[300px] !aspect-auto"
             key={resolvedTheme ?? theme ?? "light"}
           >
             <BarChart data={chartData}>

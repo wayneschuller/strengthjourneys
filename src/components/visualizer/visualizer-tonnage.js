@@ -265,7 +265,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               </AreaChart>
             </ChartContainer>
         ) : (
-          <ChartContainer config={chartConfig}>
+          <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
             <AreaChart
               data={chartData}
               margin={{ left: 5, right: 20 }}

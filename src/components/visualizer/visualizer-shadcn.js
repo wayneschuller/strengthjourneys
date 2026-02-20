@@ -241,7 +241,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">
-        <ChartContainer config={chartConfig} className="">
+        <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
           <AreaChart
             accessibilityLayer
             data={chartData}

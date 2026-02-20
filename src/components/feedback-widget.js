@@ -102,6 +102,17 @@ const DONATION_NUDGES = [
   "You're officially in the top 1% of users who actually care.",
 ];
 
+const TRIGGER_LABELS = [
+  "Thoughts?",
+  "Ideas?",
+  "Feedback?",
+  "Issues?",
+  "Requests?",
+  "Suggestions?",
+  "Opinions?",
+];
+const TRIGGER_LABEL_INDEX_STORAGE_KEY = "sj-feedback-trigger-label-index";
+
 export function FeedbackWidget() {
   const router = useRouter();
   const { data: session } = useSession();
@@ -115,6 +126,9 @@ export function FeedbackWidget() {
   const [includeEmail, setIncludeEmail] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  // Keep this initial value deterministic for Next.js SSR/hydration; sessionStorage value is applied after mount.
+  const [triggerLabelIndex, setTriggerLabelIndex] = useState(0);
+  const clickedTriggerLabelRef = useRef(null);
 
   const [countdown, setCountdown] = useState(null);
   const [successCountdown, setSuccessCountdown] = useState(null);
@@ -135,11 +149,28 @@ export function FeedbackWidget() {
     setSuccessCountdown(null);
   }
 
-  // Listen for open-feedback event from avatar menu
+  // Subscribes once to the avatar-menu event and opens the dialog in "menu" mode.
   useEffect(() => {
-    const handleOpen = () => setOpen(true);
+    const handleOpen = () => {
+      clickedTriggerLabelRef.current = "menu";
+      setOpen(true);
+    };
     window.addEventListener("open-feedback", handleOpen);
     return () => window.removeEventListener("open-feedback", handleOpen);
+  }, []);
+
+  // Hydrates the rotating trigger label from sessionStorage; seeds a random start on first visit.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = sessionStorage.getItem(TRIGGER_LABEL_INDEX_STORAGE_KEY);
+    const parsed = Number.parseInt(raw || "", 10);
+    if (Number.isInteger(parsed) && parsed >= 0) {
+      setTriggerLabelIndex(parsed % TRIGGER_LABELS.length);
+      return;
+    }
+    const randomIndex = Math.floor(Math.random() * TRIGGER_LABELS.length);
+    setTriggerLabelIndex(randomIndex);
+    sessionStorage.setItem(TRIGGER_LABEL_INDEX_STORAGE_KEY, String(randomIndex));
   }, []);
 
   const resetState = useCallback(() => {
@@ -152,6 +183,7 @@ export function FeedbackWidget() {
     setIncludeEmail(false);
     setIsSubmitting(false);
     setError(null);
+    clickedTriggerLabelRef.current = null;
     phraseIndexRef.current = {
       title: Math.floor(Math.random() * TITLE_PREFIXES.length),
       subtitle: Math.floor(Math.random() * SUBTITLES.length),
@@ -161,7 +193,7 @@ export function FeedbackWidget() {
     };
   }, []);
 
-  // Tick the countdown every second
+  // Drives the pre-submit auto-close countdown and closes/resets when it reaches zero.
   useEffect(() => {
     if (countdown === null) return;
 
@@ -179,7 +211,7 @@ export function FeedbackWidget() {
     return () => clearTimeout(timer);
   }, [countdown, resetState]);
 
-  // Auto-close after successful submit
+  // Drives the post-submit success countdown and closes/resets when it reaches zero.
   useEffect(() => {
     if (successCountdown === null) return;
 
@@ -219,6 +251,7 @@ export function FeedbackWidget() {
   const donationNudge = DONATION_NUDGES[phraseIndexRef.current.nudge];
   const donationAsk = DONATION_ASKS[phraseIndexRef.current.ask];
   const tooltipMessage = TOOLTIP_MESSAGES[phraseIndexRef.current.tooltip];
+  const triggerLabel = TRIGGER_LABELS[triggerLabelIndex] || TRIGGER_LABELS[0];
 
   const PAGE_NAMES = {
     "/": session ? "the Home Dashboard" : "the Landing Page",
@@ -243,8 +276,7 @@ export function FeedbackWidget() {
     "barbell-strict-press-insights": "Strict Press Insights",
   };
 
-  // Subtle spring animation at random intervals to draw attention
-  // Stops for the session once the user submits feedback
+  // Schedules recurring attention nudges while closed; disabled after feedback is submitted.
   const controls = useAnimationControls();
   const [hasFeedback, setHasFeedback] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -301,6 +333,7 @@ export function FeedbackWidget() {
           message: message.trim(),
           sentiment,
           page: router.pathname,
+          triggerLabel: clickedTriggerLabelRef.current,
           includeEmail,
           email: includeEmail ? (session?.user?.email || email || "") : "",
           userType: getUserType(),
@@ -323,10 +356,12 @@ export function FeedbackWidget() {
     }
   }
 
-  // Delay appearance on the home page for unauthenticated visitors
+  // Delays first render of the floating trigger on anonymous home visits to reduce interruption.
   const isHomePage = router.pathname === "/";
   const delayButton = isHomePage && !session;
   const [visible, setVisible] = useState(!delayButton);
+
+  // Applies/removes the 20s visibility delay when route/session context changes.
   useEffect(() => {
     if (!delayButton) {
       setVisible(true);
@@ -353,12 +388,18 @@ export function FeedbackWidget() {
               <Button
                 variant="outline"
                 className="h-12 w-12 rounded-full border-amber-300 bg-amber-400 shadow-lg hover:bg-amber-500 lg:h-auto lg:w-auto lg:gap-2 lg:rounded-full lg:px-4 lg:py-2.5"
-                onClick={() => setOpen(true)}
+                onClick={() => {
+                  clickedTriggerLabelRef.current = triggerLabel;
+                  setOpen(true);
+                  const nextIndex = (triggerLabelIndex + 1) % TRIGGER_LABELS.length;
+                  setTriggerLabelIndex(nextIndex);
+                  sessionStorage.setItem(TRIGGER_LABEL_INDEX_STORAGE_KEY, String(nextIndex));
+                }}
                 aria-label="Give feedback"
               >
                 <MessageCircleHeart className="h-5 w-5 text-amber-950 lg:h-5 lg:w-5" />
                 <span className="hidden text-sm font-semibold text-amber-950 lg:inline">
-                  Thoughts?
+                  {triggerLabel}
                 </span>
               </Button>
             </motion.div>

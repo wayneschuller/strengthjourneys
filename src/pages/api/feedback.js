@@ -76,7 +76,7 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "Feedback service not configured" });
   }
 
-  const { message, sentiment, page, includeEmail, email, userType, metadata } = req.body;
+  const { message, sentiment, page, triggerLabel, includeEmail, email, userType, metadata } = req.body;
 
   if (!message || typeof message !== "string" || message.trim().length === 0) {
     return res.status(400).json({ error: "Message is required" });
@@ -105,6 +105,9 @@ export default async function handler(req, res) {
   const sentimentLabel = sentiment === "positive" ? "thumbs up" : "thumbs down";
   const sentimentEmoji = sentiment === "positive" ? "👍" : "👎";
   const pagePath = typeof page === "string" && page.startsWith("/") ? page : "/";
+  const triggerLabelValue = typeof triggerLabel === "string" && triggerLabel.trim().length > 0
+    ? triggerLabel.trim()
+    : "unknown";
   const baseUrl = getBaseUrl(req);
   const pageUrl = toAbsolutePageUrl(req, pagePath);
   const logoUrl =
@@ -116,6 +119,7 @@ export default async function handler(req, res) {
   const safePagePath = escapeHtml(pagePath);
   const safePageUrl = escapeHtml(pageUrl);
   const safeUserType = escapeHtml(userType || "unknown");
+  const safeTriggerLabel = escapeHtml(triggerLabelValue);
   const safeLogoUrl = escapeHtml(logoUrl);
   const meta = normalizeMetadata(metadata);
   const nameWithParsedRows = `${userName} [${meta.parsedRowCount}]`;
@@ -130,6 +134,7 @@ export default async function handler(req, res) {
       subject: `${sentimentEmoji} ${subjectPrefix} from ${userName} — ${sentimentLabel} — ${pagePath}`,
       text: [
         `Sentiment: ${sentimentLabel} ${sentimentEmoji}`,
+        `CTA label clicked: ${triggerLabelValue}`,
         `Authentication: ${safeAuthStatus}`,
         `Page: ${pagePath}`,
         `Page URL: ${pageUrl}`,
@@ -165,6 +170,7 @@ export default async function handler(req, res) {
             <div style="padding:20px;">
               <table role="presentation" cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse;">
                 <tr><td style="padding:6px 0;color:#6b7280;width:140px;">Authentication</td><td style="padding:6px 0;font-weight:${isLoggedIn ? "500" : "700"};color:${isLoggedIn ? "#111827" : "#b91c1c"};">${escapeHtml(safeAuthStatus)}</td></tr>
+                <tr><td style="padding:6px 0;color:#6b7280;width:140px;">CTA label clicked</td><td style="padding:6px 0;">${safeTriggerLabel}</td></tr>
                 <tr><td style="padding:6px 0;color:#6b7280;width:140px;">Page</td><td style="padding:6px 0;"><a href="${safePageUrl}" style="color:#2563eb;text-decoration:underline;">${safePagePath}</a></td></tr>
                 <tr><td style="padding:6px 0;color:#6b7280;">User type</td><td style="padding:6px 0;">${safeUserType}</td></tr>
                 <tr><td style="padding:6px 0;color:#6b7280;">Contact email</td><td style="padding:6px 0;">${safeContactEmail}</td></tr>

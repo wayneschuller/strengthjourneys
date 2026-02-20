@@ -632,14 +632,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
 
           {/* Algorithm Range — full width, directly below hero */}
           <div className="mb-6">
-            <div className="mb-3 flex items-baseline justify-between gap-2">
-              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Algorithm Range
-              </span>
-              <span className="text-sm font-semibold tabular-nums">
-                {e1rmFormula}: {e1rmWeight}{unit}
-              </span>
-            </div>
             <AlgorithmRangeBar
               reps={reps}
               weight={weight}

@@ -52,6 +52,22 @@ export function UnitChooser({ isMetric, onSwitchChange }) {
       description: isMetric ? randomQuip(LB_QUIPS) : randomQuip(KG_QUIPS),
       duration: 4000,
     });
+    if (isMetric) {
+      // Switching to lb — freedom units deserve fireworks
+      import("canvas-confetti").then(({ default: confetti }) => {
+        const flag = confetti.shapeFromText({ text: "🇺🇸", scalar: 2 });
+        const burst = { shapes: [flag], scalar: 2, spread: 60, origin: { y: 0.6 } };
+        confetti({ ...burst, particleCount: 20 });
+        setTimeout(() => confetti({ ...burst, particleCount: 15, spread: 90, startVelocity: 35 }), 150);
+        setTimeout(() => confetti({ ...burst, particleCount: 10, spread: 50, startVelocity: 45, origin: { x: 0.4, y: 0.65 } }), 280);
+      });
+    } else {
+      // Switching to kg — a gentle globe shower
+      import("canvas-confetti").then(({ default: confetti }) => {
+        const globe = confetti.shapeFromText({ text: "🌍", scalar: 2 });
+        confetti({ shapes: [globe], scalar: 2, particleCount: 18, spread: 80, origin: { y: 0.6 }, startVelocity: 28 });
+      });
+    }
   };
 
   return (

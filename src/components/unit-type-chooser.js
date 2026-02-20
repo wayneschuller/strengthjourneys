@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -41,8 +42,19 @@ function randomQuip(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+/** Returns canvas-confetti origin {x, y} (0–1) from the center of a DOM element. */
+function getOriginFromRef(ref) {
+  if (!ref.current) return { x: 0.5, y: 0.6 };
+  const rect = ref.current.getBoundingClientRect();
+  return {
+    x: (rect.left + rect.width / 2) / window.innerWidth,
+    y: (rect.top + rect.height / 2) / window.innerHeight,
+  };
+}
+
 export function UnitChooser({ isMetric, onSwitchChange }) {
   const { toast } = useToast();
+  const buttonRef = useRef(null);
   const nextUnit = isMetric ? "lb" : "kg";
 
   const handleClick = () => {
@@ -52,20 +64,23 @@ export function UnitChooser({ isMetric, onSwitchChange }) {
       description: isMetric ? randomQuip(LB_QUIPS) : randomQuip(KG_QUIPS),
       duration: 4000,
     });
+
+    const origin = getOriginFromRef(buttonRef);
+
     if (isMetric) {
       // Switching to lb — freedom units deserve fireworks
       import("canvas-confetti").then(({ default: confetti }) => {
         const flag = confetti.shapeFromText({ text: "🇺🇸", scalar: 2 });
-        const burst = { shapes: [flag], scalar: 2, spread: 60, origin: { y: 0.6 } };
+        const burst = { shapes: [flag], scalar: 2, spread: 60, origin };
         confetti({ ...burst, particleCount: 20 });
         setTimeout(() => confetti({ ...burst, particleCount: 15, spread: 90, startVelocity: 35 }), 150);
-        setTimeout(() => confetti({ ...burst, particleCount: 10, spread: 50, startVelocity: 45, origin: { x: 0.4, y: 0.65 } }), 280);
+        setTimeout(() => confetti({ ...burst, particleCount: 10, spread: 50, startVelocity: 45 }), 280);
       });
     } else {
       // Switching to kg — a gentle globe shower
       import("canvas-confetti").then(({ default: confetti }) => {
         const globe = confetti.shapeFromText({ text: "🌍", scalar: 2 });
-        confetti({ shapes: [globe], scalar: 2, particleCount: 18, spread: 80, origin: { y: 0.6 }, startVelocity: 28 });
+        confetti({ shapes: [globe], scalar: 2, particleCount: 18, spread: 80, origin, startVelocity: 28 });
       });
     }
   };
@@ -75,6 +90,7 @@ export function UnitChooser({ isMetric, onSwitchChange }) {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            ref={buttonRef}
             variant="outline"
             size="icon"
             aria-label={`Switch app units to ${nextUnit}`}

@@ -898,7 +898,7 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
             transition={springConfig}
           />
         </div>
-        <div className="mt-1.5 flex justify-between text-[10px] text-foreground/70">
+        <div className="mt-1.5 flex justify-between text-xs text-foreground/70">
           <span>0{unit}</span>
           <span>{overviewMax}{unit}</span>
         </div>
@@ -983,7 +983,7 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
         </div>
 
         {/* Detail axis endpoints */}
-        <div className="mt-2 flex justify-between text-[10px] text-foreground/70">
+        <div className="mt-2 flex justify-between text-xs text-foreground/70">
           <span>{Math.round(detailMin)}{unit}</span>
           <span>{Math.round(detailMax)}{unit}</span>
         </div>
@@ -1143,7 +1143,7 @@ function StrengthStandardsBar({ e1rmWeight, standards, liftType, isMetric, liftC
       </div>
 
       {/* Axis endpoints */}
-      <div className="mt-1 flex justify-between text-[10px] text-foreground/70">
+      <div className="mt-1 flex justify-between text-xs text-foreground/70">
         <span>{axisMin}{unit}</span>
         <span>{axisMax}{unit}</span>
       </div>

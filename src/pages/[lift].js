@@ -29,10 +29,7 @@ import {
   PageHeaderRight,
 } from "@/components/page-header";
 
-import {
-  LiftTypeSummaryStatistics,
-  LiftTypeRecentHighlights,
-} from "@/components/analyzer/lift-achievements-card";
+import { LiftJourneyCard } from "@/components/visualizer/lift-journey-card";
 import { LiftTypeRepPRsDisplay } from "@/components/analyzer/lift-type-prs-display";
 
 import { MostRecentSessionCard } from "@/components/home-dashboard/most-recent-session-card";
@@ -59,7 +56,7 @@ const StrengthJourneys = () => (
 
 import { fetchRelatedArticles, fetchArticleById } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
-import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
+import { useLiftColors } from "@/hooks/use-lift-colors";
 
 export async function getStaticPaths() {
   const paths = bigFourLiftInsightData.map((lift) => ({
@@ -207,7 +204,7 @@ function BarbellInsightsMain({
         </div>
         {/* <div className="col-span-3 flex flex-col gap-6 lg:flex-row"> */}
         <div className="col-span-3 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-stretch">
-          <MyLiftTypeSummaryCard liftType={liftInsightData.liftType} />
+          <LiftJourneyCard liftType={liftInsightData.liftType} />
           <SanityArticleCard article={introductionArticle} />
           <div className="flex flex-col gap-6 lg:h-full">
             <SanityArticleCard
@@ -229,7 +226,7 @@ function BarbellInsightsMain({
         <div className="col-span-3">
           <VisualizerReps liftType={liftInsightData.liftType} />
         </div>
-        <div className="col-span-3">
+        <div className="col-span-3" id="lift-prs">
           <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">
@@ -244,44 +241,6 @@ function BarbellInsightsMain({
   );
 }
 
-function MyLiftTypeSummaryCard({ liftType }) {
-  const { status: authStatus } = useSession();
-  const { getColor } = useLiftColors();
-
-  return (
-    <Card className="min-h-[300px]">
-      <CardHeader>
-        <h2
-          className="mr-5 text-pretty text-2xl font-semibold leading-none tracking-tight"
-          style={{
-            textDecoration: "underline",
-            textDecorationColor: `${getColor(liftType)}`,
-          }}
-        >
-          {authStatus !== "authenticated" && (
-            <span className="mr-2 font-bold">Demo Mode:</span>
-          )}
-          My {liftType} Journey
-        </h2>
-      </CardHeader>
-      <CardContent className="">
-        {authStatus !== "authenticated" && (
-          <div className="mb-4 text-lg italic">
-            This is sample data. Please sign in using Google and connect your
-            sheet to get instant analysis of your data.
-          </div>
-        )}
-        <div className="flex h-full flex-col justify-between gap-4">
-          <LiftTypeSummaryStatistics liftType={liftType} />
-          <LiftTypeRecentHighlights liftType={liftType} />
-        </div>
-        <div className="mt-10">
-          <LiftColorPicker liftType={liftType} />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 function MyLiftTypePRsCard({ liftType }) {
   const { status: authStatus } = useSession();

@@ -831,13 +831,11 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
 
   const minVal = estimates[0].value;
   const maxVal = estimates[estimates.length - 1].value;
-  const range = maxVal - minVal;
-  // Extra padding so labels at the edges don't get clipped
-  const pad = Math.max(range * 0.55, isMetric ? 3 : 5);
-  const axisMin = Math.max(0, minVal - pad);
-  const axisMax = maxVal + pad;
+  // Fixed axis matching the weight slider range so the window visibly slides
+  const axisMin = 0;
+  const axisMax = isMetric ? 250 : 600;
   const axisRange = axisMax - axisMin;
-  const pct = (v) => ((v - axisMin) / axisRange) * 100;
+  const pct = (v) => Math.min(100, Math.max(0, (v / axisRange) * 100));
 
   const bandLeft = pct(minVal);
   const bandWidth = pct(maxVal) - bandLeft;
@@ -933,10 +931,10 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
         ))}
       </div>
 
-      {/* Axis: min / max values */}
+      {/* Axis: fixed scale endpoints */}
       <div className="mt-2 flex justify-between text-[10px] text-muted-foreground/40">
-        <span>{minVal}{unit}</span>
-        <span>{maxVal}{unit}</span>
+        <span>0{unit}</span>
+        <span>{axisMax}{unit}</span>
       </div>
     </div>
   );

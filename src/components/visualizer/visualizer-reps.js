@@ -22,7 +22,7 @@
  * • You only need the heaviest set per calendar day for each rep range.
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -81,6 +81,8 @@ const repTabs = [
  */
 export function VisualizerReps({ data, liftType }) {
   const { parsedData, isLoading } = useUserLiftingData();
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => { setIsMounted(true); }, []);
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
@@ -133,8 +135,9 @@ export function VisualizerReps({ data, liftType }) {
     ),
   );
 
-  // Build chart data: one object per date, with weight for each rep range
-  const chartData = allDates.map((date) => {
+  // Build chart data: one object per date, with weight for each rep range.
+  // null when parsedData not yet loaded (matches the mini pattern for gating ChartContainer).
+  const chartData = !parsedData ? null : allDates.map((date) => {
     const entry = { date };
     repTabs.forEach((t) => {
       const found = chartDataByReps[t.reps].find((d) => d.date === date);
@@ -222,7 +225,7 @@ export function VisualizerReps({ data, liftType }) {
         <TimeRangeSelect timeRange={timeRange} setTimeRange={setTimeRange} />
       </CardHeader>
       <CardContent className="pl-0 pr-2">
-        {isLoading || !parsedData ? (
+        {isLoading || !parsedData || !isMounted || !chartData ? (
           <div className="flex h-[300px] w-full items-center justify-center">
             <Skeleton className="h-full w-full" />
           </div>

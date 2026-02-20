@@ -22,6 +22,8 @@ export function StandardsSlider({
   standards,
 }) {
   const {
+    isLoading: isUserDataLoading,
+    sheetInfo,
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
@@ -112,6 +114,12 @@ export function StandardsSlider({
 
     return summaries;
   }, [authStatus, parsedData, liftType, e1rmFormula, unitType]);
+
+  // Prevent initial render on standards-only scale, then jumping once
+  // authenticated user data (PR/E1RM) hydrates and expands min/max bounds.
+  if (authStatus === "authenticated" && sheetInfo?.ssid && isUserDataLoading) {
+    return <div className="h-[7.5rem] w-full animate-pulse rounded bg-muted/30" />;
+  }
 
   if (!standards) return null;
   const originalData = standards[liftType];
@@ -342,7 +350,9 @@ export function StandardsSlider({
 
           return (
             <span key={level} className={labelClass} style={labelStyle}>
-              <div className="md:text-base">{level}</div>
+              <div className="md:text-base">
+                {width < 800 && level === "Physically Active" ? "Active" : level}
+              </div>
               <div className="font-bold md:text-lg lg:text-xl">
                 {liftTypeStandards[level]}
                 {unitType}

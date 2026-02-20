@@ -4,8 +4,9 @@ import { format } from "date-fns";
 import { useState, useEffect, useContext } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Skeleton } from "@/components/ui/skeleton";
-import { findLiftPositionInTopLifts } from "@/lib/processing-utils";
+import { findLiftPositionInTopLifts, getDisplayWeight } from "@/lib/processing-utils";
 import {
   Card,
   CardContent,
@@ -24,6 +25,7 @@ export function MonthsHighlightsCard() {
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
+  const { isMetric } = useAthleteBio();
   const { status: authStatus } = useSession();
 
   const recentMonthHighlights = getRecentMonthHighlights(
@@ -65,13 +67,13 @@ export function MonthsHighlightsCard() {
                         rel="noopener noreferrer"
                         className="underline"
                       >
-                        {record.liftType} {record.reps}@{record.weight}
-                        {record.unitType}
+                        {record.liftType} {record.reps}@{getDisplayWeight(record, isMetric).value}
+                        {getDisplayWeight(record, isMetric).unit}
                       </a>
                     ) : (
                       <>
-                        {record.liftType} {record.reps}@{record.weight}
-                        {record.unitType}
+                        {record.liftType} {record.reps}@{getDisplayWeight(record, isMetric).value}
+                        {getDisplayWeight(record, isMetric).unit}
                       </>
                     )}{" "}
                     ({getReadableDateString(record.date)})

@@ -1,12 +1,47 @@
 import { format } from "date-fns";
 import { estimateE1RM } from "./estimate-e1rm";
 
+// =============================================================================
+// UNIT TYPE SYSTEM — HOW IT WORKS
+// =============================================================================
+//
+// Strength Journeys has two separate unit-related concepts that must be kept
+// distinct:
+//
+// 1. lift.unitType  ("kg" | "lb")
+//    The native unit stored in the user's Google Sheet for each lift row.
+//    Assigned once at parse time (parse-data.js). Never changes after parsing.
+//    Used for: PR detection, sorting, tonnage accumulation — all raw-value
+//    comparisons. These are always valid because we assume single-unit users
+//    (everyone lifts in either all-kg or all-lb, never mixed).
+//
+// 2. isMetric  (boolean, global via useAthleteBio())
+//    The user's DISPLAY preference. Stored in localStorage ("calcIsMetric").
+//    Toggling it changes how weights are shown everywhere in the app — charts,
+//    PRs, analyzer, year recap, tooltips — without touching parsedData.
+//
+//    Auto-init: on first load with data, isMetric is initialized to true if
+//    the majority of the user's lifts have unitType "kg", false (lb) otherwise.
+//    A flag ("SJ_unitPreferenceSet" in localStorage) prevents this auto-init
+//    from ever overriding an explicit user choice.
+//
+// RULE: never render {lift.weight}{lift.unitType} directly in UI code.
+//       Always call getDisplayWeight(lift, isMetric) so that the user's
+//       display preference is respected and any necessary conversion is applied.
+//
+// The function below is the single conversion point for the entire app.
+// =============================================================================
+
 /**
  * Convert a lift's weight to the display unit preferred by the user.
- * Returns exact native values when no conversion is needed to avoid rounding artifacts.
  *
- * @param {{ weight: number, unitType: string }} lift - Lift object with weight + unitType
- * @param {boolean} isMetric - User's display preference (true = kg, false = lb)
+ * When the lift's native unit already matches the user's preference, the
+ * original value is returned unchanged (no rounding artifacts). When a
+ * conversion is needed, the result is rounded to one decimal place.
+ *
+ * @param {{ weight: number, unitType: string }} lift - Lift object (or any object
+ *   with `weight` and `unitType` — also works for tonnage totals, E1RM estimates, etc.)
+ * @param {boolean} isMetric - User's display preference from useAthleteBio() (true = kg, false = lb)
  * @returns {{ value: number, unit: string }}
  */
 export function getDisplayWeight(lift, isMetric) {

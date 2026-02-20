@@ -29,6 +29,7 @@ import {
 
 import {
   getCelebrationEmoji,
+  getDisplayWeight,
   getReadableDateString,
 } from "@/lib/processing-utils";
 
@@ -41,6 +42,7 @@ import { Button, buttonVariants } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { findBestE1RM } from "@/lib/processing-utils";
 import { useReadLocalStorage } from "usehooks-ts";
 
@@ -168,6 +170,7 @@ export function ExpandedLiftAchievements({ liftType }) {
 export const LiftTypeSummaryStatistics = ({ liftType }) => {
   const { liftTypes, topLiftsByTypeAndReps, topTonnageByType, topTonnageByTypeLast12Months } =
     useUserLiftingData();
+  const { isMetric } = useAthleteBio();
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false }) ?? "Brzycki";
 
@@ -199,6 +202,17 @@ export const LiftTypeSummaryStatistics = ({ liftType }) => {
     (heaviestLast12.date !== heaviestSession.date ||
       heaviestLast12.tonnage !== heaviestSession.tonnage);
 
+  const heaviestSessionDisplay = heaviestSession
+    ? getDisplayWeight({ weight: heaviestSession.tonnage, unitType: heaviestSession.unitType }, isMetric)
+    : null;
+  const heaviestLast12Display = heaviestLast12
+    ? getDisplayWeight({ weight: heaviestLast12.tonnage, unitType: heaviestLast12.unitType }, isMetric)
+    : null;
+  const e1rmDisplay = bestLift
+    ? getDisplayWeight({ weight: bestE1RMWeight, unitType: bestLift.unitType }, isMetric)
+    : null;
+  const bestLiftDisplay = bestLift ? getDisplayWeight(bestLift, isMetric) : null;
+
   return (
     <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
       <div className="col-span-2 text-lg font-semibold">
@@ -215,29 +229,29 @@ export const LiftTypeSummaryStatistics = ({ liftType }) => {
       {oneRM && <div className="font-semibold shrink-0">Best single:</div>}
       {oneRM && (
         <div>
-          {oneRM.weight}
-          {oneRM.unitType} ({getReadableDateString(oneRM.date)})
+          {getDisplayWeight(oneRM, isMetric).value}
+          {getDisplayWeight(oneRM, isMetric).unit} ({getReadableDateString(oneRM.date)})
         </div>
       )}
       {threeRM && <div className="font-semibold shrink-0">Best triple:</div>}
       {threeRM && (
         <div>
-          {threeRM.weight}
-          {threeRM.unitType} ({getReadableDateString(threeRM.date)})
+          {getDisplayWeight(threeRM, isMetric).value}
+          {getDisplayWeight(threeRM, isMetric).unit} ({getReadableDateString(threeRM.date)})
         </div>
       )}
       {fiveRM && <div className="font-semibold shrink-0">Best five:</div>}
       {fiveRM && (
         <div>
-          {fiveRM.weight}
-          {fiveRM.unitType} ({getReadableDateString(fiveRM.date)})
+          {getDisplayWeight(fiveRM, isMetric).value}
+          {getDisplayWeight(fiveRM, isMetric).unit} ({getReadableDateString(fiveRM.date)})
         </div>
       )}
       {heaviestSession && (
         <>
           <div className="font-semibold shrink-0">Heaviest session:</div>
           <div>
-            {Math.round(heaviestSession.tonnage).toLocaleString()} {heaviestSession.unitType} (
+            {Math.round(heaviestSessionDisplay.value).toLocaleString()} {heaviestSessionDisplay.unit} (
             {getReadableDateString(heaviestSession.date)})
           </div>
         </>
@@ -246,17 +260,17 @@ export const LiftTypeSummaryStatistics = ({ liftType }) => {
         <>
           <div className="font-semibold shrink-0">Heaviest (12 mo):</div>
           <div>
-            {Math.round(heaviestLast12.tonnage).toLocaleString()} {heaviestLast12.unitType} (
+            {Math.round(heaviestLast12Display.value).toLocaleString()} {heaviestLast12Display.unit} (
             {getReadableDateString(heaviestLast12.date)})
           </div>
         </>
       )}
       {bestLift && (
         <div className="col-span-2 mt-4">
-          Your highest potential {liftType} is {bestE1RMWeight}
-          {unitType} based on your {getReadableDateString(bestLift.date)} set of{" "}
-          {bestLift.reps}@{bestLift.weight}
-          {bestLift.unitType} (using {e1rmFormula} formula).
+          Your highest potential {liftType} is {e1rmDisplay.value}
+          {e1rmDisplay.unit} based on your {getReadableDateString(bestLift.date)} set of{" "}
+          {bestLift.reps}@{bestLiftDisplay.value}
+          {bestLiftDisplay.unit} (using {e1rmFormula} formula).
         </div>
       )}
     </div>
@@ -265,6 +279,7 @@ export const LiftTypeSummaryStatistics = ({ liftType }) => {
 
 export const LiftTypeRepPRsAccordion = ({ liftType }) => {
   const { topLiftsByTypeAndReps } = useUserLiftingData();
+  const { isMetric } = useAthleteBio();
   if (!topLiftsByTypeAndReps) return null;
 
   const topLiftsByReps = topLiftsByTypeAndReps?.[liftType];
@@ -283,7 +298,7 @@ export const LiftTypeRepPRsAccordion = ({ liftType }) => {
               value={`${liftType}-${index + 1}`}
             >
               <AccordionTrigger>
-                {`${index + 1}@${repRange[0].weight}${repRange[0].unitType}`},{" "}
+                {index + 1}@{getDisplayWeight(repRange[0], isMetric).value}{getDisplayWeight(repRange[0], isMetric).unit},{" "}
                 {getReadableDateString(repRange[0].date)}.
               </AccordionTrigger>
               <AccordionContent>
@@ -293,7 +308,7 @@ export const LiftTypeRepPRsAccordion = ({ liftType }) => {
                       <li key={liftIndex}>
                         <div className="grid grid-cols-4 even:bg-muted/40 md:grid-cols-6">
                           <div>
-                            {`${index + 1}@${lift.weight}${lift.unitType}  `}
+                            {index + 1}@{getDisplayWeight(lift, isMetric).value}{getDisplayWeight(lift, isMetric).unit}{"  "}
                           </div>
                           <div>
                             {lift.URL && (
@@ -328,6 +343,7 @@ export const LiftTypeRepPRsAccordion = ({ liftType }) => {
 
 export const LiftTypeRecentHighlights = ({ liftType }) => {
   const { topLiftsByTypeAndReps } = useUserLiftingData();
+  const { isMetric } = useAthleteBio();
   if (!topLiftsByTypeAndReps) return null;
 
   // Compute cutoff once, then use string comparison in the filter
@@ -358,8 +374,8 @@ export const LiftTypeRecentHighlights = ({ liftType }) => {
             className="mb-1 grid grid-cols-4 even:bg-muted/40 md:grid-cols-6"
           >
             <div>
-              {lift.reps}@{lift.weight}
-              {lift.unitType}
+              {lift.reps}@{getDisplayWeight(lift, isMetric).value}
+              {getDisplayWeight(lift, isMetric).unit}
             </div>
             <div>{getReadableDateString(lift.date)}</div>
             <div className="col-span-2">
@@ -396,6 +412,7 @@ const ACCORDION_HEADER_RIGHT_SPACE = "pr-12 md:pr-12";
 function PopularLiftAccordionTriggerRow({ liftType }) {
   const { liftTypes, topLiftsByTypeAndReps } = useUserLiftingData();
   const { getColor } = useLiftColors();
+  const { isMetric } = useAthleteBio();
 
   const lift = liftTypes?.find((l) => l.liftType === liftType);
   const topLiftsByReps = topLiftsByTypeAndReps?.[liftType];
@@ -407,7 +424,7 @@ function PopularLiftAccordionTriggerRow({ liftType }) {
   const totalSets = lift?.totalSets ?? 0;
 
   const prCell = (pr) =>
-    pr ? `${pr.weight}${pr.unitType}` : "—";
+    pr ? `${getDisplayWeight(pr, isMetric).value}${getDisplayWeight(pr, isMetric).unit}` : "—";
 
   return (
     <div className="w-full min-w-0 text-left">

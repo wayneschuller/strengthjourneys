@@ -461,8 +461,21 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
   }, [age, sex, bodyWeight, isMetric]);
 
   // Auto-initialize isMetric from the majority unit in the user's data.
-  // Only runs once, and only when no explicit user preference has been set yet.
-  // Priority: URL query param > localStorage preference > data-driven default > false (lb)
+  //
+  // WHY: new users land with isMetric=false (lb) by default because the app
+  // was originally US-focused. But kg users shouldn't have to manually toggle
+  // the setting on first visit — if their data is clearly in kg, we set isMetric
+  // automatically so every chart, PR, and analyzer display is correct from the start.
+  //
+  // Priority chain (highest wins):
+  //   1. SJ_unitPreferenceSet flag in localStorage — user has explicitly toggled the button
+  //   2. URL query param (calcIsMetric=true/false) — shared links from calculator pages
+  //   3. Majority unit from parsedData — this auto-init (runs once on first data load)
+  //   4. false (lb) — no data, demo mode, or 50/50 split defaults to lb
+  //
+  // The SJ_unitPreferenceSet flag is set by any explicit user action (toggleIsMetric,
+  // setIsMetric, UnitChooser button, or URL param detection). Once set, this block
+  // never overrides it — the user's choice is permanent until they toggle again.
   const hasAutoInitRef = useRef(false);
   useEffect(() => {
     if (hasAutoInitRef.current) return;

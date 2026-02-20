@@ -181,7 +181,16 @@ function parseBespokeData(data) {
     objectsArray.push(obj);
   }
 
-  // Two-pass smart default: count explicit unit declarations, assign majority to ambiguous entries
+  // Two-pass smart default for unitType
+  //
+  // Why: users often write weights without a unit suffix (e.g. "100" instead of
+  // "100kg"). A blind default of "lb" would mislabel kg-only users' data.
+  //
+  // How: convertWeightAndUnitType() tags each row with _explicitUnit: true when
+  // a suffix was present (e.g. "100kg", "225lb"), or null when ambiguous ("100").
+  // After the first pass we count explicit kg vs lb declarations. If kg wins,
+  // every ambiguous entry inherits "kg" as its unitType — matching what the user
+  // almost certainly intended. On a tie (or all-lb majority), we default to "lb".
   let explicitKg = 0;
   let explicitLb = 0;
   objectsArray.forEach((obj) => {

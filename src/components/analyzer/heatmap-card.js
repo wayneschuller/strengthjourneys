@@ -9,7 +9,9 @@ import {
   devLog,
   logTiming,
   getReadableDateString,
+  getDisplayWeight,
 } from "@/lib/processing-utils";
+import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LoaderCircle } from "lucide-react";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
@@ -290,6 +292,7 @@ function Heatmap({ parsedData, startDate, endDate, isSharing }) {
 
 function HeatmapTooltipContent({ value }) {
   const { sessionData, date } = value;
+  const { isMetric } = useAthleteBio();
   if (!sessionData) return null;
 
   const { totalSets, uniqueLifts, prs, liftsByType } = sessionData;
@@ -325,8 +328,8 @@ function HeatmapTooltipContent({ value }) {
               </span>
               <LiftTypeIndicator liftType={pr.liftType} />
               <span className="text-muted-foreground">
-                {pr.reps}@{pr.weight}
-                {pr.unitType}
+                {pr.reps}@{getDisplayWeight(pr, isMetric).value}
+                {getDisplayWeight(pr, isMetric).unit}
               </span>
             </div>
           ))}
@@ -337,7 +340,7 @@ function HeatmapTooltipContent({ value }) {
         {visibleLifts.map((liftType) => (
           <div key={liftType}>
             <LiftTypeIndicator liftType={liftType} />
-            <SessionRow lifts={liftsByType[liftType]} showDate={false} />
+            <SessionRow lifts={liftsByType[liftType]} showDate={false} isMetric={isMetric} />
           </div>
         ))}
         {hiddenCount > 0 && (

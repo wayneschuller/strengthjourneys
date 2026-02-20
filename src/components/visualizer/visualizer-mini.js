@@ -206,6 +206,9 @@ export function VisualizerMini({ liftType }) {
   // Shadcn charts needs this for theming but we just do custom colors anyway
   const chartConfig = { [liftType]: { label: liftType } };
 
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => { setIsMounted(true); }, []);
+
   const handleMouseMove = (event) => {
     if (event && event.activePayload) {
       const activeIndex = event.activeTooltipIndex;
@@ -291,7 +294,7 @@ export function VisualizerMini({ liftType }) {
       </CardHeader>
 
       <CardContent className="pl-0 pr-2">
-        {chartData && (
+        {isMounted && chartData && (
             <ChartContainer config={chartConfig} className="h-[400px] !aspect-auto">
               <AreaChart
                 accessibilityLayer

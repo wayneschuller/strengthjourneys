@@ -8,7 +8,7 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
-import { getReadableDateString } from "@/lib/processing-utils";
+import { getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useReadLocalStorage, useWindowSize } from "usehooks-ts";
@@ -33,6 +33,15 @@ export function StandardsSlider({
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, { initializeWithValue: false }) ?? "Brzycki";
 
   const unitType = isMetric ? "kg" : "lb";
+
+  // Determine the native unit type from the user's actual lift data for this lift type.
+  // This may differ from unitType when the user has toggled isMetric away from their data's
+  // native unit (e.g. lb data viewed in kg mode). All lift weights/e1rms from parsedData
+  // and topLiftsByTypeAndReps are in this native unit and must be converted before comparing
+  // against `standards`, which are always in the display unit (see useAthleteBioData).
+  const firstLiftForType = (isYearly ? topLiftsByTypeAndRepsLast12Months : topLiftsByTypeAndReps)?.[liftType]?.[0]?.[0];
+  const nativeUnitType = firstLiftForType?.unitType || unitType;
+  const toDisplay = (w) => getDisplayWeight({ weight: w, unitType: nativeUnitType }, isMetric).value;
 
   // --- Compute period-best E1RMs (1M / 6M / 1Y / 2Y / 5Y / 10Y) ---
   const periodBestNotches = useMemo(() => {
@@ -120,6 +129,9 @@ export function StandardsSlider({
   let strengthRating = null;
   let bestWeightTuple = null;
   let bestE1RMTuple = null;
+  // Raw (native-unit) copies kept for dedup comparison against period notches
+  let rawBestWeightTuple = null;
+  let rawBestE1RMTuple = null;
   if (authStatus === "authenticated") {
     const topLifts = isYearly
       ? topLiftsByTypeAndRepsLast12Months?.[liftType]
@@ -135,22 +147,35 @@ export function StandardsSlider({
       e1rmFormula,
       bioForDateRating,
     );
-    athleteRankingWeight = stats.bestWeight;
-    highestE1RM = stats.bestE1RM;
+    // Convert from native lift unit to display unit so positions on the slider
+    // are consistent with the standards scale (which is already in display unit).
+    athleteRankingWeight = stats.bestWeight > 0 ? toDisplay(stats.bestWeight) : 0;
+    highestE1RM = stats.bestE1RM > 0 ? toDisplay(stats.bestE1RM) : 0;
     strengthRating = stats.strengthRating;
-    bestWeightTuple = stats.bestWeightTuple;
-    bestE1RMTuple = stats.bestE1RMTuple;
+    // Keep raw (unconverted) copies for dedup comparison against period notches (also native unit)
+    rawBestWeightTuple = stats.bestWeightTuple;
+    rawBestE1RMTuple = stats.bestE1RMTuple;
+    bestWeightTuple = stats.bestWeightTuple
+      ? { ...stats.bestWeightTuple, weight: toDisplay(stats.bestWeightTuple.weight) }
+      : null;
+    bestE1RMTuple = stats.bestE1RMTuple
+      ? { ...stats.bestE1RMTuple, weight: toDisplay(stats.bestE1RMTuple.weight), e1rm: toDisplay(stats.bestE1RMTuple.e1rm) }
+      : null;
   }
 
-  const periodMinE1RM =
+  // Convert period notch e1rms to display unit before computing userMin,
+  // so the scale is consistent with standards (which are in display unit).
+  const periodMinE1RMDisplay =
     periodBestNotches.length > 0
-      ? Math.min(...periodBestNotches.map((notch) => notch.e1rm))
+      ? Math.min(...periodBestNotches.map((n) =>
+          getDisplayWeight({ weight: n.e1rm, unitType: n.unitType || nativeUnitType }, isMetric).value,
+        ))
       : Infinity;
   const userMin =
     authStatus === "authenticated"
       ? Math.min(
           athleteRankingWeight > 0 ? athleteRankingWeight : Infinity,
-          periodMinE1RM,
+          periodMinE1RMDisplay,
         )
       : Infinity;
   const effectiveMin = Number.isFinite(userMin)
@@ -228,33 +253,38 @@ export function StandardsSlider({
     });
   }
 
-  // Skip period notches that duplicate the lifetime PR or E1RM
+  // Skip period notches that duplicate the lifetime PR or E1RM.
+  // Compare against raw (native-unit) tuples since period notch weights are also native.
   const isSameLift = (a, b) =>
     a && b && a.date === b.date && a.reps === b.reps && a.weight === b.weight;
 
   if (periodBestNotches.length > 0) {
     for (const notch of periodBestNotches) {
-      if (isSameLift(notch, bestWeightTuple) || isSameLift(notch, bestE1RMTuple))
+      if (isSameLift(notch, rawBestWeightTuple) || isSameLift(notch, rawBestE1RMTuple))
         continue;
-      const notchUnit = notch.unitType || unitType;
+      // Convert notch values to display unit (same unit as standards scale)
+      const notchE1rmDisplay = getDisplayWeight({ weight: notch.e1rm, unitType: notch.unitType || nativeUnitType }, isMetric).value;
+      const notchWeightDisplay = typeof notch.weight === "number"
+        ? getDisplayWeight({ weight: notch.weight, unitType: notch.unitType || nativeUnitType }, isMetric).value
+        : notch.weight;
       allNotches.push({
-        key: notch.periodKey || notch.label || `extra-${getPercent(notch.e1rm)}`,
-        percent: getPercent(notch.e1rm),
+        key: notch.periodKey || notch.label || `extra-${getPercent(notchE1rmDisplay)}`,
+        percent: getPercent(notchE1rmDisplay),
         shortLabel: notch.shortLabel || notch.periodKey,
         zIndex: 10,
         tooltipContent: (
           <div className="space-y-0.5">
             <div className="font-semibold">
-              {notch.label} E1RM: ~{Math.round(notch.e1rm)}{notchUnit}
+              {notch.label} E1RM: ~{Math.round(notchE1rmDisplay)}{unitType}
               {bodyWeight > 0 && (
                 <span className="font-normal text-muted-foreground">
-                  {" "}({(notch.e1rm / bodyWeight).toFixed(2)}×BW)
+                  {" "}({(notchE1rmDisplay / bodyWeight).toFixed(2)}×BW)
                 </span>
               )}
             </div>
             <div className="text-muted-foreground">
               {typeof notch.reps === "number" && typeof notch.weight === "number" && (
-                <>{notch.reps} × {notch.weight}{notchUnit}</>
+                <>{notch.reps} × {notchWeightDisplay}{unitType}</>
               )}
               {typeof notch.reps === "number" && typeof notch.weight === "number" && notch.date && " · "}
               {notch.date && getReadableDateString(notch.date)}

@@ -20,10 +20,18 @@ import { estimateE1RM } from "./estimate-e1rm";
 //    Toggling it changes how weights are shown everywhere in the app — charts,
 //    PRs, analyzer, year recap, tooltips — without touching parsedData.
 //
-//    Auto-init: on first load with data, isMetric is initialized to true if
-//    the majority of the user's lifts have unitType "kg", false (lb) otherwise.
-//    A flag ("SJ_unitPreferenceSet" in localStorage) prevents this auto-init
-//    from ever overriding an explicit user choice.
+//    Priority for how isMetric is resolved (highest wins):
+//      a. URL query param (?calcIsMetric=true/false) — always wins. Shared
+//         calculator links bring their own unit; the recipient sees what was shared,
+//         even if their localStorage says otherwise.
+//      b. SJ_unitPreferenceSet in localStorage — set by any explicit action (toggle,
+//         URL-param visit, or auto-init). Once set, subsequent visits without a URL
+//         param honor the stored preference instead of re-running auto-init.
+//      c. Data majority auto-init — one-time init for fresh users: kg wins if
+//         >50% of their lifts have unitType "kg".
+//      d. false (lb) — default for new/demo users and ties.
+//
+//    Implemented in: use-athlete-biodata.js (AthleteBioProvider auto-init effect).
 //
 // RULE: never render {lift.weight}{lift.unitType} directly in UI code.
 //       Always call getDisplayWeight(lift, isMetric) so that the user's

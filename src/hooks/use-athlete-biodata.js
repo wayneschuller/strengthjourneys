@@ -468,29 +468,40 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
   // automatically so every chart, PR, and analyzer display is correct from the start.
   //
   // Priority chain (highest wins):
-  //   1. SJ_unitPreferenceSet flag in localStorage — user has explicitly toggled the button
-  //   2. URL query param (calcIsMetric=true/false) — shared links from calculator pages
-  //   3. Majority unit from parsedData — this auto-init (runs once on first data load)
-  //   4. false (lb) — no data, demo mode, or 50/50 split defaults to lb
+  //   1. URL query param (calcIsMetric=true/false) — always wins. Shared links from
+  //      calculator pages bring their own unit; the recipient should see what was shared.
+  //      Note: useStateFromQueryOrLocalStorage already applies URL → isMetric state before
+  //      this effect runs, so here we just mark it as an explicit preference and skip
+  //      data auto-init. No need to call setIsMetric.
+  //   2. SJ_unitPreferenceSet flag in localStorage — user has previously made an explicit
+  //      choice (toggle, URL param visit, or auto-init completed). Honor it and return.
+  //   3. Majority unit from parsedData — one-time auto-init for fresh users. If the user's
+  //      data is majority kg, start them in kg mode so everything looks right immediately.
+  //   4. false (lb) — no data, demo mode, or tie → default remains lb.
   //
-  // The SJ_unitPreferenceSet flag is set by any explicit user action (toggleIsMetric,
-  // setIsMetric, UnitChooser button, or URL param detection). Once set, this block
-  // never overrides it — the user's choice is permanent until they toggle again.
+  // The SJ_unitPreferenceSet flag is set by any explicit action: toggling the UnitChooser,
+  // setIsMetric(), visiting a URL with the param, or completing data auto-init. Once set,
+  // this effect never overrides the user's choice on future visits.
   const hasAutoInitRef = useRef(false);
   useEffect(() => {
-    if (hasAutoInitRef.current) return;
-    if (!parsedData?.length) return;
     if (typeof window === "undefined") return;
-    hasAutoInitRef.current = true;
+    if (!router.isReady) return;
 
-    // Skip if user (or URL param) has already set an explicit preference
-    if (localStorage.getItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET)) return;
-
-    // Skip if the current URL has a calcIsMetric param (shared link) — respect it
-    if (router.isReady && router.query[LOCAL_STORAGE_KEYS.CALC_IS_METRIC] !== undefined) {
+    // 1. URL query param always wins (highest priority).
+    //    useStateFromQueryOrLocalStorage already applied it to isMetric; we just
+    //    mark the preference as set so data auto-init doesn't run on top of it.
+    if (router.query[LOCAL_STORAGE_KEYS.CALC_IS_METRIC] !== undefined) {
       localStorage.setItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET, "1");
       return;
     }
+
+    // 2. User has already made an explicit choice — respect it, nothing to do.
+    if (localStorage.getItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET)) return;
+
+    // 3. One-time data auto-init for fresh users (no URL param, no stored preference).
+    if (hasAutoInitRef.current) return;
+    if (!parsedData?.length) return;
+    hasAutoInitRef.current = true;
 
     // Count units across all lifts and use the majority
     let kgCount = 0;
@@ -505,8 +516,8 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     }
     // Mark as initialized so future loads don't override the user's subsequent choices
     localStorage.setItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET, "1");
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- router excluded to prevent infinite loop
-  }, [parsedData, router.isReady]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- router object excluded to prevent infinite loop; router.query and router.isReady are explicit
+  }, [parsedData, router.isReady, router.query]);
 
   // Helper function - if user toggles unit type, update isMetric and bodyweight state
   const toggleIsMetric = (isMetric) => {

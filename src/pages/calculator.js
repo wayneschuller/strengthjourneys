@@ -70,11 +70,11 @@ export async function getStaticProps() {
 }
 
 export default function E1RMCalculator({ relatedArticles }) {
-  const title = "One Rep Max Calculator | Free tool, no login required";
+  const title = "One Rep Max Calculator | Free 1RM Tool, No Login Required";
   const description =
-    "The worlds greatest one-rep max (ORM) calculator. With multiple algorithms, units, and personalized strength ratings. For strong fat thumbed atheletes. Mobile friendly UI.";
+    "Free 1RM calculator using 5 proven formulas (Epley, Brzycki & more). Get rep-max projection tables, percentage training guides, and Big Four strength level ratings benchmarked to your age, sex, and bodyweight. No login required.";
   const keywords =
-    "One rep max calculator, orm calcaultor, ORM calculator, OneRM Calculator , 1RM estimation tool, Weightlifting max calculator, Powerlifting 1RM calculator, Max lift predictor, orm calculator, Strength level estimator, Gym performance calculator, e1RM calculator, Max weight calculator, Barbell load calculator";
+    "one rep max calculator, 1RM calculator, ORM calculator, e1RM calculator, Epley formula, Brzycki formula, powerlifting 1RM calculator, weightlifting max calculator, max lift predictor, strength level estimator, rep max projections, percentage calculator, Big Four strength standards, barbell load calculator";
   const canonicalURL = "https://www.strengthjourneys.xyz/calculator";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";
@@ -358,8 +358,9 @@ function E1RMCalculatorMain({ relatedArticles }) {
           One Rep Max Calculator
         </PageHeaderHeading>
         <PageHeaderDescription>
-          Estimate your max single based on reps and weight. With optional
-          strength level insights.
+          Enter reps and weight to estimate your one-rep max across 5 proven
+          formulas. See rep-max projections, percentage training guides, and
+          personalized Big Four strength levels by age, sex, and bodyweight.
         </PageHeaderDescription>
       </PageHeader>
       <Card>
@@ -734,7 +735,7 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric }) {
 
   return (
     <div>
-      <h3 className="mb-1 text-base font-semibold">Rep Max Projections</h3>
+      <h2 className="mb-1 text-base font-semibold">Rep Max Projections</h2>
       <p className="mb-3 text-sm text-muted-foreground">{e1rmFormula} algorithm</p>
       <div className="overflow-hidden rounded-lg border">
         <table className="w-full text-sm">
@@ -793,7 +794,7 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric }) {
 
   return (
     <div>
-      <h3 className="mb-1 text-base font-semibold">Percentage Calculator</h3>
+      <h2 className="mb-1 text-base font-semibold">Percentage Calculator</h2>
       <p className="mb-3 text-sm text-muted-foreground">
         Based on {e1rmWeight}{unit} estimated max
       </p>
@@ -857,7 +858,7 @@ function BigFourStrengthBars({ e1rmWeight, isMetric }) {
     <TooltipProvider>
       <div className="space-y-3">
         <div className="border-t pt-3">
-          <h3 className="text-center text-base font-semibold">Big Four Strength Levels</h3>
+          <h2 className="text-center text-base font-semibold">Big Four Strength Levels</h2>
           <div className="mt-1 flex justify-center">
             <AthleteBioQuickSettings variant="inline" />
           </div>

@@ -1148,7 +1148,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="text-xs">
-                      Copy {liftType} result
+                      Copy e1rm estimate with {liftType} rating included
                     </TooltipContent>
                   </Tooltip>
                 </div>

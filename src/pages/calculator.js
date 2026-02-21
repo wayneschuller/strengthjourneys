@@ -935,7 +935,7 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
               <div
                 key={label}
                 style={{ left: `${overviewPct(value)}%` }}
-                className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[9px] text-muted-foreground/60"
+                className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[11px] text-muted-foreground/80"
               >
                 {label}
               </div>
@@ -943,7 +943,7 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
           </div>
         )}
 
-        <div className="mt-1 flex justify-between text-xs text-foreground/70">
+        <div className="mt-1 flex justify-between text-sm text-foreground/90">
           <span>0{unit}</span>
           <span>{overviewMax}{unit}</span>
         </div>
@@ -959,10 +959,10 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
               onClick={() => setE1rmFormula(formula)}
               style={{ left: `${detailPct(value)}%` }}
               className={cn(
-                "absolute bottom-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-[10px] leading-none transition-colors",
+                "absolute bottom-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-xs leading-none transition-colors",
                 formula === e1rmFormula
                   ? "font-semibold text-foreground"
-                  : "text-muted-foreground/50 hover:text-muted-foreground",
+                  : "text-muted-foreground/80 hover:text-foreground",
               )}
             >
               {formula}
@@ -1016,10 +1016,10 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
               onClick={() => setE1rmFormula(formula)}
               style={{ left: `${detailPct(value)}%` }}
               className={cn(
-                "absolute top-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-[10px] leading-none transition-colors",
+                "absolute top-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-xs leading-none transition-colors",
                 formula === e1rmFormula
                   ? "font-semibold text-foreground"
-                  : "text-muted-foreground/50 hover:text-muted-foreground",
+                  : "text-muted-foreground/80 hover:text-foreground",
               )}
             >
               {formula}
@@ -1028,7 +1028,7 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
         </div>
 
         {/* Detail axis endpoints */}
-        <div className="mt-2 flex justify-between text-xs text-foreground/70">
+        <div className="mt-2 flex justify-between text-sm text-foreground/90">
           <span>{Math.round(detailMin)}{unit}</span>
           <span>{Math.round(detailMax)}{unit}</span>
         </div>

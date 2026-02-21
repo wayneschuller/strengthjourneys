@@ -1,5 +1,4 @@
 import Head from "next/head";
-import Link from "next/link";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
@@ -23,11 +22,7 @@ import {
   PageHeaderDescription,
 } from "@/components/page-header";
 
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  interpolateStandardKG,
-  LiftingStandardsKG,
-} from "@/lib/lifting-standards-kg";
+import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { Input } from "@/components/ui/input";
@@ -39,18 +34,14 @@ import { ShareCopyButton } from "@/components/share-copy-button";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { cn } from "@/lib/utils";
 
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage, useIsClient } from "usehooks-ts";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { useAthleteBio, getStrengthRatingForE1RM } from "@/hooks/use-athlete-biodata";
+import { useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
 import { useStateFromQueryOrLocalStorage } from "../hooks/use-state-from-query-or-localStorage";
 import { Calculator } from "lucide-react";
-import { useLiftColors } from "@/hooks/use-lift-colors";
 import {
   motion,
-  AnimatePresence,
   useMotionValue,
   useSpring,
   useTransform,
@@ -123,28 +114,12 @@ export default function E1RMCalculator({ relatedArticles }) {
 function E1RMCalculatorMain({ relatedArticles }) {
   const router = useRouter();
   const { toast } = useToast();
-  // Controls whether advanced UI/bio-based insights are shown
-  const [isAdvancedAnalysis, setIsAdvancedAnalysis] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.E1RM_ADVANCED_ANALYSIS,
-    false,
-    { initializeWithValue: false },
-  );
   const {
-    age,
-    setAge,
     isMetric,
     setIsMetric,
-    sex,
-    setSex,
     bodyWeight,
     setBodyWeight,
-    standards,
-    liftType,
-    setLiftType,
-  } = useAthleteBio({
-    modifyURLQuery: true,
-    isAdvancedAnalysis,
-  });
+  } = useAthleteBio({ modifyURLQuery: true });
   // Order matters: each includes the ones before it when syncing to URL.
   // Weight last so changing it syncs full state (reps, formula, unit type) → shareable URL.
   const [reps, setReps] = useStateFromQueryOrLocalStorage(
@@ -181,28 +156,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
   useEffect(() => {
     setThemeFontFamily(window.getComputedStyle(document.body).fontFamily);
   }, []);
-  const { getColor } = useLiftColors();
-
-  // When opening a shared link: turn on advanced UI if URL has all four athlete params or explicit advanced flag
-  useEffect(() => {
-    if (router.isReady && router.query) {
-      const {
-        AthleteLiftType,
-        AthleteSex,
-        AthleteBodyWeight,
-        AthleteAge,
-        advanced,
-      } = router.query;
-      const hasAdvancedParams =
-        AthleteLiftType && AthleteSex && AthleteBodyWeight && AthleteAge;
-      const hasAdvancedFlag =
-        advanced === "true" || advanced === true;
-      if (hasAdvancedParams || hasAdvancedFlag) {
-        setIsAdvancedAnalysis(true);
-      }
-    }
-  }, [router.isReady, router.query, setIsAdvancedAnalysis]);
-
   // Helper function
   const updateQueryParams = (updatedParams) => {
     router.replace(
@@ -213,41 +166,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
       undefined,
       { shallow: true },
     );
-  };
-
-  // Add/remove advanced params and explicit "advanced" flag so shared URLs restore full state
-  const updateAdvancedAnalysisQueryParams = (isEnabled) => {
-    const { query } = router;
-    const updatedQuery = { ...query };
-
-    if (isEnabled) {
-      updatedQuery.AthleteLiftType = liftType;
-      updatedQuery.AthleteSex = sex;
-      updatedQuery.AthleteBodyWeight = bodyWeight;
-      updatedQuery.AthleteAge = age;
-      updatedQuery[LOCAL_STORAGE_KEYS.CALC_IS_METRIC] = isMetric;
-      updatedQuery.advanced = "true";
-    } else {
-      delete updatedQuery.AthleteLiftType;
-      delete updatedQuery.AthleteSex;
-      delete updatedQuery.AthleteBodyWeight;
-      delete updatedQuery.AthleteAge;
-      delete updatedQuery.advanced;
-    }
-
-    router.replace(
-      {
-        pathname: router.pathname,
-        query: updatedQuery,
-      },
-      undefined,
-      { shallow: true },
-    );
-  };
-
-  const handleAdvancedAnalysisChange = (checked) => {
-    setIsAdvancedAnalysis(checked);
-    updateAdvancedAnalysisQueryParams(checked);
   };
 
   const handleWeightSliderChange = (value) => {
@@ -321,46 +239,20 @@ function E1RMCalculatorMain({ relatedArticles }) {
         .join("&");
     };
 
-    let sentenceToCopy;
-
     const unit = getUnitSuffix(isMetric);
-
     const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
 
-    if (!isAdvancedAnalysis) {
-      const queryString = createQueryString({
-        reps: reps,
-        weight: weight,
-        calcIsMetric: isMetric,
-        formula: e1rmFormula,
-      });
+    const queryString = createQueryString({
+      reps: reps,
+      weight: weight,
+      calcIsMetric: isMetric,
+      formula: e1rmFormula,
+    });
 
-      sentenceToCopy =
-        `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
-        `using the ${e1rmFormula} algorithm.\n` +
-        `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
-    } else {
-      const queryString = createQueryString({
-        reps: reps,
-        weight: weight,
-        calcIsMetric: isMetric,
-        formula: e1rmFormula,
-        AthleteAge: age,
-        AthleteBodyWeight: bodyWeight,
-        AthleteSex: sex,
-        AthleteLiftType: liftType,
-        advanced: "true",
-      });
-
-      const bodyWeightMultiplier = (e1rmWeight / bodyWeight).toFixed(2);
-
-      sentenceToCopy =
-        `${liftType} ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
-        `using the ${e1rmFormula} algorithm.\n` +
-        `${bodyWeightMultiplier}x bodyweight.\n` +
-        `Lift Strength Rating: ${liftRating}\n` +
-        `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
-    }
+    const sentenceToCopy =
+      `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
+      `using the ${e1rmFormula} algorithm.\n` +
+      `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
 
     // Create a temporary textarea element
     const textarea = document.createElement("textarea");
@@ -452,24 +344,8 @@ function E1RMCalculatorMain({ relatedArticles }) {
     }
   };
 
-  const sortedFormulae = getSortedFormulae(reps, weight);
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
-  const liftColor = isAdvancedAnalysis ? getColor(liftType) : null;
   const unit = getUnitSuffix(isMetric);
-
-  let liftRating = "";
-
-  if (isAdvancedAnalysis)
-    liftRating = getStandardRatingString(
-      age,
-      bodyWeight,
-      sex,
-      reps,
-      weight,
-      liftType,
-      isMetric,
-      e1rmFormula,
-    );
 
   return (
     <PageContainer>
@@ -551,7 +427,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
             </div>
           </div>
 
-          {/* Hidden portrait card — 9:16 for Instagram Stories image capture (360×640 → 1080×1920 at scale:3) */}
+          {/* Hidden portrait card — 9:16 for Instagram Stories image capture */}
           <div
             ref={portraitRef}
             style={{
@@ -561,142 +437,52 @@ function E1RMCalculatorMain({ relatedArticles }) {
               width: "360px",
               height: "640px",
               fontFamily: themeFontFamily,
-              ...(liftColor ? { borderTopColor: liftColor, borderTopWidth: 8 } : {}),
             }}
             className="relative flex flex-col items-center justify-center gap-6 rounded-xl border-4 bg-card px-8 py-10 text-card-foreground"
           >
-            {/* Label + context */}
             <div className="w-full text-center" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
                 One Rep Max
               </div>
-              {isAdvancedAnalysis && (
-                <div style={{ fontSize: "26px", fontWeight: 700, color: liftColor || "inherit" }}>
-                  {liftType}
-                </div>
-              )}
               <div style={{ fontSize: "20px", opacity: 0.6 }}>
                 {reps} reps @ {weight}{isMetric ? "kg" : "lb"}
               </div>
             </div>
-
-            {/* Hero number */}
             <div style={{ textAlign: "center", lineHeight: 1 }}>
-              <div style={{ fontSize: "128px", fontWeight: 800, letterSpacing: "-0.04em", color: liftColor || "inherit" }}>
+              <div style={{ fontSize: "128px", fontWeight: 800, letterSpacing: "-0.04em" }}>
                 {e1rmWeight}
               </div>
               <div style={{ fontSize: "40px", fontWeight: 700, opacity: 0.55, marginTop: "4px" }}>
                 {isMetric ? "kg" : "lb"}
               </div>
             </div>
-
-            {/* Strength rating (advanced only) */}
-            {isAdvancedAnalysis && liftRating && (
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
-                  Strength Rating
-                </div>
-                <div style={{ fontSize: "30px", fontWeight: 700, marginTop: "4px" }}>{liftRating}</div>
-              </div>
-            )}
-
-            {/* Formula */}
             <div style={{ fontSize: "15px", opacity: 0.45 }}>
               {e1rmFormula} formula
             </div>
           </div>
 
-          {/* Layout: two-col when insights ON, centered single-col when OFF */}
-          <div className={cn(
-            "my-6",
-            isAdvancedAnalysis
-              ? "grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr] lg:items-start"
-              : "flex flex-col items-center gap-3",
-          )}>
-
-            {/* Hero + copy buttons. When insights OFF, also shows the inline toggle. */}
-            <div className="flex flex-col items-center gap-3">
-              <E1RMSummaryCard
-                reps={reps}
-                weight={weight}
-                isMetric={isMetric}
-                e1rmFormula={e1rmFormula}
-                estimateE1RM={estimateE1RM}
-                isAdvancedAnalysis={isAdvancedAnalysis}
-                liftType={liftType}
-                liftRating={liftRating}
-                bodyWeight={bodyWeight}
+          {/* Hero card — always centered */}
+          <div className="my-6 flex flex-col items-center gap-3">
+            <E1RMSummaryCard
+              reps={reps}
+              weight={weight}
+              isMetric={isMetric}
+              e1rmFormula={e1rmFormula}
+              estimateE1RM={estimateE1RM}
+            />
+            <div className="flex gap-2">
+              <ShareCopyButton label="Copy Text" onClick={handleCopyToClipboard} />
+              <ShareCopyButton
+                label="Copy Image"
+                onClick={handleCopyImage}
+                isLoading={isCapturingImage}
+                disabled={isCapturingImage}
+                tooltip="Copy portrait image for Instagram Stories"
               />
-              <div className="flex gap-2">
-                <ShareCopyButton label="Copy Text" onClick={handleCopyToClipboard} />
-                <ShareCopyButton
-                  label="Copy Image"
-                  onClick={handleCopyImage}
-                  isLoading={isCapturingImage}
-                  disabled={isCapturingImage}
-                  tooltip="Copy portrait image for Instagram Stories"
-                />
-              </div>
-              {!isAdvancedAnalysis && (
-                <label
-                  htmlFor="advanced-inline"
-                  className="mt-1 flex cursor-pointer select-none items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <Checkbox
-                    id="advanced-inline"
-                    checked={false}
-                    onCheckedChange={handleAdvancedAnalysisChange}
-                  />
-                  Strength Level Insights
-                </label>
-              )}
             </div>
-
-            {/* Right column: full insights Card — only rendered when insights ON */}
-            <AnimatePresence>
-              {isAdvancedAnalysis && (
-                <motion.div
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 16 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                >
-                  <Card className="border-muted/60">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="advanced"
-                          checked={true}
-                          onCheckedChange={handleAdvancedAnalysisChange}
-                        />
-                        <label
-                          htmlFor="advanced"
-                          className="cursor-pointer select-none text-base font-semibold leading-none"
-                        >
-                          Strength Level Insights
-                        </label>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <OptionalAtheleBioData
-                        isMetric={isMetric}
-                        bodyWeight={bodyWeight}
-                        setBodyWeight={setBodyWeight}
-                        liftType={liftType}
-                        setLiftType={setLiftType}
-                        age={age}
-                        setAge={setAge}
-                        sex={sex}
-                        setSex={setSex}
-                      />
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
 
-          {/* Algorithm Range Bar — full width below both columns */}
+          {/* Algorithm comparison bar */}
           <div className="mb-6">
             <AlgorithmRangeBars
               reps={reps}
@@ -704,11 +490,12 @@ function E1RMCalculatorMain({ relatedArticles }) {
               isMetric={isMetric}
               e1rmFormula={e1rmFormula}
               setE1rmFormula={setE1rmFormula}
-              liftColor={liftColor}
-              isAdvancedAnalysis={isAdvancedAnalysis}
-              standards={standards}
-              liftType={liftType}
             />
+          </div>
+
+          {/* Big Four strength standards — always shown */}
+          <div className="mb-6">
+            <BigFourStrengthBars e1rmWeight={e1rmWeight} isMetric={isMetric} />
           </div>
 
           {/* Rep Range + Percentage Tables side by side */}
@@ -719,8 +506,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
               weight={weight}
               e1rmFormula={e1rmFormula}
               isMetric={isMetric}
-              isAdvancedAnalysis={isAdvancedAnalysis}
-              liftType={liftType}
             />
             <PercentageTable
               key={`pct-${e1rmFormula}-${weight}-${reps}`}
@@ -728,8 +513,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
               weight={weight}
               e1rmFormula={e1rmFormula}
               isMetric={isMetric}
-              isAdvancedAnalysis={isAdvancedAnalysis}
-              liftType={liftType}
             />
           </div>
 
@@ -740,40 +523,12 @@ function E1RMCalculatorMain({ relatedArticles }) {
   );
 }
 
-const liftSlugMap = {
-  "Back Squat": "barbell-squat-insights",
-  "Bench Press": "barbell-bench-press-insights",
-  "Deadlift": "barbell-deadlift-insights",
-  "Strict Press": "barbell-strict-press-insights",
-};
 
-const getSortedFormulae = (reps, weight) => {
-  return e1rmFormulae.slice().sort((a, b) => {
-    const e1rmA = estimateE1RM(reps, weight, a);
-    const e1rmB = estimateE1RM(reps, weight, b);
-    return e1rmA - e1rmB;
-  });
-};
-
-// Hero card showing the e1rm result. Animates the number up/down with a spring
-// when reps, weight, or formula changes. Shows lift type, bodyweight ratio, and
-// strength rating when Strength Level Insights is enabled.
-const E1RMSummaryCard = ({
-  reps,
-  weight,
-  isMetric,
-  e1rmFormula,
-  estimateE1RM,
-  isAdvancedAnalysis,
-  liftRating,
-  liftType,
-  bodyWeight,
-}) => {
+// Hero card — just the animated e1rm number, set/formula context, and bodyweight ratio.
+const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM }) => {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
-  const { getColor } = useLiftColors();
-  const liftColor = isAdvancedAnalysis ? getColor(liftType) : null;
+  const { bodyWeight } = useAthleteBio();
 
-  // Animated count-up/count-down when e1rm changes
   const motionVal = useMotionValue(e1rmWeight);
   const springVal = useSpring(motionVal, { stiffness: 200, damping: 20 });
   const displayVal = useTransform(springVal, (v) => Math.round(v));
@@ -783,55 +538,23 @@ const E1RMSummaryCard = ({
   }, [e1rmWeight, motionVal]);
 
   return (
-    <Card
-      className="w-full max-w-md border-4"
-      style={liftColor ? { borderTopColor: liftColor, borderTopWidth: 6 } : {}}
-    >
+    <Card className="w-full max-w-md border-4">
       <CardHeader>
         <CardTitle className="text-center md:text-3xl">
           Estimated One Rep Max
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-2">
-        <div className="text-center text-lg md:text-xl">
-          {isAdvancedAnalysis && (
-            <>
-              <Link
-                href={liftSlugMap[liftType] ? `/${liftSlugMap[liftType]}` : "#"}
-                style={{
-                  textDecoration: "underline",
-                  textDecorationColor: liftColor,
-                  textDecorationThickness: "2px",
-                  textUnderlineOffset: "3px",
-                }}
-              >
-                {liftType}
-              </Link>{" "}
-            </>
-          )}
-          {reps}@{weight}
-          {isMetric ? "kg" : "lb"}
+        <div className="text-center text-lg md:text-xl text-muted-foreground">
+          {reps}@{weight}{isMetric ? "kg" : "lb"}
         </div>
         <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
           <motion.span className="tabular-nums">{displayVal}</motion.span>
           {isMetric ? "kg" : "lb"}
         </div>
-        {isAdvancedAnalysis && (
-          <div className="text-center text-lg">
-            {(e1rmWeight / bodyWeight).toFixed(2)}x bodyweight
-          </div>
-        )}
-        {isAdvancedAnalysis && liftRating && (
-          <div>
-            <Link
-              href="/strength-level-calculator"
-              className="flex flex-col justify-center gap-1 text-center align-middle text-xl hover:underline hover:underline-offset-4 xl:flex-row"
-            >
-              <div className="text-muted-foreground hover:text-muted-foreground/80">
-                Your Strength Rating:
-              </div>
-              <div className="text-xl font-semibold">{liftRating}</div>
-            </Link>
+        {bodyWeight > 0 && (
+          <div className="mt-1 text-center text-sm text-muted-foreground">
+            {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
           </div>
         )}
       </CardContent>
@@ -844,18 +567,15 @@ const E1RMSummaryCard = ({
   );
 };
 
-// Two stacked horizontal tracks visualising the spread of e1rm estimates across
-// all 7 algorithms. The overview bar shows where the cluster sits on the full
-// 0–250kg/600lb scale (with optional strength-standards overlay when advanced).
-// The detail bar zooms into the cluster so individual algorithm dots are
-// clickable to switch the active formula.
-function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormula, liftColor, isAdvancedAnalysis, standards, liftType }) {
-  const { getColor } = useLiftColors();
+// Zoomed horizontal track showing the spread of all 7 e1rm algorithm estimates.
+// Dots are clickable to switch the active formula. The band always occupies a
+// fixed visual fraction of the track so the spread is legible regardless of
+// how close the algorithms agree.
+function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormula }) {
   const unit = isMetric ? "kg" : "lb";
-  const accentColor = liftColor || "var(--primary)";
-  const standard = isAdvancedAnalysis ? standards?.[liftType] : null;
+  const accentColor = "var(--primary)";
 
-  // All 7 formulae sorted low→high by their estimate for this reps/weight
+  // All 7 formulae sorted low→high
   const estimates = useMemo(
     () =>
       e1rmFormulae
@@ -867,20 +587,6 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
   const minVal = estimates[0].value;
   const maxVal = estimates[estimates.length - 1].value;
   const range = maxVal - minVal;
-
-  // ── Overview track: when standards are present, anchor scale to physicallyActive→elite.
-  // Expand beyond either bound if the algorithm cluster falls outside that range.
-  // Without standards, fall back to the full weight-slider scale (0–250kg / 0–600lb).
-  const overviewMin = standard
-    ? Math.min(standard.physicallyActive ?? 0, minVal)
-    : 0;
-  const overviewMax = standard
-    ? Math.max(standard.elite, maxVal)
-    : (isMetric ? 250 : 600);
-  const overviewRange = Math.max(overviewMax - overviewMin, 1);
-  const overviewPct = (v) => Math.min(100, Math.max(0, ((v - overviewMin) / overviewRange) * 100));
-  const overviewBandLeft = overviewPct(minVal);
-  const overviewBandWidth = overviewPct(maxVal) - overviewBandLeft;
 
   // ── Detail track: zoomed into the algorithm cluster ────────────────────
   // Detail track: band always occupies a fixed visual fraction of the track.
@@ -923,128 +629,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
 
   return (
     <div className="select-none">
-
-      {/* ── Overview track — only shown when Strength Level Insights is ON ── */}
-      {isAdvancedAnalysis && <div>
-        <div className="mb-1 flex justify-between text-sm text-foreground/90">
-          <span>{Math.round(overviewMin)}{unit}</span>
-          <span>{Math.round(overviewMax)}{unit}</span>
-        </div>
-        {/* Tier labels (when advanced) */}
-        {standard?.elite && (
-          <div className="relative mb-1" style={{ height: "14px" }}>
-            {[
-              { label: "Active", value: standard.physicallyActive ?? 0 },
-              { label: "Beginner", value: standard.beginner },
-              { label: "Intermediate", value: standard.intermediate },
-              { label: "Advanced", value: standard.advanced },
-              { label: "Elite", value: standard.elite },
-            ].map(({ label, value }) => (
-              <div
-                key={label}
-                style={{ left: `${overviewPct(value)}%` }}
-                className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[11px] text-muted-foreground/80"
-              >
-                {label}
-              </div>
-            ))}
-          </div>
-        )}
-        {/* Notch value labels — min and max algorithm estimates above each bracket */}
-        <div className="relative mb-0.5" style={{ height: "14px" }}>
-          <span
-            style={{ left: `${overviewBandLeft}%`, color: accentColor, opacity: 0.6 }}
-            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[10px]"
-          >
-            {Math.round(minVal)}{unit}
-          </span>
-          <span
-            style={{ left: `${overviewBandLeft + Math.max(overviewBandWidth, 0.3)}%`, color: accentColor, opacity: 0.6 }}
-            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[10px]"
-          >
-            {Math.round(maxVal)}{unit}
-          </span>
-        </div>
-        <div className="relative" style={{ height: "24px" }}>
-          {/* Base track */}
-          <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
-
-          {/* Strength standards gradient overlay — matches StandardsSlider (yellow→green) */}
-          {standard?.elite && (
-            <>
-              <div
-                style={{
-                  position: "absolute",
-                  left: `${overviewPct(standard.physicallyActive ?? 0)}%`,
-                  width: `${overviewPct(standard.elite) - overviewPct(standard.physicallyActive ?? 0)}%`,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  height: "12px",
-                  background: "linear-gradient(to right, #EAB308, #86EFAC, #166534)",
-                  borderRadius: "2px",
-                }}
-              />
-              {[standard.beginner, standard.intermediate, standard.advanced, standard.elite].map((val, i) => (
-                <div
-                  key={i}
-                  style={{
-                    position: "absolute",
-                    left: `${overviewPct(val)}%`,
-                    top: "50%",
-                    transform: "translate(-50%, -50%)",
-                    width: "1px",
-                    height: "16px",
-                    backgroundColor: "var(--background)",
-                    opacity: 0.7,
-                  }}
-                />
-              ))}
-            </>
-          )}
-
-          {/* Algorithm range band */}
-          <motion.div
-            style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", height: "12px", backgroundColor: accentColor, opacity: 0.35, borderRadius: "4px" }}
-            animate={{ left: `${overviewBandLeft}%`, width: `${Math.max(overviewBandWidth, 0.3)}%` }}
-            transition={springConfig}
-          />
-          {/* Left bracket notch */}
-          <motion.div
-            style={{ position: "absolute", top: "50%", transform: "translate(-50%, -50%)", width: "3px", height: "20px", borderRadius: "2px", backgroundColor: accentColor }}
-            animate={{ left: `${overviewBandLeft}%` }}
-            transition={springConfig}
-          />
-          {/* Right bracket notch */}
-          <motion.div
-            style={{ position: "absolute", top: "50%", transform: "translate(-50%, -50%)", width: "3px", height: "20px", borderRadius: "2px", backgroundColor: accentColor }}
-            animate={{ left: `${overviewBandLeft + Math.max(overviewBandWidth, 0.3)}%` }}
-            transition={springConfig}
-          />
-        </div>
-
-      </div>}
-
-      {/* Dashed connector lines — only shown alongside overview */}
-      {isAdvancedAnalysis && (
-        <svg
-          aria-hidden="true"
-          className="w-full pointer-events-none"
-          style={{ height: "16px", display: "block", overflow: "visible" }}
-        >
-          <line
-            x1={`${overviewBandLeft}%`} y1="-10"
-            x2={`${detailBandLeft + 3}%`} y2="100%"
-            stroke={accentColor} strokeDasharray="4 3" strokeOpacity="0.45" strokeWidth="1.5"
-          />
-          <line
-            x1={`${overviewBandLeft + Math.max(overviewBandWidth, 0.3)}%`} y1="-10"
-            x2={`${detailBandLeft + detailBandWidth - 3}%`} y2="100%"
-            stroke={accentColor} strokeDasharray="4 3" strokeOpacity="0.45" strokeWidth="1.5"
-          />
-        </svg>
-      )}
-
-      {/* ── Detail track (zoomed, with labels) ── */}
+      {/* ── Detail track: zoomed into the algorithm cluster ── */}
       <div>
         {/* Track */}
         <div className="relative" style={{ height: "20px" }}>
@@ -1121,10 +706,8 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
 // derived from the current e1rm via estimateWeightForReps. Highlights the
 // row matching the user's current rep input. Re-mounts (re-animates) whenever
 // the formula, weight, or reps change via the parent key prop.
-function RepRangeTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalysis, liftType }) {
+function RepRangeTable({ reps, weight, e1rmFormula, isMetric }) {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
-  const { getColor } = useLiftColors();
-  const liftColor = isAdvancedAnalysis ? getColor(liftType) : null;
   const unit = isMetric ? "kg" : "lb";
   const currentReps = Number(reps);
 
@@ -1156,14 +739,8 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalysis
                   transition={{ delay: i * 0.04, ease: "easeOut" }}
                   className={cn(
                     "border-b last:border-b-0",
-                    isCurrentReps ? "font-semibold" : "",
-                    isCurrentReps && !liftColor ? "bg-accent" : "",
+                    isCurrentReps ? "font-semibold bg-accent" : "",
                   )}
-                  style={
-                    isCurrentReps && liftColor
-                      ? { backgroundColor: liftColor + "20" }
-                      : {}
-                  }
                 >
                   <td className="px-4 py-2">
                     {r}RM
@@ -1188,10 +765,8 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalysis
 // Table showing common training intensities from 100% down to 50% of e1rm
 // in 5% steps — useful for bro-programming percentage-based templates.
 // Sits beside RepRangeTable in a two-column grid on md+ screens.
-function PercentageTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalysis, liftType }) {
+function PercentageTable({ reps, weight, e1rmFormula, isMetric }) {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
-  const { getColor } = useLiftColors();
-  const liftColor = isAdvancedAnalysis ? getColor(liftType) : null;
   const unit = isMetric ? "kg" : "lb";
 
   const percentages = [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50];
@@ -1225,10 +800,8 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalys
                   transition={{ delay: i * 0.04, ease: "easeOut" }}
                   className={cn(
                     "border-b last:border-b-0",
-                    isMax ? "font-semibold" : "",
-                    isMax && !liftColor ? "bg-accent" : "",
+                    isMax ? "font-semibold bg-accent" : "",
                   )}
-                  style={isMax && liftColor ? { backgroundColor: liftColor + "20" } : {}}
                 >
                   <td className="px-4 py-2 tabular-nums">{pct}%</td>
                   <td className="px-4 py-2 text-right tabular-nums">
@@ -1245,141 +818,79 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalys
 }
 
 
-// Expandable panel of athlete bio inputs (age, sex, bodyweight, lift type)
-// used by Strength Level Insights. Rendered inside an AnimatePresence collapse
-// in the right-column card. Lift type uses a 2x2 SVG grid for the Big Four.
-function OptionalAtheleBioData({
-  isMetric,
-  bodyWeight,
-  setBodyWeight,
-  liftType,
-  setLiftType,
-  age,
-  setAge,
-  sex,
-  setSex,
-}) {
-  const { getColor } = useLiftColors();
+const BIG_FOUR = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
+
+// Four compact strength standard bars — one per Big Four lift — showing where
+// the current calculator e1rm sits on the physicallyActive→elite spectrum.
+// Bio data (age, bodyWeight, sex) comes from the global hook; defaults to 30yo
+// 200lb male if the user hasn't set a profile. The AthleteBioQuickSettings
+// dropdown lets them update it inline without leaving the page.
+function BigFourStrengthBars({ e1rmWeight, isMetric }) {
+  const { age, bodyWeight, sex, standards } = useAthleteBio();
+  const unit = isMetric ? "kg" : "lb";
+  const hasCustomBio = age !== 30 || bodyWeight !== 200 || sex !== "male" || isMetric !== false;
 
   return (
-    <div className="flex flex-col gap-4 px-4">
-      <div>
-        <div className="flex flex-row gap-2">
-          <Label>Age: {age}</Label>
-        </div>
-        <Slider
-          min={13}
-          max={100}
-          step={1}
-          value={[age]}
-          onValueChange={(values) => setAge(values[0])}
-          className="mt-2 flex-1"
-          aria-label="Age"
-        />
+    <div className="space-y-3">
+      <h3 className="text-sm font-medium text-muted-foreground">Big Four Strength Standards</h3>
+      <div className="space-y-3">
+        {BIG_FOUR.map((liftType) => {
+          const standard = standards?.[liftType];
+          if (!standard?.elite) return null;
+
+          const rating = getStrengthRatingForE1RM(e1rmWeight, standard);
+          const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
+          const { physicallyActive, elite } = standard;
+          const range = elite - physicallyActive;
+          // Clamp marker to 2–98% so it's always visible even at extremes
+          const pct = range > 0
+            ? Math.min(98, Math.max(2, ((e1rmWeight - physicallyActive) / range) * 100))
+            : 50;
+
+          const svgPath = getLiftSvgPath(liftType);
+
+          return (
+            <div key={liftType} className="flex items-center gap-3">
+              {svgPath
+                ? <img src={svgPath} alt={liftType} className="h-8 w-8 shrink-0 object-contain opacity-75" />
+                : <div className="h-8 w-8 shrink-0" />
+              }
+              <span className="w-24 shrink-0 truncate text-xs text-muted-foreground">{liftType}</span>
+              <div className="relative flex-1">
+                <div
+                  className="h-2 w-full rounded-full"
+                  style={{ background: "linear-gradient(to right, #EAB308, #86EFAC, #166534)" }}
+                />
+                {/* Tier dividers at beginner, intermediate, advanced */}
+                {[standard.beginner, standard.intermediate, standard.advanced].map((val, i) => (
+                  <div
+                    key={i}
+                    className="absolute top-0 h-2 w-px"
+                    style={{ left: `${((val - physicallyActive) / range) * 100}%`, backgroundColor: "var(--background)", opacity: 0.7 }}
+                  />
+                ))}
+                {/* e1rm marker */}
+                <div
+                  className="absolute top-1/2 h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-1 ring-background"
+                  style={{ left: `${pct}%` }}
+                />
+              </div>
+              <span className="w-32 shrink-0 text-right text-xs font-medium">
+                {emoji} {rating}
+              </span>
+            </div>
+          );
+        })}
       </div>
-      <div className="mt-1 flex flex-row gap-4">
-        <Label>Sex: </Label>
-        <RadioGroup
-          value={sex}
-          onValueChange={setSex}
-          // orientation="horizontal"
-          className="flex space-x-4" // Really makes it horizontal
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="male" id="male" />
-            <Label htmlFor="male">Male</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="female" id="female" />
-            <Label htmlFor="female">Female</Label>
-          </div>
-        </RadioGroup>
-      </div>
-      <div>
-        <div className="flex flex-row gap-2">
-          <Label>
-            Bodyweight: {bodyWeight}
-            {isMetric ? "kg" : "lb"}
-          </Label>
-        </div>
-        <Slider
-          min={isMetric ? 40 : 100}
-          max={isMetric ? 230 : 500}
-          step={1}
-          value={[bodyWeight]}
-          onValueChange={(values) => setBodyWeight(values[0])}
-          className="mt-2 flex-1"
-          aria-label={`Weight in ${isMetric ? "kilograms" : "pounds"}`}
-        />
-      </div>
-      <div>
-        <Label className="mb-2 block text-sm">Lift Type</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {["Back Squat", "Bench Press", "Deadlift", "Strict Press"].map((lift) => {
-            const isSelected = liftType === lift;
-            const color = getColor(lift);
-            const svgPath = getLiftSvgPath(lift);
-            return (
-              <button
-                key={lift}
-                type="button"
-                onClick={() => setLiftType(lift)}
-                className={cn(
-                  "flex flex-col items-center gap-1 rounded-lg border p-2 text-center transition-colors cursor-pointer",
-                  isSelected ? "border-2" : "border-muted hover:border-muted-foreground/40",
-                )}
-                style={isSelected ? { borderColor: color, backgroundColor: color + "18" } : {}}
-              >
-                {svgPath && (
-                  <img src={svgPath} alt={lift} className="h-12 w-12 object-contain" />
-                )}
-                <span className={cn(
-                  "text-xs leading-tight",
-                  isSelected ? "font-semibold" : "text-muted-foreground",
-                )}>
-                  {lift}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+
+      {/* Bio assumption note + quick-edit dropdown */}
+      <div className="flex items-center justify-between border-t pt-3">
+        <p className="text-xs text-muted-foreground">
+          {!hasCustomBio && <span className="mr-1 text-amber-500">⚠ Using defaults —</span>}
+          {bodyWeight}{unit} · {sex} · age {age}
+        </p>
+        <AthleteBioQuickSettings />
       </div>
     </div>
   );
 }
-
-export const getStandardRatingString = (
-  age,
-  bodyWeight,
-  sex,
-  reps,
-  weight,
-  liftType,
-  isMetric,
-  e1rmFormula,
-) => {
-  const bodyWeightKG = isMetric ? bodyWeight : Math.round(bodyWeight / 2.204);
-
-  // FIXME: We don't need to call this, we should be getting the standard from the custom AthelteBioData hook
-  let standard = interpolateStandardKG(
-    age,
-    bodyWeightKG,
-    sex,
-    liftType,
-    LiftingStandardsKG,
-  );
-
-  // If the user wants lb units we should convert back into lb units now
-  if (!isMetric && standard) {
-    standard = {
-      physicallyActive: Math.round(standard.physicallyActive * 2.204),
-      beginner: Math.round(standard.beginner * 2.204),
-      intermediate: Math.round(standard.intermediate * 2.204),
-      advanced: Math.round(standard.advanced * 2.204),
-      elite: Math.round(standard.elite * 2.204),
-    };
-  }
-
-  const oneRepMax = estimateE1RM(reps, weight, e1rmFormula);
-  return standard ? getStrengthRatingForE1RM(oneRepMax, standard) : undefined;
-};

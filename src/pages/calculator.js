@@ -562,7 +562,7 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM }) 
           <motion.span className="tabular-nums">{displayVal}</motion.span>
           {isMetric ? "kg" : "lb"}
         </div>
-        {bodyWeight > 0 && (
+        {bodyWeight > 0 && bodyWeight !== 200 && (
           <div className="mt-1 text-center text-sm text-muted-foreground">
             {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
           </div>

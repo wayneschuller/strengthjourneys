@@ -603,20 +603,35 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
   const detailBandWidth = detailPct(maxVal) - detailBandLeft;
 
   // Merge labels that would overlap on the detail track (sorted low→high, same order as estimates).
-  // Groups are merged greedily: if a label falls within the threshold of the previous group's
-  // centre, it joins that group and the centre is recomputed as the average of all members.
-  const LABEL_MERGE_THRESHOLD_PCT = 8;
+  // Groups are merged greedily: compare the estimated right-edge of the previous group's label
+  // text against the new candidate's position, so long merged labels don't collide with neighbours.
+  // Assumes ~1.2% of track width per character (≈7px char on ~580px track).
+  const CHAR_WIDTH_PCT = 1.2;
+  const getLabelText = (formulas, values) => {
+    const minV = Math.min(...values);
+    const maxV = Math.max(...values);
+    const wStr = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
+    return formulas.join(" / ") + " " + wStr;
+  };
   const mergedLabels = [];
   for (const { formula, value } of estimates) {
     const pct = detailPct(value);
     const last = mergedLabels[mergedLabels.length - 1];
-    if (last && pct - last.pct < LABEL_MERGE_THRESHOLD_PCT) {
-      last.formulas.push(formula);
-      last.values.push(value);
-      const memberPcts = last.formulas.map(
-        (f) => detailPct(estimates.find((e) => e.formula === f).value),
-      );
-      last.pct = memberPcts.reduce((a, b) => a + b, 0) / memberPcts.length;
+    if (last) {
+      const lastWidthPct = getLabelText(last.formulas, last.values).length * CHAR_WIDTH_PCT;
+      // First label is left-pinned so its right edge = pct + full width; others are centred.
+      const isLastFirst = mergedLabels.length === 1;
+      const lastRightEdge = isLastFirst ? last.pct + lastWidthPct : last.pct + lastWidthPct / 2;
+      if (pct - lastRightEdge < 4) {
+        last.formulas.push(formula);
+        last.values.push(value);
+        const memberPcts = last.formulas.map(
+          (f) => detailPct(estimates.find((e) => e.formula === f).value),
+        );
+        last.pct = memberPcts.reduce((a, b) => a + b, 0) / memberPcts.length;
+      } else {
+        mergedLabels.push({ formulas: [formula], pct, values: [value] });
+      }
     } else {
       mergedLabels.push({ formulas: [formula], pct, values: [value] });
     }
@@ -652,7 +667,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                 transition={dotSpring}
                 style={{
                   position: "absolute",
-                  left: `${detailPct(value)}%`,
+                  left: `${Math.min(Math.max(detailPct(value), 1.5), 98.5)}%`,
                   top: "50%",
                   transform: "translate(-50%, -50%)",
                   borderRadius: "9999px",

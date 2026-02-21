@@ -29,7 +29,8 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { cn } from "@/lib/utils";
 import { Activity, X } from "lucide-react";
 
-export function AthleteBioQuickSettings({ variant = "dropdown" }) {
+// Dropdown variant — used in the nav bar.
+export function AthleteBioQuickSettings() {
   const {
     age,
     setAge,
@@ -39,27 +40,8 @@ export function AthleteBioQuickSettings({ variant = "dropdown" }) {
     setSex,
     isMetric,
     toggleIsMetric,
+    bioDataIsDefault,
   } = useAthleteBio();
-
-  // Heuristic: if bio matches initial defaults, assume user hasn't customized it yet.
-  const hasCustomBio =
-    age !== 30 || bodyWeight !== 200 || sex !== "male" || isMetric !== false;
-
-  if (variant === "inline") {
-    return (
-      <AthleteBioInline
-        age={age}
-        setAge={setAge}
-        bodyWeight={bodyWeight}
-        setBodyWeight={setBodyWeight}
-        sex={sex}
-        setSex={setSex}
-        isMetric={isMetric}
-        toggleIsMetric={toggleIsMetric}
-        hasCustomBio={hasCustomBio}
-      />
-    );
-  }
 
   return (
     <DropdownMenu>
@@ -73,11 +55,11 @@ export function AthleteBioQuickSettings({ variant = "dropdown" }) {
                 aria-label="Set athlete bio data"
                 className={cn(
                   "relative",
-                  !hasCustomBio && "ring-2 ring-amber-400/70",
+                  bioDataIsDefault && "ring-2 ring-amber-400/70",
                 )}
               >
                 <Activity className="h-4 w-4" />
-                {!hasCustomBio && (
+                {bioDataIsDefault && (
                   <span className="absolute -top-1 -right-1 flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75 animate-ping" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
@@ -92,7 +74,7 @@ export function AthleteBioQuickSettings({ variant = "dropdown" }) {
       <DropdownMenuContent className="w-72">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Your bio data</span>
-          {!hasCustomBio && (
+          {bioDataIsDefault && (
             <Badge
               variant="secondary"
               className="text-[0.6rem] font-semibold uppercase tracking-wide animate-pulse"
@@ -154,24 +136,24 @@ export function AthleteBioQuickSettings({ variant = "dropdown" }) {
               >
                 Bodyweight
               </Label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">{bodyWeight}</span>
-                      <UnitChooser
-                        isMetric={isMetric}
-                        onSwitchChange={toggleIsMetric}
-                      />
-                    </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold">{bodyWeight}</span>
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={toggleIsMetric}
+                />
+              </div>
             </div>
             <div className="pt-0.5">
-                      <Slider
-                        id="nav-athlete-bodyweight-slider"
-                        min={isMetric ? 40 : 90}
-                        max={isMetric ? 180 : 400}
-                        step={1}
-                        value={[bodyWeight]}
-                        onValueChange={(values) => setBodyWeight(values[0])}
-                        aria-label="Bodyweight"
-                      />
+              <Slider
+                id="nav-athlete-bodyweight-slider"
+                min={isMetric ? 40 : 90}
+                max={isMetric ? 180 : 400}
+                step={1}
+                value={[bodyWeight]}
+                onValueChange={(values) => setBodyWeight(values[0])}
+                aria-label="Bodyweight"
+              />
             </div>
           </div>
           <p className="pt-1 text-[10px] leading-snug text-muted-foreground">
@@ -188,21 +170,23 @@ export function AthleteBioQuickSettings({ variant = "dropdown" }) {
   );
 }
 
-// Inline variant: shows bio summary text with an Activity toggle button.
-// Clicking the button slides out compact editing controls on the same row.
-function AthleteBioInline({
-  age,
-  setAge,
-  bodyWeight,
-  setBodyWeight,
-  sex,
-  setSex,
-  isMetric,
-  toggleIsMetric,
-  hasCustomBio,
-}) {
+// Inline variant — used inside the calculator's Big Four strength section.
+// Shows a bio summary line with an edit toggle that slides out compact controls.
+export function AthleteBioInlineSettings() {
+  const {
+    age,
+    setAge,
+    bodyWeight,
+    setBodyWeight,
+    sex,
+    setSex,
+    isMetric,
+    toggleIsMetric,
+    bioDataIsDefault,
+  } = useAthleteBio();
+
   // Pre-open the controls when the user is still on defaults — nudge them to personalise
-  const [isOpen, setIsOpen] = useState(!hasCustomBio);
+  const [isOpen, setIsOpen] = useState(bioDataIsDefault);
   const unit = isMetric ? "kg" : "lb";
 
   return (
@@ -210,9 +194,9 @@ function AthleteBioInline({
       {/* Bio summary — always visible, never moves */}
       <p className={cn(
         "text-right text-xs",
-        hasCustomBio ? "text-muted-foreground" : "text-amber-500",
+        bioDataIsDefault ? "text-amber-500" : "text-muted-foreground",
       )}>
-        Strength levels for a {bodyWeight}{unit} {sex}, age {age}{!hasCustomBio && " · defaults"}
+        Strength levels for a {bodyWeight}{unit} {sex}, age {age}{bioDataIsDefault && " · enter your details"}
       </p>
 
       {/* Button is the anchor — controls are absolutely positioned to its right */}
@@ -227,7 +211,7 @@ function AthleteBioInline({
                 aria-label={isOpen ? "Close bio settings" : "Edit bio data"}
                 className={cn(
                   "relative h-7 w-7",
-                  !hasCustomBio && !isOpen && "ring-2 ring-amber-400/70",
+                  bioDataIsDefault && !isOpen && "ring-2 ring-amber-400/70",
                 )}
               >
                 {isOpen ? (
@@ -235,7 +219,7 @@ function AthleteBioInline({
                 ) : (
                   <Activity className="h-3.5 w-3.5" />
                 )}
-                {!hasCustomBio && !isOpen && (
+                {bioDataIsDefault && !isOpen && (
                   <span className="absolute -right-1 -top-1 flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />

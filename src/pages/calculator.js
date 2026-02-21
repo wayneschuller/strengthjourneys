@@ -22,7 +22,7 @@ import {
   PageHeaderDescription,
 } from "@/components/page-header";
 
-import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
+import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { Input } from "@/components/ui/input";
@@ -957,7 +957,7 @@ function BigFourStrengthBars({ e1rmWeight, isMetric }) {
         <div className="border-t pt-3">
           <h2 className="text-center text-base font-semibold">Big Four Strength Levels</h2>
           <div className="mt-1 flex justify-center">
-            <AthleteBioQuickSettings variant="inline" />
+            <AthleteBioInlineSettings />
           </div>
         </div>
 

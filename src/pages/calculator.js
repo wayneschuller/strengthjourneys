@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { devLog } from "@/lib/processing-utils";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
+import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { cn } from "@/lib/utils";
 
 import { Label } from "@/components/ui/label";
@@ -550,31 +551,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
             </div>
           </div>
 
-          {/* Hero: E1RM Result Card — centered, full visual weight */}
-          <div className="my-8 flex flex-col items-center gap-3">
-            <E1RMSummaryCard
-              reps={reps}
-              weight={weight}
-              isMetric={isMetric}
-              e1rmFormula={e1rmFormula}
-              estimateE1RM={estimateE1RM}
-              isAdvancedAnalysis={isAdvancedAnalysis}
-              liftType={liftType}
-              liftRating={liftRating}
-              bodyWeight={bodyWeight}
-            />
-            <div className="flex gap-2">
-              <ShareCopyButton label="Copy Text" onClick={handleCopyToClipboard} />
-              <ShareCopyButton
-                label="Copy Image"
-                onClick={handleCopyImage}
-                isLoading={isCapturingImage}
-                disabled={isCapturingImage}
-                tooltip="Copy portrait image for Instagram Stories"
-              />
-            </div>
-          </div>
-
           {/* Hidden portrait card — 9:16 for Instagram Stories image capture (360×640 → 1080×1920 at scale:3) */}
           <div
             ref={portraitRef}
@@ -630,67 +606,94 @@ function E1RMCalculatorMain({ relatedArticles }) {
             </div>
           </div>
 
-          {/* Algorithm Range — full width, directly below hero */}
-          <div className="mb-6">
-            <AlgorithmRangeBar
-              reps={reps}
-              weight={weight}
-              isMetric={isMetric}
-              e1rmFormula={e1rmFormula}
-              setE1rmFormula={setE1rmFormula}
-              liftColor={liftColor}
-              isAdvancedAnalysis={isAdvancedAnalysis}
-              standards={standards}
-              liftType={liftType}
-            />
-          </div>
+          {/* Two-column layout: hero + algo bar (left, primary), strength insights (right, secondary) */}
+          <div className="my-6 grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr] lg:items-start">
 
-          {/* Strength Analysis */}
-          <Card className="mb-8">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="advanced"
-                  checked={isAdvancedAnalysis}
-                  onCheckedChange={handleAdvancedAnalysisChange}
+            {/* Left column: hero card, copy buttons, algorithm range bar */}
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col items-center gap-3">
+                <E1RMSummaryCard
+                  reps={reps}
+                  weight={weight}
+                  isMetric={isMetric}
+                  e1rmFormula={e1rmFormula}
+                  estimateE1RM={estimateE1RM}
+                  isAdvancedAnalysis={isAdvancedAnalysis}
+                  liftType={liftType}
+                  liftRating={liftRating}
+                  bodyWeight={bodyWeight}
                 />
-                <label
-                  htmlFor="advanced"
-                  className={cn(
-                    "cursor-pointer select-none text-base font-semibold leading-none",
-                    isAdvancedAnalysis ? "opacity-100" : "opacity-60",
-                  )}
-                >
-                  Strength Level Insights
-                </label>
+                <div className="flex gap-2">
+                  <ShareCopyButton label="Copy Text" onClick={handleCopyToClipboard} />
+                  <ShareCopyButton
+                    label="Copy Image"
+                    onClick={handleCopyImage}
+                    isLoading={isCapturingImage}
+                    disabled={isCapturingImage}
+                    tooltip="Copy portrait image for Instagram Stories"
+                  />
+                </div>
               </div>
-            </CardHeader>
-            <AnimatePresence>
-              {isAdvancedAnalysis && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                  style={{ overflow: "hidden" }}
-                >
-                  <CardContent className="pt-0">
-                    <OptionalAtheleBioData
-                      isMetric={isMetric}
-                      bodyWeight={bodyWeight}
-                      setBodyWeight={setBodyWeight}
-                      liftType={liftType}
-                      setLiftType={setLiftType}
-                      age={age}
-                      setAge={setAge}
-                      sex={sex}
-                      setSex={setSex}
-                    />
-                  </CardContent>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </Card>
+              <AlgorithmRangeBar
+                reps={reps}
+                weight={weight}
+                isMetric={isMetric}
+                e1rmFormula={e1rmFormula}
+                setE1rmFormula={setE1rmFormula}
+                liftColor={liftColor}
+                isAdvancedAnalysis={isAdvancedAnalysis}
+                standards={standards}
+                liftType={liftType}
+              />
+            </div>
+
+            {/* Right column: Strength Insights (secondary) */}
+            <Card className="border-muted/60">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="advanced"
+                    checked={isAdvancedAnalysis}
+                    onCheckedChange={handleAdvancedAnalysisChange}
+                  />
+                  <label
+                    htmlFor="advanced"
+                    className={cn(
+                      "cursor-pointer select-none text-base font-semibold leading-none",
+                      isAdvancedAnalysis ? "opacity-100" : "opacity-60",
+                    )}
+                  >
+                    Strength Level Insights
+                  </label>
+                </div>
+              </CardHeader>
+              <AnimatePresence>
+                {isAdvancedAnalysis && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                    style={{ overflow: "hidden" }}
+                  >
+                    <CardContent className="pt-0">
+                      <OptionalAtheleBioData
+                        isMetric={isMetric}
+                        bodyWeight={bodyWeight}
+                        setBodyWeight={setBodyWeight}
+                        liftType={liftType}
+                        setLiftType={setLiftType}
+                        age={age}
+                        setAge={setAge}
+                        sex={sex}
+                        setSex={setSex}
+                      />
+                    </CardContent>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Card>
+          </div>
 
           {/* Rep Range Projection Table — re-animates when formula/weight/reps changes */}
           <RepRangeTable
@@ -751,7 +754,7 @@ const E1RMSummaryCard = ({
 
   return (
     <Card
-      className="w-full max-w-sm border-4"
+      className="w-full max-w-md border-4"
       style={liftColor ? { borderTopColor: liftColor, borderTopWidth: 6 } : {}}
     >
       <CardHeader>
@@ -1114,9 +1117,6 @@ function OptionalAtheleBioData({
   sex,
   setSex,
 }) {
-  const uniqueLiftNames = Array.from(
-    new Set(LiftingStandardsKG.map((item) => item.liftType)),
-  );
   const { getColor } = useLiftColors();
 
   return (
@@ -1171,32 +1171,36 @@ function OptionalAtheleBioData({
         />
       </div>
       <div>
-        <Label>Lift Type:</Label>
-        <RadioGroup value={liftType} onValueChange={setLiftType}>
-          {uniqueLiftNames.map((lift) => (
-            <div key={lift} className="flex items-center space-x-2">
-              <RadioGroupItem value={lift} id={lift} />
-              <Label htmlFor={lift}>
-                {liftSlugMap[lift] ? (
-                  <Link
-                    href={`/${liftSlugMap[lift]}`}
-                    style={{
-                      textDecoration: "underline",
-                      textDecorationColor: getColor(lift),
-                      textDecorationThickness: "2px",
-                      textUnderlineOffset: "3px",
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {lift}
-                  </Link>
-                ) : (
-                  lift
+        <Label className="mb-2 block text-sm">Lift Type</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {["Back Squat", "Bench Press", "Deadlift", "Strict Press"].map((lift) => {
+            const isSelected = liftType === lift;
+            const color = getColor(lift);
+            const svgPath = getLiftSvgPath(lift);
+            return (
+              <button
+                key={lift}
+                type="button"
+                onClick={() => setLiftType(lift)}
+                className={cn(
+                  "flex flex-col items-center gap-1 rounded-lg border p-2 text-center transition-colors cursor-pointer",
+                  isSelected ? "border-2" : "border-muted hover:border-muted-foreground/40",
                 )}
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
+                style={isSelected ? { borderColor: color, backgroundColor: color + "18" } : {}}
+              >
+                {svgPath && (
+                  <img src={svgPath} alt={lift} className="h-12 w-12 object-contain" />
+                )}
+                <span className={cn(
+                  "text-xs leading-tight",
+                  isSelected ? "font-semibold" : "text-muted-foreground",
+                )}>
+                  {lift}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

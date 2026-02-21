@@ -697,16 +697,27 @@ function E1RMCalculatorMain({ relatedArticles }) {
             />
           </div>
 
-          {/* Rep Range Projection Table — re-animates when formula/weight/reps changes */}
-          <RepRangeTable
-            key={`${e1rmFormula}-${weight}-${reps}`}
-            reps={reps}
-            weight={weight}
-            e1rmFormula={e1rmFormula}
-            isMetric={isMetric}
-            isAdvancedAnalysis={isAdvancedAnalysis}
-            liftType={liftType}
-          />
+          {/* Rep Range + Percentage Tables side by side */}
+          <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <RepRangeTable
+              key={`${e1rmFormula}-${weight}-${reps}`}
+              reps={reps}
+              weight={weight}
+              e1rmFormula={e1rmFormula}
+              isMetric={isMetric}
+              isAdvancedAnalysis={isAdvancedAnalysis}
+              liftType={liftType}
+            />
+            <PercentageTable
+              key={`pct-${e1rmFormula}-${weight}-${reps}`}
+              reps={reps}
+              weight={weight}
+              e1rmFormula={e1rmFormula}
+              isMetric={isMetric}
+              isAdvancedAnalysis={isAdvancedAnalysis}
+              liftType={liftType}
+            />
+          </div>
 
         </CardContent>
       </Card>
@@ -1057,7 +1068,7 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalysis
   });
 
   return (
-    <div className="mb-8">
+    <div>
       <h3 className="mb-1 text-base font-semibold">Rep Max Projections</h3>
       <p className="mb-3 text-sm text-muted-foreground">{e1rmFormula} algorithm</p>
       <div className="overflow-hidden rounded-lg border">
@@ -1094,6 +1105,63 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalysis
                       <span className="ml-2 text-xs text-muted-foreground">(current)</span>
                     )}
                   </td>
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {w}{unit}
+                  </td>
+                </motion.tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+
+function PercentageTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalysis, liftType }) {
+  const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
+  const { getColor } = useLiftColors();
+  const liftColor = isAdvancedAnalysis ? getColor(liftType) : null;
+  const unit = isMetric ? "kg" : "lb";
+
+  const percentages = [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
+  const rows = percentages.map((pct) => ({
+    pct,
+    weight: Math.round((e1rmWeight * pct) / 100),
+  }));
+
+  return (
+    <div>
+      <h3 className="mb-1 text-base font-semibold">Percentage Calculator</h3>
+      <p className="mb-3 text-sm text-muted-foreground">
+        Based on {e1rmWeight}{unit} estimated max
+      </p>
+      <div className="overflow-hidden rounded-lg border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="px-4 py-2 text-left font-medium">Intensity</th>
+              <th className="px-4 py-2 text-right font-medium">Weight ({unit})</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(({ pct, weight: w }, i) => {
+              const isMax = pct === 100;
+              return (
+                <motion.tr
+                  key={pct}
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04, ease: "easeOut" }}
+                  className={cn(
+                    "border-b last:border-b-0",
+                    isMax ? "font-semibold" : "",
+                    isMax && !liftColor ? "bg-accent" : "",
+                  )}
+                  style={isMax && liftColor ? { backgroundColor: liftColor + "20" } : {}}
+                >
+                  <td className="px-4 py-2 tabular-nums">{pct}%</td>
                   <td className="px-4 py-2 text-right tabular-nums">
                     {w}{unit}
                   </td>

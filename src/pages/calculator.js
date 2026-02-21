@@ -850,7 +850,6 @@ function BigFourStrengthBars({ e1rmWeight, isMetric }) {
   return (
     <TooltipProvider>
       <div className="space-y-3">
-        <h3 className="text-sm font-medium text-muted-foreground">Big Four Strength Standards</h3>
         <div className="space-y-3">
           {BIG_FOUR.map((liftType) => {
             const standard = standards?.[liftType];

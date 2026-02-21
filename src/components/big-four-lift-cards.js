@@ -290,11 +290,13 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="relative px-6 pt-0 pb-2">
-                  <p className="text-muted-foreground text-sm">
-                    {lift.liftDescription}
-                  </p>
-                </CardContent>
+                {!isStatsMode && (
+                  <CardContent className="px-6 pt-0 pb-2">
+                    <p className="text-muted-foreground text-sm">
+                      {lift.liftDescription}
+                    </p>
+                  </CardContent>
+                )}
                 {miniBarData && (
                   <motion.div
                     className="px-6 pb-2"
@@ -315,9 +317,15 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                         style={{ left: `${miniBarData.thumbPercent}%` }}
                       />
                     </div>
-                    <div className="mt-0.5 text-xs text-muted-foreground">
-                      {STRENGTH_LEVEL_EMOJI[miniBarData.strengthRating]}{" "}
-                      {miniBarData.strengthRating}
+                    <div className="mt-0.5 flex items-center justify-between text-xs text-muted-foreground">
+                      <span>
+                        ~{Math.round(miniBarData.e1rmDisplay)}
+                        {isMetric ? "kg" : "lb"} E1RM
+                      </span>
+                      <span>
+                        {STRENGTH_LEVEL_EMOJI[miniBarData.strengthRating]}{" "}
+                        {miniBarData.strengthRating}
+                      </span>
                     </div>
                   </motion.div>
                 )}
@@ -795,5 +803,6 @@ function getMiniBarData(liftType, parsedData, standards, isMetric, e1rmFormula) 
   return {
     strengthRating,
     thumbPercent: Math.min(100, Math.max(0, thumbPercent)),
+    e1rmDisplay,
   };
 }

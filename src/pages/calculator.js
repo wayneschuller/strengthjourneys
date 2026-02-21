@@ -1016,6 +1016,8 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
     toast({ description: "Result copied to clipboard." });
   };
 
+  const [openPopoverLift, setOpenPopoverLift] = useState(null);
+
   return (
     <TooltipProvider>
       <div className="space-y-3">
@@ -1088,11 +1090,11 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
                         style={{ left: `${((val - physicallyActive) / range) * 100}%`, backgroundColor: "var(--background)", opacity: 0.7 }}
                       />
                     ))}
-                    {/* e1rm marker with tooltip */}
+                    {/* e1rm marker — desktop: hover tooltip; mobile: tap popover */}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div
-                          className="absolute top-1/2 h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-1 ring-background"
+                          className="absolute top-1/2 hidden h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-1 ring-background md:block"
                           style={{ left: `${pct}%` }}
                         />
                       </TooltipTrigger>
@@ -1108,6 +1110,31 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
                         )}
                       </TooltipContent>
                     </Tooltip>
+                    <Popover
+                      open={openPopoverLift === liftType}
+                      onOpenChange={(o) => setOpenPopoverLift(o ? liftType : null)}
+                    >
+                      <PopoverTrigger asChild>
+                        <button
+                          className="absolute top-1/2 flex h-6 w-4 -translate-x-1/2 -translate-y-1/2 items-center justify-center md:hidden"
+                          style={{ left: `${pct}%` }}
+                          aria-label={`${liftType} strength level`}
+                        >
+                          <div className="h-4 w-1.5 rounded-full bg-foreground shadow-sm ring-1 ring-background" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent side="top" className="w-auto p-2 text-xs">
+                        <p className="font-semibold">{liftType}</p>
+                        <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
+                        {nextTierInfo ? (
+                          <p className="text-muted-foreground">
+                            Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
+                          </p>
+                        ) : (
+                          <p className="text-muted-foreground">Already at the top!</p>
+                        )}
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   {/* Copy button — immediately after the bar on all screen sizes */}
                   <button

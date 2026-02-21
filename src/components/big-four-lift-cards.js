@@ -6,7 +6,11 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import {
+  useAthleteBio,
+  getTopLiftStats,
+  STRENGTH_LEVEL_EMOJI,
+} from "@/hooks/use-athlete-biodata";
 import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
@@ -54,7 +58,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
-  const { isMetric } = useAthleteBio();
+  const { isMetric, standards } = useAthleteBio();
   const { status: authStatus } = useSession();
   const isMobile = useMediaQuery("(max-width: 1279px)", {
     initializeWithValue: false,
@@ -231,6 +235,17 @@ export function BigFourLiftCards({ lifts, animated = true }) {
 
         const showStats = statsVisibleCount > index;
 
+        const miniBarData =
+          isStatsMode && topLiftsByTypeAndReps
+            ? getMiniBarData(
+                lift.liftType,
+                topLiftsByTypeAndReps,
+                standards,
+                isMetric,
+                e1rmFormula,
+              )
+            : null;
+
         return (
           <Card
             key={lift.slug}
@@ -328,6 +343,32 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                     )}
                   </div>
                 </CardContent>
+                {miniBarData && (
+                  <motion.div
+                    className="px-6 pb-2"
+                    initial={{ opacity: 0 }}
+                    animate={showStats ? { opacity: 1 } : { opacity: 0 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 220,
+                      damping: 24,
+                      delay: showStats ? 0.1 : 0,
+                    }}
+                  >
+                    {/* Mini gradient strength bar */}
+                    <div className="relative py-1">
+                      <div className="h-1.5 w-full rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800" />
+                      <div
+                        className="absolute top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow"
+                        style={{ left: `${miniBarData.thumbPercent}%` }}
+                      />
+                    </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {STRENGTH_LEVEL_EMOJI[miniBarData.strengthRating]}{" "}
+                      {miniBarData.strengthRating}
+                    </div>
+                  </motion.div>
+                )}
                 <CardFooter className="flex justify-center p-2 pt-0">
                   <motion.div
                     className="flex justify-center"
@@ -748,6 +789,61 @@ function buildBadgesForLiftType(
   }
 
   return badges;
+}
+
+/**
+ * Computes the data needed to render the mini strength bar on each BigFour card.
+ * Returns { strengthRating, thumbPercent } or null if insufficient data.
+ * thumbPercent is 0–100, representing where the user's best lift sits on the
+ * standards scale (physicallyActive → elite, extended if they exceed elite).
+ */
+function getMiniBarData(
+  liftType,
+  topLiftsByTypeAndReps,
+  standards,
+  isMetric,
+  e1rmFormula,
+) {
+  const topLifts = topLiftsByTypeAndReps?.[liftType];
+  const liftStandards = standards?.[liftType];
+  if (!topLifts || !liftStandards) return null;
+
+  const stats = getTopLiftStats(topLifts, liftType, standards, e1rmFormula);
+  if (!stats.bestWeight || !stats.strengthRating) return null;
+
+  // topLiftsByTypeAndReps stores weights in the user's native data unit.
+  // standards are already in the display unit (useAthleteBio handles conversion).
+  // Convert native → display so the thumb position is on the same scale.
+  const firstLift = topLifts?.[0]?.[0];
+  const nativeUnit = firstLift?.unitType || (isMetric ? "kg" : "lb");
+  const athleteRankingWeight = getDisplayWeight(
+    { weight: stats.bestWeight, unitType: nativeUnit },
+    isMetric ?? false,
+  ).value;
+  const highestE1RM =
+    stats.bestE1RM > 0
+      ? getDisplayWeight(
+          { weight: stats.bestE1RM, unitType: nativeUnit },
+          isMetric ?? false,
+        ).value
+      : 0;
+
+  const standardValues = Object.values(liftStandards);
+  const standardsMin = Math.min(...standardValues);
+  const eliteMax = liftStandards.elite;
+  const userMax = Math.max(highestE1RM, athleteRankingWeight);
+  const maxLift = userMax > eliteMax ? Math.ceil(userMax * 1.05) : eliteMax;
+
+  const thumbPercent =
+    maxLift === standardsMin
+      ? 0
+      : ((athleteRankingWeight - standardsMin) / (maxLift - standardsMin)) *
+        100;
+
+  return {
+    strengthRating: stats.strengthRating,
+    thumbPercent: Math.min(100, Math.max(0, thumbPercent)),
+  };
 }
 
 function formatLiftDate(dateStr) {

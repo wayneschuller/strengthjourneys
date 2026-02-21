@@ -812,8 +812,9 @@ const E1RMSummaryCard = ({
 };
 
 function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula, liftColor, isAdvancedAnalysis, standards, liftType }) {
+  const { getColor } = useLiftColors();
   const unit = isMetric ? "kg" : "lb";
-  const accentColor = liftColor || "hsl(var(--primary))";
+  const accentColor = liftColor || getColor(liftType) || "hsl(var(--primary))";
   const standard = isAdvancedAnalysis ? standards?.[liftType] : null;
 
   // All 7 formulae sorted low→high by their estimate for this reps/weight

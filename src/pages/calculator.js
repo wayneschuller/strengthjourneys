@@ -484,152 +484,8 @@ function E1RMCalculatorMain({ relatedArticles }) {
       </PageHeader>
       <Card>
         <CardContent>
-          {/* Hidden portrait card — 9:16 for Instagram Stories image capture (360×640 → 1080×1920 at scale:3) */}
-          <div
-            ref={portraitRef}
-            style={{
-              position: "fixed",
-              left: "-9999px",
-              top: 0,
-              width: "360px",
-              height: "640px",
-              fontFamily: themeFontFamily,
-              ...(liftColor ? { borderTopColor: liftColor, borderTopWidth: 8 } : {}),
-            }}
-            className="relative flex flex-col items-center justify-center gap-6 rounded-xl border-4 bg-card px-8 py-10 text-card-foreground"
-          >
-            {/* Label + context */}
-            <div className="w-full text-center" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
-                One Rep Max
-              </div>
-              {isAdvancedAnalysis && (
-                <div style={{ fontSize: "26px", fontWeight: 700, color: liftColor || "inherit" }}>
-                  {liftType}
-                </div>
-              )}
-              <div style={{ fontSize: "20px", opacity: 0.6 }}>
-                {reps} reps @ {weight}{isMetric ? "kg" : "lb"}
-              </div>
-            </div>
-
-            {/* Hero number */}
-            <div style={{ textAlign: "center", lineHeight: 1 }}>
-              <div style={{ fontSize: "128px", fontWeight: 800, letterSpacing: "-0.04em", color: liftColor || "inherit" }}>
-                {e1rmWeight}
-              </div>
-              <div style={{ fontSize: "40px", fontWeight: 700, opacity: 0.55, marginTop: "4px" }}>
-                {isMetric ? "kg" : "lb"}
-              </div>
-            </div>
-
-            {/* Strength rating (advanced only) */}
-            {isAdvancedAnalysis && liftRating && (
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
-                  Strength Rating
-                </div>
-                <div style={{ fontSize: "30px", fontWeight: 700, marginTop: "4px" }}>{liftRating}</div>
-              </div>
-            )}
-
-            {/* Formula */}
-            <div style={{ fontSize: "15px", opacity: 0.45 }}>
-              {e1rmFormula} formula
-            </div>
-          </div>
-
-          {/* Two-column layout: hero + algo bar (left, primary), strength insights (right, secondary) */}
-          <div className="my-6 grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr] lg:items-start">
-
-            {/* Left column: hero card, copy buttons, algorithm range bar */}
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col items-center gap-3">
-                <E1RMSummaryCard
-                  reps={reps}
-                  weight={weight}
-                  isMetric={isMetric}
-                  e1rmFormula={e1rmFormula}
-                  estimateE1RM={estimateE1RM}
-                  isAdvancedAnalysis={isAdvancedAnalysis}
-                  liftType={liftType}
-                  liftRating={liftRating}
-                  bodyWeight={bodyWeight}
-                />
-                <div className="flex gap-2">
-                  <ShareCopyButton label="Copy Text" onClick={handleCopyToClipboard} />
-                  <ShareCopyButton
-                    label="Copy Image"
-                    onClick={handleCopyImage}
-                    isLoading={isCapturingImage}
-                    disabled={isCapturingImage}
-                    tooltip="Copy portrait image for Instagram Stories"
-                  />
-                </div>
-              </div>
-              <AlgorithmRangeBar
-                reps={reps}
-                weight={weight}
-                isMetric={isMetric}
-                e1rmFormula={e1rmFormula}
-                setE1rmFormula={setE1rmFormula}
-                liftColor={liftColor}
-                isAdvancedAnalysis={isAdvancedAnalysis}
-                standards={standards}
-                liftType={liftType}
-              />
-            </div>
-
-            {/* Right column: Strength Insights (secondary) */}
-            <Card className="border-muted/60">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="advanced"
-                    checked={isAdvancedAnalysis}
-                    onCheckedChange={handleAdvancedAnalysisChange}
-                  />
-                  <label
-                    htmlFor="advanced"
-                    className={cn(
-                      "cursor-pointer select-none text-base font-semibold leading-none",
-                      isAdvancedAnalysis ? "opacity-100" : "opacity-60",
-                    )}
-                  >
-                    Strength Level Insights
-                  </label>
-                </div>
-              </CardHeader>
-              <AnimatePresence>
-                {isAdvancedAnalysis && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                    style={{ overflow: "hidden" }}
-                  >
-                    <CardContent className="pt-0">
-                      <OptionalAtheleBioData
-                        isMetric={isMetric}
-                        bodyWeight={bodyWeight}
-                        setBodyWeight={setBodyWeight}
-                        liftType={liftType}
-                        setLiftType={setLiftType}
-                        age={age}
-                        setAge={setAge}
-                        sex={sex}
-                        setSex={setSex}
-                      />
-                    </CardContent>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </Card>
-          </div>
-
-          {/* Two main sliders — full width below both columns */}
-          <div className="mt-2 grid grid-cols-1 items-center gap-6 md:grid-cols-6 md:gap-4">
+          {/* Two main sliders */}
+          <div className="mt-4 grid grid-cols-1 items-center gap-6 md:grid-cols-6 md:gap-4">
             <div className="ml-2 justify-self-center text-2xl md:hidden">
               {reps} reps
             </div>
@@ -693,6 +549,152 @@ function E1RMCalculatorMain({ relatedArticles }) {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Hidden portrait card — 9:16 for Instagram Stories image capture (360×640 → 1080×1920 at scale:3) */}
+          <div
+            ref={portraitRef}
+            style={{
+              position: "fixed",
+              left: "-9999px",
+              top: 0,
+              width: "360px",
+              height: "640px",
+              fontFamily: themeFontFamily,
+              ...(liftColor ? { borderTopColor: liftColor, borderTopWidth: 8 } : {}),
+            }}
+            className="relative flex flex-col items-center justify-center gap-6 rounded-xl border-4 bg-card px-8 py-10 text-card-foreground"
+          >
+            {/* Label + context */}
+            <div className="w-full text-center" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
+                One Rep Max
+              </div>
+              {isAdvancedAnalysis && (
+                <div style={{ fontSize: "26px", fontWeight: 700, color: liftColor || "inherit" }}>
+                  {liftType}
+                </div>
+              )}
+              <div style={{ fontSize: "20px", opacity: 0.6 }}>
+                {reps} reps @ {weight}{isMetric ? "kg" : "lb"}
+              </div>
+            </div>
+
+            {/* Hero number */}
+            <div style={{ textAlign: "center", lineHeight: 1 }}>
+              <div style={{ fontSize: "128px", fontWeight: 800, letterSpacing: "-0.04em", color: liftColor || "inherit" }}>
+                {e1rmWeight}
+              </div>
+              <div style={{ fontSize: "40px", fontWeight: 700, opacity: 0.55, marginTop: "4px" }}>
+                {isMetric ? "kg" : "lb"}
+              </div>
+            </div>
+
+            {/* Strength rating (advanced only) */}
+            {isAdvancedAnalysis && liftRating && (
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
+                  Strength Rating
+                </div>
+                <div style={{ fontSize: "30px", fontWeight: 700, marginTop: "4px" }}>{liftRating}</div>
+              </div>
+            )}
+
+            {/* Formula */}
+            <div style={{ fontSize: "15px", opacity: 0.45 }}>
+              {e1rmFormula} formula
+            </div>
+          </div>
+
+          {/* Two-column layout: hero + algo bar (left, primary), strength insights (right, secondary) */}
+          <div className="my-6 grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr] lg:items-start">
+
+            {/* Left column: hero card + copy buttons */}
+            <div className="flex flex-col items-center gap-3">
+              <E1RMSummaryCard
+                reps={reps}
+                weight={weight}
+                isMetric={isMetric}
+                e1rmFormula={e1rmFormula}
+                estimateE1RM={estimateE1RM}
+                isAdvancedAnalysis={isAdvancedAnalysis}
+                liftType={liftType}
+                liftRating={liftRating}
+                bodyWeight={bodyWeight}
+              />
+              <div className="flex gap-2">
+                <ShareCopyButton label="Copy Text" onClick={handleCopyToClipboard} />
+                <ShareCopyButton
+                  label="Copy Image"
+                  onClick={handleCopyImage}
+                  isLoading={isCapturingImage}
+                  disabled={isCapturingImage}
+                  tooltip="Copy portrait image for Instagram Stories"
+                />
+              </div>
+            </div>
+
+            {/* Right column: Strength Insights (secondary) */}
+            <Card className="border-muted/60">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="advanced"
+                    checked={isAdvancedAnalysis}
+                    onCheckedChange={handleAdvancedAnalysisChange}
+                  />
+                  <label
+                    htmlFor="advanced"
+                    className={cn(
+                      "cursor-pointer select-none text-base font-semibold leading-none",
+                      isAdvancedAnalysis ? "opacity-100" : "opacity-60",
+                    )}
+                  >
+                    Strength Level Insights
+                  </label>
+                </div>
+              </CardHeader>
+              <AnimatePresence>
+                {isAdvancedAnalysis && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                    style={{ overflow: "hidden" }}
+                  >
+                    <CardContent className="pt-0">
+                      <OptionalAtheleBioData
+                        isMetric={isMetric}
+                        bodyWeight={bodyWeight}
+                        setBodyWeight={setBodyWeight}
+                        liftType={liftType}
+                        setLiftType={setLiftType}
+                        age={age}
+                        setAge={setAge}
+                        sex={sex}
+                        setSex={setSex}
+                      />
+                    </CardContent>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Card>
+          </div>
+
+          {/* Algorithm Range Bar — full width below both columns */}
+          <div className="mb-6">
+            <AlgorithmRangeBar
+              reps={reps}
+              weight={weight}
+              isMetric={isMetric}
+              e1rmFormula={e1rmFormula}
+              setE1rmFormula={setE1rmFormula}
+              liftColor={liftColor}
+              isAdvancedAnalysis={isAdvancedAnalysis}
+              standards={standards}
+              liftType={liftType}
+            />
           </div>
 
           {/* Rep Range Projection Table — re-animates when formula/weight/reps changes */}

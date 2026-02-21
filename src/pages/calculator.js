@@ -52,6 +52,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
@@ -579,6 +584,7 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM }) 
 function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormula }) {
   const unit = isMetric ? "kg" : "lb";
   const accentColor = "var(--primary)";
+  const [openPopoverKey, setOpenPopoverKey] = useState(null);
 
   // All 7 formulae sorted low→high
   const estimates = useMemo(
@@ -682,15 +688,14 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
           })}
         </div>
 
-        {/* Labels below — all formulas, merged when too close */}
-        <div className="relative mt-1" style={{ height: "20px" }}>
+        {/* Labels: desktop — full formula names */}
+        <div className="relative mt-1 hidden md:block" style={{ height: "20px" }}>
           {mergedLabels.map((group, groupIndex) => {
             const isFirst = groupIndex === 0;
             const isLast = groupIndex === mergedLabels.length - 1;
             const minV = Math.min(...group.values);
             const maxV = Math.max(...group.values);
             const weightLabel = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
-            // Pin first label to left edge, last to right edge, others centred
             const translateClass = isFirst
               ? "translate-x-0"
               : isLast
@@ -722,6 +727,83 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                   </span>
                 ))}{" "}
                 <span className="opacity-60">{weightLabel}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Labels: mobile — first letter(s) only, popover for merged groups */}
+        <div className="relative mt-1 md:hidden" style={{ height: "20px" }}>
+          {mergedLabels.map((group, groupIndex) => {
+            const isFirst = groupIndex === 0;
+            const isLast = groupIndex === mergedLabels.length - 1;
+            const minV = Math.min(...group.values);
+            const maxV = Math.max(...group.values);
+            const weightLabel = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
+            const translateClass = isFirst
+              ? "translate-x-0"
+              : isLast
+                ? "-translate-x-full"
+                : "-translate-x-1/2";
+            const groupKey = group.formulas.join("-");
+            const initials = group.formulas.map((f) => f[0]).join("/");
+            const isGroupSelected = group.formulas.includes(e1rmFormula);
+            const labelCls = cn(
+              "cursor-pointer transition-colors",
+              isGroupSelected ? "font-semibold text-foreground" : "text-muted-foreground/80",
+            );
+            return (
+              <div
+                key={groupKey}
+                style={{ left: `${group.pct}%` }}
+                className={cn(
+                  "absolute top-0 whitespace-nowrap text-xs leading-none",
+                  translateClass,
+                )}
+              >
+                {group.formulas.length === 1 ? (
+                  // Single formula — tap to select directly, no popover needed
+                  <button onClick={() => setE1rmFormula(group.formulas[0])} className={labelCls}>
+                    {initials} <span className="opacity-60">{weightLabel}</span>
+                  </button>
+                ) : (
+                  // Merged group — tap to open popover listing full names
+                  <Popover
+                    open={openPopoverKey === groupKey}
+                    onOpenChange={(o) => setOpenPopoverKey(o ? groupKey : null)}
+                  >
+                    <PopoverTrigger asChild>
+                      <button className={labelCls}>
+                        {initials} <span className="opacity-60">{weightLabel}</span>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto p-2"
+                      align={isFirst ? "start" : isLast ? "end" : "center"}
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        {group.formulas.map((formula) => {
+                          const val = estimates.find((e) => e.formula === formula)?.value ?? 0;
+                          const isSelected = e1rmFormula === formula;
+                          return (
+                            <button
+                              key={formula}
+                              onClick={() => { setE1rmFormula(formula); setOpenPopoverKey(null); }}
+                              className={cn(
+                                "flex items-center gap-3 rounded px-2 py-1.5 text-xs transition-colors hover:bg-muted text-left",
+                                isSelected ? "font-semibold" : "",
+                              )}
+                            >
+                              <span className="flex-1">{formula}</span>
+                              <span className="text-muted-foreground">{val}{unit}</span>
+                              {isSelected && <span className="text-primary">✓</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
               </div>
             );
           })}
@@ -901,13 +983,21 @@ function BigFourStrengthBars({ e1rmWeight, isMetric }) {
             const svgPath = getLiftSvgPath(liftType);
 
             return (
-              <div key={liftType} className="flex items-center gap-3">
-                {svgPath
-                  ? <img src={svgPath} alt={liftType} className="h-12 w-12 shrink-0 object-contain opacity-75" />
-                  // Keep the same footprint when an icon is missing so labels/bars stay aligned.
-                  : <div className="h-12 w-12 shrink-0" />
-                }
-                <span className="w-24 shrink-0 truncate text-xs text-muted-foreground">{liftType}</span>
+              <div key={liftType} className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
+                {/* Row 1 on mobile: SVG + lift name + rating badge */}
+                <div className="flex items-center gap-3">
+                  {svgPath
+                    ? <img src={svgPath} alt={liftType} className="h-12 w-12 shrink-0 object-contain opacity-75" />
+                    // Keep the same footprint when an icon is missing so labels/bars stay aligned.
+                    : <div className="h-12 w-12 shrink-0" />
+                  }
+                  <span className="flex-1 text-xs text-muted-foreground md:w-24 md:flex-none md:truncate">{liftType}</span>
+                  {/* Rating badge: inline on mobile row 1, hidden here on desktop (shown at end) */}
+                  <span className="shrink-0 text-right text-xs font-medium md:hidden">
+                    {emoji} {rating}
+                  </span>
+                </div>
+                {/* Row 2 on mobile / middle col on desktop: the strength bar */}
                 <div className="relative flex-1">
                   <div
                     className="h-2 w-full rounded-full"
@@ -942,7 +1032,8 @@ function BigFourStrengthBars({ e1rmWeight, isMetric }) {
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <span className="w-32 shrink-0 text-right text-xs font-medium">
+                {/* Rating at end — desktop only (shown in row 1 on mobile) */}
+                <span className="hidden w-32 shrink-0 text-right text-xs font-medium md:block">
                   {emoji} {rating}
                 </span>
               </div>

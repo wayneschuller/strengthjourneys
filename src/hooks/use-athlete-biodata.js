@@ -335,17 +335,17 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
   const hasAdvancedInteractedRef = useRef(false);
 
   // Advanced params: syncQuery=false here; we sync all four together in the effect below
-  const [age, setAgeBase] = useStateFromQueryOrLocalStorage(
+  const [age, setAgeBase, ageIsDefault] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_AGE,
     30,
     false,
   );
-  const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
+  const [isMetric, setIsMetric, isMetricIsDefault] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
     false,
     modifyURLQuery,
   );
-  const [sex, setSexBase] = useStateFromQueryOrLocalStorage(
+  const [sex, setSexBase, sexIsDefault] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_SEX,
     "male",
     false,
@@ -355,6 +355,10 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     200,
     false,
   );
+
+  // True when all bio fields are still at their defaults — user has never personalised.
+  // Used to prompt the user for bio data in the navbar, calculator strength levels, and hero card.
+  const bioDataIsDefault = ageIsDefault && isMetricIsDefault && sexIsDefault && bodyWeightIsDefault;
   const [liftType, setLiftTypeBase] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE,
     "Back Squat",
@@ -558,7 +562,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     setSex,
     bodyWeight,
     setBodyWeight,
-    bodyWeightIsSet: !bodyWeightIsDefault,
+    bioDataIsDefault,
     standards,
     toggleIsMetric,
     liftType,

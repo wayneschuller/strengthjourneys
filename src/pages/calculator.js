@@ -537,7 +537,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
 // Hero card — just the animated e1rm number, set/formula context, and bodyweight ratio.
 const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM }) => {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
-  const { bodyWeight, bodyWeightIsSet } = useAthleteBio();
+  const { bodyWeight, bioDataIsDefault } = useAthleteBio();
 
   const motionVal = useMotionValue(e1rmWeight);
   const springVal = useSpring(motionVal, { stiffness: 200, damping: 20 });
@@ -562,7 +562,7 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM }) 
           <motion.span className="tabular-nums">{displayVal}</motion.span>
           {isMetric ? "kg" : "lb"}
         </div>
-        {bodyWeightIsSet && bodyWeight > 0 && (
+        {!bioDataIsDefault && bodyWeight > 0 && (
           <div className="mt-1 text-center text-sm text-muted-foreground">
             {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
           </div>

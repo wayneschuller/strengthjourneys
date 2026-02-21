@@ -639,6 +639,9 @@ function E1RMCalculatorMain({ relatedArticles }) {
               e1rmFormula={e1rmFormula}
               setE1rmFormula={setE1rmFormula}
               liftColor={liftColor}
+              isAdvancedAnalysis={isAdvancedAnalysis}
+              standards={standards}
+              liftType={liftType}
             />
           </div>
 
@@ -682,13 +685,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
                       setAge={setAge}
                       sex={sex}
                       setSex={setSex}
-                    />
-                    <StrengthStandardsBar
-                      e1rmWeight={e1rmWeight}
-                      standards={standards}
-                      liftType={liftType}
-                      isMetric={isMetric}
-                      liftColor={liftColor}
                     />
                   </CardContent>
                 </motion.div>
@@ -815,9 +811,10 @@ const E1RMSummaryCard = ({
   );
 };
 
-function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula, liftColor }) {
+function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula, liftColor, isAdvancedAnalysis, standards, liftType }) {
   const unit = isMetric ? "kg" : "lb";
   const accentColor = liftColor || "hsl(var(--primary))";
+  const standard = isAdvancedAnalysis ? standards?.[liftType] : null;
 
   // All 7 formulae sorted low→high by their estimate for this reps/weight
   const estimates = useMemo(
@@ -869,9 +866,43 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
       {/* ── Overview track (full scale, bracket notches at min/max) ── */}
       <div>
         <div className="relative" style={{ height: "24px" }}>
-          {/* Track */}
+          {/* Base track */}
           <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
-          {/* Filled band */}
+
+          {/* Strength standards gradient overlay */}
+          {standard?.elite && (
+            <>
+              <div
+                style={{
+                  position: "absolute",
+                  left: `${overviewPct(standard.physicallyActive ?? 0)}%`,
+                  width: `${overviewPct(standard.elite) - overviewPct(standard.physicallyActive ?? 0)}%`,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  height: "12px",
+                  background: `linear-gradient(to right, ${accentColor}18, ${accentColor}65)`,
+                  borderRadius: "2px",
+                }}
+              />
+              {[standard.beginner, standard.intermediate, standard.advanced, standard.elite].map((val, i) => (
+                <div
+                  key={i}
+                  style={{
+                    position: "absolute",
+                    left: `${overviewPct(val)}%`,
+                    top: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "1px",
+                    height: "16px",
+                    backgroundColor: "hsl(var(--background))",
+                    opacity: 0.7,
+                  }}
+                />
+              ))}
+            </>
+          )}
+
+          {/* Algorithm range band */}
           <motion.div
             style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", height: "12px", backgroundColor: accentColor, opacity: 0.35, borderRadius: "4px" }}
             animate={{ left: `${overviewBandLeft}%`, width: `${Math.max(overviewBandWidth, 0.3)}%` }}
@@ -890,7 +921,29 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
             transition={springConfig}
           />
         </div>
-        <div className="mt-1.5 flex justify-between text-xs text-foreground/70">
+
+        {/* Tier labels (when advanced) */}
+        {standard?.elite && (
+          <div className="relative mt-0.5" style={{ height: "14px" }}>
+            {[
+              { label: "Active", value: standard.physicallyActive ?? 0 },
+              { label: "Beginner", value: standard.beginner },
+              { label: "Intermediate", value: standard.intermediate },
+              { label: "Advanced", value: standard.advanced },
+              { label: "Elite", value: standard.elite },
+            ].map(({ label, value }) => (
+              <div
+                key={label}
+                style={{ left: `${overviewPct(value)}%` }}
+                className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[9px] text-muted-foreground/60"
+              >
+                {label}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-1 flex justify-between text-xs text-foreground/70">
           <span>0{unit}</span>
           <span>{overviewMax}{unit}</span>
         </div>
@@ -1048,100 +1101,6 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalysis
   );
 }
 
-function StrengthStandardsBar({ e1rmWeight, standards, liftType, isMetric, liftColor }) {
-  const standard = standards?.[liftType];
-  if (!standard) return null;
-
-  const { physicallyActive, beginner, intermediate, advanced, elite } = standard;
-  if (!elite) return null;
-
-  const unit = isMetric ? "kg" : "lb";
-  const accentColor = liftColor || "hsl(var(--primary))";
-
-  // Axis: start below the physicallyActive threshold, end beyond elite
-  const axisMin = Math.max(0, Math.round(physicallyActive * 0.75));
-  const axisMax = Math.round(elite * 1.15);
-  const axisRange = axisMax - axisMin;
-  const pct = (v) => Math.min(100, Math.max(0, ((v - axisMin) / axisRange) * 100));
-
-  const tiers = [
-    { label: "Active", value: physicallyActive },
-    { label: "Beginner", value: beginner },
-    { label: "Intermediate", value: intermediate },
-    { label: "Advanced", value: advanced },
-    { label: "Elite", value: elite },
-  ];
-
-  return (
-    <div className="mt-6 select-none">
-      <div className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        Strength Standards — {liftType}
-      </div>
-
-      <div className="relative" style={{ height: "24px" }}>
-        {/* Gradient track: muted → accent, representing weak → strong */}
-        <div
-          className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full"
-          style={{ background: `linear-gradient(to right, hsl(var(--muted)), ${accentColor}90)` }}
-        />
-
-        {/* Tier divider ticks */}
-        {tiers.map(({ label, value }) => (
-          <div
-            key={label}
-            style={{
-              position: "absolute",
-              left: `${pct(value)}%`,
-              top: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "2px",
-              height: "18px",
-              backgroundColor: "hsl(var(--background))",
-              borderRadius: "1px",
-              opacity: 0.7,
-            }}
-          />
-        ))}
-
-        {/* e1rm notch */}
-        <motion.div
-          style={{
-            position: "absolute",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "3px",
-            height: "22px",
-            backgroundColor: accentColor,
-            borderRadius: "2px",
-            zIndex: 10,
-            boxShadow: `0 0 0 2px ${accentColor}30`,
-          }}
-          animate={{ left: `${pct(e1rmWeight)}%` }}
-          transition={{ duration: 0 }}
-        />
-      </div>
-
-      {/* Tier labels */}
-      <div className="relative mt-1" style={{ height: "16px" }}>
-        {tiers.map(({ label, value }) => (
-          <div
-            key={label}
-            style={{ left: `${pct(value)}%` }}
-            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[9px] text-muted-foreground/50"
-          >
-            {label}
-          </div>
-        ))}
-      </div>
-
-      {/* Axis endpoints */}
-      <div className="mt-1 flex justify-between text-xs text-foreground/70">
-        <span>{axisMin}{unit}</span>
-        <span>{axisMax}{unit}</span>
-      </div>
-    </div>
-  );
-}
 
 function OptionalAtheleBioData({
   isMetric,

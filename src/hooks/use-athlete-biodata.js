@@ -340,7 +340,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     30,
     false,
   );
-  const [isMetric, setIsMetric, isMetricIsDefault] = useStateFromQueryOrLocalStorage(
+  const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
     false,
     modifyURLQuery,
@@ -358,7 +358,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
 
   // True when all bio fields are still at their defaults — user has never personalised.
   // Used to prompt the user for bio data in the navbar, calculator strength levels, and hero card.
-  const bioDataIsDefault = ageIsDefault && isMetricIsDefault && sexIsDefault && bodyWeightIsDefault;
+  const bioDataIsDefault = ageIsDefault && sexIsDefault && bodyWeightIsDefault;
   const [liftType, setLiftTypeBase] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE,
     "Back Squat",

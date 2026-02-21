@@ -62,8 +62,11 @@ import { getLogoForTheme } from "@/lib/theme-logos";
 
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 
+const BIO_SETTINGS_PAGES = ["/calculator", "/strength-level-calculator"];
+
 export function NavBar() {
   const { status: authStatus } = useSession();
+  const pathname = usePathname();
 
   useEffect(() => {
     // Only run on client
@@ -111,7 +114,9 @@ export function NavBar() {
           <GitHubButton />
         </div>
 
-        <AthleteBioQuickSettings />
+        {(authStatus === "authenticated" || BIO_SETTINGS_PAGES.includes(pathname)) && (
+          <AthleteBioQuickSettings />
+        )}
         <ThemeChooser />
         {/* <DarkModeToggle /> */}
         <AvatarDropdown />

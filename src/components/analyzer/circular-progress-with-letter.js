@@ -14,6 +14,16 @@ const SIZES = {
   lg: { minH: 150, innerRadius: 42, strokeWidth: 8, textClass: "text-4xl" },
 };
 
+/**
+ * Renders a circular pie-chart progress ring with a letter grade in the center.
+ * Grade and ring color are derived from the progress percentage via getGradeAndColor.
+ *
+ * @param {Object} props
+ * @param {number} [props.progress=90] - Percentage filled (0–100) used to draw the ring and derive the grade.
+ * @param {"sm"|"lg"} [props.size="sm"] - Size preset controlling ring radius and font size.
+ * @param {number} [props.gradeOverride] - When provided, overrides progress for grade/color calculation only
+ *   while the ring still animates from the actual progress value.
+ */
 export function CircularProgressWithLetter({ progress = 90, size = "sm", gradeOverride }) {
   const displayProgress = gradeOverride ?? progress;
   const { grade, color } = getGradeAndColor(displayProgress);

@@ -59,9 +59,7 @@ const getStrengthRating = (
   return getStrengthRatingForE1RM(oneRepMax, standard);
 };
 
-/**
- * TruncatedText component for displaying notes with expand/collapse
- */
+// Inline text that truncates to 300 characters with a "Show more / Show less" toggle.
 const TruncatedText = ({ text, className }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const truncLength = 300;
@@ -92,9 +90,7 @@ const TruncatedText = ({ text, className }) => {
   );
 };
 
-/**
- * PR Card component for displaying a single rep range PR
- */
+// Card for a single rep-range PR showing weight, date, strength badge, video link, and expand/collapse chevron.
 const PRCard = ({
   repRange,
   repIndex,
@@ -233,9 +229,7 @@ const PRCard = ({
   );
 };
 
-/**
- * Detail view showing all lifts in a rep range
- */
+// Grid of all lifts for a given rep range, ranked by weight with strength badges and video links.
 const RepRangeDetailView = ({
   repRange,
   repIndex,

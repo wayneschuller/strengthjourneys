@@ -36,6 +36,10 @@ import { cn } from "@/lib/utils";
 
 const BASIC_THEMES = ["light", "dark"];
 
+/**
+ * Dropdown button that lets the user select from all available app themes.
+ * Authenticated users can access all themes and toggle the animated background; unauthenticated users are limited to light/dark.
+ */
 export function ThemeChooser() {
   const router = useRouter();
   const { theme, setTheme, themes } = useTheme();
@@ -143,7 +147,10 @@ const DARK_THEMES = [
   "starry-night-dark",
 ];
 
-// This is the old dark mode toggle that is no longer used
+/**
+ * Simple icon button that toggles between light and dark themes.
+ * @deprecated Replaced by ThemeChooser; kept for reference but no longer rendered in the app.
+ */
 export function DarkModeToggle() {
   const { theme, setTheme } = useTheme();
   const isDark = DARK_THEMES.includes(theme ?? "");

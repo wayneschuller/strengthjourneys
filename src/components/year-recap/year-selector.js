@@ -22,6 +22,15 @@ export function getYearsWithData(parsedData) {
   return Array.from(years).sort((a, b) => a - b);
 }
 
+/**
+ * Renders a set of year buttons for selecting a recap year, sorted newest-first.
+ * Supports a default horizontal layout and a "sidebar" two-column grid variant.
+ * @param {Object} props
+ * @param {number[]} props.years - Array of years to display as selectable buttons.
+ * @param {number} props.selectedYear - The currently selected year, highlighted with primary styling.
+ * @param {Function} props.onSelect - Callback invoked with the chosen year number when a button is clicked.
+ * @param {string} [props.variant] - Layout variant: "default" (flex-wrap row) or "sidebar" (2-column grid).
+ */
 export function YearSelector({ years, selectedYear, onSelect, variant = "default" }) {
   const descendingYears = [...years].sort((a, b) => b - a);
   const isSidebar = variant === "sidebar";

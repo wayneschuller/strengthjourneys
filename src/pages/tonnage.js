@@ -32,6 +32,11 @@ export async function getStaticProps() {
   };
 }
 
+/**
+ * Tonnage Metrics page. Renders SEO metadata and delegates rendering to TonnageVisualizerMain.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles related to the Tonnage Metrics topic, fetched via ISR.
+ */
 export default function TonnageVisualizer({ relatedArticles }) {
   // OG Meta Tags
   const title = "Strength Journeys Tonnage Metrics";
@@ -80,6 +85,12 @@ export default function TonnageVisualizer({ relatedArticles }) {
   );
 }
 
+/**
+ * Inner client component for the Tonnage Metrics page. Renders a tonnage chart alongside a session
+ * analysis card, letting users explore their total volume lifted over time.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ */
 function TonnageVisualizerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { isLoading, sheetInfo } = useUserLiftingData();

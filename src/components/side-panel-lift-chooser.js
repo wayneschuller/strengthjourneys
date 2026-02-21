@@ -31,6 +31,19 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 /** Default prefix for component-scoped lift selection. Export for consumers that need to hydrate from the same key. */
 export const VISUALIZER_STORAGE_PREFIX = "visualizer";
 
+/**
+ * Icon or text button that opens a side-panel Sheet with a checklist of the user's lift types.
+ * Persists the selection to localStorage under the given storage prefix.
+ *
+ * @param {Object} props
+ * @param {boolean} [props.isIconMode] - When true, renders a compact icon-only button instead of a labelled button.
+ * @param {string[]} props.selectedLiftTypes - Array of currently selected lift type names.
+ * @param {function(string[])} props.setSelectedLiftTypes - Callback invoked with the updated selection array.
+ * @param {string} [props.storagePrefix=VISUALIZER_STORAGE_PREFIX] - localStorage key prefix for persisting selection.
+ * @param {string} [props.title="Choose Lifts"] - Title displayed in the Sheet header.
+ * @param {React.ReactNode} [props.description] - Description displayed below the Sheet title.
+ * @param {string} [props.tooltipLabel] - Accessible tooltip text; falls back to `title` when omitted.
+ */
 export function SidePanelSelectLiftsButton({
   isIconMode,
   selectedLiftTypes,
@@ -90,6 +103,7 @@ export function SidePanelSelectLiftsButton({
   );
 }
 
+// Internal scrollable checklist of all lift types for the side-panel lift chooser.
 const CheckboxLifts = ({
   selectedLiftTypes,
   setSelectedLiftTypes,

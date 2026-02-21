@@ -35,6 +35,13 @@ import {
 
 const MAX_LIFTS_SHOWN = 6;
 
+/**
+ * Card displaying one calendar heatmap per year of the user's training history, with PR-weighted
+ * color intensity. Includes a "Copy heatmap" button that renders the card to clipboard via html2canvas.
+ * Reads parsedData from UserLiftingDataProvider; takes no props.
+ *
+ * @param {Object} props
+ */
 export function ActivityHeatmapsCard() {
   const { parsedData, isLoading } = useUserLiftingData();
   const [startDate, setStartDate] = useState(null);
@@ -211,6 +218,7 @@ export function ActivityHeatmapsCard() {
   );
 }
 
+// Single-year calendar heatmap with a custom tooltip showing PR details and lift breakdown per day.
 function Heatmap({ parsedData, startDate, endDate, isSharing }) {
   const { status: authStatus } = useSession();
   const [heatmapData, setHeatmapData] = useState(null);
@@ -290,6 +298,7 @@ function Heatmap({ parsedData, startDate, endDate, isSharing }) {
   );
 }
 
+// Tooltip popup showing date, total sets, PR badges, and per-lift set breakdowns for a heatmap cell.
 function HeatmapTooltipContent({ value }) {
   const { sessionData, date } = value;
   const { isMetric } = useAthleteBio();

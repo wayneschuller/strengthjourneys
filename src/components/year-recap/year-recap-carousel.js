@@ -30,6 +30,13 @@ function fireTitleConfetti() {
   });
 }
 
+/**
+ * Full-screen carousel of Strength Unwrapped recap slides for a given year.
+ * Fires confetti on the title slide and provides a share-to-clipboard button to capture the active slide as an image.
+ * @param {Object} props
+ * @param {number|string} props.year - The recap year to display across all slide cards.
+ * @param {boolean} props.isDemo - When true, suppresses confetti and hides the share button in favour of a "Demo mode" label.
+ */
 export function YearRecapCarousel({ year, isDemo }) {
   const [api, setApi] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);

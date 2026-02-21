@@ -6,6 +6,14 @@ import { pickQuirkyPhrase, SEASONAL_PHRASES } from "../phrases";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { BarChart3 } from "lucide-react";
 
+/**
+ * Recap slide showing the busiest training month and an animated monthly session bar chart for the given year.
+ * Bars animate in sequentially when the slide becomes active.
+ * @param {Object} props
+ * @param {number|string} props.year - The recap year to compute monthly session data for.
+ * @param {boolean} props.isDemo - Whether the card is being shown in demo mode.
+ * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
+ */
 export function SeasonalPatternCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const phrase = pickQuirkyPhrase(

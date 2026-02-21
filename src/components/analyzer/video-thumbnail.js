@@ -7,8 +7,13 @@ import { getVideoThumbnailInfo } from "@/lib/video-thumbnails";
 import { cn } from "@/lib/utils";
 
 /**
- * VideoThumbnail component for displaying video thumbnails with play button overlay
- * Supports YouTube and Google Photos links
+ * Renders a clickable video thumbnail with a play button overlay. For YouTube URLs it fetches
+ * the actual thumbnail image; for Google Photos and other links it shows a generic play placeholder.
+ *
+ * @param {Object} props
+ * @param {string} props.url - Video URL (YouTube or Google Photos). Required; renders nothing if falsy.
+ * @param {string} [props.className] - Additional Tailwind classes applied to the container div.
+ * @param {function} [props.onClick] - Custom click handler. When omitted, opens the URL in a new tab.
  */
 export function VideoThumbnail({ url, className, onClick }) {
   const [imageError, setImageError] = useState(false);

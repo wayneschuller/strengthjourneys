@@ -20,6 +20,16 @@ export function getLiftSvgPath(liftType) {
   return LIFT_SVG_MAP[liftType] ?? null;
 }
 
+/**
+ * Renders the SVG illustration for a known lift type, optionally with a spring entrance animation.
+ * Returns null if no SVG mapping exists for the given liftType.
+ * @param {Object} props
+ * @param {string} props.liftType - The lift name used to look up the SVG path (e.g. "Back Squat", "Deadlift").
+ * @param {string} [props.size] - Size preset: "sm", "md", or "lg".
+ * @param {boolean} [props.animate] - When true, wraps the image in a motion.div with a spring animation.
+ * @param {boolean} [props.isActive] - Controls whether the animation plays (scale/opacity in) or reverses (scale/opacity out).
+ * @param {string} [props.className] - Additional CSS classes applied to the img element.
+ */
 export function LiftSvg({
   liftType,
   size = "md",

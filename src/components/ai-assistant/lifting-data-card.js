@@ -21,6 +21,13 @@ import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 
+/**
+ * Card that manages which lifting data categories are shared with the AI assistant.
+ * Handles auth states (unauthenticated, no sheet connected, sheet loaded) and renders the appropriate Google sign-in, sheet picker, or data-sharing checkboxes.
+ * @param {Object} props
+ * @param {Object} props.selectedOptions - Object of boolean flags controlling which data categories are shared (all, records, frequency, consistency, sessionData).
+ * @param {Function} props.setSelectedOptions - State setter for selectedOptions; receives the full updated options object.
+ */
 export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
   const router = useRouter();
   const { parsedData, isLoading, isDemoMode, sheetInfo, selectSheet } =

@@ -4,9 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
-// ---------------------------------------------------------------------------------------------------
-// <PlaylistAdminTools /> stuff for maintenance. To use: add a Google email to .env or Vercel env settings
-// ---------------------------------------------------------------------------------------------------
+/**
+ * Admin toolbar rendered below a playlist card that exposes edit, delete, and ISR revalidation actions.
+ * Only rendered when the signed-in user matches the admin Google email set in environment variables.
+ * @param {Object} props
+ * @param {Object} props.playlist - The playlist data object passed through to the edit and delete callbacks.
+ * @param {Function} props.onEdit - Callback invoked with the playlist object when the Edit button is clicked.
+ * @param {Function} props.onDelete - Callback invoked with the playlist ID when the Delete button is clicked.
+ * @param {string} [props.className] - Additional CSS classes applied to the wrapper element.
+ */
 export function PlaylistAdminTools({ playlist, onEdit, onDelete, className }) {
   const [isRevalidating, setIsRevalidating] = useState(false);
 

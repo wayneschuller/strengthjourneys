@@ -59,6 +59,14 @@ function getOriginFromRef(ref) {
   };
 }
 
+/**
+ * Toggle button that switches the app between kg and lb units. Fires a toast
+ * notification with a humorous quip and a small confetti burst on each toggle.
+ *
+ * @param {Object} props
+ * @param {boolean} props.isMetric - Whether the current unit is metric (kg).
+ * @param {Function} props.onSwitchChange - Callback invoked with the new isMetric boolean.
+ */
 export function UnitChooser({ isMetric, onSwitchChange }) {
   const { toast } = useToast();
   const buttonRef = useRef(null);

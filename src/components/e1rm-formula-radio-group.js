@@ -3,6 +3,20 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { estimateE1RM, e1rmFormulae } from "@/lib/estimate-e1rm";
 import { cn } from "@/lib/utils";
 
+/**
+ * Radio group for selecting an estimated one-rep-max (E1RM) formula. Optionally
+ * shows the estimated value each formula would produce for the given reps and weight.
+ *
+ * @param {Object} props
+ * @param {string[]} [props.formulae] - Array of formula names to display; defaults to all known formulae.
+ * @param {string} props.e1rmFormula - The currently selected formula name.
+ * @param {Function} props.setE1rmFormula - Callback to update the selected formula.
+ * @param {number} [props.reps] - Rep count used to compute per-formula estimates.
+ * @param {number} [props.weight] - Weight used to compute per-formula estimates.
+ * @param {boolean} [props.isMetric] - Whether weights are in kg (true) or lb (false).
+ * @param {boolean} [props.horizontal] - If true, renders the radio items in a multi-column grid.
+ * @param {boolean} [props.showEstimates] - If true, shows the per-formula estimate beside each label.
+ */
 export function E1RMFormulaRadioGroup({
   formulae,
   e1rmFormula,

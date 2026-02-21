@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import Image from "next/image";
 import { urlFor } from "@/lib/sanity-io.js";
 
+// Internal helper: renders a cropped Sanity image thumbnail for an article card.
 const ArticleImage = ({ sanityImage, className }) => {
   if (!sanityImage) return null;
 

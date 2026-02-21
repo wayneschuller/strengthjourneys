@@ -107,6 +107,11 @@ export async function getStaticProps() {
   };
 }
 
+/**
+ * 1000lb Club Calculator page. Renders SEO metadata and delegates rendering to ThousandPoundClubCalculatorMain.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles related to the 1000lb Club topic, fetched via ISR.
+ */
 export default function ThousandPoundClubCalculator({ relatedArticles }) {
   // OG Meta Tags
   const canonicalURL =
@@ -160,6 +165,12 @@ export default function ThousandPoundClubCalculator({ relatedArticles }) {
 const toKg = (lbs) => (lbs * 0.453592).toFixed(1);
 const KG_PER_LB = 0.453592;
 
+/**
+ * Inner client component for the 1000lb Club Calculator page. Provides squat/bench/deadlift sliders,
+ * a donut progress chart, a confetti celebration when 1000lb is reached, and a shareable result.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ */
 function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const { toast } = useToast();
   const prefersReducedMotion = useReducedMotion();
@@ -482,6 +493,13 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   );
 }
 
+/**
+ * Animated donut chart showing progress toward the 1000lb club target, with the total displayed
+ * in the centre and a green color scheme once the target is reached.
+ * @param {Object} props
+ * @param {number} props.total - Combined squat + bench + deadlift total in pounds.
+ * @param {number} [props.target=1000] - Target total in pounds (defaults to 1000).
+ */
 function ThousandDonut({ total, target = 1000 }) {
   const capped = Math.min(total, target);
   const remainder = Math.max(0, target - total);

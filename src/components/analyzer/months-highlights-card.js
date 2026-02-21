@@ -19,6 +19,13 @@ import {
   getReadableDateString,
 } from "@/lib/processing-utils";
 
+/**
+ * Card listing the top PR lifts from the past month across all lift types,
+ * annotated with lifetime and yearly ranking significance. Core lifts are bolded.
+ * Reads data from UserLiftingDataProvider; takes no props.
+ *
+ * @param {Object} props
+ */
 export function MonthsHighlightsCard() {
   const {
     parsedData,

@@ -26,6 +26,10 @@ import {
 import { Crown, Shield, Skull, Luggage } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
+/**
+ * Slide-out mobile navigation drawer triggered by a hamburger button.
+ * Renders the app logo, all feature page links, and Big Four lift insight links inside a shadcn Sheet.
+ */
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -60,6 +64,7 @@ export function MobileNav() {
     "Strict Press": Luggage,
   };
 
+  // Internal nav link row: icon + label, highlights the active route.
   const NavLink = ({ href, title, IconComponent }) => (
     <SheetClose asChild>
       <Link

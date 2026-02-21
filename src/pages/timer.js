@@ -28,6 +28,12 @@ export async function getStaticProps() {
   };
 }
 
+/**
+ * Lifting Set Timer page. Renders SEO metadata and a full-screen countdown/stopwatch timer
+ * suitable for use at the gym on phones or large displays.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles related to the Gym Timer topic, fetched via ISR.
+ */
 export default function Timer({ relatedArticles }) {
   // const { time } = useTimer();
 
@@ -84,6 +90,10 @@ export default function Timer({ relatedArticles }) {
   );
 }
 
+/**
+ * Full-screen timer display with a giant time readout and restart/start-stop/reset controls.
+ * Starts automatically on mount and supports spacebar restart via keyboard listener.
+ */
 function LargeTimer() {
   const {
     time,
@@ -167,6 +177,10 @@ const formatTime = (totalSeconds) => {
   return `${formattedMinutes}:${formattedSeconds}`;
 };
 
+/**
+ * Compact inline timer display used in the site navigation bar. Renders only while the timer is running,
+ * showing the elapsed time and restarting on click.
+ */
 export function MiniTimer() {
   const {
     time,

@@ -320,6 +320,7 @@ const DEMO_MODE_NUDGE_MESSAGES = [
   },
 ];
 
+// Internal banner shown on data pages when the user is unauthenticated or has no sheet connected.
 function DataAccessBanner({ pathname }) {
   const { data: session, status: authStatus } = useSession();
   const { sheetInfo, selectSheet } = useUserLiftingData();

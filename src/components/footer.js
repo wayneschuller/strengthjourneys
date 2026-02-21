@@ -4,6 +4,12 @@
 import { featurePages } from "@/pages";
 import { PageContainer } from "@/components/page-header";
 
+/**
+ * Site-wide footer with links to the author's Twitter, the GitHub repository,
+ * the Buy Me a Coffee page, the feature-request feedback form, and the changelog.
+ *
+ * @param {Object} props - No props.
+ */
 export function Footer() {
   // return null;
 

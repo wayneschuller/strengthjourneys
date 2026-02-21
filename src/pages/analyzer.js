@@ -39,6 +39,11 @@ export async function getStaticProps() {
   };
 }
 
+/**
+ * PR Analyzer page. Renders SEO metadata and delegates rendering to AnalyzerMain.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles related to the PR Analyzer topic, fetched via ISR.
+ */
 export default function Analyzer({ relatedArticles }) {
   // OG Meta Tags
   const description =
@@ -87,6 +92,12 @@ export default function Analyzer({ relatedArticles }) {
   );
 }
 
+/**
+ * Inner client component for the PR Analyzer page. Renders the full dashboard of analyzer cards
+ * (session analysis, consistency, monthly highlights, heatmaps, lift accordion) and related articles.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ */
 function AnalyzerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { isLoading, sheetInfo } = useUserLiftingData();

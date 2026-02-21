@@ -32,6 +32,11 @@ export async function getStaticProps() {
   };
 }
 
+/**
+ * Strength Visualizer page. Renders SEO metadata and delegates rendering to VisualizerMain.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles related to the Strength Visualizer topic, fetched via ISR.
+ */
 export default function Visualizer({ relatedArticles }) {
   // OG Meta Tags
   const title = "Strength Journeys Lift Strength Visualizer";
@@ -80,6 +85,12 @@ export default function Visualizer({ relatedArticles }) {
   );
 }
 
+/**
+ * Inner client component for the Strength Visualizer page. Renders an E1RM chart alongside a session
+ * analysis card so users can explore their complete strength history across all lifts.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ */
 function VisualizerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { isLoading, sheetInfo } = useUserLiftingData();

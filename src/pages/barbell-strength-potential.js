@@ -49,6 +49,11 @@ export async function getStaticProps() {
   };
 }
 
+/**
+ * Barbell Strength Potential page. Renders SEO metadata and delegates rendering to StrengthPotentialMain.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles related to the PR Analyzer topic, fetched via ISR.
+ */
 export default function StrengthPotential({ relatedArticles }) {
   // OG Meta Tags
   const description =
@@ -98,6 +103,12 @@ export default function StrengthPotential({ relatedArticles }) {
   );
 }
 
+/**
+ * Inner client component for the Barbell Strength Potential page. Renders E1RM formula selector and
+ * bar charts of top lifts per rep range for the Big Four plus a user-selected additional lift.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ */
 function StrengthPotentialMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { liftTypes, isLoading, sheetInfo } = useUserLiftingData();

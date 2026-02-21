@@ -75,6 +75,7 @@ function formatYears(years) {
   return `${y} yr ${months} mo`;
 }
 
+// Animated horizontal progress bar that fills from 0 to pct on mount using motion.
 function ProgressBar({ pct, color, isMounted, delay = 0.3 }) {
   const isDone = pct >= 1;
   return (
@@ -94,6 +95,7 @@ function ProgressBar({ pct, color, isMounted, delay = 0.3 }) {
   );
 }
 
+// Shows reps and time progress bars toward the next tier, or a congratulations message at max tier.
 function TierProgressSection({ totalReps, yearsTraining, tier, liftType, liftColor, isMounted }) {
   const currentIndex = TIERS.findIndex((t) => t.name === tier.name);
   const nextTier = TIERS[currentIndex + 1] ?? null;
@@ -168,6 +170,7 @@ function TierProgressSection({ totalReps, yearsTraining, tier, liftType, liftCol
 // ─────────────────────────────────────────────────────────────────────────────
 // Animated donut ring
 // ─────────────────────────────────────────────────────────────────────────────
+// SVG donut ring that animates its fill arc from 0 to the target proportion on mount.
 function StatRing({ value, fill, label, color, isMounted }) {
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
@@ -228,6 +231,13 @@ function StatRing({ value, fill, label, color, isMounted }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Main card
 // ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Card summarizing a user's full history with a single lift: PR trio, E1RM estimate, experience
+ * tier badge and progress, animated commitment rings, recent highlights, and heaviest session stats.
+ *
+ * @param {Object} props
+ * @param {string} props.liftType - Display name of the lift (e.g. "Back Squat") to show the journey for.
+ */
 export function LiftJourneyCard({ liftType }) {
   const { status: authStatus } = useSession();
   const {

@@ -113,6 +113,11 @@ const TRIGGER_LABELS = [
 ];
 const TRIGGER_LABEL_INDEX_STORAGE_KEY = "sj-feedback-trigger-label-index";
 
+/**
+ * Floating feedback button and progressive-disclosure dialog for collecting user sentiment.
+ * Renders a fixed-position button in the bottom-right corner that opens a multi-step dialog
+ * (thumbs rating → optional comment → optional email → success/donation prompt).
+ */
 export function FeedbackWidget() {
   const router = useRouter();
   const { data: session } = useSession();

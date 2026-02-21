@@ -22,9 +22,20 @@ import {
   Heart,
 } from "lucide-react";
 
-// ---------------------------------------------------------------------------------------------------
-// <PlaylistCard /> - Upvotable info card about a good gym music playlist
-// ---------------------------------------------------------------------------------------------------
+/**
+ * Upvotable info card displaying details about a gym music playlist, including title, URL, description, category badges, and vote controls.
+ * Enforces a 10-minute cooldown between votes and shows admin edit/delete tools when isAdmin is true.
+ * @param {Object} props
+ * @param {Object} props.playlist - The playlist data object (id, title, url, description, categories, upVotes, downVotes).
+ * @param {Object} props.votes - Map of playlist IDs to the user's local vote state ({ vote, timestamp }).
+ * @param {Function} props.handleVote - Callback invoked with (playlistId, isUpvote) when a vote button is clicked.
+ * @param {boolean} props.isAdmin - When true, renders admin edit and delete tools below the card content.
+ * @param {Function} props.onDelete - Callback invoked with the playlist ID when the admin delete button is clicked.
+ * @param {Function} props.onEdit - Callback invoked with the playlist object when the admin edit button is clicked.
+ * @param {Function} props.onSave - Callback invoked with the playlist ID when the save/unsave heart button is clicked.
+ * @param {boolean} props.isSaved - Whether the playlist is currently saved by the user; controls the filled/unfilled heart icon.
+ * @param {string} [props.className] - Additional CSS classes applied to the root Card element.
+ */
 export function PlaylistCard({
   playlist,
   votes,
@@ -45,6 +56,7 @@ export function PlaylistCard({
     setHasLogoError(false);
   }, [playlist.url]);
 
+  // Internal up/down vote button with active-state highlighting and disabled state during cooldown.
   const VoteButton = ({ isUpvote = true, onClick, className }) => {
     const isUserVote =
       (isUpvote && userVote === "upVote") ||

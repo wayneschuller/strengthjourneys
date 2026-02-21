@@ -22,6 +22,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useLocalStorage } from "usehooks-ts";
 import { cn } from "@/lib/utils";
 
+/**
+ * Card that collects the user's basic biometric details (age, bodyweight, height, sex) and a toggle to share them with the AI assistant.
+ * All values are controlled externally; this component only renders sliders, selects, and a share checkbox.
+ * @param {Object} props
+ * @param {number} props.age - Current age value in years.
+ * @param {Function} props.setAge - Setter for age.
+ * @param {number} props.bodyWeight - Current bodyweight value in the active unit.
+ * @param {boolean} props.isMetric - Whether the bodyweight unit is kg (true) or lb (false).
+ * @param {Function} props.toggleIsMetric - Callback to toggle between kg and lb.
+ * @param {Function} props.setBodyWeight - Setter for bodyWeight.
+ * @param {string} props.sex - Current sex selection ("male" or "female").
+ * @param {Function} props.setSex - Setter for sex.
+ * @param {number} props.height - Current height value in centimetres.
+ * @param {Function} props.setHeight - Setter for height.
+ * @param {boolean} props.shareBioDetails - Whether bio details are currently shared with the AI.
+ * @param {Function} props.setShareBioDetails - Setter for shareBioDetails.
+ */
 export function BioDetailsCard({
   age,
   setAge,
@@ -138,6 +155,7 @@ export function BioDetailsCard({
   );
 }
 
+// Internal slider widget for selecting height in cm, also displaying the imperial feet/inches equivalent.
 const HeightWidget = ({ height, setHeight }) => {
   const handleHeightChange = (newHeight) => {
     setHeight(newHeight[0]);

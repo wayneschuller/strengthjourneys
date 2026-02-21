@@ -76,6 +76,11 @@ export async function getStaticProps() {
   };
 }
 
+/**
+ * One Rep Max Calculator page. Renders SEO metadata and delegates rendering to E1RMCalculatorMain.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles related to the One Rep Max Calculator topic, fetched via ISR.
+ */
 export default function E1RMCalculator({ relatedArticles }) {
   const title = "One Rep Max Calculator | Free 1RM Tool, No Login Required";
   const description =
@@ -124,6 +129,12 @@ export default function E1RMCalculator({ relatedArticles }) {
   );
 }
 
+/**
+ * Inner client component for the One Rep Max Calculator page. Provides reps/weight sliders, an animated
+ * E1RM summary card, algorithm range bars, Big Four strength standard bars, and rep-range/percentage tables.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ */
 function E1RMCalculatorMain({ relatedArticles }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -535,7 +546,16 @@ function E1RMCalculatorMain({ relatedArticles }) {
 }
 
 
-// Hero card — just the animated e1rm number, set/formula context, and bodyweight ratio.
+/**
+ * Hero card displaying the animated estimated one-rep max number, the input set context, and
+ * optionally a bodyweight ratio when athlete bio data is available.
+ * @param {Object} props
+ * @param {number|string} props.reps - Number of reps performed.
+ * @param {number|string} props.weight - Weight lifted.
+ * @param {boolean} props.isMetric - Whether weight is in kg (true) or lb (false).
+ * @param {string} props.e1rmFormula - Name of the E1RM formula currently selected.
+ * @param {Function} props.estimateE1RM - Function to compute the estimated one-rep max.
+ */
 const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM }) => {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const { bodyWeight, bioDataIsDefault } = useAthleteBio();
@@ -578,10 +598,16 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM }) 
   );
 };
 
-// Zoomed horizontal track showing the spread of all 7 e1rm algorithm estimates.
-// Dots are clickable to switch the active formula. The band always occupies a
-// fixed visual fraction of the track so the spread is legible regardless of
-// how close the algorithms agree.
+/**
+ * Zoomed horizontal track visualizing the spread of all 7 E1RM algorithm estimates. Dots are clickable
+ * to switch the active formula, and labels merge when adjacent estimates are too close to distinguish.
+ * @param {Object} props
+ * @param {number|string} props.reps - Number of reps performed.
+ * @param {number|string} props.weight - Weight lifted.
+ * @param {boolean} props.isMetric - Whether weight is in kg (true) or lb (false).
+ * @param {string} props.e1rmFormula - Currently active E1RM formula name.
+ * @param {Function} props.setE1rmFormula - Setter to change the active formula.
+ */
 function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormula }) {
   const unit = isMetric ? "kg" : "lb";
   const accentColor = "var(--primary)";
@@ -844,10 +870,15 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
   );
 }
 
-// Table projecting the estimated best lift at each rep count from 1–10RM,
-// derived from the current e1rm via estimateWeightForReps. Highlights the
-// row matching the user's current rep input. Re-mounts (re-animates) whenever
-// the formula, weight, or reps change via the parent key prop.
+/**
+ * Table projecting the estimated best lift at each rep count from 1–20RM, derived from the current
+ * E1RM. Highlights the row matching the user's current rep input and animates in on each re-mount.
+ * @param {Object} props
+ * @param {number|string} props.reps - Currently selected rep count (used to highlight the matching row).
+ * @param {number|string} props.weight - Weight lifted.
+ * @param {string} props.e1rmFormula - E1RM formula used for all projections.
+ * @param {boolean} props.isMetric - Whether weight is in kg (true) or lb (false).
+ */
 function RepRangeTable({ reps, weight, e1rmFormula, isMetric }) {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const unit = isMetric ? "kg" : "lb";
@@ -905,9 +936,15 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric }) {
 }
 
 
-// Table showing common training intensities from 100% down to 50% of e1rm
-// in 5% steps — useful for bro-programming percentage-based templates.
-// Sits beside RepRangeTable in a two-column grid on md+ screens.
+/**
+ * Table showing common training intensities from 100% down to 50% of the estimated one-rep max in 5%
+ * steps, useful for percentage-based programming templates.
+ * @param {Object} props
+ * @param {number|string} props.reps - Number of reps performed (used to derive E1RM).
+ * @param {number|string} props.weight - Weight lifted.
+ * @param {string} props.e1rmFormula - E1RM formula used to compute the base max.
+ * @param {boolean} props.isMetric - Whether weight is in kg (true) or lb (false).
+ */
 function PercentageTable({ reps, weight, e1rmFormula, isMetric }) {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const unit = isMetric ? "kg" : "lb";
@@ -971,11 +1008,16 @@ const NEXT_TIER = {
   Elite: null,
 };
 
-// Four compact strength standard bars — one per Big Four lift — showing where
-// the current calculator e1rm sits on the physicallyActive→elite spectrum.
-// Bio data (age, bodyWeight, sex) comes from the global hook; defaults to 30yo
-// 200lb male if the user hasn't set a profile. The AthleteBioQuickSettings
-// dropdown lets them update it inline without leaving the page.
+/**
+ * Four compact strength standard bars (one per Big Four lift) showing where the current calculator
+ * E1RM sits on the physically-active-to-elite spectrum, with inline athlete bio settings.
+ * @param {Object} props
+ * @param {number|string} props.reps - Number of reps performed.
+ * @param {number|string} props.weight - Weight lifted.
+ * @param {number} props.e1rmWeight - Computed estimated one-rep max.
+ * @param {boolean} props.isMetric - Whether weight is in kg (true) or lb (false).
+ * @param {string} props.e1rmFormula - Active E1RM formula name, included in copied text.
+ */
 function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }) {
   const { standards, age, sex, bodyWeight, bioDataIsDefault } = useAthleteBio();
   const { toast } = useToast();

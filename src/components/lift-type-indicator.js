@@ -10,6 +10,14 @@ export const bigFourURLs = {
   "Strict Press": "/barbell-strict-press-insights",
 };
 
+/**
+ * Renders a small colored square followed by the lift type name. For the four
+ * main barbell lifts the entire element is wrapped in a link to its insight page.
+ *
+ * @param {Object} props
+ * @param {string} props.liftType - The name of the lift (e.g. "Back Squat").
+ * @param {string} [props.className] - Additional CSS classes for the wrapper element.
+ */
 export const LiftTypeIndicator = ({ liftType, className = "" }) => {
   const { getColor } = useLiftColors();
   const color = getColor(liftType);

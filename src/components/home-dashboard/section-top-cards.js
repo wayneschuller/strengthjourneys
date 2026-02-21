@@ -342,6 +342,7 @@ export function SectionTopCards({ isProgressDone = false }) {
   );
 }
 
+// Placeholder skeleton rendered in place of SectionTopCards while row-count animation is running.
 function SectionTopCardsSkeleton() {
   return Array.from({ length: 5 }).map((_, index) => (
     <div

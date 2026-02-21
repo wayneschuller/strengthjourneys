@@ -100,6 +100,15 @@ export async function getStaticProps({ params }) {
   };
 }
 
+/**
+ * Dynamic insight page for a single Big Four barbell lift (e.g. Back Squat, Bench Press, Deadlift, Strict Press).
+ * Renders SEO metadata from the lift's static data and delegates content rendering to BarbellInsightsMain.
+ * @param {Object} props
+ * @param {Object} props.liftInsightData - Static metadata for this lift (titles, SEO fields, quote, videos, etc.) from bigFourLiftInsightData.
+ * @param {Array} props.relatedArticles - CMS articles related to this lift type, fetched via ISR.
+ * @param {Object|null} props.introductionArticle - Sanity CMS article used as the introduction body for this lift.
+ * @param {Object|null} props.resourcesArticle - Sanity CMS article used as the resources section for this lift.
+ */
 export default function BigFourBarbellInsights({
   liftInsightData,
   relatedArticles,
@@ -147,6 +156,15 @@ export default function BigFourBarbellInsights({
   );
 }
 
+/**
+ * Inner client component for a Big Four lift insight page. Renders the full dashboard of lift-specific
+ * cards: strength levels, lift journey, articles, visualizer charts, PR tables, and video guides.
+ * @param {Object} props
+ * @param {Object} props.liftInsightData - Static metadata for this lift including liftType, quote, videos, etc.
+ * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ * @param {Object|null} props.introductionArticle - Sanity CMS article rendered as the introduction card.
+ * @param {Object|null} props.resourcesArticle - Sanity CMS article rendered as the resources card.
+ */
 function BarbellInsightsMain({
   liftInsightData,
   relatedArticles,
@@ -242,6 +260,12 @@ function BarbellInsightsMain({
 }
 
 
+/**
+ * Card displaying the authenticated user's all-time PR table for a specific lift type.
+ * Returns null for unauthenticated users.
+ * @param {Object} props
+ * @param {string} props.liftType - The lift type to display PRs for (e.g. "Back Squat").
+ */
 function MyLiftTypePRsCard({ liftType }) {
   const { status: authStatus } = useSession();
 
@@ -269,6 +293,13 @@ const DARK_THEMES = [
   "starry-night-dark",
 ];
 
+/**
+ * Card rendering a Sanity CMS article's title and rich-text body using PortableText, with
+ * dark-mode prose inversion support.
+ * @param {Object} props
+ * @param {Object} props.article - Sanity article object with at least `title` and `body` fields.
+ * @param {string} [props.className] - Optional additional CSS classes for the card.
+ */
 function SanityArticleCard({ article, className }) {
   const { resolvedTheme } = useTheme();
   const isDarkTheme = DARK_THEMES.includes(resolvedTheme ?? "");
@@ -313,6 +344,12 @@ function HowStrong({ liftType }) {
   );
 }
 
+/**
+ * Card showing the current user's strength rating for a specific lift type using the
+ * StandardsSlider component, with athlete bio details (age, sex, bodyweight) shown in the description.
+ * @param {Object} props
+ * @param {string} props.liftType - The lift type to display strength levels for (e.g. "Deadlift").
+ */
 function StrengthLevelsCard({ liftType }) {
   const { age, sex, bodyWeight, standards, isMetric } = useAthleteBio();
   const unitType = isMetric ? "kg" : "lb";
@@ -341,6 +378,12 @@ function StrengthLevelsCard({ liftType }) {
   );
 }
 
+/**
+ * Card displaying one or more embedded YouTube video guides for a specific lift type.
+ * @param {Object} props
+ * @param {string} props.liftType - The lift type name, used in the card heading.
+ * @param {string[]} props.videos - Array of YouTube embed URLs to render as iframes.
+ */
 function VideoCard({ liftType, videos }) {
   return (
     <Card className="">

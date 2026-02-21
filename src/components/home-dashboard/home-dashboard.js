@@ -56,6 +56,15 @@ const WELCOME_QUIPS = [
   "Built with patience, {name}",
 ];
 
+/**
+ * Top-level home dashboard rendered when the user is authenticated and a Google Sheet is linked.
+ * Shows a personalised welcome greeting, consistency grade circles, a data-sync status row, a
+ * row-processing animation, top stat cards, and the most recent session card. Falls back to
+ * OnBoardingDashboard when no sheet is connected.
+ * Reads session and lifting data from context; takes no props.
+ *
+ * @param {Object} props
+ */
 export function HomeDashboard() {
   const { data: session, status: authStatus } = useSession();
 

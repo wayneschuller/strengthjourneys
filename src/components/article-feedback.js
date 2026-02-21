@@ -8,6 +8,13 @@ import { gaTrackFeedbackSentiment } from "@/lib/analytics";
 
 const STORAGE_KEY_PREFIX = "article_feedback_";
 
+/**
+ * Inline thumbs-up/thumbs-down feedback widget for article pages.
+ * Persists the vote to sessionStorage and tracks the sentiment via GA, including time spent on the page.
+ *
+ * @param {Object} props
+ * @param {string} props.slug - The article slug used as the sessionStorage key and the GA page path segment.
+ */
 export function ArticleFeedback({ slug }) {
   const { status } = useSession();
   const [vote, setVote] = useState(null); // "positive" | "negative" | null

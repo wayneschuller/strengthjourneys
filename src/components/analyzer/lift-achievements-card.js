@@ -139,8 +139,7 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
   );
 }
 
-// A big card telling the user good stuff about a particular lift type
-// FIXME: this would be a great place to make the color for this lift type configurable
+// Full expanded view combining summary statistics, recent highlights, and rep-range PRs for a lift.
 export function ExpandedLiftAchievements({ liftType }) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:justify-stretch">
@@ -160,13 +159,13 @@ export function ExpandedLiftAchievements({ liftType }) {
   );
 }
 
-// Show some good overview summary statistics for this liftType.
-//
-// FIXME: be creative, could we show them progress to the next milestone that we calculate?
-// e.g.: next plate milestone, next round number milestone (in either units)
-// Also reward them for what milestones they have, by the same formula
-// So create a milestones function.
-// Visually showing progress to the next milestone would be good - progress bar.
+/**
+ * Displays an overview grid of summary statistics for a single lift type: total reps/sets,
+ * date range, best single/triple/five, heaviest sessions, and best estimated 1RM.
+ *
+ * @param {Object} props
+ * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
+ */
 export const LiftTypeSummaryStatistics = ({ liftType }) => {
   const { liftTypes, topLiftsByTypeAndReps, topTonnageByType, topTonnageByTypeLast12Months } =
     useUserLiftingData();
@@ -277,6 +276,13 @@ export const LiftTypeSummaryStatistics = ({ liftType }) => {
   );
 };
 
+/**
+ * Accordion list of PR lifts grouped by rep range (1RM–10RM) for a single lift type.
+ * Each accordion item shows the top PR and expands to display the top 20 lifts for that rep count.
+ *
+ * @param {Object} props
+ * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
+ */
 export const LiftTypeRepPRsAccordion = ({ liftType }) => {
   const { topLiftsByTypeAndReps } = useUserLiftingData();
   const { isMetric } = useAthleteBio();
@@ -341,6 +347,13 @@ export const LiftTypeRepPRsAccordion = ({ liftType }) => {
   );
 };
 
+/**
+ * Shows the top lifting highlights from the past four weeks for a single lift type,
+ * with rank annotation (e.g. "3rd best 5RM ever").
+ *
+ * @param {Object} props
+ * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
+ */
 export const LiftTypeRecentHighlights = ({ liftType }) => {
   const { topLiftsByTypeAndReps } = useUserLiftingData();
   const { isMetric } = useAthleteBio();
@@ -691,6 +704,7 @@ export function PopularLiftsIndividualLiftCards() {
   );
 }
 
+// Inline text that truncates to 100 characters and expands on click.
 const TruncatedText = ({ text }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const truncLength = 100;

@@ -63,6 +63,7 @@ const renderCustomizedLabel = ({
   );
 };
 
+// Custom recharts legend rendering color swatches and lift names in a wrapping flex row.
 const CustomLegend = ({ payload }) => {
   return (
     <div className="mt-4 flex flex-wrap justify-center gap-4">
@@ -80,6 +81,7 @@ const CustomLegend = ({ payload }) => {
   );
 };
 
+// Tabular list of top lifts showing color swatch, name (linked for big-four), reps, and set percentage.
 const TopLiftsTable = ({ stats }) => {
   return (
     <div>
@@ -122,6 +124,13 @@ const TopLiftsTable = ({ stats }) => {
   );
 };
 
+/**
+ * Card showing a donut pie chart of the top 10 most frequent lift types by set count,
+ * with an interactive tooltip and a summary table below the chart.
+ * Reads liftTypes from UserLiftingDataProvider; takes no props.
+ *
+ * @param {Object} props
+ */
 export function LiftTypeFrequencyPieCard() {
   const { liftTypes, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();

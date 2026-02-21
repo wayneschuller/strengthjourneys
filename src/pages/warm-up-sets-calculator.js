@@ -45,6 +45,11 @@ export async function getStaticProps() {
   };
 }
 
+/**
+ * Barbell Warm Up Sets Calculator page. Renders SEO metadata and delegates rendering to WarmUpSetsCalculatorMain.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles related to the Warm Ups topic, fetched via ISR.
+ */
 export default function WarmUpSetsCalculator({ relatedArticles }) {
   const title =
     "Barbell Warm Up Sets Calculator | Free tool, no login required";
@@ -93,6 +98,12 @@ export default function WarmUpSetsCalculator({ relatedArticles }) {
   );
 }
 
+/**
+ * Inner client component for the Warm Up Sets Calculator page. Provides target weight/reps sliders,
+ * bar type and plate preference options, and renders progressive warmup sets with plate diagrams.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ */
 function WarmUpSetsCalculatorMain({ relatedArticles }) {
   // Order matters: each includes the ones before it when syncing to URL.
   // Weight is last so changing it syncs the full state → shareable URL on any change.

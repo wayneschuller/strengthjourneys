@@ -64,6 +64,12 @@ import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings
 
 const BIO_SETTINGS_PAGES = ["/calculator", "/strength-level-calculator"];
 
+/**
+ * Top-level navigation bar. Composes the desktop logo/nav links, mobile nav,
+ * mini timer, theme chooser, athlete bio quick-settings, and avatar dropdown.
+ *
+ * @param {Object} props - No props; reads auth status and pathname from context/hooks.
+ */
 export function NavBar() {
   const { status: authStatus } = useSession();
   const pathname = usePathname();
@@ -130,6 +136,12 @@ export function NavBar() {
 
 // FIXME: use the featurePages array in index.js?
 
+/**
+ * Desktop-only navigation area showing the logo and the main nav menus.
+ * Hidden on mobile; the logo pulses while user data is validating.
+ *
+ * @param {Object} props - No props; reads theme and validating state from context/hooks.
+ */
 export function DesktopNav() {
   const pathname = usePathname();
   const { isValidating } = useUserLiftingData();
@@ -219,8 +231,12 @@ export function DesktopNav() {
   );
 }
 
-// When user is logged in with data, give a link to their google sheet
-// Also we have a subtle pulse animation when we are trying to look for new data from google (via useSWR isValidating)
+/**
+ * Icon button linking to the authenticated user's connected Google Sheet.
+ * Pulses while data is being re-fetched; returns null when unauthenticated or loading.
+ *
+ * @param {Object} props - No props; reads session and sheet info from context/hooks.
+ */
 export function UserSheetIcon() {
   const { data: session, status: authStatus } = useSession();
   const { sheetInfo, isLoading, isValidating, isError } =
@@ -260,6 +276,11 @@ export function UserSheetIcon() {
   );
 }
 
+/**
+ * Icon button that opens the Strength Journeys GitHub repository in a new tab.
+ *
+ * @param {Object} props - No props.
+ */
 export function GitHubButton() {
   return (
     <TooltipProvider>
@@ -286,6 +307,7 @@ export function GitHubButton() {
   );
 }
 
+// Internal dropdown menu for the four main barbell lift insight pages.
 function BigFourBarbellInsightsMenu() {
   const pathname = usePathname();
   const lifts = bigFourLiftInsightData;
@@ -365,6 +387,7 @@ function BigFourBarbellInsightsMenu() {
   );
 }
 
+// Internal dropdown menu for strength insight tools (Analyzer, Visualizer, AI assistant, etc.).
 function StrengthInsightsMenu() {
   const pathname = usePathname();
 
@@ -470,6 +493,7 @@ function StrengthInsightsMenu() {
   );
 }
 
+// Internal dropdown menu for calculator tools (1RM, warm-ups, strength level, timer, etc.).
 function CalculatorsMenu() {
   const pathname = usePathname();
 

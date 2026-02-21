@@ -8,6 +8,12 @@ import { SloganCarousel } from "./slogan-carousel";
 import { Button } from "./ui/button";
 import { motion, AnimatePresence } from "motion/react";
 
+/**
+ * Landing page hero section. Renders the slogan carousel, headline, Google sign-in
+ * button, and the animated spreadsheet/app screenshot showcase side by side.
+ *
+ * @param {Object} props - No props.
+ */
 export function HeroSection() {
   return (
     <div>
@@ -31,6 +37,7 @@ export function HeroSection() {
   );
 }
 
+// Internal helper: paragraph describing the app's core value proposition with links.
 const PageDescription = () => (
   <p className="mb-10 mt-2 text-center text-xl tracking-tight md:text-left md:text-2xl lg:w-4/5">
     Track PRs, visualize E1RM progress, and analyze your strength — all from a
@@ -54,6 +61,7 @@ const PageDescription = () => (
   </p>
 );
 
+// Internal helper: prominent Google sign-in button shown only to unauthenticated visitors.
 function GoogleSignInButton() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
@@ -114,6 +122,12 @@ const images = [
   },
 ];
 
+/**
+ * Animated slideshow cycling through spreadsheet and app screenshot images with
+ * a fade/scale transition and a floating caption overlay.
+ *
+ * @param {Object} props - No props.
+ */
 export default function SpreadsheetShowcase() {
   const [index, setIndex] = useState(0);
 
@@ -174,6 +188,13 @@ export default function SpreadsheetShowcase() {
   );
 }
 
+/**
+ * Inline SVG rendering of the Google "G" logo in its official four-color form.
+ *
+ * @param {Object} props
+ * @param {number} [props.size] - Width and height in pixels (default 20).
+ * @param {string} [props.className] - Additional CSS classes for the svg element.
+ */
 export function GoogleLogo({ size = 20, className = "" }) {
   return (
     <svg

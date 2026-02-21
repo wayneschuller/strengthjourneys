@@ -13,6 +13,14 @@ import { cn } from "@/lib/utils";
 const SWIRL_IMAGE_HREF = "/swirls-medium.png";
 const NARROW_VIEWPORT_MAX_WIDTH = 1300;
 
+/**
+ * Full-bleed background layer that displays the starry night swirl image.
+ * When `animated` is true, the image gently orbits in a clockwise loop using Framer Motion.
+ *
+ * @param {Object} props
+ * @param {string} [props.className] - Additional CSS classes applied to the outer wrapper.
+ * @param {boolean} [props.animated=false] - When true, enables the slow orbital drift animation.
+ */
 export function StarryNightLayer({ className, animated = false }) {
   const [narrowViewport, setNarrowViewport] = useState(true);
 
@@ -82,6 +90,7 @@ export function StarryNightLayer({ className, animated = false }) {
 // Warp – Retro-arcade 3D warp grid with animated beams
 // -----------------------------------------------------------------------------
 
+// Internal animated beam strip used by WarpBackground to simulate warp-speed light streaks.
 const Beam = ({ width, x, delay, duration }) => {
   const hue = Math.floor(Math.random() * 360);
   const ar = Math.floor(Math.random() * 10) + 1;
@@ -107,6 +116,21 @@ const Beam = ({ width, x, delay, duration }) => {
   );
 };
 
+/**
+ * Retro-arcade 3D warp-grid background that wraps any content with animated light beams shooting from all four sides.
+ * Uses CSS 3D perspective transforms and Framer Motion to create a sci-fi tunnel effect.
+ *
+ * @param {Object} props
+ * @param {React.ReactNode} [props.children] - Content rendered on top of the warp grid.
+ * @param {number} [props.perspective=100] - CSS perspective depth in pixels.
+ * @param {string} [props.className] - Additional CSS classes for the outer wrapper.
+ * @param {number} [props.beamsPerSide=3] - Number of animated beams emitted per side of the grid.
+ * @param {number} [props.beamSize=5] - Width of each beam as a percentage of the container.
+ * @param {number} [props.beamDelayMax=3] - Maximum random delay (seconds) before a beam starts.
+ * @param {number} [props.beamDelayMin=0] - Minimum random delay (seconds) before a beam starts.
+ * @param {number} [props.beamDuration=3] - Duration in seconds for each beam traversal.
+ * @param {string} [props.gridColor="var(--border)"] - CSS color value used for the grid lines.
+ */
 export const WarpBackground = ({
   children,
   perspective = 100,

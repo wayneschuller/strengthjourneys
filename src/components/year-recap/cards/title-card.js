@@ -68,6 +68,7 @@ const ICON_BG_COLORS = [
   "bg-chart-4/20 ring-1 ring-chart-4/50",
 ];
 
+// Animated corner icon that displays a lift SVG image in a colored rounded box.
 function CornerIcon({ liftType, index, isActive, variants }) {
   return (
     <motion.div
@@ -99,6 +100,14 @@ function CornerIcon({ liftType, index, isActive, variants }) {
   );
 }
 
+/**
+ * Opening recap slide displaying the "Strength Unwrapped" title and recap year, flanked by four animated lift icons.
+ * Each lift icon springs in from its corner when the slide becomes active.
+ * @param {Object} props
+ * @param {number|string} props.year - The recap year shown in large type below the title.
+ * @param {boolean} props.isDemo - Whether the card is being shown in demo mode.
+ * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
+ */
 export function TitleCard({ year, isDemo, isActive = true }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">

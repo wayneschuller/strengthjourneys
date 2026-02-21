@@ -12,6 +12,14 @@ import { getLiftVolumeMultiplier } from "@/lib/processing-utils";
 import { Trophy } from "lucide-react";
 import { LiftSvg } from "../lift-svg";
 
+/**
+ * Recap slide highlighting the lift the user trained most frequently during the given year, with set/rep counts and a session frequency sentence.
+ * Displays the lift's SVG illustration with a spring animation when active.
+ * @param {Object} props
+ * @param {number|string} props.year - The recap year to compute the most-trained lift for.
+ * @param {boolean} props.isDemo - Whether the card is being shown in demo mode.
+ * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
+ */
 export function MostTrainedLiftCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const label = pickQuirkyPhrase(

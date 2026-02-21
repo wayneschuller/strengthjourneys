@@ -505,6 +505,7 @@ export function SessionExerciseBlock({
   );
 }
 
+// One-line tonnage comparison row: current session tonnage vs. 12-month average with a ±% badge.
 function LiftTonnageRow({ liftType, stats, isMetric = false }) {
   const {
     currentLiftTonnage,
@@ -566,6 +567,25 @@ function LiftTonnageRow({ liftType, stats, isMetric = false }) {
   );
 }
 
+/**
+ * Displays the strength level rating (e.g. "Advanced", "Elite") for a set of workouts on a given lift,
+ * rendered as an inline pill or styled badge linking to the calculator pre-filled with the best set.
+ *
+ * @param {Object} props
+ * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
+ * @param {Array<{reps: number, weight: number, unitType?: string}>} props.workouts - Set objects used to derive the best e1RM.
+ * @param {Object} [props.standards] - Map of liftType -> strength standard. Used when sessionDate/age/bodyWeight/sex are not provided.
+ * @param {string} [props.e1rmFormula] - E1RM formula key (default "Brzycki").
+ * @param {string} [props.sessionDate] - Session date (YYYY-MM-DD) for age-adjusted historical standard lookup.
+ * @param {number} [props.age] - Athlete age for historical standard lookup.
+ * @param {number} [props.bodyWeight] - Athlete bodyweight for standard lookup.
+ * @param {string} [props.sex] - Athlete sex for standard lookup.
+ * @param {boolean} [props.isMetric] - Whether the athlete uses kg.
+ * @param {boolean} [props.inline=false] - When true renders a compact dashed-border pill; when false renders a text link row.
+ * @param {number} [props.bestSetReps] - Explicit rep count for the best set (overrides scanning workouts).
+ * @param {number} [props.bestSetWeight] - Explicit weight for the best set (overrides scanning workouts).
+ * @param {boolean} [props.asBadge=false] - When true renders a shadcn Badge instead of a text link.
+ */
 export function LiftStrengthLevel({
   liftType,
   workouts,

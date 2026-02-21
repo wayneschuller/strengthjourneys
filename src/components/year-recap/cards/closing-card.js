@@ -7,6 +7,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 
+/**
+ * Final recap slide displaying a motivational closing phrase and a link back to the dashboard.
+ * Animates its content in when the slide becomes active in the carousel.
+ * @param {Object} props
+ * @param {number|string} props.year - The recap year, used to seed the phrase selection.
+ * @param {boolean} props.isDemo - Whether the card is being shown in demo mode.
+ * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
+ */
 export function ClosingCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const phrase = pickQuirkyPhrase(

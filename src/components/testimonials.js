@@ -16,6 +16,10 @@ import {
   Award,
 } from "lucide-react";
 
+/**
+ * Dual-row marquee carousel displaying user testimonial cards.
+ * The two rows scroll in opposite directions and pause on hover.
+ */
 export function Testimonials({}) {
   const firstRow = testimonialData.slice(0, testimonialData.length / 2);
   const secondRow = testimonialData.slice(testimonialData.length / 2);
@@ -40,6 +44,7 @@ export function Testimonials({}) {
   );
 }
 
+// Internal card that displays a single testimonial with avatar, name, description, and quoted comment.
 function TestimonialCard({ testimony }) {
   // devLog(testimony);
   return (

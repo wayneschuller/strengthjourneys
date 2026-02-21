@@ -757,6 +757,7 @@ function getMonthLiftsData(parsedData, monthStartStr, chartLiftType) {
   };
 }
 
+// Recharts tooltip for the tonnage chart; renders session/week/month details and syncs hover date.
 const TonnageTooltipContent = ({
   payload,
   label,

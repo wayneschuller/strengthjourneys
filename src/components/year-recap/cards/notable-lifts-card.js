@@ -20,6 +20,14 @@ import { Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import { LiftSvg, getLiftSvgPath } from "../lift-svg";
 
+/**
+ * Recap slide listing notable PR highlights for the year, excluding any already shown as lifetime PRs.
+ * Each lift entry animates in sequentially when the slide becomes active.
+ * @param {Object} props
+ * @param {number|string} props.year - The recap year to surface notable lifts for.
+ * @param {boolean} props.isDemo - Whether the card is being shown in demo mode.
+ * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
+ */
 export function NotableLiftsCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const { parsedData } = useUserLiftingData();

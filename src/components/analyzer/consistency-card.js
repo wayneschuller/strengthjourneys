@@ -33,6 +33,13 @@ import {
 
 const A_GRADES = ["A+", "A", "A-"];
 
+/**
+ * Card that shows circular consistency grade charts for each relevant time period
+ * (week, month, 3-month, etc.), with animated confetti for A-grade periods on authenticated users.
+ * Reads parsedData from UserLiftingDataProvider; takes no props.
+ *
+ * @param {Object} props
+ */
 export function ConsistencyCard() {
   const { parsedData } = useUserLiftingData();
   const { status: authStatus } = useSession();

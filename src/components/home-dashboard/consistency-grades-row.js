@@ -23,6 +23,7 @@ const LABEL_ABBREV = {
   Decade: "10Y",
 };
 
+// Animated SVG ring with letter grade inside, labeled with an abbreviated period name. Drops in from above on mount.
 function GradeCircle({ percentage, label, tooltip, size = 28, delay = 0, isVisible }) {
   const { grade, color } = getGradeAndColor(percentage);
   const strokeWidth = 3;
@@ -110,6 +111,14 @@ function trimTrailingDots(items) {
   return items.slice(0, lastReal + 1);
 }
 
+/**
+ * Compact row of animated consistency grade circles (one per time period) that links to /analyzer.
+ * Trailing "." grades (below 30%) are trimmed so only meaningful periods are shown.
+ *
+ * @param {Object} props
+ * @param {Array<Object>} props.parsedData - Parsed lifting entries used to compute consistency grades.
+ * @param {boolean} [props.isVisible=false] - Controls the entrance animation; circles animate in when true.
+ */
 export function ConsistencyGradesRow({ parsedData, isVisible = false }) {
   const consistency = useMemo(() => {
     const raw = processConsistency(parsedData);

@@ -25,6 +25,10 @@ export async function getStaticProps() {
   return { props: {}, revalidate: 60 * 60 };
 }
 
+/**
+ * Strength Year in Review page. Renders SEO metadata and delegates rendering to StrengthYearInReviewMain.
+ * Has no dynamic props — all data is loaded client-side from the user's lifting context.
+ */
 export default function StrengthYearInReview() {
   const title = "Strength Year in Review | Your Lifting Recap | Strength Journeys";
   const description =
@@ -60,6 +64,7 @@ export default function StrengthYearInReview() {
   );
 }
 
+// Skeleton placeholder for the year selector panel shown while lifting data is loading.
 function YearSelectorSkeleton() {
   return (
     <div className="space-y-4">
@@ -76,6 +81,7 @@ function YearSelectorSkeleton() {
   );
 }
 
+// Skeleton placeholder for the year recap carousel shown while lifting data is loading.
 function CarouselSkeleton() {
   return (
     <div className="relative mx-auto w-full max-w-[360px] rounded-xl border bg-card overflow-hidden">
@@ -94,6 +100,10 @@ function formatThemeLabel(theme) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/**
+ * Sidebar panel (visible at xl breakpoint) that lets authenticated users switch app theme
+ * to customise the appearance of their year recap before sharing it.
+ */
 function RecapCustomiseSidebar() {
   const { theme, setTheme, themes } = useTheme();
   const customThemes = useMemo(
@@ -136,6 +146,11 @@ function RecapCustomiseSidebar() {
   );
 }
 
+/**
+ * Inner client component for the Strength Year in Review page. Resolves which years have lifting data,
+ * manages year selection state (including URL sync), and renders the recap carousel with optional
+ * year selector and customisation sidebar.
+ */
 function StrengthYearInReviewMain() {
   const router = useRouter();
   const { status: authStatus } = useSession();

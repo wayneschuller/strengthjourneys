@@ -11,8 +11,16 @@ import {
 
 import { useLiftColors } from "@/hooks/use-lift-colors";
 
-// Reusable component to render a session row with date, tonnage, and sets
-// isMetric: user's display preference (true = kg, false = lb). Defaults to reading native lift.unitType.
+/**
+ * Renders a compact inline summary of a session's sets as "reps@weight" pairs, optionally
+ * preceded by the session date.
+ *
+ * @param {Object} props
+ * @param {string} [props.date] - ISO date string (YYYY-MM-DD) for the session; displayed only when showDate is true.
+ * @param {Array} props.lifts - Array of lift objects to display (each must have reps, weight, and unitType).
+ * @param {boolean} [props.isMetric] - When true, displays weights in kg; defaults to reading each lift's native unitType.
+ * @param {boolean} [props.showDate] - Whether to prefix the row with the formatted date; defaults to true.
+ */
 export const SessionRow = ({ date, lifts, isMetric, showDate = true }) => {
   if (!lifts || lifts.length === 0) return null;
 
@@ -88,7 +96,16 @@ const TooltipUI = ({ dateLabel, tooltipsPerLift }) => (
   </div>
 );
 
-// For multiple lifts - the main visualizer chart has multi lifts
+/**
+ * Recharts tooltip content for the multi-lift E1RM area chart, showing each selected lift's
+ * date, lift type name, and estimated one-rep max for the hovered data point.
+ *
+ * @param {Object} props
+ * @param {boolean} props.active - Whether the tooltip is currently active (provided by Recharts).
+ * @param {Array} props.payload - Recharts payload array for the hovered data point.
+ * @param {*} props.label - Recharts label value (unused; date is read from payload).
+ * @param {string[]} props.selectedLiftTypes - List of lift type names currently displayed on the chart.
+ */
 export const MultiLiftTooltipContent = ({
   active,
   payload,
@@ -132,7 +149,19 @@ function getSessionLiftsByType(parsedData, dateStr, chartLiftType) {
   return liftsByType;
 }
 
-// For single lift - visualizer mini uses this
+/**
+ * Recharts tooltip content for a single-lift E1RM chart, showing the date, lift name, estimated
+ * one-rep max, and the raw sets logged that session (fetched from parsedData).
+ *
+ * @param {Object} props
+ * @param {boolean} props.active - Whether the tooltip is currently active (provided by Recharts).
+ * @param {Array} props.payload - Recharts payload array for the hovered data point.
+ * @param {*} props.label - Recharts label value (unused; date is read from payload).
+ * @param {string} props.liftType - Display name of the lift being charted.
+ * @param {Array} props.parsedData - Full parsed lifting dataset used to look up session sets.
+ * @param {string} [props.liftColor] - Hex color for the lift's color swatch; falls back to the lift color from context.
+ * @param {boolean} [props.isMetric] - When true, displays weights in kg; otherwise lb.
+ */
 export const SingleLiftTooltipContent = ({
   active,
   payload,
@@ -189,6 +218,14 @@ export const SingleLiftTooltipContent = ({
   );
 };
 
+/**
+ * Dropdown that lets the user switch between available E1RM estimation algorithms
+ * (e.g. Brzycki, Epley, etc.). Used in visualizer chart footers.
+ *
+ * @param {Object} props
+ * @param {string} props.e1rmFormula - Currently selected formula name.
+ * @param {function(string)} props.setE1rmFormula - Callback to update the selected formula.
+ */
 export function E1RMFormulaSelect({ e1rmFormula, setE1rmFormula }) {
   return (
     <div className="flex flex-row items-center space-x-2">
@@ -212,7 +249,15 @@ export function E1RMFormulaSelect({ e1rmFormula, setE1rmFormula }) {
   );
 }
 
-// Show a label of corresponding to labels in user data
+/**
+ * Recharts custom label that renders a user-supplied text annotation (from the "label" column
+ * in the Google Sheet) as a bordered badge below a chart data point.
+ *
+ * @param {Object} props
+ * @param {number} props.x - SVG x coordinate provided by Recharts.
+ * @param {number} props.y - SVG y coordinate provided by Recharts.
+ * @param {string} [props.value] - Label text to display; truncated at 20 characters.
+ */
 export const SpecialHtmlLabel = ({ x, y, value }) => {
   if (!value) return null;
 
@@ -241,7 +286,16 @@ function getRepColor(reps, liftColor) {
   return liftColor;
 }
 
-// Tooltip for VisualizerReps (singles, triples, fives chart card)
+/**
+ * Recharts tooltip content for the Singles/Triples/Fives area chart, showing the date, lift type,
+ * and the best recorded weight for each rep range at the hovered data point.
+ *
+ * @param {Object} props
+ * @param {boolean} props.active - Whether the tooltip is currently active (provided by Recharts).
+ * @param {Array} props.payload - Recharts payload array for the hovered data point.
+ * @param {*} props.label - Recharts label value (unused; date is read from payload).
+ * @param {boolean} [props.isMetric] - When true, displays weights in kg; otherwise lb.
+ */
 export const VisualizerRepsTooltip = ({ active, payload, label, isMetric }) => {
   if (!active || !payload?.length) return null;
   // devLog(payload);

@@ -46,6 +46,15 @@ async function copyToClipboard(text) {
   await navigator.clipboard.writeText(text);
 }
 
+/**
+ * Renders the primary share control for an article page. Uses the Web Share API
+ * when available and falls back to copying the URL to the clipboard.
+ *
+ * @param {Object} props
+ * @param {string} props.title - Article title passed to the share payload.
+ * @param {string} props.slug - Article slug used for analytics tracking.
+ * @param {string} props.url - Canonical article URL to share or copy.
+ */
 export function ArticleShareControls({ title, slug, url }) {
   const { handleShare, isSharing } = useArticleShare({ title, slug, url });
 
@@ -103,6 +112,15 @@ function useArticleShare({ title, slug, url }) {
   return { handleShare, isSharing };
 }
 
+/**
+ * Icon-only share button used in the article page title area. Triggers the same
+ * share flow as ArticleShareControls but renders as a compact icon.
+ *
+ * @param {Object} props
+ * @param {string} [props.title] - Article title passed to the share payload.
+ * @param {string} [props.slug] - Article slug used for analytics tracking.
+ * @param {string} [props.url] - Canonical article URL to share or copy.
+ */
 export function TopArticleShareButton({ title, slug, url }) {
   const { handleShare, isSharing } = useArticleShare({ title, slug, url });
 
@@ -116,6 +134,15 @@ export function TopArticleShareButton({ title, slug, url }) {
   );
 }
 
+/**
+ * Footer call-to-action block encouraging readers to share the article. Displays
+ * a randomised nudge message above an outlined share button.
+ *
+ * @param {Object} props
+ * @param {string} [props.title] - Article title passed to the share payload.
+ * @param {string} [props.slug] - Article slug used for analytics tracking.
+ * @param {string} [props.url] - Canonical article URL to share or copy.
+ */
 export function ArticleShareFooterCta({ title, slug, url }) {
   const { handleShare, isSharing } = useArticleShare({ title, slug, url });
   const [nudgeText, setNudgeText] = useState(SHARE_NUDGES[0]);
@@ -142,6 +169,15 @@ export function ArticleShareFooterCta({ title, slug, url }) {
   );
 }
 
+/**
+ * Floating action button fixed to the bottom-right corner on mobile screens only.
+ * Provides a prominent share trigger without cluttering the desktop layout.
+ *
+ * @param {Object} props
+ * @param {string} [props.title] - Article title passed to the share payload.
+ * @param {string} [props.slug] - Article slug used for analytics tracking.
+ * @param {string} [props.url] - Canonical article URL to share or copy.
+ */
 export function MobileFloatingArticleShareButton({ title, slug, url }) {
   const { handleShare, isSharing } = useArticleShare({ title, slug, url });
 

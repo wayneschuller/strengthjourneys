@@ -80,6 +80,11 @@ export async function getStaticProps() {
   };
 }
 
+/**
+ * AI Lifting Assistant page. Renders SEO metadata and delegates rendering to AILiftingAssistantMain.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles related to the AI Lifting Assistant topic, fetched via ISR.
+ */
 export default function AILiftingAssistantPage({ relatedArticles }) {
   // OG Meta Tags
   const canonicalURL = "https://www.strengthjourneys.xyz/ai-lifting-assistant";
@@ -128,6 +133,12 @@ export default function AILiftingAssistantPage({ relatedArticles }) {
   );
 }
 
+/**
+ * Inner client component for the AI Lifting Assistant page. Assembles the user profile and lifting data
+ * context strings and renders the chat card alongside bio and lifting data configuration panels.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ */
 function AILiftingAssistantMain({ relatedArticles }) {
   const {
     age,
@@ -350,9 +361,12 @@ const defaultMessages = [
   "Give me a riddle about lifting weights.",
 ];
 
-// -----------------------------------------------------------------------------------------------------
-// CopyButton - Component with visual feedback for copy action
-// -----------------------------------------------------------------------------------------------------
+/**
+ * Icon button that copies the provided text to the clipboard and shows a checkmark tick for 2 seconds
+ * as visual confirmation of the copy action.
+ * @param {Object} props
+ * @param {string} props.text - The text content to copy to the clipboard.
+ */
 function CopyButton({ text, ...props }) {
   const [copied, setCopied] = useState(false);
 
@@ -382,9 +396,13 @@ function CopyButton({ text, ...props }) {
   );
 }
 
-// -----------------------------------------------------------------------------------------------------
-// AILiftingAssistantCard - chatbot (full proprietary prompt lives in the server env variable)
-// -----------------------------------------------------------------------------------------------------
+/**
+ * Chat card that drives the AI lifting assistant conversation. Handles message streaming via the
+ * Vercel AI SDK, persists the session to sessionStorage, and supports download and reset actions.
+ * @param {Object} props
+ * @param {string} props.userProvidedProfileData - Serialised string of user bio and lifting metadata
+ *   to inject into the AI system prompt via the request body on each message send.
+ */
 function AILiftingAssistantCard({ userProvidedProfileData }) {
   const { messages, setMessages, sendMessage, status, stop, regenerate } =
     useChat({
@@ -656,6 +674,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
   );
 }
 
+// Decorative flickering grid animation shown in the chat card header on desktop.
 function FlickeringGridDemo() {
   return (
     <FlickeringGrid

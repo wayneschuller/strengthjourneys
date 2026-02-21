@@ -19,9 +19,17 @@ import DOMPurify from "dompurify";
 import { WHITELISTED_SITES } from "./playlist-utils";
 import { validateAndProcessPlaylist } from "./playlist-utils";
 
-// ---------------------------------------------------------------------------------------------------
-// <PlaylistCreateEditDialog /> - Create/Edit a playlist for the leaderboard
-// ---------------------------------------------------------------------------------------------------
+/**
+ * Modal dialog for creating a new playlist or editing an existing one on the gym playlist leaderboard.
+ * Validates and sanitizes the URL against a whitelist before calling the submit callback.
+ * @param {Object} props
+ * @param {boolean} props.isOpen - Controls whether the dialog is visible.
+ * @param {Function} props.onOpenChange - Callback invoked with the new open state when the dialog is opened or closed.
+ * @param {boolean} props.isEditMode - When true, shows "Edit Playlist" UI; when false, shows "Add New Playlist" UI.
+ * @param {Object} props.currentPlaylist - The playlist object pre-populating the form fields (used for both edit defaults and preserving id/votes).
+ * @param {Function} props.onSubmit - Callback invoked with the validated playlist object on successful form submission.
+ * @param {string[]} props.categories - List of available category strings displayed as checkboxes.
+ */
 export function PlaylistCreateEditDialog({
   isOpen,
   onOpenChange,

@@ -183,6 +183,10 @@ const mainBarbellLifts = [
 //   IconComponent: Newspaper,
 // },
 
+/**
+ * Home page and landing page for Strength Journeys. Shows the hero section or user dashboard,
+ * the Big Four barbell lift cards, a grid of feature tool cards, testimonials, and a getting-started card.
+ */
 export default function Home() {
   const title = "Free Barbell Lifting Analysis Tools | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/";
@@ -294,6 +298,15 @@ export default function Home() {
   );
 }
 
+/**
+ * Animated card linking to a single feature tool page, displaying the tool's icon, title, and description.
+ * @param {Object} props
+ * @param {string} props.href - URL path for the feature page.
+ * @param {string} props.title - Display name of the feature.
+ * @param {string} props.description - Short description shown under the title.
+ * @param {React.ComponentType} props.IconComponent - Lucide icon component rendered as the card illustration.
+ * @param {number} [props.index=0] - Card position in the grid, used to assign a chart color and stagger the animation.
+ */
 function FeatureCard({ href, title, description, IconComponent, index = 0 }) {
   const isWarmupsCalculator = href === "/warm-up-sets-calculator";
   const chartColorVar = `--chart-${(index % 5) + 1}`;

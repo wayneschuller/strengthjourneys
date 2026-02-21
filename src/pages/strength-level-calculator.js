@@ -55,6 +55,11 @@ export async function getStaticProps() {
   };
 }
 
+/**
+ * Strength Level Calculator page. Renders SEO metadata and delegates rendering to StrengthLevelCalculatorMain.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles related to the Strength Calculator topic, fetched via ISR.
+ */
 export default function StrengthLevelCalculator({ relatedArticles }) {
   // OG Meta Tags
   const canonicalURL =
@@ -105,7 +110,12 @@ export default function StrengthLevelCalculator({ relatedArticles }) {
   );
 }
 
-// Strength Level Calculator
+/**
+ * Inner client component for the Strength Level Calculator page. Provides age, bodyweight, and sex
+ * sliders and displays Lon Kilgore strength standards for every lift type as interactive slider bars.
+ * @param {Object} props
+ * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ */
 function StrengthLevelCalculatorMain({ relatedArticles }) {
   const {
     age,
@@ -276,6 +286,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
   );
 }
 
+// Small card displaying a single strength level label and its corresponding weight threshold.
 const MiniCard = ({ levelString, weight, unitType }) => (
   <div className="flex-1 rounded-lg bg-card p-4">
     <h3 className="mb-2 text-sm font-medium">{levelString}</h3>

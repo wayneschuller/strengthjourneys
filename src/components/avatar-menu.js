@@ -38,6 +38,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+/**
+ * User avatar button in the nav bar. Shows a Google sign-in button when unauthenticated,
+ * or a dropdown menu with sheet management, feedback, and sign-out options when authenticated.
+ *
+ * @param {Object} props - No props; all data is sourced from session and lifting data context.
+ */
 export function AvatarDropdown() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();

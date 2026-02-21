@@ -9,7 +9,9 @@ import { Sparkles, ChevronRight } from "lucide-react";
 /**
  * December promo banner for Strength Unwrapped (yearly recap).
  * Shows in December or when ?showRecapBanner=1. Returns null otherwise.
- * Use hidden prop to force-hide (e.g. on the recap page itself).
+ * @param {Object} props
+ * @param {string} [props.className] - Additional CSS classes for the wrapper element.
+ * @param {boolean} [props.hidden] - When true, forces the banner to be hidden regardless of date or query params.
  */
 export function StrengthUnwrappedDecemberBanner({ className, hidden }) {
   const router = useRouter();

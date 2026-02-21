@@ -8,6 +8,14 @@ import { Dumbbell } from "lucide-react";
 import { BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
 import { getLiftSvgPath } from "../lift-svg";
 
+/**
+ * Recap slide displaying total weight moved (tonnage) for the year, a fun real-world equivalent comparison, and per-lift bar chart for the Big Four lifts.
+ * Respects the user's preferred unit system (kg/lb) from athlete bio context.
+ * @param {Object} props
+ * @param {number|string} props.year - The recap year to compute tonnage for.
+ * @param {boolean} props.isDemo - Whether the card is being shown in demo mode.
+ * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
+ */
 export function TonnageCard({ year, isDemo, isActive = true }) {
   const equivRef = useRef(null);
 

@@ -22,6 +22,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+/**
+ * Stacked bar chart comparing the user's best achieved lift against their estimated potential max
+ * for each rep range (1–10 reps), derived from the best E1RM across all rep counts.
+ *
+ * @param {Object} props
+ * @param {string} [props.liftType] - Display name of the lift to chart; defaults to "Bench Press".
+ */
 export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   const { parsedData, topLiftsByTypeAndReps, isValidating, isLoading } =
     useUserLiftingData();
@@ -211,6 +218,7 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   );
 }
 
+// Recharts tooltip showing the actual best lift and projected potential max for the hovered rep count.
 const CustomTooltip = ({
   active,
   payload,

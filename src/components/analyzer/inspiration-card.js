@@ -91,6 +91,12 @@ const getRandomQuote = () => {
   return inspirationalQuotes[randomIndex];
 };
 
+/**
+ * Card that displays a random inspirational strength-training quote on each mount.
+ * The initial quote is set server-side for SEO consistency and randomized client-side via useEffect.
+ *
+ * @param {Object} props
+ */
 export function InspirationCard({}) {
   const [quote, setQuote] = useState(inspirationalQuotes[0]); // Consistent default for static rendering SEO
 

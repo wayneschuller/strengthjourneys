@@ -6,8 +6,10 @@ import { useSession } from "next-auth/react";
 import { gaTrackSignInSuccess } from "@/lib/analytics";
 
 /**
- * Calls gaTrackSignInSuccess() to send Google Analytics funnel_sign_in_success when the user becomes authenticated (client-side only).
- * Mount inside SessionProvider. Fires once per transition to authenticated.
+ * Invisible tracking component that fires a Google Analytics sign-in success event
+ * once per session whenever the user transitions to the authenticated state.
+ *
+ * @param {Object} props - No props; reads auth status from the NextAuth session context.
  */
 export function AnalyticsSession() {
   const { status } = useSession();

@@ -31,6 +31,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+/**
+ * Two-column onboarding flow shown on the dashboard after a user signs in for the
+ * first time. Walks them through copying the Google Sheet template and connecting it.
+ *
+ * @param {Object} props - No props; reads session and sheet context internally.
+ */
 // This is very similar to the ChooseSheetInstructionsCard but designed for the front page
 export function OnBoardingDashboard() {
   const [openPicker, setOpenPicker] = useState(null);
@@ -153,6 +159,12 @@ export function OnBoardingDashboard() {
   );
 }
 
+/**
+ * Card shown when a user is authenticated but has not yet connected a Google Sheet.
+ * Provides a sample sheet link and a Google Drive picker button to connect their data.
+ *
+ * @param {Object} props - No props; reads session and sheet context internally.
+ */
 // This card is shown if the user goes to the visualizer or analyzer with google auth but no spreadsheet selected
 export function ChooseSheetInstructionsCard() {
   const [openPicker, setOpenPicker] = useState(null);
@@ -262,6 +274,12 @@ export function ChooseSheetInstructionsCard() {
   );
 }
 
+/**
+ * Full-width card explaining the three-step setup process: log lifts in a Google Sheet,
+ * sign in, connect the sheet, then explore the app. Adapts its CTAs to auth state.
+ *
+ * @param {Object} props - No props; reads session and sheet context internally.
+ */
 export function GettingStartedCard() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
@@ -475,7 +493,12 @@ export function GettingStartedCard() {
   );
 }
 
-/** Compact card for the 1000lb calculator page: See this with your data. */
+/**
+ * Compact card for pages like the 1000lb calculator that want a minimal sign-in/connect
+ * prompt. Shows sign-in, picker, or a "you're connected" message depending on auth state.
+ *
+ * @param {Object} props - No props; reads session and sheet context internally.
+ */
 export function GettingStartedCardCompact() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
@@ -578,6 +601,12 @@ export function GettingStartedCardCompact() {
   );
 }
 
+/**
+ * Inline sign-in prompt rendered as a text link. Returns null when the user is
+ * already authenticated so it disappears automatically after sign-in.
+ *
+ * @param {Object} props - No props; reads auth status from session context.
+ */
 export const SignInInvite = () => {
   const router = useRouter();
   const { status: authStatus } = useSession();

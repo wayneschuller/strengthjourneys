@@ -67,7 +67,7 @@ import {
 
 import { processVisualizerData, getYearLabels } from "./visualizer-processing";
 
-// Wraps MultiLiftTooltipContent to sync chart hover → SessionAnalysisCard.
+// Wraps MultiLiftTooltipContent and syncs the hovered date to SessionAnalysisCard via setHighlightDate.
 // recharts v3 doesn't reliably populate activePayload in onMouseMove for numeric/time XAxis,
 // but it always calls Tooltip content when a data point is active.
 function SyncedMultiLiftTooltip({ active, payload, label, selectedLiftTypes, setHighlightDate, debounceMs = 0 }) {
@@ -82,6 +82,15 @@ function SyncedMultiLiftTooltip({ active, payload, label, selectedLiftTypes, set
   return <MultiLiftTooltipContent active={active} payload={payload} label={label} selectedLiftTypes={selectedLiftTypes} />;
 }
 
+/**
+ * Main strength visualizer card showing estimated one-rep maxes over time for one or more lifts
+ * as a multi-series area chart. Includes lift selection, time range, weekly/all-data toggle,
+ * value labels, and E1RM formula controls.
+ *
+ * @param {Object} props
+ * @param {function(string)} [props.setHighlightDate] - Callback invoked on chart hover with the
+ *   hovered ISO date string; used to sync with SessionAnalysisCard.
+ */
 export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, liftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();

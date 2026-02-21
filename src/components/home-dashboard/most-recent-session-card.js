@@ -45,6 +45,8 @@ const RECENT_SESSIONS_COUNT = 3;
  * @param {function(string)|null} [props.setHighlightDate] - Callback to update the displayed session
  *   date. When provided, the component runs in controlled mode. When omitted, uses internal state
  *   for prev/next navigation.
+ * @param {boolean} [props.isProgressDone=true] - When false, renders a skeleton placeholder while
+ *   the home dashboard row-count animation is still running.
  */
 export function MostRecentSessionCard({
   liftType = null,
@@ -422,6 +424,7 @@ export function MostRecentSessionCard({
   );
 }
 
+// Skeleton placeholder shown while MostRecentSessionCard waits for data to be ready.
 function MostRecentSessionCardSkeleton() {
   return (
     <Card className="mt-4 rounded-xl border">

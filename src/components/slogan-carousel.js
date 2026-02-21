@@ -38,6 +38,12 @@ function shuffleArray(items) {
   return arr;
 }
 
+/**
+ * Auto-playing carousel of marketing slogans for the landing page hero section.
+ * Slogans are shuffled on mount (keeping the first item fixed) and cycle every 6 seconds.
+ *
+ * @param {Object} props - No props.
+ */
 export function SloganCarousel() {
   const plugin = useRef(Autoplay({ delay: 6000, stopOnInteraction: false }));
   const shuffledSlogansRef = useRef(null);

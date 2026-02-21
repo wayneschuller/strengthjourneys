@@ -10,6 +10,14 @@ import { Calendar } from "lucide-react";
 
 const MERGED_PHRASES = [...SESSIONS_PHRASES, ...CONSISTENCY_PHRASES];
 
+/**
+ * Recap slide showing total training sessions, consistency grade, best weekly streak, and a year-over-year comparison.
+ * Animates a circular progress indicator when the slide becomes active.
+ * @param {Object} props
+ * @param {number|string} props.year - The recap year to compute session stats for.
+ * @param {boolean} props.isDemo - Whether the card is being shown in demo mode.
+ * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
+ */
 export function SessionsCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const phrase = pickQuirkyPhrase(MERGED_PHRASES, phraseRef, `sessions-${year}`);

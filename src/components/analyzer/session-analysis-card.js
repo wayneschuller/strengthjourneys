@@ -394,6 +394,7 @@ export function SessionAnalysisCard({
 
 // --- Supporting components and functions ---
 
+// Displays total session tonnage with a comparison bar vs. the rolling 12-month average.
 function SessionTonnage({
   analyzedSessionLifts,
   sessionTonnageLookup,
@@ -593,6 +594,7 @@ function SessionTonnage({
   );
 }
 
+// Visual track bar showing today's tonnage as a solid bar against a dashed 25th–90th percentile band.
 function TonnageRangeSlider({
   currentPct,
   rangeLeftPct,

@@ -68,9 +68,12 @@ export async function getStaticProps() {
   }
 }
 
-// ---------------------------------------------------------------------------------------------------
-// <GymPlaylistLeaderboard /> - World's best source of lifting music
-// ---------------------------------------------------------------------------------------------------
+/**
+ * Gym Music Playlist Leaderboard page. Renders a community-driven, voteable playlist directory with
+ * tabs for top/new/saved playlists, category filters, and add/edit playlist dialogs.
+ * @param {Object} props
+ * @param {Array} props.initialPlaylists - Pre-fetched playlist array from the Vercel KV store, used for ISR hydration.
+ */
 export default function GymPlaylistLeaderboard({ initialPlaylists }) {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
@@ -742,6 +745,7 @@ const dummyPlaylists = [
   },
 ];
 
+// Simple previous/next pagination control used below the playlist list.
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   return (
     <div className="mt-4 flex items-center justify-center space-x-2">

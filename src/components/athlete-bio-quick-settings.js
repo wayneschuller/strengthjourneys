@@ -29,7 +29,10 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { cn } from "@/lib/utils";
 import { Activity, X } from "lucide-react";
 
-// Dropdown variant — used in the nav bar.
+/**
+ * Dropdown variant of the athlete bio settings panel, used in the nav bar.
+ * Renders an icon button that opens a dropdown with age, sex, and bodyweight controls.
+ */
 export function AthleteBioQuickSettings() {
   const {
     age,
@@ -170,9 +173,13 @@ export function AthleteBioQuickSettings() {
   );
 }
 
-// Inline variant — used inside the calculator's Big Four strength section.
-// Shows a bio summary line with an edit toggle that slides out compact controls.
-// liftNote — optional extra context appended to the summary (e.g. "lifting 239lb in each lift type").
+/**
+ * Inline variant of the athlete bio settings panel, used inside the calculator's Big Four strength section.
+ * Shows a bio summary line with an edit toggle that slides out compact age, sex, and bodyweight controls.
+ *
+ * @param {Object} props
+ * @param {string} [props.liftNote] - Optional extra context appended to the summary line (e.g. "lifting 239lb in each lift type").
+ */
 export function AthleteBioInlineSettings({ liftNote }) {
   const {
     age,

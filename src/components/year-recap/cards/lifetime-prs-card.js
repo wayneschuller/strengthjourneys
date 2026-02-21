@@ -13,6 +13,14 @@ import { Trophy } from "lucide-react";
 import { motion } from "motion/react";
 import { LiftSvg, getLiftSvgPath } from "../lift-svg";
 
+/**
+ * Recap slide listing all lifetime personal records the user achieved during the given year.
+ * Each PR entry animates in sequentially when the slide becomes active.
+ * @param {Object} props
+ * @param {number|string} props.year - The recap year to find lifetime PRs for.
+ * @param {boolean} props.isDemo - Whether the card is being shown in demo mode.
+ * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
+ */
 export function LifetimePRsCard({ year, isDemo, isActive = true }) {
   const phraseRef = useRef(null);
   const { parsedData } = useUserLiftingData();

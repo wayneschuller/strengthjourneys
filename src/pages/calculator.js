@@ -898,6 +898,10 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
 
       {/* ── Overview track (full scale, bracket notches at min/max) ── */}
       <div>
+        <div className="mb-1 flex justify-between text-sm text-foreground/90">
+          <span>0{unit}</span>
+          <span>{overviewMax}{unit}</span>
+        </div>
         <div className="relative" style={{ height: "24px" }}>
           {/* Base track */}
           <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
@@ -976,10 +980,6 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
           </div>
         )}
 
-        <div className="mt-1 flex justify-between text-sm text-foreground/90">
-          <span>0{unit}</span>
-          <span>{overviewMax}{unit}</span>
-        </div>
       </div>
 
       {/* Dashed connector lines from overview notches to detail band edges */}

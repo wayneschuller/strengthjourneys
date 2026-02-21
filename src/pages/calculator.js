@@ -668,26 +668,45 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
 
         {/* Labels below — all formulas, merged when too close */}
         <div className="relative mt-1" style={{ height: "20px" }}>
-          {mergedLabels.map((group) => {
-            const isSelected = group.formulas.includes(e1rmFormula);
+          {mergedLabels.map((group, groupIndex) => {
+            const isFirst = groupIndex === 0;
+            const isLast = groupIndex === mergedLabels.length - 1;
             const minV = Math.min(...group.values);
             const maxV = Math.max(...group.values);
             const weightLabel = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
+            // Pin first label to left edge, last to right edge, others centred
+            const translateClass = isFirst
+              ? "translate-x-0"
+              : isLast
+                ? "-translate-x-full"
+                : "-translate-x-1/2";
             return (
-              <button
+              <div
                 key={group.formulas.join("-")}
-                onClick={() => setE1rmFormula(group.formulas[0])}
                 style={{ left: `${group.pct}%` }}
                 className={cn(
-                  "absolute top-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-xs leading-none transition-colors",
-                  isSelected
-                    ? "font-semibold text-foreground"
-                    : "text-muted-foreground/80 hover:text-foreground",
+                  "absolute top-0 whitespace-nowrap text-xs leading-none",
+                  translateClass,
                 )}
               >
-                {group.formulas.join(" / ")}{" "}
+                {group.formulas.map((formula, fi) => (
+                  <span key={formula}>
+                    {fi > 0 && <span className="text-muted-foreground/40"> / </span>}
+                    <button
+                      onClick={() => setE1rmFormula(formula)}
+                      className={cn(
+                        "cursor-pointer transition-colors",
+                        e1rmFormula === formula
+                          ? "font-semibold text-foreground"
+                          : "text-muted-foreground/80 hover:text-foreground",
+                      )}
+                    >
+                      {formula}
+                    </button>
+                  </span>
+                ))}{" "}
                 <span className="opacity-60">{weightLabel}</span>
-              </button>
+              </div>
             );
           })}
         </div>

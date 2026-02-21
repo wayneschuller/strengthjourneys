@@ -995,7 +995,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
     }
 
     const lines = [
-      `Lifting ${reps}@${weight}${unit} → 1RM: ${e1rmWeight}${unit} (${e1rmFormula})`,
+      `${liftType} ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, using the ${e1rmFormula} algorithm.`,
     ];
     if (!bioDataIsDefault && bodyWeight > 0) {
       lines.push(`${(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight`);

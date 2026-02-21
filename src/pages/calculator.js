@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { devLog } from "@/lib/processing-utils";
-import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
+import { gaTrackCalcShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { cn } from "@/lib/utils";
@@ -295,7 +295,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
       description: "Result copied to clipboard.",
     });
 
-    gaEvent(GA_EVENT_TAGS.CALC_SHARE_CLIPBOARD, { page: "/calculator", type: "text" });
+    gaTrackCalcShareCopy("text", { page: "/calculator" });
 
     // This fails in React - but it's the new API
     // if (navigator?.clipboard?.writeText) {
@@ -1056,6 +1056,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
     document.body.removeChild(textarea);
 
     toast({ description: "Result copied to clipboard." });
+    gaTrackCalcShareCopy("lift_bar", { page: "/calculator", liftType });
   };
 
   const [openPopoverLift, setOpenPopoverLift] = useState(null);

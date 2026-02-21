@@ -188,6 +188,16 @@ export function gaTrackShareCopy(feature, params = {}) {
 }
 
 /**
+ * Track calculator copy-to-clipboard actions. Preserves the historical CALC_SHARE_CLIPBOARD
+ * event name for GA4 continuity while following the newer helper-function pattern.
+ * @param {string} type - Copy type (e.g. "text", "image", "lift_bar")
+ * @param {object} [params] - Optional extra params (e.g. { page, liftType })
+ */
+export function gaTrackCalcShareCopy(type, params = {}) {
+  gaEvent(GA_EVENT_TAGS.CALC_SHARE_CLIPBOARD, { type, ...params });
+}
+
+/**
  * Track feedback sentiment (thumbs up/down).
  * @param {"positive"|"negative"} sentiment
  * @param {string} page - Current page pathname

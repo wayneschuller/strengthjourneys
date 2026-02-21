@@ -197,7 +197,7 @@ export function AthleteBioInlineSettings({ liftNote }) {
         "text-right text-xs",
         bioDataIsDefault ? "text-amber-500" : "text-muted-foreground",
       )}>
-        Strength levels for a {bodyWeight}{unit} {sex}, age {age}{liftNote && ` ${liftNote}`}{bioDataIsDefault && " · enter your details"}
+        Strength levels for a {bodyWeight}{unit} {sex}, age {age}{liftNote && ` ${liftNote}`}{bioDataIsDefault && " · enter your details"}.
       </p>
 
       {/* Button is the anchor — controls are absolutely positioned to its right */}

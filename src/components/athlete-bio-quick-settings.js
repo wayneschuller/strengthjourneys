@@ -172,7 +172,8 @@ export function AthleteBioQuickSettings() {
 
 // Inline variant — used inside the calculator's Big Four strength section.
 // Shows a bio summary line with an edit toggle that slides out compact controls.
-export function AthleteBioInlineSettings() {
+// liftNote — optional extra context appended to the summary (e.g. "lifting 239lb in each lift type").
+export function AthleteBioInlineSettings({ liftNote }) {
   const {
     age,
     setAge,
@@ -196,7 +197,7 @@ export function AthleteBioInlineSettings() {
         "text-right text-xs",
         bioDataIsDefault ? "text-amber-500" : "text-muted-foreground",
       )}>
-        Strength levels for a {bodyWeight}{unit} {sex}, age {age}{bioDataIsDefault && " · enter your details"}
+        Strength levels for a {bodyWeight}{unit} {sex}, age {age}{liftNote && ` ${liftNote}`}{bioDataIsDefault && " · enter your details"}
       </p>
 
       {/* Button is the anchor — controls are absolutely positioned to its right */}

@@ -1014,7 +1014,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
             </Link>
           </h2>
           <div className="mt-1 flex justify-center">
-            <AthleteBioInlineSettings />
+            <AthleteBioInlineSettings liftNote={`lifting ${e1rmWeight}${unit} in each lift type`} />
           </div>
         </div>
 

@@ -212,7 +212,7 @@ function AthleteBioInline({
         "text-right text-xs",
         hasCustomBio ? "text-muted-foreground" : "text-amber-500",
       )}>
-        Strength levels for a {bodyWeight}{unit} {sex}, age {age}
+        Strength levels for a {bodyWeight}{unit} {sex}, age {age}{!hasCustomBio && " · defaults"}
       </p>
 
       {/* Button is the anchor — controls are absolutely positioned to its right */}

@@ -684,7 +684,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
 
           {/* Algorithm Range Bar — full width below both columns */}
           <div className="mb-6">
-            <AlgorithmRangeBar
+            <AlgorithmRangeBars
               reps={reps}
               weight={weight}
               isMetric={isMetric}
@@ -741,6 +741,9 @@ const getSortedFormulae = (reps, weight) => {
   });
 };
 
+// Hero card showing the e1rm result. Animates the number up/down with a spring
+// when reps, weight, or formula changes. Shows lift type, bodyweight ratio, and
+// strength rating when Strength Level Insights is enabled.
 const E1RMSummaryCard = ({
   reps,
   weight,
@@ -827,7 +830,12 @@ const E1RMSummaryCard = ({
   );
 };
 
-function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula, liftColor, isAdvancedAnalysis, standards, liftType }) {
+// Two stacked horizontal tracks visualising the spread of e1rm estimates across
+// all 7 algorithms. The overview bar shows where the cluster sits on the full
+// 0–250kg/600lb scale (with optional strength-standards overlay when advanced).
+// The detail bar zooms into the cluster so individual algorithm dots are
+// clickable to switch the active formula.
+function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormula, liftColor, isAdvancedAnalysis, standards, liftType }) {
   const { getColor } = useLiftColors();
   const unit = isMetric ? "kg" : "lb";
   const accentColor = liftColor || getColor(liftType) || "hsl(var(--primary))";
@@ -878,10 +886,10 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
   const dotSpring = { duration: 0 };
 
   return (
-    <div className="select-none space-y-5 px-1">
+    <div className="select-none space-y-5">
 
       {/* ── Overview track (full scale, bracket notches at min/max) ── */}
-      <div>
+      <div className="px-1">
         <div className="relative" style={{ height: "24px" }}>
           {/* Base track */}
           <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
@@ -1055,6 +1063,10 @@ function AlgorithmRangeBar({ reps, weight, isMetric, e1rmFormula, setE1rmFormula
   );
 }
 
+// Table projecting the estimated best lift at each rep count from 1–10RM,
+// derived from the current e1rm via estimateWeightForReps. Highlights the
+// row matching the user's current rep input. Re-mounts (re-animates) whenever
+// the formula, weight, or reps change via the parent key prop.
 function RepRangeTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalysis, liftType }) {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const { getColor } = useLiftColors();
@@ -1119,6 +1131,9 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalysis
 }
 
 
+// Table showing common training intensities from 100% down to 50% of e1rm
+// in 5% steps — useful for bro-programming percentage-based templates.
+// Sits beside RepRangeTable in a two-column grid on md+ screens.
 function PercentageTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalysis, liftType }) {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const { getColor } = useLiftColors();
@@ -1176,6 +1191,9 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalys
 }
 
 
+// Expandable panel of athlete bio inputs (age, sex, bodyweight, lift type)
+// used by Strength Level Insights. Rendered inside an AnimatePresence collapse
+// in the right-column card. Lift type uses a 2x2 SVG grid for the Big Four.
 function OptionalAtheleBioData({
   isMetric,
   bodyWeight,

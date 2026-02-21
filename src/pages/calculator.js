@@ -977,11 +977,23 @@ const NEXT_TIER = {
 // 200lb male if the user hasn't set a profile. The AthleteBioQuickSettings
 // dropdown lets them update it inline without leaving the page.
 function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }) {
-  const { standards, bodyWeight, bioDataIsDefault } = useAthleteBio();
+  const { standards, age, sex, bodyWeight, bioDataIsDefault } = useAthleteBio();
   const { toast } = useToast();
   const unit = isMetric ? "kg" : "lb";
 
   const handleCopyLift = (liftType, rating, emoji, nextTierInfo, diff) => {
+    const params = new URLSearchParams({
+      [LOCAL_STORAGE_KEYS.REPS]: reps,
+      [LOCAL_STORAGE_KEYS.WEIGHT]: weight,
+      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
+      [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
+    });
+    if (!bioDataIsDefault) {
+      params.set(LOCAL_STORAGE_KEYS.ATHLETE_AGE, age);
+      params.set(LOCAL_STORAGE_KEYS.ATHLETE_SEX, sex);
+      params.set(LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT, bodyWeight);
+    }
+
     const lines = [
       `Lifting ${reps}@${weight}${unit} → 1RM: ${e1rmWeight}${unit} (${e1rmFormula})`,
     ];
@@ -992,7 +1004,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
     if (nextTierInfo && diff) {
       lines.push(`Next: ${STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} ${nextTierInfo.name} — ${diff}${unit} away`);
     }
-    lines.push(`Source: https://strengthjourneys.xyz/calculator`);
+    lines.push(`Source: https://strengthjourneys.xyz/calculator?${params.toString()}`);
 
     const textarea = document.createElement("textarea");
     textarea.value = lines.join("\n");
@@ -1056,64 +1068,60 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
                   >
                     {liftType}
                   </Link>
-                  {/* Rating badge + copy: inline on mobile row 1, hidden on desktop (shown at end) */}
-                  <div className="flex shrink-0 items-center gap-1.5 md:hidden">
-                    <button
-                      onClick={() => handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)}
-                      className="text-muted-foreground/50 transition-colors hover:text-foreground"
-                      aria-label={`Copy ${liftType} result`}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </button>
-                    <span className="text-right text-xs font-medium">{emoji} {rating}</span>
-                  </div>
+                  {/* Rating badge: mobile only (desktop shows it at the end) */}
+                  <span className="shrink-0 text-right text-xs font-medium md:hidden">
+                    {emoji} {rating}
+                  </span>
                 </div>
-                {/* Row 2 on mobile / middle col on desktop: the strength bar */}
-                <div className="relative flex-1">
-                  <div
-                    className="h-2 w-full rounded-full"
-                    style={{ background: "linear-gradient(to right, #EAB308, #86EFAC, #166534)" }}
-                  />
-                  {/* Tier dividers at beginner, intermediate, advanced */}
-                  {[standard.beginner, standard.intermediate, standard.advanced].map((val, i) => (
+                {/* Row 2 on mobile / middle col on desktop: bar + copy button */}
+                <div className="flex flex-1 items-center gap-2">
+                  <div className="relative flex-1">
                     <div
-                      key={i}
-                      className="absolute top-0 h-2 w-px"
-                      style={{ left: `${((val - physicallyActive) / range) * 100}%`, backgroundColor: "var(--background)", opacity: 0.7 }}
+                      className="h-2 w-full rounded-full"
+                      style={{ background: "linear-gradient(to right, #EAB308, #86EFAC, #166534)" }}
                     />
-                  ))}
-                  {/* e1rm marker with tooltip */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+                    {/* Tier dividers at beginner, intermediate, advanced */}
+                    {[standard.beginner, standard.intermediate, standard.advanced].map((val, i) => (
                       <div
-                        className="absolute top-1/2 h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-1 ring-background"
-                        style={{ left: `${pct}%` }}
+                        key={i}
+                        className="absolute top-0 h-2 w-px"
+                        style={{ left: `${((val - physicallyActive) / range) * 100}%`, backgroundColor: "var(--background)", opacity: 0.7 }}
                       />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs">
-                      <p className="font-semibold">{liftType}</p>
-                      <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
-                      {nextTierInfo ? (
-                        <p className="text-muted-foreground">
-                          Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
-                        </p>
-                      ) : (
-                        <p className="text-muted-foreground">Already at the top!</p>
-                      )}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-                {/* Copy + rating — desktop: inline after bar; mobile: after rating badge in row 1 */}
-                <div className="hidden w-32 shrink-0 items-center justify-end gap-1.5 md:flex">
+                    ))}
+                    {/* e1rm marker with tooltip */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          className="absolute top-1/2 h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-1 ring-background"
+                          style={{ left: `${pct}%` }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        <p className="font-semibold">{liftType}</p>
+                        <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
+                        {nextTierInfo ? (
+                          <p className="text-muted-foreground">
+                            Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
+                          </p>
+                        ) : (
+                          <p className="text-muted-foreground">Already at the top!</p>
+                        )}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  {/* Copy button — immediately after the bar on all screen sizes */}
                   <button
                     onClick={() => handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)}
-                    className="text-muted-foreground/50 transition-colors hover:text-foreground"
+                    className="shrink-0 text-muted-foreground/50 transition-colors hover:text-foreground"
                     aria-label={`Copy ${liftType} result`}
                   >
                     <Copy className="h-3 w-3" />
                   </button>
-                  <span className="text-xs font-medium">{emoji} {rating}</span>
                 </div>
+                {/* Rating at end — desktop only (shown in row 1 on mobile) */}
+                <span className="hidden w-32 shrink-0 text-right text-xs font-medium md:block">
+                  {emoji} {rating}
+                </span>
               </div>
             );
           })}

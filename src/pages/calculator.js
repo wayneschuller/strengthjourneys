@@ -856,6 +856,13 @@ function BigFourStrengthBars({ e1rmWeight, isMetric }) {
   return (
     <TooltipProvider>
       <div className="space-y-3">
+        <div className="border-t pt-3">
+          <h3 className="text-center text-base font-semibold">Big Four Strength Levels</h3>
+          <div className="mt-1 flex justify-center">
+            <AthleteBioQuickSettings variant="inline" />
+          </div>
+        </div>
+
         <div className="space-y-3">
           {BIG_FOUR.map((liftType) => {
             const standard = standards?.[liftType];
@@ -927,8 +934,6 @@ function BigFourStrengthBars({ e1rmWeight, isMetric }) {
           })}
         </div>
 
-        {/* Bio inline editor — sits before the separator */}
-        <AthleteBioQuickSettings variant="inline" />
         <div className="border-t" />
       </div>
     </TooltipProvider>

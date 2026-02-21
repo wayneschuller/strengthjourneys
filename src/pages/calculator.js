@@ -608,25 +608,44 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
   const detailBandLeft = detailPct(minVal);
   const detailBandWidth = detailPct(maxVal) - detailBandLeft;
 
-  // Merge labels that would overlap on the detail track (sorted low→high, same order as estimates).
-  // Groups are merged greedily: compare the estimated right-edge of the previous group's label
-  // text against the new candidate's position, so long merged labels don't collide with neighbours.
-  // Assumes ~1.2% of track width per character (≈7px char on ~580px track).
-  const CHAR_WIDTH_PCT = 1.2;
+  // Helper used by both merge passes.
   const getLabelText = (formulas, values) => {
     const minV = Math.min(...values);
     const maxV = Math.max(...values);
     const wStr = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
     return formulas.join(" / ") + " " + wStr;
   };
-  const mergedLabels = [];
+
+  // Desktop merge — classic centre-to-centre threshold. Less aggressive; desktop tracks are
+  // wide enough that only truly overlapping neighbours need grouping.
+  const DESKTOP_MERGE_THRESHOLD_PCT = 8;
+  const desktopMergedLabels = [];
   for (const { formula, value } of estimates) {
     const pct = detailPct(value);
-    const last = mergedLabels[mergedLabels.length - 1];
+    const last = desktopMergedLabels[desktopMergedLabels.length - 1];
+    if (last && pct - last.pct < DESKTOP_MERGE_THRESHOLD_PCT) {
+      last.formulas.push(formula);
+      last.values.push(value);
+      const memberPcts = last.formulas.map(
+        (f) => detailPct(estimates.find((e) => e.formula === f).value),
+      );
+      last.pct = memberPcts.reduce((a, b) => a + b, 0) / memberPcts.length;
+    } else {
+      desktopMergedLabels.push({ formulas: [formula], pct, values: [value] });
+    }
+  }
+
+  // Mobile merge — text-width-aware: compares the estimated right edge of the previous label
+  // against the next position so long merged strings don't collide. Assumes ~1.2% per char
+  // (≈7px on ~580px track). More aggressive than desktop because the track is narrower.
+  const CHAR_WIDTH_PCT = 1.2;
+  const mobileMergedLabels = [];
+  for (const { formula, value } of estimates) {
+    const pct = detailPct(value);
+    const last = mobileMergedLabels[mobileMergedLabels.length - 1];
     if (last) {
       const lastWidthPct = getLabelText(last.formulas, last.values).length * CHAR_WIDTH_PCT;
-      // First label is left-pinned so its right edge = pct + full width; others are centred.
-      const isLastFirst = mergedLabels.length === 1;
+      const isLastFirst = mobileMergedLabels.length === 1;
       const lastRightEdge = isLastFirst ? last.pct + lastWidthPct : last.pct + lastWidthPct / 2;
       if (pct - lastRightEdge < 4) {
         last.formulas.push(formula);
@@ -636,10 +655,10 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
         );
         last.pct = memberPcts.reduce((a, b) => a + b, 0) / memberPcts.length;
       } else {
-        mergedLabels.push({ formulas: [formula], pct, values: [value] });
+        mobileMergedLabels.push({ formulas: [formula], pct, values: [value] });
       }
     } else {
-      mergedLabels.push({ formulas: [formula], pct, values: [value] });
+      mobileMergedLabels.push({ formulas: [formula], pct, values: [value] });
     }
   }
 
@@ -651,48 +670,57 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
       {/* ── Detail track: zoomed into the algorithm cluster ── */}
       <div>
         {/* Track */}
-        <div className="relative" style={{ height: "20px" }}>
-          <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
-          <motion.div
-            className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full"
-            style={{ backgroundColor: accentColor, opacity: 0.4 }}
-            animate={{ left: `${detailBandLeft}%`, width: `${Math.max(detailBandWidth, 0.5)}%` }}
-            transition={springConfig}
-          />
-          {estimates.map(({ formula, value }) => {
-            const isSelected = formula === e1rmFormula;
-            return (
-              <motion.button
-                key={formula}
-                onClick={() => setE1rmFormula(formula)}
-                animate={{
-                  width: isSelected ? "14px" : "10px",
-                  height: isSelected ? "14px" : "10px",
-                  opacity: isSelected ? 1 : 0.45,
-                }}
-                transition={dotSpring}
-                style={{
-                  position: "absolute",
-                  left: `${Math.min(Math.max(detailPct(value), 1.5), 98.5)}%`,
-                  top: "50%",
-                  transform: "translate(-50%, -50%)",
-                  borderRadius: "9999px",
-                  backgroundColor: isSelected ? accentColor : "var(--muted-foreground)",
-                  zIndex: isSelected ? 10 : 1,
-                  boxShadow: isSelected ? `0 0 0 3px ${accentColor}30` : "none",
-                  cursor: "pointer",
-                  border: "none",
-                }}
-              />
-            );
-          })}
-        </div>
+        <TooltipProvider>
+          <div className="relative" style={{ height: "20px" }}>
+            <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
+            <motion.div
+              className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full"
+              style={{ backgroundColor: accentColor, opacity: 0.4 }}
+              animate={{ left: `${detailBandLeft}%`, width: `${Math.max(detailBandWidth, 0.5)}%` }}
+              transition={springConfig}
+            />
+            {estimates.map(({ formula, value }) => {
+              const isSelected = formula === e1rmFormula;
+              return (
+                <Tooltip key={formula}>
+                  <TooltipTrigger asChild>
+                    <motion.button
+                      onClick={() => setE1rmFormula(formula)}
+                      animate={{
+                        width: isSelected ? "14px" : "10px",
+                        height: isSelected ? "14px" : "10px",
+                        opacity: isSelected ? 1 : 0.45,
+                      }}
+                      transition={dotSpring}
+                      style={{
+                        position: "absolute",
+                        left: `${Math.min(Math.max(detailPct(value), 1.5), 98.5)}%`,
+                        top: "50%",
+                        transform: "translate(-50%, -50%)",
+                        borderRadius: "9999px",
+                        backgroundColor: isSelected ? accentColor : "var(--muted-foreground)",
+                        zIndex: isSelected ? 10 : 1,
+                        boxShadow: isSelected ? `0 0 0 3px ${accentColor}30` : "none",
+                        cursor: "pointer",
+                        border: "none",
+                      }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    <p className="font-semibold">{formula}</p>
+                    <p>{value}{unit}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </TooltipProvider>
 
         {/* Labels: desktop — full formula names */}
         <div className="relative mt-1 hidden md:block" style={{ height: "20px" }}>
-          {mergedLabels.map((group, groupIndex) => {
+          {desktopMergedLabels.map((group, groupIndex) => {
             const isFirst = groupIndex === 0;
-            const isLast = groupIndex === mergedLabels.length - 1;
+            const isLast = groupIndex === desktopMergedLabels.length - 1;
             const minV = Math.min(...group.values);
             const maxV = Math.max(...group.values);
             const weightLabel = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
@@ -734,9 +762,9 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
 
         {/* Labels: mobile — first letter(s) only, popover for merged groups */}
         <div className="relative mt-1 md:hidden" style={{ height: "20px" }}>
-          {mergedLabels.map((group, groupIndex) => {
+          {mobileMergedLabels.map((group, groupIndex) => {
             const isFirst = groupIndex === 0;
-            const isLast = groupIndex === mergedLabels.length - 1;
+            const isLast = groupIndex === mobileMergedLabels.length - 1;
             const minV = Math.min(...group.values);
             const maxV = Math.max(...group.values);
             const weightLabel = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;

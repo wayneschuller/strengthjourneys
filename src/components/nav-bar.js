@@ -111,7 +111,7 @@ export function NavBar() {
           <GitHubButton />
         </div>
 
-        {authStatus === "authenticated" && <AthleteBioQuickSettings />}
+        <AthleteBioQuickSettings />
         <ThemeChooser />
         {/* <DarkModeToggle /> */}
         <AvatarDropdown />

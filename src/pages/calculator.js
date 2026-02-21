@@ -41,7 +41,7 @@ import { useLocalStorage, useIsClient } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
 import { useStateFromQueryOrLocalStorage } from "../hooks/use-state-from-query-or-localStorage";
-import { Calculator } from "lucide-react";
+import { Calculator, Copy } from "lucide-react";
 import {
   motion,
   useMotionValue,
@@ -484,13 +484,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
             />
             <div className="flex gap-2">
               <ShareCopyButton label="Copy Text" onClick={handleCopyToClipboard} />
-              <ShareCopyButton
-                label="Copy Image"
-                onClick={handleCopyImage}
-                isLoading={isCapturingImage}
-                disabled={isCapturingImage}
-                tooltip="Copy portrait image for Instagram Stories"
-              />
             </div>
           </div>
 
@@ -507,7 +500,13 @@ function E1RMCalculatorMain({ relatedArticles }) {
 
           {/* Big Four strength standards — always shown */}
           <div className="mb-6">
-            <BigFourStrengthBars e1rmWeight={e1rmWeight} isMetric={isMetric} />
+            <BigFourStrengthBars
+              reps={reps}
+              weight={weight}
+              e1rmWeight={e1rmWeight}
+              isMetric={isMetric}
+              e1rmFormula={e1rmFormula}
+            />
           </div>
 
           {/* Rep Range + Percentage Tables side by side */}
@@ -977,9 +976,33 @@ const NEXT_TIER = {
 // Bio data (age, bodyWeight, sex) comes from the global hook; defaults to 30yo
 // 200lb male if the user hasn't set a profile. The AthleteBioQuickSettings
 // dropdown lets them update it inline without leaving the page.
-function BigFourStrengthBars({ e1rmWeight, isMetric }) {
-  const { standards } = useAthleteBio();
+function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }) {
+  const { standards, bodyWeight, bioDataIsDefault } = useAthleteBio();
+  const { toast } = useToast();
   const unit = isMetric ? "kg" : "lb";
+
+  const handleCopyLift = (liftType, rating, emoji, nextTierInfo, diff) => {
+    const lines = [
+      `Lifting ${reps}@${weight}${unit} → 1RM: ${e1rmWeight}${unit} (${e1rmFormula})`,
+    ];
+    if (!bioDataIsDefault && bodyWeight > 0) {
+      lines.push(`${(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight`);
+    }
+    lines.push(`${liftType}: ${emoji} ${rating}`);
+    if (nextTierInfo && diff) {
+      lines.push(`Next: ${STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} ${nextTierInfo.name} — ${diff}${unit} away`);
+    }
+    lines.push(`Source: https://strengthjourneys.xyz/calculator`);
+
+    const textarea = document.createElement("textarea");
+    textarea.value = lines.join("\n");
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+
+    toast({ description: "Result copied to clipboard." });
+  };
 
   return (
     <TooltipProvider>
@@ -1033,10 +1056,17 @@ function BigFourStrengthBars({ e1rmWeight, isMetric }) {
                   >
                     {liftType}
                   </Link>
-                  {/* Rating badge: inline on mobile row 1, hidden here on desktop (shown at end) */}
-                  <span className="shrink-0 text-right text-xs font-medium md:hidden">
-                    {emoji} {rating}
-                  </span>
+                  {/* Rating badge + copy: inline on mobile row 1, hidden on desktop (shown at end) */}
+                  <div className="flex shrink-0 items-center gap-1.5 md:hidden">
+                    <button
+                      onClick={() => handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)}
+                      className="text-muted-foreground/50 transition-colors hover:text-foreground"
+                      aria-label={`Copy ${liftType} result`}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                    <span className="text-right text-xs font-medium">{emoji} {rating}</span>
+                  </div>
                 </div>
                 {/* Row 2 on mobile / middle col on desktop: the strength bar */}
                 <div className="relative flex-1">
@@ -1073,10 +1103,17 @@ function BigFourStrengthBars({ e1rmWeight, isMetric }) {
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                {/* Rating at end — desktop only (shown in row 1 on mobile) */}
-                <span className="hidden w-32 shrink-0 text-right text-xs font-medium md:block">
-                  {emoji} {rating}
-                </span>
+                {/* Copy + rating — desktop: inline after bar; mobile: after rating badge in row 1 */}
+                <div className="hidden w-32 shrink-0 items-center justify-end gap-1.5 md:flex">
+                  <button
+                    onClick={() => handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)}
+                    className="text-muted-foreground/50 transition-colors hover:text-foreground"
+                    aria-label={`Copy ${liftType} result`}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </button>
+                  <span className="text-xs font-medium">{emoji} {rating}</span>
+                </div>
               </div>
             );
           })}

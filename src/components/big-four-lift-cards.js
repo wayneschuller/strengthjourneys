@@ -35,13 +35,19 @@ import { Badge } from "@/components/ui/badge";
 
 /**
  * Renders a grid of cards for the "big four" barbell lifts (Back Squat, Bench Press,
- * Deadlift, Strict Press). Each card shows lift info, stats (total sets/reps, best set),
- * badges (recent PR, favorite, tonnage, etc.), and an SVG diagram.
+ * Deadlift, Strict Press). Each card links to its dedicated lift insights page and has
+ * two display modes:
+ *
+ * - **Guest / no-sheet mode**: shows the lift description and SVG diagram.
+ * - **Stats mode** (authenticated with a connected sheet): hides the description and
+ *   instead shows a mini yellow-to-green strength bar with the user's last-month best
+ *   E1RM marker and their strength rating (e.g. "💪 Intermediate"), plus contextual
+ *   badges for recent PRs, training frequency, volume, and lift preference.
  *
  * @param {Object} props
  * @param {Array<{liftType: string, slug: string, liftDescription: string}>} props.lifts - Array of
  *   lift config objects. Each must have liftType (display name), slug (URL path), and
- *   liftDescription (short description shown before stats load).
+ *   liftDescription (short description shown in guest mode).
  * @param {boolean} [props.animated=true] - When true, stats and badges stagger in with a short
  *   delay per card after auth and data load. Set to false to skip the animation (e.g. when
  *   embedded elsewhere).

@@ -592,18 +592,10 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
   const maxVal = estimates[estimates.length - 1].value;
   const range = maxVal - minVal;
 
-  // ── Detail track: zoomed into the algorithm cluster ────────────────────
-  // Detail track: band always occupies a fixed visual fraction of the track.
-  // The track range is back-calculated from the band width, so the band stays
-  // the same size regardless of how spread the algorithms are. The axis labels
-  // at the edges update to show the actual values at those positions.
-  const BAND_LEFT_PCT = 10;
-  const BAND_RIGHT_PCT = 90;
-  const bandSpanPct = BAND_RIGHT_PCT - BAND_LEFT_PCT; // 70%
-  const trackRange = range > 0
-    ? range / (bandSpanPct / 100)
-    : (isMetric ? 10 : 25); // fallback when all algorithms agree
-  const detailMin = Math.max(0, minVal - (BAND_LEFT_PCT / 100) * trackRange);
+  // Track spans exactly from the lowest to highest algorithm estimate.
+  // Fallback padding only when all algorithms agree (range === 0) so the dot stays visible.
+  const trackRange = range > 0 ? range : (isMetric ? 10 : 25);
+  const detailMin = range > 0 ? minVal : minVal - trackRange / 2;
   const detailMax = detailMin + trackRange;
   const detailPct = (v) => ((v - detailMin) / trackRange) * 100;
   const detailBandLeft = detailPct(minVal);
@@ -700,11 +692,6 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
           })}
         </div>
 
-        {/* Detail axis endpoints */}
-        <div className="mt-2 flex justify-between text-sm text-foreground/90">
-          <span>{Math.round(detailMin)}{unit}</span>
-          <span>{Math.round(detailMax)}{unit}</span>
-        </div>
       </div>
 
     </div>

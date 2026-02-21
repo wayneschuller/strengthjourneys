@@ -894,7 +894,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
   const dotSpring = { duration: 0 };
 
   return (
-    <div className="select-none space-y-5">
+    <div className="select-none">
 
       {/* ── Overview track (full scale, bracket notches at min/max) ── */}
       <div className="px-1">
@@ -981,6 +981,24 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
           <span>{overviewMax}{unit}</span>
         </div>
       </div>
+
+      {/* Dashed connector lines from overview notches to detail band edges */}
+      <svg
+        aria-hidden="true"
+        className="w-full pointer-events-none"
+        style={{ height: "20px", display: "block" }}
+      >
+        <line
+          x1={`${overviewBandLeft}%`} y1="0"
+          x2={`${detailBandLeft}%`} y2="100%"
+          stroke={accentColor} strokeDasharray="4 3" strokeOpacity="0.45" strokeWidth="1.5"
+        />
+        <line
+          x1={`${overviewBandLeft + Math.max(overviewBandWidth, 0.3)}%`} y1="0"
+          x2={`${detailBandLeft + detailBandWidth}%`} y2="100%"
+          stroke={accentColor} strokeDasharray="4 3" strokeOpacity="0.45" strokeWidth="1.5"
+        />
+      </svg>
 
       {/* ── Detail track (zoomed, with labels) ── */}
       <div>

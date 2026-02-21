@@ -796,49 +796,43 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                   translateClass,
                 )}
               >
-                {group.formulas.length === 1 ? (
-                  // Single formula — tap to select directly, no popover needed
-                  <button onClick={() => setE1rmFormula(group.formulas[0])} className={labelCls}>
-                    {initials} <span className="opacity-60">{weightLabel}</span>
-                  </button>
-                ) : (
-                  // Merged group — tap to open popover listing full names
-                  <Popover
-                    open={openPopoverKey === groupKey}
-                    onOpenChange={(o) => setOpenPopoverKey(o ? groupKey : null)}
+                {/* Always show popover on mobile — single or merged — so the full name and
+                    value are visible before committing, and the UX is consistent. */}
+                <Popover
+                  open={openPopoverKey === groupKey}
+                  onOpenChange={(o) => setOpenPopoverKey(o ? groupKey : null)}
+                >
+                  <PopoverTrigger asChild>
+                    <button className={labelCls}>
+                      {initials} <span className="opacity-60">{weightLabel}</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-2"
+                    align={isFirst ? "start" : isLast ? "end" : "center"}
                   >
-                    <PopoverTrigger asChild>
-                      <button className={labelCls}>
-                        {initials} <span className="opacity-60">{weightLabel}</span>
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-auto p-2"
-                      align={isFirst ? "start" : isLast ? "end" : "center"}
-                    >
-                      <div className="flex flex-col gap-0.5">
-                        {group.formulas.map((formula) => {
-                          const val = estimates.find((e) => e.formula === formula)?.value ?? 0;
-                          const isSelected = e1rmFormula === formula;
-                          return (
-                            <button
-                              key={formula}
-                              onClick={() => { setE1rmFormula(formula); setOpenPopoverKey(null); }}
-                              className={cn(
-                                "flex items-center gap-3 rounded px-2 py-1.5 text-xs transition-colors hover:bg-muted text-left",
-                                isSelected ? "font-semibold" : "",
-                              )}
-                            >
-                              <span className="flex-1">{formula}</span>
-                              <span className="text-muted-foreground">{val}{unit}</span>
-                              {isSelected && <span className="text-primary">✓</span>}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                )}
+                    <div className="flex flex-col gap-0.5">
+                      {group.formulas.map((formula) => {
+                        const val = estimates.find((e) => e.formula === formula)?.value ?? 0;
+                        const isSelected = e1rmFormula === formula;
+                        return (
+                          <button
+                            key={formula}
+                            onClick={() => { setE1rmFormula(formula); setOpenPopoverKey(null); }}
+                            className={cn(
+                              "flex items-center gap-3 rounded px-2 py-1.5 text-xs transition-colors hover:bg-muted text-left",
+                              isSelected ? "font-semibold" : "",
+                            )}
+                          >
+                            <span className="flex-1">{formula}</span>
+                            <span className="text-muted-foreground">{val}{unit}</span>
+                            {isSelected && <span className="text-primary">✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             );
           })}

@@ -15,6 +15,26 @@ import { useReadLocalStorage, useWindowSize } from "usehooks-ts";
 
 const PERIOD_KEYS = ["1M", "6M", "1Y", "2Y", "5Y", "10Y"];
 
+/**
+ * Horizontal gradient bar (yellow → green) that visualises where a user sits on a
+ * five-tier strength scale: Physically Active → Beginner → Intermediate → Advanced → Elite.
+ *
+ * Has two display modes:
+ * - **Guest mode**: renders the labelled standards scale only, with no personal data.
+ * - **Authenticated mode**: overlays interactive notches for the user's lifetime PR,
+ *   lifetime best E1RM, and period-best E1RMs (last 1M / 6M / 1Y / 2Y / 5Y / 10Y).
+ *   Nearby notches are clustered to avoid overlap. Each notch has a tooltip with the
+ *   underlying set details. A strength rating label (e.g. "💪 Intermediate") is shown
+ *   below the bar. The scale extends beyond Elite when the user surpasses that threshold.
+ *
+ * @param {Object} props
+ * @param {string} props.liftType - The lift type to display (e.g. "Back Squat").
+ * @param {boolean} [props.isYearly=false] - When true, uses last-12-months data instead of all-time.
+ * @param {boolean} props.isMetric - Whether to display weights in kg (true) or lb (false).
+ * @param {Object} props.standards - Standards object from `useAthleteBio()`, keyed by liftType,
+ *   each value being `{ physicallyActive, beginner, intermediate, advanced, elite }` in the
+ *   display unit.
+ */
 export function StandardsSlider({
   liftType,
   isYearly = false,

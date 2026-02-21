@@ -139,7 +139,13 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
   );
 }
 
-// Full expanded view combining summary statistics, recent highlights, and rep-range PRs for a lift.
+/**
+ * Full expanded view for a single lift type, combining lifetime summary statistics,
+ * recent session highlights, and a rep-range PR accordion.
+ *
+ * @param {Object} props
+ * @param {string} props.liftType - The lift type to display (e.g. "Back Squat").
+ */
 export function ExpandedLiftAchievements({ liftType }) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:justify-stretch">

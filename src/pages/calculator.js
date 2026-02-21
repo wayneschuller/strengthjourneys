@@ -72,7 +72,7 @@ export async function getStaticProps() {
 export default function E1RMCalculator({ relatedArticles }) {
   const title = "One Rep Max Calculator | Free 1RM Tool, No Login Required";
   const description =
-    "Free 1RM calculator using 5 proven formulas (Epley, Brzycki & more). Get rep-max projection tables, percentage training guides, and Big Four strength level ratings benchmarked to your age, sex, and bodyweight. No login required.";
+    "Free 1RM calculator using 7 proven formulas (Epley, Brzycki & more). Get rep-max projection tables, percentage training guides, and Big Four strength level ratings benchmarked to your age, sex, and bodyweight. No login required.";
   const keywords =
     "one rep max calculator, 1RM calculator, ORM calculator, e1RM calculator, Epley formula, Brzycki formula, powerlifting 1RM calculator, weightlifting max calculator, max lift predictor, strength level estimator, rep max projections, percentage calculator, Big Four strength standards, barbell load calculator";
   const canonicalURL = "https://www.strengthjourneys.xyz/calculator";
@@ -358,7 +358,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
           One Rep Max Calculator
         </PageHeaderHeading>
         <PageHeaderDescription>
-          Enter reps and weight to estimate your one-rep max across 5 proven
+          Enter reps and weight to estimate your one-rep max across 7 proven
           formulas. See rep-max projections, percentage training guides, and
           personalized Big Four strength levels by age, sex, and bodyweight.
         </PageHeaderDescription>

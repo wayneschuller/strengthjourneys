@@ -606,10 +606,15 @@ function E1RMCalculatorMain({ relatedArticles }) {
             </div>
           </div>
 
-          {/* Two-column layout: hero + algo bar (left, primary), strength insights (right, secondary) */}
-          <div className="my-6 grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr] lg:items-start">
+          {/* Layout: two-col when insights ON, centered single-col when OFF */}
+          <div className={cn(
+            "my-6",
+            isAdvancedAnalysis
+              ? "grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr] lg:items-start"
+              : "flex flex-col items-center gap-3",
+          )}>
 
-            {/* Left column: hero card + copy buttons */}
+            {/* Hero + copy buttons. When insights OFF, also shows the inline toggle. */}
             <div className="flex flex-col items-center gap-3">
               <E1RMSummaryCard
                 reps={reps}
@@ -632,37 +637,46 @@ function E1RMCalculatorMain({ relatedArticles }) {
                   tooltip="Copy portrait image for Instagram Stories"
                 />
               </div>
-            </div>
-
-            {/* Right column: Strength Insights (secondary) */}
-            <Card className="border-muted/60">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
+              {!isAdvancedAnalysis && (
+                <label
+                  htmlFor="advanced-inline"
+                  className="mt-1 flex cursor-pointer select-none items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
                   <Checkbox
-                    id="advanced"
-                    checked={isAdvancedAnalysis}
+                    id="advanced-inline"
+                    checked={false}
                     onCheckedChange={handleAdvancedAnalysisChange}
                   />
-                  <label
-                    htmlFor="advanced"
-                    className={cn(
-                      "cursor-pointer select-none text-base font-semibold leading-none",
-                      isAdvancedAnalysis ? "opacity-100" : "opacity-60",
-                    )}
-                  >
-                    Strength Level Insights
-                  </label>
-                </div>
-              </CardHeader>
-              <AnimatePresence>
-                {isAdvancedAnalysis && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                    style={{ overflow: "hidden" }}
-                  >
+                  Strength Level Insights
+                </label>
+              )}
+            </div>
+
+            {/* Right column: full insights Card — only rendered when insights ON */}
+            <AnimatePresence>
+              {isAdvancedAnalysis && (
+                <motion.div
+                  initial={{ opacity: 0, x: 16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 16 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  <Card className="border-muted/60">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="advanced"
+                          checked={true}
+                          onCheckedChange={handleAdvancedAnalysisChange}
+                        />
+                        <label
+                          htmlFor="advanced"
+                          className="cursor-pointer select-none text-base font-semibold leading-none"
+                        >
+                          Strength Level Insights
+                        </label>
+                      </div>
+                    </CardHeader>
                     <CardContent className="pt-0">
                       <OptionalAtheleBioData
                         isMetric={isMetric}
@@ -676,10 +690,10 @@ function E1RMCalculatorMain({ relatedArticles }) {
                         setSex={setSex}
                       />
                     </CardContent>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </Card>
+                  </Card>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Algorithm Range Bar — full width below both columns */}
@@ -854,9 +868,17 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
   const maxVal = estimates[estimates.length - 1].value;
   const range = maxVal - minVal;
 
-  // ── Overview track: fixed axis matching the weight slider ──────────────
-  const overviewMax = isMetric ? 250 : 600;
-  const overviewPct = (v) => Math.min(100, Math.max(0, (v / overviewMax) * 100));
+  // ── Overview track: when standards are present, anchor scale to physicallyActive→elite.
+  // Expand beyond either bound if the algorithm cluster falls outside that range.
+  // Without standards, fall back to the full weight-slider scale (0–250kg / 0–600lb).
+  const overviewMin = standard
+    ? Math.min(standard.physicallyActive ?? 0, minVal)
+    : 0;
+  const overviewMax = standard
+    ? Math.max(standard.elite, maxVal)
+    : (isMetric ? 250 : 600);
+  const overviewRange = Math.max(overviewMax - overviewMin, 1);
+  const overviewPct = (v) => Math.min(100, Math.max(0, ((v - overviewMin) / overviewRange) * 100));
   const overviewBandLeft = overviewPct(minVal);
   const overviewBandWidth = overviewPct(maxVal) - overviewBandLeft;
 
@@ -902,11 +924,11 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
   return (
     <div className="select-none">
 
-      {/* ── Overview track (full scale, bracket notches at min/max) ── */}
-      <div>
+      {/* ── Overview track — only shown when Strength Level Insights is ON ── */}
+      {isAdvancedAnalysis && <div>
         <div className="mb-1 flex justify-between text-sm text-foreground/90">
-          <span>0{unit}</span>
-          <span>{overviewMax}{unit}</span>
+          <span>{Math.round(overviewMin)}{unit}</span>
+          <span>{Math.round(overviewMax)}{unit}</span>
         </div>
         {/* Tier labels (when advanced) */}
         {standard?.elite && (
@@ -947,7 +969,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
           {/* Base track */}
           <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
 
-          {/* Strength standards gradient overlay */}
+          {/* Strength standards gradient overlay — matches StandardsSlider (yellow→green) */}
           {standard?.elite && (
             <>
               <div
@@ -958,7 +980,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                   top: "50%",
                   transform: "translateY(-50%)",
                   height: "12px",
-                  background: `linear-gradient(to right, ${accentColor}18, ${accentColor}65)`,
+                  background: "linear-gradient(to right, #EAB308, #86EFAC, #166534)",
                   borderRadius: "2px",
                 }}
               />
@@ -1000,28 +1022,27 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
           />
         </div>
 
+      </div>}
 
-
-      </div>
-
-      {/* Dashed connector lines from overview notch tips to detail band edges.
-          overflow="visible" + negative y1 extends lines up into the notch body. */}
-      <svg
-        aria-hidden="true"
-        className="w-full pointer-events-none"
-        style={{ height: "16px", display: "block", overflow: "visible" }}
-      >
-        <line
-          x1={`${overviewBandLeft}%`} y1="-10"
-          x2={`${detailBandLeft + 3}%`} y2="100%"
-          stroke={accentColor} strokeDasharray="4 3" strokeOpacity="0.45" strokeWidth="1.5"
-        />
-        <line
-          x1={`${overviewBandLeft + Math.max(overviewBandWidth, 0.3)}%`} y1="-10"
-          x2={`${detailBandLeft + detailBandWidth - 3}%`} y2="100%"
-          stroke={accentColor} strokeDasharray="4 3" strokeOpacity="0.45" strokeWidth="1.5"
-        />
-      </svg>
+      {/* Dashed connector lines — only shown alongside overview */}
+      {isAdvancedAnalysis && (
+        <svg
+          aria-hidden="true"
+          className="w-full pointer-events-none"
+          style={{ height: "16px", display: "block", overflow: "visible" }}
+        >
+          <line
+            x1={`${overviewBandLeft}%`} y1="-10"
+            x2={`${detailBandLeft + 3}%`} y2="100%"
+            stroke={accentColor} strokeDasharray="4 3" strokeOpacity="0.45" strokeWidth="1.5"
+          />
+          <line
+            x1={`${overviewBandLeft + Math.max(overviewBandWidth, 0.3)}%`} y1="-10"
+            x2={`${detailBandLeft + detailBandWidth - 3}%`} y2="100%"
+            stroke={accentColor} strokeDasharray="4 3" strokeOpacity="0.45" strokeWidth="1.5"
+          />
+        </svg>
+      )}
 
       {/* ── Detail track (zoomed, with labels) ── */}
       <div>

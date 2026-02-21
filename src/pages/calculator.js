@@ -1137,13 +1137,20 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
                     </Popover>
                   </div>
                   {/* Copy button — immediately after the bar on all screen sizes */}
-                  <button
-                    onClick={() => handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)}
-                    className="shrink-0 text-muted-foreground/50 transition-colors hover:text-foreground"
-                    aria-label={`Copy ${liftType} result`}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)}
+                        className="shrink-0 text-muted-foreground/50 transition-colors hover:text-foreground"
+                        aria-label={`Copy ${liftType} result`}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      Copy {liftType} result
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
                 {/* Rating at end — desktop only (shown in row 1 on mobile) */}
                 <span className="hidden w-32 shrink-0 text-right text-xs font-medium md:block">

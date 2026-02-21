@@ -838,7 +838,7 @@ const E1RMSummaryCard = ({
 function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormula, liftColor, isAdvancedAnalysis, standards, liftType }) {
   const { getColor } = useLiftColors();
   const unit = isMetric ? "kg" : "lb";
-  const accentColor = liftColor || getColor(liftType) || "hsl(var(--chart-1))";
+  const accentColor = liftColor || "var(--primary)";
   const standard = isAdvancedAnalysis ? standards?.[liftType] : null;
 
   // All 7 formulae sorted low→high by their estimate for this reps/weight
@@ -931,14 +931,14 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
         {/* Notch value labels — min and max algorithm estimates above each bracket */}
         <div className="relative mb-0.5" style={{ height: "14px" }}>
           <span
-            style={{ left: `${overviewBandLeft}%`, color: accentColor }}
-            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[11px] font-medium"
+            style={{ left: `${overviewBandLeft}%`, color: accentColor, opacity: 0.6 }}
+            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[10px]"
           >
             {Math.round(minVal)}{unit}
           </span>
           <span
-            style={{ left: `${overviewBandLeft + Math.max(overviewBandWidth, 0.3)}%`, color: accentColor }}
-            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[11px] font-medium"
+            style={{ left: `${overviewBandLeft + Math.max(overviewBandWidth, 0.3)}%`, color: accentColor, opacity: 0.6 }}
+            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[10px]"
           >
             {Math.round(maxVal)}{unit}
           </span>
@@ -972,7 +972,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                     transform: "translate(-50%, -50%)",
                     width: "1px",
                     height: "16px",
-                    backgroundColor: "hsl(var(--background))",
+                    backgroundColor: "var(--background)",
                     opacity: 0.7,
                   }}
                 />
@@ -1013,12 +1013,12 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
       >
         <line
           x1={`${overviewBandLeft}%`} y1="-10"
-          x2={`${detailBandLeft}%`} y2="100%"
+          x2={`${detailBandLeft + 3}%`} y2="100%"
           stroke={accentColor} strokeDasharray="4 3" strokeOpacity="0.45" strokeWidth="1.5"
         />
         <line
           x1={`${overviewBandLeft + Math.max(overviewBandWidth, 0.3)}%`} y1="-10"
-          x2={`${detailBandLeft + detailBandWidth}%`} y2="100%"
+          x2={`${detailBandLeft + detailBandWidth - 3}%`} y2="100%"
           stroke={accentColor} strokeDasharray="4 3" strokeOpacity="0.45" strokeWidth="1.5"
         />
       </svg>
@@ -1052,7 +1052,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                   top: "50%",
                   transform: "translate(-50%, -50%)",
                   borderRadius: "9999px",
-                  backgroundColor: isSelected ? accentColor : "hsl(var(--muted-foreground))",
+                  backgroundColor: isSelected ? accentColor : "var(--muted-foreground)",
                   zIndex: isSelected ? 10 : 1,
                   boxShadow: isSelected ? `0 0 0 3px ${accentColor}30` : "none",
                   cursor: "pointer",

@@ -114,6 +114,9 @@ export function NavBar() {
           <GitHubButton />
         </div>
 
+        {/* Logged-in users always get the bio settings button. For guests we only show it on
+            pages where bio data (age, sex, bodyweight) actively changes the output — we don't
+            want the pulsing badge distracting first-time visitors on the landing page. */}
         {(authStatus === "authenticated" || BIO_SETTINGS_PAGES.includes(pathname)) && (
           <AthleteBioQuickSettings />
         )}

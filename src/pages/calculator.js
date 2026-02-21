@@ -877,18 +877,24 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
   const detailBandLeft = detailPct(minVal);
   const detailBandWidth = detailPct(maxVal) - detailBandLeft;
 
-  // Alternating above/below rows for detail labels
-  const aboveRaw = estimates.filter((_, i) => i % 2 === 0);
-  const belowRaw = estimates.filter((_, i) => i % 2 !== 0);
-  const dedupe = (arr) => {
-    const seen = new Map();
-    arr.forEach((e) => {
-      if (!seen.has(e.value) || e.formula === e1rmFormula) seen.set(e.value, e);
-    });
-    return Array.from(seen.values());
-  };
-  const aboveLabels = dedupe(aboveRaw);
-  const belowLabels = dedupe(belowRaw);
+  // Merge labels that would overlap on the detail track (sorted low→high, same order as estimates).
+  // Groups are merged greedily: if a label falls within the threshold of the previous group's
+  // centre, it joins that group and the centre is recomputed as the average of all members.
+  const LABEL_MERGE_THRESHOLD_PCT = 8;
+  const mergedLabels = [];
+  for (const { formula, value } of estimates) {
+    const pct = detailPct(value);
+    const last = mergedLabels[mergedLabels.length - 1];
+    if (last && pct - last.pct < LABEL_MERGE_THRESHOLD_PCT) {
+      last.formulas.push(formula);
+      const memberPcts = last.formulas.map(
+        (f) => detailPct(estimates.find((e) => e.formula === f).value),
+      );
+      last.pct = memberPcts.reduce((a, b) => a + b, 0) / memberPcts.length;
+    } else {
+      mergedLabels.push({ formulas: [formula], pct });
+    }
+  }
 
   const springConfig = { duration: 0 };
   const dotSpring = { duration: 0 };
@@ -1003,25 +1009,6 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
 
       {/* ── Detail track (zoomed, with labels) ── */}
       <div>
-        {/* Labels above */}
-        <div className="relative mb-1" style={{ height: "20px" }}>
-          {aboveLabels.map(({ formula, value }) => (
-            <button
-              key={formula}
-              onClick={() => setE1rmFormula(formula)}
-              style={{ left: `${detailPct(value)}%` }}
-              className={cn(
-                "absolute bottom-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-xs leading-none transition-colors",
-                formula === e1rmFormula
-                  ? "font-semibold text-foreground"
-                  : "text-muted-foreground/80 hover:text-foreground",
-              )}
-            >
-              {formula}
-            </button>
-          ))}
-        </div>
-
         {/* Track */}
         <div className="relative" style={{ height: "20px" }}>
           <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
@@ -1060,23 +1047,26 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
           })}
         </div>
 
-        {/* Labels below */}
+        {/* Labels below — all formulas, merged when too close */}
         <div className="relative mt-1" style={{ height: "20px" }}>
-          {belowLabels.map(({ formula, value }) => (
-            <button
-              key={formula}
-              onClick={() => setE1rmFormula(formula)}
-              style={{ left: `${detailPct(value)}%` }}
-              className={cn(
-                "absolute top-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-xs leading-none transition-colors",
-                formula === e1rmFormula
-                  ? "font-semibold text-foreground"
-                  : "text-muted-foreground/80 hover:text-foreground",
-              )}
-            >
-              {formula}
-            </button>
-          ))}
+          {mergedLabels.map((group) => {
+            const isSelected = group.formulas.includes(e1rmFormula);
+            return (
+              <button
+                key={group.formulas.join("-")}
+                onClick={() => setE1rmFormula(group.formulas[0])}
+                style={{ left: `${group.pct}%` }}
+                className={cn(
+                  "absolute top-0 -translate-x-1/2 cursor-pointer whitespace-nowrap text-xs leading-none transition-colors",
+                  isSelected
+                    ? "font-semibold text-foreground"
+                    : "text-muted-foreground/80 hover:text-foreground",
+                )}
+              >
+                {group.formulas.join(" / ")}
+              </button>
+            );
+          })}
         </div>
 
         {/* Detail axis endpoints */}

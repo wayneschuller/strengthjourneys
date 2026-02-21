@@ -1125,7 +1125,7 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric, isAdvancedAnalys
   const liftColor = isAdvancedAnalysis ? getColor(liftType) : null;
   const unit = isMetric ? "kg" : "lb";
 
-  const percentages = [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
+  const percentages = [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50];
   const rows = percentages.map((pct) => ({
     pct,
     weight: Math.round((e1rmWeight * pct) / 100),

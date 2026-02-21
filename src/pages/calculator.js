@@ -838,7 +838,7 @@ const E1RMSummaryCard = ({
 function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormula, liftColor, isAdvancedAnalysis, standards, liftType }) {
   const { getColor } = useLiftColors();
   const unit = isMetric ? "kg" : "lb";
-  const accentColor = liftColor || getColor(liftType) || "hsl(var(--primary))";
+  const accentColor = liftColor || getColor(liftType) || "hsl(var(--chart-1))";
   const standard = isAdvancedAnalysis ? standards?.[liftType] : null;
 
   // All 7 formulae sorted low→high by their estimate for this reps/weight
@@ -928,6 +928,21 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
             ))}
           </div>
         )}
+        {/* Notch value labels — min and max algorithm estimates above each bracket */}
+        <div className="relative mb-0.5" style={{ height: "14px" }}>
+          <span
+            style={{ left: `${overviewBandLeft}%`, color: accentColor }}
+            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[11px] font-medium"
+          >
+            {Math.round(minVal)}{unit}
+          </span>
+          <span
+            style={{ left: `${overviewBandLeft + Math.max(overviewBandWidth, 0.3)}%`, color: accentColor }}
+            className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[11px] font-medium"
+          >
+            {Math.round(maxVal)}{unit}
+          </span>
+        </div>
         <div className="relative" style={{ height: "24px" }}>
           {/* Base track */}
           <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
@@ -989,19 +1004,20 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
 
       </div>
 
-      {/* Dashed connector lines from overview notches to detail band edges */}
+      {/* Dashed connector lines from overview notch tips to detail band edges.
+          overflow="visible" + negative y1 extends lines up into the notch body. */}
       <svg
         aria-hidden="true"
         className="w-full pointer-events-none"
-        style={{ height: "20px", display: "block" }}
+        style={{ height: "16px", display: "block", overflow: "visible" }}
       >
         <line
-          x1={`${overviewBandLeft}%`} y1="0"
+          x1={`${overviewBandLeft}%`} y1="-10"
           x2={`${detailBandLeft}%`} y2="100%"
           stroke={accentColor} strokeDasharray="4 3" strokeOpacity="0.45" strokeWidth="1.5"
         />
         <line
-          x1={`${overviewBandLeft + Math.max(overviewBandWidth, 0.3)}%`} y1="0"
+          x1={`${overviewBandLeft + Math.max(overviewBandWidth, 0.3)}%`} y1="-10"
           x2={`${detailBandLeft + detailBandWidth}%`} y2="100%"
           stroke={accentColor} strokeDasharray="4 3" strokeOpacity="0.45" strokeWidth="1.5"
         />

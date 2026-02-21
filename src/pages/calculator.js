@@ -897,7 +897,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
     <div className="select-none">
 
       {/* ── Overview track (full scale, bracket notches at min/max) ── */}
-      <div className="px-1">
+      <div>
         <div className="relative" style={{ height: "24px" }}>
           {/* Base track */}
           <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />

@@ -484,73 +484,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
       </PageHeader>
       <Card>
         <CardContent>
-          {/* Two main sliders */}
-          <div className="mt-4 grid grid-cols-1 items-center gap-6 md:grid-cols-6 md:gap-4">
-            <div className="ml-2 justify-self-center text-2xl md:hidden">
-              {reps} reps
-            </div>
-            <Slider
-              className="md:col-span-5"
-              value={[reps]}
-              min={1}
-              max={20}
-              step={1}
-              onValueChange={(values) => setReps(values[0])}
-              aria-label="Reps"
-            />
-            <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
-              {reps} reps
-            </div>
-            <div className="ml-2 mt-6 w-[9rem] justify-self-center md:hidden">
-              <div className="flex items-center gap-1 text-2xl">
-                <Input
-                  className="text-2xl"
-                  type="number"
-                  min="1"
-                  step="1"
-                  id="weightInput"
-                  value={weight}
-                  onChange={(event) => setWeight(event.target.value)}
-                  onKeyPress={handleKeyPress}
-                  onKeyDown={handleKeyDown}
-                  aria-label="Weight"
-                />
-                <UnitChooser
-                  isMetric={isMetric}
-                  onSwitchChange={toggleIsMetric}
-                />
-              </div>
-            </div>
-            <Slider
-              className="md:col-span-5"
-              value={[weight]}
-              min={1}
-              max={isMetric ? 250 : 600}
-              onValueChange={handleWeightSliderChange}
-              aria-label="Weight"
-            />
-            <div className="ml-1 hidden w-[8rem] justify-self-center md:block md:justify-self-start">
-              <div className="flex items-center gap-1">
-                <Input
-                  className="text-lg"
-                  type="number"
-                  min="1"
-                  step="1"
-                  id="weightInput"
-                  value={weight}
-                  onChange={(event) => setWeight(event.target.value)}
-                  onKeyPress={handleKeyPress}
-                  onKeyDown={handleKeyDown}
-                  aria-label="Weight"
-                />
-                <UnitChooser
-                  isMetric={isMetric}
-                  onSwitchChange={toggleIsMetric}
-                />
-              </div>
-            </div>
-          </div>
-
           {/* Hidden portrait card — 9:16 for Instagram Stories image capture (360×640 → 1080×1920 at scale:3) */}
           <div
             ref={portraitRef}
@@ -693,6 +626,73 @@ function E1RMCalculatorMain({ relatedArticles }) {
                 )}
               </AnimatePresence>
             </Card>
+          </div>
+
+          {/* Two main sliders — full width below both columns */}
+          <div className="mt-2 grid grid-cols-1 items-center gap-6 md:grid-cols-6 md:gap-4">
+            <div className="ml-2 justify-self-center text-2xl md:hidden">
+              {reps} reps
+            </div>
+            <Slider
+              className="md:col-span-5"
+              value={[reps]}
+              min={1}
+              max={20}
+              step={1}
+              onValueChange={(values) => setReps(values[0])}
+              aria-label="Reps"
+            />
+            <div className="ml-2 hidden justify-self-center text-lg md:block md:w-[7rem] md:justify-self-start">
+              {reps} reps
+            </div>
+            <div className="ml-2 mt-6 w-[9rem] justify-self-center md:hidden">
+              <div className="flex items-center gap-1 text-2xl">
+                <Input
+                  className="text-2xl"
+                  type="number"
+                  min="1"
+                  step="1"
+                  id="weightInput"
+                  value={weight}
+                  onChange={(event) => setWeight(event.target.value)}
+                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
+                  aria-label="Weight"
+                />
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={toggleIsMetric}
+                />
+              </div>
+            </div>
+            <Slider
+              className="md:col-span-5"
+              value={[weight]}
+              min={1}
+              max={isMetric ? 250 : 600}
+              onValueChange={handleWeightSliderChange}
+              aria-label="Weight"
+            />
+            <div className="ml-1 hidden w-[8rem] justify-self-center md:block md:justify-self-start">
+              <div className="flex items-center gap-1">
+                <Input
+                  className="text-lg"
+                  type="number"
+                  min="1"
+                  step="1"
+                  id="weightInput"
+                  value={weight}
+                  onChange={(event) => setWeight(event.target.value)}
+                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
+                  aria-label="Weight"
+                />
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={toggleIsMetric}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Rep Range Projection Table — re-animates when formula/weight/reps changes */}

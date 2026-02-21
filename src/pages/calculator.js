@@ -861,7 +861,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
   const overviewBandWidth = overviewPct(maxVal) - overviewBandLeft;
 
   // ── Detail track: zoomed into the algorithm cluster ────────────────────
-  const pad = Math.max(range * 0.55, isMetric ? 3 : 5);
+  const pad = Math.max(range * 0.2, isMetric ? 2 : 4);
   const detailMin = Math.max(0, minVal - pad);
   const detailMax = maxVal + pad;
   const detailRange = detailMax - detailMin;

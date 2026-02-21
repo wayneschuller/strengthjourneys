@@ -291,58 +291,9 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                   </div>
                 </CardHeader>
                 <CardContent className="relative px-6 pt-0 pb-2">
-                  <div className="relative h-16">
-                    {/* Base description. Fades out per card when that card's stats fade in. */}
-                    <motion.div
-                      className="text-muted-foreground text-sm"
-                      initial={false}
-                      animate={{
-                        opacity: isStatsMode && showStats ? 0 : 1,
-                      }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 220,
-                        damping: 24,
-                      }}
-                    >
-                      {lift.liftDescription}
-                    </motion.div>
-
-                    {/* Stats overlay that fades in on top for authenticated users with data */}
-                    {isStatsMode && stats && (
-                      <motion.div
-                        className="text-muted-foreground pointer-events-none absolute inset-0 flex flex-col justify-start text-sm"
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={
-                          showStats
-                            ? { opacity: 1, y: 0 }
-                            : { opacity: 0, y: 8 }
-                        }
-                        transition={{
-                          type: "spring",
-                          stiffness: 200,
-                          damping: 22,
-                        }}
-                      >
-                        {(stats.totalSets > 0 || stats.totalReps > 0) && (
-                          <span>
-                            {stats.totalSets.toLocaleString()} sets ·{" "}
-                            {stats.totalReps.toLocaleString()} reps logged
-                          </span>
-                        )}
-                        {stats.bestLift && (
-                          <span className="block">
-                            Best set: {stats.bestLift.reps}@
-                            {getDisplayWeight(stats.bestLift, isMetric ?? false).value}
-                            {getDisplayWeight(stats.bestLift, isMetric ?? false).unit}
-                            {stats.bestLift.date && (
-                              <> on {formatLiftDate(stats.bestLift.date)}</>
-                            )}
-                          </span>
-                        )}
-                      </motion.div>
-                    )}
-                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    {lift.liftDescription}
+                  </p>
                 </CardContent>
                 {miniBarData && (
                   <motion.div
@@ -845,15 +796,4 @@ function getMiniBarData(liftType, parsedData, standards, isMetric, e1rmFormula) 
     strengthRating,
     thumbPercent: Math.min(100, Math.max(0, thumbPercent)),
   };
-}
-
-function formatLiftDate(dateStr) {
-  if (!dateStr) return null;
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 }

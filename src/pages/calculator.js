@@ -46,6 +46,12 @@ import {
   useSpring,
   useTransform,
 } from "motion/react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
@@ -220,11 +226,9 @@ function E1RMCalculatorMain({ relatedArticles }) {
       setWeight(newWeight);
     }, 100); // Adjust delay as needed
 
-    if (isAdvancedAnalysis) {
-      setTimeout(() => {
-        setBodyWeight(newBodyWeight);
-      }, 200); // Adjust delay as needed
-    }
+    setTimeout(() => {
+      setBodyWeight(newBodyWeight);
+    }, 200); // Adjust delay as needed
   };
 
   const handleCopyToClipboard = async () => {
@@ -615,12 +619,13 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
     const last = mergedLabels[mergedLabels.length - 1];
     if (last && pct - last.pct < LABEL_MERGE_THRESHOLD_PCT) {
       last.formulas.push(formula);
+      last.values.push(value);
       const memberPcts = last.formulas.map(
         (f) => detailPct(estimates.find((e) => e.formula === f).value),
       );
       last.pct = memberPcts.reduce((a, b) => a + b, 0) / memberPcts.length;
     } else {
-      mergedLabels.push({ formulas: [formula], pct });
+      mergedLabels.push({ formulas: [formula], pct, values: [value] });
     }
   }
 
@@ -673,6 +678,9 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
         <div className="relative mt-1" style={{ height: "20px" }}>
           {mergedLabels.map((group) => {
             const isSelected = group.formulas.includes(e1rmFormula);
+            const minV = Math.min(...group.values);
+            const maxV = Math.max(...group.values);
+            const weightLabel = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
             return (
               <button
                 key={group.formulas.join("-")}
@@ -685,7 +693,8 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                     : "text-muted-foreground/80 hover:text-foreground",
                 )}
               >
-                {group.formulas.join(" / ")}
+                {group.formulas.join(" / ")}{" "}
+                <span className="opacity-60">{weightLabel}</span>
               </button>
             );
           })}
@@ -711,10 +720,11 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric }) {
   const unit = isMetric ? "kg" : "lb";
   const currentReps = Number(reps);
 
-  const rows = Array.from({ length: 10 }, (_, i) => {
-    const r = i + 1;
-    return { reps: r, weight: estimateWeightForReps(e1rmWeight, r, e1rmFormula) };
-  });
+  const repPoints = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20];
+  const rows = repPoints.map((r) => ({
+    reps: r,
+    weight: estimateWeightForReps(e1rmWeight, r, e1rmFormula),
+  }));
 
   return (
     <div>
@@ -736,7 +746,7 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric }) {
                   key={r}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.04, ease: "easeOut" }}
+                  transition={{ delay: Math.min(i, 10) * 0.04, ease: "easeOut" }}
                   className={cn(
                     "border-b last:border-b-0",
                     isCurrentReps ? "font-semibold bg-accent" : "",
@@ -820,77 +830,100 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric }) {
 
 const BIG_FOUR = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
 
+const NEXT_TIER = {
+  "Physically Active": { name: "Beginner", key: "beginner" },
+  Beginner: { name: "Intermediate", key: "intermediate" },
+  Intermediate: { name: "Advanced", key: "advanced" },
+  Advanced: { name: "Elite", key: "elite" },
+  Elite: null,
+};
+
 // Four compact strength standard bars — one per Big Four lift — showing where
 // the current calculator e1rm sits on the physicallyActive→elite spectrum.
 // Bio data (age, bodyWeight, sex) comes from the global hook; defaults to 30yo
 // 200lb male if the user hasn't set a profile. The AthleteBioQuickSettings
 // dropdown lets them update it inline without leaving the page.
 function BigFourStrengthBars({ e1rmWeight, isMetric }) {
-  const { age, bodyWeight, sex, standards } = useAthleteBio();
+  const { standards } = useAthleteBio();
   const unit = isMetric ? "kg" : "lb";
-  const hasCustomBio = age !== 30 || bodyWeight !== 200 || sex !== "male" || isMetric !== false;
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-medium text-muted-foreground">Big Four Strength Standards</h3>
+    <TooltipProvider>
       <div className="space-y-3">
-        {BIG_FOUR.map((liftType) => {
-          const standard = standards?.[liftType];
-          if (!standard?.elite) return null;
+        <h3 className="text-sm font-medium text-muted-foreground">Big Four Strength Standards</h3>
+        <div className="space-y-3">
+          {BIG_FOUR.map((liftType) => {
+            const standard = standards?.[liftType];
+            if (!standard?.elite) return null;
 
-          const rating = getStrengthRatingForE1RM(e1rmWeight, standard);
-          const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
-          const { physicallyActive, elite } = standard;
-          const range = elite - physicallyActive;
-          // Clamp marker to 2–98% so it's always visible even at extremes
-          const pct = range > 0
-            ? Math.min(98, Math.max(2, ((e1rmWeight - physicallyActive) / range) * 100))
-            : 50;
+            const rating = getStrengthRatingForE1RM(e1rmWeight, standard);
+            const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
+            const { physicallyActive, elite } = standard;
+            const range = elite - physicallyActive;
+            // Clamp marker to 2–98% so it's always visible even at extremes
+            const pct = range > 0
+              ? Math.min(98, Math.max(2, ((e1rmWeight - physicallyActive) / range) * 100))
+              : 50;
 
-          const svgPath = getLiftSvgPath(liftType);
+            const nextTierInfo = NEXT_TIER[rating];
+            const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
+            const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmWeight) : null;
 
-          return (
-            <div key={liftType} className="flex items-center gap-3">
-              {svgPath
-                ? <img src={svgPath} alt={liftType} className="h-8 w-8 shrink-0 object-contain opacity-75" />
-                : <div className="h-8 w-8 shrink-0" />
-              }
-              <span className="w-24 shrink-0 truncate text-xs text-muted-foreground">{liftType}</span>
-              <div className="relative flex-1">
-                <div
-                  className="h-2 w-full rounded-full"
-                  style={{ background: "linear-gradient(to right, #EAB308, #86EFAC, #166534)" }}
-                />
-                {/* Tier dividers at beginner, intermediate, advanced */}
-                {[standard.beginner, standard.intermediate, standard.advanced].map((val, i) => (
+            const svgPath = getLiftSvgPath(liftType);
+
+            return (
+              <div key={liftType} className="flex items-center gap-3">
+                {svgPath
+                  ? <img src={svgPath} alt={liftType} className="h-12 w-12 shrink-0 object-contain opacity-75" />
+                  : <div className="h-12 w-12 shrink-0" />
+                }
+                <span className="w-24 shrink-0 truncate text-xs text-muted-foreground">{liftType}</span>
+                <div className="relative flex-1">
                   <div
-                    key={i}
-                    className="absolute top-0 h-2 w-px"
-                    style={{ left: `${((val - physicallyActive) / range) * 100}%`, backgroundColor: "var(--background)", opacity: 0.7 }}
+                    className="h-2 w-full rounded-full"
+                    style={{ background: "linear-gradient(to right, #EAB308, #86EFAC, #166534)" }}
                   />
-                ))}
-                {/* e1rm marker */}
-                <div
-                  className="absolute top-1/2 h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-1 ring-background"
-                  style={{ left: `${pct}%` }}
-                />
+                  {/* Tier dividers at beginner, intermediate, advanced */}
+                  {[standard.beginner, standard.intermediate, standard.advanced].map((val, i) => (
+                    <div
+                      key={i}
+                      className="absolute top-0 h-2 w-px"
+                      style={{ left: `${((val - physicallyActive) / range) * 100}%`, backgroundColor: "var(--background)", opacity: 0.7 }}
+                    />
+                  ))}
+                  {/* e1rm marker with tooltip */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        className="absolute top-1/2 h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-1 ring-background"
+                        style={{ left: `${pct}%` }}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      <p className="font-semibold">{liftType}</p>
+                      <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
+                      {nextTierInfo ? (
+                        <p className="text-muted-foreground">
+                          Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
+                        </p>
+                      ) : (
+                        <p className="text-muted-foreground">Already at the top!</p>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <span className="w-32 shrink-0 text-right text-xs font-medium">
+                  {emoji} {rating}
+                </span>
               </div>
-              <span className="w-32 shrink-0 text-right text-xs font-medium">
-                {emoji} {rating}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      {/* Bio assumption note + quick-edit dropdown */}
-      <div className="flex items-center justify-between border-t pt-3">
-        <p className="text-xs text-muted-foreground">
-          {!hasCustomBio && <span className="mr-1 text-amber-500">⚠ Using defaults —</span>}
-          {bodyWeight}{unit} · {sex} · age {age}
-        </p>
-        <AthleteBioQuickSettings />
+        {/* Bio inline editor — sits before the separator */}
+        <AthleteBioQuickSettings variant="inline" />
+        <div className="border-t" />
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

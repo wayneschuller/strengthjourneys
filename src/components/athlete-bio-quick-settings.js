@@ -2,6 +2,7 @@
 
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,11 +24,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AnimatePresence, motion } from "motion/react";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { cn } from "@/lib/utils";
-import { Activity } from "lucide-react";
+import { Activity, X } from "lucide-react";
 
-export function AthleteBioQuickSettings() {
+export function AthleteBioQuickSettings({ variant = "dropdown" }) {
   const {
     age,
     setAge,
@@ -42,6 +44,22 @@ export function AthleteBioQuickSettings() {
   // Heuristic: if bio matches initial defaults, assume user hasn't customized it yet.
   const hasCustomBio =
     age !== 30 || bodyWeight !== 200 || sex !== "male" || isMetric !== false;
+
+  if (variant === "inline") {
+    return (
+      <AthleteBioInline
+        age={age}
+        setAge={setAge}
+        bodyWeight={bodyWeight}
+        setBodyWeight={setBodyWeight}
+        sex={sex}
+        setSex={setSex}
+        isMetric={isMetric}
+        toggleIsMetric={toggleIsMetric}
+        hasCustomBio={hasCustomBio}
+      />
+    );
+  }
 
   return (
     <DropdownMenu>
@@ -170,3 +188,110 @@ export function AthleteBioQuickSettings() {
   );
 }
 
+// Inline variant: shows bio summary text with an Activity toggle button.
+// Clicking the button slides out compact editing controls on the same row.
+function AthleteBioInline({
+  age,
+  setAge,
+  bodyWeight,
+  setBodyWeight,
+  sex,
+  setSex,
+  isMetric,
+  toggleIsMetric,
+  hasCustomBio,
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const unit = isMetric ? "kg" : "lb";
+
+  return (
+    <div className="flex items-center gap-2">
+      <AnimatePresence mode="wait" initial={false}>
+        {isOpen ? (
+          <motion.div
+            key="controls"
+            className="flex flex-1 flex-wrap items-center gap-x-2 gap-y-1"
+            initial={{ opacity: 0, x: 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 12 }}
+            transition={{ duration: 0.15 }}
+          >
+            <Label
+              htmlFor="inline-bio-age"
+              className="shrink-0 text-xs text-muted-foreground"
+            >
+              Age
+            </Label>
+            <Input
+              id="inline-bio-age"
+              type="number"
+              min={13}
+              max={100}
+              value={age}
+              onChange={(e) => {
+                const v = parseInt(e.target.value || "0", 10);
+                if (!isNaN(v)) setAge(v);
+              }}
+              className="h-7 w-12 px-2 text-xs"
+            />
+            <span className="text-xs font-semibold text-muted-foreground">M</span>
+            <Switch
+              id="inline-bio-sex"
+              checked={sex === "female"}
+              onCheckedChange={(c) => setSex(c ? "female" : "male")}
+              className="h-5 w-9 data-[state=checked]:bg-pink-500"
+            />
+            <span className="text-xs font-semibold text-muted-foreground">F</span>
+            <Input
+              type="number"
+              min={isMetric ? 40 : 90}
+              max={isMetric ? 180 : 400}
+              value={bodyWeight}
+              onChange={(e) => {
+                const v = parseInt(e.target.value || "0", 10);
+                if (!isNaN(v)) setBodyWeight(v);
+              }}
+              className="h-7 w-14 px-2 text-xs"
+            />
+            <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+          </motion.div>
+        ) : (
+          <motion.p
+            key="summary"
+            className="flex-1 text-xs text-muted-foreground"
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -12 }}
+            transition={{ duration: 0.15 }}
+          >
+            {!hasCustomBio && <span className="mr-1 text-amber-500">⚠</span>}
+            {bodyWeight}{unit} · {sex} · age {age}
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={() => setIsOpen((o) => !o)}
+        aria-label={isOpen ? "Close bio settings" : "Edit bio data"}
+        className={cn(
+          "relative h-7 w-7 shrink-0",
+          !hasCustomBio && !isOpen && "ring-2 ring-amber-400/70",
+        )}
+      >
+        {isOpen ? (
+          <X className="h-3.5 w-3.5" />
+        ) : (
+          <Activity className="h-3.5 w-3.5" />
+        )}
+        {!hasCustomBio && !isOpen && (
+          <span className="absolute -right-1 -top-1 flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+          </span>
+        )}
+      </Button>
+    </div>
+  );
+}

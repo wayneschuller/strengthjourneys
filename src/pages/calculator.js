@@ -636,16 +636,22 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
     }
   }
 
-  // Mobile merge — text-width-aware: compares the estimated right edge of the previous label
-  // against the next position so long merged strings don't collide. Assumes ~1.2% per char
-  // (≈7px on ~580px track). More aggressive than desktop because the track is narrower.
+  // Mobile merge — text-width-aware using the *initials* label that's actually rendered
+  // (e.g. "B/W 123kg"), not the full formula names. Initials are much shorter so far fewer
+  // groups need merging. Assumes ~1.2% per char (≈7px on ~580px track).
+  const getMobileInitialsText = (formulas, values) => {
+    const minV = Math.min(...values);
+    const maxV = Math.max(...values);
+    const wStr = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
+    return formulas.map((f) => f[0]).join("/") + " " + wStr;
+  };
   const CHAR_WIDTH_PCT = 1.2;
   const mobileMergedLabels = [];
   for (const { formula, value } of estimates) {
     const pct = detailPct(value);
     const last = mobileMergedLabels[mobileMergedLabels.length - 1];
     if (last) {
-      const lastWidthPct = getLabelText(last.formulas, last.values).length * CHAR_WIDTH_PCT;
+      const lastWidthPct = getMobileInitialsText(last.formulas, last.values).length * CHAR_WIDTH_PCT;
       const isLastFirst = mobileMergedLabels.length === 1;
       const lastRightEdge = isLastFirst ? last.pct + lastWidthPct : last.pct + lastWidthPct / 2;
       if (pct - lastRightEdge < 4) {

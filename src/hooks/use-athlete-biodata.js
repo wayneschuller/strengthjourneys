@@ -350,7 +350,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     "male",
     false,
   );
-  const [bodyWeight, setBodyWeightBase] = useStateFromQueryOrLocalStorage(
+  const [bodyWeight, setBodyWeightBase, bodyWeightIsDefault, setBodyWeightSilent] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT,
     200,
     false,
@@ -541,8 +541,11 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     // Delay setting bodyWeight state by 100ms
     // This hack allows the query params to update the above isMetric value before we update other values
     // We have race conditions with router updates and useEffects - please don't judge me, this works
+    // Use the silent setter: unit conversion must not flip bodyWeightIsDefault — only the user
+    // explicitly entering their weight should do that. If the weight was already user-set
+    // (bodyWeightIsDefault = false), the persistence effect still writes the converted value.
     setTimeout(() => {
-      setBodyWeight(newBodyWeight);
+      setBodyWeightSilent(newBodyWeight);
     }, 100); // Adjust delay as needed
   };
 
@@ -555,6 +558,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     setSex,
     bodyWeight,
     setBodyWeight,
+    bodyWeightIsSet: !bodyWeightIsDefault,
     standards,
     toggleIsMetric,
     liftType,

@@ -320,7 +320,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
                     <div className="mt-0.5 flex items-center justify-between text-xs text-muted-foreground">
                       <span>
                         ~{Math.round(miniBarData.e1rmDisplay)}
-                        {isMetric ? "kg" : "lb"} E1RM · this month
+                        {isMetric ? "kg" : "lb"} best E1RM this month
                       </span>
                       <span>
                         {STRENGTH_LEVEL_EMOJI[miniBarData.strengthRating]}{" "}

@@ -861,11 +861,19 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
   const overviewBandWidth = overviewPct(maxVal) - overviewBandLeft;
 
   // ── Detail track: zoomed into the algorithm cluster ────────────────────
-  const pad = Math.max(range * 0.2, isMetric ? 2 : 4);
-  const detailMin = Math.max(0, minVal - pad);
-  const detailMax = maxVal + pad;
-  const detailRange = detailMax - detailMin;
-  const detailPct = (v) => ((v - detailMin) / detailRange) * 100;
+  // Detail track: band always occupies a fixed visual fraction of the track.
+  // The track range is back-calculated from the band width, so the band stays
+  // the same size regardless of how spread the algorithms are. The axis labels
+  // at the edges update to show the actual values at those positions.
+  const BAND_LEFT_PCT = 15;
+  const BAND_RIGHT_PCT = 85;
+  const bandSpanPct = BAND_RIGHT_PCT - BAND_LEFT_PCT; // 70%
+  const trackRange = range > 0
+    ? range / (bandSpanPct / 100)
+    : (isMetric ? 10 : 25); // fallback when all algorithms agree
+  const detailMin = Math.max(0, minVal - (BAND_LEFT_PCT / 100) * trackRange);
+  const detailMax = detailMin + trackRange;
+  const detailPct = (v) => ((v - detailMin) / trackRange) * 100;
   const detailBandLeft = detailPct(minVal);
   const detailBandWidth = detailPct(maxVal) - detailBandLeft;
 

@@ -902,6 +902,26 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
           <span>0{unit}</span>
           <span>{overviewMax}{unit}</span>
         </div>
+        {/* Tier labels (when advanced) */}
+        {standard?.elite && (
+          <div className="relative mb-1" style={{ height: "14px" }}>
+            {[
+              { label: "Active", value: standard.physicallyActive ?? 0 },
+              { label: "Beginner", value: standard.beginner },
+              { label: "Intermediate", value: standard.intermediate },
+              { label: "Advanced", value: standard.advanced },
+              { label: "Elite", value: standard.elite },
+            ].map(({ label, value }) => (
+              <div
+                key={label}
+                style={{ left: `${overviewPct(value)}%` }}
+                className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[11px] text-muted-foreground/80"
+              >
+                {label}
+              </div>
+            ))}
+          </div>
+        )}
         <div className="relative" style={{ height: "24px" }}>
           {/* Base track */}
           <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
@@ -959,26 +979,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
           />
         </div>
 
-        {/* Tier labels (when advanced) */}
-        {standard?.elite && (
-          <div className="relative mt-0.5" style={{ height: "14px" }}>
-            {[
-              { label: "Active", value: standard.physicallyActive ?? 0 },
-              { label: "Beginner", value: standard.beginner },
-              { label: "Intermediate", value: standard.intermediate },
-              { label: "Advanced", value: standard.advanced },
-              { label: "Elite", value: standard.elite },
-            ].map(({ label, value }) => (
-              <div
-                key={label}
-                style={{ left: `${overviewPct(value)}%` }}
-                className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[11px] text-muted-foreground/80"
-              >
-                {label}
-              </div>
-            ))}
-          </div>
-        )}
+
 
       </div>
 

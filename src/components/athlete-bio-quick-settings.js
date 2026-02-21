@@ -190,100 +190,142 @@ export function AthleteBioInlineSettings({ liftNote }) {
   const [isOpen, setIsOpen] = useState(bioDataIsDefault);
   const unit = isMetric ? "kg" : "lb";
 
+  const ageOnChange = (e) => {
+    const v = parseInt(e.target.value || "0", 10);
+    if (!isNaN(v)) setAge(v);
+  };
+  const bwOnChange = (e) => {
+    const v = parseInt(e.target.value || "0", 10);
+    if (!isNaN(v)) setBodyWeight(v);
+  };
+
   return (
-    <div className="flex items-center justify-center gap-2">
-      {/* Bio summary — always visible, never moves */}
-      <p className={cn(
-        "text-right text-xs",
-        bioDataIsDefault ? "text-amber-500" : "text-muted-foreground",
-      )}>
-        Strength levels for a {bodyWeight}{unit} {sex}, age {age}{liftNote && ` ${liftNote}`}{bioDataIsDefault && " · enter your details"}.
-      </p>
+    <div className="flex flex-col items-center gap-1">
+      {/* Row 1: bio summary + toggle button — always visible */}
+      <div className="flex items-center gap-2">
+        <p className={cn(
+          "text-xs",
+          bioDataIsDefault ? "text-amber-500" : "text-muted-foreground",
+        )}>
+          Strength levels for a {bodyWeight}{unit} {sex}, age {age}{liftNote && ` ${liftNote}`}{bioDataIsDefault && " · enter your details"}.
+        </p>
 
-      {/* Button is the anchor — controls are absolutely positioned to its right */}
-      <div className="relative">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setIsOpen((o) => !o)}
-                aria-label={isOpen ? "Close bio settings" : "Edit bio data"}
-                className={cn(
-                  "relative h-7 w-7",
-                  bioDataIsDefault && !isOpen && "ring-2 ring-amber-400/70",
-                )}
-              >
-                {isOpen ? (
-                  <X className="h-3.5 w-3.5" />
-                ) : (
-                  <Activity className="h-3.5 w-3.5" />
-                )}
-                {bioDataIsDefault && !isOpen && (
-                  <span className="absolute -right-1 -top-1 flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
-                  </span>
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Set athlete age, weight, and sex</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {/* Button — desktop controls float right of it; mobile controls appear below */}
+        <div className="relative shrink-0">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setIsOpen((o) => !o)}
+                  aria-label={isOpen ? "Close bio settings" : "Edit bio data"}
+                  className={cn(
+                    "relative h-7 w-7",
+                    bioDataIsDefault && !isOpen && "ring-2 ring-amber-400/70",
+                  )}
+                >
+                  {isOpen ? (
+                    <X className="h-3.5 w-3.5" />
+                  ) : (
+                    <Activity className="h-3.5 w-3.5" />
+                  )}
+                  {bioDataIsDefault && !isOpen && (
+                    <span className="absolute -right-1 -top-1 flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                    </span>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Set athlete age, weight, and sex</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-        {/* Controls float out to the right — absolutely positioned so they don't affect layout */}
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              className="absolute left-full top-1/2 ml-2 flex -translate-y-1/2 items-center gap-x-2 whitespace-nowrap"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.15 }}
-            >
-              <Label
-                htmlFor="inline-bio-age"
-                className="text-xs text-muted-foreground"
+          {/* Desktop: controls float right of the button */}
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div
+                className="absolute left-full top-1/2 ml-2 hidden -translate-y-1/2 items-center gap-x-2 whitespace-nowrap md:flex"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.15 }}
               >
-                Age
-              </Label>
-              <Input
-                id="inline-bio-age"
-                type="number"
-                min={13}
-                max={100}
-                value={age}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value || "0", 10);
-                  if (!isNaN(v)) setAge(v);
-                }}
-                className="h-7 w-16 px-2 text-xs"
-              />
-              <span className="text-xs font-semibold text-muted-foreground">M</span>
-              <Switch
-                id="inline-bio-sex"
-                checked={sex === "female"}
-                onCheckedChange={(c) => setSex(c ? "female" : "male")}
-                className="h-5 w-9 data-[state=checked]:bg-pink-500"
-              />
-              <span className="text-xs font-semibold text-muted-foreground">F</span>
-              <Input
-                type="number"
-                min={isMetric ? 40 : 90}
-                max={isMetric ? 180 : 400}
-                value={bodyWeight}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value || "0", 10);
-                  if (!isNaN(v)) setBodyWeight(v);
-                }}
-                className="h-7 w-20 px-2 text-xs"
-              />
-              <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <Label htmlFor="inline-bio-age" className="text-xs text-muted-foreground">Age</Label>
+                <Input
+                  id="inline-bio-age"
+                  type="number"
+                  min={13}
+                  max={100}
+                  value={age}
+                  onChange={ageOnChange}
+                  className="h-7 w-16 px-2 text-xs"
+                />
+                <span className="text-xs font-semibold text-muted-foreground">M</span>
+                <Switch
+                  id="inline-bio-sex"
+                  checked={sex === "female"}
+                  onCheckedChange={(c) => setSex(c ? "female" : "male")}
+                  className="h-5 w-9 data-[state=checked]:bg-pink-500"
+                />
+                <span className="text-xs font-semibold text-muted-foreground">F</span>
+                <Input
+                  type="number"
+                  min={isMetric ? 40 : 90}
+                  max={isMetric ? 180 : 400}
+                  value={bodyWeight}
+                  onChange={bwOnChange}
+                  className="h-7 w-20 px-2 text-xs"
+                />
+                <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
+
+      {/* Mobile: controls appear on the next row, centred */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="flex items-center justify-center gap-x-2 md:hidden"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
+          >
+            <span className="text-xs text-muted-foreground">Age</span>
+            <Input
+              aria-label="Age"
+              type="number"
+              min={13}
+              max={100}
+              value={age}
+              onChange={ageOnChange}
+              className="h-7 w-16 px-2 text-xs"
+            />
+            <span className="text-xs font-semibold text-muted-foreground">M</span>
+            <Switch
+              aria-label="Sex"
+              checked={sex === "female"}
+              onCheckedChange={(c) => setSex(c ? "female" : "male")}
+              className="h-5 w-9 data-[state=checked]:bg-pink-500"
+            />
+            <span className="text-xs font-semibold text-muted-foreground">F</span>
+            <Input
+              aria-label="Bodyweight"
+              type="number"
+              min={isMetric ? 40 : 90}
+              max={isMetric ? 180 : 400}
+              value={bodyWeight}
+              onChange={bwOnChange}
+              className="h-7 w-20 px-2 text-xs"
+            />
+            <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,10 +24,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AnimatePresence, motion } from "motion/react";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { cn } from "@/lib/utils";
-import { Activity } from "lucide-react";
+import { Activity, X } from "lucide-react";
 
+// Dropdown variant — used in the nav bar.
 export function AthleteBioQuickSettings() {
   const {
     age,
@@ -37,11 +40,8 @@ export function AthleteBioQuickSettings() {
     setSex,
     isMetric,
     toggleIsMetric,
+    bioDataIsDefault,
   } = useAthleteBio();
-
-  // Heuristic: if bio matches initial defaults, assume user hasn't customized it yet.
-  const hasCustomBio =
-    age !== 30 || bodyWeight !== 200 || sex !== "male" || isMetric !== false;
 
   return (
     <DropdownMenu>
@@ -55,11 +55,11 @@ export function AthleteBioQuickSettings() {
                 aria-label="Set athlete bio data"
                 className={cn(
                   "relative",
-                  !hasCustomBio && "ring-2 ring-amber-400/70",
+                  bioDataIsDefault && "ring-2 ring-amber-400/70",
                 )}
               >
                 <Activity className="h-4 w-4" />
-                {!hasCustomBio && (
+                {bioDataIsDefault && (
                   <span className="absolute -top-1 -right-1 flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75 animate-ping" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
@@ -74,7 +74,7 @@ export function AthleteBioQuickSettings() {
       <DropdownMenuContent className="w-72">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Your bio data</span>
-          {!hasCustomBio && (
+          {bioDataIsDefault && (
             <Badge
               variant="secondary"
               className="text-[0.6rem] font-semibold uppercase tracking-wide animate-pulse"
@@ -136,24 +136,24 @@ export function AthleteBioQuickSettings() {
               >
                 Bodyweight
               </Label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">{bodyWeight}</span>
-                      <UnitChooser
-                        isMetric={isMetric}
-                        onSwitchChange={toggleIsMetric}
-                      />
-                    </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold">{bodyWeight}</span>
+                <UnitChooser
+                  isMetric={isMetric}
+                  onSwitchChange={toggleIsMetric}
+                />
+              </div>
             </div>
             <div className="pt-0.5">
-                      <Slider
-                        id="nav-athlete-bodyweight-slider"
-                        min={isMetric ? 40 : 90}
-                        max={isMetric ? 180 : 400}
-                        step={1}
-                        value={[bodyWeight]}
-                        onValueChange={(values) => setBodyWeight(values[0])}
-                        aria-label="Bodyweight"
-                      />
+              <Slider
+                id="nav-athlete-bodyweight-slider"
+                min={isMetric ? 40 : 90}
+                max={isMetric ? 180 : 400}
+                step={1}
+                value={[bodyWeight]}
+                onValueChange={(values) => setBodyWeight(values[0])}
+                aria-label="Bodyweight"
+              />
             </div>
           </div>
           <p className="pt-1 text-[10px] leading-snug text-muted-foreground">
@@ -170,3 +170,162 @@ export function AthleteBioQuickSettings() {
   );
 }
 
+// Inline variant — used inside the calculator's Big Four strength section.
+// Shows a bio summary line with an edit toggle that slides out compact controls.
+// liftNote — optional extra context appended to the summary (e.g. "lifting 239lb in each lift type").
+export function AthleteBioInlineSettings({ liftNote }) {
+  const {
+    age,
+    setAge,
+    bodyWeight,
+    setBodyWeight,
+    sex,
+    setSex,
+    isMetric,
+    toggleIsMetric,
+    bioDataIsDefault,
+  } = useAthleteBio();
+
+  // Pre-open the controls when the user is still on defaults — nudge them to personalise
+  const [isOpen, setIsOpen] = useState(bioDataIsDefault);
+  const unit = isMetric ? "kg" : "lb";
+
+  const ageOnChange = (e) => {
+    const v = parseInt(e.target.value || "0", 10);
+    if (!isNaN(v)) setAge(v);
+  };
+  const bwOnChange = (e) => {
+    const v = parseInt(e.target.value || "0", 10);
+    if (!isNaN(v)) setBodyWeight(v);
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      {/* Row 1: bio summary + toggle button — always visible */}
+      <div className="flex items-center gap-2">
+        <p className={cn(
+          "text-xs",
+          bioDataIsDefault ? "text-amber-500" : "text-muted-foreground",
+        )}>
+          Strength levels for a {bodyWeight}{unit} {sex}, age {age}{liftNote && ` ${liftNote}`}{bioDataIsDefault && " · enter your details"}.
+        </p>
+
+        {/* Button — desktop controls float right of it; mobile controls appear below */}
+        <div className="relative shrink-0">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setIsOpen((o) => !o)}
+                  aria-label={isOpen ? "Close bio settings" : "Edit bio data"}
+                  className={cn(
+                    "relative h-7 w-7",
+                    bioDataIsDefault && !isOpen && "ring-2 ring-amber-400/70",
+                  )}
+                >
+                  {isOpen ? (
+                    <X className="h-3.5 w-3.5" />
+                  ) : (
+                    <Activity className="h-3.5 w-3.5" />
+                  )}
+                  {bioDataIsDefault && !isOpen && (
+                    <span className="absolute -right-1 -top-1 flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                    </span>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Set athlete age, weight, and sex</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          {/* Desktop: controls float right of the button */}
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div
+                className="absolute left-full top-1/2 ml-2 hidden -translate-y-1/2 items-center gap-x-2 whitespace-nowrap xl:flex"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.15 }}
+              >
+                <Label htmlFor="inline-bio-age" className="text-xs text-muted-foreground">Age</Label>
+                <Input
+                  id="inline-bio-age"
+                  type="number"
+                  min={13}
+                  max={100}
+                  value={age}
+                  onChange={ageOnChange}
+                  className="h-7 w-16 px-2 text-xs"
+                />
+                <span className="text-xs font-semibold text-muted-foreground">M</span>
+                <Switch
+                  id="inline-bio-sex"
+                  checked={sex === "female"}
+                  onCheckedChange={(c) => setSex(c ? "female" : "male")}
+                  className="h-5 w-9 data-[state=checked]:bg-pink-500"
+                />
+                <span className="text-xs font-semibold text-muted-foreground">F</span>
+                <Input
+                  type="number"
+                  min={isMetric ? 40 : 90}
+                  max={isMetric ? 180 : 400}
+                  value={bodyWeight}
+                  onChange={bwOnChange}
+                  className="h-7 w-20 px-2 text-xs"
+                />
+                <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Mobile: controls appear on the next row, centred */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="flex items-center justify-center gap-x-2 xl:hidden"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
+          >
+            <span className="text-xs text-muted-foreground">Age</span>
+            <Input
+              aria-label="Age"
+              type="number"
+              min={13}
+              max={100}
+              value={age}
+              onChange={ageOnChange}
+              className="h-7 w-16 px-2 text-xs"
+            />
+            <span className="text-xs font-semibold text-muted-foreground">M</span>
+            <Switch
+              aria-label="Sex"
+              checked={sex === "female"}
+              onCheckedChange={(c) => setSex(c ? "female" : "male")}
+              className="h-5 w-9 data-[state=checked]:bg-pink-500"
+            />
+            <span className="text-xs font-semibold text-muted-foreground">F</span>
+            <Input
+              aria-label="Bodyweight"
+              type="number"
+              min={isMetric ? 40 : 90}
+              max={isMetric ? 180 : 400}
+              value={bodyWeight}
+              onChange={bwOnChange}
+              className="h-7 w-20 px-2 text-xs"
+            />
+            <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

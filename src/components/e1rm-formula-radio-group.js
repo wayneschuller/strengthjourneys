@@ -22,11 +22,20 @@ export function E1RMFormulaRadioGroup({
   const hasEstimateData =
     reps !== undefined && weight !== undefined && isMetric !== undefined;
 
+  const unit = isMetric ? "kg" : "lb";
+  const minEstimate = hasEstimateData ? estimateE1RM(reps, weight, formulae[0]) : null;
+  const maxEstimate = hasEstimateData ? estimateE1RM(reps, weight, formulae[formulae.length - 1]) : null;
+
   return (
     <fieldset className="">
       <legend>
         <Label>E1RM Algorithm:</Label>
       </legend>
+      {hasEstimateData && (
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {formulae.length} algorithms — estimates range from {minEstimate} to {maxEstimate}{unit}
+        </p>
+      )}
       <RadioGroup
         value={e1rmFormula}
         onValueChange={setE1rmFormula}

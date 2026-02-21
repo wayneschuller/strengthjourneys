@@ -62,8 +62,11 @@ import { getLogoForTheme } from "@/lib/theme-logos";
 
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 
+const BIO_SETTINGS_PAGES = ["/calculator", "/strength-level-calculator"];
+
 export function NavBar() {
   const { status: authStatus } = useSession();
+  const pathname = usePathname();
 
   useEffect(() => {
     // Only run on client
@@ -111,7 +114,12 @@ export function NavBar() {
           <GitHubButton />
         </div>
 
-        {authStatus === "authenticated" && <AthleteBioQuickSettings />}
+        {/* Logged-in users always get the bio settings button. For guests we only show it on
+            pages where bio data (age, sex, bodyweight) actively changes the output — we don't
+            want the pulsing badge distracting first-time visitors on the landing page. */}
+        {(authStatus === "authenticated" || BIO_SETTINGS_PAGES.includes(pathname)) && (
+          <AthleteBioQuickSettings />
+        )}
         <ThemeChooser />
         {/* <DarkModeToggle /> */}
         <AvatarDropdown />

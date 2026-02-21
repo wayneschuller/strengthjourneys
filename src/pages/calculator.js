@@ -1,18 +1,15 @@
 import Head from "next/head";
-import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 
 import { RelatedArticles } from "@/components/article-cards";
 
-import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { Button } from "@/components/ui/button";
+import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -25,11 +22,9 @@ import {
   PageHeaderDescription,
 } from "@/components/page-header";
 
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  interpolateStandardKG,
-  LiftingStandardsKG,
-} from "@/lib/lifting-standards-kg";
+import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
+import { bigFourURLs } from "@/components/lift-type-indicator";
+import Link from "next/link";
 
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { Input } from "@/components/ui/input";
@@ -38,22 +33,36 @@ import { useToast } from "@/hooks/use-toast";
 import { devLog } from "@/lib/processing-utils";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { cn } from "@/lib/utils";
 
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage, useIsClient } from "usehooks-ts";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { useAthleteBio, getStrengthRatingForE1RM } from "@/hooks/use-athlete-biodata";
+import { useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
 import { useStateFromQueryOrLocalStorage } from "../hooks/use-state-from-query-or-localStorage";
-import { Calculator } from "lucide-react";
-
-const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
+import { Calculator, Copy } from "lucide-react";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "motion/react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
-import { E1RMFormulaRadioGroup } from "@/components/e1rm-formula-radio-group";
+
+const getUnitSuffix = (isMetric) => (isMetric ? "kg" : "lb");
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "One Rep Max Calculator";
@@ -68,11 +77,11 @@ export async function getStaticProps() {
 }
 
 export default function E1RMCalculator({ relatedArticles }) {
-  const title = "One Rep Max Calculator | Free tool, no login required";
+  const title = "One Rep Max Calculator | Free 1RM Tool, No Login Required";
   const description =
-    "The worlds greatest one-rep max (ORM) calculator. With multiple algorithms, units, and personalized strength ratings. For strong fat thumbed atheletes. Mobile friendly UI.";
+    "Free 1RM calculator using 7 proven formulas (Epley, Brzycki & more). Get rep-max projection tables, percentage training guides, and Big Four strength level ratings benchmarked to your age, sex, and bodyweight. No login required.";
   const keywords =
-    "One rep max calculator, orm calcaultor, ORM calculator, OneRM Calculator , 1RM estimation tool, Weightlifting max calculator, Powerlifting 1RM calculator, Max lift predictor, orm calculator, Strength level estimator, Gym performance calculator, e1RM calculator, Max weight calculator, Barbell load calculator";
+    "one rep max calculator, 1RM calculator, ORM calculator, e1RM calculator, Epley formula, Brzycki formula, powerlifting 1RM calculator, weightlifting max calculator, max lift predictor, strength level estimator, rep max projections, percentage calculator, Big Four strength standards, barbell load calculator";
   const canonicalURL = "https://www.strengthjourneys.xyz/calculator";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";
@@ -118,28 +127,12 @@ export default function E1RMCalculator({ relatedArticles }) {
 function E1RMCalculatorMain({ relatedArticles }) {
   const router = useRouter();
   const { toast } = useToast();
-  // Controls whether advanced UI/bio-based insights are shown
-  const [isAdvancedAnalysis, setIsAdvancedAnalysis] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.E1RM_ADVANCED_ANALYSIS,
-    false,
-    { initializeWithValue: false },
-  );
   const {
-    age,
-    setAge,
     isMetric,
     setIsMetric,
-    sex,
-    setSex,
     bodyWeight,
     setBodyWeight,
-    standards,
-    liftType,
-    setLiftType,
-  } = useAthleteBio({
-    modifyURLQuery: true,
-    isAdvancedAnalysis,
-  });
+  } = useAthleteBio({ modifyURLQuery: true });
   // Order matters: each includes the ones before it when syncing to URL.
   // Weight last so changing it syncs full state (reps, formula, unit type) → shareable URL.
   const [reps, setReps] = useStateFromQueryOrLocalStorage(
@@ -167,29 +160,15 @@ function E1RMCalculatorMain({ relatedArticles }) {
       [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
     },
   ); // Will be a string
-  const [parent] = useAutoAnimate(/* optional config */);
   const isClient = useIsClient();
-
-  // When opening a shared link: turn on advanced UI if URL has all four athlete params or explicit advanced flag
+  const [isCapturingImage, setIsCapturingImage] = useState(false);
+  const portraitRef = useRef(null);
+  // Capture the resolved theme font at mount time so html2canvas gets the actual
+  // font name (not just the unresolved --font-sans CSS variable)
+  const [themeFontFamily, setThemeFontFamily] = useState("system-ui, sans-serif");
   useEffect(() => {
-    if (router.isReady && router.query) {
-      const {
-        AthleteLiftType,
-        AthleteSex,
-        AthleteBodyWeight,
-        AthleteAge,
-        advanced,
-      } = router.query;
-      const hasAdvancedParams =
-        AthleteLiftType && AthleteSex && AthleteBodyWeight && AthleteAge;
-      const hasAdvancedFlag =
-        advanced === "true" || advanced === true;
-      if (hasAdvancedParams || hasAdvancedFlag) {
-        setIsAdvancedAnalysis(true);
-      }
-    }
-  }, [router.isReady, router.query, setIsAdvancedAnalysis]);
-
+    setThemeFontFamily(window.getComputedStyle(document.body).fontFamily);
+  }, []);
   // Helper function
   const updateQueryParams = (updatedParams) => {
     router.replace(
@@ -200,41 +179,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
       undefined,
       { shallow: true },
     );
-  };
-
-  // Add/remove advanced params and explicit "advanced" flag so shared URLs restore full state
-  const updateAdvancedAnalysisQueryParams = (isEnabled) => {
-    const { query } = router;
-    const updatedQuery = { ...query };
-
-    if (isEnabled) {
-      updatedQuery.AthleteLiftType = liftType;
-      updatedQuery.AthleteSex = sex;
-      updatedQuery.AthleteBodyWeight = bodyWeight;
-      updatedQuery.AthleteAge = age;
-      updatedQuery[LOCAL_STORAGE_KEYS.CALC_IS_METRIC] = isMetric;
-      updatedQuery.advanced = "true";
-    } else {
-      delete updatedQuery.AthleteLiftType;
-      delete updatedQuery.AthleteSex;
-      delete updatedQuery.AthleteBodyWeight;
-      delete updatedQuery.AthleteAge;
-      delete updatedQuery.advanced;
-    }
-
-    router.replace(
-      {
-        pathname: router.pathname,
-        query: updatedQuery,
-      },
-      undefined,
-      { shallow: true },
-    );
-  };
-
-  const handleAdvancedAnalysisChange = (checked) => {
-    setIsAdvancedAnalysis(checked);
-    updateAdvancedAnalysisQueryParams(checked);
   };
 
   const handleWeightSliderChange = (value) => {
@@ -289,11 +233,9 @@ function E1RMCalculatorMain({ relatedArticles }) {
       setWeight(newWeight);
     }, 100); // Adjust delay as needed
 
-    if (isAdvancedAnalysis) {
-      setTimeout(() => {
-        setBodyWeight(newBodyWeight);
-      }, 200); // Adjust delay as needed
-    }
+    setTimeout(() => {
+      setBodyWeight(newBodyWeight);
+    }, 200); // Adjust delay as needed
   };
 
   const handleCopyToClipboard = async () => {
@@ -308,46 +250,20 @@ function E1RMCalculatorMain({ relatedArticles }) {
         .join("&");
     };
 
-    let sentenceToCopy;
-
     const unit = getUnitSuffix(isMetric);
-
     const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
 
-    if (!isAdvancedAnalysis) {
-      const queryString = createQueryString({
-        reps: reps,
-        weight: weight,
-        calcIsMetric: isMetric,
-        formula: e1rmFormula,
-      });
+    const queryString = createQueryString({
+      reps: reps,
+      weight: weight,
+      calcIsMetric: isMetric,
+      formula: e1rmFormula,
+    });
 
-      sentenceToCopy =
-        `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
-        `using the ${e1rmFormula} algorithm.\n` +
-        `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
-    } else {
-      const queryString = createQueryString({
-        reps: reps,
-        weight: weight,
-        calcIsMetric: isMetric,
-        formula: e1rmFormula,
-        AthleteAge: age,
-        AthleteBodyWeight: bodyWeight,
-        AthleteSex: sex,
-        AthleteLiftType: liftType,
-        advanced: "true",
-      });
-
-      const bodyWeightMultiplier = (e1rmWeight / bodyWeight).toFixed(2);
-
-      sentenceToCopy =
-        `${liftType} ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
-        `using the ${e1rmFormula} algorithm.\n` +
-        `${bodyWeightMultiplier}x bodyweight.\n` +
-        `Lift Strength Rating: ${liftRating}\n` +
-        `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
-    }
+    const sentenceToCopy =
+      `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
+      `using the ${e1rmFormula} algorithm.\n` +
+      `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
 
     // Create a temporary textarea element
     const textarea = document.createElement("textarea");
@@ -368,7 +284,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
       description: "Result copied to clipboard.",
     });
 
-    gaEvent(GA_EVENT_TAGS.CALC_SHARE_CLIPBOARD, { page: "/calculator" });
+    gaEvent(GA_EVENT_TAGS.CALC_SHARE_CLIPBOARD, { page: "/calculator", type: "text" });
 
     // This fails in React - but it's the new API
     // if (navigator?.clipboard?.writeText) {
@@ -384,21 +300,63 @@ function E1RMCalculatorMain({ relatedArticles }) {
     // }
   };
 
-  const sortedFormulae = getSortedFormulae(reps, weight);
+  const handleCopyImage = async () => {
+    if (!portraitRef.current) return;
+    setIsCapturingImage(true);
+    try {
+      const html2canvas = (await import("html2canvas-pro")).default;
 
-  let liftRating = "";
+      let watermarkEl = null;
+      try {
+        watermarkEl = document.createElement("div");
+        watermarkEl.textContent = "strengthjourneys.xyz";
+        Object.assign(watermarkEl.style, {
+          position: "absolute",
+          right: "12px",
+          bottom: "12px",
+          padding: "4px 12px",
+          borderRadius: "9999px",
+          background: "rgba(15, 23, 42, 0.86)",
+          color: "rgba(248, 250, 252, 0.98)",
+          fontSize: "11px",
+          fontWeight: "500",
+          letterSpacing: "0.03em",
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+          boxShadow: "0 6px 16px rgba(15, 23, 42, 0.55)",
+          pointerEvents: "none",
+          zIndex: "10",
+        });
+        portraitRef.current.appendChild(watermarkEl);
 
-  if (isAdvancedAnalysis)
-    liftRating = getStandardRatingString(
-      age,
-      bodyWeight,
-      sex,
-      reps,
-      weight,
-      liftType,
-      isMetric,
-      e1rmFormula,
-    );
+        const canvas = await html2canvas(portraitRef.current, {
+          backgroundColor: null,
+          scale: 3,
+        });
+
+        canvas.toBlob((blob) => {
+          navigator.clipboard
+            .write([new ClipboardItem({ "image/png": blob })])
+            .then(() => {
+              toast({ title: "Image copied! Paste into Instagram or anywhere." });
+              gaEvent(GA_EVENT_TAGS.CALC_SHARE_CLIPBOARD, { page: "/calculator", type: "image" });
+            })
+            .catch((err) => {
+              console.error("Copy image error:", err);
+              toast({ variant: "destructive", title: "Could not copy image to clipboard" });
+            });
+        }, "image/png");
+      } finally {
+        if (watermarkEl && watermarkEl.parentNode) {
+          watermarkEl.parentNode.removeChild(watermarkEl);
+        }
+      }
+    } finally {
+      setIsCapturingImage(false);
+    }
+  };
+
+  const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
+  const unit = getUnitSuffix(isMetric);
 
   return (
     <PageContainer>
@@ -407,8 +365,9 @@ function E1RMCalculatorMain({ relatedArticles }) {
           One Rep Max Calculator
         </PageHeaderHeading>
         <PageHeaderDescription>
-          Estimate your max single based on reps and weight. With optional
-          strength level insights.
+          Enter reps and weight to estimate your one-rep max across 7 proven
+          formulas. See rep-max projections, percentage training guides, and
+          personalized Big Four strength levels by age, sex, and bodyweight.
         </PageHeaderDescription>
       </PageHeader>
       <Card>
@@ -480,78 +439,94 @@ function E1RMCalculatorMain({ relatedArticles }) {
             </div>
           </div>
 
-          <div className="my-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="order-3 lg:order-1" ref={parent}>
-              <div className="mb-4 flex flex-row gap-2">
-                <Checkbox
-                  id="advanced"
-                  checked={isAdvancedAnalysis}
-                  // onCheckedChange={setIsAdvancedAnalysis}
-                  onCheckedChange={handleAdvancedAnalysisChange}
-                />
-                <label
-                  htmlFor="advanced"
-                  className={cn(
-                    "text-sm font-medium leading-none",
-                    isAdvancedAnalysis ? "opacity-100" : "opacity-50",
-                  )}
-                >
-                  Strength Level Insights
-                </label>
+          {/* Hidden portrait card — 9:16 for Instagram Stories image capture */}
+          <div
+            ref={portraitRef}
+            style={{
+              position: "fixed",
+              left: "-9999px",
+              top: 0,
+              width: "360px",
+              height: "640px",
+              fontFamily: themeFontFamily,
+            }}
+            className="relative flex flex-col items-center justify-center gap-6 rounded-xl border-4 bg-card px-8 py-10 text-card-foreground"
+          >
+            <div className="w-full text-center" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div style={{ fontSize: "13px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.5 }}>
+                One Rep Max
               </div>
-              {isAdvancedAnalysis && (
-                <OptionalAtheleBioData
-                  isMetric={isMetric}
-                  bodyWeight={bodyWeight}
-                  setBodyWeight={setBodyWeight}
-                  liftType={liftType}
-                  setLiftType={setLiftType}
-                  age={age}
-                  setAge={setAge}
-                  sex={sex}
-                  setSex={setSex}
-                />
-              )}
+              <div style={{ fontSize: "20px", opacity: 0.6 }}>
+                {reps} reps @ {weight}{isMetric ? "kg" : "lb"}
+              </div>
             </div>
-            <div className="order-1 place-self-center lg:order-2">
-              <E1RMSummaryCard
-                reps={reps}
-                weight={weight}
-                isMetric={isMetric}
-                e1rmFormula={e1rmFormula}
-                estimateE1RM={estimateE1RM}
-                isAdvancedAnalysis={isAdvancedAnalysis}
-                liftType={liftType}
-                liftRating={liftRating}
-                bodyWeight={bodyWeight}
-              />
+            <div style={{ textAlign: "center", lineHeight: 1 }}>
+              <div style={{ fontSize: "128px", fontWeight: 800, letterSpacing: "-0.04em" }}>
+                {e1rmWeight}
+              </div>
+              <div style={{ fontSize: "40px", fontWeight: 700, opacity: 0.55, marginTop: "4px" }}>
+                {isMetric ? "kg" : "lb"}
+              </div>
             </div>
-            <div className="order-2 place-self-center md:pl-4 lg:order-3 lg:place-self-auto">
-              <E1RMFormulaRadioGroup
-                formulae={sortedFormulae}
-                e1rmFormula={e1rmFormula}
-                setE1rmFormula={setE1rmFormula}
-                reps={reps}
-                weight={weight}
-                isMetric={isMetric}
-              />
+            <div style={{ fontSize: "15px", opacity: 0.45 }}>
+              {e1rmFormula} formula
             </div>
-          </div>
-          <div className="mt-4 flex justify-center gap-4">
-            <ShareCopyButton label="Copy to clipboard" onClick={handleCopyToClipboard} />
           </div>
 
-          {/* <h4 className="mt-10 scroll-m-20 text-xl font-semibold tracking-tight">
-            Citations and background for these exercise science formulae are
-            found in this{" "}
-            <a
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              href="https://en.wikipedia.org/wiki/One-repetition_maximum"
-              target="_blank"
-            >
-              Wikipedia article
-            </a>
-          </h4> */}
+          {/* Hero card — always centered */}
+          <div className="my-6 flex flex-col items-center gap-3">
+            <E1RMSummaryCard
+              reps={reps}
+              weight={weight}
+              isMetric={isMetric}
+              e1rmFormula={e1rmFormula}
+              estimateE1RM={estimateE1RM}
+            />
+            <div className="flex gap-2">
+              <ShareCopyButton label="Copy Text" onClick={handleCopyToClipboard} />
+            </div>
+          </div>
+
+          {/* Algorithm comparison bar */}
+          <div className="mb-6">
+            <AlgorithmRangeBars
+              reps={reps}
+              weight={weight}
+              isMetric={isMetric}
+              e1rmFormula={e1rmFormula}
+              setE1rmFormula={setE1rmFormula}
+            />
+          </div>
+
+          {/* Big Four strength standards — always shown */}
+          <div className="mb-6">
+            <BigFourStrengthBars
+              reps={reps}
+              weight={weight}
+              e1rmWeight={e1rmWeight}
+              isMetric={isMetric}
+              e1rmFormula={e1rmFormula}
+            />
+          </div>
+
+          {/* Rep Range + Percentage Tables side by side */}
+          <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <RepRangeTable
+              key={`${e1rmFormula}-${weight}-${reps}`}
+              reps={reps}
+              weight={weight}
+              e1rmFormula={e1rmFormula}
+              isMetric={isMetric}
+            />
+            <PercentageTable
+              key={`pct-${e1rmFormula}-${weight}-${reps}`}
+              reps={reps}
+              weight={weight}
+              e1rmFormula={e1rmFormula}
+              isMetric={isMetric}
+            />
+          </div>
+
         </CardContent>
       </Card>
       <RelatedArticles articles={relatedArticles} />
@@ -559,60 +534,38 @@ function E1RMCalculatorMain({ relatedArticles }) {
   );
 }
 
-const getSortedFormulae = (reps, weight) => {
-  return e1rmFormulae.slice().sort((a, b) => {
-    const e1rmA = estimateE1RM(reps, weight, a);
-    const e1rmB = estimateE1RM(reps, weight, b);
-    return e1rmA - e1rmB;
-  });
-};
 
-const E1RMSummaryCard = ({
-  reps,
-  weight,
-  isMetric,
-  e1rmFormula,
-  estimateE1RM,
-  isAdvancedAnalysis,
-  liftRating,
-  liftType,
-  bodyWeight,
-}) => {
+// Hero card — just the animated e1rm number, set/formula context, and bodyweight ratio.
+const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM }) => {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
+  const { bodyWeight, bioDataIsDefault } = useAthleteBio();
+
+  const motionVal = useMotionValue(e1rmWeight);
+  const springVal = useSpring(motionVal, { stiffness: 200, damping: 20 });
+  const displayVal = useTransform(springVal, (v) => Math.round(v));
+
+  useEffect(() => {
+    motionVal.set(e1rmWeight);
+  }, [e1rmWeight, motionVal]);
 
   return (
-    <Card className="border-4">
+    <Card className="w-full max-w-md border-4">
       <CardHeader>
         <CardTitle className="text-center md:text-3xl">
           Estimated One Rep Max
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-2">
-        <div className="text-center text-lg md:text-xl">
-          {isAdvancedAnalysis && `${liftType} `}
-          {reps}@{weight}
-          {isMetric ? "kg" : "lb"}
+        <div className="text-center text-lg md:text-xl text-muted-foreground">
+          {reps}@{weight}{isMetric ? "kg" : "lb"}
         </div>
         <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
-          {e1rmWeight}
+          <motion.span className="tabular-nums">{displayVal}</motion.span>
           {isMetric ? "kg" : "lb"}
         </div>
-        {isAdvancedAnalysis && (
-          <div className="text-center text-lg">
-            {(e1rmWeight / bodyWeight).toFixed(2)}x bodyweight
-          </div>
-        )}
-        {isAdvancedAnalysis && liftRating && (
-          <div>
-            <Link
-              href="/strength-level-calculator"
-              className="flex flex-col justify-center gap-1 text-center align-middle text-xl hover:underline hover:underline-offset-4 xl:flex-row"
-            >
-              <div className="text-muted-foreground hover:text-muted-foreground/80">
-                Your Strength Rating:
-              </div>
-              <div className="text-xl font-semibold">{liftRating}</div>
-            </Link>
+        {!bioDataIsDefault && bodyWeight > 0 && (
+          <div className="mt-1 text-center text-sm text-muted-foreground">
+            {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
           </div>
         )}
       </CardContent>
@@ -625,122 +578,591 @@ const E1RMSummaryCard = ({
   );
 };
 
+// Zoomed horizontal track showing the spread of all 7 e1rm algorithm estimates.
+// Dots are clickable to switch the active formula. The band always occupies a
+// fixed visual fraction of the track so the spread is legible regardless of
+// how close the algorithms agree.
+function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormula }) {
+  const unit = isMetric ? "kg" : "lb";
+  const accentColor = "var(--primary)";
+  const [openPopoverKey, setOpenPopoverKey] = useState(null);
 
-function OptionalAtheleBioData({
-  isMetric,
-  bodyWeight,
-  setBodyWeight,
-  liftType,
-  setLiftType,
-  age,
-  setAge,
-  sex,
-  setSex,
-}) {
-  const uniqueLiftNames = Array.from(
-    new Set(LiftingStandardsKG.map((item) => item.liftType)),
+  // All 7 formulae sorted low→high
+  const estimates = useMemo(
+    () =>
+      e1rmFormulae
+        .map((formula) => ({ formula, value: estimateE1RM(reps, weight, formula) }))
+        .sort((a, b) => a.value - b.value),
+    [reps, weight],
   );
 
+  const minVal = estimates[0].value;
+  const maxVal = estimates[estimates.length - 1].value;
+  const range = maxVal - minVal;
+
+  // Track spans exactly from the lowest to highest algorithm estimate.
+  // Fallback padding only when all algorithms agree (range === 0) so the dot stays visible.
+  const trackRange = range > 0 ? range : (isMetric ? 10 : 25);
+  const detailMin = range > 0 ? minVal : minVal - trackRange / 2;
+  const detailMax = detailMin + trackRange;
+  const detailPct = (v) => ((v - detailMin) / trackRange) * 100;
+  const detailBandLeft = detailPct(minVal);
+  const detailBandWidth = detailPct(maxVal) - detailBandLeft;
+
+  // Helper used by both merge passes.
+  const getLabelText = (formulas, values) => {
+    const minV = Math.min(...values);
+    const maxV = Math.max(...values);
+    const wStr = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
+    return formulas.join(" / ") + " " + wStr;
+  };
+
+  // Desktop merge — classic centre-to-centre threshold. Less aggressive; desktop tracks are
+  // wide enough that only truly overlapping neighbours need grouping.
+  const DESKTOP_MERGE_THRESHOLD_PCT = 8;
+  const desktopMergedLabels = [];
+  for (const { formula, value } of estimates) {
+    const pct = detailPct(value);
+    const last = desktopMergedLabels[desktopMergedLabels.length - 1];
+    if (last && pct - last.pct < DESKTOP_MERGE_THRESHOLD_PCT) {
+      last.formulas.push(formula);
+      last.values.push(value);
+      const memberPcts = last.formulas.map(
+        (f) => detailPct(estimates.find((e) => e.formula === f).value),
+      );
+      last.pct = memberPcts.reduce((a, b) => a + b, 0) / memberPcts.length;
+    } else {
+      desktopMergedLabels.push({ formulas: [formula], pct, values: [value] });
+    }
+  }
+
+  // Mobile merge — text-width-aware using the *initials* label that's actually rendered
+  // (e.g. "B/W 123kg"), not the full formula names. Initials are much shorter so far fewer
+  // groups need merging. Assumes ~1.2% per char (≈7px on ~580px track).
+  const getMobileInitialsText = (formulas, values) => {
+    const minV = Math.min(...values);
+    const maxV = Math.max(...values);
+    const wStr = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
+    return formulas.map((f) => f[0]).join("/") + " " + wStr;
+  };
+  const CHAR_WIDTH_PCT = 1.2;
+  const mobileMergedLabels = [];
+  for (const { formula, value } of estimates) {
+    const pct = detailPct(value);
+    const last = mobileMergedLabels[mobileMergedLabels.length - 1];
+    if (last) {
+      const lastWidthPct = getMobileInitialsText(last.formulas, last.values).length * CHAR_WIDTH_PCT;
+      const isLastFirst = mobileMergedLabels.length === 1;
+      const lastRightEdge = isLastFirst ? last.pct + lastWidthPct : last.pct + lastWidthPct / 2;
+      if (pct - lastRightEdge < 4) {
+        last.formulas.push(formula);
+        last.values.push(value);
+        const memberPcts = last.formulas.map(
+          (f) => detailPct(estimates.find((e) => e.formula === f).value),
+        );
+        last.pct = memberPcts.reduce((a, b) => a + b, 0) / memberPcts.length;
+      } else {
+        mobileMergedLabels.push({ formulas: [formula], pct, values: [value] });
+      }
+    } else {
+      mobileMergedLabels.push({ formulas: [formula], pct, values: [value] });
+    }
+  }
+
+  const springConfig = { duration: 0 };
+  const dotSpring = { duration: 0 };
+
   return (
-    <div className="flex flex-col gap-4 px-4">
+    <div className="select-none">
+      {/* ── Detail track: zoomed into the algorithm cluster ── */}
       <div>
-        <div className="flex flex-row gap-2">
-          <Label>Age: {age}</Label>
-        </div>
-        <Slider
-          min={13}
-          max={100}
-          step={1}
-          value={[age]}
-          onValueChange={(values) => setAge(values[0])}
-          className="mt-2 flex-1"
-          aria-label="Age"
-        />
-      </div>
-      <div className="mt-1 flex flex-row gap-4">
-        <Label>Sex: </Label>
-        <RadioGroup
-          value={sex}
-          onValueChange={setSex}
-          // orientation="horizontal"
-          className="flex space-x-4" // Really makes it horizontal
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="male" id="male" />
-            <Label htmlFor="male">Male</Label>
+        {/* Track */}
+        <TooltipProvider>
+          <div className="relative" style={{ height: "20px" }}>
+            <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-muted" />
+            <motion.div
+              className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full"
+              style={{ backgroundColor: accentColor, opacity: 0.4 }}
+              animate={{ left: `${detailBandLeft}%`, width: `${Math.max(detailBandWidth, 0.5)}%` }}
+              transition={springConfig}
+            />
+            {estimates.map(({ formula, value }) => {
+              const isSelected = formula === e1rmFormula;
+              return (
+                <Tooltip key={formula}>
+                  <TooltipTrigger asChild>
+                    <motion.button
+                      onClick={() => setE1rmFormula(formula)}
+                      animate={{
+                        width: isSelected ? "14px" : "10px",
+                        height: isSelected ? "14px" : "10px",
+                        opacity: isSelected ? 1 : 0.45,
+                      }}
+                      transition={dotSpring}
+                      style={{
+                        position: "absolute",
+                        left: `${Math.min(Math.max(detailPct(value), 1.5), 98.5)}%`,
+                        top: "50%",
+                        transform: "translate(-50%, -50%)",
+                        borderRadius: "9999px",
+                        backgroundColor: isSelected ? accentColor : "var(--muted-foreground)",
+                        zIndex: isSelected ? 10 : 1,
+                        boxShadow: isSelected ? `0 0 0 3px ${accentColor}30` : "none",
+                        cursor: "pointer",
+                        border: "none",
+                      }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    <p className="font-semibold">{formula}</p>
+                    <p>{value}{unit}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
           </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="female" id="female" />
-            <Label htmlFor="female">Female</Label>
-          </div>
-        </RadioGroup>
-      </div>
-      <div>
-        <div className="flex flex-row gap-2">
-          <Label>
-            Bodyweight: {bodyWeight}
-            {isMetric ? "kg" : "lb"}
-          </Label>
+        </TooltipProvider>
+
+        {/* Labels: desktop — full formula names */}
+        <div className="relative mt-1 hidden md:block" style={{ height: "20px" }}>
+          {desktopMergedLabels.map((group, groupIndex) => {
+            const isFirst = groupIndex === 0;
+            const isLast = groupIndex === desktopMergedLabels.length - 1;
+            const minV = Math.min(...group.values);
+            const maxV = Math.max(...group.values);
+            const weightLabel = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
+            const translateClass = isFirst
+              ? "translate-x-0"
+              : isLast
+                ? "-translate-x-full"
+                : "-translate-x-1/2";
+            return (
+              <div
+                key={group.formulas.join("-")}
+                style={{ left: `${group.pct}%` }}
+                className={cn(
+                  "absolute top-0 whitespace-nowrap text-xs leading-none",
+                  translateClass,
+                )}
+              >
+                {group.formulas.map((formula, fi) => (
+                  <span key={formula}>
+                    {fi > 0 && <span className="text-muted-foreground/40"> / </span>}
+                    <button
+                      onClick={() => setE1rmFormula(formula)}
+                      className={cn(
+                        "cursor-pointer transition-colors",
+                        e1rmFormula === formula
+                          ? "font-semibold text-foreground"
+                          : "text-muted-foreground/80 hover:text-foreground",
+                      )}
+                    >
+                      {formula}
+                    </button>
+                  </span>
+                ))}{" "}
+                <span className="opacity-60">{weightLabel}</span>
+              </div>
+            );
+          })}
         </div>
-        <Slider
-          min={isMetric ? 40 : 100}
-          max={isMetric ? 230 : 500}
-          step={1}
-          value={[bodyWeight]}
-          onValueChange={(values) => setBodyWeight(values[0])}
-          className="mt-2 flex-1"
-          aria-label={`Weight in ${isMetric ? "kilograms" : "pounds"}`}
-        />
+
+        {/* Labels: mobile — first letter(s) only, popover for merged groups */}
+        <div className="relative mt-1 md:hidden" style={{ height: "20px" }}>
+          {mobileMergedLabels.map((group, groupIndex) => {
+            const isFirst = groupIndex === 0;
+            const isLast = groupIndex === mobileMergedLabels.length - 1;
+            const minV = Math.min(...group.values);
+            const maxV = Math.max(...group.values);
+            const weightLabel = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
+            const translateClass = isFirst
+              ? "translate-x-0"
+              : isLast
+                ? "-translate-x-full"
+                : "-translate-x-1/2";
+            const groupKey = group.formulas.join("-");
+            const initials = group.formulas.map((f) => f[0]).join("/");
+            const isGroupSelected = group.formulas.includes(e1rmFormula);
+            const labelCls = cn(
+              "cursor-pointer transition-colors",
+              isGroupSelected ? "font-semibold text-foreground" : "text-muted-foreground/80",
+            );
+            return (
+              <div
+                key={groupKey}
+                style={{ left: `${group.pct}%` }}
+                className={cn(
+                  "absolute top-0 whitespace-nowrap text-xs leading-none",
+                  translateClass,
+                )}
+              >
+                {/* Always show popover on mobile — single or merged — so the full name and
+                    value are visible before committing, and the UX is consistent. */}
+                <Popover
+                  open={openPopoverKey === groupKey}
+                  onOpenChange={(o) => setOpenPopoverKey(o ? groupKey : null)}
+                >
+                  <PopoverTrigger asChild>
+                    <button className={labelCls}>
+                      {initials} <span className="opacity-60">{weightLabel}</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-2"
+                    align={isFirst ? "start" : isLast ? "end" : "center"}
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      {group.formulas.map((formula) => {
+                        const val = estimates.find((e) => e.formula === formula)?.value ?? 0;
+                        const isSelected = e1rmFormula === formula;
+                        return (
+                          <button
+                            key={formula}
+                            onClick={() => { setE1rmFormula(formula); setOpenPopoverKey(null); }}
+                            className={cn(
+                              "flex items-center gap-3 rounded px-2 py-1.5 text-xs transition-colors hover:bg-muted text-left",
+                              isSelected ? "font-semibold" : "",
+                            )}
+                          >
+                            <span className="flex-1">{formula}</span>
+                            <span className="text-muted-foreground">{val}{unit}</span>
+                            {isSelected && <span className="text-primary">✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            );
+          })}
+        </div>
+
       </div>
-      <div>
-        <Label>Lift Type:</Label>
-        <RadioGroup value={liftType} onValueChange={setLiftType}>
-          {uniqueLiftNames.map((lift) => (
-            <div key={lift} className="flex items-center space-x-2">
-              <RadioGroupItem value={lift} id={lift} />
-              <Label htmlFor={lift}>{lift}</Label>
-            </div>
-          ))}
-        </RadioGroup>
+
+    </div>
+  );
+}
+
+// Table projecting the estimated best lift at each rep count from 1–10RM,
+// derived from the current e1rm via estimateWeightForReps. Highlights the
+// row matching the user's current rep input. Re-mounts (re-animates) whenever
+// the formula, weight, or reps change via the parent key prop.
+function RepRangeTable({ reps, weight, e1rmFormula, isMetric }) {
+  const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
+  const unit = isMetric ? "kg" : "lb";
+  const currentReps = Number(reps);
+
+  const repPoints = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20];
+  const rows = repPoints.map((r) => ({
+    reps: r,
+    weight: estimateWeightForReps(e1rmWeight, r, e1rmFormula),
+  }));
+
+  return (
+    <div>
+      <h2 className="mb-1 text-base font-semibold">Rep Max Projections</h2>
+      <p className="mb-3 text-sm text-muted-foreground">{e1rmFormula} algorithm</p>
+      <div className="overflow-hidden rounded-lg border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="px-4 py-2 text-left font-medium">Reps</th>
+              <th className="px-4 py-2 text-right font-medium">Weight ({unit})</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(({ reps: r, weight: w }, i) => {
+              const isCurrentReps = r === currentReps;
+              return (
+                <motion.tr
+                  key={r}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: Math.min(i, 10) * 0.04, ease: "easeOut" }}
+                  className={cn(
+                    "border-b last:border-b-0",
+                    isCurrentReps ? "font-semibold bg-accent" : "",
+                  )}
+                >
+                  <td className="px-4 py-2">
+                    {r}RM
+                    {isCurrentReps && (
+                      <span className="ml-2 text-xs text-muted-foreground">(current)</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {w}{unit}
+                  </td>
+                </motion.tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
 
-export const getStandardRatingString = (
-  age,
-  bodyWeight,
-  sex,
-  reps,
-  weight,
-  liftType,
-  isMetric,
-  e1rmFormula,
-) => {
-  const bodyWeightKG = isMetric ? bodyWeight : Math.round(bodyWeight / 2.204);
 
-  // FIXME: We don't need to call this, we should be getting the standard from the custom AthelteBioData hook
-  let standard = interpolateStandardKG(
-    age,
-    bodyWeightKG,
-    sex,
-    liftType,
-    LiftingStandardsKG,
+// Table showing common training intensities from 100% down to 50% of e1rm
+// in 5% steps — useful for bro-programming percentage-based templates.
+// Sits beside RepRangeTable in a two-column grid on md+ screens.
+function PercentageTable({ reps, weight, e1rmFormula, isMetric }) {
+  const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
+  const unit = isMetric ? "kg" : "lb";
+
+  const percentages = [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50];
+  const rows = percentages.map((pct) => ({
+    pct,
+    weight: Math.round((e1rmWeight * pct) / 100),
+  }));
+
+  return (
+    <div>
+      <h2 className="mb-1 text-base font-semibold">Percentage Calculator</h2>
+      <p className="mb-3 text-sm text-muted-foreground">
+        Based on {e1rmWeight}{unit} estimated max
+      </p>
+      <div className="overflow-hidden rounded-lg border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="px-4 py-2 text-left font-medium">Intensity</th>
+              <th className="px-4 py-2 text-right font-medium">Weight ({unit})</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(({ pct, weight: w }, i) => {
+              const isMax = pct === 100;
+              return (
+                <motion.tr
+                  key={pct}
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04, ease: "easeOut" }}
+                  className={cn(
+                    "border-b last:border-b-0",
+                    isMax ? "font-semibold bg-accent" : "",
+                  )}
+                >
+                  <td className="px-4 py-2 tabular-nums">{pct}%</td>
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {w}{unit}
+                  </td>
+                </motion.tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
+}
 
-  // If the user wants lb units we should convert back into lb units now
-  if (!isMetric && standard) {
-    standard = {
-      physicallyActive: Math.round(standard.physicallyActive * 2.204),
-      beginner: Math.round(standard.beginner * 2.204),
-      intermediate: Math.round(standard.intermediate * 2.204),
-      advanced: Math.round(standard.advanced * 2.204),
-      elite: Math.round(standard.elite * 2.204),
-    };
-  }
 
-  let liftRating;
+const BIG_FOUR = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
 
-  const oneRepMax = estimateE1RM(reps, weight, e1rmFormula);
-  return standard ? getStrengthRatingForE1RM(oneRepMax, standard) : undefined;
+const NEXT_TIER = {
+  "Physically Active": { name: "Beginner", key: "beginner" },
+  Beginner: { name: "Intermediate", key: "intermediate" },
+  Intermediate: { name: "Advanced", key: "advanced" },
+  Advanced: { name: "Elite", key: "elite" },
+  Elite: null,
 };
+
+// Four compact strength standard bars — one per Big Four lift — showing where
+// the current calculator e1rm sits on the physicallyActive→elite spectrum.
+// Bio data (age, bodyWeight, sex) comes from the global hook; defaults to 30yo
+// 200lb male if the user hasn't set a profile. The AthleteBioQuickSettings
+// dropdown lets them update it inline without leaving the page.
+function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }) {
+  const { standards, age, sex, bodyWeight, bioDataIsDefault } = useAthleteBio();
+  const { toast } = useToast();
+  const unit = isMetric ? "kg" : "lb";
+
+  const handleCopyLift = (liftType, rating, emoji, nextTierInfo, diff) => {
+    const params = new URLSearchParams({
+      [LOCAL_STORAGE_KEYS.REPS]: reps,
+      [LOCAL_STORAGE_KEYS.WEIGHT]: weight,
+      [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
+      [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
+    });
+    if (!bioDataIsDefault) {
+      params.set(LOCAL_STORAGE_KEYS.ATHLETE_AGE, age);
+      params.set(LOCAL_STORAGE_KEYS.ATHLETE_SEX, sex);
+      params.set(LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT, bodyWeight);
+    }
+
+    const lines = [
+      `${liftType} ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, using the ${e1rmFormula} algorithm.`,
+    ];
+    if (!bioDataIsDefault && bodyWeight > 0) {
+      lines.push(`${(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight`);
+    }
+    lines.push(`${liftType}: ${emoji} ${rating}`);
+    if (nextTierInfo && diff) {
+      lines.push(`Next: ${STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} ${nextTierInfo.name} — ${diff}${unit} away`);
+    }
+    lines.push(`Source: https://strengthjourneys.xyz/calculator?${params.toString()}`);
+
+    const textarea = document.createElement("textarea");
+    textarea.value = lines.join("\n");
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+
+    toast({ description: "Result copied to clipboard." });
+  };
+
+  const [openPopoverLift, setOpenPopoverLift] = useState(null);
+
+  return (
+    <TooltipProvider>
+      <div className="space-y-3">
+        <div className="border-t pt-3">
+          <h2 className="text-center text-base font-semibold">
+            <Link href="/strength-level-calculator" className="transition-opacity hover:opacity-70">
+              Big Four Strength Levels
+            </Link>
+          </h2>
+          <div className="mt-1 flex justify-center">
+            <AthleteBioInlineSettings liftNote={`lifting ${e1rmWeight}${unit} in each lift type`} />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {BIG_FOUR.map((liftType) => {
+            const standard = standards?.[liftType];
+            if (!standard?.elite) return null;
+
+            const rating = getStrengthRatingForE1RM(e1rmWeight, standard);
+            const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
+            const { physicallyActive, elite } = standard;
+            const range = elite - physicallyActive;
+            // Clamp marker to 2–98% so it's always visible even at extremes
+            const pct = range > 0
+              ? Math.min(98, Math.max(2, ((e1rmWeight - physicallyActive) / range) * 100))
+              : 50;
+
+            const nextTierInfo = NEXT_TIER[rating];
+            const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
+            const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmWeight) : null;
+
+            // Resolve lift name -> static SVG asset (returns null when no mapping exists).
+            const svgPath = getLiftSvgPath(liftType);
+
+            return (
+              <div key={liftType} className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
+                {/* Row 1 on mobile: SVG + lift name + rating badge */}
+                <div className="flex items-center gap-3">
+                  <Link href={bigFourURLs[liftType] ?? "#"} className="shrink-0 transition-opacity hover:opacity-70">
+                    {svgPath
+                      ? <img src={svgPath} alt={liftType} className="h-12 w-12 object-contain opacity-75" />
+                      // Keep the same footprint when an icon is missing so labels/bars stay aligned.
+                      : <div className="h-12 w-12" />
+                    }
+                  </Link>
+                  <Link
+                    href={bigFourURLs[liftType] ?? "#"}
+                    className="flex-1 text-xs text-muted-foreground transition-opacity hover:opacity-70 md:w-24 md:flex-none md:truncate"
+                  >
+                    {liftType}
+                  </Link>
+                  {/* Rating badge: mobile only (desktop shows it at the end) */}
+                  <span className="shrink-0 text-right text-xs font-medium md:hidden">
+                    {emoji} {rating}
+                  </span>
+                </div>
+                {/* Row 2 on mobile / middle col on desktop: bar + copy button */}
+                <div className="flex flex-1 items-center gap-2">
+                  <div className="relative flex-1">
+                    <div
+                      className="h-2 w-full rounded-full"
+                      style={{ background: "linear-gradient(to right, #EAB308, #86EFAC, #166534)" }}
+                    />
+                    {/* Tier dividers at beginner, intermediate, advanced */}
+                    {[standard.beginner, standard.intermediate, standard.advanced].map((val, i) => (
+                      <div
+                        key={i}
+                        className="absolute top-0 h-2 w-px"
+                        style={{ left: `${((val - physicallyActive) / range) * 100}%`, backgroundColor: "var(--background)", opacity: 0.7 }}
+                      />
+                    ))}
+                    {/* e1rm marker — desktop: hover tooltip; mobile: tap popover */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          className="absolute top-1/2 hidden h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-1 ring-background md:block"
+                          style={{ left: `${pct}%` }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        <p className="font-semibold">{liftType}</p>
+                        <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
+                        {nextTierInfo ? (
+                          <p className="text-muted-foreground">
+                            Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
+                          </p>
+                        ) : (
+                          <p className="text-muted-foreground">Already at the top!</p>
+                        )}
+                      </TooltipContent>
+                    </Tooltip>
+                    <Popover
+                      open={openPopoverLift === liftType}
+                      onOpenChange={(o) => setOpenPopoverLift(o ? liftType : null)}
+                    >
+                      <PopoverTrigger asChild>
+                        <button
+                          className="absolute top-1/2 flex h-6 w-4 -translate-x-1/2 -translate-y-1/2 items-center justify-center md:hidden"
+                          style={{ left: `${pct}%` }}
+                          aria-label={`${liftType} strength level`}
+                        >
+                          <div className="h-4 w-1.5 rounded-full bg-foreground shadow-sm ring-1 ring-background" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent side="top" className="w-auto p-2 text-xs">
+                        <p className="font-semibold">{liftType}</p>
+                        <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
+                        {nextTierInfo ? (
+                          <p className="text-muted-foreground">
+                            Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
+                          </p>
+                        ) : (
+                          <p className="text-muted-foreground">Already at the top!</p>
+                        )}
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  {/* Copy button — immediately after the bar on all screen sizes */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)}
+                        className="shrink-0 text-muted-foreground/50 transition-colors hover:text-foreground"
+                        aria-label={`Copy ${liftType} result`}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      Copy e1rm estimate with {liftType} rating included
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                {/* Rating at end — desktop only (shown in row 1 on mobile) */}
+                <span className="hidden w-32 shrink-0 text-right text-xs font-medium md:block">
+                  {emoji} {rating}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="border-t" />
+      </div>
+    </TooltipProvider>
+  );
+}

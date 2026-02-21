@@ -283,11 +283,13 @@ export const useAthleteBio = (options = {}) => {
         pathname: router.pathname,
         query: {
           ...router.query,
-          [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: JSON.stringify(ctx.age),
-          [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: JSON.stringify(ctx.sex),
-          [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: JSON.stringify(
-            ctx.bodyWeight,
-          ),
+          // Only write bio params when personalised — don't pollute URLs with defaults.
+          // Existing shared links that already carry bio params are honoured on read.
+          ...(ctx.bioDataIsDefault ? {} : {
+            [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: JSON.stringify(ctx.age),
+            [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: JSON.stringify(ctx.sex),
+            [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: JSON.stringify(ctx.bodyWeight),
+          }),
           [LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE]: JSON.stringify(ctx.liftType),
           [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: JSON.stringify(ctx.isMetric),
           [ADVANCED_QUERY_PARAM]: "true",
@@ -303,6 +305,7 @@ export const useAthleteBio = (options = {}) => {
     ctx.bodyWeight,
     ctx.liftType,
     ctx.isMetric,
+    ctx.bioDataIsDefault,
     syncAdvancedParams,
     router.isReady,
   ]);
@@ -335,7 +338,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
   const hasAdvancedInteractedRef = useRef(false);
 
   // Advanced params: syncQuery=false here; we sync all four together in the effect below
-  const [age, setAgeBase] = useStateFromQueryOrLocalStorage(
+  const [age, setAgeBase, ageIsDefault] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_AGE,
     30,
     false,
@@ -345,16 +348,20 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     false,
     modifyURLQuery,
   );
-  const [sex, setSexBase] = useStateFromQueryOrLocalStorage(
+  const [sex, setSexBase, sexIsDefault] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_SEX,
     "male",
     false,
   );
-  const [bodyWeight, setBodyWeightBase] = useStateFromQueryOrLocalStorage(
+  const [bodyWeight, setBodyWeightBase, bodyWeightIsDefault, setBodyWeightSilent] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT,
     200,
     false,
   );
+
+  // True when all bio fields are still at their defaults — user has never personalised.
+  // Used to prompt the user for bio data in the navbar, calculator strength levels, and hero card.
+  const bioDataIsDefault = ageIsDefault && sexIsDefault && bodyWeightIsDefault;
   const [liftType, setLiftTypeBase] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE,
     "Back Squat",
@@ -394,6 +401,9 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
   // Sync all advanced params together when any change. Keeps shared URLs complete (age without
   // bodyweight etc. would be meaningless). Include unit type so bodyWeight is interpretable (kg vs lb).
   // Only runs after user interaction, never on load.
+  // Bio params (age/sex/bodyWeight) are omitted when still at defaults so we don't pollute shared
+  // URLs. Existing shared links with bio params in them are still honoured on read (handled by
+  // useStateFromQueryOrLocalStorage, which sets isDefault=false when a URL param is present).
   useEffect(() => {
     if (
       !syncAdvancedParams ||
@@ -407,9 +417,11 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
         pathname: router.pathname,
         query: {
           ...router.query,
-          [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: JSON.stringify(age),
-          [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: JSON.stringify(sex),
-          [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: JSON.stringify(bodyWeight),
+          ...(bioDataIsDefault ? {} : {
+            [LOCAL_STORAGE_KEYS.ATHLETE_AGE]: JSON.stringify(age),
+            [LOCAL_STORAGE_KEYS.ATHLETE_SEX]: JSON.stringify(sex),
+            [LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT]: JSON.stringify(bodyWeight),
+          }),
           [LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE]: JSON.stringify(liftType),
           [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: JSON.stringify(isMetric),
           [ADVANCED_QUERY_PARAM]: "true", // Explicit flag so recipient knows to show advanced UI
@@ -419,7 +431,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
       { shallow: true },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- router excluded to prevent infinite loop
-  }, [age, sex, bodyWeight, liftType, isMetric, syncAdvancedParams, router.isReady]);
+  }, [age, sex, bodyWeight, liftType, isMetric, syncAdvancedParams, router.isReady, bioDataIsDefault]);
 
   const [standards, setStandards] = useState({});
 
@@ -541,8 +553,11 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     // Delay setting bodyWeight state by 100ms
     // This hack allows the query params to update the above isMetric value before we update other values
     // We have race conditions with router updates and useEffects - please don't judge me, this works
+    // Use the silent setter: unit conversion must not flip bodyWeightIsDefault — only the user
+    // explicitly entering their weight should do that. If the weight was already user-set
+    // (bodyWeightIsDefault = false), the persistence effect still writes the converted value.
     setTimeout(() => {
-      setBodyWeight(newBodyWeight);
+      setBodyWeightSilent(newBodyWeight);
     }, 100); // Adjust delay as needed
   };
 
@@ -555,6 +570,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     setSex,
     bodyWeight,
     setBodyWeight,
+    bioDataIsDefault,
     standards,
     toggleIsMetric,
     liftType,

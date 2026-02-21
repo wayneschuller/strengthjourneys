@@ -23,6 +23,8 @@ import {
 } from "@/components/page-header";
 
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
+import { bigFourURLs } from "@/components/lift-type-indicator";
+import Link from "next/link";
 
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { Input } from "@/components/ui/input";
@@ -983,7 +985,11 @@ function BigFourStrengthBars({ e1rmWeight, isMetric }) {
     <TooltipProvider>
       <div className="space-y-3">
         <div className="border-t pt-3">
-          <h2 className="text-center text-base font-semibold">Big Four Strength Levels</h2>
+          <h2 className="text-center text-base font-semibold">
+            <Link href="/strength-level-calculator" className="transition-opacity hover:opacity-70">
+              Big Four Strength Levels
+            </Link>
+          </h2>
           <div className="mt-1 flex justify-center">
             <AthleteBioInlineSettings />
           </div>
@@ -1014,12 +1020,19 @@ function BigFourStrengthBars({ e1rmWeight, isMetric }) {
               <div key={liftType} className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
                 {/* Row 1 on mobile: SVG + lift name + rating badge */}
                 <div className="flex items-center gap-3">
-                  {svgPath
-                    ? <img src={svgPath} alt={liftType} className="h-12 w-12 shrink-0 object-contain opacity-75" />
-                    // Keep the same footprint when an icon is missing so labels/bars stay aligned.
-                    : <div className="h-12 w-12 shrink-0" />
-                  }
-                  <span className="flex-1 text-xs text-muted-foreground md:w-24 md:flex-none md:truncate">{liftType}</span>
+                  <Link href={bigFourURLs[liftType] ?? "#"} className="shrink-0 transition-opacity hover:opacity-70">
+                    {svgPath
+                      ? <img src={svgPath} alt={liftType} className="h-12 w-12 object-contain opacity-75" />
+                      // Keep the same footprint when an icon is missing so labels/bars stay aligned.
+                      : <div className="h-12 w-12" />
+                    }
+                  </Link>
+                  <Link
+                    href={bigFourURLs[liftType] ?? "#"}
+                    className="flex-1 text-xs text-muted-foreground transition-opacity hover:opacity-70 md:w-24 md:flex-none md:truncate"
+                  >
+                    {liftType}
+                  </Link>
                   {/* Rating badge: inline on mobile row 1, hidden here on desktop (shown at end) */}
                   <span className="shrink-0 text-right text-xs font-medium md:hidden">
                     {emoji} {rating}

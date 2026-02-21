@@ -8,8 +8,8 @@ import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   useAthleteBio,
-  getTopLiftStats,
   STRENGTH_LEVEL_EMOJI,
+  getStrengthRatingForE1RM,
 } from "@/hooks/use-athlete-biodata";
 import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -49,6 +49,7 @@ import { Badge } from "@/components/ui/badge";
 export function BigFourLiftCards({ lifts, animated = true }) {
   const {
     sheetInfo,
+    parsedData,
     topLiftsByTypeAndReps,
     liftTypes,
     sessionTonnageLookup,
@@ -236,10 +237,10 @@ export function BigFourLiftCards({ lifts, animated = true }) {
         const showStats = statsVisibleCount > index;
 
         const miniBarData =
-          isStatsMode && topLiftsByTypeAndReps
+          isStatsMode && parsedData
             ? getMiniBarData(
                 lift.liftType,
-                topLiftsByTypeAndReps,
+                parsedData,
                 standards,
                 isMetric,
                 e1rmFormula,
@@ -793,55 +794,55 @@ function buildBadgesForLiftType(
 
 /**
  * Computes the data needed to render the mini strength bar on each BigFour card.
- * Returns { strengthRating, thumbPercent } or null if insufficient data.
- * thumbPercent is 0–100, representing where the user's best lift sits on the
- * standards scale (physicallyActive → elite, extended if they exceed elite).
+ * Shows where the user's best E1RM from the last month sits on the standards scale.
+ * Returns { strengthRating, thumbPercent } or null if no data in the last month.
  */
-function getMiniBarData(
-  liftType,
-  topLiftsByTypeAndReps,
-  standards,
-  isMetric,
-  e1rmFormula,
-) {
-  const topLifts = topLiftsByTypeAndReps?.[liftType];
+function getMiniBarData(liftType, parsedData, standards, isMetric, e1rmFormula) {
   const liftStandards = standards?.[liftType];
-  if (!topLifts || !liftStandards) return null;
+  if (!liftStandards || !parsedData?.length) return null;
 
-  const stats = getTopLiftStats(topLifts, liftType, standards, e1rmFormula);
-  if (!stats.bestWeight || !stats.strengthRating) return null;
+  // Compute last-month cutoff as a comparable date string
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - 1);
+  const cutoffStr = format(cutoff, "yyyy-MM-dd");
 
-  // topLiftsByTypeAndReps stores weights in the user's native data unit.
-  // standards are already in the display unit (useAthleteBio handles conversion).
-  // Convert native → display so the thumb position is on the same scale.
-  const firstLift = topLifts?.[0]?.[0];
-  const nativeUnit = firstLift?.unitType || (isMetric ? "kg" : "lb");
-  const athleteRankingWeight = getDisplayWeight(
-    { weight: stats.bestWeight, unitType: nativeUnit },
+  // Find the best E1RM for this lift type in the last month
+  let best1ME1RM = 0;
+  let best1MNativeUnit = isMetric ? "kg" : "lb";
+  for (const entry of parsedData) {
+    if (entry.liftType !== liftType || !entry.reps || !entry.weight) continue;
+    if (!entry.date || entry.date < cutoffStr) continue;
+    const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
+    if (e1rm > best1ME1RM) {
+      best1ME1RM = e1rm;
+      best1MNativeUnit = entry.unitType || best1MNativeUnit;
+    }
+  }
+
+  if (best1ME1RM === 0) return null;
+
+  // Convert to display unit — standards are already in display unit
+  const e1rmDisplay = getDisplayWeight(
+    { weight: best1ME1RM, unitType: best1MNativeUnit },
     isMetric ?? false,
   ).value;
-  const highestE1RM =
-    stats.bestE1RM > 0
-      ? getDisplayWeight(
-          { weight: stats.bestE1RM, unitType: nativeUnit },
-          isMetric ?? false,
-        ).value
-      : 0;
+
+  const strengthRating = getStrengthRatingForE1RM(e1rmDisplay, liftStandards);
+  if (!strengthRating) return null;
 
   const standardValues = Object.values(liftStandards);
   const standardsMin = Math.min(...standardValues);
   const eliteMax = liftStandards.elite;
-  const userMax = Math.max(highestE1RM, athleteRankingWeight);
-  const maxLift = userMax > eliteMax ? Math.ceil(userMax * 1.05) : eliteMax;
+  const maxLift =
+    e1rmDisplay > eliteMax ? Math.ceil(e1rmDisplay * 1.05) : eliteMax;
 
   const thumbPercent =
     maxLift === standardsMin
       ? 0
-      : ((athleteRankingWeight - standardsMin) / (maxLift - standardsMin)) *
-        100;
+      : ((e1rmDisplay - standardsMin) / (maxLift - standardsMin)) * 100;
 
   return {
-    strengthRating: stats.strengthRating,
+    strengthRating,
     thumbPercent: Math.min(100, Math.max(0, thumbPercent)),
   };
 }

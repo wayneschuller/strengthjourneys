@@ -874,12 +874,14 @@ function BigFourStrengthBars({ e1rmWeight, isMetric }) {
             const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
             const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmWeight) : null;
 
+            // Resolve lift name -> static SVG asset (returns null when no mapping exists).
             const svgPath = getLiftSvgPath(liftType);
 
             return (
               <div key={liftType} className="flex items-center gap-3">
                 {svgPath
                   ? <img src={svgPath} alt={liftType} className="h-12 w-12 shrink-0 object-contain opacity-75" />
+                  // Keep the same footprint when an icon is missing so labels/bars stay aligned.
                   : <div className="h-12 w-12 shrink-0" />
                 }
                 <span className="w-24 shrink-0 truncate text-xs text-muted-foreground">{liftType}</span>

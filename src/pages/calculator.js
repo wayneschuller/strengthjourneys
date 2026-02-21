@@ -865,8 +865,8 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
   // The track range is back-calculated from the band width, so the band stays
   // the same size regardless of how spread the algorithms are. The axis labels
   // at the edges update to show the actual values at those positions.
-  const BAND_LEFT_PCT = 15;
-  const BAND_RIGHT_PCT = 85;
+  const BAND_LEFT_PCT = 10;
+  const BAND_RIGHT_PCT = 90;
   const bandSpanPct = BAND_RIGHT_PCT - BAND_LEFT_PCT; // 70%
   const trackRange = range > 0
     ? range / (bandSpanPct / 100)

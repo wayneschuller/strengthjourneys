@@ -246,7 +246,7 @@ export function AthleteBioInlineSettings({ liftNote }) {
           <AnimatePresence>
             {isOpen && (
               <motion.div
-                className="absolute left-full top-1/2 ml-2 hidden -translate-y-1/2 items-center gap-x-2 whitespace-nowrap md:flex"
+                className="absolute left-full top-1/2 ml-2 hidden -translate-y-1/2 items-center gap-x-2 whitespace-nowrap xl:flex"
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -8 }}
@@ -289,7 +289,7 @@ export function AthleteBioInlineSettings({ liftNote }) {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="flex items-center justify-center gap-x-2 md:hidden"
+            className="flex items-center justify-center gap-x-2 xl:hidden"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}

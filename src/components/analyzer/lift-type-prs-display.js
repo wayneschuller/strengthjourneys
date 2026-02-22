@@ -105,6 +105,7 @@ const PRCard = ({
   isMetric,
   hasBioData,
   e1rmFormula = "Brzycki",
+  compact = false,
 }) => {
   if (!repRange || repRange.length === 0) return null;
 
@@ -205,7 +206,7 @@ const PRCard = ({
         </div>
 
         {/* Notes */}
-        {pr.notes && (
+        {!compact && pr.notes && (
           <TruncatedText text={pr.notes} className="mt-2" />
         )}
 
@@ -443,7 +444,9 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
             a card or a tab above to explore all lifts for that rep range.
           </p>
           <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${!compact && "lg:grid-cols-3 xl:grid-cols-4"}`}>
-            {repRangesWithData.map(({ repRange, repIndex, repCount }) => (
+            {repRangesWithData
+              .filter(({ repCount }) => !compact || [1, 3, 5, 10].includes(repCount))
+              .map(({ repRange, repIndex, repCount }) => (
               <PRCard
                 key={repIndex}
                 repRange={repRange}
@@ -459,6 +462,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
                 sex={sex}
                 isMetric={isMetric}
                 e1rmFormula={e1rmFormula}
+                compact={compact}
               />
             ))}
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -78,6 +78,18 @@ function formatStrengthLevel(score) {
 
 function isStrengthLevelRegressed(current, last) {
   return last !== null && (current === null || current < last - 0.3);
+}
+
+function AnimatedInteger({ value, className = "" }) {
+  const motionVal = useMotionValue(0);
+  const springVal = useSpring(motionVal, { stiffness: 180, damping: 22 });
+  const displayVal = useTransform(springVal, (v) => Math.round(v));
+
+  useEffect(() => {
+    motionVal.set(value ?? 0);
+  }, [value, motionVal]);
+
+  return <motion.span className={className}>{displayVal}</motion.span>;
 }
 
 // ─── Month boundary helpers ────────────────────────────────────────────────
@@ -268,22 +280,6 @@ function getPaceStatus(current, last, progressRatio) {
   return { status, fillPct, needed: Math.max(0, Math.round(last - current)), projected };
 }
 
-// ─── Month phase copy ──────────────────────────────────────────────────────
-
-function getMonthPhase(dayOfMonth) {
-  if (dayOfMonth <= 7) return "early";
-  if (dayOfMonth <= 15) return "mid";
-  if (dayOfMonth <= 22) return "late";
-  return "final";
-}
-
-const PHASE_COPY = {
-  early: "Just getting started",
-  mid: "One week in — pace is taking shape",
-  late: "Second half — time to make a move",
-  final: "Final stretch — close it out strong",
-};
-
 // ─── Verdict ───────────────────────────────────────────────────────────────
 
 function getVerdict(stats, strengthLevelPassed) {
@@ -350,6 +346,35 @@ function getWinNeedsText(stats, strengthLevelPassed, unit) {
     parts.push("maintain strength level across Big Four");
   }
   return parts.length > 0 ? `Needs: ${parts.join(" · ")}` : null;
+}
+
+function getMonthlyChecksSummary(stats, strengthLevelStats) {
+  if (!stats) return null;
+
+  let checksMet = 0;
+  let checksTotal = 1; // sessions
+
+  if (stats.sessions.current >= stats.sessions.last) checksMet += 1;
+
+  for (const liftType of BIG_FOUR_LIFT_TYPES) {
+    checksTotal += 1; // tonnage
+    const lift = stats.bigFourByLift?.[liftType];
+    if ((lift?.current ?? 0) >= (lift?.last ?? 0)) checksMet += 1;
+  }
+
+  if (strengthLevelStats) {
+    for (const liftType of BIG_FOUR_LIFT_TYPES) {
+      checksTotal += 1; // strength
+      const { current, last } = strengthLevelStats[liftType] ?? {
+        current: null,
+        last: null,
+      };
+      const passed = last === null || !isStrengthLevelRegressed(current, last);
+      if (passed) checksMet += 1;
+    }
+  }
+
+  return { checksMet, checksTotal };
 }
 
 // ─── Status colors ─────────────────────────────────────────────────────────
@@ -510,6 +535,7 @@ function MetricRow({
 // ─── Big Four Criteria Table (Strength + Tonnage per lift) ────────────────
 
 function BigFourCriteriaTable({
+  sessions,
   bigFourByLift,
   strengthLevelStats,
   strengthSetupRequired = false,
@@ -544,33 +570,63 @@ function BigFourCriteriaTable({
 
   return (
     <div className="space-y-1.5">
-      <div className="space-y-1">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <p className="text-xs font-medium text-muted-foreground">
-                Big Four Criteria (8 checks)
-              </p>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              <p className="max-w-64 text-center text-xs">
-                Each lift has 2 checks: strength level and tonnage. Combined with
-                sessions, that makes 9 monthly win criteria.
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <AthleteBioInlineSettings
-          forceStackedControls
-          autoOpenWhenDefault={false}
-        />
-      </div>
-
       <div className="grid grid-cols-[1fr_100px_1fr] items-center gap-2 px-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">
         <div className="text-right">{boundaries.prevMonthName}</div>
-        <div className="text-center">Criterion</div>
+        <div className="text-center" aria-hidden="true"></div>
         <div className="text-left">{boundaries.currentMonthName}</div>
       </div>
+
+      {!!sessions && (() => {
+        const baseline = (sessions.lastSameDay ?? 0) === 0;
+        const passed = baseline || (sessions.current ?? 0) >= (sessions.lastSameDay ?? 0);
+        const rowBg = baseline
+          ? "bg-muted/20"
+          : passed
+            ? "bg-emerald-50/30 dark:bg-emerald-950/15"
+            : "bg-red-50/30 dark:bg-red-950/15";
+        const rightColor = baseline
+          ? "text-muted-foreground"
+          : passed
+            ? "text-emerald-600 dark:text-emerald-400"
+            : "text-red-600 dark:text-red-400";
+
+        return (
+          <motion.div
+            className={`grid grid-cols-[1fr_100px_1fr] items-center gap-2 rounded-md px-2 py-1.5 ${rowBg}`}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.04, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-right">
+                    <AnimatedInteger
+                      value={sessions.lastSameDay}
+                      className="tabular-nums text-2xl font-semibold tracking-tight text-muted-foreground"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p className="max-w-56 text-center text-xs">
+                    {boundaries.prevMonthName} sessions through day{" "}
+                    {boundaries.dayOfMonth} (same point in the month).
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <div className="text-center text-xs font-medium text-muted-foreground">
+              Sessions
+            </div>
+            <div className="text-left">
+              <AnimatedInteger
+                value={sessions.current}
+                className={`tabular-nums text-2xl font-bold tracking-tight ${rightColor}`}
+              />
+            </div>
+          </motion.div>
+        );
+      })()}
 
       {rows.map(({ liftType, tonnage, strength }, i) => {
         const currentTonnage = tonnage.current ?? 0;
@@ -707,6 +763,13 @@ function BigFourCriteriaTable({
           </motion.div>
         );
       })}
+
+      <div className="space-y-1 pt-1">
+        <AthleteBioInlineSettings
+          forceStackedControls
+          autoOpenWhenDefault={false}
+        />
+      </div>
     </div>
   );
 }
@@ -757,10 +820,7 @@ export function ThisMonthInIronCard() {
     return getVerdict(stats, strengthLevelPassed);
   }, [stats, strengthLevelPassed]);
 
-  const phase = getMonthPhase(boundaries.dayOfMonth);
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
-  const paceTooltip = `Where ${boundaries.prevMonthName} stood on day ${boundaries.dayOfMonth} — your target pace`;
-  const vsTooltip = `${boundaries.prevMonthName}'s total through day ${boundaries.dayOfMonth} — same point in the month`;
 
   const sessionsPaceStatus = stats
     ? getPaceStatus(stats.sessions.current, stats.sessions.last, stats.progressRatio)
@@ -769,26 +829,14 @@ export function ThisMonthInIronCard() {
     ? getPaceStatus(stats.bigFourTonnage.current, stats.bigFourTonnage.last, stats.progressRatio)
     : null;
 
-  const metricRows = stats
-    ? [
-        {
-          label: "Sessions",
-          currentLabel: String(stats.sessions.current),
-          lastLabel: String(stats.sessions.lastSameDay),
-          paceStatus: sessionsPaceStatus,
-          projectedLabel: `~${Math.round(sessionsPaceStatus.projected)} sessions`,
-          showPaceMarker: true,
-          hideNeeded: false,
-          paceTooltip,
-          vsTooltip,
-        },
-      ]
-    : [];
-
   const winNeedsText = stats
     ? getWinNeedsText(stats, strengthLevelPassed, unit)
     : null;
   const strengthSetupRequired = !!bio?.bioDataIsDefault;
+  const checksSummary = useMemo(
+    () => getMonthlyChecksSummary(stats, strengthLevelStats),
+    [stats, strengthLevelStats],
+  );
 
   return (
     <Card className="flex-1">
@@ -807,27 +855,8 @@ export function ThisMonthInIronCard() {
 
         {stats && (
           <>
-            <div className="space-y-4">
-              {metricRows.map((row, i) => (
-                <MetricRow
-                  key={row.label}
-                  label={row.label}
-                  currentLabel={row.currentLabel}
-                  lastLabel={row.lastLabel}
-                  paceStatus={row.paceStatus}
-                  index={i}
-                  progressRatio={stats.progressRatio}
-                  showPaceMarker={row.showPaceMarker}
-                  hideNeeded={row.hideNeeded}
-                  paceTooltip={row.paceTooltip}
-                  projectedLabel={row.projectedLabel}
-                  vsTooltip={row.vsTooltip}
-                  labelTooltip={row.labelTooltip}
-                />
-              ))}
-            </div>
-
             <BigFourCriteriaTable
+              sessions={stats.sessions}
               bigFourByLift={stats.bigFourByLift}
               strengthLevelStats={strengthLevelStats}
               strengthSetupRequired={strengthSetupRequired}
@@ -852,24 +881,25 @@ export function ThisMonthInIronCard() {
                   }
                 >
                   {(() => {
-                    if (verdict?.label === "Still Forging") {
-                      const onPace = (s) =>
-                        s?.status === "ahead" || s?.status === "on-pace";
-                      if (onPace(sessionsPaceStatus) && onPace(bigFourPaceStatus)) {
-                        return "Still Forging — On Pace ⚒️";
-                      }
+                    if (verdict?.won) return "Winning the Month ✅";
+
+                    const onPace = (s) =>
+                      s?.status === "ahead" || s?.status === "on-pace";
+                    if (onPace(sessionsPaceStatus) && onPace(bigFourPaceStatus)) {
+                      return "On Track to Win ⚒️";
                     }
-                    return `${verdict?.label} ${verdict?.emoji}`;
+                    return "Not Winning Yet ⚒️";
                   })()}
                 </span>
               </p>
+              {checksSummary && (
+                <p className="text-xs text-muted-foreground">
+                  {checksSummary.checksMet}/{checksSummary.checksTotal} checks green
+                </p>
+              )}
               {verdict?.label === "Still Forging" && winNeedsText && (
                 <p className="text-xs text-muted-foreground">{winNeedsText}</p>
               )}
-              <p className="text-xs text-muted-foreground">
-                {PHASE_COPY[phase]} · Day {boundaries.dayOfMonth} of{" "}
-                {boundaries.daysInPrevMonth}
-              </p>
             </motion.div>
           </>
         )}

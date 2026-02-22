@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -39,11 +39,6 @@ const MOTIVATIONAL_PHRASES = [
   "Progress is the only goal",
 ];
 
-// Picked once at module load — stable for the whole session
-const MOTIVATIONAL_PHRASE =
-  MOTIVATIONAL_PHRASES[
-    Math.floor(Math.random() * MOTIVATIONAL_PHRASES.length)
-  ];
 
 // ─── Month boundary helpers ────────────────────────────────────────────────
 
@@ -416,6 +411,16 @@ export function ThisMonthInIronCard() {
 
   const boundaries = useMemo(() => getMonthBoundaries(), []);
 
+  const [motivationalPhrase, setMotivationalPhrase] = useState(
+    MOTIVATIONAL_PHRASES[0],
+  );
+  useEffect(() => {
+    setMotivationalPhrase(
+      MOTIVATIONAL_PHRASES[
+        Math.floor(Math.random() * MOTIVATIONAL_PHRASES.length)
+      ],
+    );
+  }, []);
 
   const stats = useMemo(() => {
     if (!parsedData) return null;
@@ -528,7 +533,7 @@ export function ThisMonthInIronCard() {
           This Month in Iron
         </CardTitle>
         <CardDescription>
-          {MOTIVATIONAL_PHRASE} · {boundaries.currentMonthName} vs{" "}
+          {motivationalPhrase} · {boundaries.currentMonthName} vs{" "}
           {boundaries.prevMonthName}
         </CardDescription>
       </CardHeader>

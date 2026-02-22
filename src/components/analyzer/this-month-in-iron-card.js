@@ -370,10 +370,49 @@ function MetricRow({
   paceTooltip,
   projectedLabel,
   vsTooltip,
+  labelTooltip,
 }) {
   const { status, fillPct } = paceStatus;
   const rowDelay = index * 0.08;
   const paceMarkerPct = Math.min(100, progressRatio * 100);
+
+  const labelEl = labelTooltip ? (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="text-sm font-medium">{label}</span>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <p className="max-w-52 text-center text-xs">{labelTooltip}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  ) : (
+    <span className="text-sm font-medium">{label}</span>
+  );
+
+  const vsEl = vsTooltip ? (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">{currentLabel}</span>
+            {" vs "}
+            {lastLabel}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <p className="max-w-44 text-center text-xs">{vsTooltip}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  ) : (
+    <span className="text-xs text-muted-foreground">
+      <span className="font-semibold text-foreground">{currentLabel}</span>
+      {" vs "}
+      {lastLabel}
+    </span>
+  );
 
   return (
     <motion.div
@@ -383,21 +422,8 @@ function MetricRow({
       transition={{ duration: 0.4, delay: rowDelay, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-sm font-medium">{label}</span>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-xs text-muted-foreground">
-                <span className="font-semibold text-foreground">{currentLabel}</span>
-                {" vs "}
-                {lastLabel}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              <p className="max-w-44 text-center text-xs">{vsTooltip}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {labelEl}
+        {vsEl}
       </div>
       <div
         className={`relative h-2.5 w-full rounded-full ${STATUS_TRACK_COLORS[status]}`}
@@ -553,6 +579,8 @@ export function ThisMonthInIronCard() {
         },
         {
           label: "Big Four Tonnage",
+          labelTooltip:
+            "Squat, bench, deadlift, and overhead press — the backbone of sustainable strength. Matching last month's Big Four exposure is the primary win condition.",
           currentLabel: formatTonnage(stats.bigFourTonnage.current, unit),
           lastLabel: formatTonnage(stats.bigFourTonnage.lastSameDay, unit),
           paceStatus: bigFourPaceStatus,
@@ -565,7 +593,7 @@ export function ThisMonthInIronCard() {
         ...(notablePRCounts
           ? [
               {
-                label: "Top-20 PRs",
+                label: "Standout PRs",
                 currentLabel: String(notablePRCounts.current),
                 lastLabel: String(notablePRCounts.last),
                 paceStatus: getPRPaceStatus(
@@ -612,6 +640,7 @@ export function ThisMonthInIronCard() {
                   paceTooltip={row.paceTooltip}
                   projectedLabel={row.projectedLabel}
                   vsTooltip={row.vsTooltip}
+                  labelTooltip={row.labelTooltip}
                 />
               ))}
             </div>
@@ -623,6 +652,10 @@ export function ThisMonthInIronCard() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.35 }}
             >
+              <p className="text-xs text-muted-foreground/60">
+                Won by matching last month{"'"}s sessions and Big Four tonnage.
+                Strength levels and standout PRs are a bonus.
+              </p>
               <p className="text-sm">
                 <span className="text-muted-foreground">Verdict: </span>
                 <span
@@ -632,7 +665,19 @@ export function ThisMonthInIronCard() {
                       : "text-muted-foreground"
                   }
                 >
-                  {verdict?.label} {verdict?.emoji}
+                  {(() => {
+                    if (verdict?.label === "Still Forging") {
+                      const onPace = (s) =>
+                        s?.status === "ahead" || s?.status === "on-pace";
+                      if (
+                        onPace(sessionsPaceStatus) &&
+                        onPace(bigFourPaceStatus)
+                      ) {
+                        return "Still Forging — On Pace ⚒️";
+                      }
+                    }
+                    return `${verdict?.label} ${verdict?.emoji}`;
+                  })()}
                 </span>
               </p>
               {verdict?.label === "Still Forging" &&

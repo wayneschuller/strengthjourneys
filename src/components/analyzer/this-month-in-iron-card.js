@@ -760,6 +760,7 @@ function BigFourCriteriaTable({
             className="grid grid-cols-[1fr_100px_1fr] grid-rows-2 items-center gap-x-2 gap-y-1 rounded-md px-2 py-2"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
+            whileHover="hover"
             transition={{
               duration: 0.35,
               delay: 0.08 + i * 0.06,
@@ -793,12 +794,18 @@ function BigFourCriteriaTable({
               </TooltipProvider>
             </div>
 
-            <div className="row-span-2 flex flex-col items-center justify-center gap-1">
+            <motion.div
+              className="row-span-2 flex flex-col items-center justify-center gap-1"
+              variants={{
+                hover: { scale: 1.06, y: -1 },
+              }}
+              transition={{ type: "spring", stiffness: 260, damping: 18 }}
+            >
               <LiftSvg liftType={liftType} size="sm" animate={false} />
               <span className="text-[10px] text-muted-foreground/80">
                 {formatLiftTypeLabel(liftType)}
               </span>
-            </div>
+            </motion.div>
 
             <div className={`rounded px-1.5 py-1 text-left ${strengthBg}`}>
               <TooltipProvider>

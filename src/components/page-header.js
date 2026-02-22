@@ -12,7 +12,7 @@ import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strengt
  */
 export function PageContainer({ className, children, ...props }) {
   return (
-    <div className={cn("container mx-auto", className)} {...props}>
+    <div className={cn("container mx-auto px-2 sm:px-0", className)} {...props}>
       {children}
     </div>
   );
@@ -93,7 +93,7 @@ export function PageHeaderHeading({ className, icon: Icon, ...props }) {
   return (
     <h1
       className={cn(
-        "flex items-center text-3xl font-bold leading-tight tracking-tighter md:text-4xl lg:leading-[1.1]",
+        "flex items-center text-3xl leading-tight font-bold tracking-tighter md:text-4xl lg:leading-[1.1]",
         className,
       )}
       {...props}
@@ -115,7 +115,7 @@ export function PageHeaderDescription({ className, ...props }) {
   return (
     <div
       className={cn(
-        "max-w-4xl text-pretty text-lg font-light text-foreground",
+        "text-foreground max-w-4xl text-lg font-light text-pretty",
         className,
       )}
       {...props}

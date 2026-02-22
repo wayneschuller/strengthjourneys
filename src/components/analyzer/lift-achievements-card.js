@@ -36,7 +36,7 @@ import {
 import { devLog } from "@/lib/processing-utils";
 import { useWindowSize } from "usehooks-ts";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { AnimatePresence, motion } from "motion/react";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { Button, buttonVariants } from "../ui/button";
 import { Separator } from "../ui/separator";
@@ -57,7 +57,6 @@ import { useReadLocalStorage } from "usehooks-ts";
  */
 export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
   const { liftTypes } = useUserLiftingData();
-  const [parent, enableAnimations] = useAutoAnimate(/* optional config */);
   const { getColor } = useLiftColors();
 
   const lift = liftTypes?.find((lift) => lift.liftType === liftType);
@@ -119,17 +118,34 @@ export function LiftAchievementsCard({ liftType, isExpanded, onToggle }) {
       <CardContent>
         {!liftTypes && <Skeleton className="h-64" />}
         {liftTypes && (
-          <div ref={parent}>
-            {!isExpanded && (
-              <div className="grid grid-cols-2 gap-x-1">
-                <div className="font-semibold">Total reps:</div>
-                <div>{totalReps}</div>
-                <div className="font-semibold">Total sets:</div>
-                <div>{totalSets}</div>
-              </div>
+          <AnimatePresence mode="wait" initial={false}>
+            {!isExpanded ? (
+              <motion.div
+                key="collapsed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <div className="grid grid-cols-2 gap-x-1">
+                  <div className="font-semibold">Total reps:</div>
+                  <div>{totalReps}</div>
+                  <div className="font-semibold">Total sets:</div>
+                  <div>{totalSets}</div>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="expanded"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <ExpandedLiftAchievements liftType={liftType} />
+              </motion.div>
             )}
-            {isExpanded && <ExpandedLiftAchievements liftType={liftType} />}
-          </div>
+          </AnimatePresence>
         )}
       </CardContent>
       <CardFooter className="text-sm font-extralight">
@@ -639,7 +655,6 @@ export function PopularLiftsIndividualLiftCards() {
   const { parsedData, liftTypes } = useUserLiftingData();
   const [expandedCard, setExpandedCard] = useState(null);
   const [visibleCount, setVisibleCount] = useState(LIFTS_VISIBLE_INITIAL);
-  const [parent] = useAutoAnimate(/* optional config */);
   const { width } = useWindowSize({ initializeWithValue: false });
   const isMobile = width !== undefined && width <= 768;
 
@@ -670,42 +685,61 @@ export function PopularLiftsIndividualLiftCards() {
   if (!liftTypes?.length) return null;
 
   return (
-    <div
-      ref={parent}
-      className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4"
-    >
-      {!isMobile && expandedCardData && (
-        <div className="col-span-1 md:col-span-2 xl:col-span-4">
-          <LiftAchievementsCard
-            key={`${expandedCard}-card`}
-            liftType={expandedCardData}
-            parsedData={parsedData}
-            isExpanded={true}
-            onToggle={() => toggleCard(expandedCardData)}
-          />
-        </div>
-      )}
-
-      {otherCards.map((lift) => (
-        <LiftAchievementsCard
-          key={`${lift}-card`}
-          liftType={lift}
-          parsedData={parsedData}
-          isExpanded={isMobile ? expandedCard === lift : false}
-          onToggle={() => toggleCard(lift)}
-        />
-      ))}
-
-      {hasMore && (
-        <div className="col-span-1 md:col-span-2 xl:col-span-4 flex justify-center">
-          <Button
-            variant="outline"
-            onClick={() => setVisibleCount((c) => c + LIFTS_PER_PAGE)}
+    <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <AnimatePresence>
+        {!isMobile && expandedCardData && (
+          <motion.div
+            key={`${expandedCard}-expanded`}
+            className="col-span-1 md:col-span-2 xl:col-span-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
           >
-            Show more ({sortedByReps.length - visibleCount} remaining)
-          </Button>
-        </div>
-      )}
+            <LiftAchievementsCard
+              liftType={expandedCardData}
+              parsedData={parsedData}
+              isExpanded={true}
+              onToggle={() => toggleCard(expandedCardData)}
+            />
+          </motion.div>
+        )}
+
+        {otherCards.map((lift) => (
+          <motion.div
+            key={`${lift}-card`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <LiftAchievementsCard
+              liftType={lift}
+              parsedData={parsedData}
+              isExpanded={isMobile ? expandedCard === lift : false}
+              onToggle={() => toggleCard(lift)}
+            />
+          </motion.div>
+        ))}
+
+        {hasMore && (
+          <motion.div
+            key="show-more"
+            className="col-span-1 md:col-span-2 xl:col-span-4 flex justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Button
+              variant="outline"
+              onClick={() => setVisibleCount((c) => c + LIFTS_PER_PAGE)}
+            >
+              Show more ({sortedByReps.length - visibleCount} remaining)
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

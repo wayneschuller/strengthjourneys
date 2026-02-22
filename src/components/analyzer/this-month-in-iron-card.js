@@ -384,22 +384,20 @@ function MetricRow({
     >
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-sm font-medium">{label}</span>
-        <span className="text-xs text-muted-foreground">
-          <span className="font-semibold text-foreground">{currentLabel}</span>
-          {" vs "}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="cursor-help underline decoration-dotted">
-                  {lastLabel}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <p className="max-w-44 text-center text-xs">{vsTooltip}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">{currentLabel}</span>
+                {" vs "}
+                {lastLabel}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p className="max-w-44 text-center text-xs">{vsTooltip}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       <div
         className={`relative h-2.5 w-full rounded-full ${STATUS_TRACK_COLORS[status]}`}

@@ -374,7 +374,7 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
         )}
       </CardHeader>
 
-      <CardContent className="space-y-6 px-4 sm:px-6">
+      <CardContent className="space-y-6 px-2 sm:px-6">
         {isLoading || !liftTypes || !topLiftsByTypeAndReps ? (
           <Skeleton className="h-[260px] w-full" />
         ) : (

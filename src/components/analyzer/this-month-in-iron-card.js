@@ -22,13 +22,13 @@ import {
 } from "@/components/ui/tooltip";
 import {
   BIG_FOUR_LIFT_TYPES,
-  findLiftPositionInTopLifts,
 } from "@/lib/processing-utils";
 import {
   getStrengthRatingForE1RM,
   getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { LiftSvg } from "@/components/year-recap/lift-svg";
 
 // ─── Motivational phrases ──────────────────────────────────────────────────
 
@@ -45,6 +45,35 @@ const MOTIVATIONAL_PHRASES = [
   "This month or never",
 ];
 
+// ─── Strength level constants ──────────────────────────────────────────────
+
+const LEVEL_SCORES = {
+  "Physically Active": 0,
+  Beginner: 1,
+  Intermediate: 2,
+  Advanced: 3,
+  Elite: 4,
+};
+
+const LEVEL_LABELS = [
+  "Physically Active",
+  "Beginner",
+  "Intermediate",
+  "Advanced",
+  "Elite",
+];
+
+const LEVEL_EMOJIS = ["🏃", "🌱", "💪", "🔥", "👑"];
+
+function formatStrengthLevel(score) {
+  if (score === null || score === undefined) return null;
+  const floor = Math.min(4, Math.floor(score));
+  const fraction = score - floor;
+  const label = LEVEL_LABELS[floor];
+  const emoji = LEVEL_EMOJIS[floor];
+  const plus = fraction >= 0.25 ? "+" : "";
+  return { label: label + plus, emoji, score };
+}
 
 // ─── Month boundary helpers ────────────────────────────────────────────────
 
@@ -62,7 +91,6 @@ function getMonthBoundaries() {
   const pm = prevDate.getMonth();
   const daysInPrevMonth = new Date(y, m, 0).getDate();
 
-  // The equivalent day in the previous month (capped if prev month is shorter)
   const sameDayInPrev = Math.min(d, daysInPrevMonth);
 
   return {
@@ -113,7 +141,6 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
       lastTonnage += tonnage;
       lastDates.add(date);
       if (BIG_FOUR_LIFT_TYPES.includes(liftType)) lastBigFour += tonnage;
-      // Also accumulate the same-day slice (last month up to the equivalent day)
       if (date <= boundaries.prevMonthSameDayStr) {
         lastTonnageSameDay += tonnage;
         lastDatesSameDay.add(date);
@@ -131,48 +158,77 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
   };
 }
 
-// ─── Notable PR count (top-20 yearly or lifetime) ─────────────────────────
+// ─── Strength level stats (per Big Four lift, avg top-set level) ───────────
 
-function computeNotablePRCounts(
-  parsedData,
-  topLiftsByTypeAndReps,
-  topLiftsByTypeAndRepsLast12Months,
-  boundaries,
-) {
-  let current = 0;
-  let last = 0;
+function computeStrengthLevelStats(parsedData, boundaries, bio) {
+  if (bio.bioDataIsDefault) return null;
+
+  // For each (liftType, date), track the entry with the highest e1rm
+  const currentTopByLiftDate = {};
+  const lastTopByLiftDate = {};
 
   for (const entry of parsedData) {
     if (entry.isGoal) continue;
-    if ((entry.reps ?? 0) < 1 || (entry.reps ?? 0) > 20) continue;
+    const reps = entry.reps ?? 0;
+    if (reps < 1 || reps > 10) continue; // cap at 10 for reliable e1rm
+    if (!BIG_FOUR_LIFT_TYPES.includes(entry.liftType)) continue;
 
-    const { date } = entry;
+    const { date, liftType } = entry;
     const inCurrent =
       date >= boundaries.currentMonthStart && date <= boundaries.todayStr;
     const inLast =
-      date >= boundaries.prevMonthStart && date <= boundaries.prevMonthEnd;
+      date >= boundaries.prevMonthStart && date <= boundaries.prevMonthSameDayStr;
 
     if (!inCurrent && !inLast) continue;
 
-    const { rank: lifetimeRank } = findLiftPositionInTopLifts(
-      entry,
-      topLiftsByTypeAndReps,
-    );
-    const { rank: yearlyRank } = findLiftPositionInTopLifts(
-      entry,
-      topLiftsByTypeAndRepsLast12Months,
-    );
+    const e1rm = estimateE1RM(reps, entry.weight ?? 0);
+    const bucket = inCurrent ? currentTopByLiftDate : lastTopByLiftDate;
 
-    const isNotable =
-      (lifetimeRank !== -1 && lifetimeRank < 20) ||
-      (yearlyRank !== -1 && yearlyRank < 20);
-    if (!isNotable) continue;
-
-    if (inCurrent) current++;
-    else last++;
+    if (!bucket[liftType]) bucket[liftType] = {};
+    if (!bucket[liftType][date] || e1rm > bucket[liftType][date].e1rm) {
+      bucket[liftType][date] = { e1rm, date, liftType };
+    }
   }
 
-  return { current, last };
+  const computeAvgLevel = (topByDate, liftType) => {
+    const sessions = Object.values(topByDate[liftType] ?? {});
+    if (sessions.length === 0) return null;
+
+    const scores = sessions.map(({ e1rm, date }) => {
+      const standard = getStandardForLiftDate(
+        bio.age,
+        date,
+        bio.bodyWeight,
+        bio.sex,
+        liftType,
+        bio.isMetric,
+      );
+      const rating = getStrengthRatingForE1RM(e1rm, standard);
+      return LEVEL_SCORES[rating] ?? 0;
+    });
+
+    return scores.reduce((a, b) => a + b, 0) / scores.length;
+  };
+
+  const result = {};
+  for (const liftType of BIG_FOUR_LIFT_TYPES) {
+    result[liftType] = {
+      current: computeAvgLevel(currentTopByLiftDate, liftType),
+      last: computeAvgLevel(lastTopByLiftDate, liftType),
+    };
+  }
+  return result;
+}
+
+function getStrengthLevelPassed(strengthLevelStats) {
+  if (!strengthLevelStats) return { passed: true, skipped: true };
+  for (const liftType of BIG_FOUR_LIFT_TYPES) {
+    const { current, last } = strengthLevelStats[liftType];
+    if (last === null) continue; // not trained last month — no regression possible
+    if (current === null) return { passed: false, skipped: false }; // absent this month = regression
+    if (current < last - 0.3) return { passed: false, skipped: false }; // significant drop
+  }
+  return { passed: true, skipped: false };
 }
 
 // ─── Pace status ───────────────────────────────────────────────────────────
@@ -186,14 +242,6 @@ function getPaceStatus(current, last, progressRatio) {
     pacePct >= 1.0 ? "ahead" : pacePct >= 0.85 ? "on-pace" : "behind";
   const projected = progressRatio > 0 ? current / progressRatio : current;
   return { status, fillPct, needed: Math.max(0, Math.round(last - current)), projected };
-}
-
-// PRs don't accumulate linearly so we compare totals without a pace target
-function getPRPaceStatus(current, last) {
-  if (last === 0) return { status: "no-data", fillPct: 0 };
-  const fillPct = Math.min(100, (current / last) * 100);
-  const status = current >= last ? "ahead" : "behind";
-  return { status, fillPct };
 }
 
 // ─── Month phase copy ──────────────────────────────────────────────────────
@@ -212,54 +260,9 @@ const PHASE_COPY = {
   final: "Final stretch — close it out strong",
 };
 
-// ─── Standards check ───────────────────────────────────────────────────────
-
-function getStandardsMet(parsedData, currentMonthStart, todayStr, bio) {
-  if (bio.bioDataIsDefault) return { met: true, skipped: true };
-
-  const PASSING = ["Intermediate", "Advanced", "Elite"];
-  const bestE1RMByLift = {};
-
-  for (const entry of parsedData) {
-    if (entry.isGoal) continue;
-    if (entry.date < currentMonthStart || entry.date > todayStr) continue;
-    if (!BIG_FOUR_LIFT_TYPES.includes(entry.liftType)) continue;
-
-    const e1rm = estimateE1RM(entry.reps, entry.weight);
-    if (
-      !bestE1RMByLift[entry.liftType] ||
-      e1rm > bestE1RMByLift[entry.liftType].e1rm
-    ) {
-      bestE1RMByLift[entry.liftType] = {
-        e1rm,
-        date: entry.date,
-        liftType: entry.liftType,
-      };
-    }
-  }
-
-  const results = Object.values(bestE1RMByLift).map(
-    ({ e1rm, date, liftType }) => {
-      const standard = getStandardForLiftDate(
-        bio.age,
-        date,
-        bio.bodyWeight,
-        bio.sex,
-        liftType,
-        bio.isMetric,
-      );
-      const rating = getStrengthRatingForE1RM(e1rm, standard);
-      return { liftType, rating, passing: PASSING.includes(rating) };
-    },
-  );
-
-  if (results.length === 0) return { met: true, skipped: true };
-  return { met: results.every((r) => r.passing), results, skipped: false };
-}
-
 // ─── Verdict ───────────────────────────────────────────────────────────────
 
-function getVerdict(stats, hasNotablePRs, standardsMet) {
+function getVerdict(stats, strengthLevelPassed) {
   const { sessions, bigFourTonnage, tonnage } = stats;
 
   if (
@@ -273,10 +276,10 @@ function getVerdict(stats, hasNotablePRs, standardsMet) {
   const primaryMet =
     sessions.current >= sessions.last &&
     bigFourTonnage.current >= bigFourTonnage.last;
-  const secondaryMet = tonnage.current >= tonnage.last || hasNotablePRs;
-  const standardsOK = standardsMet.skipped || standardsMet.met;
+  const strengthOK =
+    strengthLevelPassed.skipped || strengthLevelPassed.passed;
 
-  if (primaryMet && secondaryMet && standardsOK) {
+  if (primaryMet && strengthOK) {
     return { label: "Month Won", emoji: "✅", won: true };
   }
   return { label: "Still Forging", emoji: "⚒️", won: false };
@@ -293,7 +296,7 @@ function formatTonnage(value, unit) {
 
 // ─── Win needs summary ─────────────────────────────────────────────────────
 
-function getWinNeedsText(stats, unit) {
+function getWinNeedsText(stats, strengthLevelPassed, unit) {
   const { sessions, bigFourTonnage } = stats;
   const parts = [];
   if (sessions.current < sessions.last) {
@@ -304,6 +307,9 @@ function getWinNeedsText(stats, unit) {
     parts.push(
       `${formatTonnage(bigFourTonnage.last - bigFourTonnage.current, unit)} Big Four tonnage`,
     );
+  }
+  if (!strengthLevelPassed.skipped && !strengthLevelPassed.passed) {
+    parts.push("maintain strength level across Big Four");
   }
   return parts.length > 0 ? `Needs: ${parts.join(" · ")}` : null;
 }
@@ -346,7 +352,6 @@ function PaceStatusLine({ status, needed, hideNeeded, projectedLabel }) {
       </p>
     );
   }
-  // behind
   return (
     <p className="text-xs font-medium text-red-600 dark:text-red-400">
       {hideNeeded
@@ -464,19 +469,154 @@ function MetricRow({
   );
 }
 
+// ─── StrengthLevelTable ────────────────────────────────────────────────────
+
+function StrengthLevelTable({ strengthLevelStats, boundaries }) {
+  if (!strengthLevelStats) {
+    return (
+      <p className="text-xs text-muted-foreground/60">
+        Set your profile (age, bodyweight, sex) to track strength level consistency.
+      </p>
+    );
+  }
+
+  // Only show rows where at least one month has data
+  const rows = BIG_FOUR_LIFT_TYPES.map((liftType) => ({
+    liftType,
+    ...strengthLevelStats[liftType],
+  })).filter((r) => r.current !== null || r.last !== null);
+
+  if (rows.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground/60">
+        No Big Four lifts recorded yet this month or last.
+      </p>
+    );
+  }
+
+  const lastTooltip = `${boundaries.prevMonthName} average through day ${boundaries.dayOfMonth}`;
+  const currentTooltip = `Average strength level across all sessions this month — best set per session, capped at 10 reps for accuracy`;
+
+  return (
+    <div className="space-y-0.5">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+              Strength Level
+            </p>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p className="max-w-56 text-center text-xs">
+              For each Big Four lift, the best set per session is classified
+              against age- and bodyweight-adjusted standards. This column
+              averages those daily ratings — a drop signals reduced training
+              intensity, not just lower volume.
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      {rows.map((row, i) => {
+        const { liftType, current, last } = row;
+        const currentFmt = formatStrengthLevel(current);
+        const lastFmt = formatStrengthLevel(last);
+
+        const regressed =
+          last !== null &&
+          (current === null || current < last - 0.3);
+        const noData = current === null && last === null;
+
+        const rowBg = noData
+          ? ""
+          : regressed
+            ? "bg-red-50/50 dark:bg-red-950/30"
+            : "bg-emerald-50/40 dark:bg-emerald-950/20";
+
+        const currentColor = noData
+          ? "text-muted-foreground/40"
+          : regressed
+            ? "text-red-600 dark:text-red-400"
+            : "text-emerald-600 dark:text-emerald-400";
+
+        const currentTooltipText = regressed
+          ? `${liftType} averaged a lower strength level than last month — training intensity for this lift has dipped`
+          : currentTooltip;
+
+        return (
+          <motion.div
+            key={liftType}
+            className={`grid grid-cols-[1fr_52px_1fr] items-center gap-2 rounded-md px-2 py-1 ${rowBg}`}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.35,
+              delay: 0.1 + i * 0.07,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            {/* Last month level */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-right">
+                    {lastFmt ? (
+                      <span className="text-xs text-muted-foreground">
+                        {lastFmt.emoji} {lastFmt.label}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground/30">—</span>
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <p className="max-w-44 text-center text-xs">{lastTooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Lift SVG */}
+            <div className="flex justify-center">
+              <LiftSvg liftType={liftType} size="sm" animate={false} />
+            </div>
+
+            {/* This month level */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-left">
+                    {currentFmt ? (
+                      <span className={`text-xs font-medium ${currentColor}`}>
+                        {currentFmt.emoji} {currentFmt.label}
+                      </span>
+                    ) : (
+                      <span className={`text-xs font-medium ${currentColor}`}>
+                        {last !== null ? "Not trained" : "—"}
+                      </span>
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p className="max-w-52 text-center text-xs">{currentTooltipText}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Main component ────────────────────────────────────────────────────────
 
 /**
  * Card that challenges the user to beat their previous calendar month across
- * tonnage, sessions, Big Four tonnage, and notable top-20 PRs.
+ * sessions, Big Four tonnage, and Big Four strength level consistency.
  * Reads data from UserLiftingDataProvider; takes no props.
  */
 export function ThisMonthInIronCard() {
-  const {
-    parsedData,
-    topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
-  } = useUserLiftingData();
+  const { parsedData } = useUserLiftingData();
   const bio = useAthleteBio();
   const { isMetric } = bio;
   const { status: authStatus } = useSession();
@@ -499,53 +639,26 @@ export function ThisMonthInIronCard() {
     return computeMonthlyBattleStats(parsedData, boundaries);
   }, [parsedData, boundaries]);
 
-  const notablePRCounts = useMemo(() => {
-    if (
-      !parsedData ||
-      !topLiftsByTypeAndReps ||
-      !topLiftsByTypeAndRepsLast12Months
-    )
-      return null;
-    return computeNotablePRCounts(
-      parsedData,
-      topLiftsByTypeAndReps,
-      topLiftsByTypeAndRepsLast12Months,
-      boundaries,
-    );
-  }, [
-    parsedData,
-    topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
-    boundaries,
-  ]);
-
-  const standardsMet = useMemo(() => {
-    if (!parsedData || !bio) return { met: true, skipped: true };
-    return getStandardsMet(
-      parsedData,
-      boundaries.currentMonthStart,
-      boundaries.todayStr,
-      bio,
-    );
+  const strengthLevelStats = useMemo(() => {
+    if (!parsedData || !bio) return null;
+    return computeStrengthLevelStats(parsedData, boundaries, bio);
   }, [parsedData, bio, boundaries]);
+
+  const strengthLevelPassed = useMemo(
+    () => getStrengthLevelPassed(strengthLevelStats),
+    [strengthLevelStats],
+  );
 
   const verdict = useMemo(() => {
     if (!stats) return null;
-    return getVerdict(
-      stats,
-      (notablePRCounts?.current ?? 0) > 0,
-      standardsMet,
-    );
-  }, [stats, notablePRCounts, standardsMet]);
+    return getVerdict(stats, strengthLevelPassed);
+  }, [stats, strengthLevelPassed]);
 
   const phase = getMonthPhase(boundaries.dayOfMonth);
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
   const paceTooltip = `Where ${boundaries.prevMonthName} stood on day ${boundaries.dayOfMonth} — your target pace`;
   const vsTooltip = `${boundaries.prevMonthName}'s total through day ${boundaries.dayOfMonth} — same point in the month`;
 
-  const tonnagePaceStatus = stats
-    ? getPaceStatus(stats.tonnage.current, stats.tonnage.last, stats.progressRatio)
-    : null;
   const sessionsPaceStatus = stats
     ? getPaceStatus(stats.sessions.current, stats.sessions.last, stats.progressRatio)
     : null;
@@ -555,17 +668,6 @@ export function ThisMonthInIronCard() {
 
   const metricRows = stats
     ? [
-        {
-          label: "Total Tonnage",
-          currentLabel: formatTonnage(stats.tonnage.current, unit),
-          lastLabel: formatTonnage(stats.tonnage.lastSameDay, unit),
-          paceStatus: tonnagePaceStatus,
-          projectedLabel: `~${formatTonnage(tonnagePaceStatus.projected, unit)}`,
-          showPaceMarker: true,
-          hideNeeded: false,
-          paceTooltip,
-          vsTooltip,
-        },
         {
           label: "Sessions",
           currentLabel: String(stats.sessions.current),
@@ -590,23 +692,12 @@ export function ThisMonthInIronCard() {
           paceTooltip,
           vsTooltip,
         },
-        ...(notablePRCounts
-          ? [
-              {
-                label: "Standout PRs",
-                currentLabel: String(notablePRCounts.current),
-                lastLabel: String(notablePRCounts.last),
-                paceStatus: getPRPaceStatus(
-                  notablePRCounts.current,
-                  notablePRCounts.last,
-                ),
-                showPaceMarker: false,
-                hideNeeded: true,
-              },
-            ]
-          : []),
       ]
     : [];
+
+  const winNeedsText = stats
+    ? getWinNeedsText(stats, strengthLevelPassed, unit)
+    : null;
 
   return (
     <Card className="flex-1">
@@ -645,6 +736,11 @@ export function ThisMonthInIronCard() {
               ))}
             </div>
 
+            <StrengthLevelTable
+              strengthLevelStats={strengthLevelStats}
+              boundaries={boundaries}
+            />
+
             <Separator />
             <motion.div
               className="space-y-1"
@@ -653,8 +749,8 @@ export function ThisMonthInIronCard() {
               transition={{ duration: 0.4, delay: 0.35 }}
             >
               <p className="text-xs text-muted-foreground/60">
-                Won by matching last month{"'"}s sessions and Big Four tonnage.
-                Strength levels and standout PRs are a bonus.
+                Won by matching last month{"'"}s sessions and Big Four tonnage
+                with stable strength levels.
               </p>
               <p className="text-sm">
                 <span className="text-muted-foreground">Verdict: </span>
@@ -669,10 +765,7 @@ export function ThisMonthInIronCard() {
                     if (verdict?.label === "Still Forging") {
                       const onPace = (s) =>
                         s?.status === "ahead" || s?.status === "on-pace";
-                      if (
-                        onPace(sessionsPaceStatus) &&
-                        onPace(bigFourPaceStatus)
-                      ) {
+                      if (onPace(sessionsPaceStatus) && onPace(bigFourPaceStatus)) {
                         return "Still Forging — On Pace ⚒️";
                       }
                     }
@@ -680,12 +773,9 @@ export function ThisMonthInIronCard() {
                   })()}
                 </span>
               </p>
-              {verdict?.label === "Still Forging" &&
-                getWinNeedsText(stats, unit) && (
-                  <p className="text-xs text-muted-foreground">
-                    {getWinNeedsText(stats, unit)}
-                  </p>
-                )}
+              {verdict?.label === "Still Forging" && winNeedsText && (
+                <p className="text-xs text-muted-foreground">{winNeedsText}</p>
+              )}
               <p className="text-xs text-muted-foreground">
                 {PHASE_COPY[phase]} · Day {boundaries.dayOfMonth} of{" "}
                 {boundaries.daysInPrevMonth}

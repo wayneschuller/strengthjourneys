@@ -65,6 +65,7 @@ const LEVEL_LABELS = [
 ];
 
 const LEVEL_EMOJIS = ["🏃", "🌱", "💪", "🔥", "👑"];
+const CLOSE_ENOUGH_RATIO = 0.9; // Within 10% of last month still counts as a win.
 
 function formatStrengthLevel(score) {
   if (score === null || score === undefined) return null;
@@ -77,7 +78,11 @@ function formatStrengthLevel(score) {
 }
 
 function isStrengthLevelRegressed(current, last) {
-  return last !== null && (current === null || current < last - 0.3);
+  return last !== null && (current === null || current < last * CLOSE_ENOUGH_RATIO);
+}
+
+function passesTonnageThreshold(current, last) {
+  return current >= last * CLOSE_ENOUGH_RATIO;
 }
 
 function AnimatedInteger({ value, className = "" }) {
@@ -297,7 +302,7 @@ function getVerdict(stats, strengthLevelPassed) {
     sessions.current >= sessions.last &&
     BIG_FOUR_LIFT_TYPES.every((liftType) => {
       const lift = bigFourByLift?.[liftType];
-      return (lift?.current ?? 0) >= (lift?.last ?? 0);
+      return passesTonnageThreshold(lift?.current ?? 0, lift?.last ?? 0);
     });
   const strengthOK =
     strengthLevelPassed.skipped || strengthLevelPassed.passed;
@@ -336,8 +341,9 @@ function getWinNeedsText(stats, strengthLevelPassed, unit) {
   const tonnageLiftDeficits = BIG_FOUR_LIFT_TYPES.map((liftType) => {
     const current = bigFourByLift?.[liftType]?.current ?? 0;
     const last = bigFourByLift?.[liftType]?.last ?? 0;
-    if (current >= last) return null;
-    return `${formatLiftTypeLabel(liftType)} +${formatTonnage(last - current, unit)}`;
+    if (passesTonnageThreshold(current, last)) return null;
+    const needed = Math.max(0, last * CLOSE_ENOUGH_RATIO - current);
+    return `${formatLiftTypeLabel(liftType)} +${formatTonnage(needed, unit)}`;
   }).filter(Boolean);
   if (tonnageLiftDeficits.length > 0) {
     parts.push(`tonnage (${tonnageLiftDeficits.join(", ")})`);
@@ -359,7 +365,7 @@ function getMonthlyChecksSummary(stats, strengthLevelStats) {
   for (const liftType of BIG_FOUR_LIFT_TYPES) {
     checksTotal += 1; // tonnage
     const lift = stats.bigFourByLift?.[liftType];
-    if ((lift?.current ?? 0) >= (lift?.last ?? 0)) checksMet += 1;
+    if (passesTonnageThreshold(lift?.current ?? 0, lift?.last ?? 0)) checksMet += 1;
   }
 
   if (strengthLevelStats) {
@@ -375,6 +381,53 @@ function getMonthlyChecksSummary(stats, strengthLevelStats) {
   }
 
   return { checksMet, checksTotal };
+}
+
+function getStrengthStatusTooltip({
+  liftType,
+  strengthLocked,
+  strengthBaseline,
+  strengthNewWin,
+  strengthRegressed,
+}) {
+  if (strengthLocked) {
+    return "Strength-level comparisons require bio details: age, sex, and bodyweight.";
+  }
+  if (strengthBaseline && !strengthNewWin) {
+    return "No previous strength-level baseline and no current data yet for this lift.";
+  }
+  if (strengthNewWin) {
+    return "No previous strength-level baseline for this lift. Current data this month counts as a win.";
+  }
+  if (strengthRegressed) {
+    return `${formatLiftTypeLabel(liftType)} is more than 10% below last month’s average strength level.`;
+  }
+  return "Passes: this month’s average strength level is at least 90% of last month (within 10% counts).";
+}
+
+function getTonnageStatusTooltip({
+  tonnageBaseline,
+  tonnageNewWin,
+  tonnagePassed,
+}) {
+  if (tonnageBaseline && !tonnageNewWin) {
+    return "No previous tonnage baseline and no current tonnage yet for this lift.";
+  }
+  if (tonnageNewWin) {
+    return "No previous tonnage baseline for this lift. Current tonnage this month counts as a win.";
+  }
+  if (tonnagePassed) {
+    return "Passes: this month’s tonnage is at least 90% of last month (within 10% counts).";
+  }
+  return "Behind: this month’s tonnage is more than 10% below last month.";
+}
+
+function getStrengthLastColumnTooltip(boundaries) {
+  return `${boundaries.prevMonthName} average strength level through day ${boundaries.dayOfMonth}, based on each session’s best set (up to 10 reps) rated against your bio-adjusted standards.`;
+}
+
+function getTonnageLastColumnTooltip() {
+  return "This is your total tonnage for this lift at the same point in last month.";
 }
 
 // ─── Status colors ─────────────────────────────────────────────────────────
@@ -450,7 +503,7 @@ function MetricRow({
         <TooltipTrigger asChild>
           <span className="text-sm font-medium">{label}</span>
         </TooltipTrigger>
-        <TooltipContent side="top">
+        <TooltipContent side="top" sideOffset={4}>
           <p className="max-w-52 text-center text-xs">{labelTooltip}</p>
         </TooltipContent>
       </Tooltip>
@@ -469,7 +522,7 @@ function MetricRow({
             {lastLabel}
           </span>
         </TooltipTrigger>
-        <TooltipContent side="top">
+        <TooltipContent side="top" sideOffset={4}>
           <p className="max-w-44 text-center text-xs">{vsTooltip}</p>
         </TooltipContent>
       </Tooltip>
@@ -515,7 +568,7 @@ function MetricRow({
                   <div className="mx-auto h-full w-0.5 bg-foreground/40" />
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="top">
+              <TooltipContent side="top" sideOffset={4}>
                 <p className="max-w-44 text-center text-xs">{paceTooltip}</p>
               </TooltipContent>
             </Tooltip>
@@ -564,9 +617,9 @@ function BigFourCriteriaTable({
     );
   }
 
-  const lastStrengthTooltip = `${boundaries.prevMonthName} average through day ${boundaries.dayOfMonth}`;
+  const lastStrengthTooltip = getStrengthLastColumnTooltip(boundaries);
   const strengthInfoTooltip =
-    "Strength level compares each month’s average session-top-set rating for this lift. For every session, your best set (up to 10 reps) is converted to an estimated 1RM and graded against age-, sex-, and bodyweight-adjusted standards. This check passes when this month matches or exceeds last month.";
+    "Strength level compares each month’s average session-top-set rating for this lift. For every session, your best set (up to 10 reps) is converted to an estimated 1RM and graded against age-, sex-, and bodyweight-adjusted standards. This check passes when this month is at least 90% of last month (within 10% counts).";
 
   return (
     <div className="space-y-1.5">
@@ -607,10 +660,10 @@ function BigFourCriteriaTable({
                     />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="top">
+                <TooltipContent side="top" sideOffset={4}>
                   <p className="max-w-56 text-center text-xs">
                     {boundaries.prevMonthName} sessions through day{" "}
-                    {boundaries.dayOfMonth} (same point in the month).
+                    {boundaries.dayOfMonth}, counted from unique logged training dates.
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -618,12 +671,25 @@ function BigFourCriteriaTable({
             <div className="text-center text-xs font-medium text-muted-foreground">
               Sessions
             </div>
-            <div className="text-left">
-              <AnimatedInteger
-                value={sessions.current}
-                className={`tabular-nums text-2xl font-bold tracking-tight ${rightColor}`}
-              />
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-left">
+                    <AnimatedInteger
+                      value={sessions.current}
+                      className={`tabular-nums text-2xl font-bold tracking-tight ${rightColor}`}
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" sideOffset={4}>
+                  <p className="max-w-56 text-center text-xs">
+                    This month sessions so far. We compare this to last
+                    month&apos;s same-day count; being within 10% still counts as
+                    on track.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </motion.div>
         );
       })()}
@@ -631,7 +697,10 @@ function BigFourCriteriaTable({
       {rows.map(({ liftType, tonnage, strength }, i) => {
         const currentTonnage = tonnage.current ?? 0;
         const lastTonnage = tonnage.last ?? 0;
-        const tonnagePassed = (tonnage.current ?? 0) >= (tonnage.last ?? 0);
+        const tonnagePassed = passesTonnageThreshold(
+          tonnage.current ?? 0,
+          tonnage.last ?? 0,
+        );
         const tonnageBaseline = lastTonnage === 0;
         const tonnageNewWin = tonnageBaseline && currentTonnage > 0;
         const tonnageColor = tonnageBaseline && !tonnageNewWin
@@ -672,6 +741,19 @@ function BigFourCriteriaTable({
           ? "bg-emerald-50/30 dark:bg-emerald-950/15"
           : "bg-red-50/30 dark:bg-red-950/15";
 
+        const strengthStatusTooltip = getStrengthStatusTooltip({
+          liftType,
+          strengthLocked,
+          strengthBaseline,
+          strengthNewWin,
+          strengthRegressed,
+        });
+        const tonnageStatusTooltip = getTonnageStatusTooltip({
+          tonnageBaseline,
+          tonnageNewWin,
+          tonnagePassed,
+        });
+
         return (
           <motion.div
             key={liftType}
@@ -700,7 +782,7 @@ function BigFourCriteriaTable({
                       )}
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="left">
+                  <TooltipContent side="top" sideOffset={4}>
                     <p className="max-w-52 text-center text-xs">
                       {strengthLocked
                         ? "Add age, sex, and bodyweight in your profile to compare strength levels."
@@ -734,32 +816,50 @@ function BigFourCriteriaTable({
                       )}
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="right">
+                  <TooltipContent side="top" sideOffset={4}>
                     <p className="max-w-52 text-center text-xs">
-                      {strengthLocked
-                        ? "Strength-level comparisons require bio details: age, sex, and bodyweight."
-                        : strengthRegressed
-                        ? `${formatLiftTypeLabel(liftType)} strength level regressed vs last month`
-                        : strengthInfoTooltip}
+                      {strengthStatusTooltip}
                     </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
 
-            <div className={`rounded px-1.5 py-1 text-right ${tonnageBg}`}>
-              <div className={`text-xs ${tonnageColor}`}>
-                <span className="text-muted-foreground">
-                  {formatTonnage(tonnage.last ?? 0, unit)} lifted
-                </span>
-              </div>
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className={`rounded px-1.5 py-1 text-right ${tonnageBg}`}>
+                    <div className={`text-xs ${tonnageColor}`}>
+                      <span className="text-muted-foreground">
+                        {formatTonnage(tonnage.last ?? 0, unit)} lifted
+                      </span>
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" sideOffset={4}>
+                  <p className="max-w-56 text-center text-xs">
+                    {getTonnageLastColumnTooltip()}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
-            <div className={`rounded px-1.5 py-1 text-left ${tonnageBg}`}>
-              <div className={`text-xs font-semibold ${tonnageColor}`}>
-                {formatTonnage(tonnage.current ?? 0, unit)} lifted
-              </div>
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className={`rounded px-1.5 py-1 text-left ${tonnageBg}`}>
+                    <div className={`text-xs font-semibold ${tonnageColor}`}>
+                      {formatTonnage(tonnage.current ?? 0, unit)} lifted
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" sideOffset={4}>
+                  <p className="max-w-56 text-center text-xs">
+                    This month total tonnage for this lift. {tonnageStatusTooltip}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </motion.div>
         );
       })}

@@ -24,6 +24,27 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 
+// ─── Motivational phrases ──────────────────────────────────────────────────
+
+const MOTIVATIONAL_PHRASES = [
+  "Win the month, win the year",
+  "Iron never lies",
+  "Consistency beats intensity",
+  "One month at a time",
+  "Better than last month",
+  "Show up, do the work",
+  "The bar doesn't care how you feel",
+  "Forge it or lose it",
+  "Leave nothing on the platform",
+  "Progress is the only goal",
+];
+
+// Picked once at module load — stable for the whole session
+const MOTIVATIONAL_PHRASE =
+  MOTIVATIONAL_PHRASES[
+    Math.floor(Math.random() * MOTIVATIONAL_PHRASES.length)
+  ];
+
 // ─── Month boundary helpers ────────────────────────────────────────────────
 
 function getMonthBoundaries() {
@@ -255,6 +276,23 @@ function formatTonnage(value, unit) {
   return `${Math.round(value)} ${unit}`;
 }
 
+// ─── Win needs summary ─────────────────────────────────────────────────────
+
+function getWinNeedsText(stats, unit) {
+  const { sessions, bigFourTonnage } = stats;
+  const parts = [];
+  if (sessions.current < sessions.last) {
+    const diff = sessions.last - sessions.current;
+    parts.push(`${diff} more session${diff !== 1 ? "s" : ""}`);
+  }
+  if (bigFourTonnage.current < bigFourTonnage.last) {
+    parts.push(
+      `${formatTonnage(bigFourTonnage.last - bigFourTonnage.current, unit)} Big Four tonnage`,
+    );
+  }
+  return parts.length > 0 ? `Needs: ${parts.join(" · ")}` : null;
+}
+
 // ─── Status colors ─────────────────────────────────────────────────────────
 
 const STATUS_COLORS = {
@@ -378,6 +416,7 @@ export function ThisMonthInIronCard() {
 
   const boundaries = useMemo(() => getMonthBoundaries(), []);
 
+
   const stats = useMemo(() => {
     if (!parsedData) return null;
     return computeMonthlyBattleStats(parsedData, boundaries);
@@ -489,7 +528,8 @@ export function ThisMonthInIronCard() {
           This Month in Iron
         </CardTitle>
         <CardDescription>
-          {boundaries.currentMonthName} vs {boundaries.prevMonthName}
+          {MOTIVATIONAL_PHRASE} · {boundaries.currentMonthName} vs{" "}
+          {boundaries.prevMonthName}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -532,6 +572,12 @@ export function ThisMonthInIronCard() {
                   {verdict?.label} {verdict?.emoji}
                 </span>
               </p>
+              {verdict?.label === "Still Forging" &&
+                getWinNeedsText(stats, unit) && (
+                  <p className="text-xs text-muted-foreground">
+                    {getWinNeedsText(stats, unit)}
+                  </p>
+                )}
               <p className="text-xs text-muted-foreground">
                 {PHASE_COPY[phase]} · Day {boundaries.dayOfMonth} of{" "}
                 {boundaries.daysInPrevMonth}

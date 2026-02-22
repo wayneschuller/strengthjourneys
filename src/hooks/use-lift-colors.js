@@ -188,7 +188,7 @@ export function LiftColorPicker({ liftType }) {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="w-auto"
+          className="w-auto transition-opacity hover:opacity-80"
           style={{
             backgroundColor: color,
             color: isLightColor(color) ? "#000" : "#fff",

@@ -28,15 +28,15 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 const MOTIVATIONAL_PHRASES = [
   "Win the month, win the year",
-  "Iron never lies",
-  "Consistency beats intensity",
+  "Win the month, win the game",
   "One month at a time",
+  "Own the month",
   "Better than last month",
-  "Show up, do the work",
-  "The bar doesn't care how you feel",
-  "Forge it or lose it",
-  "Leave nothing on the platform",
-  "Progress is the only goal",
+  "Outwork last month",
+  "Beat last month",
+  "Make last month jealous",
+  "One month stronger",
+  "This month or never",
 ];
 
 

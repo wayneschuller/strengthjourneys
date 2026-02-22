@@ -486,11 +486,10 @@ export function ThisMonthInIronCard() {
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo Mode: "}
-          {boundaries.currentMonthName} vs {boundaries.prevMonthName}
+          This Month in Iron
         </CardTitle>
         <CardDescription>
-          {PHASE_COPY[phase]} · Day {boundaries.dayOfMonth} of{" "}
-          {boundaries.daysInPrevMonth}
+          {boundaries.currentMonthName} vs {boundaries.prevMonthName}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -516,6 +515,7 @@ export function ThisMonthInIronCard() {
 
             <Separator />
             <motion.div
+              className="space-y-1"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.35 }}
@@ -531,6 +531,10 @@ export function ThisMonthInIronCard() {
                 >
                   {verdict?.label} {verdict?.emoji}
                 </span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {PHASE_COPY[phase]} · Day {boundaries.dayOfMonth} of{" "}
+                {boundaries.daysInPrevMonth}
               </p>
             </motion.div>
           </>

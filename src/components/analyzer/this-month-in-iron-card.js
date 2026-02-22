@@ -12,18 +12,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import {
   BIG_FOUR_LIFT_TYPES,
   findLiftPositionInTopLifts,
-  getDisplayWeight,
-  getReadableDateString,
 } from "@/lib/processing-utils";
 import {
-  STRENGTH_LEVEL_EMOJI,
   getStrengthRatingForE1RM,
   getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
@@ -101,6 +96,50 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
   };
 }
 
+// ─── Notable PR count (top-20 yearly or lifetime) ─────────────────────────
+
+function computeNotablePRCounts(
+  parsedData,
+  topLiftsByTypeAndReps,
+  topLiftsByTypeAndRepsLast12Months,
+  boundaries,
+) {
+  let current = 0;
+  let last = 0;
+
+  for (const entry of parsedData) {
+    if (entry.isGoal) continue;
+    if ((entry.reps ?? 0) < 1 || (entry.reps ?? 0) > 20) continue;
+
+    const { date } = entry;
+    const inCurrent =
+      date >= boundaries.currentMonthStart && date <= boundaries.todayStr;
+    const inLast =
+      date >= boundaries.prevMonthStart && date <= boundaries.prevMonthEnd;
+
+    if (!inCurrent && !inLast) continue;
+
+    const { rank: lifetimeRank } = findLiftPositionInTopLifts(
+      entry,
+      topLiftsByTypeAndReps,
+    );
+    const { rank: yearlyRank } = findLiftPositionInTopLifts(
+      entry,
+      topLiftsByTypeAndRepsLast12Months,
+    );
+
+    const isNotable =
+      (lifetimeRank !== -1 && lifetimeRank < 20) ||
+      (yearlyRank !== -1 && yearlyRank < 20);
+    if (!isNotable) continue;
+
+    if (inCurrent) current++;
+    else last++;
+  }
+
+  return { current, last };
+}
+
 // ─── Pace status ───────────────────────────────────────────────────────────
 
 function getPaceStatus(current, last, progressRatio) {
@@ -111,6 +150,14 @@ function getPaceStatus(current, last, progressRatio) {
   const status =
     pacePct >= 1.0 ? "ahead" : pacePct >= 0.85 ? "on-pace" : "behind";
   return { status, fillPct, needed: Math.max(0, Math.round(last - current)) };
+}
+
+// PRs don't accumulate linearly so we compare totals without a pace target
+function getPRPaceStatus(current, last) {
+  if (last === 0) return { status: "no-data", fillPct: 0 };
+  const fillPct = Math.min(100, (current / last) * 100);
+  const status = current >= last ? "ahead" : "behind";
+  return { status, fillPct };
 }
 
 // ─── Month phase copy ──────────────────────────────────────────────────────
@@ -128,66 +175,6 @@ const PHASE_COPY = {
   late: "Second half — time to make a move",
   final: "Final stretch — close it out strong",
 };
-
-// ─── PR section ────────────────────────────────────────────────────────────
-
-function getCurrentMonthPRs(
-  parsedData,
-  topLiftsByTypeAndReps,
-  topLiftsByTypeAndRepsLast12Months,
-  currentMonthStart,
-  todayStr,
-) {
-  if (!parsedData) return [];
-
-  const highlights = [];
-
-  for (const entry of parsedData) {
-    if (entry.isGoal) continue;
-    if (entry.date < currentMonthStart || entry.date > todayStr) continue;
-    if ((entry.reps ?? 0) < 1 || (entry.reps ?? 0) > 20) continue;
-
-    const { rank: yearlyRanking, annotation: yearlySignificanceAnnotation } =
-      findLiftPositionInTopLifts(entry, topLiftsByTypeAndRepsLast12Months);
-    const { rank: lifetimeRanking, annotation: lifetimeSignificanceAnnotation } =
-      findLiftPositionInTopLifts(entry, topLiftsByTypeAndReps);
-
-    const hasYearly = yearlyRanking !== -1 && yearlyRanking < 10;
-    const hasLifetime =
-      lifetimeRanking !== -1 && lifetimeSignificanceAnnotation;
-
-    if (!hasYearly && !hasLifetime) continue;
-
-    highlights.push({
-      ...entry,
-      yearlyRanking: hasYearly ? yearlyRanking : undefined,
-      yearlySignificanceAnnotation: hasYearly
-        ? yearlySignificanceAnnotation + " of the year"
-        : undefined,
-      lifetimeRanking: hasLifetime ? lifetimeRanking : undefined,
-      lifetimeSignificanceAnnotation: hasLifetime
-        ? lifetimeSignificanceAnnotation + " ever"
-        : undefined,
-    });
-  }
-
-  highlights.sort((a, b) => {
-    // Lifetime #1s first
-    const aIsLifetime1 = a.lifetimeRanking === 0;
-    const bIsLifetime1 = b.lifetimeRanking === 0;
-    if (aIsLifetime1 !== bIsLifetime1) return aIsLifetime1 ? -1 : 1;
-    // Then by lifetimeRanking
-    const aLt = a.lifetimeRanking ?? Infinity;
-    const bLt = b.lifetimeRanking ?? Infinity;
-    if (aLt !== bLt) return aLt - bLt;
-    // Then by yearlyRanking
-    const aYr = a.yearlyRanking ?? Infinity;
-    const bYr = b.yearlyRanking ?? Infinity;
-    return aYr - bYr;
-  });
-
-  return highlights.slice(0, 10);
-}
 
 // ─── Standards check ───────────────────────────────────────────────────────
 
@@ -236,7 +223,7 @@ function getStandardsMet(parsedData, currentMonthStart, todayStr, bio) {
 
 // ─── Verdict ───────────────────────────────────────────────────────────────
 
-function getVerdict(stats, hasAnyPRs, standardsMet) {
+function getVerdict(stats, hasNotablePRs, standardsMet) {
   const { sessions, bigFourTonnage, tonnage } = stats;
 
   if (
@@ -250,7 +237,7 @@ function getVerdict(stats, hasAnyPRs, standardsMet) {
   const primaryMet =
     sessions.current >= sessions.last &&
     bigFourTonnage.current >= bigFourTonnage.last;
-  const secondaryMet = tonnage.current >= tonnage.last || hasAnyPRs;
+  const secondaryMet = tonnage.current >= tonnage.last || hasNotablePRs;
   const standardsOK = standardsMet.skipped || standardsMet.met;
 
   if (primaryMet && secondaryMet && standardsOK) {
@@ -268,7 +255,7 @@ function formatTonnage(value, unit) {
   return `${Math.round(value)} ${unit}`;
 }
 
-// ─── Status color ──────────────────────────────────────────────────────────
+// ─── Status colors ─────────────────────────────────────────────────────────
 
 const STATUS_COLORS = {
   ahead: "bg-emerald-500",
@@ -284,7 +271,7 @@ const STATUS_TRACK_COLORS = {
   "no-data": "bg-muted/40",
 };
 
-function PaceStatusLine({ status, needed, unit }) {
+function PaceStatusLine({ status, needed, hideNeeded }) {
   if (status === "no-data") {
     return (
       <p className="text-xs text-muted-foreground">
@@ -307,17 +294,27 @@ function PaceStatusLine({ status, needed, unit }) {
     );
   }
   // behind
-  const neededStr = unit ? `${Math.round(needed).toLocaleString()} ${unit}` : needed;
   return (
     <p className="text-xs font-medium text-red-600 dark:text-red-400">
-      ▼ Behind pace · Need {neededStr} more to win
+      {hideNeeded
+        ? "▼ Behind last month"
+        : `▼ Behind pace · Need ${needed.toLocaleString()} more to win`}
     </p>
   );
 }
 
 // ─── MetricRow ─────────────────────────────────────────────────────────────
 
-function MetricRow({ label, currentLabel, lastLabel, paceStatus, index, progressRatio }) {
+function MetricRow({
+  label,
+  currentLabel,
+  lastLabel,
+  paceStatus,
+  index,
+  progressRatio,
+  showPaceMarker = true,
+  hideNeeded = false,
+}) {
   const { status, fillPct } = paceStatus;
   const rowDelay = index * 0.08;
   const paceMarkerPct = Math.min(100, progressRatio * 100);
@@ -337,7 +334,6 @@ function MetricRow({ label, currentLabel, lastLabel, paceStatus, index, progress
           {lastLabel}
         </span>
       </div>
-      {/* Progress bar */}
       <div
         className={`relative h-2.5 w-full overflow-hidden rounded-full ${STATUS_TRACK_COLORS[status]}`}
       >
@@ -347,15 +343,18 @@ function MetricRow({ label, currentLabel, lastLabel, paceStatus, index, progress
           animate={{ width: `${fillPct}%` }}
           transition={{ duration: 0.7, delay: rowDelay + 0.1, ease: "easeOut" }}
         />
-        {/* Pace marker line */}
-        {status !== "no-data" && (
+        {showPaceMarker && status !== "no-data" && (
           <div
             className="absolute top-0 h-full w-0.5 bg-foreground/40"
             style={{ left: `${paceMarkerPct}%` }}
           />
         )}
       </div>
-      <PaceStatusLine status={status} needed={paceStatus.needed} />
+      <PaceStatusLine
+        status={status}
+        needed={paceStatus.needed}
+        hideNeeded={hideNeeded}
+      />
     </motion.div>
   );
 }
@@ -364,7 +363,7 @@ function MetricRow({ label, currentLabel, lastLabel, paceStatus, index, progress
 
 /**
  * Card that challenges the user to beat their previous calendar month across
- * tonnage, sessions, and Big Four tonnage. Replaces MonthsHighlightsCard.
+ * tonnage, sessions, Big Four tonnage, and notable top-20 PRs.
  * Reads data from UserLiftingDataProvider; takes no props.
  */
 export function ThisMonthInIronCard() {
@@ -384,17 +383,25 @@ export function ThisMonthInIronCard() {
     return computeMonthlyBattleStats(parsedData, boundaries);
   }, [parsedData, boundaries]);
 
-  const monthPRs = useMemo(() => {
-    if (!parsedData || !topLiftsByTypeAndReps || !topLiftsByTypeAndRepsLast12Months)
-      return [];
-    return getCurrentMonthPRs(
+  const notablePRCounts = useMemo(() => {
+    if (
+      !parsedData ||
+      !topLiftsByTypeAndReps ||
+      !topLiftsByTypeAndRepsLast12Months
+    )
+      return null;
+    return computeNotablePRCounts(
       parsedData,
       topLiftsByTypeAndReps,
       topLiftsByTypeAndRepsLast12Months,
-      boundaries.currentMonthStart,
-      boundaries.todayStr,
+      boundaries,
     );
-  }, [parsedData, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months, boundaries]);
+  }, [
+    parsedData,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+    boundaries,
+  ]);
 
   const standardsMet = useMemo(() => {
     if (!parsedData || !bio) return { met: true, skipped: true };
@@ -408,13 +415,16 @@ export function ThisMonthInIronCard() {
 
   const verdict = useMemo(() => {
     if (!stats) return null;
-    return getVerdict(stats, monthPRs.length > 0, standardsMet);
-  }, [stats, monthPRs, standardsMet]);
+    return getVerdict(
+      stats,
+      (notablePRCounts?.current ?? 0) > 0,
+      standardsMet,
+    );
+  }, [stats, notablePRCounts, standardsMet]);
 
   const phase = getMonthPhase(boundaries.dayOfMonth);
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
 
-  // Build metric rows
   const metricRows = stats
     ? [
         {
@@ -426,6 +436,8 @@ export function ThisMonthInIronCard() {
             stats.tonnage.last,
             stats.progressRatio,
           ),
+          showPaceMarker: true,
+          hideNeeded: false,
         },
         {
           label: "Sessions",
@@ -436,6 +448,8 @@ export function ThisMonthInIronCard() {
             stats.sessions.last,
             stats.progressRatio,
           ),
+          showPaceMarker: true,
+          hideNeeded: false,
         },
         {
           label: "Big Four Tonnage",
@@ -446,7 +460,24 @@ export function ThisMonthInIronCard() {
             stats.bigFourTonnage.last,
             stats.progressRatio,
           ),
+          showPaceMarker: true,
+          hideNeeded: false,
         },
+        ...(notablePRCounts
+          ? [
+              {
+                label: "Top-20 PRs",
+                currentLabel: String(notablePRCounts.current),
+                lastLabel: String(notablePRCounts.last),
+                paceStatus: getPRPaceStatus(
+                  notablePRCounts.current,
+                  notablePRCounts.last,
+                ),
+                showPaceMarker: false,
+                hideNeeded: true,
+              },
+            ]
+          : []),
       ]
     : [];
 
@@ -467,7 +498,6 @@ export function ThisMonthInIronCard() {
 
         {stats && (
           <>
-            {/* Metric rows */}
             <div className="space-y-4">
               {metricRows.map((row, i) => (
                 <MetricRow
@@ -478,11 +508,12 @@ export function ThisMonthInIronCard() {
                   paceStatus={row.paceStatus}
                   index={i}
                   progressRatio={stats.progressRatio}
+                  showPaceMarker={row.showPaceMarker}
+                  hideNeeded={row.hideNeeded}
                 />
               ))}
             </div>
 
-            {/* Verdict */}
             <Separator />
             <motion.div
               initial={{ opacity: 0 }}
@@ -502,53 +533,6 @@ export function ThisMonthInIronCard() {
                 </span>
               </p>
             </motion.div>
-
-            {/* PRs section */}
-            {monthPRs.length > 0 && (
-              <>
-                <Separator />
-                <p className="text-sm font-semibold">This month{"'"}s PRs</p>
-                <ul className="space-y-1">
-                  {monthPRs.map((record, i) => {
-                    const { value: dispValue, unit: dispUnit } = getDisplayWeight(record, isMetric);
-                    return (
-                      <motion.li
-                        key={`${record.liftType}-${record.reps}-${record.date}-${i}`}
-                        className="flex flex-wrap items-center gap-x-2 gap-y-1 py-0.5 text-sm"
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{
-                          duration: 0.3,
-                          delay: 0.4 + i * 0.05,
-                        }}
-                      >
-                        <LiftTypeIndicator liftType={record.liftType} />
-                        <span className="text-muted-foreground">
-                          {record.reps}@{dispValue}
-                          {dispUnit}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {getReadableDateString(record.date)}
-                        </span>
-                        <span className="flex flex-wrap gap-1">
-                          {record.lifetimeSignificanceAnnotation && (
-                            <Badge variant="secondary" className="text-xs">
-                              {record.lifetimeSignificanceAnnotation}
-                            </Badge>
-                          )}
-                          {record.lifetimeRanking !== 0 &&
-                            record.yearlySignificanceAnnotation && (
-                              <Badge variant="outline" className="text-xs">
-                                {record.yearlySignificanceAnnotation}
-                              </Badge>
-                            )}
-                        </span>
-                      </motion.li>
-                    );
-                  })}
-                </ul>
-              </>
-            )}
           </>
         )}
       </CardContent>

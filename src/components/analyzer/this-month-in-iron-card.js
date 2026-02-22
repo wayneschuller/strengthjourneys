@@ -62,11 +62,15 @@ function getMonthBoundaries() {
   const pm = prevDate.getMonth();
   const daysInPrevMonth = new Date(y, m, 0).getDate();
 
+  // The equivalent day in the previous month (capped if prev month is shorter)
+  const sameDayInPrev = Math.min(d, daysInPrevMonth);
+
   return {
     todayStr,
     currentMonthStart,
     prevMonthStart: `${py}-${pad(pm + 1)}-01`,
     prevMonthEnd: `${py}-${pad(pm + 1)}-${pad(daysInPrevMonth)}`,
+    prevMonthSameDayStr: `${py}-${pad(pm + 1)}-${pad(sameDayInPrev)}`,
     dayOfMonth: d,
     daysInPrevMonth,
     currentMonthName: today.toLocaleString("default", { month: "long" }),
@@ -81,10 +85,13 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
 
   let currentTonnage = 0;
   let lastTonnage = 0;
+  let lastTonnageSameDay = 0;
   const currentDates = new Set();
   const lastDates = new Set();
+  const lastDatesSameDay = new Set();
   let currentBigFour = 0;
   let lastBigFour = 0;
+  let lastBigFourSameDay = 0;
 
   for (const entry of parsedData) {
     if (entry.isGoal) continue;
@@ -106,13 +113,19 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
       lastTonnage += tonnage;
       lastDates.add(date);
       if (BIG_FOUR_LIFT_TYPES.includes(liftType)) lastBigFour += tonnage;
+      // Also accumulate the same-day slice (last month up to the equivalent day)
+      if (date <= boundaries.prevMonthSameDayStr) {
+        lastTonnageSameDay += tonnage;
+        lastDatesSameDay.add(date);
+        if (BIG_FOUR_LIFT_TYPES.includes(liftType)) lastBigFourSameDay += tonnage;
+      }
     }
   }
 
   return {
-    tonnage: { current: currentTonnage, last: lastTonnage },
-    sessions: { current: currentDates.size, last: lastDates.size },
-    bigFourTonnage: { current: currentBigFour, last: lastBigFour },
+    tonnage: { current: currentTonnage, last: lastTonnage, lastSameDay: lastTonnageSameDay },
+    sessions: { current: currentDates.size, last: lastDates.size, lastSameDay: lastDatesSameDay.size },
+    bigFourTonnage: { current: currentBigFour, last: lastBigFour, lastSameDay: lastBigFourSameDay },
     progressRatio: boundaries.dayOfMonth / boundaries.daysInPrevMonth,
     nativeUnit,
   };
@@ -508,7 +521,7 @@ export function ThisMonthInIronCard() {
         {
           label: "Total Tonnage",
           currentLabel: formatTonnage(stats.tonnage.current, unit),
-          lastLabel: formatTonnage(stats.tonnage.last, unit),
+          lastLabel: formatTonnage(stats.tonnage.lastSameDay, unit),
           paceStatus: tonnagePaceStatus,
           projectedLabel: `~${formatTonnage(tonnagePaceStatus.projected, unit)}`,
           showPaceMarker: true,
@@ -518,7 +531,7 @@ export function ThisMonthInIronCard() {
         {
           label: "Sessions",
           currentLabel: String(stats.sessions.current),
-          lastLabel: String(stats.sessions.last),
+          lastLabel: String(stats.sessions.lastSameDay),
           paceStatus: sessionsPaceStatus,
           projectedLabel: `~${Math.round(sessionsPaceStatus.projected)} sessions`,
           showPaceMarker: true,
@@ -528,7 +541,7 @@ export function ThisMonthInIronCard() {
         {
           label: "Big Four Tonnage",
           currentLabel: formatTonnage(stats.bigFourTonnage.current, unit),
-          lastLabel: formatTonnage(stats.bigFourTonnage.last, unit),
+          lastLabel: formatTonnage(stats.bigFourTonnage.lastSameDay, unit),
           paceStatus: bigFourPaceStatus,
           projectedLabel: `~${formatTonnage(bigFourPaceStatus.projected, unit)}`,
           showPaceMarker: true,

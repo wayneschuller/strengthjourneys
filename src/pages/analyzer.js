@@ -14,7 +14,7 @@ import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card
 import { PopularLiftsAccordion } from "@/components/analyzer/lift-achievements-card";
 import { ConsistencyCard } from "@/components/analyzer/consistency-card";
 import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-pie-card";
-import { MonthsHighlightsCard } from "@/components/analyzer/months-highlights-card";
+import { ThisMonthInIronCard } from "@/components/analyzer/this-month-in-iron-card";
 import { ActivityHeatmapsCard } from "@/components/analyzer/heatmap-card";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
 import {
@@ -129,7 +129,7 @@ function AnalyzerMain({ relatedArticles }) {
         </div>
         <div className="flex h-full min-w-full flex-col gap-6">
           <ConsistencyCard />
-          <MonthsHighlightsCard />
+          <ThisMonthInIronCard />
         </div>
         <div className="grid h-full min-w-full gap-6">
           <div className="min-w-full">

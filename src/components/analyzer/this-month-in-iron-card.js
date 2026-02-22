@@ -845,10 +845,7 @@ export function ThisMonthInIronCard() {
           {authStatus === "unauthenticated" && "Demo Mode: "}
           This Month in Iron
         </CardTitle>
-        <CardDescription>
-          {motivationalPhrase} · {boundaries.currentMonthName} vs{" "}
-          {boundaries.prevMonthName}
-        </CardDescription>
+        <CardDescription>{motivationalPhrase}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {!stats && <Skeleton className="h-[30vh]" />}

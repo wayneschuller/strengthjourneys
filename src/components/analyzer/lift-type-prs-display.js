@@ -347,7 +347,7 @@ const RepRangeDetailView = ({
  * @param {Object} props
  * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
  */
-export const LiftTypeRepPRsDisplay = ({ liftType }) => {
+export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
   const { topLiftsByTypeAndReps } = useUserLiftingData();
   const { getColor } = useLiftColors();
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
@@ -442,7 +442,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType }) => {
             Overview of your best {liftType} sets across different rep ranges. Click
             a card or a tab above to explore all lifts for that rep range.
           </p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${!compact && "lg:grid-cols-3 xl:grid-cols-4"}`}>
             {repRangesWithData.map(({ repRange, repIndex, repCount }) => (
               <PRCard
                 key={repIndex}

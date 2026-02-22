@@ -138,11 +138,11 @@ export function LiftTypeFrequencyPieCard() {
 
   if (isLoading)
     return (
-      <Card className="flex-1">
+      <Card className="flex h-full flex-1 flex-col">
         <CardHeader>
           <CardTitle>Your Top Lifts</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-1 flex-col">
           <div className="mx-auto aspect-square min-h-[250px]">
             <Skeleton className="h-full w-full rounded-full" />
           </div>
@@ -194,14 +194,14 @@ export function LiftTypeFrequencyPieCard() {
   }));
 
   return (
-    <Card className="flex-1">
+    <Card className="flex h-full flex-1 flex-col">
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo mode: "}Your Most Frequent
           Lifts
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-1 flex-col">
         <ChartContainer
           config={chartConfig}
           // className="mx-auto aspect-square min-h-[300px]"

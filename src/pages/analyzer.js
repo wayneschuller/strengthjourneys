@@ -131,11 +131,11 @@ function AnalyzerMain({ relatedArticles }) {
           <ConsistencyCard />
           <ThisMonthInIronCard />
         </div>
-        <div className="grid h-full min-w-full gap-6">
+        <div className="flex h-full min-w-full flex-col gap-6">
           <div className="min-w-full">
             <InspirationCard />
           </div>
-          <div className="flex h-full min-w-full flex-col">
+          <div className="flex min-w-full flex-1 flex-col">
             <LiftTypeFrequencyPieCard />
           </div>
         </div>

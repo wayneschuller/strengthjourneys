@@ -165,13 +165,14 @@ function computeNotablePRCounts(
 // ─── Pace status ───────────────────────────────────────────────────────────
 
 function getPaceStatus(current, last, progressRatio) {
-  if (last === 0) return { status: "no-data", fillPct: 0, needed: 0 };
+  if (last === 0) return { status: "no-data", fillPct: 0, needed: 0, projected: 0 };
   const fillPct = Math.min(100, (current / last) * 100);
   const paceTarget = last * progressRatio;
   const pacePct = paceTarget > 0 ? current / paceTarget : 1;
   const status =
     pacePct >= 1.0 ? "ahead" : pacePct >= 0.85 ? "on-pace" : "behind";
-  return { status, fillPct, needed: Math.max(0, Math.round(last - current)) };
+  const projected = progressRatio > 0 ? current / progressRatio : current;
+  return { status, fillPct, needed: Math.max(0, Math.round(last - current)), projected };
 }
 
 // PRs don't accumulate linearly so we compare totals without a pace target
@@ -310,7 +311,7 @@ const STATUS_TRACK_COLORS = {
   "no-data": "bg-muted/40",
 };
 
-function PaceStatusLine({ status, needed, hideNeeded }) {
+function PaceStatusLine({ status, needed, hideNeeded, projectedLabel }) {
   if (status === "no-data") {
     return (
       <p className="text-xs text-muted-foreground">
@@ -321,14 +322,14 @@ function PaceStatusLine({ status, needed, hideNeeded }) {
   if (status === "ahead") {
     return (
       <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-        ▲ Ahead of pace
+        ▲ On pace for {projectedLabel}
       </p>
     );
   }
   if (status === "on-pace") {
     return (
       <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
-        → On pace
+        → On pace for {projectedLabel}
       </p>
     );
   }
@@ -354,6 +355,7 @@ function MetricRow({
   showPaceMarker = true,
   hideNeeded = false,
   paceTooltip,
+  projectedLabel,
 }) {
   const { status, fillPct } = paceStatus;
   const rowDelay = index * 0.08;
@@ -407,6 +409,7 @@ function MetricRow({
         status={status}
         needed={paceStatus.needed}
         hideNeeded={hideNeeded}
+        projectedLabel={projectedLabel}
       />
     </motion.div>
   );
@@ -490,17 +493,24 @@ export function ThisMonthInIronCard() {
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
   const paceTooltip = `Where ${boundaries.prevMonthName} stood on day ${boundaries.dayOfMonth} — your target pace`;
 
+  const tonnagePaceStatus = stats
+    ? getPaceStatus(stats.tonnage.current, stats.tonnage.last, stats.progressRatio)
+    : null;
+  const sessionsPaceStatus = stats
+    ? getPaceStatus(stats.sessions.current, stats.sessions.last, stats.progressRatio)
+    : null;
+  const bigFourPaceStatus = stats
+    ? getPaceStatus(stats.bigFourTonnage.current, stats.bigFourTonnage.last, stats.progressRatio)
+    : null;
+
   const metricRows = stats
     ? [
         {
           label: "Total Tonnage",
           currentLabel: formatTonnage(stats.tonnage.current, unit),
           lastLabel: formatTonnage(stats.tonnage.last, unit),
-          paceStatus: getPaceStatus(
-            stats.tonnage.current,
-            stats.tonnage.last,
-            stats.progressRatio,
-          ),
+          paceStatus: tonnagePaceStatus,
+          projectedLabel: `~${formatTonnage(tonnagePaceStatus.projected, unit)}`,
           showPaceMarker: true,
           hideNeeded: false,
           paceTooltip,
@@ -509,11 +519,8 @@ export function ThisMonthInIronCard() {
           label: "Sessions",
           currentLabel: String(stats.sessions.current),
           lastLabel: String(stats.sessions.last),
-          paceStatus: getPaceStatus(
-            stats.sessions.current,
-            stats.sessions.last,
-            stats.progressRatio,
-          ),
+          paceStatus: sessionsPaceStatus,
+          projectedLabel: `~${Math.round(sessionsPaceStatus.projected)} sessions`,
           showPaceMarker: true,
           hideNeeded: false,
           paceTooltip,
@@ -522,11 +529,8 @@ export function ThisMonthInIronCard() {
           label: "Big Four Tonnage",
           currentLabel: formatTonnage(stats.bigFourTonnage.current, unit),
           lastLabel: formatTonnage(stats.bigFourTonnage.last, unit),
-          paceStatus: getPaceStatus(
-            stats.bigFourTonnage.current,
-            stats.bigFourTonnage.last,
-            stats.progressRatio,
-          ),
+          paceStatus: bigFourPaceStatus,
+          projectedLabel: `~${formatTonnage(bigFourPaceStatus.projected, unit)}`,
           showPaceMarker: true,
           hideNeeded: false,
           paceTooltip,
@@ -579,6 +583,7 @@ export function ThisMonthInIronCard() {
                   showPaceMarker={row.showPaceMarker}
                   hideNeeded={row.hideNeeded}
                   paceTooltip={row.paceTooltip}
+                  projectedLabel={row.projectedLabel}
                 />
               ))}
             </div>

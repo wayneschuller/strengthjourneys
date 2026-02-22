@@ -337,7 +337,7 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
 
   return (
     <Wrapper className={asCard ? "min-h-[300px]" : undefined}>
-      <CardHeader className="pb-3">
+      <CardHeader className="px-4 pb-3 sm:px-6">
         {/* Title + tier badge */}
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h2
@@ -374,7 +374,7 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
         )}
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 px-4 sm:px-6">
         {isLoading || !liftTypes || !topLiftsByTypeAndReps ? (
           <Skeleton className="h-[260px] w-full" />
         ) : (

@@ -369,6 +369,7 @@ function MetricRow({
   hideNeeded = false,
   paceTooltip,
   projectedLabel,
+  vsTooltip,
 }) {
   const { status, fillPct } = paceStatus;
   const rowDelay = index * 0.08;
@@ -386,7 +387,18 @@ function MetricRow({
         <span className="text-xs text-muted-foreground">
           <span className="font-semibold text-foreground">{currentLabel}</span>
           {" vs "}
-          {lastLabel}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="cursor-help underline decoration-dotted">
+                  {lastLabel}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p className="max-w-44 text-center text-xs">{vsTooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </span>
       </div>
       <div
@@ -505,6 +517,7 @@ export function ThisMonthInIronCard() {
   const phase = getMonthPhase(boundaries.dayOfMonth);
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
   const paceTooltip = `Where ${boundaries.prevMonthName} stood on day ${boundaries.dayOfMonth} — your target pace`;
+  const vsTooltip = `${boundaries.prevMonthName}'s total through day ${boundaries.dayOfMonth} — same point in the month`;
 
   const tonnagePaceStatus = stats
     ? getPaceStatus(stats.tonnage.current, stats.tonnage.last, stats.progressRatio)
@@ -527,6 +540,7 @@ export function ThisMonthInIronCard() {
           showPaceMarker: true,
           hideNeeded: false,
           paceTooltip,
+          vsTooltip,
         },
         {
           label: "Sessions",
@@ -537,6 +551,7 @@ export function ThisMonthInIronCard() {
           showPaceMarker: true,
           hideNeeded: false,
           paceTooltip,
+          vsTooltip,
         },
         {
           label: "Big Four Tonnage",
@@ -547,6 +562,7 @@ export function ThisMonthInIronCard() {
           showPaceMarker: true,
           hideNeeded: false,
           paceTooltip,
+          vsTooltip,
         },
         ...(notablePRCounts
           ? [
@@ -597,6 +613,7 @@ export function ThisMonthInIronCard() {
                   hideNeeded={row.hideNeeded}
                   paceTooltip={row.paceTooltip}
                   projectedLabel={row.projectedLabel}
+                  vsTooltip={row.vsTooltip}
                 />
               ))}
             </div>

@@ -15,6 +15,12 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   BIG_FOUR_LIFT_TYPES,
   findLiftPositionInTopLifts,
 } from "@/lib/processing-utils";
@@ -347,6 +353,7 @@ function MetricRow({
   progressRatio,
   showPaceMarker = true,
   hideNeeded = false,
+  paceTooltip,
 }) {
   const { status, fillPct } = paceStatus;
   const rowDelay = index * 0.08;
@@ -368,19 +375,32 @@ function MetricRow({
         </span>
       </div>
       <div
-        className={`relative h-2.5 w-full overflow-hidden rounded-full ${STATUS_TRACK_COLORS[status]}`}
+        className={`relative h-2.5 w-full rounded-full ${STATUS_TRACK_COLORS[status]}`}
       >
-        <motion.div
-          className={`h-full rounded-full ${STATUS_COLORS[status]}`}
-          initial={{ width: "0%" }}
-          animate={{ width: `${fillPct}%` }}
-          transition={{ duration: 0.7, delay: rowDelay + 0.1, ease: "easeOut" }}
-        />
-        {showPaceMarker && status !== "no-data" && (
-          <div
-            className="absolute top-0 h-full w-0.5 bg-foreground/40"
-            style={{ left: `${paceMarkerPct}%` }}
+        <div className="absolute inset-0 overflow-hidden rounded-full">
+          <motion.div
+            className={`h-full rounded-full ${STATUS_COLORS[status]}`}
+            initial={{ width: "0%" }}
+            animate={{ width: `${fillPct}%` }}
+            transition={{ duration: 0.7, delay: rowDelay + 0.1, ease: "easeOut" }}
           />
+        </div>
+        {showPaceMarker && status !== "no-data" && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="absolute top-0 h-full w-2 -translate-x-1/2 cursor-default"
+                  style={{ left: `${paceMarkerPct}%` }}
+                >
+                  <div className="mx-auto h-full w-0.5 bg-foreground/40" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p className="max-w-44 text-center text-xs">{paceTooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
       <PaceStatusLine
@@ -468,6 +488,7 @@ export function ThisMonthInIronCard() {
 
   const phase = getMonthPhase(boundaries.dayOfMonth);
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
+  const paceTooltip = `Where ${boundaries.prevMonthName} stood on day ${boundaries.dayOfMonth} — your target pace`;
 
   const metricRows = stats
     ? [
@@ -482,6 +503,7 @@ export function ThisMonthInIronCard() {
           ),
           showPaceMarker: true,
           hideNeeded: false,
+          paceTooltip,
         },
         {
           label: "Sessions",
@@ -494,6 +516,7 @@ export function ThisMonthInIronCard() {
           ),
           showPaceMarker: true,
           hideNeeded: false,
+          paceTooltip,
         },
         {
           label: "Big Four Tonnage",
@@ -506,6 +529,7 @@ export function ThisMonthInIronCard() {
           ),
           showPaceMarker: true,
           hideNeeded: false,
+          paceTooltip,
         },
         ...(notablePRCounts
           ? [
@@ -554,6 +578,7 @@ export function ThisMonthInIronCard() {
                   progressRatio={stats.progressRatio}
                   showPaceMarker={row.showPaceMarker}
                   hideNeeded={row.hideNeeded}
+                  paceTooltip={row.paceTooltip}
                 />
               ))}
             </div>

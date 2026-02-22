@@ -238,7 +238,7 @@ function StatRing({ value, fill, label, color, isMounted }) {
  * @param {Object} props
  * @param {string} props.liftType - Display name of the lift (e.g. "Back Squat") to show the journey for.
  */
-export function LiftJourneyCard({ liftType }) {
+export function LiftJourneyCard({ liftType, asCard = true }) {
   const { status: authStatus } = useSession();
   const {
     liftTypes,
@@ -333,8 +333,10 @@ export function LiftJourneyCard({ liftType }) {
     { label: "Best Five", lift: fiveRM },
   ];
 
+  const Wrapper = asCard ? Card : "div";
+
   return (
-    <Card className="min-h-[300px]">
+    <Wrapper className={asCard ? "min-h-[300px]" : undefined}>
       <CardHeader className="pb-3">
         {/* Title + tier badge */}
         <div className="flex flex-wrap items-start justify-between gap-2">
@@ -523,6 +525,6 @@ export function LiftJourneyCard({ liftType }) {
           </>
         )}
       </CardContent>
-    </Card>
+    </Wrapper>
   );
 }

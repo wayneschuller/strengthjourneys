@@ -114,10 +114,18 @@ function PopularLiftAccordionTriggerRow({ liftType }) {
  */
 function PopularLiftAccordionExpandedCard({ liftType }) {
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
-      <LiftJourneyCard liftType={liftType} />
-      <LiftTypeRepPRsDisplay liftType={liftType} compact />
-    </div>
+    <Card>
+      <CardContent className="pt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:divide-x">
+          <div className="lg:pr-6">
+            <LiftJourneyCard liftType={liftType} asCard={false} />
+          </div>
+          <div className="mt-6 lg:mt-0 lg:pl-6">
+            <LiftTypeRepPRsDisplay liftType={liftType} compact />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

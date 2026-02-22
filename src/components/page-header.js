@@ -1,5 +1,6 @@
 "use client";
 
+import { Children, isValidElement } from "react";
 import { cn } from "@/lib/utils";
 import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";
 
@@ -19,8 +20,8 @@ export function PageContainer({ className, children, ...props }) {
 }
 
 /**
- * Page header section with responsive layout. Accepts children; children with
- * displayName "PageHeaderRight" are rendered in a right-aligned section on desktop.
+ * Page header section with responsive layout. Accepts children; a single
+ * PageHeaderRight child is rendered in a right-aligned section on desktop.
  *
  * @param {Object} props
  * @param {string} [props.className] - Additional CSS classes.
@@ -28,14 +29,20 @@ export function PageContainer({ className, children, ...props }) {
  *   for right-aligned content (e.g. diagram, controls).
  */
 export function PageHeader({ className, children, hideRecapBanner, ...props }) {
-  // Find the right section if it exists
-  const rightSection = children?.find(
-    (child) => child?.type?.displayName === "PageHeaderRight",
+  const childArray = Children.toArray(children);
+  const rightSections = childArray.filter(
+    (child) => isValidElement(child) && child.type === PageHeaderRight,
   );
+  const rightSection = rightSections[0];
 
-  // Get all other children
-  const content = children?.filter(
-    (child) => child?.type?.displayName !== "PageHeaderRight",
+  if (process.env.NODE_ENV !== "production" && rightSections.length > 1) {
+    console.warn(
+      "PageHeader received multiple PageHeaderRight children. Only the first will be rendered.",
+    );
+  }
+
+  const content = childArray.filter(
+    (child) => !(isValidElement(child) && child.type === PageHeaderRight),
   );
 
   return (

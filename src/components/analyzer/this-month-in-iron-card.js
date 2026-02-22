@@ -29,6 +29,7 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LiftSvg } from "@/components/year-recap/lift-svg";
+import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
 // ─── Motivational phrases ──────────────────────────────────────────────────
 
@@ -75,6 +76,10 @@ function formatStrengthLevel(score) {
   return { label: label + plus, emoji, score };
 }
 
+function isStrengthLevelRegressed(current, last) {
+  return last !== null && (current === null || current < last - 0.3);
+}
+
 // ─── Month boundary helpers ────────────────────────────────────────────────
 
 function getMonthBoundaries() {
@@ -110,6 +115,13 @@ function getMonthBoundaries() {
 
 function computeMonthlyBattleStats(parsedData, boundaries) {
   const nativeUnit = parsedData.find((e) => !e.isGoal)?.unitType ?? "lb";
+  const initBigFourByLift = () =>
+    Object.fromEntries(
+      BIG_FOUR_LIFT_TYPES.map((liftType) => [
+        liftType,
+        { current: 0, last: 0, lastSameDay: 0 },
+      ]),
+    );
 
   let currentTonnage = 0;
   let lastTonnage = 0;
@@ -120,6 +132,7 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
   let currentBigFour = 0;
   let lastBigFour = 0;
   let lastBigFourSameDay = 0;
+  const bigFourByLift = initBigFourByLift();
 
   for (const entry of parsedData) {
     if (entry.isGoal) continue;
@@ -136,15 +149,24 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
     if (inCurrent) {
       currentTonnage += tonnage;
       currentDates.add(date);
-      if (BIG_FOUR_LIFT_TYPES.includes(liftType)) currentBigFour += tonnage;
+      if (BIG_FOUR_LIFT_TYPES.includes(liftType)) {
+        currentBigFour += tonnage;
+        bigFourByLift[liftType].current += tonnage;
+      }
     } else if (inLast) {
       lastTonnage += tonnage;
       lastDates.add(date);
-      if (BIG_FOUR_LIFT_TYPES.includes(liftType)) lastBigFour += tonnage;
+      if (BIG_FOUR_LIFT_TYPES.includes(liftType)) {
+        lastBigFour += tonnage;
+        bigFourByLift[liftType].last += tonnage;
+      }
       if (date <= boundaries.prevMonthSameDayStr) {
         lastTonnageSameDay += tonnage;
         lastDatesSameDay.add(date);
-        if (BIG_FOUR_LIFT_TYPES.includes(liftType)) lastBigFourSameDay += tonnage;
+        if (BIG_FOUR_LIFT_TYPES.includes(liftType)) {
+          lastBigFourSameDay += tonnage;
+          bigFourByLift[liftType].lastSameDay += tonnage;
+        }
       }
     }
   }
@@ -153,6 +175,7 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
     tonnage: { current: currentTonnage, last: lastTonnage, lastSameDay: lastTonnageSameDay },
     sessions: { current: currentDates.size, last: lastDates.size, lastSameDay: lastDatesSameDay.size },
     bigFourTonnage: { current: currentBigFour, last: lastBigFour, lastSameDay: lastBigFourSameDay },
+    bigFourByLift,
     progressRatio: boundaries.dayOfMonth / boundaries.daysInPrevMonth,
     nativeUnit,
   };
@@ -225,8 +248,9 @@ function getStrengthLevelPassed(strengthLevelStats) {
   for (const liftType of BIG_FOUR_LIFT_TYPES) {
     const { current, last } = strengthLevelStats[liftType];
     if (last === null) continue; // not trained last month — no regression possible
-    if (current === null) return { passed: false, skipped: false }; // absent this month = regression
-    if (current < last - 0.3) return { passed: false, skipped: false }; // significant drop
+    if (isStrengthLevelRegressed(current, last)) {
+      return { passed: false, skipped: false };
+    }
   }
   return { passed: true, skipped: false };
 }
@@ -263,7 +287,7 @@ const PHASE_COPY = {
 // ─── Verdict ───────────────────────────────────────────────────────────────
 
 function getVerdict(stats, strengthLevelPassed) {
-  const { sessions, bigFourTonnage, tonnage } = stats;
+  const { sessions, bigFourTonnage, tonnage, bigFourByLift } = stats;
 
   if (
     sessions.last === 0 &&
@@ -275,7 +299,10 @@ function getVerdict(stats, strengthLevelPassed) {
 
   const primaryMet =
     sessions.current >= sessions.last &&
-    bigFourTonnage.current >= bigFourTonnage.last;
+    BIG_FOUR_LIFT_TYPES.every((liftType) => {
+      const lift = bigFourByLift?.[liftType];
+      return (lift?.current ?? 0) >= (lift?.last ?? 0);
+    });
   const strengthOK =
     strengthLevelPassed.skipped || strengthLevelPassed.passed;
 
@@ -294,19 +321,30 @@ function formatTonnage(value, unit) {
   return `${Math.round(value)} ${unit}`;
 }
 
+function formatLiftTypeLabel(liftType) {
+  return liftType
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 // ─── Win needs summary ─────────────────────────────────────────────────────
 
 function getWinNeedsText(stats, strengthLevelPassed, unit) {
-  const { sessions, bigFourTonnage } = stats;
+  const { sessions, bigFourByLift } = stats;
   const parts = [];
   if (sessions.current < sessions.last) {
     const diff = sessions.last - sessions.current;
     parts.push(`${diff} more session${diff !== 1 ? "s" : ""}`);
   }
-  if (bigFourTonnage.current < bigFourTonnage.last) {
-    parts.push(
-      `${formatTonnage(bigFourTonnage.last - bigFourTonnage.current, unit)} Big Four tonnage`,
-    );
+  const tonnageLiftDeficits = BIG_FOUR_LIFT_TYPES.map((liftType) => {
+    const current = bigFourByLift?.[liftType]?.current ?? 0;
+    const last = bigFourByLift?.[liftType]?.last ?? 0;
+    if (current >= last) return null;
+    return `${formatLiftTypeLabel(liftType)} +${formatTonnage(last - current, unit)}`;
+  }).filter(Boolean);
+  if (tonnageLiftDeficits.length > 0) {
+    parts.push(`tonnage (${tonnageLiftDeficits.join(", ")})`);
   }
   if (!strengthLevelPassed.skipped && !strengthLevelPassed.passed) {
     parts.push("maintain strength level across Big Four");
@@ -469,138 +507,203 @@ function MetricRow({
   );
 }
 
-// ─── StrengthLevelTable ────────────────────────────────────────────────────
+// ─── Big Four Criteria Table (Strength + Tonnage per lift) ────────────────
 
-function StrengthLevelTable({ strengthLevelStats, boundaries }) {
-  if (!strengthLevelStats) {
-    return (
-      <p className="text-xs text-muted-foreground/60">
-        Set your profile (age, bodyweight, sex) to track strength level consistency.
-      </p>
-    );
-  }
-
-  // Only show rows where at least one month has data
-  const rows = BIG_FOUR_LIFT_TYPES.map((liftType) => ({
-    liftType,
-    ...strengthLevelStats[liftType],
-  })).filter((r) => r.current !== null || r.last !== null);
+function BigFourCriteriaTable({
+  bigFourByLift,
+  strengthLevelStats,
+  strengthSetupRequired = false,
+  boundaries,
+  unit,
+}) {
+  const rows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
+    const tonnage = bigFourByLift?.[liftType] ?? {
+      current: 0,
+      last: 0,
+      lastSameDay: 0,
+    };
+    const strength = strengthLevelStats?.[liftType] ?? { current: null, last: null };
+    return { liftType, tonnage, strength };
+  }).filter(({ tonnage, strength }) => {
+    const hasTonnage = (tonnage.current ?? 0) > 0 || (tonnage.last ?? 0) > 0;
+    const hasStrength = strength.current !== null || strength.last !== null;
+    return hasTonnage || hasStrength;
+  });
 
   if (rows.length === 0) {
     return (
       <p className="text-xs text-muted-foreground/60">
-        No Big Four lifts recorded yet this month or last.
+        No Big Four lift criteria to compare yet this month or last.
       </p>
     );
   }
 
-  const lastTooltip = `${boundaries.prevMonthName} average through day ${boundaries.dayOfMonth}`;
-  const currentTooltip = `Average strength level across all sessions this month — best set per session, capped at 10 reps for accuracy`;
+  const lastStrengthTooltip = `${boundaries.prevMonthName} average through day ${boundaries.dayOfMonth}`;
+  const strengthInfoTooltip =
+    "Strength level compares each month’s average session-top-set rating for this lift. For every session, your best set (up to 10 reps) is converted to an estimated 1RM and graded against age-, sex-, and bodyweight-adjusted standards. This check passes when this month matches or exceeds last month.";
 
   return (
-    <div className="space-y-0.5">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <p className="mb-1.5 text-xs font-medium text-muted-foreground">
-              Strength Level
-            </p>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            <p className="max-w-56 text-center text-xs">
-              For each Big Four lift, the best set per session is classified
-              against age- and bodyweight-adjusted standards. This column
-              averages those daily ratings — a drop signals reduced training
-              intensity, not just lower volume.
-            </p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+    <div className="space-y-1.5">
+      <div className="space-y-1">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <p className="text-xs font-medium text-muted-foreground">
+                Big Four Criteria (8 checks)
+              </p>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p className="max-w-64 text-center text-xs">
+                Each lift has 2 checks: strength level and tonnage. Combined with
+                sessions, that makes 9 monthly win criteria.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <AthleteBioInlineSettings
+          forceStackedControls
+          autoOpenWhenDefault={false}
+        />
+      </div>
 
-      {rows.map((row, i) => {
-        const { liftType, current, last } = row;
-        const currentFmt = formatStrengthLevel(current);
-        const lastFmt = formatStrengthLevel(last);
+      <div className="grid grid-cols-[1fr_100px_1fr] items-center gap-2 px-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">
+        <div className="text-right">{boundaries.prevMonthName}</div>
+        <div className="text-center">Criterion</div>
+        <div className="text-left">{boundaries.currentMonthName}</div>
+      </div>
 
-        const regressed =
-          last !== null &&
-          (current === null || current < last - 0.3);
-        const noData = current === null && last === null;
+      {rows.map(({ liftType, tonnage, strength }, i) => {
+        const currentTonnage = tonnage.current ?? 0;
+        const lastTonnage = tonnage.last ?? 0;
+        const tonnagePassed = (tonnage.current ?? 0) >= (tonnage.last ?? 0);
+        const tonnageBaseline = lastTonnage === 0;
+        const tonnageNewWin = tonnageBaseline && currentTonnage > 0;
+        const tonnageColor = tonnageBaseline && !tonnageNewWin
+          ? "text-muted-foreground"
+          : tonnageNewWin || tonnagePassed
+            ? "text-emerald-600 dark:text-emerald-400"
+            : "text-red-600 dark:text-red-400";
 
-        const rowBg = noData
-          ? ""
-          : regressed
-            ? "bg-red-50/50 dark:bg-red-950/30"
-            : "bg-emerald-50/40 dark:bg-emerald-950/20";
-
-        const currentColor = noData
-          ? "text-muted-foreground/40"
-          : regressed
-            ? "text-red-600 dark:text-red-400"
-            : "text-emerald-600 dark:text-emerald-400";
-
-        const currentTooltipText = regressed
-          ? `${liftType} averaged a lower strength level than last month — training intensity for this lift has dipped`
-          : currentTooltip;
+        const currentStrengthFmt = formatStrengthLevel(strength.current);
+        const lastStrengthFmt = formatStrengthLevel(strength.last);
+        const strengthBaseline = strength.last === null;
+        const strengthNewWin = strengthBaseline && strength.current !== null;
+        const strengthRegressed = isStrengthLevelRegressed(
+          strength.current,
+          strength.last,
+        );
+        const strengthLocked = strengthSetupRequired;
+        const strengthPassed = strengthLocked
+          ? true
+          : strengthBaseline || !strengthRegressed;
+        const strengthColor = strengthLocked
+          ? "text-muted-foreground"
+          : strengthBaseline && !strengthNewWin
+          ? "text-muted-foreground"
+          : strengthNewWin || strengthPassed
+            ? "text-emerald-600 dark:text-emerald-400"
+            : "text-red-600 dark:text-red-400";
+        const strengthBg =
+          strengthLocked || (strengthBaseline && !strengthNewWin)
+            ? "bg-muted/20"
+            : strengthPassed
+          ? "bg-emerald-50/30 dark:bg-emerald-950/15"
+          : "bg-red-50/30 dark:bg-red-950/15";
+        const tonnageBg =
+          tonnageBaseline && !tonnageNewWin
+            ? "bg-muted/20"
+            : tonnagePassed
+          ? "bg-emerald-50/30 dark:bg-emerald-950/15"
+          : "bg-red-50/30 dark:bg-red-950/15";
 
         return (
           <motion.div
             key={liftType}
-            className={`grid grid-cols-[1fr_52px_1fr] items-center gap-2 rounded-md px-2 py-1 ${rowBg}`}
+            className="grid grid-cols-[1fr_100px_1fr] grid-rows-2 items-center gap-x-2 gap-y-1 rounded-md px-2 py-2"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
               duration: 0.35,
-              delay: 0.1 + i * 0.07,
+              delay: 0.08 + i * 0.06,
               ease: [0.22, 1, 0.36, 1],
             }}
           >
-            {/* Last month level */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="text-right">
-                    {lastFmt ? (
-                      <span className="text-xs text-muted-foreground">
-                        {lastFmt.emoji} {lastFmt.label}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground/30">—</span>
-                    )}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  <p className="max-w-44 text-center text-xs">{lastTooltip}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            {/* Lift SVG */}
-            <div className="flex justify-center">
-              <LiftSvg liftType={liftType} size="sm" animate={false} />
+            <div className={`rounded px-1.5 py-1 text-right ${strengthBg}`}>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="text-xs">
+                      {strengthLocked ? (
+                        <span className="text-muted-foreground/70">Locked</span>
+                      ) : lastStrengthFmt ? (
+                        <span className="text-muted-foreground">
+                          {lastStrengthFmt.emoji} {lastStrengthFmt.label}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/40">—</span>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    <p className="max-w-52 text-center text-xs">
+                      {strengthLocked
+                        ? "Add age, sex, and bodyweight in your profile to compare strength levels."
+                        : lastStrengthTooltip}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
 
-            {/* This month level */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="text-left">
-                    {currentFmt ? (
-                      <span className={`text-xs font-medium ${currentColor}`}>
-                        {currentFmt.emoji} {currentFmt.label}
-                      </span>
-                    ) : (
-                      <span className={`text-xs font-medium ${currentColor}`}>
-                        {last !== null ? "Not trained" : "—"}
-                      </span>
-                    )}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p className="max-w-52 text-center text-xs">{currentTooltipText}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <div className="row-span-2 flex flex-col items-center justify-center gap-1">
+              <LiftSvg liftType={liftType} size="sm" animate={false} />
+              <span className="text-[10px] text-muted-foreground/80">
+                {formatLiftTypeLabel(liftType)}
+              </span>
+            </div>
+
+            <div className={`rounded px-1.5 py-1 text-left ${strengthBg}`}>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={`text-xs font-medium ${strengthColor}`}>
+                      {strengthLocked ? (
+                        <span>Setup required</span>
+                      ) : currentStrengthFmt ? (
+                        <span>
+                          {currentStrengthFmt.emoji} {currentStrengthFmt.label}
+                        </span>
+                      ) : (
+                        <span>{strength.last !== null ? "Not trained" : "—"}</span>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p className="max-w-52 text-center text-xs">
+                      {strengthLocked
+                        ? "Strength-level comparisons require bio details: age, sex, and bodyweight."
+                        : strengthRegressed
+                        ? `${formatLiftTypeLabel(liftType)} strength level regressed vs last month`
+                        : strengthInfoTooltip}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            <div className={`rounded px-1.5 py-1 text-right ${tonnageBg}`}>
+              <div className={`text-xs ${tonnageColor}`}>
+                <span className="text-muted-foreground">
+                  {formatTonnage(tonnage.last ?? 0, unit)} lifted
+                </span>
+              </div>
+            </div>
+
+            <div className={`rounded px-1.5 py-1 text-left ${tonnageBg}`}>
+              <div className={`text-xs font-semibold ${tonnageColor}`}>
+                {formatTonnage(tonnage.current ?? 0, unit)} lifted
+              </div>
+            </div>
           </motion.div>
         );
       })}
@@ -679,25 +782,13 @@ export function ThisMonthInIronCard() {
           paceTooltip,
           vsTooltip,
         },
-        {
-          label: "Big Four Tonnage",
-          labelTooltip:
-            "Squat, bench, deadlift, and overhead press — the backbone of sustainable strength. Matching last month's Big Four exposure is the primary win condition.",
-          currentLabel: formatTonnage(stats.bigFourTonnage.current, unit),
-          lastLabel: formatTonnage(stats.bigFourTonnage.lastSameDay, unit),
-          paceStatus: bigFourPaceStatus,
-          projectedLabel: `~${formatTonnage(bigFourPaceStatus.projected, unit)}`,
-          showPaceMarker: true,
-          hideNeeded: false,
-          paceTooltip,
-          vsTooltip,
-        },
       ]
     : [];
 
   const winNeedsText = stats
     ? getWinNeedsText(stats, strengthLevelPassed, unit)
     : null;
+  const strengthSetupRequired = !!bio?.bioDataIsDefault;
 
   return (
     <Card className="flex-1">
@@ -736,9 +827,12 @@ export function ThisMonthInIronCard() {
               ))}
             </div>
 
-            <StrengthLevelTable
+            <BigFourCriteriaTable
+              bigFourByLift={stats.bigFourByLift}
               strengthLevelStats={strengthLevelStats}
+              strengthSetupRequired={strengthSetupRequired}
               boundaries={boundaries}
+              unit={unit}
             />
 
             <Separator />
@@ -748,10 +842,6 @@ export function ThisMonthInIronCard() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.35 }}
             >
-              <p className="text-xs text-muted-foreground/60">
-                Won by matching last month{"'"}s sessions and Big Four tonnage
-                with stable strength levels.
-              </p>
               <p className="text-sm">
                 <span className="text-muted-foreground">Verdict: </span>
                 <span

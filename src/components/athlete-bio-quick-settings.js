@@ -179,8 +179,14 @@ export function AthleteBioQuickSettings() {
  *
  * @param {Object} props
  * @param {string} [props.liftNote] - Optional extra context appended to the summary line (e.g. "lifting 239lb in each lift type").
+ * @param {boolean} [props.forceStackedControls] - Render controls below the summary and allow wrapping within the parent width.
+ * @param {boolean} [props.autoOpenWhenDefault] - Auto-open controls when bio is default/unset.
  */
-export function AthleteBioInlineSettings({ liftNote }) {
+export function AthleteBioInlineSettings({
+  liftNote,
+  forceStackedControls = false,
+  autoOpenWhenDefault = true,
+}) {
   const {
     age,
     setAge,
@@ -194,7 +200,7 @@ export function AthleteBioInlineSettings({ liftNote }) {
   } = useAthleteBio();
 
   // Pre-open the controls when the user is still on defaults — nudge them to personalise
-  const [isOpen, setIsOpen] = useState(bioDataIsDefault);
+  const [isOpen, setIsOpen] = useState(autoOpenWhenDefault && bioDataIsDefault);
   const unit = isMetric ? "kg" : "lb";
 
   const ageOnChange = (e) => {
@@ -207,12 +213,16 @@ export function AthleteBioInlineSettings({ liftNote }) {
   };
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className={cn("flex flex-col items-center gap-1", forceStackedControls && "w-full")}>
       {/* Row 1: bio summary + toggle button — always visible */}
-      <div className="flex items-center gap-2">
+      <div className={cn(
+        "flex items-center gap-2",
+        forceStackedControls && "w-full flex-wrap justify-center",
+      )}>
         <p className={cn(
           "text-xs",
           bioDataIsDefault ? "text-amber-500" : "text-muted-foreground",
+          forceStackedControls && "text-center",
         )}>
           Strength levels for a {bodyWeight}{unit} {sex}, age {age}{liftNote && ` ${liftNote}`}{bioDataIsDefault && " · enter your details"}.
         </p>
@@ -251,7 +261,7 @@ export function AthleteBioInlineSettings({ liftNote }) {
 
           {/* Desktop: controls float right of the button */}
           <AnimatePresence>
-            {isOpen && (
+            {isOpen && !forceStackedControls && (
               <motion.div
                 className="absolute left-full top-1/2 ml-2 hidden -translate-y-1/2 items-center gap-x-2 whitespace-nowrap xl:flex"
                 initial={{ opacity: 0, x: -8 }}
@@ -296,40 +306,53 @@ export function AthleteBioInlineSettings({ liftNote }) {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="flex items-center justify-center gap-x-2 xl:hidden"
+            className={cn(
+              "items-center justify-center gap-x-2 gap-y-2",
+              forceStackedControls
+                ? "flex w-full flex-wrap justify-center"
+                : "flex xl:hidden",
+            )}
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
           >
-            <span className="text-xs text-muted-foreground">Age</span>
-            <Input
-              aria-label="Age"
-              type="number"
-              min={13}
-              max={100}
-              value={age}
-              onChange={ageOnChange}
-              className="h-7 w-16 px-2 text-xs"
-            />
-            <span className="text-xs font-semibold text-muted-foreground">M</span>
-            <Switch
-              aria-label="Sex"
-              checked={sex === "female"}
-              onCheckedChange={(c) => setSex(c ? "female" : "male")}
-              className="h-5 w-9 data-[state=checked]:bg-pink-500"
-            />
-            <span className="text-xs font-semibold text-muted-foreground">F</span>
-            <Input
-              aria-label="Bodyweight"
-              type="number"
-              min={isMetric ? 40 : 90}
-              max={isMetric ? 180 : 400}
-              value={bodyWeight}
-              onChange={bwOnChange}
-              className="h-7 w-20 px-2 text-xs"
-            />
-            <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Age</span>
+              <Input
+                aria-label="Age"
+                type="number"
+                min={13}
+                max={100}
+                value={age}
+                onChange={ageOnChange}
+                className="h-7 w-16 px-2 text-xs"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <span className="text-xs font-semibold text-muted-foreground">M</span>
+              <Switch
+                aria-label="Sex"
+                checked={sex === "female"}
+                onCheckedChange={(c) => setSex(c ? "female" : "male")}
+                className="h-5 w-9 data-[state=checked]:bg-pink-500"
+              />
+              <span className="text-xs font-semibold text-muted-foreground">F</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Input
+                aria-label="Bodyweight"
+                type="number"
+                min={isMetric ? 40 : 90}
+                max={isMetric ? 180 : 400}
+                value={bodyWeight}
+                onChange={bwOnChange}
+                className="h-7 w-20 px-2 text-xs"
+              />
+              <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

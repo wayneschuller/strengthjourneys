@@ -1,17 +1,16 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useMemo } from "react";
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
-import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 
 import {
-  ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
@@ -22,8 +21,9 @@ import {
   Pie,
   PieChart,
   Cell,
-  Legend,
-  Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
 } from "recharts";
 
 const bigFourURLs = {
@@ -82,16 +82,28 @@ const CustomLegend = ({ payload }) => {
 };
 
 // Tabular list of top lifts showing color swatch, name (linked for big-four), reps, and set percentage.
-const TopLiftsTable = ({ stats }) => {
+const TopLiftsTable = ({ stats, selectedLiftType, onSelectLift }) => {
   return (
     <div>
-      <h3 className="mb-2 text-sm font-semibold">
-        Top {stats.length} Most Frequent Lifts
-      </h3>
       <table className="w-full">
         <tbody>
           {stats.map((item, index) => (
-            <tr key={index}>
+            <tr
+              key={index}
+              onClick={() => onSelectLift?.(item.liftType)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelectLift?.(item.liftType);
+                }
+              }}
+              tabIndex={0}
+              className={cn(
+                "cursor-pointer rounded-md outline-none transition-colors hover:bg-muted/40 focus-visible:bg-muted/50",
+                selectedLiftType === item.liftType && "bg-muted/60",
+              )}
+              aria-label={`Show ${item.liftType} reps over time`}
+            >
               <td className="py-1">
                 <div className="flex min-w-0 items-center gap-2">
                   <div
@@ -102,6 +114,7 @@ const TopLiftsTable = ({ stats }) => {
                     <Link
                       href={bigFourURLs[item.liftType]}
                       className="truncate text-sm underline"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       {item.liftType}
                     </Link>
@@ -124,6 +137,209 @@ const TopLiftsTable = ({ stats }) => {
   );
 };
 
+function parseDateUTC(ymd) {
+  if (!ymd) return null;
+  const [year, month, day] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function formatDateShortUTC(date, cadence) {
+  if (!(date instanceof Date)) return "";
+  if (cadence === "year") {
+    return String(date.getUTCFullYear());
+  }
+  if (cadence === "quarter") {
+    const q = Math.floor(date.getUTCMonth() / 3) + 1;
+    return `Q${q} ${String(date.getUTCFullYear()).slice(-2)}`;
+  }
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    year: "2-digit",
+    timeZone: "UTC",
+  });
+}
+
+function startOfBucketUTC(date, cadence) {
+  const d = new Date(date);
+  if (cadence === "week") {
+    const day = d.getUTCDay(); // 0=Sun
+    const mondayOffset = (day + 6) % 7;
+    d.setUTCDate(d.getUTCDate() - mondayOffset);
+    d.setUTCHours(0, 0, 0, 0);
+    return d;
+  }
+  if (cadence === "month") {
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+  }
+  if (cadence === "quarter") {
+    const qMonth = Math.floor(d.getUTCMonth() / 3) * 3;
+    return new Date(Date.UTC(d.getUTCFullYear(), qMonth, 1));
+  }
+  return new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+}
+
+function addBucketUTC(date, cadence, count = 1) {
+  const d = new Date(date);
+  if (cadence === "week") {
+    d.setUTCDate(d.getUTCDate() + count * 7);
+    return d;
+  }
+  if (cadence === "month") {
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + count, 1));
+  }
+  if (cadence === "quarter") {
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + count * 3, 1));
+  }
+  return new Date(Date.UTC(d.getUTCFullYear() + count, 0, 1));
+}
+
+function bucketKeyUTC(date, cadence) {
+  const d = startOfBucketUTC(date, cadence);
+  return d.toISOString().slice(0, 10);
+}
+
+function countBucketsInRange(firstDate, lastDate, cadence) {
+  let count = 0;
+  let current = startOfBucketUTC(firstDate, cadence);
+  const end = startOfBucketUTC(lastDate, cadence);
+  while (current <= end && count < 5000) {
+    count += 1;
+    current = addBucketUTC(current, cadence, 1);
+  }
+  return count;
+}
+
+function chooseCadence(firstDate, lastDate, targetBars = 10) {
+  const options = ["week", "month", "quarter", "year"];
+  const scored = options.map((cadence) => {
+    const count = countBucketsInRange(firstDate, lastDate, cadence);
+    const distance = Math.abs(count - targetBars);
+    const lowPenalty = count < 4 ? (4 - count) * 3 : 0;
+    const highPenalty = count > 14 ? (count - 14) * 0.6 : 0;
+    return {
+      cadence,
+      count,
+      score: distance + lowPenalty + highPenalty,
+    };
+  });
+
+  scored.sort((a, b) => a.score - b.score);
+  return scored[0]?.cadence ?? "month";
+}
+
+function buildLiftChronology(parsedData, liftType, targetBars = 10) {
+  if (!parsedData?.length || !liftType) return null;
+
+  const validEntries = parsedData.filter((entry) => !entry.isGoal && entry.date);
+  if (!validEntries.length) return null;
+
+  const firstDate = parseDateUTC(validEntries[0].date);
+  const lastDate = parseDateUTC(validEntries[validEntries.length - 1].date);
+  if (!firstDate || !lastDate) return null;
+
+  const totalWeeks = countBucketsInRange(firstDate, lastDate, "week");
+  if (totalWeeks < 10) return null;
+
+  const cadence = chooseCadence(firstDate, lastDate, targetBars);
+  const sums = new Map();
+
+  parsedData.forEach((entry) => {
+    if (entry.isGoal) return;
+    if (entry.liftType !== liftType) return;
+    if (typeof entry.reps !== "number") return;
+    const d = parseDateUTC(entry.date);
+    if (!d) return;
+    const key = bucketKeyUTC(d, cadence);
+    sums.set(key, (sums.get(key) ?? 0) + (entry.reps ?? 0));
+  });
+
+  const bars = [];
+  let cursor = startOfBucketUTC(firstDate, cadence);
+  const end = startOfBucketUTC(lastDate, cadence);
+  let i = 0;
+  while (cursor <= end && i < 5000) {
+    const key = cursor.toISOString().slice(0, 10);
+    bars.push({
+      bucket: key,
+      label: formatDateShortUTC(cursor, cadence),
+      reps: sums.get(key) ?? 0,
+      index: i,
+    });
+    cursor = addBucketUTC(cursor, cadence, 1);
+    i += 1;
+  }
+
+  const maxReps = bars.reduce((m, b) => Math.max(m, b.reps), 0);
+  const nonZeroBars = bars.filter((b) => b.reps > 0).length;
+  const hasAnyLiftData = nonZeroBars > 0;
+
+  if (!hasAnyLiftData) return null;
+
+  return {
+    cadence,
+    bars,
+    maxReps,
+    nonZeroBars,
+    startLabel: formatDateShortUTC(bars[0] ? parseDateUTC(bars[0].bucket) : firstDate, cadence),
+    endLabel: formatDateShortUTC(
+      bars[bars.length - 1] ? parseDateUTC(bars[bars.length - 1].bucket) : lastDate,
+      cadence,
+    ),
+  };
+}
+
+function MiniLiftChronologyChart({ liftType, color, chronology }) {
+  if (!liftType || !chronology?.bars?.length) return null;
+
+  const chartConfig = {
+    reps: {
+      label: "Reps",
+      color,
+    },
+  };
+
+  return (
+    <ChartContainer
+      config={chartConfig}
+      className="mt-1 mb-5 h-[72px] w-full select-none !aspect-auto [&_.recharts-surface]:focus:outline-none [&_.recharts-surface]:focus-visible:outline-none"
+      onMouseDownCapture={(e) => e.preventDefault()}
+    >
+        <BarChart data={chronology.bars} margin={{ top: 6, right: 2, left: 2, bottom: 4 }}>
+          <XAxis dataKey="label" hide />
+          <ChartTooltip
+            cursor={false}
+            content={
+              <ChartTooltipContent
+                labelFormatter={(_, payload) => {
+                  const item = payload?.[0]?.payload;
+                  if (!item) return "";
+                  return item.label;
+                }}
+                formatter={(value) => (
+                  <div className="flex w-full items-center justify-between gap-3">
+                    <span className="text-muted-foreground">Reps</span>
+                    <span className="font-mono font-medium tabular-nums">
+                      {Number(value).toLocaleString()}
+                    </span>
+                  </div>
+                )}
+              />
+            }
+          />
+          <Bar dataKey="reps" radius={[2, 2, 0, 0]} fill={color} fillOpacity={0.75}>
+            {chronology.bars.map((bar, index) => (
+              <Cell
+                key={`mini-bar-${index}`}
+                fill={color}
+                opacity={bar.reps > 0 ? 0.9 : 0.12}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ChartContainer>
+  );
+}
+
 /**
  * Card showing a donut pie chart of the top 10 most frequent lift types by set count,
  * with an interactive tooltip and a summary table below the chart.
@@ -132,9 +348,10 @@ const TopLiftsTable = ({ stats }) => {
  * @param {Object} props
  */
 export function LiftTypeFrequencyPieCard() {
-  const { liftTypes, isLoading } = useUserLiftingData();
+  const { liftTypes, parsedData, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
+  const [selectedLiftType, setSelectedLiftType] = useState(null);
 
   if (isLoading)
     return (
@@ -193,6 +410,21 @@ export function LiftTypeFrequencyPieCard() {
     percentage: ((item.sets / totalSets) * 100).toFixed(1),
   }));
 
+  const effectiveSelectedLiftType =
+    stats.find((item) => item.liftType === selectedLiftType)?.liftType ??
+    stats[0]?.liftType ??
+    null;
+
+  const selectedLiftColor =
+    stats.find((item) => item.liftType === effectiveSelectedLiftType)?.color ??
+    "#3b82f6";
+
+  const selectedLiftChronology = buildLiftChronology(
+    parsedData,
+    effectiveSelectedLiftType,
+    10,
+  );
+
   return (
     <Card className="flex h-full flex-1 flex-col">
       <CardHeader>
@@ -205,7 +437,7 @@ export function LiftTypeFrequencyPieCard() {
         <ChartContainer
           config={chartConfig}
           // className="mx-auto aspect-square min-h-[300px]"
-          className="mx-auto h-[280px] w-full max-w-[400px] sm:h-[320px] md:h-[360px]"
+          className="mx-auto h-[250px] w-full max-w-[400px] sm:h-[280px] md:h-[300px]"
         >
             <PieChart>
               <Pie
@@ -213,7 +445,7 @@ export function LiftTypeFrequencyPieCard() {
                 dataKey="sets"
                 nameKey="liftType"
                 cx="50%"
-                cy="50%"
+                cy="56%"
                 innerRadius={60}
                 outerRadius={120}
                 paddingAngle={4}
@@ -221,56 +453,41 @@ export function LiftTypeFrequencyPieCard() {
                 animationBegin={200}
                 animationDuration={800}
                 animationEasing="ease-out"
+                onClick={(data) => setSelectedLiftType(data?.liftType ?? null)}
               >
                 {pieData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.color}
-                    className="stroke-background transition-opacity hover:opacity-80"
-                    strokeWidth={2}
+                    className="cursor-pointer stroke-background transition-opacity"
+                    strokeWidth={
+                      effectiveSelectedLiftType === entry.liftType ? 3 : 2
+                    }
+                    opacity={
+                      !effectiveSelectedLiftType ||
+                      effectiveSelectedLiftType === entry.liftType
+                        ? 1
+                        : 0.45
+                    }
                   />
                 ))}
                 {/* <LabelList dataKey="liftType" content={renderCustomizedLabel} position="outside" /> */}
               </Pie>
               {/* <Legend verticalAlign="top" align="center" content={<CustomLegend />} /> */}
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (!active || !payload) return null;
-                  const data = payload[0];
-                  const sets = data.value;
-                  const percentage = ((sets / totalSets) * 100).toFixed(1);
-
-                  return (
-                    <div className="rounded-md border bg-background p-3 shadow-lg">
-                      <div key={data.name} className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                            style={{ background: data.payload.color }}
-                          />
-                          <div className="text-base font-semibold">
-                            {data.name}
-                          </div>
-                        </div>
-                        <div className="space-y-1 pl-6">
-                          <div className="text-sm">
-                            {data.payload.reps?.toLocaleString()} reps
-                          </div>
-                          <div className="text-sm">
-                            {sets} sets ({percentage}% of total)
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }}
-              />
             </PieChart>
         </ChartContainer>
 
-        {/* <Separator className="my-6" /> */}
+        <MiniLiftChronologyChart
+          liftType={effectiveSelectedLiftType}
+          color={selectedLiftColor}
+          chronology={selectedLiftChronology}
+        />
 
-        <TopLiftsTable stats={stats} />
+        <TopLiftsTable
+          stats={stats}
+          selectedLiftType={effectiveSelectedLiftType}
+          onSelectLift={setSelectedLiftType}
+        />
       </CardContent>
     </Card>
   );

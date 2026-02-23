@@ -20,7 +20,6 @@ import {
   Pie,
   PieChart,
   Cell,
-  Sector,
   BarChart,
   Bar,
   XAxis,
@@ -36,31 +35,15 @@ const bigFourURLs = {
 const RADIAN = Math.PI / 180;
 const SUBTLE_CHART_OUTLINE = "hsl(var(--foreground) / 0.28)";
 const STRONG_CHART_OUTLINE = "hsl(var(--foreground) / 0.65)";
-
-function ActivePieSliceShape(props) {
-  return (
-    <g style={{ filter: "drop-shadow(0 3px 8px hsl(var(--foreground) / 0.18))" }}>
-      <Sector
-        {...props}
-        outerRadius={(props.outerRadius ?? 0) + 6}
-        stroke={STRONG_CHART_OUTLINE}
-        strokeWidth={4}
-        strokeLinejoin="round"
-      />
-    </g>
-  );
-}
+const HOVER_CHART_OUTLINE = "hsl(var(--primary))";
 
 const renderCustomizedLabel = ({
   cx,
   cy,
   midAngle,
   outerRadius,
-  percent,
   name,
 }) => {
-  if (!percent || percent < 0.035) return null;
-
   const cos = Math.cos(-midAngle * RADIAN);
   const sin = Math.sin(-midAngle * RADIAN);
   const sx = cx + (outerRadius + 2) * cos;
@@ -383,6 +366,7 @@ export function LiftTypeFrequencyPieCard() {
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
   const [selectedLiftType, setSelectedLiftType] = useState(null);
+  const [hoveredLiftType, setHoveredLiftType] = useState(null);
 
   if (isLoading)
     return (
@@ -410,7 +394,7 @@ export function LiftTypeFrequencyPieCard() {
   });
 
   // Get top 10 lifts and their colors
-  const pieData = topLifts.map((item) => ({
+  let pieData = topLifts.map((item) => ({
     liftType: item.liftType,
     sets: item.totalSets,
     reps: item.totalReps,
@@ -420,6 +404,10 @@ export function LiftTypeFrequencyPieCard() {
 
   // Calculate total sets for percentage
   const totalSets = pieData.reduce((sum, item) => sum + item.sets, 0);
+  pieData = pieData.map((item) => ({
+    ...item,
+    percentageValue: totalSets > 0 ? item.sets / totalSets : 0,
+  }));
 
   // Create chart config for shadcn chart
   const chartConfig = {
@@ -447,9 +435,6 @@ export function LiftTypeFrequencyPieCard() {
     null;
   const explicitSelectedLiftType =
     stats.find((item) => item.liftType === selectedLiftType)?.liftType ?? null;
-  const activePieIndex = explicitSelectedLiftType
-    ? pieData.findIndex((item) => item.liftType === explicitSelectedLiftType)
-    : -1;
 
   const selectedLiftColor =
     stats.find((item) => item.liftType === effectiveSelectedLiftType)?.color ??
@@ -490,8 +475,8 @@ export function LiftTypeFrequencyPieCard() {
                 animationBegin={200}
                 animationDuration={800}
                 animationEasing="ease-out"
-                activeIndex={activePieIndex >= 0 ? activePieIndex : undefined}
-                activeShape={ActivePieSliceShape}
+                onMouseLeave={() => setHoveredLiftType(null)}
+                onMouseEnter={(data) => setHoveredLiftType(data?.liftType ?? null)}
                 onClick={(data) => setSelectedLiftType(data?.liftType ?? null)}
               >
                 {pieData.map((entry, index) => (
@@ -500,12 +485,18 @@ export function LiftTypeFrequencyPieCard() {
                     fill={entry.color}
                     className="cursor-pointer transition-opacity"
                     stroke={
-                      explicitSelectedLiftType === entry.liftType
+                      hoveredLiftType === entry.liftType
+                        ? HOVER_CHART_OUTLINE
+                        : explicitSelectedLiftType === entry.liftType
                         ? STRONG_CHART_OUTLINE
                         : SUBTLE_CHART_OUTLINE
                     }
                     strokeWidth={
-                      explicitSelectedLiftType === entry.liftType ? 4 : 2.5
+                      hoveredLiftType === entry.liftType
+                        ? 5
+                        : explicitSelectedLiftType === entry.liftType
+                          ? 4
+                          : 2.5
                     }
                     strokeLinejoin="round"
                     opacity={

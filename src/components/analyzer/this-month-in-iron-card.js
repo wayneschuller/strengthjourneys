@@ -340,7 +340,7 @@ function formatCurrentSessionsReporting(count, boundaries) {
   const daysRemaining = boundaries?.daysRemainingInCurrentMonth ?? 0;
   if (daysRemaining <= 10) {
     const dayLabel = daysRemaining === 1 ? "day" : "days";
-    return `${count} with ${daysRemaining} ${dayLabel} remaining`;
+    return `${count} with ${daysRemaining} ${dayLabel} left`;
   }
   return `${count} so far`;
 }
@@ -644,7 +644,7 @@ function BigFourCriteriaTable({
 
   return (
     <div className="space-y-1.5">
-      <div className="grid grid-cols-[1fr_100px_1fr] items-center gap-2 px-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">
+      <div className="grid grid-cols-[1fr_100px_1fr] items-center gap-2 px-2 text-[11px] font-medium uppercase tracking-wide text-primary">
         <div className="text-right">{boundaries.prevMonthName}</div>
         <div className="text-center" aria-hidden="true"></div>
         <div className="text-left">{boundaries.currentMonthName}</div>
@@ -686,6 +686,9 @@ function BigFourCriteriaTable({
                       value={sessions.lastSameDay}
                       className="tabular-nums text-2xl font-semibold tracking-tight text-muted-foreground"
                     />
+                    <div className="text-[10px] text-muted-foreground/80">
+                      of {sessions.last ?? 0} total
+                    </div>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
@@ -696,24 +699,25 @@ function BigFourCriteriaTable({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <div className="text-center text-xs font-medium text-muted-foreground">
-              Sessions
+            <div className="text-center text-xs font-medium leading-tight text-muted-foreground">
+              <div>Gym</div>
+              <div>Sessions</div>
             </div>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="text-left">
-                    <div className="flex items-baseline gap-1">
+                    <div>
                       <AnimatedInteger
                         value={sessions.current}
                         className={`tabular-nums text-2xl font-bold tracking-tight ${rightColor}`}
                       />
-                      <span className="text-[10px] text-muted-foreground">
-                        {currentSessionsReporting.replace(
-                          `${sessions.current ?? 0} `,
-                          "",
-                        )}
-                      </span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {currentSessionsReporting.replace(
+                        `${sessions.current ?? 0} `,
+                        "",
+                      )}
                     </div>
                   </div>
                 </TooltipTrigger>

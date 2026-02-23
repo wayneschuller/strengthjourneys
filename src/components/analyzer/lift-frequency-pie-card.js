@@ -20,6 +20,7 @@ import {
   Pie,
   PieChart,
   Cell,
+  Sector,
   BarChart,
   Bar,
   XAxis,
@@ -34,8 +35,20 @@ const bigFourURLs = {
 
 const RADIAN = Math.PI / 180;
 const SUBTLE_CHART_OUTLINE = "hsl(var(--foreground) / 0.28)";
-const STRONG_CHART_OUTLINE = "hsl(var(--foreground) / 0.65)";
+const STRONG_CHART_OUTLINE = "hsl(var(--primary))";
 const HOVER_CHART_OUTLINE = "hsl(var(--primary))";
+const ACTIVE_SEGMENT_OUTLINE = "hsl(var(--primary))";
+
+function ActiveBorderPieSliceShape(props) {
+  return (
+    <Sector
+      {...props}
+      stroke={ACTIVE_SEGMENT_OUTLINE}
+      strokeWidth={6}
+      strokeLinejoin="round"
+    />
+  );
+}
 
 const renderCustomizedLabel = ({
   cx,
@@ -43,7 +56,8 @@ const renderCustomizedLabel = ({
   midAngle,
   outerRadius,
   name,
-}) => {
+  payload,
+}, selectedLiftType) => {
   const cos = Math.cos(-midAngle * RADIAN);
   const sin = Math.sin(-midAngle * RADIAN);
   const sx = cx + (outerRadius + 2) * cos;
@@ -53,6 +67,7 @@ const renderCustomizedLabel = ({
   const ex = mx + (cos >= 0 ? 7 : -7);
   const ey = my;
   const textAnchor = cos >= 0 ? "start" : "end";
+  const isSelected = payload?.liftType === selectedLiftType;
 
   return (
     <g>
@@ -67,7 +82,10 @@ const renderCustomizedLabel = ({
         y={ey}
         textAnchor={textAnchor}
         dominantBaseline="central"
-        className="fill-foreground text-[11px] font-medium md:text-[12px]"
+        className={cn(
+          "fill-foreground text-[11px] md:text-[12px]",
+          isSelected ? "font-bold" : "font-medium",
+        )}
       >
         {name}
       </text>
@@ -435,6 +453,12 @@ export function LiftTypeFrequencyPieCard() {
     null;
   const explicitSelectedLiftType =
     stats.find((item) => item.liftType === selectedLiftType)?.liftType ?? null;
+  const activePieIndex = (() => {
+    const activeLift = hoveredLiftType ?? explicitSelectedLiftType;
+    if (!activeLift) return undefined;
+    const index = pieData.findIndex((item) => item.liftType === activeLift);
+    return index >= 0 ? index : undefined;
+  })();
 
   const selectedLiftColor =
     stats.find((item) => item.liftType === effectiveSelectedLiftType)?.color ??
@@ -470,9 +494,11 @@ export function LiftTypeFrequencyPieCard() {
                 innerRadius={60}
                 outerRadius={108}
                 paddingAngle={4}
-                label={renderCustomizedLabel}
+                label={(props) => renderCustomizedLabel(props, explicitSelectedLiftType)}
                 labelLine={false}
                 isAnimationActive={false}
+                activeIndex={activePieIndex}
+                activeShape={ActiveBorderPieSliceShape}
                 onMouseLeave={() => setHoveredLiftType(null)}
                 onMouseEnter={(data) => setHoveredLiftType(data?.liftType ?? null)}
                 onClick={(data) => setSelectedLiftType(data?.liftType ?? null)}
@@ -497,12 +523,8 @@ export function LiftTypeFrequencyPieCard() {
                           : 2.5
                     }
                     strokeLinejoin="round"
-                    opacity={
-                      !explicitSelectedLiftType ||
-                      explicitSelectedLiftType === entry.liftType
-                        ? 1
-                        : 0.7
-                    }
+                    strokeOpacity={0}
+                    opacity={1}
                   />
                 ))}
                 {/* <LabelList dataKey="liftType" content={renderCustomizedLabel} position="outside" /> */}

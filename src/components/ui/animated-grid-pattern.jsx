@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { motion } from "motion/react"
+import { motion } from "motion/react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 export function AnimatedGridPattern({
   width = 40,
@@ -14,76 +14,97 @@ export function AnimatedGridPattern({
   maxOpacity = 0.5,
   duration = 4,
   repeatDelay = 0.5,
+  minHold = 0.58,
+  maxHold = 0.78,
+  stagger = 0.04,
   ...props
 }) {
-  const id = useId()
-  const containerRef = useRef(null)
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
-  const [squares, setSquares] = useState([])
+  const id = useId();
+  const containerRef = useRef(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [squares, setSquares] = useState([]);
 
   const getPos = useCallback(() => {
     return [
       Math.floor((Math.random() * dimensions.width) / width),
       Math.floor((Math.random() * dimensions.height) / height),
     ];
-  }, [dimensions.height, dimensions.width, height, width])
+  }, [dimensions.height, dimensions.width, height, width]);
 
-  const generateSquares = useCallback((count) => {
-    return Array.from({ length: count }, (_, i) => ({
-      id: i,
-      pos: getPos(),
-      iteration: 0,
-    }));
-  }, [getPos])
+  const getHold = useCallback(() => {
+    const min = Math.min(minHold, maxHold);
+    const max = Math.max(minHold, maxHold);
+    return min + Math.random() * (max - min);
+  }, [minHold, maxHold]);
 
-  const updateSquarePosition = useCallback((squareId) => {
-    setSquares((currentSquares) => {
-      const current = currentSquares[squareId]
-      if (!current || current.id !== squareId) return currentSquares
+  const getSpeed = useCallback(() => 0.85 + Math.random() * 0.55, []);
 
-      const nextSquares = currentSquares.slice()
-      nextSquares[squareId] = {
-        ...current,
+  const generateSquares = useCallback(
+    (count) => {
+      return Array.from({ length: count }, (_, i) => ({
+        id: i,
         pos: getPos(),
-        iteration: current.iteration + 1,
-      }
+        iteration: 0,
+        hold: getHold(),
+        speed: getSpeed(),
+      }));
+    },
+    [getHold, getPos, getSpeed],
+  );
 
-      return nextSquares
-    })
-  }, [getPos])
+  const updateSquarePosition = useCallback(
+    (squareId) => {
+      setSquares((currentSquares) => {
+        const current = currentSquares[squareId];
+        if (!current || current.id !== squareId) return currentSquares;
+
+        const nextSquares = currentSquares.slice();
+        nextSquares[squareId] = {
+          ...current,
+          pos: getPos(),
+          iteration: current.iteration + 1,
+          hold: getHold(),
+          speed: getSpeed(),
+        };
+
+        return nextSquares;
+      });
+    },
+    [getHold, getPos, getSpeed],
+  );
 
   useEffect(() => {
     if (dimensions.width && dimensions.height) {
-      setSquares(generateSquares(numSquares))
+      setSquares(generateSquares(numSquares));
     }
-  }, [dimensions.width, dimensions.height, generateSquares, numSquares])
+  }, [dimensions.width, dimensions.height, generateSquares, numSquares]);
 
   useEffect(() => {
-    const element = containerRef.current
-    if (!element) return
+    const element = containerRef.current;
+    if (!element) return;
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setDimensions((currentDimensions) => {
-          const nextWidth = entry.contentRect.width
-          const nextHeight = entry.contentRect.height
+          const nextWidth = entry.contentRect.width;
+          const nextHeight = entry.contentRect.height;
           if (
             currentDimensions.width === nextWidth &&
             currentDimensions.height === nextHeight
           ) {
-            return currentDimensions
+            return currentDimensions;
           }
-          return { width: nextWidth, height: nextHeight }
-        })
+          return { width: nextWidth, height: nextHeight };
+        });
       }
-    })
+    });
 
-    resizeObserver.observe(element)
+    resizeObserver.observe(element);
 
     return () => {
-      resizeObserver.disconnect()
+      resizeObserver.disconnect();
     };
-  }, [])
+  }, []);
 
   return (
     <svg
@@ -91,9 +112,10 @@ export function AnimatedGridPattern({
       aria-hidden="true"
       className={cn(
         "pointer-events-none absolute inset-0 h-full w-full fill-gray-400/30 stroke-gray-400/30",
-        className
+        className,
       )}
-      {...props}>
+      {...props}
+    >
       <defs>
         <pattern
           id={id}
@@ -101,35 +123,40 @@ export function AnimatedGridPattern({
           height={height}
           patternUnits="userSpaceOnUse"
           x={x}
-          y={y}>
+          y={y}
+        >
           <path
             d={`M.5 ${height}V.5H${width}`}
             fill="none"
-            strokeDasharray={strokeDasharray} />
+            strokeDasharray={strokeDasharray}
+          />
         </pattern>
       </defs>
       <rect width="100%" height="100%" fill={`url(#${id})`} />
       <svg x={x} y={y} className="overflow-visible">
-        {squares.map(({ pos: [squareX, squareY], id, iteration }, index) => (
-          <motion.rect
-            initial={{ opacity: 0 }}
-            animate={{ opacity: maxOpacity }}
-            transition={{
-              duration,
-              repeat: 1,
-              delay: index * 0.1,
-              repeatType: "reverse",
-              repeatDelay,
-            }}
-            onAnimationComplete={() => updateSquarePosition(id)}
-            key={`${id}-${iteration}`}
-            width={width - 1}
-            height={height - 1}
-            x={squareX * width + 1}
-            y={squareY * height + 1}
-            fill="currentColor"
-            strokeWidth="0" />
-        ))}
+        {squares.map(
+          ({ pos: [squareX, squareY], id, iteration, hold, speed }, index) => (
+            <motion.rect
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, maxOpacity, maxOpacity, 0] }}
+              transition={{
+                duration: duration * 2 * speed,
+                delay: index * stagger,
+                times: [0, 0.22, hold, 1],
+                ease: "easeInOut",
+                repeatDelay,
+              }}
+              onAnimationComplete={() => updateSquarePosition(id)}
+              key={`${id}-${iteration}`}
+              width={width - 1}
+              height={height - 1}
+              x={squareX * width + 1}
+              y={squareY * height + 1}
+              fill="currentColor"
+              strokeWidth="0"
+            />
+          ),
+        )}
       </svg>
     </svg>
   );

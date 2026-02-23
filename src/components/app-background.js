@@ -13,11 +13,15 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 
-const staticGridClassName = cn(
-  "pointer-events-none absolute inset-0 h-full w-full fill-gray-400/30 stroke-foreground/30",
-  "[mask-image:radial-gradient(1200px_circle_at_top_left,white,transparent)]",
-  "inset-x-0 inset-y-[-30%] h-[200%] -skew-y-12",
+const vanillaGridBaseClassName = cn(
+  "pointer-events-none absolute inset-0 h-full w-full",
+  "inset-x-0 inset-y-[-32%] h-[210%] -skew-y-12",
 );
+
+const vanillaGridMaskA =
+  "[mask-image:radial-gradient(1400px_circle_at_top_left,white,transparent)]";
+const vanillaGridMaskB =
+  "[mask-image:radial-gradient(1100px_circle_at_18%_10%,white,transparent)]";
 
 const blueprintMaskClassName =
   "[mask-image:radial-gradient(140vmax_circle_at_top_left,white_0,white_72%,transparent_100%)]";
@@ -26,20 +30,6 @@ const blueprintOverlayClassName = cn(
   "pointer-events-none absolute inset-0",
   blueprintMaskClassName,
 );
-
-const GRID_SQUARES = [
-  [0, 3],
-  [4, 5],
-  [10, 6],
-  [6, 7],
-  [22, 7],
-  [1, 8],
-  [16, 10],
-  [0, 11],
-  [3, 14],
-  [8, 15],
-  [14, 16],
-];
 
 const BLUEPRINT_SQUARES = [
   [1, 2],
@@ -274,22 +264,70 @@ export function AppBackground() {
 
       {/* Static GridPattern when animated is disabled (not for starry night) */}
       {showStaticGrid && (
-        <GridPattern squares={GRID_SQUARES} className={staticGridClassName} />
+        <>
+          {/* Use the same grid renderer as animated mode, but with no squares. */}
+          <AnimatedGridPattern
+            numSquares={0}
+            width={52}
+            height={52}
+            className={cn(
+              vanillaGridBaseClassName,
+              "text-foreground/14 stroke-foreground/18 fill-transparent",
+              vanillaGridMaskA,
+            )}
+          />
+          <AnimatedGridPattern
+            numSquares={0}
+            width={18}
+            height={18}
+            className={cn(
+              "pointer-events-none absolute inset-0 h-full w-full",
+              "inset-x-0 inset-y-[-30%] h-[200%] -skew-y-12",
+              "text-primary/10 stroke-foreground/10 fill-transparent",
+              vanillaGridMaskB,
+            )}
+          />
+        </>
       )}
 
       {/* Animated GridPattern for light/dark when animated is enabled */}
       {showAnimatedGrid && (
-        <AnimatedGridPattern
-          numSquares={80}
-          maxOpacity={0.22}
-          duration={1.5}
-          repeatDelay={0.3}
-          className={cn(
-            "stroke-foreground/30 pointer-events-none absolute inset-0 h-full w-full fill-gray-400/30",
-            "[mask-image:radial-gradient(1200px_circle_at_top_left,white,transparent)]",
-            "inset-x-0 inset-y-[-30%] h-[200%] -skew-y-12",
-          )}
-        />
+        <>
+          <AnimatedGridPattern
+            numSquares={46}
+            width={52}
+            height={52}
+            maxOpacity={0.12}
+            duration={3.2}
+            repeatDelay={0.9}
+            minHold={0.68}
+            maxHold={0.84}
+            stagger={0.02}
+            className={cn(
+              "pointer-events-none absolute inset-0 h-full w-full",
+              "text-foreground/18 stroke-foreground/22 fill-transparent",
+              "[mask-image:radial-gradient(1400px_circle_at_top_left,white,transparent)]",
+              "inset-x-0 inset-y-[-32%] h-[210%] -skew-y-12",
+            )}
+          />
+          <AnimatedGridPattern
+            numSquares={92}
+            width={18}
+            height={18}
+            maxOpacity={0.1}
+            duration={2.2}
+            repeatDelay={0.55}
+            minHold={0.62}
+            maxHold={0.8}
+            stagger={0.012}
+            className={cn(
+              "pointer-events-none absolute inset-0 h-full w-full",
+              "text-primary/12 stroke-foreground/12 fill-transparent",
+              "[mask-image:radial-gradient(1100px_circle_at_18%_10%,white,transparent)]",
+              "inset-x-0 inset-y-[-30%] h-[200%] -skew-y-12",
+            )}
+          />
+        </>
       )}
 
       {/* Warp background for retro-arcade themes */}

@@ -181,11 +181,13 @@ export function AthleteBioQuickSettings() {
  * @param {string} [props.liftNote] - Optional extra context appended to the summary line (e.g. "lifting 239lb in each lift type").
  * @param {boolean} [props.forceStackedControls] - Render controls below the summary and allow wrapping within the parent width.
  * @param {boolean} [props.autoOpenWhenDefault] - Auto-open controls when bio is default/unset.
+ * @param {string} [props.defaultBioPrompt] - Custom summary text shown when bio data is still default/unset.
  */
 export function AthleteBioInlineSettings({
   liftNote,
   forceStackedControls = false,
   autoOpenWhenDefault = true,
+  defaultBioPrompt,
 }) {
   const {
     age,
@@ -202,6 +204,9 @@ export function AthleteBioInlineSettings({
   // Pre-open the controls when the user is still on defaults — nudge them to personalise
   const [isOpen, setIsOpen] = useState(autoOpenWhenDefault && bioDataIsDefault);
   const unit = isMetric ? "kg" : "lb";
+  const bioSummaryText = bioDataIsDefault && defaultBioPrompt
+    ? defaultBioPrompt
+    : `Strength levels for a ${bodyWeight}${unit} ${sex}, age ${age}${liftNote ? ` ${liftNote}` : ""}${bioDataIsDefault ? " · enter your details" : ""}.`;
 
   const ageOnChange = (e) => {
     const v = parseInt(e.target.value || "0", 10);
@@ -224,7 +229,7 @@ export function AthleteBioInlineSettings({
           bioDataIsDefault ? "text-amber-500" : "text-muted-foreground",
           forceStackedControls && "text-center",
         )}>
-          Strength levels for a {bodyWeight}{unit} {sex}, age {age}{liftNote && ` ${liftNote}`}{bioDataIsDefault && " · enter your details"}.
+          {bioSummaryText}
         </p>
 
         {/* Button — desktop controls float right of it; mobile controls appear below */}

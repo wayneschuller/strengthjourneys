@@ -17,10 +17,10 @@ import {
 } from "@/components/ui/chart";
 
 import {
-  LabelList,
   Pie,
   PieChart,
   Cell,
+  Sector,
   BarChart,
   Bar,
   XAxis,
@@ -34,32 +34,61 @@ const bigFourURLs = {
 };
 
 const RADIAN = Math.PI / 180;
+const SUBTLE_CHART_OUTLINE = "hsl(var(--foreground) / 0.28)";
+const STRONG_CHART_OUTLINE = "hsl(var(--foreground) / 0.65)";
+
+function ActivePieSliceShape(props) {
+  return (
+    <g style={{ filter: "drop-shadow(0 3px 8px hsl(var(--foreground) / 0.18))" }}>
+      <Sector
+        {...props}
+        outerRadius={(props.outerRadius ?? 0) + 6}
+        stroke={STRONG_CHART_OUTLINE}
+        strokeWidth={4}
+        strokeLinejoin="round"
+      />
+    </g>
+  );
+}
+
 const renderCustomizedLabel = ({
   cx,
   cy,
   midAngle,
-  innerRadius,
   outerRadius,
   percent,
-  index,
-  value,
   name,
 }) => {
-  const radius = outerRadius + 20;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  if (!percent || percent < 0.035) return null;
+
+  const cos = Math.cos(-midAngle * RADIAN);
+  const sin = Math.sin(-midAngle * RADIAN);
+  const sx = cx + (outerRadius + 2) * cos;
+  const sy = cy + (outerRadius + 2) * sin;
+  const mx = cx + (outerRadius + 10) * cos;
+  const my = cy + (outerRadius + 14) * sin;
+  const ex = mx + (cos >= 0 ? 7 : -7);
+  const ey = my;
+  const textAnchor = cos >= 0 ? "start" : "end";
 
   return (
-    <text
-      x={x}
-      y={y}
-      fill="currentColor"
-      textAnchor={x > cx ? "start" : "end"}
-      dominantBaseline="central"
-      className="fill-foreground text-[12px] font-medium md:text-[14px]"
-    >
-      {name}
-    </text>
+    <g>
+      <path
+        d={`M ${sx} ${sy} L ${mx} ${my} L ${ex} ${ey}`}
+        fill="none"
+        stroke="hsl(var(--muted-foreground) / 0.45)"
+        strokeWidth={1.25}
+      />
+      <text
+        x={ex + (cos >= 0 ? 2 : -2)}
+        y={ey}
+        textAnchor={textAnchor}
+        dominantBaseline="central"
+        className="fill-foreground text-[11px] font-medium md:text-[12px]"
+      >
+        {name}
+      </text>
+    </g>
   );
 };
 
@@ -332,6 +361,8 @@ function MiniLiftChronologyChart({ liftType, color, chronology }) {
                 key={`mini-bar-${index}`}
                 fill={color}
                 opacity={bar.reps > 0 ? 0.9 : 0.12}
+                stroke={SUBTLE_CHART_OUTLINE}
+                strokeWidth={bar.reps > 0 ? 1.25 : 0.75}
               />
             ))}
           </Bar>
@@ -414,6 +445,11 @@ export function LiftTypeFrequencyPieCard() {
     stats.find((item) => item.liftType === selectedLiftType)?.liftType ??
     stats[0]?.liftType ??
     null;
+  const explicitSelectedLiftType =
+    stats.find((item) => item.liftType === selectedLiftType)?.liftType ?? null;
+  const activePieIndex = explicitSelectedLiftType
+    ? pieData.findIndex((item) => item.liftType === explicitSelectedLiftType)
+    : -1;
 
   const selectedLiftColor =
     stats.find((item) => item.liftType === effectiveSelectedLiftType)?.color ??
@@ -437,7 +473,7 @@ export function LiftTypeFrequencyPieCard() {
         <ChartContainer
           config={chartConfig}
           // className="mx-auto aspect-square min-h-[300px]"
-          className="mx-auto h-[250px] w-full max-w-[400px] sm:h-[280px] md:h-[300px]"
+          className="mx-auto h-[280px] w-full max-w-[440px] sm:h-[310px] md:h-[330px]"
         >
             <PieChart>
               <Pie
@@ -445,29 +481,38 @@ export function LiftTypeFrequencyPieCard() {
                 dataKey="sets"
                 nameKey="liftType"
                 cx="50%"
-                cy="56%"
+                cy="52%"
                 innerRadius={60}
-                outerRadius={120}
+                outerRadius={108}
                 paddingAngle={4}
+                label={renderCustomizedLabel}
                 labelLine={false}
                 animationBegin={200}
                 animationDuration={800}
                 animationEasing="ease-out"
+                activeIndex={activePieIndex >= 0 ? activePieIndex : undefined}
+                activeShape={ActivePieSliceShape}
                 onClick={(data) => setSelectedLiftType(data?.liftType ?? null)}
               >
                 {pieData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.color}
-                    className="cursor-pointer stroke-background transition-opacity"
-                    strokeWidth={
-                      effectiveSelectedLiftType === entry.liftType ? 3 : 2
+                    className="cursor-pointer transition-opacity"
+                    stroke={
+                      explicitSelectedLiftType === entry.liftType
+                        ? STRONG_CHART_OUTLINE
+                        : SUBTLE_CHART_OUTLINE
                     }
+                    strokeWidth={
+                      explicitSelectedLiftType === entry.liftType ? 4 : 2.5
+                    }
+                    strokeLinejoin="round"
                     opacity={
-                      !effectiveSelectedLiftType ||
-                      effectiveSelectedLiftType === entry.liftType
+                      !explicitSelectedLiftType ||
+                      explicitSelectedLiftType === entry.liftType
                         ? 1
-                        : 0.45
+                        : 0.7
                     }
                   />
                 ))}

@@ -1,4 +1,3 @@
-
 import {
   Card,
   CardContent,
@@ -9,12 +8,7 @@ import {
 import { useMemo, useRef, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
-import {
-  format,
-  parseISO,
-  subDays,
-  differenceInCalendarDays,
-} from "date-fns";
+import { format, parseISO, subDays, differenceInCalendarDays } from "date-fns";
 import { motion } from "motion/react";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -120,48 +114,48 @@ export function ConsistencyCard() {
       </CardHeader>
       <CardContent className="flex justify-center">
         {!consistency ? (
-          <Skeleton className="h-[40vh]" />
+          <Skeleton className="h-56 w-full max-w-xl sm:h-64" />
         ) : (
           <div
             ref={gridRef}
             className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4"
           >
             {consistency.map((item, index) => (
-                <TooltipProvider key={item.label}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <motion.div
-                        data-grade-ref
-                        className="flex flex-col items-center text-center rounded-xl p-2 -m-2 transition-colors duration-150 hover:bg-muted/60"
-                        initial={{ opacity: 0, scale: 0.85 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{
-                          duration: 0.45,
-                          delay: index * 0.06,
-                          ease: [0.22, 1, 0.36, 1],
-                        }}
-                      >
-                        <div>
-                          <CircularProgressWithLetter
-                            progress={item.percentage}
-                          />
-                        </div>
-                        <div className="text-nowrap">{item.label}</div>
-                        <p className="mt-1 text-xs text-muted-foreground sm:hidden">
-                          {item.tooltip}
-                        </p>
-                      </motion.div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <div className="w-40">
-                        <div className="text-center text-2xl sm:text-2xl lg:text-lg">
-                          {item.percentage}%
-                        </div>
-                        <div>{item.tooltip}</div>
+              <TooltipProvider key={item.label}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <motion.div
+                      data-grade-ref
+                      className="hover:bg-muted/60 -m-2 flex flex-col items-center rounded-xl p-2 text-center transition-colors duration-150"
+                      initial={{ opacity: 0, scale: 0.85 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{
+                        duration: 0.45,
+                        delay: index * 0.06,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                    >
+                      <div>
+                        <CircularProgressWithLetter
+                          progress={item.percentage}
+                        />
                       </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                      <div className="text-nowrap">{item.label}</div>
+                      <p className="text-muted-foreground mt-1 text-xs sm:hidden">
+                        {item.tooltip}
+                      </p>
+                    </motion.div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="w-40">
+                      <div className="text-center text-2xl sm:text-2xl lg:text-lg">
+                        {item.percentage}%
+                      </div>
+                      <div>{item.tooltip}</div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             ))}
           </div>
         )}

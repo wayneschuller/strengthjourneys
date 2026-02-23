@@ -26,6 +26,12 @@ import { cn } from "@/lib/utils";
  * @param {function} [props.onPressAnalytics] - Optional analytics callback fired when button is pressed
  * @param {function} [props.onClick] - Click handler
  * @param {boolean} [props.disabled] - Disabled state
+ *
+ * Usage pattern (recommended for fast copy actions):
+ * - Use `useTransientSuccess()` in the parent component.
+ * - Call `triggerSuccess()` after the copy/share action succeeds.
+ * - Pass `isSuccess` + `successLabel` to this button (for tick + label swap).
+ * - Keep destructive/error toast for failures; skip success toast when inline confirmation is enough.
  */
 export function ShareCopyButton({
   label = "Copy",

@@ -1,4 +1,3 @@
-"use client";
 
 import { useRef, useMemo } from "react";
 import {

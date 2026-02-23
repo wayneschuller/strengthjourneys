@@ -1,4 +1,3 @@
-"use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { DrivePicker, DrivePickerDocsView } from "@googleworkspace/drive-picker-react";

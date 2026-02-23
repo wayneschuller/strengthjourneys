@@ -1,4 +1,3 @@
-"use client";
 
 import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";

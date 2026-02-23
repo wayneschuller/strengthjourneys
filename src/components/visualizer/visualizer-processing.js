@@ -1,4 +1,3 @@
-"use client";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { devLog, logTiming, getDisplayWeight } from "@/lib/processing-utils";
 

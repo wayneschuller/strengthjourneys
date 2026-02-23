@@ -1,5 +1,4 @@
 /** @format */
-"use client";
 
 import { gaTrackSheetConnectClick } from "@/lib/analytics";
 

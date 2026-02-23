@@ -1,4 +1,3 @@
-"use client";
 
 import { motion } from "motion/react";
 import { LIFT_SVG_MAP } from "../lift-svg";

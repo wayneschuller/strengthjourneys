@@ -1,4 +1,3 @@
-"use client";
 
 import { Children, isValidElement } from "react";
 import { cn } from "@/lib/utils";

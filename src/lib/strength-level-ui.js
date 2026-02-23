@@ -1,4 +1,3 @@
-"use client";
 
 /**
  * Maps a strength rating label to a shadcn/ui Badge variant.

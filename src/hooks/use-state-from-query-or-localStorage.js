@@ -1,4 +1,3 @@
-"use client";
 import { useRouter } from "next/router";
 import { useState, useEffect, useRef, useCallback } from "react";
 

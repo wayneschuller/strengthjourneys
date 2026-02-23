@@ -1,4 +1,3 @@
-"use client";
 
 import { useMemo, useState, useEffect } from "react";
 import { useLiftColors } from "@/hooks/use-lift-colors";

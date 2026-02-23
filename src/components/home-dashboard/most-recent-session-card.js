@@ -1,4 +1,3 @@
-"use client";
 
 import { useState, useMemo } from "react";
 import { useReadLocalStorage } from "usehooks-ts";

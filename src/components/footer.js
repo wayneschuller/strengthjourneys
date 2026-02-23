@@ -1,6 +1,5 @@
 /** @format */
 
-"use client";
 import { featurePages } from "@/pages";
 import { PageContainer } from "@/components/page-header";
 

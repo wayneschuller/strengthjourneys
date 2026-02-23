@@ -1,4 +1,3 @@
-"use client";
 
 import { useMemo } from "react";
 import { useMediaQuery } from "usehooks-ts";

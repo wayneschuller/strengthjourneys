@@ -1,4 +1,3 @@
-"use client";
 
 import { format } from "date-fns";
 import { cloneElement, useState, useEffect, useRef, useCallback } from "react";

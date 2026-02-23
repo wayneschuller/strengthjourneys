@@ -1,5 +1,4 @@
 /** @format */
-"use client";
 
 /**
  * Central Google Analytics (GA4) helper for Strength Journeys.

@@ -1,4 +1,3 @@
-"use client";
 
 import Head from "next/head";
 import { useEffect, useState, useContext } from "react";

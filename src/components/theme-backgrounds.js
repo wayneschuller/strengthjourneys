@@ -1,6 +1,5 @@
 /** @format */
 
-"use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";

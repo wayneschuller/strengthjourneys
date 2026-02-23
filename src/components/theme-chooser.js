@@ -1,6 +1,5 @@
 /** @format */
 
-"use client";
 
 import { devLog } from "@/lib/processing-utils";
 import { gaEvent, GA_EVENT_TAGS, gaTrackSignInClick } from "@/lib/analytics";

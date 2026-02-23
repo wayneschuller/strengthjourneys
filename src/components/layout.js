@@ -1,6 +1,5 @@
 /** @format */
 
-"use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";

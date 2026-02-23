@@ -1,4 +1,3 @@
-"use client";
 
 import { Share2, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";

@@ -1,4 +1,3 @@
-"use client";
 
 import * as React from "react";
 import { useContext, useState, useEffect, useCallback } from "react";

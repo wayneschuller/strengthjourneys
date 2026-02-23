@@ -281,7 +281,9 @@ export default function Home() {
         <BigFourLiftCards lifts={mainBarbellLifts} animated={bigFourAnimated} />
         <Separator className="my-8" />
 
-        <h2 className="mt-8 text-xl font-semibold">🛠️ Strength Insights & Tools</h2>
+        <h2 className="mt-8 text-xl font-semibold">
+          🛠️ Strength Insights & Tools
+        </h2>
         <div className="mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {featurePages.map((card, index) => (
             <FeatureCard key={index} index={index} {...card} />
@@ -309,10 +311,19 @@ export default function Home() {
  */
 function FeatureCard({ href, title, description, IconComponent, index = 0 }) {
   const isWarmupsCalculator = href === "/warm-up-sets-calculator";
+  const isAnalyzer = href === "/analyzer";
   const chartColorVar = `--chart-${(index % 5) + 1}`;
 
   return (
     <Card className="group ring-ring relative shadow-lg ring-0 hover:ring-1">
+      {isAnalyzer && (
+        <Badge
+          variant="outline"
+          className="bg-primary/10 text-primary absolute top-2 right-2 text-xs"
+        >
+          Updated! ✨
+        </Badge>
+      )}
       {isWarmupsCalculator && (
         <Badge
           variant="outline"

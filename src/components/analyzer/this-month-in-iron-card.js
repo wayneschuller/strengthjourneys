@@ -31,6 +31,137 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LiftSvg } from "@/components/year-recap/lift-svg";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
+// ─── Main component ────────────────────────────────────────────────────────
+
+/**
+ * Card that challenges the user to beat their previous calendar month across
+ * sessions, Big Four tonnage, and Big Four strength level consistency.
+ * Reads data from UserLiftingDataProvider; takes no props.
+ */
+export function ThisMonthInIronCard() {
+  const { parsedData } = useUserLiftingData();
+  const bio = useAthleteBio();
+  const { isMetric } = bio;
+  const { status: authStatus } = useSession();
+
+  const boundaries = useMemo(() => getMonthBoundaries(), []);
+
+  const [motivationalPhrase, setMotivationalPhrase] = useState(
+    MOTIVATIONAL_PHRASES[0],
+  );
+  useEffect(() => {
+    setMotivationalPhrase(
+      MOTIVATIONAL_PHRASES[
+        Math.floor(Math.random() * MOTIVATIONAL_PHRASES.length)
+      ],
+    );
+  }, []);
+
+  const stats = useMemo(() => {
+    if (!parsedData) return null;
+    return computeMonthlyBattleStats(parsedData, boundaries);
+  }, [parsedData, boundaries]);
+
+  const strengthLevelStats = useMemo(() => {
+    if (!parsedData || !bio) return null;
+    return computeStrengthLevelStats(parsedData, boundaries, bio);
+  }, [parsedData, bio, boundaries]);
+
+  const strengthLevelPassed = useMemo(
+    () => getStrengthLevelPassed(strengthLevelStats),
+    [strengthLevelStats],
+  );
+
+  const verdict = useMemo(() => {
+    if (!stats) return null;
+    return getVerdict(stats, strengthLevelPassed);
+  }, [stats, strengthLevelPassed]);
+
+  const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
+
+  const sessionsPaceStatus = stats
+    ? getPaceStatus(stats.sessions.current, stats.sessions.last, stats.progressRatio)
+    : null;
+  const bigFourPaceStatus = stats
+    ? getPaceStatus(stats.bigFourTonnage.current, stats.bigFourTonnage.last, stats.progressRatio)
+    : null;
+
+  const winNeedsText = stats
+    ? getWinNeedsText(stats, strengthLevelPassed, unit)
+    : null;
+  const strengthSetupRequired = !!bio?.bioDataIsDefault;
+  const checksSummary = useMemo(
+    () => getMonthlyChecksSummary(stats, strengthLevelStats),
+    [stats, strengthLevelStats],
+  );
+
+  return (
+    <Card className="flex-1">
+      <CardHeader>
+        <CardTitle>
+          {authStatus === "unauthenticated" && "Demo Mode: "}
+          This Month in Iron
+        </CardTitle>
+        <CardDescription>{motivationalPhrase}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {!stats && <Skeleton className="h-[30vh]" />}
+
+        {stats && (
+          <>
+            <BigFourCriteriaTable
+              sessions={stats.sessions}
+              bigFourByLift={stats.bigFourByLift}
+              strengthLevelStats={strengthLevelStats}
+              strengthSetupRequired={strengthSetupRequired}
+              boundaries={boundaries}
+              unit={unit}
+            />
+
+            <Separator />
+            <motion.div
+              className="space-y-1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.35 }}
+            >
+              <p className="text-sm">
+                <span className="text-muted-foreground">Verdict: </span>
+                <span
+                  className={
+                    verdict?.won
+                      ? "font-semibold text-emerald-600 dark:text-emerald-400"
+                      : "text-muted-foreground"
+                  }
+                >
+                  {(() => {
+                    if (verdict?.won) return "Winning the Month ✅";
+
+                    const onPace = (s) =>
+                      s?.status === "ahead" || s?.status === "on-pace";
+                    if (onPace(sessionsPaceStatus) && onPace(bigFourPaceStatus)) {
+                      return "On Track to Win ⚒️";
+                    }
+                    return "Not Winning Yet ⚒️";
+                  })()}
+                </span>
+              </p>
+              {checksSummary && (
+                <p className="text-xs text-muted-foreground">
+                  {checksSummary.checksMet}/{checksSummary.checksTotal} checks green
+                </p>
+              )}
+              {verdict?.label === "Still Forging" && winNeedsText && (
+                <p className="text-xs text-muted-foreground">{winNeedsText}</p>
+              )}
+            </motion.div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Motivational phrases ──────────────────────────────────────────────────
 
 const MOTIVATIONAL_PHRASES = [
@@ -918,136 +1049,5 @@ function BigFourCriteriaTable({
         />
       </div>
     </div>
-  );
-}
-
-// ─── Main component ────────────────────────────────────────────────────────
-
-/**
- * Card that challenges the user to beat their previous calendar month across
- * sessions, Big Four tonnage, and Big Four strength level consistency.
- * Reads data from UserLiftingDataProvider; takes no props.
- */
-export function ThisMonthInIronCard() {
-  const { parsedData } = useUserLiftingData();
-  const bio = useAthleteBio();
-  const { isMetric } = bio;
-  const { status: authStatus } = useSession();
-
-  const boundaries = useMemo(() => getMonthBoundaries(), []);
-
-  const [motivationalPhrase, setMotivationalPhrase] = useState(
-    MOTIVATIONAL_PHRASES[0],
-  );
-  useEffect(() => {
-    setMotivationalPhrase(
-      MOTIVATIONAL_PHRASES[
-        Math.floor(Math.random() * MOTIVATIONAL_PHRASES.length)
-      ],
-    );
-  }, []);
-
-  const stats = useMemo(() => {
-    if (!parsedData) return null;
-    return computeMonthlyBattleStats(parsedData, boundaries);
-  }, [parsedData, boundaries]);
-
-  const strengthLevelStats = useMemo(() => {
-    if (!parsedData || !bio) return null;
-    return computeStrengthLevelStats(parsedData, boundaries, bio);
-  }, [parsedData, bio, boundaries]);
-
-  const strengthLevelPassed = useMemo(
-    () => getStrengthLevelPassed(strengthLevelStats),
-    [strengthLevelStats],
-  );
-
-  const verdict = useMemo(() => {
-    if (!stats) return null;
-    return getVerdict(stats, strengthLevelPassed);
-  }, [stats, strengthLevelPassed]);
-
-  const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
-
-  const sessionsPaceStatus = stats
-    ? getPaceStatus(stats.sessions.current, stats.sessions.last, stats.progressRatio)
-    : null;
-  const bigFourPaceStatus = stats
-    ? getPaceStatus(stats.bigFourTonnage.current, stats.bigFourTonnage.last, stats.progressRatio)
-    : null;
-
-  const winNeedsText = stats
-    ? getWinNeedsText(stats, strengthLevelPassed, unit)
-    : null;
-  const strengthSetupRequired = !!bio?.bioDataIsDefault;
-  const checksSummary = useMemo(
-    () => getMonthlyChecksSummary(stats, strengthLevelStats),
-    [stats, strengthLevelStats],
-  );
-
-  return (
-    <Card className="flex-1">
-      <CardHeader>
-        <CardTitle>
-          {authStatus === "unauthenticated" && "Demo Mode: "}
-          This Month in Iron
-        </CardTitle>
-        <CardDescription>{motivationalPhrase}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {!stats && <Skeleton className="h-[30vh]" />}
-
-        {stats && (
-          <>
-            <BigFourCriteriaTable
-              sessions={stats.sessions}
-              bigFourByLift={stats.bigFourByLift}
-              strengthLevelStats={strengthLevelStats}
-              strengthSetupRequired={strengthSetupRequired}
-              boundaries={boundaries}
-              unit={unit}
-            />
-
-            <Separator />
-            <motion.div
-              className="space-y-1"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.35 }}
-            >
-              <p className="text-sm">
-                <span className="text-muted-foreground">Verdict: </span>
-                <span
-                  className={
-                    verdict?.won
-                      ? "font-semibold text-emerald-600 dark:text-emerald-400"
-                      : "text-muted-foreground"
-                  }
-                >
-                  {(() => {
-                    if (verdict?.won) return "Winning the Month ✅";
-
-                    const onPace = (s) =>
-                      s?.status === "ahead" || s?.status === "on-pace";
-                    if (onPace(sessionsPaceStatus) && onPace(bigFourPaceStatus)) {
-                      return "On Track to Win ⚒️";
-                    }
-                    return "Not Winning Yet ⚒️";
-                  })()}
-                </span>
-              </p>
-              {checksSummary && (
-                <p className="text-xs text-muted-foreground">
-                  {checksSummary.checksMet}/{checksSummary.checksTotal} checks green
-                </p>
-              )}
-              {verdict?.label === "Still Forging" && winNeedsText && (
-                <p className="text-xs text-muted-foreground">{winNeedsText}</p>
-              )}
-            </motion.div>
-          </>
-        )}
-      </CardContent>
-    </Card>
   );
 }

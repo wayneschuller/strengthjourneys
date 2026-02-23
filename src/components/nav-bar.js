@@ -104,7 +104,7 @@ export function NavBar() {
   }, []);
 
   return (
-    <div className="mx-2 my-3 flex items-center rounded-lg bg-background/80 px-3 md:mx-10 md:px-6 xl:mx-24">
+    <div className="bg-background/50 mx-2 my-3 flex items-center rounded-lg px-3 md:mx-10 md:px-6 xl:mx-24">
       <div className="flex items-center">
         <DesktopNav />
         <MobileNav />
@@ -122,9 +122,8 @@ export function NavBar() {
         {/* Logged-in users always get the bio settings button. For guests we only show it on
             pages where bio data (age, sex, bodyweight) actively changes the output — we don't
             want the pulsing badge distracting first-time visitors on the landing page. */}
-        {(authStatus === "authenticated" || BIO_SETTINGS_PAGES.includes(pathname)) && (
-          <AthleteBioQuickSettings />
-        )}
+        {(authStatus === "authenticated" ||
+          BIO_SETTINGS_PAGES.includes(pathname)) && <AthleteBioQuickSettings />}
         <ThemeChooser />
         {/* <DarkModeToggle /> */}
         <AvatarDropdown />
@@ -153,7 +152,7 @@ export function DesktopNav() {
   // Set logo on mount and when theme changes
   useEffect(() => {
     let currentTheme = theme ?? resolvedTheme;
-    
+
     // If theme not yet resolved, try to get from localStorage
     if (!currentTheme && typeof window !== "undefined") {
       const storedTheme = localStorage.getItem(LOCAL_STORAGE_KEYS.THEME);
@@ -161,7 +160,7 @@ export function DesktopNav() {
         currentTheme = storedTheme;
       }
     }
-    
+
     setLogoSrc(getLogoForTheme(currentTheme || "light"));
   }, [theme, resolvedTheme]);
 
@@ -195,7 +194,7 @@ export function DesktopNav() {
         <Link
           href="/gym-playlist-leaderboard"
           className={cn(
-            "transition-colors hover:text-foreground/80",
+            "hover:text-foreground/80 transition-colors",
             pathname === "/gym-playlist-leaderboard"
               ? "text-foreground"
               : "text-foreground/60",
@@ -207,7 +206,7 @@ export function DesktopNav() {
         <Link
           href="/articles"
           className={cn(
-            "transition-colors hover:text-foreground/80",
+            "hover:text-foreground/80 transition-colors",
             pathname.startsWith("/articles")
               ? "text-foreground"
               : "text-foreground/60",
@@ -238,8 +237,7 @@ export function DesktopNav() {
  */
 export function UserSheetIcon() {
   const { data: session, status: authStatus } = useSession();
-  const { sheetInfo, isLoading, isValidating, isError } =
-    useUserLiftingData();
+  const { sheetInfo, isLoading, isValidating, isError } = useUserLiftingData();
 
   // devLog( `<UserSheetIcon /> isLoading: ${isLoading}, isValidating ${isValidating}, isError: ${isError}, authStatus: ${authStatus}`,);
 
@@ -326,16 +324,16 @@ function BigFourBarbellInsightsMenu() {
             <Link
               ref={ref}
               className={cn(
-                "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none",
                 className,
               )}
               {...props}
             >
               <div className="flex flex-row items-center gap-2 align-middle">
                 {bigFourIcons[title]} {/* Icon based on lift title */}
-                <div className="text-sm font-medium leading-none">{title}</div>
+                <div className="text-sm leading-none font-medium">{title}</div>
               </div>
-              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+              <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
                 {children}
               </p>
             </Link>
@@ -353,7 +351,7 @@ function BigFourBarbellInsightsMenu() {
           <NavigationMenuItem>
             <NavigationMenuTrigger
               className={cn(
-                "bg-transparent transition-colors hover:text-foreground/80",
+                "hover:text-foreground/80 bg-transparent transition-colors",
                 pathname.startsWith("/barbell")
                   ? "text-foreground"
                   : "text-foreground/60",
@@ -431,16 +429,16 @@ function StrengthInsightsMenu() {
             <Link
               ref={ref}
               className={cn(
-                "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none",
                 className,
               )}
               {...props}
             >
               <div className="flex flex-row items-center gap-2 align-middle">
                 {props.icon} {/* Icon based on title */}
-                <div className="text-sm font-medium leading-none">{title}</div>
+                <div className="text-sm leading-none font-medium">{title}</div>
               </div>
-              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+              <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
                 {children}
               </p>
             </Link>
@@ -457,7 +455,7 @@ function StrengthInsightsMenu() {
         <NavigationMenuItem>
           <NavigationMenuTrigger
             className={cn(
-              "bg-transparent transition-colors hover:text-foreground/80",
+              "hover:text-foreground/80 bg-transparent transition-colors",
               pathname.startsWith("/analyzer") ||
                 pathname.startsWith("/visualizer") ||
                 pathname.startsWith("/ai-lifting-assistant")
@@ -532,16 +530,16 @@ function CalculatorsMenu() {
             <Link
               ref={ref}
               className={cn(
-                "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline transition-colors outline-none select-none",
                 className,
               )}
               {...props}
             >
               <div className="flex flex-row items-center gap-2 align-middle">
                 {props.icon} {/* Icon based on calculator title */}
-                <div className="text-sm font-medium leading-none">{title}</div>
+                <div className="text-sm leading-none font-medium">{title}</div>
               </div>
-              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+              <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
                 {children}
               </p>
             </Link>
@@ -558,7 +556,7 @@ function CalculatorsMenu() {
         <NavigationMenuItem>
           <NavigationMenuTrigger
             className={cn(
-              "bg-transparent transition-colors hover:text-foreground/80",
+              "hover:text-foreground/80 bg-transparent transition-colors",
               pathname.startsWith("/calculator") ||
                 pathname.startsWith("/warm-up-sets-calculator") ||
                 pathname.startsWith("/strength-level-calculator") ||

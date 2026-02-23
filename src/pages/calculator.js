@@ -40,8 +40,9 @@ import { useLocalStorage, useIsClient } from "usehooks-ts";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
+import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { useStateFromQueryOrLocalStorage } from "../hooks/use-state-from-query-or-localStorage";
-import { Calculator, Copy } from "lucide-react";
+import { Calculator } from "lucide-react";
 import {
   motion,
   useMotionValue,
@@ -173,6 +174,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
   ); // Will be a string
   const isClient = useIsClient();
   const [isCapturingImage, setIsCapturingImage] = useState(false);
+  const { isSuccess: isTextCopied, triggerSuccess: triggerTextCopied } = useTransientSuccess();
   const portraitRef = useRef(null);
   // Capture the resolved theme font at mount time so html2canvas gets the actual
   // font name (not just the unresolved --font-sans CSS variable)
@@ -276,26 +278,28 @@ function E1RMCalculatorMain({ relatedArticles }) {
       `using the ${e1rmFormula} algorithm.\n` +
       `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
 
-    // Create a temporary textarea element
     const textarea = document.createElement("textarea");
-    // Set the value of the textarea to the sentence you want to copy
-    textarea.value = sentenceToCopy;
-    // Append the textarea to the document
-    document.body.appendChild(textarea);
-    // Select the text in the textarea
-    textarea.select();
+    let didCopy = false;
+    try {
+      textarea.value = sentenceToCopy;
+      document.body.appendChild(textarea);
+      textarea.select();
 
-    // Execute the 'copy' command to copy the selected text to the clipboard
-    // FIXME: deprecated function still works
-    document.execCommand("copy");
-    // Remove the temporary textarea
-    document.body.removeChild(textarea);
+      // FIXME: deprecated function still works
+      didCopy = document.execCommand("copy");
+      if (!didCopy) {
+        throw new Error("Copy command failed");
+      }
 
-    toast({
-      description: "Result copied to clipboard.",
-    });
-
-    gaTrackCalcShareCopy("text", { page: "/calculator" });
+      triggerTextCopied();
+    } catch (error) {
+      console.error("Unable to copy calculator text:", error);
+      toast({ variant: "destructive", title: "Could not copy result" });
+    } finally {
+      if (textarea.parentNode) {
+        textarea.parentNode.removeChild(textarea);
+      }
+    }
 
     // This fails in React - but it's the new API
     // if (navigator?.clipboard?.writeText) {
@@ -494,7 +498,14 @@ function E1RMCalculatorMain({ relatedArticles }) {
               estimateE1RM={estimateE1RM}
             />
             <div className="flex gap-2">
-              <ShareCopyButton label="Copy Text" onClick={handleCopyToClipboard} />
+              <ShareCopyButton
+                label="Copy Text"
+                successLabel="Copied"
+                isSuccess={isTextCopied}
+                className="min-w-[112px]"
+                onPressAnalytics={() => gaTrackCalcShareCopy("text", { page: "/calculator" })}
+                onClick={handleCopyToClipboard}
+              />
             </div>
           </div>
 
@@ -1049,14 +1060,26 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
     lines.push(`Source: https://strengthjourneys.xyz/calculator?${params.toString()}`);
 
     const textarea = document.createElement("textarea");
-    textarea.value = lines.join("\n");
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand("copy");
-    document.body.removeChild(textarea);
+    try {
+      textarea.value = lines.join("\n");
+      document.body.appendChild(textarea);
+      textarea.select();
+      const didCopy = document.execCommand("copy");
+      if (!didCopy) {
+        throw new Error("Copy command failed");
+      }
 
-    toast({ description: "Result copied to clipboard." });
-    gaTrackCalcShareCopy("lift_bar", { page: "/calculator", liftType });
+      toast({ description: "Result copied to clipboard." });
+      return true;
+    } catch (error) {
+      console.error(`Unable to copy ${liftType} result:`, error);
+      toast({ variant: "destructive", title: "Could not copy result" });
+      return false;
+    } finally {
+      if (textarea.parentNode) {
+        textarea.parentNode.removeChild(textarea);
+      }
+    }
   };
 
   const [openPopoverLift, setOpenPopoverLift] = useState(null);
@@ -1180,20 +1203,10 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
                     </Popover>
                   </div>
                   {/* Copy button — immediately after the bar on all screen sizes */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)}
-                        className="shrink-0 text-muted-foreground/50 transition-colors hover:text-foreground"
-                        aria-label={`Copy ${liftType} result`}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs">
-                      Copy e1rm estimate with {liftType} rating included
-                    </TooltipContent>
-                  </Tooltip>
+                  <LiftResultCopyButton
+                    liftType={liftType}
+                    onCopy={() => handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)}
+                  />
                 </div>
                 {/* Rating at end — desktop only (shown in row 1 on mobile) */}
                 <span className="hidden w-32 shrink-0 text-right text-xs font-medium md:block">
@@ -1207,5 +1220,29 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
         <div className="border-t" />
       </div>
     </TooltipProvider>
+  );
+}
+
+function LiftResultCopyButton({ liftType, onCopy }) {
+  const { isSuccess, triggerSuccess } = useTransientSuccess();
+
+  const handleClick = () => {
+    const didCopy = onCopy?.();
+    if (didCopy) {
+      triggerSuccess();
+    }
+  };
+
+  return (
+    <ShareCopyButton
+      iconOnly
+      size="icon"
+      label={`Copy ${liftType} result`}
+      tooltip={`Copy e1rm estimate with ${liftType} rating included`}
+      isSuccess={isSuccess}
+      className="h-6 w-6 text-muted-foreground/50 hover:text-foreground"
+      onPressAnalytics={() => gaTrackCalcShareCopy("lift_bar", { page: "/calculator", liftType })}
+      onClick={handleClick}
+    />
   );
 }

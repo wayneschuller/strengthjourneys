@@ -8,6 +8,7 @@ import {
   CarouselNext,
 } from "@/components/ui/carousel";
 import { useToast } from "@/hooks/use-toast";
+import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { TitleCard } from "./cards/title-card";
@@ -41,6 +42,7 @@ export function YearRecapCarousel({ year, isDemo }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const shareRef = useRef(null);
   const [isSharing, setIsSharing] = useState(false);
+  const { isSuccess: isCopied, triggerSuccess: triggerCopied } = useTransientSuccess();
   const { toast } = useToast();
 
   const hasFiredConfettiRef = useRef(false);
@@ -116,24 +118,24 @@ export function YearRecapCarousel({ year, isDemo }) {
           scale: 2,
         });
 
-        canvas.toBlob((blob) => {
-          navigator.clipboard
-            .write([new ClipboardItem({ "image/png": blob })])
-            .then(() => {
-              toast({ title: "Copied to clipboard! Paste into Instagram or anywhere." });
-              const slideId = cards[selectedIndex]?.id;
-              gaTrackShareCopy("year_recap", { page: "/strength-year-in-review", slide: slideId });
-            })
-            .catch((err) => {
-              console.error("Copy error:", err);
-              toast({ variant: "destructive", title: "Could not copy to clipboard" });
-            });
-        }, "image/png");
+        const blob = await new Promise((resolve) => {
+          canvas.toBlob(resolve, "image/png");
+        });
+
+        if (!blob) {
+          throw new Error("Could not generate image blob");
+        }
+
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        triggerCopied();
       } finally {
         if (watermarkEl && watermarkEl.parentNode) {
           watermarkEl.parentNode.removeChild(watermarkEl);
         }
       }
+    } catch (error) {
+      console.error("Copy error:", error);
+      toast({ variant: "destructive", title: "Could not copy to clipboard" });
     } finally {
       setIsSharing(false);
     }
@@ -176,9 +178,19 @@ export function YearRecapCarousel({ year, isDemo }) {
           ) : (
             <ShareCopyButton
               label="Copy this card"
+              successLabel="Copied"
+              isSuccess={isCopied}
               onClick={handleShare}
               isLoading={isSharing}
               disabled={isSharing}
+              className="min-w-[124px]"
+              onPressAnalytics={() => {
+                const slideId = cards[selectedIndex]?.id;
+                gaTrackShareCopy("year_recap", {
+                  page: "/strength-year-in-review",
+                  slide: slideId,
+                });
+              }}
             />
           )}
         </div>

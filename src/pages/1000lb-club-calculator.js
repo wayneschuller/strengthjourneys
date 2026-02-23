@@ -276,7 +276,6 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       ?.writeText(lines.join("\n"))
       .then(() => {
         toast({ description: "Result copied to clipboard." });
-        gaTrackShareCopy("1000lb_club", { page: "/1000lb-club-calculator" });
       })
       .catch(() => {
         toast({ variant: "destructive", title: "Could not copy to clipboard" });
@@ -408,6 +407,10 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             <div className="flex justify-end">
               <ShareCopyButton
                 label="Copy my result"
+                onPressAnalytics={() =>
+                  gaTrackShareCopy("1000lb_club", {
+                    page: "/1000lb-club-calculator",
+                  })}
                 onClick={handleCopyResult}
               />
             </div>

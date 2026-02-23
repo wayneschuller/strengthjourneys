@@ -313,7 +313,7 @@ function MiniLiftChronologyChart({ liftType, color, chronology }) {
   return (
     <ChartContainer
       config={chartConfig}
-      className="mt-1 mb-5 h-[72px] w-full select-none !aspect-auto [&_.recharts-surface]:focus:outline-none [&_.recharts-surface]:focus-visible:outline-none"
+      className="mt-0 mb-5 h-[72px] w-full select-none !aspect-auto [&_.recharts-surface]:focus:outline-none [&_.recharts-surface]:focus-visible:outline-none"
       onMouseDownCapture={(e) => e.preventDefault()}
     >
         <BarChart data={chronology.bars} margin={{ top: 6, right: 2, left: 2, bottom: 4 }}>
@@ -454,11 +454,11 @@ export function LiftTypeFrequencyPieCard() {
           Lifts
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col">
+      <CardContent className="pt-0 flex flex-1 flex-col">
         <ChartContainer
           config={chartConfig}
           // className="mx-auto aspect-square min-h-[300px]"
-          className="mx-auto h-[280px] w-full max-w-[440px] sm:h-[310px] md:h-[330px]"
+          className="mx-auto h-[248px] w-full max-w-[440px] sm:h-[278px] md:h-[292px]"
         >
             <PieChart>
               <Pie
@@ -466,15 +466,13 @@ export function LiftTypeFrequencyPieCard() {
                 dataKey="sets"
                 nameKey="liftType"
                 cx="50%"
-                cy="52%"
+                cy="46%"
                 innerRadius={60}
                 outerRadius={108}
                 paddingAngle={4}
                 label={renderCustomizedLabel}
                 labelLine={false}
-                animationBegin={200}
-                animationDuration={800}
-                animationEasing="ease-out"
+                isAnimationActive={false}
                 onMouseLeave={() => setHoveredLiftType(null)}
                 onMouseEnter={(data) => setHoveredLiftType(data?.liftType ?? null)}
                 onClick={(data) => setSelectedLiftType(data?.liftType ?? null)}

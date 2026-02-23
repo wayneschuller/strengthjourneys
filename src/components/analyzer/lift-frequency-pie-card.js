@@ -34,10 +34,11 @@ const bigFourURLs = {
 };
 
 const RADIAN = Math.PI / 180;
-const SUBTLE_CHART_OUTLINE = "hsl(var(--foreground) / 0.28)";
-const STRONG_CHART_OUTLINE = "hsl(var(--primary))";
-const HOVER_CHART_OUTLINE = "hsl(var(--primary))";
-const ACTIVE_SEGMENT_OUTLINE = "hsl(var(--primary))";
+const SUBTLE_CHART_OUTLINE = "var(--muted-foreground)";
+const STRONG_CHART_OUTLINE = "var(--primary)";
+const HOVER_CHART_OUTLINE = "var(--primary)";
+const ACTIVE_SEGMENT_OUTLINE = "var(--primary)";
+const BAR_OUTLINE = "var(--muted-foreground)";
 
 function ActiveBorderPieSliceShape(props) {
   return (
@@ -74,7 +75,8 @@ const renderCustomizedLabel = ({
       <path
         d={`M ${sx} ${sy} L ${mx} ${my} L ${ex} ${ey}`}
         fill="none"
-        stroke="hsl(var(--muted-foreground) / 0.45)"
+        stroke="var(--muted-foreground)"
+        strokeOpacity={0.45}
         strokeWidth={1.25}
       />
       <text
@@ -356,14 +358,22 @@ function MiniLiftChronologyChart({ liftType, color, chronology }) {
               />
             }
           />
-          <Bar dataKey="reps" radius={[2, 2, 0, 0]} fill={color} fillOpacity={0.75}>
+          <Bar
+            dataKey="reps"
+            radius={[2, 2, 0, 0]}
+            fill={color}
+            fillOpacity={0.9}
+            stroke={BAR_OUTLINE}
+            strokeWidth={1.25}
+          >
             {chronology.bars.map((bar, index) => (
               <Cell
                 key={`mini-bar-${index}`}
                 fill={color}
-                opacity={bar.reps > 0 ? 0.9 : 0.12}
-                stroke={SUBTLE_CHART_OUTLINE}
-                strokeWidth={bar.reps > 0 ? 1.25 : 0.75}
+                opacity={bar.reps > 0 ? 0.95 : 0.16}
+                stroke={BAR_OUTLINE}
+                strokeWidth={bar.reps > 0 ? 1.5 : 1}
+                strokeOpacity={bar.reps > 0 ? 0.55 : 0.4}
               />
             ))}
           </Bar>

@@ -1,4 +1,3 @@
-
 import { motion } from "motion/react";
 import { useMemo, useRef } from "react";
 import {
@@ -59,6 +58,109 @@ const STREAK_ENCOURAGMENTS = [
   "Bookmark this feeling.",
 ];
 
+const JOURNEY_COMPLIMENT_POOLS = {
+  underOneYear: [
+    "building strong foundations",
+    "showing up and stacking wins",
+    "learning the craft",
+    "early momentum",
+    "new-lifter discipline",
+    "solid progress",
+    "turning effort into habit",
+    "earning your stripes",
+    "form-first progress",
+    "quiet consistency",
+    "strength basics done right",
+    "the start of something strong",
+    "putting in honest work",
+    "rookie gains with purpose",
+    "a strong start",
+    "figuring out which end of the bar to lift",
+    "growing yourself up",
+    "novice gains",
+  ],
+  oneToTwoYears: [
+    "consistency",
+    "real progress",
+    "strength growth",
+    "earned momentum",
+    "committed lifting",
+    "barbell discipline",
+    "serious habit-building",
+    "steady improvement",
+    "showing what consistency does",
+    "strength that keeps compounding",
+    "earned confidence",
+    "putting together a strong run",
+    "progress you can feel",
+    "committed effort",
+    "solid lifting momentum",
+    "no longer a gym NPC",
+    "moving plates and getting no dates",
+    "trying to look swole",
+  ],
+  threeToFiveYears: [
+    "serious lifting",
+    "relentless improvement",
+    "iron-earned progress",
+    "resilience under the bar",
+    "next-level consistency",
+    "strength-building momentum",
+    "earned experience",
+    "barbell fluency",
+    "hard-won progress",
+    "disciplined training",
+    "strength built the right way",
+    "putting years behind the work",
+    "seasoned consistency",
+    "proof of the process",
+    "serious commitment",
+    "strong opinions and stronger excuses",
+    "looking jacked in at least one hoodie",
+    "eating protein",
+  ],
+  fiveToTenYears: [
+    "dedication",
+    "forged strength",
+    "earned respect",
+    "veteran consistency",
+    "discipline that lasts",
+    "long-game progress",
+    "iron-forged discipline",
+    "battle-tested consistency",
+    "years of hard-earned strength",
+    "built through heavy days",
+    "veteran grit",
+    "pressure-tested progress",
+    "barbell war stories",
+    "a reputation under the bar",
+    "strength carved from effort",
+    "menacing warm-up weights",
+    "the right to complain about commercial gym playlists",
+    "scaring newbies without even trying",
+  ],
+  tenPlusYears: [
+    "strength mastery",
+    "legendary consistency",
+    "a lifting legacy",
+    "iron-veteran discipline",
+    "generational grit",
+    "elite dedication",
+    "decades of earned power",
+    "battle-hardened strength",
+    "a legacy under the bar",
+    "ironclad discipline",
+    "old-school grit and force",
+    "mastery forged in heavy reps",
+    "proof that time and effort win",
+    "the long reign of consistency",
+    "strength built over eras",
+    "being personally offended by half reps",
+    "old-man strength and zero patience",
+    "enough barbell lore to bore a whole party",
+  ],
+};
+
 /**
  * Compact stat row with icon, label, value, and optional subtext.
  */
@@ -89,12 +191,12 @@ function StatCard({
         <span className="text-muted-foreground text-xs">{description}</span>
         {action && <span className="ml-1">{action}</span>}
       </div>
-      <div className="text-sm font-semibold leading-snug tabular-nums sm:text-base">
+      <div className="text-sm leading-snug font-semibold tabular-nums sm:text-base">
         {title}
       </div>
       {footer && (
         <motion.div
-          className="text-muted-foreground text-[11px] leading-tight line-clamp-1"
+          className="text-muted-foreground line-clamp-1 text-[11px] leading-tight"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{
@@ -120,12 +222,8 @@ function StatCard({
  *   on the home dashboard).
  */
 export function SectionTopCards({ isProgressDone = false }) {
-  const {
-    parsedData,
-    liftTypes,
-    topLiftsByTypeAndReps,
-    sessionTonnageLookup,
-  } = useUserLiftingData();
+  const { parsedData, liftTypes, topLiftsByTypeAndReps, sessionTonnageLookup } =
+    useUserLiftingData();
 
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
 
@@ -181,7 +279,10 @@ export function SectionTopCards({ isProgressDone = false }) {
   // Calculate lifetime tonnage (all-time total weight moved) in preferred units.
   const lifetimeTonnage = useMemo(
     () =>
-      calculateLifetimeTonnageFromLookup(sessionTonnageLookup, isMetric ? "kg" : "lb"),
+      calculateLifetimeTonnageFromLookup(
+        sessionTonnageLookup,
+        isMetric ? "kg" : "lb",
+      ),
     [sessionTonnageLookup, isMetric],
   );
 
@@ -367,24 +468,83 @@ function formatJourneyLength(startDate) {
   const days = differenceInCalendarDays(today, start) % 30;
 
   if (years > 0) {
-    if (years >= 10) {
-      return `Over ${years} years of strength mastery`;
-    } else if (years >= 5) {
-      return `${years} years of strength excellence`;
-    } else if (years >= 1) {
-      return `${years} year${years > 1 ? "s" : ""} of strength commitment`;
-    }
+    const pluralizedYears = `${years} year${years > 1 ? "s" : ""}`;
+    const compliment = getJourneyComplimentFromPool({
+      years,
+      startDate,
+      today,
+    });
+    return `${pluralizedYears} of ${compliment}`;
   }
 
   if (months > 0) {
-    if (months >= 6) {
-      return `${months} months of strength progress`;
-    } else {
-      return `${months} month${months > 1 ? "s" : ""} of lifting`;
+    const compliment = getJourneyComplimentFromPool({
+      years: 0,
+      startDate,
+      today,
+    });
+    return `${months} month${months > 1 ? "s" : ""} of ${compliment}`;
+  }
+
+  const compliment = getJourneyComplimentFromPool({
+    years: 0,
+    startDate,
+    today,
+  });
+  return `${days} day${days !== 1 ? "s" : ""} of ${compliment}`;
+}
+
+function getJourneyComplimentFromPool({ years, startDate, today }) {
+  let poolKey = "underOneYear";
+  let pool = JOURNEY_COMPLIMENT_POOLS.underOneYear;
+
+  if (years >= 10) {
+    poolKey = "tenPlusYears";
+    pool = JOURNEY_COMPLIMENT_POOLS.tenPlusYears;
+  } else if (years >= 5) {
+    poolKey = "fiveToTenYears";
+    pool = JOURNEY_COMPLIMENT_POOLS.fiveToTenYears;
+  } else if (years >= 3) {
+    poolKey = "threeToFiveYears";
+    pool = JOURNEY_COMPLIMENT_POOLS.threeToFiveYears;
+  } else if (years >= 1) {
+    poolKey = "oneToTwoYears";
+    pool = JOURNEY_COMPLIMENT_POOLS.oneToTwoYears;
+  }
+
+  // Preserve a random phrase for the current browser tab/session only.
+  // A new tab gets a fresh sessionStorage scope and a new phrase generation.
+  if (typeof window !== "undefined") {
+    try {
+      const storageKey = `journey-compliment:${startDate}:${poolKey}`;
+      const storedIndex = window.sessionStorage.getItem(storageKey);
+
+      if (storedIndex !== null) {
+        const parsedIndex = Number.parseInt(storedIndex, 10);
+        if (
+          Number.isInteger(parsedIndex) &&
+          parsedIndex >= 0 &&
+          parsedIndex < pool.length
+        ) {
+          return pool[parsedIndex];
+        }
+      }
+
+      const randomIndex = Math.floor(Math.random() * pool.length);
+      window.sessionStorage.setItem(storageKey, String(randomIndex));
+      return pool[randomIndex];
+    } catch {
+      // Fall through to deterministic fallback if sessionStorage is unavailable.
     }
   }
 
-  return `${days} day${days !== 1 ? "s" : ""} of lifting`;
+  const seed = `${startDate}-${poolKey}-${format(today, "yyyy-MM-dd")}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+
+  return pool[hash % pool.length];
 }
 
 function calculateTotalStats(liftTypes) {
@@ -404,7 +564,10 @@ function calculateTotalStats(liftTypes) {
  * (sum of weight × reps across all non-goal lifts).
  * Returns totals per unit plus a primary unit/total for display.
  */
-function calculateLifetimeTonnageFromLookup(sessionTonnageLookup, preferredUnit = "lb") {
+function calculateLifetimeTonnageFromLookup(
+  sessionTonnageLookup,
+  preferredUnit = "lb",
+) {
   const allSessionDates = sessionTonnageLookup?.allSessionDates ?? [];
   const sessionTonnageByDate = sessionTonnageLookup?.sessionTonnageByDate ?? {};
 
@@ -502,7 +665,9 @@ function calculateLifetimeTonnageFromLookup(sessionTonnageLookup, preferredUnit 
   }
 
   const averagePerSession =
-    allSessionDates.length > 0 ? Math.round(primaryTotal / allSessionDates.length) : 0;
+    allSessionDates.length > 0
+      ? Math.round(primaryTotal / allSessionDates.length)
+      : 0;
 
   return {
     totalByUnit,
@@ -555,7 +720,10 @@ function findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes) {
       const topWeight = singleReps[0].weight;
       const pr = singleReps
         .filter((lift) => lift.weight === topWeight)
-        .reduce((best, lift) => (lift.date > best.date ? lift : best), singleReps[0]);
+        .reduce(
+          (best, lift) => (lift.date > best.date ? lift : best),
+          singleReps[0],
+        );
       if (!mostRecentPR || pr.date > mostRecentDate) {
         mostRecentPR = pr;
         mostRecentDate = pr.date;
@@ -776,7 +944,9 @@ function calculateStreakFromDates(allSessionDates) {
   let bestStreak = 0;
   let tempStreak = 0;
   weekKey = oldestWeek;
-  const bestStreakEndWeek = thisWeekIsQualified ? thisWeekKey : lastCompleteWeekKey;
+  const bestStreakEndWeek = thisWeekIsQualified
+    ? thisWeekKey
+    : lastCompleteWeekKey;
   while (weekKey <= bestStreakEndWeek) {
     const sessionCount = weekSessionCount.get(weekKey) || 0;
     if (sessionCount >= 3) {

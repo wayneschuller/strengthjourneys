@@ -116,6 +116,7 @@ function getMonthBoundaries() {
   const py = prevDate.getFullYear();
   const pm = prevDate.getMonth();
   const daysInPrevMonth = new Date(y, m, 0).getDate();
+  const daysInCurrentMonth = new Date(y, m + 1, 0).getDate();
 
   const sameDayInPrev = Math.min(d, daysInPrevMonth);
 
@@ -126,6 +127,8 @@ function getMonthBoundaries() {
     prevMonthEnd: `${py}-${pad(pm + 1)}-${pad(daysInPrevMonth)}`,
     prevMonthSameDayStr: `${py}-${pad(pm + 1)}-${pad(sameDayInPrev)}`,
     dayOfMonth: d,
+    daysInCurrentMonth,
+    daysRemainingInCurrentMonth: Math.max(0, daysInCurrentMonth - d),
     daysInPrevMonth,
     currentMonthName: today.toLocaleString("default", { month: "long" }),
     prevMonthName: prevDate.toLocaleString("default", { month: "long" }),
@@ -331,6 +334,15 @@ function formatLiftTypeLabel(liftType) {
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+function formatCurrentSessionsReporting(count, boundaries) {
+  const daysRemaining = boundaries?.daysRemainingInCurrentMonth ?? 0;
+  if (daysRemaining <= 10) {
+    const dayLabel = daysRemaining === 1 ? "day" : "days";
+    return `${count} with ${daysRemaining} ${dayLabel} remaining`;
+  }
+  return `${count} so far`;
 }
 
 // ─── Win needs summary ─────────────────────────────────────────────────────
@@ -644,6 +656,10 @@ function BigFourCriteriaTable({
           sessions.current ?? 0,
           sessions.lastSameDay ?? 0,
         );
+        const currentSessionsReporting = formatCurrentSessionsReporting(
+          sessions.current ?? 0,
+          boundaries,
+        );
         const rowBg = baseline
           ? "bg-muted/20"
           : passed
@@ -687,15 +703,23 @@ function BigFourCriteriaTable({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="text-left">
-                    <AnimatedInteger
-                      value={sessions.current}
-                      className={`tabular-nums text-2xl font-bold tracking-tight ${rightColor}`}
-                    />
+                    <div className="flex items-baseline gap-1">
+                      <AnimatedInteger
+                        value={sessions.current}
+                        className={`tabular-nums text-2xl font-bold tracking-tight ${rightColor}`}
+                      />
+                      <span className="text-[10px] text-muted-foreground">
+                        {currentSessionsReporting.replace(
+                          `${sessions.current ?? 0} `,
+                          "",
+                        )}
+                      </span>
+                    </div>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
                   <p className="max-w-56 text-center text-xs">
-                    This month sessions so far. We compare this to last
+                    This month sessions ({currentSessionsReporting}). We compare this to last
                     month&apos;s same-day count; being within 10% still counts as
                     on track.
                   </p>

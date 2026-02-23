@@ -506,10 +506,10 @@ export function LiftTypeFrequencyPieCard() {
                     }
                     strokeWidth={
                       hoveredLiftType === entry.liftType
-                        ? 2.25
+                        ? 1.75
                         : explicitSelectedLiftType === entry.liftType
-                          ? 2
-                          : 1.5
+                          ? 1.5
+                          : 1
                     }
                     strokeLinejoin="round"
                     strokeOpacity={

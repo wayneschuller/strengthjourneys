@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,14 +14,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-import {
-  Pie,
-  PieChart,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-} from "recharts";
+import { Pie, PieChart, Cell, BarChart, Bar, XAxis } from "recharts";
 
 const bigFourURLs = {
   "Back Squat": "/barbell-squat-insights",
@@ -37,14 +29,10 @@ const STRONG_CHART_OUTLINE = "var(--muted-foreground)";
 const HOVER_CHART_OUTLINE = "var(--muted-foreground)";
 const BAR_OUTLINE = "var(--muted-foreground)";
 
-const renderCustomizedLabel = ({
-  cx,
-  cy,
-  midAngle,
-  outerRadius,
-  name,
-  payload,
-}, selectedLiftType) => {
+const renderCustomizedLabel = (
+  { cx, cy, midAngle, outerRadius, name, payload },
+  selectedLiftType,
+) => {
   const cos = Math.cos(-midAngle * RADIAN);
   const sin = Math.sin(-midAngle * RADIAN);
   const sx = cx + (outerRadius + 2) * cos;
@@ -117,7 +105,7 @@ const TopLiftsTable = ({ stats, selectedLiftType, onSelectLift }) => {
               }}
               tabIndex={0}
               className={cn(
-                "cursor-pointer rounded-md outline-none transition-colors hover:bg-muted/40 focus-visible:bg-muted/50",
+                "hover:bg-muted/40 focus-visible:bg-muted/50 cursor-pointer rounded-md transition-colors outline-none",
                 selectedLiftType === item.liftType && "bg-muted/60",
               )}
               aria-label={`Show ${item.liftType} reps over time`}
@@ -141,10 +129,10 @@ const TopLiftsTable = ({ stats, selectedLiftType, onSelectLift }) => {
                   )}
                 </div>
               </td>
-              <td className="whitespace-nowrap py-1 text-right text-sm">
+              <td className="py-1 text-right text-sm whitespace-nowrap">
                 {item.reps.toLocaleString()} reps
               </td>
-              <td className="whitespace-nowrap py-1 text-right text-sm">
+              <td className="py-1 text-right text-sm whitespace-nowrap">
                 {item.sets} sets ({item.percentage}%)
               </td>
             </tr>
@@ -206,7 +194,9 @@ function addBucketUTC(date, cadence, count = 1) {
     return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + count, 1));
   }
   if (cadence === "quarter") {
-    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + count * 3, 1));
+    return new Date(
+      Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + count * 3, 1),
+    );
   }
   return new Date(Date.UTC(d.getUTCFullYear() + count, 0, 1));
 }
@@ -248,7 +238,9 @@ function chooseCadence(firstDate, lastDate, targetBars = 10) {
 function buildLiftChronology(parsedData, liftType, targetBars = 10) {
   if (!parsedData?.length || !liftType) return null;
 
-  const validEntries = parsedData.filter((entry) => !entry.isGoal && entry.date);
+  const validEntries = parsedData.filter(
+    (entry) => !entry.isGoal && entry.date,
+  );
   if (!validEntries.length) return null;
 
   const firstDate = parseDateUTC(validEntries[0].date);
@@ -298,9 +290,14 @@ function buildLiftChronology(parsedData, liftType, targetBars = 10) {
     bars,
     maxReps,
     nonZeroBars,
-    startLabel: formatDateShortUTC(bars[0] ? parseDateUTC(bars[0].bucket) : firstDate, cadence),
+    startLabel: formatDateShortUTC(
+      bars[0] ? parseDateUTC(bars[0].bucket) : firstDate,
+      cadence,
+    ),
     endLabel: formatDateShortUTC(
-      bars[bars.length - 1] ? parseDateUTC(bars[bars.length - 1].bucket) : lastDate,
+      bars[bars.length - 1]
+        ? parseDateUTC(bars[bars.length - 1].bucket)
+        : lastDate,
       cadence,
     ),
   };
@@ -319,52 +316,55 @@ function MiniLiftChronologyChart({ liftType, color, chronology }) {
   return (
     <ChartContainer
       config={chartConfig}
-      className="mt-0 mb-5 h-[72px] w-full select-none !aspect-auto [&_.recharts-surface]:focus:outline-none [&_.recharts-surface]:focus-visible:outline-none"
+      className="mt-0 mb-5 !aspect-auto h-[72px] w-full select-none [&_.recharts-surface]:focus:outline-none [&_.recharts-surface]:focus-visible:outline-none"
       onMouseDownCapture={(e) => e.preventDefault()}
     >
-        <BarChart data={chronology.bars} margin={{ top: 6, right: 2, left: 2, bottom: 4 }}>
-          <XAxis dataKey="label" hide />
-          <ChartTooltip
-            cursor={false}
-            content={
-              <ChartTooltipContent
-                labelFormatter={(_, payload) => {
-                  const item = payload?.[0]?.payload;
-                  if (!item) return "";
-                  return item.label;
-                }}
-                formatter={(value) => (
-                  <div className="flex w-full items-center justify-between gap-3">
-                    <span className="text-muted-foreground">Reps</span>
-                    <span className="font-mono font-medium tabular-nums">
-                      {Number(value).toLocaleString()}
-                    </span>
-                  </div>
-                )}
-              />
-            }
-          />
-          <Bar
-            dataKey="reps"
-            radius={[2, 2, 0, 0]}
-            fill={color}
-            fillOpacity={0.9}
-            stroke={BAR_OUTLINE}
-            strokeWidth={1.25}
-          >
-            {chronology.bars.map((bar, index) => (
-              <Cell
-                key={`mini-bar-${index}`}
-                fill={color}
-                opacity={bar.reps > 0 ? 0.95 : 0.16}
-                stroke={BAR_OUTLINE}
-                strokeWidth={bar.reps > 0 ? 1.5 : 1}
-                strokeOpacity={bar.reps > 0 ? 0.55 : 0.4}
-              />
-            ))}
-          </Bar>
-        </BarChart>
-      </ChartContainer>
+      <BarChart
+        data={chronology.bars}
+        margin={{ top: 6, right: 2, left: 2, bottom: 4 }}
+      >
+        <XAxis dataKey="label" hide />
+        <ChartTooltip
+          cursor={false}
+          content={
+            <ChartTooltipContent
+              labelFormatter={(_, payload) => {
+                const item = payload?.[0]?.payload;
+                if (!item) return "";
+                return item.label;
+              }}
+              formatter={(value) => (
+                <div className="flex w-full items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Reps</span>
+                  <span className="font-mono font-medium tabular-nums">
+                    {Number(value).toLocaleString()}
+                  </span>
+                </div>
+              )}
+            />
+          }
+        />
+        <Bar
+          dataKey="reps"
+          radius={[2, 2, 0, 0]}
+          fill={color}
+          fillOpacity={0.9}
+          stroke={BAR_OUTLINE}
+          strokeWidth={1.25}
+        >
+          {chronology.bars.map((bar, index) => (
+            <Cell
+              key={`mini-bar-${index}`}
+              fill={color}
+              opacity={bar.reps > 0 ? 0.95 : 0.16}
+              stroke={BAR_OUTLINE}
+              strokeWidth={bar.reps > 0 ? 1.5 : 1}
+              strokeOpacity={bar.reps > 0 ? 0.55 : 0.4}
+            />
+          ))}
+        </Bar>
+      </BarChart>
+    </ChartContainer>
   );
 }
 
@@ -392,6 +392,9 @@ export function LiftTypeFrequencyPieCard() {
           <div className="mx-auto aspect-square min-h-[250px]">
             <Skeleton className="h-full w-full rounded-full" />
           </div>
+          <div className="mx-auto mt-5 mb-5 h-[72px] w-full max-w-[440px]">
+            <Skeleton className="h-full w-full" />
+          </div>
         </CardContent>
       </Card>
     );
@@ -402,7 +405,6 @@ export function LiftTypeFrequencyPieCard() {
   const topLifts = liftTypes.slice(0, 10);
   const liftColors = {};
   topLifts.forEach((item) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const color = getColor(item.liftType);
     liftColors[item.liftType] = color;
   });
@@ -468,70 +470,80 @@ export function LiftTypeFrequencyPieCard() {
           Lifts
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-0 flex flex-1 flex-col">
+      <CardContent className="flex flex-1 flex-col pt-0">
         <ChartContainer
           config={chartConfig}
           // className="mx-auto aspect-square min-h-[300px]"
           className="mx-auto h-[248px] w-full max-w-[440px] sm:h-[278px] md:h-[292px]"
         >
-            <PieChart>
-              <Pie
-                data={pieData}
-                dataKey="sets"
-                nameKey="liftType"
-                cx="50%"
-                cy="46%"
-                innerRadius={60}
-                outerRadius={108}
-                paddingAngle={4}
-                label={(props) => renderCustomizedLabel(props, explicitSelectedLiftType)}
-                labelLine={false}
-                isAnimationActive={false}
-                onMouseLeave={() => setHoveredLiftType(null)}
-                onMouseEnter={(data) => setHoveredLiftType(data?.liftType ?? null)}
-                onClick={(data) => setSelectedLiftType(data?.liftType ?? null)}
-              >
-                {pieData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.color}
-                    className="cursor-pointer transition-opacity"
-                    stroke={
-                      hoveredLiftType === entry.liftType
-                        ? HOVER_CHART_OUTLINE
-                        : explicitSelectedLiftType === entry.liftType
+          <PieChart>
+            <Pie
+              data={pieData}
+              dataKey="sets"
+              nameKey="liftType"
+              cx="50%"
+              cy="46%"
+              innerRadius={60}
+              outerRadius={108}
+              paddingAngle={4}
+              label={(props) =>
+                renderCustomizedLabel(props, explicitSelectedLiftType)
+              }
+              labelLine={false}
+              isAnimationActive={false}
+              onMouseLeave={() => setHoveredLiftType(null)}
+              onMouseEnter={(data) =>
+                setHoveredLiftType(data?.liftType ?? null)
+              }
+              onClick={(data) => setSelectedLiftType(data?.liftType ?? null)}
+            >
+              {pieData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.color}
+                  className="cursor-pointer transition-opacity"
+                  stroke={
+                    hoveredLiftType === entry.liftType
+                      ? HOVER_CHART_OUTLINE
+                      : explicitSelectedLiftType === entry.liftType
                         ? STRONG_CHART_OUTLINE
                         : SUBTLE_CHART_OUTLINE
-                    }
-                    strokeWidth={
-                      hoveredLiftType === entry.liftType
-                        ? 1.75
-                        : explicitSelectedLiftType === entry.liftType
-                          ? 1.5
-                          : 1
-                    }
-                    strokeLinejoin="round"
-                    strokeOpacity={
-                      hoveredLiftType === entry.liftType
+                  }
+                  strokeWidth={
+                    hoveredLiftType === entry.liftType
+                      ? 1.75
+                      : explicitSelectedLiftType === entry.liftType
+                        ? 1.5
+                        : 1
+                  }
+                  strokeLinejoin="round"
+                  strokeOpacity={
+                    hoveredLiftType === entry.liftType
+                      ? 1
+                      : explicitSelectedLiftType === entry.liftType
                         ? 1
-                        : explicitSelectedLiftType === entry.liftType
-                          ? 1
-                          : 0.3
-                    }
-                    opacity={1}
-                  />
-                ))}
-                {/* <LabelList dataKey="liftType" content={renderCustomizedLabel} position="outside" /> */}
-              </Pie>
-              {/* <Legend verticalAlign="top" align="center" content={<CustomLegend />} /> */}
-            </PieChart>
+                        : 0.3
+                  }
+                  opacity={1}
+                />
+              ))}
+              {/* <LabelList dataKey="liftType" content={renderCustomizedLabel} position="outside" /> */}
+            </Pie>
+            {/* <Legend verticalAlign="top" align="center" content={<CustomLegend />} /> */}
+          </PieChart>
         </ChartContainer>
 
-        <MiniLiftChronologyChart
-          liftType={effectiveSelectedLiftType}
-          color={selectedLiftColor}
-          chronology={selectedLiftChronology}
-        />
+        {selectedLiftChronology ? (
+          <MiniLiftChronologyChart
+            liftType={effectiveSelectedLiftType}
+            color={selectedLiftColor}
+            chronology={selectedLiftChronology}
+          />
+        ) : (
+          <div className="mx-auto mb-5 h-[72px] w-full max-w-[440px]">
+            <Skeleton className="h-full w-full" />
+          </div>
+        )}
 
         <TopLiftsTable
           stats={stats}

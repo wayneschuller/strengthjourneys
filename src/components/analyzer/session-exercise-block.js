@@ -456,13 +456,27 @@ export function SessionExerciseBlock({
         className="text-base max-w-36 leading-tight"
       />
     ) : null;
+    const usesTextLiftIndicator = Boolean(liftTypeArea && !svgPath);
+    const usesSvgLiftIndicator = Boolean(svgPath);
 
     return (
       <div
         className={`bg-muted/20 flex h-full min-h-0 flex-col gap-3 rounded-xl border sm:flex-row sm:items-center sm:gap-3 ${
           liftTypeArea ? "p-4" : "px-2 py-1.5 gap-2"
+        } ${
+          usesTextLiftIndicator || usesSvgLiftIndicator
+            ? "lg:flex-wrap lg:items-start"
+            : ""
         }`}
       >
+        {usesSvgLiftIndicator && (
+          <div className="hidden lg:block lg:basis-full">
+            <LiftTypeIndicator
+              liftType={liftType}
+              className="text-base max-w-36 leading-tight"
+            />
+          </div>
+        )}
         {liftTypeArea &&
           (svgPath && bigFourURLs[liftType] ? (
             <Link
@@ -474,7 +488,17 @@ export function SessionExerciseBlock({
           ) : (
             liftTypeArea
           ))}
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div
+          className={`flex min-w-0 flex-1 flex-col gap-1.5 ${
+            usesTextLiftIndicator ? "lg:basis-full" : ""
+          }`}
+        >
+          {usesSvgLiftIndicator && (
+            <LiftTypeIndicator
+              liftType={liftType}
+              className="text-base max-w-36 leading-tight lg:hidden"
+            />
+          )}
           {label && (
             <span className="text-muted-foreground shrink-0 text-xs font-medium">
               {label}

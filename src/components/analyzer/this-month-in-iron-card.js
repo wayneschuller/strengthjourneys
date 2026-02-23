@@ -96,7 +96,7 @@ export function ThisMonthInIronCard() {
   );
 
   return (
-    <Card className="flex-1">
+    <Card className="flex h-full flex-1 flex-col">
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo Mode: "}
@@ -104,7 +104,7 @@ export function ThisMonthInIronCard() {
         </CardTitle>
         <CardDescription>{motivationalPhrase}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex flex-1 flex-col space-y-4">
         {!stats && <Skeleton className="h-[30vh]" />}
 
         {stats && (

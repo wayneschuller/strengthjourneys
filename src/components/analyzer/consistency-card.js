@@ -109,7 +109,7 @@ export function ConsistencyCard() {
   }, [consistency, authStatus]);
 
   return (
-    <Card className="flex-1">
+    <Card>
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo mode: "} Consistency

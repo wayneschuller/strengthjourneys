@@ -186,11 +186,11 @@ Theme system is a mix of `next-themes` + CSS variable packs.
 
 - **Theme definitions:** `src/styles/globals.css` defines each theme as a CSS selector that sets shadcn-style CSS variables (`--background`, `--foreground`, `--primary`, etc.) plus app-specific tokens.
   - Base tokens live under `:root` and `.dark`.
-  - Additional theme packs are classes like `.neo-brutalism`, `.neo-brutalism-dark`, `.retro-arcade`, `.retro-arcade-dark`, `.starry-night`, `.starry-night-dark`.
+  - Additional theme packs are classes like `.neo-brutalism`, `.neo-brutalism-dark`, `.blueprint`, `.blueprint-dark`, `.retro-arcade`, `.retro-arcade-dark`, `.starry-night`, `.starry-night-dark`.
   - Heatmap colors come from `--heatmap-0` through `--heatmap-4` and are consumed by `.react-calendar-heatmap .color-heatmap-*` rules in the same file.
   - Fonts are set per theme via variables like `--font-sans`; required font files are imported in `src/pages/_app.js`.
 
-- **`dark:` Tailwind variant:** `src/styles/globals.css` defines a custom `dark` variant that activates when `html` has one of the dark theme classes (currently `.dark`, `.neo-brutalism-dark`, `.retro-arcade-dark`, `.starry-night-dark`).
+- **`dark:` Tailwind variant:** `src/styles/globals.css` defines a custom `dark` variant that activates when `html` has one of the dark theme classes (currently `.dark`, `.neo-brutalism-dark`, `.blueprint-dark`, `.retro-arcade-dark`, `.starry-night-dark`).
   - If you add a new `*-dark` theme and expect Tailwind `dark:` utilities to apply inside it, add the new dark class to this `@custom-variant dark` selector.
 
 - **Theme picker + access control:** `src/components/theme-chooser.js`

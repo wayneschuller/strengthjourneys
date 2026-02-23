@@ -1,6 +1,5 @@
 /** @format */
 
-
 import "@/styles/globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
@@ -23,6 +22,7 @@ import { AthleteBioProvider } from "@/hooks/use-athlete-biodata";
 import "@fontsource/geist-sans/index.css"; // Used in: light, dark
 import "@fontsource/dm-sans/index.css"; // Used in: neo-brutalism, neo-brutalism-dark
 import "@fontsource/outfit/index.css"; // Used in: retro-arcade, retro-arcade-dark
+import "@fontsource/ibm-plex-sans-condensed/index.css"; // Used in: blueprint, blueprint-dark
 import "@fontsource/libre-baskerville/index.css"; // Used in: starry-night, starry-night-dark
 
 export default function App({ Component, pageProps, session }) {
@@ -33,7 +33,10 @@ export default function App({ Component, pageProps, session }) {
     captureUtmFromUrl(); // Google Analytics: persist UTM from URL for session
     const handleRouteChange = () => {
       pageView(typeof window !== "undefined" ? window.location.href : ""); // Google Analytics: send page_view with full URL
-      devLog("Google Analytics pageView:", typeof window !== "undefined" ? window.location.href : "");
+      devLog(
+        "Google Analytics pageView:",
+        typeof window !== "undefined" ? window.location.href : "",
+      );
     };
     router.events.on("routeChangeComplete", handleRouteChange);
     return () => router.events.off("routeChangeComplete", handleRouteChange);
@@ -50,6 +53,8 @@ export default function App({ Component, pageProps, session }) {
           "dark",
           "neo-brutalism",
           "neo-brutalism-dark",
+          "blueprint",
+          "blueprint-dark",
           "retro-arcade",
           "retro-arcade-dark",
           "starry-night",

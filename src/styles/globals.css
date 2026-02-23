@@ -4,8 +4,8 @@
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
-/* dark: applies when html has .dark, .neo-brutalism-dark, .retro-arcade-dark, or .starry-night-dark */
-@custom-variant dark (&:where(.dark, .neo-brutalism-dark, .retro-arcade-dark, .starry-night-dark, .dark *, .neo-brutalism-dark *, .retro-arcade-dark *, .starry-night-dark *));
+/* dark: applies when html has .dark or any *-dark theme class */
+@custom-variant dark (&:where(.dark, .neo-brutalism-dark, .retro-arcade-dark, .starry-night-dark, .blueprint-dark, .dark *, .neo-brutalism-dark *, .retro-arcade-dark *, .starry-night-dark *, .blueprint-dark *));
 
 /* Required for MessageResponse component (Streamdown) */
 @source "../../node_modules/streamdown/dist/*.js";
@@ -457,6 +457,150 @@
     --heatmap-2: #4d8a8a;
     --heatmap-3: #d66b7a;
     --heatmap-4: #e8738a;
+  }
+
+  /* Blueprint (light) */
+  .blueprint {
+    --background: hsl(212 60% 97%);
+    --foreground: hsl(214 55% 14%);
+    --card: hsl(212 52% 95%);
+    --card-foreground: hsl(214 55% 14%);
+    --popover: hsl(212 60% 98%);
+    --popover-foreground: hsl(214 55% 14%);
+    --primary: hsl(214 95% 38%);
+    --primary-foreground: hsl(212 60% 97%);
+    --secondary: hsl(205 100% 34%);
+    --secondary-foreground: hsl(212 60% 97%);
+    --muted: hsl(212 28% 90%);
+    --muted-foreground: hsl(214 24% 34%);
+    --accent: hsl(28 92% 55%);
+    --accent-foreground: hsl(214 55% 14%);
+    --destructive: hsl(0 75% 52%);
+    --destructive-foreground: hsl(212 60% 97%);
+    --border: hsl(214 44% 82%);
+    --input: hsl(214 44% 82%);
+    --ring: hsl(205 100% 34%);
+    --chart-1: hsl(214 95% 38%);
+    --chart-2: hsl(205 100% 34%);
+    --chart-3: hsl(28 92% 55%);
+    --chart-4: hsl(196 85% 38%);
+    --chart-5: hsl(224 70% 42%);
+    --sidebar: hsl(212 52% 95%);
+    --sidebar-background: hsl(212 52% 95%);
+    --sidebar-foreground: hsl(214 55% 14%);
+    --sidebar-primary: hsl(214 95% 38%);
+    --sidebar-primary-foreground: hsl(212 60% 97%);
+    --sidebar-accent: hsl(205 100% 34%);
+    --sidebar-accent-foreground: hsl(212 60% 97%);
+    --sidebar-border: hsl(214 44% 82%);
+    --sidebar-ring: hsl(205 100% 34%);
+    --font-sans: "IBM Plex Sans Condensed", sans-serif;
+    --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: Space Mono, monospace;
+    --radius: 0.25rem;
+    --shadow-x: 0;
+    --shadow-y: 1px;
+    --shadow-blur: 0px;
+    --shadow-spread: 0px;
+    --shadow-opacity: 0.08;
+    --shadow-color: hsl(214 55% 14%);
+    --shadow-2xs: 0 1px 0px 0px hsl(214 55% 14% / 0.06);
+    --shadow-xs: 0 1px 0px 0px hsl(214 55% 14% / 0.06);
+    --shadow-sm:
+      0 1px 0px 0px hsl(214 55% 14% / 0.08),
+      0 1px 2px -1px hsl(214 55% 14% / 0.08);
+    --shadow:
+      0 1px 0px 0px hsl(214 55% 14% / 0.08),
+      0 1px 2px -1px hsl(214 55% 14% / 0.08);
+    --shadow-md:
+      0 1px 0px 0px hsl(214 55% 14% / 0.1),
+      0 2px 4px -1px hsl(214 55% 14% / 0.1);
+    --shadow-lg:
+      0 1px 0px 0px hsl(214 55% 14% / 0.12),
+      0 4px 8px -2px hsl(214 55% 14% / 0.12);
+    --shadow-xl:
+      0 1px 0px 0px hsl(214 55% 14% / 0.14),
+      0 8px 14px -4px hsl(214 55% 14% / 0.14);
+    --shadow-2xl: 0 1px 0px 0px hsl(214 55% 14% / 0.2);
+    --tracking-normal: 0.01em;
+    --spacing: 0.25rem;
+    --heatmap-0: #e6f0ff;
+    --heatmap-1: #bcd6ff;
+    --heatmap-2: #72a9ff;
+    --heatmap-3: #1b75ff;
+    --heatmap-4: #003c9d;
+  }
+
+  /* Blueprint (dark) */
+  .blueprint-dark {
+    --background: hsl(215 72% 10%);
+    --foreground: hsl(198 100% 92%);
+    --card: hsl(215 62% 12%);
+    --card-foreground: hsl(198 100% 92%);
+    --popover: hsl(215 62% 12%);
+    --popover-foreground: hsl(198 100% 92%);
+    --primary: hsl(196 100% 55%);
+    --primary-foreground: hsl(215 72% 10%);
+    --secondary: hsl(205 95% 50%);
+    --secondary-foreground: hsl(215 72% 10%);
+    --muted: hsl(215 38% 18%);
+    --muted-foreground: hsl(202 30% 74%);
+    --accent: hsl(32 95% 55%);
+    --accent-foreground: hsl(215 72% 10%);
+    --destructive: hsl(0 80% 56%);
+    --destructive-foreground: hsl(215 72% 10%);
+    --border: hsl(200 65% 28%);
+    --input: hsl(200 65% 28%);
+    --ring: hsl(196 100% 55%);
+    --chart-1: hsl(196 100% 55%);
+    --chart-2: hsl(205 95% 50%);
+    --chart-3: hsl(32 95% 55%);
+    --chart-4: hsl(165 70% 45%);
+    --chart-5: hsl(280 60% 60%);
+    --sidebar: hsl(215 62% 12%);
+    --sidebar-background: hsl(215 62% 12%);
+    --sidebar-foreground: hsl(198 100% 92%);
+    --sidebar-primary: hsl(196 100% 55%);
+    --sidebar-primary-foreground: hsl(215 72% 10%);
+    --sidebar-accent: hsl(205 95% 50%);
+    --sidebar-accent-foreground: hsl(215 72% 10%);
+    --sidebar-border: hsl(200 65% 28%);
+    --sidebar-ring: hsl(196 100% 55%);
+    --font-sans: "IBM Plex Sans Condensed", sans-serif;
+    --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: Space Mono, monospace;
+    --radius: 0.25rem;
+    --shadow-x: 0;
+    --shadow-y: 1px;
+    --shadow-blur: 0px;
+    --shadow-spread: 0px;
+    --shadow-opacity: 0.18;
+    --shadow-color: hsl(196 100% 55%);
+    --shadow-2xs: 0 1px 0px 0px hsl(196 100% 55% / 0.1);
+    --shadow-xs: 0 1px 0px 0px hsl(196 100% 55% / 0.1);
+    --shadow-sm:
+      0 1px 0px 0px hsl(196 100% 55% / 0.14),
+      0 1px 2px -1px hsl(196 100% 55% / 0.14);
+    --shadow:
+      0 1px 0px 0px hsl(196 100% 55% / 0.14),
+      0 1px 2px -1px hsl(196 100% 55% / 0.14);
+    --shadow-md:
+      0 1px 0px 0px hsl(196 100% 55% / 0.16),
+      0 2px 4px -1px hsl(196 100% 55% / 0.16);
+    --shadow-lg:
+      0 1px 0px 0px hsl(196 100% 55% / 0.18),
+      0 4px 8px -2px hsl(196 100% 55% / 0.18);
+    --shadow-xl:
+      0 1px 0px 0px hsl(196 100% 55% / 0.22),
+      0 8px 14px -4px hsl(196 100% 55% / 0.22);
+    --shadow-2xl: 0 1px 0px 0px hsl(196 100% 55% / 0.3);
+    --tracking-normal: 0.01em;
+    --spacing: 0.25rem;
+    --heatmap-0: #0a203a;
+    --heatmap-1: #0f3459;
+    --heatmap-2: #15587f;
+    --heatmap-3: #18a4c6;
+    --heatmap-4: #6bf2ff;
   }
 
   /* Starry Night (light) */

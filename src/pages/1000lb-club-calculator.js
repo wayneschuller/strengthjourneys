@@ -525,7 +525,7 @@ function ThousandDonut({ total, target = 1000 }) {
             startAngle={90}
             endAngle={-270}
             stroke="none"
-            isAnimationActive
+            isAnimationActive={false}
           >
             {data.map((_, i) => (
               <Cell key={i} fill={COLORS[i]} />

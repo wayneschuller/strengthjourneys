@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import GridPattern from "./magicui/grid-pattern";
 import { AnimatedGridPattern } from "@/components/ui/animated-grid-pattern";
-import FlickeringGrid from "./magicui/flickering-grid";
 import {
+  NeoBrutalistStickerBombLayer,
   StarryNightLayer,
   WarpBackground,
 } from "@/components/theme-backgrounds";
@@ -97,7 +97,12 @@ export function AppBackground() {
   const showAnimated = animatedBackground ?? false;
   const isVanillaLightDark =
     !isRetroArcade && !isNeoBrutalism && !isStarryNight && !isBlueprint;
-  const showStaticGrid = !showAnimated && !isStarryNight && !isBlueprint;
+  const showStaticGrid =
+    !showAnimated &&
+    !isStarryNight &&
+    !isBlueprint &&
+    !isNeoBrutalism &&
+    !isRetroArcade;
   const showAnimatedGrid = mounted && showAnimated && isVanillaLightDark;
 
   return (
@@ -253,6 +258,20 @@ export function AppBackground() {
         </div>
       )}
 
+      {/* Neo-brutalism theme: sticker bomb collage layer */}
+      {mounted && isNeoBrutalism && (
+        <NeoBrutalistStickerBombLayer
+          animated={showAnimated}
+          variant={
+            themeForBackground === "neo-brutalism-dark" ? "dark" : "light"
+          }
+          className={cn(
+            "pointer-events-none absolute inset-0",
+            "[mask-image:radial-gradient(1700px_circle_at_50%_45%,white_0,white_76%,transparent_100%)]",
+          )}
+        />
+      )}
+
       {/* Static GridPattern when animated is disabled (not for starry night) */}
       {showStaticGrid && (
         <GridPattern squares={GRID_SQUARES} className={staticGridClassName} />
@@ -273,52 +292,25 @@ export function AppBackground() {
         />
       )}
 
-      {/* Bold, primary-colored flickering background for neo-brutalism themes */}
-      {mounted && showAnimated && isNeoBrutalism && (
-        <>
-          {/* Primary red layer */}
-          <FlickeringGrid
-            className="pointer-events-none absolute inset-0 h-full w-full"
-            squareSize={10}
-            gridGap={28}
-            flickerChance={themeForBackground === "neo-brutalism" ? 0.06 : 0.12}
-            maxOpacity={themeForBackground === "neo-brutalism" ? 0.16 : 0.2}
-            color={
-              themeForBackground === "neo-brutalism"
-                ? "hsl(0 100% 60%)" // primary red on light
-                : "hsl(0 100% 70%)" // primary red on dark
-            }
-          />
-          {/* Secondary yellow layer */}
-          <FlickeringGrid
-            className="pointer-events-none absolute inset-0 h-full w-full"
-            squareSize={12}
-            gridGap={32}
-            flickerChance={themeForBackground === "neo-brutalism" ? 0.05 : 0.1}
-            maxOpacity={themeForBackground === "neo-brutalism" ? 0.13 : 0.17}
-            color={
-              themeForBackground === "neo-brutalism"
-                ? "hsl(60 100% 50%)" // secondary yellow on light
-                : "hsl(60 100% 60%)" // secondary yellow on dark
-            }
-          />
-        </>
-      )}
-
       {/* Warp background for retro-arcade themes */}
-      {mounted && showAnimated && isRetroArcade && (
+      {mounted && isRetroArcade && (
         <WarpBackground
-          className="pointer-events-none absolute inset-0 border-0 p-0"
+          className="pointer-events-none absolute inset-0 rounded-none border-0 p-0"
           perspective={140}
-          beamsPerSide={4}
+          beamsPerSide={showAnimated ? 4 : 0}
+          showBeams={showAnimated}
           beamSize={6}
           beamDelayMin={0}
           beamDelayMax={3}
           beamDuration={3.5}
           gridColor={
             themeForBackground === "retro-arcade"
-              ? "rgba(95, 168, 163, 0.6)" // teal-ish grid for light retro
-              : "rgba(214, 107, 122, 0.7)" // pink-ish grid for dark retro
+              ? showAnimated
+                ? "rgba(95, 168, 163, 0.6)" // teal-ish grid for light retro
+                : "rgba(95, 168, 163, 0.35)" // calmer static
+              : showAnimated
+                ? "rgba(214, 107, 122, 0.7)" // pink-ish grid for dark retro
+                : "rgba(214, 107, 122, 0.45)" // calmer static
           }
         >
           {/* Empty child just to satisfy WarpBackground API while using it purely as a background */}

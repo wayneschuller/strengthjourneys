@@ -65,7 +65,8 @@ const LEVEL_LABELS = [
 ];
 
 const LEVEL_EMOJIS = ["🏃", "🌱", "💪", "🔥", "👑"];
-const CLOSE_ENOUGH_RATIO = 0.9; // Within 10% of last month still counts as a win.
+const TONNAGE_CLOSE_ENOUGH_RATIO = 0.9; // Tonnage/session checks: within 10% of last month still counts as a win.
+const STRENGTH_CLOSE_ENOUGH_RATIO = 0.8; // Strength-level checks: within 20% still counts as a win.
 
 function formatStrengthLevel(score) {
   if (score === null || score === undefined) return null;
@@ -78,11 +79,14 @@ function formatStrengthLevel(score) {
 }
 
 function isStrengthLevelRegressed(current, last) {
-  return last !== null && (current === null || current < last * CLOSE_ENOUGH_RATIO);
+  return (
+    last !== null &&
+    (current === null || current < last * STRENGTH_CLOSE_ENOUGH_RATIO)
+  );
 }
 
 function passesTonnageThreshold(current, last) {
-  return current >= last * CLOSE_ENOUGH_RATIO;
+  return current >= last * TONNAGE_CLOSE_ENOUGH_RATIO;
 }
 
 function AnimatedInteger({ value, className = "" }) {
@@ -299,7 +303,7 @@ function getVerdict(stats, strengthLevelPassed) {
   }
 
   const primaryMet =
-    sessions.current >= sessions.last &&
+    passesTonnageThreshold(sessions.current, sessions.lastSameDay) &&
     BIG_FOUR_LIFT_TYPES.every((liftType) => {
       const lift = bigFourByLift?.[liftType];
       return passesTonnageThreshold(lift?.current ?? 0, lift?.last ?? 0);
@@ -334,15 +338,18 @@ function formatLiftTypeLabel(liftType) {
 function getWinNeedsText(stats, strengthLevelPassed, unit) {
   const { sessions, bigFourByLift } = stats;
   const parts = [];
-  if (sessions.current < sessions.last) {
-    const diff = sessions.last - sessions.current;
+  const sessionsTarget = Math.ceil(
+    (sessions.lastSameDay ?? 0) * TONNAGE_CLOSE_ENOUGH_RATIO,
+  );
+  if ((sessions.current ?? 0) < sessionsTarget) {
+    const diff = sessionsTarget - (sessions.current ?? 0);
     parts.push(`${diff} more session${diff !== 1 ? "s" : ""}`);
   }
   const tonnageLiftDeficits = BIG_FOUR_LIFT_TYPES.map((liftType) => {
     const current = bigFourByLift?.[liftType]?.current ?? 0;
     const last = bigFourByLift?.[liftType]?.last ?? 0;
     if (passesTonnageThreshold(current, last)) return null;
-    const needed = Math.max(0, last * CLOSE_ENOUGH_RATIO - current);
+    const needed = Math.max(0, last * TONNAGE_CLOSE_ENOUGH_RATIO - current);
     return `${formatLiftTypeLabel(liftType)} +${formatTonnage(needed, unit)}`;
   }).filter(Boolean);
   if (tonnageLiftDeficits.length > 0) {
@@ -360,7 +367,9 @@ function getMonthlyChecksSummary(stats, strengthLevelStats) {
   let checksMet = 0;
   let checksTotal = 1; // sessions
 
-  if (stats.sessions.current >= stats.sessions.last) checksMet += 1;
+  if (passesTonnageThreshold(stats.sessions.current, stats.sessions.lastSameDay)) {
+    checksMet += 1;
+  }
 
   for (const liftType of BIG_FOUR_LIFT_TYPES) {
     checksTotal += 1; // tonnage
@@ -400,9 +409,9 @@ function getStrengthStatusTooltip({
     return "No previous strength-level baseline for this lift. Current data this month counts as a win.";
   }
   if (strengthRegressed) {
-    return `${formatLiftTypeLabel(liftType)} is more than 10% below last month’s average strength level.`;
+    return `${formatLiftTypeLabel(liftType)} is more than 20% below last month’s average strength level.`;
   }
-  return "Passes: this month’s average strength level is at least 90% of last month (within 10% counts).";
+  return "Passes: this month’s average strength level is at least 80% of last month (within 20% counts).";
 }
 
 function getTonnageStatusTooltip({
@@ -619,7 +628,7 @@ function BigFourCriteriaTable({
 
   const lastStrengthTooltip = getStrengthLastColumnTooltip(boundaries);
   const strengthInfoTooltip =
-    "Strength level compares each month’s average session-top-set rating for this lift. For every session, your best set (up to 10 reps) is converted to an estimated 1RM and graded against age-, sex-, and bodyweight-adjusted standards. This check passes when this month is at least 90% of last month (within 10% counts).";
+    "Strength level compares each month’s average session-top-set rating for this lift. For every session, your best set (up to 10 reps) is converted to an estimated 1RM and graded against age-, sex-, and bodyweight-adjusted standards. This check passes when this month is at least 80% of last month (within 20% counts).";
 
   return (
     <div className="space-y-1.5">
@@ -631,7 +640,10 @@ function BigFourCriteriaTable({
 
       {!!sessions && (() => {
         const baseline = (sessions.lastSameDay ?? 0) === 0;
-        const passed = baseline || (sessions.current ?? 0) >= (sessions.lastSameDay ?? 0);
+        const passed = baseline || passesTonnageThreshold(
+          sessions.current ?? 0,
+          sessions.lastSameDay ?? 0,
+        );
         const rowBg = baseline
           ? "bg-muted/20"
           : passed

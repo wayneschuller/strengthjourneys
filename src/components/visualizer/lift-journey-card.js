@@ -28,8 +28,8 @@ import { cn } from "@/lib/utils";
 // Reps thresholds are ~75% of what a 2,000 reps/year lifter accumulates by
 // that year, so dedicated lifters clear reps before years at higher tiers.
 const TIERS = [
-  { name: "Initiate",     minReps: 0,     minYears: 0,  icon: "🌱", bg: "bg-stone-100 dark:bg-stone-800",         text: "text-stone-500 dark:text-stone-400" },
-  { name: "Wanderer",     minReps: 200,   minYears: 1,  icon: "🌿", bg: "bg-green-50 dark:bg-green-950",          text: "text-green-700 dark:text-green-400" },
+  { name: "Baby",         minReps: 0,     minYears: 0,  icon: "🌱", bg: "bg-stone-100 dark:bg-stone-800",         text: "text-stone-500 dark:text-stone-400" },
+  { name: "Initiate",     minReps: 200,   minYears: 1,  icon: "🌿", bg: "bg-green-50 dark:bg-green-950",          text: "text-green-700 dark:text-green-400" },
   { name: "Scout",        minReps: 800,   minYears: 2,  icon: "💡", bg: "bg-teal-50 dark:bg-teal-950",            text: "text-teal-700 dark:text-teal-400" },
   { name: "Squire",       minReps: 1500,  minYears: 3,  icon: "🔧", bg: "bg-sky-100 dark:bg-sky-950",             text: "text-sky-700 dark:text-sky-400" },
   { name: "Warden",       minReps: 2500,  minYears: 4,  icon: "⚡", bg: "bg-blue-100 dark:bg-blue-950",           text: "text-blue-700 dark:text-blue-400" },

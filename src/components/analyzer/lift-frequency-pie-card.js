@@ -20,7 +20,6 @@ import {
   Pie,
   PieChart,
   Cell,
-  Sector,
   BarChart,
   Bar,
   XAxis,
@@ -35,21 +34,9 @@ const bigFourURLs = {
 
 const RADIAN = Math.PI / 180;
 const SUBTLE_CHART_OUTLINE = "var(--muted-foreground)";
-const STRONG_CHART_OUTLINE = "var(--primary)";
-const HOVER_CHART_OUTLINE = "var(--primary)";
-const ACTIVE_SEGMENT_OUTLINE = "var(--primary)";
+const STRONG_CHART_OUTLINE = "var(--muted-foreground)";
+const HOVER_CHART_OUTLINE = "var(--muted-foreground)";
 const BAR_OUTLINE = "var(--muted-foreground)";
-
-function ActiveBorderPieSliceShape(props) {
-  return (
-    <Sector
-      {...props}
-      stroke={ACTIVE_SEGMENT_OUTLINE}
-      strokeWidth={6}
-      strokeLinejoin="round"
-    />
-  );
-}
 
 const renderCustomizedLabel = ({
   cx,
@@ -463,12 +450,6 @@ export function LiftTypeFrequencyPieCard() {
     null;
   const explicitSelectedLiftType =
     stats.find((item) => item.liftType === selectedLiftType)?.liftType ?? null;
-  const activePieIndex = (() => {
-    const activeLift = hoveredLiftType ?? explicitSelectedLiftType;
-    if (!activeLift) return undefined;
-    const index = pieData.findIndex((item) => item.liftType === activeLift);
-    return index >= 0 ? index : undefined;
-  })();
 
   const selectedLiftColor =
     stats.find((item) => item.liftType === effectiveSelectedLiftType)?.color ??
@@ -507,8 +488,6 @@ export function LiftTypeFrequencyPieCard() {
                 label={(props) => renderCustomizedLabel(props, explicitSelectedLiftType)}
                 labelLine={false}
                 isAnimationActive={false}
-                activeIndex={activePieIndex}
-                activeShape={ActiveBorderPieSliceShape}
                 onMouseLeave={() => setHoveredLiftType(null)}
                 onMouseEnter={(data) => setHoveredLiftType(data?.liftType ?? null)}
                 onClick={(data) => setSelectedLiftType(data?.liftType ?? null)}
@@ -527,13 +506,19 @@ export function LiftTypeFrequencyPieCard() {
                     }
                     strokeWidth={
                       hoveredLiftType === entry.liftType
-                        ? 5
+                        ? 2.25
                         : explicitSelectedLiftType === entry.liftType
-                          ? 4
-                          : 2.5
+                          ? 2
+                          : 1.5
                     }
                     strokeLinejoin="round"
-                    strokeOpacity={0}
+                    strokeOpacity={
+                      hoveredLiftType === entry.liftType
+                        ? 1
+                        : explicitSelectedLiftType === entry.liftType
+                          ? 1
+                          : 0.3
+                    }
                     opacity={1}
                   />
                 ))}

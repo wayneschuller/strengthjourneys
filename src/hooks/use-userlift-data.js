@@ -166,6 +166,12 @@ export const UserLiftingDataProvider = ({ children }) => {
     shouldFetch ? `/api/read-gsheet?ssid=${sheetInfo.ssid}` : null,
     fetcher,
     {
+      // Be explicit about mobile resume behavior. Chrome on Android may keep
+      // the page alive, then trigger focus/reconnect revalidation on return.
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      revalidateIfStale: true,
+      revalidateOnMount: true,
       onErrorRetry: (err, _key, _config, revalidate, { retryCount }) => {
         if (err.status >= 400 && err.status < 500) {
           setFetchFailed(true);
@@ -192,6 +198,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   );
 
   const isError = !!error;
+  const hasCachedSheetData = Array.isArray(data?.values);
   const apiError = useMemo(() => {
     if (!error) return null;
     return {
@@ -357,6 +364,7 @@ export const UserLiftingDataProvider = ({ children }) => {
         topTonnageByTypeLast12Months,
         sessionTonnageLookup,
         rawRows,
+        hasCachedSheetData,
         dataSyncedAt: lastDataReceivedAt,
         mutate,
         sheetInfo,

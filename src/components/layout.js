@@ -42,6 +42,7 @@ export function Layout({ children }) {
     parseError,
     parsedData,
     rawRows,
+    hasCachedSheetData,
     dataSyncedAt,
     sheetInfo,
   } = useUserLiftingData();
@@ -59,14 +60,14 @@ export function Layout({ children }) {
   // which only fires after retries are exhausted (not during transient gaps
   // between SWR's error/retry cycles). See use-userlift-data.js for details.
   //
-  // When data is already loaded (rawRows != null), revalidation failures are
-  // silent — the user has working data and SWR will recover via retry or
-  // revalidateOnReconnect. Monitor: if users report stale data without
-  // realizing sync is broken, consider adding a subtle sync-status indicator.
+  // When data is already loaded (either parsed in local state or still present
+  // in SWR cache during a failed revalidation), revalidation failures are
+  // silent. This avoids false destructive toasts on mobile resume where SWR
+  // may return stale cached data + an error at the same time.
   useEffect(() => {
     if (apiErrorShown.current) return;
     if (!fetchFailed || authStatus !== "authenticated") return;
-    if (rawRows != null) return;
+    if (rawRows != null || hasCachedSheetData) return;
 
     const statusLabel = apiError?.status
       ? `HTTP ${apiError.status}${apiError?.statusText ? ` ${apiError.statusText}` : ""}`
@@ -78,7 +79,7 @@ export function Layout({ children }) {
       title: `Google Sheet sync failed (${statusLabel})`,
       description: apiError?.message || "No error details were provided.",
     });
-  }, [fetchFailed, authStatus, apiError, rawRows, toast]);
+  }, [fetchFailed, authStatus, apiError, rawRows, hasCachedSheetData, toast]);
 
   // Toast 2: Data Loaded — fires when rawRows changes (new data arrived),
   // not on every SWR revalidation. Skipped on "/" (home has its own widgets).

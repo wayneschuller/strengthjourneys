@@ -149,10 +149,10 @@ export function ThisMonthInIronCard() {
               {checksSummary && (
                 <p className="text-xs text-muted-foreground">
                   {checksSummary.checksMet}/{checksSummary.checksTotal} checks green
+                  {verdict?.label === "Still Forging" && winNeedsText
+                    ? ` · ${winNeedsText}`
+                    : ""}
                 </p>
-              )}
-              {verdict?.label === "Still Forging" && winNeedsText && (
-                <p className="text-xs text-muted-foreground">{winNeedsText}</p>
               )}
             </motion.div>
           </>

@@ -42,6 +42,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
+import { useTransientSuccess } from "@/hooks/use-transient-success";
 
 const BIG_FOUR_URLS = {
   "Back Squat": "/barbell-squat-insights",
@@ -172,6 +173,7 @@ const KG_PER_LB = 0.453592;
  */
 function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const { toast } = useToast();
+  const { isSuccess: isCopied, triggerSuccess: triggerCopied } = useTransientSuccess();
   const prefersReducedMotion = useReducedMotion();
   const [squat, setSquat] = useLocalStorage(
     LOCAL_STORAGE_KEYS.THOUSAND_SQUAT,
@@ -275,7 +277,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     navigator.clipboard
       ?.writeText(lines.join("\n"))
       .then(() => {
-        toast({ description: "Result copied to clipboard." });
+        triggerCopied();
       })
       .catch(() => {
         toast({ variant: "destructive", title: "Could not copy to clipboard" });
@@ -407,6 +409,8 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             <div className="flex justify-end">
               <ShareCopyButton
                 label="Copy my result"
+                successLabel="Copied"
+                isSuccess={isCopied}
                 onPressAnalytics={() =>
                   gaTrackShareCopy("1000lb_club", {
                     page: "/1000lb-club-calculator",

@@ -413,7 +413,7 @@ export function SectionTopCards({ isProgressDone = false }) {
               ) : null
             }
             action={
-              classicLiftMemory?.lift?.url ? (
+              (classicLiftMemory?.lift?.URL || classicLiftMemory?.lift?.url) ? (
                 <Button
                   type="button"
                   variant="ghost"
@@ -423,7 +423,7 @@ export function SectionTopCards({ isProgressDone = false }) {
                   title="Open lift video"
                   onClick={() =>
                     window.open(
-                      classicLiftMemory.lift.url,
+                      classicLiftMemory.lift.URL || classicLiftMemory.lift.url,
                       "_blank",
                       "noopener,noreferrer",
                     )
@@ -847,7 +847,7 @@ function pickClassicLiftMemory({
       strengthRating: candidate.strengthRating ?? null,
       noteTags: candidate.noteSignals?.tags ?? [],
       anniversaryDaysAway: candidate.anniversaryDaysAway ?? null,
-      hasUrl: !!candidate.lift?.url,
+      hasUrl: !!(candidate.lift?.URL || candidate.lift?.url),
     })),
   );
 

@@ -48,6 +48,64 @@ const STRENGTH_RATING_SCORE = {
   Elite: 5,
 };
 
+const CLASSIC_LIFT_NOTE_KEYWORDS = {
+  meet: [
+    "competition",
+    "comp",
+    "meet",
+    "powerlifting meet",
+    "powerlifting",
+    "platform",
+    "weigh in",
+    "weigh-in",
+    "opener",
+    "second attempt",
+    "third attempt",
+    "1st attempt",
+    "2nd attempt",
+    "3rd attempt",
+    "white lights",
+    "judges",
+    "usapl",
+    "uspa",
+    "apl",
+    "attempt",
+  ],
+  positive: [
+    "amazing",
+    "awesome",
+    "great",
+    "felt great",
+    "happy",
+    "stoked",
+    "pumped",
+    "wow",
+    "best",
+    "huge",
+    "nailed",
+    "smoked",
+    "easy",
+    "flew",
+    "crushed",
+    "money",
+    "dialed",
+    "solid",
+    "strong",
+    "excellent",
+  ],
+  negative: [
+    "hurt",
+    "pain",
+    "tweaked",
+    "missed",
+    "failed",
+    "awful",
+    "bad",
+    "sloppy",
+    "ugly",
+  ],
+};
+
 const STREAK_ENCOURAGMENTS = [
   "Go have a beer.",
   "You've earned couch time.",
@@ -764,20 +822,17 @@ function pickClassicLiftMemory({
     };
   }
 
-  const sortedCandidates = [...candidates].sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    if (a.lift.date !== b.lift.date) return a.lift.date > b.lift.date ? -1 : 1;
-    return a.id.localeCompare(b.id);
+  const selectionPool = buildClassicLiftSelectionPool(candidates, {
+    trainingYears,
   });
-
-  const poolSize = Math.min(
-    sortedCandidates.length,
-    trainingYears >= 3 ? 12 : 6,
-  );
-  const selectionPool = sortedCandidates.slice(0, poolSize);
+  const targetPoolSize = getClassicLiftPoolTargetSize(trainingYears);
   devLog(
     "Classic lift pool size:",
     selectionPool.length,
+    "target:",
+    targetPoolSize,
+    "candidateCount:",
+    candidates.length,
     "pool:",
     selectionPool.map((candidate) => ({
       liftType: candidate.lift?.liftType,
@@ -786,8 +841,12 @@ function pickClassicLiftMemory({
       unitType: candidate.lift?.unitType ?? "lb",
       date: candidate.lift?.date,
       reason: candidate.reasonLabel,
+      candidateKind: candidate.candidateKind,
       score: candidate.score,
+      scoreBreakdown: candidate.scoreBreakdown,
       strengthRating: candidate.strengthRating ?? null,
+      noteTags: candidate.noteSignals?.tags ?? [],
+      anniversaryDaysAway: candidate.anniversaryDaysAway ?? null,
       hasUrl: !!candidate.lift?.url,
     })),
   );
@@ -797,7 +856,7 @@ function pickClassicLiftMemory({
       firstParsedDate ?? "none",
       lastParsedDate ?? "none",
       parsedData?.length ?? 0,
-      poolSize,
+      selectionPool.length,
     ].join("|"),
   });
 }
@@ -821,7 +880,12 @@ function buildClassicLiftCandidates({
     const repRanges = topLiftsByTypeAndReps[liftType];
     if (!repRanges) return;
 
-    const topSingles = takeTopUniqueWeightEntries(repRanges[0] ?? [], 3);
+    const topSinglesDepth =
+      trainingYears >= 10 ? 10 : trainingYears >= 5 ? 7 : trainingYears >= 3 ? 5 : 3;
+    const standoutRepDepth =
+      trainingYears >= 10 ? 4 : trainingYears >= 5 ? 3 : trainingYears >= 3 ? 2 : 1;
+
+    const topSingles = takeTopUniqueWeightEntries(repRanges[0] ?? [], topSinglesDepth);
     topSingles.forEach((lift, index) => {
       const strengthRating = getLiftStrengthRating({
         lift,
@@ -843,51 +907,67 @@ function buildClassicLiftCandidates({
       candidates.push({
         id: buildLiftCandidateId(lift, `single-${index + 1}`),
         lift,
-        score,
+        score: score.total,
+        scoreBreakdown: score.breakdown,
         strengthRating,
+        noteSignals: score.noteSignals,
+        anniversaryDaysAway: score.anniversaryDaysAway,
+        candidateKind: "single",
         reasonLabel: `Top ${index + 1} single`,
       });
     });
 
     for (let repsIndex = 1; repsIndex < 10; repsIndex++) {
-      const topAtReps = repRanges[repsIndex]?.[0];
-      if (!topAtReps) continue;
-
       const reps = repsIndex + 1;
-      const estimatedE1RM = estimateE1RM(reps, topAtReps.weight, "Brzycki");
-      const strengthRating = getLiftStrengthRating({
-        lift: topAtReps,
-        oneRepMaxOverride: estimatedE1RM,
-        hasBioData,
-        age,
-        bodyWeight,
-        sex,
-        isMetric,
-      });
+      const topRepEntries = takeTopUniqueWeightEntries(
+        repRanges[repsIndex] ?? [],
+        standoutRepDepth,
+      );
+      if (topRepEntries.length === 0) continue;
 
-      const ratingScore = STRENGTH_RATING_SCORE[strengthRating] ?? 0;
-      const qualifiesStandoutRep =
-        hasBioData
-          ? ratingScore >= (trainingYears >= 3 ? 4 : 3)
-          : reps <= 5;
+      topRepEntries.forEach((topAtReps, repRankIndex) => {
+        const estimatedE1RM = estimateE1RM(reps, topAtReps.weight, "Brzycki");
+        const strengthRating = getLiftStrengthRating({
+          lift: topAtReps,
+          oneRepMaxOverride: estimatedE1RM,
+          hasBioData,
+          age,
+          bodyWeight,
+          sex,
+          isMetric,
+        });
 
-      if (!qualifiesStandoutRep) continue;
+        const ratingScore = STRENGTH_RATING_SCORE[strengthRating] ?? 0;
+        const qualifiesStandoutRep =
+          hasBioData
+            ? ratingScore >= (trainingYears >= 3 ? 4 : 3)
+            : reps <= 5;
 
-      const score = scoreClassicLiftCandidate({
-        lift: topAtReps,
-        candidateKind: "standoutRep",
-        rankIndex: 0,
-        trainingYears,
-        strengthRating,
-        liftFrequency: liftFrequencyMap.get(liftType) ?? 0,
-      });
+        if (!qualifiesStandoutRep) return;
 
-      candidates.push({
-        id: buildLiftCandidateId(topAtReps, `rep-${reps}`),
-        lift: topAtReps,
-        score,
-        strengthRating,
-        reasonLabel: `Standout ${reps}RM`,
+        const score = scoreClassicLiftCandidate({
+          lift: topAtReps,
+          candidateKind: "standoutRep",
+          rankIndex: repRankIndex,
+          trainingYears,
+          strengthRating,
+          liftFrequency: liftFrequencyMap.get(liftType) ?? 0,
+        });
+
+        candidates.push({
+          id: buildLiftCandidateId(topAtReps, `rep-${reps}-${repRankIndex + 1}`),
+          lift: topAtReps,
+          score: score.total,
+          scoreBreakdown: score.breakdown,
+          strengthRating,
+          noteSignals: score.noteSignals,
+          anniversaryDaysAway: score.anniversaryDaysAway,
+          candidateKind: "standoutRep",
+          reasonLabel:
+            repRankIndex === 0
+              ? `Standout ${reps}RM`
+              : `Standout ${reps}RM #${repRankIndex + 1}`,
+        });
       });
     }
   });
@@ -914,8 +994,9 @@ function buildClassicLiftCandidates({
             trainingYears,
             strengthRating,
             liftFrequency: liftFrequencyMap.get(recentPR.liftType) ?? 0,
-          }) + 8,
+          }).total + 8,
         strengthRating,
+        candidateKind: "single",
         reasonLabel: "Recent PR single",
       });
     }
@@ -990,9 +1071,16 @@ function scoreClassicLiftCandidate({
   liftFrequency,
 }) {
   const ratingScore = STRENGTH_RATING_SCORE[strengthRating] ?? 0;
+  const noteSignals = analyzeClassicLiftNotes(lift?.notes);
   const base = candidateKind === "single" ? 100 : 82;
-  const rankBonus = candidateKind === "single" ? (3 - rankIndex) * 6 : 0;
-  const frequencyBonus = Math.min(8, Math.round(Math.log10((liftFrequency || 1) + 1) * 6));
+  const rankBonus =
+    candidateKind === "single"
+      ? Math.max(0, 5 - rankIndex) * 4
+      : Math.max(0, 4 - rankIndex) * 2;
+  const frequencyBonus = Math.min(
+    8,
+    Math.round(Math.log10((liftFrequency || 1) + 1) * 6),
+  );
 
   const daysAgo = getDaysAgoFromDateStr(lift.date);
   const recencyOrNostalgiaBonus =
@@ -1001,16 +1089,41 @@ function scoreClassicLiftCandidate({
       : Math.max(0, 18 - Math.round(daysAgo / 30));
 
   const repSchemeBonus =
-    candidateKind === "standoutRep" ? Math.max(0, 8 - Math.abs((lift.reps ?? 1) - 5)) : 0;
+    candidateKind === "standoutRep"
+      ? Math.max(0, 8 - Math.abs((lift.reps ?? 1) - 5))
+      : 0;
+  const noteBonus =
+    (noteSignals.hasMeetContext ? 24 : 0) +
+    Math.min(12, noteSignals.positiveMatches.length * 4) -
+    Math.min(8, noteSignals.negativeMatches.length * 4);
+  const { boost: anniversaryBonus, daysAway: anniversaryDaysAway } =
+    getAnniversaryBoost(lift.date);
 
-  return (
+  const total =
     base +
     rankBonus +
     ratingScore * 4 +
     frequencyBonus +
     recencyOrNostalgiaBonus +
-    repSchemeBonus
-  );
+    repSchemeBonus +
+    noteBonus +
+    anniversaryBonus;
+
+  return {
+    total,
+    noteSignals,
+    anniversaryDaysAway,
+    breakdown: {
+      base,
+      rankBonus,
+      strengthBonus: ratingScore * 4,
+      frequencyBonus,
+      nostalgiaBonus: recencyOrNostalgiaBonus,
+      repSchemeBonus,
+      noteBonus,
+      anniversaryBonus,
+    },
+  };
 }
 
 function dedupeClassicLiftCandidates(candidates) {
@@ -1037,6 +1150,236 @@ function buildLiftCandidateId(lift, suffix) {
     lift?.unitType ?? "lb",
     suffix,
   ].join("|");
+}
+
+function getClassicLiftPoolTargetSize(trainingYears) {
+  if (trainingYears >= 10) return 56;
+  if (trainingYears >= 5) return 40;
+  if (trainingYears >= 3) return 28;
+  if (trainingYears >= 1) return 16;
+  return 10;
+}
+
+function buildClassicLiftSelectionPool(candidates, { trainingYears }) {
+  const sortedCandidates = [...(candidates ?? [])].sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    if (a.lift?.date !== b.lift?.date) {
+      return (a.lift?.date ?? "") > (b.lift?.date ?? "") ? -1 : 1;
+    }
+    return a.id.localeCompare(b.id);
+  });
+
+  const targetSize = Math.min(
+    sortedCandidates.length,
+    getClassicLiftPoolTargetSize(trainingYears),
+  );
+  if (targetSize <= 0) return [];
+
+  const selected = [];
+  const selectedIds = new Set();
+  const byLift = new Map();
+  const byKind = new Map();
+
+  const addCandidate = (candidate) => {
+    if (!candidate || selectedIds.has(candidate.id) || selected.length >= targetSize) {
+      return false;
+    }
+    selected.push(candidate);
+    selectedIds.add(candidate.id);
+    byLift.set(
+      candidate.lift?.liftType ?? "Unknown",
+      (byLift.get(candidate.lift?.liftType ?? "Unknown") ?? 0) + 1,
+    );
+    byKind.set(
+      candidate.candidateKind ?? "unknown",
+      (byKind.get(candidate.candidateKind ?? "unknown") ?? 0) + 1,
+    );
+    return true;
+  };
+
+  const addByPredicate = (limit, predicate) => {
+    if (limit <= 0) return;
+    for (let i = 0; i < sortedCandidates.length && selected.length < targetSize; i++) {
+      if (limit <= 0) break;
+      const candidate = sortedCandidates[i];
+      if (selectedIds.has(candidate.id)) continue;
+      if (!predicate(candidate)) continue;
+      if (addCandidate(candidate)) {
+        limit--;
+      }
+    }
+  };
+
+  const minPerBigFour = trainingYears >= 10 ? 3 : trainingYears >= 5 ? 2 : 1;
+  BIG_FOUR_LIFTS.forEach((liftType) => {
+    const availableForLift = sortedCandidates.filter(
+      (candidate) => candidate.lift?.liftType === liftType,
+    ).length;
+    addByPredicate(Math.min(minPerBigFour, availableForLift), (candidate) => {
+      return candidate.lift?.liftType === liftType;
+    });
+  });
+
+  if (targetSize >= 12) {
+    addByPredicate(Math.min(6, Math.ceil(targetSize * 0.2)), (candidate) => {
+      return candidate.candidateKind === "standoutRep";
+    });
+  }
+
+  if (trainingYears >= 3) {
+    addByPredicate(Math.min(4, Math.ceil(targetSize * 0.12)), (candidate) => {
+      return candidate.noteSignals?.hasMeetContext;
+    });
+    addByPredicate(Math.min(6, Math.ceil(targetSize * 0.18)), (candidate) => {
+      return candidate.noteSignals?.positiveMatches?.length > 0;
+    });
+    addByPredicate(Math.min(4, Math.ceil(targetSize * 0.12)), (candidate) => {
+      return (candidate.anniversaryDaysAway ?? 999) <= 14;
+    });
+  }
+
+  if (trainingYears >= 5) {
+    addByPredicate(Math.min(10, Math.ceil(targetSize * 0.3)), (candidate) => {
+      return getDaysAgoFromDateStr(candidate.lift?.date) >= 365 * 5;
+    });
+    addByPredicate(Math.min(8, Math.ceil(targetSize * 0.22)), (candidate) => {
+      const daysAgo = getDaysAgoFromDateStr(candidate.lift?.date);
+      return daysAgo >= 365 * 2 && daysAgo < 365 * 5;
+    });
+    addByPredicate(Math.min(6, Math.ceil(targetSize * 0.18)), (candidate) => {
+      return getDaysAgoFromDateStr(candidate.lift?.date) < 365 * 2;
+    });
+  }
+
+  const softPerLiftCap = Math.max(minPerBigFour, Math.ceil(targetSize * 0.4));
+  addByPredicate(targetSize, (candidate) => {
+    const liftType = candidate.lift?.liftType ?? "Unknown";
+    const currentLiftCount = byLift.get(liftType) ?? 0;
+    if (currentLiftCount >= softPerLiftCap) return false;
+
+    const standoutCount = byKind.get("standoutRep") ?? 0;
+    if (
+      candidate.candidateKind === "standoutRep" &&
+      targetSize >= 16 &&
+      standoutCount >= Math.ceil(targetSize * 0.55)
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+
+  addByPredicate(targetSize, () => true);
+
+  return selected;
+}
+
+function analyzeClassicLiftNotes(notes) {
+  if (!notes || typeof notes !== "string") {
+    return {
+      hasMeetContext: false,
+      meetMatches: [],
+      positiveMatches: [],
+      negativeMatches: [],
+      tags: [],
+    };
+  }
+
+  const normalized = normalizeClassicLiftNoteText(notes);
+  const meetMatches = matchClassicLiftNoteKeywords(
+    normalized,
+    CLASSIC_LIFT_NOTE_KEYWORDS.meet,
+  );
+  const positiveMatches = matchClassicLiftNoteKeywords(
+    normalized,
+    CLASSIC_LIFT_NOTE_KEYWORDS.positive,
+  );
+  const negativeMatches = matchClassicLiftNoteKeywords(
+    normalized,
+    CLASSIC_LIFT_NOTE_KEYWORDS.negative,
+  );
+
+  const tags = [];
+  if (meetMatches.length > 0) tags.push("meet");
+  if (positiveMatches.length > 0) tags.push("positive");
+  if (negativeMatches.length > 0) tags.push("negative");
+
+  return {
+    hasMeetContext: meetMatches.length > 0,
+    meetMatches,
+    positiveMatches,
+    negativeMatches,
+    tags,
+  };
+}
+
+function normalizeClassicLiftNoteText(notes) {
+  return notes
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function matchClassicLiftNoteKeywords(normalizedNotes, keywords) {
+  if (!normalizedNotes) return [];
+
+  const matches = [];
+  for (let i = 0; i < keywords.length; i++) {
+    const keyword = keywords[i];
+    const escaped = escapeRegExp(keyword.toLowerCase());
+    const pattern = new RegExp(`(^|\\s)${escaped}(\\s|$)`, "i");
+    if (pattern.test(normalizedNotes)) {
+      matches.push(keyword);
+    }
+  }
+  return matches;
+}
+
+function escapeRegExp(input) {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function getAnniversaryBoost(dateStr) {
+  if (!dateStr) return { boost: 0, daysAway: null };
+
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return { boost: 0, daysAway: null };
+
+  const month = Number.parseInt(parts[1], 10);
+  const day = Number.parseInt(parts[2], 10);
+  if (!Number.isInteger(month) || !Number.isInteger(day)) {
+    return { boost: 0, daysAway: null };
+  }
+
+  const today = new Date();
+  const y = today.getFullYear();
+  const todayMidnight = new Date(y, today.getMonth(), today.getDate());
+  const candidates = [
+    new Date(y - 1, month - 1, day),
+    new Date(y, month - 1, day),
+    new Date(y + 1, month - 1, day),
+  ];
+  let minDays = Number.POSITIVE_INFINITY;
+
+  for (let i = 0; i < candidates.length; i++) {
+    const diffMs = Math.abs(candidates[i].getTime() - todayMidnight.getTime());
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays < minDays) minDays = diffDays;
+  }
+
+  let boost = 0;
+  if (Number.isFinite(minDays)) {
+    if (minDays <= 3) boost = 12;
+    else if (minDays <= 7) boost = 8;
+    else if (minDays <= 14) boost = 5;
+    else if (minDays <= 30) boost = 2;
+  }
+
+  return {
+    boost,
+    daysAway: Number.isFinite(minDays) ? minDays : null,
+  };
 }
 
 function pickSessionStoredCandidate(candidates, { fingerprint }) {

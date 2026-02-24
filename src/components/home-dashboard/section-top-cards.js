@@ -93,7 +93,7 @@ const CLASSIC_LIFT_NOTE_KEYWORDS = {
     "strong",
     "excellent",
   ],
-  negative: [
+  battle: [
     "hurt",
     "pain",
     "tweaked",
@@ -1092,10 +1092,10 @@ function scoreClassicLiftCandidate({
     candidateKind === "standoutRep"
       ? Math.max(0, 8 - Math.abs((lift.reps ?? 1) - 5))
       : 0;
+  const positiveNoteBonus = Math.min(12, noteSignals.positiveMatches.length * 4);
+  const battleNoteBonus = Math.min(12, noteSignals.battleMatches.length * 4);
   const noteBonus =
-    (noteSignals.hasMeetContext ? 24 : 0) +
-    Math.min(12, noteSignals.positiveMatches.length * 4) -
-    Math.min(8, noteSignals.negativeMatches.length * 4);
+    (noteSignals.hasMeetContext ? 24 : 0) + positiveNoteBonus + battleNoteBonus;
   const { boost: anniversaryBonus, daysAway: anniversaryDaysAway } =
     getAnniversaryBoost(lift.date);
 
@@ -1280,7 +1280,7 @@ function analyzeClassicLiftNotes(notes) {
       hasMeetContext: false,
       meetMatches: [],
       positiveMatches: [],
-      negativeMatches: [],
+      battleMatches: [],
       tags: [],
     };
   }
@@ -1294,21 +1294,21 @@ function analyzeClassicLiftNotes(notes) {
     normalized,
     CLASSIC_LIFT_NOTE_KEYWORDS.positive,
   );
-  const negativeMatches = matchClassicLiftNoteKeywords(
+  const battleMatches = matchClassicLiftNoteKeywords(
     normalized,
-    CLASSIC_LIFT_NOTE_KEYWORDS.negative,
+    CLASSIC_LIFT_NOTE_KEYWORDS.battle,
   );
 
   const tags = [];
   if (meetMatches.length > 0) tags.push("meet");
   if (positiveMatches.length > 0) tags.push("positive");
-  if (negativeMatches.length > 0) tags.push("negative");
+  if (battleMatches.length > 0) tags.push("battle");
 
   return {
     hasMeetContext: meetMatches.length > 0,
     meetMatches,
     positiveMatches,
-    negativeMatches,
+    battleMatches,
     tags,
   };
 }

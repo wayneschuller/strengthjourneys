@@ -27,7 +27,7 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { devLog, getDisplayWeight } from "@/lib/processing-utils";
+import { devLog, getDisplayWeight, logTiming } from "@/lib/processing-utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -105,6 +105,37 @@ const CLASSIC_LIFT_NOTE_KEYWORDS = {
     "ugly",
   ],
 };
+
+const CLASSIC_LIFT_NOTE_FAST_HINTS = [
+  "meet",
+  "comp",
+  "platform",
+  "attempt",
+  "opener",
+  "usapl",
+  "uspa",
+  "amazing",
+  "awesome",
+  "great",
+  "happy",
+  "stoked",
+  "pumped",
+  "wow",
+  "nailed",
+  "smoked",
+  "easy",
+  "flew",
+  "crushed",
+  "money",
+  "solid",
+  "hurt",
+  "pain",
+  "tweak",
+  "missed",
+  "failed",
+  "ugly",
+  "sloppy",
+];
 
 const STREAK_ENCOURAGMENTS = [
   "Go have a beer.",
@@ -796,6 +827,7 @@ function pickClassicLiftMemory({
   const candidates = buildClassicLiftCandidates({
     topLiftsByTypeAndReps,
     liftTypes,
+    parsedData,
     trainingYears,
     hasBioData,
     age,
@@ -864,6 +896,7 @@ function pickClassicLiftMemory({
 function buildClassicLiftCandidates({
   topLiftsByTypeAndReps,
   liftTypes,
+  parsedData,
   trainingYears,
   hasBioData,
   age,
@@ -1002,7 +1035,29 @@ function buildClassicLiftCandidates({
     }
   }
 
-  return dedupeClassicLiftCandidates(candidates);
+  const storyLaneStart = performance.now();
+  const nonBigFourStoryCandidates = buildNonBigFourStoryCandidates({
+    parsedData,
+    liftTypes,
+    trainingYears,
+    hasBioData,
+    age,
+    bodyWeight,
+    sex,
+    isMetric,
+  });
+  if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development") {
+    logTiming(
+      "Classic Lift Story Lane",
+      performance.now() - storyLaneStart,
+      `${nonBigFourStoryCandidates.length} candidates`,
+    );
+  }
+
+  return dedupeClassicLiftCandidates([
+    ...candidates,
+    ...nonBigFourStoryCandidates,
+  ]);
 }
 
 function getLiftStrengthRating({
@@ -1073,10 +1128,19 @@ function scoreClassicLiftCandidate({
   const ratingScore = STRENGTH_RATING_SCORE[strengthRating] ?? 0;
   const noteSignals = analyzeClassicLiftNotes(lift?.notes);
   const base = candidateKind === "single" ? 100 : 82;
+  const normalizedCandidateKind = candidateKind ?? "standoutRep";
+  const adjustedBase =
+    normalizedCandidateKind === "single"
+      ? 100
+      : normalizedCandidateKind === "storyLift"
+        ? 74
+        : 82;
   const rankBonus =
-    candidateKind === "single"
+    normalizedCandidateKind === "single"
       ? Math.max(0, 5 - rankIndex) * 4
-      : Math.max(0, 4 - rankIndex) * 2;
+      : normalizedCandidateKind === "storyLift"
+        ? Math.max(0, 3 - rankIndex) * 2
+        : Math.max(0, 4 - rankIndex) * 2;
   const frequencyBonus = Math.min(
     8,
     Math.round(Math.log10((liftFrequency || 1) + 1) * 6),
@@ -1089,8 +1153,10 @@ function scoreClassicLiftCandidate({
       : Math.max(0, 18 - Math.round(daysAgo / 30));
 
   const repSchemeBonus =
-    candidateKind === "standoutRep"
+    normalizedCandidateKind === "standoutRep"
       ? Math.max(0, 8 - Math.abs((lift.reps ?? 1) - 5))
+      : normalizedCandidateKind === "storyLift"
+        ? Math.max(0, 6 - Math.abs((lift.reps ?? 3) - 5))
       : 0;
   const positiveNoteBonus = Math.min(12, noteSignals.positiveMatches.length * 4);
   const battleNoteBonus = Math.min(12, noteSignals.battleMatches.length * 4);
@@ -1100,7 +1166,7 @@ function scoreClassicLiftCandidate({
     getAnniversaryBoost(lift.date);
 
   const total =
-    base +
+    adjustedBase +
     rankBonus +
     ratingScore * 4 +
     frequencyBonus +
@@ -1115,6 +1181,7 @@ function scoreClassicLiftCandidate({
     anniversaryDaysAway,
     breakdown: {
       base,
+      adjustedBase,
       rankBonus,
       strengthBonus: ratingScore * 4,
       frequencyBonus,
@@ -1226,6 +1293,12 @@ function buildClassicLiftSelectionPool(candidates, { trainingYears }) {
     });
   }
 
+  if (targetSize >= 16) {
+    addByPredicate(Math.min(8, Math.ceil(targetSize * 0.2)), (candidate) => {
+      return candidate.candidateKind === "storyLift";
+    });
+  }
+
   if (trainingYears >= 3) {
     addByPredicate(Math.min(4, Math.ceil(targetSize * 0.12)), (candidate) => {
       return candidate.noteSignals?.hasMeetContext;
@@ -1266,12 +1339,194 @@ function buildClassicLiftSelectionPool(candidates, { trainingYears }) {
       return false;
     }
 
+    const storyLiftCount = byKind.get("storyLift") ?? 0;
+    if (
+      candidate.candidateKind === "storyLift" &&
+      targetSize >= 16 &&
+      storyLiftCount >= Math.ceil(targetSize * 0.35)
+    ) {
+      return false;
+    }
+
     return true;
   });
 
   addByPredicate(targetSize, () => true);
 
   return selected;
+}
+
+function buildNonBigFourStoryCandidates({
+  parsedData,
+  liftTypes,
+  trainingYears,
+  hasBioData,
+  age,
+  bodyWeight,
+  sex,
+  isMetric,
+}) {
+  if (!Array.isArray(parsedData) || parsedData.length === 0) return [];
+
+  const liftTotalsMap = new Map(
+    (liftTypes ?? []).map((lift) => [
+      lift.liftType,
+      {
+        totalSets: lift.totalSets ?? 0,
+        totalReps: lift.totalReps ?? 0,
+      },
+    ]),
+  );
+  const noteSignalCache = new Map();
+  const candidatesByLiftType = new Map();
+  const seenLiftKeys = new Set();
+
+  const globalCandidateCap =
+    trainingYears >= 10 ? 24 : trainingYears >= 5 ? 18 : trainingYears >= 3 ? 12 : 8;
+  const perLiftCap =
+    trainingYears >= 10 ? 4 : trainingYears >= 5 ? 3 : trainingYears >= 3 ? 2 : 2;
+  const maxReps = trainingYears >= 5 ? 15 : 12;
+
+  for (let i = 0; i < parsedData.length; i++) {
+    const lift = parsedData[i];
+    if (!lift || lift.isGoal) continue;
+    if (!lift.notes || typeof lift.notes !== "string") continue;
+    if (!lift.liftType || BIG_FOUR_LIFTS.includes(lift.liftType)) continue;
+    if (!lift.date || !lift.weight || !lift.reps) continue;
+    if (lift.reps < 1 || lift.reps > maxReps) continue;
+
+    // Cheap substring gate before regex/keyword parsing.
+    const noteLower = lift.notes.toLowerCase();
+    let hasFastHint = false;
+    for (let j = 0; j < CLASSIC_LIFT_NOTE_FAST_HINTS.length; j++) {
+      if (noteLower.includes(CLASSIC_LIFT_NOTE_FAST_HINTS[j])) {
+        hasFastHint = true;
+        break;
+      }
+    }
+    if (!hasFastHint) continue;
+
+    const dedupeKey = `${lift.liftType}|${lift.date}|${lift.reps}|${lift.weight}|${lift.unitType || "lb"}`;
+    if (seenLiftKeys.has(dedupeKey)) continue;
+    seenLiftKeys.add(dedupeKey);
+
+    let noteSignals = noteSignalCache.get(lift.notes);
+    if (!noteSignals) {
+      noteSignals = analyzeClassicLiftNotes(lift.notes);
+      noteSignalCache.set(lift.notes, noteSignals);
+    }
+    if (!noteSignals.tags?.length) continue;
+
+    const hasStrongStorySignal =
+      noteSignals.hasMeetContext ||
+      noteSignals.positiveMatches.length > 0 ||
+      noteSignals.battleMatches.length > 0;
+    if (!hasStrongStorySignal) continue;
+
+    let strengthRating = null;
+    if (hasBioData && lift.reps <= 10) {
+      const estimatedE1RM = estimateE1RM(lift.reps, lift.weight, "Brzycki");
+      strengthRating = getLiftStrengthRating({
+        lift,
+        oneRepMaxOverride: estimatedE1RM,
+        hasBioData,
+        age,
+        bodyWeight,
+        sex,
+        isMetric,
+      });
+    }
+
+    const liftTotals = liftTotalsMap.get(lift.liftType) ?? {
+      totalSets: 0,
+      totalReps: 0,
+    };
+    const score = scoreClassicLiftCandidate({
+      lift,
+      candidateKind: "storyLift",
+      rankIndex: 0,
+      trainingYears,
+      strengthRating,
+      liftFrequency: liftTotals.totalSets,
+    });
+
+    const careBonus = getStoryLiftCareBonus(liftTotals);
+    const rarityBonus = Math.max(
+      0,
+      10 - Math.min(10, Math.round(Math.log10((liftTotals.totalSets ?? 1) + 1) * 6)),
+    );
+    const finalScore = score.total + rarityBonus + careBonus;
+
+    const candidate = {
+      id: buildLiftCandidateId(lift, `story-${i}`),
+      lift,
+      score: finalScore,
+      scoreBreakdown: {
+        ...score.breakdown,
+        careBonus,
+        rarityBonus,
+      },
+      strengthRating,
+      noteSignals,
+      anniversaryDaysAway: score.anniversaryDaysAway,
+      candidateKind: "storyLift",
+      reasonLabel: buildStoryLiftReasonLabel(lift, noteSignals),
+    };
+
+    const liftBucket = candidatesByLiftType.get(lift.liftType) ?? [];
+    liftBucket.push(candidate);
+    liftBucket.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (a.lift.date !== b.lift.date) return a.lift.date > b.lift.date ? -1 : 1;
+      return a.id.localeCompare(b.id);
+    });
+    if (liftBucket.length > perLiftCap) {
+      liftBucket.length = perLiftCap;
+    }
+    candidatesByLiftType.set(lift.liftType, liftBucket);
+  }
+
+  const flattened = Array.from(candidatesByLiftType.values()).flat();
+  flattened.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    if (a.lift.date !== b.lift.date) return a.lift.date > b.lift.date ? -1 : 1;
+    return a.id.localeCompare(b.id);
+  });
+
+  if (flattened.length > globalCandidateCap) {
+    flattened.length = globalCandidateCap;
+  }
+
+  return flattened;
+}
+
+function buildStoryLiftReasonLabel(lift, noteSignals) {
+  if (noteSignals?.hasMeetContext) {
+    return `Story lift (${lift.reps} reps · meet)`;
+  }
+  if (noteSignals?.battleMatches?.length) {
+    return `Story lift (${lift.reps} reps · battle)`;
+  }
+  if (noteSignals?.positiveMatches?.length) {
+    return `Story lift (${lift.reps} reps · note)`;
+  }
+  return `Story lift (${lift.reps} reps)`;
+}
+
+function getStoryLiftCareBonus(liftTotals) {
+  const totalSets = liftTotals?.totalSets ?? 0;
+  const totalReps = liftTotals?.totalReps ?? 0;
+
+  const setsSignal = Math.round(Math.log10(totalSets + 1) * 7);
+  const repsSignal = Math.round(Math.log10(totalReps + 1) * 5);
+
+  let milestoneBonus = 0;
+  if (totalSets >= 250 || totalReps >= 1000) milestoneBonus += 10;
+  else if (totalSets >= 120 || totalReps >= 500) milestoneBonus += 7;
+  else if (totalSets >= 60 || totalReps >= 250) milestoneBonus += 4;
+  else if (totalSets >= 25 || totalReps >= 100) milestoneBonus += 2;
+
+  return Math.min(22, setsSignal + repsSignal + milestoneBonus);
 }
 
 function analyzeClassicLiftNotes(notes) {

@@ -16,6 +16,7 @@ import {
   Activity,
   Flame,
   Anvil,
+  Video,
 } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
@@ -24,7 +25,9 @@ import {
   getStandardForLiftDate,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getDisplayWeight } from "@/lib/processing-utils";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ACCENTS = {
@@ -33,6 +36,16 @@ const ACCENTS = {
   emerald: "text-emerald-500",
   violet: "text-violet-500",
   orange: "text-orange-500",
+};
+
+const BIG_FOUR_LIFTS = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
+const CLASSIC_LIFT_DAILY_STORAGE_KEY = "home-dashboard:classic-lift-daily";
+const STRENGTH_RATING_SCORE = {
+  "Physically Active": 1,
+  Beginner: 2,
+  Intermediate: 3,
+  Advanced: 4,
+  Elite: 5,
 };
 
 const STREAK_ENCOURAGMENTS = [
@@ -212,7 +225,7 @@ function StatCard({
 }
 
 /**
- * Shows a row of stat cards with key metrics: journey length, most recent PR single,
+ * Shows a row of stat cards with key metrics: journey length, classic lift memory,
  * session momentum (90-day comparison), lifetime tonnage, and weekly consistency streak.
  * Uses useUserLiftingData and useAthleteBioData internally.
  *
@@ -232,49 +245,32 @@ export function SectionTopCards({ isProgressDone = false }) {
     [sessionTonnageLookup],
   );
 
-  // Find the most recent PR single from top 5 most frequent lifts
-  const mostRecentPR = useMemo(
-    () => findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes),
-    [topLiftsByTypeAndReps, liftTypes],
-  );
-
   // Check if we have the necessary bio data and standards to calculate a strength rating
   const hasBioData =
     age && bodyWeight && standards && Object.keys(standards).length > 0;
-
-  // Calculate strength rating for the most recent PR single when possible.
-  // Use age at time of PR for accurate age-adjusted rating (PR may be years old).
-  let mostRecentPRStrengthRating = null;
-  if (hasBioData && mostRecentPR) {
-    const standardForLift = getStandardForLiftDate(
+  const classicLiftMemory = useMemo(
+    () =>
+      pickClassicLiftMemory({
+        parsedData,
+        liftTypes,
+        topLiftsByTypeAndReps,
+        hasBioData,
+        age,
+        bodyWeight,
+        sex,
+        isMetric,
+      }),
+    [
+      parsedData,
+      liftTypes,
+      topLiftsByTypeAndReps,
+      hasBioData,
       age,
-      mostRecentPR.date,
       bodyWeight,
       sex,
-      mostRecentPR.liftType,
       isMetric,
-    );
-    const unitForStandards = isMetric ? "kg" : "lb";
-
-    if (standardForLift && mostRecentPR.weight) {
-      const prUnit = mostRecentPR.unitType || "lb";
-      let oneRepMax = mostRecentPR.weight;
-
-      // Align PR units with standards units before rating
-      if (prUnit !== unitForStandards) {
-        if (prUnit === "kg" && unitForStandards === "lb") {
-          oneRepMax = Math.round(oneRepMax * 2.2046);
-        } else if (prUnit === "lb" && unitForStandards === "kg") {
-          oneRepMax = Math.round(oneRepMax / 2.2046);
-        }
-      }
-
-      mostRecentPRStrengthRating = getStrengthRatingForE1RM(
-        oneRepMax,
-        standardForLift,
-      );
-    }
-  }
+    ],
+  );
 
   // Calculate lifetime tonnage (all-time total weight moved) in preferred units.
   const lifetimeTonnage = useMemo(
@@ -341,20 +337,42 @@ export function SectionTopCards({ isProgressDone = false }) {
           <StatCard
             accent="amber"
             icon={Trophy}
-            description="Most Recent PR Single"
+            description="Classic Lift"
             title={
-              mostRecentPR
-                ? `${mostRecentPR.liftType} 1@${getDisplayWeight(mostRecentPR, isMetric ?? false).value}${getDisplayWeight(mostRecentPR, isMetric ?? false).unit}`
-                : "No PRs yet"
+              classicLiftMemory
+                ? `${classicLiftMemory.lift.liftType} ${classicLiftMemory.lift.reps}@${getDisplayWeight(classicLiftMemory.lift, isMetric ?? false).value}${getDisplayWeight(classicLiftMemory.lift, isMetric ?? false).unit}`
+                : "No classic lifts yet"
             }
             footer={
-              mostRecentPR ? (
+              classicLiftMemory ? (
                 <span>
-                  {format(new Date(mostRecentPR.date), "d MMMM yyyy")}
-                  {mostRecentPRStrengthRating
-                    ? ` · ${STRENGTH_LEVEL_EMOJI[mostRecentPRStrengthRating] ?? ""} ${mostRecentPRStrengthRating}`
+                  {classicLiftMemory.reasonLabel} ·{" "}
+                  {format(new Date(classicLiftMemory.lift.date), "d MMM yyyy")}
+                  {classicLiftMemory.strengthRating
+                    ? ` · ${STRENGTH_LEVEL_EMOJI[classicLiftMemory.strengthRating] ?? ""} ${classicLiftMemory.strengthRating}`
                     : ""}
                 </span>
+              ) : null
+            }
+            action={
+              classicLiftMemory?.lift?.url ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5"
+                  aria-label="Open lift video"
+                  title="Open lift video"
+                  onClick={() =>
+                    window.open(
+                      classicLiftMemory.lift.url,
+                      "_blank",
+                      "noopener,noreferrer",
+                    )
+                  }
+                >
+                  <Video className="h-3.5 w-3.5" />
+                </Button>
               ) : null
             }
             animationDelay={200}
@@ -693,6 +711,367 @@ function formatLifetimeTonnage(value) {
   }
 
   return value.toLocaleString();
+}
+
+function pickClassicLiftMemory({
+  parsedData,
+  liftTypes,
+  topLiftsByTypeAndReps,
+  hasBioData,
+  age,
+  bodyWeight,
+  sex,
+  isMetric,
+}) {
+  if (!topLiftsByTypeAndReps) return null;
+  const firstParsedDate = parsedData?.[0]?.date ?? null;
+  const lastParsedDate =
+    parsedData && parsedData.length > 0
+      ? parsedData[parsedData.length - 1]?.date ?? null
+      : null;
+
+  const trainingYears =
+    firstParsedDate != null
+      ? Math.max(0, differenceInCalendarYears(new Date(), parseISO(firstParsedDate)))
+      : 0;
+
+  const candidates = buildClassicLiftCandidates({
+    topLiftsByTypeAndReps,
+    liftTypes,
+    trainingYears,
+    hasBioData,
+    age,
+    bodyWeight,
+    sex,
+    isMetric,
+  });
+
+  if (candidates.length === 0) {
+    const fallbackPR = findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes);
+    if (!fallbackPR) return null;
+    return {
+      lift: fallbackPR,
+      reasonLabel: "Recent PR single",
+      strengthRating: getLiftStrengthRating({
+        lift: fallbackPR,
+        hasBioData,
+        age,
+        bodyWeight,
+        sex,
+        isMetric,
+      }),
+      score: 0,
+    };
+  }
+
+  const sortedCandidates = [...candidates].sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    if (a.lift.date !== b.lift.date) return a.lift.date > b.lift.date ? -1 : 1;
+    return a.id.localeCompare(b.id);
+  });
+
+  const poolSize = Math.min(
+    sortedCandidates.length,
+    trainingYears >= 3 ? 12 : 6,
+  );
+  const selectionPool = sortedCandidates.slice(0, poolSize);
+
+  return pickDailySessionStoredCandidate(selectionPool, {
+    fingerprint: [
+      firstParsedDate ?? "none",
+      lastParsedDate ?? "none",
+      parsedData?.length ?? 0,
+      poolSize,
+    ].join("|"),
+  });
+}
+
+function buildClassicLiftCandidates({
+  topLiftsByTypeAndReps,
+  liftTypes,
+  trainingYears,
+  hasBioData,
+  age,
+  bodyWeight,
+  sex,
+  isMetric,
+}) {
+  const candidates = [];
+  const liftFrequencyMap = new Map(
+    (liftTypes ?? []).map((lift) => [lift.liftType, lift.totalSets ?? 0]),
+  );
+
+  BIG_FOUR_LIFTS.forEach((liftType) => {
+    const repRanges = topLiftsByTypeAndReps[liftType];
+    if (!repRanges) return;
+
+    const topSingles = takeTopUniqueWeightEntries(repRanges[0] ?? [], 3);
+    topSingles.forEach((lift, index) => {
+      const strengthRating = getLiftStrengthRating({
+        lift,
+        hasBioData,
+        age,
+        bodyWeight,
+        sex,
+        isMetric,
+      });
+      const score = scoreClassicLiftCandidate({
+        lift,
+        candidateKind: "single",
+        rankIndex: index,
+        trainingYears,
+        strengthRating,
+        liftFrequency: liftFrequencyMap.get(liftType) ?? 0,
+      });
+
+      candidates.push({
+        id: buildLiftCandidateId(lift, `single-${index + 1}`),
+        lift,
+        score,
+        strengthRating,
+        reasonLabel: `Top ${index + 1} single`,
+      });
+    });
+
+    for (let repsIndex = 1; repsIndex < 10; repsIndex++) {
+      const topAtReps = repRanges[repsIndex]?.[0];
+      if (!topAtReps) continue;
+
+      const reps = repsIndex + 1;
+      const estimatedE1RM = estimateE1RM(reps, topAtReps.weight, "Brzycki");
+      const strengthRating = getLiftStrengthRating({
+        lift: topAtReps,
+        oneRepMaxOverride: estimatedE1RM,
+        hasBioData,
+        age,
+        bodyWeight,
+        sex,
+        isMetric,
+      });
+
+      const ratingScore = STRENGTH_RATING_SCORE[strengthRating] ?? 0;
+      const qualifiesStandoutRep =
+        hasBioData
+          ? ratingScore >= (trainingYears >= 3 ? 4 : 3)
+          : reps <= 5;
+
+      if (!qualifiesStandoutRep) continue;
+
+      const score = scoreClassicLiftCandidate({
+        lift: topAtReps,
+        candidateKind: "standoutRep",
+        rankIndex: 0,
+        trainingYears,
+        strengthRating,
+        liftFrequency: liftFrequencyMap.get(liftType) ?? 0,
+      });
+
+      candidates.push({
+        id: buildLiftCandidateId(topAtReps, `rep-${reps}`),
+        lift: topAtReps,
+        score,
+        strengthRating,
+        reasonLabel: `Standout ${reps}RM`,
+      });
+    }
+  });
+
+  if (trainingYears < 3) {
+    const recentPR = findMostRecentSinglePR(topLiftsByTypeAndReps, liftTypes);
+    if (recentPR) {
+      const strengthRating = getLiftStrengthRating({
+        lift: recentPR,
+        hasBioData,
+        age,
+        bodyWeight,
+        sex,
+        isMetric,
+      });
+      candidates.push({
+        id: buildLiftCandidateId(recentPR, "recent-pr"),
+        lift: recentPR,
+        score:
+          scoreClassicLiftCandidate({
+            lift: recentPR,
+            candidateKind: "single",
+            rankIndex: 0,
+            trainingYears,
+            strengthRating,
+            liftFrequency: liftFrequencyMap.get(recentPR.liftType) ?? 0,
+          }) + 8,
+        strengthRating,
+        reasonLabel: "Recent PR single",
+      });
+    }
+  }
+
+  return dedupeClassicLiftCandidates(candidates);
+}
+
+function getLiftStrengthRating({
+  lift,
+  oneRepMaxOverride,
+  hasBioData,
+  age,
+  bodyWeight,
+  sex,
+  isMetric,
+}) {
+  if (!hasBioData || !lift) return null;
+
+  const standardForLift = getStandardForLiftDate(
+    age,
+    lift.date,
+    bodyWeight,
+    sex,
+    lift.liftType,
+    isMetric,
+  );
+
+  if (!standardForLift) return null;
+
+  const unitForStandards = isMetric ? "kg" : "lb";
+  const liftUnit = lift.unitType || "lb";
+  let oneRepMax =
+    typeof oneRepMaxOverride === "number" ? oneRepMaxOverride : lift.weight;
+
+  if (!oneRepMax) return null;
+
+  if (liftUnit !== unitForStandards) {
+    if (liftUnit === "kg" && unitForStandards === "lb") {
+      oneRepMax = Math.round(oneRepMax * 2.2046);
+    } else if (liftUnit === "lb" && unitForStandards === "kg") {
+      oneRepMax = Math.round(oneRepMax / 2.2046);
+    }
+  }
+
+  return getStrengthRatingForE1RM(oneRepMax, standardForLift);
+}
+
+function takeTopUniqueWeightEntries(entries, maxCount) {
+  if (!Array.isArray(entries) || entries.length === 0) return [];
+
+  const results = [];
+  const seenWeights = new Set();
+
+  for (let i = 0; i < entries.length && results.length < maxCount; i++) {
+    const lift = entries[i];
+    const weightKey = `${lift.weight}|${lift.unitType || "lb"}`;
+    if (seenWeights.has(weightKey)) continue;
+    seenWeights.add(weightKey);
+    results.push(lift);
+  }
+
+  return results;
+}
+
+function scoreClassicLiftCandidate({
+  lift,
+  candidateKind,
+  rankIndex,
+  trainingYears,
+  strengthRating,
+  liftFrequency,
+}) {
+  const ratingScore = STRENGTH_RATING_SCORE[strengthRating] ?? 0;
+  const base = candidateKind === "single" ? 100 : 82;
+  const rankBonus = candidateKind === "single" ? (3 - rankIndex) * 6 : 0;
+  const frequencyBonus = Math.min(8, Math.round(Math.log10((liftFrequency || 1) + 1) * 6));
+
+  const daysAgo = getDaysAgoFromDateStr(lift.date);
+  const recencyOrNostalgiaBonus =
+    trainingYears >= 3
+      ? Math.min(18, Math.round(daysAgo / 180))
+      : Math.max(0, 18 - Math.round(daysAgo / 30));
+
+  const repSchemeBonus =
+    candidateKind === "standoutRep" ? Math.max(0, 8 - Math.abs((lift.reps ?? 1) - 5)) : 0;
+
+  return (
+    base +
+    rankBonus +
+    ratingScore * 4 +
+    frequencyBonus +
+    recencyOrNostalgiaBonus +
+    repSchemeBonus
+  );
+}
+
+function dedupeClassicLiftCandidates(candidates) {
+  const bestByLiftKey = new Map();
+
+  (candidates ?? []).forEach((candidate) => {
+    if (!candidate?.lift) return;
+    const key = buildLiftCandidateId(candidate.lift, "core");
+    const existing = bestByLiftKey.get(key);
+    if (!existing || candidate.score > existing.score) {
+      bestByLiftKey.set(key, candidate);
+    }
+  });
+
+  return Array.from(bestByLiftKey.values());
+}
+
+function buildLiftCandidateId(lift, suffix) {
+  return [
+    lift?.liftType ?? "Unknown",
+    lift?.date ?? "0000-00-00",
+    lift?.reps ?? 0,
+    lift?.weight ?? 0,
+    lift?.unitType ?? "lb",
+    suffix,
+  ].join("|");
+}
+
+function pickDailySessionStoredCandidate(candidates, { fingerprint }) {
+  if (!Array.isArray(candidates) || candidates.length === 0) return null;
+
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const storageSeed = `${todayStr}|${fingerprint}|${candidates.length}`;
+
+  if (typeof window !== "undefined") {
+    try {
+      const stored = window.sessionStorage.getItem(CLASSIC_LIFT_DAILY_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (
+          parsed?.seed === storageSeed &&
+          Number.isInteger(parsed.index) &&
+          parsed.index >= 0 &&
+          parsed.index < candidates.length
+        ) {
+          return candidates[parsed.index];
+        }
+      }
+
+      const seededIndex = hashStringToIndex(storageSeed, candidates.length);
+      window.sessionStorage.setItem(
+        CLASSIC_LIFT_DAILY_STORAGE_KEY,
+        JSON.stringify({ seed: storageSeed, index: seededIndex }),
+      );
+      return candidates[seededIndex];
+    } catch {
+      // Fall through to deterministic hash when sessionStorage is unavailable.
+    }
+  }
+
+  return candidates[hashStringToIndex(storageSeed, candidates.length)];
+}
+
+function hashStringToIndex(seed, modulo) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return modulo > 0 ? hash % modulo : 0;
+}
+
+function getDaysAgoFromDateStr(dateStr) {
+  if (!dateStr) return 0;
+  const date = new Date(`${dateStr}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return 0;
+  const diffMs = Date.now() - date.getTime();
+  return Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
 }
 
 /**

@@ -26,7 +26,8 @@ import {
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { getDisplayWeight } from "@/lib/processing-utils";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { devLog, getDisplayWeight } from "@/lib/processing-utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -39,7 +40,6 @@ const ACCENTS = {
 };
 
 const BIG_FOUR_LIFTS = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
-const CLASSIC_LIFT_DAILY_STORAGE_KEY = "home-dashboard:classic-lift-daily";
 const STRENGTH_RATING_SCORE = {
   "Physically Active": 1,
   Beginner: 2,
@@ -775,8 +775,24 @@ function pickClassicLiftMemory({
     trainingYears >= 3 ? 12 : 6,
   );
   const selectionPool = sortedCandidates.slice(0, poolSize);
+  devLog(
+    "Classic lift pool size:",
+    selectionPool.length,
+    "pool:",
+    selectionPool.map((candidate) => ({
+      liftType: candidate.lift?.liftType,
+      reps: candidate.lift?.reps,
+      weight: candidate.lift?.weight,
+      unitType: candidate.lift?.unitType ?? "lb",
+      date: candidate.lift?.date,
+      reason: candidate.reasonLabel,
+      score: candidate.score,
+      strengthRating: candidate.strengthRating ?? null,
+      hasUrl: !!candidate.lift?.url,
+    })),
+  );
 
-  return pickDailySessionStoredCandidate(selectionPool, {
+  return pickSessionStoredCandidate(selectionPool, {
     fingerprint: [
       firstParsedDate ?? "none",
       lastParsedDate ?? "none",
@@ -1023,19 +1039,21 @@ function buildLiftCandidateId(lift, suffix) {
   ].join("|");
 }
 
-function pickDailySessionStoredCandidate(candidates, { fingerprint }) {
+function pickSessionStoredCandidate(candidates, { fingerprint }) {
   if (!Array.isArray(candidates) || candidates.length === 0) return null;
 
   const todayStr = format(new Date(), "yyyy-MM-dd");
-  const storageSeed = `${todayStr}|${fingerprint}|${candidates.length}`;
+  const sessionSeed = `${todayStr}|${fingerprint}|${candidates.length}`;
 
   if (typeof window !== "undefined") {
     try {
-      const stored = window.sessionStorage.getItem(CLASSIC_LIFT_DAILY_STORAGE_KEY);
+      const stored = window.sessionStorage.getItem(
+        LOCAL_STORAGE_KEYS.CLASSIC_LIFT_SESSION,
+      );
       if (stored) {
         const parsed = JSON.parse(stored);
         if (
-          parsed?.seed === storageSeed &&
+          parsed?.seed === sessionSeed &&
           Number.isInteger(parsed.index) &&
           parsed.index >= 0 &&
           parsed.index < candidates.length
@@ -1044,18 +1062,18 @@ function pickDailySessionStoredCandidate(candidates, { fingerprint }) {
         }
       }
 
-      const seededIndex = hashStringToIndex(storageSeed, candidates.length);
+      const randomIndex = Math.floor(Math.random() * candidates.length);
       window.sessionStorage.setItem(
-        CLASSIC_LIFT_DAILY_STORAGE_KEY,
-        JSON.stringify({ seed: storageSeed, index: seededIndex }),
+        LOCAL_STORAGE_KEYS.CLASSIC_LIFT_SESSION,
+        JSON.stringify({ seed: sessionSeed, index: randomIndex }),
       );
-      return candidates[seededIndex];
+      return candidates[randomIndex];
     } catch {
       // Fall through to deterministic hash when sessionStorage is unavailable.
     }
   }
 
-  return candidates[hashStringToIndex(storageSeed, candidates.length)];
+  return candidates[hashStringToIndex(sessionSeed, candidates.length)];
 }
 
 function hashStringToIndex(seed, modulo) {

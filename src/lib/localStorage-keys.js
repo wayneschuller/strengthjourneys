@@ -92,6 +92,9 @@ export const LOCAL_STORAGE_KEYS = {
 
   // Session analysis – creative ratings cache (per date, auth only)
   SESSION_RATING_CACHE: "sj-session-rating-cache",
+
+  // Home dashboard (also used with sessionStorage)
+  CLASSIC_LIFT_SESSION: "SJ_HomeClassicLiftSession",
 };
 
 /**

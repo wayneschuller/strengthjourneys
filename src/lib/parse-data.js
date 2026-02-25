@@ -1,5 +1,6 @@
 import { recordTiming } from "@/lib/processing-utils";
 import { parse } from "date-fns";
+import { normalizeYmd as normalizeDateString } from "@/lib/date-utils";
 import { parseTurnKeyData } from "@/lib/parse-turnkey-importer";
 
 /**
@@ -289,37 +290,6 @@ export function normalizeLiftTypeNames(liftType) {
 
   const key = liftType.toLowerCase();
   return standardLiftTypes[key] || liftType; // Defaults to original if no match
-}
-
-// Helper function to normalize date strings to YYYY-MM-DD format
-// Occasionally google sheets will return dates in the format "2025-5-23"
-// instead of "2025-05-23"
-// Our assumed date format is always YYYY-MM-DD
-// Maybe one day we will use Typescript like grownups.
-// Fast string-only date normalization
-function normalizeDateString(dateStr) {
-  if (!dateStr) return null;
-
-  // Trim is very fast - just removes whitespace from start/end
-  dateStr = dateStr.trim();
-
-  // Split is fast - just splits on delimiter
-  const parts = dateStr.split("-");
-  if (parts.length !== 3) return null;
-
-  // Fast string operations only
-  const year = parts[0];
-  if (year.length !== 4) return null;
-
-  // Zero-pad month and day using string operations only
-  const month = parts[1].padStart(2, "0");
-  const day = parts[2].padStart(2, "0");
-
-  // Simple numeric validation without parsing
-  if (month < "01" || month > "12") return null;
-  if (day < "01" || day > "31") return null;
-
-  return `${year}-${month}-${day}`;
 }
 
 // Used to normalize column names to a standard format

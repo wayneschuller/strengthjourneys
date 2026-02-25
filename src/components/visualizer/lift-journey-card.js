@@ -60,7 +60,6 @@ const TIERS = [
 
 // Rings fill to 100% at the Legend threshold; higher tiers show a full ring.
 const RING_MAX_REPS = 27000;
-const RING_MAX_SETS = 5400;
 
 function computeTier(totalReps, yearsTraining) {
   let tier = TIERS[0];
@@ -280,7 +279,6 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
   // ── Derived data ─────────────────────────────────────────────────────────
   const liftEntry = liftTypes?.find((l) => l.liftType === liftType);
   const totalReps = liftEntry?.totalReps ?? 0;
-  const totalSets = liftEntry?.totalSets ?? 0;
   const oldestDate = liftEntry?.oldestDate;
 
   const topLiftsByReps = topLiftsByTypeAndReps?.[liftType];
@@ -345,7 +343,6 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
     : null;
 
   const repsFill = totalReps / RING_MAX_REPS;
-  const setsFill = totalSets / RING_MAX_SETS;
 
   const prRecords = [
     { label: "Best Single", lift: oneRM },
@@ -464,14 +461,6 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
                   color={liftColor}
                   isMounted={isMounted}
                   tooltip="Full ring = Legend tier (27,000 reps)"
-                />
-                <StatRing
-                  value={totalSets}
-                  fill={setsFill}
-                  label="Total Sets"
-                  color={liftColor}
-                  isMounted={isMounted}
-                  tooltip="Full ring = Legend tier (5,400 sets)"
                 />
               </div>
             )}

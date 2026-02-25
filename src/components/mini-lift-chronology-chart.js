@@ -178,14 +178,25 @@ export function buildLiftChronology(parsedData, liftType, targetBars = 10) {
  * @param {string} props.color - Hex/CSS color for the bars.
  * @param {Object} props.chronology - Output of `buildLiftChronology`.
  */
+const CADENCE_LABEL = {
+  week: "Weekly",
+  month: "Monthly",
+  quarter: "Quarterly",
+  year: "Annual",
+};
+
 export function MiniLiftChronologyChart({ liftType, color, chronology }) {
   if (!liftType || !chronology?.bars?.length) return null;
 
   const chartConfig = { reps: { label: "Reps", color } };
   const gradientId = `mlc-grad-${color.replace(/[^a-zA-Z0-9]/g, "")}`;
+  const cadenceLabel = CADENCE_LABEL[chronology.cadence] ?? "Reps";
+  const header = `${cadenceLabel} reps · ${chronology.startLabel} – ${chronology.endLabel}`;
 
   return (
-    <ChartContainer
+    <div>
+      <p className="mb-1 text-xs text-muted-foreground">{header}</p>
+      <ChartContainer
       config={chartConfig}
       className="mt-0 mb-5 !aspect-auto h-[72px] w-full select-none [&_.recharts-surface]:focus:outline-none [&_.recharts-surface]:focus-visible:outline-none"
       onMouseDownCapture={(e) => e.preventDefault()}
@@ -241,5 +252,6 @@ export function MiniLiftChronologyChart({ liftType, color, chronology }) {
         </Bar>
       </BarChart>
     </ChartContainer>
+    </div>
   );
 }

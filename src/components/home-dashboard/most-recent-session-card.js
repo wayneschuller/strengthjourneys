@@ -12,7 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -55,6 +55,7 @@ export function MostRecentSessionCard({
 }) {
   const { status: authStatus } = useSession();
   const [internalHighlightDate, setInternalHighlightDate] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(RECENT_SESSIONS_COUNT);
 
   const isControlled = setHighlightDateProp != null;
   const highlightDate = isControlled ? highlightDateProp : internalHighlightDate;
@@ -90,7 +91,7 @@ export function MostRecentSessionCard({
 
       if (liftType) {
         datesForNav = getSessionDatesContainingLiftType(parsedData, liftType);
-        const recentDates = datesForNav.slice(-RECENT_SESSIONS_COUNT).reverse();
+        const recentDates = datesForNav.slice().reverse();
         const recentSessions = recentDates
           .map((date) => {
             const allAnalyzed = getAnalyzedSessionLifts(
@@ -232,7 +233,7 @@ export function MostRecentSessionCard({
                 </div>
               )}
               <div className="min-w-0 flex-1 flex flex-col gap-1.5">
-                {recentSessions.map(({ sessionDate, analyzedSessionLifts }, sessionIndex) => {
+                {recentSessions.slice(0, visibleCount).map(({ sessionDate, analyzedSessionLifts }, sessionIndex) => {
                   const liftEntries = Object.entries(analyzedSessionLifts);
                   if (liftEntries.length === 0) return null;
                   return (
@@ -265,6 +266,17 @@ export function MostRecentSessionCard({
                     </motion.div>
                   );
                 })}
+                {visibleCount < recentSessions.length && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mt-1 self-start text-muted-foreground"
+                    onClick={() => setVisibleCount((c) => c + 1)}
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    Show one more session
+                  </Button>
+                )}
               </div>
             </div>
           </CardContent>

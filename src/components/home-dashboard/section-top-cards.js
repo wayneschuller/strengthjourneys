@@ -802,6 +802,15 @@ function formatLifetimeTonnage(value) {
   return value.toLocaleString();
 }
 
+/**
+ * Orchestrates the "Classic Lift" top-card selection.
+ *
+ * Flow:
+ * 1) Build a broad candidate list (Big Four, frequent non-Big-Four PRs, note-driven story lifts)
+ * 2) Compute a dynamic pool target size based on training age + candidate richness
+ * 3) Curate a diversified pool (quotas by kind, era, note signals, etc.)
+ * 4) Pick one candidate per browser tab session (sessionStorage-backed)
+ */
 function pickClassicLiftMemory({
   parsedData,
   liftTypes,
@@ -854,10 +863,14 @@ function pickClassicLiftMemory({
     };
   }
 
+  const targetPoolSize = getClassicLiftPoolTargetSize(
+    trainingYears,
+    candidates.length,
+  );
   const selectionPool = buildClassicLiftSelectionPool(candidates, {
     trainingYears,
+    targetPoolSize,
   });
-  const targetPoolSize = getClassicLiftPoolTargetSize(trainingYears);
   devLog(
     "Classic lift pool size:",
     selectionPool.length,
@@ -893,6 +906,17 @@ function pickClassicLiftMemory({
   });
 }
 
+/**
+ * Builds the raw candidate list before pool curation.
+ *
+ * Candidate sources:
+ * - Big Four top singles + standout rep PRs (core classic lane)
+ * - Frequent non-Big-Four PRs (importance lane)
+ * - Note-driven non-Big-Four story lifts (memory lane)
+ *
+ * We intentionally gather more than needed here; the later pool builder is responsible for
+ * diversity and final pool size control.
+ */
 function buildClassicLiftCandidates({
   topLiftsByTypeAndReps,
   liftTypes,
@@ -913,6 +937,7 @@ function buildClassicLiftCandidates({
     const repRanges = topLiftsByTypeAndReps[liftType];
     if (!repRanges) return;
 
+    // Longer training histories benefit from a deeper nostalgia bench; newer lifters stay tighter.
     const topSinglesDepth =
       trainingYears >= 10 ? 10 : trainingYears >= 5 ? 7 : trainingYears >= 3 ? 5 : 3;
     const standoutRepDepth =
@@ -1035,7 +1060,27 @@ function buildClassicLiftCandidates({
     }
   }
 
+  // Separate timing logs make it easier to tune expensive lanes independently.
   const storyLaneStart = performance.now();
+  const frequentNonBigFourCandidates = buildFrequentNonBigFourClassicCandidates({
+    topLiftsByTypeAndReps,
+    liftTypes,
+    trainingYears,
+    hasBioData,
+    age,
+    bodyWeight,
+    sex,
+    isMetric,
+  });
+  if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development") {
+    logTiming(
+      "Classic Lift Frequent Lane",
+      performance.now() - storyLaneStart,
+      `${frequentNonBigFourCandidates.length} candidates`,
+    );
+  }
+
+  const storyLaneTimingStart = performance.now();
   const nonBigFourStoryCandidates = buildNonBigFourStoryCandidates({
     parsedData,
     liftTypes,
@@ -1049,17 +1094,24 @@ function buildClassicLiftCandidates({
   if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development") {
     logTiming(
       "Classic Lift Story Lane",
-      performance.now() - storyLaneStart,
+      performance.now() - storyLaneTimingStart,
       `${nonBigFourStoryCandidates.length} candidates`,
     );
   }
 
   return dedupeClassicLiftCandidates([
     ...candidates,
+    ...frequentNonBigFourCandidates,
     ...nonBigFourStoryCandidates,
   ]);
 }
 
+/**
+ * Computes an age-adjusted strength rating for a historical lift.
+ *
+ * Accepts an optional `oneRepMaxOverride` so non-single sets can be scored using estimated 1RM
+ * while still using the lift's original date/liftType for standards lookup.
+ */
 function getLiftStrengthRating({
   lift,
   oneRepMaxOverride,
@@ -1100,6 +1152,12 @@ function getLiftStrengthRating({
   return getStrengthRatingForE1RM(oneRepMax, standardForLift);
 }
 
+/**
+ * Returns the top entries by weight while enforcing unique weight values.
+ *
+ * This avoids filling the candidate list with multiple same-weight duplicates (e.g. repeated
+ * tie entries, warmups, or retakes at the same load).
+ */
 function takeTopUniqueWeightEntries(entries, maxCount) {
   if (!Array.isArray(entries) || entries.length === 0) return [];
 
@@ -1117,6 +1175,17 @@ function takeTopUniqueWeightEntries(entries, maxCount) {
   return results;
 }
 
+/**
+ * Central scoring function used by all classic-lift candidate lanes.
+ *
+ * Output includes:
+ * - `total`: final score for ranking
+ * - `noteSignals`: parsed note tags for downstream quotas/debugging
+ * - `anniversaryDaysAway`: used by pool quotas and debug logs
+ * - `breakdown`: score components for tuning
+ *
+ * Keep all scoring weights centralized here so tuning stays coherent.
+ */
 function scoreClassicLiftCandidate({
   lift,
   candidateKind,
@@ -1127,17 +1196,20 @@ function scoreClassicLiftCandidate({
 }) {
   const ratingScore = STRENGTH_RATING_SCORE[strengthRating] ?? 0;
   const noteSignals = analyzeClassicLiftNotes(lift?.notes);
-  const base = candidateKind === "single" ? 100 : 82;
   const normalizedCandidateKind = candidateKind ?? "standoutRep";
   const adjustedBase =
     normalizedCandidateKind === "single"
       ? 100
+      : normalizedCandidateKind === "frequentLiftPR"
+        ? 88
       : normalizedCandidateKind === "storyLift"
         ? 74
         : 82;
   const rankBonus =
     normalizedCandidateKind === "single"
       ? Math.max(0, 5 - rankIndex) * 4
+      : normalizedCandidateKind === "frequentLiftPR"
+        ? Math.max(0, 4 - rankIndex) * 3
       : normalizedCandidateKind === "storyLift"
         ? Math.max(0, 3 - rankIndex) * 2
         : Math.max(0, 4 - rankIndex) * 2;
@@ -1147,6 +1219,7 @@ function scoreClassicLiftCandidate({
   );
 
   const daysAgo = getDaysAgoFromDateStr(lift.date);
+  // Veterans get nostalgia bias (older lifts rise); newer lifters get recency bias.
   const recencyOrNostalgiaBonus =
     trainingYears >= 3
       ? Math.min(18, Math.round(daysAgo / 180))
@@ -1155,6 +1228,8 @@ function scoreClassicLiftCandidate({
   const repSchemeBonus =
     normalizedCandidateKind === "standoutRep"
       ? Math.max(0, 8 - Math.abs((lift.reps ?? 1) - 5))
+      : normalizedCandidateKind === "frequentLiftPR"
+        ? Math.max(0, 7 - Math.abs((lift.reps ?? 1) - 4))
       : normalizedCandidateKind === "storyLift"
         ? Math.max(0, 6 - Math.abs((lift.reps ?? 3) - 5))
       : 0;
@@ -1193,6 +1268,11 @@ function scoreClassicLiftCandidate({
   };
 }
 
+/**
+ * Dedupes candidates that point to the same lift/set entry, keeping the highest-scoring variant.
+ *
+ * The same lift can be discovered by multiple lanes (e.g. frequent-lift PR + story-lift notes).
+ */
 function dedupeClassicLiftCandidates(candidates) {
   const bestByLiftKey = new Map();
 
@@ -1208,6 +1288,12 @@ function dedupeClassicLiftCandidates(candidates) {
   return Array.from(bestByLiftKey.values());
 }
 
+/**
+ * Stable identifier for a candidate (used for dedupe + session selection storage).
+ *
+ * `suffix` allows the same underlying lift to appear as different "candidate concepts"
+ * during raw generation (single vs e1RM lane, etc.) before dedupe collapses them.
+ */
 function buildLiftCandidateId(lift, suffix) {
   return [
     lift?.liftType ?? "Unknown",
@@ -1219,15 +1305,42 @@ function buildLiftCandidateId(lift, suffix) {
   ].join("|");
 }
 
-function getClassicLiftPoolTargetSize(trainingYears) {
-  if (trainingYears >= 10) return 56;
-  if (trainingYears >= 5) return 40;
-  if (trainingYears >= 3) return 28;
-  if (trainingYears >= 1) return 16;
-  return 10;
+/**
+ * Dynamic pool-size target derived from training age and candidate richness.
+ *
+ * This scales with `candidateCount` so long-history users with lots of viable memories get a
+ * meaningfully larger rotation pool, while smaller datasets stay focused.
+ */
+function getClassicLiftPoolTargetSize(trainingYears, candidateCount = 0) {
+  const count = Math.max(0, candidateCount || 0);
+
+  if (trainingYears >= 10) {
+    return clampNumber(Math.round(count * 0.6), 64, 96);
+  }
+  if (trainingYears >= 5) {
+    return clampNumber(Math.round(count * 0.55), 36, 72);
+  }
+  if (trainingYears >= 3) {
+    return clampNumber(Math.round(count * 0.5), 24, 48);
+  }
+  if (trainingYears >= 1) {
+    return clampNumber(Math.round(count * 0.45), 14, 28);
+  }
+  return clampNumber(Math.round(count * 0.4), 8, 16);
 }
 
-function buildClassicLiftSelectionPool(candidates, { trainingYears }) {
+/**
+ * Curates the final session-random pool from the raw candidates.
+ *
+ * This is intentionally quota-driven (not simply top-N by score) to preserve variety:
+ * - Big Four representation
+ * - rep PRs
+ * - frequent non-Big-Four PRs
+ * - note-driven story lifts
+ * - anniversary-ish dates
+ * - era balance for longer histories
+ */
+function buildClassicLiftSelectionPool(candidates, { trainingYears, targetPoolSize }) {
   const sortedCandidates = [...(candidates ?? [])].sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
     if (a.lift?.date !== b.lift?.date) {
@@ -1236,10 +1349,7 @@ function buildClassicLiftSelectionPool(candidates, { trainingYears }) {
     return a.id.localeCompare(b.id);
   });
 
-  const targetSize = Math.min(
-    sortedCandidates.length,
-    getClassicLiftPoolTargetSize(trainingYears),
-  );
+  const targetSize = Math.min(sortedCandidates.length, targetPoolSize);
   if (targetSize <= 0) return [];
 
   const selected = [];
@@ -1264,6 +1374,7 @@ function buildClassicLiftSelectionPool(candidates, { trainingYears }) {
     return true;
   };
 
+  // Shared quota helper: pulls highest-ranked items matching a predicate until `limit`.
   const addByPredicate = (limit, predicate) => {
     if (limit <= 0) return;
     for (let i = 0; i < sortedCandidates.length && selected.length < targetSize; i++) {
@@ -1277,6 +1388,7 @@ function buildClassicLiftSelectionPool(candidates, { trainingYears }) {
     }
   };
 
+  // Guarantee a baseline of Big Four representation before filling specialty lanes.
   const minPerBigFour = trainingYears >= 10 ? 3 : trainingYears >= 5 ? 2 : 1;
   BIG_FOUR_LIFTS.forEach((liftType) => {
     const availableForLift = sortedCandidates.filter(
@@ -1296,6 +1408,12 @@ function buildClassicLiftSelectionPool(candidates, { trainingYears }) {
   if (targetSize >= 16) {
     addByPredicate(Math.min(8, Math.ceil(targetSize * 0.2)), (candidate) => {
       return candidate.candidateKind === "storyLift";
+    });
+  }
+
+  if (targetSize >= 16) {
+    addByPredicate(Math.min(10, Math.ceil(targetSize * 0.28)), (candidate) => {
+      return candidate.candidateKind === "frequentLiftPR";
     });
   }
 
@@ -1324,6 +1442,7 @@ function buildClassicLiftSelectionPool(candidates, { trainingYears }) {
     });
   }
 
+  // Final fill pass enforces soft caps so one lift/kind cannot dominate the pool.
   const softPerLiftCap = Math.max(minPerBigFour, Math.ceil(targetSize * 0.4));
   addByPredicate(targetSize, (candidate) => {
     const liftType = candidate.lift?.liftType ?? "Unknown";
@@ -1348,6 +1467,15 @@ function buildClassicLiftSelectionPool(candidates, { trainingYears }) {
       return false;
     }
 
+    const frequentLiftPrCount = byKind.get("frequentLiftPR") ?? 0;
+    if (
+      candidate.candidateKind === "frequentLiftPR" &&
+      targetSize >= 16 &&
+      frequentLiftPrCount >= Math.ceil(targetSize * 0.42)
+    ) {
+      return false;
+    }
+
     return true;
   });
 
@@ -1356,6 +1484,161 @@ function buildClassicLiftSelectionPool(candidates, { trainingYears }) {
   return selected;
 }
 
+/** Small utility for pool target bounds. */
+function clampNumber(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+/**
+ * Builds a low-cost non-Big-Four performance lane using curated PR structures only.
+ *
+ * For the user's most-frequent non-Big-Four lifts, we surface:
+ * - best true single (if it exists)
+ * - best e1RM candidate across rep ranges 1–10
+ *
+ * This captures "identity lifts" without scanning all parsed rows.
+ */
+function buildFrequentNonBigFourClassicCandidates({
+  topLiftsByTypeAndReps,
+  liftTypes,
+  trainingYears,
+  hasBioData,
+  age,
+  bodyWeight,
+  sex,
+  isMetric,
+}) {
+  if (!topLiftsByTypeAndReps || !Array.isArray(liftTypes) || liftTypes.length === 0) {
+    return [];
+  }
+
+  // Longer histories can support a wider "important lifts" universe.
+  const topLiftCount = trainingYears >= 10 ? 15 : trainingYears >= 5 ? 12 : 10;
+  const frequentNonBigFour = liftTypes
+    .slice(0, topLiftCount + BIG_FOUR_LIFTS.length)
+    .filter((liftMeta) => !BIG_FOUR_LIFTS.includes(liftMeta.liftType))
+    .slice(0, topLiftCount);
+
+  const candidates = [];
+
+  for (let i = 0; i < frequentNonBigFour.length; i++) {
+    const liftMeta = frequentNonBigFour[i];
+    const liftType = liftMeta.liftType;
+    const repRanges = topLiftsByTypeAndReps[liftType];
+    if (!repRanges) continue;
+
+    const liftTotals = {
+      totalSets: liftMeta.totalSets ?? 0,
+      totalReps: liftMeta.totalReps ?? 0,
+    };
+    const careBonus = getStoryLiftCareBonus(liftTotals);
+
+    const bestSingle = takeTopUniqueWeightEntries(repRanges[0] ?? [], 1)[0] ?? null;
+    if (bestSingle) {
+      const strengthRating = getLiftStrengthRating({
+        lift: bestSingle,
+        hasBioData,
+        age,
+        bodyWeight,
+        sex,
+        isMetric,
+      });
+      const score = scoreClassicLiftCandidate({
+        lift: bestSingle,
+        candidateKind: "frequentLiftPR",
+        rankIndex: 0,
+        trainingYears,
+        strengthRating,
+        liftFrequency: liftTotals.totalSets,
+      });
+      candidates.push({
+        id: buildLiftCandidateId(bestSingle, `frequent-single-${i + 1}`),
+        lift: bestSingle,
+        score: score.total + careBonus,
+        scoreBreakdown: {
+          ...score.breakdown,
+          careBonus,
+        },
+        strengthRating,
+        noteSignals: score.noteSignals,
+        anniversaryDaysAway: score.anniversaryDaysAway,
+        candidateKind: "frequentLiftPR",
+        reasonLabel: "Frequent-lift best single",
+      });
+    }
+
+    // Pick the single strongest e1RM expression across rep ranges for this lift.
+    let bestE1RMCandidate = null;
+    let bestE1RMWeight = 0;
+    for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
+      const topAtReps = repRanges[repsIndex]?.[0];
+      if (!topAtReps) continue;
+      const reps = repsIndex + 1;
+      const estimated = estimateE1RM(reps, topAtReps.weight, "Brzycki");
+      if (estimated > bestE1RMWeight) {
+        bestE1RMWeight = estimated;
+        bestE1RMCandidate = topAtReps;
+      }
+    }
+
+    if (bestE1RMCandidate) {
+      const e1rmStrengthRating = getLiftStrengthRating({
+        lift: bestE1RMCandidate,
+        oneRepMaxOverride:
+          bestE1RMCandidate.reps > 1
+            ? estimateE1RM(
+                bestE1RMCandidate.reps,
+                bestE1RMCandidate.weight,
+                "Brzycki",
+              )
+            : bestE1RMCandidate.weight,
+        hasBioData,
+        age,
+        bodyWeight,
+        sex,
+        isMetric,
+      });
+      const score = scoreClassicLiftCandidate({
+        lift: bestE1RMCandidate,
+        candidateKind: "frequentLiftPR",
+        rankIndex: bestE1RMCandidate.reps === 1 ? 1 : 0,
+        trainingYears,
+        strengthRating: e1rmStrengthRating,
+        liftFrequency: liftTotals.totalSets,
+      });
+      candidates.push({
+        id: buildLiftCandidateId(bestE1RMCandidate, `frequent-e1rm-${i + 1}`),
+        lift: bestE1RMCandidate,
+        score: score.total + careBonus + (bestE1RMCandidate.reps > 1 ? 3 : 0),
+        scoreBreakdown: {
+          ...score.breakdown,
+          careBonus,
+          e1rmIdentityBonus: bestE1RMCandidate.reps > 1 ? 3 : 0,
+        },
+        strengthRating: e1rmStrengthRating,
+        noteSignals: score.noteSignals,
+        anniversaryDaysAway: score.anniversaryDaysAway,
+        candidateKind: "frequentLiftPR",
+        reasonLabel:
+          bestE1RMCandidate.reps === 1
+            ? "Frequent-lift best e1RM (single)"
+            : `Frequent-lift best e1RM (${bestE1RMCandidate.reps} reps)`,
+      });
+    }
+  }
+
+  return candidates;
+}
+
+/**
+ * Builds the note-driven non-Big-Four "story lift" lane from parsedData.
+ *
+ * Performance is intentionally protected via:
+ * - aggressive early filters
+ * - cheap substring gate before fuzzy parsing
+ * - note-signal cache by note string
+ * - per-lift and global caps
+ */
 function buildNonBigFourStoryCandidates({
   parsedData,
   liftTypes,
@@ -1395,7 +1678,7 @@ function buildNonBigFourStoryCandidates({
     if (!lift.date || !lift.weight || !lift.reps) continue;
     if (lift.reps < 1 || lift.reps > maxReps) continue;
 
-    // Cheap substring gate before regex/keyword parsing.
+    // Cheap substring gate before regex/keyword parsing (fast reject path).
     const noteLower = lift.notes.toLowerCase();
     let hasFastHint = false;
     for (let j = 0; j < CLASSIC_LIFT_NOTE_FAST_HINTS.length; j++) {
@@ -1410,6 +1693,7 @@ function buildNonBigFourStoryCandidates({
     if (seenLiftKeys.has(dedupeKey)) continue;
     seenLiftKeys.add(dedupeKey);
 
+    // Notes repeat a lot ("felt good", "meet day"), so cache parsed signals by raw note text.
     let noteSignals = noteSignalCache.get(lift.notes);
     if (!noteSignals) {
       noteSignals = analyzeClassicLiftNotes(lift.notes);
@@ -1500,6 +1784,11 @@ function buildNonBigFourStoryCandidates({
   return flattened;
 }
 
+/**
+ * Human-readable footer label for story-lift candidates.
+ *
+ * Keep this compact: it appears in the top-card footer and should explain "why this made the pool".
+ */
 function buildStoryLiftReasonLabel(lift, noteSignals) {
   if (noteSignals?.hasMeetContext) {
     return `Story lift (${lift.reps} reps · meet)`;
@@ -1513,6 +1802,12 @@ function buildStoryLiftReasonLabel(lift, noteSignals) {
   return `Story lift (${lift.reps} reps)`;
 }
 
+/**
+ * "Care signal" bonus for non-Big-Four lifts.
+ *
+ * High sets/reps frequency implies the lift mattered to the athlete over time, so story/frequent
+ * lanes get a bonus for lifts the user repeatedly trained.
+ */
 function getStoryLiftCareBonus(liftTotals) {
   const totalSets = liftTotals?.totalSets ?? 0;
   const totalReps = liftTotals?.totalReps ?? 0;
@@ -1529,6 +1824,12 @@ function getStoryLiftCareBonus(liftTotals) {
   return Math.min(22, setsSignal + repsSignal + milestoneBonus);
 }
 
+/**
+ * Lightweight fuzzy note parser used for nostalgia scoring and pool quotas.
+ *
+ * Returns normalized signal buckets (`meet`, `positive`, `battle`) plus tags for debug output.
+ * This stays intentionally heuristic/regex-based for speed and tuneability.
+ */
 function analyzeClassicLiftNotes(notes) {
   if (!notes || typeof notes !== "string") {
     return {
@@ -1568,6 +1869,7 @@ function analyzeClassicLiftNotes(notes) {
   };
 }
 
+/** Normalizes notes for keyword matching (lowercase + punctuation stripping). */
 function normalizeClassicLiftNoteText(notes) {
   return notes
     .toLowerCase()
@@ -1576,6 +1878,11 @@ function normalizeClassicLiftNoteText(notes) {
     .trim();
 }
 
+/**
+ * Matches keyword/phrase list against normalized note text using word-boundary style checks.
+ *
+ * We avoid naive substring matching here to reduce false positives (e.g. short tokens inside words).
+ */
 function matchClassicLiftNoteKeywords(normalizedNotes, keywords) {
   if (!normalizedNotes) return [];
 
@@ -1591,10 +1898,17 @@ function matchClassicLiftNoteKeywords(normalizedNotes, keywords) {
   return matches;
 }
 
+/** Escapes user-defined keyword phrases for regex construction. */
 function escapeRegExp(input) {
   return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * Small nostalgia boost for lifts close to the same calendar date (month/day) this year.
+ *
+ * We compare against previous/current/next year to get the nearest "anniversary distance"
+ * and return both the boost and `daysAway` for quotas/debugging.
+ */
 function getAnniversaryBoost(dateStr) {
   if (!dateStr) return { boost: 0, daysAway: null };
 
@@ -1637,6 +1951,14 @@ function getAnniversaryBoost(dateStr) {
   };
 }
 
+/**
+ * Picks one candidate per browser tab session and persists it in sessionStorage.
+ *
+ * Behavior:
+ * - Stable within a tab (refresh-safe)
+ * - New tab gets a new random selection
+ * - Falls back to deterministic hash if sessionStorage is unavailable
+ */
 function pickSessionStoredCandidate(candidates, { fingerprint }) {
   if (!Array.isArray(candidates) || candidates.length === 0) return null;
 
@@ -1674,6 +1996,7 @@ function pickSessionStoredCandidate(candidates, { fingerprint }) {
   return candidates[hashStringToIndex(sessionSeed, candidates.length)];
 }
 
+/** Deterministic fallback index for environments where sessionStorage is unavailable. */
 function hashStringToIndex(seed, modulo) {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
@@ -1682,6 +2005,7 @@ function hashStringToIndex(seed, modulo) {
   return modulo > 0 ? hash % modulo : 0;
 }
 
+/** Returns whole-day distance from today for a YYYY-MM-DD string (UTC-safe parsing). */
 function getDaysAgoFromDateStr(dateStr) {
   if (!dateStr) return 0;
   const date = new Date(`${dateStr}T00:00:00Z`);

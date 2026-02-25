@@ -303,28 +303,52 @@ export function SessionExerciseBlock({
 
   const compactPills = (
     <div className="flex min-w-0 flex-1 flex-wrap content-center items-center gap-2">
-      {workouts.map((workout, index) => {
-        const isHighlighted = highlightedIndices.has(index);
-        const size = { text: "text-sm", pad: "px-2.5 py-2" };
-        const padClass = isHighlighted ? "px-3.5 py-2.5" : size.pad;
+      {groups.map((group) => {
+        const firstIdx = group[0];
+        const firstWorkout = workouts[firstIdx];
+        const count = group.length;
+
+        const isHighlighted = group.some((i) => highlightedIndices.has(i));
+        const hasLifetimePR = group.some((i) => workouts[i].lifetimeRanking !== -1);
+        const hasYearlyPR = group.some(
+          (i) => workouts[i].yearlyRanking != null && workouts[i].yearlyRanking !== -1,
+        );
+        const lifetimeAnnotation = group
+          .map((i) => workouts[i].lifetimeSignificanceAnnotation)
+          .find(Boolean);
+        const yearlyAnnotation = group
+          .map((i) => workouts[i].yearlySignificanceAnnotation)
+          .find(Boolean);
+        const groupNotes = group.map((i) => workouts[i].notes).filter(Boolean);
+        const groupURLs = group.map((i) => workouts[i].URL).filter(Boolean);
+
+        const { value: weightValue, unit: weightUnit } = getDisplayWeight(
+          firstWorkout,
+          isMetric ?? false,
+        );
+        const displayText =
+          count > 1
+            ? `${count}×${firstWorkout.reps}@${weightValue}${weightUnit}`
+            : `${firstWorkout.reps}@${weightValue}${weightUnit}`;
+
+        const padClass = isHighlighted ? "px-3.5 py-2.5" : "px-2.5 py-2";
         const textClass = isHighlighted
           ? "font-semibold text-emerald-600 dark:text-emerald-400"
           : "";
 
         return (
           <div
-            key={index}
+            key={firstIdx}
             className={`flex flex-col gap-1 rounded-lg border transition-colors ${padClass} ${
               isHighlighted ? highlightClass : "border-border/60 bg-muted/30"
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className={`tabular-nums ${size.text} ${textClass}`}>
-                {workout.reps}×{getDisplayWeight(workout, isMetric ?? false).value}
-                {getDisplayWeight(workout, isMetric ?? false).unit}
+              <span className={`tabular-nums text-sm ${textClass}`}>
+                {displayText}
               </span>
               <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
-                {workout.lifetimeRanking !== -1 && (
+                {hasLifetimePR && (
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -338,38 +362,35 @@ export function SessionExerciseBlock({
                       <TooltipContent>
                         <p>
                           Lifetime PR
-                          {workout.lifetimeSignificanceAnnotation
-                            ? `: ${workout.lifetimeSignificanceAnnotation}`
+                          {lifetimeAnnotation ? `: ${lifetimeAnnotation}` : ""}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {hasYearlyPR && (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className="text-blue-600 transition-transform hover:scale-110 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+                          aria-label="12-month PR"
+                        >
+                          <Medal className="h-4 w-4 sm:h-3 sm:w-3" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          12-month PR
+                          {yearlyAnnotation
+                            ? `: ${yearlyAnnotation} of the year`
                             : ""}
                         </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                {workout.yearlyRanking != null &&
-                  workout.yearlyRanking !== -1 && (
-                    <TooltipProvider delayDuration={0}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span
-                            className="text-blue-600 transition-transform hover:scale-110 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
-                            aria-label="12-month PR"
-                          >
-                            <Medal className="h-4 w-4 sm:h-3 sm:w-3" />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>
-                            12-month PR
-                            {workout.yearlySignificanceAnnotation
-                              ? `: ${workout.yearlySignificanceAnnotation} of the year`
-                              : ""}
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                {workout.notes && (
+                {groupNotes.length > 0 && (
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -381,20 +402,26 @@ export function SessionExerciseBlock({
                         </span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="max-w-xs">
-                          <span className="font-semibold">Note: </span>
-                          {workout.notes}
-                        </p>
+                        <div className="flex max-w-xs flex-col gap-1">
+                          {groupNotes.map((note, i) => (
+                            <p key={i}>
+                              <span className="font-semibold">
+                                {groupNotes.length > 1 ? `Note ${i + 1}: ` : "Note: "}
+                              </span>
+                              {note}
+                            </p>
+                          ))}
+                        </div>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                {workout.URL && (
-                  <TooltipProvider delayDuration={0}>
+                {groupURLs.map((url, i) => (
+                  <TooltipProvider key={i} delayDuration={0}>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <a
-                          href={workout.URL}
+                          href={url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex rounded p-0.5 transition-transform hover:scale-110"
@@ -405,17 +432,15 @@ export function SessionExerciseBlock({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>
-                          Click to open video
-                          {workout.URL.length > 40
-                            ? ` (${workout.URL.slice(0, 37)}…)`
-                            : ""}
+                          {groupURLs.length > 1 ? `Video ${i + 1}` : "Click to open video"}
+                          {url.length > 40 ? ` (${url.slice(0, 37)}…)` : ""}
                         </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                )}
+                ))}
               </div>
-              {canShowStrengthLevel && index === bestE1rmLastIndex && (
+              {canShowStrengthLevel && group.includes(bestE1rmLastIndex) && (
                 <div className="ml-1">
                   <LiftStrengthLevel
                     liftType={liftType}
@@ -427,8 +452,8 @@ export function SessionExerciseBlock({
                     bodyWeight={bodyWeight}
                     sex={sex}
                     isMetric={isMetric}
-                    bestSetReps={workout.reps}
-                    bestSetWeight={workout.weight}
+                    bestSetReps={firstWorkout.reps}
+                    bestSetWeight={firstWorkout.weight}
                     inline
                   />
                 </div>

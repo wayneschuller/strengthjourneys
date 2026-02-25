@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { motion } from "motion/react";
 import { useMemo, useRef, useState } from "react";
 import {
@@ -26,7 +27,6 @@ import {
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog, getDisplayWeight, logTiming } from "@/lib/processing-utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,6 +40,12 @@ const ACCENTS = {
 };
 
 const BIG_FOUR_LIFTS = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
+const BIG_FOUR_INSIGHT_PATHS = {
+  "Back Squat": "/barbell-squat-insights",
+  "Bench Press": "/barbell-bench-press-insights",
+  Deadlift: "/barbell-deadlift-insights",
+  "Strict Press": "/barbell-strict-press-insights",
+};
 const STRENGTH_RATING_SCORE = {
   "Physically Active": 1,
   Beginner: 2,
@@ -340,6 +346,7 @@ export function SectionTopCards({ isProgressDone = false }) {
   // Check if we have the necessary bio data and standards to calculate a strength rating
   const hasBioData =
     age && bodyWeight && standards && Object.keys(standards).length > 0;
+  const classicLiftSelectionRef = useRef(null);
   const classicLiftMemory = useMemo(
     () =>
       pickClassicLiftMemory({
@@ -351,6 +358,7 @@ export function SectionTopCards({ isProgressDone = false }) {
         bodyWeight,
         sex,
         isMetric,
+        selectionCacheRef: classicLiftSelectionRef,
       }),
     [
       parsedData,
@@ -554,6 +562,7 @@ function ClassicLiftFooter({ classicLiftMemory }) {
 
   const note = classicLiftMemory.lift.notes?.trim() ?? "";
   const hasNote = note.length > 0;
+  const bigFourPrHref = getBigFourPrSectionHref(classicLiftMemory.lift.liftType);
   const maxPreviewChars = 88;
   const isLongNote = note.length > maxPreviewChars;
   const previewNote =
@@ -585,8 +594,24 @@ function ClassicLiftFooter({ classicLiftMemory }) {
           )}
         </div>
       )}
+
+      {bigFourPrHref && (
+        <div>
+          <Link
+            href={bigFourPrHref}
+            className="inline font-medium text-primary hover:underline"
+          >
+            View {classicLiftMemory.lift.liftType} PRs
+          </Link>
+        </div>
+      )}
     </div>
   );
+}
+
+function getBigFourPrSectionHref(liftType) {
+  const basePath = BIG_FOUR_INSIGHT_PATHS[liftType];
+  return basePath ? `${basePath}#lift-prs` : null;
 }
 
 // Placeholder skeleton rendered in place of SectionTopCards while row-count animation is running.
@@ -849,7 +874,7 @@ function formatLifetimeTonnage(value) {
  * 1) Build a broad candidate list (Big Four, frequent non-Big-Four PRs, note-driven story lifts)
  * 2) Compute a dynamic pool target size based on training age + candidate richness
  * 3) Curate a diversified pool (quotas by kind, era, note signals, etc.)
- * 4) Pick one candidate per browser tab session (sessionStorage-backed)
+ * 4) Pick one candidate per component mount (in-memory ref cache)
  */
 function pickClassicLiftMemory({
   parsedData,
@@ -860,6 +885,7 @@ function pickClassicLiftMemory({
   bodyWeight,
   sex,
   isMetric,
+  selectionCacheRef,
 }) {
   if (!topLiftsByTypeAndReps) return null;
   const firstParsedDate = parsedData?.[0]?.date ?? null;
@@ -936,13 +962,14 @@ function pickClassicLiftMemory({
     })),
   );
 
-  return pickSessionStoredCandidate(selectionPool, {
+  return pickMountedCachedCandidate(selectionPool, {
     fingerprint: [
       firstParsedDate ?? "none",
       lastParsedDate ?? "none",
       parsedData?.length ?? 0,
       selectionPool.length,
     ].join("|"),
+    cacheRef: selectionCacheRef,
   });
 }
 
@@ -2052,57 +2079,39 @@ function getAnniversaryBoost(dateStr) {
 }
 
 /**
- * Picks one candidate per browser tab session and persists it in sessionStorage.
+ * Picks one candidate and caches it in-memory for the lifetime of the mounted component.
  *
  * Behavior:
- * - Stable within a tab (refresh-safe)
- * - New tab gets a new random selection
- * - Falls back to deterministic hash if sessionStorage is unavailable
+ * - Stable across re-renders while the component remains mounted
+ * - New browser refresh gets a fresh random pick (ref cache is lost)
+ * - New tab also gets a fresh random pick
+ *
+ * `fingerprint` invalidates the mounted cache when the underlying candidate pool materially
+ * changes (e.g. data load completes, dataset changes, or pool size changes).
  */
-function pickSessionStoredCandidate(candidates, { fingerprint }) {
+function pickMountedCachedCandidate(candidates, { fingerprint, cacheRef }) {
   if (!Array.isArray(candidates) || candidates.length === 0) return null;
 
-  const todayStr = format(new Date(), "yyyy-MM-dd");
-  const sessionSeed = `${todayStr}|${fingerprint}|${candidates.length}`;
-
-  if (typeof window !== "undefined") {
-    try {
-      const stored = window.sessionStorage.getItem(
-        LOCAL_STORAGE_KEYS.CLASSIC_LIFT_SESSION,
-      );
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (
-          parsed?.seed === sessionSeed &&
-          Number.isInteger(parsed.index) &&
-          parsed.index >= 0 &&
-          parsed.index < candidates.length
-        ) {
-          return candidates[parsed.index];
-        }
-      }
-
-      const randomIndex = Math.floor(Math.random() * candidates.length);
-      window.sessionStorage.setItem(
-        LOCAL_STORAGE_KEYS.CLASSIC_LIFT_SESSION,
-        JSON.stringify({ seed: sessionSeed, index: randomIndex }),
-      );
-      return candidates[randomIndex];
-    } catch {
-      // Fall through to deterministic hash when sessionStorage is unavailable.
-    }
+  const cacheSeed = `${fingerprint}|${candidates.length}`;
+  const cached = cacheRef?.current;
+  if (
+    cached &&
+    cached.seed === cacheSeed &&
+    Number.isInteger(cached.index) &&
+    cached.index >= 0 &&
+    cached.index < candidates.length
+  ) {
+    return candidates[cached.index];
   }
 
-  return candidates[hashStringToIndex(sessionSeed, candidates.length)];
-}
-
-/** Deterministic fallback index for environments where sessionStorage is unavailable. */
-function hashStringToIndex(seed, modulo) {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  const randomIndex = Math.floor(Math.random() * candidates.length);
+  if (cacheRef) {
+    cacheRef.current = {
+      seed: cacheSeed,
+      index: randomIndex,
+    };
   }
-  return modulo > 0 ? hash % modulo : 0;
+  return candidates[randomIndex];
 }
 
 /** Returns whole-day distance from today for a YYYY-MM-DD string (UTC-safe parsing). */

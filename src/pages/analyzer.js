@@ -125,8 +125,8 @@ function AnalyzerMain({ relatedArticles }) {
           />
         </div>
         <div className="flex h-full min-w-full flex-col gap-6">
-          <ConsistencyCard />
           <ThisMonthInIronCard />
+          <ConsistencyCard />
         </div>
         <div className="flex h-full min-w-full flex-col gap-6">
           <div className="min-w-full">

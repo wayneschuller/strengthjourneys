@@ -106,12 +106,11 @@ export const UserLiftingDataProvider = ({ children }) => {
   // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
   const [parsedData, setParsedData] = useState(null); // see @/lib/sample-parsed-data.js for data structure design
   const [lastDataReceivedAt, setLastDataReceivedAt] = useState(null);
-  const [isDemoMode, setIsDemoMode] = useState(false);
   const [parseError, setParseError] = useState(null);
-  const [rawRows, setRawRows] = useState(null);
   const [fetchFailed, setFetchFailed] = useState(false);
 
   const { data: session, status: authStatus } = useSession();
+  const isDemoMode = authStatus === "unauthenticated";
 
   // Single consolidated sheet state
   const [sheetInfo, setSheetInfo] = useLocalStorage(
@@ -196,6 +195,7 @@ export const UserLiftingDataProvider = ({ children }) => {
     },
   );
 
+  const rawRows = data?.values?.length ?? null;
   const isError = !!error;
   const hasCachedSheetData = Array.isArray(data?.values);
   const apiError = useMemo(() => {
@@ -266,9 +266,7 @@ export const UserLiftingDataProvider = ({ children }) => {
     }
 
     setParsedData(result.parsedData);
-    setIsDemoMode(result.isDemoMode);
     setParseError(result.parseError);
-    setRawRows(data?.values?.length ?? null);
   }, [data, isLoading, isError, error, authStatus, clearSheet]);
 
   // -----------------------------------------------------------------------------------------------
@@ -424,5 +422,5 @@ function getParsedDataWithFallback({ authStatus, data }) {
   // state variables everything needs.
   parsedData = markHigherWeightAsHistoricalPRs(parsedData);
 
-  return { parsedData, isDemoMode, parseError };
+  return { parsedData, parseError };
 }

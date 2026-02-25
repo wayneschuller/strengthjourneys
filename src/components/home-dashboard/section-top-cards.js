@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   format,
   parseISO,
@@ -272,6 +272,7 @@ function StatCard({
   description,
   title,
   footer,
+  footerMultiline = false,
   action,
   animationDelay,
 }) {
@@ -298,7 +299,9 @@ function StatCard({
       </div>
       {footer && (
         <motion.div
-          className="text-muted-foreground line-clamp-1 text-[11px] leading-tight"
+          className={`text-muted-foreground text-[11px] leading-tight ${
+            footerMultiline ? "" : "line-clamp-1"
+          }`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{
@@ -434,15 +437,10 @@ export function SectionTopCards({ isProgressDone = false }) {
             }
             footer={
               classicLiftMemory ? (
-                <span>
-                  {classicLiftMemory.reasonLabel} ·{" "}
-                  {format(new Date(classicLiftMemory.lift.date), "d MMM yyyy")}
-                  {classicLiftMemory.strengthRating
-                    ? ` · ${STRENGTH_LEVEL_EMOJI[classicLiftMemory.strengthRating] ?? ""} ${classicLiftMemory.strengthRating}`
-                    : ""}
-                </span>
+                <ClassicLiftFooter classicLiftMemory={classicLiftMemory} />
               ) : null
             }
+            footerMultiline
             action={
               (classicLiftMemory?.lift?.URL || classicLiftMemory?.lift?.url) ? (
                 <Button
@@ -544,6 +542,48 @@ export function SectionTopCards({ isProgressDone = false }) {
             animationDelay={800}
           />
         </>
+      )}
+    </div>
+  );
+}
+
+function ClassicLiftFooter({ classicLiftMemory }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (!classicLiftMemory?.lift) return null;
+
+  const note = classicLiftMemory.lift.notes?.trim() ?? "";
+  const hasNote = note.length > 0;
+  const maxPreviewChars = 88;
+  const isLongNote = note.length > maxPreviewChars;
+  const previewNote =
+    isLongNote && !isExpanded ? `${note.slice(0, maxPreviewChars).trim()}...` : note;
+
+  return (
+    <div className="space-y-0.5">
+      <div className="line-clamp-1">
+        {classicLiftMemory.reasonLabel} ·{" "}
+        {format(new Date(classicLiftMemory.lift.date), "d MMM yyyy")}
+        {classicLiftMemory.strengthRating
+          ? ` · ${STRENGTH_LEVEL_EMOJI[classicLiftMemory.strengthRating] ?? ""} ${classicLiftMemory.strengthRating}`
+          : ""}
+      </div>
+
+      {hasNote && (
+        <div className="text-muted-foreground/90">
+          <span className={isExpanded ? "whitespace-pre-wrap break-words" : ""}>
+            &ldquo;{previewNote}&rdquo;
+          </span>
+          {isLongNote && (
+            <button
+              type="button"
+              className="ml-1 inline font-medium text-primary hover:underline"
+              onClick={() => setIsExpanded((value) => !value)}
+            >
+              {isExpanded ? "Less" : "More"}
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
@@ -1197,6 +1237,7 @@ function scoreClassicLiftCandidate({
   const ratingScore = STRENGTH_RATING_SCORE[strengthRating] ?? 0;
   const noteSignals = analyzeClassicLiftNotes(lift?.notes);
   const normalizedCandidateKind = candidateKind ?? "standoutRep";
+  const base = 82;
   const adjustedBase =
     normalizedCandidateKind === "single"
       ? 100
@@ -1412,6 +1453,61 @@ function buildClassicLiftSelectionPool(candidates, { trainingYears, targetPoolSi
   }
 
   if (targetSize >= 16) {
+    // Coverage pass: for frequent non-Big-Four lifts, try to include both "best single" and
+    // "best e1RM" representations before generic lane quotas kick in.
+    const frequentLiftTypes = Array.from(
+      new Set(
+        sortedCandidates
+          .filter((candidate) => candidate.candidateKind === "frequentLiftPR")
+          .map((candidate) => candidate.frequentLiftType)
+          .filter(Boolean),
+      ),
+    );
+    let frequentCoverageRemaining = Math.min(
+      Math.ceil(targetSize * 0.45),
+      frequentLiftTypes.length * 2,
+    );
+
+    for (
+      let i = 0;
+      i < frequentLiftTypes.length &&
+      selected.length < targetSize &&
+      frequentCoverageRemaining > 0;
+      i++
+    ) {
+      const liftType = frequentLiftTypes[i];
+      const before = selected.length;
+      addByPredicate(1, (candidate) => {
+        return (
+          candidate.candidateKind === "frequentLiftPR" &&
+          candidate.frequentLiftType === liftType &&
+          candidate.frequentLiftSlot === "single"
+        );
+      });
+      frequentCoverageRemaining -= selected.length > before ? 1 : 0;
+    }
+
+    for (
+      let i = 0;
+      i < frequentLiftTypes.length &&
+      selected.length < targetSize &&
+      frequentCoverageRemaining > 0;
+      i++
+    ) {
+      const liftType = frequentLiftTypes[i];
+      const before = selected.length;
+      addByPredicate(1, (candidate) => {
+        return (
+          candidate.candidateKind === "frequentLiftPR" &&
+          candidate.frequentLiftType === liftType &&
+          candidate.frequentLiftSlot === "e1rm"
+        );
+      });
+      frequentCoverageRemaining -= selected.length > before ? 1 : 0;
+    }
+  }
+
+  if (targetSize >= 16) {
     addByPredicate(Math.min(10, Math.ceil(targetSize * 0.28)), (candidate) => {
       return candidate.candidateKind === "frequentLiftPR";
     });
@@ -1563,6 +1659,8 @@ function buildFrequentNonBigFourClassicCandidates({
         noteSignals: score.noteSignals,
         anniversaryDaysAway: score.anniversaryDaysAway,
         candidateKind: "frequentLiftPR",
+        frequentLiftType: liftType,
+        frequentLiftSlot: "single",
         reasonLabel: "Frequent-lift best single",
       });
     }
@@ -1619,6 +1717,8 @@ function buildFrequentNonBigFourClassicCandidates({
         noteSignals: score.noteSignals,
         anniversaryDaysAway: score.anniversaryDaysAway,
         candidateKind: "frequentLiftPR",
+        frequentLiftType: liftType,
+        frequentLiftSlot: "e1rm",
         reasonLabel:
           bestE1RMCandidate.reps === 1
             ? "Frequent-lift best e1RM (single)"

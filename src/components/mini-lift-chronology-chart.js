@@ -182,6 +182,7 @@ export function MiniLiftChronologyChart({ liftType, color, chronology }) {
   if (!liftType || !chronology?.bars?.length) return null;
 
   const chartConfig = { reps: { label: "Reps", color } };
+  const gradientId = `mlc-grad-${color.replace(/[^a-zA-Z0-9]/g, "")}`;
 
   return (
     <ChartContainer
@@ -193,6 +194,12 @@ export function MiniLiftChronologyChart({ liftType, color, chronology }) {
         data={chronology.bars}
         margin={{ top: 6, right: 2, left: 2, bottom: 4 }}
       >
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={1} />
+            <stop offset="100%" stopColor={color} stopOpacity={0.4} />
+          </linearGradient>
+        </defs>
         <XAxis dataKey="label" hide />
         <ChartTooltip
           cursor={false}
@@ -217,15 +224,14 @@ export function MiniLiftChronologyChart({ liftType, color, chronology }) {
         <Bar
           dataKey="reps"
           radius={[2, 2, 0, 0]}
-          fill={color}
-          fillOpacity={0.9}
+          fill={`url(#${gradientId})`}
           stroke={BAR_OUTLINE}
           strokeWidth={1.25}
         >
           {chronology.bars.map((bar, index) => (
             <Cell
               key={`mini-bar-${index}`}
-              fill={color}
+              fill={`url(#${gradientId})`}
               opacity={bar.reps > 0 ? 0.95 : 0.16}
               stroke={BAR_OUTLINE}
               strokeWidth={bar.reps > 0 ? 1.5 : 1}

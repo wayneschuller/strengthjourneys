@@ -195,7 +195,6 @@ export function MiniLiftChronologyChart({ liftType, color, chronology }) {
 
   return (
     <div>
-      <p className="mb-1 text-xs text-muted-foreground">{header}</p>
       <ChartContainer
       config={chartConfig}
       className="mt-0 mb-5 !aspect-auto h-[72px] w-full select-none [&_.recharts-surface]:focus:outline-none [&_.recharts-surface]:focus-visible:outline-none"
@@ -252,6 +251,7 @@ export function MiniLiftChronologyChart({ liftType, color, chronology }) {
         </Bar>
       </BarChart>
     </ChartContainer>
+    <p className="mt-1 text-center text-xs text-muted-foreground">{header}</p>
     </div>
   );
 }

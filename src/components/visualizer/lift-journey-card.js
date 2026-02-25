@@ -16,6 +16,12 @@ import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   buildLiftChronology,
   MiniLiftChronologyChart,
 } from "@/components/mini-lift-chronology-chart";
@@ -174,60 +180,67 @@ function TierProgressSection({ totalReps, yearsTraining, tier, liftType, liftCol
 // Animated donut ring
 // ─────────────────────────────────────────────────────────────────────────────
 // SVG donut ring that animates its fill arc from 0 to the target proportion on mount.
-function StatRing({ value, fill, label, color, isMounted }) {
+function StatRing({ value, fill, label, color, isMounted, tooltip }) {
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
   const targetOffset = circumference * (1 - Math.min(1, fill));
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="relative h-24 w-24">
-        <svg
-          width="96"
-          height="96"
-          viewBox="0 0 96 96"
-          className="-rotate-90"
-          aria-hidden="true"
-        >
-          {/* Track */}
-          <circle
-            cx="48"
-            cy="48"
-            r={radius}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="8"
-            className="text-muted/25"
-          />
-          {/* Animated fill */}
-          <motion.circle
-            cx="48"
-            cy="48"
-            r={radius}
-            fill="none"
-            stroke={color}
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference }}
-            animate={
-              isMounted
-                ? { strokeDashoffset: targetOffset }
-                : { strokeDashoffset: circumference }
-            }
-            transition={{ duration: 1.4, ease: "easeOut", delay: 0.2 }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-base font-bold leading-tight">
-            {value >= 10000
-              ? `${(value / 1000).toFixed(0)}K`
-              : value.toLocaleString()}
-          </span>
-        </div>
-      </div>
-      <span className="text-xs text-muted-foreground">{label}</span>
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex flex-col items-center gap-1">
+            <div className="relative h-24 w-24">
+              <svg
+                width="96"
+                height="96"
+                viewBox="0 0 96 96"
+                className="-rotate-90"
+                aria-hidden="true"
+              >
+                {/* Track */}
+                <circle
+                  cx="48"
+                  cy="48"
+                  r={radius}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  className="text-muted/25"
+                />
+                {/* Animated fill */}
+                <motion.circle
+                  cx="48"
+                  cy="48"
+                  r={radius}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  initial={{ strokeDashoffset: circumference }}
+                  animate={
+                    isMounted
+                      ? { strokeDashoffset: targetOffset }
+                      : { strokeDashoffset: circumference }
+                  }
+                  transition={{ duration: 1.4, ease: "easeOut", delay: 0.2 }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-base font-bold leading-tight">
+                  {value >= 10000
+                    ? `${(value / 1000).toFixed(0)}K`
+                    : value.toLocaleString()}
+                </span>
+              </div>
+            </div>
+            <span className="text-xs text-muted-foreground">{label}</span>
+          </div>
+        </TooltipTrigger>
+        {tooltip && <TooltipContent>{tooltip}</TooltipContent>}
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -450,6 +463,7 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
                   label="Total Reps"
                   color={liftColor}
                   isMounted={isMounted}
+                  tooltip="Full ring = Legend tier (27,000 reps)"
                 />
                 <StatRing
                   value={totalSets}
@@ -457,6 +471,7 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
                   label="Total Sets"
                   color={liftColor}
                   isMounted={isMounted}
+                  tooltip="Full ring = Legend tier (5,400 sets)"
                 />
               </div>
             )}

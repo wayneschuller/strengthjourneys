@@ -319,7 +319,11 @@ export function SessionExerciseBlock({
         const yearlyAnnotation = group
           .map((i) => workouts[i].yearlySignificanceAnnotation)
           .find(Boolean);
-        const groupNotes = group.map((i) => workouts[i].notes).filter(Boolean);
+        const groupNotes = group
+          .map((i, groupIdx) =>
+            workouts[i].notes ? { note: workouts[i].notes, setNum: groupIdx + 1 } : null,
+          )
+          .filter(Boolean);
         const groupURLs = group
           .map((i, groupIdx) =>
             workouts[i].URL ? { url: workouts[i].URL, setNum: groupIdx + 1 } : null,
@@ -407,10 +411,10 @@ export function SessionExerciseBlock({
                       </TooltipTrigger>
                       <TooltipContent>
                         <div className="flex max-w-xs flex-col gap-1">
-                          {groupNotes.map((note, i) => (
+                          {groupNotes.map(({ note, setNum }, i) => (
                             <p key={i}>
                               <span className="font-semibold">
-                                {groupNotes.length > 1 ? `Note ${i + 1}: ` : "Note: "}
+                                {count > 1 ? `Set ${setNum}: ` : "Note: "}
                               </span>
                               {note}
                             </p>

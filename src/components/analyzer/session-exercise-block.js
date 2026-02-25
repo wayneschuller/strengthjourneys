@@ -482,21 +482,16 @@ export function SessionExerciseBlock({
           className="h-16 w-auto object-contain"
         />
       </div>
-    ) : !hideSvg ? (
-      <LiftTypeIndicator
-        liftType={liftType}
-        className="text-base max-w-36 leading-tight"
-      />
     ) : null;
 
     return (
       <div
         className={`bg-muted/20 flex h-full min-h-0 flex-col gap-2.5 rounded-xl border sm:flex-row sm:items-center sm:gap-3 ${
-          liftTypeArea ? "p-3" : "px-2 py-1.5 gap-2"
+          hideSvg ? "px-2 py-1.5 gap-2" : "p-3"
         }`}
       >
         {liftTypeArea &&
-          (svgPath && bigFourURLs[liftType] ? (
+          (bigFourURLs[liftType] ? (
             <Link
               href={bigFourURLs[liftType]}
               className="flex shrink-0 justify-center transition-opacity hover:opacity-80 sm:justify-start"
@@ -507,7 +502,7 @@ export function SessionExerciseBlock({
             liftTypeArea
           ))}
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          {svgPath && (
+          {!hideSvg && (
             <LiftTypeIndicator
               liftType={liftType}
               className="text-base max-w-36 leading-tight"

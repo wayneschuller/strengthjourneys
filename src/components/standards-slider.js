@@ -10,6 +10,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { formatDateToYmdLocal, getWeekKeyFromDateStr } from "@/lib/date-utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useReadLocalStorage, useWindowSize } from "usehooks-ts";
 
@@ -133,6 +134,67 @@ export function StandardsSlider({
     });
 
     return summaries;
+  }, [authStatus, parsedData, liftType, e1rmFormula, unitType]);
+
+  const recentLiftNotch = useMemo(() => {
+    if (authStatus !== "authenticated" || !parsedData?.length || !e1rmFormula) {
+      return null;
+    }
+
+    let latestDate = null;
+    let bestLiftOnLatestDate = null;
+
+    for (const entry of parsedData) {
+      if (entry.liftType !== liftType || !entry.reps || !entry.weight || !entry.date) {
+        continue;
+      }
+
+      const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
+
+      if (!latestDate || entry.date > latestDate) {
+        latestDate = entry.date;
+        bestLiftOnLatestDate = {
+          date: entry.date,
+          reps: entry.reps,
+          weight: entry.weight,
+          unitType: entry.unitType || unitType,
+          e1rm,
+        };
+        continue;
+      }
+
+      if (entry.date === latestDate && (!bestLiftOnLatestDate || e1rm > bestLiftOnLatestDate.e1rm)) {
+        bestLiftOnLatestDate = {
+          date: entry.date,
+          reps: entry.reps,
+          weight: entry.weight,
+          unitType: entry.unitType || unitType,
+          e1rm,
+        };
+      }
+    }
+
+    if (!bestLiftOnLatestDate?.date) return null;
+
+    const now = new Date();
+    const todayYmd = formatDateToYmdLocal(now);
+    const oneMonthAgoYmd = format(subMonths(now, 1), "yyyy-MM-dd");
+
+    if (bestLiftOnLatestDate.date < oneMonthAgoYmd) return null;
+
+    let shortLabel = "1M";
+    if (bestLiftOnLatestDate.date === todayYmd) {
+      shortLabel = "Today";
+    } else if (
+      getWeekKeyFromDateStr(bestLiftOnLatestDate.date) === getWeekKeyFromDateStr(todayYmd)
+    ) {
+      shortLabel = "This week";
+    }
+
+    return {
+      ...bestLiftOnLatestDate,
+      shortLabel,
+    };
   }, [authStatus, parsedData, liftType, e1rmFormula, unitType]);
 
   // Prevent initial render on standards-only scale, then jumping once
@@ -321,6 +383,37 @@ export function StandardsSlider({
         ),
       });
     }
+  }
+
+  if (recentLiftNotch) {
+    const recentE1rmDisplay = getDisplayWeight(
+      { weight: recentLiftNotch.e1rm, unitType: recentLiftNotch.unitType || nativeUnitType },
+      isMetric,
+    ).value;
+    const recentWeightDisplay = getDisplayWeight(
+      { weight: recentLiftNotch.weight, unitType: recentLiftNotch.unitType || nativeUnitType },
+      isMetric,
+    ).value;
+
+    allNotches.push({
+      key: `recent-${recentLiftNotch.date}-${recentLiftNotch.reps}-${recentLiftNotch.weight}`,
+      percent: getPercent(recentE1rmDisplay),
+      shortLabel: recentLiftNotch.shortLabel,
+      zIndex: 15,
+      tooltipContent: (
+        <div className="space-y-0.5">
+          <div className="font-semibold">
+            Most recent lift ({recentLiftNotch.shortLabel}): ~{Math.round(recentE1rmDisplay)}
+            {unitType} E1RM
+          </div>
+          <div className="text-muted-foreground">
+            {recentLiftNotch.reps} × {recentWeightDisplay}
+            {unitType}
+            {recentLiftNotch.date && <> · {getReadableDateString(recentLiftNotch.date)}</>}
+          </div>
+        </div>
+      ),
+    });
   }
 
   // Sort by percent position and group nearby notches into clusters

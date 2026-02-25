@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { SectionTopCards } from "./section-top-cards";
+import { HomeInspirationCards } from "./home-inspiration-cards";
 import { MostRecentSessionCard } from "./most-recent-session-card";
 import { DataSheetStatus, RowProcessingIndicator } from "./row-processing-indicator";
 import { OnBoardingDashboard } from "@/components/instructions-cards";
@@ -161,7 +161,7 @@ export function HomeDashboard() {
           setIsProgressDone={setIsProgressDone}
         />
       )}
-      {sheetInfo?.ssid && <SectionTopCards isProgressDone={hasDataLoaded} />}
+      {sheetInfo?.ssid && <HomeInspirationCards isProgressDone={hasDataLoaded} />}
       {sheetInfo?.ssid && <MostRecentSessionCard isProgressDone={hasDataLoaded} />}
     </div>
   );

@@ -233,7 +233,7 @@ function BarbellInsightsMain({
           </div>
         </div>
         <div className="col-span-3">
-          <MostRecentSessionCard liftType={liftInsightData.liftType} />
+          <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} />
         </div>
         <div className="col-span-3">
           <VisualizerMini liftType={liftInsightData.liftType} />

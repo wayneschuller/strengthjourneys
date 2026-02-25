@@ -385,7 +385,7 @@ export function StandardsSlider({
     }
   }
 
-  if (recentLiftNotch) {
+  if (recentLiftNotch && recentLiftNotch.shortLabel !== "1M") {
     const recentE1rmDisplay = getDisplayWeight(
       { weight: recentLiftNotch.e1rm, unitType: recentLiftNotch.unitType || nativeUnitType },
       isMetric,
@@ -394,26 +394,32 @@ export function StandardsSlider({
       { weight: recentLiftNotch.weight, unitType: recentLiftNotch.unitType || nativeUnitType },
       isMetric,
     ).value;
+    const isShortRecencyLabel =
+      recentLiftNotch.shortLabel === "Today" || recentLiftNotch.shortLabel === "This week";
+    const shouldHideBelowLowestLevel =
+      isShortRecencyLabel && recentE1rmDisplay < standardsMin;
 
-    allNotches.push({
-      key: `recent-${recentLiftNotch.date}-${recentLiftNotch.reps}-${recentLiftNotch.weight}`,
-      percent: getPercent(recentE1rmDisplay),
-      shortLabel: recentLiftNotch.shortLabel,
-      zIndex: 15,
-      tooltipContent: (
-        <div className="space-y-0.5">
-          <div className="font-semibold">
-            Most recent lift ({recentLiftNotch.shortLabel}): ~{Math.round(recentE1rmDisplay)}
-            {unitType} E1RM
+    if (!shouldHideBelowLowestLevel) {
+      allNotches.push({
+        key: `recent-${recentLiftNotch.date}-${recentLiftNotch.reps}-${recentLiftNotch.weight}`,
+        percent: getPercent(recentE1rmDisplay),
+        shortLabel: recentLiftNotch.shortLabel,
+        zIndex: 15,
+        tooltipContent: (
+          <div className="space-y-0.5">
+            <div className="font-semibold">
+              Most recent lift ({recentLiftNotch.shortLabel}): ~{Math.round(recentE1rmDisplay)}
+              {unitType} E1RM
+            </div>
+            <div className="text-muted-foreground">
+              {recentLiftNotch.reps} × {recentWeightDisplay}
+              {unitType}
+              {recentLiftNotch.date && <> · {getReadableDateString(recentLiftNotch.date)}</>}
+            </div>
           </div>
-          <div className="text-muted-foreground">
-            {recentLiftNotch.reps} × {recentWeightDisplay}
-            {unitType}
-            {recentLiftNotch.date && <> · {getReadableDateString(recentLiftNotch.date)}</>}
-          </div>
-        </div>
-      ),
-    });
+        ),
+      });
+    }
   }
 
   // Sort by percent position and group nearby notches into clusters

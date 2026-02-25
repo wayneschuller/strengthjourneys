@@ -320,7 +320,11 @@ export function SessionExerciseBlock({
           .map((i) => workouts[i].yearlySignificanceAnnotation)
           .find(Boolean);
         const groupNotes = group.map((i) => workouts[i].notes).filter(Boolean);
-        const groupURLs = group.map((i) => workouts[i].URL).filter(Boolean);
+        const groupURLs = group
+          .map((i, groupIdx) =>
+            workouts[i].URL ? { url: workouts[i].URL, setNum: groupIdx + 1 } : null,
+          )
+          .filter(Boolean);
 
         const { value: weightValue, unit: weightUnit } = getDisplayWeight(
           firstWorkout,
@@ -416,7 +420,7 @@ export function SessionExerciseBlock({
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                {groupURLs.map((url, i) => (
+                {groupURLs.map(({ url, setNum }, i) => (
                   <TooltipProvider key={i} delayDuration={0}>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -432,7 +436,7 @@ export function SessionExerciseBlock({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>
-                          {groupURLs.length > 1 ? `Video ${i + 1}` : "Click to open video"}
+                          {count > 1 ? `Set ${setNum}: ` : ""}Click to open video
                           {url.length > 40 ? ` (${url.slice(0, 37)}…)` : ""}
                         </p>
                       </TooltipContent>

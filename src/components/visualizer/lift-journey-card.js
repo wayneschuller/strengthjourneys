@@ -16,12 +16,6 @@ import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   buildLiftChronology,
   MiniLiftChronologyChart,
 } from "@/components/mini-lift-chronology-chart";
@@ -34,32 +28,30 @@ import { cn } from "@/lib/utils";
 // Both minReps AND minYears must be met to reach a tier.
 // ─────────────────────────────────────────────────────────────────────────────
 // One tier per year 0–15, then 5-year jumps to 30.
-// Reps thresholds are ~75% of what a 2,000 reps/year lifter accumulates by
-// that year, so dedicated lifters clear reps before years at higher tiers.
+// Reps thresholds track ~100% of a 2,000 reps/year pace, so a consistent
+// lifter reaches the year-N tier's reps requirement at roughly year N.
 const TIERS = [
   { name: "Baby",         minReps: 0,     minYears: 0,  icon: "🌱", bg: "bg-stone-100 dark:bg-stone-800",         text: "text-stone-500 dark:text-stone-400" },
-  { name: "Initiate",     minReps: 200,   minYears: 1,  icon: "🌿", bg: "bg-green-50 dark:bg-green-950",          text: "text-green-700 dark:text-green-400" },
-  { name: "Scout",        minReps: 800,   minYears: 2,  icon: "💡", bg: "bg-teal-50 dark:bg-teal-950",            text: "text-teal-700 dark:text-teal-400" },
-  { name: "Squire",       minReps: 1500,  minYears: 3,  icon: "🔧", bg: "bg-sky-100 dark:bg-sky-950",             text: "text-sky-700 dark:text-sky-400" },
-  { name: "Warden",       minReps: 2500,  minYears: 4,  icon: "⚡", bg: "bg-blue-100 dark:bg-blue-950",           text: "text-blue-700 dark:text-blue-400" },
-  { name: "Padawan",      minReps: 4000,  minYears: 5,  icon: "🎯", bg: "bg-indigo-100 dark:bg-indigo-950",       text: "text-indigo-700 dark:text-indigo-400" },
-  { name: "Journeyman",   minReps: 5500,  minYears: 6,  icon: "🛤️", bg: "bg-violet-100 dark:bg-violet-950",       text: "text-violet-700 dark:text-violet-400" },
-  { name: "Dedicated",    minReps: 7500,  minYears: 7,  icon: "💪", bg: "bg-purple-100 dark:bg-purple-950",       text: "text-purple-700 dark:text-purple-400" },
-  { name: "Veteran",      minReps: 9500,  minYears: 8,  icon: "🎖️", bg: "bg-fuchsia-100 dark:bg-fuchsia-950",     text: "text-fuchsia-700 dark:text-fuchsia-400" },
-  { name: "Predator",     minReps: 11500, minYears: 9,  icon: "⭐", bg: "bg-pink-100 dark:bg-pink-950",           text: "text-pink-700 dark:text-pink-400" },
-  { name: "Paragon",      minReps: 14000, minYears: 10, icon: "🌟", bg: "bg-rose-100 dark:bg-rose-950",           text: "text-rose-700 dark:text-rose-400" },
-  { name: "Jedimaster",   minReps: 16500, minYears: 11, icon: "🏆", bg: "bg-amber-100 dark:bg-amber-950",         text: "text-amber-700 dark:text-amber-400" },
-  { name: "Terminator",   minReps: 19000, minYears: 12, icon: "👑", bg: "bg-amber-200 dark:bg-amber-900",         text: "text-amber-800 dark:text-amber-300" },
-  { name: "Champion",     minReps: 21500, minYears: 13, icon: "🥇", bg: "bg-orange-100 dark:bg-orange-950",       text: "text-orange-700 dark:text-orange-400" },
-  { name: "Luminary",     minReps: 24000, minYears: 14, icon: "✨", bg: "bg-orange-200 dark:bg-orange-900",       text: "text-orange-800 dark:text-orange-300" },
-  { name: "Legend",       minReps: 27000, minYears: 15, icon: "🔱", bg: "bg-red-100 dark:bg-red-950",             text: "text-red-700 dark:text-red-400" },
-  { name: "Titan",        minReps: 35000, minYears: 20, icon: "🏔️", bg: "bg-slate-700 dark:bg-slate-800",         text: "text-slate-100" },
-  { name: "Immortal",     minReps: 44000, minYears: 25, icon: "🌌", bg: "bg-gray-800 dark:bg-gray-900",           text: "text-amber-300" },
-  { name: "Eternal",      minReps: 53000, minYears: 30, icon: "🌠", bg: "bg-zinc-900 dark:bg-zinc-950",           text: "text-yellow-400" },
+  { name: "Initiate",     minReps: 300,   minYears: 1,  icon: "🌿", bg: "bg-green-50 dark:bg-green-950",          text: "text-green-700 dark:text-green-400" },
+  { name: "Scout",        minReps: 1500,  minYears: 2,  icon: "💡", bg: "bg-teal-50 dark:bg-teal-950",            text: "text-teal-700 dark:text-teal-400" },
+  { name: "Squire",       minReps: 3000,  minYears: 3,  icon: "🔧", bg: "bg-sky-100 dark:bg-sky-950",             text: "text-sky-700 dark:text-sky-400" },
+  { name: "Warden",       minReps: 5000,  minYears: 4,  icon: "⚡", bg: "bg-blue-100 dark:bg-blue-950",           text: "text-blue-700 dark:text-blue-400" },
+  { name: "Padawan",      minReps: 7000,  minYears: 5,  icon: "🎯", bg: "bg-indigo-100 dark:bg-indigo-950",       text: "text-indigo-700 dark:text-indigo-400" },
+  { name: "Journeyman",   minReps: 9500,  minYears: 6,  icon: "🛤️", bg: "bg-violet-100 dark:bg-violet-950",       text: "text-violet-700 dark:text-violet-400" },
+  { name: "Dedicated",    minReps: 12000, minYears: 7,  icon: "💪", bg: "bg-purple-100 dark:bg-purple-950",       text: "text-purple-700 dark:text-purple-400" },
+  { name: "Veteran",      minReps: 14500, minYears: 8,  icon: "🎖️", bg: "bg-fuchsia-100 dark:bg-fuchsia-950",     text: "text-fuchsia-700 dark:text-fuchsia-400" },
+  { name: "Predator",     minReps: 17000, minYears: 9,  icon: "⭐", bg: "bg-pink-100 dark:bg-pink-950",           text: "text-pink-700 dark:text-pink-400" },
+  { name: "Paragon",      minReps: 19500, minYears: 10, icon: "🌟", bg: "bg-rose-100 dark:bg-rose-950",           text: "text-rose-700 dark:text-rose-400" },
+  { name: "Jedimaster",   minReps: 22000, minYears: 11, icon: "🏆", bg: "bg-amber-100 dark:bg-amber-950",         text: "text-amber-700 dark:text-amber-400" },
+  { name: "Terminator",   minReps: 24000, minYears: 12, icon: "👑", bg: "bg-amber-200 dark:bg-amber-900",         text: "text-amber-800 dark:text-amber-300" },
+  { name: "Champion",     minReps: 26000, minYears: 13, icon: "🥇", bg: "bg-orange-100 dark:bg-orange-950",       text: "text-orange-700 dark:text-orange-400" },
+  { name: "Luminary",     minReps: 28000, minYears: 14, icon: "✨", bg: "bg-orange-200 dark:bg-orange-900",       text: "text-orange-800 dark:text-orange-300" },
+  { name: "Legend",       minReps: 30000, minYears: 15, icon: "🔱", bg: "bg-red-100 dark:bg-red-950",             text: "text-red-700 dark:text-red-400" },
+  { name: "Titan",        minReps: 40000, minYears: 20, icon: "🏔️", bg: "bg-slate-700 dark:bg-slate-800",         text: "text-slate-100" },
+  { name: "Immortal",     minReps: 50000, minYears: 25, icon: "🌌", bg: "bg-gray-800 dark:bg-gray-900",           text: "text-amber-300" },
+  { name: "Eternal",      minReps: 60000, minYears: 30, icon: "🌠", bg: "bg-zinc-900 dark:bg-zinc-950",           text: "text-yellow-400" },
 ];
 
-// Rings fill to 100% at the Legend threshold; higher tiers show a full ring.
-const RING_MAX_REPS = 27000;
 
 function computeTier(totalReps, yearsTraining) {
   let tier = TIERS[0];
@@ -179,69 +171,6 @@ function TierProgressSection({ totalReps, yearsTraining, tier, liftType, liftCol
 // Animated donut ring
 // ─────────────────────────────────────────────────────────────────────────────
 // SVG donut ring that animates its fill arc from 0 to the target proportion on mount.
-function StatRing({ value, fill, label, color, isMounted, tooltip }) {
-  const radius = 38;
-  const circumference = 2 * Math.PI * radius;
-  const targetOffset = circumference * (1 - Math.min(1, fill));
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex flex-col items-center gap-1">
-            <div className="relative h-24 w-24">
-              <svg
-                width="96"
-                height="96"
-                viewBox="0 0 96 96"
-                className="-rotate-90"
-                aria-hidden="true"
-              >
-                {/* Track */}
-                <circle
-                  cx="48"
-                  cy="48"
-                  r={radius}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  className="text-muted/25"
-                />
-                {/* Animated fill */}
-                <motion.circle
-                  cx="48"
-                  cy="48"
-                  r={radius}
-                  fill="none"
-                  stroke={color}
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={circumference}
-                  initial={{ strokeDashoffset: circumference }}
-                  animate={
-                    isMounted
-                      ? { strokeDashoffset: targetOffset }
-                      : { strokeDashoffset: circumference }
-                  }
-                  transition={{ duration: 1.4, ease: "easeOut", delay: 0.2 }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-base font-bold leading-tight">
-                  {value >= 10000
-                    ? `${(value / 1000).toFixed(0)}K`
-                    : value.toLocaleString()}
-                </span>
-              </div>
-            </div>
-            <span className="text-xs text-muted-foreground">{label}</span>
-          </div>
-        </TooltipTrigger>
-        {tooltip && <TooltipContent>{tooltip}</TooltipContent>}
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main card
@@ -342,7 +271,6 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
       )
     : null;
 
-  const repsFill = totalReps / RING_MAX_REPS;
 
   const prRecords = [
     { label: "Best Single", lift: oneRM },
@@ -451,19 +379,6 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
               />
             )}
 
-            {/* Commitment rings */}
-            {totalReps > 0 && (
-              <div className="flex items-center justify-center gap-10 py-2">
-                <StatRing
-                  value={totalReps}
-                  fill={repsFill}
-                  label="Total Reps"
-                  color={liftColor}
-                  isMounted={isMounted}
-                  tooltip="Full ring = Legend tier (27,000 reps)"
-                />
-              </div>
-            )}
 
             {/* Reps over time */}
             <MiniLiftChronologyChart

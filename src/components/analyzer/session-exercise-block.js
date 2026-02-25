@@ -475,11 +475,11 @@ export function SessionExerciseBlock({
 
   if (isCompact) {
     const liftTypeArea = svgPath ? (
-      <div className="flex shrink-0 items-center justify-center py-2 sm:h-full sm:min-h-16 sm:py-0">
+      <div className="flex shrink-0 items-center">
         <img
           src={svgPath}
           alt={`${liftType} diagram`}
-          className="h-24 w-auto max-h-32 object-contain sm:h-full"
+          className="h-16 w-auto object-contain"
         />
       </div>
     ) : !hideSvg ? (
@@ -488,27 +488,13 @@ export function SessionExerciseBlock({
         className="text-base max-w-36 leading-tight"
       />
     ) : null;
-    const usesTextLiftIndicator = Boolean(liftTypeArea && !svgPath);
-    const usesSvgLiftIndicator = Boolean(svgPath);
 
     return (
       <div
-        className={`bg-muted/20 flex h-full min-h-0 flex-col gap-3 rounded-xl border sm:flex-row sm:items-center sm:gap-3 ${
-          liftTypeArea ? "p-4" : "px-2 py-1.5 gap-2"
-        } ${
-          usesTextLiftIndicator || usesSvgLiftIndicator
-            ? "lg:flex-wrap lg:items-start"
-            : ""
+        className={`bg-muted/20 flex h-full min-h-0 flex-col gap-2.5 rounded-xl border sm:flex-row sm:items-center sm:gap-3 ${
+          liftTypeArea ? "p-3" : "px-2 py-1.5 gap-2"
         }`}
       >
-        {usesSvgLiftIndicator && (
-          <div className="hidden lg:block lg:basis-full">
-            <LiftTypeIndicator
-              liftType={liftType}
-              className="text-base max-w-36 leading-tight"
-            />
-          </div>
-        )}
         {liftTypeArea &&
           (svgPath && bigFourURLs[liftType] ? (
             <Link
@@ -520,15 +506,11 @@ export function SessionExerciseBlock({
           ) : (
             liftTypeArea
           ))}
-        <div
-          className={`flex min-w-0 flex-1 flex-col gap-1.5 ${
-            usesTextLiftIndicator ? "lg:basis-full" : ""
-          }`}
-        >
-          {usesSvgLiftIndicator && (
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          {svgPath && (
             <LiftTypeIndicator
               liftType={liftType}
-              className="text-base max-w-36 leading-tight lg:hidden"
+              className="text-base max-w-36 leading-tight"
             />
           )}
           {label && (

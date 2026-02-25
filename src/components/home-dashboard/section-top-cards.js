@@ -1692,19 +1692,16 @@ function buildFrequentNonBigFourClassicCandidates({
       });
     }
 
-    // Pick the single strongest e1RM expression across rep ranges for this lift.
-    let bestE1RMCandidate = null;
-    let bestE1RMWeight = 0;
-    for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
-      const topAtReps = repRanges[repsIndex]?.[0];
-      if (!topAtReps) continue;
-      const reps = repsIndex + 1;
-      const estimated = estimateE1RM(reps, topAtReps.weight, "Brzycki");
-      if (estimated > bestE1RMWeight) {
-        bestE1RMWeight = estimated;
-        bestE1RMCandidate = topAtReps;
-      }
-    }
+    // Pick the best "secondary classic" expression for frequent lifts.
+    // Usually this is the best e1RM across rep ranges, but for fixed-implement lifts
+    // (DB/KB/etc.) we prefer "most reps at the top weight" when the weight is the same,
+    // because that often captures the actual progression story better than a lower-rep set.
+    const {
+      candidate: bestE1RMCandidate,
+      reasonLabel: frequentSecondaryReasonLabel,
+      rankIndex: frequentSecondaryRankIndex,
+      e1rmIdentityBonus,
+    } = chooseFrequentLiftSecondaryClassicCandidate(liftType, repRanges);
 
     if (bestE1RMCandidate) {
       const e1rmStrengthRating = getLiftStrengthRating({
@@ -1726,7 +1723,7 @@ function buildFrequentNonBigFourClassicCandidates({
       const score = scoreClassicLiftCandidate({
         lift: bestE1RMCandidate,
         candidateKind: "frequentLiftPR",
-        rankIndex: bestE1RMCandidate.reps === 1 ? 1 : 0,
+        rankIndex: frequentSecondaryRankIndex,
         trainingYears,
         strengthRating: e1rmStrengthRating,
         liftFrequency: liftTotals.totalSets,
@@ -1746,15 +1743,87 @@ function buildFrequentNonBigFourClassicCandidates({
         candidateKind: "frequentLiftPR",
         frequentLiftType: liftType,
         frequentLiftSlot: "e1rm",
-        reasonLabel:
-          bestE1RMCandidate.reps === 1
-            ? "Frequent-lift best e1RM (single)"
-            : `Frequent-lift best e1RM (${bestE1RMCandidate.reps} reps)`,
+        reasonLabel: frequentSecondaryReasonLabel,
       });
     }
   }
 
   return candidates;
+}
+
+/**
+ * Chooses the "secondary" frequent-lift classic candidate (besides best true single).
+ *
+ * Default behavior uses the top e1RM expression across rep ranges 1–10.
+ * For fixed-implement lifts (DB/KB/cable/machine variations), if multiple rep-range tops
+ * share the same highest weight, we prefer the highest-rep version of that weight to better
+ * reflect progression on a capped implement.
+ */
+function chooseFrequentLiftSecondaryClassicCandidate(liftType, repRanges) {
+  let bestE1RMCandidate = null;
+  let bestE1RMWeight = 0;
+  let topWeightAnyRepCandidate = null;
+
+  for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
+    const topAtReps = repRanges[repsIndex]?.[0];
+    if (!topAtReps) continue;
+
+    const reps = repsIndex + 1;
+    const estimated = estimateE1RM(reps, topAtReps.weight, "Brzycki");
+    if (estimated > bestE1RMWeight) {
+      bestE1RMWeight = estimated;
+      bestE1RMCandidate = topAtReps;
+    }
+
+    if (
+      !topWeightAnyRepCandidate ||
+      topAtReps.weight > topWeightAnyRepCandidate.weight ||
+      (topAtReps.weight === topWeightAnyRepCandidate.weight &&
+        reps > (topWeightAnyRepCandidate.reps ?? 0))
+    ) {
+      topWeightAnyRepCandidate = topAtReps;
+    }
+  }
+
+  if (!bestE1RMCandidate) {
+    return {
+      candidate: null,
+      reasonLabel: "",
+      rankIndex: 0,
+      e1rmIdentityBonus: 0,
+    };
+  }
+
+  const isFixedImplementLift = /dumbbell|db\b|kettlebell|kb\b|cable|machine/i.test(
+    liftType ?? "",
+  );
+  const sameTopWeightBetterRepStory =
+    isFixedImplementLift &&
+    topWeightAnyRepCandidate &&
+    bestE1RMCandidate &&
+    topWeightAnyRepCandidate.weight === bestE1RMCandidate.weight &&
+    (topWeightAnyRepCandidate.unitType || "lb") ===
+      (bestE1RMCandidate.unitType || "lb") &&
+    (topWeightAnyRepCandidate.reps ?? 0) > (bestE1RMCandidate.reps ?? 0);
+
+  if (sameTopWeightBetterRepStory) {
+    return {
+      candidate: topWeightAnyRepCandidate,
+      reasonLabel: `Frequent-lift top weight reps (${topWeightAnyRepCandidate.reps} reps)`,
+      rankIndex: 0,
+      e1rmIdentityBonus: 1, // still a performance expression, but story > e1RM purity
+    };
+  }
+
+  return {
+    candidate: bestE1RMCandidate,
+    reasonLabel:
+      bestE1RMCandidate.reps === 1
+        ? "Frequent-lift best e1RM (single)"
+        : `Frequent-lift best e1RM (${bestE1RMCandidate.reps} reps)`,
+    rankIndex: bestE1RMCandidate.reps === 1 ? 1 : 0,
+    e1rmIdentityBonus: bestE1RMCandidate.reps > 1 ? 3 : 0,
+  };
 }
 
 /**

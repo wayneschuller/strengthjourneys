@@ -761,7 +761,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
         </TooltipProvider>
 
         {/* Labels: desktop — full formula names */}
-        <div className="relative mt-1 hidden md:block" style={{ height: "20px" }}>
+        <div className="relative mt-1 hidden md:block" style={{ height: "34px" }}>
           {desktopMergedLabels.map((group, groupIndex) => {
             const isFirst = groupIndex === 0;
             const isLast = groupIndex === desktopMergedLabels.length - 1;
@@ -778,34 +778,36 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                 key={group.formulas.join("-")}
                 style={{ left: `${group.pct}%` }}
                 className={cn(
-                  "absolute top-0 whitespace-nowrap text-xs leading-none",
+                  "absolute top-0 whitespace-nowrap text-xs leading-tight",
                   translateClass,
                 )}
               >
-                {group.formulas.map((formula, fi) => (
-                  <span key={formula}>
-                    {fi > 0 && <span className="text-muted-foreground/40"> / </span>}
-                    <button
-                      onClick={() => setE1rmFormula(formula)}
-                      className={cn(
-                        "cursor-pointer transition-colors",
-                        e1rmFormula === formula
-                          ? "font-semibold text-foreground"
-                          : "text-muted-foreground/80 hover:text-foreground",
-                      )}
-                    >
-                      {formula}
-                    </button>
-                  </span>
-                ))}{" "}
-                <span className="opacity-60">{weightLabel}</span>
+                <div>
+                  {group.formulas.map((formula, fi) => (
+                    <span key={formula}>
+                      {fi > 0 && <span className="text-muted-foreground/40"> / </span>}
+                      <button
+                        onClick={() => setE1rmFormula(formula)}
+                        className={cn(
+                          "cursor-pointer transition-colors",
+                          e1rmFormula === formula
+                            ? "font-semibold text-foreground"
+                            : "text-muted-foreground/80 hover:text-foreground",
+                        )}
+                      >
+                        {formula}
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-0.5 opacity-60">{weightLabel}</div>
               </div>
             );
           })}
         </div>
 
         {/* Labels: mobile — first letter(s) only, popover for merged groups */}
-        <div className="relative mt-1 md:hidden" style={{ height: "20px" }}>
+        <div className="relative mt-1 md:hidden" style={{ height: "34px" }}>
           {mobileMergedLabels.map((group, groupIndex) => {
             const isFirst = groupIndex === 0;
             const isLast = groupIndex === mobileMergedLabels.length - 1;
@@ -829,7 +831,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                 key={groupKey}
                 style={{ left: `${group.pct}%` }}
                 className={cn(
-                  "absolute top-0 whitespace-nowrap text-xs leading-none",
+                  "absolute top-0 whitespace-nowrap text-xs leading-tight",
                   translateClass,
                 )}
               >
@@ -840,8 +842,9 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
                   onOpenChange={(o) => setOpenPopoverKey(o ? groupKey : null)}
                 >
                   <PopoverTrigger asChild>
-                    <button className={labelCls}>
-                      {initials} <span className="opacity-60">{weightLabel}</span>
+                    <button className={cn("text-left", labelCls)}>
+                      <span className="block">{initials}</span>
+                      <span className="mt-0.5 block opacity-60">{weightLabel}</span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent

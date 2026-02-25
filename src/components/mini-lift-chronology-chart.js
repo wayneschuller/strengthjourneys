@@ -197,7 +197,7 @@ export function MiniLiftChronologyChart({ liftType, color, chronology }) {
     <div>
       <ChartContainer
       config={chartConfig}
-      className="mt-0 mb-5 !aspect-auto h-[72px] w-full select-none [&_.recharts-surface]:focus:outline-none [&_.recharts-surface]:focus-visible:outline-none"
+      className="mt-0 mb-0 !aspect-auto h-[72px] w-full select-none [&_.recharts-surface]:focus:outline-none [&_.recharts-surface]:focus-visible:outline-none"
       onMouseDownCapture={(e) => e.preventDefault()}
     >
       <BarChart
@@ -251,7 +251,7 @@ export function MiniLiftChronologyChart({ liftType, color, chronology }) {
         </Bar>
       </BarChart>
     </ChartContainer>
-    <p className="mt-1 text-center text-xs text-muted-foreground">{header}</p>
+    <p className="text-center text-xs text-muted-foreground">{header}</p>
     </div>
   );
 }

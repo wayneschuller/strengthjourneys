@@ -15,6 +15,10 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors, LiftColorPicker } from "@/hooks/use-lift-colors";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  buildLiftChronology,
+  MiniLiftChronologyChart,
+} from "@/components/mini-lift-chronology-chart";
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -240,6 +244,7 @@ function StatRing({ value, fill, label, color, isMounted }) {
 export function LiftJourneyCard({ liftType, asCard = true }) {
   const { status: authStatus } = useSession();
   const {
+    parsedData,
     liftTypes,
     topLiftsByTypeAndReps,
     topTonnageByType,
@@ -288,6 +293,9 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
     ? (new Date() - new Date(oldestDate)) / (365.25 * 24 * 60 * 60 * 1000)
     : 0;
   const tier = computeTier(totalReps, yearsTraining);
+
+  // ── Reps chronology ──────────────────────────────────────────────────────
+  const chronology = buildLiftChronology(parsedData, liftType);
 
   // ── Recent highlights (last 4 weeks) ─────────────────────────────────────
   const oneMonthAgo = new Date();
@@ -452,6 +460,13 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
                 />
               </div>
             )}
+
+            {/* Reps over time */}
+            <MiniLiftChronologyChart
+              liftType={liftType}
+              color={liftColor}
+              chronology={chronology}
+            />
 
             {/* Recent highlights */}
             {recentHighlights && recentHighlights.length > 0 && (

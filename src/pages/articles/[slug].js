@@ -322,20 +322,6 @@ export async function getStaticProps({ params }) {
     { slug },
   );
 
-  const articleOLDGROQ = await sanityIOClient.fetch(
-    `*[_type == "post" && slug.current == $slug && publishedAt < now() && defined(body)][0]{
-      title,
-      body,
-      "slug": slug.current,
-      publishedAt,
-      "author": author->{name, "url": website},
-      footer,
-      mainImage,
-      description
-    }`,
-    { slug },
-  );
-
   // devLog(article);
 
   if (!article) {

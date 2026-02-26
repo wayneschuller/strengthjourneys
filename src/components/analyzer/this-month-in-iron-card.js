@@ -773,8 +773,8 @@ function BigFourCriteriaTable({
     "Strength level compares each month’s average session-top-set rating for this lift. For every session, your best set (up to 10 reps) is converted to an estimated 1RM and graded against age-, sex-, and bodyweight-adjusted standards. This check passes when this month is at least 80% of last month (within 20% counts).";
 
   return (
-    <div className="space-y-1.5">
-      <div className="grid grid-cols-[1fr_100px_1fr] items-center gap-2 px-2 text-[11px] font-medium uppercase tracking-wide text-primary">
+    <div className="space-y-2">
+      <div className="grid grid-cols-[1fr_100px_1fr] items-center gap-2 border-b border-border/30 px-2 pb-1.5 text-[11px] font-medium uppercase tracking-wide text-primary">
         <div className="text-right">{boundaries.prevMonthName}</div>
         <div className="text-center" aria-hidden="true"></div>
         <div className="text-left">{boundaries.currentMonthName}</div>
@@ -803,7 +803,7 @@ function BigFourCriteriaTable({
 
         return (
           <motion.div
-            className={`grid grid-cols-[1fr_100px_1fr] items-center gap-2 rounded-md px-2 py-1.5 ${rowBg}`}
+            className={`grid grid-cols-[1fr_100px_1fr] items-center gap-2 rounded-md border border-border/25 px-2 py-1.5 ${rowBg}`}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.04, ease: [0.22, 1, 0.36, 1] }}
@@ -837,11 +837,14 @@ function BigFourCriteriaTable({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="text-left">
-                    <div>
+                    <div className="flex items-baseline gap-1">
                       <AnimatedInteger
                         value={sessions.current}
                         className={`tabular-nums text-2xl font-bold tracking-tight ${rightColor}`}
                       />
+                      {passed && !baseline && (
+                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">✓</span>
+                      )}
                     </div>
                     <div className="text-[10px] text-muted-foreground">
                       {currentSessionsReporting.replace(
@@ -927,7 +930,7 @@ function BigFourCriteriaTable({
         return (
           <motion.div
             key={liftType}
-            className="grid grid-cols-[1fr_100px_1fr] grid-rows-2 items-center gap-x-2 gap-y-1 rounded-md px-2 py-2"
+            className="grid grid-cols-[1fr_100px_1fr] grid-rows-2 items-center gap-x-2 gap-y-1 rounded-md border border-border/25 px-2 py-2"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             whileHover="hover"
@@ -981,7 +984,7 @@ function BigFourCriteriaTable({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className={`text-xs font-medium ${strengthColor}`}>
+                    <div className={`flex items-center gap-1 text-xs font-medium ${strengthColor}`}>
                       {strengthLocked ? (
                         <span>Setup required</span>
                       ) : currentStrengthFmt ? (
@@ -990,6 +993,9 @@ function BigFourCriteriaTable({
                         </span>
                       ) : (
                         <span>{strength.last !== null ? "Not trained" : "—"}</span>
+                      )}
+                      {!strengthLocked && strengthPassed && (strengthNewWin || !strengthBaseline) && (
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
                       )}
                     </div>
                   </TooltipTrigger>
@@ -1025,8 +1031,11 @@ function BigFourCriteriaTable({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className={`rounded px-1.5 py-1 text-left ${tonnageBg}`}>
-                    <div className={`text-xs font-semibold ${tonnageColor}`}>
-                      {formatTonnage(tonnage.current ?? 0, unit)} lifted
+                    <div className={`flex items-center gap-1 text-xs font-semibold ${tonnageColor}`}>
+                      <span>{formatTonnage(tonnage.current ?? 0, unit)} lifted</span>
+                      {(tonnagePassed || tonnageNewWin) && (
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
+                      )}
                     </div>
                   </div>
                 </TooltipTrigger>

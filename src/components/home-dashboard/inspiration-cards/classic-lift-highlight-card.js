@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { Trophy, Video } from "lucide-react";
 import { useMemo, useRef } from "react";
 
 import { getDisplayWeight } from "@/lib/processing-utils";
+import { getBigFourPrSectionHref } from "@/lib/classic-lift-memory";
 import { pickClassicLiftMemory } from "@/lib/home-dashboard/classic-lift-highlight-selection";
 import { Button } from "@/components/ui/button";
 import { ClassicLiftDetails } from "./classic-lift-details";
@@ -47,6 +49,9 @@ export function ClassicLiftHighlightCard({
   const displayWeight = classicLiftMemory?.lift
     ? getDisplayWeight(classicLiftMemory.lift, isMetric ?? false)
     : null;
+  const bigFourPrHref = classicLiftMemory?.lift?.liftType
+    ? getBigFourPrSectionHref(classicLiftMemory.lift.liftType)
+    : null;
 
   return (
     <InspirationCard
@@ -55,7 +60,23 @@ export function ClassicLiftHighlightCard({
       description="Classic Lift"
       title={
         classicLiftMemory && displayWeight
-          ? `${classicLiftMemory.lift.liftType} ${classicLiftMemory.lift.reps}@${displayWeight.value}${displayWeight.unit}`
+          ? (
+              <>
+                {bigFourPrHref ? (
+                  <Link
+                    href={bigFourPrHref}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {classicLiftMemory.lift.liftType}
+                  </Link>
+                ) : (
+                  classicLiftMemory.lift.liftType
+                )}{" "}
+                {classicLiftMemory.lift.reps}@
+                {displayWeight.value}
+                {displayWeight.unit}
+              </>
+            )
           : "No classic lifts yet"
       }
       footer={

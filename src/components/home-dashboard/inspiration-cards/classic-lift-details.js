@@ -1,9 +1,7 @@
-import Link from "next/link";
 import { useState } from "react";
 import { format } from "date-fns";
 
 import { STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
-import { getBigFourPrSectionHref } from "@/lib/classic-lift-memory";
 
 export function ClassicLiftDetails({ classicLiftMemory }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -12,7 +10,6 @@ export function ClassicLiftDetails({ classicLiftMemory }) {
 
   const note = classicLiftMemory.lift.notes?.trim() ?? "";
   const hasNote = note.length > 0;
-  const bigFourPrHref = getBigFourPrSectionHref(classicLiftMemory.lift.liftType);
   const maxPreviewChars = 88;
   const isLongNote = note.length > maxPreviewChars;
   const previewNote =
@@ -42,17 +39,6 @@ export function ClassicLiftDetails({ classicLiftMemory }) {
               {isExpanded ? "Less" : "More"}
             </button>
           )}
-        </div>
-      )}
-
-      {bigFourPrHref && (
-        <div>
-          <Link
-            href={bigFourPrHref}
-            className="inline font-medium text-primary hover:underline"
-          >
-            View {classicLiftMemory.lift.liftType} PRs
-          </Link>
         </div>
       )}
     </div>

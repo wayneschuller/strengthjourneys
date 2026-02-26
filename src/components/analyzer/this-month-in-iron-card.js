@@ -209,23 +209,16 @@ const LEVEL_LABELS = [
 
 const LEVEL_EMOJIS = ["🏃", "🌱", "💪", "🔥", "👑"];
 const TONNAGE_CLOSE_ENOUGH_RATIO = 0.9; // Tonnage/session checks: within 10% of last month still counts as a win.
-const STRENGTH_CLOSE_ENOUGH_RATIO = 0.8; // Strength-level checks: within 20% still counts as a win.
-
 function formatStrengthLevel(score) {
   if (score === null || score === undefined) return null;
-  const floor = Math.min(4, Math.floor(score));
-  const fraction = score - floor;
-  const label = LEVEL_LABELS[floor];
-  const emoji = LEVEL_EMOJIS[floor];
-  const plus = fraction >= 0.25 ? "+" : "";
-  return { label: label + plus, emoji, score };
+  const tier = Math.min(4, Math.floor(score));
+  const label = LEVEL_LABELS[tier];
+  const emoji = LEVEL_EMOJIS[tier];
+  return { label, emoji, score: tier };
 }
 
 function isStrengthLevelRegressed(current, last) {
-  return (
-    last !== null &&
-    (current === null || current < last * STRENGTH_CLOSE_ENOUGH_RATIO)
-  );
+  return last !== null && (current === null || current < last);
 }
 
 function passesTonnageThreshold(current, last) {
@@ -348,65 +341,50 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
   };
 }
 
-// ─── Strength level stats (per Big Four lift, avg top-set level) ───────────
+// ─── Strength level stats (per Big Four lift, best category hit) ───────────
 
 function computeStrengthLevelStats(parsedData, boundaries, bio) {
   if (bio.bioDataIsDefault) return null;
 
-  // For each (liftType, date), track the entry with the highest e1rm
-  const currentTopByLiftDate = {};
-  const lastTopByLiftDate = {};
+  const result = Object.fromEntries(
+    BIG_FOUR_LIFT_TYPES.map((liftType) => [
+      liftType,
+      { current: null, last: null },
+    ]),
+  );
 
   for (const entry of parsedData) {
     if (entry.isGoal) continue;
     const reps = entry.reps ?? 0;
-    if (reps < 1 || reps > 10) continue; // cap at 10 for reliable e1rm
+    if (reps < 1) continue;
     if (!BIG_FOUR_LIFT_TYPES.includes(entry.liftType)) continue;
 
     const { date, liftType } = entry;
     const inCurrent =
       date >= boundaries.currentMonthStart && date <= boundaries.todayStr;
     const inLast =
-      date >= boundaries.prevMonthStart && date <= boundaries.prevMonthSameDayStr;
+      date >= boundaries.prevMonthStart && date <= boundaries.prevMonthEnd;
 
     if (!inCurrent && !inLast) continue;
 
     const e1rm = estimateE1RM(reps, entry.weight ?? 0);
-    const bucket = inCurrent ? currentTopByLiftDate : lastTopByLiftDate;
-
-    if (!bucket[liftType]) bucket[liftType] = {};
-    if (!bucket[liftType][date] || e1rm > bucket[liftType][date].e1rm) {
-      bucket[liftType][date] = { e1rm, date, liftType };
+    const standard = getStandardForLiftDate(
+      bio.age,
+      date,
+      bio.bodyWeight,
+      bio.sex,
+      liftType,
+      bio.isMetric,
+    );
+    const rating = getStrengthRatingForE1RM(e1rm, standard);
+    const score = LEVEL_SCORES[rating] ?? 0;
+    const monthKey = inCurrent ? "current" : "last";
+    const prevScore = result[liftType][monthKey];
+    if (prevScore === null || score > prevScore) {
+      result[liftType][monthKey] = score;
     }
   }
 
-  const computeAvgLevel = (topByDate, liftType) => {
-    const sessions = Object.values(topByDate[liftType] ?? {});
-    if (sessions.length === 0) return null;
-
-    const scores = sessions.map(({ e1rm, date }) => {
-      const standard = getStandardForLiftDate(
-        bio.age,
-        date,
-        bio.bodyWeight,
-        bio.sex,
-        liftType,
-        bio.isMetric,
-      );
-      const rating = getStrengthRatingForE1RM(e1rm, standard);
-      return LEVEL_SCORES[rating] ?? 0;
-    });
-
-    return scores.reduce((a, b) => a + b, 0) / scores.length;
-  };
-
-  const result = {};
-  for (const liftType of BIG_FOUR_LIFT_TYPES) {
-    result[liftType] = {
-      current: computeAvgLevel(currentTopByLiftDate, liftType),
-      last: computeAvgLevel(lastTopByLiftDate, liftType),
-    };
-  }
   return result;
 }
 
@@ -540,9 +518,9 @@ function getStrengthStatusTooltip({
     return "No previous strength-level baseline for this lift. Current data this month counts as a win.";
   }
   if (strengthRegressed) {
-    return `${formatLiftTypeLabel(liftType)} is more than 20% below last month’s average strength level.`;
+    return `${formatLiftTypeLabel(liftType)} has not yet matched the best strength category you hit last month.`;
   }
-  return "Passes: this month’s average strength level is at least 80% of last month (within 20% counts).";
+  return "Passes: you matched (or exceeded) the best strength category you hit last month at least once this month.";
 }
 
 function getTonnageStatusTooltip({
@@ -563,7 +541,7 @@ function getTonnageStatusTooltip({
 }
 
 function getStrengthLastColumnTooltip(boundaries) {
-  return `${boundaries.prevMonthName} average strength level through day ${boundaries.dayOfMonth}, based on each session’s best set (up to 10 reps) rated against your bio-adjusted standards.`;
+  return `${boundaries.prevMonthName} best strength category hit (full month), based on the best estimated 1RM category from any logged set and graded against your bio-adjusted standards.`;
 }
 
 function getTonnageLastColumnTooltip() {
@@ -758,8 +736,6 @@ function BigFourCriteriaTable({
   }
 
   const lastStrengthTooltip = getStrengthLastColumnTooltip(boundaries);
-  const strengthInfoTooltip =
-    "Strength level compares each month’s average session-top-set rating for this lift. For every session, your best set (up to 10 reps) is converted to an estimated 1RM and graded against age-, sex-, and bodyweight-adjusted standards. This check passes when this month is at least 80% of last month (within 20% counts).";
 
   return (
     <div className="space-y-2">

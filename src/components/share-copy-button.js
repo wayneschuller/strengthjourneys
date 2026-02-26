@@ -1,4 +1,4 @@
-
+import { forwardRef } from "react";
 import { Check, LoaderCircle, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils";
  * - Pass `isSuccess` + `successLabel` to this button (for tick + label swap).
  * - Keep destructive/error toast for failures; skip success toast when inline confirmation is enough.
  */
-export function ShareCopyButton({
+export const ShareCopyButton = forwardRef(function ShareCopyButton({
   label = "Copy",
   iconOnly = false,
   isLoading = false,
@@ -47,7 +47,7 @@ export function ShareCopyButton({
   onClick,
   disabled,
   ...rest
-}) {
+}, ref) {
   const handleClick = (event) => {
     try {
       onPressAnalytics?.(event);
@@ -59,6 +59,7 @@ export function ShareCopyButton({
 
   const content = (
     <Button
+      ref={ref}
       variant={variant}
       size={iconOnly ? "icon" : size}
       className={cn("gap-2", iconOnly && "h-9 w-9", className)}
@@ -133,4 +134,6 @@ export function ShareCopyButton({
   }
 
   return content;
-}
+});
+
+ShareCopyButton.displayName = "ShareCopyButton";

@@ -606,6 +606,8 @@ function getStrengthStatusTooltip({
   strengthBaseline,
   strengthNewWin,
   strengthRegressed,
+  strengthCurrent,
+  strengthLast,
 }) {
   if (strengthLocked) {
     return "Strength-level comparisons require age, sex, and bodyweight.";
@@ -619,7 +621,10 @@ function getStrengthStatusTooltip({
   if (strengthRegressed) {
     return `${formatLiftTypeLabel(liftType)} has not yet matched your best strength category from last month.`;
   }
-  return "Passes: you matched or exceeded your best strength category from last month at least once this month.";
+  if (strengthCurrent > strengthLast) {
+    return "Exceeded your best strength level from last month.";
+  }
+  return "Matched your best strength level from last month.";
 }
 
 function getTonnageStatusTooltip({
@@ -984,6 +989,8 @@ function BigFourCriteriaTable({
           strengthBaseline,
           strengthNewWin,
           strengthRegressed,
+          strengthCurrent: strength.current,
+          strengthLast: strength.last,
         });
         const tonnageStatusTooltip = getTonnageStatusTooltip({
           tonnageBaseline,

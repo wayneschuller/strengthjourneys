@@ -132,7 +132,7 @@ export function ThisMonthInIronCard() {
                 >
                   {(() => {
                     if (verdict?.won) {
-                      if (verdict.label === "Month Earned") return "Month Earned 🏆";
+                      if (verdict.label === "Month Crushed") return "Month Crushed 💥";
                       return "Month Won ✅";
                     }
                     const onPace = (s) =>
@@ -441,11 +441,11 @@ function getVerdict(stats, strengthLevelPassed) {
     strengthLevelPassed.skipped || strengthLevelPassed.passed;
 
   if (primaryMet && strengthOK) {
-    return { label: "Month Won", emoji: "✅", won: true };
+    return { label: "Month Crushed", emoji: "💥", won: true };
   }
   if (primaryMet) {
     // Sessions + tonnage all pass; strength has a regression caveat
-    return { label: "Month Earned", emoji: "🏆", won: true };
+    return { label: "Month Won", emoji: "✅", won: true };
   }
   return { label: "Still Forging", emoji: "⚒️", won: false };
 }

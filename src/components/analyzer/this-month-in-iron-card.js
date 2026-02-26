@@ -1,6 +1,7 @@
 
 import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import confetti from "canvas-confetti";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -45,20 +46,19 @@ export function ThisMonthInIronCard() {
 
   const boundaries = useMemo(() => getMonthBoundaries(), []);
 
-  const topTierVerdict = useRef(
-    TOP_TIER_VERDICTS[Math.floor(Math.random() * TOP_TIER_VERDICTS.length)],
+  const [topTierVerdict] = useState(
+    () =>
+      TOP_TIER_VERDICTS[
+        Math.floor(Math.random() * TOP_TIER_VERDICTS.length)
+      ],
   );
 
-  const [motivationalPhrase, setMotivationalPhrase] = useState(
-    MOTIVATIONAL_PHRASES[0],
-  );
-  useEffect(() => {
-    setMotivationalPhrase(
+  const [motivationalPhrase] = useState(
+    () =>
       MOTIVATIONAL_PHRASES[
         Math.floor(Math.random() * MOTIVATIONAL_PHRASES.length)
       ],
-    );
-  }, []);
+  );
 
   const stats = useMemo(() => {
     if (!parsedData) return null;
@@ -94,9 +94,39 @@ export function ThisMonthInIronCard() {
     () => getMonthlyChecksSummary(stats, strengthLevelStats),
     [stats, strengthLevelStats],
   );
+  const confettiFiredRef = useRef(false);
+  const cardRef = useRef(null);
+  const verdictHeadline = useMemo(
+    () =>
+      getVerdictHeadline({
+        verdict,
+        checksSummary,
+        sessionsPaceStatus,
+        bigFourPaceStatus,
+        topTierPhrase: topTierVerdict,
+      }),
+    [verdict, checksSummary, sessionsPaceStatus, bigFourPaceStatus, topTierVerdict],
+  );
+
+  useEffect(() => {
+    const shouldCelebrate =
+      checksSummary?.checksTotal === 9 && checksSummary.checksMet >= 7;
+
+    if (!shouldCelebrate) {
+      confettiFiredRef.current = false;
+      return;
+    }
+
+    if (confettiFiredRef.current) return;
+    if (typeof window === "undefined") return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+
+    confettiFiredRef.current = true;
+    fireMonthWinConfetti(cardRef);
+  }, [checksSummary]);
 
   return (
-    <Card className="flex h-full flex-1 flex-col">
+    <Card ref={cardRef} className="flex h-full flex-1 flex-col">
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo Mode: "}
@@ -125,34 +155,22 @@ export function ThisMonthInIronCard() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.35 }}
             >
-              <p className="text-sm">
-                <span className="text-muted-foreground">Verdict: </span>
+              <p className="text-foreground text-lg font-semibold tracking-tight sm:text-xl">
                 <span
                   className={
-                    verdict?.won
-                      ? "font-semibold text-emerald-600 dark:text-emerald-400"
-                      : "text-muted-foreground"
+                    verdictHeadline?.tone === "neutral"
+                      ? "text-muted-foreground"
+                      : "text-foreground"
                   }
                 >
-                  {(() => {
-                    if (verdict?.won) {
-                      if (verdict.label === "Month Crushed") return topTierVerdict.current;
-                      return "Month Won";
-                    }
-                    const onPace = (s) =>
-                      s?.status === "ahead" || s?.status === "on-pace";
-                    if (onPace(sessionsPaceStatus) && onPace(bigFourPaceStatus)) {
-                      return "On Track to Win ⚒️";
-                    }
-                    return "Not Winning Yet ⚒️";
-                  })()}
+                  {verdictHeadline?.text || "Keep forging ⚒️"}
                 </span>
+                {verdictHeadline?.scoreText && (
+                  <span className="ml-2 text-xs font-medium text-muted-foreground align-middle">
+                    {verdictHeadline.scoreText}
+                  </span>
+                )}
               </p>
-              {checksSummary && (
-                <p className="text-xs text-muted-foreground">
-                  {checksSummary.checksMet}/{checksSummary.checksTotal} checks green
-                </p>
-              )}
             </motion.div>
           </>
         )}
@@ -443,6 +461,83 @@ function getVerdict(stats, strengthLevelPassed) {
     return { label: "Month Won", emoji: "✅", won: true };
   }
   return { label: "Still Forging", emoji: "⚒️", won: false };
+}
+
+function getVerdictHeadline({
+  verdict,
+  checksSummary,
+  sessionsPaceStatus,
+  bigFourPaceStatus,
+  topTierPhrase,
+}) {
+  const checksText = checksSummary
+    ? `${checksSummary.checksMet}/${checksSummary.checksTotal}`
+    : null;
+
+  if (checksSummary?.checksTotal === 9 && checksSummary.checksMet >= 7) {
+    return {
+      tone: "win",
+      text: topTierPhrase || "Month Won ✅",
+      scoreText: checksText ? `${checksText} green` : null,
+    };
+  }
+
+  if (verdict?.won) {
+    return {
+      tone: "win",
+      text: verdict.label === "Month Crushed"
+        ? (topTierPhrase || "Month Won ✅")
+        : "Month Won ✅",
+      scoreText: checksText ? `${checksText} green` : null,
+    };
+  }
+
+  const onPace = (s) => s?.status === "ahead" || s?.status === "on-pace";
+  if (onPace(sessionsPaceStatus) && onPace(bigFourPaceStatus)) {
+    return {
+      tone: "progress",
+      text: checksText
+        ? `⚒️ ${checksText} checks green — on track to win the month`
+        : "⚒️ On track to win the month",
+      scoreText: null,
+    };
+  }
+
+  return {
+    tone: "neutral",
+    text: checksText
+      ? `⚒️ ${checksText} checks green — keep forging`
+      : "⚒️ Keep forging",
+    scoreText: null,
+  };
+}
+
+function getConfettiOriginFromRef(ref) {
+  if (!ref?.current || typeof window === "undefined") {
+    return { x: 0.5, y: 0.5 };
+  }
+
+  const rect = ref.current.getBoundingClientRect();
+  return {
+    x: (rect.left + rect.width / 2) / window.innerWidth,
+    y: (rect.top + rect.height / 2) / window.innerHeight,
+  };
+}
+
+function fireMonthWinConfetti(cardRef) {
+  const defaults = {
+    spread: 70,
+    startVelocity: 42,
+    ticks: 180,
+    zIndex: 2000,
+  };
+  const origin = getConfettiOriginFromRef(cardRef);
+
+  confetti({
+    ...defaults,
+    particleCount: 160,
+    origin,
+  });
 }
 
 // ─── Formatting helpers ────────────────────────────────────────────────────

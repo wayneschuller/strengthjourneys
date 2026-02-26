@@ -1,5 +1,5 @@
 import { Activity, TrendingDown, TrendingUp } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { calculateSessionMomentumFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
 import { InspirationCard } from "./inspiration-card";
@@ -92,10 +92,20 @@ export function TrainingMomentumCard({ allSessionDates = [], animationDelay = 0 
   }
 
   const encouragementOptions = ENCOURAGEMENTS[mode] ?? ENCOURAGEMENTS.steady;
-  const encouragementIndex =
-    Math.abs(recentSessions * 31 + previousSessions * 17 + sessionDelta * 13) %
-    encouragementOptions.length;
-  const encouragementLine = encouragementOptions[encouragementIndex];
+  const [encouragementIndex, setEncouragementIndex] = useState(0);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setEncouragementIndex(
+        Math.floor(Math.random() * encouragementOptions.length),
+      );
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [encouragementOptions.length]);
+
+  const encouragementLine =
+    encouragementOptions[encouragementIndex % encouragementOptions.length];
 
   return (
     <InspirationCard

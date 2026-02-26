@@ -46,9 +46,12 @@ export function ThisMonthInIronCard() {
 
   const boundaries = useMemo(() => getMonthBoundaries(), []);
 
-  const topTierVerdict = useRef(
-    TOP_TIER_VERDICTS[Math.floor(Math.random() * TOP_TIER_VERDICTS.length)],
-  );
+  const [topTierVerdict, setTopTierVerdict] = useState(TOP_TIER_VERDICTS[0]);
+  useEffect(() => {
+    setTopTierVerdict(
+      TOP_TIER_VERDICTS[Math.floor(Math.random() * TOP_TIER_VERDICTS.length)],
+    );
+  }, []);
 
   const [motivationalPhrase, setMotivationalPhrase] = useState(
     MOTIVATIONAL_PHRASES[0],
@@ -96,6 +99,7 @@ export function ThisMonthInIronCard() {
     [stats, strengthLevelStats],
   );
   const confettiFiredRef = useRef(false);
+  const cardRef = useRef(null);
   const verdictHeadline = useMemo(
     () =>
       getVerdictHeadline({
@@ -103,9 +107,9 @@ export function ThisMonthInIronCard() {
         checksSummary,
         sessionsPaceStatus,
         bigFourPaceStatus,
-        topTierPhrase: topTierVerdict.current,
+        topTierPhrase: topTierVerdict,
       }),
-    [verdict, checksSummary, sessionsPaceStatus, bigFourPaceStatus],
+    [verdict, checksSummary, sessionsPaceStatus, bigFourPaceStatus, topTierVerdict],
   );
 
   useEffect(() => {
@@ -122,11 +126,11 @@ export function ThisMonthInIronCard() {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
 
     confettiFiredRef.current = true;
-    fireMonthWinConfetti();
+    fireMonthWinConfetti(cardRef);
   }, [checksSummary]);
 
   return (
-    <Card className="flex h-full flex-1 flex-col">
+    <Card ref={cardRef} className="flex h-full flex-1 flex-col">
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo Mode: "}
@@ -512,25 +516,31 @@ function getVerdictHeadline({
   };
 }
 
-function fireMonthWinConfetti() {
+function getConfettiOriginFromRef(ref) {
+  if (!ref?.current || typeof window === "undefined") {
+    return { x: 0.5, y: 0.5 };
+  }
+
+  const rect = ref.current.getBoundingClientRect();
+  return {
+    x: (rect.left + rect.width / 2) / window.innerWidth,
+    y: (rect.top + rect.height / 2) / window.innerHeight,
+  };
+}
+
+function fireMonthWinConfetti(cardRef) {
   const defaults = {
     spread: 70,
     startVelocity: 42,
     ticks: 180,
     zIndex: 2000,
   };
+  const origin = getConfettiOriginFromRef(cardRef);
 
   confetti({
     ...defaults,
-    particleCount: 80,
-    origin: { x: 0.15, y: 0.8 },
-    angle: 60,
-  });
-  confetti({
-    ...defaults,
-    particleCount: 80,
-    origin: { x: 0.85, y: 0.8 },
-    angle: 120,
+    particleCount: 160,
+    origin,
   });
 }
 

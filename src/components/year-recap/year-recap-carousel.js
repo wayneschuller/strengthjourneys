@@ -1,5 +1,6 @@
 
 import { useRef, useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import {
   Carousel,
   CarouselContent,
@@ -10,7 +11,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { gaTrackShareCopy } from "@/lib/analytics";
-import { ShareCopyButton } from "@/components/share-copy-button";
+import { ShareActionsMenu } from "@/components/share-actions-menu";
 import { TitleCard } from "./cards/title-card";
 import { SessionsCard } from "./cards/sessions-card";
 import { TonnageCard } from "./cards/tonnage-card";
@@ -38,11 +39,14 @@ function fireTitleConfetti() {
  * @param {boolean} props.isDemo - When true, suppresses confetti and hides the share button in favour of a "Demo mode" label.
  */
 export function YearRecapCarousel({ year, isDemo }) {
+  const { status: authStatus } = useSession();
   const [api, setApi] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const shareRef = useRef(null);
-  const [isSharing, setIsSharing] = useState(false);
+  const [busyAction, setBusyAction] = useState(null);
+  const [menuSuccessAction, setMenuSuccessAction] = useState(null);
   const { isSuccess: isCopied, triggerSuccess: triggerCopied } = useTransientSuccess();
+  const { isSuccess: isEmailed, triggerSuccess: triggerEmailed } = useTransientSuccess();
   const { toast } = useToast();
 
   const hasFiredConfettiRef = useRef(false);
@@ -77,69 +81,163 @@ export function YearRecapCarousel({ year, isDemo }) {
     { id: "closing", Component: ClosingCard },
   ];
 
-  const handleShare = async () => {
+  const activeSlideId = cards[selectedIndex]?.id;
+
+  const captureActiveSlideImage = async () => {
     if (!shareRef.current) return;
-    setIsSharing(true);
+    const html2canvas = (await import("html2canvas-pro")).default;
+    const slides = shareRef.current.querySelectorAll("[data-recap-slide]");
+    const activeSlide = slides[selectedIndex];
+    if (!activeSlide) {
+      throw new Error("Could not capture slide");
+    }
+
+    let watermarkEl = null;
     try {
-      const html2canvas = (await import("html2canvas-pro")).default;
-      const slides = shareRef.current.querySelectorAll("[data-recap-slide]");
-      const activeSlide = slides[selectedIndex];
-      if (!activeSlide) {
-        toast({ variant: "destructive", title: "Could not capture slide" });
-        return;
+      watermarkEl = document.createElement("div");
+      watermarkEl.textContent = "strengthjourneys.xyz";
+      Object.assign(watermarkEl.style, {
+        position: "absolute",
+        right: "10px",
+        bottom: "10px",
+        padding: "4px 12px",
+        borderRadius: "9999px",
+        background: "rgba(15, 23, 42, 0.86)",
+        color: "rgba(248, 250, 252, 0.98)",
+        fontSize: "11px",
+        fontWeight: "500",
+        letterSpacing: "0.03em",
+        textTransform: "none",
+        fontFamily:
+          'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        boxShadow: "0 6px 16px rgba(15, 23, 42, 0.55)",
+        pointerEvents: "none",
+        zIndex: "10",
+      });
+      activeSlide.appendChild(watermarkEl);
+
+      const canvas = await html2canvas(activeSlide, {
+        backgroundColor: null,
+        scale: 2,
+      });
+
+      const blob = await new Promise((resolve) => {
+        canvas.toBlob(resolve, "image/png");
+      });
+
+      if (!blob) {
+        throw new Error("Could not generate image blob");
       }
 
-      let watermarkEl = null;
-      try {
-        watermarkEl = document.createElement("div");
-        watermarkEl.textContent = "strengthjourneys.xyz";
-        Object.assign(watermarkEl.style, {
-          position: "absolute",
-          right: "10px",
-          bottom: "10px",
-          padding: "4px 12px",
-          borderRadius: "9999px",
-          background: "rgba(15, 23, 42, 0.86)",
-          color: "rgba(248, 250, 252, 0.98)",
-          fontSize: "11px",
-          fontWeight: "500",
-          letterSpacing: "0.03em",
-          textTransform: "none",
-          fontFamily:
-            'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-          boxShadow: "0 6px 16px rgba(15, 23, 42, 0.55)",
-          pointerEvents: "none",
-          zIndex: "10",
-        });
-        activeSlide.appendChild(watermarkEl);
-
-        const canvas = await html2canvas(activeSlide, {
-          backgroundColor: null,
-          scale: 2,
-        });
-
-        const blob = await new Promise((resolve) => {
-          canvas.toBlob(resolve, "image/png");
-        });
-
-        if (!blob) {
-          throw new Error("Could not generate image blob");
-        }
-
-        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-        triggerCopied();
-      } finally {
-        if (watermarkEl && watermarkEl.parentNode) {
-          watermarkEl.parentNode.removeChild(watermarkEl);
-        }
+      return {
+        blob,
+        slideId: activeSlideId,
+      };
+    } finally {
+      if (watermarkEl && watermarkEl.parentNode) {
+        watermarkEl.parentNode.removeChild(watermarkEl);
       }
+    }
+  };
+
+  const readBlobAsDataUrl = (blob) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error("Could not read image"));
+      reader.readAsDataURL(blob);
+    });
+
+  const handleCopyImage = async () => {
+    setBusyAction("copy_image");
+    try {
+      const result = await captureActiveSlideImage();
+      if (!result?.blob) {
+        throw new Error("No image generated");
+      }
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": result.blob })]);
+      triggerCopied();
+      setMenuSuccessAction("copy_image");
+      gaTrackShareCopy("year_recap", {
+        page: "/strength-year-in-review",
+        slide: result.slideId,
+        method: "clipboard_image",
+      });
     } catch (error) {
       console.error("Copy error:", error);
       toast({ variant: "destructive", title: "Could not copy to clipboard" });
     } finally {
-      setIsSharing(false);
+      setBusyAction(null);
     }
   };
+
+  const handleEmailMeThis = async () => {
+    setBusyAction("email_me");
+    try {
+      const result = await captureActiveSlideImage();
+      if (!result?.blob) {
+        throw new Error("No image generated");
+      }
+
+      const imageDataUrl = await readBlobAsDataUrl(result.blob);
+      const response = await fetch("/api/share/email-card", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          feature: "year_recap",
+          title: `Strength Unwrapped ${year}`,
+          subtitle: `Slide ${selectedIndex + 1} of ${cards.length}`,
+          canonicalUrl:
+            typeof window !== "undefined"
+              ? window.location.href
+              : "/strength-year-in-review",
+          imageDataUrl,
+          metadata: {
+            year,
+            slideId: result.slideId,
+            slideIndex: selectedIndex,
+          },
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || "Could not send email");
+      }
+
+      triggerEmailed();
+      setMenuSuccessAction("email_me");
+      gaTrackShareCopy("year_recap", {
+        page: "/strength-year-in-review",
+        slide: result.slideId,
+        method: "email_me",
+      });
+      toast({ title: "Sent to your email" });
+    } catch (error) {
+      console.error("Email share error:", error);
+      const title =
+        authStatus !== "authenticated"
+          ? "Sign in to email yourself recap cards"
+          : "Could not send email";
+      toast({ variant: "destructive", title });
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!isCopied && menuSuccessAction === "copy_image") {
+      setMenuSuccessAction(null);
+    }
+  }, [isCopied, menuSuccessAction]);
+
+  useEffect(() => {
+    if (!isEmailed && menuSuccessAction === "email_me") {
+      setMenuSuccessAction(null);
+    }
+  }, [isEmailed, menuSuccessAction]);
 
   return (
     <div className="relative">
@@ -176,21 +274,36 @@ export function YearRecapCarousel({ year, isDemo }) {
           {isDemo ? (
             <span className="text-sm text-muted-foreground">Demo mode</span>
           ) : (
-            <ShareCopyButton
-              label="Copy this card"
-              successLabel="Copied"
-              isSuccess={isCopied}
-              onClick={handleShare}
-              isLoading={isSharing}
-              disabled={isSharing}
+            <ShareActionsMenu
+              label="Share this card"
+              disabled={Boolean(busyAction)}
               className="min-w-[124px]"
               onPressAnalytics={() => {
-                const slideId = cards[selectedIndex]?.id;
                 gaTrackShareCopy("year_recap", {
                   page: "/strength-year-in-review",
-                  slide: slideId,
+                  slide: activeSlideId,
+                  method: "menu_open",
                 });
               }}
+              actions={[
+                {
+                  id: "copy_image",
+                  label: "Copy image",
+                  successLabel: "Copied",
+                  isLoading: busyAction === "copy_image",
+                  isSuccess: menuSuccessAction === "copy_image" && isCopied,
+                  onSelect: handleCopyImage,
+                },
+                {
+                  id: "email_me",
+                  label: authStatus === "authenticated" ? "Email me this" : "Email me this (sign in)",
+                  successLabel: "Emailed",
+                  isLoading: busyAction === "email_me",
+                  isSuccess: menuSuccessAction === "email_me" && isEmailed,
+                  disabled: authStatus === "loading" || authStatus === "unauthenticated",
+                  onSelect: handleEmailMeThis,
+                },
+              ]}
             />
           )}
         </div>

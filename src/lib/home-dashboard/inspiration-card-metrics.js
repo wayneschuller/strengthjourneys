@@ -223,27 +223,35 @@ export function formatLifetimeTonnage(value) {
 
 export function calculateSessionMomentumFromDates(allSessionDates) {
   if (!allSessionDates || allSessionDates.length === 0) {
-    return { recentSessions: 0, previousSessions: 0, percentageChange: 0 };
+    return {
+      recentSessions: 0,
+      previousSessions: 0,
+      sessionDelta: 0,
+      percentageChange: 0,
+      windowDays: 90,
+    };
   }
 
+  const windowDays = 90;
   const todayStr = format(new Date(), "yyyy-MM-dd");
-  const ninetyDaysAgoStr = subtractDaysFromStr(todayStr, 90);
-  const oneEightyDaysAgoStr = subtractDaysFromStr(todayStr, 180);
+  const recentStartStr = subtractDaysFromStr(todayStr, windowDays - 1);
+  const previousStartStr = subtractDaysFromStr(todayStr, windowDays * 2 - 1);
 
   const recentSessionDates = new Set();
   const previousSessionDates = new Set();
 
   for (let i = 0; i < allSessionDates.length; i++) {
     const dateStr = allSessionDates[i];
-    if (dateStr >= ninetyDaysAgoStr && dateStr <= todayStr) {
+    if (dateStr >= recentStartStr && dateStr <= todayStr) {
       recentSessionDates.add(dateStr);
-    } else if (dateStr >= oneEightyDaysAgoStr && dateStr < ninetyDaysAgoStr) {
+    } else if (dateStr >= previousStartStr && dateStr < recentStartStr) {
       previousSessionDates.add(dateStr);
     }
   }
 
   const recentSessions = recentSessionDates.size;
   const previousSessions = previousSessionDates.size;
+  const sessionDelta = recentSessions - previousSessions;
 
   let percentageChange = 0;
   if (previousSessions > 0) {
@@ -254,7 +262,13 @@ export function calculateSessionMomentumFromDates(allSessionDates) {
     percentageChange = 100;
   }
 
-  return { recentSessions, previousSessions, percentageChange };
+  return {
+    recentSessions,
+    previousSessions,
+    sessionDelta,
+    percentageChange,
+    windowDays,
+  };
 }
 
 export function calculateStreakFromDates(allSessionDates) {

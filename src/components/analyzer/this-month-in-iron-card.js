@@ -46,19 +46,23 @@ export function ThisMonthInIronCard() {
 
   const boundaries = useMemo(() => getMonthBoundaries(), []);
 
-  const [topTierVerdict] = useState(
-    () =>
-      TOP_TIER_VERDICTS[
-        Math.floor(Math.random() * TOP_TIER_VERDICTS.length)
-      ],
-  );
+  const [topTierVerdict, setTopTierVerdict] = useState(TOP_TIER_VERDICTS[0]);
+  useEffect(() => {
+    setTopTierVerdict(
+      TOP_TIER_VERDICTS[Math.floor(Math.random() * TOP_TIER_VERDICTS.length)],
+    );
+  }, []);
 
-  const [motivationalPhrase] = useState(
-    () =>
+  const [motivationalPhrase, setMotivationalPhrase] = useState(
+    MOTIVATIONAL_PHRASES[0],
+  );
+  useEffect(() => {
+    setMotivationalPhrase(
       MOTIVATIONAL_PHRASES[
         Math.floor(Math.random() * MOTIVATIONAL_PHRASES.length)
       ],
-  );
+    );
+  }, []);
 
   const stats = useMemo(() => {
     if (!parsedData) return null;

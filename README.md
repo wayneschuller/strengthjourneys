@@ -31,19 +31,6 @@ Open our [sample data format in Google Sheets](https://docs.google.com/spreadshe
 
 No user data is stored server-side. Google Sheet reads are authenticated via Google OAuth and requested through a Next.js API route proxy, then processed client-side in the browser. The app does not persist your lifting data in a database.
 
-## Getting started
-
-```bash
-npm install
-npm run dev
-```
-
-Requires Node.js >= 24. See [package.json](https://github.com/wayneschuller/strengthjourneys/blob/main/package.json) for the full list of dependencies.
-
-Other commands:
-- `npm run build` — production build
-- `npm run lint` — run ESLint
-
 ## Tech stack
 
 **Framework & language:**

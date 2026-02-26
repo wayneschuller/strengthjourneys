@@ -45,6 +45,10 @@ export function ThisMonthInIronCard() {
 
   const boundaries = useMemo(() => getMonthBoundaries(), []);
 
+  const topTierVerdict = useRef(
+    TOP_TIER_VERDICTS[Math.floor(Math.random() * TOP_TIER_VERDICTS.length)],
+  );
+
   const [motivationalPhrase, setMotivationalPhrase] = useState(
     MOTIVATIONAL_PHRASES[0],
   );
@@ -132,8 +136,8 @@ export function ThisMonthInIronCard() {
                 >
                   {(() => {
                     if (verdict?.won) {
-                      if (verdict.label === "Month Crushed") return "Month Crushed 💥";
-                      return "Month Won ✅";
+                      if (verdict.label === "Month Crushed") return topTierVerdict.current;
+                      return "Month Won";
                     }
                     const onPace = (s) =>
                       s?.status === "ahead" || s?.status === "on-pace";
@@ -158,6 +162,19 @@ export function ThisMonthInIronCard() {
 }
 
 // ─── Motivational phrases ──────────────────────────────────────────────────
+
+const TOP_TIER_VERDICTS = [
+  "Won the Month ✅",
+  "Win Secured 🔒",
+  "Win Complete ✅",
+  "Clean Win 💪",
+  "Iron Win 🏆",
+  "Win Confirmed ✅",
+  "Total Win 🏆",
+  "Owned the Month 👑",
+  "Month Dominated 👑",
+  "Won and Done ✅",
+];
 
 const MOTIVATIONAL_PHRASES = [
   "Win the month, win the year",

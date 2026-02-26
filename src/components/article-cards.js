@@ -9,12 +9,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FileText, ArrowRight, Newspaper } from "lucide-react";
-import { format } from "date-fns";
 import Image from "next/image";
 import { urlFor } from "@/lib/sanity-io.js";
 
+const articleDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+});
+
 // Internal helper: renders a cropped Sanity image thumbnail for an article card.
-const ArticleImage = ({ sanityImage, className }) => {
+const ArticleImage = ({ sanityImage, articleTitle, className }) => {
   if (!sanityImage) return null;
 
   let imageUrl = urlFor(sanityImage)
@@ -36,9 +41,10 @@ const ArticleImage = ({ sanityImage, className }) => {
     >
       <Image
         src={imageUrl}
-        alt="Banner"
+        alt={articleTitle ? `${articleTitle} article image` : "Article image"}
         width={600}
         height={600}
+        sizes="(max-width: 768px) 100vw, 150px"
         className="h-full w-full object-cover"
       />
     </div>
@@ -64,7 +70,7 @@ export function ArticleSummaryCard({ article }) {
               {article.title}
             </CardTitle>
             <CardDescription>
-              {format(new Date(article.publishedAt), "MMMM d, yyyy")}
+              {articleDateFormatter.format(new Date(article.publishedAt))}
             </CardDescription>
             {/* <p className="text-sm text-gray-500"> Published on {new Date(article.publishedAt).toLocaleDateString()} </p> */}
             {article.description && (
@@ -72,7 +78,10 @@ export function ArticleSummaryCard({ article }) {
             )}
           </div>
           <div className="order-1 flex w-full justify-center md:order-2 md:w-auto md:justify-start">
-            <ArticleImage sanityImage={article.mainImage} />
+            <ArticleImage
+              sanityImage={article.mainImage}
+              articleTitle={article.title}
+            />
           </div>
         </CardHeader>
         <CardContent>
@@ -119,11 +128,12 @@ export function RelatedArticles({ articles }) {
                 <span className="mr-3 w-2/3 flex-grow text-balance group-hover:text-primary">
                   {article.title}
                   <div className="text-muted-foreground">
-                    {format(new Date(article.publishedAt), "MMMM d, yyyy")}
+                    {articleDateFormatter.format(new Date(article.publishedAt))}
                   </div>
                 </span>
                 <ArticleImage
                   sanityImage={article.mainImage}
+                  articleTitle={article.title}
                   className="w-28"
                 />
                 {/* <ArrowRight className="ml-2 text-gray-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-primary" size={16} /> */}

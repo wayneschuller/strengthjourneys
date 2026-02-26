@@ -15,13 +15,17 @@ import {
   ArticleShareFooterCta,
   MobileFloatingArticleShareButton,
 } from "@/components/article-share-controls";
-import { format } from "date-fns";
 
 import { sanityIOClient, urlFor } from "@/lib/sanity-io.js";
 
 const SITE_NAME = "Strength Journeys";
 const DEFAULT_OG_IMAGE_URL =
   "https://www.strengthjourneys.xyz/strength_journeys_articles_og.png";
+const ARTICLE_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+});
 
 const getImageLinkUrl = (url) => {
   if (typeof url !== "string") {
@@ -49,7 +53,7 @@ const getImageLinkUrl = (url) => {
   return null;
 };
 
-const components = {
+const createPortableTextComponents = (articleTitle) => ({
   types: {
     image: ({ value }) => {
       if (!value?.asset?._ref) {
@@ -73,8 +77,9 @@ const components = {
       const image = (
         <Image
           src={imageUrl}
-          alt={value.alt || " "}
+          alt={value.alt?.trim() || value.caption?.trim() || articleTitle || "Article image"}
           fill
+          sizes="(max-width: 768px) 100vw, 768px"
           style={{ objectFit: "contain" }}
         />
       );
@@ -87,7 +92,7 @@ const components = {
               target={isExternalImageLink ? "_blank" : undefined}
               rel={isExternalImageLink ? "noopener noreferrer" : undefined}
               className="block h-full w-full"
-              aria-label="Open image link"
+              aria-label={value.caption || value.alt || "Open image link"}
             >
               {image}
             </a>
@@ -98,12 +103,13 @@ const components = {
       );
     },
   },
-};
+});
 
 export default function ArticlePost({ article }) {
   const canonicalUrl = `https://www.strengthjourneys.xyz/articles/${article.slug.current}`;
   const publishDate = new Date(article.publishedAt).toISOString();
-  const formattedDate = format(new Date(article.publishedAt), "MMMM d, yyyy");
+  const formattedDate = ARTICLE_DATE_FORMATTER.format(new Date(article.publishedAt));
+  const portableTextComponents = createPortableTextComponents(article.title);
 
   // devLog(article);
 
@@ -134,6 +140,7 @@ export default function ArticlePost({ article }) {
     "Strength and lifting article from Strength Journeys";
   const pageTitle = `${article.title} | ${SITE_NAME}`;
   const ogImageAlt = article.mainImage?.alt ?? article.title;
+  const bannerImageAlt = article.title ? `${article.title} banner image` : "Article banner image";
   const modifiedDate = article._updatedAt
     ? new Date(article._updatedAt).toISOString()
     : null;
@@ -165,6 +172,7 @@ export default function ArticlePost({ article }) {
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={ogImageUrl} />
+        <meta name="twitter:image:alt" content={ogImageAlt} />
 
         {/* Structured Data */}
         <script type="application/ld+json">
@@ -172,9 +180,11 @@ export default function ArticlePost({ article }) {
             "@context": "https://schema.org",
             "@type": "Article",
             headline: article.title,
+            description,
             datePublished: publishDate,
             ...(modifiedDate && { dateModified: modifiedDate }),
             url: canonicalUrl,
+            mainEntityOfPage: canonicalUrl,
             image: ogImageUrl,
             author: {
               "@type": "Organization",
@@ -183,6 +193,10 @@ export default function ArticlePost({ article }) {
             publisher: {
               "@type": "Organization",
               name: "Strength Journeys",
+              logo: {
+                "@type": "ImageObject",
+                url: "https://www.strengthjourneys.xyz/nav_logo_light.png",
+              },
             },
           })}
         </script>
@@ -211,7 +225,7 @@ export default function ArticlePost({ article }) {
               Back to Articles
             </Link>
           </div>
-          {bannerImageUrl && <Banner imageUrl={bannerImageUrl} />}
+          {bannerImageUrl && <Banner imageUrl={bannerImageUrl} alt={bannerImageAlt} />}
         </CardHeader>
         <CardContent className="px-3 md:px-6">
           <article className="prose text-foreground prose-headings:text-foreground prose-strong:text-foreground max-w-3xl">
@@ -226,9 +240,9 @@ export default function ArticlePost({ article }) {
                   url={canonicalUrl}
                 />
               </div>
-              <h3 className="text-muted-foreground mt-2 text-sm font-light">
-                Published at: {formattedDate}
-              </h3>
+              <p className="text-muted-foreground mt-2 text-sm font-light">
+                <time dateTime={publishDate}>Published {formattedDate}</time>
+              </p>
 
               {/* Let's leave out the article author for now */}
               {false && article.author && (
@@ -237,10 +251,10 @@ export default function ArticlePost({ article }) {
                 </h2>
               )}
             </header>
-            <PortableText value={article.body} components={components} />
+            <PortableText value={article.body} components={portableTextComponents} />
             {article.footer && (
               <footer>
-                <PortableText value={article.footer} components={components} />
+                <PortableText value={article.footer} components={portableTextComponents} />
               </footer>
             )}
           </article>
@@ -270,12 +284,12 @@ export default function ArticlePost({ article }) {
   );
 }
 
-const Banner = ({ imageUrl }) => (
+const Banner = ({ imageUrl, alt }) => (
   <div className="relative h-32 w-full overflow-hidden rounded-lg">
     {/* Adjust height as needed */}
     <Image
       src={imageUrl}
-      alt="Banner"
+      alt={alt || "Article banner image"}
       fill
       style={{ objectFit: "cover" }}
       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw"

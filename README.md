@@ -29,7 +29,7 @@ Open our [sample data format in Google Sheets](https://docs.google.com/spreadshe
 
 ## Privacy
 
-No user data is stored server-side. Your Google Sheet data is fetched directly in the browser via OAuth and processed entirely client-side. The app never sees, stores, or transmits your lifting data to any backend.
+No user data is stored server-side. Google Sheet reads are authenticated via Google OAuth and requested through a Next.js API route proxy, then processed client-side in the browser. The app does not persist your lifting data in a database.
 
 ## Getting started
 
@@ -48,8 +48,8 @@ Other commands:
 
 **Framework & language:**
 - JavaScript (no TypeScript) with [JSDoc](https://jsdoc.app/) for key function documentation
-- [Next.js 14](https://nextjs.org/) (Pages Router)
-- [React 18](https://react.dev/)
+- [Next.js 16](https://nextjs.org/) (Pages Router)
+- [React 19](https://react.dev/)
 - Deployed on [Vercel](https://vercel.com/) with [Vercel Analytics](https://vercel.com/analytics) and [Speed Insights](https://vercel.com/docs/speed-insights)
 
 **UI & styling:**
@@ -81,6 +81,39 @@ Other commands:
 - [next-seo](https://github.com/garmeeh/next-seo) and [next-sitemap](https://github.com/iamvishnusankar/next-sitemap) for SEO
 
 See [package.json](https://github.com/wayneschuller/strengthjourneys/blob/main/package.json) for the full list of dependencies.
+
+## Codebase structure (quick contributor map)
+
+This repo has grown into a multi-tool lifting app (analyzer, visualizer, calculators, AI assistant, playlists, articles) that shares a common app shell and lifting-data pipeline.
+
+- `src/pages/` — Next.js Pages Router routes (tool pages, article pages, API routes)
+- `src/pages/_app.js` — global providers + app layout wrapper (theme, auth, lifting data, athlete bio, timer)
+- `src/components/` — feature UI and shared UI
+- `src/components/analyzer/` — PR Analyzer dashboard cards
+- `src/components/visualizer/` — charting + visualizer UI
+- `src/components/ai-elements/` — composable chat UI building blocks used by the AI assistant
+- `src/components/ui/` — shadcn/Radix-based primitives
+- `src/hooks/use-userlift-data.js` — central Google Sheets fetch/parse/cache context (SWR + demo mode + derived metrics)
+- `src/lib/parse-data.js` — normalizes raw Google Sheets rows into the app’s canonical lift-entry format
+- `src/lib/processing-utils.js` — shared processing/aggregation helpers (PRs, tonnage, timing logs, unit conversion)
+- `src/pages/api/read-gsheet.js` — authenticated Google Sheets + Drive metadata proxy
+- `src/pages/api/auth/[...nextauth].js` — NextAuth Google OAuth setup + token refresh
+- `src/lib/sanity-io.js` — Sanity CMS fetch helpers for article pages and related content
+
+### Core data flow (at a glance)
+
+1. User signs in with Google (`next-auth`) and picks a spreadsheet.
+2. `use-userlift-data` fetches `/api/read-gsheet` via SWR.
+3. API route reads Google Sheets + Drive metadata and returns JSON.
+4. `parseData()` normalizes rows into canonical lift entries.
+5. Shared derived metrics (PRs, tonnage, lift types, session lookups) are computed once in context and consumed by pages/cards.
+
+### Common contributor entry points
+
+- Build a new tool page (or improve an existing one): start in `src/pages/<tool>.js`, then add/adjust feature components under `src/components/<feature>/`
+- Improve parser tolerance for real-world spreadsheets (header variations, blank-row patterns, date/weight formats): `src/lib/parse-data.js`
+- UI polish and usability improvements (layout spacing, card composition, mobile tweaks, theme details): `src/components/`, `src/components/ui/`, `src/styles/globals.css`
+- Add import support for other lifting apps/export formats: branch from `src/lib/parse-data.js`, reuse `src/lib/parse-turnkey-importer.js` as an example, or add a new parser module under `src/lib/`
 
 ## Branch strategy
 

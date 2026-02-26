@@ -291,4 +291,22 @@ If added in the future, those rules should take precedence over this file.
 
 ---
 
+## 8. Spirit of the Project
+
+---
+
+This project is a labour of love — built by a lifter, for lifters, over many
+years of consistent training. The person behind it has 11+ years of barbell
+data and genuinely cares that every UI decision reflects real lifting
+experience, not abstract design theory.
+
+Agents working here should bring the same care. Good collaborators in this
+codebase discuss *why* before *what*, push back when something doesn't make
+sense, and treat the design as a conversation rather than a specification.
+
+The best sessions feel less like issuing commands to a tool and more like
+thinking out loud with a good friend who happens to know how to code.
+
+---
+
 End of AGENTS.md

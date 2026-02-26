@@ -5,30 +5,41 @@ import { calculateSessionMomentumFromDates } from "@/lib/home-dashboard/inspirat
 import { InspirationCard } from "./inspiration-card";
 
 const ENCOURAGEMENTS = {
-  baseline: [
-    "Every block starts with a few sessions.",
-    "A baseline today gives you something to build next block.",
-    "This is the start of your next rhythm.",
-  ],
   steady: [
     "Consistency across blocks is real momentum.",
     "Steady training keeps progress moving.",
     "Holding the line counts as momentum.",
+    "This is what sustainable training looks like.",
+    "A steady block keeps the long game moving.",
+    "Consistency is doing more work than it feels like.",
+    "You are keeping the rhythm alive.",
+    "Steady blocks are how progress compounds.",
+    "Nothing flashy needed. Just keep showing up.",
+    "This is solid work. Keep it rolling.",
   ],
   up: [
     "Nice work. Keep the rhythm going.",
     "Strong block. Stack another one.",
     "Momentum looks good. Protect the routine.",
+    "Great block. Keep the bar moving.",
+    "You are building real momentum right now.",
+    "Strong progress. Keep showing up for it.",
+    "This block moved well. Stay with it.",
+    "Good work. Another steady week keeps it going.",
+    "You are trending the right way. Keep pressing.",
+    "Excellent block. Keep the routine simple and repeatable.",
   ],
-  down: [
+  behind: [
+    "You are still in range. A few good sessions can close the gap.",
+    "Keep training. This block can still finish strong.",
+    "Stay with it. A small push now changes the block quickly.",
     "A lighter block is still part of the process.",
     "Reset the rhythm with one solid session.",
     "Small dips happen. The next block is the rebound.",
-  ],
-  matched: [
-    "Repeatable training is a strength.",
-    "You matched the work. That is consistency.",
-    "Same output, same discipline. Keep rolling.",
+    "You are not far off. Keep the next session simple and solid.",
+    "This is still recoverable. String together a few sessions.",
+    "One good week can change the feel of the whole block.",
+    "Keep going. Momentum often comes back faster than expected.",
   ],
 };
 
@@ -48,13 +59,18 @@ export function TrainingMomentumCard({ allSessionDates = [], animationDelay = 0 
   );
 
   const hasPreviousBaseline = previousSessions > 0;
-  const isWithinTenPercent = hasPreviousBaseline && Math.abs(percentageChange) <= 10;
+  const STEADY_THRESHOLD_PERCENT = 15;
+  const isWithinSteadyRange =
+    hasPreviousBaseline && Math.abs(percentageChange) <= STEADY_THRESHOLD_PERCENT;
+  const isUp = hasPreviousBaseline && percentageChange > STEADY_THRESHOLD_PERCENT;
+  const isBehind =
+    hasPreviousBaseline && percentageChange < -STEADY_THRESHOLD_PERCENT;
 
   let trendText = null;
   let trendIcon = null;
   let trendTone = "text-muted-foreground";
 
-  if (hasPreviousBaseline && isWithinTenPercent) {
+  if (hasPreviousBaseline && isWithinSteadyRange) {
     trendText = "steady";
     trendTone = "text-emerald-600";
   } else if (sessionDelta > 0) {
@@ -70,28 +86,26 @@ export function TrainingMomentumCard({ allSessionDates = [], animationDelay = 0 
   }
 
   let verdictLine = `No prior ${windowDays}-day block yet.`;
-  let mode = "baseline";
+  let encouragementMode = "steady";
 
   if (hasPreviousBaseline) {
-    if (isWithinTenPercent) {
+    if (isWithinSteadyRange) {
       verdictLine = `Steady compared with the previous ${windowDays}-day block.`;
-      mode = "steady";
-    } else if (sessionDelta > 0) {
+      encouragementMode = "steady";
+    } else if (isUp || sessionDelta > 0) {
       verdictLine = `Momentum is up versus the previous ${windowDays}-day block.`;
-      mode = "up";
-    } else if (sessionDelta < 0) {
+      encouragementMode = "up";
+    } else if (isBehind || sessionDelta < 0) {
       verdictLine = `Slight dip versus the previous ${windowDays}-day block.`;
-      mode = "down";
-    } else {
-      verdictLine = `Matched the previous ${windowDays}-day block exactly.`;
-      mode = "matched";
+      encouragementMode = "behind";
     }
   } else if (recentSessions > 0) {
     verdictLine = "Building your baseline.";
-    mode = "baseline";
+    encouragementMode = "up";
   }
 
-  const encouragementOptions = ENCOURAGEMENTS[mode] ?? ENCOURAGEMENTS.steady;
+  const encouragementOptions =
+    ENCOURAGEMENTS[encouragementMode] ?? ENCOURAGEMENTS.steady;
   const [encouragementIndex, setEncouragementIndex] = useState(0);
 
   useEffect(() => {

@@ -608,18 +608,18 @@ function getStrengthStatusTooltip({
   strengthRegressed,
 }) {
   if (strengthLocked) {
-    return "Strength-level comparisons require bio details: age, sex, and bodyweight.";
+    return "Strength-level comparisons require age, sex, and bodyweight.";
   }
   if (strengthBaseline && !strengthNewWin) {
-    return "No previous strength-level baseline and no current data yet for this lift.";
+    return "No previous strength-level baseline or current data yet for this lift.";
   }
   if (strengthNewWin) {
-    return "No previous strength-level baseline for this lift. Current data this month counts as a win.";
+    return "No previous strength-level baseline for this lift, so current data this month counts as a win.";
   }
   if (strengthRegressed) {
-    return `${formatLiftTypeLabel(liftType)} has not yet matched the best strength category you hit last month.`;
+    return `${formatLiftTypeLabel(liftType)} has not yet matched your best strength category from last month.`;
   }
-  return "Passes: you matched (or exceeded) the best strength category you hit last month at least once this month.";
+  return "Passes: you matched or exceeded your best strength category from last month at least once this month.";
 }
 
 function getTonnageStatusTooltip({

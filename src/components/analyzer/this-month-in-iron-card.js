@@ -1,6 +1,7 @@
 
 import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import confetti from "canvas-confetti";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -94,6 +95,35 @@ export function ThisMonthInIronCard() {
     () => getMonthlyChecksSummary(stats, strengthLevelStats),
     [stats, strengthLevelStats],
   );
+  const confettiFiredRef = useRef(false);
+  const verdictHeadline = useMemo(
+    () =>
+      getVerdictHeadline({
+        verdict,
+        checksSummary,
+        sessionsPaceStatus,
+        bigFourPaceStatus,
+        topTierPhrase: topTierVerdict.current,
+      }),
+    [verdict, checksSummary, sessionsPaceStatus, bigFourPaceStatus],
+  );
+
+  useEffect(() => {
+    const shouldCelebrate =
+      checksSummary?.checksTotal === 9 && checksSummary.checksMet >= 7;
+
+    if (!shouldCelebrate) {
+      confettiFiredRef.current = false;
+      return;
+    }
+
+    if (confettiFiredRef.current) return;
+    if (typeof window === "undefined") return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+
+    confettiFiredRef.current = true;
+    fireMonthWinConfetti();
+  }, [checksSummary]);
 
   return (
     <Card className="flex h-full flex-1 flex-col">
@@ -125,34 +155,22 @@ export function ThisMonthInIronCard() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.35 }}
             >
-              <p className="text-sm">
-                <span className="text-muted-foreground">Verdict: </span>
+              <p className="text-foreground text-lg font-semibold tracking-tight sm:text-xl">
                 <span
                   className={
-                    verdict?.won
-                      ? "font-semibold text-emerald-600 dark:text-emerald-400"
-                      : "text-muted-foreground"
+                    verdictHeadline?.tone === "neutral"
+                      ? "text-muted-foreground"
+                      : "text-foreground"
                   }
                 >
-                  {(() => {
-                    if (verdict?.won) {
-                      if (verdict.label === "Month Crushed") return topTierVerdict.current;
-                      return "Month Won";
-                    }
-                    const onPace = (s) =>
-                      s?.status === "ahead" || s?.status === "on-pace";
-                    if (onPace(sessionsPaceStatus) && onPace(bigFourPaceStatus)) {
-                      return "On Track to Win ⚒️";
-                    }
-                    return "Not Winning Yet ⚒️";
-                  })()}
+                  {verdictHeadline?.text || "Keep forging ⚒️"}
                 </span>
+                {verdictHeadline?.scoreText && (
+                  <span className="ml-2 text-xs font-medium text-muted-foreground align-middle">
+                    {verdictHeadline.scoreText}
+                  </span>
+                )}
               </p>
-              {checksSummary && (
-                <p className="text-xs text-muted-foreground">
-                  {checksSummary.checksMet}/{checksSummary.checksTotal} checks green
-                </p>
-              )}
             </motion.div>
           </>
         )}
@@ -443,6 +461,77 @@ function getVerdict(stats, strengthLevelPassed) {
     return { label: "Month Won", emoji: "✅", won: true };
   }
   return { label: "Still Forging", emoji: "⚒️", won: false };
+}
+
+function getVerdictHeadline({
+  verdict,
+  checksSummary,
+  sessionsPaceStatus,
+  bigFourPaceStatus,
+  topTierPhrase,
+}) {
+  const checksText = checksSummary
+    ? `${checksSummary.checksMet}/${checksSummary.checksTotal}`
+    : null;
+
+  if (checksSummary?.checksTotal === 9 && checksSummary.checksMet >= 7) {
+    return {
+      tone: "win",
+      text: topTierPhrase || "Month Won ✅",
+      scoreText: checksText ? `${checksText} green` : null,
+    };
+  }
+
+  if (verdict?.won) {
+    return {
+      tone: "win",
+      text: verdict.label === "Month Crushed"
+        ? (topTierPhrase || "Month Won ✅")
+        : "Month Won ✅",
+      scoreText: checksText ? `${checksText} green` : null,
+    };
+  }
+
+  const onPace = (s) => s?.status === "ahead" || s?.status === "on-pace";
+  if (onPace(sessionsPaceStatus) && onPace(bigFourPaceStatus)) {
+    return {
+      tone: "progress",
+      text: checksText
+        ? `⚒️ ${checksText} checks green — on track to win the month`
+        : "⚒️ On track to win the month",
+      scoreText: null,
+    };
+  }
+
+  return {
+    tone: "neutral",
+    text: checksText
+      ? `⚒️ ${checksText} checks green — keep forging`
+      : "⚒️ Keep forging",
+    scoreText: null,
+  };
+}
+
+function fireMonthWinConfetti() {
+  const defaults = {
+    spread: 70,
+    startVelocity: 42,
+    ticks: 180,
+    zIndex: 2000,
+  };
+
+  confetti({
+    ...defaults,
+    particleCount: 80,
+    origin: { x: 0.15, y: 0.8 },
+    angle: 60,
+  });
+  confetti({
+    ...defaults,
+    particleCount: 80,
+    origin: { x: 0.85, y: 0.8 },
+    angle: 120,
+  });
 }
 
 // ─── Formatting helpers ────────────────────────────────────────────────────

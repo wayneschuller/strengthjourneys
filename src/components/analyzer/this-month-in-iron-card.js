@@ -85,9 +85,6 @@ export function ThisMonthInIronCard() {
     ? getPaceStatus(stats.bigFourTonnage.current, stats.bigFourTonnage.last, stats.progressRatio)
     : null;
 
-  const winNeedsText = stats
-    ? getWinNeedsText(stats, strengthLevelPassed, unit)
-    : null;
   const strengthSetupRequired = !!bio?.bioDataIsDefault;
   const checksSummary = useMemo(
     () => getMonthlyChecksSummary(stats, strengthLevelStats),
@@ -134,8 +131,10 @@ export function ThisMonthInIronCard() {
                   }
                 >
                   {(() => {
-                    if (verdict?.won) return "Winning the Month ✅";
-
+                    if (verdict?.won) {
+                      if (verdict.label === "Month Earned") return "Month Earned 🏆";
+                      return "Month Won ✅";
+                    }
                     const onPace = (s) =>
                       s?.status === "ahead" || s?.status === "on-pace";
                     if (onPace(sessionsPaceStatus) && onPace(bigFourPaceStatus)) {
@@ -148,9 +147,6 @@ export function ThisMonthInIronCard() {
               {checksSummary && (
                 <p className="text-xs text-muted-foreground">
                   {checksSummary.checksMet}/{checksSummary.checksTotal} checks green
-                  {verdict?.label === "Still Forging" && winNeedsText
-                    ? ` · ${winNeedsText}`
-                    : ""}
                 </p>
               )}
             </motion.div>
@@ -447,6 +443,10 @@ function getVerdict(stats, strengthLevelPassed) {
   if (primaryMet && strengthOK) {
     return { label: "Month Won", emoji: "✅", won: true };
   }
+  if (primaryMet) {
+    // Sessions + tonnage all pass; strength has a regression caveat
+    return { label: "Month Earned", emoji: "🏆", won: true };
+  }
   return { label: "Still Forging", emoji: "⚒️", won: false };
 }
 
@@ -473,34 +473,6 @@ function formatCurrentSessionsReporting(count, boundaries) {
     return `${count} with ${daysRemaining} ${dayLabel} left`;
   }
   return `${count} so far`;
-}
-
-// ─── Win needs summary ─────────────────────────────────────────────────────
-
-function getWinNeedsText(stats, strengthLevelPassed, unit) {
-  const { sessions, bigFourByLift } = stats;
-  const parts = [];
-  const sessionsTarget = Math.ceil(
-    (sessions.lastSameDay ?? 0) * TONNAGE_CLOSE_ENOUGH_RATIO,
-  );
-  if ((sessions.current ?? 0) < sessionsTarget) {
-    const diff = sessionsTarget - (sessions.current ?? 0);
-    parts.push(`${diff} more session${diff !== 1 ? "s" : ""}`);
-  }
-  const tonnageLiftDeficits = BIG_FOUR_LIFT_TYPES.map((liftType) => {
-    const current = bigFourByLift?.[liftType]?.current ?? 0;
-    const last = bigFourByLift?.[liftType]?.last ?? 0;
-    if (passesTonnageThreshold(current, last)) return null;
-    const needed = Math.max(0, last * TONNAGE_CLOSE_ENOUGH_RATIO - current);
-    return `${formatLiftTypeLabel(liftType)} +${formatTonnage(needed, unit)}`;
-  }).filter(Boolean);
-  if (tonnageLiftDeficits.length > 0) {
-    parts.push(`tonnage (${tonnageLiftDeficits.join(", ")})`);
-  }
-  if (!strengthLevelPassed.skipped && !strengthLevelPassed.passed) {
-    parts.push("maintain strength level across Big Four");
-  }
-  return parts.length > 0 ? `Needs: ${parts.join(" · ")}` : null;
 }
 
 function getMonthlyChecksSummary(stats, strengthLevelStats) {

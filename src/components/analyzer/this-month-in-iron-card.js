@@ -645,7 +645,7 @@ function getTonnageStatusTooltip({
 }
 
 function getStrengthLastColumnTooltip(boundaries) {
-  return `${boundaries.prevMonthName} best strength category hit (full month), based on the best estimated 1RM category from any logged set and graded against your bio-adjusted standards.`;
+  return `${boundaries.prevMonthName} best strength level hit across the full month.`;
 }
 
 function getTonnageLastColumnTooltip() {

@@ -182,7 +182,7 @@ export const UserLiftingDataProvider = ({ children }) => {
           return;
         }
         setTimeout(
-          () => revalidate({ retryCount }),
+          () => revalidate({ retryCount: retryCount + 1 }),
           Math.min(1000 * 2 ** retryCount, 30000),
         );
       },

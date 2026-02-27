@@ -275,6 +275,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   const prevTotalRef = useRef(null);
   const hasCelebratedRef = useRef(false);
   const activeLiftTimeoutRef = useRef(null);
+  const donutContainerRef = useRef(null);
   const [activeLiftKey, setActiveLiftKey] = useState(null);
 
   const total = squat + bench + deadlift;
@@ -326,8 +327,19 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
     prevTotalRef.current = total;
     if (!wasInClub && nowInClub) {
       hasCelebratedRef.current = true;
+      const donutRect = donutContainerRef.current?.getBoundingClientRect();
+      const x = donutRect
+        ? Math.min(1, Math.max(0, (donutRect.left + donutRect.width / 2) / window.innerWidth))
+        : 0.5;
+      const y = donutRect
+        ? Math.min(1, Math.max(0, (donutRect.top + donutRect.height / 2) / window.innerHeight))
+        : 0.7;
       import("canvas-confetti").then((confetti) => {
-        confetti.default({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+        confetti.default({
+          particleCount: 80,
+          spread: 60,
+          origin: { x, y },
+        });
       });
     }
   }, [total]);
@@ -394,94 +406,100 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
 
       <Card className="pt-4">
         <CardContent className="pt-4">
-          <div className="space-y-6">
-            {[
-              {
-                key: "squat",
-                liftType: "Back Squat",
-                value: squat,
-                set: setSquat,
-              },
-              {
-                key: "bench",
-                liftType: "Bench Press",
-                value: bench,
-                set: setBench,
-              },
-              {
-                key: "deadlift",
-                liftType: "Deadlift",
-                value: deadlift,
-                set: setDeadlift,
-              },
-            ].map(({ key, liftType, value, set }) => (
-              <div key={key} className="flex items-center gap-4">
-                <Link
-                  href={BIG_FOUR_URLS[liftType]}
-                  className="flex-shrink-0"
-                  aria-hidden
-                >
-                  <motion.img
-                    src={LIFT_GRAPHICS[liftType]}
-                    alt={`${liftType} exercise illustration`}
-                    className="h-20 w-20 origin-bottom object-contain sm:h-24 sm:w-24 xl:h-32 xl:w-32"
-                    animate={
-                      prefersReducedMotion
-                        ? undefined
-                        : activeLiftKey === key
-                          ? {
-                              scale: 1.1,
-                              y: -5,
-                              rotate: liftRotationByKey[key] || 0,
-                            }
-                          : { scale: 1, y: 0, rotate: 0 }
-                    }
-                    transition={{
-                      type: "spring",
-                      stiffness: 360,
-                      damping: 16,
-                      mass: 0.6,
-                    }}
-                  />
-                </Link>
-                <div className="min-w-0 flex-1">
-                  <div className="text-lg font-semibold">
-                    <Link
-                      href={BIG_FOUR_URLS[liftType]}
-                      className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
-                    >
-                      {liftType}
-                    </Link>
-                    : {value} lbs ({toKgF(value)} kg)
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px] xl:gap-8">
+            <div className="space-y-6">
+              {[
+                {
+                  key: "squat",
+                  liftType: "Back Squat",
+                  value: squat,
+                  set: setSquat,
+                },
+                {
+                  key: "bench",
+                  liftType: "Bench Press",
+                  value: bench,
+                  set: setBench,
+                },
+                {
+                  key: "deadlift",
+                  liftType: "Deadlift",
+                  value: deadlift,
+                  set: setDeadlift,
+                },
+              ].map(({ key, liftType, value, set }) => (
+                <div key={key} className="flex items-center gap-4">
+                  <Link
+                    href={BIG_FOUR_URLS[liftType]}
+                    className="flex-shrink-0"
+                    aria-hidden
+                  >
+                    <motion.img
+                      src={LIFT_GRAPHICS[liftType]}
+                      alt={`${liftType} exercise illustration`}
+                      className="h-20 w-20 origin-bottom object-contain sm:h-24 sm:w-24 xl:h-32 xl:w-32"
+                      animate={
+                        prefersReducedMotion
+                          ? undefined
+                          : activeLiftKey === key
+                            ? {
+                                scale: 1.1,
+                                y: -5,
+                                rotate: liftRotationByKey[key] || 0,
+                              }
+                            : { scale: 1, y: 0, rotate: 0 }
+                      }
+                      transition={{
+                        type: "spring",
+                        stiffness: 360,
+                        damping: 16,
+                        mass: 0.6,
+                      }}
+                    />
+                  </Link>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-lg font-semibold">
+                      <Link
+                        href={BIG_FOUR_URLS[liftType]}
+                        className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
+                      >
+                        {liftType}
+                      </Link>
+                      : {value} lbs ({toKgF(value)} kg)
+                    </div>
+                    <Slider
+                      value={[value]}
+                      min={0}
+                      max={700}
+                      step={5}
+                      onValueChange={handleLiftValueChange(key, set)}
+                      onValueCommit={handleLiftValueCommit}
+                      className="mt-2"
+                    />
                   </div>
-                  <Slider
-                    value={[value]}
-                    min={0}
-                    max={700}
-                    step={5}
-                    onValueChange={handleLiftValueChange(key, set)}
-                    onValueCommit={handleLiftValueCommit}
-                    className="mt-2"
-                  />
                 </div>
+              ))}
+
+              <div className="mt-4 text-3xl font-bold tabular-nums">
+                Total: {total} lbs ({toKgF(total)} kg)
               </div>
-            ))}
 
-            <div className="mt-4 text-3xl font-bold tabular-nums">
-              Total: {total} lbs ({toKgF(total)} kg)
+              <div
+                className={cn("text-xl font-semibold", {
+                  "text-green-600": inClub,
+                  "text-muted-foreground": !inClub,
+                })}
+              >
+                {inClub
+                  ? `You're in the 1000lb Club! You're ${pastLbs} lbs (${toKgF(pastLbs)} kg) past 1000.`
+                  : `You're ${awayLbs} lbs (${toKgF(awayLbs)} kg) away from the 1000lb Club.`}
+              </div>
             </div>
-
-            <div
-              className={cn("text-xl font-semibold", {
-                "text-green-600": inClub,
-                "text-muted-foreground": !inClub,
-              })}
-            >
-              {inClub
-                ? `You're in the 1000lb Club! You're ${pastLbs} lbs (${toKgF(pastLbs)} kg) past 1000.`
-                : `You're ${awayLbs} lbs (${toKgF(awayLbs)} kg) away from the 1000lb Club.`}
+            <div className="xl:self-center">
+              <ThousandDonut total={total} containerRef={donutContainerRef} />
             </div>
-            <ThousandDonut total={total} />
+          </div>
+          <div className="mt-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <MiniFeedbackWidget
                 prompt="Useful calculator?"
@@ -633,7 +651,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
  * @param {number} props.total - Combined squat + bench + deadlift total in pounds.
  * @param {number} [props.target=1000] - Target total in pounds (defaults to 1000).
  */
-function ThousandDonut({ total, target = 1000 }) {
+function ThousandDonut({ total, target = 1000, containerRef }) {
   const capped = Math.min(total, target);
   const remainder = Math.max(0, target - total);
   const data = [
@@ -647,14 +665,17 @@ function ThousandDonut({ total, target = 1000 }) {
   const totalKg = (total * KG_PER_LB).toFixed(1);
 
   return (
-    <div className="relative mx-auto my-6 w-full max-w-md">
-      <ResponsiveContainer width="100%" height={220}>
+    <div
+      ref={containerRef}
+      className="relative mx-auto my-6 h-[220px] w-full max-w-md xl:h-[320px] xl:max-w-lg"
+    >
+      <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
             data={data}
             dataKey="value"
-            innerRadius={70}
-            outerRadius={100}
+            innerRadius="62%"
+            outerRadius="90%"
             startAngle={90}
             endAngle={-270}
             stroke="none"
@@ -671,21 +692,21 @@ function ThousandDonut({ total, target = 1000 }) {
         <div className="text-center tabular-nums">
           {inClub ? (
             <>
-              <div className="text-3xl font-bold text-green-500">
+              <div className="text-3xl font-bold text-green-500 xl:text-4xl">
                 {total} lbs
               </div>
-              <div className="text-sm text-green-500/90">({totalKg} kg)</div>
-              <div className="text-sm font-semibold text-green-400">
+              <div className="text-sm text-green-500/90 xl:text-base">({totalKg} kg)</div>
+              <div className="text-sm font-semibold text-green-400 xl:text-base">
                 1000lb Club!
               </div>
             </>
           ) : (
             <>
-              <div className="text-2xl font-bold">{total} lbs</div>
-              <div className="text-muted-foreground text-xs">
+              <div className="text-2xl font-bold xl:text-4xl">{total} lbs</div>
+              <div className="text-muted-foreground text-xs xl:text-sm">
                 ({totalKg} kg) of {target}
               </div>
-              <div className="text-muted-foreground text-sm">{percent}%</div>
+              <div className="text-muted-foreground text-sm xl:text-lg">{percent}%</div>
             </>
           )}
         </div>

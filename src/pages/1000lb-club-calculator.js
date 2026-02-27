@@ -1,4 +1,4 @@
-
+import Head from "next/head";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { NextSeo } from "next-seo";
@@ -56,6 +56,30 @@ const LIFT_GRAPHICS = {
   "Bench Press": "/bench_press.svg",
   Deadlift: "/deadlift.svg",
 };
+const TARGET_TOTAL = 1000;
+
+const FAQ_ITEMS = [
+  {
+    question: "What is the 1000lb club?",
+    answer:
+      "The 1000lb club means your back squat, bench press, and deadlift combined total is at least 1000 pounds.",
+  },
+  {
+    question: "Do kilos count for the 1000lb club?",
+    answer:
+      "Yes. This calculator accepts pounds for the sliders and also shows kilogram conversions so you can track progress in either unit.",
+  },
+  {
+    question: "Does strict press count toward a 1000lb total?",
+    answer:
+      "Most versions of the challenge use only back squat, bench press, and deadlift. Strict press is a strong benchmark but usually not part of the 1000lb total.",
+  },
+  {
+    question: "What if my total is over 1000lb?",
+    answer:
+      "You are in the club. The calculator shows how far past 1000lb you are so you can set the next milestone.",
+  },
+];
 
 const WHATS_NEXT_FEATURES = [
   {
@@ -123,9 +147,60 @@ export default function ThousandPoundClubCalculator({ relatedArticles }) {
     "1000lb Club Calculator, Strength level, strength test, strength standards, powerlifting benchmarks, how strong am I, one-rep max (1RM), squat rating, bench press rating, deadlift rating, overhead press rating, strength comparison, bodyweight ratio, age-adjusted strength, gender-specific strength levels, beginner to elite lifter, strength training progress, fitness assessment tool, weightlifting goals, strength sports";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_1000lb_club_calculator_og.png";
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        name: "1000lb Club Calculator",
+        applicationCategory: "HealthApplication",
+        operatingSystem: "Any",
+        description,
+        url: canonicalURL,
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://www.strengthjourneys.xyz",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "1000lb Club Calculator",
+            item: canonicalURL,
+          },
+        ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: FAQ_ITEMS.map(({ question, answer }) => ({
+          "@type": "Question",
+          name: question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: answer,
+          },
+        })),
+      },
+    ],
+  };
 
   return (
     <>
+      <Head>
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      </Head>
       <NextSeo
         title={title}
         description={description}
@@ -481,6 +556,51 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
               </Link>
             ),
           )}
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="mb-3 text-xl font-semibold">
+          How the 1000lb Club calculator works
+        </h2>
+        <div className="space-y-3 text-sm leading-relaxed">
+          <p>
+            The formula is simple: <strong>Back Squat + Bench Press + Deadlift</strong>.
+            If your total is at least <strong>{TARGET_TOTAL} lbs</strong>, you&apos;re in
+            the 1000lb club.
+          </p>
+          <p>
+            Use the sliders to estimate your current total, then compare your
+            progress with our{" "}
+            <Link
+              href="/strength-level-calculator"
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            >
+              Strength Level Calculator
+            </Link>{" "}
+            and project training loads with the{" "}
+            <Link
+              href="/calculator"
+              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            >
+              E1RM Calculator
+            </Link>
+            .
+          </p>
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="mb-4 text-xl font-semibold">
+          1000lb Club FAQ
+        </h2>
+        <div className="space-y-4">
+          {FAQ_ITEMS.map(({ question, answer }) => (
+            <article key={question} className="rounded-lg border p-4">
+              <h3 className="text-base font-semibold">{question}</h3>
+              <p className="text-muted-foreground mt-1 text-sm">{answer}</p>
+            </article>
+          ))}
         </div>
       </section>
 

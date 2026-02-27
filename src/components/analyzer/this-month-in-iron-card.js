@@ -1126,7 +1126,7 @@ function BigFourCriteriaTable({
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
                   <p className="max-w-56 text-center text-xs">
-                    This month total tonnage for this lift. {tonnageStatusTooltip}
+                    {tonnageStatusTooltip}
                   </p>
                 </TooltipContent>
               </Tooltip>

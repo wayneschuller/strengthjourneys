@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { NextSeo } from "next-seo";
 import { motion, useReducedMotion } from "motion/react";
 import { RelatedArticles } from "@/components/article-cards";
+import { MiniFeedbackWidget } from "@/components/feedback";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 import { GettingStartedCard } from "@/components/instructions-cards";
@@ -481,7 +482,13 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                 : `You're ${awayLbs} lbs (${toKgF(awayLbs)} kg) away from the 1000lb Club.`}
             </div>
             <ThousandDonut total={total} />
-            <div className="flex justify-end">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <MiniFeedbackWidget
+                prompt="Useful calculator?"
+                contextId="thousand_lb_club_calculator"
+                page="/1000lb-club-calculator"
+                analyticsExtra={{ context: "1000lb_club_calculator_card" }}
+              />
               <ShareCopyButton
                 label="Copy my result"
                 successLabel="Copied"

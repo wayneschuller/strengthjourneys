@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 
 import { RelatedArticles } from "@/components/article-cards";
+import { MiniFeedbackWidget } from "@/components/feedback";
 
 import { estimateE1RM, estimateWeightForReps } from "@/lib/estimate-e1rm";
 import { UnitChooser } from "@/components/unit-type-chooser";
@@ -497,18 +498,26 @@ function E1RMCalculatorMain({ relatedArticles }) {
               e1rmFormula={e1rmFormula}
               estimateE1RM={estimateE1RM}
             />
-            <div className="flex gap-2">
+            <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center">
+              <div className="justify-self-start">
+                <MiniFeedbackWidget
+                  prompt="Useful calculator?"
+                  contextId="e1rm_calculator"
+                  page="/calculator"
+                  analyticsExtra={{ context: "e1rm_calculator_card" }}
+                />
+              </div>
               <ShareCopyButton
                 label="Copy Text"
                 successLabel="Copied"
                 isSuccess={isTextCopied}
-                className="min-w-[112px]"
+                className="min-w-[112px] justify-self-center"
                 onPressAnalytics={() => gaTrackCalcShareCopy("text", { page: "/calculator" })}
                 onClick={handleCopyToClipboard}
               />
+              <div aria-hidden className="justify-self-end" />
             </div>
           </div>
-
           {/* Algorithm comparison bar */}
           <div className="mb-6">
             <AlgorithmRangeBars
@@ -548,7 +557,6 @@ function E1RMCalculatorMain({ relatedArticles }) {
               isMetric={isMetric}
             />
           </div>
-
         </CardContent>
       </Card>
       <RelatedArticles articles={relatedArticles} />

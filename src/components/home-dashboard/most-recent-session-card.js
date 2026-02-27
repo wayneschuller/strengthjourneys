@@ -410,8 +410,8 @@ export function MostRecentSessionCard({
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.06, duration: 0.25 }}
-                className="w-full min-w-0 xl:min-w-[200px]"
-                style={{ flex: `${Math.max(1, Math.ceil(workouts.length / 3))} 1 200px` }}
+                className="w-full min-w-0 xl:min-w-[200px] xl:basis-[200px] xl:[flex-grow:var(--session-grow)]"
+                style={{ "--session-grow": Math.max(1, Math.ceil(workouts.length / 3)) }}
               >
                 <SessionExerciseBlock
                   variant="compact"

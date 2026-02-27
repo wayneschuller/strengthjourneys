@@ -1,5 +1,6 @@
 
 import { useMemo, useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import confetti from "canvas-confetti";
 import { useSession } from "next-auth/react";
@@ -210,6 +211,13 @@ const MOTIVATIONAL_PHRASES = [
   "One month stronger",
   "This month or never",
 ];
+
+const BIG_FOUR_LIFT_URLS = {
+  "Back Squat": "/barbell-squat-insights",
+  "Bench Press": "/barbell-bench-press-insights",
+  Deadlift: "/barbell-deadlift-insights",
+  "Strict Press": "/barbell-strict-press-insights",
+};
 
 // ─── Strength level constants ──────────────────────────────────────────────
 
@@ -1011,6 +1019,7 @@ function BigFourCriteriaTable({
           tonnagePassed,
         });
         const tonnageLastTooltip = getTonnageLastColumnTooltip(liftType);
+        const liftInsightHref = BIG_FOUR_LIFT_URLS[liftType];
 
         return (
           <motion.div
@@ -1052,18 +1061,23 @@ function BigFourCriteriaTable({
               </TooltipProvider>
             </div>
 
-            <motion.div
-              className="row-span-2 flex flex-col items-center justify-center gap-1"
-              variants={{
-                hover: { scale: 1.06, y: -1 },
-              }}
-              transition={{ type: "spring", stiffness: 260, damping: 18 }}
+            <Link
+              href={liftInsightHref}
+              className="row-span-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <LiftSvg liftType={liftType} size="sm" animate={false} />
-              <span className="text-[10px] text-muted-foreground/80">
-                {formatLiftTypeLabel(liftType)}
-              </span>
-            </motion.div>
+              <motion.div
+                className="flex flex-col items-center justify-center gap-1"
+                variants={{
+                  hover: { scale: 1.06, y: -1 },
+                }}
+                transition={{ type: "spring", stiffness: 260, damping: 18 }}
+              >
+                <LiftSvg liftType={liftType} size="sm" animate={false} />
+                <span className="text-[10px] text-muted-foreground/80">
+                  {formatLiftTypeLabel(liftType)}
+                </span>
+              </motion.div>
+            </Link>
 
             <div className={`rounded px-1.5 py-1 text-left ${strengthBg}`}>
               <TooltipProvider>

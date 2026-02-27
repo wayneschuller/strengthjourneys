@@ -645,7 +645,7 @@ function getTonnageStatusTooltip({
   if (tonnageNewWin) {
     return `No previous month ${liftLabel} tonnage to compare.`;
   }
-  if (currentTonnage >= lastTonnage) {
+  if (currentTonnage === lastTonnage) {
     return `Matched previous month ${liftLabel} tonnage.`;
   }
   if (tonnagePassed) {

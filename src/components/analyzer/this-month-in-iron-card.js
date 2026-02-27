@@ -101,6 +101,7 @@ export function ThisMonthInIronCard() {
   );
   const confettiFiredRef = useRef(false);
   const cardRef = useRef(null);
+  const [showHighlights, setShowHighlights] = useState(false);
   const verdictHeadline = useMemo(
     () =>
       getVerdictHeadline({
@@ -114,6 +115,28 @@ export function ThisMonthInIronCard() {
   );
 
   useEffect(() => {
+    if (!stats) {
+      setShowHighlights(false);
+      return;
+    }
+
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+    ) {
+      setShowHighlights(true);
+      return;
+    }
+
+    setShowHighlights(false);
+    const timer = setTimeout(
+      () => setShowHighlights(true),
+      HIGHLIGHT_REVEAL_DELAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [stats, checksSummary]);
+
+  useEffect(() => {
     const shouldCelebrate =
       checksSummary?.checksTotal === 9 && checksSummary.checksMet >= 7;
 
@@ -124,11 +147,16 @@ export function ThisMonthInIronCard() {
 
     if (confettiFiredRef.current) return;
     if (typeof window === "undefined") return;
+    if (!showHighlights) return;
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
 
     confettiFiredRef.current = true;
-    fireMonthWinConfetti(cardRef);
-  }, [checksSummary]);
+    const timer = setTimeout(
+      () => fireMonthWinConfetti(cardRef),
+      CONFETTI_AFTER_HIGHLIGHT_DELAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [checksSummary, showHighlights]);
 
   return (
     <Card ref={cardRef} className="flex h-full flex-1 flex-col">
@@ -151,6 +179,7 @@ export function ThisMonthInIronCard() {
               strengthSetupRequired={strengthSetupRequired}
               boundaries={boundaries}
               unit={unit}
+              showHighlights={showHighlights}
             />
 
             <Separator />
@@ -163,14 +192,14 @@ export function ThisMonthInIronCard() {
               <p className="text-foreground text-lg font-semibold tracking-tight sm:text-xl">
                 <span
                   className={
-                    verdictHeadline?.tone === "neutral"
+                    !showHighlights || verdictHeadline?.tone === "neutral"
                       ? "text-muted-foreground"
                       : "text-foreground"
                   }
                 >
                   {verdictHeadline?.text || "Keep forging ⚒️"}
                 </span>
-                {verdictHeadline?.scoreText && (
+                {showHighlights && verdictHeadline?.scoreText && (
                   <span className="ml-2 text-xs font-medium text-muted-foreground align-middle">
                     {verdictHeadline.scoreText}
                   </span>
@@ -218,6 +247,9 @@ const BIG_FOUR_LIFT_URLS = {
   Deadlift: "/barbell-deadlift-insights",
   "Strict Press": "/barbell-strict-press-insights",
 };
+
+const HIGHLIGHT_REVEAL_DELAY_MS = 450;
+const CONFETTI_AFTER_HIGHLIGHT_DELAY_MS = 200;
 
 // ─── Strength level constants ──────────────────────────────────────────────
 
@@ -834,6 +866,7 @@ function BigFourCriteriaTable({
   strengthSetupRequired = false,
   boundaries,
   unit,
+  showHighlights = false,
 }) {
   const rows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
     const tonnage = bigFourByLift?.[liftType] ?? {
@@ -885,10 +918,12 @@ function BigFourCriteriaTable({
           : passed
             ? "text-emerald-600 dark:text-emerald-400"
             : "text-red-600 dark:text-red-400";
+        const revealRowBg = showHighlights ? rowBg : "bg-transparent";
+        const revealRightColor = showHighlights ? rightColor : "text-foreground";
 
         return (
           <motion.div
-            className={`grid grid-cols-[1fr_100px_1fr] items-center gap-2 rounded-md border border-border/25 px-2 py-1.5 ${rowBg}`}
+            className={`grid grid-cols-[1fr_100px_1fr] items-center gap-2 rounded-md border border-border/25 px-2 py-1.5 transition-colors duration-500 ${revealRowBg}`}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.04, ease: [0.22, 1, 0.36, 1] }}
@@ -899,9 +934,9 @@ function BigFourCriteriaTable({
                   <div className="text-right">
                     <AnimatedInteger
                       value={sessions.lastSameDay}
-                      className="tabular-nums text-2xl font-semibold tracking-tight text-muted-foreground"
+                      className={`tabular-nums text-2xl font-semibold tracking-tight transition-colors duration-500 ${showHighlights ? "text-muted-foreground" : "text-foreground"}`}
                     />
-                    <div className="text-[10px] text-muted-foreground/80">
+                    <div className={`text-[10px] transition-colors duration-500 ${showHighlights ? "text-muted-foreground/80" : "text-foreground/80"}`}>
                       of {sessions.last ?? 0} total
                     </div>
                   </div>
@@ -914,7 +949,7 @@ function BigFourCriteriaTable({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <div className="text-center text-xs font-medium leading-tight text-muted-foreground">
+            <div className={`text-center text-xs font-medium leading-tight transition-colors duration-500 ${showHighlights ? "text-muted-foreground" : "text-foreground"}`}>
               <div>Gym</div>
               <div>Sessions</div>
             </div>
@@ -925,9 +960,9 @@ function BigFourCriteriaTable({
                     <div className="flex items-baseline gap-1">
                       <AnimatedInteger
                         value={sessions.current}
-                        className={`tabular-nums text-2xl font-bold tracking-tight ${rightColor}`}
+                        className={`tabular-nums text-2xl font-bold tracking-tight transition-colors duration-500 ${revealRightColor}`}
                       />
-                      {passed && !baseline && (
+                      {showHighlights && passed && !baseline && (
                         <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">✓</span>
                       )}
                     </div>
@@ -996,6 +1031,10 @@ function BigFourCriteriaTable({
             : tonnagePassed
           ? "bg-emerald-50/30 dark:bg-emerald-950/15"
           : "bg-red-50/30 dark:bg-red-950/15";
+        const revealStrengthBg = showHighlights ? strengthBg : "bg-transparent";
+        const revealTonnageBg = showHighlights ? tonnageBg : "bg-transparent";
+        const revealStrengthColor = showHighlights ? strengthColor : "text-foreground";
+        const revealTonnageColor = showHighlights ? tonnageColor : "text-foreground";
 
         const strengthStatusTooltip = getStrengthStatusTooltip({
           liftType,
@@ -1034,19 +1073,19 @@ function BigFourCriteriaTable({
               ease: [0.22, 1, 0.36, 1],
             }}
           >
-            <div className={`rounded px-1.5 py-1 text-right ${strengthBg}`}>
+            <div className={`rounded px-1.5 py-1 text-right transition-colors duration-500 ${revealStrengthBg}`}>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="text-xs">
                       {strengthLocked ? (
-                        <span className="text-muted-foreground/70">Locked</span>
+                        <span className={showHighlights ? "text-muted-foreground/70" : "text-foreground"}>Locked</span>
                       ) : lastStrengthFmt ? (
-                        <span className="text-muted-foreground">
+                        <span className={showHighlights ? "text-muted-foreground" : "text-foreground"}>
                           {lastStrengthFmt.emoji} {lastStrengthFmt.label}
                         </span>
                       ) : (
-                        <span className="text-muted-foreground/40">—</span>
+                        <span className={showHighlights ? "text-muted-foreground/40" : "text-foreground"}>—</span>
                       )}
                     </div>
                   </TooltipTrigger>
@@ -1073,17 +1112,17 @@ function BigFourCriteriaTable({
                 transition={{ type: "spring", stiffness: 260, damping: 18 }}
               >
                 <LiftSvg liftType={liftType} size="sm" animate={false} />
-                <span className="text-[10px] text-muted-foreground/80">
+                <span className={`text-[10px] transition-colors duration-500 ${showHighlights ? "text-muted-foreground/80" : "text-foreground/80"}`}>
                   {formatLiftTypeLabel(liftType)}
                 </span>
               </motion.div>
             </Link>
 
-            <div className={`rounded px-1.5 py-1 text-left ${strengthBg}`}>
+            <div className={`rounded px-1.5 py-1 text-left transition-colors duration-500 ${revealStrengthBg}`}>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className={`flex items-center gap-1 text-xs font-medium ${strengthColor}`}>
+                    <div className={`flex items-center gap-1 text-xs font-medium transition-colors duration-500 ${revealStrengthColor}`}>
                       {strengthLocked ? (
                         <span>Setup required</span>
                       ) : currentStrengthFmt ? (
@@ -1093,7 +1132,7 @@ function BigFourCriteriaTable({
                       ) : (
                         <span>{strength.last !== null ? "Not trained" : "—"}</span>
                       )}
-                      {!strengthLocked && strengthPassed && (strengthNewWin || !strengthBaseline) && (
+                      {showHighlights && !strengthLocked && strengthPassed && (strengthNewWin || !strengthBaseline) && (
                         <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
                       )}
                     </div>
@@ -1110,9 +1149,9 @@ function BigFourCriteriaTable({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className={`rounded px-1.5 py-1 text-right ${tonnageBg}`}>
-                    <div className={`text-xs ${tonnageColor}`}>
-                      <span className="text-muted-foreground">
+                  <div className={`rounded px-1.5 py-1 text-right transition-colors duration-500 ${revealTonnageBg}`}>
+                    <div className={`text-xs transition-colors duration-500 ${revealTonnageColor}`}>
+                      <span className={showHighlights ? "text-muted-foreground" : "text-foreground"}>
                         {formatTonnage(tonnage.last ?? 0, unit)} lifted
                       </span>
                     </div>
@@ -1129,10 +1168,10 @@ function BigFourCriteriaTable({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className={`rounded px-1.5 py-1 text-left ${tonnageBg}`}>
-                    <div className={`flex items-center gap-1 text-xs font-semibold ${tonnageColor}`}>
+                  <div className={`rounded px-1.5 py-1 text-left transition-colors duration-500 ${revealTonnageBg}`}>
+                    <div className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}>
                       <span>{formatTonnage(tonnage.current ?? 0, unit)} lifted</span>
-                      {(tonnagePassed || tonnageNewWin) && (
+                      {showHighlights && (tonnagePassed || tonnageNewWin) && (
                         <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
                       )}
                     </div>

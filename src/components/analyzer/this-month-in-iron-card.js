@@ -101,6 +101,8 @@ export function ThisMonthInIronCard() {
   );
   const confettiFiredRef = useRef(false);
   const cardRef = useRef(null);
+  const highlightTimerRef = useRef(null);
+  const highlightQueuedRef = useRef(false);
   const [showHighlights, setShowHighlights] = useState(false);
   const verdictHeadline = useMemo(
     () =>
@@ -117,6 +119,11 @@ export function ThisMonthInIronCard() {
   useEffect(() => {
     if (!stats) {
       setShowHighlights(false);
+      highlightQueuedRef.current = false;
+      if (highlightTimerRef.current) {
+        clearTimeout(highlightTimerRef.current);
+        highlightTimerRef.current = null;
+      }
       return;
     }
 
@@ -125,16 +132,27 @@ export function ThisMonthInIronCard() {
       window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
     ) {
       setShowHighlights(true);
+      highlightQueuedRef.current = false;
       return;
     }
 
+    if (showHighlights || highlightQueuedRef.current) return;
+
     setShowHighlights(false);
-    const timer = setTimeout(
-      () => setShowHighlights(true),
-      HIGHLIGHT_REVEAL_DELAY_MS,
-    );
-    return () => clearTimeout(timer);
-  }, [stats, checksSummary]);
+    highlightQueuedRef.current = true;
+    highlightTimerRef.current = setTimeout(() => {
+      setShowHighlights(true);
+      highlightQueuedRef.current = false;
+      highlightTimerRef.current = null;
+    }, HIGHLIGHT_REVEAL_DELAY_MS);
+  }, [stats, showHighlights]);
+
+  useEffect(() => () => {
+    if (highlightTimerRef.current) {
+      clearTimeout(highlightTimerRef.current);
+      highlightTimerRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     const shouldCelebrate =

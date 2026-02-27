@@ -609,22 +609,24 @@ function getStrengthStatusTooltip({
   strengthCurrent,
   strengthLast,
 }) {
+  const liftLabel = formatLiftTypeLabel(liftType);
+
   if (strengthLocked) {
-    return "Strength-level comparisons require age, sex, and bodyweight.";
+    return `${liftLabel} strength-level comparisons require age, sex, and bodyweight.`;
   }
   if (strengthBaseline && !strengthNewWin) {
-    return "No previous strength-level baseline or current data yet for this lift.";
+    return `No previous ${liftLabel} strength-level baseline or current data yet.`;
   }
   if (strengthNewWin) {
-    return "No previous strength-level baseline for this lift, so current data this month counts as a win.";
+    return `No previous ${liftLabel} strength-level baseline, so current data this month counts as a win.`;
   }
   if (strengthRegressed) {
-    return `${formatLiftTypeLabel(liftType)} has not yet matched your best strength category from last month.`;
+    return `${liftLabel} has not yet matched your best strength category from last month.`;
   }
   if (strengthCurrent > strengthLast) {
-    return "Exceeded your best strength level from last month.";
+    return `Exceeded your best ${liftLabel} strength level from last month.`;
   }
-  return "Matched your best strength level from last month.";
+  return `Matched your best ${liftLabel} strength level from last month.`;
 }
 
 function getTonnageStatusTooltip({
@@ -644,8 +646,8 @@ function getTonnageStatusTooltip({
   return "Behind: this month’s tonnage is more than 10% below last month.";
 }
 
-function getStrengthLastColumnTooltip(boundaries) {
-  return `${boundaries.prevMonthName} best strength level hit across the full month.`;
+function getStrengthLastColumnTooltip(boundaries, liftType) {
+  return `${boundaries.prevMonthName} best ${formatLiftTypeLabel(liftType)} strength level hit across the full month.`;
 }
 
 function getTonnageLastColumnTooltip() {
@@ -839,8 +841,6 @@ function BigFourCriteriaTable({
     );
   }
 
-  const lastStrengthTooltip = getStrengthLastColumnTooltip(boundaries);
-
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-[1fr_100px_1fr] items-center gap-2 border-b border-border/30 px-2 pb-1.5 text-[11px] font-medium uppercase tracking-wide text-primary">
@@ -992,6 +992,10 @@ function BigFourCriteriaTable({
           strengthCurrent: strength.current,
           strengthLast: strength.last,
         });
+        const lastStrengthTooltip = getStrengthLastColumnTooltip(
+          boundaries,
+          liftType,
+        );
         const tonnageStatusTooltip = getTonnageStatusTooltip({
           tonnageBaseline,
           tonnageNewWin,

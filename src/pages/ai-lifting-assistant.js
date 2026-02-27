@@ -472,7 +472,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
     const footer =
       `\n\n---\nGenerated at ${today}\n` +
       `Conversations are processed in your browser and are not stored on our servers.\n` +
-      `https://strengthjourneys.xyz`;
+      `https://www.strengthjourneys.xyz`;
 
     // Body text - handle AI SDK v6 parts format
     const body = exportMessages.map((m) => {

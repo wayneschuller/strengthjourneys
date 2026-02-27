@@ -10,9 +10,11 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { MiniFeedbackWidget } from "@/components/feedback";
 import {
   PageContainer,
   PageHeader,
@@ -516,6 +518,14 @@ function WarmupSetsDisplayCard({
           })}
         </div>
       </CardContent>
+      <CardFooter className="pt-0">
+        <MiniFeedbackWidget
+          prompt="Useful calculator?"
+          contextId="warmup_sets_calculator"
+          page="/warm-up-sets-calculator"
+          analyticsExtra={{ context: "warmup_sets_display_card" }}
+        />
+      </CardFooter>
     </Card>
   );
 }

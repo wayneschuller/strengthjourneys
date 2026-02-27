@@ -2,11 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { ThumbsSentimentControl } from "@/components/feedback/thumbs-sentiment-control";
 import { Button } from "@/components/ui/button";
-import { SESSION_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
-  readStoredSentiment,
   trackFeedbackSentiment,
-  writeStoredSentiment,
 } from "@/components/feedback/feedback-tracking";
 
 const DEFAULT_SHORT_PROMPTS = [
@@ -16,7 +13,7 @@ const DEFAULT_SHORT_PROMPTS = [
   "Good?",
   "Any good?",
 ];
-const AUTO_HIDE_AFTER_FEEDBACK_MS = 15000;
+const AUTO_HIDE_AFTER_FEEDBACK_MS = 10000;
 
 const REASON_OPTIONS_BY_SENTIMENT = Object.freeze({
   positive: [
@@ -65,55 +62,15 @@ export function MiniFeedbackWidget({
   const { status } = useSession();
   const [vote, setVote] = useState(null);
   const [reasonCode, setReasonCode] = useState(null);
-  const [promptIndex, setPromptIndex] = useState(0);
   const [isHidden, setIsHidden] = useState(false);
   const mountTime = useRef(null);
   const hideTimerRef = useRef(null);
-  const storageKey = `${SESSION_STORAGE_KEYS.MINI_FEEDBACK_PREFIX}${contextId || "unknown"}`;
-  const reasonStorageKey = `${SESSION_STORAGE_KEYS.MINI_FEEDBACK_REASON_PREFIX}${contextId || "unknown"}`;
-  const promptIndexStorageKey = `${SESSION_STORAGE_KEYS.MINI_FEEDBACK_PROMPT_INDEX_PREFIX}${contextId || "unknown"}`;
   const safePromptOptions = Array.isArray(promptOptions) && promptOptions.length > 0
     ? promptOptions
     : DEFAULT_SHORT_PROMPTS;
-
-  useEffect(() => {
-    // Mini feedback is intentionally session-scoped so votes reset naturally
-    // when the browser session ends (no long-term cooldown/TTL).
-    setVote(readStoredSentiment(storageKey));
-  }, [storageKey]);
-
-  useEffect(() => {
-    if (!vote) {
-      setReasonCode(null);
-      return;
-    }
-
-    const storedReasonCode = sessionStorage.getItem(reasonStorageKey);
-    if (isValidReasonCode(vote, storedReasonCode)) {
-      setReasonCode(storedReasonCode);
-      return;
-    }
-
-    setReasonCode(null);
-    if (storedReasonCode) {
-      sessionStorage.removeItem(reasonStorageKey);
-    }
-  }, [reasonStorageKey, vote]);
-
-  useEffect(() => {
-    if (prompt) return;
-
-    const raw = sessionStorage.getItem(promptIndexStorageKey);
-    const parsed = Number.parseInt(raw || "", 10);
-    if (Number.isInteger(parsed) && parsed >= 0) {
-      setPromptIndex(parsed % safePromptOptions.length);
-      return;
-    }
-
-    const randomIndex = Math.floor(Math.random() * safePromptOptions.length);
-    setPromptIndex(randomIndex);
-    sessionStorage.setItem(promptIndexStorageKey, String(randomIndex));
-  }, [prompt, promptIndexStorageKey, safePromptOptions.length]);
+  const [promptIndex] = useState(() =>
+    Math.floor(Math.random() * safePromptOptions.length),
+  );
 
   useEffect(() => {
     if (mountTime.current === null) {
@@ -144,8 +101,6 @@ export function MiniFeedbackWidget({
     setVote(sentiment);
     setReasonCode(null);
     scheduleAutoHide();
-    writeStoredSentiment(storageKey, sentiment);
-    sessionStorage.removeItem(reasonStorageKey);
     trackFeedbackSentiment({
       sentiment,
       page,
@@ -161,7 +116,6 @@ export function MiniFeedbackWidget({
 
     setReasonCode(nextReasonCode);
     scheduleAutoHide();
-    sessionStorage.setItem(reasonStorageKey, nextReasonCode);
     trackFeedbackSentiment({
       sentiment: vote,
       page,
@@ -175,7 +129,8 @@ export function MiniFeedbackWidget({
     });
   }
 
-  const promptText = prompt || safePromptOptions[promptIndex] || DEFAULT_SHORT_PROMPTS[0];
+  const promptText =
+    prompt || safePromptOptions[promptIndex] || DEFAULT_SHORT_PROMPTS[0];
   const reasonOptions = getReasonOptions(vote);
 
   return (

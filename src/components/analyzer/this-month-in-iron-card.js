@@ -101,9 +101,15 @@ export function ThisMonthInIronCard() {
   );
   const confettiFiredRef = useRef(false);
   const cardRef = useRef(null);
-  const highlightTimerRef = useRef(null);
+  const highlightStartTimerRef = useRef(null);
+  const highlightStepTimerRef = useRef(null);
   const highlightQueuedRef = useRef(false);
-  const [showHighlights, setShowHighlights] = useState(false);
+  const [revealedRows, setRevealedRows] = useState(0);
+  const totalRevealRows = useMemo(
+    () => getMonthlyRevealRowCount(stats, strengthLevelStats),
+    [stats, strengthLevelStats],
+  );
+  const highlightsComplete = totalRevealRows > 0 && revealedRows >= totalRevealRows;
   const verdictHeadline = useMemo(
     () =>
       getVerdictHeadline({
@@ -117,12 +123,16 @@ export function ThisMonthInIronCard() {
   );
 
   useEffect(() => {
-    if (!stats) {
-      setShowHighlights(false);
+    if (!stats || totalRevealRows === 0) {
+      setRevealedRows(0);
       highlightQueuedRef.current = false;
-      if (highlightTimerRef.current) {
-        clearTimeout(highlightTimerRef.current);
-        highlightTimerRef.current = null;
+      if (highlightStartTimerRef.current) {
+        clearTimeout(highlightStartTimerRef.current);
+        highlightStartTimerRef.current = null;
+      }
+      if (highlightStepTimerRef.current) {
+        clearInterval(highlightStepTimerRef.current);
+        highlightStepTimerRef.current = null;
       }
       return;
     }
@@ -131,26 +141,40 @@ export function ThisMonthInIronCard() {
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
     ) {
-      setShowHighlights(true);
+      setRevealedRows(totalRevealRows);
       highlightQueuedRef.current = false;
       return;
     }
 
-    if (showHighlights || highlightQueuedRef.current) return;
+    if (revealedRows >= totalRevealRows || highlightQueuedRef.current) return;
 
-    setShowHighlights(false);
+    setRevealedRows(0);
     highlightQueuedRef.current = true;
-    highlightTimerRef.current = setTimeout(() => {
-      setShowHighlights(true);
-      highlightQueuedRef.current = false;
-      highlightTimerRef.current = null;
+    highlightStartTimerRef.current = setTimeout(() => {
+      setRevealedRows(1);
+      highlightStartTimerRef.current = null;
+      highlightStepTimerRef.current = setInterval(() => {
+        setRevealedRows((prev) => {
+          const next = Math.min(totalRevealRows, prev + 1);
+          if (next >= totalRevealRows && highlightStepTimerRef.current) {
+            clearInterval(highlightStepTimerRef.current);
+            highlightStepTimerRef.current = null;
+            highlightQueuedRef.current = false;
+          }
+          return next;
+        });
+      }, HIGHLIGHT_ROW_STAGGER_MS);
     }, HIGHLIGHT_REVEAL_DELAY_MS);
-  }, [stats, showHighlights]);
+  }, [stats, totalRevealRows, revealedRows]);
 
   useEffect(() => () => {
-    if (highlightTimerRef.current) {
-      clearTimeout(highlightTimerRef.current);
-      highlightTimerRef.current = null;
+    if (highlightStartTimerRef.current) {
+      clearTimeout(highlightStartTimerRef.current);
+      highlightStartTimerRef.current = null;
+    }
+    if (highlightStepTimerRef.current) {
+      clearInterval(highlightStepTimerRef.current);
+      highlightStepTimerRef.current = null;
     }
   }, []);
 
@@ -165,7 +189,7 @@ export function ThisMonthInIronCard() {
 
     if (confettiFiredRef.current) return;
     if (typeof window === "undefined") return;
-    if (!showHighlights) return;
+    if (!highlightsComplete) return;
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
 
     confettiFiredRef.current = true;
@@ -174,7 +198,7 @@ export function ThisMonthInIronCard() {
       CONFETTI_AFTER_HIGHLIGHT_DELAY_MS,
     );
     return () => clearTimeout(timer);
-  }, [checksSummary, showHighlights]);
+  }, [checksSummary, highlightsComplete]);
 
   return (
     <Card ref={cardRef} className="flex h-full flex-1 flex-col">
@@ -197,7 +221,7 @@ export function ThisMonthInIronCard() {
               strengthSetupRequired={strengthSetupRequired}
               boundaries={boundaries}
               unit={unit}
-              showHighlights={showHighlights}
+              revealedRows={revealedRows}
             />
 
             <Separator />
@@ -210,14 +234,14 @@ export function ThisMonthInIronCard() {
               <p className="text-foreground text-lg font-semibold tracking-tight sm:text-xl">
                 <span
                   className={
-                    !showHighlights || verdictHeadline?.tone === "neutral"
+                    !highlightsComplete || verdictHeadline?.tone === "neutral"
                       ? "text-muted-foreground"
                       : "text-foreground"
                   }
                 >
                   {verdictHeadline?.text || "Keep forging ⚒️"}
                 </span>
-                {showHighlights && verdictHeadline?.scoreText && (
+                {highlightsComplete && verdictHeadline?.scoreText && (
                   <span className="ml-2 text-xs font-medium text-muted-foreground align-middle">
                     {verdictHeadline.scoreText}
                   </span>
@@ -266,7 +290,8 @@ const BIG_FOUR_LIFT_URLS = {
   "Strict Press": "/barbell-strict-press-insights",
 };
 
-const HIGHLIGHT_REVEAL_DELAY_MS = 450;
+const HIGHLIGHT_REVEAL_DELAY_MS = 650;
+const HIGHLIGHT_ROW_STAGGER_MS = 170;
 const CONFETTI_AFTER_HIGHLIGHT_DELAY_MS = 200;
 
 // ─── Strength level constants ──────────────────────────────────────────────
@@ -658,6 +683,24 @@ function getMonthlyChecksSummary(stats, strengthLevelStats) {
   return { checksMet, checksTotal };
 }
 
+function getMonthlyRevealRowCount(stats, strengthLevelStats) {
+  if (!stats) return 0;
+
+  const liftRows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
+    const tonnage = stats.bigFourByLift?.[liftType] ?? {
+      current: 0,
+      last: 0,
+    };
+    const strength = strengthLevelStats?.[liftType] ?? { current: null, last: null };
+    const hasTonnage = (tonnage.current ?? 0) > 0 || (tonnage.last ?? 0) > 0;
+    const hasStrength = strength.current !== null || strength.last !== null;
+    return hasTonnage || hasStrength;
+  }).filter(Boolean).length;
+
+  const hasSessionsRow = !!stats.sessions;
+  return liftRows + (hasSessionsRow ? 1 : 0);
+}
+
 function getStrengthStatusTooltip({
   liftType,
   strengthLocked,
@@ -884,7 +927,7 @@ function BigFourCriteriaTable({
   strengthSetupRequired = false,
   boundaries,
   unit,
-  showHighlights = false,
+  revealedRows = 0,
 }) {
   const rows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
     const tonnage = bigFourByLift?.[liftType] ?? {
@@ -917,6 +960,7 @@ function BigFourCriteriaTable({
       </div>
 
       {!!sessions && (() => {
+        const rowHighlighted = revealedRows >= 1;
         const baseline = (sessions.lastSameDay ?? 0) === 0;
         const passed = baseline || passesTonnageThreshold(
           sessions.current ?? 0,
@@ -936,8 +980,8 @@ function BigFourCriteriaTable({
           : passed
             ? "text-emerald-600 dark:text-emerald-400"
             : "text-red-600 dark:text-red-400";
-        const revealRowBg = showHighlights ? rowBg : "bg-transparent";
-        const revealRightColor = showHighlights ? rightColor : "text-foreground";
+        const revealRowBg = rowHighlighted ? rowBg : "bg-transparent";
+        const revealRightColor = rowHighlighted ? rightColor : "text-foreground";
 
         return (
           <motion.div
@@ -952,9 +996,9 @@ function BigFourCriteriaTable({
                   <div className="text-right">
                     <AnimatedInteger
                       value={sessions.lastSameDay}
-                      className={`tabular-nums text-2xl font-semibold tracking-tight transition-colors duration-500 ${showHighlights ? "text-muted-foreground" : "text-foreground"}`}
+                      className={`tabular-nums text-2xl font-semibold tracking-tight transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}
                     />
-                    <div className={`text-[10px] transition-colors duration-500 ${showHighlights ? "text-muted-foreground/80" : "text-foreground/80"}`}>
+                    <div className={`text-[10px] transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}>
                       of {sessions.last ?? 0} total
                     </div>
                   </div>
@@ -967,7 +1011,7 @@ function BigFourCriteriaTable({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <div className={`text-center text-xs font-medium leading-tight transition-colors duration-500 ${showHighlights ? "text-muted-foreground" : "text-foreground"}`}>
+            <div className={`text-center text-xs font-medium leading-tight transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}>
               <div>Gym</div>
               <div>Sessions</div>
             </div>
@@ -980,7 +1024,7 @@ function BigFourCriteriaTable({
                         value={sessions.current}
                         className={`tabular-nums text-2xl font-bold tracking-tight transition-colors duration-500 ${revealRightColor}`}
                       />
-                      {showHighlights && passed && !baseline && (
+                      {rowHighlighted && passed && !baseline && (
                         <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">✓</span>
                       )}
                     </div>
@@ -1004,6 +1048,8 @@ function BigFourCriteriaTable({
       })()}
 
       {rows.map(({ liftType, tonnage, strength }, i) => {
+        const rowHighlightIndex = sessions ? i + 2 : i + 1;
+        const rowHighlighted = revealedRows >= rowHighlightIndex;
         const currentTonnage = tonnage.current ?? 0;
         const lastTonnage = tonnage.last ?? 0;
         const tonnagePassed = passesTonnageThreshold(
@@ -1049,10 +1095,10 @@ function BigFourCriteriaTable({
             : tonnagePassed
           ? "bg-emerald-50/30 dark:bg-emerald-950/15"
           : "bg-red-50/30 dark:bg-red-950/15";
-        const revealStrengthBg = showHighlights ? strengthBg : "bg-transparent";
-        const revealTonnageBg = showHighlights ? tonnageBg : "bg-transparent";
-        const revealStrengthColor = showHighlights ? strengthColor : "text-foreground";
-        const revealTonnageColor = showHighlights ? tonnageColor : "text-foreground";
+        const revealStrengthBg = rowHighlighted ? strengthBg : "bg-transparent";
+        const revealTonnageBg = rowHighlighted ? tonnageBg : "bg-transparent";
+        const revealStrengthColor = rowHighlighted ? strengthColor : "text-foreground";
+        const revealTonnageColor = rowHighlighted ? tonnageColor : "text-foreground";
 
         const strengthStatusTooltip = getStrengthStatusTooltip({
           liftType,
@@ -1097,13 +1143,13 @@ function BigFourCriteriaTable({
                   <TooltipTrigger asChild>
                     <div className="text-xs">
                       {strengthLocked ? (
-                        <span className={showHighlights ? "text-muted-foreground/70" : "text-foreground"}>Locked</span>
+                        <span className={rowHighlighted ? "text-muted-foreground/70" : "text-foreground"}>Locked</span>
                       ) : lastStrengthFmt ? (
-                        <span className={showHighlights ? "text-muted-foreground" : "text-foreground"}>
+                        <span className={rowHighlighted ? "text-muted-foreground" : "text-foreground"}>
                           {lastStrengthFmt.emoji} {lastStrengthFmt.label}
                         </span>
                       ) : (
-                        <span className={showHighlights ? "text-muted-foreground/40" : "text-foreground"}>—</span>
+                        <span className={rowHighlighted ? "text-muted-foreground/40" : "text-foreground"}>—</span>
                       )}
                     </div>
                   </TooltipTrigger>
@@ -1130,7 +1176,7 @@ function BigFourCriteriaTable({
                 transition={{ type: "spring", stiffness: 260, damping: 18 }}
               >
                 <LiftSvg liftType={liftType} size="sm" animate={false} />
-                <span className={`text-[10px] transition-colors duration-500 ${showHighlights ? "text-muted-foreground/80" : "text-foreground/80"}`}>
+                <span className={`text-[10px] transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}>
                   {formatLiftTypeLabel(liftType)}
                 </span>
               </motion.div>
@@ -1150,7 +1196,7 @@ function BigFourCriteriaTable({
                       ) : (
                         <span>{strength.last !== null ? "Not trained" : "—"}</span>
                       )}
-                      {showHighlights && !strengthLocked && strengthPassed && (strengthNewWin || !strengthBaseline) && (
+                      {rowHighlighted && !strengthLocked && strengthPassed && (strengthNewWin || !strengthBaseline) && (
                         <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
                       )}
                     </div>
@@ -1169,7 +1215,7 @@ function BigFourCriteriaTable({
                 <TooltipTrigger asChild>
                   <div className={`rounded px-1.5 py-1 text-right transition-colors duration-500 ${revealTonnageBg}`}>
                     <div className={`text-xs transition-colors duration-500 ${revealTonnageColor}`}>
-                      <span className={showHighlights ? "text-muted-foreground" : "text-foreground"}>
+                      <span className={rowHighlighted ? "text-muted-foreground" : "text-foreground"}>
                         {formatTonnage(tonnage.last ?? 0, unit)} lifted
                       </span>
                     </div>
@@ -1189,7 +1235,7 @@ function BigFourCriteriaTable({
                   <div className={`rounded px-1.5 py-1 text-left transition-colors duration-500 ${revealTonnageBg}`}>
                     <div className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}>
                       <span>{formatTonnage(tonnage.current ?? 0, unit)} lifted</span>
-                      {showHighlights && (tonnagePassed || tonnageNewWin) && (
+                      {rowHighlighted && (tonnagePassed || tonnageNewWin) && (
                         <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
                       )}
                     </div>

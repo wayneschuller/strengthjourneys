@@ -30,6 +30,7 @@
 export const LOCAL_STORAGE_KEYS = {
   // Theme
   THEME: "theme",
+  SHOW_BACKGROUND: "sj-show-background",
   ANIMATED_BACKGROUND: "sj-animated-background",
 
   // Lift colors

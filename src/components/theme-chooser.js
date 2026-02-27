@@ -50,6 +50,11 @@ export function ThemeChooser() {
     false,
     { initializeWithValue: false },
   );
+  const [showBackground, setShowBackground] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.SHOW_BACKGROUND,
+    true,
+    { initializeWithValue: false },
+  );
 
   useEffect(() => {
     if (theme) {
@@ -104,16 +109,25 @@ export function ThemeChooser() {
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
         <DropdownMenuCheckboxItem
-          checked={animatedBackground ?? false}
-          onCheckedChange={(checked) =>
-            isAuthenticated && setAnimatedBackground(checked === true)
-          }
-          className={cn(
-            !isAuthenticated && "opacity-50 pointer-events-none cursor-default"
-          )}
+          checked={showBackground ?? true}
+          onCheckedChange={(checked) => setShowBackground(checked === true)}
         >
-          Animated background
+          Background
         </DropdownMenuCheckboxItem>
+        {(showBackground ?? true) && (
+          <DropdownMenuCheckboxItem
+            checked={animatedBackground ?? false}
+            onCheckedChange={(checked) =>
+              isAuthenticated && setAnimatedBackground(checked === true)
+            }
+            className={cn(
+              "pl-8 text-muted-foreground",
+              !isAuthenticated && "opacity-50 pointer-events-none cursor-default"
+            )}
+          >
+            Animated background
+          </DropdownMenuCheckboxItem>
+        )}
         {!isAuthenticated && (
           <>
             <DropdownMenuSeparator />

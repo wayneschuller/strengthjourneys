@@ -59,6 +59,11 @@ export function AppBackground() {
     false,
     { initializeWithValue: false },
   );
+  const [showBackground] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.SHOW_BACKGROUND,
+    true,
+    { initializeWithValue: false },
+  );
 
   // Avoid theme-based SSR/CSR mismatch: until mounted, assume light theme for
   // background so static output is identical on server and first client paint.
@@ -85,15 +90,21 @@ export function AppBackground() {
   const isBlueprintDark = themeForBackground === "blueprint-dark";
 
   const showAnimated = animatedBackground ?? false;
+  const shouldShowBackground = showBackground ?? true;
   const isVanillaLightDark =
     !isRetroArcade && !isNeoBrutalism && !isStarryNight && !isBlueprint;
   const showStaticGrid =
+    shouldShowBackground &&
     !showAnimated &&
     !isStarryNight &&
     !isBlueprint &&
     !isNeoBrutalism &&
     !isRetroArcade;
   const showAnimatedGrid = mounted && showAnimated && isVanillaLightDark;
+
+  if (!shouldShowBackground) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-0">

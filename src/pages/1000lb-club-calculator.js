@@ -1,6 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useId } from "react";
 import { NextSeo } from "next-seo";
 import { motion, useReducedMotion } from "motion/react";
 import { RelatedArticles } from "@/components/article-cards";
@@ -522,7 +522,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           <div className="mt-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <MiniFeedbackWidget
-                prompt="Useful calculator?"
+                prompt="Useful?"
                 contextId="thousand_lb_club_calculator"
                 page="/1000lb-club-calculator"
                 analyticsExtra={{ context: "1000lb_club_calculator_card" }}
@@ -678,6 +678,7 @@ function ThousandDonut({
   isAdjusting = false,
   prefersReducedMotion = false,
 }) {
+  const gradientId = `thousand-donut-progress-${useId().replace(/:/g, "")}`;
   const capped = Math.min(total, target);
   const remainder = Math.max(0, target - total);
   const data = [
@@ -723,6 +724,12 @@ function ThousandDonut({
     >
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
+          <defs>
+            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#34D399" />
+              <stop offset="100%" stopColor="#059669" />
+            </linearGradient>
+          </defs>
           <Pie
             data={data}
             dataKey="value"
@@ -736,7 +743,7 @@ function ThousandDonut({
             animationEasing="ease-out"
           >
             {data.map((_, i) => (
-              <Cell key={i} fill={COLORS[i]} />
+              <Cell key={i} fill={i === 0 ? `url(#${gradientId})` : COLORS[i]} />
             ))}
           </Pie>
         </PieChart>

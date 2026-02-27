@@ -1,9 +1,16 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { MiniFeedbackWidget } from "@/components/feedback";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
@@ -327,6 +334,14 @@ export function LiftTypeFrequencyPieCard() {
           onSelectLift={setSelectedLiftType}
         />
       </CardContent>
+      <CardFooter className="pt-0">
+        <MiniFeedbackWidget
+          prompt="Useful card?"
+          contextId="lift_frequency_pie_card"
+          page="/analyzer"
+          analyticsExtra={{ context: "lift_frequency_pie_card" }}
+        />
+      </CardFooter>
     </Card>
   );
 }

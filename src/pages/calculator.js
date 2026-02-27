@@ -277,7 +277,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
     const sentenceToCopy =
       `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
       `using the ${e1rmFormula} algorithm.\n` +
-      `Source: https://strengthjourneys.xyz/calculator?${queryString}`;
+      `Source: https://www.strengthjourneys.xyz/calculator?${queryString}`;
 
     const textarea = document.createElement("textarea");
     let didCopy = false;
@@ -1068,7 +1068,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
     if (nextTierInfo && diff) {
       lines.push(`Next: ${STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} ${nextTierInfo.name} — ${diff}${unit} away`);
     }
-    lines.push(`Source: https://strengthjourneys.xyz/calculator?${params.toString()}`);
+    lines.push(`Source: https://www.strengthjourneys.xyz/calculator?${params.toString()}`);
 
     const textarea = document.createElement("textarea");
     try {

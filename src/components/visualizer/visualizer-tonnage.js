@@ -46,6 +46,7 @@ import {
 } from "recharts";
 
 import { getYearLabels } from "./visualizer-processing";
+import { MiniFeedbackWidget } from "@/components/feedback";
 
 /**
  * Chart showing session tonnage (weight × reps) over time. Supports per-session or per-week
@@ -82,6 +83,9 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   const { width } = useWindowSize({ initializeWithValue: false });
 
   const rangeFirstDate = calculateThresholdDate(timeRange, setTimeRange);
+  const feedbackContextId = `tonnage_chart_${(liftType || "all_lifts")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")}`;
 
   const chartData = useMemo(() => {
     if (!parsedData || parsedData.length === 0) return null;
@@ -367,8 +371,19 @@ export function TonnageChart({ setHighlightDate, liftType }) {
       </CardContent>
 
       <CardFooter>
-        <div className="flex w-full flex-col items-center justify-between gap-2 md:flex-row">
-          <div className="flex items-center space-x-2">
+        <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3 md:items-center">
+          <div className="justify-self-start">
+            <MiniFeedbackWidget
+              prompt="Useful chart?"
+              contextId={feedbackContextId}
+              page={liftType ? "/visualizer" : "/tonnage"}
+              analyticsExtra={{
+                context: liftType ? "lift_tonnage_chart" : "tonnage_chart",
+                lift_type: liftType || "all_lifts",
+              }}
+            />
+          </div>
+          <div className="flex items-center space-x-2 md:justify-self-center">
             <Label className="font-light" htmlFor="show-values">
               Show Values
             </Label>
@@ -379,25 +394,26 @@ export function TonnageChart({ setHighlightDate, liftType }) {
               onCheckedChange={(show) => setShowLabelValues(show)}
             />
           </div>
-          <ToggleGroup
-            type="single"
-            value={aggregationType}
-            onValueChange={(value) => {
-              if (value) setAggregationType(value);
-            }}
-            variant="outline"
-          >
-            <ToggleGroupItem value="perSession" aria-label="Per Session">
-              Per Session
-            </ToggleGroupItem>
-            <ToggleGroupItem value="perWeek" aria-label="Per Week">
-              Per Week
-            </ToggleGroupItem>
-            <ToggleGroupItem value="perMonth" aria-label="Per Month">
-              Per Month
-            </ToggleGroupItem>
-          </ToggleGroup>
-          <div></div>
+          <div className="md:justify-self-end">
+            <ToggleGroup
+              type="single"
+              value={aggregationType}
+              onValueChange={(value) => {
+                if (value) setAggregationType(value);
+              }}
+              variant="outline"
+            >
+              <ToggleGroupItem value="perSession" aria-label="Per Session">
+                Per Session
+              </ToggleGroupItem>
+              <ToggleGroupItem value="perWeek" aria-label="Per Week">
+                Per Week
+              </ToggleGroupItem>
+              <ToggleGroupItem value="perMonth" aria-label="Per Month">
+                Per Month
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
         </div>
       </CardFooter>
     </Card>

@@ -64,6 +64,7 @@ import { ChartContainer } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VisualizerRepsTooltip } from "./visualizer-utils";
 import { Badge } from "@/components/ui/badge";
+import { MiniFeedbackWidget } from "@/components/feedback";
 
 const repTabs = [
   { label: "Singles", reps: 1 },
@@ -97,6 +98,9 @@ export function VisualizerReps({ data, liftType }) {
 
   // Used to hide the y-axis and other UI elements on smaller screens
   const { width } = useWindowSize({ initializeWithValue: false });
+  const feedbackContextId = `visualizer_reps_${(liftType || "unknown_lift")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")}`;
 
   // Add state for toggling line visibility
   const [visible, setVisible] = useState({ 1: true, 3: true, 5: true });
@@ -339,6 +343,17 @@ export function VisualizerReps({ data, liftType }) {
             </ChartContainer>
         )}
       </CardContent>
+      <CardFooter className="pt-0">
+        <MiniFeedbackWidget
+          prompt="Useful chart?"
+          contextId={feedbackContextId}
+          page="/visualizer"
+          analyticsExtra={{
+            context: "visualizer_reps_card",
+            lift_type: liftType || "unknown_lift",
+          }}
+        />
+      </CardFooter>
     </Card>
   );
 }

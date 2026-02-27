@@ -59,6 +59,7 @@ import {
 } from "recharts";
 
 import { getYearLabels, processVisualizerData } from "./visualizer-processing";
+import { MiniFeedbackWidget } from "@/components/feedback";
 
 /**
  * E1RM over time chart for a single lift. Shows estimated 1RM progression with optional formula
@@ -127,6 +128,9 @@ export function VisualizerMini({ liftType }) {
   const { width } = useWindowSize({ initializeWithValue: false });
 
   const rangeFirstDate = calculateThresholdDate(timeRange, setTimeRange);
+  const feedbackContextId = `visualizer_mini_${liftType
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")}`;
 
   const {
     dataset: chartData,
@@ -517,8 +521,19 @@ export function VisualizerMini({ liftType }) {
         )}
       </CardContent>
       <CardFooter>
-        <div className="flex w-full flex-col items-center justify-between gap-2 md:flex-row">
-          <div className="flex items-center space-x-2">
+        <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-4 md:items-center">
+          <div className="justify-self-start">
+            <MiniFeedbackWidget
+              prompt="Useful chart?"
+              contextId={feedbackContextId}
+              page="/visualizer"
+              analyticsExtra={{
+                context: "visualizer_mini_card",
+                lift_type: liftType,
+              }}
+            />
+          </div>
+          <div className="flex items-center space-x-2 md:justify-self-center">
             <Label className="font-light" htmlFor="show-values">
               Show Values
             </Label>
@@ -529,8 +544,8 @@ export function VisualizerMini({ liftType }) {
               onCheckedChange={(show) => setShowLabelValues(show)}
             />
           </div>
-          <div className="flex items-center space-x-1">
-            <Label className="font-light" htmlFor="show-values">
+          <div className="flex items-center space-x-1 md:justify-self-center">
+            <Label className="font-light" htmlFor="all-data">
               Weekly Bests
             </Label>
             <Switch
@@ -539,11 +554,11 @@ export function VisualizerMini({ liftType }) {
               checked={showAllData}
               onCheckedChange={(show) => setShowAllData(show)}
             />
-            <Label className="font-light" htmlFor="show-values">
+            <Label className="font-light" htmlFor="all-data">
               All Data
             </Label>
           </div>
-          <div>
+          <div className="md:justify-self-end">
             <E1RMFormulaSelect
               e1rmFormula={e1rmFormula}
               setE1rmFormula={setE1rmFormula}

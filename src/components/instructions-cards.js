@@ -318,13 +318,12 @@ export function GettingStartedCard() {
               className="h-6 w-6 shrink-0"
               aria-hidden
             />
-            Getting Started: Set Up Google Sheets and Connect with Strength
-            Journeys
+            Turn Your Lifting History into Actionable Strength Analysis
           </CardTitle>
         </CardHeader>
       <CardContent className="grid grid-cols-1 lg:grid-cols-7">
         <div className="">
-          Lift progressively heavier things with a{" "}
+          Train with progressive overload and log your sessions with a{" "}
           <a
             href="https://www.roguefitness.com/rogue-45lb-ohio-power-bar-bare-steel"
             target="_blank"
@@ -333,7 +332,7 @@ export function GettingStartedCard() {
             barbell
           </a>
           . <br></br>
-          e.g.:{" "}
+          For example:{" "}
           <Link
             href="/barbell-squat-insights"
             className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
@@ -361,7 +360,7 @@ export function GettingStartedCard() {
           >
             strict press
           </Link>
-          . Just log any measurable lift movement and we can track it.
+          . Log each set and build a complete lifting history over time.
         </div>
         <div className="flex justify-center">
           <ArrowBigRight
@@ -376,7 +375,7 @@ export function GettingStartedCard() {
           />
         </div>
         <div className="">
-          Record your lifting progress in Google Sheets. Use simple columns:
+          Put your lifting history in a Google Sheet using simple columns:
           date, lift type, reps, weight. One set per row.
           <div>
             (
@@ -441,8 +440,8 @@ export function GettingStartedCard() {
           ) : (
             "select your Google Sheet"
           )}
-          . We will read your data every couple of seconds. We do not keep a
-          copy of your data.
+          . Strength Journeys reads your data live in your browser every couple
+          of seconds and does not store a copy.
         </div>
         <div className="flex justify-center">
           <ArrowBigRight
@@ -457,28 +456,36 @@ export function GettingStartedCard() {
           />
         </div>
         <div className="">
-          Explore the{" "}
+          Open your personalized dashboard: session recaps, PR tables,
+          consistency grades, lift frequency breakdowns, and training heatmaps in{" "}
           <Link
             href="/analyzer"
             className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
           >
             Analyzer
           </Link>{" "}
-          or{" "}
+          . Then use{" "}
           <Link
             href="/visualizer"
             className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
           >
             Visualizer
-          </Link>{" "}
-          for motivation, rewards and additional insights.
+          </Link>
+          {" "}and the lift-specific{" "}
+          <Link
+            href="/barbell-squat-insights"
+            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          >
+            insight pages
+          </Link>
+          {" "}for e1RM trends, tonnage, rep-range PRs, and strength standards. Build momentum and get strong for life.
         </div>
       </CardContent>
       <CardFooter className="text-muted-foreground">
         <div>
-          Strength Journeys securely accesses your Google Sheet for read-only
-          purposes, ensuring your data is never altered or stored by us. Your
-          original data remains intact and solely under your control. {` `}
+          Your sheet stays yours. Strength Journeys only accesses it with
+          read-only permissions, never alters it, and never stores your raw
+          lifting data. {` `}
           <Link
             href="/privacy-policy.html"
             className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"

@@ -630,28 +630,36 @@ function getStrengthStatusTooltip({
 }
 
 function getTonnageStatusTooltip({
+  liftType,
+  currentTonnage,
+  lastTonnage,
   tonnageBaseline,
   tonnageNewWin,
   tonnagePassed,
 }) {
+  const liftLabel = formatLiftTypeLabel(liftType).toLowerCase();
+
   if (tonnageBaseline && !tonnageNewWin) {
-    return "No previous tonnage baseline and no current tonnage yet for this lift.";
+    return `No previous month ${liftLabel} tonnage yet.`;
   }
   if (tonnageNewWin) {
-    return "No previous tonnage baseline for this lift. Current tonnage this month counts as a win.";
+    return `First tracked month for ${liftLabel} tonnage.`;
+  }
+  if (currentTonnage >= lastTonnage) {
+    return `Matched your previous month ${liftLabel} tonnage.`;
   }
   if (tonnagePassed) {
-    return "Passes: this month’s tonnage is at least 90% of last month (within 10% counts).";
+    return `Passed your previous month ${liftLabel} tonnage.`;
   }
-  return "Behind: this month’s tonnage is more than 10% below last month.";
+  return `Below your previous month ${liftLabel} tonnage.`;
 }
 
 function getStrengthLastColumnTooltip(boundaries, liftType) {
   return `${boundaries.prevMonthName} best ${formatLiftTypeLabel(liftType)} strength level hit across the full month.`;
 }
 
-function getTonnageLastColumnTooltip() {
-  return "This is your total tonnage for this lift at the same point in last month.";
+function getTonnageLastColumnTooltip(liftType) {
+  return `Previous month ${formatLiftTypeLabel(liftType).toLowerCase()} tonnage.`;
 }
 
 // ─── Status colors ─────────────────────────────────────────────────────────
@@ -997,10 +1005,14 @@ function BigFourCriteriaTable({
           liftType,
         );
         const tonnageStatusTooltip = getTonnageStatusTooltip({
+          liftType,
+          currentTonnage,
+          lastTonnage,
           tonnageBaseline,
           tonnageNewWin,
           tonnagePassed,
         });
+        const tonnageLastTooltip = getTonnageLastColumnTooltip(liftType);
 
         return (
           <motion.div
@@ -1096,7 +1108,7 @@ function BigFourCriteriaTable({
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
                   <p className="max-w-56 text-center text-xs">
-                    {getTonnageLastColumnTooltip()}
+                    {tonnageLastTooltip}
                   </p>
                 </TooltipContent>
               </Tooltip>

@@ -7,6 +7,7 @@ import { useChat } from "@ai-sdk/react";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog, getAnalyzedSessionLifts } from "@/lib/processing-utils";
 import { RelatedArticles } from "@/components/article-cards";
+import { MiniFeedbackWidget } from "@/components/feedback";
 
 import {
   Conversation,
@@ -519,14 +520,7 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
           </CardTitle>
           <CardDescription className="text-muted-foreground text-balance">
             Discussions are streamed to your device and not stored on our
-            servers. Please leave{" "}
-            <a
-              href="https://strengthjourneys.canny.io/"
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-            >
-              feedback
-            </a>{" "}
-            about this AI.
+            servers.
           </CardDescription>
         </div>
         {messages.length > 0 && (
@@ -657,8 +651,8 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
           <ConversationScrollButton />
         </Conversation>
       </CardContent>
-      <CardFooter className="">
-        <div className="flex-1 flex-col">
+      <CardFooter>
+        <div className="flex w-full flex-col gap-3">
           <PromptInput onSubmit={handleSubmit}>
             <PromptInputBody>
               <PromptInputTextarea placeholder="Type a message..." />
@@ -667,6 +661,12 @@ function AILiftingAssistantCard({ userProvidedProfileData }) {
               <PromptInputSubmit status={status} onStop={stop} />
             </PromptInputFooter>
           </PromptInput>
+          <MiniFeedbackWidget
+            prompt="Useful assistant?"
+            contextId="ai_lifting_assistant_card"
+            page="/ai-lifting-assistant"
+            analyticsExtra={{ context: "ai_lifting_assistant_card" }}
+          />
         </div>
       </CardFooter>
     </Card>

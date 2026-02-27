@@ -403,14 +403,14 @@ export function MostRecentSessionCard({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-stretch">
+          <div className="flex flex-col gap-4 xl:flex-row xl:flex-wrap xl:items-stretch">
             {liftEntries.map(([lt, workouts], index) => (
               <motion.div
                 key={lt}
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.06, duration: 0.25 }}
-                className="w-full min-w-0 sm:min-w-[200px]"
+                className="w-full min-w-0 xl:min-w-[200px]"
                 style={{ flex: `${Math.max(1, Math.ceil(workouts.length / 3))} 1 200px` }}
               >
                 <SessionExerciseBlock
@@ -451,7 +451,7 @@ function MostRecentSessionCardSkeleton() {
         </div>
       </CardHeader>
       <CardContent className="px-4 pt-1 pb-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch">
+        <div className="flex flex-col gap-2 xl:flex-row xl:flex-wrap xl:items-stretch">
           <div className="min-w-[160px] flex-1 rounded-lg border bg-muted/30 px-3 py-2">
             <Skeleton className="mb-2 h-4 w-32" />
             <Skeleton className="h-3 w-40" />

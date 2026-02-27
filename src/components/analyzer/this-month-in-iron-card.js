@@ -16,6 +16,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -37,6 +38,7 @@ import {
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LiftSvg } from "@/components/year-recap/lift-svg";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
+import { MiniFeedbackWidget } from "@/components/feedback";
 
 // ─── Main component ────────────────────────────────────────────────────────
 
@@ -258,6 +260,15 @@ export function ThisMonthInIronCard() {
           </>
         )}
       </CardContent>
+      {stats && (
+        <CardFooter className="pt-0">
+          <MiniFeedbackWidget
+            contextId="this_month_in_iron_card"
+            page="/analyzer"
+            analyticsExtra={{ context: "this_month_in_iron_card" }}
+          />
+        </CardFooter>
+      )}
     </Card>
   );
 }

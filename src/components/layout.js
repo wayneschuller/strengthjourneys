@@ -7,7 +7,7 @@ import { useSession, signIn } from "next-auth/react";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 import { AppBackground } from "@/components/app-background";
-import { FeedbackWidget } from "@/components/feedback-widget";
+import { FeedbackWidget } from "@/components/feedback";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { GoogleLogo } from "@/components/hero-section";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";

@@ -13,6 +13,7 @@ import {
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LoaderCircle } from "lucide-react";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
+import { MiniFeedbackWidget } from "@/components/feedback";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -201,7 +202,12 @@ export function ActivityHeatmapsCard() {
         </CardContent>
         {intervals && (
           <CardFooter id="ignoreCopy">
-            <div className="flex flex-1 flex-row justify-end">
+            <div className="flex w-full items-center justify-between gap-3">
+              <MiniFeedbackWidget
+                contextId="heatmap_card"
+                page="/analyzer"
+                analyticsExtra={{ context: "activity_heatmaps_card" }}
+              />
               <ShareCopyButton
                 label="Copy heatmap"
                 tooltip="Share heatmaps to clipboard"

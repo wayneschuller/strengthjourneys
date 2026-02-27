@@ -9,7 +9,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { devLog } from "@/lib/processing-utils";
-import { ArticleFeedback } from "@/components/article-feedback";
+import { ArticleFeedback } from "@/components/feedback";
 import {
   TopArticleShareButton,
   ArticleShareFooterCta,

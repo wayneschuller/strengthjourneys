@@ -95,6 +95,14 @@ export const LOCAL_STORAGE_KEYS = {
 
 };
 
+export const SESSION_STORAGE_KEYS = {
+  FEEDBACK_TRIGGER_LABEL_INDEX: "sj-feedback-trigger-label-index",
+  FEEDBACK_GIVEN: "sj-feedback-given",
+  ARTICLE_FEEDBACK_PREFIX: "article_feedback_",
+  MINI_FEEDBACK_PREFIX: "mini_feedback_",
+  MINI_FEEDBACK_PROMPT_INDEX_PREFIX: "mini_feedback_prompt_index_",
+};
+
 /**
  * Returns the appropriate selected lifts key based on auth status and optional prefix.
  * Use a prefix when the lift selector is scoped to a specific component (e.g. "visualizer").

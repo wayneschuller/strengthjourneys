@@ -23,6 +23,8 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
+import { fetchRelatedArticles } from "@/lib/sanity-io.js";
+import { RelatedArticles } from "@/components/article-cards";
 
 const translator = shortUUID();
 
@@ -37,13 +39,16 @@ export async function getStaticProps() {
 
   const isLocalDev = !process.env.VERCEL;
 
+  const relatedArticles = await fetchRelatedArticles("Gym Music");
+  devLog(`gym-playlist-leaderboard relatedArticles:`, relatedArticles);
+
   // Dev mode use dummy data to protect my tiny Vercel quota of KV reads
   if (!vercelProPlan && isLocalDev) {
     console.log(
       "Local (non-Vercel) mode detected: Using dummy data instead of KV store",
     );
     return {
-      props: { initialPlaylists: dummyPlaylists },
+      props: { initialPlaylists: dummyPlaylists, relatedArticles },
     };
   }
 
@@ -57,13 +62,13 @@ export async function getStaticProps() {
       `getStaticProps: caching initialPlaylists (length: ${initialPlaylists.length}) `,
     );
     return {
-      props: { initialPlaylists },
+      props: { initialPlaylists, relatedArticles },
       revalidate: 600, // Revalidate for everyone every 10 minutes
     };
   } catch (error) {
     console.error("Error fetching playlists:", error);
     return {
-      props: { initialPlaylists: [] },
+      props: { initialPlaylists: [], relatedArticles },
     };
   }
 }
@@ -74,7 +79,7 @@ export async function getStaticProps() {
  * @param {Object} props
  * @param {Array} props.initialPlaylists - Pre-fetched playlist array from the Vercel KV store, used for ISR hydration.
  */
-export default function GymPlaylistLeaderboard({ initialPlaylists }) {
+export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticles }) {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [playlists, setPlaylists] = useState(initialPlaylists);
@@ -587,6 +592,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists }) {
             </TabsContent>
           </Tabs>
         </section>
+        <RelatedArticles articles={relatedArticles} />
       </PageContainer>
     </>
   );

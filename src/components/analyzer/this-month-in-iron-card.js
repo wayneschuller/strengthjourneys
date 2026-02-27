@@ -640,10 +640,10 @@ function getTonnageStatusTooltip({
   const liftLabel = formatLiftTypeLabel(liftType).toLowerCase();
 
   if (tonnageBaseline && !tonnageNewWin) {
-    return `No previous month ${liftLabel} tonnage.`;
+    return `Matched previous month ${liftLabel} tonnage.`;
   }
   if (tonnageNewWin) {
-    return `No previous month ${liftLabel} tonnage to compare.`;
+    return `Passed previous month ${liftLabel} tonnage.`;
   }
   if (currentTonnage > lastTonnage) {
     return `Passed previous month ${liftLabel} tonnage.`;

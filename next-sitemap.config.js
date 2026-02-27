@@ -39,7 +39,7 @@ async function fetchArticleSitemapEntries() {
 }
 
 module.exports = {
-  siteUrl: "https://strengthjourneys.xyz",
+  siteUrl: "https://www.strengthjourneys.xyz",
   generateRobotsTxt: true,
   additionalPaths: async () => fetchArticleSitemapEntries(),
 };

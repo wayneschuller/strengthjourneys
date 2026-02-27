@@ -39,7 +39,7 @@ export async function getStaticProps() {
 export default function TonnageVisualizer({ relatedArticles }) {
   // OG Meta Tags
   const title = "Strength Journeys Tonnage Metrics";
-  const canonicalURL = "https://www.strengthjourneys.xyz/tonnage-visualizer";
+  const canonicalURL = "https://www.strengthjourneys.xyz/tonnage";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_visualizer_og.png";
   const description =

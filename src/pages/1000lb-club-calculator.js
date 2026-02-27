@@ -480,9 +480,24 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                 </div>
               ))}
 
-              <div className="mt-4 text-3xl font-bold tabular-nums">
+              <motion.div
+                className="mt-4 text-3xl font-bold tabular-nums"
+                animate={
+                  prefersReducedMotion
+                    ? undefined
+                    : activeLiftKey
+                      ? { scale: 1.025, y: -1 }
+                      : { scale: 1, y: 0 }
+                }
+                transition={{
+                  type: "spring",
+                  stiffness: 320,
+                  damping: 22,
+                  mass: 0.7,
+                }}
+              >
                 Total: {total} lbs ({toKgF(total)} kg)
-              </div>
+              </motion.div>
 
               <div
                 className={cn("text-xl font-semibold", {
@@ -496,7 +511,12 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
               </div>
             </div>
             <div className="xl:self-center">
-              <ThousandDonut total={total} containerRef={donutContainerRef} />
+              <ThousandDonut
+                total={total}
+                containerRef={donutContainerRef}
+                isAdjusting={Boolean(activeLiftKey)}
+                prefersReducedMotion={prefersReducedMotion}
+              />
             </div>
           </div>
           <div className="mt-2">
@@ -655,6 +675,8 @@ function ThousandDonut({
   total,
   target = 1000,
   containerRef,
+  isAdjusting = false,
+  prefersReducedMotion = false,
 }) {
   const gradientId = `thousand-donut-progress-${useId().replace(/:/g, "")}`;
   const capped = Math.min(total, target);
@@ -670,9 +692,35 @@ function ThousandDonut({
   const totalKg = (total * KG_PER_LB).toFixed(1);
 
   return (
-    <div
+    <motion.div
       ref={containerRef}
       className="relative mx-auto my-6 h-[220px] w-full max-w-md xl:h-[320px] xl:max-w-lg"
+      animate={
+        prefersReducedMotion
+          ? undefined
+          : isAdjusting
+            ? {
+                scale: 1.03,
+                rotate: 0.6,
+                filter: "drop-shadow(0 10px 18px rgba(16,185,129,0.24))",
+              }
+            : { scale: 1, rotate: 0, filter: "drop-shadow(0 0px 0px rgba(0,0,0,0))" }
+      }
+      whileHover={
+        prefersReducedMotion
+          ? undefined
+          : {
+              scale: 1.04,
+              rotate: -0.6,
+              filter: "drop-shadow(0 12px 20px rgba(16,185,129,0.26))",
+            }
+      }
+      transition={{
+        type: "spring",
+        stiffness: 260,
+        damping: 18,
+        mass: 0.7,
+      }}
     >
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
@@ -690,7 +738,9 @@ function ThousandDonut({
             startAngle={90}
             endAngle={-270}
             stroke="none"
-            isAnimationActive={false}
+            isAnimationActive={!prefersReducedMotion && !isAdjusting}
+            animationDuration={220}
+            animationEasing="ease-out"
           >
             {data.map((_, i) => (
               <Cell key={i} fill={i === 0 ? `url(#${gradientId})` : COLORS[i]} />
@@ -700,7 +750,22 @@ function ThousandDonut({
       </ResponsiveContainer>
 
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="text-center tabular-nums">
+        <motion.div
+          className="text-center tabular-nums"
+          animate={
+            prefersReducedMotion
+              ? undefined
+              : isAdjusting
+                ? { scale: 1.06 }
+                : { scale: 1 }
+          }
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 20,
+            mass: 0.6,
+          }}
+        >
           {inClub ? (
             <>
               <div className="text-3xl font-bold text-green-500 xl:text-4xl">
@@ -720,8 +785,8 @@ function ThousandDonut({
               <div className="text-muted-foreground text-sm xl:text-lg">{percent}%</div>
             </>
           )}
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

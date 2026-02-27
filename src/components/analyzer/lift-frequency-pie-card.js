@@ -139,8 +139,9 @@ const TopLiftsTable = ({ stats, selectedLiftType, onSelectLift }) => {
               <td className="py-1 text-right text-sm whitespace-nowrap">
                 {item.reps.toLocaleString()} reps
               </td>
-              <td className="py-1 text-right text-sm whitespace-nowrap">
-                {item.sets} sets ({item.percentage}%)
+              <td className="hidden py-1 text-right text-sm whitespace-nowrap sm:table-cell">
+                {item.sets} sets
+                <span className="hidden md:inline"> ({item.percentage}%)</span>
               </td>
             </tr>
           ))}
@@ -328,11 +329,13 @@ export function LiftTypeFrequencyPieCard() {
           </div>
         )}
 
-        <TopLiftsTable
-          stats={stats}
-          selectedLiftType={effectiveSelectedLiftType}
-          onSelectLift={setSelectedLiftType}
-        />
+        <div className="mt-2">
+          <TopLiftsTable
+            stats={stats}
+            selectedLiftType={effectiveSelectedLiftType}
+            onSelectLift={setSelectedLiftType}
+          />
+        </div>
       </CardContent>
       <CardFooter className="pt-0">
         <MiniFeedbackWidget

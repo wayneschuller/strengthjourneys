@@ -933,9 +933,7 @@ function BigFourCriteriaTable({
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
                   <p className="max-w-56 text-center text-xs">
-                    This month sessions ({currentSessionsReporting}). We compare this to last
-                    month&apos;s same-day count; being within 10% still counts as
-                    on track.
+                    Compared with last month&apos;s same-day count; being within 10% still counts as on track.
                   </p>
                 </TooltipContent>
               </Tooltip>

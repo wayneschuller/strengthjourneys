@@ -640,18 +640,18 @@ function getTonnageStatusTooltip({
   const liftLabel = formatLiftTypeLabel(liftType).toLowerCase();
 
   if (tonnageBaseline && !tonnageNewWin) {
-    return `No previous month ${liftLabel} tonnage yet.`;
+    return `No previous month ${liftLabel} tonnage.`;
   }
   if (tonnageNewWin) {
-    return `First tracked month for ${liftLabel} tonnage.`;
+    return `No previous month ${liftLabel} tonnage to compare.`;
   }
   if (currentTonnage >= lastTonnage) {
-    return `Matched your previous month ${liftLabel} tonnage.`;
+    return `Matched previous month ${liftLabel} tonnage.`;
   }
   if (tonnagePassed) {
-    return `Passed your previous month ${liftLabel} tonnage.`;
+    return `Passed previous month ${liftLabel} tonnage.`;
   }
-  return `Below your previous month ${liftLabel} tonnage.`;
+  return `Below previous month ${liftLabel} tonnage.`;
 }
 
 function getStrengthLastColumnTooltip(boundaries, liftType) {

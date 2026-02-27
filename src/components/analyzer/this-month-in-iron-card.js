@@ -1,7 +1,13 @@
 
 import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import {
+  motion,
+  useInView,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "motion/react";
 import confetti from "canvas-confetti";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -105,6 +111,7 @@ export function ThisMonthInIronCard() {
   const highlightStepTimerRef = useRef(null);
   const highlightQueuedRef = useRef(false);
   const [revealedRows, setRevealedRows] = useState(0);
+  const isCardInView = useInView(cardRef, { once: true, amount: 0.35 });
   const totalRevealRows = useMemo(
     () => getMonthlyRevealRowCount(stats, strengthLevelStats),
     [stats, strengthLevelStats],
@@ -123,7 +130,7 @@ export function ThisMonthInIronCard() {
   );
 
   useEffect(() => {
-    if (!stats || totalRevealRows === 0) {
+    if (!isCardInView || !stats || totalRevealRows === 0) {
       setRevealedRows(0);
       highlightQueuedRef.current = false;
       if (highlightStartTimerRef.current) {
@@ -165,7 +172,7 @@ export function ThisMonthInIronCard() {
         });
       }, HIGHLIGHT_ROW_STAGGER_MS);
     }, HIGHLIGHT_REVEAL_DELAY_MS);
-  }, [stats, totalRevealRows, revealedRows]);
+  }, [isCardInView, stats, totalRevealRows, revealedRows]);
 
   useEffect(() => () => {
     if (highlightStartTimerRef.current) {

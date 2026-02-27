@@ -16,6 +16,7 @@ const DEFAULT_SHORT_PROMPTS = [
   "Good?",
   "Any good?",
 ];
+const AUTO_HIDE_AFTER_FEEDBACK_MS = 15000;
 
 const REASON_OPTIONS_BY_SENTIMENT = Object.freeze({
   positive: [
@@ -65,7 +66,9 @@ export function MiniFeedbackWidget({
   const [vote, setVote] = useState(null);
   const [reasonCode, setReasonCode] = useState(null);
   const [promptIndex, setPromptIndex] = useState(0);
+  const [isHidden, setIsHidden] = useState(false);
   const mountTime = useRef(null);
+  const hideTimerRef = useRef(null);
   const storageKey = `${SESSION_STORAGE_KEYS.MINI_FEEDBACK_PREFIX}${contextId || "unknown"}`;
   const reasonStorageKey = `${SESSION_STORAGE_KEYS.MINI_FEEDBACK_REASON_PREFIX}${contextId || "unknown"}`;
   const promptIndexStorageKey = `${SESSION_STORAGE_KEYS.MINI_FEEDBACK_PROMPT_INDEX_PREFIX}${contextId || "unknown"}`;
@@ -118,10 +121,29 @@ export function MiniFeedbackWidget({
     }
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current);
+      }
+    };
+  }, []);
+
+  function scheduleAutoHide() {
+    setIsHidden(false);
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+    }
+    hideTimerRef.current = setTimeout(() => {
+      setIsHidden(true);
+    }, AUTO_HIDE_AFTER_FEEDBACK_MS);
+  }
+
   function handleVote(sentiment) {
     if (sentiment === vote) return;
     setVote(sentiment);
     setReasonCode(null);
+    scheduleAutoHide();
     writeStoredSentiment(storageKey, sentiment);
     sessionStorage.removeItem(reasonStorageKey);
     trackFeedbackSentiment({
@@ -138,6 +160,7 @@ export function MiniFeedbackWidget({
     if (nextReasonCode === reasonCode) return;
 
     setReasonCode(nextReasonCode);
+    scheduleAutoHide();
     sessionStorage.setItem(reasonStorageKey, nextReasonCode);
     trackFeedbackSentiment({
       sentiment: vote,
@@ -156,7 +179,12 @@ export function MiniFeedbackWidget({
   const reasonOptions = getReasonOptions(vote);
 
   return (
-    <div className={`flex flex-col items-start gap-1.5 ${className}`.trim()}>
+    <div
+      className={`flex max-h-32 flex-col items-start gap-1.5 overflow-hidden transition-all duration-500 ${
+        isHidden ? "pointer-events-none max-h-0 opacity-0" : "opacity-100"
+      } ${className}`.trim()}
+      aria-hidden={isHidden}
+    >
       <div className="flex items-center gap-2">
         <span className="min-w-[5.75rem] text-xs text-muted-foreground">
           {vote ? "Thanks!" : promptText}

@@ -8,12 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
 import Image from "next/image";
-import {
-  ArrowDown,
-  ArrowRight,
-  ArrowBigDown,
-  ArrowBigRight,
-} from "lucide-react";
+import { BarChart3, Calendar, Check, Flame, Table2 } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 
@@ -284,6 +280,7 @@ export function GettingStartedCard() {
   const { data: session, status: authStatus } = useSession();
   const [openPicker, setOpenPicker] = useState(null);
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   const handlePickerReady = useCallback((picker) => {
     setOpenPicker(() => picker);
@@ -298,7 +295,16 @@ export function GettingStartedCard() {
 
   const { sheetInfo, selectSheet } = useUserLiftingData();
 
-  const arrowSize = 75;
+  const stepAnimation = (index) =>
+    prefersReducedMotion
+      ? {}
+      : {
+          initial: { opacity: 0, y: 14 },
+          whileInView: { opacity: 1, y: 0 },
+          viewport: { once: true, amount: 0.35 },
+          transition: { duration: 0.35, delay: index * 0.08 },
+        };
+
   return (
     <>
       {shouldLoadPicker && (
@@ -309,9 +315,16 @@ export function GettingStartedCard() {
           selectSheet={selectSheet}
         />
       )}
-      <Card className="hover:ring-0">
+      <Card className="relative overflow-hidden border hover:ring-0">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-70"
+          aria-hidden
+        >
+          <div className="from-primary/10 absolute -top-20 left-8 h-64 w-64 rounded-full bg-gradient-to-br to-transparent blur-3xl" />
+          <div className="from-chart-2/15 absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-gradient-to-tr to-transparent blur-3xl" />
+        </div>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="relative flex items-center gap-2 text-2xl tracking-tight">
             <img
               src={GOOGLE_SHEETS_ICON_URL}
               alt=""
@@ -320,181 +333,197 @@ export function GettingStartedCard() {
             />
             Turn Your Lifting History into Actionable Strength Analysis
           </CardTitle>
+          <CardDescription className="relative max-w-3xl text-base">
+            Strength Journeys is a free suite of lifting tools, and it really
+            comes alive with your own training data. Follow these steps to
+            connect your sheet and unlock personalized insights.
+          </CardDescription>
         </CardHeader>
-      <CardContent className="grid grid-cols-1 lg:grid-cols-7">
-        <div className="">
-          Train with progressive overload and log your sessions with a{" "}
-          <a
-            href="https://www.roguefitness.com/rogue-45lb-ohio-power-bar-bare-steel"
-            target="_blank"
-            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+        <CardContent className="relative grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
+          <motion.div
+            {...stepAnimation(0)}
+            className="bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1"
           >
-            barbell
-          </a>
-          . <br></br>
-          For example:{" "}
-          <Link
-            href="/barbell-squat-insights"
-            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            <div className="mb-3 flex items-center gap-2">
+              <div className="bg-primary/10 text-primary rounded-lg p-2">
+                <Flame className="h-4 w-4" />
+              </div>
+              <p className="text-sm font-semibold">Step 1: Copy the Template</p>
+            </div>
+            <p className="text-sm leading-relaxed">
+              Start with the{" "}
+              <a
+                href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              >
+                sample Google Sheet
+              </a>{" "}
+              and use <em>File → Make a copy</em>. This gives you your own
+              private log in the exact format Strength Journeys expects.
+            </p>
+            <div className="mt-3">
+              <Button asChild size="sm" className="gap-2">
+                <a
+                  href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src={GOOGLE_SHEETS_ICON_URL}
+                    alt=""
+                    className="h-4 w-4 shrink-0"
+                    aria-hidden
+                  />
+                  Open Google Sheet Template
+                </a>
+              </Button>
+            </div>
+          </motion.div>
+
+          <motion.div
+            {...stepAnimation(1)}
+            className="bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1"
           >
-            Squat
-          </Link>
-          ,{" "}
-          <Link
-            href="/barbell-bench-press-insights"
-            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            <div className="mb-3 flex items-center gap-2">
+              <div className="bg-primary/10 text-primary rounded-lg p-2">
+                <Calendar className="h-4 w-4" />
+              </div>
+              <p className="text-sm font-semibold">Step 2: Log Your Sessions</p>
+            </div>
+            <p className="text-sm leading-relaxed">
+              Put your lifting history in Google Sheets using columns for date,
+              lift type, reps, and weight. One set per row. Use {`"lb"`} or{" "}
+              {`"kg"`}. Start with the big four:{" "}
+              <Link
+                href="/barbell-squat-insights"
+                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              >
+                squat
+              </Link>
+              ,{" "}
+              <Link
+                href="/barbell-bench-press-insights"
+                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              >
+                bench
+              </Link>
+              ,{" "}
+              <Link
+                href="/barbell-deadlift-insights"
+                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              >
+                deadlift
+              </Link>
+              , and{" "}
+              <Link
+                href="/barbell-strict-press-insights"
+                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              >
+                strict press
+              </Link>
+              .
+            </p>
+          </motion.div>
+
+          <motion.div
+            {...stepAnimation(2)}
+            className="bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1"
           >
-            bench
-          </Link>
-          ,{" "}
-          <Link
-            href="/barbell-deadlift-insights"
-            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+            <div className="mb-3 flex items-center gap-2">
+              <div className="bg-primary/10 text-primary rounded-lg p-2">
+                <Table2 className="h-4 w-4" />
+              </div>
+              <p className="text-sm font-semibold">Step 3: Sign In + Connect</p>
+            </div>
+            <p className="mb-3 text-sm leading-relaxed">
+              First sign in with Google. Then choose your lifting sheet in the
+              Google Picker. Every time you visit Strength Journeys, your
+              browser re-reads your latest Google Sheet data so your insights
+              stay current. We never store your raw rows.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {authStatus !== "authenticated" ? (
+                <Button
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    gaTrackSignInClick(router.pathname);
+                    signIn("google");
+                  }}
+                >
+                  <GoogleLogo size={16} />
+                  Sign in with Google
+                </Button>
+              ) : authStatus === "authenticated" && !sheetInfo?.ssid ? (
+                <Button
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    if (openPicker) handleOpenFilePicker(openPicker);
+                  }}
+                  disabled={!openPicker}
+                  title={
+                    !openPicker
+                      ? "Loading Google Picker… (allow Google scripts if blocked)"
+                      : undefined
+                  }
+                >
+                  <img
+                    src={GOOGLE_SHEETS_ICON_URL}
+                    alt=""
+                    className="h-4 w-4 shrink-0"
+                    aria-hidden
+                  />
+                  {openPicker ? "Connect your sheet" : "Loading picker..."}
+                </Button>
+              ) : (
+                <div className="text-primary inline-flex items-center gap-1 text-sm font-medium">
+                  <Check className="h-4 w-4" />
+                  Google Sheet connected
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          <motion.div
+            {...stepAnimation(3)}
+            className="bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1"
           >
-            deadlift
-          </Link>
-          ,{" "}
-          <Link
-            href="/barbell-strict-press-insights"
-            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-          >
-            strict press
-          </Link>
-          . Log each set and build a complete lifting history over time.
-        </div>
-        <div className="flex justify-center">
-          <ArrowBigRight
-            size={arrowSize}
-            strokeWidth={0.5}
-            className="hidden lg:block"
-          />
-          <ArrowBigDown
-            size={arrowSize}
-            strokeWidth={0.5}
-            className="block lg:hidden"
-          />
-        </div>
-        <div className="">
-          Put your lifting history in a Google Sheet using simple columns:
-          date, lift type, reps, weight. One set per row.
-          <div>
-            (
-            <a
-              href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
-              target="_blank"
+            <div className="mb-3 flex items-center gap-2">
+              <div className="bg-primary/10 text-primary rounded-lg p-2">
+                <BarChart3 className="h-4 w-4" />
+              </div>
+              <p className="text-sm font-semibold">Step 4: Train Smarter</p>
+            </div>
+            <p className="text-sm leading-relaxed">
+              Start on the{" "}
+              <Link
+                href="/"
+                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              >
+                Home Dashboard
+              </Link>{" "}
+              for daily inspiration, momentum, consistency grades, and session
+              recaps. Then go to the Big Four lift pages for your best insights:
+              e1RM trends, tonnage, rep-range PRs, and strength standards.
+            </p>
+          </motion.div>
+        </CardContent>
+        <CardFooter className="relative">
+          <p className="text-muted-foreground text-sm">
+            Your sheet stays yours: read-only access, no edits, no raw-data
+            storage.{" "}
+            <Link
+              href="/privacy-policy.html"
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
-              sample Google Sheet
-            </a>
-            ). Use {`"lb"`} or {`"kg"`} with weight values.
-          </div>
-        </div>
-        <div className="flex justify-center">
-          <ArrowBigRight
-            size={arrowSize}
-            strokeWidth={0.5}
-            className="hidden lg:block"
-          />
-          <ArrowBigDown
-            size={arrowSize}
-            strokeWidth={0.5}
-            className="block lg:hidden"
-          />
-        </div>
-        <div className="">
-          {authStatus !== "authenticated" ? (
-            <button
-              onClick={() => {
-                gaTrackSignInClick(router.pathname);
-                signIn("google");
-              }}
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-            >
-              Sign in via Google
-            </button>
-          ) : (
-            "Sign in via Google"
-          )}{" "}
-          and{" "}
-          {authStatus === "authenticated" && !sheetInfo?.ssid ? (
-            <button
-              onClick={() => {
-                if (openPicker) handleOpenFilePicker(openPicker);
-              }}
-              className="inline-flex items-center gap-1 text-blue-600 underline visited:text-purple-600 hover:text-blue-800 disabled:cursor-wait disabled:opacity-70"
-              disabled={!openPicker}
-              title={
-                !openPicker
-                  ? "Loading Google Picker… (allow Google scripts if blocked)"
-                  : undefined
-              }
-            >
-              <img
-                src={GOOGLE_SHEETS_ICON_URL}
-                alt=""
-                className="h-4 w-4 shrink-0"
-                aria-hidden
-              />
-              {openPicker ? "select your Google Sheet" : "select your Google Sheet (loading…)"}
-            </button>
-          ) : (
-            "select your Google Sheet"
-          )}
-          . Strength Journeys reads your data live in your browser every couple
-          of seconds and does not store a copy.
-        </div>
-        <div className="flex justify-center">
-          <ArrowBigRight
-            size={arrowSize}
-            strokeWidth={0.5}
-            className="hidden lg:block"
-          />
-          <ArrowBigDown
-            size={arrowSize}
-            strokeWidth={0.5}
-            className="block lg:hidden"
-          />
-        </div>
-        <div className="">
-          Open your personalized dashboard: session recaps, PR tables,
-          consistency grades, lift frequency breakdowns, and training heatmaps in{" "}
-          <Link
-            href="/analyzer"
-            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-          >
-            Analyzer
-          </Link>{" "}
-          . Then use{" "}
-          <Link
-            href="/visualizer"
-            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-          >
-            Visualizer
-          </Link>
-          {" "}and the lift-specific{" "}
-          <Link
-            href="/barbell-squat-insights"
-            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-          >
-            insight pages
-          </Link>
-          {" "}for e1RM trends, tonnage, rep-range PRs, and strength standards. Build momentum and get strong for life.
-        </div>
-      </CardContent>
-      <CardFooter className="text-muted-foreground">
-        <div>
-          Your sheet stays yours. Strength Journeys only accesses it with
-          read-only permissions, never alters it, and never stores your raw
-          lifting data. {` `}
-          <Link
-            href="/privacy-policy.html"
-            className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-          >
-            (Privacy Policy)
-          </Link>
-        </div>
-      </CardFooter>
-    </Card>
+              Privacy Policy
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
     </>
   );
 }

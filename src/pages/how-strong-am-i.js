@@ -227,61 +227,65 @@ function HowStrongAmIPageInner() {
         </PageHeaderDescription>
       </PageHeader>
 
-      {/* Bio strip — full width above grid */}
-      <div className="mt-4 flex justify-center">
-        <AthleteBioInlineSettings
-          defaultBioPrompt="Enter your details for personalised percentiles."
-          autoOpenWhenDefault={true}
-        />
-      </div>
+      <Card className="mt-4">
+        <CardContent className="pt-5">
+          {/* Bio strip — full width above grid */}
+          <div className="flex justify-center">
+            <AthleteBioInlineSettings
+              defaultBioPrompt="Enter your details for personalised percentiles."
+              autoOpenWhenDefault={true}
+            />
+          </div>
 
-      {/*
-        Desktop: 3-column grid — controls | chart | breakdown
-        Mobile:  single column — chart first (order-1), controls second (order-2),
-                 breakdown last (order-3)
+          {/*
+            Desktop: 3-column grid — controls | chart | breakdown
+            Mobile:  single column — chart first (order-1), controls second (order-2),
+                     breakdown last (order-3)
 
-        The center column is true-center on the page because the outer columns
-        are equal-width (1fr each) and the center is auto-width capped at ~420px.
-      */}
-      <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,420px)_1fr] lg:items-start lg:gap-8">
+            The center column is true-center on the page because the outer columns
+            are equal-width (1fr each) and the center is auto-width capped at ~420px.
+          */}
+          <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,420px)_1fr] lg:items-start lg:gap-8">
 
-        {/* ── Col 1: Lift sliders ────────────────────────────────────────── */}
-        <div className="order-2 lg:order-none">
-          <LiftSliders
-            liftWeights={liftWeights}
-            onChange={handleLiftChange}
-            isMetric={isMetric}
-          />
-        </div>
+            {/* ── Col 1: Lift sliders ──────────────────────────────────── */}
+            <div className="order-2 lg:order-none">
+              <LiftSliders
+                liftWeights={liftWeights}
+                onChange={handleLiftChange}
+                isMetric={isMetric}
+              />
+            </div>
 
-        {/* ── Col 2: Hero chart + share button ─────────────────────────── */}
-        <div className="order-1 lg:order-none flex flex-col items-center gap-4">
-          <StrengthCirclesChart
-            percentiles={chartPercentiles}
-            activeUniverse={activeUniverse}
-            onUniverseChange={setActiveUniverse}
-          />
-          <Button variant="outline" size="sm" onClick={handleShare} className="gap-2">
-            <Copy className="h-3.5 w-3.5" />
-            Copy result
-          </Button>
-        </div>
+            {/* ── Col 2: Hero chart + share button ────────────────────── */}
+            <div className="order-1 lg:order-none flex flex-col items-center gap-4">
+              <StrengthCirclesChart
+                percentiles={chartPercentiles}
+                activeUniverse={activeUniverse}
+                onUniverseChange={setActiveUniverse}
+              />
+              <Button variant="outline" size="sm" onClick={handleShare} className="gap-2">
+                <Copy className="h-3.5 w-3.5" />
+                Copy result
+              </Button>
+            </div>
 
-        {/* ── Col 3: Per-lift breakdown ─────────────────────────────────── */}
-        <div className="order-3 lg:order-none">
-          <LiftBreakdown
-            results={results}
-            activeUniverse={activeUniverse}
-            liftWeights={liftWeights}
-            isMetric={isMetric}
-          />
-        </div>
-      </div>
+            {/* ── Col 3: Per-lift breakdown ────────────────────────────── */}
+            <div className="order-3 lg:order-none">
+              <LiftBreakdown
+                results={results}
+                activeUniverse={activeUniverse}
+                liftWeights={liftWeights}
+                isMetric={isMetric}
+              />
+            </div>
+          </div>
 
-      <section className="mt-12 max-w-2xl">
-        <ExplainerSection />
-        <FAQSection />
-      </section>
+          <section className="mt-10 max-w-2xl mx-auto">
+            <ExplainerSection />
+            <FAQSection />
+          </section>
+        </CardContent>
+      </Card>
     </PageContainer>
   );
 }

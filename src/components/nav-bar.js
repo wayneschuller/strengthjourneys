@@ -54,6 +54,7 @@ import {
   Bus,
   Flame,
   Sparkles,
+  CircleDashed,
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 
@@ -519,6 +520,11 @@ function CalculatorsMenu() {
       title: "Lifting Set Timer",
       href: "/timer",
       icon: <Timer className="h-5 w-5" />,
+    },
+    {
+      title: "How Strong Am I?",
+      href: "/how-strong-am-i",
+      icon: <CircleDashed className="h-5 w-5" />,
     },
   ];
 

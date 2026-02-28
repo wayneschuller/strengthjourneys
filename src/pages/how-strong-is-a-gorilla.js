@@ -39,7 +39,7 @@ const GORILLA_MULTIPLIER_MID = 8;
 
 // Matches Deadlift color in use-lift-colors.js
 const DEADLIFT_COLOR = "#005F73";
-const DEADLIFT_COLOR_SOFT = "rgba(0, 95, 115, 0.18)";
+const DEADLIFT_COLOR_SOFT = "rgba(0, 95, 115, 0.12)";
 
 const TRAINED_HUMAN_BASE_BENCH_LB = 175;
 const TRAINED_HUMAN_BASE_PRESS_LB = 110;
@@ -185,9 +185,17 @@ function GorillaStrengthMain({ relatedArticles }) {
 
   const bragLine = getBragLine(gorillaPercent);
 
+  const handleUnitSwitch = () => {
+    const nextIsMetric = !isMetric;
+    setIsMetric(nextIsMetric);
+    setBodyWeight((prev) => roundWeight(convertWeight(prev, isMetric, nextIsMetric)));
+    setBench((prev) => roundWeight(convertWeight(prev, isMetric, nextIsMetric)));
+    setPress((prev) => roundWeight(convertWeight(prev, isMetric, nextIsMetric)));
+  };
+
   const copyResult = async () => {
     const text =
-      `I’m ~${Math.round(gorillaPercent)}% as strong as a gorilla (upper-body). ` +
+      `I'm ~${Math.round(gorillaPercent)}% as strong as a gorilla (upper-body). ` +
       "https://www.strengthjourneys.xyz/how-strong-is-a-gorilla";
     try {
       await navigator.clipboard.writeText(text);
@@ -204,72 +212,108 @@ function GorillaStrengthMain({ relatedArticles }) {
           How Strong Are You Compared to a Gorilla?
         </PageHeaderHeading>
         <PageHeaderDescription>
-          A playful, approximate comparison - not biological precision.
+          A playful, approximate comparison — not biological precision.
         </PageHeaderDescription>
       </PageHeader>
 
-      <Card className="pt-2">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xl">Result</CardTitle>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle>Your Gorilla Comparison</CardTitle>
+            <UnitChooser isMetric={isMetric} onSwitchChange={handleUnitSwitch} />
+          </div>
         </CardHeader>
-        <CardContent className="space-y-8 py-6">
-          <section className="rounded-xl bg-muted/25 p-6">
-            <div className="flex items-center justify-center gap-2">
-              <GorillaIcon className="h-5 w-5" style={{ color: DEADLIFT_COLOR }} />
-              <p className="text-sm font-semibold">You vs Gorilla</p>
-            </div>
+
+        <CardContent className="space-y-8 pb-6 pt-2">
+
+          {/* ── HERO RESULT ── */}
+          <div
+            className="rounded-2xl p-6 text-center"
+            style={{ background: DEADLIFT_COLOR_SOFT }}
+          >
             <p
-              className="mt-3 text-center text-5xl font-extrabold leading-none"
+              className="text-[5rem] font-black leading-none tabular-nums tracking-tighter sm:text-[6rem]"
               style={{ color: DEADLIFT_COLOR }}
             >
               ~{Math.round(gorillaPercent)}%
             </p>
-            <p className="mt-2 text-center text-sm font-medium">
-              of gorilla strength (midpoint estimate)
+            <p className="mt-2 text-base font-semibold">
+              of a silverback gorilla&apos;s strength
             </p>
+            <p className="mt-1.5 text-sm italic text-muted-foreground">{bragLine}</p>
 
-            <div className="mt-5">
-              <div className="mb-2 flex items-center justify-between text-sm font-semibold">
+            {/* Progress bar */}
+            <div className="mt-6 space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-semibold">
                 <span>You</span>
-                <span>Gorilla</span>
+                <div className="flex items-center gap-1">
+                  <span>Silverback</span>
+                  <GorillaIcon className="h-4 w-4" style={{ color: DEADLIFT_COLOR }} />
+                </div>
               </div>
-              <div className="h-5 w-full overflow-hidden rounded-full bg-muted">
+              <div className="relative h-5 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-5 rounded-full transition-none"
+                  className="h-full rounded-full transition-all duration-150 ease-out"
                   style={{
                     width: `${fillPercent}%`,
-                    backgroundColor: DEADLIFT_COLOR,
+                    background: `linear-gradient(90deg, ${DEADLIFT_COLOR}66, ${DEADLIFT_COLOR})`,
                   }}
                 />
+                {[25, 50, 75].map((pct) => (
+                  <div
+                    key={pct}
+                    className="absolute inset-y-0 w-0.5 bg-background/50"
+                    style={{ left: `${pct}%` }}
+                  />
+                ))}
+              </div>
+              <div className="relative h-4">
+                {[25, 50, 75, 100].map((pct) => (
+                  <span
+                    key={pct}
+                    className="absolute -translate-x-1/2 text-[10px] text-muted-foreground"
+                    style={{ left: `${pct}%` }}
+                  >
+                    {pct}%
+                  </span>
+                ))}
               </div>
             </div>
-          </section>
+          </div>
 
-          <section className="rounded-xl bg-muted/20 p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold">Your strength score</h2>
-              <UnitChooser
-                isMetric={isMetric}
-                onSwitchChange={() => {
-                  const nextIsMetric = !isMetric;
-                  setIsMetric(nextIsMetric);
-                  setBodyWeight((prev) =>
-                    roundWeight(convertWeight(prev, isMetric, nextIsMetric)),
-                  );
-                  setBench((prev) =>
-                    roundWeight(convertWeight(prev, isMetric, nextIsMetric)),
-                  );
-                  setPress((prev) =>
-                    roundWeight(convertWeight(prev, isMetric, nextIsMetric)),
-                  );
-                }}
-              />
-            </div>
+          {/* ── STAT TILES ── */}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <StatTile
+              label="Stronger than"
+              value={`${Math.round(percentile.humans)}%`}
+              sub="of all adults"
+            />
+            <StatTile
+              label="Stronger than"
+              value={`${Math.round(percentile.gym)}%`}
+              sub="of gym-goers"
+            />
+            <StatTile
+              label="Your score"
+              value={displayScore}
+              sub={scoreUnit}
+            />
+            <StatTile
+              label="Gorilla range"
+              value={`${displayLow}–${displayHigh}`}
+              sub={scoreUnit}
+            />
+          </div>
 
-            <div className="grid gap-5 md:grid-cols-3">
+          {/* ── INPUTS ── */}
+          <div className="space-y-5">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Your lifts
+            </p>
+            <div className="grid gap-6 md:grid-cols-3">
               <StrengthInput
                 label="Bodyweight"
-                helper="for context only (v1)"
+                helper="context only (v1)"
                 value={bodyWeight}
                 onChange={setBodyWeight}
                 min={isMetric ? 45 : 100}
@@ -298,78 +342,51 @@ function GorillaStrengthMain({ relatedArticles }) {
                 unit={scoreUnit}
               />
             </div>
-
-            <p className="mt-5 text-sm font-medium">
-              Upper-body strength score:{" "}
+            <p className="text-sm text-muted-foreground">
+              Upper-body score:{" "}
               <span className="font-bold" style={{ color: DEADLIFT_COLOR }}>
                 {displayScore} {scoreUnit}
               </span>
+              {" "}(bench + strict press)
             </p>
-          </section>
+          </div>
 
-          <section className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl bg-muted/20 p-5">
-              <h3 className="text-base font-semibold">Gorilla estimate</h3>
-              <p className="mt-2 text-sm leading-relaxed">
-                A silverback is estimated at ~6-10x a trained human in upper-body
-                pulling/pressing strength.
-              </p>
-              <p className="mt-3 text-sm font-medium">
-                Estimated gorilla equivalent:{" "}
-                <span className="font-bold" style={{ color: DEADLIFT_COLOR }}>
-                  {displayLow}-{displayHigh} {scoreUnit}
-                </span>{" "}
-                (range, midpoint ~{displayMid} {scoreUnit})
-              </p>
-            </div>
+          {/* ── SHARE + LINK ── */}
+          <div className="flex flex-wrap items-center gap-3 border-t pt-6">
+            <Button
+              onClick={copyResult}
+              style={{ backgroundColor: DEADLIFT_COLOR }}
+            >
+              {isCopied ? "✓ Copied!" : "Share result"}
+            </Button>
+            <Link
+              href="/how-strong-am-i"
+              className="text-sm font-semibold underline-offset-2 hover:underline"
+              style={{ color: DEADLIFT_COLOR }}
+            >
+              Want the serious version? → How Strong Am I?
+            </Link>
+          </div>
 
-            <div className="rounded-xl bg-muted/20 p-5">
-              <h3 className="text-base font-semibold">Interpretation</h3>
-              <p className="mt-2 text-sm">
-                You are stronger than about{" "}
-                <strong>{Math.round(percentile.humans)}% of adults</strong> and{" "}
-                <strong>{Math.round(percentile.gym)}% of regular gym-goers</strong>{" "}
-                for this upper-body composite.
-              </p>
-              <p className="mt-3 text-sm">{bragLine}</p>
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <Button
-                  onClick={copyResult}
-                  className="h-11"
-                  style={{ backgroundColor: DEADLIFT_COLOR }}
-                >
-                  {isCopied ? "Copied" : "Copy result"}
-                </Button>
-                <Link
-                  href="/how-strong-am-i"
-                  className="text-sm font-semibold underline"
-                  style={{ color: DEADLIFT_COLOR }}
-                >
-                  Want the serious version? -&gt; How Strong Am I (Strength Circles)
-                </Link>
-              </div>
-            </div>
-          </section>
-
+          {/* ── ASSUMPTIONS ── */}
           <Accordion type="single" collapsible>
             <AccordionItem value="assumptions">
-              <AccordionTrigger>Assumptions</AccordionTrigger>
+              <AccordionTrigger>Assumptions & methodology</AccordionTrigger>
               <AccordionContent>
                 <ul className="list-inside list-disc space-y-2 text-sm text-muted-foreground">
                   <li>
-                    We estimate gorilla strength as 6-10x a trained human upper-body composite.
+                    Gorilla strength is estimated at ~6–10× a trained human upper-body composite.
                   </li>
                   <li>
-                    Bodyweight is used only as a light contextual scaling factor (+/-15% cap).
+                    Bodyweight is used as a light contextual scaling factor (+/–15% cap).
                   </li>
-                  <li>
-                    This is for perspective and fun, not a scientific measurement.
-                  </li>
+                  <li>This is for perspective and fun, not a scientific measurement.</li>
                 </ul>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
         </CardContent>
+
         <CardFooter className="pt-0 text-xs text-muted-foreground">
           Playful approximation. Not biological precision.
         </CardFooter>
@@ -382,32 +399,40 @@ function GorillaStrengthMain({ relatedArticles }) {
   );
 }
 
-function StrengthInput({
-  label,
-  helper,
-  value,
-  onChange,
-  min,
-  max,
-  step,
-  unit,
-}) {
+function StatTile({ label, value, sub }) {
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-semibold">
-        {label}: <span className="font-bold">{Math.round(value)} {unit}</span>
-      </Label>
-      <p className="text-xs text-muted-foreground">{helper}</p>
-      <div className="rounded-md border bg-background px-3 py-4">
-        <Slider
-          min={min}
-          max={max}
-          step={step}
-          value={[value]}
-          onValueChange={(vals) => onChange(vals[0])}
-          aria-label={`${label} slider in ${unit}`}
-        />
+    <div className="flex flex-col items-center justify-center gap-0.5 rounded-xl border bg-muted/30 p-4 text-center">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-xl font-black tabular-nums" style={{ color: DEADLIFT_COLOR }}>
+        {value}
+      </p>
+      <p className="text-xs text-muted-foreground">{sub}</p>
+    </div>
+  );
+}
+
+function StrengthInput({ label, helper, value, onChange, min, max, step, unit }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <Label className="text-sm font-semibold">{label}</Label>
+        <span
+          className="shrink-0 text-xl font-black tabular-nums"
+          style={{ color: DEADLIFT_COLOR }}
+        >
+          {Math.round(value)}
+          <span className="ml-0.5 text-xs font-normal text-muted-foreground">{unit}</span>
+        </span>
       </div>
+      <Slider
+        min={min}
+        max={max}
+        step={step}
+        value={[value]}
+        onValueChange={(vals) => onChange(vals[0])}
+        aria-label={`${label} slider in ${unit}`}
+      />
+      <p className="text-xs text-muted-foreground">{helper}</p>
     </div>
   );
 }

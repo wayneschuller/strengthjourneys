@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import { NextSeo } from "next-seo";
+import { Copy } from "lucide-react";
+import { Trophy } from "lucide-react";
 
 import {
   PageContainer,
@@ -30,7 +32,8 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Trophy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 // ─── ISR ─────────────────────────────────────────────────────────────────────
 
@@ -39,43 +42,86 @@ export async function getStaticProps() {
   return { props: { relatedArticles }, revalidate: 60 * 60 };
 }
 
-// ─── Lift config ──────────────────────────────────────────────────────────────
+// ─── Config ───────────────────────────────────────────────────────────────────
 
 const LIFTS = [
-  { key: "squat",    label: "Back Squat",  emoji: "🏋️", standardKey: "Back Squat" },
+  { key: "squat",    label: "Back Squat",  emoji: "🏋️", standardKey: "Back Squat"  },
   { key: "bench",    label: "Bench Press", emoji: "💪", standardKey: "Bench Press" },
-  { key: "deadlift", label: "Deadlift",    emoji: "⛓️", standardKey: "Deadlift" },
+  { key: "deadlift", label: "Deadlift",    emoji: "⛓️", standardKey: "Deadlift"    },
 ];
+
+const CANONICAL = "https://www.strengthjourneys.xyz/how-strong-am-i";
 
 function toKg(weight, isMetric) {
   return isMetric ? weight : weight / 2.2046;
 }
 
-// ─── Per-universe breakdown ───────────────────────────────────────────────────
+function ordinal(n) {
+  if (n == null) return "—";
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
 
-function UniverseBreakdown({ percentiles, activeUniverse, onUniverseChange }) {
+// ─── Per-lift breakdown ───────────────────────────────────────────────────────
+
+function LiftBreakdown({ results, activeUniverse, liftWeights, isMetric }) {
+  const unit = isMetric ? "kg" : "lb";
+
   return (
-    <div className="flex flex-col gap-1">
-      {UNIVERSES.map((universe) => {
-        const p = percentiles?.[universe];
-        const isActive = universe === activeUniverse;
-        return (
-          <button
-            key={universe}
-            onClick={() => onUniverseChange(universe)}
-            className={`flex items-center justify-between rounded-md px-3 py-2 text-sm transition-all ${
-              isActive
-                ? "bg-muted font-semibold"
-                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-            }`}
-          >
-            <span>{universe}</span>
-            <span className="tabular-nums font-medium">
-              {p !== null && p !== undefined ? `${p}th percentile` : "—"}
+    <div className="w-full max-w-md">
+      <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        Per-lift — {activeUniverse}
+      </p>
+      <div className="flex flex-col gap-1.5">
+        {LIFTS.map(({ key, label, emoji, standardKey }) => {
+          const liftResult = results.lifts[key];
+          const weight = liftWeights[key];
+          const percentile = liftResult?.percentiles?.[activeUniverse];
+          const weightKg = toKg(weight, isMetric);
+          const rating = liftResult?.standard
+            ? getStrengthRatingForE1RM(weightKg, liftResult.standard)
+            : null;
+
+          return (
+            <div
+              key={key}
+              className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm"
+            >
+              <div className="flex items-center gap-2">
+                <span>{emoji}</span>
+                <span className="font-medium">{label}</span>
+                <span className="text-muted-foreground">
+                  {weight}{unit}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {rating && (
+                  <Badge
+                    variant={getRatingBadgeVariant(rating)}
+                    className="hidden text-xs sm:inline-flex"
+                  >
+                    {STRENGTH_LEVEL_EMOJI[rating]} {rating}
+                  </Badge>
+                )}
+                <span className="tabular-nums font-semibold">
+                  {ordinal(percentile)}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* SBD total row — only when all three lifts produce results */}
+        {results.hasAllThree && results.total && (
+          <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+            <span className="font-medium text-muted-foreground">SBD Total</span>
+            <span className="tabular-nums font-bold">
+              {ordinal(results.total.percentiles?.[activeUniverse])}
             </span>
-          </button>
-        );
-      })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -83,47 +129,69 @@ function UniverseBreakdown({ percentiles, activeUniverse, onUniverseChange }) {
 // ─── Inner client component ───────────────────────────────────────────────────
 
 function HowStrongAmIPageInner() {
-  const { age, sex, bodyWeight, isMetric, standards } = useAthleteBio();
+  const { age, sex, bodyWeight, isMetric } = useAthleteBio();
+  const { toast } = useToast();
   const unit = isMetric ? "kg" : "lb";
 
+  // Track weights for all three lifts independently (display units)
+  const [liftWeights, setLiftWeights] = useState({
+    squat:    isMetric ? 100 : 225,
+    bench:    isMetric ? 70  : 155,
+    deadlift: isMetric ? 120 : 265,
+  });
+
+  // Which lift the slider is currently editing
   const [selectedLiftKey, setSelectedLiftKey] = useState("squat");
+
+  // Default active ring = Barbell Lifters (most relevant to our audience)
   const [activeUniverse, setActiveUniverse] = useState("Barbell Lifters");
 
-  // Default slider weight: intermediate Kilgore standard for the user's bio,
-  // falling back to a sensible number if standards aren't loaded yet.
-  const selectedLift = LIFTS.find((l) => l.key === selectedLiftKey);
-  const intermediateDefault = standards?.[selectedLift?.standardKey]?.intermediate;
-  const fallback = isMetric ? 100 : 225;
-  const [weight, setWeight] = useState(
-    intermediateDefault ? Math.round(intermediateDefault) : fallback,
-  );
-
-  // Slider range in display units
   const sliderMin  = isMetric ? 20  : 44;
   const sliderMax  = isMetric ? 300 : 660;
   const sliderStep = isMetric ? 2.5 : 5;
 
-  // Compute
   const bodyWeightKg = toKg(bodyWeight, isMetric);
-  const weightKg     = toKg(weight, isMetric);
 
+  // All lift weights in kg for computation
   const liftKgs = useMemo(() => ({
-    squat:    selectedLiftKey === "squat"    ? weightKg : null,
-    bench:    selectedLiftKey === "bench"    ? weightKg : null,
-    deadlift: selectedLiftKey === "deadlift" ? weightKg : null,
-  }), [selectedLiftKey, weightKg]);
+    squat:    toKg(liftWeights.squat,    isMetric),
+    bench:    toKg(liftWeights.bench,    isMetric),
+    deadlift: toKg(liftWeights.deadlift, isMetric),
+  }), [liftWeights, isMetric]);
 
   const results = useMemo(
     () => computeStrengthResults({ age, sex, bodyWeightKg }, liftKgs),
     [age, sex, bodyWeightKg, liftKgs],
   );
 
-  const activeLiftResult = results.lifts[selectedLiftKey];
-  const percentiles = activeLiftResult?.percentiles ?? {};
+  // Chart rings show average percentile across all three lifts per universe
+  const chartPercentiles = useMemo(() => {
+    const out = {};
+    for (const universe of UNIVERSES) {
+      const vals = LIFTS
+        .map(({ key }) => results.lifts[key]?.percentiles?.[universe])
+        .filter((v) => v != null);
+      out[universe] = vals.length
+        ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
+        : 0;
+    }
+    return out;
+  }, [results]);
 
-  const rating = activeLiftResult?.standard
-    ? getStrengthRatingForE1RM(weightKg, activeLiftResult.standard)
-    : null;
+  const currentWeight = liftWeights[selectedLiftKey];
+
+  const handleSlider = ([v]) =>
+    setLiftWeights((prev) => ({ ...prev, [selectedLiftKey]: v }));
+
+  // Share: copy a short text summary to clipboard
+  const handleShare = () => {
+    const percentile = chartPercentiles[activeUniverse];
+    const text = `I'm stronger than ${percentile}% of ${activeUniverse.toLowerCase()} — Strength Journeys: How Strong Am I? ${CANONICAL}`;
+    navigator.clipboard
+      .writeText(text)
+      .then(() => toast({ title: "Copied!", description: "Result copied to clipboard." }))
+      .catch(() => toast({ title: "Copy failed", description: "Try selecting the text manually.", variant: "destructive" }));
+  };
 
   return (
     <PageContainer>
@@ -135,28 +203,25 @@ function HowStrongAmIPageInner() {
         </PageHeaderDescription>
       </PageHeader>
 
-      {/* ── Centered hero column ─────────────────────────────────────────── */}
       <div className="mt-4 flex flex-col items-center gap-5">
-
-        {/* Bio strip — compact, nudges user to personalise */}
+        {/* Bio strip */}
         <AthleteBioInlineSettings
           defaultBioPrompt="Enter your details for personalised percentiles."
           autoOpenWhenDefault={true}
         />
 
-        {/* ── HERO: Strength Circles chart ─────────────────────────────── */}
+        {/* ── HERO: chart ──────────────────────────────────────────────── */}
         <div className="w-full max-w-md">
           <StrengthCirclesChart
-            percentiles={percentiles}
+            percentiles={chartPercentiles}
             activeUniverse={activeUniverse}
             onUniverseChange={setActiveUniverse}
           />
         </div>
 
-        {/* ── Lift input: dropdown + weight slider ─────────────────────── */}
+        {/* ── Lift input: dropdown + slider ────────────────────────────── */}
         <div className="w-full max-w-md rounded-xl border bg-card p-5">
           <div className="mb-4 flex items-center justify-between gap-4">
-            {/* Lift selector */}
             <Select value={selectedLiftKey} onValueChange={setSelectedLiftKey}>
               <SelectTrigger className="w-44">
                 <SelectValue />
@@ -170,51 +235,42 @@ function HowStrongAmIPageInner() {
               </SelectContent>
             </Select>
 
-            {/* Weight display */}
             <div className="flex items-baseline gap-1.5">
               <span className="text-3xl font-bold tabular-nums leading-none">
-                {weight}
+                {currentWeight}
               </span>
-              <span className="text-sm text-muted-foreground">{unit}</span>
+              <span className="text-sm text-muted-foreground">{unit} 1RM</span>
             </div>
           </div>
 
-          {/* Weight slider */}
           <Slider
-            value={[weight]}
-            onValueChange={([v]) => setWeight(v)}
+            value={[currentWeight]}
+            onValueChange={handleSlider}
             min={sliderMin}
             max={sliderMax}
             step={sliderStep}
           />
 
-          {/* Kilgore rating pill */}
-          {rating && (
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Kilgore level:</span>
-              <Badge variant={getRatingBadgeVariant(rating)} className="text-xs">
-                {STRENGTH_LEVEL_EMOJI[rating]} {rating}
-              </Badge>
-            </div>
-          )}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Switch the dropdown to set each lift. Results update live.
+          </p>
         </div>
 
-        {/* ── Per-universe breakdown ────────────────────────────────────── */}
-        {activeLiftResult && (
-          <div className="w-full max-w-md">
-            <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {selectedLift?.label} · all groups
-            </p>
-            <UniverseBreakdown
-              percentiles={percentiles}
-              activeUniverse={activeUniverse}
-              onUniverseChange={setActiveUniverse}
-            />
-          </div>
-        )}
+        {/* ── Per-lift breakdown ────────────────────────────────────────── */}
+        <LiftBreakdown
+          results={results}
+          activeUniverse={activeUniverse}
+          liftWeights={liftWeights}
+          isMetric={isMetric}
+        />
+
+        {/* ── Share button ──────────────────────────────────────────────── */}
+        <Button variant="outline" onClick={handleShare} className="gap-2">
+          <Copy className="h-4 w-4" />
+          Copy result
+        </Button>
       </div>
 
-      {/* ── Explainer + FAQ ──────────────────────────────────────────────── */}
       <section className="mt-12 max-w-2xl">
         <ExplainerSection />
         <FAQSection />
@@ -263,7 +319,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Should I enter my true 1RM or an estimate?",
-    a: "Either works. The slider represents a 1RM — if you only know a recent heavy set, find your estimated 1RM using the One Rep Max Calculator first.",
+    a: "Enter your best 1-rep max. If you only know a recent heavy set, use the One Rep Max Calculator to estimate it first.",
   },
   {
     q: "Does age matter?",
@@ -292,7 +348,6 @@ function FAQSection() {
 const TITLE = "How Strong Am I? Strength Percentile Calculator";
 const DESCRIPTION =
   "Compare your squat, bench press, and deadlift to the general population, gym-goers, barbell lifters, and competitive powerlifters. Free strength percentile calculator — no login required.";
-const CANONICAL = "https://www.strengthjourneys.xyz/how-strong-am-i";
 
 export default function HowStrongAmIPage({ relatedArticles }) {
   return (

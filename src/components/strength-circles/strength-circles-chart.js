@@ -2,63 +2,68 @@
  * StrengthCirclesChart
  *
  * Concentric ring chart visualizing strength percentiles across four universes.
- * Pure SVG — no Recharts. Animated via motion/react (stroke-dashoffset).
- *
- * Rings (outer → inner):
- *   General Population → Gym-Goers → Barbell Lifters → Powerlifting Culture
+ * Rings are pure SVG; center label is an HTML overlay (enables text wrapping +
+ * proper font rendering). Animated via motion/react.
  */
 
 import { motion, AnimatePresence } from "motion/react";
 
-// CSS vars in this project already include the full hsl() value.
-// Use var(--chart-N) directly — never hsl(var(--chart-N)).
+// Ring definitions — outer → inner.
+// strokeWidth increases slightly inward so inner rings don't feel secondary.
+// "ofLabel" is used in the center text: "Stronger than X% of the General Population"
 const RING_CONFIG = [
   {
     universe: "General Population",
-    label: "Gen. Pop.",
-    radius: 148,
-    strokeWidth: 20,
+    label:    "Gen. Pop.",
+    ofLabel:  "of the General Population",
+    radius:   155,
+    strokeWidth: 17,
     color: "var(--chart-1)",
   },
   {
     universe: "Gym-Goers",
-    label: "Gym-Goers",
-    radius: 120,
-    strokeWidth: 20,
+    label:    "Gym-Goers",
+    ofLabel:  "of Gym-Goers",
+    radius:   129,
+    strokeWidth: 18,
     color: "var(--chart-2)",
   },
   {
     universe: "Barbell Lifters",
-    label: "Barbell",
-    radius: 92,
-    strokeWidth: 20,
+    label:    "Barbell",
+    ofLabel:  "of Barbell Lifters",
+    radius:   103,
+    strokeWidth: 19,
     color: "var(--chart-3)",
   },
   {
     universe: "Powerlifting Culture",
-    label: "Powerlifting",
-    radius: 64,
+    label:    "Powerlifting",
+    ofLabel:  "of Powerlifting Culture",
+    radius:   77,
     strokeWidth: 20,
     color: "var(--chart-4)",
   },
 ];
 
-// Larger viewBox = more room for center text
-const VIEWBOX_SIZE = 340;
-const CENTER = VIEWBOX_SIZE / 2; // 170
+// Larger viewBox → more center breathing room
+const VIEWBOX_SIZE = 360;
+const CENTER = VIEWBOX_SIZE / 2; // 180
+
+// Inner ring clear radius = 77 − (20/2) = 67px → ~134px diameter (at viewBox scale)
+// HTML overlay uses max-w-[37%] of rendered SVG width ≈ 66% of that diameter
 
 function percentileToOffset(percentile, radius) {
   const circumference = 2 * Math.PI * radius;
   return circumference * (1 - (percentile ?? 0) / 100);
 }
 
-// ─── Individual ring ──────────────────────────────────────────────────────────
+// ─── Single ring ──────────────────────────────────────────────────────────────
 
 function Ring({ config, percentile, isActive, onClick }) {
   const { radius, strokeWidth, color } = config;
   const circumference = 2 * Math.PI * radius;
   const offset = percentileToOffset(percentile, radius);
-  const effectiveStroke = isActive ? strokeWidth + 4 : strokeWidth;
 
   return (
     <g
@@ -67,17 +72,17 @@ function Ring({ config, percentile, isActive, onClick }) {
       role="button"
       aria-label={`${config.universe}: ${percentile ?? 0}th percentile`}
     >
-      {/* Background track */}
+      {/* Background track — always full circle, base stroke width */}
       <circle
         cx={CENTER}
         cy={CENTER}
         r={radius}
         fill="none"
         style={{ stroke: "var(--muted-foreground)", opacity: 0.15 }}
-        strokeWidth={effectiveStroke}
+        strokeWidth={strokeWidth}
       />
 
-      {/* Filled arc — <g> handles the -90° rotation so motion doesn't intercept transform */}
+      {/* Filled arc — <g> rotates −90° so motion doesn't intercept the transform */}
       <g transform={`rotate(-90, ${CENTER}, ${CENTER})`}>
         <motion.circle
           cx={CENTER}
@@ -85,20 +90,22 @@ function Ring({ config, percentile, isActive, onClick }) {
           r={radius}
           fill="none"
           style={{ stroke: color }}
-          strokeWidth={effectiveStroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
           animate={{
             strokeDashoffset: offset,
-            opacity: isActive ? 1 : 0.55,
+            opacity:     isActive ? 1    : 0.45,
+            strokeWidth: isActive ? strokeWidth + 4 : strokeWidth,
           }}
           initial={{
             strokeDashoffset: circumference,
-            opacity: isActive ? 1 : 0.55,
+            opacity:     isActive ? 1    : 0.45,
+            strokeWidth: isActive ? strokeWidth + 4 : strokeWidth,
           }}
           transition={{
-            strokeDashoffset: { duration: 0.75, ease: "easeOut" },
-            opacity: { duration: 0.2 },
+            strokeDashoffset: { duration: 0.55, ease: "easeOut" },
+            opacity:          { duration: 0.25 },
+            strokeWidth:      { duration: 0.25 },
           }}
         />
       </g>
@@ -106,9 +113,9 @@ function Ring({ config, percentile, isActive, onClick }) {
   );
 }
 
-// ─── Center label ─────────────────────────────────────────────────────────────
-// Inner ring clear radius = 64 - 10 = 54px → 108px diameter for text
-// Two-line layout: big % number + colored universe name below
+// ─── Center label (HTML overlay) ─────────────────────────────────────────────
+// Absolutely positioned over the SVG so text wraps naturally and inherits page font.
+// max-w-[37%] keeps text inside the inner ring's clear area at all breakpoints.
 
 function CenterLabel({ activeUniverse, percentiles }) {
   const config = RING_CONFIG.find((r) => r.universe === activeUniverse);
@@ -116,83 +123,54 @@ function CenterLabel({ activeUniverse, percentiles }) {
   const hasData = percentile !== null && percentile !== undefined;
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.g
-        key={`${activeUniverse}-${hasData}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.18 }}
-      >
-        {hasData ? (
-          <>
-            {/* Big percentage — the hero number */}
-            <text
-              x={CENTER}
-              y={CENTER - 10}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize="48"
-              fontWeight="700"
-              fontFamily="inherit"
-              style={{ fill: "var(--foreground)", fontVariantNumeric: "tabular-nums" }}
-            >
-              {percentile}%
-            </text>
-
-            {/* Universe name below, in ring color */}
-            <text
-              x={CENTER}
-              y={CENTER + 32}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize="13"
-              fontWeight="600"
-              fontFamily="inherit"
-              style={{ fill: config?.color ?? "var(--foreground)" }}
-            >
-              {config?.label ?? activeUniverse}
-            </text>
-          </>
-        ) : (
-          <>
-            <text
-              x={CENTER}
-              y={CENTER - 10}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize="13"
-              fontFamily="inherit"
-              style={{ fill: "var(--muted-foreground)" }}
-            >
-              Enter a lift
-            </text>
-            <text
-              x={CENTER}
-              y={CENTER + 12}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize="13"
-              fontFamily="inherit"
-              style={{ fill: "var(--muted-foreground)" }}
-            >
-              to see results
-            </text>
-          </>
-        )}
-      </motion.g>
-    </AnimatePresence>
+    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={`${activeUniverse}-${String(hasData)}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
+          className="flex max-w-[37%] flex-col items-center text-center"
+        >
+          {hasData ? (
+            <>
+              <span className="text-[10px] leading-snug text-muted-foreground">
+                Stronger than
+              </span>
+              <span
+                className="text-4xl font-bold leading-none tabular-nums"
+                style={{ color: "var(--foreground)" }}
+              >
+                {percentile}%
+              </span>
+              <span
+                className="mt-0.5 text-[10px] font-semibold leading-snug"
+                style={{ color: config?.color }}
+              >
+                {config?.ofLabel ?? activeUniverse}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-xs text-muted-foreground">Enter a lift</span>
+              <span className="text-xs text-muted-foreground">to see results</span>
+            </>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }
 
-// ─── Legend below the chart ───────────────────────────────────────────────────
+// ─── Legend ───────────────────────────────────────────────────────────────────
 
 function Legend({ percentiles, activeUniverse, onUniverseChange }) {
   return (
-    <div className="mt-4 flex flex-col gap-1">
+    <div className="mt-1 flex flex-col gap-0.5">
       {RING_CONFIG.map((config) => {
         const percentile = percentiles?.[config.universe];
-        const isActive = config.universe === activeUniverse;
+        const isActive   = config.universe === activeUniverse;
 
         return (
           <button
@@ -232,33 +210,39 @@ export function StrengthCirclesChart({
 }) {
   return (
     <div className="flex flex-col">
-      <svg
-        viewBox={`0 0 ${VIEWBOX_SIZE} ${VIEWBOX_SIZE}`}
-        className="w-full"
-        aria-label="Strength percentile rings"
-        role="img"
-      >
-        {RING_CONFIG.map((config) => (
-          <Ring
-            key={config.universe}
-            config={config}
-            percentile={percentiles?.[config.universe] ?? 0}
-            isActive={config.universe === activeUniverse}
-            onClick={() => onUniverseChange(config.universe)}
-          />
-        ))}
+      {/* Rings SVG + HTML center overlay */}
+      <div className="relative">
+        <svg
+          viewBox={`0 0 ${VIEWBOX_SIZE} ${VIEWBOX_SIZE}`}
+          className="w-full"
+          aria-label="Strength percentile rings"
+          role="img"
+        >
+          {RING_CONFIG.map((config) => (
+            <Ring
+              key={config.universe}
+              config={config}
+              percentile={percentiles?.[config.universe] ?? 0}
+              isActive={config.universe === activeUniverse}
+              onClick={() => onUniverseChange(config.universe)}
+            />
+          ))}
+        </svg>
 
-        <CenterLabel
-          activeUniverse={activeUniverse}
-          percentiles={percentiles}
-        />
-      </svg>
+        <CenterLabel activeUniverse={activeUniverse} percentiles={percentiles} />
+      </div>
 
+      {/* Legend — tight mt-1 so it feels attached to the chart */}
       <Legend
         percentiles={percentiles}
         activeUniverse={activeUniverse}
         onUniverseChange={onUniverseChange}
       />
+
+      {/* Trust line */}
+      <p className="mt-2 text-center text-[11px] text-muted-foreground">
+        As the groups become more specialised, the comparison becomes tougher.
+      </p>
     </div>
   );
 }

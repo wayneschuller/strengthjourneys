@@ -286,50 +286,25 @@ function GorillaStrengthMain({ relatedArticles }) {
                 </p>
               </div>
 
-              <div className="mx-auto mt-4 w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:left-0 md:top-1/2 md:mt-0 md:w-fit md:-translate-y-1/2">
-                <div className="flex items-center gap-1 text-left">
-                  <div className="relative h-[clamp(80px,12.8vh,136px)] aspect-[1200/700]">
-                    <Image
-                      src="/human_bench.png"
-                      alt=""
-                      fill
-                      aria-hidden="true"
-                      className="object-contain object-right opacity-90"
-                    />
-                  </div>
-                  <div className="shrink-0">
-                    <p className="text-xs text-muted-foreground">Human bench</p>
-                    <p className="text-2xl font-black tabular-nums md:text-3xl" style={{ color: DEADLIFT_COLOR }}>
-                      {displayBench}
-                      <span className="ml-1 text-base font-semibold text-muted-foreground">
-                        {scoreUnit}
-                      </span>
-                    </p>
-                  </div>
-                </div>
+              <div className="mx-auto mt-4 hidden w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:left-0 md:top-1/2 md:mt-0 md:block md:w-fit md:-translate-y-1/2">
+                <ComparisonBenchCard
+                  label="Human bench"
+                  value={displayBench}
+                  unit={scoreUnit}
+                  imageSrc="/human_bench.png"
+                  imageObjectPosition="object-right"
+                />
               </div>
 
-              <div className="mx-auto mt-4 w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:right-0 md:top-1/2 md:mt-0 md:w-fit md:-translate-y-1/2">
-                <div className="flex items-center gap-1 text-left">
-                  <div className="shrink-0">
-                    <p className="text-xs text-muted-foreground">Gorilla bench</p>
-                    <p className="text-2xl font-black tabular-nums md:text-3xl" style={{ color: DEADLIFT_COLOR }}>
-                      {displayGorillaCardValue}+
-                      <span className="ml-1 text-base font-semibold text-muted-foreground">
-                        {scoreUnit}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="relative h-[clamp(80px,12.8vh,136px)] aspect-[1200/700]">
-                    <Image
-                      src="/gorilla_bench.png"
-                      alt=""
-                      fill
-                      aria-hidden="true"
-                      className="object-contain object-left opacity-90"
-                    />
-                  </div>
-                </div>
+              <div className="mx-auto mt-4 hidden w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:right-0 md:top-1/2 md:mt-0 md:block md:w-fit md:-translate-y-1/2">
+                <ComparisonBenchCard
+                  label="Gorilla bench"
+                  value={`${displayGorillaCardValue}+`}
+                  unit={scoreUnit}
+                  imageSrc="/gorilla_bench.png"
+                  imageObjectPosition="object-left"
+                  reverse
+                />
               </div>
             </div>
 
@@ -435,6 +410,28 @@ function GorillaStrengthMain({ relatedArticles }) {
                 Your best single rep — form optional, honesty required.
               </p>
             </div>
+
+            <div className="space-y-3 md:hidden">
+              <div className="w-full rounded-xl border bg-background/65 p-3 backdrop-blur-[1px]">
+                <ComparisonBenchCard
+                  label="Human bench"
+                  value={displayBench}
+                  unit={scoreUnit}
+                  imageSrc="/human_bench.png"
+                  imageObjectPosition="object-right"
+                />
+              </div>
+              <div className="w-full rounded-xl border bg-background/65 p-3 backdrop-blur-[1px]">
+                <ComparisonBenchCard
+                  label="Gorilla bench"
+                  value={`${displayGorillaCardValue}+`}
+                  unit={scoreUnit}
+                  imageSrc="/gorilla_bench.png"
+                  imageObjectPosition="object-left"
+                  reverse
+                />
+              </div>
+            </div>
           </div>
 
           {/* ── SHARE ── */}
@@ -490,6 +487,31 @@ function StatTile({ label, value, sub }) {
         {value}
       </p>
       <p className="text-xs text-muted-foreground">{sub}</p>
+    </div>
+  );
+}
+
+function ComparisonBenchCard({ label, value, unit, imageSrc, imageObjectPosition, reverse = false }) {
+  return (
+    <div className={`flex items-center gap-1 text-left ${reverse ? "flex-row-reverse" : ""}`}>
+      <div className="relative h-[clamp(80px,12.8vh,136px)] aspect-[1200/700]">
+        <Image
+          src={imageSrc}
+          alt=""
+          fill
+          aria-hidden="true"
+          className={`object-contain opacity-90 ${imageObjectPosition}`}
+        />
+      </div>
+      <div className="shrink-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-2xl font-black tabular-nums md:text-3xl" style={{ color: DEADLIFT_COLOR }}>
+          {value}
+          <span className="ml-1 text-base font-semibold text-muted-foreground">
+            {unit}
+          </span>
+        </p>
+      </div>
     </div>
   );
 }

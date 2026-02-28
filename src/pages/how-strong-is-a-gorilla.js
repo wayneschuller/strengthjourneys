@@ -3,6 +3,7 @@ import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { useEffect, useMemo, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
+import { motion } from "motion/react";
 import { GorillaIcon } from "@/components/gorilla-icon";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import { RelatedArticles } from "@/components/article-cards";
@@ -143,6 +144,10 @@ function GorillaStrengthMain({ relatedArticles }) {
   const gorillaPercent = clamp((benchLb / GORILLA_BENCH_MID_LB) * 100, 0, 999);
   const fillPercent = clamp(gorillaPercent, 0, 100);
 
+  // Gorilla grows from cowering (0.18) to full menace (1.0) as you approach 100%
+  const gorillaScale = 0.18 + (fillPercent / 100) * 0.82;
+  const gorillaOpacity = 0.3 + (fillPercent / 100) * 0.7;
+
   // Use fixed assumed bodyweight for percentile ratio (fun approximation)
   const strengthRatio = benchLb / ASSUMED_BODYWEIGHT_LB;
   const percentile = useMemo(
@@ -203,13 +208,24 @@ function GorillaStrengthMain({ relatedArticles }) {
             className="rounded-2xl p-6 text-center"
             style={{ background: DEADLIFT_COLOR_SOFT }}
           >
-            <p
-              className="text-[5rem] font-black leading-none tabular-nums tracking-tighter sm:text-[6rem]"
-              style={{ color: DEADLIFT_COLOR }}
-            >
-              ~{Math.round(gorillaPercent)}%
-            </p>
-            <p className="mt-2 text-base font-semibold">
+            {/* Gorilla + percentage side by side */}
+            <div className="flex items-end justify-center gap-4">
+              <motion.div
+                animate={{ scale: gorillaScale, opacity: gorillaOpacity }}
+                transition={{ type: "spring", stiffness: 220, damping: 18 }}
+                style={{ transformOrigin: "bottom center" }}
+                className="shrink-0"
+              >
+                <GorillaIcon size={120} color={DEADLIFT_COLOR} />
+              </motion.div>
+              <p
+                className="text-[5rem] font-black leading-none tabular-nums tracking-tighter sm:text-[6rem]"
+                style={{ color: DEADLIFT_COLOR }}
+              >
+                ~{Math.round(gorillaPercent)}%
+              </p>
+            </div>
+            <p className="mt-3 text-base font-semibold">
               of a silverback gorilla&apos;s bench press
             </p>
             <p className="mt-1.5 text-sm italic text-muted-foreground">{bragLine}</p>

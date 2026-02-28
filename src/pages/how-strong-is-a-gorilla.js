@@ -248,7 +248,30 @@ function GorillaStrengthMain({ relatedArticles }) {
                 </p>
               </div>
 
-              <div className="mx-auto mt-4 w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:right-0 md:top-6 md:mt-0 md:w-fit">
+              <div className="mx-auto mt-4 w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:left-0 md:top-1/2 md:mt-0 md:w-fit md:-translate-y-1/2">
+                <div className="flex items-center gap-1 text-left">
+                  <div className="relative h-[clamp(80px,12.8vh,136px)] aspect-[1200/700]">
+                    <Image
+                      src="/human_bench.png"
+                      alt=""
+                      fill
+                      aria-hidden="true"
+                      className="object-contain object-right opacity-90"
+                    />
+                  </div>
+                  <div className="shrink-0">
+                    <p className="text-xs text-muted-foreground">Human bench</p>
+                    <p className="text-2xl font-black tabular-nums md:text-3xl" style={{ color: DEADLIFT_COLOR }}>
+                      {displayBench}
+                      <span className="ml-1 text-base font-semibold text-muted-foreground">
+                        {scoreUnit}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mx-auto mt-4 w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:right-0 md:top-1/2 md:mt-0 md:w-fit md:-translate-y-1/2">
                 <div className="flex items-center gap-1 text-left">
                   <div className="shrink-0">
                     <p className="text-xs text-muted-foreground">Gorilla bench</p>

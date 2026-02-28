@@ -1,9 +1,10 @@
 import Head from "next/head";
+import Image from "next/image";
 import { NextSeo } from "next-seo";
 import { useEffect, useMemo, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { motion } from "motion/react";
-import { Shield, Share2 } from "lucide-react";
+import { Share2, Shield } from "lucide-react";
 import { GorillaIcon } from "@/components/gorilla-icon";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import { RelatedArticles } from "@/components/article-cards";
@@ -176,14 +177,6 @@ function GorillaStrengthMain({ relatedArticles }) {
   const scoreUnit = isMetric ? "kg" : "lb";
   const displayBench = Math.round(bench);
   const displayGorillaMid = formatWeightInt(GORILLA_BENCH_MID_LB, isMetric);
-  const displayGorillaLow = formatWeightInt(GORILLA_BENCH_LOW_LB, isMetric);
-  const displayGorillaHigh = formatWeightInt(GORILLA_BENCH_HIGH_LB, isMetric);
-  const displayGorillaMidKg = formatWeightInt(GORILLA_BENCH_MID_LB, true);
-  const displayGorillaLowKg = formatWeightInt(GORILLA_BENCH_LOW_LB, true);
-  const displayGorillaHighKg = formatWeightInt(GORILLA_BENCH_HIGH_LB, true);
-  const displayGorillaMidLb = formatWeightInt(GORILLA_BENCH_MID_LB, false);
-  const displayGorillaLowLb = formatWeightInt(GORILLA_BENCH_LOW_LB, false);
-  const displayGorillaHighLb = formatWeightInt(GORILLA_BENCH_HIGH_LB, false);
 
   const bragLine = getBragLine(gorillaPercent);
 
@@ -257,12 +250,9 @@ function GorillaStrengthMain({ relatedArticles }) {
                   <p className="text-xs text-muted-foreground">Gorilla bench</p>
                   <p className="text-3xl font-black tabular-nums" style={{ color: DEADLIFT_COLOR }}>
                     ~{displayGorillaMid}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    kg ({displayGorillaLowKg}–{displayGorillaHighKg})
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    lb ({displayGorillaLowLb}–{displayGorillaHighLb})
+                    <span className="ml-1 text-base font-semibold text-muted-foreground">
+                      {scoreUnit}
+                    </span>
                   </p>
                 </div>
                 <GorillaIcon
@@ -352,14 +342,24 @@ function GorillaStrengthMain({ relatedArticles }) {
                   </span>
                 </span>
               </div>
-              <Slider
-                min={isMetric ? 20 : 45}
-                max={isMetric ? 320 : 700}
-                step={isMetric ? 2.5 : 5}
-                value={[bench]}
-                onValueChange={(vals) => setBench(vals[0])}
-                aria-label={`Bench press 1RM in ${scoreUnit}`}
-              />
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/bench_press.svg"
+                  alt=""
+                  width={22}
+                  height={22}
+                  aria-hidden="true"
+                  className="shrink-0 opacity-90"
+                />
+                <Slider
+                  min={isMetric ? 20 : 45}
+                  max={isMetric ? 320 : 700}
+                  step={isMetric ? 2.5 : 5}
+                  value={[bench]}
+                  onValueChange={(vals) => setBench(vals[0])}
+                  aria-label={`Bench press 1RM in ${scoreUnit}`}
+                />
+              </div>
               <p className="text-xs text-muted-foreground">
                 Your best single rep — form optional, honesty required.
               </p>

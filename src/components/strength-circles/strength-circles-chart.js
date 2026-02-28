@@ -6,59 +6,51 @@
  *
  * Rings (outer → inner):
  *   General Population → Gym-Goers → Barbell Lifters → Powerlifting Culture
- *
- * Props:
- *   percentiles       { [universe]: number }  0–99 per universe
- *   activeUniverse    string
- *   onUniverseChange  (universe: string) => void
- *   size              number  (SVG viewBox square size, default 320)
  */
 
 import { motion, AnimatePresence } from "motion/react";
-import { UNIVERSES } from "@/lib/strength-circles/universe-percentiles";
 
 // ─── Ring layout config ───────────────────────────────────────────────────────
 
+// NOTE: CSS vars like --chart-1 already include the full hsl(...) value in
+// this project, so use var(--chart-1) directly — never hsl(var(--chart-1)).
 const RING_CONFIG = [
   {
     universe: "General Population",
     label: "Gen. Pop.",
     radius: 130,
     strokeWidth: 16,
-    color: "hsl(var(--chart-1))",
+    color: "var(--chart-1)",
   },
   {
     universe: "Gym-Goers",
     label: "Gym-Goers",
     radius: 107,
     strokeWidth: 16,
-    color: "hsl(var(--chart-2))",
+    color: "var(--chart-2)",
   },
   {
     universe: "Barbell Lifters",
     label: "Barbell",
     radius: 84,
     strokeWidth: 16,
-    color: "hsl(var(--chart-3))",
+    color: "var(--chart-3)",
   },
   {
     universe: "Powerlifting Culture",
     label: "Powerlifting",
     radius: 61,
     strokeWidth: 16,
-    color: "hsl(var(--chart-4))",
+    color: "var(--chart-4)",
   },
 ];
 
 const VIEWBOX_SIZE = 320;
 const CENTER = VIEWBOX_SIZE / 2;
 
-// Convert a percentile (0–100) to stroke-dashoffset on a circle of given radius.
-// The arc starts at the top (−90° rotation applied via transform).
-// Full circumference = 2πr. A percentile of 100 = full circle (offset 0).
 function percentileToOffset(percentile, radius) {
   const circumference = 2 * Math.PI * radius;
-  return circumference * (1 - percentile / 100);
+  return circumference * (1 - (percentile ?? 0) / 100);
 }
 
 // ─── Individual ring ──────────────────────────────────────────────────────────
@@ -66,56 +58,52 @@ function percentileToOffset(percentile, radius) {
 function Ring({ config, percentile, isActive, onClick }) {
   const { radius, strokeWidth, color } = config;
   const circumference = 2 * Math.PI * radius;
-  const offset = percentileToOffset(percentile ?? 0, radius);
-
-  // Active ring gets a slightly larger stroke and full opacity;
-  // inactive rings dim slightly.
+  const offset = percentileToOffset(percentile, radius);
   const effectiveStroke = isActive ? strokeWidth + 3 : strokeWidth;
-  const opacity = isActive ? 1 : 0.65;
+  const opacity = isActive ? 1 : 0.6;
 
   return (
     <g
-      style={{ cursor: "pointer" }}
       onClick={onClick}
+      style={{ cursor: "pointer" }}
       role="button"
       aria-label={`${config.universe}: ${percentile ?? 0}th percentile`}
     >
-      {/* Track (background full circle) */}
+      {/* Background track — full 360° ring */}
       <circle
         cx={CENTER}
         cy={CENTER}
         r={radius}
         fill="none"
-        stroke="hsl(var(--muted))"
+        style={{ stroke: "var(--muted-foreground)", opacity: 0.18 }}
         strokeWidth={effectiveStroke}
-        opacity={0.35}
       />
 
-      {/* Filled arc */}
-      <motion.circle
-        cx={CENTER}
-        cy={CENTER}
-        r={radius}
-        fill="none"
-        stroke={color}
-        strokeWidth={effectiveStroke}
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        animate={{
-          strokeDashoffset: offset,
-          opacity,
-        }}
-        initial={{
-          strokeDashoffset: circumference, // start at 0%
-          opacity,
-        }}
-        transition={{
-          strokeDashoffset: { duration: 0.8, ease: "easeOut" },
-          opacity: { duration: 0.2 },
-        }}
-        // SVG circles draw clockwise from 3 o'clock; rotate to start at top
-        transform={`rotate(-90, ${CENTER}, ${CENTER})`}
-      />
+      {/* Filled arc — rotate via <g> so motion doesn't intercept the transform */}
+      <g transform={`rotate(-90, ${CENTER}, ${CENTER})`}>
+        <motion.circle
+          cx={CENTER}
+          cy={CENTER}
+          r={radius}
+          fill="none"
+          style={{ stroke: color }}
+          strokeWidth={effectiveStroke}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          animate={{
+            strokeDashoffset: offset,
+            opacity,
+          }}
+          initial={{
+            strokeDashoffset: circumference,
+            opacity,
+          }}
+          transition={{
+            strokeDashoffset: { duration: 0.8, ease: "easeOut" },
+            opacity: { duration: 0.2 },
+          }}
+        />
+      </g>
     </g>
   );
 }
@@ -130,7 +118,7 @@ function CenterLabel({ activeUniverse, percentiles }) {
   return (
     <AnimatePresence mode="wait">
       <motion.g
-        key={activeUniverse}
+        key={activeUniverse + String(hasData)}
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
@@ -139,7 +127,6 @@ function CenterLabel({ activeUniverse, percentiles }) {
       >
         {hasData ? (
           <>
-            {/* Large percentile number */}
             <text
               x={CENTER}
               y={CENTER - 10}
@@ -147,23 +134,20 @@ function CenterLabel({ activeUniverse, percentiles }) {
               dominantBaseline="auto"
               fontSize="42"
               fontWeight="700"
-              fill="hsl(var(--foreground))"
-              style={{ fontVariantNumeric: "tabular-nums" }}
+              style={{ fill: "var(--foreground)", fontVariantNumeric: "tabular-nums" }}
             >
               {percentile}%
             </text>
-            {/* "stronger than" label */}
             <text
               x={CENTER}
               y={CENTER + 12}
               textAnchor="middle"
               dominantBaseline="auto"
               fontSize="11"
-              fill="hsl(var(--muted-foreground))"
+              style={{ fill: "var(--muted-foreground)" }}
             >
               stronger than
             </text>
-            {/* Universe name */}
             <text
               x={CENTER}
               y={CENTER + 28}
@@ -171,7 +155,7 @@ function CenterLabel({ activeUniverse, percentiles }) {
               dominantBaseline="auto"
               fontSize="12"
               fontWeight="600"
-              fill={config?.color ?? "hsl(var(--foreground))"}
+              style={{ fill: config?.color ?? "var(--foreground)" }}
             >
               {config?.label ?? activeUniverse}
             </text>
@@ -184,7 +168,7 @@ function CenterLabel({ activeUniverse, percentiles }) {
               textAnchor="middle"
               dominantBaseline="auto"
               fontSize="13"
-              fill="hsl(var(--muted-foreground))"
+              style={{ fill: "var(--muted-foreground)" }}
             >
               Enter lifts
             </text>
@@ -194,7 +178,7 @@ function CenterLabel({ activeUniverse, percentiles }) {
               textAnchor="middle"
               dominantBaseline="auto"
               fontSize="13"
-              fill="hsl(var(--muted-foreground))"
+              style={{ fill: "var(--muted-foreground)" }}
             >
               to see results
             </text>
@@ -226,14 +210,12 @@ function Legend({ percentiles, activeUniverse, onUniverseChange }) {
           >
             <div className="flex items-center gap-2">
               <span
-                className="inline-block h-2.5 w-2.5 rounded-full"
+                className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full"
                 style={{ backgroundColor: config.color }}
               />
               <span>{config.universe}</span>
             </div>
-            <span
-              className={`tabular-nums ${isActive ? "text-foreground" : ""}`}
-            >
+            <span className="tabular-nums">
               {percentile !== null && percentile !== undefined
                 ? `${percentile}th`
                 : "—"}
@@ -260,7 +242,6 @@ export function StrengthCirclesChart({
         aria-label="Strength percentile rings"
         role="img"
       >
-        {/* Rings: rendered outer → inner so inner rings paint on top */}
         {RING_CONFIG.map((config) => (
           <Ring
             key={config.universe}
@@ -271,7 +252,6 @@ export function StrengthCirclesChart({
           />
         ))}
 
-        {/* Center label */}
         <CenterLabel
           activeUniverse={activeUniverse}
           percentiles={percentiles}

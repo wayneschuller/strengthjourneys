@@ -25,6 +25,7 @@ import {
   Luggage,
   Flame,
   Sparkles,
+  CircleDashed,
 } from "lucide-react";
 
 import { motion } from "motion/react";
@@ -90,10 +91,24 @@ export const featurePages = [
     IconComponent: Flame,
   },
   {
+    href: "/how-strong-am-i",
+    title: "How Strong Am I?",
+    description:
+      "See your strength percentile across four groups — from the general population to competitive powerlifters.",
+    IconComponent: CircleDashed,
+  },
+  {
     href: "/strength-level-calculator",
     title: "Strength Level Calculator",
     description:
       "How strong are you? Assess your relative strength by age, gender and lift type.",
+    IconComponent: BicepsFlexed,
+  },
+  {
+    href: "/how-strong-is-a-gorilla",
+    title: "How Strong Is a Gorilla?",
+    description:
+      "Compare your upper-body strength to a silverback with a fun, transparent estimate.",
     IconComponent: BicepsFlexed,
   },
   {

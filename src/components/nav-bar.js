@@ -57,6 +57,7 @@ import {
   CircleDashed,
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+import { GorillaIcon } from "@/components/gorilla-icon";
 
 import { getLogoForTheme } from "@/lib/theme-logos";
 
@@ -527,6 +528,11 @@ function CalculatorsMenu() {
             title: "How Strong Am I?",
             href: "/how-strong-am-i",
             icon: <CircleDashed className="h-5 w-5" />,
+          },
+          {
+            title: "How Strong Is a Gorilla?",
+            href: "/how-strong-is-a-gorilla",
+            icon: <GorillaIcon className="h-5 w-5" />,
           },
         ]
       : []),

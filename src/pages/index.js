@@ -109,13 +109,17 @@ export const featurePages = [
       "How strong are you? Assess your relative strength by age, gender and lift type.",
     IconComponent: BicepsFlexed,
   },
-  {
-    href: "/how-strong-is-a-gorilla",
-    title: "How Strong Is a Gorilla?",
-    description:
-      "Compare your upper-body strength to a silverback with a fun, transparent estimate.",
-    IconComponent: GorillaIcon,
-  },
+  ...(process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development"
+    ? [
+        {
+          href: "/how-strong-is-a-gorilla",
+          title: "How Strong Is a Gorilla?",
+          description:
+            "Compare your bench press to a silverback. Find out how badly you'd lose.",
+          IconComponent: GorillaIcon,
+        },
+      ]
+    : []),
   {
     href: "/1000lb-club-calculator",
     title: "1000lb Club Calculator",

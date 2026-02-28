@@ -1,10 +1,9 @@
 import Head from "next/head";
-import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { useEffect, useMemo, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { motion } from "motion/react";
-import { Shield } from "lucide-react";
+import { Shield, Share2 } from "lucide-react";
 import { GorillaIcon } from "@/components/gorilla-icon";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import { RelatedArticles } from "@/components/article-cards";
@@ -355,21 +354,23 @@ function GorillaStrengthMain({ relatedArticles }) {
             </div>
           </div>
 
-          {/* ── SHARE + LINK ── */}
-          <div className="flex flex-wrap items-center gap-3 border-t pt-6">
+          {/* ── SHARE ── */}
+          {/* TODO: When How Strong Am I? is public, add a link here:
+              "Want the serious version? → How Strong Am I? (/how-strong-am-i)" */}
+          <div className="flex justify-center border-t pt-6">
             <Button
               onClick={copyResult}
               style={{ backgroundColor: DEADLIFT_COLOR }}
             >
-              {isCopied ? "✓ Copied! (Gorillas can't read)" : "Share result"}
+              {isCopied ? (
+                "✓ Copied! (Gorillas can't read)"
+              ) : (
+                <>
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share result
+                </>
+              )}
             </Button>
-            <Link
-              href="/how-strong-am-i"
-              className="text-sm font-semibold underline-offset-2 hover:underline"
-              style={{ color: DEADLIFT_COLOR }}
-            >
-              Want the serious version? → How Strong Am I?
-            </Link>
           </div>
         </CardContent>
 

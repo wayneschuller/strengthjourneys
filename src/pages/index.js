@@ -45,6 +45,7 @@ import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
 import { BigFourLiftCards } from "@/components/big-four-lift-cards";
+import { GorillaIcon } from "@/components/gorilla-icon";
 import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";
 
 // The feature pages are the main tools, with one card each on the landing page
@@ -109,7 +110,7 @@ export const featurePages = [
     title: "How Strong Is a Gorilla?",
     description:
       "Compare your upper-body strength to a silverback with a fun, transparent estimate.",
-    IconComponent: BicepsFlexed,
+    IconComponent: GorillaIcon,
   },
   {
     href: "/1000lb-club-calculator",

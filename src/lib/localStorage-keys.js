@@ -75,6 +75,12 @@ export const LOCAL_STORAGE_KEYS = {
   THOUSAND_BENCH: "SJ_thousand_bench",
   THOUSAND_DEADLIFT: "SJ_thousand_deadlift",
 
+  // Gorilla comparison
+  GORILLA_IS_METRIC: "SJ_gorilla_is_metric",
+  GORILLA_BODY_WEIGHT: "SJ_gorilla_body_weight",
+  GORILLA_BENCH: "SJ_gorilla_bench",
+  GORILLA_PRESS: "SJ_gorilla_press",
+
   // Playlist leaderboard
   PLAYLIST_VOTES: "SJ_playlistVotes",
   SAVED_PLAYLISTS: "SJ_savedPlaylists",

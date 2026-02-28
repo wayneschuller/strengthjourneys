@@ -91,13 +91,17 @@ export const featurePages = [
       "Generate warmup sets for your barbell workouts using progressive warmup methodology.",
     IconComponent: Flame,
   },
-  {
-    href: "/how-strong-am-i",
-    title: "How Strong Am I?",
-    description:
-      "See your strength percentile across four groups — from the general population to competitive powerlifters.",
-    IconComponent: CircleDashed,
-  },
+  ...(process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development"
+    ? [
+        {
+          href: "/how-strong-am-i",
+          title: "How Strong Am I?",
+          description:
+            "See your strength percentile across four groups — from the general population to competitive powerlifters.",
+          IconComponent: CircleDashed,
+        },
+      ]
+    : []),
   {
     href: "/strength-level-calculator",
     title: "Strength Level Calculator",

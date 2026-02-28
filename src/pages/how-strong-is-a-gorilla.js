@@ -225,10 +225,10 @@ function GorillaStrengthMain({ relatedArticles }) {
             className="relative rounded-2xl p-6 text-center"
             style={{ background: DEADLIFT_COLOR_SOFT }}
           >
-            {/* Percentage stays centered; left gorilla grows from the bottom corner */}
-            <div className="relative overflow-hidden py-3">
+            {/* Percentage centered in row; right card is right-justified on desktop */}
+            <div className="relative overflow-visible py-3 md:grid md:grid-cols-[1fr_auto_1fr] md:items-start md:gap-4">
               <p
-                className="text-center text-[5rem] font-black leading-none tabular-nums tracking-tighter sm:text-[6rem]"
+                className="text-center text-[5rem] font-black leading-none tabular-nums tracking-tighter sm:text-[6rem] md:col-start-2"
                 style={{ color: DEADLIFT_COLOR }}
               >
                 ~{Math.round(gorillaPercent)}%
@@ -242,23 +242,28 @@ function GorillaStrengthMain({ relatedArticles }) {
               >
                 <img src="/gorilla1.png" alt="" width="420" height="420" aria-hidden="true" />
               </motion.div>
-            </div>
 
-            <div className="mx-auto mt-4 w-full max-w-[220px] rounded-xl border bg-background/65 p-4 text-left backdrop-blur-[1px] md:absolute md:right-6 md:top-6 md:mt-0">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs text-muted-foreground">Gorilla bench</p>
-                  <p className="text-3xl font-black tabular-nums" style={{ color: DEADLIFT_COLOR }}>
-                    ~{displayGorillaMid}
-                    <span className="ml-1 text-base font-semibold text-muted-foreground">
-                      {scoreUnit}
-                    </span>
-                  </p>
+              <div className="mx-auto mt-4 w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:right-6 md:top-6 md:mt-0 md:w-fit">
+                <div className="flex items-center gap-1 text-left">
+                  <div className="shrink-0">
+                    <p className="text-xs text-muted-foreground">Gorilla bench</p>
+                    <p className="text-2xl font-black tabular-nums md:text-3xl" style={{ color: DEADLIFT_COLOR }}>
+                      ~{displayGorillaMid}
+                      <span className="ml-1 text-base font-semibold text-muted-foreground">
+                        {scoreUnit}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="relative h-[clamp(80px,12.8vh,136px)] aspect-[1200/700]">
+                    <Image
+                      src="/gorilla_bench.png"
+                      alt=""
+                      fill
+                      aria-hidden="true"
+                      className="object-contain object-left opacity-90"
+                    />
+                  </div>
                 </div>
-                <GorillaIcon
-                  className="mt-0.5 h-14 w-14 shrink-0 opacity-90"
-                  style={{ color: DEADLIFT_COLOR }}
-                />
               </div>
             </div>
 
@@ -346,8 +351,8 @@ function GorillaStrengthMain({ relatedArticles }) {
                 <Image
                   src="/bench_press.svg"
                   alt=""
-                  width={22}
-                  height={22}
+                  width={64}
+                  height={64}
                   aria-hidden="true"
                   className="shrink-0 opacity-90"
                 />

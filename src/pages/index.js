@@ -25,6 +25,7 @@ import {
   Luggage,
   Flame,
   Sparkles,
+  CircleDashed,
 } from "lucide-react";
 
 import { motion } from "motion/react";
@@ -44,6 +45,7 @@ import { Separator } from "@/components/ui/separator";
 import { HeroSection } from "@/components/hero-section";
 import { HomeDashboard } from "@/components/home-dashboard/home-dashboard";
 import { BigFourLiftCards } from "@/components/big-four-lift-cards";
+import { GorillaIcon } from "@/components/gorilla-icon";
 import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";
 
 // The feature pages are the main tools, with one card each on the landing page
@@ -89,12 +91,30 @@ export const featurePages = [
       "Generate warmup sets for your barbell workouts using progressive warmup methodology.",
     IconComponent: Flame,
   },
+  ...(process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development"
+    ? [
+        {
+          href: "/how-strong-am-i",
+          title: "How Strong Am I?",
+          description:
+            "See your strength percentile across four groups — from the general population to competitive powerlifters.",
+          IconComponent: CircleDashed,
+        },
+      ]
+    : []),
   {
     href: "/strength-level-calculator",
     title: "Strength Level Calculator",
     description:
       "How strong are you? Assess your relative strength by age, gender and lift type.",
     IconComponent: BicepsFlexed,
+  },
+  {
+    href: "/how-strong-is-a-gorilla",
+    title: "How Strong Is a Gorilla?",
+    description:
+      "Compare your bench press to a silverback. Find out how badly you'd lose.",
+    IconComponent: GorillaIcon,
   },
   {
     href: "/1000lb-club-calculator",
@@ -312,6 +332,7 @@ export default function Home() {
 function FeatureCard({ href, title, description, IconComponent, index = 0 }) {
   const isWarmupsCalculator = href === "/warm-up-sets-calculator";
   const isAnalyzer = href === "/analyzer";
+  const isGorillaCalculator = href === "/how-strong-is-a-gorilla";
   const chartColorVar = `--chart-${(index % 5) + 1}`;
 
   return (
@@ -330,6 +351,14 @@ function FeatureCard({ href, title, description, IconComponent, index = 0 }) {
           className="bg-primary/10 text-primary absolute top-2 right-2 text-xs"
         >
           New
+        </Badge>
+      )}
+      {isGorillaCalculator && (
+        <Badge
+          variant="outline"
+          className="bg-primary/10 text-primary absolute top-2 right-2 text-xs"
+        >
+          Bananas 🍌
         </Badge>
       )}
       <Link href={href}>

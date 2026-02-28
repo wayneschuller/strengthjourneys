@@ -203,9 +203,20 @@ export function AthleteBioInlineSettings({
   // Pre-open the controls when the user is still on defaults — nudge them to personalise
   const [isOpen, setIsOpen] = useState(autoOpenWhenDefault && bioDataIsDefault);
   const unit = isMetric ? "kg" : "lb";
-  const bioSummaryText = bioDataIsDefault && defaultBioPrompt
-    ? defaultBioPrompt
-    : `Strength levels for a ${bodyWeight}${unit} ${sex}, age ${age}${liftNote ? ` ${liftNote}` : ""}${bioDataIsDefault ? " · enter your details" : ""}.`;
+
+  // JSX bio summary — values are bolded, labels stay light
+  const bioSummaryContent = (bioDataIsDefault && defaultBioPrompt) ? (
+    defaultBioPrompt
+  ) : (
+    <>
+      Strength levels for a{" "}
+      <strong className="font-semibold text-foreground">{bodyWeight}{unit}</strong>{" "}
+      <strong className="font-semibold text-foreground">{sex}</strong>,{" "}
+      age <strong className="font-semibold text-foreground">{age}</strong>
+      {liftNote ? ` ${liftNote}` : ""}
+      {bioDataIsDefault ? " · enter your details" : ""}.
+    </>
+  );
 
   const ageOnChange = (e) => {
     const v = parseInt(e.target.value || "0", 10);
@@ -228,7 +239,7 @@ export function AthleteBioInlineSettings({
           bioDataIsDefault ? "text-amber-500" : "text-muted-foreground",
           forceStackedControls && "text-center",
         )}>
-          {bioSummaryText}
+          {bioSummaryContent}
         </p>
 
         {/* Button — desktop controls float right of it; mobile controls appear below */}

@@ -521,11 +521,15 @@ function CalculatorsMenu() {
       href: "/timer",
       icon: <Timer className="h-5 w-5" />,
     },
-    {
-      title: "How Strong Am I?",
-      href: "/how-strong-am-i",
-      icon: <CircleDashed className="h-5 w-5" />,
-    },
+    ...(process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development"
+      ? [
+          {
+            title: "How Strong Am I?",
+            href: "/how-strong-am-i",
+            icon: <CircleDashed className="h-5 w-5" />,
+          },
+        ]
+      : []),
   ];
 
   const ListItem = React.forwardRef(

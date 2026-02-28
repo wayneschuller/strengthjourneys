@@ -163,10 +163,6 @@ function GorillaStrengthMain({ relatedArticles }) {
   const gorillaPercent = clamp((benchLb / GORILLA_BENCH_MID_LB) * 100, 0, 999);
   const fillPercent = clamp(gorillaPercent, 0, 100);
 
-  // Gorilla grows from cowering (0.18) to full menace (1.0) as you approach 100%
-  const gorillaScale = 0.18 + (fillPercent / 100) * 0.82;
-  const gorillaOpacity = 0.3 + (fillPercent / 100) * 0.7;
-
   // Use fixed assumed bodyweight for percentile ratio (fun approximation)
   const strengthRatio = benchLb / ASSUMED_BODYWEIGHT_LB;
   const percentile = useMemo(
@@ -227,21 +223,30 @@ function GorillaStrengthMain({ relatedArticles }) {
           >
             {/* Percentage centered in row; right card is right-justified on desktop */}
             <div className="relative overflow-visible py-3 md:grid md:grid-cols-[1fr_auto_1fr] md:items-start md:gap-4">
-              <p
-                className="text-center text-[5rem] font-black leading-none tabular-nums tracking-tighter sm:text-[6rem] md:col-start-2"
-                style={{ color: DEADLIFT_COLOR }}
-              >
-                ~{Math.round(gorillaPercent)}%
-              </p>
-              {/* Left gorilla */}
-              <motion.div
-                className="pointer-events-none absolute bottom-0 left-0"
-                animate={{ scale: gorillaScale, opacity: gorillaOpacity }}
-                transition={{ type: "spring", stiffness: 220, damping: 18 }}
-                style={{ transformOrigin: "bottom left" }}
-              >
-                <img src="/gorilla1.png" alt="" width="420" height="420" aria-hidden="true" />
-              </motion.div>
+              <div className="md:col-start-2 flex items-end justify-center gap-3">
+                <p
+                  className="text-center text-[5rem] font-black leading-none tabular-nums tracking-tighter sm:text-[6rem]"
+                  style={{ color: DEADLIFT_COLOR }}
+                >
+                  ~{Math.round(gorillaPercent)}%
+                </p>
+                <motion.div
+                  key={`gorilla-wobble-${bench}`}
+                  className="pointer-events-none hidden sm:block"
+                  initial={{ rotate: 0, y: 0 }}
+                  animate={{ rotate: [0, -6, 6, -4, 3, 0], y: [0, -6, 0, -3, 0] }}
+                  transition={{ duration: 0.65, ease: "easeInOut" }}
+                >
+                  <img
+                    src="/gorilla1.png"
+                    alt=""
+                    width="420"
+                    height="420"
+                    aria-hidden="true"
+                    className="h-36 w-auto md:h-44"
+                  />
+                </motion.div>
+              </div>
 
               <div className="mx-auto mt-4 w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:right-0 md:top-6 md:mt-0 md:w-fit">
                 <div className="flex items-center gap-1 text-left">

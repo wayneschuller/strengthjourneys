@@ -178,6 +178,12 @@ function GorillaStrengthMain({ relatedArticles }) {
   const displayGorillaMid = formatWeightInt(GORILLA_BENCH_MID_LB, isMetric);
   const displayGorillaLow = formatWeightInt(GORILLA_BENCH_LOW_LB, isMetric);
   const displayGorillaHigh = formatWeightInt(GORILLA_BENCH_HIGH_LB, isMetric);
+  const displayGorillaMidKg = formatWeightInt(GORILLA_BENCH_MID_LB, true);
+  const displayGorillaLowKg = formatWeightInt(GORILLA_BENCH_LOW_LB, true);
+  const displayGorillaHighKg = formatWeightInt(GORILLA_BENCH_HIGH_LB, true);
+  const displayGorillaMidLb = formatWeightInt(GORILLA_BENCH_MID_LB, false);
+  const displayGorillaLowLb = formatWeightInt(GORILLA_BENCH_LOW_LB, false);
+  const displayGorillaHighLb = formatWeightInt(GORILLA_BENCH_HIGH_LB, false);
 
   const bragLine = getBragLine(gorillaPercent);
 
@@ -223,10 +229,10 @@ function GorillaStrengthMain({ relatedArticles }) {
 
           {/* ── HERO RESULT ── */}
           <div
-            className="rounded-2xl p-6 text-center"
+            className="relative rounded-2xl p-6 text-center"
             style={{ background: DEADLIFT_COLOR_SOFT }}
           >
-            {/* Percentage stays fixed center; gorillas grow from the bottom corners */}
+            {/* Percentage stays centered; left gorilla grows from the bottom corner */}
             <div className="relative overflow-hidden py-3">
               <p
                 className="text-center text-[5rem] font-black leading-none tabular-nums tracking-tighter sm:text-[6rem]"
@@ -241,19 +247,29 @@ function GorillaStrengthMain({ relatedArticles }) {
                 transition={{ type: "spring", stiffness: 220, damping: 18 }}
                 style={{ transformOrigin: "bottom left" }}
               >
-                <GorillaIcon size={96} color={DEADLIFT_COLOR} />
+                <img src="/gorilla1.png" alt="" width="420" height="420" aria-hidden="true" />
               </motion.div>
-              {/* Right gorilla (mirrored to face inward) */}
-              <motion.div
-                className="pointer-events-none absolute bottom-0 right-0"
-                animate={{ scale: gorillaScale, opacity: gorillaOpacity }}
-                transition={{ type: "spring", stiffness: 220, damping: 18 }}
-                style={{ transformOrigin: "bottom right" }}
-              >
-                <div style={{ transform: "scaleX(-1)" }}>
-                  <GorillaIcon size={96} color={DEADLIFT_COLOR} />
+            </div>
+
+            <div className="mx-auto mt-4 w-full max-w-[220px] rounded-xl border bg-background/65 p-4 text-left backdrop-blur-[1px] md:absolute md:right-6 md:top-6 md:mt-0">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Gorilla bench</p>
+                  <p className="text-3xl font-black tabular-nums" style={{ color: DEADLIFT_COLOR }}>
+                    ~{displayGorillaMid}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    kg ({displayGorillaLowKg}–{displayGorillaHighKg})
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    lb ({displayGorillaLowLb}–{displayGorillaHighLb})
+                  </p>
                 </div>
-              </motion.div>
+                <GorillaIcon
+                  className="mt-0.5 h-14 w-14 shrink-0 opacity-90"
+                  style={{ color: DEADLIFT_COLOR }}
+                />
+              </div>
             </div>
 
             <p className="mt-3 text-base font-semibold">
@@ -312,11 +328,7 @@ function GorillaStrengthMain({ relatedArticles }) {
               value={`${Math.round(percentile.gym)}%`}
               sub="of gym-goers"
             />
-            <StatTile
-              label="Gorilla bench"
-              value={`~${displayGorillaMid}`}
-              sub={`${scoreUnit} (${displayGorillaLow}–${displayGorillaHigh})`}
-            />
+            <StatTile label="Stronger than" value="0%" sub="of all gorillas" />
           </div>
 
           {/* ── SINGLE SLIDER ── */}

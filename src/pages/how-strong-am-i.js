@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { NextSeo } from "next-seo";
-import { Copy, Trophy } from "lucide-react";
+import { Copy, CircleDashed } from "lucide-react";
 
 import {
   PageContainer,
@@ -220,7 +220,7 @@ function HowStrongAmIPageInner() {
   return (
     <PageContainer>
       <PageHeader>
-        <PageHeaderHeading icon={Trophy}>How Strong Am I?</PageHeaderHeading>
+        <PageHeaderHeading icon={CircleDashed}>How Strong Am I?</PageHeaderHeading>
         <PageHeaderDescription>
           Strength Percentile Calculator — see how you rank across four groups,
           from the general population to competitive powerlifters.

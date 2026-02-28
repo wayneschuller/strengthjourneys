@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { useEffect, useMemo, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
@@ -15,6 +16,7 @@ import {
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
+  PageHeaderRight,
 } from "@/components/page-header";
 import {
   Card,
@@ -222,6 +224,24 @@ function GorillaStrengthMain({ relatedArticles }) {
           Enter your bench press. Find out how badly you&apos;d lose.
           Please do not challenge an actual gorilla.
         </PageHeaderDescription>
+        <PageHeaderRight>
+          <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">
+            <Link
+              href="/strength-level-calculator"
+              className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
+            >
+              <h3 className="text-base font-semibold">Strength Level Calculator</h3>
+              <p className="text-sm">How strong am I?</p>
+            </Link>
+            <Link
+              href="/calculator"
+              className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
+            >
+              <h3 className="text-base font-semibold">E1RM Calculator</h3>
+              <p className="text-sm">Set targets. Estimate 1RM from any set.</p>
+            </Link>
+          </div>
+        </PageHeaderRight>
       </PageHeader>
 
       <Card>

@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { NextSeo } from "next-seo";
-import { Copy } from "lucide-react";
-import { Trophy } from "lucide-react";
+import { Copy, Trophy } from "lucide-react";
 
 import {
   PageContainer,
@@ -23,16 +22,15 @@ import {
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
 // ─── ISR ─────────────────────────────────────────────────────────────────────
@@ -63,24 +61,65 @@ function ordinal(n) {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
-// ─── Per-lift breakdown ───────────────────────────────────────────────────────
+// ─── Left column: 3 lift sliders ─────────────────────────────────────────────
+
+function LiftSliders({ liftWeights, onChange, isMetric }) {
+  const unit = isMetric ? "kg" : "lb";
+  const min  = isMetric ? 20  : 44;
+  const max  = isMetric ? 300 : 660;
+  const step = isMetric ? 2.5 : 5;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Your Lifts
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-5">
+        {LIFTS.map(({ key, label, emoji }) => (
+          <div key={key} className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-sm font-medium">
+                <span>{emoji}</span>
+                <span>{label}</span>
+              </div>
+              <span className="text-sm font-bold tabular-nums">
+                {liftWeights[key]}<span className="ml-0.5 text-xs font-normal text-muted-foreground">{unit}</span>
+              </span>
+            </div>
+            <Slider
+              value={[liftWeights[key]]}
+              onValueChange={([v]) => onChange(key, v)}
+              min={min}
+              max={max}
+              step={step}
+              aria-label={`${label} 1RM`}
+            />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Right column: per-lift breakdown ────────────────────────────────────────
 
 function LiftBreakdown({ results, activeUniverse, liftWeights, isMetric }) {
   const unit = isMetric ? "kg" : "lb";
 
   return (
-    <div className="w-full max-w-md">
-      <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+    <div>
+      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         Per-lift — {activeUniverse}
       </p>
       <div className="flex flex-col gap-1.5">
-        {LIFTS.map(({ key, label, emoji, standardKey }) => {
+        {LIFTS.map(({ key, label, emoji }) => {
           const liftResult = results.lifts[key];
-          const weight = liftWeights[key];
+          const weight     = liftWeights[key];
           const percentile = liftResult?.percentiles?.[activeUniverse];
-          const weightKg = toKg(weight, isMetric);
-          const rating = liftResult?.standard
-            ? getStrengthRatingForE1RM(weightKg, liftResult.standard)
+          const rating     = liftResult?.standard
+            ? getStrengthRatingForE1RM(toKg(weight, isMetric), liftResult.standard)
             : null;
 
           return (
@@ -88,18 +127,18 @@ function LiftBreakdown({ results, activeUniverse, liftWeights, isMetric }) {
               key={key}
               className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm"
             >
-              <div className="flex items-center gap-2">
-                <span>{emoji}</span>
-                <span className="font-medium">{label}</span>
-                <span className="text-muted-foreground">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="shrink-0">{emoji}</span>
+                <span className="font-medium truncate">{label}</span>
+                <span className="text-muted-foreground shrink-0">
                   {weight}{unit}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0 ml-2">
                 {rating && (
                   <Badge
                     variant={getRatingBadgeVariant(rating)}
-                    className="hidden text-xs sm:inline-flex"
+                    className="hidden text-xs xl:inline-flex"
                   >
                     {STRENGTH_LEVEL_EMOJI[rating]} {rating}
                   </Badge>
@@ -112,10 +151,9 @@ function LiftBreakdown({ results, activeUniverse, liftWeights, isMetric }) {
           );
         })}
 
-        {/* SBD total row — only when all three lifts produce results */}
         {results.hasAllThree && results.total && (
           <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-            <span className="font-medium text-muted-foreground">SBD Total</span>
+            <span className="text-muted-foreground">SBD Total</span>
             <span className="tabular-nums font-bold">
               {ordinal(results.total.percentiles?.[activeUniverse])}
             </span>
@@ -131,28 +169,20 @@ function LiftBreakdown({ results, activeUniverse, liftWeights, isMetric }) {
 function HowStrongAmIPageInner() {
   const { age, sex, bodyWeight, isMetric } = useAthleteBio();
   const { toast } = useToast();
-  const unit = isMetric ? "kg" : "lb";
 
-  // Track weights for all three lifts independently (display units)
   const [liftWeights, setLiftWeights] = useState({
     squat:    isMetric ? 100 : 225,
     bench:    isMetric ? 70  : 155,
     deadlift: isMetric ? 120 : 265,
   });
 
-  // Which lift the slider is currently editing
-  const [selectedLiftKey, setSelectedLiftKey] = useState("squat");
-
-  // Default active ring = Barbell Lifters (most relevant to our audience)
   const [activeUniverse, setActiveUniverse] = useState("Barbell Lifters");
 
-  const sliderMin  = isMetric ? 20  : 44;
-  const sliderMax  = isMetric ? 300 : 660;
-  const sliderStep = isMetric ? 2.5 : 5;
+  const handleLiftChange = (key, value) =>
+    setLiftWeights((prev) => ({ ...prev, [key]: value }));
 
   const bodyWeightKg = toKg(bodyWeight, isMetric);
 
-  // All lift weights in kg for computation
   const liftKgs = useMemo(() => ({
     squat:    toKg(liftWeights.squat,    isMetric),
     bench:    toKg(liftWeights.bench,    isMetric),
@@ -164,7 +194,7 @@ function HowStrongAmIPageInner() {
     [age, sex, bodyWeightKg, liftKgs],
   );
 
-  // Chart rings show average percentile across all three lifts per universe
+  // Chart rings show average percentile across all three lifts
   const chartPercentiles = useMemo(() => {
     const out = {};
     for (const universe of UNIVERSES) {
@@ -178,12 +208,6 @@ function HowStrongAmIPageInner() {
     return out;
   }, [results]);
 
-  const currentWeight = liftWeights[selectedLiftKey];
-
-  const handleSlider = ([v]) =>
-    setLiftWeights((prev) => ({ ...prev, [selectedLiftKey]: v }));
-
-  // Share: copy a short text summary to clipboard
   const handleShare = () => {
     const percentile = chartPercentiles[activeUniverse];
     const text = `I'm stronger than ${percentile}% of ${activeUniverse.toLowerCase()} — Strength Journeys: How Strong Am I? ${CANONICAL}`;
@@ -203,72 +227,55 @@ function HowStrongAmIPageInner() {
         </PageHeaderDescription>
       </PageHeader>
 
-      <div className="mt-4 flex flex-col items-center gap-5">
-        {/* Bio strip */}
+      {/* Bio strip — full width above grid */}
+      <div className="mt-4 flex justify-center">
         <AthleteBioInlineSettings
           defaultBioPrompt="Enter your details for personalised percentiles."
           autoOpenWhenDefault={true}
         />
+      </div>
 
-        {/* ── HERO: chart ──────────────────────────────────────────────── */}
-        <div className="w-full max-w-md">
+      {/*
+        Desktop: 3-column grid — controls | chart | breakdown
+        Mobile:  single column — chart first (order-1), controls second (order-2),
+                 breakdown last (order-3)
+
+        The center column is true-center on the page because the outer columns
+        are equal-width (1fr each) and the center is auto-width capped at ~420px.
+      */}
+      <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_minmax(0,420px)_1fr] lg:items-start lg:gap-8">
+
+        {/* ── Col 1: Lift sliders ────────────────────────────────────────── */}
+        <div className="order-2 lg:order-none">
+          <LiftSliders
+            liftWeights={liftWeights}
+            onChange={handleLiftChange}
+            isMetric={isMetric}
+          />
+        </div>
+
+        {/* ── Col 2: Hero chart + share button ─────────────────────────── */}
+        <div className="order-1 lg:order-none flex flex-col items-center gap-4">
           <StrengthCirclesChart
             percentiles={chartPercentiles}
             activeUniverse={activeUniverse}
             onUniverseChange={setActiveUniverse}
           />
+          <Button variant="outline" size="sm" onClick={handleShare} className="gap-2">
+            <Copy className="h-3.5 w-3.5" />
+            Copy result
+          </Button>
         </div>
 
-        {/* ── Lift input: dropdown + slider ────────────────────────────── */}
-        <div className="w-full max-w-md rounded-xl border bg-card p-5">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <Select value={selectedLiftKey} onValueChange={setSelectedLiftKey}>
-              <SelectTrigger className="w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LIFTS.map(({ key, label, emoji }) => (
-                  <SelectItem key={key} value={key}>
-                    {emoji} {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-bold tabular-nums leading-none">
-                {currentWeight}
-              </span>
-              <span className="text-sm text-muted-foreground">{unit} 1RM</span>
-            </div>
-          </div>
-
-          <Slider
-            value={[currentWeight]}
-            onValueChange={handleSlider}
-            min={sliderMin}
-            max={sliderMax}
-            step={sliderStep}
+        {/* ── Col 3: Per-lift breakdown ─────────────────────────────────── */}
+        <div className="order-3 lg:order-none">
+          <LiftBreakdown
+            results={results}
+            activeUniverse={activeUniverse}
+            liftWeights={liftWeights}
+            isMetric={isMetric}
           />
-
-          <p className="mt-2 text-xs text-muted-foreground">
-            Switch the dropdown to set each lift. Results update live.
-          </p>
         </div>
-
-        {/* ── Per-lift breakdown ────────────────────────────────────────── */}
-        <LiftBreakdown
-          results={results}
-          activeUniverse={activeUniverse}
-          liftWeights={liftWeights}
-          isMetric={isMetric}
-        />
-
-        {/* ── Share button ──────────────────────────────────────────────── */}
-        <Button variant="outline" onClick={handleShare} className="gap-2">
-          <Copy className="h-4 w-4" />
-          Copy result
-        </Button>
       </div>
 
       <section className="mt-12 max-w-2xl">

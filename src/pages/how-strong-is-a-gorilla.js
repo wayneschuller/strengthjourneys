@@ -223,13 +223,7 @@ function GorillaStrengthMain({ relatedArticles }) {
           >
             {/* Percentage centered in row; right card is right-justified on desktop */}
             <div className="relative overflow-visible py-3 md:grid md:grid-cols-[1fr_auto_1fr] md:items-start md:gap-4">
-              <div className="md:col-start-2 flex items-end justify-center gap-3">
-                <p
-                  className="text-center text-[5rem] font-black leading-none tabular-nums tracking-tighter sm:text-[6rem]"
-                  style={{ color: DEADLIFT_COLOR }}
-                >
-                  ~{Math.round(gorillaPercent)}%
-                </p>
+              <div className="md:col-start-2 flex flex-col items-center justify-center gap-1">
                 <motion.div
                   key={`gorilla-wobble-${bench}`}
                   className="pointer-events-none hidden sm:block"
@@ -243,9 +237,15 @@ function GorillaStrengthMain({ relatedArticles }) {
                     width="420"
                     height="420"
                     aria-hidden="true"
-                    className="h-36 w-auto md:h-44"
+                    className="h-28 w-auto md:h-32"
                   />
                 </motion.div>
+                <p
+                  className="text-center text-[6rem] font-black leading-none tabular-nums tracking-tighter sm:text-[7rem]"
+                  style={{ color: DEADLIFT_COLOR }}
+                >
+                  {Math.round(gorillaPercent)}%
+                </p>
               </div>
 
               <div className="mx-auto mt-4 w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:right-0 md:top-6 md:mt-0 md:w-fit">

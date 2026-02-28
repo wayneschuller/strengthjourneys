@@ -209,12 +209,6 @@ function GorillaStrengthMain({ relatedArticles }) {
     [strengthRatio],
   );
 
-  const scaleMax = Math.max(gorillaUpperHigh * 1.05, upperBodyTotalLb * 1.15, 400);
-  const averageMarker = (AVERAGE_MALE_UPPER_TOTAL_LB / scaleMax) * 100;
-  const youMarker = (upperBodyTotalLb / scaleMax) * 100;
-  const gorillaLowMarker = (gorillaUpperLow / scaleMax) * 100;
-  const gorillaHighMarker = (gorillaUpperHigh / scaleMax) * 100;
-
   const displayedUpperBodyTotal = formatWeight(upperBodyTotalLb, isMetric);
   const displayedGorillaLow = formatWeight(gorillaUpperLow, isMetric);
   const displayedGorillaHigh = formatWeight(gorillaUpperHigh, isMetric);
@@ -266,6 +260,18 @@ function GorillaStrengthMain({ relatedArticles }) {
           <CardTitle>Gorilla Strength Comparison Tool</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="rounded-lg border bg-muted/20 p-6">
+            <p className="mb-4 text-center text-base font-semibold">You vs Gorilla</p>
+            <div className="mx-auto flex max-w-2xl flex-col items-center gap-4">
+              <GorillaRadialBadge percent={asGorillaPercent} size={260} />
+              <p className="text-center text-sm text-muted-foreground">
+                Your upper-body total is <strong>{displayedUpperBodyTotal} {isMetric ? "kg" : "lb"}</strong>.
+                Gorilla midpoint estimate is <strong>{formatWeight(gorillaUpperMid, isMetric)} {isMetric ? "kg" : "lb"}</strong>.
+                {" "}Range used: {displayedGorillaLow}-{displayedGorillaHigh} {isMetric ? "kg" : "lb"}.
+              </p>
+            </div>
+          </div>
+
           <div className="grid gap-5 lg:grid-cols-3">
             <SliderInput
               label="Bodyweight"
@@ -326,33 +332,6 @@ function GorillaStrengthMain({ relatedArticles }) {
               value={`~${Math.round(asGorillaPercent)}%`}
               subtitle={`Based on an ${GORILLA_MULTIPLIER_MID}x midpoint assumption`}
             />
-          </div>
-
-          <div className="rounded-lg border p-4">
-            <p className="mb-3 text-sm font-medium">Human → You → Gorilla</p>
-            <div className="relative h-14">
-              <div className="absolute top-5 h-2 w-full rounded-full bg-muted" />
-              <RangeBand left={gorillaLowMarker} right={gorillaHighMarker} />
-              <ScaleMarker
-                label="Average human"
-                value={AVERAGE_MALE_UPPER_TOTAL_LB}
-                position={averageMarker}
-                isMetric={isMetric}
-              />
-              <ScaleMarker
-                label="You"
-                value={upperBodyTotalLb}
-                position={youMarker}
-                isMetric={isMetric}
-                emphasized
-              />
-              <ScaleMarker
-                label="Gorilla"
-                value={gorillaUpperMid}
-                position={((gorillaUpperLow + gorillaUpperHigh) / 2 / scaleMax) * 100}
-                isMetric={isMetric}
-              />
-            </div>
           </div>
 
           <div className="grid gap-3 lg:grid-cols-3">
@@ -469,30 +448,23 @@ function StatCard({ title, value, subtitle }) {
   );
 }
 
-function RangeBand({ left, right }) {
-  return (
-    <div
-      className="absolute top-4 h-4 rounded bg-primary/30"
-      style={{
-        left: `${clampPercent(left)}%`,
-        width: `${Math.max(1, clampPercent(right) - clampPercent(left))}%`,
-      }}
-      aria-hidden
-    />
-  );
-}
+function GorillaRadialBadge({ percent, size = 192 }) {
+  const boundedPercent = Math.max(0, Math.min(100, percent));
+  const angle = Math.round((boundedPercent / 100) * 360);
 
-function ScaleMarker({ label, value, position, isMetric, emphasized = false }) {
   return (
-    <div
-      className="absolute top-0 -translate-x-1/2"
-      style={{ left: `${clampPercent(position)}%` }}
-    >
-      <div className={`h-8 w-[2px] ${emphasized ? "bg-primary" : "bg-foreground/60"}`} />
-      <p className="mt-1 text-center text-[11px] font-medium leading-none">{label}</p>
-      <p className="text-center text-[10px] text-muted-foreground">
-        {formatWeight(value, isMetric)} {isMetric ? "kg" : "lb"}
-      </p>
+    <div className="relative rounded-full p-2" style={{ height: size, width: size }}>
+      <div
+        className="h-full w-full rounded-full"
+        style={{
+          background: `conic-gradient(hsl(var(--primary)) ${angle}deg, hsl(var(--muted)) ${angle}deg 360deg)`,
+        }}
+      />
+      <div className="absolute inset-4 flex flex-col items-center justify-center rounded-full border bg-background text-center">
+        <GorillaIcon className="h-14 w-14" />
+        <p className="mt-1 text-3xl font-bold leading-none">{Math.round(percent)}%</p>
+        <p className="text-xs text-muted-foreground">of gorilla midpoint</p>
+      </div>
     </div>
   );
 }
@@ -566,8 +538,4 @@ function roundWeight(value) {
 
 function roundOneDecimal(value) {
   return Math.round(value * 10) / 10;
-}
-
-function clampPercent(value) {
-  return Math.max(0, Math.min(100, value));
 }

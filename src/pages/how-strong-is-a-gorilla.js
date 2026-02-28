@@ -4,6 +4,7 @@ import { NextSeo } from "next-seo";
 import { useEffect, useMemo, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { motion } from "motion/react";
+import { Shield } from "lucide-react";
 import { GorillaIcon } from "@/components/gorilla-icon";
 import { UnitChooser } from "@/components/unit-type-chooser";
 import { RelatedArticles } from "@/components/article-cards";
@@ -25,12 +26,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 
 const LB_PER_KG = 2.20462;
 const KG_PER_LB = 0.453592;
@@ -51,6 +46,7 @@ const GORILLA_BENCH_MID_LB = TRAINED_HUMAN_BASE_BENCH_LB * GORILLA_MULTIPLIER_MI
 const GORILLA_BENCH_HIGH_LB = TRAINED_HUMAN_BASE_BENCH_LB * GORILLA_MULTIPLIER_HIGH; // 1750
 
 const DEFAULT_BENCH_LB = 135;
+const ASSUMED_BODYWEIGHT_LB = 185;
 
 // Approximate bench-only percentiles (ratio = bench / ~185 lb assumed bodyweight)
 const HUMAN_PERCENTILE_TABLE = [
@@ -65,7 +61,28 @@ const HUMAN_PERCENTILE_TABLE = [
   { ratio: 2.5, humans: 99.5, gym: 97 },
 ];
 
-const ASSUMED_BODYWEIGHT_LB = 185;
+const FAQ_ITEMS = [
+  {
+    question: "How strong is a gorilla actually?",
+    answer:
+      "A silverback gorilla is estimated at 6–10x the upper-body strength of a trained human, based on comparative anatomy studies of muscle fiber density and limb mechanics. Nobody has tested this in a gym setting. For obvious reasons.",
+  },
+  {
+    question: "Why bench press specifically?",
+    answer:
+      "Bench press is the most commonly tracked upper-body strength lift and the best single proxy for human pushing power. It keeps the comparison clean, simple, and braggable at the gym.",
+  },
+  {
+    question: "Can I actually beat a gorilla?",
+    answer:
+      "No. A silverback weighs 400–500 lb of near-pure muscle and has been observed throwing 800 lb objects. Your bench press number is irrelevant in an actual encounter. Please do not attempt to verify this.",
+  },
+  {
+    question: "Is this scientifically accurate?",
+    answer:
+      "It is a playful estimate based on published comparative strength research. The 6–10x multiplier is the most commonly cited figure in the literature. The exact number varies by source, study methodology, and which gorilla showed up that day.",
+  },
+];
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Strength Calculator";
@@ -91,10 +108,12 @@ export default function GorillaStrengthPage({ relatedArticles }) {
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "WebPage",
-            name: title,
-            description,
-            url: canonicalURL,
+            "@type": "FAQPage",
+            mainEntity: FAQ_ITEMS.map(({ question, answer }) => ({
+              "@type": "Question",
+              name: question,
+              acceptedAnswer: { "@type": "Answer", text: answer },
+            })),
           })}
         </script>
       </Head>
@@ -208,23 +227,36 @@ function GorillaStrengthMain({ relatedArticles }) {
             className="rounded-2xl p-6 text-center"
             style={{ background: DEADLIFT_COLOR_SOFT }}
           >
-            {/* Gorilla + percentage side by side */}
-            <div className="flex items-end justify-center gap-4">
-              <motion.div
-                animate={{ scale: gorillaScale, opacity: gorillaOpacity }}
-                transition={{ type: "spring", stiffness: 220, damping: 18 }}
-                style={{ transformOrigin: "bottom center" }}
-                className="shrink-0"
-              >
-                <GorillaIcon size={120} color={DEADLIFT_COLOR} />
-              </motion.div>
+            {/* Percentage stays fixed center; gorillas grow from the bottom corners */}
+            <div className="relative overflow-hidden py-3">
               <p
-                className="text-[5rem] font-black leading-none tabular-nums tracking-tighter sm:text-[6rem]"
+                className="text-center text-[5rem] font-black leading-none tabular-nums tracking-tighter sm:text-[6rem]"
                 style={{ color: DEADLIFT_COLOR }}
               >
                 ~{Math.round(gorillaPercent)}%
               </p>
+              {/* Left gorilla */}
+              <motion.div
+                className="pointer-events-none absolute bottom-0 left-0"
+                animate={{ scale: gorillaScale, opacity: gorillaOpacity }}
+                transition={{ type: "spring", stiffness: 220, damping: 18 }}
+                style={{ transformOrigin: "bottom left" }}
+              >
+                <GorillaIcon size={96} color={DEADLIFT_COLOR} />
+              </motion.div>
+              {/* Right gorilla (mirrored to face inward) */}
+              <motion.div
+                className="pointer-events-none absolute bottom-0 right-0"
+                animate={{ scale: gorillaScale, opacity: gorillaOpacity }}
+                transition={{ type: "spring", stiffness: 220, damping: 18 }}
+                style={{ transformOrigin: "bottom right" }}
+              >
+                <div style={{ transform: "scaleX(-1)" }}>
+                  <GorillaIcon size={96} color={DEADLIFT_COLOR} />
+                </div>
+              </motion.div>
             </div>
+
             <p className="mt-3 text-base font-semibold">
               of a silverback gorilla&apos;s bench press
             </p>
@@ -294,8 +326,11 @@ function GorillaStrengthMain({ relatedArticles }) {
               Your bench press
             </p>
             <div className="space-y-3">
-              <div className="flex items-baseline justify-between gap-2">
-                <Label className="text-sm font-semibold">Bench Press 1RM</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label className="flex items-center gap-1.5 text-sm font-semibold">
+                  <Shield className="h-4 w-4 shrink-0" style={{ color: DEADLIFT_COLOR }} />
+                  Bench Press 1RM
+                </Label>
                 <span
                   className="shrink-0 text-xl font-black tabular-nums"
                   style={{ color: DEADLIFT_COLOR }}
@@ -336,42 +371,25 @@ function GorillaStrengthMain({ relatedArticles }) {
               Want the serious version? → How Strong Am I?
             </Link>
           </div>
-
-          {/* ── HOW DOES THIS WORK ── */}
-          <Accordion type="single" collapsible>
-            <AccordionItem value="methodology">
-              <AccordionTrigger>How does this work?</AccordionTrigger>
-              <AccordionContent>
-                <ul className="list-inside list-disc space-y-2 text-sm text-muted-foreground">
-                  <li>
-                    A silverback gorilla is estimated to have the upper-body strength of
-                    6–10 trained human lifters. Nobody has actually tested a silverback
-                    in a squat rack. For obvious reasons.
-                  </li>
-                  <li>
-                    We use a 175 lb trained human bench press as our baseline, giving a
-                    gorilla equivalent of roughly {displayGorillaLow}–{displayGorillaHigh}{" "}
-                    {scoreUnit}. The midpoint (~{displayGorillaMid} {scoreUnit}) is your
-                    target to hit 100%.
-                  </li>
-                  <li>
-                    Percentile estimates assume an average bodyweight and are very
-                    approximate. This is a fun tool, not a research paper.
-                  </li>
-                  <li>
-                    Seriously, do not fight a gorilla. You will lose regardless of your
-                    bench press.
-                  </li>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
         </CardContent>
 
         <CardFooter className="pt-0 text-xs text-muted-foreground">
           For entertainment only. We accept no liability for gorilla-related incidents.
         </CardFooter>
       </Card>
+
+      {/* ── FAQ ── */}
+      <section className="mt-10">
+        <h2 className="mb-4 text-xl font-semibold">Gorilla Strength FAQ</h2>
+        <div className="space-y-4">
+          {FAQ_ITEMS.map(({ question, answer }) => (
+            <article key={question} className="rounded-lg border p-4">
+              <h3 className="text-base font-semibold">{question}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{answer}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-8">
         <RelatedArticles articles={relatedArticles} />

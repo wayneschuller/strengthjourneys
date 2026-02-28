@@ -190,6 +190,7 @@ function GorillaStrengthMain({ relatedArticles }) {
   const scoreUnit = isMetric ? "kg" : "lb";
   const displayBench = Math.round(bench);
   const displayGorillaMid = formatWeightInt(GORILLA_BENCH_MID_LB, isMetric);
+  const displayGorillaCardValue = isMetric ? 600 : 1320;
 
   const bragLine = getBragLine(gorillaPercent, benchLb);
 
@@ -293,7 +294,7 @@ function GorillaStrengthMain({ relatedArticles }) {
                   <div className="shrink-0">
                     <p className="text-xs text-muted-foreground">Gorilla bench</p>
                     <p className="text-2xl font-black tabular-nums md:text-3xl" style={{ color: DEADLIFT_COLOR }}>
-                      ~{displayGorillaMid}
+                      {displayGorillaCardValue}+
                       <span className="ml-1 text-base font-semibold text-muted-foreground">
                         {scoreUnit}
                       </span>

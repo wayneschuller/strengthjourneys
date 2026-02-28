@@ -243,7 +243,7 @@ function GorillaStrengthMain({ relatedArticles }) {
                 <img src="/gorilla1.png" alt="" width="420" height="420" aria-hidden="true" />
               </motion.div>
 
-              <div className="mx-auto mt-4 w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:right-6 md:top-6 md:mt-0 md:w-fit">
+              <div className="mx-auto mt-4 w-full max-w-[640px] rounded-xl border bg-background/65 p-3 text-center backdrop-blur-[1px] md:absolute md:right-0 md:top-6 md:mt-0 md:w-fit">
                 <div className="flex items-center gap-1 text-left">
                   <div className="shrink-0">
                     <p className="text-xs text-muted-foreground">Gorilla bench</p>

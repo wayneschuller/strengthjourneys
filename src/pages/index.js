@@ -332,6 +332,7 @@ export default function Home() {
 function FeatureCard({ href, title, description, IconComponent, index = 0 }) {
   const isWarmupsCalculator = href === "/warm-up-sets-calculator";
   const isAnalyzer = href === "/analyzer";
+  const isGorillaCalculator = href === "/how-strong-is-a-gorilla";
   const chartColorVar = `--chart-${(index % 5) + 1}`;
 
   return (
@@ -350,6 +351,14 @@ function FeatureCard({ href, title, description, IconComponent, index = 0 }) {
           className="bg-primary/10 text-primary absolute top-2 right-2 text-xs"
         >
           New
+        </Badge>
+      )}
+      {isGorillaCalculator && (
+        <Badge
+          variant="outline"
+          className="bg-primary/10 text-primary absolute top-2 right-2 text-xs"
+        >
+          Bananas 🍌
         </Badge>
       )}
       <Link href={href}>

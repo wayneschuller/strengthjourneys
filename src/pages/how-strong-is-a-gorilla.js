@@ -1,11 +1,11 @@
 import Head from "next/head";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
-import { RelatedArticles } from "@/components/article-cards";
-import { UnitChooser } from "@/components/unit-type-chooser";
 import { GorillaIcon } from "@/components/gorilla-icon";
+import { UnitChooser } from "@/components/unit-type-chooser";
+import { RelatedArticles } from "@/components/article-cards";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import {
@@ -13,7 +13,6 @@ import {
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
-  PageHeaderRight,
 } from "@/components/page-header";
 import {
   Card,
@@ -24,18 +23,28 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const LB_PER_KG = 2.20462;
 const KG_PER_LB = 0.453592;
-
 const GORILLA_MULTIPLIER_LOW = 6;
 const GORILLA_MULTIPLIER_HIGH = 10;
 const GORILLA_MULTIPLIER_MID = 8;
 
-const AVERAGE_MALE_BENCH_LB = 135;
-const AVERAGE_MALE_PRESS_LB = 95;
-const AVERAGE_MALE_UPPER_TOTAL_LB = AVERAGE_MALE_BENCH_LB + AVERAGE_MALE_PRESS_LB;
+// Matches Deadlift color in use-lift-colors.js
+const DEADLIFT_COLOR = "#005F73";
+const DEADLIFT_COLOR_SOFT = "rgba(0, 95, 115, 0.18)";
+
+const TRAINED_HUMAN_BASE_BENCH_LB = 175;
+const TRAINED_HUMAN_BASE_PRESS_LB = 110;
+const TRAINED_HUMAN_BASE_SCORE_LB =
+  TRAINED_HUMAN_BASE_BENCH_LB + TRAINED_HUMAN_BASE_PRESS_LB;
 
 const DEFAULT_VALUES = {
   bodyWeightLb: 185,
@@ -55,24 +64,6 @@ const HUMAN_PERCENTILE_TABLE = [
   { ratio: 2.5, humans: 99.5, gym: 97 },
 ];
 
-const FAQ_ITEMS = [
-  {
-    question: "How strong is a gorilla compared to a human?",
-    answer:
-      "A common estimate is that a silverback gorilla has about 6 to 10 times the upper-body pulling or pressing strength of an average adult male.",
-  },
-  {
-    question: "Can a human become as strong as a gorilla?",
-    answer:
-      "Not in absolute terms. Elite humans can get extremely strong, but gorillas have very different anatomy and leverage.",
-  },
-  {
-    question: "Is this gorilla calculator scientific?",
-    answer:
-      "No. It is an approximate perspective tool using conservative assumptions, not a biomechanical lab model.",
-  },
-];
-
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Strength Calculator";
   const relatedArticles = await fetchRelatedArticles(RELATED_ARTICLES_CATEGORY);
@@ -85,48 +76,25 @@ export async function getStaticProps() {
   };
 }
 
-/**
- * How Strong Is a Gorilla page. Renders SEO metadata and delegates rendering to GorillaStrengthMain.
- * @param {Object} props
- * @param {Array} props.relatedArticles - CMS articles related to strength tools, fetched via ISR.
- */
 export default function GorillaStrengthPage({ relatedArticles }) {
   const canonicalURL = "https://www.strengthjourneys.xyz/how-strong-is-a-gorilla";
-  const title = "How Strong Is a Gorilla? Compare Your Strength | Strength Journeys";
+  const title = "How Strong Are You Compared to a Gorilla? | Strength Journeys";
   const description =
-    "How strong is a gorilla? Use this fun gorilla strength comparison tool to see your rough upper-body strength percentage versus a silverback.";
+    "Playful gorilla strength comparison tool. Estimate your upper-body strength score versus a silverback range.";
   const keywords =
-    "how strong is a gorilla, gorilla strength, silverback strength, gorilla vs human strength, strength comparison tool, how strong am i";
-  const ogImageURL =
-    "https://www.strengthjourneys.xyz/strength_journeys_strength_levels_calculator_og.png";
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "WebPage",
-        name: "How Strong Is a Gorilla?",
-        description,
-        url: canonicalURL,
-      },
-      {
-        "@type": "FAQPage",
-        mainEntity: FAQ_ITEMS.map(({ question, answer }) => ({
-          "@type": "Question",
-          name: question,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: answer,
-          },
-        })),
-      },
-    ],
-  };
+    "how strong is a gorilla, gorilla strength, gorilla vs human strength, how strong are you";
 
   return (
     <>
       <Head>
         <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: title,
+            description,
+            url: canonicalURL,
+          })}
         </script>
       </Head>
       <NextSeo
@@ -140,23 +108,12 @@ export default function GorillaStrengthPage({ relatedArticles }) {
           type: "website",
           images: [
             {
-              url: ogImageURL,
-              alt: "How Strong Is a Gorilla comparison tool",
+              url: "https://www.strengthjourneys.xyz/strength_journeys_strength_levels_calculator_og.png",
+              alt: "How Strong Are You Compared to a Gorilla",
             },
           ],
           site_name: "Strength Journeys",
         }}
-        twitter={{
-          handle: "@wayneschuller",
-          site: "@wayneschuller",
-          cardType: "summary_large_image",
-        }}
-        additionalMetaTags={[
-          {
-            name: "keywords",
-            content: keywords,
-          },
-        ]}
       />
       <GorillaStrengthMain relatedArticles={relatedArticles} />
     </>
@@ -164,6 +121,7 @@ export default function GorillaStrengthPage({ relatedArticles }) {
 }
 
 function GorillaStrengthMain({ relatedArticles }) {
+  const [isCopied, setIsCopied] = useState(false);
   const [isMetric, setIsMetric] = useLocalStorage(
     LOCAL_STORAGE_KEYS.GORILLA_IS_METRIC,
     false,
@@ -185,311 +143,270 @@ function GorillaStrengthMain({ relatedArticles }) {
     { initializeWithValue: false },
   );
 
+  useEffect(() => {
+    if (!isCopied) return;
+    const timer = setTimeout(() => setIsCopied(false), 1400);
+    return () => clearTimeout(timer);
+  }, [isCopied]);
+
   const bodyWeightLb = isMetric ? bodyWeight * LB_PER_KG : bodyWeight;
   const benchLb = isMetric ? bench * LB_PER_KG : bench;
   const pressLb = isMetric ? press * LB_PER_KG : press;
+  const upperBodyStrengthScoreLb = benchLb + pressLb;
 
-  const upperBodyTotalLb = benchLb + pressLb;
-  const gorillaBenchLow = AVERAGE_MALE_BENCH_LB * GORILLA_MULTIPLIER_LOW;
-  const gorillaBenchHigh = AVERAGE_MALE_BENCH_LB * GORILLA_MULTIPLIER_HIGH;
-  const gorillaPressLow = AVERAGE_MALE_PRESS_LB * GORILLA_MULTIPLIER_LOW;
-  const gorillaPressHigh = AVERAGE_MALE_PRESS_LB * GORILLA_MULTIPLIER_HIGH;
-  const gorillaUpperLow = AVERAGE_MALE_UPPER_TOTAL_LB * GORILLA_MULTIPLIER_LOW;
-  const gorillaUpperHigh = AVERAGE_MALE_UPPER_TOTAL_LB * GORILLA_MULTIPLIER_HIGH;
-  const gorillaUpperMid = AVERAGE_MALE_UPPER_TOTAL_LB * GORILLA_MULTIPLIER_MID;
-
-  const asGorillaPercent = Math.max(
-    0,
-    Math.min(999, (upperBodyTotalLb / gorillaUpperMid) * 100),
+  // Light bodyweight-based scaling: +/-15% max relative to 185 lb baseline.
+  const bodyweightScale = clamp(
+    1 + ((bodyWeightLb - DEFAULT_VALUES.bodyWeightLb) / DEFAULT_VALUES.bodyWeightLb) * 0.15,
+    0.85,
+    1.15,
   );
 
-  const strengthRatio = bodyWeightLb > 0 ? upperBodyTotalLb / bodyWeightLb : 0;
+  const gorillaLowLb =
+    TRAINED_HUMAN_BASE_SCORE_LB * GORILLA_MULTIPLIER_LOW * bodyweightScale;
+  const gorillaHighLb =
+    TRAINED_HUMAN_BASE_SCORE_LB * GORILLA_MULTIPLIER_HIGH * bodyweightScale;
+  const gorillaMidLb =
+    TRAINED_HUMAN_BASE_SCORE_LB * GORILLA_MULTIPLIER_MID * bodyweightScale;
+
+  const gorillaPercent = clamp((upperBodyStrengthScoreLb / gorillaMidLb) * 100, 0, 999);
+  const fillPercent = clamp(gorillaPercent, 0, 100);
+
+  const strengthRatio = bodyWeightLb > 0 ? upperBodyStrengthScoreLb / bodyWeightLb : 0;
   const percentile = useMemo(
     () => getEstimatedPercentiles(strengthRatio),
     [strengthRatio],
   );
 
-  const displayedUpperBodyTotal = formatWeight(upperBodyTotalLb, isMetric);
-  const displayedGorillaLow = formatWeight(gorillaUpperLow, isMetric);
-  const displayedGorillaHigh = formatWeight(gorillaUpperHigh, isMetric);
-  const displayedBenchLow = formatWeight(gorillaBenchLow, isMetric);
-  const displayedBenchHigh = formatWeight(gorillaBenchHigh, isMetric);
-  const displayedPressLow = formatWeight(gorillaPressLow, isMetric);
-  const displayedPressHigh = formatWeight(gorillaPressHigh, isMetric);
+  const displayScore = formatWeightInt(upperBodyStrengthScoreLb, isMetric);
+  const displayLow = formatWeightInt(gorillaLowLb, isMetric);
+  const displayHigh = formatWeightInt(gorillaHighLb, isMetric);
+  const displayMid = formatWeightInt(gorillaMidLb, isMetric);
+  const scoreUnit = isMetric ? "kg" : "lb";
+
+  const bragLine = getBragLine(gorillaPercent);
+
+  const copyResult = async () => {
+    const text =
+      `I’m ~${Math.round(gorillaPercent)}% as strong as a gorilla (upper-body). ` +
+      "https://www.strengthjourneys.xyz/how-strong-is-a-gorilla";
+    try {
+      await navigator.clipboard.writeText(text);
+      setIsCopied(true);
+    } catch {
+      setIsCopied(false);
+    }
+  };
 
   return (
     <PageContainer>
-      <PageHeader>
-        <PageHeaderHeading icon={GorillaIcon}>How Strong Is a Gorilla?</PageHeaderHeading>
+      <PageHeader hideRecapBanner>
+        <PageHeaderHeading icon={GorillaIcon}>
+          How Strong Are You Compared to a Gorilla?
+        </PageHeaderHeading>
         <PageHeaderDescription>
-          Compare Your Strength to a Silverback Gorilla
+          A playful, approximate comparison - not biological precision.
         </PageHeaderDescription>
-        <PageHeaderRight>
-          <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
-            <Link
-              href="/strength-level-calculator"
-              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
-            >
-              <h3 className="text-base font-semibold">How Strong Am I?</h3>
-              <p className="text-sm">Get your full strength ranking by lift.</p>
-            </Link>
-            <Link
-              href="/analyzer"
-              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
-            >
-              <h3 className="text-base font-semibold">Strength Circles</h3>
-              <p className="text-sm">Track your rankings over your full journey.</p>
-            </Link>
-          </div>
-        </PageHeaderRight>
       </PageHeader>
 
-      <section className="px-3 pb-4 sm:px-[2vw] md:px-[3vw] lg:px-[4vw] xl:px-[5vw]">
-        <h2 className="text-xl font-semibold">Quick answer</h2>
-        <p className="mt-2 max-w-4xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-          Conservative estimates often place silverback gorillas at about{" "}
-          <strong>{GORILLA_MULTIPLIER_LOW} to {GORILLA_MULTIPLIER_HIGH} times</strong>{" "}
-          the upper-body strength of an average adult male. In rough gym terms,
-          that can map to very high pressing and pulling equivalents. This page is
-          a playful comparison tool, not a biology lab result.
-        </p>
-      </section>
-
-      <Card className="pt-4">
-        <CardHeader>
-          <CardTitle>Gorilla Strength Comparison Tool</CardTitle>
+      <Card className="pt-2">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl">Result</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="rounded-lg border bg-muted/20 p-6">
-            <p className="mb-4 text-center text-base font-semibold">You vs Gorilla</p>
-            <div className="mx-auto flex max-w-2xl flex-col items-center gap-4">
-              <GorillaRadialBadge percent={asGorillaPercent} size={260} />
-              <p className="text-center text-sm text-muted-foreground">
-                Your upper-body total is <strong>{displayedUpperBodyTotal} {isMetric ? "kg" : "lb"}</strong>.
-                Gorilla midpoint estimate is <strong>{formatWeight(gorillaUpperMid, isMetric)} {isMetric ? "kg" : "lb"}</strong>.
-                {" "}Range used: {displayedGorillaLow}-{displayedGorillaHigh} {isMetric ? "kg" : "lb"}.
-              </p>
+        <CardContent className="space-y-8 py-6">
+          <section className="rounded-xl bg-muted/25 p-6">
+            <div className="flex items-center justify-center gap-2">
+              <GorillaIcon className="h-5 w-5" style={{ color: DEADLIFT_COLOR }} />
+              <p className="text-sm font-semibold">You vs Gorilla</p>
             </div>
-          </div>
+            <p
+              className="mt-3 text-center text-5xl font-extrabold leading-none"
+              style={{ color: DEADLIFT_COLOR }}
+            >
+              ~{Math.round(gorillaPercent)}%
+            </p>
+            <p className="mt-2 text-center text-sm font-medium">
+              of gorilla strength (midpoint estimate)
+            </p>
 
-          <div className="grid gap-5 lg:grid-cols-3">
-            <SliderInput
-              label="Bodyweight"
-              value={bodyWeight}
-              onChange={setBodyWeight}
-              min={isMetric ? 45 : 100}
-              max={isMetric ? 205 : 450}
-              step={1}
-              unit={isMetric ? "kg" : "lb"}
-              rightControl={
-                <UnitChooser
-                  isMetric={isMetric}
-                  onSwitchChange={() => {
-                    const nextIsMetric = !isMetric;
-                    setIsMetric(nextIsMetric);
-                    setBodyWeight((prev) => roundWeight(convertWeight(prev, isMetric, nextIsMetric)));
-                    setBench((prev) => roundWeight(convertWeight(prev, isMetric, nextIsMetric)));
-                    setPress((prev) => roundWeight(convertWeight(prev, isMetric, nextIsMetric)));
+            <div className="mt-5">
+              <div className="mb-2 flex items-center justify-between text-sm font-semibold">
+                <span>You</span>
+                <span>Gorilla</span>
+              </div>
+              <div className="h-5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-5 rounded-full transition-none"
+                  style={{
+                    width: `${fillPercent}%`,
+                    backgroundColor: DEADLIFT_COLOR,
                   }}
                 />
-              }
-            />
-            <SliderInput
-              label="Bench Press"
-              value={bench}
-              onChange={setBench}
-              min={0}
-              max={isMetric ? 320 : 700}
-              step={isMetric ? 1 : 5}
-              unit={isMetric ? "kg" : "lb"}
-            />
-            <SliderInput
-              label="Strict Press"
-              value={press}
-              onChange={setPress}
-              min={0}
-              max={isMetric ? 220 : 500}
-              step={isMetric ? 1 : 5}
-              unit={isMetric ? "kg" : "lb"}
-            />
-          </div>
+              </div>
+            </div>
+          </section>
 
-          <Separator />
+          <section className="rounded-xl bg-muted/20 p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold">Your strength score</h2>
+              <UnitChooser
+                isMetric={isMetric}
+                onSwitchChange={() => {
+                  const nextIsMetric = !isMetric;
+                  setIsMetric(nextIsMetric);
+                  setBodyWeight((prev) =>
+                    roundWeight(convertWeight(prev, isMetric, nextIsMetric)),
+                  );
+                  setBench((prev) =>
+                    roundWeight(convertWeight(prev, isMetric, nextIsMetric)),
+                  );
+                  setPress((prev) =>
+                    roundWeight(convertWeight(prev, isMetric, nextIsMetric)),
+                  );
+                }}
+              />
+            </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            <StatCard
-              title="Your Upper-Body Total"
-              value={`${displayedUpperBodyTotal} ${isMetric ? "kg" : "lb"}`}
-              subtitle={`Bench + Strict Press`}
-            />
-            <StatCard
-              title="Estimated Gorilla Equivalent"
-              value={`${displayedGorillaLow} - ${displayedGorillaHigh} ${isMetric ? "kg" : "lb"}`}
-              subtitle={`${GORILLA_MULTIPLIER_LOW}x - ${GORILLA_MULTIPLIER_HIGH}x average male upper-body`}
-            />
-            <StatCard
-              title="You vs Gorilla"
-              value={`~${Math.round(asGorillaPercent)}%`}
-              subtitle={`Based on an ${GORILLA_MULTIPLIER_MID}x midpoint assumption`}
-            />
-          </div>
+            <div className="grid gap-5 md:grid-cols-3">
+              <StrengthInput
+                label="Bodyweight"
+                helper="for context only (v1)"
+                value={bodyWeight}
+                onChange={setBodyWeight}
+                min={isMetric ? 45 : 100}
+                max={isMetric ? 205 : 450}
+                step={1}
+                unit={scoreUnit}
+              />
+              <StrengthInput
+                label="Bench Press"
+                helper="1RM or best single"
+                value={bench}
+                onChange={setBench}
+                min={0}
+                max={isMetric ? 320 : 700}
+                step={1}
+                unit={scoreUnit}
+              />
+              <StrengthInput
+                label="Strict Press"
+                helper="1RM or best single"
+                value={press}
+                onChange={setPress}
+                min={0}
+                max={isMetric ? 220 : 500}
+                step={1}
+                unit={scoreUnit}
+              />
+            </div>
 
-          <div className="grid gap-3 lg:grid-cols-3">
-            <ComparisonRow
-              label="Bench equivalent"
-              userValue={benchLb}
-              gorillaLow={gorillaBenchLow}
-              gorillaHigh={gorillaBenchHigh}
-              isMetric={isMetric}
-            />
-            <ComparisonRow
-              label="Strict press equivalent"
-              userValue={pressLb}
-              gorillaLow={gorillaPressLow}
-              gorillaHigh={gorillaPressHigh}
-              isMetric={isMetric}
-            />
-            <ComparisonRow
-              label="Upper-body total equivalent"
-              userValue={upperBodyTotalLb}
-              gorillaLow={gorillaUpperLow}
-              gorillaHigh={gorillaUpperHigh}
-              isMetric={isMetric}
-            />
-          </div>
+            <p className="mt-5 text-sm font-medium">
+              Upper-body strength score:{" "}
+              <span className="font-bold" style={{ color: DEADLIFT_COLOR }}>
+                {displayScore} {scoreUnit}
+              </span>
+            </p>
+          </section>
 
-          <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-            You are estimated stronger than about <strong>{percentile.humans}% of adults</strong>{" "}
-            and <strong>{percentile.gym}% of regular gym-goers</strong> for
-            upper-body strength.
-          </div>
+          <section className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-xl bg-muted/20 p-5">
+              <h3 className="text-base font-semibold">Gorilla estimate</h3>
+              <p className="mt-2 text-sm leading-relaxed">
+                A silverback is estimated at ~6-10x a trained human in upper-body
+                pulling/pressing strength.
+              </p>
+              <p className="mt-3 text-sm font-medium">
+                Estimated gorilla equivalent:{" "}
+                <span className="font-bold" style={{ color: DEADLIFT_COLOR }}>
+                  {displayLow}-{displayHigh} {scoreUnit}
+                </span>{" "}
+                (range, midpoint ~{displayMid} {scoreUnit})
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-muted/20 p-5">
+              <h3 className="text-base font-semibold">Interpretation</h3>
+              <p className="mt-2 text-sm">
+                You are stronger than about{" "}
+                <strong>{Math.round(percentile.humans)}% of adults</strong> and{" "}
+                <strong>{Math.round(percentile.gym)}% of regular gym-goers</strong>{" "}
+                for this upper-body composite.
+              </p>
+              <p className="mt-3 text-sm">{bragLine}</p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Button
+                  onClick={copyResult}
+                  className="h-11"
+                  style={{ backgroundColor: DEADLIFT_COLOR }}
+                >
+                  {isCopied ? "Copied" : "Copy result"}
+                </Button>
+                <Link
+                  href="/how-strong-am-i"
+                  className="text-sm font-semibold underline"
+                  style={{ color: DEADLIFT_COLOR }}
+                >
+                  Want the serious version? -&gt; How Strong Am I (Strength Circles)
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          <Accordion type="single" collapsible>
+            <AccordionItem value="assumptions">
+              <AccordionTrigger>Assumptions</AccordionTrigger>
+              <AccordionContent>
+                <ul className="list-inside list-disc space-y-2 text-sm text-muted-foreground">
+                  <li>
+                    We estimate gorilla strength as 6-10x a trained human upper-body composite.
+                  </li>
+                  <li>
+                    Bodyweight is used only as a light contextual scaling factor (+/-15% cap).
+                  </li>
+                  <li>
+                    This is for perspective and fun, not a scientific measurement.
+                  </li>
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
-        <CardFooter className="flex flex-col items-start gap-3 text-sm">
-          <p className="text-muted-foreground">
-            These comparisons are approximate and for perspective, not biological precision.
-          </p>
-          <p>
-            Want the serious version? See your full lift-by-lift ranking in our{" "}
-            <Link
-              href="/strength-level-calculator"
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-            >
-              Strength Level Calculator
-            </Link>
-            {" "}and{" "}
-            <Link
-              href="/analyzer"
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-            >
-              PR Analyzer
-            </Link>
-            .
-          </p>
+        <CardFooter className="pt-0 text-xs text-muted-foreground">
+          Playful approximation. Not biological precision.
         </CardFooter>
       </Card>
 
-      <section className="mt-10 px-3 sm:px-[2vw] md:px-[3vw] lg:px-[4vw] xl:px-[5vw]">
-        <h2 className="mb-3 text-xl font-semibold">How this estimate works</h2>
-        <ul className="list-inside list-disc space-y-2 text-sm text-muted-foreground">
-          <li>
-            Uses a conservative public estimate of{" "}
-            <strong>{GORILLA_MULTIPLIER_LOW}x to {GORILLA_MULTIPLIER_HIGH}x</strong>{" "}
-            average adult male upper-body strength.
-          </li>
-          <li>
-            Converts that multiplier into rough barbell-style equivalents for
-            bench press, strict press, and their combined total.
-          </li>
-          <li>
-            Percentile outputs are playful heuristics for perspective, not scientific
-            population claims.
-          </li>
-        </ul>
-        <p className="mt-4 text-sm text-muted-foreground">
-          Bench equivalent estimate: {displayedBenchLow}-{displayedBenchHigh}{" "}
-          {isMetric ? "kg" : "lb"} | Strict press equivalent estimate:{" "}
-          {displayedPressLow}-{displayedPressHigh} {isMetric ? "kg" : "lb"}.
-        </p>
+      <section className="mt-8">
+        <RelatedArticles articles={relatedArticles} />
       </section>
-
-      <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );
 }
 
-function SliderInput({ label, value, onChange, min, max, step, unit, rightControl }) {
+function StrengthInput({
+  label,
+  helper,
+  value,
+  onChange,
+  min,
+  max,
+  step,
+  unit,
+}) {
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3">
-        <Label className="text-base">
-          {label}: <span className="font-semibold">{value} {unit}</span>
-        </Label>
-        {rightControl}
-      </div>
-      <Slider
-        min={min}
-        max={max}
-        step={step}
-        value={[value]}
-        onValueChange={(vals) => onChange(vals[0])}
-        aria-label={`${label} in ${unit}`}
-      />
-    </div>
-  );
-}
-
-function StatCard({ title, value, subtitle }) {
-  return (
-    <div className="rounded-lg border p-4">
-      <div className="text-sm text-muted-foreground">{title}</div>
-      <div className="mt-1 text-2xl font-bold tracking-tight">{value}</div>
-      <div className="mt-1 text-xs text-muted-foreground">{subtitle}</div>
-    </div>
-  );
-}
-
-function GorillaRadialBadge({ percent, size = 192 }) {
-  const boundedPercent = Math.max(0, Math.min(100, percent));
-  const angle = Math.round((boundedPercent / 100) * 360);
-
-  return (
-    <div className="relative rounded-full p-2" style={{ height: size, width: size }}>
-      <div
-        className="h-full w-full rounded-full"
-        style={{
-          background: `conic-gradient(hsl(var(--primary)) ${angle}deg, hsl(var(--muted)) ${angle}deg 360deg)`,
-        }}
-      />
-      <div className="absolute inset-4 flex flex-col items-center justify-center rounded-full border bg-background text-center">
-        <GorillaIcon className="h-14 w-14" />
-        <p className="mt-1 text-3xl font-bold leading-none">{Math.round(percent)}%</p>
-        <p className="text-xs text-muted-foreground">of gorilla midpoint</p>
-      </div>
-    </div>
-  );
-}
-
-function ComparisonRow({ label, userValue, gorillaLow, gorillaHigh, isMetric }) {
-  const rangeMid = (gorillaLow + gorillaHigh) / 2;
-  const percent = Math.max(0, Math.min(220, (userValue / rangeMid) * 100));
-
-  return (
-    <div className="rounded-lg border p-3">
-      <div className="text-sm font-medium">{label}</div>
-      <div className="mt-1 text-xs text-muted-foreground">
-        You: {formatWeight(userValue, isMetric)} {isMetric ? "kg" : "lb"} | Gorilla est:{" "}
-        {formatWeight(gorillaLow, isMetric)}-{formatWeight(gorillaHigh, isMetric)}{" "}
-        {isMetric ? "kg" : "lb"}
-      </div>
-      <div className="mt-3 h-2 rounded-full bg-muted">
-        <div
-          className="h-2 rounded-full bg-primary"
-          style={{ width: `${Math.min(100, percent)}%` }}
-          aria-hidden
+      <Label className="text-sm font-semibold">
+        {label}: <span className="font-bold">{Math.round(value)} {unit}</span>
+      </Label>
+      <p className="text-xs text-muted-foreground">{helper}</p>
+      <div className="rounded-md border bg-background px-3 py-4">
+        <Slider
+          min={min}
+          max={max}
+          step={step}
+          value={[value]}
+          onValueChange={(vals) => onChange(vals[0])}
+          aria-label={`${label} slider in ${unit}`}
         />
-      </div>
-      <div className="mt-1 text-[11px] text-muted-foreground">
-        ~{Math.round(percent)}% of gorilla equivalent midpoint
       </div>
     </div>
   );
@@ -509,8 +426,8 @@ function getEstimatedPercentiles(ratio) {
     if (ratio <= upper.ratio) {
       const t = (ratio - lower.ratio) / (upper.ratio - lower.ratio);
       return {
-        humans: roundOneDecimal(lower.humans + (upper.humans - lower.humans) * t),
-        gym: roundOneDecimal(lower.gym + (upper.gym - lower.gym) * t),
+        humans: lower.humans + (upper.humans - lower.humans) * t,
+        gym: lower.gym + (upper.gym - lower.gym) * t,
       };
     }
   }
@@ -521,9 +438,9 @@ function getEstimatedPercentiles(ratio) {
   };
 }
 
-function formatWeight(valueLb, isMetric) {
+function formatWeightInt(valueLb, isMetric) {
   const value = isMetric ? valueLb * KG_PER_LB : valueLb;
-  return roundOneDecimal(value);
+  return Math.round(value);
 }
 
 function convertWeight(value, fromMetric, toMetric) {
@@ -536,6 +453,14 @@ function roundWeight(value) {
   return Math.max(0, Math.round(value));
 }
 
-function roundOneDecimal(value) {
-  return Math.round(value * 10) / 10;
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getBragLine(percent) {
+  if (percent < 10) return "You are in the game. Keep training.";
+  if (percent < 20) return "You're about 1/7th of a gorilla. Respect.";
+  if (percent < 35) return "You are closing in on serious primate territory.";
+  if (percent < 50) return "You are officially scary in normal gym terms.";
+  return "You might be the problem in the jungle.";
 }

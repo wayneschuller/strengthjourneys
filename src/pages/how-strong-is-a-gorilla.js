@@ -47,6 +47,8 @@ const GORILLA_BENCH_HIGH_LB = TRAINED_HUMAN_BASE_BENCH_LB * GORILLA_MULTIPLIER_H
 
 const DEFAULT_BENCH_LB = 135;
 const ASSUMED_BODYWEIGHT_LB = 185;
+const MOCKING_THRESHOLD_KG = 180;
+const MOCKING_THRESHOLD_LB = MOCKING_THRESHOLD_KG * LB_PER_KG;
 
 // Approximate bench-only percentiles (ratio = bench / ~185 lb assumed bodyweight)
 const HUMAN_PERCENTILE_TABLE = [
@@ -81,6 +83,21 @@ const FAQ_ITEMS = [
     question: "Is this scientifically accurate?",
     answer:
       "It is a playful estimate based on published comparative strength research. The 6–10x multiplier is the most commonly cited figure in the literature. The exact number varies by source, study methodology, and which gorilla showed up that day.",
+  },
+  {
+    question: "Are gorillas basically just angry bodybuilders?",
+    answer:
+      "No. Gorillas are more like very large yoga dads. Immensely strong, deeply chill, and far more likely to babysit than brawl.",
+  },
+  {
+    question: "How strong is a silverback, really?",
+    answer:
+      "Strong enough that if he were a gym member, he'd be banned for breaking equipment. Silverbacks can weigh up to 400 lbs and casually move things you'd need a forklift for — all while eating salad.",
+  },
+  {
+    question: "What does “silverback” actually mean?",
+    answer:
+      "It's not a job title, rank, or Hogwarts house. It simply means: adult male gorilla with stylish silver hair. Think distinguished, not midlife crisis.",
   },
 ];
 
@@ -174,7 +191,7 @@ function GorillaStrengthMain({ relatedArticles }) {
   const displayBench = Math.round(bench);
   const displayGorillaMid = formatWeightInt(GORILLA_BENCH_MID_LB, isMetric);
 
-  const bragLine = getBragLine(gorillaPercent);
+  const bragLine = getBragLine(gorillaPercent, benchLb);
 
   const handleUnitSwitch = () => {
     const nextIsMetric = !isMetric;
@@ -497,11 +514,17 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-function getBragLine(percent) {
-  if (percent < 5) return "A gorilla could bench you. As a warm-up set.";
-  if (percent < 10) return "You are in the game. A small, very brave game.";
-  if (percent < 20) return "About 1/10th of a gorilla. Solid for your species.";
-  if (percent < 35) return "Closing in on primate territory. The gorilla is not concerned.";
-  if (percent < 50) return "Gym-scary. Jungle — not so much.";
-  return "You might be the problem in the jungle. Still wouldn't recommend it.";
+function getBragLine(percent, benchLb) {
+  if (benchLb <= MOCKING_THRESHOLD_LB) {
+    if (percent < 5) return "A gorilla could bench you. As a warm-up set.";
+    if (percent < 10) return "You are in the game. A small, very brave game.";
+    if (percent < 20) return "About 1/10th of a gorilla. Solid for your species.";
+    if (percent < 28) return "Closing in on primate territory. The gorilla is not concerned.";
+    return "Big human numbers. The gorilla has noticed you now.";
+  }
+
+  if (benchLb < 485) return "180kg+? Sure. And your spotter was Bigfoot.";
+  if (benchLb < 575) return "That number is strong. Your honesty is not.";
+  if (benchLb < 700) return "We checked. The bar is bent from fiction.";
+  return "Legendary strength. Completely imaginary, but legendary.";
 }

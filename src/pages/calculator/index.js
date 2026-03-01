@@ -154,7 +154,7 @@ export default function E1RMCalculator({ relatedArticles }) {
  * @param {string|null} [props.forceLift=null] - When set, shows lift-specific UI enhancements:
  *   the lift SVG next to the page title, the lift name + strength rating in the hero card, and
  *   the target lift featured prominently in the strength standards section.
- *   Value should be a slug page lift name e.g. "Squat", "Bench Press", "Deadlift", "Overhead Press".
+ *   Value should be a slug page lift name e.g. "Squat", "Bench Press", "Deadlift", "Strict Press".
  * @param {string} [props.pageTitle] - Heading text for the page.
  * @param {string} [props.pageDescription] - Description text under the heading.
  * @param {Object|null} [props.formulaBlurb] - If set, renders an equation + blurb line under the description.
@@ -1112,7 +1112,7 @@ const LIFT_SLUG_TO_BIG_FOUR = {
   "Squat": "Back Squat",
   "Bench Press": "Bench Press",
   "Deadlift": "Deadlift",
-  "Overhead Press": "Strict Press",
+  "Strict Press": "Strict Press",
 };
 
 // Maps lift slug page names to the dedicated lift insights page URL.
@@ -1120,7 +1120,7 @@ const LIFT_SLUG_TO_INSIGHTS_URL = {
   "Squat": "/barbell-squat-insights",
   "Bench Press": "/barbell-bench-press-insights",
   "Deadlift": "/barbell-deadlift-insights",
-  "Overhead Press": "/barbell-strict-press-insights",
+  "Strict Press": "/barbell-strict-press-insights",
 };
 
 const NEXT_TIER = {

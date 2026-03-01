@@ -121,7 +121,7 @@ const PAGE_CONFIG = {
   },
   "overhead-press-1rm-calculator": {
     type: "lift",
-    liftName: "Overhead Press",
+    liftName: "Strict Press",
     blurb:
       "Enter your overhead press working weight and reps. The OHP 1RM is a key upper body strength benchmark. Sets of 3–8 reps give the most reliable estimates.",
     title: "Overhead Press 1RM Calculator | OHP Max Calculator — Free Tool",

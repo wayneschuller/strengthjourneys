@@ -383,7 +383,7 @@ function StrengthLevelsCard({ liftType }) {
           </CardDescription>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-0">
         <StandardsSlider
           liftType={liftType}
           standards={standards}

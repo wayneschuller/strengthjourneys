@@ -137,19 +137,19 @@ export default function E1RMCalculator({ relatedArticles }) {
  *
  * Formula selection strategy:
  * - Normal pages (/calculator, lift slug pages): URL query → localStorage → defaultFormula.
- *   The user's saved preference is respected and shared links carry the formula in the URL.
+ *   The user's saved preference is respected; shared links carry the formula in the URL.
  * - Formula slug pages (/calculator/epley-formula-1rm-calculator etc.): forceFormula always wins.
- *   Both URL query and localStorage are ignored on init so the page always opens with its formula.
- *   The user can still change the formula interactively after load. This is implemented by calling
- *   both hooks unconditionally (React rules) and selecting which one drives the UI based on forceFormula.
+ *   The formula prop drives the display directly — no state, no URL query, no localStorage.
+ *   Clicking a different formula redirects to /calculator with all current state in the query
+ *   so the user lands on the main calculator with their inputs intact and the new formula selected.
  *
  * @param {Object} props
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
  * @param {string} [props.defaultFormula="Brzycki"] - Fallback formula for normal pages when no URL
  *   query or localStorage value exists. Ignored when forceFormula is set.
- * @param {string|null} [props.forceFormula=null] - When set, this formula is always shown on load,
- *   ignoring URL query and localStorage. Intended for formula slug pages where the slug itself
- *   communicates the formula. User interactions after load still work normally.
+ * @param {string|null} [props.forceFormula=null] - When set, this formula is always shown regardless
+ *   of URL query or localStorage. Clicking a different formula navigates away to /calculator.
+ *   Intended for formula slug pages where the slug itself communicates the formula.
  * @param {string} [props.pageTitle] - Heading text for the page.
  * @param {string} [props.pageDescription] - Description text under the heading.
  * @param {Object|null} [props.formulaBlurb] - If set, renders an equation + blurb line under the description.
@@ -180,8 +180,8 @@ export function E1RMCalculatorMain({
     { [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric },
   ); // Will be a string
   // For normal pages: URL query → localStorage → defaultFormula.
-  // For formula slug pages: forceFormula always wins (see forceFormula prop). Both hooks must be
-  // called unconditionally (React rules); we select which one drives the UI below.
+  // For formula slug pages: forceFormula prop drives the display directly (no state involved).
+  // Clicking a different formula redirects to /calculator with all current state in the query.
   const [hookFormula, setHookFormula] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.FORMULA,
     defaultFormula,
@@ -191,9 +191,18 @@ export function E1RMCalculatorMain({
       [LOCAL_STORAGE_KEYS.REPS]: reps,
     },
   );
-  const [forcedFormula, setForcedFormula] = useState(forceFormula ?? defaultFormula);
-  const e1rmFormula = forceFormula !== null ? forcedFormula : hookFormula;
-  const setE1rmFormula = forceFormula !== null ? setForcedFormula : setHookFormula;
+  const e1rmFormula = forceFormula ?? hookFormula;
+  const setE1rmFormula = forceFormula !== null
+    ? (newFormula) => router.push({
+        pathname: "/calculator",
+        query: {
+          [LOCAL_STORAGE_KEYS.FORMULA]: JSON.stringify(newFormula),
+          [LOCAL_STORAGE_KEYS.REPS]: JSON.stringify(reps),
+          [LOCAL_STORAGE_KEYS.WEIGHT]: JSON.stringify(weight),
+          [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: JSON.stringify(isMetric),
+        },
+      })
+    : setHookFormula;
   const [weight, setWeight] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.WEIGHT,
     225,

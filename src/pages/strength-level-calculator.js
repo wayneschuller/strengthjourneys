@@ -175,9 +175,6 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
               ) : (
                 <div className="w-full aspect-square" />
               )}
-              <span className="text-center text-xs font-semibold leading-tight text-muted-foreground">
-                {liftType}
-              </span>
             </div>
 
             {/* Main column */}

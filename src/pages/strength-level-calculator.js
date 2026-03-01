@@ -25,6 +25,7 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { StandardsSlider } from "@/components/standards-slider";
 import { bigFourURLs } from "@/components/lift-type-indicator";
+import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 
 const LIFT_CALC_URLS = {
   "Back Squat": "/calculator/squat-1rm-calculator",
@@ -156,29 +157,45 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
           </div>
           <div className="flex flex-col gap-8 md:ml-4">
             {liftTypesFromStandards.map((liftType) => (
-              <div key={liftType} className="">
-                <Link href={bigFourURLs[liftType]} className="transition-opacity hover:opacity-70">
-                  <h2
-                    className="text-xl font-bold underline decoration-2 underline-offset-2"
-                    style={{ textDecorationColor: getColor(liftType) }}
+              <div key={liftType} className="flex items-stretch gap-4">
+                {getLiftSvgPath(liftType) && bigFourURLs[liftType] && (
+                  <Link
+                    href={bigFourURLs[liftType]}
+                    className="flex w-14 flex-shrink-0 items-center"
+                    tabIndex={-1}
+                    aria-hidden
                   >
-                    {liftType} Strength Standards:
-                  </h2>
-                </Link>
-                <StandardsSlider
-                  liftType={liftType}
-                  standards={standards}
-                  isMetric={isMetric}
-                  ratingRightSlot={LIFT_CALC_URLS[liftType] && (
-                    <Link
-                      href={LIFT_CALC_URLS[liftType]}
-                      className="whitespace-nowrap hover:text-foreground"
+                    <img
+                      src={getLiftSvgPath(liftType)}
+                      alt=""
+                      className="h-full w-full object-contain opacity-60 transition-opacity hover:opacity-90"
+                    />
+                  </Link>
+                )}
+                <div className="min-w-0 flex-1">
+                  <Link href={bigFourURLs[liftType]} className="transition-opacity hover:opacity-70">
+                    <h2
+                      className="text-xl font-bold underline decoration-2 underline-offset-2"
+                      style={{ textDecorationColor: getColor(liftType) }}
                     >
-                      {liftType} 1RM Calculator →
-                    </Link>
-                  )}
-                />
-                <Separator />
+                      {liftType} Strength Standards:
+                    </h2>
+                  </Link>
+                  <StandardsSlider
+                    liftType={liftType}
+                    standards={standards}
+                    isMetric={isMetric}
+                    ratingRightSlot={LIFT_CALC_URLS[liftType] && (
+                      <Link
+                        href={LIFT_CALC_URLS[liftType]}
+                        className="whitespace-nowrap hover:text-foreground"
+                      >
+                        {liftType} 1RM Calculator →
+                      </Link>
+                    )}
+                  />
+                  <Separator />
+                </div>
               </div>
             ))}
           </div>

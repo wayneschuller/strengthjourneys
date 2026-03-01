@@ -181,6 +181,7 @@ export default function FormulaOrLiftCalculatorPage({ relatedArticles, pageConfi
       <E1RMCalculatorMain
         relatedArticles={relatedArticles}
         forceFormula={isFormula ? pageConfig.formulaName : null}
+        forceLift={isFormula ? null : pageConfig.liftName}
         pageTitle={
           isFormula
             ? `${pageConfig.formulaName} Formula 1RM Calculator`

@@ -345,9 +345,6 @@ function HowStrong({ liftType }) {
   );
 }
 
-/**
- * Card showing the current user's strength rating for a specific lift type using the
- * StandardsSlider component, with athlete bio details (age, sex, bodyweight) shown in the description.
 const LIFT_CALC_URLS = {
   "Back Squat": "/calculator/squat-1rm-calculator",
   "Bench Press": "/calculator/bench-press-1rm-calculator",

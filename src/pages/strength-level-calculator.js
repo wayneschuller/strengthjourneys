@@ -152,7 +152,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
       <Card className="pt-4">
         <CardContent className="">
           <div className="mb-6">
-            <AthleteBioInlineSettings forceStackedControls />
+            <AthleteBioInlineSettings />
           </div>
           <div className="flex flex-col gap-8 md:ml-4">
             {liftTypesFromStandards.map((liftType) => (

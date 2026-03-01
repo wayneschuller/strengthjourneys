@@ -754,6 +754,7 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
                 platesPerSide={plateBreakdown.platesPerSide}
                 barWeight={barWeight}
                 isMetric={isMetric}
+                hideLabels={true}
                 animationKey={diagramAnimKey}
                 useScrollTrigger={false}
               />
@@ -761,11 +762,6 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
                 Plan warmup sets →
               </div>
             </Link>
-            {plateBreakdown.remainder !== 0 && (
-              <div className="px-2 text-right text-xs text-muted-foreground">
-                Closest: {plateBreakdown.closestWeight}{unit}
-              </div>
-            )}
           </div>
         </div>
       </CardContent>

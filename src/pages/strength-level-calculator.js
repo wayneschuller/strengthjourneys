@@ -2,17 +2,8 @@
 import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
 import { NextSeo } from "next-seo";
-import { sanityIOClient } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
-import { UnitChooser } from "@/components/unit-type-chooser";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 import {
   PageContainer,
@@ -23,24 +14,23 @@ import {
 } from "@/components/page-header";
 
 
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Separator } from "@/components/ui/separator";
 import { BicepsFlexed } from "lucide-react";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { StandardsSlider } from "@/components/standards-slider";
 import { bigFourURLs } from "@/components/lift-type-indicator";
+import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
+
+const LIFT_CALC_URLS = {
+  "Back Squat": "/calculator/squat-1rm-calculator",
+  "Bench Press": "/calculator/bench-press-1rm-calculator",
+  "Deadlift": "/calculator/deadlift-1rm-calculator",
+  "Strict Press": "/calculator/strict-press-1rm-calculator",
+};
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { SignInInvite } from "@/components/instructions-cards";
+import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Strength Calculator";
@@ -116,21 +106,9 @@ export default function StrengthLevelCalculator({ relatedArticles }) {
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
  */
 function StrengthLevelCalculatorMain({ relatedArticles }) {
-  const {
-    age,
-    setAge,
-    isMetric,
-    setIsMetric,
-    sex,
-    setSex,
-    bodyWeight,
-    setBodyWeight,
-    standards,
-    toggleIsMetric,
-  } = useAthleteBio({ modifyURLQuery: true });
+  const { standards, isMetric } = useAthleteBio();
   const { getColor } = useLiftColors();
 
-  const unitType = isMetric ? "kg" : "lb";
   const liftTypesFromStandards = Object.keys(standards);
 
   return (
@@ -144,7 +122,6 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
           and bodyweight. <SignInInvite />
         </PageHeaderDescription>
         <PageHeaderRight>
-          {/* <div className="hidden space-x-4 text-muted-foreground md:flex"> */}
           <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
             <Link
               href="/calculator"
@@ -165,121 +142,87 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
           </div>
         </PageHeaderRight>
       </PageHeader>
-      <Card className="pt-4">
-        <CardContent className="">
-          <div className="mb-10 flex flex-col items-start gap-4 md:mr-10 md:flex-row md:gap-8">
-            <div className="md:min-w-1/5 flex w-full flex-col">
-              <div className="py-2">
-                <Label htmlFor="age" className="text-xl">
-                  Age: {age}
-                </Label>
-              </div>
-              <Slider
-                min={13}
-                max={100}
-                step={1}
-                value={[age]}
-                onValueChange={(values) => setAge(values[0])}
-                className="mt-2 min-w-40 flex-1"
-                aria-label="Age"
-                aria-labelledby="age"
-              />
-            </div>
-            <div className="md:min-w-1/5 flex h-[4rem] w-full flex-col justify-between">
-              <div className="flex flex-row items-center">
-                <Label htmlFor="weight" className="mr-2 text-xl">
-                  Bodyweight:
-                </Label>
-                <Label
-                  htmlFor="weight"
-                  className="mr-2 w-[3rem] text-right text-xl"
-                >
-                  {bodyWeight}
-                </Label>
-                <UnitChooser
-                  isMetric={isMetric}
-                  onSwitchChange={toggleIsMetric}
-                />
-              </div>
-              <Slider
-                min={isMetric ? 40 : 100}
-                max={isMetric ? 230 : 500}
-                step={1}
-                value={[bodyWeight]}
-                onValueChange={(values) => setBodyWeight(values[0])}
-                className="mt-2 min-w-40 flex-1"
-                aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
-              />
-            </div>
-            <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
-              <Label htmlFor="sex" className="text-xl">
-                Sex:
-              </Label>
-              <Select
-                id="gender"
-                value={sex}
-                onValueChange={(value) => setSex(value)}
-                className="min-w-52 text-xl"
-              >
-                <SelectTrigger aria-label="Select sex">
-                  <SelectValue placeholder="Select sex" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex flex-col gap-8 md:ml-4">
-            {liftTypesFromStandards.map((liftType) => (
-              <div key={liftType} className="">
-                <Link href={bigFourURLs[liftType]} className="transition-opacity hover:opacity-70">
-                  <h2
-                    className="text-lg font-bold underline decoration-2 underline-offset-2"
-                    style={{ textDecorationColor: getColor(liftType) }}
-                  >
-                    {liftType} Standards:
-                  </h2>
-                </Link>
-                <StandardsSlider
-                  liftType={liftType}
-                  standards={standards}
-                  isMetric={isMetric}
-                />
-                <Separator />
-              </div>
-            ))}
-          </div>
+
+      {/* Bio settings strip */}
+      <Card>
+        <CardContent className="py-3">
+          <AthleteBioInlineSettings />
         </CardContent>
-        <CardFooter className="text-sm">
-          <div className="flex flex-col">
-            <p className="">
-              {" "}
-              To see a strength rating for a particular set, e.g.: Squat 3x5
-              {"@"}225lb, then use our{" "}
-              <Link
-                href="/calculator"
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                One Rep Max Calculator
-              </Link>{" "}
-              and click {`"`}Strength Level Insights{`"`}.
-            </p>
-            <p className="">
-              Our data model is a derivation of the excellent research of{" "}
-              <a
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-                target="_blank"
-                href="https://lonkilgore.com/"
-              >
-                Professor Lon Kilgore
-              </a>
-              . Any errors are our own.
-            </p>
-          </div>
-        </CardFooter>
       </Card>
+
+      {/* Per-lift cards */}
+      <div className="flex flex-col gap-3">
+        {liftTypesFromStandards.map((liftType) => (
+          <div
+            key={liftType}
+            className="flex items-start overflow-hidden rounded-lg border bg-card shadow-sm"
+          >
+            {/* Left rail */}
+            <div className="flex w-20 flex-shrink-0 flex-col items-center gap-2 self-stretch border-r bg-muted/40 px-3 py-4 sm:w-24">
+              {getLiftSvgPath(liftType) ? (
+                <Link
+                  href={bigFourURLs[liftType] ?? "#"}
+                  tabIndex={-1}
+                  aria-hidden
+                  className="w-full"
+                >
+                  <img
+                    src={getLiftSvgPath(liftType)}
+                    alt=""
+                    className="w-full object-contain opacity-90 transition-opacity hover:opacity-50"
+                  />
+                </Link>
+              ) : (
+                <div className="w-full aspect-square" />
+              )}
+            </div>
+
+            {/* Main column */}
+            <div className="min-w-0 flex-1 p-4">
+              <Link
+                href={bigFourURLs[liftType] ?? "#"}
+                className="transition-opacity hover:opacity-70"
+              >
+                <h2
+                  className="text-xl font-bold underline decoration-2 underline-offset-2"
+                  style={{ textDecorationColor: getColor(liftType) }}
+                >
+                  {liftType} Strength Standards
+                </h2>
+              </Link>
+              <StandardsSlider
+                liftType={liftType}
+                standards={standards}
+                isMetric={isMetric}
+                ratingRightSlot={
+                  LIFT_CALC_URLS[liftType] && (
+                    <Link
+                      href={LIFT_CALC_URLS[liftType]}
+                      className="whitespace-nowrap hover:text-foreground"
+                    >
+                      {liftType} 1RM Calculator →
+                    </Link>
+                  )
+                }
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Attribution */}
+      <p className="px-1 text-sm text-muted-foreground">
+        Our data model is a derivation of the excellent research of{" "}
+        <a
+          className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          target="_blank"
+          href="https://lonkilgore.com/"
+        >
+          Professor Lon Kilgore
+        </a>
+        . Any errors are our own.
+      </p>
+
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );

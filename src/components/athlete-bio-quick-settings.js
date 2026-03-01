@@ -1,7 +1,7 @@
 /** @format */
 
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -200,8 +200,14 @@ export function AthleteBioInlineSettings({
     bioDataIsDefault,
   } = useAthleteBio();
 
-  // Pre-open the controls when the user is still on defaults — nudge them to personalise
-  const [isOpen, setIsOpen] = useState(autoOpenWhenDefault && bioDataIsDefault);
+  // Pre-open the controls when the user is still on defaults — nudge them to personalise.
+  // Initialise closed so SSR and first paint don't race with localStorage hydration;
+  // flip open after mount only if bio data is genuinely still at defaults.
+  const [isOpen, setIsOpen] = useState(false);
+  useEffect(() => {
+    if (autoOpenWhenDefault && bioDataIsDefault) setIsOpen(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally mount-only
   const unit = isMetric ? "kg" : "lb";
 
   // JSX bio summary — values are bolded, labels stay light

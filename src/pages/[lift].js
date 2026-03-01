@@ -3,11 +3,11 @@ import Image from "next/image";
 
 
 import { cn } from "@/lib/utils";
-import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { useAthleteBio, getTopLiftStats, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
-import { devLog } from "@/lib/processing-utils";
+import { devLog, getDisplayWeight } from "@/lib/processing-utils";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { StandardsSlider } from "@/components/standards-slider";
 import { NextSeo } from "next-seo";
@@ -18,6 +18,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
 } from "@/components/ui/card";
 
@@ -57,6 +58,7 @@ const StrengthJourneys = () => (
 import { fetchRelatedArticles, fetchArticleById } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
+import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
 export async function getStaticPaths() {
   const paths = bigFourLiftInsightData.map((lift) => ({
@@ -344,36 +346,76 @@ function HowStrong({ liftType }) {
   );
 }
 
+const LIFT_CALC_URLS = {
+  "Back Squat": "/calculator/squat-1rm-calculator",
+  "Bench Press": "/calculator/bench-press-1rm-calculator",
+  "Deadlift": "/calculator/deadlift-1rm-calculator",
+  "Strict Press": "/calculator/strict-press-1rm-calculator",
+};
+
 /**
- * Card showing the current user's strength rating for a specific lift type using the
- * StandardsSlider component, with athlete bio details (age, sex, bodyweight) shown in the description.
  * @param {Object} props
  * @param {string} props.liftType - The lift type to display strength levels for (e.g. "Deadlift").
  */
 function StrengthLevelsCard({ liftType }) {
-  const { age, sex, bodyWeight, standards, isMetric } = useAthleteBio();
-  const unitType = isMetric ? "kg" : "lb";
+  const { standards, isMetric, age, bodyWeight, sex } = useAthleteBio();
+  const { topLiftsByTypeAndReps } = useUserLiftingData();
+  const { status: authStatus } = useSession();
+  const calcUrl = LIFT_CALC_URLS[liftType];
+
+  let strengthRating = null;
+  let isBeyondElite = false;
+  if (authStatus === "authenticated") {
+    const topLifts = topLiftsByTypeAndReps?.[liftType];
+    const bioForDateRating = age && bodyWeight != null && sex != null
+      ? { age, bodyWeight, sex, isMetric }
+      : null;
+    const stats = getTopLiftStats(topLifts, liftType, standards, "Brzycki", bioForDateRating);
+    strengthRating = stats.strengthRating;
+    if (strengthRating === "Elite") {
+      const nativeUnitType = topLiftsByTypeAndReps?.[liftType]?.[0]?.[0]?.unitType ?? (isMetric ? "kg" : "lb");
+      const toDisplay = (w) => getDisplayWeight({ weight: w, unitType: nativeUnitType }, isMetric).value;
+      const userMax = Math.max(
+        stats.bestE1RM > 0 ? toDisplay(stats.bestE1RM) : 0,
+        stats.bestWeight > 0 ? toDisplay(stats.bestWeight) : 0,
+      );
+      isBeyondElite = userMax > (standards?.[liftType]?.elite ?? Infinity);
+    }
+  }
 
   return (
     <Card>
       <CardHeader>
         <h2 className="text-2xl font-semibold leading-none tracking-tight">My {liftType} Strength Rating</h2>
-        <CardDescription>
-          Standards for a {age} year old {sex}, weighing {bodyWeight}
-          {unitType}. Go to the{" "}
-          <Link href="/strength-level-calculator">
-            Strength Levels Calculator
-          </Link>{" "}
-          to modify bio details.
-        </CardDescription>
+        {strengthRating && (
+          <CardDescription>
+            My lifetime {liftType} level:{" "}
+            {isBeyondElite
+              ? <>{STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite</>
+              : <>{STRENGTH_LEVEL_EMOJI[strengthRating] ?? ""} {strengthRating}</>
+            }
+          </CardDescription>
+        )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-0">
         <StandardsSlider
           liftType={liftType}
           standards={standards}
           isMetric={isMetric}
+          hideRating
         />
       </CardContent>
+      <CardFooter className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <AthleteBioInlineSettings autoOpenWhenDefault={false} />
+        {calcUrl && (
+          <Link
+            href={calcUrl}
+            className="text-xs text-muted-foreground hover:text-foreground whitespace-nowrap"
+          >
+            {liftType} 1RM Calculator →
+          </Link>
+        )}
+      </CardFooter>
     </Card>
   );
 }

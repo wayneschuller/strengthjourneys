@@ -21,6 +21,7 @@ import {
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
+  PageHeaderRight,
 } from "@/components/page-header";
 
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
@@ -42,7 +43,7 @@ import { useLocalStorage, useIsClient } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
-import { useStateFromQueryOrLocalStorage } from "../hooks/use-state-from-query-or-localStorage";
+import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { Calculator } from "lucide-react";
 import {
   motion,
@@ -134,10 +135,40 @@ export default function E1RMCalculator({ relatedArticles }) {
 /**
  * Inner client component for the One Rep Max Calculator page. Provides reps/weight sliders, an animated
  * E1RM summary card, algorithm range bars, Big Four strength standard bars, and rep-range/percentage tables.
+ *
+ * Formula selection strategy:
+ * - Normal pages (/calculator, lift slug pages): URL query → localStorage → defaultFormula.
+ *   The user's saved preference is respected; shared links carry the formula in the URL.
+ * - Formula slug pages (/calculator/epley-formula-1rm-calculator etc.): forceFormula always wins.
+ *   The formula prop drives the display directly — no state, no URL query, no localStorage.
+ *   Clicking a different formula redirects to /calculator with all current state in the query
+ *   so the user lands on the main calculator with their inputs intact and the new formula selected.
+ *
  * @param {Object} props
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ * @param {string} [props.defaultFormula="Brzycki"] - Fallback formula for normal pages when no URL
+ *   query or localStorage value exists. Ignored when forceFormula is set.
+ * @param {string|null} [props.forceFormula=null] - When set, this formula is always shown regardless
+ *   of URL query or localStorage. Clicking a different formula navigates away to /calculator.
+ *   Intended for formula slug pages where the slug itself communicates the formula.
+ * @param {string|null} [props.forceLift=null] - When set, shows lift-specific UI enhancements:
+ *   the lift SVG next to the page title, the lift name + strength rating in the hero card, and
+ *   the target lift featured prominently in the strength standards section.
+ *   Value should be a slug page lift name e.g. "Squat", "Bench Press", "Deadlift", "Strict Press".
+ * @param {string} [props.pageTitle] - Heading text for the page.
+ * @param {string} [props.pageDescription] - Description text under the heading.
+ * @param {Object|null} [props.formulaBlurb] - If set, renders an equation + blurb line under the description.
+ *   Shape: { equation: string, text: string }. Used by formula slug pages to show the formula equation.
  */
-function E1RMCalculatorMain({ relatedArticles }) {
+export function E1RMCalculatorMain({
+  relatedArticles,
+  defaultFormula = "Brzycki",
+  forceFormula = null,
+  forceLift = null,
+  pageTitle = "One Rep Max Calculator",
+  pageDescription = "Enter reps and weight to estimate your one-rep max across 7 proven formulas. See rep-max projections, percentage training guides, and personalized Big Four strength levels by age, sex, and bodyweight.",
+  formulaBlurb = null,
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const {
@@ -154,15 +185,30 @@ function E1RMCalculatorMain({ relatedArticles }) {
     true,
     { [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric },
   ); // Will be a string
-  const [e1rmFormula, setE1rmFormula] = useStateFromQueryOrLocalStorage(
+  // For normal pages: URL query → localStorage → defaultFormula.
+  // For formula slug pages: forceFormula prop drives the display directly (no state involved).
+  // Clicking a different formula redirects to /calculator with all current state in the query.
+  const [hookFormula, setHookFormula] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.FORMULA,
-    "Brzycki",
+    defaultFormula,
     true,
     {
       [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
       [LOCAL_STORAGE_KEYS.REPS]: reps,
     },
   );
+  const e1rmFormula = forceFormula ?? hookFormula;
+  const setE1rmFormula = forceFormula !== null
+    ? (newFormula) => router.push({
+        pathname: "/calculator",
+        query: {
+          [LOCAL_STORAGE_KEYS.FORMULA]: JSON.stringify(newFormula),
+          [LOCAL_STORAGE_KEYS.REPS]: JSON.stringify(reps),
+          [LOCAL_STORAGE_KEYS.WEIGHT]: JSON.stringify(weight),
+          [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: JSON.stringify(isMetric),
+        },
+      })
+    : setHookFormula;
   const [weight, setWeight] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.WEIGHT,
     225,
@@ -354,7 +400,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
             .write([new ClipboardItem({ "image/png": blob })])
             .then(() => {
               toast({ title: "Image copied! Paste into Instagram or anywhere." });
-              gaEvent(GA_EVENT_TAGS.CALC_SHARE_CLIPBOARD, { page: "/calculator", type: "image" });
+              gaTrackCalcShareCopy("image", { page: router.asPath });
             })
             .catch((err) => {
               console.error("Copy image error:", err);
@@ -378,13 +424,36 @@ function E1RMCalculatorMain({ relatedArticles }) {
     <PageContainer>
       <PageHeader>
         <PageHeaderHeading icon={Calculator}>
-          One Rep Max Calculator
+          {pageTitle}
         </PageHeaderHeading>
         <PageHeaderDescription>
-          Enter reps and weight to estimate your one-rep max across 7 proven
-          formulas. See rep-max projections, percentage training guides, and
-          personalized Big Four strength levels by age, sex, and bodyweight.
+          {pageDescription}
         </PageHeaderDescription>
+        {formulaBlurb && (
+          <p className="text-sm text-muted-foreground mt-1 font-mono">
+            {formulaBlurb.equation} — {formulaBlurb.text}
+          </p>
+        )}
+        {forceLift && getLiftSvgPath(forceLift) && LIFT_SLUG_TO_INSIGHTS_URL[forceLift] && (
+          <PageHeaderRight>
+            <Link
+              href={LIFT_SLUG_TO_INSIGHTS_URL[forceLift]}
+              className="hover:bg-muted flex w-64 items-center gap-3 rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
+            >
+              <div className="flex-1">
+                <h3 className="text-base font-semibold">{forceLift} Insights</h3>
+                <p className="text-muted-foreground text-sm">
+                  Standards, PRs &amp; progress →
+                </p>
+              </div>
+              <img
+                src={getLiftSvgPath(forceLift)}
+                alt={forceLift}
+                className="h-24 w-24 flex-shrink-0 object-contain opacity-90 transition-opacity hover:opacity-50"
+              />
+            </Link>
+          </PageHeaderRight>
+        )}
       </PageHeader>
       <Card>
         <CardContent>
@@ -497,6 +566,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
               isMetric={isMetric}
               e1rmFormula={e1rmFormula}
               estimateE1RM={estimateE1RM}
+              forceLift={forceLift}
             />
             <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center">
               <div className="justify-self-start">
@@ -512,7 +582,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
                 successLabel="Copied"
                 isSuccess={isTextCopied}
                 className="min-w-[112px] justify-self-center"
-                onPressAnalytics={() => gaTrackCalcShareCopy("text", { page: "/calculator" })}
+                onPressAnalytics={() => gaTrackCalcShareCopy("text", { page: router.asPath })}
                 onClick={handleCopyToClipboard}
               />
               <div aria-hidden className="justify-self-end" />
@@ -537,6 +607,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
               e1rmWeight={e1rmWeight}
               isMetric={isMetric}
               e1rmFormula={e1rmFormula}
+              forceLift={forceLift}
             />
           </div>
 
@@ -548,6 +619,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
               weight={weight}
               e1rmFormula={e1rmFormula}
               isMetric={isMetric}
+              forceLift={forceLift}
             />
             <PercentageTable
               key={`pct-${e1rmFormula}-${weight}-${reps}`}
@@ -555,6 +627,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
               weight={weight}
               e1rmFormula={e1rmFormula}
               isMetric={isMetric}
+              forceLift={forceLift}
             />
           </div>
         </CardContent>
@@ -568,16 +641,18 @@ function E1RMCalculatorMain({ relatedArticles }) {
 /**
  * Hero card displaying the animated estimated one-rep max number, the input set context, and
  * optionally a bodyweight ratio when athlete bio data is available.
+ * When forceLift is set, also shows the lift name in the title and the strength level rating.
  * @param {Object} props
  * @param {number|string} props.reps - Number of reps performed.
  * @param {number|string} props.weight - Weight lifted.
  * @param {boolean} props.isMetric - Whether weight is in kg (true) or lb (false).
  * @param {string} props.e1rmFormula - Name of the E1RM formula currently selected.
  * @param {Function} props.estimateE1RM - Function to compute the estimated one-rep max.
+ * @param {string|null} [props.forceLift=null] - When set, shows lift name in title and strength rating.
  */
-const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM }) => {
+const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, forceLift = null }) => {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
-  const { bodyWeight, bioDataIsDefault } = useAthleteBio();
+  const { bodyWeight, bioDataIsDefault, standards } = useAthleteBio();
 
   const motionVal = useMotionValue(e1rmWeight);
   const springVal = useSpring(motionVal, { stiffness: 200, damping: 20 });
@@ -587,11 +662,17 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM }) 
     motionVal.set(e1rmWeight);
   }, [e1rmWeight, motionVal]);
 
+  // Strength rating for the forced lift type, when on a lift slug page
+  const bigFourName = forceLift ? LIFT_SLUG_TO_BIG_FOUR[forceLift] : null;
+  const liftStandard = bigFourName ? standards?.[bigFourName] : null;
+  const liftRating = liftStandard?.elite ? getStrengthRatingForE1RM(e1rmWeight, liftStandard) : null;
+  const liftRatingEmoji = liftRating ? (STRENGTH_LEVEL_EMOJI[liftRating] ?? "") : null;
+
   return (
     <Card className="w-full max-w-md border-4">
       <CardHeader>
         <CardTitle className="text-center md:text-3xl">
-          Estimated One Rep Max
+          {forceLift ? `${forceLift} — Estimated 1RM` : "Estimated One Rep Max"}
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-2">
@@ -602,6 +683,11 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM }) 
           <motion.span className="tabular-nums">{displayVal}</motion.span>
           {isMetric ? "kg" : "lb"}
         </div>
+        {liftRating && (
+          <div className="mt-2 text-center text-base font-semibold">
+            {liftRatingEmoji} {liftRating}
+          </div>
+        )}
         {!bioDataIsDefault && bodyWeight > 0 && (
           <div className="mt-1 text-center text-sm text-muted-foreground">
             {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
@@ -901,7 +987,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
  * @param {string} props.e1rmFormula - E1RM formula used for all projections.
  * @param {boolean} props.isMetric - Whether weight is in kg (true) or lb (false).
  */
-function RepRangeTable({ reps, weight, e1rmFormula, isMetric }) {
+function RepRangeTable({ reps, weight, e1rmFormula, isMetric, forceLift = null }) {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const unit = isMetric ? "kg" : "lb";
   const currentReps = Number(reps);
@@ -914,7 +1000,9 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric }) {
 
   return (
     <div>
-      <h2 className="mb-1 text-base font-semibold">Rep Max Projections</h2>
+      <h2 className="mb-1 text-base font-semibold">
+        {forceLift ? `${forceLift} Rep Max Projections` : "Rep Max Projections"}
+      </h2>
       <p className="mb-3 text-sm text-muted-foreground">{e1rmFormula} algorithm</p>
       <div className="overflow-hidden rounded-lg border">
         <table className="w-full text-sm">
@@ -967,7 +1055,7 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric }) {
  * @param {string} props.e1rmFormula - E1RM formula used to compute the base max.
  * @param {boolean} props.isMetric - Whether weight is in kg (true) or lb (false).
  */
-function PercentageTable({ reps, weight, e1rmFormula, isMetric }) {
+function PercentageTable({ reps, weight, e1rmFormula, isMetric, forceLift = null }) {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const unit = isMetric ? "kg" : "lb";
 
@@ -979,7 +1067,9 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric }) {
 
   return (
     <div>
-      <h2 className="mb-1 text-base font-semibold">Percentage Calculator</h2>
+      <h2 className="mb-1 text-base font-semibold">
+        {forceLift ? `${forceLift} Percentage Calculator` : "Percentage Calculator"}
+      </h2>
       <p className="mb-3 text-sm text-muted-foreground">
         Based on {e1rmWeight}{unit} estimated max
       </p>
@@ -1022,6 +1112,23 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric }) {
 
 const BIG_FOUR = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
 
+// Maps lift slug page names (from PAGE_CONFIG in [slug].js) to the internal BIG_FOUR names
+// used as keys in the strength standards lookup.
+const LIFT_SLUG_TO_BIG_FOUR = {
+  "Squat": "Back Squat",
+  "Bench Press": "Bench Press",
+  "Deadlift": "Deadlift",
+  "Strict Press": "Strict Press",
+};
+
+// Maps lift slug page names to the dedicated lift insights page URL.
+const LIFT_SLUG_TO_INSIGHTS_URL = {
+  "Squat": "/barbell-squat-insights",
+  "Bench Press": "/barbell-bench-press-insights",
+  "Deadlift": "/barbell-deadlift-insights",
+  "Strict Press": "/barbell-strict-press-insights",
+};
+
 const NEXT_TIER = {
   "Physically Active": { name: "Beginner", key: "beginner" },
   Beginner: { name: "Intermediate", key: "intermediate" },
@@ -1031,16 +1138,19 @@ const NEXT_TIER = {
 };
 
 /**
- * Four compact strength standard bars (one per Big Four lift) showing where the current calculator
- * E1RM sits on the physically-active-to-elite spectrum, with inline athlete bio settings.
+ * Strength standard bars showing where the current calculator E1RM sits on the
+ * physically-active-to-elite spectrum, with inline athlete bio settings.
+ * When forceLift is set, renders the target lift prominently first, then the other
+ * three lifts subordinately below a "Compare to Big Four" label.
  * @param {Object} props
  * @param {number|string} props.reps - Number of reps performed.
  * @param {number|string} props.weight - Weight lifted.
  * @param {number} props.e1rmWeight - Computed estimated one-rep max.
  * @param {boolean} props.isMetric - Whether weight is in kg (true) or lb (false).
  * @param {string} props.e1rmFormula - Active E1RM formula name, included in copied text.
+ * @param {string|null} [props.forceLift=null] - When set, features that lift prominently.
  */
-function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }) {
+function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, forceLift = null }) {
   const { standards, age, sex, bodyWeight, bioDataIsDefault } = useAthleteBio();
   const { toast } = useToast();
   const unit = isMetric ? "kg" : "lb";
@@ -1095,138 +1205,163 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
 
   const [openPopoverLift, setOpenPopoverLift] = useState(null);
 
+  // For lift slug pages: resolve the slug lift name to the BIG_FOUR internal key.
+  const featuredBigFourName = forceLift ? LIFT_SLUG_TO_BIG_FOUR[forceLift] : null;
+
+  // Compute all display data for a single lift bar row.
+  const getLiftBarData = (liftType) => {
+    const standard = standards?.[liftType];
+    if (!standard?.elite) return null;
+    const rating = getStrengthRatingForE1RM(e1rmWeight, standard);
+    const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
+    const { physicallyActive, elite } = standard;
+    const range = elite - physicallyActive;
+    const pct = range > 0
+      ? Math.min(98, Math.max(2, ((e1rmWeight - physicallyActive) / range) * 100))
+      : 50;
+    const nextTierInfo = NEXT_TIER[rating];
+    const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
+    const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmWeight) : null;
+    const svgPath = getLiftSvgPath(liftType);
+    return { standard, rating, emoji, physicallyActive, range, pct, nextTierInfo, diff, svgPath };
+  };
+
+  // Renders a single lift bar row. featured=true uses larger SVG and taller bar.
+  const renderLiftRow = (liftType, data, featured = false) => {
+    const { standard, rating, emoji, physicallyActive, range, pct, nextTierInfo, diff, svgPath } = data;
+    return (
+      <div key={liftType} className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
+        {/* Row 1 on mobile: SVG + lift name + rating badge */}
+        <div className="flex items-center gap-3">
+          <Link href={bigFourURLs[liftType] ?? "#"} className="shrink-0 transition-opacity hover:opacity-50">
+            {svgPath
+              ? <img src={svgPath} alt={liftType} className={cn("object-contain opacity-90", featured ? "h-16 w-16" : "h-12 w-12")} />
+              : <div className={featured ? "h-16 w-16" : "h-12 w-12"} />
+            }
+          </Link>
+          <Link
+            href={bigFourURLs[liftType] ?? "#"}
+            className={cn("flex-1 text-muted-foreground transition-opacity hover:opacity-70 md:flex-none md:truncate", featured ? "text-sm font-medium md:w-28" : "text-xs md:w-24")}
+          >
+            {liftType}
+          </Link>
+          {/* Rating badge: mobile only (desktop shows it at the end) */}
+          <span className={cn("shrink-0 text-right font-medium md:hidden", featured ? "text-sm" : "text-xs")}>
+            {emoji} {rating}
+          </span>
+        </div>
+        {/* Row 2 on mobile / middle col on desktop: bar + copy button */}
+        <div className="flex flex-1 items-center gap-2">
+          <div className="relative flex-1">
+            <div
+              className={cn("w-full rounded-full", featured ? "h-3" : "h-2")}
+              style={{ background: "linear-gradient(to right, #EAB308, #86EFAC, #166534)" }}
+            />
+            {/* Tier dividers at beginner, intermediate, advanced */}
+            {[standard.beginner, standard.intermediate, standard.advanced].map((val, i) => (
+              <div
+                key={i}
+                className={cn("absolute top-0 w-px", featured ? "h-3" : "h-2")}
+                style={{ left: `${((val - physicallyActive) / range) * 100}%`, backgroundColor: "var(--background)", opacity: 0.7 }}
+              />
+            ))}
+            {/* e1rm marker — desktop: hover tooltip; mobile: tap popover */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="absolute top-1/2 hidden h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-1 ring-background md:block"
+                  style={{ left: `${pct}%` }}
+                />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                <p className="font-semibold">{liftType}</p>
+                <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
+                {nextTierInfo ? (
+                  <p className="text-muted-foreground">
+                    Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground">Already at the top!</p>
+                )}
+              </TooltipContent>
+            </Tooltip>
+            <Popover
+              open={openPopoverLift === liftType}
+              onOpenChange={(o) => setOpenPopoverLift(o ? liftType : null)}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  className="absolute top-1/2 flex h-6 w-4 -translate-x-1/2 -translate-y-1/2 items-center justify-center md:hidden"
+                  style={{ left: `${pct}%` }}
+                  aria-label={`${liftType} strength level`}
+                >
+                  <div className="h-4 w-1.5 rounded-full bg-foreground shadow-sm ring-1 ring-background" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="top" className="w-auto p-2 text-xs">
+                <p className="font-semibold">{liftType}</p>
+                <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
+                {nextTierInfo ? (
+                  <p className="text-muted-foreground">
+                    Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground">Already at the top!</p>
+                )}
+              </PopoverContent>
+            </Popover>
+          </div>
+          {/* Copy button — immediately after the bar on all screen sizes */}
+          <LiftResultCopyButton
+            liftType={liftType}
+            onCopy={() => handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)}
+          />
+        </div>
+        {/* Rating at end — desktop only (shown in row 1 on mobile) */}
+        <span className={cn("hidden w-32 shrink-0 text-right font-medium md:block", featured ? "text-sm" : "text-xs")}>
+          {emoji} {rating}
+        </span>
+      </div>
+    );
+  };
+
+  const featuredData = featuredBigFourName ? getLiftBarData(featuredBigFourName) : null;
+  const comparisonLifts = BIG_FOUR.filter((l) => l !== featuredBigFourName);
+
   return (
     <TooltipProvider>
       <div className="space-y-3">
         <div className="border-t pt-3">
           <h2 className="text-center text-base font-semibold">
-            <Link href="/strength-level-calculator" className="transition-opacity hover:opacity-70">
-              Big Four Strength Levels
+            <Link
+              href={featuredBigFourName ? (bigFourURLs[featuredBigFourName] ?? "/strength-level-calculator") : "/strength-level-calculator"}
+              className="transition-opacity hover:opacity-70"
+            >
+              {featuredBigFourName ? `${forceLift} Strength Level` : "Big Four Strength Levels"}
             </Link>
           </h2>
           <div className="mt-1 flex justify-center">
-            <AthleteBioInlineSettings liftNote={`lifting ${e1rmWeight}${unit} in each lift type`} />
+            <AthleteBioInlineSettings liftNote={`lifting ${e1rmWeight}${unit}${featuredBigFourName ? "" : " in each lift type"}`} />
           </div>
         </div>
 
-        <div className="space-y-3">
-          {BIG_FOUR.map((liftType) => {
-            const standard = standards?.[liftType];
-            if (!standard?.elite) return null;
+        {/* Featured lift (lift slug pages only) */}
+        {featuredData && (
+          <div className="space-y-3">
+            {renderLiftRow(featuredBigFourName, featuredData, true)}
+          </div>
+        )}
 
-            const rating = getStrengthRatingForE1RM(e1rmWeight, standard);
-            const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
-            const { physicallyActive, elite } = standard;
-            const range = elite - physicallyActive;
-            // Clamp marker to 2–98% so it's always visible even at extremes
-            const pct = range > 0
-              ? Math.min(98, Math.max(2, ((e1rmWeight - physicallyActive) / range) * 100))
-              : 50;
-
-            const nextTierInfo = NEXT_TIER[rating];
-            const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
-            const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmWeight) : null;
-
-            // Resolve lift name -> static SVG asset (returns null when no mapping exists).
-            const svgPath = getLiftSvgPath(liftType);
-
-            return (
-              <div key={liftType} className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
-                {/* Row 1 on mobile: SVG + lift name + rating badge */}
-                <div className="flex items-center gap-3">
-                  <Link href={bigFourURLs[liftType] ?? "#"} className="shrink-0 transition-opacity hover:opacity-70">
-                    {svgPath
-                      ? <img src={svgPath} alt={liftType} className="h-12 w-12 object-contain opacity-75" />
-                      // Keep the same footprint when an icon is missing so labels/bars stay aligned.
-                      : <div className="h-12 w-12" />
-                    }
-                  </Link>
-                  <Link
-                    href={bigFourURLs[liftType] ?? "#"}
-                    className="flex-1 text-xs text-muted-foreground transition-opacity hover:opacity-70 md:w-24 md:flex-none md:truncate"
-                  >
-                    {liftType}
-                  </Link>
-                  {/* Rating badge: mobile only (desktop shows it at the end) */}
-                  <span className="shrink-0 text-right text-xs font-medium md:hidden">
-                    {emoji} {rating}
-                  </span>
-                </div>
-                {/* Row 2 on mobile / middle col on desktop: bar + copy button */}
-                <div className="flex flex-1 items-center gap-2">
-                  <div className="relative flex-1">
-                    <div
-                      className="h-2 w-full rounded-full"
-                      style={{ background: "linear-gradient(to right, #EAB308, #86EFAC, #166534)" }}
-                    />
-                    {/* Tier dividers at beginner, intermediate, advanced */}
-                    {[standard.beginner, standard.intermediate, standard.advanced].map((val, i) => (
-                      <div
-                        key={i}
-                        className="absolute top-0 h-2 w-px"
-                        style={{ left: `${((val - physicallyActive) / range) * 100}%`, backgroundColor: "var(--background)", opacity: 0.7 }}
-                      />
-                    ))}
-                    {/* e1rm marker — desktop: hover tooltip; mobile: tap popover */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div
-                          className="absolute top-1/2 hidden h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm ring-1 ring-background md:block"
-                          style={{ left: `${pct}%` }}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-xs">
-                        <p className="font-semibold">{liftType}</p>
-                        <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
-                        {nextTierInfo ? (
-                          <p className="text-muted-foreground">
-                            Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
-                          </p>
-                        ) : (
-                          <p className="text-muted-foreground">Already at the top!</p>
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                    <Popover
-                      open={openPopoverLift === liftType}
-                      onOpenChange={(o) => setOpenPopoverLift(o ? liftType : null)}
-                    >
-                      <PopoverTrigger asChild>
-                        <button
-                          className="absolute top-1/2 flex h-6 w-4 -translate-x-1/2 -translate-y-1/2 items-center justify-center md:hidden"
-                          style={{ left: `${pct}%` }}
-                          aria-label={`${liftType} strength level`}
-                        >
-                          <div className="h-4 w-1.5 rounded-full bg-foreground shadow-sm ring-1 ring-background" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent side="top" className="w-auto p-2 text-xs">
-                        <p className="font-semibold">{liftType}</p>
-                        <p>{emoji} {rating} · {Math.round(e1rmWeight)}{unit}</p>
-                        {nextTierInfo ? (
-                          <p className="text-muted-foreground">
-                            Next: {STRENGTH_LEVEL_EMOJI[nextTierInfo.name] ?? ""} {nextTierInfo.name} — {diff}{unit} away
-                          </p>
-                        ) : (
-                          <p className="text-muted-foreground">Already at the top!</p>
-                        )}
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  {/* Copy button — immediately after the bar on all screen sizes */}
-                  <LiftResultCopyButton
-                    liftType={liftType}
-                    onCopy={() => handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)}
-                  />
-                </div>
-                {/* Rating at end — desktop only (shown in row 1 on mobile) */}
-                <span className="hidden w-32 shrink-0 text-right text-xs font-medium md:block">
-                  {emoji} {rating}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+        {/* All four lifts on normal pages; lift slug pages show only the featured lift */}
+        {!featuredBigFourName && (
+          <div className="space-y-3">
+            {comparisonLifts.map((liftType) => {
+              const data = getLiftBarData(liftType);
+              if (!data) return null;
+              return renderLiftRow(liftType, data, false);
+            })}
+          </div>
+        )}
 
         <div className="border-t" />
       </div>
@@ -1235,6 +1370,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
 }
 
 function LiftResultCopyButton({ liftType, onCopy }) {
+  const router = useRouter();
   const { isSuccess, triggerSuccess } = useTransientSuccess();
 
   const handleClick = () => {
@@ -1252,7 +1388,7 @@ function LiftResultCopyButton({ liftType, onCopy }) {
       tooltip={`Copy e1rm estimate with ${liftType} rating included`}
       isSuccess={isSuccess}
       className="h-6 w-6 text-muted-foreground/50 hover:text-foreground"
-      onPressAnalytics={() => gaTrackCalcShareCopy("lift_bar", { page: "/calculator", liftType })}
+      onPressAnalytics={() => gaTrackCalcShareCopy("lift_bar", { page: router.asPath, liftType })}
       onClick={handleClick}
     />
   );

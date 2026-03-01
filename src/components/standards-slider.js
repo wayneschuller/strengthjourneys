@@ -41,6 +41,8 @@ export function StandardsSlider({
   isYearly = false,
   isMetric,
   standards,
+  hideRating = false,
+  ratingRightSlot = null,
 }) {
   const {
     isLoading: isUserDataLoading,
@@ -543,18 +545,17 @@ export function StandardsSlider({
           })}
         </TooltipProvider>
       </div>
-      {authStatus === "authenticated" && strengthRating && (
-        <div className="mt-2 text-sm font-medium text-muted-foreground">
-          {liftType} strength level:{" "}
-          {strengthRating === "Elite" && userMax > eliteMax ? (
-            <>
-              {STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite
-            </>
-          ) : (
-            <>
-              {STRENGTH_LEVEL_EMOJI[strengthRating] ?? ""} {strengthRating}
-            </>
-          )}
+      {!hideRating && authStatus === "authenticated" && strengthRating && (
+        <div className="mt-2 flex items-center justify-between gap-4 text-sm font-medium text-muted-foreground">
+          <span>
+            My lifetime {liftType} level:{" "}
+            {strengthRating === "Elite" && userMax > eliteMax ? (
+              <>{STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite</>
+            ) : (
+              <>{STRENGTH_LEVEL_EMOJI[strengthRating] ?? ""} {strengthRating}</>
+            )}
+          </span>
+          {ratingRightSlot}
         </div>
       )}
     </div>

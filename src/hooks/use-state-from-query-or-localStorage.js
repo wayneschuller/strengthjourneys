@@ -7,15 +7,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
  * Motivation: We encourage users to share Strength Journeys URLs so others see the same
  * unique data/results. Query params make links shareable; localStorage persists preferences.
  *
- * Read order (normal): URL query (highest) → localStorage → defaultValue.
- * Read order (ignoreLocalStorage=true): URL query → defaultValue. localStorage is skipped entirely.
- *   Use this when a page must impose a specific value regardless of the user's saved preference,
- *   e.g. formula slug pages (/calculator/epley-formula-1rm-calculator) must always open with
- *   Epley selected even if the user previously saved a different formula.
- *
+ * Read order: query (highest) → localStorage → defaultValue.
  * Write: localStorage only when the value came from a real source (URL/localStorage/user action).
  *   Defaults are never written to localStorage so callers can reliably detect "user never set this".
- *   When ignoreLocalStorage=true, the defaultValue is treated as a default (not written to localStorage).
  * URL sync: only when syncQuery and user has interacted (never on load).
  * Never sync on load: avoids polluting shared links when someone opens them.
  *
@@ -26,8 +20,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
  * @param {*} defaultValue
  * @param {boolean} [syncQuery=false]
  * @param {Record<string, *>|null} [includeWhenSyncing=null]
- * @param {boolean} [ignoreLocalStorage=false] - When true, skip localStorage on init; read URL query
- *   or defaultValue only. User interactions after load still write to localStorage normally.
  * @returns {[*, Function, boolean, Function]} [state, setter, isDefault, silentSetter]
  *   - setter: marks value as user-supplied, persists to localStorage + URL
  *   - isDefault: true when the value was never explicitly provided (URL, localStorage, or setter)
@@ -39,7 +31,6 @@ export const useStateFromQueryOrLocalStorage = (
   defaultValue,
   syncQuery = false,
   includeWhenSyncing = null,
-  ignoreLocalStorage = false,
 ) => {
   const router = useRouter();
   const [state, setState] = useState(defaultValue);
@@ -78,7 +69,7 @@ export const useStateFromQueryOrLocalStorage = (
     if (queryValue !== undefined) {
       initialState = parseValue(queryValue);
       usingDefault = false;
-    } else if (!ignoreLocalStorage && typeof window !== "undefined") {
+    } else if (typeof window !== "undefined") {
       const localStorageValue = localStorage.getItem(key);
       if (localStorageValue !== null) {
         initialState = parseValue(localStorageValue);
@@ -97,7 +88,7 @@ export const useStateFromQueryOrLocalStorage = (
     if (!usingDefault && typeof window !== "undefined") {
       localStorage.setItem(key, stringifyValue(initialState));
     }
-  }, [router.isReady, key, defaultValue, ignoreLocalStorage]);
+  }, [router.isReady, key, defaultValue]);
 
   // Persist to localStorage; sync to URL when syncQuery + user interacted.
   // Skipped entirely when isDefault — we never write defaults to localStorage.

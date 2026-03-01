@@ -135,18 +135,21 @@ export default function E1RMCalculator({ relatedArticles }) {
  * Inner client component for the One Rep Max Calculator page. Provides reps/weight sliders, an animated
  * E1RM summary card, algorithm range bars, Big Four strength standard bars, and rep-range/percentage tables.
  *
- * Formula priority: URL query ?formula=X > forceFormula > localStorage > defaultFormula.
- * forceFormula bypasses localStorage so formula slug pages always open with their formula selected,
- * even for returning users who have a different formula saved. URL query still wins so that share
- * links copied from a formula page open with the correct formula.
+ * Formula selection strategy:
+ * - Normal pages (/calculator, lift slug pages): URL query → localStorage → defaultFormula.
+ *   The user's saved preference is respected and shared links carry the formula in the URL.
+ * - Formula slug pages (/calculator/epley-formula-1rm-calculator etc.): forceFormula always wins.
+ *   Both URL query and localStorage are ignored on init so the page always opens with its formula.
+ *   The user can still change the formula interactively after load. This is implemented by calling
+ *   both hooks unconditionally (React rules) and selecting which one drives the UI based on forceFormula.
  *
  * @param {Object} props
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
- * @param {string} [props.defaultFormula="Brzycki"] - Fallback formula when no URL query, no localStorage,
- *   and no forceFormula. Used by lift slug pages so the user's saved preference still applies.
- * @param {string|null} [props.forceFormula=null] - When set, overrides localStorage on init; the given
- *   formula is always shown regardless of the user's saved preference. Intended for formula slug pages
- *   (e.g. /calculator/epley-formula-1rm-calculator) where the URL implies a specific formula.
+ * @param {string} [props.defaultFormula="Brzycki"] - Fallback formula for normal pages when no URL
+ *   query or localStorage value exists. Ignored when forceFormula is set.
+ * @param {string|null} [props.forceFormula=null] - When set, this formula is always shown on load,
+ *   ignoring URL query and localStorage. Intended for formula slug pages where the slug itself
+ *   communicates the formula. User interactions after load still work normally.
  * @param {string} [props.pageTitle] - Heading text for the page.
  * @param {string} [props.pageDescription] - Description text under the heading.
  * @param {Object|null} [props.formulaBlurb] - If set, renders an equation + blurb line under the description.
@@ -176,16 +179,21 @@ export function E1RMCalculatorMain({
     true,
     { [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric },
   ); // Will be a string
-  const [e1rmFormula, setE1rmFormula] = useStateFromQueryOrLocalStorage(
+  // For normal pages: URL query → localStorage → defaultFormula.
+  // For formula slug pages: forceFormula always wins (see forceFormula prop). Both hooks must be
+  // called unconditionally (React rules); we select which one drives the UI below.
+  const [hookFormula, setHookFormula] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.FORMULA,
-    forceFormula ?? defaultFormula,
+    defaultFormula,
     true,
     {
       [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
       [LOCAL_STORAGE_KEYS.REPS]: reps,
     },
-    !!forceFormula,
   );
+  const [forcedFormula, setForcedFormula] = useState(forceFormula ?? defaultFormula);
+  const e1rmFormula = forceFormula !== null ? forcedFormula : hookFormula;
+  const setE1rmFormula = forceFormula !== null ? setForcedFormula : setHookFormula;
   const [weight, setWeight] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.WEIGHT,
     225,

@@ -144,6 +144,7 @@ export default function E1RMCalculator({ relatedArticles }) {
 export function E1RMCalculatorMain({
   relatedArticles,
   defaultFormula = "Brzycki",
+  forceFormula = null,
   pageTitle = "One Rep Max Calculator",
   pageDescription = "Enter reps and weight to estimate your one-rep max across 7 proven formulas. See rep-max projections, percentage training guides, and personalized Big Four strength levels by age, sex, and bodyweight.",
   formulaBlurb = null,
@@ -166,12 +167,13 @@ export function E1RMCalculatorMain({
   ); // Will be a string
   const [e1rmFormula, setE1rmFormula] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.FORMULA,
-    defaultFormula,
+    forceFormula ?? defaultFormula,
     true,
     {
       [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
       [LOCAL_STORAGE_KEYS.REPS]: reps,
     },
+    !!forceFormula,
   );
   const [weight, setWeight] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.WEIGHT,

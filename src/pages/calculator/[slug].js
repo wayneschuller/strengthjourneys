@@ -180,7 +180,7 @@ export default function FormulaOrLiftCalculatorPage({ relatedArticles, pageConfi
       />
       <E1RMCalculatorMain
         relatedArticles={relatedArticles}
-        defaultFormula={isFormula ? pageConfig.formulaName : "Brzycki"}
+        forceFormula={isFormula ? pageConfig.formulaName : null}
         pageTitle={
           isFormula
             ? `${pageConfig.formulaName} Formula 1RM Calculator`

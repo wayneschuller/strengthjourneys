@@ -20,6 +20,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
  * @param {*} defaultValue
  * @param {boolean} [syncQuery=false]
  * @param {Record<string, *>|null} [includeWhenSyncing=null]
+ * @param {boolean} [ignoreLocalStorage=false] - Skip localStorage lookup; read URL query or defaultValue only.
+ *   Use when a page must impose a specific value (e.g. formula slug pages) regardless of user's saved preference.
  * @returns {[*, Function, boolean, Function]} [state, setter, isDefault, silentSetter]
  *   - setter: marks value as user-supplied, persists to localStorage + URL
  *   - isDefault: true when the value was never explicitly provided (URL, localStorage, or setter)
@@ -31,6 +33,7 @@ export const useStateFromQueryOrLocalStorage = (
   defaultValue,
   syncQuery = false,
   includeWhenSyncing = null,
+  ignoreLocalStorage = false,
 ) => {
   const router = useRouter();
   const [state, setState] = useState(defaultValue);
@@ -69,7 +72,7 @@ export const useStateFromQueryOrLocalStorage = (
     if (queryValue !== undefined) {
       initialState = parseValue(queryValue);
       usingDefault = false;
-    } else if (typeof window !== "undefined") {
+    } else if (!ignoreLocalStorage && typeof window !== "undefined") {
       const localStorageValue = localStorage.getItem(key);
       if (localStorageValue !== null) {
         initialState = parseValue(localStorageValue);
@@ -88,7 +91,7 @@ export const useStateFromQueryOrLocalStorage = (
     if (!usingDefault && typeof window !== "undefined") {
       localStorage.setItem(key, stringifyValue(initialState));
     }
-  }, [router.isReady, key, defaultValue]);
+  }, [router.isReady, key, defaultValue, ignoreLocalStorage]);
 
   // Persist to localStorage; sync to URL when syncQuery + user interacted.
   // Skipped entirely when isDefault — we never write defaults to localStorage.

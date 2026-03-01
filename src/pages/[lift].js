@@ -3,7 +3,7 @@ import Image from "next/image";
 
 
 import { cn } from "@/lib/utils";
-import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { useAthleteBio, getTopLiftStats, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
@@ -17,6 +17,7 @@ import { Crown, Shield, Skull, Luggage } from "lucide-react";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
@@ -357,19 +358,37 @@ const LIFT_CALC_URLS = {
  * @param {string} props.liftType - The lift type to display strength levels for (e.g. "Deadlift").
  */
 function StrengthLevelsCard({ liftType }) {
-  const { standards, isMetric } = useAthleteBio();
+  const { standards, isMetric, age, bodyWeight, sex } = useAthleteBio();
+  const { topLiftsByTypeAndReps } = useUserLiftingData();
+  const { status: authStatus } = useSession();
   const calcUrl = LIFT_CALC_URLS[liftType];
+
+  let strengthRating = null;
+  if (authStatus === "authenticated") {
+    const topLifts = topLiftsByTypeAndReps?.[liftType];
+    const bioForDateRating = age && bodyWeight != null && sex != null
+      ? { age, bodyWeight, sex, isMetric }
+      : null;
+    const stats = getTopLiftStats(topLifts, liftType, standards, "Brzycki", bioForDateRating);
+    strengthRating = stats.strengthRating;
+  }
 
   return (
     <Card>
       <CardHeader>
         <h2 className="text-2xl font-semibold leading-none tracking-tight">My {liftType} Strength Rating</h2>
+        {strengthRating && (
+          <CardDescription>
+            {liftType} strength level: {STRENGTH_LEVEL_EMOJI[strengthRating] ?? ""} {strengthRating}
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent>
         <StandardsSlider
           liftType={liftType}
           standards={standards}
           isMetric={isMetric}
+          hideRating
         />
       </CardContent>
       <CardFooter className="flex flex-wrap items-center justify-between gap-3">

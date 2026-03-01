@@ -41,6 +41,7 @@ export function StandardsSlider({
   isYearly = false,
   isMetric,
   standards,
+  hideRating = false,
 }) {
   const {
     isLoading: isUserDataLoading,
@@ -543,7 +544,7 @@ export function StandardsSlider({
           })}
         </TooltipProvider>
       </div>
-      {authStatus === "authenticated" && strengthRating && (
+      {!hideRating && authStatus === "authenticated" && strengthRating && (
         <div className="mt-2 text-sm font-medium text-muted-foreground">
           {liftType} strength level:{" "}
           {strengthRating === "Elite" && userMax > eliteMax ? (

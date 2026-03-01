@@ -440,7 +440,7 @@ export function StandardsSlider({
   return (
     <div className="mx-auto w-full">
       {/* Lift level labels */}
-      <div className="relative mb-2 h-12 w-full">
+      <div className="relative mb-2 h-14 w-full">
         {levelLabels.map((level, index) => {
           // Only show 1st, 3rd, last on mobile
           if (
@@ -471,10 +471,10 @@ export function StandardsSlider({
 
           return (
             <span key={level} className={labelClass} style={labelStyle}>
-              <div className="text-xs text-muted-foreground">
+              <div className="md:text-base">
                 {width < 800 && level === "Physically Active" ? "Active" : level}
               </div>
-              <div className="text-sm font-semibold">
+              <div className="font-bold md:text-lg lg:text-xl">
                 {liftTypeStandards[level]}
                 {unitType}
               </div>
@@ -485,7 +485,7 @@ export function StandardsSlider({
       </div>
       <div className="relative mb-7 w-full">
         {/* Slider bar background */}
-        <div className="relative h-3 w-full rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800" />
+        <div className="relative h-2 w-full rounded-full bg-gradient-to-r from-yellow-500 via-green-300 to-green-800" />
         {/* Lifetime 1RM and E1RM notches */}
         <TooltipProvider>
           {notchClusters.map((cluster) => {
@@ -517,7 +517,7 @@ export function StandardsSlider({
                     style={{ left: `${centerPercent}%`, zIndex: maxZ }}
                   >
                     <TooltipTrigger asChild>
-                      <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-medium bg-background/80 text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground">
+                      <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-medium shadow bg-background/80 text-foreground group-hover:bg-primary group-hover:text-primary-foreground">
                         {mergedLabel}
                       </span>
                     </TooltipTrigger>

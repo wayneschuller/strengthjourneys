@@ -169,7 +169,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
                   <img
                     src={getLiftSvgPath(liftType)}
                     alt=""
-                    className="w-full object-contain opacity-70 transition-opacity hover:opacity-40"
+                    className="w-full object-contain opacity-90 transition-opacity hover:opacity-50"
                   />
                 </Link>
               ) : (
@@ -190,9 +190,8 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
                   className="text-xl font-bold underline decoration-2 underline-offset-2"
                   style={{ textDecorationColor: getColor(liftType) }}
                 >
-                  {liftType}
+                  {liftType} Strength Standards
                 </h2>
-                <p className="text-xs text-muted-foreground">Strength Standards</p>
               </Link>
               <StandardsSlider
                 liftType={liftType}

@@ -630,10 +630,22 @@ export function E1RMCalculatorMain({
               </Link>
             </div>
 
-            {/* Mobile: simple text link below card */}
-            <Link href={warmupURL} className="text-xs text-muted-foreground md:hidden">
-              See warm-up sets →
-            </Link>
+            {/* Mobile: plate diagram + link below card */}
+            <div className="flex flex-col items-center md:hidden">
+              <Link href={warmupURL}>
+                <PlateDiagram
+                  platesPerSide={plateBreakdown.platesPerSide}
+                  barWeight={plateBarWeight}
+                  isMetric={isMetric}
+                  hideLabels={true}
+                  animationKey={diagramAnimKey}
+                  useScrollTrigger={false}
+                />
+              </Link>
+              <Link href={warmupURL} className="mt-1 text-xs text-muted-foreground">
+                See warm-up sets →
+              </Link>
+            </div>
 
             <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center">
               <div className="justify-self-start">

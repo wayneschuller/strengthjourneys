@@ -389,7 +389,7 @@ function StrengthLevelsCard({ liftType }) {
         <h2 className="text-2xl font-semibold leading-none tracking-tight">My {liftType} Strength Rating</h2>
         {strengthRating && (
           <CardDescription>
-            {liftType} strength level:{" "}
+            My lifetime {liftType} level:{" "}
             {isBeyondElite
               ? <>{STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite</>
               : <>{STRENGTH_LEVEL_EMOJI[strengthRating] ?? ""} {strengthRating}</>

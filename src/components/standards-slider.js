@@ -546,7 +546,7 @@ export function StandardsSlider({
       </div>
       {!hideRating && authStatus === "authenticated" && strengthRating && (
         <div className="mt-2 text-sm font-medium text-muted-foreground">
-          {liftType} strength level:{" "}
+          My lifetime {liftType} level:{" "}
           {strengthRating === "Elite" && userMax > eliteMax ? (
             <>
               {STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite

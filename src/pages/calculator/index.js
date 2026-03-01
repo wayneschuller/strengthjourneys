@@ -449,7 +449,7 @@ export function E1RMCalculatorMain({
               <img
                 src={getLiftSvgPath(forceLift)}
                 alt={forceLift}
-                className="h-16 w-16 flex-shrink-0 object-contain opacity-75"
+                className="h-24 w-24 flex-shrink-0 object-contain opacity-75"
               />
             </Link>
           </PageHeaderRight>

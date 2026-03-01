@@ -38,7 +38,9 @@ import { ShareCopyButton } from "@/components/share-copy-button";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { cn } from "@/lib/utils";
 
-import { useLocalStorage, useIsClient } from "usehooks-ts";
+import { useLocalStorage, useIsClient, useReadLocalStorage } from "usehooks-ts";
+import { calculatePlateBreakdown } from "@/lib/warmups";
+import { PlateDiagram } from "@/components/warmups/plate-diagram";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
@@ -702,31 +704,70 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
   const liftRating = liftStandard?.elite ? getStrengthRatingForE1RM(e1rmWeight, liftStandard) : null;
   const liftRatingEmoji = liftRating ? (STRENGTH_LEVEL_EMOJI[liftRating] ?? "") : null;
 
+  // Plate diagram: read warmup-calc preferences from localStorage, falling back to warmup-calc defaults
+  const storedBarType = useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, { initializeWithValue: false }) ?? "standard";
+  const storedPlatePreference = useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE, { initializeWithValue: false }) ?? "red";
+  const barWeight = isMetric ? (storedBarType === "womens" ? 15 : 20) : (storedBarType === "womens" ? 35 : 45);
+  const plateBreakdown = calculatePlateBreakdown(e1rmWeight, barWeight, isMetric, storedPlatePreference);
+  const unit = isMetric ? "kg" : "lb";
+  const warmupURL = `/warm-up-sets-calculator?${LOCAL_STORAGE_KEYS.WARMUP_WEIGHT}=${e1rmWeight}&${LOCAL_STORAGE_KEYS.CALC_IS_METRIC}=${isMetric}`;
+  const diagramAnimKey = `${e1rmWeight}-${isMetric}-${storedBarType}-${storedPlatePreference}`;
+
   return (
-    <Card className="w-full max-w-md border-4">
+    <Card className="w-full max-w-2xl border-4">
       <CardHeader>
         <CardTitle className="text-center md:text-3xl">
           {forceLift ? `${forceLift} — Estimated 1RM` : "Estimated One Rep Max"}
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-2">
-        <div className="text-center text-lg md:text-xl text-muted-foreground">
-          {reps}@{weight}{isMetric ? "kg" : "lb"}
-        </div>
-        <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
-          <motion.span className="tabular-nums">{displayVal}</motion.span>
-          {isMetric ? "kg" : "lb"}
-        </div>
-        {liftRating && (
-          <div className="mt-2 text-center text-base font-semibold">
-            {liftRatingEmoji} {liftRating}
+        <div className="md:grid md:grid-cols-2 md:gap-6">
+          {/* Left: number display */}
+          <div>
+            <div className="text-center text-lg md:text-xl text-muted-foreground">
+              {reps}@{weight}{unit}
+            </div>
+            <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
+              <motion.span className="tabular-nums">{displayVal}</motion.span>
+              {unit}
+            </div>
+            {liftRating && (
+              <div className="mt-2 text-center text-base font-semibold">
+                {liftRatingEmoji} {liftRating}
+              </div>
+            )}
+            {!bioDataIsDefault && bodyWeight > 0 && (
+              <div className="mt-1 text-center text-sm text-muted-foreground">
+                {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
+              </div>
+            )}
           </div>
-        )}
-        {!bioDataIsDefault && bodyWeight > 0 && (
-          <div className="mt-1 text-center text-sm text-muted-foreground">
-            {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
+
+          {/* Right: plate diagram (desktop only) — click to open warmup calculator */}
+          <div className="hidden md:flex md:flex-col md:items-end md:justify-center">
+            <Link
+              href={warmupURL}
+              className="group flex flex-col items-end rounded-lg p-2 transition-colors hover:bg-muted"
+              title="Plan warmup sets to build to this weight"
+            >
+              <PlateDiagram
+                platesPerSide={plateBreakdown.platesPerSide}
+                barWeight={barWeight}
+                isMetric={isMetric}
+                animationKey={diagramAnimKey}
+                useScrollTrigger={false}
+              />
+              <div className="mt-2 text-xs text-muted-foreground transition-colors group-hover:text-foreground">
+                Plan warmup sets →
+              </div>
+            </Link>
+            {plateBreakdown.remainder !== 0 && (
+              <div className="px-2 text-right text-xs text-muted-foreground">
+                Closest: {plateBreakdown.closestWeight}{unit}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </CardContent>
       <CardFooter className="text-muted-foreground">
         <div className="flex-1 text-center">

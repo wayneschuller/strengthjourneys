@@ -471,7 +471,7 @@ function WarmupSetsDisplayCard({
             return (
               <div
                 key={idx}
-                className={`flex h-64 flex-col justify-between gap-3 rounded-lg p-4 ${
+                className={`flex min-h-64 flex-col justify-between gap-3 rounded-lg p-4 ${
                   isTopSet ? "border-primary border-4" : "border"
                 }`}
               >

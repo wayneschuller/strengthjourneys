@@ -28,7 +28,7 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
 
         {/* Reserve space for labels to match plates version */}
         {!hideLabels && (
-          <div className="flex h-8 flex-wrap justify-end gap-1 text-xs text-muted-foreground">
+          <div className="flex flex-wrap justify-end gap-1 text-xs text-muted-foreground">
             <span>Bar only ({barWeight}{unit})</span>
           </div>
         )}
@@ -94,7 +94,7 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
 
       {/* Plate labels - right-aligned, showing one side only */}
       {!hideLabels && (
-        <div className="flex h-8 flex-wrap justify-end gap-1 text-xs text-muted-foreground">
+        <div className="flex flex-wrap justify-end gap-1 text-xs text-muted-foreground">
           {platesPerSide.map((plate, idx) => (
             <span key={idx} className="flex items-center gap-1">
               <span

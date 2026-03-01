@@ -619,6 +619,7 @@ export function E1RMCalculatorMain({
               weight={weight}
               e1rmFormula={e1rmFormula}
               isMetric={isMetric}
+              forceLift={forceLift}
             />
             <PercentageTable
               key={`pct-${e1rmFormula}-${weight}-${reps}`}
@@ -626,6 +627,7 @@ export function E1RMCalculatorMain({
               weight={weight}
               e1rmFormula={e1rmFormula}
               isMetric={isMetric}
+              forceLift={forceLift}
             />
           </div>
         </CardContent>
@@ -985,7 +987,7 @@ function AlgorithmRangeBars({ reps, weight, isMetric, e1rmFormula, setE1rmFormul
  * @param {string} props.e1rmFormula - E1RM formula used for all projections.
  * @param {boolean} props.isMetric - Whether weight is in kg (true) or lb (false).
  */
-function RepRangeTable({ reps, weight, e1rmFormula, isMetric }) {
+function RepRangeTable({ reps, weight, e1rmFormula, isMetric, forceLift = null }) {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const unit = isMetric ? "kg" : "lb";
   const currentReps = Number(reps);
@@ -998,7 +1000,9 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric }) {
 
   return (
     <div>
-      <h2 className="mb-1 text-base font-semibold">Rep Max Projections</h2>
+      <h2 className="mb-1 text-base font-semibold">
+        {forceLift ? `${forceLift} Rep Max Projections` : "Rep Max Projections"}
+      </h2>
       <p className="mb-3 text-sm text-muted-foreground">{e1rmFormula} algorithm</p>
       <div className="overflow-hidden rounded-lg border">
         <table className="w-full text-sm">
@@ -1051,7 +1055,7 @@ function RepRangeTable({ reps, weight, e1rmFormula, isMetric }) {
  * @param {string} props.e1rmFormula - E1RM formula used to compute the base max.
  * @param {boolean} props.isMetric - Whether weight is in kg (true) or lb (false).
  */
-function PercentageTable({ reps, weight, e1rmFormula, isMetric }) {
+function PercentageTable({ reps, weight, e1rmFormula, isMetric, forceLift = null }) {
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const unit = isMetric ? "kg" : "lb";
 
@@ -1063,7 +1067,9 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric }) {
 
   return (
     <div>
-      <h2 className="mb-1 text-base font-semibold">Percentage Calculator</h2>
+      <h2 className="mb-1 text-base font-semibold">
+        {forceLift ? `${forceLift} Percentage Calculator` : "Percentage Calculator"}
+      </h2>
       <p className="mb-3 text-sm text-muted-foreground">
         Based on {e1rmWeight}{unit} estimated max
       </p>

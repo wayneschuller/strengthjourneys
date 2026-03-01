@@ -614,7 +614,7 @@ export function E1RMCalculatorMain({
             />
 
             {/* Floating plate annotation: absolute in right whitespace on desktop */}
-            <div className="absolute right-0 top-8 hidden origin-right scale-90 flex-col items-end opacity-60 md:flex">
+            <div className="absolute right-0 top-1/2 hidden origin-right -translate-y-1/2 scale-90 flex-col items-end opacity-60 md:flex">
               <Link href={warmupURL}>
                 <PlateDiagram
                   platesPerSide={plateBreakdown.platesPerSide}

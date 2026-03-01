@@ -438,25 +438,19 @@ export function E1RMCalculatorMain({
           <PageHeaderRight>
             <Link
               href={LIFT_SLUG_TO_INSIGHTS_URL[forceLift]}
-              className="group block"
+              className="hover:bg-muted flex w-64 items-center gap-3 rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
-              <Card className="w-44 overflow-hidden border-2 transition-colors hover:border-primary">
-                <CardContent className="flex flex-col items-center gap-2 p-3 pb-3">
-                  <img
-                    src={getLiftSvgPath(forceLift)}
-                    alt={forceLift}
-                    className="h-20 w-20 object-contain opacity-75 transition-opacity group-hover:opacity-100"
-                  />
-                  <div className="text-center">
-                    <p className="text-xs font-semibold leading-tight">
-                      {forceLift} Insights
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground leading-tight">
-                      Standards, PRs &amp; progress tracking →
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="flex-1">
+                <h3 className="text-base font-semibold">{forceLift} Insights</h3>
+                <p className="text-muted-foreground text-sm">
+                  Standards, PRs &amp; progress →
+                </p>
+              </div>
+              <img
+                src={getLiftSvgPath(forceLift)}
+                alt={forceLift}
+                className="h-16 w-16 flex-shrink-0 object-contain opacity-75"
+              />
             </Link>
           </PageHeaderRight>
         )}

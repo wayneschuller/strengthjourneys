@@ -364,7 +364,7 @@ export function E1RMCalculatorMain({
             .write([new ClipboardItem({ "image/png": blob })])
             .then(() => {
               toast({ title: "Image copied! Paste into Instagram or anywhere." });
-              gaTrackCalcShareCopy("image", { page: "/calculator" });
+              gaTrackCalcShareCopy("image", { page: router.asPath });
             })
             .catch((err) => {
               console.error("Copy image error:", err);
@@ -525,7 +525,7 @@ export function E1RMCalculatorMain({
                 successLabel="Copied"
                 isSuccess={isTextCopied}
                 className="min-w-[112px] justify-self-center"
-                onPressAnalytics={() => gaTrackCalcShareCopy("text", { page: "/calculator" })}
+                onPressAnalytics={() => gaTrackCalcShareCopy("text", { page: router.asPath })}
                 onClick={handleCopyToClipboard}
               />
               <div aria-hidden className="justify-self-end" />
@@ -1248,6 +1248,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula }
 }
 
 function LiftResultCopyButton({ liftType, onCopy }) {
+  const router = useRouter();
   const { isSuccess, triggerSuccess } = useTransientSuccess();
 
   const handleClick = () => {
@@ -1265,7 +1266,7 @@ function LiftResultCopyButton({ liftType, onCopy }) {
       tooltip={`Copy e1rm estimate with ${liftType} rating included`}
       isSuccess={isSuccess}
       className="h-6 w-6 text-muted-foreground/50 hover:text-foreground"
-      onPressAnalytics={() => gaTrackCalcShareCopy("lift_bar", { page: "/calculator", liftType })}
+      onPressAnalytics={() => gaTrackCalcShareCopy("lift_bar", { page: router.asPath, liftType })}
       onClick={handleClick}
     />
   );

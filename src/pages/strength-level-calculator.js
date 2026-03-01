@@ -161,14 +161,14 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
                 {getLiftSvgPath(liftType) && bigFourURLs[liftType] && (
                   <Link
                     href={bigFourURLs[liftType]}
-                    className="flex w-14 flex-shrink-0 items-center"
+                    className="flex w-20 flex-shrink-0 items-center"
                     tabIndex={-1}
                     aria-hidden
                   >
                     <img
                       src={getLiftSvgPath(liftType)}
                       alt=""
-                      className="h-full w-full object-contain opacity-60 transition-opacity hover:opacity-90"
+                      className="h-full w-full object-contain opacity-90 transition-opacity hover:opacity-50"
                     />
                   </Link>
                 )}

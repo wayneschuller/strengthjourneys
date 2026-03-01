@@ -119,16 +119,16 @@ const PAGE_CONFIG = {
     keywords:
       "deadlift 1rm calculator, max deadlift calculator, one rep max deadlift, deadlift max calculator",
   },
-  "overhead-press-1rm-calculator": {
+  "strict-press-1rm-calculator": {
     type: "lift",
     liftName: "Strict Press",
     blurb:
-      "Enter your overhead press working weight and reps. The OHP 1RM is a key upper body strength benchmark. Sets of 3–8 reps give the most reliable estimates.",
-    title: "Overhead Press 1RM Calculator | OHP Max Calculator — Free Tool",
+      "Enter your strict press working weight and reps. The strict press 1RM is a key upper body strength benchmark. Sets of 3–8 reps give the most reliable estimates.",
+    title: "Strict Press 1RM Calculator | OHP Max Calculator — Free Tool",
     description:
-      "Calculate your overhead press one rep max using 7 proven formulas. Rep-max tables, percentage guides, and strength ratings. Free OHP 1RM calculator, no login required.",
+      "Calculate your strict press one rep max using 7 proven formulas. Rep-max tables, percentage guides, and strength ratings. Free overhead press / OHP 1RM calculator, no login required.",
     keywords:
-      "overhead press 1rm calculator, ohp 1rm calculator, max overhead press, press max calculator",
+      "strict press 1rm calculator, overhead press 1rm calculator, ohp 1rm calculator, max overhead press, press max calculator",
   },
 };
 

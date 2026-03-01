@@ -392,7 +392,7 @@ function StrengthLevelsCard({ liftType }) {
         />
       </CardContent>
       <CardFooter className="flex flex-wrap items-center justify-between gap-3">
-        <AthleteBioInlineSettings />
+        <AthleteBioInlineSettings autoOpenWhenDefault={false} />
         {calcUrl && (
           <Link
             href={calcUrl}

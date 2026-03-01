@@ -2,13 +2,8 @@
 import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
 import { NextSeo } from "next-seo";
-import { sanityIOClient } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 import {
   PageContainer,
@@ -19,7 +14,6 @@ import {
 } from "@/components/page-header";
 
 
-import { Separator } from "@/components/ui/separator";
 import { BicepsFlexed } from "lucide-react";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
@@ -115,7 +109,6 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
   const { standards, isMetric } = useAthleteBio();
   const { getColor } = useLiftColors();
 
-  const unitType = isMetric ? "kg" : "lb";
   const liftTypesFromStandards = Object.keys(standards);
 
   return (
@@ -129,7 +122,6 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
           and bodyweight. <SignInInvite />
         </PageHeaderDescription>
         <PageHeaderRight>
-          {/* <div className="hidden space-x-4 text-muted-foreground md:flex"> */}
           <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
             <Link
               href="/calculator"
@@ -150,72 +142,90 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
           </div>
         </PageHeaderRight>
       </PageHeader>
-      <Card className="pt-4">
-        <CardContent className="">
-          <div className="mb-6">
-            <AthleteBioInlineSettings />
-          </div>
-          <div className="flex flex-col gap-8 md:ml-4">
-            {liftTypesFromStandards.map((liftType) => (
-              <div key={liftType} className="flex items-stretch gap-4">
-                {getLiftSvgPath(liftType) && bigFourURLs[liftType] && (
-                  <Link
-                    href={bigFourURLs[liftType]}
-                    className="flex w-20 flex-shrink-0 items-center"
-                    tabIndex={-1}
-                    aria-hidden
-                  >
-                    <img
-                      src={getLiftSvgPath(liftType)}
-                      alt=""
-                      className="h-full w-full object-contain opacity-90 transition-opacity hover:opacity-50"
-                    />
-                  </Link>
-                )}
-                <div className="min-w-0 flex-1">
-                  <Link href={bigFourURLs[liftType]} className="transition-opacity hover:opacity-70">
-                    <h2
-                      className="text-xl font-bold underline decoration-2 underline-offset-2"
-                      style={{ textDecorationColor: getColor(liftType) }}
-                    >
-                      {liftType} Strength Standards:
-                    </h2>
-                  </Link>
-                  <StandardsSlider
-                    liftType={liftType}
-                    standards={standards}
-                    isMetric={isMetric}
-                    ratingRightSlot={LIFT_CALC_URLS[liftType] && (
-                      <Link
-                        href={LIFT_CALC_URLS[liftType]}
-                        className="whitespace-nowrap hover:text-foreground"
-                      >
-                        {liftType} 1RM Calculator →
-                      </Link>
-                    )}
-                  />
-                  <Separator />
-                </div>
-              </div>
-            ))}
-          </div>
+
+      {/* Bio settings strip */}
+      <Card>
+        <CardContent className="py-3">
+          <AthleteBioInlineSettings />
         </CardContent>
-        <CardFooter className="text-sm">
-          <div className="flex flex-col">
-            <p className="">
-              Our data model is a derivation of the excellent research of{" "}
-              <a
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-                target="_blank"
-                href="https://lonkilgore.com/"
-              >
-                Professor Lon Kilgore
-              </a>
-              . Any errors are our own.
-            </p>
-          </div>
-        </CardFooter>
       </Card>
+
+      {/* Per-lift cards */}
+      <div className="flex flex-col gap-3">
+        {liftTypesFromStandards.map((liftType) => (
+          <div
+            key={liftType}
+            className="flex items-start overflow-hidden rounded-lg border bg-card shadow-sm"
+          >
+            {/* Left rail */}
+            <div className="flex w-20 flex-shrink-0 flex-col items-center gap-2 self-stretch border-r bg-muted/40 px-3 py-4 sm:w-24">
+              {getLiftSvgPath(liftType) ? (
+                <Link
+                  href={bigFourURLs[liftType] ?? "#"}
+                  tabIndex={-1}
+                  aria-hidden
+                  className="w-full"
+                >
+                  <img
+                    src={getLiftSvgPath(liftType)}
+                    alt=""
+                    className="w-full object-contain opacity-90 transition-opacity hover:opacity-50"
+                  />
+                </Link>
+              ) : (
+                <div className="w-full aspect-square" />
+              )}
+              <span className="text-center text-xs font-semibold leading-tight text-muted-foreground">
+                {liftType}
+              </span>
+            </div>
+
+            {/* Main column */}
+            <div className="min-w-0 flex-1 p-4">
+              <Link
+                href={bigFourURLs[liftType] ?? "#"}
+                className="transition-opacity hover:opacity-70"
+              >
+                <h2
+                  className="text-xl font-bold underline decoration-2 underline-offset-2"
+                  style={{ textDecorationColor: getColor(liftType) }}
+                >
+                  {liftType} Strength Standards
+                </h2>
+              </Link>
+              <StandardsSlider
+                liftType={liftType}
+                standards={standards}
+                isMetric={isMetric}
+                ratingRightSlot={
+                  LIFT_CALC_URLS[liftType] && (
+                    <Link
+                      href={LIFT_CALC_URLS[liftType]}
+                      className="whitespace-nowrap hover:text-foreground"
+                    >
+                      {liftType} 1RM Calculator →
+                    </Link>
+                  )
+                }
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Attribution */}
+      <p className="px-1 text-sm text-muted-foreground">
+        Our data model is a derivation of the excellent research of{" "}
+        <a
+          className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          target="_blank"
+          href="https://lonkilgore.com/"
+        >
+          Professor Lon Kilgore
+        </a>
+        . Any errors are our own.
+      </p>
+
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );

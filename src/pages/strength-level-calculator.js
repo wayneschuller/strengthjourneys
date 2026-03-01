@@ -39,6 +39,13 @@ import { useLiftColors } from "@/hooks/use-lift-colors";
 import { StandardsSlider } from "@/components/standards-slider";
 import { bigFourURLs } from "@/components/lift-type-indicator";
 
+const LIFT_CALC_URLS = {
+  "Back Squat": "/calculator/squat-1rm-calculator",
+  "Bench Press": "/calculator/bench-press-1rm-calculator",
+  "Deadlift": "/calculator/deadlift-1rm-calculator",
+  "Strict Press": "/calculator/strict-press-1rm-calculator",
+};
+
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { SignInInvite } from "@/components/instructions-cards";
 
@@ -246,6 +253,14 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
                   liftType={liftType}
                   standards={standards}
                   isMetric={isMetric}
+                  ratingRightSlot={LIFT_CALC_URLS[liftType] && (
+                    <Link
+                      href={LIFT_CALC_URLS[liftType]}
+                      className="whitespace-nowrap hover:text-foreground"
+                    >
+                      {liftType} 1RM Calculator →
+                    </Link>
+                  )}
                 />
                 <Separator />
               </div>

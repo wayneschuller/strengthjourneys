@@ -243,7 +243,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
               <div key={liftType} className="">
                 <Link href={bigFourURLs[liftType]} className="transition-opacity hover:opacity-70">
                   <h2
-                    className="text-lg font-bold underline decoration-2 underline-offset-2"
+                    className="text-xl font-bold underline decoration-2 underline-offset-2"
                     style={{ textDecorationColor: getColor(liftType) }}
                   >
                     {liftType} Standards:

@@ -456,6 +456,14 @@ export function E1RMCalculatorMain({
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const unit = getUnitSuffix(isMetric);
 
+  // Floating plate annotation state (reads warmup-calc prefs from localStorage)
+  const storedBarType = useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, { initializeWithValue: false }) ?? "standard";
+  const storedPlatePreference = useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE, { initializeWithValue: false }) ?? "red";
+  const plateBarWeight = isMetric ? (storedBarType === "womens" ? 15 : 20) : (storedBarType === "womens" ? 35 : 45);
+  const plateBreakdown = calculatePlateBreakdown(e1rmWeight, plateBarWeight, isMetric, storedPlatePreference);
+  const warmupURL = `/warm-up-sets-calculator?${LOCAL_STORAGE_KEYS.WARMUP_WEIGHT}=${e1rmWeight}&${LOCAL_STORAGE_KEYS.CALC_IS_METRIC}=${isMetric}`;
+  const diagramAnimKey = `${e1rmWeight}-${isMetric}-${storedBarType}-${storedPlatePreference}`;
+
   return (
     <PageContainer>
       <PageHeader>
@@ -594,8 +602,8 @@ export function E1RMCalculatorMain({
             </div>
           </div>
 
-          {/* Hero card — always centered */}
-          <div className="my-6 flex flex-col items-center gap-3">
+          {/* Hero card — centered, with plate annotation floating in whitespace to the right */}
+          <div className="relative my-6 flex flex-col items-center gap-3">
             <E1RMSummaryCard
               reps={reps}
               weight={weight}
@@ -604,6 +612,29 @@ export function E1RMCalculatorMain({
               estimateE1RM={estimateE1RM}
               forceLift={forceLift}
             />
+
+            {/* Floating plate annotation: absolute in right whitespace on desktop */}
+            <div className="absolute right-0 top-8 hidden origin-right scale-90 flex-col items-end opacity-60 md:flex">
+              <Link href={warmupURL}>
+                <PlateDiagram
+                  platesPerSide={plateBreakdown.platesPerSide}
+                  barWeight={plateBarWeight}
+                  isMetric={isMetric}
+                  hideLabels={true}
+                  animationKey={diagramAnimKey}
+                  useScrollTrigger={false}
+                />
+              </Link>
+              <Link href={warmupURL} className="mt-1 text-right text-xs text-muted-foreground">
+                See warm-up sets →
+              </Link>
+            </div>
+
+            {/* Mobile: simple text link below card */}
+            <Link href={warmupURL} className="text-xs text-muted-foreground md:hidden">
+              See warm-up sets →
+            </Link>
+
             <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center">
               <div className="justify-self-start">
                 <MiniFeedbackWidget
@@ -704,66 +735,31 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
   const liftRating = liftStandard?.elite ? getStrengthRatingForE1RM(e1rmWeight, liftStandard) : null;
   const liftRatingEmoji = liftRating ? (STRENGTH_LEVEL_EMOJI[liftRating] ?? "") : null;
 
-  // Plate diagram: read warmup-calc preferences from localStorage, falling back to warmup-calc defaults
-  const storedBarType = useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, { initializeWithValue: false }) ?? "standard";
-  const storedPlatePreference = useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE, { initializeWithValue: false }) ?? "red";
-  const barWeight = isMetric ? (storedBarType === "womens" ? 15 : 20) : (storedBarType === "womens" ? 35 : 45);
-  const plateBreakdown = calculatePlateBreakdown(e1rmWeight, barWeight, isMetric, storedPlatePreference);
-  const unit = isMetric ? "kg" : "lb";
-  const warmupURL = `/warm-up-sets-calculator?${LOCAL_STORAGE_KEYS.WARMUP_WEIGHT}=${e1rmWeight}&${LOCAL_STORAGE_KEYS.CALC_IS_METRIC}=${isMetric}`;
-  const diagramAnimKey = `${e1rmWeight}-${isMetric}-${storedBarType}-${storedPlatePreference}`;
-
   return (
-    <Card className="w-full max-w-2xl border-4">
+    <Card className="w-full max-w-md border-4">
       <CardHeader>
         <CardTitle className="text-center md:text-3xl">
           {forceLift ? `${forceLift} — Estimated 1RM` : "Estimated One Rep Max"}
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-2">
-        <div className="md:grid md:grid-cols-2 md:gap-6">
-          {/* Left: number display */}
-          <div>
-            <div className="text-center text-lg md:text-xl text-muted-foreground">
-              {reps}@{weight}{unit}
-            </div>
-            <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
-              <motion.span className="tabular-nums">{displayVal}</motion.span>
-              {unit}
-            </div>
-            {liftRating && (
-              <div className="mt-2 text-center text-base font-semibold">
-                {liftRatingEmoji} {liftRating}
-              </div>
-            )}
-            {!bioDataIsDefault && bodyWeight > 0 && (
-              <div className="mt-1 text-center text-sm text-muted-foreground">
-                {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
-              </div>
-            )}
-          </div>
-
-          {/* Right: plate diagram — below number on mobile, beside on desktop */}
-          <div className="mt-4 flex flex-col items-center md:mt-0 md:items-end md:justify-center">
-            <Link
-              href={warmupURL}
-              className="group flex flex-col items-end rounded-lg p-2 transition-colors hover:bg-muted"
-              title="See warm-up sets for this weight"
-            >
-              <PlateDiagram
-                platesPerSide={plateBreakdown.platesPerSide}
-                barWeight={barWeight}
-                isMetric={isMetric}
-                hideLabels={true}
-                animationKey={diagramAnimKey}
-                useScrollTrigger={false}
-              />
-              <div className="mt-2 text-xs text-muted-foreground transition-colors group-hover:text-foreground">
-                See warm-up sets →
-              </div>
-            </Link>
-          </div>
+        <div className="text-center text-lg md:text-xl text-muted-foreground">
+          {reps}@{weight}{isMetric ? "kg" : "lb"}
         </div>
+        <div className="text-center text-5xl font-bold tracking-tight md:text-6xl xl:text-7xl">
+          <motion.span className="tabular-nums">{displayVal}</motion.span>
+          {isMetric ? "kg" : "lb"}
+        </div>
+        {liftRating && (
+          <div className="mt-2 text-center text-base font-semibold">
+            {liftRatingEmoji} {liftRating}
+          </div>
+        )}
+        {!bioDataIsDefault && bodyWeight > 0 && (
+          <div className="mt-1 text-center text-sm text-muted-foreground">
+            {(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight
+          </div>
+        )}
       </CardContent>
       <CardFooter className="text-muted-foreground">
         <div className="flex-1 text-center">

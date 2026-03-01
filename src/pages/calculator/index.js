@@ -42,7 +42,7 @@ import { useLocalStorage, useIsClient } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
-import { useStateFromQueryOrLocalStorage } from "../hooks/use-state-from-query-or-localStorage";
+import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { Calculator } from "lucide-react";
 import {
   motion,
@@ -136,8 +136,18 @@ export default function E1RMCalculator({ relatedArticles }) {
  * E1RM summary card, algorithm range bars, Big Four strength standard bars, and rep-range/percentage tables.
  * @param {Object} props
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
+ * @param {string} [props.defaultFormula="Brzycki"] - Formula to default to if no URL/localStorage value.
+ * @param {string} [props.pageTitle] - Heading text for the page.
+ * @param {string} [props.pageDescription] - Description text under the heading.
+ * @param {Object|null} [props.formulaBlurb] - If set, renders an equation + text line under description.
  */
-function E1RMCalculatorMain({ relatedArticles }) {
+export function E1RMCalculatorMain({
+  relatedArticles,
+  defaultFormula = "Brzycki",
+  pageTitle = "One Rep Max Calculator",
+  pageDescription = "Enter reps and weight to estimate your one-rep max across 7 proven formulas. See rep-max projections, percentage training guides, and personalized Big Four strength levels by age, sex, and bodyweight.",
+  formulaBlurb = null,
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const {
@@ -156,7 +166,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
   ); // Will be a string
   const [e1rmFormula, setE1rmFormula] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.FORMULA,
-    "Brzycki",
+    defaultFormula,
     true,
     {
       [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
@@ -354,7 +364,7 @@ function E1RMCalculatorMain({ relatedArticles }) {
             .write([new ClipboardItem({ "image/png": blob })])
             .then(() => {
               toast({ title: "Image copied! Paste into Instagram or anywhere." });
-              gaEvent(GA_EVENT_TAGS.CALC_SHARE_CLIPBOARD, { page: "/calculator", type: "image" });
+              gaTrackCalcShareCopy("image", { page: "/calculator" });
             })
             .catch((err) => {
               console.error("Copy image error:", err);
@@ -378,13 +388,16 @@ function E1RMCalculatorMain({ relatedArticles }) {
     <PageContainer>
       <PageHeader>
         <PageHeaderHeading icon={Calculator}>
-          One Rep Max Calculator
+          {pageTitle}
         </PageHeaderHeading>
         <PageHeaderDescription>
-          Enter reps and weight to estimate your one-rep max across 7 proven
-          formulas. See rep-max projections, percentage training guides, and
-          personalized Big Four strength levels by age, sex, and bodyweight.
+          {pageDescription}
         </PageHeaderDescription>
+        {formulaBlurb && (
+          <p className="text-sm text-muted-foreground mt-1 font-mono">
+            {formulaBlurb.equation} — {formulaBlurb.text}
+          </p>
+        )}
       </PageHeader>
       <Card>
         <CardContent>

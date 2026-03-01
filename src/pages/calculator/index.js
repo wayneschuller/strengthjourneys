@@ -449,7 +449,7 @@ export function E1RMCalculatorMain({
               <img
                 src={getLiftSvgPath(forceLift)}
                 alt={forceLift}
-                className="h-24 w-24 flex-shrink-0 object-contain opacity-75"
+                className="h-24 w-24 flex-shrink-0 object-contain opacity-90 transition-opacity hover:opacity-50"
               />
             </Link>
           </PageHeaderRight>
@@ -1233,9 +1233,9 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
       <div key={liftType} className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
         {/* Row 1 on mobile: SVG + lift name + rating badge */}
         <div className="flex items-center gap-3">
-          <Link href={bigFourURLs[liftType] ?? "#"} className="shrink-0 transition-opacity hover:opacity-70">
+          <Link href={bigFourURLs[liftType] ?? "#"} className="shrink-0 transition-opacity hover:opacity-50">
             {svgPath
-              ? <img src={svgPath} alt={liftType} className={cn("object-contain opacity-75", featured ? "h-16 w-16" : "h-12 w-12")} />
+              ? <img src={svgPath} alt={liftType} className={cn("object-contain opacity-90", featured ? "h-16 w-16" : "h-12 w-12")} />
               : <div className={featured ? "h-16 w-16" : "h-12 w-12"} />
             }
           </Link>

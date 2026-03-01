@@ -1273,7 +1273,6 @@ function BigFourCriteriaTable({
       <div className="space-y-1 pt-1">
         <AthleteBioInlineSettings
           forceStackedControls
-          autoOpenWhenDefault
           defaultBioPrompt="Enter your details to unlock this feature."
         />
       </div>

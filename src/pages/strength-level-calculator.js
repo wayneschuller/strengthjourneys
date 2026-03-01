@@ -4,14 +4,10 @@ import { devLog } from "@/lib/processing-utils";
 import { NextSeo } from "next-seo";
 import { sanityIOClient } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
-import { UnitChooser } from "@/components/unit-type-chooser";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
 import {
@@ -23,15 +19,6 @@ import {
 } from "@/components/page-header";
 
 
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { BicepsFlexed } from "lucide-react";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -48,6 +35,7 @@ const LIFT_CALC_URLS = {
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { SignInInvite } from "@/components/instructions-cards";
+import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
 export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "Strength Calculator";
@@ -123,18 +111,7 @@ export default function StrengthLevelCalculator({ relatedArticles }) {
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
  */
 function StrengthLevelCalculatorMain({ relatedArticles }) {
-  const {
-    age,
-    setAge,
-    isMetric,
-    setIsMetric,
-    sex,
-    setSex,
-    bodyWeight,
-    setBodyWeight,
-    standards,
-    toggleIsMetric,
-  } = useAthleteBio({ modifyURLQuery: true });
+  const { standards, isMetric } = useAthleteBio();
   const { getColor } = useLiftColors();
 
   const unitType = isMetric ? "kg" : "lb";
@@ -174,69 +151,8 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
       </PageHeader>
       <Card className="pt-4">
         <CardContent className="">
-          <div className="mb-10 flex flex-col items-start gap-4 md:mr-10 md:flex-row md:gap-8">
-            <div className="md:min-w-1/5 flex w-full flex-col">
-              <div className="py-2">
-                <Label htmlFor="age" className="text-xl">
-                  Age: {age}
-                </Label>
-              </div>
-              <Slider
-                min={13}
-                max={100}
-                step={1}
-                value={[age]}
-                onValueChange={(values) => setAge(values[0])}
-                className="mt-2 min-w-40 flex-1"
-                aria-label="Age"
-                aria-labelledby="age"
-              />
-            </div>
-            <div className="md:min-w-1/5 flex h-[4rem] w-full flex-col justify-between">
-              <div className="flex flex-row items-center">
-                <Label htmlFor="weight" className="mr-2 text-xl">
-                  Bodyweight:
-                </Label>
-                <Label
-                  htmlFor="weight"
-                  className="mr-2 w-[3rem] text-right text-xl"
-                >
-                  {bodyWeight}
-                </Label>
-                <UnitChooser
-                  isMetric={isMetric}
-                  onSwitchChange={toggleIsMetric}
-                />
-              </div>
-              <Slider
-                min={isMetric ? 40 : 100}
-                max={isMetric ? 230 : 500}
-                step={1}
-                value={[bodyWeight]}
-                onValueChange={(values) => setBodyWeight(values[0])}
-                className="mt-2 min-w-40 flex-1"
-                aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"} `}
-              />
-            </div>
-            <div className="flex h-[4rem] w-40 grow-0 items-center space-x-2">
-              <Label htmlFor="sex" className="text-xl">
-                Sex:
-              </Label>
-              <Select
-                id="gender"
-                value={sex}
-                onValueChange={(value) => setSex(value)}
-                className="min-w-52 text-xl"
-              >
-                <SelectTrigger aria-label="Select sex">
-                  <SelectValue placeholder="Select sex" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="mb-6">
+            <AthleteBioInlineSettings forceStackedControls />
           </div>
           <div className="flex flex-col gap-8 md:ml-4">
             {liftTypesFromStandards.map((liftType) => (
@@ -246,7 +162,7 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
                     className="text-xl font-bold underline decoration-2 underline-offset-2"
                     style={{ textDecorationColor: getColor(liftType) }}
                   >
-                    {liftType} Standards:
+                    {liftType} Strength Standards:
                   </h2>
                 </Link>
                 <StandardsSlider

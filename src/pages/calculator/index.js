@@ -176,6 +176,10 @@ export function E1RMCalculatorMain({
     setIsMetric,
     bodyWeight,
     setBodyWeight,
+    standards,
+    age,
+    sex,
+    bioDataIsDefault,
   } = useAthleteBio({ modifyURLQuery: true });
   // Order matters: each includes the ones before it when syncing to URL.
   // Weight last so changing it syncs full state (reps, formula, unit type) → shareable URL.
@@ -299,31 +303,59 @@ export function E1RMCalculatorMain({
   };
 
   const handleCopyToClipboard = async () => {
-    const encodeQueryParam = (param) => encodeURIComponent(param);
-
-    const createQueryString = (params) => {
-      return Object.entries(params)
-        .map(
-          ([key, value]) =>
-            `${encodeQueryParam(key)}=${encodeQueryParam(value)}`,
-        )
-        .join("&");
-    };
-
     const unit = getUnitSuffix(isMetric);
     const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
 
-    const queryString = createQueryString({
-      reps: reps,
-      weight: weight,
-      calcIsMetric: isMetric,
-      formula: e1rmFormula,
-    });
+    let sentenceToCopy;
 
-    const sentenceToCopy =
-      `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
-      `using the ${e1rmFormula} algorithm.\n` +
-      `Source: https://www.strengthjourneys.xyz/calculator?${queryString}`;
+    if (forceLift) {
+      // Lift slug pages — rich copy with strength rating, bodyweight ratio, and next tier.
+      const bigFourName = LIFT_SLUG_TO_BIG_FOUR[forceLift];
+      const liftData = bigFourName ? getLiftBarData(bigFourName, standards, e1rmWeight) : null;
+
+      const params = new URLSearchParams({
+        [LOCAL_STORAGE_KEYS.REPS]: reps,
+        [LOCAL_STORAGE_KEYS.WEIGHT]: weight,
+        [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
+        [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
+      });
+      if (!bioDataIsDefault) {
+        params.set(LOCAL_STORAGE_KEYS.ATHLETE_AGE, age);
+        params.set(LOCAL_STORAGE_KEYS.ATHLETE_SEX, sex);
+        params.set(LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT, bodyWeight);
+      }
+
+      const lines = [
+        `${bigFourName ?? forceLift} ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, using the ${e1rmFormula} algorithm.`,
+      ];
+      if (!bioDataIsDefault && bodyWeight > 0) {
+        lines.push(`${(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight`);
+      }
+      if (liftData) {
+        lines.push(`${bigFourName ?? forceLift}: ${liftData.emoji} ${liftData.rating}`);
+        if (liftData.nextTierInfo && liftData.diff) {
+          lines.push(`Next: ${STRENGTH_LEVEL_EMOJI[liftData.nextTierInfo.name] ?? ""} ${liftData.nextTierInfo.name} — ${liftData.diff}${unit} away`);
+        }
+      }
+      const slugPath = router.asPath.split("?")[0];
+      lines.push(`Source: https://www.strengthjourneys.xyz${slugPath}?${params.toString()}`);
+      sentenceToCopy = lines.join("\n");
+    } else {
+      // Generic calculator page — simple one-liner.
+      const encodeQueryParam = (param) => encodeURIComponent(param);
+      const createQueryString = (p) =>
+        Object.entries(p).map(([k, v]) => `${encodeQueryParam(k)}=${encodeQueryParam(v)}`).join("&");
+      const queryString = createQueryString({
+        reps,
+        weight,
+        calcIsMetric: isMetric,
+        formula: e1rmFormula,
+      });
+      sentenceToCopy =
+        `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
+        `using the ${e1rmFormula} algorithm.\n` +
+        `Source: https://www.strengthjourneys.xyz/calculator?${queryString}`;
+    }
 
     const textarea = document.createElement("textarea");
     let didCopy = false;
@@ -1112,6 +1144,25 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric, forceLift = null
 
 const BIG_FOUR = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
 
+// Pure helper — computes display data for a single strength-level bar row.
+// Hoisted to module level so handleCopyToClipboard can use it for the hero copy button.
+function getLiftBarData(liftType, standards, e1rmWeight) {
+  const standard = standards?.[liftType];
+  if (!standard?.elite) return null;
+  const rating = getStrengthRatingForE1RM(e1rmWeight, standard);
+  const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
+  const { physicallyActive, elite } = standard;
+  const range = elite - physicallyActive;
+  const pct = range > 0
+    ? Math.min(98, Math.max(2, ((e1rmWeight - physicallyActive) / range) * 100))
+    : 50;
+  const nextTierInfo = NEXT_TIER[rating];
+  const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
+  const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmWeight) : null;
+  const svgPath = getLiftSvgPath(liftType);
+  return { standard, rating, emoji, physicallyActive, range, pct, nextTierInfo, diff, svgPath };
+}
+
 // Maps lift slug page names (from PAGE_CONFIG in [slug].js) to the internal BIG_FOUR names
 // used as keys in the strength standards lookup.
 const LIFT_SLUG_TO_BIG_FOUR = {
@@ -1208,23 +1259,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
   // For lift slug pages: resolve the slug lift name to the BIG_FOUR internal key.
   const featuredBigFourName = forceLift ? LIFT_SLUG_TO_BIG_FOUR[forceLift] : null;
 
-  // Compute all display data for a single lift bar row.
-  const getLiftBarData = (liftType) => {
-    const standard = standards?.[liftType];
-    if (!standard?.elite) return null;
-    const rating = getStrengthRatingForE1RM(e1rmWeight, standard);
-    const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
-    const { physicallyActive, elite } = standard;
-    const range = elite - physicallyActive;
-    const pct = range > 0
-      ? Math.min(98, Math.max(2, ((e1rmWeight - physicallyActive) / range) * 100))
-      : 50;
-    const nextTierInfo = NEXT_TIER[rating];
-    const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
-    const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmWeight) : null;
-    const svgPath = getLiftSvgPath(liftType);
-    return { standard, rating, emoji, physicallyActive, range, pct, nextTierInfo, diff, svgPath };
-  };
+  // getLiftBarData is defined at module level; bind the current standards + e1rmWeight.
 
   // Renders a single lift bar row. featured=true uses larger SVG and taller bar.
   const renderLiftRow = (liftType, data, featured = false) => {
@@ -1325,7 +1360,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
     );
   };
 
-  const featuredData = featuredBigFourName ? getLiftBarData(featuredBigFourName) : null;
+  const featuredData = featuredBigFourName ? getLiftBarData(featuredBigFourName, standards, e1rmWeight) : null;
   const comparisonLifts = BIG_FOUR.filter((l) => l !== featuredBigFourName);
 
   return (
@@ -1356,7 +1391,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
         {!featuredBigFourName && (
           <div className="space-y-3">
             {comparisonLifts.map((liftType) => {
-              const data = getLiftBarData(liftType);
+              const data = getLiftBarData(liftType, standards, e1rmWeight);
               if (!data) return null;
               return renderLiftRow(liftType, data, false);
             })}

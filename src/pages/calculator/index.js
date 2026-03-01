@@ -319,6 +319,7 @@ export function E1RMCalculatorMain({
         [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
         [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
       });
+      params.set("unit", unit);
       if (!bioDataIsDefault) {
         params.set(LOCAL_STORAGE_KEYS.ATHLETE_AGE, age);
         params.set(LOCAL_STORAGE_KEYS.ATHLETE_SEX, sex);
@@ -348,6 +349,7 @@ export function E1RMCalculatorMain({
       const queryString = createQueryString({
         reps,
         weight,
+        unit,
         calcIsMetric: isMetric,
         formula: e1rmFormula,
       });

@@ -200,15 +200,21 @@ export function AthleteBioInlineSettings({
     bioDataIsInitialized,
   } = useAthleteBio();
 
-  // Auto-open once bio data has been read from localStorage and is genuinely still at defaults.
-  // The ref prevents re-opening if the user closes the panel and then something re-renders.
+  // Auto-open once bio data is genuinely at defaults (user has never personalised).
+  // We use a ref to always hold the latest bioDataIsDefault value (refs update during render,
+  // before effects run). The setTimeout(0) is a macrotask — it fires after all React renders
+  // and effects for the current cycle have fully settled, so the ref reflects the real
+  // post-localStorage value regardless of child-before-parent effect ordering.
   const [isOpen, setIsOpen] = useState(false);
-  const hasSetInitialOpen = useRef(false);
+  const bioDataIsDefaultRef = useRef(bioDataIsDefault);
+  bioDataIsDefaultRef.current = bioDataIsDefault; // always up to date
   useEffect(() => {
-    if (!bioDataIsInitialized || hasSetInitialOpen.current) return;
-    hasSetInitialOpen.current = true;
-    if (bioDataIsDefault) setIsOpen(true);
-  }, [bioDataIsInitialized, bioDataIsDefault]);
+    const id = setTimeout(() => {
+      if (bioDataIsDefaultRef.current) setIsOpen(true);
+    }, 0);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // mount-only — setTimeout defers decision until localStorage has been read
   const unit = isMetric ? "kg" : "lb";
 
   // JSX bio summary — values are bolded, labels stay light

@@ -748,7 +748,7 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
             <Link
               href={warmupURL}
               className="group flex flex-col items-end rounded-lg p-2 transition-colors hover:bg-muted"
-              title="Plan warmup sets to build to this weight"
+              title="See warm-up sets for this weight"
             >
               <PlateDiagram
                 platesPerSide={plateBreakdown.platesPerSide}
@@ -759,7 +759,7 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
                 useScrollTrigger={false}
               />
               <div className="mt-2 text-xs text-muted-foreground transition-colors group-hover:text-foreground">
-                Plan warmup sets →
+                See warm-up sets →
               </div>
             </Link>
           </div>

@@ -134,12 +134,23 @@ export default function E1RMCalculator({ relatedArticles }) {
 /**
  * Inner client component for the One Rep Max Calculator page. Provides reps/weight sliders, an animated
  * E1RM summary card, algorithm range bars, Big Four strength standard bars, and rep-range/percentage tables.
+ *
+ * Formula priority: URL query ?formula=X > forceFormula > localStorage > defaultFormula.
+ * forceFormula bypasses localStorage so formula slug pages always open with their formula selected,
+ * even for returning users who have a different formula saved. URL query still wins so that share
+ * links copied from a formula page open with the correct formula.
+ *
  * @param {Object} props
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
- * @param {string} [props.defaultFormula="Brzycki"] - Formula to default to if no URL/localStorage value.
+ * @param {string} [props.defaultFormula="Brzycki"] - Fallback formula when no URL query, no localStorage,
+ *   and no forceFormula. Used by lift slug pages so the user's saved preference still applies.
+ * @param {string|null} [props.forceFormula=null] - When set, overrides localStorage on init; the given
+ *   formula is always shown regardless of the user's saved preference. Intended for formula slug pages
+ *   (e.g. /calculator/epley-formula-1rm-calculator) where the URL implies a specific formula.
  * @param {string} [props.pageTitle] - Heading text for the page.
  * @param {string} [props.pageDescription] - Description text under the heading.
- * @param {Object|null} [props.formulaBlurb] - If set, renders an equation + text line under description.
+ * @param {Object|null} [props.formulaBlurb] - If set, renders an equation + blurb line under the description.
+ *   Shape: { equation: string, text: string }. Used by formula slug pages to show the formula equation.
  */
 export function E1RMCalculatorMain({
   relatedArticles,

@@ -21,6 +21,7 @@ import {
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
+  PageHeaderRight,
 } from "@/components/page-header";
 
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
@@ -422,18 +423,9 @@ export function E1RMCalculatorMain({
   return (
     <PageContainer>
       <PageHeader>
-        <div className="flex items-center gap-3">
-          <PageHeaderHeading icon={Calculator}>
-            {pageTitle}
-          </PageHeaderHeading>
-          {forceLift && getLiftSvgPath(forceLift) && (
-            <img
-              src={getLiftSvgPath(forceLift)}
-              alt={forceLift}
-              className="h-10 w-10 shrink-0 object-contain opacity-75"
-            />
-          )}
-        </div>
+        <PageHeaderHeading icon={Calculator}>
+          {pageTitle}
+        </PageHeaderHeading>
         <PageHeaderDescription>
           {pageDescription}
         </PageHeaderDescription>
@@ -441,6 +433,15 @@ export function E1RMCalculatorMain({
           <p className="text-sm text-muted-foreground mt-1 font-mono">
             {formulaBlurb.equation} — {formulaBlurb.text}
           </p>
+        )}
+        {forceLift && getLiftSvgPath(forceLift) && (
+          <PageHeaderRight>
+            <img
+              src={getLiftSvgPath(forceLift)}
+              alt={forceLift}
+              className="h-32 w-32 object-contain opacity-75"
+            />
+          </PageHeaderRight>
         )}
       </PageHeader>
       <Card>
@@ -1326,17 +1327,16 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
           </div>
         )}
 
-        {/* Comparison lifts — all four on normal pages; other three subordinate on lift slug pages */}
-        <div className="space-y-3">
-          {featuredBigFourName && (
-            <p className="text-center text-xs text-muted-foreground">Compare to Big Four</p>
-          )}
-          {comparisonLifts.map((liftType) => {
-            const data = getLiftBarData(liftType);
-            if (!data) return null;
-            return renderLiftRow(liftType, data, false);
-          })}
-        </div>
+        {/* All four lifts on normal pages; lift slug pages show only the featured lift */}
+        {!featuredBigFourName && (
+          <div className="space-y-3">
+            {comparisonLifts.map((liftType) => {
+              const data = getLiftBarData(liftType);
+              if (!data) return null;
+              return renderLiftRow(liftType, data, false);
+            })}
+          </div>
+        )}
 
         <div className="border-t" />
       </div>

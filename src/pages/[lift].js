@@ -7,7 +7,7 @@ import { useAthleteBio, getTopLiftStats, STRENGTH_LEVEL_EMOJI } from "@/hooks/us
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
-import { devLog } from "@/lib/processing-utils";
+import { devLog, getDisplayWeight } from "@/lib/processing-utils";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { StandardsSlider } from "@/components/standards-slider";
 import { NextSeo } from "next-seo";
@@ -364,6 +364,7 @@ function StrengthLevelsCard({ liftType }) {
   const calcUrl = LIFT_CALC_URLS[liftType];
 
   let strengthRating = null;
+  let isBeyondElite = false;
   if (authStatus === "authenticated") {
     const topLifts = topLiftsByTypeAndReps?.[liftType];
     const bioForDateRating = age && bodyWeight != null && sex != null
@@ -371,6 +372,15 @@ function StrengthLevelsCard({ liftType }) {
       : null;
     const stats = getTopLiftStats(topLifts, liftType, standards, "Brzycki", bioForDateRating);
     strengthRating = stats.strengthRating;
+    if (strengthRating === "Elite") {
+      const nativeUnitType = topLiftsByTypeAndReps?.[liftType]?.[0]?.[0]?.unitType ?? (isMetric ? "kg" : "lb");
+      const toDisplay = (w) => getDisplayWeight({ weight: w, unitType: nativeUnitType }, isMetric).value;
+      const userMax = Math.max(
+        stats.bestE1RM > 0 ? toDisplay(stats.bestE1RM) : 0,
+        stats.bestWeight > 0 ? toDisplay(stats.bestWeight) : 0,
+      );
+      isBeyondElite = userMax > (standards?.[liftType]?.elite ?? Infinity);
+    }
   }
 
   return (
@@ -379,7 +389,11 @@ function StrengthLevelsCard({ liftType }) {
         <h2 className="text-2xl font-semibold leading-none tracking-tight">My {liftType} Strength Rating</h2>
         {strengthRating && (
           <CardDescription>
-            {liftType} strength level: {STRENGTH_LEVEL_EMOJI[strengthRating] ?? ""} {strengthRating}
+            {liftType} strength level:{" "}
+            {isBeyondElite
+              ? <>{STRENGTH_LEVEL_EMOJI.Elite} Beyond Elite</>
+              : <>{STRENGTH_LEVEL_EMOJI[strengthRating] ?? ""} {strengthRating}</>
+            }
           </CardDescription>
         )}
       </CardHeader>

@@ -21,7 +21,7 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
     return (
       <div className={cn("flex flex-col items-end gap-8 mt-2", className)}>
         {/* Base barbell - same structure as plates version for alignment */}
-        <div className="relative flex items-center justify-end px-2 py-1">
+        <div className="relative flex min-h-[72px] items-center justify-end px-2 py-1">
           {/* Horizontal bar - same width as plates version */}
           <div className="h-2 w-48 rounded bg-gray-400" />
         </div>
@@ -39,7 +39,7 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
   return (
     <div className={cn("flex flex-col items-end gap-8 mt-2", className)}>
       {/* Base barbell (same as bar-only state) with plates overlaid on the right */}
-      <div className="relative flex items-center justify-end px-2 py-1">
+      <div className="relative flex min-h-[72px] items-center justify-end px-2 py-1">
         {/* Horizontal bar - wider to show sleeve beyond plates */}
         <div className="h-2 w-48 rounded bg-gray-400" />
 

@@ -743,8 +743,8 @@ const E1RMSummaryCard = ({ reps, weight, isMetric, e1rmFormula, estimateE1RM, fo
             )}
           </div>
 
-          {/* Right: plate diagram (desktop only) — click to open warmup calculator */}
-          <div className="hidden md:flex md:flex-col md:items-end md:justify-center">
+          {/* Right: plate diagram — below number on mobile, beside on desktop */}
+          <div className="mt-4 flex flex-col items-center md:mt-0 md:items-end md:justify-center">
             <Link
               href={warmupURL}
               className="group flex flex-col items-end rounded-lg p-2 transition-colors hover:bg-muted"

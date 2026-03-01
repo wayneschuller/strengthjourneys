@@ -434,13 +434,30 @@ export function E1RMCalculatorMain({
             {formulaBlurb.equation} — {formulaBlurb.text}
           </p>
         )}
-        {forceLift && getLiftSvgPath(forceLift) && (
+        {forceLift && getLiftSvgPath(forceLift) && LIFT_SLUG_TO_INSIGHTS_URL[forceLift] && (
           <PageHeaderRight>
-            <img
-              src={getLiftSvgPath(forceLift)}
-              alt={forceLift}
-              className="h-32 w-32 object-contain opacity-75"
-            />
+            <Link
+              href={LIFT_SLUG_TO_INSIGHTS_URL[forceLift]}
+              className="group block"
+            >
+              <Card className="w-44 overflow-hidden border-2 transition-colors hover:border-primary">
+                <CardContent className="flex flex-col items-center gap-2 p-3 pb-3">
+                  <img
+                    src={getLiftSvgPath(forceLift)}
+                    alt={forceLift}
+                    className="h-20 w-20 object-contain opacity-75 transition-opacity group-hover:opacity-100"
+                  />
+                  <div className="text-center">
+                    <p className="text-xs font-semibold leading-tight">
+                      {forceLift} Insights
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground leading-tight">
+                      Standards, PRs &amp; progress tracking →
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           </PageHeaderRight>
         )}
       </PageHeader>
@@ -1102,6 +1119,14 @@ const LIFT_SLUG_TO_BIG_FOUR = {
   "Bench Press": "Bench Press",
   "Deadlift": "Deadlift",
   "Overhead Press": "Strict Press",
+};
+
+// Maps lift slug page names to the dedicated lift insights page URL.
+const LIFT_SLUG_TO_INSIGHTS_URL = {
+  "Squat": "/barbell-squat-insights",
+  "Bench Press": "/barbell-bench-press-insights",
+  "Deadlift": "/barbell-deadlift-insights",
+  "Overhead Press": "/barbell-strict-press-insights",
 };
 
 const NEXT_TIER = {

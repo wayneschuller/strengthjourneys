@@ -92,7 +92,7 @@ export function Layout({ children }) {
 
     const isNewData = rawRows !== prevRawRowsRef.current;
     devLog(
-      `New sheet data check — rawRows: ${rawRows}, prev: ${prevRawRowsRef.current}, isNewData: ${isNewData}, pathname: ${router.pathname}`,
+      `New sheet data check — rawRows: ${rawRows}, prev: ${prevRawRowsRef.current}, isNewData: ${isNewData}, dataSyncedAt: ${dataSyncedAt}, pathname: ${router.pathname}`,
     );
     prevRawRowsRef.current = rawRows;
 

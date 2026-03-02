@@ -37,6 +37,51 @@ import {
 
 const MAX_LIFTS_SHOWN = 6;
 
+// Heatmap card titles, staged by training history length.
+// SSR always renders index 0 of stage1; client randomises after intervals load.
+const HEATMAP_TITLES_STAGE1 = [
+  "Your Lifting Heatmap",
+  "Training Activity Overview",
+  "Lifting Activity Over Time",
+  "Training History View",
+  "Strength Activity Summary",
+  "Lifting Patterns",
+  "Training Consistency View",
+  "Activity History",
+  "Your Training Heatmap",
+  "Lifting Over Time",
+];
+const HEATMAP_TITLES_STAGE2 = [
+  "Seasons of Training",
+  "Patterns of Consistency",
+  "Finding Your Rhythm",
+  "The Work Taking Shape",
+  "Training Through the Years",
+  "Momentum Over Time",
+  "How Strength Took Form",
+  "The Middle Miles",
+  "Consistency in Motion",
+  "Becoming a Lifter",
+];
+const HEATMAP_TITLES_STAGE3 = [
+  "Your Lifting Journey",
+  "A Lifetime Under the Bar",
+  "Built Over Time",
+  "Years of Showing Up",
+  "The Long Game",
+  "Strength, Year by Year",
+  "The Work That Stayed",
+  "This Is What Consistency Looks Like",
+  "An Archive of Effort",
+  "The Iron Remembers",
+];
+
+function getHeatmapTitles(yearsCount) {
+  if (yearsCount >= 5) return HEATMAP_TITLES_STAGE3;
+  if (yearsCount >= 2) return HEATMAP_TITLES_STAGE2;
+  return HEATMAP_TITLES_STAGE1;
+}
+
 /**
  * Card displaying one calendar heatmap per year of the user's training history, with PR-weighted
  * color intensity. Includes a "Copy heatmap" button that renders the card to clipboard via html2canvas.
@@ -54,6 +99,9 @@ export function ActivityHeatmapsCard() {
   const shareRef = useRef(null);
   const [isSharing, setIsSharing] = useState(false);
   const [shareReady, setShareReady] = useState(false);
+  // SSR default = first stage-1 title; randomised client-side once intervals load
+  const [cardTitle, setCardTitle] = useState(HEATMAP_TITLES_STAGE1[0]);
+
   // initializeWithValue: false → SSR renders "daily" (default), client hydrates from localStorage on mount
   const [viewMode, setViewMode] = useLocalStorage(
     LOCAL_STORAGE_KEYS.HEATMAP_VIEW_MODE,
@@ -77,6 +125,10 @@ export function ActivityHeatmapsCard() {
     // devLog(intervals);
 
     setIntervals(intervals); // intervals is the trigger for showing the heatmaps
+
+    // Randomise card title based on training history length (client-side only)
+    const titles = getHeatmapTitles(intervals.length);
+    setCardTitle(titles[Math.floor(Math.random() * titles.length)]);
   }, [isLoading, parsedData]);
 
   // if (!parsedData || parsedData.length === 0) { return null; }
@@ -160,8 +212,7 @@ export function ActivityHeatmapsCard() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <CardTitle>
-                {authStatus === "unauthenticated" && "Demo mode: "}Activity
-                History For All Lift Types
+                {authStatus === "unauthenticated" && "Demo mode: "}{cardTitle}
               </CardTitle>
               {intervals && (
                 <CardDescription>

@@ -280,7 +280,7 @@ export function ActivityHeatmapsCard() {
           {intervals && (
             <>
               {viewMode === "daily" && (
-                <div className="max-h-[65vh] overflow-y-auto pr-1">
+                <div className="max-h-[50vh] overflow-y-auto pr-1">
                   <div className="grid grid-cols-1 gap-6">
                     {intervals.map((interval, index) => {
                       return (

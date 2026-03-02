@@ -352,7 +352,7 @@ export function SessionExerciseBlock({
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className={`tabular-nums text-sm ${textClass}`}>
+              <span className={`tabular-nums ${isHighlighted ? "text-base" : "text-sm"} ${textClass}`}>
                 {displayText}
               </span>
               <div className="flex shrink-0 items-center gap-1.5 md:gap-2">

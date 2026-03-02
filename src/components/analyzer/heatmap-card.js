@@ -160,6 +160,7 @@ export function ActivityHeatmapsCard() {
         // clipboard operation open while html2canvas renders — safe to switch apps.
         const blobPromise = html2canvas(shareRef.current, {
           ignoreElements: (element) => element.id === "ignoreCopy",
+          scale: 1,
         }).then(
           (canvas) =>
             new Promise((resolve) => canvas.toBlob(resolve, "image/png")),
@@ -231,7 +232,7 @@ export function ActivityHeatmapsCard() {
           </div>
         </div>
       )}
-      <Card ref={shareRef}>
+      <Card ref={shareRef} style={isSharing ? { maxWidth: "800px", width: "100%" } : undefined}>
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
             <div>

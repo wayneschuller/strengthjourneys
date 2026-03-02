@@ -112,14 +112,14 @@ function AnalyzerMain({ relatedArticles }) {
         </PageHeaderDescription>
       </PageHeader>
       <section className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        {/* Cols 1–2: accordion spans 2 columns on desktop */}
-        <div className="xl:col-span-2">
-          <PopularLiftsAccordion />
-        </div>
-        {/* Col 3: remaining cards stacked */}
+        {/* Col 1: pie card + inspiration */}
         <div className="flex flex-col gap-6">
           <LiftTypeFrequencyPieCard />
           <InspirationCard />
+        </div>
+        {/* Cols 2–3: accordion spans 2 columns on desktop */}
+        <div className="xl:col-span-2">
+          <PopularLiftsAccordion />
         </div>
       </section>
       <RelatedArticles articles={relatedArticles} />

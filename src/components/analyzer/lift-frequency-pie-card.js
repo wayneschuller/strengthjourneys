@@ -185,16 +185,16 @@ export function LiftTypeFrequencyPieCard() {
 
   if (!liftTypes || liftTypes.length < 1) return null;
 
-  // Get reactive colors for top 10 lifts
+  // Get reactive colors for top 20 lifts (pie uses top 10, table uses top 20)
   const topLifts = liftTypes.slice(0, 10);
+  const tableLifts = liftTypes.slice(0, 20);
   const liftColors = {};
-  topLifts.forEach((item) => {
-    const color = getColor(item.liftType);
-    liftColors[item.liftType] = color;
+  tableLifts.forEach((item) => {
+    liftColors[item.liftType] = getColor(item.liftType);
   });
 
-  // Get top 10 lifts and their colors
-  let pieData = topLifts.map((item) => ({
+  // Pie chart uses top 10 only
+  const pieData = topLifts.map((item) => ({
     liftType: item.liftType,
     sets: item.totalSets,
     reps: item.totalReps,
@@ -202,12 +202,8 @@ export function LiftTypeFrequencyPieCard() {
     fill: liftColors[item.liftType],
   }));
 
-  // Calculate total sets for percentage
-  const totalSets = pieData.reduce((sum, item) => sum + item.sets, 0);
-  pieData = pieData.map((item) => ({
-    ...item,
-    percentageValue: totalSets > 0 ? item.sets / totalSets : 0,
-  }));
+  // Total sets across all lift types for accurate percentages
+  const totalSets = liftTypes.reduce((sum, item) => sum + item.totalSets, 0);
 
   // Create chart config for shadcn chart
   const chartConfig = {
@@ -223,10 +219,14 @@ export function LiftTypeFrequencyPieCard() {
     }, {}),
   };
 
-  // Calculate statistics
-  const stats = pieData.map((item) => ({
-    ...item,
-    percentage: ((item.sets / totalSets) * 100).toFixed(1),
+  // Table shows top 20
+  const stats = tableLifts.map((item) => ({
+    liftType: item.liftType,
+    sets: item.totalSets,
+    reps: item.totalReps,
+    color: liftColors[item.liftType],
+    fill: liftColors[item.liftType],
+    percentage: ((item.totalSets / totalSets) * 100).toFixed(1),
   }));
 
   const effectiveSelectedLiftType =

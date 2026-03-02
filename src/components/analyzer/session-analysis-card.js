@@ -295,17 +295,16 @@ export function SessionAnalysisCard({
                     Demo Mode
                   </span>
                 )}
-                {analyzedSessionLifts &&
-                  getReadableDateString(sessionDate, true)}{" "}
-                Session
+                Your last session
                 {isValidating && (
                   <LoaderCircle className="inline-flex h-4 w-4 animate-spin text-muted-foreground" />
                 )}
               </CardTitle>
               <CardDescription className="mt-1">
-                {analyzedSessionLifts && !isDemoMode
-                  ? sessionRatingRef.current
-                  : "Session overview and analysis"}
+                {analyzedSessionLifts && getReadableDateString(sessionDate, true)}
+                {analyzedSessionLifts && !isDemoMode && sessionRatingRef.current
+                  ? ` · ${sessionRatingRef.current}`
+                  : ""}
               </CardDescription>
             </div>
             <div className="flex shrink-0 items-center gap-0.5 rounded-lg border bg-muted/30 p-0.5">

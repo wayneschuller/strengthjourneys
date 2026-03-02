@@ -94,8 +94,8 @@ const CustomLegend = ({ payload }) => {
   );
 };
 
-// Tabular list of top lifts showing color swatch, name (linked for big-four), reps, and set percentage.
-export const TopLiftsTable = ({ stats, selectedLiftType, onSelectLift }) => {
+// Tabular list of top lifts showing color swatch, name (linked for big-four), and optionally reps/sets/%.
+export const TopLiftsTable = ({ stats, selectedLiftType, onSelectLift, showStats = false }) => {
   return (
     <div>
       <table className="w-full">
@@ -136,13 +136,17 @@ export const TopLiftsTable = ({ stats, selectedLiftType, onSelectLift }) => {
                   )}
                 </div>
               </td>
-              <td className="py-1 text-right text-sm whitespace-nowrap">
-                {item.reps.toLocaleString()} reps
-              </td>
-              <td className="hidden py-1 text-right text-sm whitespace-nowrap sm:table-cell">
-                {item.sets} sets
-                <span className="hidden md:inline"> ({item.percentage}%)</span>
-              </td>
+              {showStats && (
+                <td className="py-1 text-right text-sm whitespace-nowrap">
+                  {item.reps.toLocaleString()} reps
+                </td>
+              )}
+              {showStats && (
+                <td className="hidden py-1 text-right text-sm whitespace-nowrap sm:table-cell">
+                  {item.sets} sets
+                  <span className="hidden md:inline"> ({item.percentage}%)</span>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

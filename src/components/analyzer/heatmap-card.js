@@ -1,6 +1,6 @@
 
 import { format } from "date-fns";
-import { cloneElement, useState, useEffect, useRef, useCallback } from "react";
+import { cloneElement, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
 import {
@@ -52,6 +52,7 @@ export function ActivityHeatmapsCard() {
   const shareRef = useRef(null);
   const [isSharing, setIsSharing] = useState(false);
   const [shareReady, setShareReady] = useState(false);
+  const [viewMode, setViewMode] = useState("daily");
 
   // FIXME: I think we have the skills to not need this useEffect anymore
   useEffect(() => {
@@ -149,39 +150,82 @@ export function ActivityHeatmapsCard() {
       )}
       <Card ref={shareRef}>
         <CardHeader>
-          <CardTitle>
-            {authStatus === "unauthenticated" && "Demo mode: "}Activity History
-            For All Lift Types
-          </CardTitle>
-          {intervals && (
-            <CardDescription>
-              Your strength journey from{" "}
-              {new Date(intervals[0].startDate).getFullYear()} -{" "}
-              {new Date(intervals[intervals.length - 1].endDate).getFullYear()}.
-            </CardDescription>
-          )}
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle>
+                {authStatus === "unauthenticated" && "Demo mode: "}Activity
+                History For All Lift Types
+              </CardTitle>
+              {intervals && (
+                <CardDescription>
+                  Your strength journey from{" "}
+                  {new Date(intervals[0].startDate).getFullYear()} -{" "}
+                  {new Date(
+                    intervals[intervals.length - 1].endDate,
+                  ).getFullYear()}
+                  .
+                </CardDescription>
+              )}
+            </div>
+            {!isSharing && intervals?.length > 2 && (
+              <div className="flex shrink-0 rounded-md border p-0.5 text-xs">
+                <button
+                  className={`rounded px-2 py-0.5 font-medium transition-colors ${
+                    viewMode === "daily"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => setViewMode("daily")}
+                >
+                  Daily
+                </button>
+                <button
+                  className={`rounded px-2 py-0.5 font-medium transition-colors ${
+                    viewMode === "weekly"
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => setViewMode("weekly")}
+                >
+                  Weekly
+                </button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
           {intervals && (
             <>
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-                {intervals.map((interval, index) => {
-                  return (
-                    <div key={`${index}-heatmap`}>
-                      <div className="mb-2 text-center text-lg font-semibold">
-                        {new Date(interval.startDate).getFullYear()}
+              {viewMode === "daily" && (
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+                  {intervals.map((interval, index) => {
+                    return (
+                      <div key={`${index}-heatmap`}>
+                        <div className="mb-2 text-center text-lg font-semibold">
+                          {new Date(interval.startDate).getFullYear()}
+                        </div>
+                        <Heatmap
+                          parsedData={parsedData}
+                          startDate={interval.startDate}
+                          endDate={interval.endDate}
+                          isSharing={isSharing}
+                        />
                       </div>
-                      <Heatmap
-                        parsedData={parsedData}
-                        startDate={interval.startDate}
-                        endDate={interval.endDate}
-                        isSharing={isSharing}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
+              {viewMode === "weekly" && (
+                <WeeklyHeatmapMatrix
+                  parsedData={parsedData}
+                  startYear={new Date(intervals[0].startDate).getFullYear()}
+                  endYear={new Date(
+                    intervals[intervals.length - 1].endDate,
+                  ).getFullYear()}
+                  isSharing={isSharing}
+                />
+              )}
               {/* Footer with app branding - only visible during image capture */}
               {isSharing && (
                 <div className="mt-6 flex items-center justify-center border-t pt-4">
@@ -468,6 +512,208 @@ function getSharingMessage(years) {
     `${years} years! Your heatmap is older than some lifters at your gym.`,
     `${years} years under the bar. The barbell knows your name by now.`,
   ]);
+}
+
+// Week cell sizing constants for the weekly matrix
+const WEEKLY_CELL = 11; // px
+const WEEKLY_GAP = 2; // px
+const WEEKLY_UNIT = WEEKLY_CELL + WEEKLY_GAP; // px per column
+const WEEKLY_YEAR_W = 32; // px for year label
+
+const WEEKLY_MONTH_LABELS = [
+  { label: "Jan", week: 1 },
+  { label: "Feb", week: 5 },
+  { label: "Mar", week: 9 },
+  { label: "Apr", week: 14 },
+  { label: "May", week: 18 },
+  { label: "Jun", week: 22 },
+  { label: "Jul", week: 27 },
+  { label: "Aug", week: 31 },
+  { label: "Sep", week: 35 },
+  { label: "Oct", week: 40 },
+  { label: "Nov", week: 44 },
+  { label: "Dec", week: 48 },
+];
+
+// Returns which calendar week of the year (1–53) a date string falls in.
+// Week 1 = Jan 1–7, week 2 = Jan 8–14, etc. No ISO week ambiguity.
+function getCalendarWeekOfYear(dateStr) {
+  const date = new Date(dateStr + "T00:00:00");
+  const startOfYear = new Date(date.getFullYear(), 0, 1);
+  const dayOfYear = Math.floor((date - startOfYear) / 86400000) + 1;
+  return Math.ceil(dayOfYear / 7);
+}
+
+// Returns "MMM d" for the first day of the given (year, weekNum) pair.
+function getWeekStartDate(year, weekNum) {
+  const jan1 = new Date(year, 0, 1);
+  const weekStart = new Date(jan1.getTime() + (weekNum - 1) * 7 * 86400000);
+  return format(weekStart, "MMM d");
+}
+
+// Builds { [year]: { [weekNum]: { sessions, count } } }.
+// count is capped at 3: 0=none, 1=1 day, 2=2 days, 3=3+ days (won).
+function generateWeeklyHeatmapData(parsedData, startYear, endYear, isDemoMode) {
+  if (isDemoMode) {
+    const result = {};
+    for (let year = startYear; year <= endYear; year++) {
+      result[year] = {};
+      for (let week = 1; week <= 53; week++) {
+        const rand = Math.random();
+        const count = rand < 0.25 ? 0 : rand < 0.42 ? 1 : rand < 0.60 ? 2 : 3;
+        result[year][week] = { sessions: count, count };
+      }
+    }
+    return result;
+  }
+
+  const weekMap = {};
+  for (const lift of parsedData) {
+    if (lift.isGoal) continue;
+    const year = parseInt(lift.date.substring(0, 4));
+    if (year < startYear || year > endYear) continue;
+    const weekNum = getCalendarWeekOfYear(lift.date);
+    if (!weekMap[year]) weekMap[year] = {};
+    if (!weekMap[year][weekNum]) weekMap[year][weekNum] = { sessionDays: new Set() };
+    weekMap[year][weekNum].sessionDays.add(lift.date);
+  }
+
+  const result = {};
+  for (const [yearStr, weeks] of Object.entries(weekMap)) {
+    result[yearStr] = {};
+    for (const [weekStr, week] of Object.entries(weeks)) {
+      const sessions = week.sessionDays.size;
+      result[yearStr][weekStr] = { sessions, count: Math.min(sessions, 3) };
+    }
+  }
+  return result;
+}
+
+// All-years matrix: one row per year, one cell per week (1–53).
+// Color intensity = sessions that week: 0 blank, 1 light, 2 medium, 3+ full (won).
+function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
+  const { status: authStatus } = useSession();
+  const isDemoMode = authStatus === "unauthenticated";
+  const [hoveredValue, setHoveredValue] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0, showBelow: false });
+
+  const weeklyData = useMemo(
+    () => generateWeeklyHeatmapData(parsedData, startYear, endYear, isDemoMode),
+    [parsedData, startYear, endYear, isDemoMode],
+  );
+
+  const years = [];
+  for (let y = startYear; y <= endYear; y++) years.push(y);
+
+  const handleMouseOver = useCallback((e, year, weekNum, data) => {
+    const cellRect = e.target.getBoundingClientRect();
+    const x = cellRect.left + cellRect.width / 2;
+    const y = cellRect.top;
+    const showBelow = y < 200;
+    setTooltipPos({
+      x: Math.max(100, Math.min(x, window.innerWidth - 100)),
+      y: showBelow ? cellRect.bottom + 8 : y - 8,
+      showBelow,
+    });
+    setHoveredValue({ year, weekNum, ...data });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => setHoveredValue(null), []);
+
+  return (
+    <div className="relative overflow-x-auto">
+      {/* Month label header */}
+      <div
+        className="relative mb-1"
+        style={{ height: 14, paddingLeft: WEEKLY_YEAR_W + WEEKLY_GAP }}
+      >
+        {WEEKLY_MONTH_LABELS.map(({ label, week }) => (
+          <span
+            key={label}
+            className="absolute text-[9px] text-muted-foreground"
+            style={{ left: (week - 1) * WEEKLY_UNIT }}
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+
+      {/* Year rows */}
+      <div className="flex flex-col gap-[2px]">
+        {years.map((year) => (
+          <div key={year} className="flex items-center" style={{ gap: WEEKLY_GAP }}>
+            <div
+              className="shrink-0 pr-1 text-right text-[10px] text-muted-foreground"
+              style={{ width: WEEKLY_YEAR_W }}
+            >
+              {year}
+            </div>
+            {Array.from({ length: 53 }, (_, i) => i + 1).map((weekNum) => {
+              const data = weeklyData[year]?.[weekNum];
+              const count = data?.count ?? 0;
+              return (
+                <div
+                  key={weekNum}
+                  className={`heatmap-cell-${count} shrink-0 rounded-sm`}
+                  style={{ width: WEEKLY_CELL, height: WEEKLY_CELL }}
+                  onMouseOver={
+                    data ? (e) => handleMouseOver(e, year, weekNum, data) : undefined
+                  }
+                  onMouseLeave={data ? handleMouseLeave : undefined}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* Sessions-per-week legend */}
+      <div className="mt-3 flex items-center gap-3 text-[10px] text-muted-foreground">
+        <span>Sessions/week:</span>
+        {[1, 2, 3].map((n) => (
+          <div key={n} className="flex items-center gap-1">
+            <div
+              className={`heatmap-cell-${n} shrink-0 rounded-sm`}
+              style={{ width: WEEKLY_CELL, height: WEEKLY_CELL }}
+            />
+            <span>{n === 3 ? "3+ won" : n}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Tooltip */}
+      {hoveredValue && !isSharing && (
+        <div
+          className="pointer-events-none fixed z-50"
+          style={{
+            left: tooltipPos.x,
+            top: tooltipPos.y,
+            transform: tooltipPos.showBelow
+              ? "translate(-50%, 0)"
+              : "translate(-50%, -100%)",
+          }}
+        >
+          <WeeklyTooltipContent value={hoveredValue} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WeeklyTooltipContent({ value }) {
+  const { year, weekNum, sessions } = value;
+  return (
+    <div className="grid min-w-[8rem] max-w-[16rem] items-start gap-1 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+      <p className="font-bold">
+        Week of {getWeekStartDate(year, weekNum)}, {year}
+      </p>
+      <p className="text-muted-foreground">
+        {sessions === 0
+          ? "No training sessions"
+          : `${sessions} training ${sessions === 1 ? "day" : "days"}${sessions >= 3 ? " — week won!" : ""}`}
+      </p>
+    </div>
+  );
 }
 
 // Volume-based heatmap level:

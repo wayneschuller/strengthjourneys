@@ -846,3 +846,17 @@
 .react-calendar-heatmap .color-heatmap-4 {
   fill: var(--heatmap-4);
 }
+
+/* Standalone heatmap cell colors for div-based weekly matrix */
+.heatmap-cell-0 {
+  background-color: var(--heatmap-0);
+}
+.heatmap-cell-1 {
+  background-color: var(--heatmap-1);
+}
+.heatmap-cell-2 {
+  background-color: var(--heatmap-2);
+}
+.heatmap-cell-3 {
+  background-color: var(--heatmap-3);
+}

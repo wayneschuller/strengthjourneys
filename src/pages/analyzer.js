@@ -129,15 +129,13 @@ function AnalyzerMain({ relatedArticles }) {
           <ConsistencyCard />
         </div>
         <div className="flex h-full min-w-full flex-col gap-6">
+          <ActivityHeatmapsCard />
           <div className="flex min-w-full flex-1 flex-col">
             <LiftTypeFrequencyPieCard />
           </div>
           <div className="min-w-full">
             <InspirationCard />
           </div>
-        </div>
-        <div className="col-span-full">
-          <ActivityHeatmapsCard />
         </div>
         <Separator className="col-span-full" />
       </section>

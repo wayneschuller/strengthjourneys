@@ -56,7 +56,7 @@ export function Layout({ children }) {
   const parseErrorShown = useRef(false);
   const demoShown = useRef(false);
 
-  // Toast 1: API Error — uses fetchFailed from useSWR's onErrorRetry callback,
+  // Sheet fetch error — uses fetchFailed from useSWR's onErrorRetry callback,
   // which only fires after retries are exhausted (not during transient gaps
   // between SWR's error/retry cycles). See use-userlift-data.js for details.
   //
@@ -81,8 +81,8 @@ export function Layout({ children }) {
     });
   }, [fetchFailed, authStatus, apiError, rawRows, hasCachedSheetData, toast]);
 
-  // Toast 2: Data Loaded — fires when new rows arrive, not on every SWR
-  // revalidation. Skipped on "/" (home has its own widgets).
+  // New sheet data — fires when new rows arrive, not on every SWR revalidation.
+  // Skipped on "/" (home has its own widgets).
   // dataSyncedAt (set in SWR onSuccess) acts as the "fetch completed" heartbeat
   // that guarantees this effect runs on every successful revalidation.
   // rawRows provides deduplication — toast only shows when row count changed.
@@ -92,7 +92,7 @@ export function Layout({ children }) {
 
     const isNewData = rawRows !== prevRawRowsRef.current;
     devLog(
-      `Toast 2 check — rawRows: ${rawRows}, prev: ${prevRawRowsRef.current}, isNewData: ${isNewData}, pathname: ${router.pathname}`,
+      `New sheet data check — rawRows: ${rawRows}, prev: ${prevRawRowsRef.current}, isNewData: ${isNewData}, pathname: ${router.pathname}`,
     );
     prevRawRowsRef.current = rawRows;
 
@@ -141,7 +141,7 @@ export function Layout({ children }) {
     });
   }, [dataSyncedAt, rawRows, parsedData, sheetInfo, router.pathname, toast]);
 
-  // Toast 3: Parse Error
+  // Sheet parse error
   useEffect(() => {
     if (parseErrorShown.current) return;
     if (!parseError) return;
@@ -154,7 +154,7 @@ export function Layout({ children }) {
     });
   }, [parseError, toast]);
 
-  // Toast 4: Demo mode nudge (delayed, on data pages when unauthenticated)
+  // Sign-in nudge — delayed prompt on data pages when unauthenticated
   useEffect(() => {
     if (demoShown.current) return;
     if (authStatus === "loading") return;

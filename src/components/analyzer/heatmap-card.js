@@ -232,7 +232,7 @@ export function ActivityHeatmapsCard() {
           </div>
         </div>
       )}
-      <Card ref={shareRef} style={isSharing ? { maxWidth: "800px", width: "100%" } : undefined}>
+      <Card ref={shareRef} style={isSharing ? { maxWidth: "800px", width: "100%", backgroundColor: "white", color: "black" } : undefined}>
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
             <div>

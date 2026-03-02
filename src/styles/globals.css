@@ -800,6 +800,11 @@
  * The github and gitlab color scales are provided for reference.
  */
 
+.react-calendar-heatmap {
+  width: 100%;
+  height: auto;
+}
+
 .react-calendar-heatmap text {
   font-size: 12px;
   fill: #aaa;

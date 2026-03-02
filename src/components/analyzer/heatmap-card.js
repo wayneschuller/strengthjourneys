@@ -175,7 +175,7 @@ export function ActivityHeatmapsCard() {
               )}
             </div>
             {!isSharing && intervals?.length > 2 && (
-              <div className="flex shrink-0 rounded-md border p-0.5 text-xs">
+              <div className="flex shrink-0 flex-col rounded-md border p-0.5 text-xs">
                 {[
                   { key: "daily", label: "Daily" },
                   { key: "weekly", label: "Weekly" },

@@ -780,9 +780,9 @@ const MONTH_NAMES = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
-// Builds { [year]: { [month 1-12]: { activeWeeks, count 0-4 } } }.
-// count = number of distinct calendar weeks in that month with at least one session,
-// capped at 4 (representing full-month consistency).
+// Builds { [year]: { [month 1-12]: { activeWeeks, count 0-4, weekBreakdown } } }.
+// count = distinct calendar weeks with at least one session, capped at 4.
+// weekBreakdown = [{ sessions }] sorted by week order within the month, for tooltips.
 function generateMonthlyHeatmapData(parsedData, startYear, endYear, isDemoMode) {
   if (isDemoMode) {
     const result = {};
@@ -792,12 +792,16 @@ function generateMonthlyHeatmapData(parsedData, startYear, endYear, isDemoMode) 
         const rand = Math.random();
         const count =
           rand < 0.12 ? 0 : rand < 0.28 ? 1 : rand < 0.50 ? 2 : rand < 0.75 ? 3 : 4;
-        result[year][month] = { activeWeeks: count, count };
+        const weekBreakdown = Array.from({ length: count }, () => ({
+          sessions: Math.floor(Math.random() * 4) + 1,
+        }));
+        result[year][month] = { activeWeeks: count, count, weekBreakdown };
       }
     }
     return result;
   }
 
+  // Per week within each month, collect unique training days (dates)
   const monthMap = {};
   for (const lift of parsedData) {
     if (lift.isGoal) continue;
@@ -806,16 +810,25 @@ function generateMonthlyHeatmapData(parsedData, startYear, endYear, isDemoMode) 
     const month = parseInt(lift.date.substring(5, 7));
     const weekNum = getCalendarWeekOfYear(lift.date);
     if (!monthMap[year]) monthMap[year] = {};
-    if (!monthMap[year][month]) monthMap[year][month] = { activeWeeks: new Set() };
-    monthMap[year][month].activeWeeks.add(weekNum);
+    if (!monthMap[year][month]) monthMap[year][month] = {};
+    if (!monthMap[year][month][weekNum]) monthMap[year][month][weekNum] = new Set();
+    monthMap[year][month][weekNum].add(lift.date);
   }
 
   const result = {};
   for (const [yearStr, months] of Object.entries(monthMap)) {
     result[yearStr] = {};
-    for (const [monthStr, data] of Object.entries(months)) {
-      const activeWeeks = data.activeWeeks.size;
-      result[yearStr][monthStr] = { activeWeeks, count: Math.min(activeWeeks, 4) };
+    for (const [monthStr, weekData] of Object.entries(months)) {
+      // Sort by week number so tooltip rows are chronological
+      const weekBreakdown = Object.entries(weekData)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .map(([, days]) => ({ sessions: days.size }));
+      const activeWeeks = weekBreakdown.length;
+      result[yearStr][monthStr] = {
+        activeWeeks,
+        count: Math.min(activeWeeks, 4),
+        weekBreakdown,
+      };
     }
   }
   return result;
@@ -955,17 +968,23 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
 }
 
 function MonthlyTooltipContent({ value }) {
-  const { year, month, activeWeeks } = value;
+  const { year, month, weekBreakdown } = value;
   return (
-    <div className="grid min-w-[8rem] max-w-[16rem] items-start gap-1 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="grid min-w-[10rem] max-w-[18rem] items-start gap-1 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">
         {MONTH_NAMES[month - 1]} {year}
       </p>
-      <p className="text-muted-foreground">
-        {activeWeeks === 0
-          ? "No training sessions"
-          : `${activeWeeks} active ${activeWeeks === 1 ? "week" : "weeks"}`}
-      </p>
+      {weekBreakdown?.length > 0 ? (
+        <div className="flex flex-col gap-0.5">
+          {weekBreakdown.map(({ sessions }, i) => (
+            <p key={i} className="text-muted-foreground">
+              Week {i + 1}: {sessions} {sessions === 1 ? "session" : "sessions"}
+            </p>
+          ))}
+        </div>
+      ) : (
+        <p className="text-muted-foreground">No training sessions</p>
+      )}
     </div>
   );
 }

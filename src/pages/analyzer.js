@@ -116,16 +116,16 @@ function AnalyzerMain({ relatedArticles }) {
           bench, deadlift and more.
         </PageHeaderDescription>
       </PageHeader>
-      <section className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        {/* Col 1: pie card + inspiration */}
-        <div className="flex flex-col gap-6">
+      <section className="mt-4 flex flex-col gap-6 xl:flex-row">
+        {/* Left: narrow lift list */}
+        <div className="shrink-0 xl:w-1/5">
           <TopLiftsCard
             selectedLiftType={effectiveLiftType}
             onSelectLift={setSelectedLiftType}
           />
         </div>
-        {/* Cols 2–3: lift detail panel */}
-        <div className="xl:col-span-2">
+        {/* Right: detail panel expands to fill remaining space */}
+        <div className="min-w-0 flex-1">
           <LiftDetailPanel liftType={effectiveLiftType} />
         </div>
       </section>

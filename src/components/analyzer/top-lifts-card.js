@@ -38,7 +38,7 @@ export function TopLiftsCard({ selectedLiftType, onSelectLift }) {
     <Card>
       <CardHeader>
         <CardTitle>
-          {authStatus === "unauthenticated" && "Demo mode: "}Your Most Frequent Lifts
+          {authStatus === "unauthenticated" && "Demo mode: "}Your Lifts
         </CardTitle>
       </CardHeader>
       <CardContent>

@@ -967,6 +967,13 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   );
 }
 
+function weekEmoji(sessions) {
+  if (sessions >= 3) return "🏆";
+  if (sessions === 2) return "💪";
+  if (sessions === 1) return "✅";
+  return "💩";
+}
+
 function MonthlyTooltipContent({ value }) {
   const { year, month, weekBreakdown } = value;
   return (
@@ -978,12 +985,14 @@ function MonthlyTooltipContent({ value }) {
         <div className="flex flex-col gap-0.5">
           {weekBreakdown.map(({ sessions }, i) => (
             <p key={i} className="text-muted-foreground">
-              Week {i + 1}: {sessions} {sessions === 1 ? "session" : "sessions"}
+              <span className="font-semibold text-foreground">Week {i + 1}:</span>{" "}
+              {sessions} {sessions === 1 ? "session" : "sessions"}{" "}
+              {weekEmoji(sessions)}
             </p>
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground">No training sessions</p>
+        <p className="text-muted-foreground">No training sessions 💩</p>
       )}
     </div>
   );

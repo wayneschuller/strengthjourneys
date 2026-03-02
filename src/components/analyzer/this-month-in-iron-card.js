@@ -10,8 +10,10 @@ import {
 } from "motion/react";
 import confetti from "canvas-confetti";
 import { useSession } from "next-auth/react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -53,7 +55,20 @@ export function ThisMonthInIronCard() {
   const { isMetric } = bio;
   const { status: authStatus } = useSession();
 
-  const boundaries = useMemo(() => getMonthBoundaries(), []);
+  const [monthOffset, setMonthOffset] = useState(0);
+  const maxMonthOffset = useMemo(
+    () => getMaxMonthOffsetFromData(parsedData),
+    [parsedData],
+  );
+  const safeMonthOffset = Math.min(monthOffset, maxMonthOffset);
+  const boundaries = useMemo(
+    () => getMonthBoundaries(safeMonthOffset),
+    [safeMonthOffset],
+  );
+  const monthCardTitle = useMemo(
+    () => getMonthlyCardTitle(boundaries),
+    [boundaries],
+  );
 
   const [topTierVerdict, setTopTierVerdict] = useState(TOP_TIER_VERDICTS[0]);
   useEffect(() => {
@@ -207,16 +222,66 @@ export function ThisMonthInIronCard() {
       CONFETTI_AFTER_HIGHLIGHT_DELAY_MS,
     );
     return () => clearTimeout(timer);
-  }, [checksSummary, highlightsComplete]);
+  }, [checksSummary, highlightsComplete, safeMonthOffset]);
+
+  const viewPreviousMonth = () => {
+    setMonthOffset((prev) => Math.min(maxMonthOffset, prev + 1));
+  };
+
+  const viewNextMonth = () => {
+    setMonthOffset((prev) => Math.max(0, prev - 1));
+  };
 
   return (
     <Card ref={cardRef} className="flex h-full flex-1 flex-col">
-      <CardHeader>
-        <CardTitle>
-          {authStatus === "unauthenticated" && "Demo Mode: "}
-          This Month in Iron
-        </CardTitle>
-        <CardDescription>{motivationalPhrase}</CardDescription>
+      <CardHeader className="pb-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <CardTitle>
+              {authStatus === "unauthenticated" && "Demo Mode: "}
+              {monthCardTitle}
+            </CardTitle>
+            <CardDescription>{motivationalPhrase}</CardDescription>
+          </div>
+          <div className="flex shrink-0 items-center gap-0.5 rounded-lg border bg-muted/30 p-0.5">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={viewPreviousMonth}
+                    disabled={safeMonthOffset >= maxMonthOffset}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Previous month</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={viewNextMonth}
+                    disabled={safeMonthOffset === 0}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Next month</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col space-y-4">
         {!stats && <Skeleton className="h-[30vh]" />}
@@ -362,11 +427,17 @@ function AnimatedInteger({ value, className = "" }) {
 
 // ─── Month boundary helpers ────────────────────────────────────────────────
 
-function getMonthBoundaries() {
+function getMonthBoundaries(monthOffset = 0) {
   const today = new Date();
-  const y = today.getFullYear();
-  const m = today.getMonth();
-  const d = today.getDate();
+  const targetMonthDate = new Date(
+    today.getFullYear(),
+    today.getMonth() - monthOffset,
+    1,
+  );
+  const y = targetMonthDate.getFullYear();
+  const m = targetMonthDate.getMonth();
+  const daysInCurrentMonth = new Date(y, m + 1, 0).getDate();
+  const d = monthOffset === 0 ? today.getDate() : daysInCurrentMonth;
   const pad = (n) => String(n).padStart(2, "0");
   const todayStr = `${y}-${pad(m + 1)}-${pad(d)}`;
   const currentMonthStart = `${y}-${pad(m + 1)}-01`;
@@ -375,7 +446,6 @@ function getMonthBoundaries() {
   const py = prevDate.getFullYear();
   const pm = prevDate.getMonth();
   const daysInPrevMonth = new Date(y, m, 0).getDate();
-  const daysInCurrentMonth = new Date(y, m + 1, 0).getDate();
 
   const sameDayInPrev = Math.min(d, daysInPrevMonth);
 
@@ -389,9 +459,53 @@ function getMonthBoundaries() {
     daysInCurrentMonth,
     daysRemainingInCurrentMonth: Math.max(0, daysInCurrentMonth - d),
     daysInPrevMonth,
-    currentMonthName: today.toLocaleString("default", { month: "long" }),
+    currentMonthName: targetMonthDate.toLocaleString("default", { month: "long" }),
+    currentMonthShortYear: targetMonthDate.toLocaleString("default", {
+      month: "short",
+      year: "numeric",
+    }),
     prevMonthName: prevDate.toLocaleString("default", { month: "long" }),
+    isCurrentMonthView: monthOffset === 0,
   };
+}
+
+function getMonthlyCardTitle(boundaries) {
+  if (boundaries.isCurrentMonthView) return "This Month in Iron";
+  return `${boundaries.currentMonthShortYear} in Iron`;
+}
+
+function parseIsoDate(isoDate) {
+  if (!isoDate || typeof isoDate !== "string") return null;
+  const [year, month, day] = isoDate.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+}
+
+function getMaxMonthOffsetFromData(parsedData) {
+  if (!Array.isArray(parsedData) || parsedData.length === 0) return 0;
+
+  let earliestDate = null;
+  for (const entry of parsedData) {
+    if (!entry || entry.isGoal) continue;
+    const entryDate = parseIsoDate(entry.date);
+    if (!entryDate) continue;
+    if (!earliestDate || entryDate < earliestDate) {
+      earliestDate = entryDate;
+    }
+  }
+
+  if (!earliestDate) return 0;
+
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+  const earliestYear = earliestDate.getFullYear();
+  const earliestMonth = earliestDate.getMonth();
+
+  return Math.max(
+    0,
+    (currentYear - earliestYear) * 12 + (currentMonth - earliestMonth),
+  );
 }
 
 // ─── Monthly stats calculation ─────────────────────────────────────────────

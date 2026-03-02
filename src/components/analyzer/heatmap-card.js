@@ -612,6 +612,7 @@ function getSharingMessage(years) {
 
 // Shared matrix layout constants (used by both weekly and monthly views)
 const WEEKLY_GAP = 2; // px gap between cells
+const MONTHLY_GAP = 5; // px gap between monthly cells (wider for breathing room)
 const WEEKLY_YEAR_W = 48; // px for year label column
 
 const WEEKLY_MONTH_LABELS = [
@@ -986,12 +987,12 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   const cellGridStyle = {
     display: "grid",
     gridTemplateColumns: "repeat(12, 1fr)",
-    gap: WEEKLY_GAP,
+    gap: MONTHLY_GAP,
     flex: 1,
   };
 
   return (
-    <div className="relative w-full">
+    <div className="from-background to-muted/20 relative w-full rounded-xl bg-gradient-to-b px-2 py-2">
       {/* Month name header */}
       <div className="mb-1 flex w-full items-end">
         <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
@@ -1008,7 +1009,7 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       </div>
 
       {/* Year rows */}
-      <div className="flex w-full flex-col gap-[2px]">
+      <div className="flex w-full flex-col gap-1.5">
         {years.map((year) => (
           <div key={year} className="flex w-full items-center">
             <div
@@ -1035,11 +1036,14 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
                     : {
                         height: 28,
                         backgroundColor: `var(--heatmap-${count})`,
+                        ...(count === 4
+                          ? { filter: "brightness(1.15) saturate(0.8)" }
+                          : {}),
                       };
                 return (
                   <div
                     key={month}
-                    className="rounded"
+                    className={`rounded-[6px] transition-transform duration-150 ${!isFuture && count > 0 ? "hover:scale-105" : ""}`}
                     style={cellStyle}
                     onMouseOver={
                       !isFuture
@@ -1061,7 +1065,7 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
         {[1, 2, 3, 4].map((n) => (
           <div key={n} className="flex items-center gap-1">
             <div
-              className="shrink-0 rounded"
+              className="shrink-0 rounded-[4px]"
               style={{
                 width: 12,
                 height: 12,

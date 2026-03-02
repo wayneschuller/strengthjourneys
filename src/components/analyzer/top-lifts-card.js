@@ -35,7 +35,7 @@ export function TopLiftsCard({ selectedLiftType, onSelectLift }) {
   }));
 
   return (
-    <Card className="flex max-h-[80vh] flex-col">
+    <Card className="flex max-h-[60vh] flex-col">
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo mode: "}Your Lifts

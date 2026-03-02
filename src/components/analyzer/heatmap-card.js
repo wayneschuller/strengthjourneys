@@ -280,22 +280,24 @@ export function ActivityHeatmapsCard() {
           {intervals && (
             <>
               {viewMode === "daily" && (
-                <div className="grid grid-cols-1 gap-6">
-                  {intervals.map((interval, index) => {
-                    return (
-                      <div key={`${index}-heatmap`}>
-                        <div className="mb-2 text-center text-lg font-semibold">
-                          {new Date(interval.startDate).getFullYear()}
+                <div className="max-h-[65vh] overflow-y-auto pr-1">
+                  <div className="grid grid-cols-1 gap-6">
+                    {intervals.map((interval, index) => {
+                      return (
+                        <div key={`${index}-heatmap`}>
+                          <div className="mb-2 text-center text-lg font-semibold">
+                            {new Date(interval.startDate).getFullYear()}
+                          </div>
+                          <Heatmap
+                            parsedData={parsedData}
+                            startDate={interval.startDate}
+                            endDate={interval.endDate}
+                            isSharing={isSharing}
+                          />
                         </div>
-                        <Heatmap
-                          parsedData={parsedData}
-                          startDate={interval.startDate}
-                          endDate={interval.endDate}
-                          isSharing={isSharing}
-                        />
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               )}
               {viewMode === "weekly" && (

@@ -154,16 +154,16 @@ const TopLiftsTable = ({ stats, selectedLiftType, onSelectLift }) => {
 
 /**
  * Card showing a donut pie chart of the top 10 most frequent lift types by set count,
- * with an interactive tooltip and a summary table below the chart.
- * Reads liftTypes from UserLiftingDataProvider; takes no props.
+ * with an interactive table below showing top 20. Controlled — caller manages selection.
  *
  * @param {Object} props
+ * @param {string|null} props.selectedLiftType - Currently selected lift type.
+ * @param {function} props.onSelectLift - Called with a liftType string when the user clicks a row or pie slice.
  */
-export function LiftTypeFrequencyPieCard() {
+export function LiftTypeFrequencyPieCard({ selectedLiftType, onSelectLift }) {
   const { liftTypes, parsedData, isLoading } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
-  const [selectedLiftType, setSelectedLiftType] = useState(null);
   const [hoveredLiftType, setHoveredLiftType] = useState(null);
 
   if (isLoading)
@@ -279,7 +279,7 @@ export function LiftTypeFrequencyPieCard() {
               onMouseEnter={(data) =>
                 setHoveredLiftType(data?.liftType ?? null)
               }
-              onClick={(data) => setSelectedLiftType(data?.liftType ?? null)}
+              onClick={(data) => onSelectLift?.(data?.liftType ?? null)}
             >
               {pieData.map((entry, index) => (
                 <Cell
@@ -333,7 +333,7 @@ export function LiftTypeFrequencyPieCard() {
           <TopLiftsTable
             stats={stats}
             selectedLiftType={effectiveSelectedLiftType}
-            onSelectLift={setSelectedLiftType}
+            onSelectLift={onSelectLift}
           />
         </div>
       </CardContent>

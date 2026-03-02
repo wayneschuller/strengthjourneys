@@ -1,14 +1,15 @@
 import { useSession } from "next-auth/react";
+import { useState } from "react";
 import { NextSeo } from "next-seo";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { RelatedArticles } from "@/components/article-cards";
 
 // Here are the analyzer dashboard cards
-import { PopularLiftsAccordion } from "@/components/analyzer/lift-achievements-card";
 import { ConsistencyCard } from "@/components/analyzer/consistency-card"; // full card, not currently in use — keep
 import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-pie-card";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
+import { LiftDetailPanel } from "@/components/analyzer/lift-detail-panel";
 import {
   PageContainer,
   PageHeader,
@@ -92,7 +93,11 @@ export default function Analyzer({ relatedArticles }) {
  */
 function AnalyzerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
-  const { isLoading, sheetInfo } = useUserLiftingData();
+  const { isLoading, sheetInfo, liftTypes } = useUserLiftingData();
+  const [selectedLiftType, setSelectedLiftType] = useState(null);
+
+  // null means "auto" — default to the user's most frequent lift
+  const effectiveLiftType = selectedLiftType ?? liftTypes?.[0]?.liftType ?? null;
 
   if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid)
     return (
@@ -114,12 +119,15 @@ function AnalyzerMain({ relatedArticles }) {
       <section className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
         {/* Col 1: pie card + inspiration */}
         <div className="flex flex-col gap-6">
-          <LiftTypeFrequencyPieCard />
+          <LiftTypeFrequencyPieCard
+            selectedLiftType={effectiveLiftType}
+            onSelectLift={setSelectedLiftType}
+          />
           <InspirationCard />
         </div>
-        {/* Cols 2–3: accordion spans 2 columns on desktop */}
+        {/* Cols 2–3: lift detail panel */}
         <div className="xl:col-span-2">
-          <PopularLiftsAccordion />
+          <LiftDetailPanel liftType={effectiveLiftType} />
         </div>
       </section>
       <RelatedArticles articles={relatedArticles} />

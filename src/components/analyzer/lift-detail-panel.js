@@ -12,7 +12,7 @@ export function LiftDetailPanel({ liftType }) {
   if (!liftType) return null;
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <div className="flex flex-col gap-6">
       <LiftJourneyCard liftType={liftType} />
       <LiftTypeRepPRsDisplay liftType={liftType} />
     </div>

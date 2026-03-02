@@ -95,7 +95,7 @@ const CustomLegend = ({ payload }) => {
 };
 
 // Tabular list of top lifts showing color swatch, name (linked for big-four), reps, and set percentage.
-const TopLiftsTable = ({ stats, selectedLiftType, onSelectLift }) => {
+export const TopLiftsTable = ({ stats, selectedLiftType, onSelectLift }) => {
   return (
     <div>
       <table className="w-full">

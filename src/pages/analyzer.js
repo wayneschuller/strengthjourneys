@@ -7,7 +7,7 @@ import { RelatedArticles } from "@/components/article-cards";
 
 // Here are the analyzer dashboard cards
 import { ConsistencyCard } from "@/components/analyzer/consistency-card"; // full card, not currently in use — keep
-import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-pie-card";
+import { TopLiftsCard } from "@/components/analyzer/top-lifts-card";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
 import { LiftDetailPanel } from "@/components/analyzer/lift-detail-panel";
 import {
@@ -119,7 +119,7 @@ function AnalyzerMain({ relatedArticles }) {
       <section className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
         {/* Col 1: pie card + inspiration */}
         <div className="flex flex-col gap-6">
-          <LiftTypeFrequencyPieCard
+          <TopLiftsCard
             selectedLiftType={effectiveLiftType}
             onSelectLift={setSelectedLiftType}
           />

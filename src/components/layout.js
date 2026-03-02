@@ -42,7 +42,6 @@ export function Layout({ children }) {
     parseError,
     parsedData,
     rawRows,
-    syncKey,
     hasCachedSheetData,
     dataSyncedAt,
     sheetInfo,
@@ -53,7 +52,7 @@ export function Layout({ children }) {
 
   // Once-per-session guards
   const apiErrorShown = useRef(false);
-  const prevSyncKeyRef = useRef(null);
+  const prevRawRowsRef = useRef(null);
   const parseErrorShown = useRef(false);
   const demoShown = useRef(false);
 
@@ -82,22 +81,20 @@ export function Layout({ children }) {
     });
   }, [fetchFailed, authStatus, apiError, rawRows, hasCachedSheetData, toast]);
 
-  // Toast 2: Data Loaded — fires when sheet data actually changes (new rows OR
-  // cell edits detected via Drive modifiedByMeTime), not on every SWR
+  // Toast 2: Data Loaded — fires when new rows arrive, not on every SWR
   // revalidation. Skipped on "/" (home has its own widgets).
   // dataSyncedAt (set in SWR onSuccess) acts as the "fetch completed" heartbeat
   // that guarantees this effect runs on every successful revalidation.
-  // syncKey (row count + modifiedByMeTime) provides deduplication so the toast
-  // only shows when data actually changed.
+  // rawRows provides deduplication — toast only shows when row count changed.
   useEffect(() => {
-    if (!dataSyncedAt || !syncKey) return;
+    if (!dataSyncedAt || rawRows == null) return;
     if (!parsedData || !parsedData.length) return;
 
-    const isNewData = syncKey !== prevSyncKeyRef.current;
+    const isNewData = rawRows !== prevRawRowsRef.current;
     devLog(
-      `Toast 2 check — syncKey: ${syncKey}, prev: ${prevSyncKeyRef.current}, isNewData: ${isNewData}, pathname: ${router.pathname}`,
+      `Toast 2 check — rawRows: ${rawRows}, prev: ${prevRawRowsRef.current}, isNewData: ${isNewData}, pathname: ${router.pathname}`,
     );
-    prevSyncKeyRef.current = syncKey;
+    prevRawRowsRef.current = rawRows;
 
     if (!isNewData) return;
     if (router.pathname === "/") return;
@@ -142,7 +139,7 @@ export function Layout({ children }) {
         </>
       ),
     });
-  }, [dataSyncedAt, syncKey, parsedData, sheetInfo, router.pathname, toast]);
+  }, [dataSyncedAt, rawRows, parsedData, sheetInfo, router.pathname, toast]);
 
   // Toast 3: Parse Error
   useEffect(() => {

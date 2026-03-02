@@ -199,16 +199,6 @@ export const UserLiftingDataProvider = ({ children }) => {
   const isError = !!error;
   const hasCachedSheetData = Array.isArray(data?.values);
 
-  // Stable key that changes whenever the user's actual sheet data changes.
-  // Combines row count with Drive modification time so it detects both new
-  // rows AND edits to existing rows. Computed directly from SWR data so it
-  // updates atomically in the same render that data arrives (no timing gap
-  // between rawRows and modifiedByMeTime becoming available).
-  const syncKey = useMemo(() => {
-    if (!data?.values) return null;
-    const modifiedKey = data.modifiedByMeTime ?? data.modifiedTime ?? null;
-    return `${data.values.length}-${modifiedKey ?? ""}`;
-  }, [data]);
   const apiError = useMemo(() => {
     if (!error) return null;
     return {
@@ -372,7 +362,6 @@ export const UserLiftingDataProvider = ({ children }) => {
         topTonnageByTypeLast12Months,
         sessionTonnageLookup,
         rawRows,
-        syncKey,
         hasCachedSheetData,
         dataSyncedAt: lastDataReceivedAt,
         mutate,

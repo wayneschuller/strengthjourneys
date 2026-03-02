@@ -8,7 +8,7 @@ import { RelatedArticles } from "@/components/article-cards";
 // Here are the analyzer dashboard cards
 import { ConsistencyCard } from "@/components/analyzer/consistency-card"; // full card, not currently in use — keep
 import { TopLiftsCard } from "@/components/analyzer/top-lifts-card";
-import { InspirationCard } from "@/components/analyzer/inspiration-card";
+import { InspirationCard } from "@/components/analyzer/inspiration-card"; // not currently in use — keep
 import { LiftDetailPanel } from "@/components/analyzer/lift-detail-panel";
 import {
   PageContainer,
@@ -123,7 +123,6 @@ function AnalyzerMain({ relatedArticles }) {
             selectedLiftType={effectiveLiftType}
             onSelectLift={setSelectedLiftType}
           />
-          <InspirationCard />
         </div>
         {/* Cols 2–3: lift detail panel */}
         <div className="xl:col-span-2">

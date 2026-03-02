@@ -17,6 +17,8 @@ import { MiniFeedbackWidget } from "@/components/feedback";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useLocalStorage } from "usehooks-ts";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "@/components/visualizer/visualizer-utils";
@@ -52,7 +54,12 @@ export function ActivityHeatmapsCard() {
   const shareRef = useRef(null);
   const [isSharing, setIsSharing] = useState(false);
   const [shareReady, setShareReady] = useState(false);
-  const [viewMode, setViewMode] = useState("daily");
+  // initializeWithValue: false → SSR renders "daily" (default), client hydrates from localStorage on mount
+  const [viewMode, setViewMode] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.HEATMAP_VIEW_MODE,
+    "daily",
+    { initializeWithValue: false },
+  );
 
   // FIXME: I think we have the skills to not need this useEffect anymore
   useEffect(() => {
@@ -636,7 +643,7 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
           {WEEKLY_MONTH_LABELS.map(({ label, week }) => (
             <span
               key={label}
-              className="overflow-visible whitespace-nowrap text-[9px] text-muted-foreground"
+              className="overflow-visible whitespace-nowrap text-[9px] text-muted-foreground lg:text-[11px] 2xl:text-xs"
               style={{ gridColumn: week }}
             >
               {label}
@@ -650,7 +657,7 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
         {years.map((year) => (
           <div key={year} className="flex w-full items-center">
             <div
-              className="shrink-0 pr-1 text-right text-[10px] text-muted-foreground"
+              className="shrink-0 pr-1 text-right text-[10px] text-muted-foreground lg:text-xs 2xl:text-sm"
               style={{ width: WEEKLY_YEAR_W }}
             >
               {year}

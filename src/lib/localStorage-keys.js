@@ -100,6 +100,9 @@ export const LOCAL_STORAGE_KEYS = {
   // Session analysis – creative ratings cache (per date, auth only)
   SESSION_RATING_CACHE: "sj-session-rating-cache",
 
+  // Analyzer
+  HEATMAP_VIEW_MODE: "SJ_heatmapViewMode",
+
 };
 
 export const SESSION_STORAGE_KEYS = {

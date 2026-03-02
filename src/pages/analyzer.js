@@ -1,18 +1,13 @@
 import { useSession } from "next-auth/react";
-import { useState } from "react";
 import { NextSeo } from "next-seo";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
-import { Separator } from "@/components/ui/separator";
 import { RelatedArticles } from "@/components/article-cards";
 
 // Here are the analyzer dashboard cards
-import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
 import { PopularLiftsAccordion } from "@/components/analyzer/lift-achievements-card";
 import { ConsistencyCard } from "@/components/analyzer/consistency-card";
 import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-pie-card";
-import { ThisMonthInIronCard } from "@/components/analyzer/this-month-in-iron-card";
-import { ActivityHeatmapsCard } from "@/components/analyzer/heatmap-card";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
 import {
   PageContainer,
@@ -98,7 +93,6 @@ export default function Analyzer({ relatedArticles }) {
 function AnalyzerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { isLoading, sheetInfo } = useUserLiftingData();
-  const [highlightDate, setHighlightDate] = useState(null);
 
   if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid)
     return (
@@ -117,31 +111,18 @@ function AnalyzerMain({ relatedArticles }) {
           bench, deadlift and more.
         </PageHeaderDescription>
       </PageHeader>
-      <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        {/* Col 1 — spans 2 rows on xl so col 3 can split heatmap / pie+inspiration */}
-        <div className="flex h-full min-w-full flex-col xl:row-span-2">
-          <SessionAnalysisCard
-            highlightDate={highlightDate}
-            setHighlightDate={setHighlightDate}
-          />
+      <section className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
+        {/* Cols 1–2: accordion spans 2 columns on desktop */}
+        <div className="xl:col-span-2">
+          <PopularLiftsAccordion />
         </div>
-        {/* Col 2 — also spans 2 rows on xl */}
-        <div className="flex h-full min-w-full flex-col gap-6 xl:row-span-2">
-          <ThisMonthInIronCard />
+        {/* Col 3: remaining cards stacked */}
+        <div className="flex flex-col gap-6">
           <ConsistencyCard />
-        </div>
-        {/* Col 3, row 1 — heatmap: 3rd in DOM so it's 3rd on mobile */}
-        <div className="min-w-full">
-          <ActivityHeatmapsCard />
-        </div>
-        {/* Col 3, row 2 — pinned back to col 3 on xl */}
-        <div className="flex min-w-full flex-col gap-6 xl:col-start-3">
           <LiftTypeFrequencyPieCard />
           <InspirationCard />
         </div>
-        <Separator className="col-span-full" />
       </section>
-      <PopularLiftsAccordion />
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );

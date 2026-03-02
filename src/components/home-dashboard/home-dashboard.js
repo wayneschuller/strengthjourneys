@@ -8,7 +8,6 @@ import { HomeInspirationCards } from "./home-inspiration-cards";
 import { DataSheetStatus, RowProcessingIndicator } from "./row-processing-indicator";
 import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
 import { ThisMonthInIronCard } from "@/components/analyzer/this-month-in-iron-card";
-import { ConsistencyCard } from "@/components/analyzer/consistency-card";
 import { ActivityHeatmapsCard } from "@/components/analyzer/heatmap-card";
 import { OnBoardingDashboard } from "@/components/instructions-cards";
 import { ConsistencyGradesRow } from "./consistency-grades-row";
@@ -172,10 +171,7 @@ export function HomeDashboard() {
             highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}
           />
-          <div className="flex flex-col gap-6">
-            <ThisMonthInIronCard />
-            <ConsistencyCard />
-          </div>
+          <ThisMonthInIronCard />
           <ActivityHeatmapsCard />
         </section>
       )}

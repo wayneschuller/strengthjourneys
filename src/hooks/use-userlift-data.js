@@ -98,8 +98,38 @@ const UserLiftingDataContext = createContext();
 export const useUserLiftingData = () => useContext(UserLiftingDataContext);
 
 /**
- * Provides lifting data from Google Sheets (or demo data) to the app.
+ * The central data engine of the app. Provides lifting data from Google Sheets
+ * (or demo data when unauthenticated) to the entire component tree.
+ *
  * Handles auth, SWR fetch, parsing, and derived state (liftTypes, topLifts, tonnage, etc.).
+ * Every piece of UI that touches lifting data — charts, PR tables, tonnage cards,
+ * the AI assistant — is downstream of this provider.
+ *
+ * Context value exposed via {@link useUserLiftingData}:
+ * @param {React.ReactNode} props.children
+ *
+ * @context parsedData {Array|null} - Processed lift objects. null until first load.
+ *   Each entry: { date, liftType, reps, weight, unitType, isHistoricalPR, isGoal }
+ * @context liftTypes {string[]} - Unique lift names in parsedData, sorted by frequency.
+ * @context topLiftsByTypeAndReps {Object|null} - All-time PR table: liftType → reps → best lift.
+ * @context topLiftsByTypeAndRepsLast12Months {Object|null} - Same, last 12 months only.
+ * @context topTonnageByType {Object|null} - All-time heaviest tonnage session per lift type.
+ * @context topTonnageByTypeLast12Months {Object|null} - Same, last 12 months only.
+ * @context sessionTonnageLookup {Object|null} - date → per-lift and total tonnage; powers tonnage chart.
+ * @context sheetInfo {Object|null} - { ssid, url, filename, modifiedTime, modifiedByMeTime } from localStorage.
+ * @context selectSheet {(ssid: string) => void} - Link a Google Sheet by spreadsheet ID.
+ * @context clearSheet {() => void} - Unlink the current sheet.
+ * @context mutate {function} - SWR mutate — force a re-fetch.
+ * @context isLoading {boolean} - True while SWR is fetching for the first time.
+ * @context isValidating {boolean} - True during any background revalidation.
+ * @context isError {boolean} - True if the last fetch attempt threw.
+ * @context fetchFailed {boolean} - True after retries are exhausted (used by Layout for error toast).
+ * @context apiError {{status, statusText, message}|null} - Structured error from the last failed fetch.
+ * @context parseError {string|null} - Error message if sheet data failed to parse (sheet is auto-cleared).
+ * @context isDemoMode {boolean} - True when unauthenticated; demo data is active.
+ * @context rawRows {number|null} - Row count from the last successful sheet fetch.
+ * @context hasCachedSheetData {boolean} - True if SWR holds valid sheet values (even if stale).
+ * @context dataSyncedAt {number|null} - Timestamp (Date.now()) of the last successful data load.
  */
 export const UserLiftingDataProvider = ({ children }) => {
   // These are our key global state variables.

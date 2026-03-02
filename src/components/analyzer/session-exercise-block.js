@@ -695,7 +695,16 @@ export function LiftStrengthLevel({
     searchParams.set("advanced", "true");
   }
 
-  const href = `/calculator?${searchParams.toString()}`;
+  const LIFT_CALC_SLUGS = {
+    "Back Squat": "squat-1rm-calculator",
+    "Bench Press": "bench-press-1rm-calculator",
+    "Deadlift": "deadlift-1rm-calculator",
+    "Strict Press": "strict-press-1rm-calculator",
+  };
+  const calcSlug = LIFT_CALC_SLUGS[liftType];
+  const href = calcSlug
+    ? `/calculator/${calcSlug}?${searchParams.toString()}`
+    : `/calculator?${searchParams.toString()}`;
   const ratingLabel = isBeyondElite ? "Beyond Elite" : rating;
   const ratingEmoji =
     isBeyondElite ? STRENGTH_LEVEL_EMOJI.Elite : STRENGTH_LEVEL_EMOJI[rating] ?? "";

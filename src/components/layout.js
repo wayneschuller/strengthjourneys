@@ -69,16 +69,9 @@ export function Layout({ children }) {
     if (!fetchFailed || authStatus !== "authenticated") return;
     if (rawRows != null || hasCachedSheetData) return;
 
-    const statusLabel = apiError?.status
-      ? `HTTP ${apiError.status}${apiError?.statusText ? ` ${apiError.statusText}` : ""}`
-      : "Request failed";
     apiErrorShown.current = true;
-
-    toast({
-      variant: "destructive",
-      title: `Google Sheet sync failed (${statusLabel})`,
-      description: apiError?.message || "No error details were provided.",
-    });
+    const { title, description } = buildApiErrorToast(apiError);
+    toast({ variant: "destructive", title, description });
   }, [fetchFailed, authStatus, apiError, rawRows, hasCachedSheetData, toast]);
 
   // New sheet data — fires when new rows arrive, not on every SWR revalidation.
@@ -204,6 +197,30 @@ export function Layout({ children }) {
       </div>
     </div>
   );
+}
+
+function buildApiErrorToast(apiError) {
+  const status = apiError?.status;
+  const statusLabel = status ? `HTTP ${status}` : "Request failed";
+  const title = `Google Sheet sync failed (${statusLabel})`;
+
+  if (status === 401 || status === 403) {
+    return {
+      title,
+      description:
+        "Your Google authorization may have expired. Try signing out and back in.",
+    };
+  }
+  if (status === 404) {
+    return {
+      title,
+      description: "Sheet not found — it may have been deleted or unshared.",
+    };
+  }
+  return {
+    title,
+    description: apiError?.message || "No error details were provided.",
+  };
 }
 
 function buildLatestDataMessages(latestDateISO) {

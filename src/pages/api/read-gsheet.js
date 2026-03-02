@@ -71,9 +71,17 @@ export default async function handler(req, res) {
     const data = await sheetsRes.json();
 
     if (!sheetsRes.ok) {
-      throw new Error(
-        `Non-OK response from Google Sheets API: ${sheetsRes.statusText} (${sheetsRes.status})`,
+      // Extract Google's own error message (format: { error: { message, code, status } })
+      const googleMessage =
+        data?.error?.message ||
+        sheetsRes.statusText ||
+        "Unknown error from Google Sheets API";
+      console.error(
+        `[read-gsheet] Google Sheets API ${sheetsRes.status}: ${googleMessage}`,
+        { ssid },
       );
+      res.status(sheetsRes.status).json({ error: googleMessage });
+      return;
     }
 
     if (driveRes.ok) {

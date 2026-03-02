@@ -281,8 +281,9 @@ export const UserLiftingDataProvider = ({ children }) => {
     // API errors: GA tracking is handled in onErrorRetry (only fires on genuine
     // failures, not transient retry gaps). Effect just logs and bails.
     if (isError) {
+      const statusInfo = error?.status ? ` (${error.status})` : "";
       console.error(
-        `%c✗ GSheet API Error%c ${error} — will retry on next revalidation`,
+        `%c✗ GSheet API Error${statusInfo}%c ${error.message} — will retry on next revalidation`,
         "color:#ef4444;font-weight:bold",
         "color:inherit",
       );

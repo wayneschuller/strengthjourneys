@@ -98,14 +98,6 @@ export const authOptions = {
         };
       }
 
-      // Make true to debug
-      if (false)
-        devLog(
-          `Next-auth JWT callback: token.accessTokenExpires = ${new Date(
-            token.accessTokenExpires,
-          ).toLocaleString()}`,
-        );
-
       // Return previous JWT token if the access token has not expired yet
       if (Date.now() < token.accessTokenExpires) {
         // devLog(`Not expired yet phew. I'll give you our secret JWT token`);

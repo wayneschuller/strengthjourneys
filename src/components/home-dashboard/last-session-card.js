@@ -46,7 +46,6 @@ import {
   getReadableDateString,
   getAnalyzedSessionLifts,
   getAverageSessionTonnageFromPrecomputed,
-  getAverageLiftSessionTonnageFromPrecomputed,
   getSessionTonnagePercentileRangeFromPrecomputed,
   getDisplayWeight,
 } from "@/lib/processing-utils";
@@ -217,51 +216,6 @@ export function SessionAnalysisCard({
     });
   }, [persistCacheTrigger, setSessionRatingCache]);
 
-  // Precompute per-lift tonnage stats for this session vs last year
-  const perLiftTonnageStats = useMemo(() => {
-    if (!analyzedSessionLifts || !sessionDate) return {};
-
-    const lookup = sessionTonnageLookup;
-    if (!lookup) return {};
-
-    return Object.entries(analyzedSessionLifts).reduce(
-      (acc, [liftType, lifts]) => {
-        const currentLiftTonnage = lifts.reduce(
-          (sum, lift) => sum + (lift.weight ?? 0) * (lift.reps ?? 0),
-          0,
-        );
-
-        const firstLift = lifts?.[0];
-        const unitTypeForLift = firstLift?.unitType ?? "lb";
-
-        const { average: avgLiftTonnage, sessionCount } =
-          getAverageLiftSessionTonnageFromPrecomputed(
-            lookup.sessionTonnageByDateAndLift,
-            lookup.allSessionDates,
-            sessionDate,
-            liftType,
-            unitTypeForLift,
-          );
-
-        const pctDiff =
-          avgLiftTonnage > 0
-            ? ((currentLiftTonnage - avgLiftTonnage) / avgLiftTonnage) * 100
-            : null;
-
-        acc[liftType] = {
-          currentLiftTonnage,
-          avgLiftTonnage,
-          sessionCount,
-          pctDiff,
-          unitType: unitTypeForLift,
-        };
-
-        return acc;
-      },
-      {},
-    );
-  }, [analyzedSessionLifts, sessionDate, sessionTonnageLookup]);
-
   const prevDate = () => {
     if (!parsedData || !sessionDate) return;
 
@@ -365,10 +319,9 @@ export function SessionAnalysisCard({
                   ([liftType, workouts]) => (
                     <SessionExerciseBlock
                       key={liftType}
-                      variant="full"
+                      variant="compact"
                       liftType={liftType}
                       workouts={workouts}
-                      perLiftTonnageStats={perLiftTonnageStats}
                       authStatus={authStatus}
                       hasBioData={hasBioData}
                       standards={standards}

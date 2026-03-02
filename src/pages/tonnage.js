@@ -6,7 +6,7 @@ import { useSession, signIn } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { devLog } from "@/lib/processing-utils";
-import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
+import { SessionAnalysisCard } from "@/components/home-dashboard/last-session-card";
 import {
   PageContainer,
   PageHeader,

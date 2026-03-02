@@ -6,7 +6,7 @@ import { RelatedArticles } from "@/components/article-cards";
 
 // Here are the analyzer dashboard cards
 import { PopularLiftsAccordion } from "@/components/analyzer/lift-achievements-card";
-import { ConsistencyCard } from "@/components/analyzer/consistency-card";
+import { ConsistencyCard } from "@/components/analyzer/consistency-card"; // full card, not currently in use — keep
 import { LiftTypeFrequencyPieCard } from "@/components/analyzer/lift-frequency-pie-card";
 import { InspirationCard } from "@/components/analyzer/inspiration-card";
 import {
@@ -118,7 +118,6 @@ function AnalyzerMain({ relatedArticles }) {
         </div>
         {/* Col 3: remaining cards stacked */}
         <div className="flex flex-col gap-6">
-          <ConsistencyCard />
           <LiftTypeFrequencyPieCard />
           <InspirationCard />
         </div>

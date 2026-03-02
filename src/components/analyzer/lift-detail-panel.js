@@ -13,7 +13,7 @@ export function LiftDetailPanel({ liftType }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <LiftJourneyCard liftType={liftType} />
+      <LiftJourneyCard liftType={liftType} asCard={false} />
       <LiftTypeRepPRsDisplay liftType={liftType} />
     </div>
   );

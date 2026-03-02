@@ -25,7 +25,7 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LiftJourneyCard } from "@/components/visualizer/lift-journey-card";
 import { LiftTypeRepPRsDisplay } from "@/components/analyzer/lift-type-prs-display";
 
-const ACCORDION_INITIAL = 10;
+const ACCORDION_INITIAL = 20;
 const ACCORDION_PAGE_SIZE = 10;
 
 /** Grid template for accordion rows: Lift | Reps | Sets | 1RM | 3RM | 5RM. */

@@ -289,7 +289,7 @@ export function SessionAnalysisCard({
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <CardTitle className="flex flex-wrap items-center gap-2 text-xl font-bold tracking-tight">
+              <CardTitle className="flex flex-wrap items-center gap-2">
                 {authStatus === "unauthenticated" && (
                   <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium">
                     Demo Mode

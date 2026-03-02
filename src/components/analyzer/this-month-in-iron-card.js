@@ -511,7 +511,7 @@ function getMonthBoundaries(monthOffset = 0) {
 }
 
 function getMonthlyCardTitle(boundaries) {
-  if (boundaries.isCurrentMonthView) return "This Month in Iron";
+  if (boundaries.isCurrentMonthView) return "The Month in Iron";
   return `${boundaries.currentMonthShortYear} in Iron`;
 }
 

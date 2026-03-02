@@ -314,9 +314,9 @@ export function SessionAnalysisCard({
                 )}
               </CardTitle>
               <CardDescription className="mt-1">
-                {analyzedSessionLifts && getReadableDateString(sessionDate, true)}
+                {analyzedSessionLifts && isLastDate && getReadableDateString(sessionDate, true)}
                 {analyzedSessionLifts && !isDemoMode && sessionRatingRef.current
-                  ? ` · ${sessionRatingRef.current}`
+                  ? `${isLastDate ? " · " : ""}${sessionRatingRef.current}`
                   : ""}
               </CardDescription>
             </div>

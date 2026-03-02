@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { gaTrackSignInClick } from "@/lib/analytics";
+import { devLog } from "@/lib/processing-utils";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import {
@@ -84,13 +85,18 @@ export function Layout({ children }) {
   // Toast 2: Data Loaded — fires when sheet data actually changes (new rows OR
   // cell edits detected via Drive modifiedByMeTime), not on every SWR
   // revalidation. Skipped on "/" (home has its own widgets).
-  // syncKey is computed atomically from SWR data (row count + modification
-  // time), so there is no timing gap between the two signals.
+  // dataSyncedAt (set in SWR onSuccess) acts as the "fetch completed" heartbeat
+  // that guarantees this effect runs on every successful revalidation.
+  // syncKey (row count + modifiedByMeTime) provides deduplication so the toast
+  // only shows when data actually changed.
   useEffect(() => {
-    if (!syncKey) return;
+    if (!dataSyncedAt || !syncKey) return;
     if (!parsedData || !parsedData.length) return;
 
     const isNewData = syncKey !== prevSyncKeyRef.current;
+    devLog(
+      `Toast 2 check — syncKey: ${syncKey}, prev: ${prevSyncKeyRef.current}, isNewData: ${isNewData}, pathname: ${router.pathname}`,
+    );
     prevSyncKeyRef.current = syncKey;
 
     if (!isNewData) return;
@@ -136,7 +142,7 @@ export function Layout({ children }) {
         </>
       ),
     });
-  }, [syncKey, parsedData, sheetInfo, router.pathname, toast]);
+  }, [dataSyncedAt, syncKey, parsedData, sheetInfo, router.pathname, toast]);
 
   // Toast 3: Parse Error
   useEffect(() => {

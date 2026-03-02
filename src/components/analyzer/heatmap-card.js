@@ -611,6 +611,11 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   const years = [];
   for (let y = startYear; y <= endYear; y++) years.push(y);
 
+  // Used to distinguish future weeks (no data yet) from past missed weeks
+  const todayDate = new Date();
+  const currentYear = todayDate.getFullYear();
+  const currentWeekNum = getCalendarWeekOfYear(format(todayDate, "yyyy-MM-dd"));
+
   const handleMouseOver = useCallback((e, year, weekNum, data) => {
     const cellRect = e.target.getBoundingClientRect();
     const x = cellRect.left + cellRect.width / 2;
@@ -652,10 +657,16 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
         </div>
       </div>
 
-      {/* Year rows */}
+      {/* Year rows — extra gap before each 5-year boundary for visual anchoring */}
       <div className="flex w-full flex-col gap-[2px]">
         {years.map((year) => (
-          <div key={year} className="flex w-full items-center">
+          <div
+            key={year}
+            className="flex w-full items-center"
+            style={
+              year !== startYear && year % 5 === 0 ? { marginTop: 6 } : undefined
+            }
+          >
             <div
               className="shrink-0 pr-1 text-right text-[10px] text-muted-foreground lg:text-xs 2xl:text-sm"
               style={{ width: WEEKLY_YEAR_W }}
@@ -664,20 +675,38 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
             </div>
             <div style={cellGridStyle}>
               {Array.from({ length: 53 }, (_, i) => i + 1).map((weekNum) => {
+                const isFuture =
+                  year > currentYear ||
+                  (year === currentYear && weekNum > currentWeekNum);
                 const data = weeklyData[year]?.[weekNum];
                 const count = data?.count ?? 0;
+                // Future weeks: invisible. Past empty: faint. Training: colored.
+                // 3+ sessions uses --heatmap-4 (darkest) for distinct visual weight.
+                const cellStyle = isFuture
+                  ? { aspectRatio: "1" }
+                  : count === 0
+                    ? {
+                        aspectRatio: "1",
+                        backgroundColor: "var(--heatmap-0)",
+                        opacity: 0.3,
+                      }
+                    : {
+                        aspectRatio: "1",
+                        backgroundColor: `var(--heatmap-${count === 3 ? 4 : count})`,
+                      };
                 return (
                   <div
                     key={weekNum}
                     className="rounded-sm"
-                    style={{
-                      aspectRatio: "1",
-                      backgroundColor: `var(--heatmap-${count})`,
-                    }}
+                    style={cellStyle}
                     onMouseOver={
-                      data ? (e) => handleMouseOver(e, year, weekNum, data) : undefined
+                      data && !isFuture
+                        ? (e) => handleMouseOver(e, year, weekNum, data)
+                        : undefined
                     }
-                    onMouseLeave={data ? handleMouseLeave : undefined}
+                    onMouseLeave={
+                      data && !isFuture ? handleMouseLeave : undefined
+                    }
                   />
                 );
               })}
@@ -686,16 +715,24 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
         ))}
       </div>
 
-      {/* Sessions-per-week legend */}
-      <div className="mt-3 flex items-center gap-3 text-[10px] text-muted-foreground">
-        <span>Sessions/week:</span>
-        {[1, 2, 3].map((n) => (
-          <div key={n} className="flex items-center gap-1">
+      {/* Legend */}
+      <div className="mt-3 flex items-center gap-4 text-[10px] text-muted-foreground">
+        <span>Sessions per week:</span>
+        {[
+          { count: 1, label: "1" },
+          { count: 2, label: "2" },
+          { count: 3, label: "3+" },
+        ].map(({ count, label }) => (
+          <div key={count} className="flex items-center gap-1">
             <div
               className="shrink-0 rounded-sm"
-              style={{ width: 12, height: 12, backgroundColor: `var(--heatmap-${n})` }}
+              style={{
+                width: 12,
+                height: 12,
+                backgroundColor: `var(--heatmap-${count === 3 ? 4 : count})`,
+              }}
             />
-            <span>{n === 3 ? "3+ won" : n}</span>
+            <span>{label}</span>
           </div>
         ))}
       </div>
@@ -729,7 +766,7 @@ function WeeklyTooltipContent({ value }) {
       <p className="text-muted-foreground">
         {sessions === 0
           ? "No training sessions"
-          : `${sessions} training ${sessions === 1 ? "day" : "days"}${sessions >= 3 ? " — week won!" : ""}`}
+          : `${sessions} training ${sessions === 1 ? "day" : "days"}`}
       </p>
     </div>
   );

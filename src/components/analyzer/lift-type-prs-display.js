@@ -400,8 +400,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
   const isWide = width >= 750;
   const overviewGridCols =
     !compact ? (
-      width >= 780 ? "grid-cols-4" :
-      width >= 540 ? "grid-cols-3" :
+      width >= 780 ? "grid-cols-3" :
       width >= 340 ? "grid-cols-2" :
       "grid-cols-1"
     ) : "grid-cols-2";

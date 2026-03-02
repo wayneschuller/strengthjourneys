@@ -864,7 +864,7 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       y: showBelow ? cellRect.bottom + 8 : y - 8,
       showBelow,
     });
-    setHoveredValue({ year, month, ...data });
+    setHoveredValue({ year, month, ...(data ?? {}) });
   }, []);
 
   const handleMouseLeave = useCallback(() => setHoveredValue(null), []);
@@ -921,11 +921,11 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
                     className="rounded"
                     style={cellStyle}
                     onMouseOver={
-                      data && !isFuture
+                      !isFuture
                         ? (e) => handleMouseOver(e, year, month, data)
                         : undefined
                     }
-                    onMouseLeave={data && !isFuture ? handleMouseLeave : undefined}
+                    onMouseLeave={!isFuture ? handleMouseLeave : undefined}
                   />
                 );
               })}

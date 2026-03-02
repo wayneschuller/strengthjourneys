@@ -601,7 +601,7 @@ function TonnageRangeSlider({
             style={{ width: `${currentPct}%` }}
           />
         </div>
-        {/* Hover overlay: range numbers appear on hover */}
+        {/* Hover overlay: range numbers + label appear on hover */}
         {isHovered && showRange && (
           <div className="absolute inset-0 pointer-events-none animate-in fade-in duration-150">
             <span
@@ -616,8 +616,8 @@ function TonnageRangeSlider({
           </div>
         )}
       </div>
-      {showRange && (
-        <p className="text-[10px] text-muted-foreground">
+      {isHovered && showRange && (
+        <p className="text-[10px] text-muted-foreground animate-in fade-in duration-150">
           Dashed range: typical session tonnage (25th–90th percentile, last 12 months)
         </p>
       )}

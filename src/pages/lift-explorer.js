@@ -16,7 +16,7 @@ import {
   PageHeaderHeading,
   PageHeaderDescription,
 } from "@/components/page-header";
-import { Trophy } from "lucide-react";
+import { Layers } from "lucide-react";
 
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 
@@ -108,7 +108,7 @@ function LiftExplorerMain({ relatedArticles }) {
   return (
     <PageContainer>
       <PageHeader>
-        <PageHeaderHeading icon={Trophy}>Lift Explorer</PageHeaderHeading>
+        <PageHeaderHeading icon={Layers}>Lift Explorer</PageHeaderHeading>
         <PageHeaderDescription>
           Explore your lifting history lift by lift. Select any movement to see
           your personal journey, records across every rep range, and how often

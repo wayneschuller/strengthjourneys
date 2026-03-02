@@ -281,19 +281,24 @@ export function ActivityHeatmapsCard() {
             <>
               {viewMode === "daily" && (
                 <div className={isSharing ? "" : "max-h-[50vh] overflow-y-auto pr-1"}>
-                  <div className="grid grid-cols-1 gap-6">
+                  <div className="flex flex-col gap-6">
                     {intervals.map((interval, index) => {
                       return (
-                        <div key={`${index}-heatmap`}>
-                          <div className="mb-2 text-center text-lg font-semibold">
+                        <div key={`${index}-heatmap`} className="flex w-full items-start">
+                          <div
+                            className="text-muted-foreground shrink-0 pr-2 pt-1 text-right text-xs lg:text-sm"
+                            style={{ width: WEEKLY_YEAR_W }}
+                          >
                             {new Date(interval.startDate).getFullYear()}
                           </div>
-                          <Heatmap
-                            parsedData={parsedData}
-                            startDate={interval.startDate}
-                            endDate={interval.endDate}
-                            isSharing={isSharing}
-                          />
+                          <div className="min-w-0 flex-1">
+                            <Heatmap
+                              parsedData={parsedData}
+                              startDate={interval.startDate}
+                              endDate={interval.endDate}
+                              isSharing={isSharing}
+                            />
+                          </div>
                         </div>
                       );
                     })}

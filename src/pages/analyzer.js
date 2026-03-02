@@ -118,24 +118,26 @@ function AnalyzerMain({ relatedArticles }) {
         </PageHeaderDescription>
       </PageHeader>
       <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        <div className="flex h-full min-w-full flex-col">
+        {/* Col 1 — spans 2 rows on xl so col 3 can split heatmap / pie+inspiration */}
+        <div className="flex h-full min-w-full flex-col xl:row-span-2">
           <SessionAnalysisCard
             highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}
           />
         </div>
-        <div className="flex h-full min-w-full flex-col gap-6">
+        {/* Col 2 — also spans 2 rows on xl */}
+        <div className="flex h-full min-w-full flex-col gap-6 xl:row-span-2">
           <ThisMonthInIronCard />
           <ConsistencyCard />
         </div>
-        <div className="flex h-full min-w-full flex-col gap-6">
+        {/* Col 3, row 1 — heatmap: 3rd in DOM so it's 3rd on mobile */}
+        <div className="min-w-full">
           <ActivityHeatmapsCard />
-          <div className="flex min-w-full flex-1 flex-col">
-            <LiftTypeFrequencyPieCard />
-          </div>
-          <div className="min-w-full">
-            <InspirationCard />
-          </div>
+        </div>
+        {/* Col 3, row 2 — pinned back to col 3 on xl */}
+        <div className="flex min-w-full flex-col gap-6 xl:col-start-3">
+          <LiftTypeFrequencyPieCard />
+          <InspirationCard />
         </div>
         <Separator className="col-span-full" />
       </section>

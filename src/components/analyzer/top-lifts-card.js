@@ -35,13 +35,13 @@ export function TopLiftsCard({ selectedLiftType, onSelectLift }) {
   }));
 
   return (
-    <Card>
+    <Card className="flex max-h-[80vh] flex-col">
       <CardHeader>
         <CardTitle>
           {authStatus === "unauthenticated" && "Demo mode: "}Your Lifts
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-y-auto">
         <TopLiftsTable
           stats={stats}
           selectedLiftType={selectedLiftType}

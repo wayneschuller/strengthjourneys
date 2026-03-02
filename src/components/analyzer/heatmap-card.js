@@ -176,26 +176,25 @@ export function ActivityHeatmapsCard() {
             </div>
             {!isSharing && intervals?.length > 2 && (
               <div className="flex shrink-0 rounded-md border p-0.5 text-xs">
-                <button
-                  className={`rounded px-2 py-0.5 font-medium transition-colors ${
-                    viewMode === "daily"
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  onClick={() => setViewMode("daily")}
-                >
-                  Daily
-                </button>
-                <button
-                  className={`rounded px-2 py-0.5 font-medium transition-colors ${
-                    viewMode === "weekly"
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  onClick={() => setViewMode("weekly")}
-                >
-                  Weekly
-                </button>
+                {[
+                  { key: "daily", label: "Daily" },
+                  { key: "weekly", label: "Weekly" },
+                  ...(intervals?.length >= 5
+                    ? [{ key: "monthly", label: "Monthly" }]
+                    : []),
+                ].map(({ key, label }) => (
+                  <button
+                    key={key}
+                    className={`rounded px-2 py-0.5 font-medium transition-colors ${
+                      viewMode === key
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    onClick={() => setViewMode(key)}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -225,6 +224,16 @@ export function ActivityHeatmapsCard() {
               )}
               {viewMode === "weekly" && (
                 <WeeklyHeatmapMatrix
+                  parsedData={parsedData}
+                  startYear={new Date(intervals[0].startDate).getFullYear()}
+                  endYear={new Date(
+                    intervals[intervals.length - 1].endDate,
+                  ).getFullYear()}
+                  isSharing={isSharing}
+                />
+              )}
+              {viewMode === "monthly" && (
+                <MonthlyHeatmapMatrix
                   parsedData={parsedData}
                   startYear={new Date(intervals[0].startDate).getFullYear()}
                   endYear={new Date(
@@ -521,9 +530,9 @@ function getSharingMessage(years) {
   ]);
 }
 
-// Weekly matrix layout constants
+// Shared matrix layout constants (used by both weekly and monthly views)
 const WEEKLY_GAP = 2; // px gap between cells
-const WEEKLY_YEAR_W = 32; // px for year label column
+const WEEKLY_YEAR_W = 48; // px for year label column
 
 const WEEKLY_MONTH_LABELS = [
   { label: "Jan", week: 1 },
@@ -657,18 +666,12 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
         </div>
       </div>
 
-      {/* Year rows — extra gap before each 5-year boundary for visual anchoring */}
+      {/* Year rows */}
       <div className="flex w-full flex-col gap-[2px]">
         {years.map((year) => (
-          <div
-            key={year}
-            className="flex w-full items-center"
-            style={
-              year !== startYear && year % 5 === 0 ? { marginTop: 6 } : undefined
-            }
-          >
+          <div key={year} className="flex w-full items-center">
             <div
-              className="shrink-0 pr-1 text-right text-[10px] text-muted-foreground lg:text-xs 2xl:text-sm"
+              className="shrink-0 pr-2 text-right text-xs text-muted-foreground lg:text-sm"
               style={{ width: WEEKLY_YEAR_W }}
             >
               {year}
@@ -767,6 +770,201 @@ function WeeklyTooltipContent({ value }) {
         {sessions === 0
           ? "No training sessions"
           : `${sessions} training ${sessions === 1 ? "day" : "days"}`}
+      </p>
+    </div>
+  );
+}
+
+const MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+// Builds { [year]: { [month 1-12]: { activeWeeks, count 0-4 } } }.
+// count = number of distinct calendar weeks in that month with at least one session,
+// capped at 4 (representing full-month consistency).
+function generateMonthlyHeatmapData(parsedData, startYear, endYear, isDemoMode) {
+  if (isDemoMode) {
+    const result = {};
+    for (let year = startYear; year <= endYear; year++) {
+      result[year] = {};
+      for (let month = 1; month <= 12; month++) {
+        const rand = Math.random();
+        const count =
+          rand < 0.12 ? 0 : rand < 0.28 ? 1 : rand < 0.50 ? 2 : rand < 0.75 ? 3 : 4;
+        result[year][month] = { activeWeeks: count, count };
+      }
+    }
+    return result;
+  }
+
+  const monthMap = {};
+  for (const lift of parsedData) {
+    if (lift.isGoal) continue;
+    const year = parseInt(lift.date.substring(0, 4));
+    if (year < startYear || year > endYear) continue;
+    const month = parseInt(lift.date.substring(5, 7));
+    const weekNum = getCalendarWeekOfYear(lift.date);
+    if (!monthMap[year]) monthMap[year] = {};
+    if (!monthMap[year][month]) monthMap[year][month] = { activeWeeks: new Set() };
+    monthMap[year][month].activeWeeks.add(weekNum);
+  }
+
+  const result = {};
+  for (const [yearStr, months] of Object.entries(monthMap)) {
+    result[yearStr] = {};
+    for (const [monthStr, data] of Object.entries(months)) {
+      const activeWeeks = data.activeWeeks.size;
+      result[yearStr][monthStr] = { activeWeeks, count: Math.min(activeWeeks, 4) };
+    }
+  }
+  return result;
+}
+
+// All-years monthly matrix: one row per year, one cell per month (1–12).
+// Color = active weeks that month: 0 blank, 1 light, 2 medium, 3 strong, 4 full.
+function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
+  const { status: authStatus } = useSession();
+  const isDemoMode = authStatus === "unauthenticated";
+  const [hoveredValue, setHoveredValue] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0, showBelow: false });
+
+  const monthlyData = useMemo(
+    () => generateMonthlyHeatmapData(parsedData, startYear, endYear, isDemoMode),
+    [parsedData, startYear, endYear, isDemoMode],
+  );
+
+  const years = [];
+  for (let y = startYear; y <= endYear; y++) years.push(y);
+
+  const todayDate = new Date();
+  const currentYear = todayDate.getFullYear();
+  const currentMonth = todayDate.getMonth() + 1;
+
+  const handleMouseOver = useCallback((e, year, month, data) => {
+    const cellRect = e.target.getBoundingClientRect();
+    const x = cellRect.left + cellRect.width / 2;
+    const y = cellRect.top;
+    const showBelow = y < 200;
+    setTooltipPos({
+      x: Math.max(100, Math.min(x, window.innerWidth - 100)),
+      y: showBelow ? cellRect.bottom + 8 : y - 8,
+      showBelow,
+    });
+    setHoveredValue({ year, month, ...data });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => setHoveredValue(null), []);
+
+  const cellGridStyle = {
+    display: "grid",
+    gridTemplateColumns: "repeat(12, 1fr)",
+    gap: WEEKLY_GAP,
+    flex: 1,
+  };
+
+  return (
+    <div className="relative w-full">
+      {/* Month name header */}
+      <div className="mb-1 flex w-full items-end">
+        <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
+        <div style={cellGridStyle}>
+          {MONTH_NAMES.map((name) => (
+            <span
+              key={name}
+              className="text-center text-[9px] text-muted-foreground lg:text-[11px] 2xl:text-xs"
+            >
+              {name}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Year rows */}
+      <div className="flex w-full flex-col gap-[2px]">
+        {years.map((year) => (
+          <div key={year} className="flex w-full items-center">
+            <div
+              className="shrink-0 pr-2 text-right text-xs text-muted-foreground lg:text-sm"
+              style={{ width: WEEKLY_YEAR_W }}
+            >
+              {year}
+            </div>
+            <div style={cellGridStyle}>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => {
+                const isFuture =
+                  year > currentYear ||
+                  (year === currentYear && month > currentMonth);
+                const data = monthlyData[year]?.[month];
+                const count = data?.count ?? 0;
+                const cellStyle = isFuture
+                  ? { height: 28 }
+                  : count === 0
+                    ? { height: 28, backgroundColor: "var(--heatmap-0)", opacity: 0.3 }
+                    : { height: 28, backgroundColor: `var(--heatmap-${count})` };
+                return (
+                  <div
+                    key={month}
+                    className="rounded"
+                    style={cellStyle}
+                    onMouseOver={
+                      data && !isFuture
+                        ? (e) => handleMouseOver(e, year, month, data)
+                        : undefined
+                    }
+                    onMouseLeave={data && !isFuture ? handleMouseLeave : undefined}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Legend */}
+      <div className="mt-3 flex items-center gap-4 text-[10px] text-muted-foreground">
+        <span>Active weeks per month:</span>
+        {[1, 2, 3, 4].map((n) => (
+          <div key={n} className="flex items-center gap-1">
+            <div
+              className="shrink-0 rounded"
+              style={{ width: 12, height: 12, backgroundColor: `var(--heatmap-${n})` }}
+            />
+            <span>{n === 4 ? "4+" : n}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Tooltip */}
+      {hoveredValue && !isSharing && (
+        <div
+          className="pointer-events-none fixed z-50"
+          style={{
+            left: tooltipPos.x,
+            top: tooltipPos.y,
+            transform: tooltipPos.showBelow
+              ? "translate(-50%, 0)"
+              : "translate(-50%, -100%)",
+          }}
+        >
+          <MonthlyTooltipContent value={hoveredValue} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MonthlyTooltipContent({ value }) {
+  const { year, month, activeWeeks } = value;
+  return (
+    <div className="grid min-w-[8rem] max-w-[16rem] items-start gap-1 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+      <p className="font-bold">
+        {MONTH_NAMES[month - 1]} {year}
+      </p>
+      <p className="text-muted-foreground">
+        {activeWeeks === 0
+          ? "No training sessions"
+          : `${activeWeeks} active ${activeWeeks === 1 ? "week" : "weeks"}`}
       </p>
     </div>
   );

@@ -1025,16 +1025,14 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
                   (year === currentYear && month > currentMonth);
                 const data = monthlyData[year]?.[month];
                 const count = data?.count ?? 0;
-                const cellStyle = isFuture
-                  ? { height: 28 }
+                const innerStyle = isFuture
+                  ? {}
                   : count === 0
                     ? {
-                        height: 28,
                         backgroundColor: "var(--heatmap-0)",
                         opacity: 0.3,
                       }
                     : {
-                        height: 28,
                         backgroundColor: `var(--heatmap-${count})`,
                         ...(count === 4
                           ? { filter: "brightness(1.15) saturate(0.8)" }
@@ -1043,15 +1041,20 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
                 return (
                   <div
                     key={month}
-                    className={`rounded-[6px] transition-transform duration-150 ${!isFuture && count > 0 ? "hover:scale-105" : ""}`}
-                    style={cellStyle}
+                    className={`rounded-[6px] p-[2px] transition-transform duration-150 ${!isFuture && count > 0 ? "hover:scale-105" : ""}`}
+                    style={{ height: 28 }}
                     onMouseOver={
                       !isFuture
                         ? (e) => handleMouseOver(e, year, month, data)
                         : undefined
                     }
                     onMouseLeave={!isFuture ? handleMouseLeave : undefined}
-                  />
+                  >
+                    <div
+                      className="h-full w-full rounded-[4px]"
+                      style={innerStyle}
+                    />
+                  </div>
                 );
               })}
             </div>

@@ -5,8 +5,11 @@ import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { HomeInspirationCards } from "./home-inspiration-cards";
-import { MostRecentSessionCard } from "./most-recent-session-card";
 import { DataSheetStatus, RowProcessingIndicator } from "./row-processing-indicator";
+import { SessionAnalysisCard } from "@/components/analyzer/session-analysis-card";
+import { ThisMonthInIronCard } from "@/components/analyzer/this-month-in-iron-card";
+import { ConsistencyCard } from "@/components/analyzer/consistency-card";
+import { ActivityHeatmapsCard } from "@/components/analyzer/heatmap-card";
 import { OnBoardingDashboard } from "@/components/instructions-cards";
 import { ConsistencyGradesRow } from "./consistency-grades-row";
 import { motion } from "motion/react";
@@ -87,6 +90,7 @@ export function HomeDashboard() {
   } = useUserLiftingData();
   const [isProgressDone, setIsProgressDone] = useState(false);
   const [hasDataLoaded, setHasDataLoaded] = useState(false);
+  const [highlightDate, setHighlightDate] = useState(null);
 
   useEffect(() => {
     if (isProgressDone) setHasDataLoaded(true);
@@ -162,7 +166,19 @@ export function HomeDashboard() {
         />
       )}
       {sheetInfo?.ssid && <HomeInspirationCards isProgressDone={hasDataLoaded} />}
-      {sheetInfo?.ssid && <MostRecentSessionCard isProgressDone={hasDataLoaded} />}
+      {sheetInfo?.ssid && hasDataLoaded && (
+        <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+          <SessionAnalysisCard
+            highlightDate={highlightDate}
+            setHighlightDate={setHighlightDate}
+          />
+          <div className="flex flex-col gap-6">
+            <ThisMonthInIronCard />
+            <ConsistencyCard />
+          </div>
+          <ActivityHeatmapsCard />
+        </section>
+      )}
     </div>
   );
 }

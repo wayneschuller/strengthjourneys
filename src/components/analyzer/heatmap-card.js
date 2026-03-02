@@ -514,11 +514,9 @@ function getSharingMessage(years) {
   ]);
 }
 
-// Week cell sizing constants for the weekly matrix
-const WEEKLY_CELL = 11; // px
-const WEEKLY_GAP = 2; // px
-const WEEKLY_UNIT = WEEKLY_CELL + WEEKLY_GAP; // px per column
-const WEEKLY_YEAR_W = 32; // px for year label
+// Weekly matrix layout constants
+const WEEKLY_GAP = 2; // px gap between cells
+const WEEKLY_YEAR_W = 32; // px for year label column
 
 const WEEKLY_MONTH_LABELS = [
   { label: "Jan", week: 1 },
@@ -590,7 +588,8 @@ function generateWeeklyHeatmapData(parsedData, startYear, endYear, isDemoMode) {
 }
 
 // All-years matrix: one row per year, one cell per week (1–53).
-// Color intensity = sessions that week: 0 blank, 1 light, 2 medium, 3+ full (won).
+// Cells fill the full available card width via CSS grid.
+// Color is applied via inline style using --heatmap-N CSS variables so themes work.
 function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   const { status: authStatus } = useSession();
   const isDemoMode = authStatus === "unauthenticated";
@@ -620,49 +619,62 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
 
   const handleMouseLeave = useCallback(() => setHoveredValue(null), []);
 
+  // 53-column grid that fills available width; gap between cells
+  const cellGridStyle = {
+    display: "grid",
+    gridTemplateColumns: "repeat(53, 1fr)",
+    gap: WEEKLY_GAP,
+    flex: 1,
+  };
+
   return (
-    <div className="relative overflow-x-auto">
-      {/* Month label header */}
-      <div
-        className="relative mb-1"
-        style={{ height: 14, paddingLeft: WEEKLY_YEAR_W + WEEKLY_GAP }}
-      >
-        {WEEKLY_MONTH_LABELS.map(({ label, week }) => (
-          <span
-            key={label}
-            className="absolute text-[9px] text-muted-foreground"
-            style={{ left: (week - 1) * WEEKLY_UNIT }}
-          >
-            {label}
-          </span>
-        ))}
+    <div className="relative w-full">
+      {/* Month label header — same 53-col grid so columns align with cells */}
+      <div className="mb-1 flex w-full items-end">
+        <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
+        <div style={cellGridStyle}>
+          {WEEKLY_MONTH_LABELS.map(({ label, week }) => (
+            <span
+              key={label}
+              className="overflow-visible whitespace-nowrap text-[9px] text-muted-foreground"
+              style={{ gridColumn: week }}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Year rows */}
-      <div className="flex flex-col gap-[2px]">
+      <div className="flex w-full flex-col gap-[2px]">
         {years.map((year) => (
-          <div key={year} className="flex items-center" style={{ gap: WEEKLY_GAP }}>
+          <div key={year} className="flex w-full items-center">
             <div
               className="shrink-0 pr-1 text-right text-[10px] text-muted-foreground"
               style={{ width: WEEKLY_YEAR_W }}
             >
               {year}
             </div>
-            {Array.from({ length: 53 }, (_, i) => i + 1).map((weekNum) => {
-              const data = weeklyData[year]?.[weekNum];
-              const count = data?.count ?? 0;
-              return (
-                <div
-                  key={weekNum}
-                  className={`heatmap-cell-${count} shrink-0 rounded-sm`}
-                  style={{ width: WEEKLY_CELL, height: WEEKLY_CELL }}
-                  onMouseOver={
-                    data ? (e) => handleMouseOver(e, year, weekNum, data) : undefined
-                  }
-                  onMouseLeave={data ? handleMouseLeave : undefined}
-                />
-              );
-            })}
+            <div style={cellGridStyle}>
+              {Array.from({ length: 53 }, (_, i) => i + 1).map((weekNum) => {
+                const data = weeklyData[year]?.[weekNum];
+                const count = data?.count ?? 0;
+                return (
+                  <div
+                    key={weekNum}
+                    className="rounded-sm"
+                    style={{
+                      aspectRatio: "1",
+                      backgroundColor: `var(--heatmap-${count})`,
+                    }}
+                    onMouseOver={
+                      data ? (e) => handleMouseOver(e, year, weekNum, data) : undefined
+                    }
+                    onMouseLeave={data ? handleMouseLeave : undefined}
+                  />
+                );
+              })}
+            </div>
           </div>
         ))}
       </div>
@@ -673,8 +685,8 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
         {[1, 2, 3].map((n) => (
           <div key={n} className="flex items-center gap-1">
             <div
-              className={`heatmap-cell-${n} shrink-0 rounded-sm`}
-              style={{ width: WEEKLY_CELL, height: WEEKLY_CELL }}
+              className="shrink-0 rounded-sm"
+              style={{ width: 12, height: 12, backgroundColor: `var(--heatmap-${n})` }}
             />
             <span>{n === 3 ? "3+ won" : n}</span>
           </div>

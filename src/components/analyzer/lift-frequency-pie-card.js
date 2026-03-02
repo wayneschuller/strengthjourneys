@@ -111,12 +111,9 @@ export const TopLiftsTable = ({ stats, selectedLiftType, onSelectLift, showStats
                 }
               }}
               tabIndex={0}
-              style={{
-                borderLeft: `3px solid ${selectedLiftType === item.liftType ? item.color : "transparent"}`,
-              }}
               className={cn(
-                "hover:bg-muted/40 focus-visible:bg-muted/50 cursor-pointer transition-colors outline-none",
-                selectedLiftType === item.liftType && "bg-muted/60 font-medium",
+                "hover:bg-muted/50 focus-visible:bg-muted/60 cursor-pointer transition-colors outline-none",
+                selectedLiftType === item.liftType && "bg-muted font-medium",
               )}
               aria-label={`Show ${item.liftType} reps over time`}
             >

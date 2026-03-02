@@ -19,7 +19,7 @@ export function TopLiftsCard({ selectedLiftType, onSelectLift }) {
 
   if (!liftTypes || liftTypes.length < 1) return null;
 
-  const tableLifts = liftTypes.slice(0, 20);
+  const tableLifts = liftTypes;
   const liftColors = {};
   tableLifts.forEach((item) => {
     liftColors[item.liftType] = getColor(item.liftType);

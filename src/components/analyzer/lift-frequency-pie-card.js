@@ -345,7 +345,7 @@ export function LiftTypeFrequencyPieCard({ selectedLiftType, onSelectLift }) {
         <MiniFeedbackWidget
           prompt="Useful card?"
           contextId="lift_frequency_pie_card"
-          page="/analyzer"
+          page="/lift-explorer"
           analyticsExtra={{ context: "lift_frequency_pie_card" }}
         />
       </CardFooter>

@@ -1,6 +1,12 @@
-
 import { format } from "date-fns";
-import { cloneElement, useState, useEffect, useRef, useCallback, useMemo } from "react";
+import {
+  cloneElement,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useTheme } from "next-themes";
 import CalendarHeatmap from "react-calendar-heatmap";
 import {
@@ -39,18 +45,22 @@ const MAX_LIFTS_SHOWN = 6;
 
 // Heatmap card titles, staged by training history length.
 // SSR always renders index 0 of stage1; client randomises after intervals load.
+
+// New lifters get neutral and functional phrasing.
 const HEATMAP_TITLES_STAGE1 = [
   "The Lifting Heatmap",
   "The Training Overview",
   "The Lifting Record",
   "The Training History",
-  "The Strength Summary",
+  "The Strength Overview",
   "The Lifting Patterns",
   "The Consistency View",
   "The Activity History",
   "The Training Map",
   "The Full Picture",
 ];
+
+// Medium term lifters get more identity based phrasing.
 const HEATMAP_TITLES_STAGE2 = [
   "The Seasons of Training",
   "The Pattern of Consistency",
@@ -63,6 +73,8 @@ const HEATMAP_TITLES_STAGE2 = [
   "The Consistency in Motion",
   "The Making of a Lifter",
 ];
+
+// We intentionally get more poetic for long term lifters.
 const HEATMAP_TITLES_STAGE3 = [
   "The Lifting Journey",
   "The Lifetime Under the Bar",
@@ -148,13 +160,16 @@ export function ActivityHeatmapsCard() {
         // clipboard operation open while html2canvas renders — safe to switch apps.
         const blobPromise = html2canvas(shareRef.current, {
           ignoreElements: (element) => element.id === "ignoreCopy",
-        }).then((canvas) => new Promise((resolve) => canvas.toBlob(resolve, "image/png")));
+        }).then(
+          (canvas) =>
+            new Promise((resolve) => canvas.toBlob(resolve, "image/png")),
+        );
 
         await navigator.clipboard.write([
           new ClipboardItem({ "image/png": blobPromise }),
         ]);
         console.log("Heatmap copied to clipboard");
-        gaEvent(GA_EVENT_TAGS.HEATMAP_SHARE_CLIPBOARD, { page: "/analyzer" });
+        gaEvent(GA_EVENT_TAGS.HEATMAP_SHARE_CLIPBOARD, { page: "/lift-explorer" });
       }
 
       logTiming("html2canvas", performance.now() - startTime);
@@ -170,13 +185,17 @@ export function ActivityHeatmapsCard() {
     <>
       {(isSharing || shareReady) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-          <div className="flex flex-col items-center gap-4 rounded-lg border bg-background p-6 shadow-lg">
+          <div className="bg-background flex flex-col items-center gap-4 rounded-lg border p-6 shadow-lg">
             {isSharing ? (
               <>
-                <LoaderCircle className="h-8 w-8 animate-spin" aria-label="Loading" role="status" />
+                <LoaderCircle
+                  className="h-8 w-8 animate-spin"
+                  aria-label="Loading"
+                  role="status"
+                />
                 <div className="text-center">
                   <h3 className="text-lg font-semibold">Generating Image</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="text-muted-foreground mt-2 text-sm">
                     {getSharingMessage(intervals?.length || 1)}
                   </p>
                 </div>
@@ -186,18 +205,23 @@ export function ActivityHeatmapsCard() {
                 <h3 className="text-lg font-semibold">
                   Heatmap Copied to Clipboard
                 </h3>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="text-muted-foreground mt-2 text-sm">
                   Paste it anywhere — social media, Discord, messages, or a
                   Google Doc.
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Use <kbd className="rounded border bg-muted px-1.5 py-0.5 text-xs font-semibold">Ctrl+V</kbd> on
-                  Windows/Linux
-                  or <kbd className="rounded border bg-muted px-1.5 py-0.5 text-xs font-semibold">Cmd+V</kbd> on
-                  Mac.
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Use{" "}
+                  <kbd className="bg-muted rounded border px-1.5 py-0.5 text-xs font-semibold">
+                    Ctrl+V
+                  </kbd>{" "}
+                  on Windows/Linux or{" "}
+                  <kbd className="bg-muted rounded border px-1.5 py-0.5 text-xs font-semibold">
+                    Cmd+V
+                  </kbd>{" "}
+                  on Mac.
                 </p>
                 <button
-                  className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 mt-4 rounded-md px-4 py-2 text-sm font-medium"
                   onClick={() => setShareReady(false)}
                 >
                   Got it
@@ -212,7 +236,8 @@ export function ActivityHeatmapsCard() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <CardTitle>
-                {authStatus === "unauthenticated" && "Demo mode: "}{cardTitle}
+                {authStatus === "unauthenticated" && "Demo mode: "}
+                {cardTitle}
               </CardTitle>
               {intervals && (
                 <CardDescription>
@@ -296,9 +321,9 @@ export function ActivityHeatmapsCard() {
               {/* Footer with app branding - only visible during image capture */}
               {isSharing && (
                 <div className="mt-6 flex items-center justify-center border-t pt-4">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Created with{" "}
-                    <span className="font-semibold text-foreground">
+                    <span className="text-foreground font-semibold">
                       Strength Journeys
                     </span>
                     {" • "}
@@ -316,7 +341,7 @@ export function ActivityHeatmapsCard() {
             <div className="flex w-full items-center justify-between gap-3">
               <MiniFeedbackWidget
                 contextId="heatmap_card"
-                page="/analyzer"
+                page="/lift-explorer"
                 analyticsExtra={{ context: "activity_heatmaps_card" }}
               />
               <ShareCopyButton
@@ -437,7 +462,7 @@ function HeatmapTooltipContent({ value }) {
   );
 
   return (
-    <div className="grid min-w-[10rem] max-w-[20rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="border-border/50 bg-background grid max-w-[20rem] min-w-[10rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">{dateLabel}</p>
       <p className="text-muted-foreground">
         {totalSets} {totalSets === 1 ? "set" : "sets"} across {uniqueLifts}{" "}
@@ -465,7 +490,11 @@ function HeatmapTooltipContent({ value }) {
         {visibleLifts.map((liftType) => (
           <div key={liftType}>
             <LiftTypeIndicator liftType={liftType} />
-            <SessionRow lifts={liftsByType[liftType]} showDate={false} isMetric={isMetric} />
+            <SessionRow
+              lifts={liftsByType[liftType]}
+              showDate={false}
+              isMetric={isMetric}
+            />
           </div>
         ))}
         {hiddenCount > 0 && (
@@ -625,7 +654,7 @@ function generateWeeklyHeatmapData(parsedData, startYear, endYear, isDemoMode) {
       result[year] = {};
       for (let week = 1; week <= 53; week++) {
         const rand = Math.random();
-        const count = rand < 0.25 ? 0 : rand < 0.42 ? 1 : rand < 0.60 ? 2 : 3;
+        const count = rand < 0.25 ? 0 : rand < 0.42 ? 1 : rand < 0.6 ? 2 : 3;
         result[year][week] = { sessions: count, count };
       }
     }
@@ -639,7 +668,8 @@ function generateWeeklyHeatmapData(parsedData, startYear, endYear, isDemoMode) {
     if (year < startYear || year > endYear) continue;
     const weekNum = getCalendarWeekOfYear(lift.date);
     if (!weekMap[year]) weekMap[year] = {};
-    if (!weekMap[year][weekNum]) weekMap[year][weekNum] = { sessionDays: new Set() };
+    if (!weekMap[year][weekNum])
+      weekMap[year][weekNum] = { sessionDays: new Set() };
     weekMap[year][weekNum].sessionDays.add(lift.date);
   }
 
@@ -661,7 +691,11 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   const { status: authStatus } = useSession();
   const isDemoMode = authStatus === "unauthenticated";
   const [hoveredValue, setHoveredValue] = useState(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0, showBelow: false });
+  const [tooltipPos, setTooltipPos] = useState({
+    x: 0,
+    y: 0,
+    showBelow: false,
+  });
 
   const weeklyData = useMemo(
     () => generateWeeklyHeatmapData(parsedData, startYear, endYear, isDemoMode),
@@ -708,7 +742,7 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
           {WEEKLY_MONTH_LABELS.map(({ label, week }) => (
             <span
               key={label}
-              className="overflow-visible whitespace-nowrap text-[9px] text-muted-foreground lg:text-[11px] 2xl:text-xs"
+              className="text-muted-foreground overflow-visible text-[9px] whitespace-nowrap lg:text-[11px] 2xl:text-xs"
               style={{ gridColumn: week }}
             >
               {label}
@@ -722,7 +756,7 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
         {years.map((year) => (
           <div key={year} className="flex w-full items-center">
             <div
-              className="shrink-0 pr-2 text-right text-xs text-muted-foreground lg:text-sm"
+              className="text-muted-foreground shrink-0 pr-2 text-right text-xs lg:text-sm"
               style={{ width: WEEKLY_YEAR_W }}
             >
               {year}
@@ -770,7 +804,7 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       </div>
 
       {/* Legend */}
-      <div className="mt-3 flex items-center gap-4 text-[10px] text-muted-foreground">
+      <div className="text-muted-foreground mt-3 flex items-center gap-4 text-[10px]">
         <span>Sessions per week:</span>
         {[
           { count: 1, label: "1" },
@@ -813,7 +847,7 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
 function WeeklyTooltipContent({ value }) {
   const { year, weekNum, sessions } = value;
   return (
-    <div className="grid min-w-[8rem] max-w-[16rem] items-start gap-1 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="border-border/50 bg-background grid max-w-[16rem] min-w-[8rem] items-start gap-1 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">
         Week of {getWeekStartDate(year, weekNum)}, {year}
       </p>
@@ -827,14 +861,29 @@ function WeeklyTooltipContent({ value }) {
 }
 
 const MONTH_NAMES = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
 // Builds { [year]: { [month 1-12]: { activeWeeks, count 0-4, weekBreakdown } } }.
 // count = distinct calendar weeks with at least one session, capped at 4.
 // weekBreakdown = [{ sessions }] sorted by week order within the month, for tooltips.
-function generateMonthlyHeatmapData(parsedData, startYear, endYear, isDemoMode) {
+function generateMonthlyHeatmapData(
+  parsedData,
+  startYear,
+  endYear,
+  isDemoMode,
+) {
   if (isDemoMode) {
     const result = {};
     for (let year = startYear; year <= endYear; year++) {
@@ -842,7 +891,15 @@ function generateMonthlyHeatmapData(parsedData, startYear, endYear, isDemoMode) 
       for (let month = 1; month <= 12; month++) {
         const rand = Math.random();
         const count =
-          rand < 0.12 ? 0 : rand < 0.28 ? 1 : rand < 0.50 ? 2 : rand < 0.75 ? 3 : 4;
+          rand < 0.12
+            ? 0
+            : rand < 0.28
+              ? 1
+              : rand < 0.5
+                ? 2
+                : rand < 0.75
+                  ? 3
+                  : 4;
         const weekBreakdown = Array.from({ length: count }, () => ({
           sessions: Math.floor(Math.random() * 4) + 1,
         }));
@@ -862,7 +919,8 @@ function generateMonthlyHeatmapData(parsedData, startYear, endYear, isDemoMode) 
     const weekNum = getCalendarWeekOfYear(lift.date);
     if (!monthMap[year]) monthMap[year] = {};
     if (!monthMap[year][month]) monthMap[year][month] = {};
-    if (!monthMap[year][month][weekNum]) monthMap[year][month][weekNum] = new Set();
+    if (!monthMap[year][month][weekNum])
+      monthMap[year][month][weekNum] = new Set();
     monthMap[year][month][weekNum].add(lift.date);
   }
 
@@ -891,10 +949,15 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   const { status: authStatus } = useSession();
   const isDemoMode = authStatus === "unauthenticated";
   const [hoveredValue, setHoveredValue] = useState(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0, showBelow: false });
+  const [tooltipPos, setTooltipPos] = useState({
+    x: 0,
+    y: 0,
+    showBelow: false,
+  });
 
   const monthlyData = useMemo(
-    () => generateMonthlyHeatmapData(parsedData, startYear, endYear, isDemoMode),
+    () =>
+      generateMonthlyHeatmapData(parsedData, startYear, endYear, isDemoMode),
     [parsedData, startYear, endYear, isDemoMode],
   );
 
@@ -936,7 +999,7 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
           {MONTH_NAMES.map((name) => (
             <span
               key={name}
-              className="text-center text-[9px] text-muted-foreground lg:text-[11px] 2xl:text-xs"
+              className="text-muted-foreground text-center text-[9px] lg:text-[11px] 2xl:text-xs"
             >
               {name}
             </span>
@@ -949,7 +1012,7 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
         {years.map((year) => (
           <div key={year} className="flex w-full items-center">
             <div
-              className="shrink-0 pr-2 text-right text-xs text-muted-foreground lg:text-sm"
+              className="text-muted-foreground shrink-0 pr-2 text-right text-xs lg:text-sm"
               style={{ width: WEEKLY_YEAR_W }}
             >
               {year}
@@ -964,8 +1027,15 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
                 const cellStyle = isFuture
                   ? { height: 28 }
                   : count === 0
-                    ? { height: 28, backgroundColor: "var(--heatmap-0)", opacity: 0.3 }
-                    : { height: 28, backgroundColor: `var(--heatmap-${count})` };
+                    ? {
+                        height: 28,
+                        backgroundColor: "var(--heatmap-0)",
+                        opacity: 0.3,
+                      }
+                    : {
+                        height: 28,
+                        backgroundColor: `var(--heatmap-${count})`,
+                      };
                 return (
                   <div
                     key={month}
@@ -986,13 +1056,17 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       </div>
 
       {/* Legend */}
-      <div className="mt-3 flex items-center gap-4 text-[10px] text-muted-foreground">
+      <div className="text-muted-foreground mt-3 flex items-center gap-4 text-[10px]">
         <span>Active weeks per month:</span>
         {[1, 2, 3, 4].map((n) => (
           <div key={n} className="flex items-center gap-1">
             <div
               className="shrink-0 rounded"
-              style={{ width: 12, height: 12, backgroundColor: `var(--heatmap-${n})` }}
+              style={{
+                width: 12,
+                height: 12,
+                backgroundColor: `var(--heatmap-${n})`,
+              }}
             />
             <span>{n === 4 ? "4+" : n}</span>
           </div>
@@ -1028,7 +1102,7 @@ function weekEmoji(sessions) {
 function MonthlyTooltipContent({ value }) {
   const { year, month, weekBreakdown } = value;
   return (
-    <div className="grid min-w-[10rem] max-w-[18rem] items-start gap-1 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="border-border/50 bg-background grid max-w-[18rem] min-w-[10rem] items-start gap-1 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
       <p className="font-bold">
         {MONTH_NAMES[month - 1]} {year}
       </p>
@@ -1036,7 +1110,9 @@ function MonthlyTooltipContent({ value }) {
         <div className="flex flex-col gap-0.5">
           {weekBreakdown.map(({ sessions }, i) => (
             <p key={i} className="text-muted-foreground">
-              <span className="font-semibold text-foreground">Week {i + 1}:</span>{" "}
+              <span className="text-foreground font-semibold">
+                Week {i + 1}:
+              </span>{" "}
               {sessions} {sessions === 1 ? "session" : "sessions"}{" "}
               {weekEmoji(sessions)}
             </p>

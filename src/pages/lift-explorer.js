@@ -37,16 +37,16 @@ export async function getStaticProps() {
  * @param {Object} props
  * @param {Array} props.relatedArticles - CMS articles related to the PR Analyzer topic, fetched via ISR.
  */
-export default function Analyzer({ relatedArticles }) {
+export default function LiftExplorer({ relatedArticles }) {
   // OG Meta Tags
   const description =
-    "Unlock free insights into your strength training with our PR Analyzer. Track PRs, consistency and detailed squat/bench/deadlift analysis.";
-  const title = "PR Analyzer - Strength Progress Reports | Strength Journeys";
-  const canonicalURL = "https://www.strengthjourneys.xyz/analyzer";
+    "Explore your full lifting history lift by lift. Select any movement to see your personal journey, records across every rep range, and training frequency at a glance.";
+  const title = "Lift Explorer - Explore Your Lifting History | Strength Journeys";
+  const canonicalURL = "https://www.strengthjourneys.xyz/lift-explorer";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_analyzer_og.png";
   const keywords =
-    "strength training, PR analyzer, workout progress, consistency tracking, monthly highlights, lifting journey, strength gains, personal records, workout heatmap, lift frequency analysis, strength progress reports, fitness data visualization";
+    "lift explorer, strength training, personal records, lifting history, rep max, lift frequency, strength journey, PR tracker, barbell lifts, workout history";
 
   return (
     <>
@@ -62,7 +62,7 @@ export default function Analyzer({ relatedArticles }) {
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys PR Analyzer",
+              alt: "Strength Journeys Lift Explorer",
             },
           ],
           site_name: "Strength Journeys",
@@ -80,18 +80,17 @@ export default function Analyzer({ relatedArticles }) {
         ]}
       />
       {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
-      <AnalyzerMain relatedArticles={relatedArticles} />
+      <LiftExplorerMain relatedArticles={relatedArticles} />
     </>
   );
 }
 
 /**
- * Inner client component for the PR Analyzer page. Renders the full dashboard of analyzer cards
- * (session analysis, consistency, monthly highlights, heatmaps, lift accordion) and related articles.
+ * Inner client component for the Lift Explorer page.
  * @param {Object} props
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
  */
-function AnalyzerMain({ relatedArticles }) {
+function LiftExplorerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
   const { isLoading, sheetInfo, liftTypes } = useUserLiftingData();
   const [selectedLiftType, setSelectedLiftType] = useState(null);
@@ -109,11 +108,11 @@ function AnalyzerMain({ relatedArticles }) {
   return (
     <PageContainer>
       <PageHeader>
-        <PageHeaderHeading icon={Trophy}>PR Analyzer</PageHeaderHeading>
+        <PageHeaderHeading icon={Trophy}>Lift Explorer</PageHeaderHeading>
         <PageHeaderDescription>
-          Unlock insights with your personalized strength dashboard. Track PRs,
-          consistency, recent highlights and detailed analysis of your squat,
-          bench, deadlift and more.
+          Explore your lifting history lift by lift. Select any movement to see
+          your personal journey, records across every rep range, and how often
+          you train it.
         </PageHeaderDescription>
       </PageHeader>
       <section className="mt-4 flex flex-col gap-6 xl:flex-row">

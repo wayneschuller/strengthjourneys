@@ -260,7 +260,7 @@ export function FeedbackWidget() {
 
   const PAGE_NAMES = {
     "/": session ? "the Home Dashboard" : "the Landing Page",
-    "/analyzer": "the PR Analyzer",
+    "/lift-explorer": "the Lift Explorer",
     "/visualizer": "the Visualizer",
     "/tonnage": "Tonnage Tracking",
     "/calculator": "the 1RM Calculator",

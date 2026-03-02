@@ -292,7 +292,7 @@ function getTodayInviteMessage(now = new Date()) {
 
 const DATA_ACCESS_BANNER_PATHS = [
   "/visualizer",
-  "/analyzer",
+  "/lift-explorer",
   "/barbell-strength-potential",
   "/tonnage",
   "/[lift]",

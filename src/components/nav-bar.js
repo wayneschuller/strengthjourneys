@@ -392,8 +392,8 @@ function StrengthInsightsMenu() {
 
   const insights = [
     {
-      title: "PR Analyzer",
-      href: "/analyzer",
+      title: "Lift Explorer",
+      href: "/lift-explorer",
       icon: <Trophy className="h-5 w-5" />,
     },
     {
@@ -458,7 +458,7 @@ function StrengthInsightsMenu() {
           <NavigationMenuTrigger
             className={cn(
               "hover:text-foreground/80 bg-transparent transition-colors",
-              pathname.startsWith("/analyzer") ||
+              pathname.startsWith("/lift-explorer") ||
                 pathname.startsWith("/visualizer") ||
                 pathname.startsWith("/ai-lifting-assistant")
                 ? "text-foreground"

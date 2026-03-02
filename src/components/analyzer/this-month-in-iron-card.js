@@ -346,7 +346,7 @@ export function ThisMonthInIronCard() {
         <CardFooter className="pt-0">
           <MiniFeedbackWidget
             contextId="this_month_in_iron_card"
-            page="/analyzer"
+            page="/lift-explorer"
             analyticsExtra={{ context: "this_month_in_iron_card" }}
           />
         </CardFooter>

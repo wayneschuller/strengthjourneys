@@ -213,7 +213,7 @@ export function MostRecentSessionCard({
                 {titlePrefix}
               </CardTitle>
               <Link
-                href="/analyzer"
+                href="/lift-explorer"
                 className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 View full analysis
@@ -393,7 +393,7 @@ export function MostRecentSessionCard({
                 </Tooltip>
               </div>
               <Link
-                href="/analyzer"
+                href="/lift-explorer"
                 className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 View full analysis

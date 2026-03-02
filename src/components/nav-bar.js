@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { DarkModeToggle, ThemeChooser } from "@/components/theme-chooser";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
-import { Table2, Loader2, Github, Trophy, LineChart } from "lucide-react";
+import { Table2, Loader2, Github, Layers, LineChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
@@ -394,7 +394,7 @@ function StrengthInsightsMenu() {
     {
       title: "Lift Explorer",
       href: "/lift-explorer",
-      icon: <Trophy className="h-5 w-5" />,
+      icon: <Layers className="h-5 w-5" />,
     },
     {
       title: "Strength Visualizer",

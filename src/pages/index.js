@@ -10,7 +10,7 @@ import {
   Calculator,
   Timer,
   LineChart,
-  Trophy,
+  Layers,
   Newspaper,
   BicepsFlexed,
   Music,
@@ -55,7 +55,7 @@ export const featurePages = [
     title: "Lift Explorer",
     description:
       "Explore your lifting history lift by lift. PRs across every rep range, your journey, and training frequency.",
-    IconComponent: Trophy,
+    IconComponent: Layers,
   },
   {
     href: "/visualizer",

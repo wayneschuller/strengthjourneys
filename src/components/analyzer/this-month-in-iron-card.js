@@ -69,24 +69,27 @@ export function ThisMonthInIronCard() {
     () => getMonthlyCardTitle(boundaries),
     [boundaries],
   );
-
-  const [topTierVerdict, setTopTierVerdict] = useState(TOP_TIER_VERDICTS[0]);
-  useEffect(() => {
-    setTopTierVerdict(
-      TOP_TIER_VERDICTS[Math.floor(Math.random() * TOP_TIER_VERDICTS.length)],
-    );
-  }, []);
-
-  const [motivationalPhrase, setMotivationalPhrase] = useState(
-    MOTIVATIONAL_PHRASES[0],
+  const monthPhraseKey = boundaries.currentMonthStart;
+  const topTierVerdict = useMemo(
+    () => pickPhraseForMonth(TOP_TIER_VERDICTS, monthPhraseKey),
+    [monthPhraseKey],
   );
-  useEffect(() => {
-    setMotivationalPhrase(
-      MOTIVATIONAL_PHRASES[
-        Math.floor(Math.random() * MOTIVATIONAL_PHRASES.length)
-      ],
-    );
-  }, []);
+  const motivationalPhrase = useMemo(
+    () => pickPhraseForMonth(MOTIVATIONAL_PHRASES, monthPhraseKey),
+    [monthPhraseKey],
+  );
+  const pastMonthWinHeadline = useMemo(
+    () => pickPhraseForMonth(PAST_MONTH_WIN_HEADLINES, monthPhraseKey),
+    [monthPhraseKey],
+  );
+  const pastMonthLossHeadline = useMemo(
+    () => pickPhraseForMonth(PAST_MONTH_LOSS_HEADLINES, monthPhraseKey),
+    [monthPhraseKey],
+  );
+  const pastMonthNoBaselineHeadline = useMemo(
+    () => pickPhraseForMonth(PAST_MONTH_NO_BASELINE_HEADLINES, monthPhraseKey),
+    [monthPhraseKey],
+  );
 
   const stats = useMemo(() => {
     if (!parsedData) return null;
@@ -137,13 +140,27 @@ export function ThisMonthInIronCard() {
   const verdictHeadline = useMemo(
     () =>
       getVerdictHeadline({
+        boundaries,
         verdict,
         checksSummary,
         sessionsPaceStatus,
         bigFourPaceStatus,
         topTierPhrase: topTierVerdict,
+        pastMonthWinHeadline,
+        pastMonthLossHeadline,
+        pastMonthNoBaselineHeadline,
       }),
-    [verdict, checksSummary, sessionsPaceStatus, bigFourPaceStatus, topTierVerdict],
+    [
+      boundaries,
+      verdict,
+      checksSummary,
+      sessionsPaceStatus,
+      bigFourPaceStatus,
+      topTierVerdict,
+      pastMonthWinHeadline,
+      pastMonthLossHeadline,
+      pastMonthNoBaselineHeadline,
+    ],
   );
 
   useEffect(() => {
@@ -364,6 +381,30 @@ const MOTIVATIONAL_PHRASES = [
   "Make last month jealous",
   "One month stronger",
   "This month or never",
+];
+
+const PAST_MONTH_WIN_HEADLINES = [
+  "Month Won ✅",
+  "Month Locked In 🔒",
+  "Month Dominated 👑",
+  "Month Cleared 💪",
+  "Month Beat: mission complete ✅",
+  "Month conquered. Keep building 🏆",
+];
+
+const PAST_MONTH_LOSS_HEADLINES = [
+  "Month Lost ❌",
+  "Month slipped. Own it and reload ⚒️",
+  "Last month got away. Next one is yours.",
+  "Missed the month. Reset and attack.",
+  "Month not won. Back to work.",
+  "Outperformed by last month. Respond.",
+];
+
+const PAST_MONTH_NO_BASELINE_HEADLINES = [
+  "No prior month to beat. Baseline set.",
+  "First month on record. Benchmark logged.",
+  "No month-versus-month baseline yet.",
 ];
 
 const BIG_FOUR_LIFT_URLS = {
@@ -683,17 +724,44 @@ function getVerdict(stats, strengthLevelPassed) {
 }
 
 function getVerdictHeadline({
+  boundaries,
   verdict,
   checksSummary,
   sessionsPaceStatus,
   bigFourPaceStatus,
   topTierPhrase,
+  pastMonthWinHeadline,
+  pastMonthLossHeadline,
+  pastMonthNoBaselineHeadline,
 }) {
   const checksText = checksSummary
     ? `${checksSummary.checksMet}/${checksSummary.checksTotal}`
     : null;
+  const isPastMonthView = !boundaries?.isCurrentMonthView;
+  const hasFullChecks = checksSummary?.checksTotal === 9;
+  const monthWon = hasFullChecks
+    ? checksSummary.checksMet >= 7
+    : Boolean(verdict?.won);
 
-  if (checksSummary?.checksTotal === 9 && checksSummary.checksMet >= 7) {
+  if (isPastMonthView) {
+    if (verdict?.label === "Writing History") {
+      return {
+        tone: "neutral",
+        text: pastMonthNoBaselineHeadline || "No prior month to beat. Baseline set.",
+        scoreText: checksText ? `${checksText} green` : null,
+      };
+    }
+
+    return {
+      tone: monthWon ? "win" : "neutral",
+      text: monthWon
+        ? (pastMonthWinHeadline || "Month Won ✅")
+        : (pastMonthLossHeadline || "Month Lost ❌"),
+      scoreText: checksText ? `${checksText} green` : null,
+    };
+  }
+
+  if (hasFullChecks && checksSummary.checksMet >= 7) {
     return {
       tone: "win",
       text: topTierPhrase || "Month Won ✅",
@@ -729,6 +797,20 @@ function getVerdictHeadline({
       : "⚒️ Keep forging",
     scoreText: null,
   };
+}
+
+function hashString(value = "") {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function pickPhraseForMonth(phrases, monthKey) {
+  if (!Array.isArray(phrases) || phrases.length === 0) return "";
+  const idx = hashString(monthKey) % phrases.length;
+  return phrases[idx];
 }
 
 function getConfettiOriginFromRef(ref) {

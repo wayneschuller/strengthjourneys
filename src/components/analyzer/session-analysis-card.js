@@ -6,6 +6,7 @@ import {
   useContext,
   useMemo,
 } from "react";
+import { format } from "date-fns";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
@@ -58,6 +59,18 @@ import {
 } from "lucide-react";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionExerciseBlock } from "@/components/analyzer/session-exercise-block";
+
+// "The Latest Session" when on the most recent date.
+// "The Feb 6 Session" for an earlier date in the current year.
+// "Feb 6, 2024 Session" (no "The") for a date in a previous year.
+function getSessionCardTitle(sessionDate, isLastDate) {
+  if (isLastDate || !sessionDate) return "The Latest Session";
+  const sessionYear = parseInt(sessionDate.substring(0, 4), 10);
+  const currentYear = new Date().getFullYear();
+  const d = new Date(sessionDate + "T00:00:00");
+  if (sessionYear === currentYear) return `The ${format(d, "MMM d")} Session`;
+  return `${format(d, "MMM d, yyyy")} Session`;
+}
 
 /**
  * Displays a detailed analysis of a single workout session. Shows exercises with sets,
@@ -295,7 +308,7 @@ export function SessionAnalysisCard({
                     Demo Mode
                   </span>
                 )}
-                Your last session
+                {getSessionCardTitle(sessionDate, isLastDate)}
                 {isValidating && (
                   <LoaderCircle className="inline-flex h-4 w-4 animate-spin text-muted-foreground" />
                 )}

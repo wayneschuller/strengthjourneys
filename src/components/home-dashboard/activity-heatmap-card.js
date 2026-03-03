@@ -28,7 +28,6 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "@/components/visualizer/visualizer-utils";
-import Link from "next/link";
 import { motion } from "motion/react";
 import { processConsistency } from "@/components/analyzer/consistency-card";
 import { getGradeAndColor } from "@/lib/consistency-grades";

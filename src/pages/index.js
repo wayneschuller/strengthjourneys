@@ -10,7 +10,7 @@ import {
   Calculator,
   Timer,
   LineChart,
-  Trophy,
+  Layers,
   Newspaper,
   BicepsFlexed,
   Music,
@@ -51,11 +51,11 @@ import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strengt
 // The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [
   {
-    href: "/analyzer",
-    title: "PR Analyzer",
+    href: "/lift-explorer",
+    title: "Lift Explorer",
     description:
-      "See lifetime and recent personal records. Consistency pie charts and heatmaps.",
-    IconComponent: Trophy,
+      "Explore your lifting history lift by lift. PRs across every rep range, your journey, and training frequency.",
+    IconComponent: Layers,
   },
   {
     href: "/visualizer",
@@ -331,7 +331,7 @@ export default function Home() {
  */
 function FeatureCard({ href, title, description, IconComponent, index = 0 }) {
   const isWarmupsCalculator = href === "/warm-up-sets-calculator";
-  const isAnalyzer = href === "/analyzer";
+  const isAnalyzer = href === "/lift-explorer";
   const isGorillaCalculator = href === "/how-strong-is-a-gorilla";
   const chartColorVar = `--chart-${(index % 5) + 1}`;
 

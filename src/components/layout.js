@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { gaTrackSignInClick } from "@/lib/analytics";
+import { devLog } from "@/lib/processing-utils";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import {
@@ -55,7 +56,7 @@ export function Layout({ children }) {
   const parseErrorShown = useRef(false);
   const demoShown = useRef(false);
 
-  // Toast 1: API Error — uses fetchFailed from useSWR's onErrorRetry callback,
+  // Sheet fetch error — uses fetchFailed from useSWR's onErrorRetry callback,
   // which only fires after retries are exhausted (not during transient gaps
   // between SWR's error/retry cycles). See use-userlift-data.js for details.
   //
@@ -68,25 +69,24 @@ export function Layout({ children }) {
     if (!fetchFailed || authStatus !== "authenticated") return;
     if (rawRows != null || hasCachedSheetData) return;
 
-    const statusLabel = apiError?.status
-      ? `HTTP ${apiError.status}${apiError?.statusText ? ` ${apiError.statusText}` : ""}`
-      : "Request failed";
     apiErrorShown.current = true;
-
-    toast({
-      variant: "destructive",
-      title: `Google Sheet sync failed (${statusLabel})`,
-      description: apiError?.message || "No error details were provided.",
-    });
+    const { title, description } = buildApiErrorToast(apiError);
+    toast({ variant: "destructive", title, description });
   }, [fetchFailed, authStatus, apiError, rawRows, hasCachedSheetData, toast]);
 
-  // Toast 2: Data Loaded — fires when rawRows changes (new data arrived),
-  // not on every SWR revalidation. Skipped on "/" (home has its own widgets).
+  // New sheet data — fires when new rows arrive, not on every SWR revalidation.
+  // Skipped on "/" (home has its own widgets).
+  // dataSyncedAt (set in SWR onSuccess) acts as the "fetch completed" heartbeat
+  // that guarantees this effect runs on every successful revalidation.
+  // rawRows provides deduplication — toast only shows when row count changed.
   useEffect(() => {
-    if (rawRows == null) return;
+    if (!dataSyncedAt || rawRows == null) return;
     if (!parsedData || !parsedData.length) return;
 
     const isNewData = rawRows !== prevRawRowsRef.current;
+    devLog(
+      `New sheet data check — rawRows: ${rawRows}, prev: ${prevRawRowsRef.current}, isNewData: ${isNewData}, dataSyncedAt: ${dataSyncedAt}, pathname: ${router.pathname}`,
+    );
     prevRawRowsRef.current = rawRows;
 
     if (!isNewData) return;
@@ -132,9 +132,9 @@ export function Layout({ children }) {
         </>
       ),
     });
-  }, [rawRows, parsedData, sheetInfo, router.pathname, toast]);
+  }, [dataSyncedAt, rawRows, parsedData, sheetInfo, router.pathname, toast]);
 
-  // Toast 3: Parse Error
+  // Sheet parse error
   useEffect(() => {
     if (parseErrorShown.current) return;
     if (!parseError) return;
@@ -147,7 +147,7 @@ export function Layout({ children }) {
     });
   }, [parseError, toast]);
 
-  // Toast 4: Demo mode nudge (delayed, on data pages when unauthenticated)
+  // Sign-in nudge — delayed prompt on data pages when unauthenticated
   useEffect(() => {
     if (demoShown.current) return;
     if (authStatus === "loading") return;
@@ -197,6 +197,30 @@ export function Layout({ children }) {
       </div>
     </div>
   );
+}
+
+function buildApiErrorToast(apiError) {
+  const status = apiError?.status;
+  const statusLabel = status ? `HTTP ${status}` : "Request failed";
+  const title = `Google Sheet sync failed (${statusLabel})`;
+
+  if (status === 401 || status === 403) {
+    return {
+      title,
+      description:
+        "Your Google authorization may have expired. Try signing out and back in.",
+    };
+  }
+  if (status === 404) {
+    return {
+      title,
+      description: "Sheet not found — it may have been deleted or unshared.",
+    };
+  }
+  return {
+    title,
+    description: apiError?.message || "No error details were provided.",
+  };
 }
 
 function buildLatestDataMessages(latestDateISO) {
@@ -268,7 +292,7 @@ function getTodayInviteMessage(now = new Date()) {
 
 const DATA_ACCESS_BANNER_PATHS = [
   "/visualizer",
-  "/analyzer",
+  "/lift-explorer",
   "/barbell-strength-potential",
   "/tonnage",
   "/[lift]",

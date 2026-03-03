@@ -10,8 +10,10 @@ import {
 } from "motion/react";
 import confetti from "canvas-confetti";
 import { useSession } from "next-auth/react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -53,25 +55,41 @@ export function ThisMonthInIronCard() {
   const { isMetric } = bio;
   const { status: authStatus } = useSession();
 
-  const boundaries = useMemo(() => getMonthBoundaries(), []);
-
-  const [topTierVerdict, setTopTierVerdict] = useState(TOP_TIER_VERDICTS[0]);
-  useEffect(() => {
-    setTopTierVerdict(
-      TOP_TIER_VERDICTS[Math.floor(Math.random() * TOP_TIER_VERDICTS.length)],
-    );
-  }, []);
-
-  const [motivationalPhrase, setMotivationalPhrase] = useState(
-    MOTIVATIONAL_PHRASES[0],
+  const [monthOffset, setMonthOffset] = useState(0);
+  const maxMonthOffset = useMemo(
+    () => getMaxMonthOffsetFromData(parsedData),
+    [parsedData],
   );
-  useEffect(() => {
-    setMotivationalPhrase(
-      MOTIVATIONAL_PHRASES[
-        Math.floor(Math.random() * MOTIVATIONAL_PHRASES.length)
-      ],
-    );
-  }, []);
+  const safeMonthOffset = Math.min(monthOffset, maxMonthOffset);
+  const boundaries = useMemo(
+    () => getMonthBoundaries(safeMonthOffset),
+    [safeMonthOffset],
+  );
+  const monthCardTitle = useMemo(
+    () => getMonthlyCardTitle(boundaries),
+    [boundaries],
+  );
+  const monthPhraseKey = boundaries.currentMonthStart;
+  const topTierVerdict = useMemo(
+    () => pickPhraseForMonth(TOP_TIER_VERDICTS, monthPhraseKey),
+    [monthPhraseKey],
+  );
+  const motivationalPhrase = useMemo(
+    () => pickPhraseForMonth(MOTIVATIONAL_PHRASES, monthPhraseKey),
+    [monthPhraseKey],
+  );
+  const pastMonthWinHeadline = useMemo(
+    () => pickPhraseForMonth(PAST_MONTH_WIN_HEADLINES, monthPhraseKey),
+    [monthPhraseKey],
+  );
+  const pastMonthLossHeadline = useMemo(
+    () => pickPhraseForMonth(PAST_MONTH_LOSS_HEADLINES, monthPhraseKey),
+    [monthPhraseKey],
+  );
+  const pastMonthNoBaselineHeadline = useMemo(
+    () => pickPhraseForMonth(PAST_MONTH_NO_BASELINE_HEADLINES, monthPhraseKey),
+    [monthPhraseKey],
+  );
 
   const stats = useMemo(() => {
     if (!parsedData) return null;
@@ -122,13 +140,27 @@ export function ThisMonthInIronCard() {
   const verdictHeadline = useMemo(
     () =>
       getVerdictHeadline({
+        boundaries,
         verdict,
         checksSummary,
         sessionsPaceStatus,
         bigFourPaceStatus,
         topTierPhrase: topTierVerdict,
+        pastMonthWinHeadline,
+        pastMonthLossHeadline,
+        pastMonthNoBaselineHeadline,
       }),
-    [verdict, checksSummary, sessionsPaceStatus, bigFourPaceStatus, topTierVerdict],
+    [
+      boundaries,
+      verdict,
+      checksSummary,
+      sessionsPaceStatus,
+      bigFourPaceStatus,
+      topTierVerdict,
+      pastMonthWinHeadline,
+      pastMonthLossHeadline,
+      pastMonthNoBaselineHeadline,
+    ],
   );
 
   useEffect(() => {
@@ -207,16 +239,66 @@ export function ThisMonthInIronCard() {
       CONFETTI_AFTER_HIGHLIGHT_DELAY_MS,
     );
     return () => clearTimeout(timer);
-  }, [checksSummary, highlightsComplete]);
+  }, [checksSummary, highlightsComplete, safeMonthOffset]);
+
+  const viewPreviousMonth = () => {
+    setMonthOffset((prev) => Math.min(maxMonthOffset, prev + 1));
+  };
+
+  const viewNextMonth = () => {
+    setMonthOffset((prev) => Math.max(0, prev - 1));
+  };
 
   return (
     <Card ref={cardRef} className="flex h-full flex-1 flex-col">
-      <CardHeader>
-        <CardTitle>
-          {authStatus === "unauthenticated" && "Demo Mode: "}
-          This Month in Iron
-        </CardTitle>
-        <CardDescription>{motivationalPhrase}</CardDescription>
+      <CardHeader className="pb-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <CardTitle>
+              {authStatus === "unauthenticated" && "Demo Mode: "}
+              {monthCardTitle}
+            </CardTitle>
+            <CardDescription>{motivationalPhrase}</CardDescription>
+          </div>
+          <div className="flex shrink-0 items-center gap-0.5 rounded-lg border bg-muted/30 p-0.5">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={viewPreviousMonth}
+                    disabled={safeMonthOffset >= maxMonthOffset}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Previous month</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={viewNextMonth}
+                    disabled={safeMonthOffset === 0}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Next month</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col space-y-4">
         {!stats && <Skeleton className="h-[30vh]" />}
@@ -264,7 +346,7 @@ export function ThisMonthInIronCard() {
         <CardFooter className="pt-0">
           <MiniFeedbackWidget
             contextId="this_month_in_iron_card"
-            page="/analyzer"
+            page="/lift-explorer"
             analyticsExtra={{ context: "this_month_in_iron_card" }}
           />
         </CardFooter>
@@ -299,6 +381,30 @@ const MOTIVATIONAL_PHRASES = [
   "Make last month jealous",
   "One month stronger",
   "This month or never",
+];
+
+const PAST_MONTH_WIN_HEADLINES = [
+  "Month Won ✅",
+  "Month Locked In 🔒",
+  "Month Dominated 👑",
+  "Month Cleared 💪",
+  "Month Beat: mission complete ✅",
+  "Month conquered. Keep building 🏆",
+];
+
+const PAST_MONTH_LOSS_HEADLINES = [
+  "Month Lost ❌",
+  "Month slipped. Own it and reload ⚒️",
+  "Last month got away. Next one is yours.",
+  "Missed the month. Reset and attack.",
+  "Month not won. Back to work.",
+  "Outperformed by last month. Respond.",
+];
+
+const PAST_MONTH_NO_BASELINE_HEADLINES = [
+  "No prior month to beat. Baseline set.",
+  "First month on record. Benchmark logged.",
+  "No month-versus-month baseline yet.",
 ];
 
 const BIG_FOUR_LIFT_URLS = {
@@ -362,11 +468,17 @@ function AnimatedInteger({ value, className = "" }) {
 
 // ─── Month boundary helpers ────────────────────────────────────────────────
 
-function getMonthBoundaries() {
+function getMonthBoundaries(monthOffset = 0) {
   const today = new Date();
-  const y = today.getFullYear();
-  const m = today.getMonth();
-  const d = today.getDate();
+  const targetMonthDate = new Date(
+    today.getFullYear(),
+    today.getMonth() - monthOffset,
+    1,
+  );
+  const y = targetMonthDate.getFullYear();
+  const m = targetMonthDate.getMonth();
+  const daysInCurrentMonth = new Date(y, m + 1, 0).getDate();
+  const d = monthOffset === 0 ? today.getDate() : daysInCurrentMonth;
   const pad = (n) => String(n).padStart(2, "0");
   const todayStr = `${y}-${pad(m + 1)}-${pad(d)}`;
   const currentMonthStart = `${y}-${pad(m + 1)}-01`;
@@ -375,7 +487,6 @@ function getMonthBoundaries() {
   const py = prevDate.getFullYear();
   const pm = prevDate.getMonth();
   const daysInPrevMonth = new Date(y, m, 0).getDate();
-  const daysInCurrentMonth = new Date(y, m + 1, 0).getDate();
 
   const sameDayInPrev = Math.min(d, daysInPrevMonth);
 
@@ -389,9 +500,53 @@ function getMonthBoundaries() {
     daysInCurrentMonth,
     daysRemainingInCurrentMonth: Math.max(0, daysInCurrentMonth - d),
     daysInPrevMonth,
-    currentMonthName: today.toLocaleString("default", { month: "long" }),
+    currentMonthName: targetMonthDate.toLocaleString("default", { month: "long" }),
+    currentMonthShortYear: targetMonthDate.toLocaleString("default", {
+      month: "short",
+      year: "numeric",
+    }),
     prevMonthName: prevDate.toLocaleString("default", { month: "long" }),
+    isCurrentMonthView: monthOffset === 0,
   };
+}
+
+function getMonthlyCardTitle(boundaries) {
+  if (boundaries.isCurrentMonthView) return "The Month in Iron";
+  return `${boundaries.currentMonthShortYear} in Iron`;
+}
+
+function parseIsoDate(isoDate) {
+  if (!isoDate || typeof isoDate !== "string") return null;
+  const [year, month, day] = isoDate.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+}
+
+function getMaxMonthOffsetFromData(parsedData) {
+  if (!Array.isArray(parsedData) || parsedData.length === 0) return 0;
+
+  let earliestDate = null;
+  for (const entry of parsedData) {
+    if (!entry || entry.isGoal) continue;
+    const entryDate = parseIsoDate(entry.date);
+    if (!entryDate) continue;
+    if (!earliestDate || entryDate < earliestDate) {
+      earliestDate = entryDate;
+    }
+  }
+
+  if (!earliestDate) return 0;
+
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+  const earliestYear = earliestDate.getFullYear();
+  const earliestMonth = earliestDate.getMonth();
+
+  return Math.max(
+    0,
+    (currentYear - earliestYear) * 12 + (currentMonth - earliestMonth),
+  );
 }
 
 // ─── Monthly stats calculation ─────────────────────────────────────────────
@@ -569,17 +724,44 @@ function getVerdict(stats, strengthLevelPassed) {
 }
 
 function getVerdictHeadline({
+  boundaries,
   verdict,
   checksSummary,
   sessionsPaceStatus,
   bigFourPaceStatus,
   topTierPhrase,
+  pastMonthWinHeadline,
+  pastMonthLossHeadline,
+  pastMonthNoBaselineHeadline,
 }) {
   const checksText = checksSummary
     ? `${checksSummary.checksMet}/${checksSummary.checksTotal}`
     : null;
+  const isPastMonthView = !boundaries?.isCurrentMonthView;
+  const hasFullChecks = checksSummary?.checksTotal === 9;
+  const monthWon = hasFullChecks
+    ? checksSummary.checksMet >= 7
+    : Boolean(verdict?.won);
 
-  if (checksSummary?.checksTotal === 9 && checksSummary.checksMet >= 7) {
+  if (isPastMonthView) {
+    if (verdict?.label === "Writing History") {
+      return {
+        tone: "neutral",
+        text: pastMonthNoBaselineHeadline || "No prior month to beat. Baseline set.",
+        scoreText: checksText ? `${checksText} green` : null,
+      };
+    }
+
+    return {
+      tone: monthWon ? "win" : "neutral",
+      text: monthWon
+        ? (pastMonthWinHeadline || "Month Won ✅")
+        : (pastMonthLossHeadline || "Month Lost ❌"),
+      scoreText: checksText ? `${checksText} green` : null,
+    };
+  }
+
+  if (hasFullChecks && checksSummary.checksMet >= 7) {
     return {
       tone: "win",
       text: topTierPhrase || "Month Won ✅",
@@ -615,6 +797,20 @@ function getVerdictHeadline({
       : "⚒️ Keep forging",
     scoreText: null,
   };
+}
+
+function hashString(value = "") {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function pickPhraseForMonth(phrases, monthKey) {
+  if (!Array.isArray(phrases) || phrases.length === 0) return "";
+  const idx = hashString(monthKey) % phrases.length;
+  return phrases[idx];
 }
 
 function getConfettiOriginFromRef(ref) {
@@ -979,10 +1175,14 @@ function BigFourCriteriaTable({
 
       {!!sessions && (() => {
         const rowHighlighted = revealedRows >= 1;
-        const baseline = (sessions.lastSameDay ?? 0) === 0;
+        const isCurrentMonthView = boundaries?.isCurrentMonthView;
+        const previousSessionsCompared = isCurrentMonthView
+          ? (sessions.lastSameDay ?? 0)
+          : (sessions.last ?? 0);
+        const baseline = previousSessionsCompared === 0;
         const passed = baseline || passesTonnageThreshold(
           sessions.current ?? 0,
-          sessions.lastSameDay ?? 0,
+          previousSessionsCompared,
         );
         const currentSessionsReporting = formatCurrentSessionsReporting(
           sessions.current ?? 0,
@@ -1013,18 +1213,21 @@ function BigFourCriteriaTable({
                 <TooltipTrigger asChild>
                   <div className="text-right">
                     <AnimatedInteger
-                      value={sessions.lastSameDay}
+                      value={previousSessionsCompared}
                       className={`tabular-nums text-2xl font-semibold tracking-tight transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground" : "text-foreground"}`}
                     />
-                    <div className={`text-[10px] transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}>
-                      of {sessions.last ?? 0} total
-                    </div>
+                    {isCurrentMonthView && (
+                      <div className={`text-[10px] transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}>
+                        of {sessions.last ?? 0} total
+                      </div>
+                    )}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
                   <p className="max-w-56 text-center text-xs">
-                    {boundaries.prevMonthName} sessions through day{" "}
-                    {boundaries.dayOfMonth}, counted from unique logged training dates.
+                    {isCurrentMonthView
+                      ? `${boundaries.prevMonthName} sessions through day ${boundaries.dayOfMonth}, counted from unique logged training dates.`
+                      : `Total sessions logged in ${boundaries.prevMonthName}.`}
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -1047,16 +1250,20 @@ function BigFourCriteriaTable({
                       )}
                     </div>
                     <div className="text-[10px] text-muted-foreground">
-                      {currentSessionsReporting.replace(
-                        `${sessions.current ?? 0} `,
-                        "",
-                      )}
+                      {isCurrentMonthView
+                        ? currentSessionsReporting.replace(
+                            `${sessions.current ?? 0} `,
+                            "",
+                          )
+                        : ""}
                     </div>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
                   <p className="max-w-56 text-center text-xs">
-                    Compared with last month&apos;s same-day count; being within 10% still counts as on track.
+                    {isCurrentMonthView
+                      ? "Compared with last month&apos;s same-day count; being within 10% still counts as on track."
+                      : "Compared with the full previous month total; being within 10% still counts as on track."}
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -1273,7 +1480,6 @@ function BigFourCriteriaTable({
       <div className="space-y-1 pt-1">
         <AthleteBioInlineSettings
           forceStackedControls
-          autoOpenWhenDefault
           defaultBioPrompt="Enter your details to unlock this feature."
         />
       </div>

@@ -338,7 +338,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
   const hasAdvancedInteractedRef = useRef(false);
 
   // Advanced params: syncQuery=false here; we sync all four together in the effect below
-  const [age, setAgeBase, ageIsDefault] = useStateFromQueryOrLocalStorage(
+  const [age, setAgeBase, ageIsDefault, , ageIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_AGE,
     30,
     false,
@@ -348,12 +348,12 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     false,
     modifyURLQuery,
   );
-  const [sex, setSexBase, sexIsDefault] = useStateFromQueryOrLocalStorage(
+  const [sex, setSexBase, sexIsDefault, , sexIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_SEX,
     "male",
     false,
   );
-  const [bodyWeight, setBodyWeightBase, bodyWeightIsDefault, setBodyWeightSilent] = useStateFromQueryOrLocalStorage(
+  const [bodyWeight, setBodyWeightBase, bodyWeightIsDefault, setBodyWeightSilent, bodyWeightIsInitialized] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT,
     200,
     false,
@@ -362,6 +362,8 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
   // True when all bio fields are still at their defaults — user has never personalised.
   // Used to prompt the user for bio data in the navbar, calculator strength levels, and hero card.
   const bioDataIsDefault = ageIsDefault && sexIsDefault && bodyWeightIsDefault;
+  // True once localStorage has been read for all three bio fields (avoids hydration races).
+  const bioDataIsInitialized = ageIsInitialized && sexIsInitialized && bodyWeightIsInitialized;
   const [liftType, setLiftTypeBase] = useStateFromQueryOrLocalStorage(
     LOCAL_STORAGE_KEYS.ATHLETE_LIFT_TYPE,
     "Back Squat",
@@ -571,6 +573,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     bodyWeight,
     setBodyWeight,
     bioDataIsDefault,
+    bioDataIsInitialized,
     standards,
     toggleIsMetric,
     liftType,

@@ -138,5 +138,5 @@ export const useStateFromQueryOrLocalStorage = (
   // write the new value to localStorage when state changes.
   const setStateSilent = setState;
 
-  return [state, setStateWithInteraction, isDefault, setStateSilent];
+  return [state, setStateWithInteraction, isDefault, setStateSilent, isInitialized];
 };

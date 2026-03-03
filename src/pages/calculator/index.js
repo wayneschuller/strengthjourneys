@@ -38,7 +38,9 @@ import { ShareCopyButton } from "@/components/share-copy-button";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { cn } from "@/lib/utils";
 
-import { useLocalStorage, useIsClient } from "usehooks-ts";
+import { useLocalStorage, useIsClient, useReadLocalStorage } from "usehooks-ts";
+import { calculatePlateBreakdown } from "@/lib/warmups";
+import { PlateDiagram } from "@/components/warmups/plate-diagram";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useAthleteBio, getStrengthRatingForE1RM, STRENGTH_LEVEL_EMOJI } from "@/hooks/use-athlete-biodata";
@@ -176,6 +178,10 @@ export function E1RMCalculatorMain({
     setIsMetric,
     bodyWeight,
     setBodyWeight,
+    standards,
+    age,
+    sex,
+    bioDataIsDefault,
   } = useAthleteBio({ modifyURLQuery: true });
   // Order matters: each includes the ones before it when syncing to URL.
   // Weight last so changing it syncs full state (reps, formula, unit type) → shareable URL.
@@ -299,31 +305,61 @@ export function E1RMCalculatorMain({
   };
 
   const handleCopyToClipboard = async () => {
-    const encodeQueryParam = (param) => encodeURIComponent(param);
-
-    const createQueryString = (params) => {
-      return Object.entries(params)
-        .map(
-          ([key, value]) =>
-            `${encodeQueryParam(key)}=${encodeQueryParam(value)}`,
-        )
-        .join("&");
-    };
-
     const unit = getUnitSuffix(isMetric);
     const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
 
-    const queryString = createQueryString({
-      reps: reps,
-      weight: weight,
-      calcIsMetric: isMetric,
-      formula: e1rmFormula,
-    });
+    let sentenceToCopy;
 
-    const sentenceToCopy =
-      `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
-      `using the ${e1rmFormula} algorithm.\n` +
-      `Source: https://www.strengthjourneys.xyz/calculator?${queryString}`;
+    if (forceLift) {
+      // Lift slug pages — rich copy with strength rating, bodyweight ratio, and next tier.
+      const bigFourName = LIFT_SLUG_TO_BIG_FOUR[forceLift];
+      const liftData = bigFourName ? getLiftBarData(bigFourName, standards, e1rmWeight) : null;
+
+      const params = new URLSearchParams({
+        [LOCAL_STORAGE_KEYS.REPS]: reps,
+        [LOCAL_STORAGE_KEYS.WEIGHT]: weight,
+        [LOCAL_STORAGE_KEYS.CALC_IS_METRIC]: isMetric,
+        [LOCAL_STORAGE_KEYS.FORMULA]: e1rmFormula,
+      });
+      params.set("unit", unit);
+      if (!bioDataIsDefault) {
+        params.set(LOCAL_STORAGE_KEYS.ATHLETE_AGE, age);
+        params.set(LOCAL_STORAGE_KEYS.ATHLETE_SEX, sex);
+        params.set(LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT, bodyWeight);
+      }
+
+      const lines = [
+        `${bigFourName ?? forceLift} ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, using the ${e1rmFormula} algorithm.`,
+      ];
+      if (!bioDataIsDefault && bodyWeight > 0) {
+        lines.push(`${(e1rmWeight / bodyWeight).toFixed(2)}× bodyweight`);
+      }
+      if (liftData) {
+        lines.push(`${bigFourName ?? forceLift}: ${liftData.emoji} ${liftData.rating}`);
+        if (liftData.nextTierInfo && liftData.diff) {
+          lines.push(`Next: ${STRENGTH_LEVEL_EMOJI[liftData.nextTierInfo.name] ?? ""} ${liftData.nextTierInfo.name} — ${liftData.diff}${unit} away`);
+        }
+      }
+      const slugPath = router.asPath.split("?")[0];
+      lines.push(`Source: https://www.strengthjourneys.xyz${slugPath}?${params.toString()}`);
+      sentenceToCopy = lines.join("\n");
+    } else {
+      // Generic calculator page — simple one-liner.
+      const encodeQueryParam = (param) => encodeURIComponent(param);
+      const createQueryString = (p) =>
+        Object.entries(p).map(([k, v]) => `${encodeQueryParam(k)}=${encodeQueryParam(v)}`).join("&");
+      const queryString = createQueryString({
+        reps,
+        weight,
+        unit,
+        calcIsMetric: isMetric,
+        formula: e1rmFormula,
+      });
+      sentenceToCopy =
+        `Lifting ${reps}@${weight}${unit} indicates a one rep max of ${e1rmWeight}${unit}, ` +
+        `using the ${e1rmFormula} algorithm.\n` +
+        `Source: https://www.strengthjourneys.xyz/calculator?${queryString}`;
+    }
 
     const textarea = document.createElement("textarea");
     let didCopy = false;
@@ -419,6 +455,14 @@ export function E1RMCalculatorMain({
 
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
   const unit = getUnitSuffix(isMetric);
+
+  // Floating plate annotation state (reads warmup-calc prefs from localStorage)
+  const storedBarType = useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, { initializeWithValue: false }) ?? "standard";
+  const storedPlatePreference = useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE, { initializeWithValue: false }) ?? "red";
+  const plateBarWeight = isMetric ? (storedBarType === "womens" ? 15 : 20) : (storedBarType === "womens" ? 35 : 45);
+  const plateBreakdown = calculatePlateBreakdown(e1rmWeight, plateBarWeight, isMetric, storedPlatePreference);
+  const warmupURL = `/warm-up-sets-calculator?${LOCAL_STORAGE_KEYS.WARMUP_WEIGHT}=${e1rmWeight}&${LOCAL_STORAGE_KEYS.CALC_IS_METRIC}=${isMetric}`;
+  const diagramAnimKey = `${e1rmWeight}-${isMetric}-${storedBarType}-${storedPlatePreference}`;
 
   return (
     <PageContainer>
@@ -558,8 +602,8 @@ export function E1RMCalculatorMain({
             </div>
           </div>
 
-          {/* Hero card — always centered */}
-          <div className="my-6 flex flex-col items-center gap-3">
+          {/* Hero card — centered, with plate annotation floating in whitespace to the right */}
+          <div className="relative my-6 flex flex-col items-center gap-3">
             <E1RMSummaryCard
               reps={reps}
               weight={weight}
@@ -568,6 +612,41 @@ export function E1RMCalculatorMain({
               estimateE1RM={estimateE1RM}
               forceLift={forceLift}
             />
+
+            {/* Floating plate annotation: absolute in right whitespace on desktop */}
+            <div className="absolute right-0 top-1/2 hidden origin-right -translate-y-1/2 scale-90 flex-col items-end opacity-60 md:flex">
+              <Link href={warmupURL}>
+                <PlateDiagram
+                  platesPerSide={plateBreakdown.platesPerSide}
+                  barWeight={plateBarWeight}
+                  isMetric={isMetric}
+                  hideLabels={true}
+                  animationKey={diagramAnimKey}
+                  useScrollTrigger={false}
+                />
+              </Link>
+              <Link href={warmupURL} className="mt-1 text-right text-xs text-muted-foreground">
+                See warm-up sets →
+              </Link>
+            </div>
+
+            {/* Mobile: plate diagram + link below card */}
+            <div className="flex flex-col items-center md:hidden">
+              <Link href={warmupURL}>
+                <PlateDiagram
+                  platesPerSide={plateBreakdown.platesPerSide}
+                  barWeight={plateBarWeight}
+                  isMetric={isMetric}
+                  hideLabels={true}
+                  animationKey={diagramAnimKey}
+                  useScrollTrigger={false}
+                />
+              </Link>
+              <Link href={warmupURL} className="mt-1 text-xs text-muted-foreground">
+                See warm-up sets →
+              </Link>
+            </div>
+
             <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center">
               <div className="justify-self-start">
                 <MiniFeedbackWidget
@@ -1112,6 +1191,25 @@ function PercentageTable({ reps, weight, e1rmFormula, isMetric, forceLift = null
 
 const BIG_FOUR = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
 
+// Pure helper — computes display data for a single strength-level bar row.
+// Hoisted to module level so handleCopyToClipboard can use it for the hero copy button.
+function getLiftBarData(liftType, standards, e1rmWeight) {
+  const standard = standards?.[liftType];
+  if (!standard?.elite) return null;
+  const rating = getStrengthRatingForE1RM(e1rmWeight, standard);
+  const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
+  const { physicallyActive, elite } = standard;
+  const range = elite - physicallyActive;
+  const pct = range > 0
+    ? Math.min(98, Math.max(2, ((e1rmWeight - physicallyActive) / range) * 100))
+    : 50;
+  const nextTierInfo = NEXT_TIER[rating];
+  const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
+  const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmWeight) : null;
+  const svgPath = getLiftSvgPath(liftType);
+  return { standard, rating, emoji, physicallyActive, range, pct, nextTierInfo, diff, svgPath };
+}
+
 // Maps lift slug page names (from PAGE_CONFIG in [slug].js) to the internal BIG_FOUR names
 // used as keys in the strength standards lookup.
 const LIFT_SLUG_TO_BIG_FOUR = {
@@ -1208,23 +1306,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
   // For lift slug pages: resolve the slug lift name to the BIG_FOUR internal key.
   const featuredBigFourName = forceLift ? LIFT_SLUG_TO_BIG_FOUR[forceLift] : null;
 
-  // Compute all display data for a single lift bar row.
-  const getLiftBarData = (liftType) => {
-    const standard = standards?.[liftType];
-    if (!standard?.elite) return null;
-    const rating = getStrengthRatingForE1RM(e1rmWeight, standard);
-    const emoji = STRENGTH_LEVEL_EMOJI[rating] ?? "";
-    const { physicallyActive, elite } = standard;
-    const range = elite - physicallyActive;
-    const pct = range > 0
-      ? Math.min(98, Math.max(2, ((e1rmWeight - physicallyActive) / range) * 100))
-      : 50;
-    const nextTierInfo = NEXT_TIER[rating];
-    const nextTierValue = nextTierInfo ? standard[nextTierInfo.key] : null;
-    const diff = nextTierValue ? Math.ceil(nextTierValue - e1rmWeight) : null;
-    const svgPath = getLiftSvgPath(liftType);
-    return { standard, rating, emoji, physicallyActive, range, pct, nextTierInfo, diff, svgPath };
-  };
+  // getLiftBarData is defined at module level; bind the current standards + e1rmWeight.
 
   // Renders a single lift bar row. featured=true uses larger SVG and taller bar.
   const renderLiftRow = (liftType, data, featured = false) => {
@@ -1325,7 +1407,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
     );
   };
 
-  const featuredData = featuredBigFourName ? getLiftBarData(featuredBigFourName) : null;
+  const featuredData = featuredBigFourName ? getLiftBarData(featuredBigFourName, standards, e1rmWeight) : null;
   const comparisonLifts = BIG_FOUR.filter((l) => l !== featuredBigFourName);
 
   return (
@@ -1356,7 +1438,7 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
         {!featuredBigFourName && (
           <div className="space-y-3">
             {comparisonLifts.map((liftType) => {
-              const data = getLiftBarData(liftType);
+              const data = getLiftBarData(liftType, standards, e1rmWeight);
               if (!data) return null;
               return renderLiftRow(liftType, data, false);
             })}

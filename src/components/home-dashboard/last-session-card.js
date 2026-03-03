@@ -6,6 +6,7 @@ import {
   useContext,
   useMemo,
 } from "react";
+import { format } from "date-fns";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
@@ -45,7 +46,6 @@ import {
   getReadableDateString,
   getAnalyzedSessionLifts,
   getAverageSessionTonnageFromPrecomputed,
-  getAverageLiftSessionTonnageFromPrecomputed,
   getSessionTonnagePercentileRangeFromPrecomputed,
   getDisplayWeight,
 } from "@/lib/processing-utils";
@@ -58,6 +58,18 @@ import {
 } from "lucide-react";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionExerciseBlock } from "@/components/analyzer/session-exercise-block";
+
+// "The Latest Session" when on the most recent date.
+// "The Feb 6 Session" for an earlier date in the current year.
+// "Feb 6, 2024 Session" (no "The") for a date in a previous year.
+function getSessionCardTitle(sessionDate, isLastDate) {
+  if (isLastDate || !sessionDate) return "The Latest Session";
+  const sessionYear = parseInt(sessionDate.substring(0, 4), 10);
+  const currentYear = new Date().getFullYear();
+  const d = new Date(sessionDate + "T00:00:00");
+  if (sessionYear === currentYear) return `The ${format(d, "MMM d")} Session`;
+  return `${format(d, "MMM d, yyyy")} Session`;
+}
 
 /**
  * Displays a detailed analysis of a single workout session. Shows exercises with sets,
@@ -204,51 +216,6 @@ export function SessionAnalysisCard({
     });
   }, [persistCacheTrigger, setSessionRatingCache]);
 
-  // Precompute per-lift tonnage stats for this session vs last year
-  const perLiftTonnageStats = useMemo(() => {
-    if (!analyzedSessionLifts || !sessionDate) return {};
-
-    const lookup = sessionTonnageLookup;
-    if (!lookup) return {};
-
-    return Object.entries(analyzedSessionLifts).reduce(
-      (acc, [liftType, lifts]) => {
-        const currentLiftTonnage = lifts.reduce(
-          (sum, lift) => sum + (lift.weight ?? 0) * (lift.reps ?? 0),
-          0,
-        );
-
-        const firstLift = lifts?.[0];
-        const unitTypeForLift = firstLift?.unitType ?? "lb";
-
-        const { average: avgLiftTonnage, sessionCount } =
-          getAverageLiftSessionTonnageFromPrecomputed(
-            lookup.sessionTonnageByDateAndLift,
-            lookup.allSessionDates,
-            sessionDate,
-            liftType,
-            unitTypeForLift,
-          );
-
-        const pctDiff =
-          avgLiftTonnage > 0
-            ? ((currentLiftTonnage - avgLiftTonnage) / avgLiftTonnage) * 100
-            : null;
-
-        acc[liftType] = {
-          currentLiftTonnage,
-          avgLiftTonnage,
-          sessionCount,
-          pctDiff,
-          unitType: unitTypeForLift,
-        };
-
-        return acc;
-      },
-      {},
-    );
-  }, [analyzedSessionLifts, sessionDate, sessionTonnageLookup]);
-
   const prevDate = () => {
     if (!parsedData || !sessionDate) return;
 
@@ -289,23 +256,22 @@ export function SessionAnalysisCard({
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <CardTitle className="flex flex-wrap items-center gap-2 text-xl font-bold tracking-tight">
+              <CardTitle className="flex flex-wrap items-center gap-2">
                 {authStatus === "unauthenticated" && (
                   <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium">
                     Demo Mode
                   </span>
                 )}
-                {analyzedSessionLifts &&
-                  getReadableDateString(sessionDate, true)}{" "}
-                Session
+                {getSessionCardTitle(sessionDate, isLastDate)}
                 {isValidating && (
                   <LoaderCircle className="inline-flex h-4 w-4 animate-spin text-muted-foreground" />
                 )}
               </CardTitle>
               <CardDescription className="mt-1">
-                {analyzedSessionLifts && !isDemoMode
-                  ? sessionRatingRef.current
-                  : "Session overview and analysis"}
+                {analyzedSessionLifts && isLastDate && getReadableDateString(sessionDate, true)}
+                {analyzedSessionLifts && !isDemoMode && sessionRatingRef.current
+                  ? `${isLastDate ? " · " : ""}${sessionRatingRef.current}`
+                  : ""}
               </CardDescription>
             </div>
             <div className="flex shrink-0 items-center gap-0.5 rounded-lg border bg-muted/30 p-0.5">
@@ -353,10 +319,9 @@ export function SessionAnalysisCard({
                   ([liftType, workouts]) => (
                     <SessionExerciseBlock
                       key={liftType}
-                      variant="full"
+                      variant="compact"
                       liftType={liftType}
                       workouts={workouts}
-                      perLiftTonnageStats={perLiftTonnageStats}
                       authStatus={authStatus}
                       hasBioData={hasBioData}
                       standards={standards}
@@ -636,7 +601,7 @@ function TonnageRangeSlider({
             style={{ width: `${currentPct}%` }}
           />
         </div>
-        {/* Hover overlay: range numbers appear on hover */}
+        {/* Hover overlay: range numbers + label appear on hover */}
         {isHovered && showRange && (
           <div className="absolute inset-0 pointer-events-none animate-in fade-in duration-150">
             <span
@@ -651,8 +616,8 @@ function TonnageRangeSlider({
           </div>
         )}
       </div>
-      {showRange && (
-        <p className="text-[10px] text-muted-foreground">
+      {isHovered && showRange && (
+        <p className="text-[10px] text-muted-foreground animate-in fade-in duration-150">
           Dashed range: typical session tonnage (25th–90th percentile, last 12 months)
         </p>
       )}

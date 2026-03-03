@@ -620,8 +620,8 @@ export function GettingStartedCardCompact() {
           ) : (
             <p className="text-sm text-muted-foreground">
               You&apos;re connected. Explore the{" "}
-              <Link href="/analyzer" className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">
-                Analyzer
+              <Link href="/lift-explorer" className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">
+                Lift Explorer
               </Link>{" "}
               or{" "}
               <Link href="/visualizer" className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">

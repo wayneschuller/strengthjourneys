@@ -233,7 +233,6 @@ function HowStrongAmIPageInner() {
           <div className="flex justify-center">
             <AthleteBioInlineSettings
               defaultBioPrompt="Enter your details for personalised percentiles."
-              autoOpenWhenDefault={true}
             />
           </div>
 

@@ -1,7 +1,7 @@
 /** @format */
 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -175,17 +175,16 @@ export function AthleteBioQuickSettings() {
 /**
  * Inline variant of the athlete bio settings panel, used inside the calculator's Big Four strength section.
  * Shows a bio summary line with an edit toggle that slides out compact age, sex, and bodyweight controls.
+ * Auto-opens once on mount when bio data is genuinely at defaults (never set by the user).
  *
  * @param {Object} props
  * @param {string} [props.liftNote] - Optional extra context appended to the summary line (e.g. "lifting 239lb in each lift type").
  * @param {boolean} [props.forceStackedControls] - Render controls below the summary and allow wrapping within the parent width.
- * @param {boolean} [props.autoOpenWhenDefault] - Auto-open controls when bio is default/unset.
  * @param {string} [props.defaultBioPrompt] - Custom summary text shown when bio data is still default/unset.
  */
 export function AthleteBioInlineSettings({
   liftNote,
   forceStackedControls = false,
-  autoOpenWhenDefault = true,
   defaultBioPrompt,
 }) {
   const {
@@ -198,16 +197,24 @@ export function AthleteBioInlineSettings({
     isMetric,
     toggleIsMetric,
     bioDataIsDefault,
+    bioDataIsInitialized,
   } = useAthleteBio();
 
-  // Pre-open the controls when the user is still on defaults — nudge them to personalise.
-  // Initialise closed so SSR and first paint don't race with localStorage hydration;
-  // flip open after mount only if bio data is genuinely still at defaults.
+  // Auto-open once bio data is genuinely at defaults (user has never personalised).
+  // We use a ref to always hold the latest bioDataIsDefault value (refs update during render,
+  // before effects run). The setTimeout(0) is a macrotask — it fires after all React renders
+  // and effects for the current cycle have fully settled, so the ref reflects the real
+  // post-localStorage value regardless of child-before-parent effect ordering.
   const [isOpen, setIsOpen] = useState(false);
+  const bioDataIsDefaultRef = useRef(bioDataIsDefault);
+  bioDataIsDefaultRef.current = bioDataIsDefault; // always up to date
   useEffect(() => {
-    if (autoOpenWhenDefault && bioDataIsDefault) setIsOpen(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // intentionally mount-only
+    const id = setTimeout(() => {
+      if (bioDataIsDefaultRef.current) setIsOpen(true);
+    }, 0);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // mount-only — setTimeout defers decision until localStorage has been read
   const unit = isMetric ? "kg" : "lb";
 
   // JSX bio summary — values are bolded, labels stay light

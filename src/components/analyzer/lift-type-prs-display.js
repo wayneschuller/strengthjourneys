@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useReadLocalStorage } from "usehooks-ts";
+import { useState, useRef } from "react";
+import { useReadLocalStorage, useResizeObserver } from "usehooks-ts";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import {
@@ -356,6 +356,8 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
       initializeWithValue: false,
     }) ?? "Brzycki";
+  const containerRef = useRef(null);
+  const { width = 0 } = useResizeObserver({ ref: containerRef });
   
   // Check if we have the necessary data for strength ratings
   const hasBioData = age && bodyWeight && standards && Object.keys(standards).length > 0;
@@ -394,47 +396,60 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
     [1, 3, 5, 10].includes(repCount),
   );
 
+  // Container-aware column counts — responds to actual rendered width, not viewport
+  const isWide = width >= 750;
+  const overviewGridCols =
+    !compact ? (
+      width >= 780 ? "grid-cols-3" :
+      width >= 340 ? "grid-cols-2" :
+      "grid-cols-1"
+    ) : "grid-cols-2";
+
   return (
-    <div className="space-y-4">
+    <div ref={containerRef} className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl sm:text-2xl font-semibold">{liftType} PRs</h2>
         </div>
 
-        {/* Mobile / tablet: only show key rep ranges to reduce crowding */}
-        <div className="w-full lg:hidden">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger
-              value="overview"
-              className="whitespace-nowrap text-xs"
-            >
-              Overview
-            </TabsTrigger>
-            {mobileRepTabs.map(({ repIndex, repCount }) => (
+        {/* Narrow container: only show key rep ranges to reduce crowding */}
+        {!isWide && (
+          <div className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger
-                key={repIndex}
-                value={`rep-${repIndex}`}
+                value="overview"
                 className="whitespace-nowrap text-xs"
               >
-                {repCount}RM
+                Overview
               </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
+              {mobileRepTabs.map(({ repIndex, repCount }) => (
+                <TabsTrigger
+                  key={repIndex}
+                  value={`rep-${repIndex}`}
+                  className="whitespace-nowrap text-xs"
+                >
+                  {repCount}RM
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+        )}
 
-        {/* Desktop (lg+): show full set of rep-range tabs */}
-        <div className="hidden w-full overflow-x-auto lg:block">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:grid-cols-11">
-            <TabsTrigger value="overview" className="text-xs">
-              Overview
-            </TabsTrigger>
-            {repRangesWithData.map(({ repIndex, repCount }) => (
-              <TabsTrigger key={repIndex} value={`rep-${repIndex}`} className="text-xs">
-                {repCount}RM
+        {/* Wide container: show full set of rep-range tabs */}
+        {isWide && (
+          <div className="w-full overflow-x-auto">
+            <TabsList className="grid w-full grid-cols-11">
+              <TabsTrigger value="overview" className="text-xs">
+                Overview
               </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
+              {repRangesWithData.map(({ repIndex, repCount }) => (
+                <TabsTrigger key={repIndex} value={`rep-${repIndex}`} className="text-xs">
+                  {repCount}RM
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+        )}
 
         {/* Overview tab: summary grid of rep range PR cards */}
         <TabsContent value="overview" className="mt-4 space-y-4">
@@ -442,7 +457,7 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
             Overview of your best {liftType} sets across different rep ranges. Click
             a card or a tab above to explore all lifts for that rep range.
           </p>
-          <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${!compact && "lg:grid-cols-3 xl:grid-cols-4"}`}>
+          <div className={`grid gap-4 ${overviewGridCols}`}>
             {repRangesWithData
               .filter(({ repCount }) => !compact || [1, 3, 5, 10].includes(repCount))
               .map(({ repRange, repIndex, repCount }) => (

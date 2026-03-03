@@ -1,8 +1,11 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
+import { kv } from "@vercel/kv";
 import { devLog } from "@/lib/processing-utils";
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 export default async function handler(req, res) {
   // Start session fetch immediately
@@ -71,9 +74,17 @@ export default async function handler(req, res) {
     const data = await sheetsRes.json();
 
     if (!sheetsRes.ok) {
-      throw new Error(
-        `Non-OK response from Google Sheets API: ${sheetsRes.statusText} (${sheetsRes.status})`,
+      // Extract Google's own error message (format: { error: { message, code, status } })
+      const googleMessage =
+        data?.error?.message ||
+        sheetsRes.statusText ||
+        "Unknown error from Google Sheets API";
+      console.error(
+        `[read-gsheet] Google Sheets API ${sheetsRes.status}: ${googleMessage}`,
+        { ssid },
       );
+      res.status(sheetsRes.status).json({ error: googleMessage });
+      return;
     }
 
     if (driveRes.ok) {
@@ -87,6 +98,37 @@ export default async function handler(req, res) {
     }
 
     res.status(200).json(data);
+
+    // Prompts the developer to offer personal support at key moments.
+    // Runs after the response is sent so the user never waits for this.
+    try {
+      const kvKey = `sj:user:${session.user.email}`;
+      const record = await kv.get(kvKey);
+      const now = new Date();
+      const meta = { rowCount: data.values?.length ?? 0 };
+
+      if (!record) {
+        // First time this user has connected their sheet
+        await promptDeveloper("sheet-connected", session.user, meta);
+        await kv.set(kvKey, {
+          connectedAt: now.toISOString(),
+          developerNotifiedAt: now.toISOString(),
+        });
+      } else if (now - new Date(record.developerNotifiedAt) >= ONE_DAY_MS) {
+        // User is active — prompt the developer to check in if it feels right
+        await promptDeveloper("active", session.user, {
+          ...meta,
+          lastActiveAt: record.developerNotifiedAt,
+          connectedAt: record.connectedAt,
+        });
+        await kv.set(kvKey, {
+          ...record,
+          developerNotifiedAt: now.toISOString(),
+        });
+      }
+    } catch (err) {
+      console.error("[personal-support] sheet activity check failed:", err);
+    }
   } catch (error) {
     console.log(error);
 

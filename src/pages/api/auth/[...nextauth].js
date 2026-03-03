@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { Resend } from "resend";
 import { devLog } from "@/lib/processing-utils";
 
 const scopes = [
@@ -74,7 +75,8 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async signIn() {
+    async signIn({ user }) {
+      await promptDeveloper("sign-in", user);
       return true;
     },
     async jwt({ token, user, account }) {
@@ -98,14 +100,6 @@ export const authOptions = {
         };
       }
 
-      // Make true to debug
-      if (false)
-        devLog(
-          `Next-auth JWT callback: token.accessTokenExpires = ${new Date(
-            token.accessTokenExpires,
-          ).toLocaleString()}`,
-        );
-
       // Return previous JWT token if the access token has not expired yet
       if (Date.now() < token.accessTokenExpires) {
         // devLog(`Not expired yet phew. I'll give you our secret JWT token`);
@@ -128,3 +122,90 @@ export const authOptions = {
 };
 
 export default NextAuth(authOptions);
+
+// ---------------------------------------------------------------------------
+// Prompts the developer to offer personal support to users at key moments
+// (sign-in, first sheet connection, ongoing activity). Failures are swallowed
+// and never affect the caller.
+// ---------------------------------------------------------------------------
+
+function friendlyDate(isoString) {
+  return new Date(isoString).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function daysAgo(isoString) {
+  const days = Math.floor(
+    (Date.now() - new Date(isoString).getTime()) / (24 * 60 * 60 * 1000),
+  );
+  if (days === 0) return "today";
+  if (days === 1) return "yesterday";
+  return `${days} days ago`;
+}
+
+const PROMPT_MESSAGES = {
+  "sign-in": (name, email, timeStr) => ({
+    subject: `[SJ] Sign-in — ${name}`,
+    text: `${name} (${email}) signed in at ${timeStr}.`,
+  }),
+  "sheet-connected": (name, email, timeStr, meta) => ({
+    subject: `[SJ] Sheet connected — ${name}`,
+    text: [
+      `${name} (${email}) connected their sheet at ${timeStr}.`,
+      meta.rowCount != null ? `Rows: ${meta.rowCount}` : null,
+      `\nThey're set up and in the app. Worth a welcome message.`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  }),
+  active: (name, email, timeStr, meta) => ({
+    subject: `[SJ] Active — ${name}`,
+    text: [
+      `${name} (${email}) is using the app. Seen at ${timeStr}.`,
+      meta.rowCount != null ? `Rows: ${meta.rowCount}` : null,
+      meta.lastActiveAt
+        ? `Last active: ${friendlyDate(meta.lastActiveAt)} (${daysAgo(meta.lastActiveAt)})`
+        : null,
+      meta.connectedAt
+        ? `Member since: ${friendlyDate(meta.connectedAt)}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  }),
+};
+
+export async function promptDeveloper(event, user, meta = {}) {
+  try {
+    const apiKey = process.env.RESEND_API_KEY;
+    const to = process.env.FEEDBACK_EMAIL_TO;
+    if (!apiKey || !to || !user?.email) return;
+
+    const name = user.name || user.email;
+    const timeStr =
+      new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "UTC",
+      }) + " UTC";
+
+    const builder = PROMPT_MESSAGES[event];
+    if (!builder) return;
+
+    const { subject, text } = builder(name, user.email, timeStr, meta);
+    const resend = new Resend(apiKey);
+    await resend.emails.send({
+      from: "Strength Journeys <feedback@updates.strengthjourneys.xyz>",
+      to,
+      subject,
+      text,
+    });
+  } catch (err) {
+    console.error(`[personal-support] promptDeveloper(${event}) failed:`, err);
+  }
+}

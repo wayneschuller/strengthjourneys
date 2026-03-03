@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { DarkModeToggle, ThemeChooser } from "@/components/theme-chooser";
 import { MobileNav } from "@/components/mobile-nav";
 import { AvatarDropdown } from "@/components/avatar-menu";
-import { Table2, Loader2, Github, Trophy, LineChart } from "lucide-react";
+import { Table2, Loader2, Github, Layers, LineChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
@@ -392,9 +392,9 @@ function StrengthInsightsMenu() {
 
   const insights = [
     {
-      title: "PR Analyzer",
-      href: "/analyzer",
-      icon: <Trophy className="h-5 w-5" />,
+      title: "Lift Explorer",
+      href: "/lift-explorer",
+      icon: <Layers className="h-5 w-5" />,
     },
     {
       title: "Strength Visualizer",
@@ -458,7 +458,7 @@ function StrengthInsightsMenu() {
           <NavigationMenuTrigger
             className={cn(
               "hover:text-foreground/80 bg-transparent transition-colors",
-              pathname.startsWith("/analyzer") ||
+              pathname.startsWith("/lift-explorer") ||
                 pathname.startsWith("/visualizer") ||
                 pathname.startsWith("/ai-lifting-assistant")
                 ? "text-foreground"

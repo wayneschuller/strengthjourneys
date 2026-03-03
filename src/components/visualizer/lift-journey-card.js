@@ -21,7 +21,6 @@ import {
 } from "@/components/mini-lift-chronology-chart";
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { MiniFeedbackWidget } from "@/components/feedback";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -460,14 +459,6 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
               <LiftColorPicker liftType={liftType} />
             </div>
 
-            <MiniFeedbackWidget
-              contextId={feedbackContextId}
-              page="/visualizer"
-              analyticsExtra={{
-                context: "lift_journey_card",
-                lift_type: liftType,
-              }}
-            />
           </>
         )}
       </CardContent>

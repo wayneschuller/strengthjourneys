@@ -98,8 +98,8 @@ const WHATS_NEXT_FEATURES = [
     IconComponent: Calculator,
   },
   {
-    href: "/analyzer",
-    title: "PR Analyzer",
+    href: "/lift-explorer",
+    title: "Lift Explorer",
     description:
       "Track your PRs, consistency, and heatmaps. See progress over time.",
     IconComponent: Trophy,

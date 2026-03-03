@@ -50,11 +50,11 @@ import { MiniFeedbackWidget } from "@/components/feedback";
 
 /**
  * Chart showing session tonnage (weight × reps) over time. Supports per-session or per-week
- * aggregation. Optional setHighlightDate syncs with SessionAnalysisCard for date hover.
+ * aggregation. Optional setHighlightDate syncs with TheLatestSessionCard for date hover.
  *
  * @param {Object} props
  * @param {function(string)} [props.setHighlightDate] - Callback when user hovers a point; receives
- *   ISO date string. Used to sync with SessionAnalysisCard on the Analyzer page.
+ *   ISO date string. Used to sync with TheLatestSessionCard on the Analyzer page.
  * @param {string} [props.liftType] - Display name of the lift to filter tonnage. When omitted,
  *   shows total tonnage across all lifts.
  */
@@ -123,7 +123,7 @@ export function TonnageChart({ setHighlightDate, liftType }) {
   }, [chartData]);
 
   // Scale debounce with dataset size so small datasets feel instant while large datasets
-  // avoid cascading SessionAnalysisCard re-renders during fast mouse scrubbing.
+  // avoid cascading TheLatestSessionCard re-renders during fast mouse scrubbing.
   // Formula: ~10ms at 120 pts, ~25ms at 300 pts, capped at 50ms at 600+ pts.
   const tooltipDebounceMs = Math.min(50, Math.floor((chartData?.length ?? 0) / 12));
 
@@ -784,7 +784,7 @@ const TonnageTooltipContent = ({
   debounceMs = 0,
   isMetric = false,
 }) => {
-  // Sync hover → SessionAnalysisCard via Tooltip content (more reliable than onMouseMove in recharts v3)
+  // Sync hover → TheLatestSessionCard via Tooltip content (more reliable than onMouseMove in recharts v3)
   const highlightDateStr = payload?.length > 0 ? payload[0]?.payload?.date : null;
   useEffect(() => {
     if (!highlightDateStr || !setHighlightDate) return;

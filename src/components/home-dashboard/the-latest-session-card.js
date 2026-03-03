@@ -82,7 +82,7 @@ function getSessionCardTitle(sessionDate, isLastDate) {
  * @param {function(string)} props.setHighlightDate - Callback to update the displayed session date.
  *   Called when user clicks prev/next or when parent (e.g. Visualizer) wants to sync.
  */
-export function SessionAnalysisCard({
+export function TheLatestSessionCard({
   highlightDate = null,
   setHighlightDate,
 }) {

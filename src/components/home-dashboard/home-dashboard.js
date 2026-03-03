@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { HomeInspirationCards } from "./home-inspiration-cards";
 import { DataSheetStatus, RowProcessingIndicator } from "./row-processing-indicator";
-import { SessionAnalysisCard } from "@/components/home-dashboard/last-session-card";
+import { TheLatestSessionCard } from "@/components/home-dashboard/the-latest-session-card";
 import { TheMonthInIronCard } from "@/components/home-dashboard/the-month-in-iron-card";
 import { TheLongGameCard } from "@/components/home-dashboard/the-long-game-card";
 import { OnBoardingDashboard } from "@/components/instructions-cards";
@@ -156,7 +156,10 @@ export function HomeDashboard() {
       {sheetInfo?.ssid && <HomeInspirationCards isProgressDone={hasDataLoaded} />}
       {sheetInfo?.ssid && hasDataLoaded && (
         <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-          <SessionAnalysisCard
+          {/* Three headline cards intentionally begin with "The" and widen chronology:
+              The Latest Session -> The Month in Iron -> The Long Game.
+              Together they make the app experience feel badass and motivating, like chapters in an ongoing strength story. */}
+          <TheLatestSessionCard
             highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}
           />

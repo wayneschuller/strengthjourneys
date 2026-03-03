@@ -7,7 +7,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { HomeInspirationCards } from "./home-inspiration-cards";
 import { DataSheetStatus, RowProcessingIndicator } from "./row-processing-indicator";
 import { SessionAnalysisCard } from "@/components/home-dashboard/last-session-card";
-import { ThisMonthInIronCard } from "@/components/home-dashboard/month-in-iron-card";
+import { TheMonthInIronCard } from "@/components/home-dashboard/the-month-in-iron-card";
 import { TheLongGameCard } from "@/components/home-dashboard/the-long-game-card";
 import { OnBoardingDashboard } from "@/components/instructions-cards";
 import { motion } from "motion/react";
@@ -160,7 +160,7 @@ export function HomeDashboard() {
             highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}
           />
-          <ThisMonthInIronCard />
+          <TheMonthInIronCard />
           <TheLongGameCard />
         </section>
       )}

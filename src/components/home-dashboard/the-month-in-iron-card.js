@@ -49,7 +49,7 @@ import { MiniFeedbackWidget } from "@/components/feedback";
  * sessions, Big Four tonnage, and Big Four strength level consistency.
  * Reads data from UserLiftingDataProvider; takes no props.
  */
-export function ThisMonthInIronCard() {
+export function TheMonthInIronCard() {
   const { parsedData } = useUserLiftingData();
   const bio = useAthleteBio();
   const { isMetric } = bio;

@@ -51,8 +51,10 @@ import {
 } from "@/components/ui/card";
 
 /**
- * Card displaying one calendar heatmap per year of the user's training history, with PR-weighted
- * color intensity. Includes a "Copy heatmap" button that renders the card to clipboard via html2canvas.
+ * Main card showing the user's full training history as heatmaps, with PR-weighted color intensity.
+ * Supports three view modes — daily (one calendar grid per year), weekly (53-column grid across all
+ * years), and monthly (12-column grid across all years) — persisted to localStorage. Also renders
+ * consistency grade rings and a share button that captures the card to clipboard via html2canvas.
  * Reads parsedData from UserLiftingDataProvider; takes no props.
  */
 export function TheLongGameCard() {
@@ -349,6 +351,9 @@ const LABEL_ABBREV = {
 
 const SHORT_TERM_LABELS = new Set(["Week", "Month", "3 Month"]);
 
+// Animated SVG ring showing a consistency grade letter and percentage fill for one time window.
+// Short-term rings (W/M/3M) render with a thicker stroke and full opacity to emphasise recent form;
+// long-term rings use a thinner stroke and 60% opacity so they recede without disappearing.
 function GradeCircle({ percentage, label, tooltip, size = 28, delay = 0, isVisible, isShortTerm = true }) {
   const { grade, color } = getGradeAndColor(percentage);
   const strokeWidth = isShortTerm ? 3.5 : 2.5;
@@ -425,6 +430,8 @@ function GradeCircle({ percentage, label, tooltip, size = 28, delay = 0, isVisib
   );
 }
 
+// Strips trailing consistency items whose grade is "." — meaning insufficient history for that
+// window — so the rings row doesn't end in visually meaningless placeholder dots.
 function trimTrailingDots(items) {
   let lastReal = items.length - 1;
   while (lastReal >= 0 && getGradeAndColor(items[lastReal].percentage).grade === ".") {
@@ -433,6 +440,9 @@ function trimTrailingDots(items) {
   return items.slice(0, lastReal + 1);
 }
 
+// Renders a horizontal row of GradeCircle rings for every consistency window the user has enough
+// data to fill. Trims trailing dot-grade periods before rendering, and spring-animates the rings
+// in from above once the card's interval data is ready.
 function ConsistencyGradesRow({ parsedData, isVisible = false }) {
   const consistency = useMemo(() => {
     const raw = processConsistency(parsedData);
@@ -504,12 +514,16 @@ const HEATMAP_TITLES_STAGE3 = [
   "The Iron Remembers",
 ];
 
+// Selects the title pool that matches the user's training history length.
+// Stage 1 (<2 years): neutral/functional. Stage 2 (2–4 years): identity-based. Stage 3 (5+): poetic.
 function getHeatmapTitles(yearsCount) {
   if (yearsCount >= 5) return HEATMAP_TITLES_STAGE3;
   if (yearsCount >= 2) return HEATMAP_TITLES_STAGE2;
   return HEATMAP_TITLES_STAGE1;
 }
 
+// Returns a randomly picked loading message shown during share image generation.
+// Tone escalates with training history length — light banter for newcomers, reverence for veterans.
 function getSharingMessage(years) {
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -557,6 +571,8 @@ function getSharingMessage(years) {
   ]);
 }
 
+// Scans parsedData in a single pass to find the earliest and latest lift dates,
+// returned as "yyyy-MM-dd" strings for use as heatmap interval boundaries.
 function findStartEndDates(parsedData) {
   if (!parsedData || parsedData.length === 0) {
     return null; // Return null for an empty array or invalid input
@@ -585,13 +601,8 @@ function findStartEndDates(parsedData) {
   };
 }
 
-// generateYearRanges
-//
-// Generates one interval per calendar year from the first year with data
-// to the last year with data. Each interval is exactly Jan 1 - Dec 31 of that year.
-//
-// startDateStr and endDateStr format is: "yyyy-mm-dd"
-//
+// Produces one Jan 1–Dec 31 interval per calendar year spanned by the user's data.
+// Input strings are "yyyy-MM-dd". Each interval drives one Heatmap row in the daily view.
 function generateYearRanges(startDateStr, endDateStr) {
   // Convert input date strings to Date objects
   const startDate = new Date(startDateStr);
@@ -649,8 +660,9 @@ function getWeekStartDate(year, weekNum) {
   return format(weekStart, "MMM d");
 }
 
-// Builds { [year]: { [weekNum]: { sessions, count } } }.
-// count is capped at 3: 0=none, 1=1 day, 2=2 days, 3=3+ days (won).
+// Aggregates parsedData into { [year]: { [weekNum]: { sessions, count } } }.
+// sessions = distinct training days in that week; count is capped at 3 for color mapping
+// (0 = none, 1 = 1 day, 2 = 2 days, 3 = 3+ days). In demo mode returns randomised data.
 function generateWeeklyHeatmapData(parsedData, startYear, endYear, isDemoMode) {
   if (isDemoMode) {
     const result = {};
@@ -688,9 +700,9 @@ function generateWeeklyHeatmapData(parsedData, startYear, endYear, isDemoMode) {
   return result;
 }
 
-// All-years matrix: one row per year, one cell per week (1–53).
-// Cells fill the full available card width via CSS grid.
-// Color is applied via inline style using --heatmap-N CSS variables so themes work.
+// All-years weekly grid: one row per year, 53 cells per row (one per calendar week).
+// Cell color encodes sessions that week: 1 day → level 1, 2 days → level 2, 3+ days → level 4.
+// Colors use --heatmap-N CSS variables so all themes work. Future weeks render invisible.
 function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   const { status: authStatus } = useSession();
   const isDemoMode = authStatus === "unauthenticated";
@@ -848,6 +860,7 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   );
 }
 
+// Tooltip body for a weekly cell: shows the week-start date and training day count for that week.
 function WeeklyTooltipContent({ value }) {
   const { year, weekNum, sessions } = value;
   return (
@@ -879,9 +892,10 @@ const MONTH_NAMES = [
   "Dec",
 ];
 
-// Builds { [year]: { [month 1-12]: { activeWeeks, count 0-4, weekBreakdown } } }.
-// count = distinct calendar weeks with at least one session, capped at 4.
-// weekBreakdown = [{ sessions }] sorted by week order within the month, for tooltips.
+// Aggregates parsedData into { [year]: { [month]: { activeWeeks, count, weekBreakdown } } }.
+// activeWeeks = distinct calendar weeks in that month with at least one session; count capped at 4.
+// weekBreakdown is sorted chronologically and drives the per-week rows in the monthly tooltip.
+// In demo mode returns randomised data with a realistic active-month distribution.
 function generateMonthlyHeatmapData(
   parsedData,
   startYear,
@@ -947,8 +961,9 @@ function generateMonthlyHeatmapData(
   return result;
 }
 
-// All-years monthly matrix: one row per year, one cell per month (1–12).
-// Color = active weeks that month: 0 blank, 1 light, 2 medium, 3 strong, 4 full.
+// All-years monthly grid: one row per year, 12 cells per row (one per month).
+// Cell color encodes active weeks that month: 0 = blank, 1–3 = graduated intensity, 4+ = full.
+// Future months render invisible; past months with zero activity render at low opacity.
 function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   const { status: authStatus } = useSession();
   const isDemoMode = authStatus === "unauthenticated";
@@ -1102,6 +1117,7 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   );
 }
 
+// Maps a weekly session count to an emoji for monthly tooltip week rows.
 function weekEmoji(sessions) {
   if (sessions >= 3) return "🏆";
   if (sessions === 2) return "💪";
@@ -1109,6 +1125,7 @@ function weekEmoji(sessions) {
   return "💩";
 }
 
+// Tooltip body for a monthly cell: shows month/year heading and a per-week session breakdown.
 function MonthlyTooltipContent({ value }) {
   const { year, month, weekBreakdown } = value;
   return (
@@ -1135,7 +1152,9 @@ function MonthlyTooltipContent({ value }) {
   );
 }
 
-// Single-year calendar heatmap with a custom tooltip showing PR details and lift breakdown per day.
+// Single-year calendar heatmap (Jan–Dec) using react-calendar-heatmap.
+// Cell color reflects session intensity and PR status via getHeatmapLevel.
+// Hover triggers a fixed-position tooltip with full session and PR details for that day.
 function Heatmap({ parsedData, startDate, endDate, isSharing }) {
   const { status: authStatus } = useSession();
   const [heatmapData, setHeatmapData] = useState(null);
@@ -1215,7 +1234,8 @@ function Heatmap({ parsedData, startDate, endDate, isSharing }) {
   );
 }
 
-// Tooltip popup showing date, total sets, PR badges, and per-lift set breakdowns for a heatmap cell.
+// Tooltip body for a daily heatmap cell: date, set/lift counts, PR badges (heaviest per lift type),
+// and per-lift set breakdowns. Shows up to MAX_LIFTS_SHOWN lift types before truncating.
 function HeatmapTooltipContent({ value }) {
   const { sessionData, date } = value;
   const { isMetric } = useAthleteBio();
@@ -1296,8 +1316,10 @@ function getHeatmapLevel(totalSets, hasPR, hasCoreLiftPR) {
   return 1;
 }
 
-// Create heatmapData with structured session info for rich tooltips
-// Single O(n) pass replaces the old O(n^2) approach
+// Builds the heatmap value array for one calendar year from parsedData.
+// Single O(n) pass produces { date, count, sessionData } entries where count = getHeatmapLevel()
+// and sessionData carries PR and set details for tooltip rendering.
+// In demo mode returns randomised counts across the full date range to fill the grid attractively.
 function generateHeatmapData(parsedData, startDate, endDate, isDemoMode) {
   // Generate a full interval of random data for demo mode because it looks good
   if (isDemoMode) {

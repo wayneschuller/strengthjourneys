@@ -417,7 +417,7 @@ export function ActivityHeatmapsCard() {
                 </div>
               )}
               {viewMode === "daily" && (
-                <div className={isSharing ? "" : "max-h-[50vh] overflow-y-auto pr-1"}>
+                <div className={isSharing ? "" : "max-h-[40vh] overflow-y-auto pr-1"}>
                   <div className="flex flex-col gap-6">
                     {intervals.map((interval, index) => {
                       return (

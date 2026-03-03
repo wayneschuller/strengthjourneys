@@ -50,6 +50,288 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+/**
+ * Card displaying one calendar heatmap per year of the user's training history, with PR-weighted
+ * color intensity. Includes a "Copy heatmap" button that renders the card to clipboard via html2canvas.
+ * Reads parsedData from UserLiftingDataProvider; takes no props.
+ */
+export function TheLongGameCard() {
+  const { parsedData, isLoading } = useUserLiftingData();
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [intervals, setIntervals] = useState(null);
+  const { status: authStatus } = useSession();
+  const { theme } = useTheme();
+  const shareRef = useRef(null);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareReady, setShareReady] = useState(false);
+  // SSR default = first stage-1 title; randomised client-side once intervals load
+  const [cardTitle, setCardTitle] = useState(HEATMAP_TITLES_STAGE1[0]);
+
+  // initializeWithValue: false → SSR renders "daily" (default), client hydrates from localStorage on mount
+  const [viewMode, setViewMode] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.HEATMAP_VIEW_MODE,
+    "daily",
+    { initializeWithValue: false },
+  );
+
+  // FIXME: I think we have the skills to not need this useEffect anymore
+  useEffect(() => {
+    if (isLoading) return;
+    if (!parsedData || parsedData.length === 0) return;
+
+    // Generate heatmap stuff
+    const { startDate, endDate } = findStartEndDates(parsedData);
+    setStartDate(startDate);
+    setEndDate(endDate);
+
+    const intervals = generateYearRanges(startDate, endDate);
+
+    // devLog(`Heatmaps: setting intervals:`);
+    // devLog(intervals);
+
+    setIntervals(intervals); // intervals is the trigger for showing the heatmaps
+
+    // Randomise card title based on training history length (client-side only)
+    const titles = getHeatmapTitles(intervals.length);
+    setCardTitle(titles[Math.floor(Math.random() * titles.length)]);
+  }, [isLoading, parsedData]);
+
+  // if (!parsedData || parsedData.length === 0) { return null; }
+
+  const handleShare = async () => {
+    const startTime = performance.now();
+    setIsSharing(true);
+    // Wait one frame so the browser paints the loading overlay before html2canvas blocks the thread
+    await new Promise((r) => requestAnimationFrame(r));
+
+    try {
+      if (shareRef.current) {
+        // Dynamically import html2canvas only when user clicks share
+        const html2canvas = (await import("html2canvas-pro")).default;
+        // Pass a Promise directly to ClipboardItem so navigator.clipboard.write()
+        // is called while the document is still focused. The browser holds the
+        // clipboard operation open while html2canvas renders — safe to switch apps.
+        const blobPromise = html2canvas(shareRef.current, {
+          ignoreElements: (element) => element.id === "ignoreCopy",
+          scale: 1,
+        }).then(
+          (canvas) =>
+            new Promise((resolve) => canvas.toBlob(resolve, "image/png")),
+        );
+
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": blobPromise }),
+        ]);
+        console.log("Heatmap copied to clipboard");
+        gaEvent(GA_EVENT_TAGS.HEATMAP_SHARE_CLIPBOARD, { page: "/lift-explorer" });
+      }
+
+      logTiming("html2canvas", performance.now() - startTime);
+      setShareReady(true);
+    } catch (err) {
+      console.error("Error in copying heatmap: ", err);
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  return (
+    <>
+      {(isSharing || shareReady) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="bg-background flex flex-col items-center gap-4 rounded-lg border p-6 shadow-lg">
+            {isSharing ? (
+              <>
+                <LoaderCircle
+                  className="h-8 w-8 animate-spin"
+                  aria-label="Loading"
+                  role="status"
+                />
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold">Generating Image</h3>
+                  <p className="text-muted-foreground mt-2 text-sm">
+                    {getSharingMessage(intervals?.length || 1)}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="text-center">
+                <h3 className="text-lg font-semibold">
+                  Heatmap Copied to Clipboard
+                </h3>
+                <p className="text-muted-foreground mt-2 text-sm">
+                  Paste it anywhere — social media, Discord, messages, or a
+                  Google Doc.
+                </p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Use{" "}
+                  <kbd className="bg-muted rounded border px-1.5 py-0.5 text-xs font-semibold">
+                    Ctrl+V
+                  </kbd>{" "}
+                  on Windows/Linux or{" "}
+                  <kbd className="bg-muted rounded border px-1.5 py-0.5 text-xs font-semibold">
+                    Cmd+V
+                  </kbd>{" "}
+                  on Mac.
+                </p>
+                <button
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 mt-4 rounded-md px-4 py-2 text-sm font-medium"
+                  onClick={() => setShareReady(false)}
+                >
+                  Got it
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      <Card ref={shareRef} style={isSharing ? { maxWidth: "800px", width: "100%", backgroundColor: "white", color: "black" } : undefined}>
+        <CardHeader>
+          <CardTitle>
+            {authStatus === "unauthenticated" && "Demo mode: "}
+            {cardTitle}
+          </CardTitle>
+          {intervals && (
+            <CardDescription>
+              Your strength journey from{" "}
+              {new Date(intervals[0].startDate).getFullYear()} -{" "}
+              {new Date(
+                intervals[intervals.length - 1].endDate,
+              ).getFullYear()}
+              .
+            </CardDescription>
+          )}
+        </CardHeader>
+        <CardContent>
+          {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
+          {intervals && (
+            <>
+              {/* Consistency grade rings — centered, hidden during share capture */}
+              {!isSharing && (
+                <div className="mb-6 flex justify-center">
+                  <ConsistencyGradesRow
+                    parsedData={parsedData}
+                    isVisible={!!intervals}
+                  />
+                </div>
+              )}
+              {!isSharing && <hr className="border-border/60 mb-3" />}
+              {/* View selector — right-justified, anchored just above the heatmap grid */}
+              {!isSharing && intervals.length > 2 && (
+                <div className="mb-2 flex justify-end">
+                  <div className="flex flex-row rounded border border-border/40 p-px text-[10px]">
+                    {[
+                      { key: "daily", label: "Daily" },
+                      { key: "weekly", label: "Weekly" },
+                      ...(intervals.length >= 5
+                        ? [{ key: "monthly", label: "Monthly" }]
+                        : []),
+                    ].map(({ key, label }) => (
+                      <button
+                        key={key}
+                        className={`rounded px-1.5 py-px transition-colors ${
+                          viewMode === key
+                            ? "bg-muted text-foreground/90 font-medium"
+                            : "text-muted-foreground/40 hover:text-muted-foreground/70"
+                        }`}
+                        onClick={() => setViewMode(key)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {viewMode === "daily" && (
+                <div className={isSharing ? "" : "max-h-[40vh] overflow-y-auto pr-1"}>
+                  <div className="flex flex-col gap-9">
+                    {intervals.map((interval, index) => {
+                      return (
+                        <div key={`${index}-heatmap`} className="flex w-full items-start">
+                          <div
+                            className="text-muted-foreground shrink-0 pr-2 pt-1 text-right text-xs lg:text-sm"
+                            style={{ width: WEEKLY_YEAR_W }}
+                          >
+                            {new Date(interval.startDate).getFullYear()}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <Heatmap
+                              parsedData={parsedData}
+                              startDate={interval.startDate}
+                              endDate={interval.endDate}
+                              isSharing={isSharing}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {viewMode === "weekly" && (
+                <WeeklyHeatmapMatrix
+                  parsedData={parsedData}
+                  startYear={new Date(intervals[0].startDate).getFullYear()}
+                  endYear={new Date(
+                    intervals[intervals.length - 1].endDate,
+                  ).getFullYear()}
+                  isSharing={isSharing}
+                />
+              )}
+              {viewMode === "monthly" && (
+                <MonthlyHeatmapMatrix
+                  parsedData={parsedData}
+                  startYear={new Date(intervals[0].startDate).getFullYear()}
+                  endYear={new Date(
+                    intervals[intervals.length - 1].endDate,
+                  ).getFullYear()}
+                  isSharing={isSharing}
+                />
+              )}
+              {/* Footer with app branding - only visible during image capture */}
+              {isSharing && (
+                <div className="mt-6 flex items-center justify-center border-t pt-4">
+                  <p className="text-muted-foreground text-sm">
+                    Created with{" "}
+                    <span className="text-foreground font-semibold">
+                      Strength Journeys
+                    </span>
+                    {" • "}
+                    <span className="text-muted-foreground">
+                      strengthjourneys.xyz
+                    </span>
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+        {intervals && (
+          <CardFooter id="ignoreCopy">
+            <div className="flex w-full items-center justify-between gap-3">
+              <MiniFeedbackWidget
+                contextId="heatmap_card"
+                page="/lift-explorer"
+                analyticsExtra={{ context: "activity_heatmaps_card" }}
+              />
+              <ShareCopyButton
+                label="Copy heatmap"
+                tooltip="Share heatmaps to clipboard"
+                onClick={handleShare}
+                isLoading={isSharing}
+                disabled={isSharing}
+              />
+            </div>
+          </CardFooter>
+        )}
+      </Card>
+    </>
+  );
+}
+
+// --- Support functions and components ---
+
 const MAX_LIFTS_SHOWN = 6;
 
 // --- Consistency Grades ---
@@ -228,433 +510,51 @@ function getHeatmapTitles(yearsCount) {
   return HEATMAP_TITLES_STAGE1;
 }
 
-/**
- * Card displaying one calendar heatmap per year of the user's training history, with PR-weighted
- * color intensity. Includes a "Copy heatmap" button that renders the card to clipboard via html2canvas.
- * Reads parsedData from UserLiftingDataProvider; takes no props.
- *
- * @param {Object} props
- */
-export function ActivityHeatmapsCard() {
-  const { parsedData, isLoading } = useUserLiftingData();
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [intervals, setIntervals] = useState(null);
-  const { status: authStatus } = useSession();
-  const { theme } = useTheme();
-  const shareRef = useRef(null);
-  const [isSharing, setIsSharing] = useState(false);
-  const [shareReady, setShareReady] = useState(false);
-  // SSR default = first stage-1 title; randomised client-side once intervals load
-  const [cardTitle, setCardTitle] = useState(HEATMAP_TITLES_STAGE1[0]);
+function getSharingMessage(years) {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-  // initializeWithValue: false → SSR renders "daily" (default), client hydrates from localStorage on mount
-  const [viewMode, setViewMode] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.HEATMAP_VIEW_MODE,
-    "daily",
-    { initializeWithValue: false },
-  );
+  if (years <= 1)
+    return pick([
+      "Generating your heatmap, get ready to brag.",
+      "Rendering your heatmap. Newbie gains are the best gains.",
+      "Packaging your gains for maximum flex.",
+      "Every PR journey starts with a single plate.",
+    ]);
 
-  // FIXME: I think we have the skills to not need this useEffect anymore
-  useEffect(() => {
-    if (isLoading) return;
-    if (!parsedData || parsedData.length === 0) return;
+  if (years <= 3)
+    return pick([
+      `Rendering ${years} years of heatmap. This won't take long.`,
+      `${years} years of heatmap. You're past the 'just trying it out' phase.`,
+      `${years} years in, and still adding plates. Nice.`,
+      "Dedicated. Your heatmap is about to prove it.",
+      "Generating your heatmap. We see you love a good spreadsheet.",
+    ]);
 
-    // Generate heatmap stuff
-    const { startDate, endDate } = findStartEndDates(parsedData);
-    setStartDate(startDate);
-    setEndDate(endDate);
+  if (years <= 5)
+    return pick([
+      `Rendering ${years} years of heatmap. This might take a moment.`,
+      `${years} years of heatmap is no joke. Hang tight.`,
+      "Your heatmap consistency is showing. Give us a sec.",
+      `${years} years under the bar. That's a lot of chalk dust.`,
+      `Building ${years} years of heatmap. Bear with us.`,
+    ]);
 
-    const intervals = generateYearRanges(startDate, endDate);
+  if (years <= 7)
+    return pick([
+      `${years} years of heatmap! This is going to take a minute.`,
+      `Rendering ${years} years of heatmap. You've earned this wait.`,
+      `${years} years! Most gym memberships don't survive ${years} months.`,
+      "Veteran status confirmed. Patience, champion.",
+      `${years} years of heatmap. We know you love your Google Sheets.`,
+    ]);
 
-    // devLog(`Heatmaps: setting intervals:`);
-    // devLog(intervals);
-
-    setIntervals(intervals); // intervals is the trigger for showing the heatmaps
-
-    // Randomise card title based on training history length (client-side only)
-    const titles = getHeatmapTitles(intervals.length);
-    setCardTitle(titles[Math.floor(Math.random() * titles.length)]);
-  }, [isLoading, parsedData]);
-
-  // if (!parsedData || parsedData.length === 0) { return null; }
-
-  const handleShare = async () => {
-    const startTime = performance.now();
-    setIsSharing(true);
-    // Wait one frame so the browser paints the loading overlay before html2canvas blocks the thread
-    await new Promise((r) => requestAnimationFrame(r));
-
-    try {
-      if (shareRef.current) {
-        // Dynamically import html2canvas only when user clicks share
-        const html2canvas = (await import("html2canvas-pro")).default;
-        // Pass a Promise directly to ClipboardItem so navigator.clipboard.write()
-        // is called while the document is still focused. The browser holds the
-        // clipboard operation open while html2canvas renders — safe to switch apps.
-        const blobPromise = html2canvas(shareRef.current, {
-          ignoreElements: (element) => element.id === "ignoreCopy",
-          scale: 1,
-        }).then(
-          (canvas) =>
-            new Promise((resolve) => canvas.toBlob(resolve, "image/png")),
-        );
-
-        await navigator.clipboard.write([
-          new ClipboardItem({ "image/png": blobPromise }),
-        ]);
-        console.log("Heatmap copied to clipboard");
-        gaEvent(GA_EVENT_TAGS.HEATMAP_SHARE_CLIPBOARD, { page: "/lift-explorer" });
-      }
-
-      logTiming("html2canvas", performance.now() - startTime);
-      setShareReady(true);
-    } catch (err) {
-      console.error("Error in copying heatmap: ", err);
-    } finally {
-      setIsSharing(false);
-    }
-  };
-
-  return (
-    <>
-      {(isSharing || shareReady) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-          <div className="bg-background flex flex-col items-center gap-4 rounded-lg border p-6 shadow-lg">
-            {isSharing ? (
-              <>
-                <LoaderCircle
-                  className="h-8 w-8 animate-spin"
-                  aria-label="Loading"
-                  role="status"
-                />
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold">Generating Image</h3>
-                  <p className="text-muted-foreground mt-2 text-sm">
-                    {getSharingMessage(intervals?.length || 1)}
-                  </p>
-                </div>
-              </>
-            ) : (
-              <div className="text-center">
-                <h3 className="text-lg font-semibold">
-                  Heatmap Copied to Clipboard
-                </h3>
-                <p className="text-muted-foreground mt-2 text-sm">
-                  Paste it anywhere — social media, Discord, messages, or a
-                  Google Doc.
-                </p>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Use{" "}
-                  <kbd className="bg-muted rounded border px-1.5 py-0.5 text-xs font-semibold">
-                    Ctrl+V
-                  </kbd>{" "}
-                  on Windows/Linux or{" "}
-                  <kbd className="bg-muted rounded border px-1.5 py-0.5 text-xs font-semibold">
-                    Cmd+V
-                  </kbd>{" "}
-                  on Mac.
-                </p>
-                <button
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 mt-4 rounded-md px-4 py-2 text-sm font-medium"
-                  onClick={() => setShareReady(false)}
-                >
-                  Got it
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-      <Card ref={shareRef} style={isSharing ? { maxWidth: "800px", width: "100%", backgroundColor: "white", color: "black" } : undefined}>
-        <CardHeader>
-          <CardTitle>
-            {authStatus === "unauthenticated" && "Demo mode: "}
-            {cardTitle}
-          </CardTitle>
-          {intervals && (
-            <CardDescription>
-              Your strength journey from{" "}
-              {new Date(intervals[0].startDate).getFullYear()} -{" "}
-              {new Date(
-                intervals[intervals.length - 1].endDate,
-              ).getFullYear()}
-              .
-            </CardDescription>
-          )}
-        </CardHeader>
-        <CardContent>
-          {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
-          {intervals && (
-            <>
-              {/* Consistency grade rings — centered, hidden during share capture */}
-              {!isSharing && (
-                <div className="mb-6 flex justify-center">
-                  <ConsistencyGradesRow
-                    parsedData={parsedData}
-                    isVisible={!!intervals}
-                  />
-                </div>
-              )}
-              {/* View selector — right-justified, anchored just above the heatmap grid */}
-              {!isSharing && intervals.length > 2 && (
-                <div className="mb-2 flex justify-end">
-                  <div className="flex flex-row rounded border border-border/40 p-px text-[10px]">
-                    {[
-                      { key: "daily", label: "Daily" },
-                      { key: "weekly", label: "Weekly" },
-                      ...(intervals.length >= 5
-                        ? [{ key: "monthly", label: "Monthly" }]
-                        : []),
-                    ].map(({ key, label }) => (
-                      <button
-                        key={key}
-                        className={`rounded px-1.5 py-px transition-colors ${
-                          viewMode === key
-                            ? "bg-muted text-foreground/90 font-medium"
-                            : "text-muted-foreground/40 hover:text-muted-foreground/70"
-                        }`}
-                        onClick={() => setViewMode(key)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {viewMode === "daily" && (
-                <div className={isSharing ? "" : "max-h-[40vh] overflow-y-auto pr-1"}>
-                  <div className="flex flex-col gap-9">
-                    {intervals.map((interval, index) => {
-                      return (
-                        <div key={`${index}-heatmap`} className="flex w-full items-start">
-                          <div
-                            className="text-muted-foreground shrink-0 pr-2 pt-1 text-right text-xs lg:text-sm"
-                            style={{ width: WEEKLY_YEAR_W }}
-                          >
-                            {new Date(interval.startDate).getFullYear()}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <Heatmap
-                              parsedData={parsedData}
-                              startDate={interval.startDate}
-                              endDate={interval.endDate}
-                              isSharing={isSharing}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              {viewMode === "weekly" && (
-                <WeeklyHeatmapMatrix
-                  parsedData={parsedData}
-                  startYear={new Date(intervals[0].startDate).getFullYear()}
-                  endYear={new Date(
-                    intervals[intervals.length - 1].endDate,
-                  ).getFullYear()}
-                  isSharing={isSharing}
-                />
-              )}
-              {viewMode === "monthly" && (
-                <MonthlyHeatmapMatrix
-                  parsedData={parsedData}
-                  startYear={new Date(intervals[0].startDate).getFullYear()}
-                  endYear={new Date(
-                    intervals[intervals.length - 1].endDate,
-                  ).getFullYear()}
-                  isSharing={isSharing}
-                />
-              )}
-              {/* Footer with app branding - only visible during image capture */}
-              {isSharing && (
-                <div className="mt-6 flex items-center justify-center border-t pt-4">
-                  <p className="text-muted-foreground text-sm">
-                    Created with{" "}
-                    <span className="text-foreground font-semibold">
-                      Strength Journeys
-                    </span>
-                    {" • "}
-                    <span className="text-muted-foreground">
-                      strengthjourneys.xyz
-                    </span>
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-        {intervals && (
-          <CardFooter id="ignoreCopy">
-            <div className="flex w-full items-center justify-between gap-3">
-              <MiniFeedbackWidget
-                contextId="heatmap_card"
-                page="/lift-explorer"
-                analyticsExtra={{ context: "activity_heatmaps_card" }}
-              />
-              <ShareCopyButton
-                label="Copy heatmap"
-                tooltip="Share heatmaps to clipboard"
-                onClick={handleShare}
-                isLoading={isSharing}
-                disabled={isSharing}
-              />
-            </div>
-          </CardFooter>
-        )}
-      </Card>
-    </>
-  );
-}
-
-// Single-year calendar heatmap with a custom tooltip showing PR details and lift breakdown per day.
-function Heatmap({ parsedData, startDate, endDate, isSharing }) {
-  const { status: authStatus } = useSession();
-  const [heatmapData, setHeatmapData] = useState(null);
-  const [hoveredValue, setHoveredValue] = useState(null);
-  const [tooltipPos, setTooltipPos] = useState({
-    x: 0,
-    y: 0,
-    showBelow: false,
-  });
-
-  useEffect(() => {
-    if (!parsedData) return;
-    const heatmapData = generateHeatmapData(
-      parsedData,
-      startDate,
-      endDate,
-      authStatus === "unauthenticated", // This is a clue we have sample data and we will fake the heatmap to impress shallow people
-    );
-    setHeatmapData(heatmapData);
-  }, [parsedData, startDate, endDate, authStatus]);
-
-  const handleMouseOver = useCallback((e, value) => {
-    if (!value || !value.sessionData) return;
-    const cellRect = e.target.getBoundingClientRect();
-    const x = cellRect.left + cellRect.width / 2;
-    const y = cellRect.top;
-    const showBelow = y < 200;
-    setTooltipPos({
-      x: Math.max(140, Math.min(x, window.innerWidth - 140)),
-      y: showBelow ? cellRect.bottom + 8 : y - 8,
-      showBelow,
-    });
-    setHoveredValue(value);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setHoveredValue(null);
-  }, []);
-
-  if (!heatmapData || !startDate || !endDate) {
-    return <Skeleton className="h-24 flex-1" />;
-  }
-
-  return (
-    <div className="relative">
-      <CalendarHeatmap
-        startDate={startDate}
-        endDate={endDate}
-        values={heatmapData}
-        showMonthLabels={true}
-        classForValue={(value) => {
-          if (!value) return `color-heatmap-0`;
-          return `color-heatmap-${value.count}`;
-        }}
-        titleForValue={() => null}
-        onMouseOver={handleMouseOver}
-        onMouseLeave={handleMouseLeave}
-        transformDayElement={(element, value, index) =>
-          cloneElement(element, { rx: 3, ry: 3 })
-        }
-      />
-      {hoveredValue && !isSharing && (
-        <div
-          className="pointer-events-none fixed z-50"
-          style={{
-            left: tooltipPos.x,
-            top: tooltipPos.y,
-            transform: tooltipPos.showBelow
-              ? "translate(-50%, 0)"
-              : "translate(-50%, -100%)",
-          }}
-        >
-          <HeatmapTooltipContent value={hoveredValue} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Tooltip popup showing date, total sets, PR badges, and per-lift set breakdowns for a heatmap cell.
-function HeatmapTooltipContent({ value }) {
-  const { sessionData, date } = value;
-  const { isMetric } = useAthleteBio();
-  if (!sessionData) return null;
-
-  const { totalSets, uniqueLifts, prs, liftsByType } = sessionData;
-  const dateLabel = getReadableDateString(date, true);
-  const liftTypes = Object.keys(liftsByType);
-  const visibleLifts = liftTypes.slice(0, MAX_LIFTS_SHOWN);
-  const hiddenCount = liftTypes.length - MAX_LIFTS_SHOWN;
-
-  // Keep only the heaviest PR per lift type
-  const bestPrs = Object.values(
-    prs.reduce((acc, pr) => {
-      if (!acc[pr.liftType] || pr.weight > acc[pr.liftType].weight) {
-        acc[pr.liftType] = pr;
-      }
-      return acc;
-    }, {}),
-  );
-
-  return (
-    <div className="border-border/50 bg-background grid max-w-[20rem] min-w-[10rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
-      <p className="font-bold">{dateLabel}</p>
-      <p className="text-muted-foreground">
-        {totalSets} {totalSets === 1 ? "set" : "sets"} across {uniqueLifts}{" "}
-        {uniqueLifts === 1 ? "lift" : "lifts"}
-      </p>
-
-      {bestPrs.length > 0 && (
-        <div className="flex flex-col gap-1">
-          {bestPrs.map((pr, i) => (
-            <div key={i} className="flex items-center gap-1.5">
-              <span className="shrink-0 rounded bg-amber-500/20 px-1 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
-                PR
-              </span>
-              <LiftTypeIndicator liftType={pr.liftType} />
-              <span className="text-muted-foreground">
-                {pr.reps}@{getDisplayWeight(pr, isMetric).value}
-                {getDisplayWeight(pr, isMetric).unit}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="flex flex-col gap-1">
-        {visibleLifts.map((liftType) => (
-          <div key={liftType}>
-            <LiftTypeIndicator liftType={liftType} />
-            <SessionRow
-              lifts={liftsByType[liftType]}
-              showDate={false}
-              isMetric={isMetric}
-            />
-          </div>
-        ))}
-        {hiddenCount > 0 && (
-          <p className="text-muted-foreground">
-            +{hiddenCount} more {hiddenCount === 1 ? "lift" : "lifts"}
-          </p>
-        )}
-      </div>
-    </div>
-  );
+  return pick([
+    `${years} years of heatmap?! We need a moment for this legend.`,
+    `Rendering ${years} years. At this point it's a historical document.`,
+    `${years} years of heatmap. Your spreadsheet must be a novel by now.`,
+    `${years} years! Your heatmap is older than some lifters at your gym.`,
+    `${years} years under the bar. The barbell knows your name by now.`,
+  ]);
 }
 
 function findStartEndDates(parsedData) {
@@ -711,53 +611,6 @@ function generateYearRanges(startDateStr, endDateStr) {
   }
 
   return yearRanges;
-}
-
-function getSharingMessage(years) {
-  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-  if (years <= 1)
-    return pick([
-      "Generating your heatmap, get ready to brag.",
-      "Rendering your heatmap. Newbie gains are the best gains.",
-      "Packaging your gains for maximum flex.",
-      "Every PR journey starts with a single plate.",
-    ]);
-
-  if (years <= 3)
-    return pick([
-      `Rendering ${years} years of heatmap. This won't take long.`,
-      `${years} years of heatmap. You're past the 'just trying it out' phase.`,
-      `${years} years in, and still adding plates. Nice.`,
-      "Dedicated. Your heatmap is about to prove it.",
-      "Generating your heatmap. We see you love a good spreadsheet.",
-    ]);
-
-  if (years <= 5)
-    return pick([
-      `Rendering ${years} years of heatmap. This might take a moment.`,
-      `${years} years of heatmap is no joke. Hang tight.`,
-      "Your heatmap consistency is showing. Give us a sec.",
-      `${years} years under the bar. That's a lot of chalk dust.`,
-      `Building ${years} years of heatmap. Bear with us.`,
-    ]);
-
-  if (years <= 7)
-    return pick([
-      `${years} years of heatmap! This is going to take a minute.`,
-      `Rendering ${years} years of heatmap. You've earned this wait.`,
-      `${years} years! Most gym memberships don't survive ${years} months.`,
-      "Veteran status confirmed. Patience, champion.",
-      `${years} years of heatmap. We know you love your Google Sheets.`,
-    ]);
-
-  return pick([
-    `${years} years of heatmap?! We need a moment for this legend.`,
-    `Rendering ${years} years. At this point it's a historical document.`,
-    `${years} years of heatmap. Your spreadsheet must be a novel by now.`,
-    `${years} years! Your heatmap is older than some lifters at your gym.`,
-    `${years} years under the bar. The barbell knows your name by now.`,
-  ]);
 }
 
 // Shared matrix layout constants (used by both weekly and monthly views)
@@ -1278,6 +1131,154 @@ function MonthlyTooltipContent({ value }) {
       ) : (
         <p className="text-muted-foreground">No training sessions 💩</p>
       )}
+    </div>
+  );
+}
+
+// Single-year calendar heatmap with a custom tooltip showing PR details and lift breakdown per day.
+function Heatmap({ parsedData, startDate, endDate, isSharing }) {
+  const { status: authStatus } = useSession();
+  const [heatmapData, setHeatmapData] = useState(null);
+  const [hoveredValue, setHoveredValue] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({
+    x: 0,
+    y: 0,
+    showBelow: false,
+  });
+
+  useEffect(() => {
+    if (!parsedData) return;
+    const heatmapData = generateHeatmapData(
+      parsedData,
+      startDate,
+      endDate,
+      authStatus === "unauthenticated", // This is a clue we have sample data and we will fake the heatmap to impress shallow people
+    );
+    setHeatmapData(heatmapData);
+  }, [parsedData, startDate, endDate, authStatus]);
+
+  const handleMouseOver = useCallback((e, value) => {
+    if (!value || !value.sessionData) return;
+    const cellRect = e.target.getBoundingClientRect();
+    const x = cellRect.left + cellRect.width / 2;
+    const y = cellRect.top;
+    const showBelow = y < 200;
+    setTooltipPos({
+      x: Math.max(140, Math.min(x, window.innerWidth - 140)),
+      y: showBelow ? cellRect.bottom + 8 : y - 8,
+      showBelow,
+    });
+    setHoveredValue(value);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredValue(null);
+  }, []);
+
+  if (!heatmapData || !startDate || !endDate) {
+    return <Skeleton className="h-24 flex-1" />;
+  }
+
+  return (
+    <div className="relative">
+      <CalendarHeatmap
+        startDate={startDate}
+        endDate={endDate}
+        values={heatmapData}
+        showMonthLabels={true}
+        classForValue={(value) => {
+          if (!value) return `color-heatmap-0`;
+          return `color-heatmap-${value.count}`;
+        }}
+        titleForValue={() => null}
+        onMouseOver={handleMouseOver}
+        onMouseLeave={handleMouseLeave}
+        transformDayElement={(element, value, index) =>
+          cloneElement(element, { rx: 3, ry: 3 })
+        }
+      />
+      {hoveredValue && !isSharing && (
+        <div
+          className="pointer-events-none fixed z-50"
+          style={{
+            left: tooltipPos.x,
+            top: tooltipPos.y,
+            transform: tooltipPos.showBelow
+              ? "translate(-50%, 0)"
+              : "translate(-50%, -100%)",
+          }}
+        >
+          <HeatmapTooltipContent value={hoveredValue} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Tooltip popup showing date, total sets, PR badges, and per-lift set breakdowns for a heatmap cell.
+function HeatmapTooltipContent({ value }) {
+  const { sessionData, date } = value;
+  const { isMetric } = useAthleteBio();
+  if (!sessionData) return null;
+
+  const { totalSets, uniqueLifts, prs, liftsByType } = sessionData;
+  const dateLabel = getReadableDateString(date, true);
+  const liftTypes = Object.keys(liftsByType);
+  const visibleLifts = liftTypes.slice(0, MAX_LIFTS_SHOWN);
+  const hiddenCount = liftTypes.length - MAX_LIFTS_SHOWN;
+
+  // Keep only the heaviest PR per lift type
+  const bestPrs = Object.values(
+    prs.reduce((acc, pr) => {
+      if (!acc[pr.liftType] || pr.weight > acc[pr.liftType].weight) {
+        acc[pr.liftType] = pr;
+      }
+      return acc;
+    }, {}),
+  );
+
+  return (
+    <div className="border-border/50 bg-background grid max-w-[20rem] min-w-[10rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
+      <p className="font-bold">{dateLabel}</p>
+      <p className="text-muted-foreground">
+        {totalSets} {totalSets === 1 ? "set" : "sets"} across {uniqueLifts}{" "}
+        {uniqueLifts === 1 ? "lift" : "lifts"}
+      </p>
+
+      {bestPrs.length > 0 && (
+        <div className="flex flex-col gap-1">
+          {bestPrs.map((pr, i) => (
+            <div key={i} className="flex items-center gap-1.5">
+              <span className="shrink-0 rounded bg-amber-500/20 px-1 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                PR
+              </span>
+              <LiftTypeIndicator liftType={pr.liftType} />
+              <span className="text-muted-foreground">
+                {pr.reps}@{getDisplayWeight(pr, isMetric).value}
+                {getDisplayWeight(pr, isMetric).unit}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1">
+        {visibleLifts.map((liftType) => (
+          <div key={liftType}>
+            <LiftTypeIndicator liftType={liftType} />
+            <SessionRow
+              lifts={liftsByType[liftType]}
+              showDate={false}
+              isMetric={isMetric}
+            />
+          </div>
+        ))}
+        {hiddenCount > 0 && (
+          <p className="text-muted-foreground">
+            +{hiddenCount} more {hiddenCount === 1 ? "lift" : "lifts"}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

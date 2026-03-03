@@ -8,7 +8,7 @@ import { HomeInspirationCards } from "./home-inspiration-cards";
 import { DataSheetStatus, RowProcessingIndicator } from "./row-processing-indicator";
 import { SessionAnalysisCard } from "@/components/home-dashboard/last-session-card";
 import { ThisMonthInIronCard } from "@/components/home-dashboard/month-in-iron-card";
-import { ActivityHeatmapsCard } from "@/components/home-dashboard/activity-heatmap-card";
+import { TheLongGameCard } from "@/components/home-dashboard/the-long-game-card";
 import { OnBoardingDashboard } from "@/components/instructions-cards";
 import { motion } from "motion/react";
 
@@ -161,7 +161,7 @@ export function HomeDashboard() {
             setHighlightDate={setHighlightDate}
           />
           <ThisMonthInIronCard />
-          <ActivityHeatmapsCard />
+          <TheLongGameCard />
         </section>
       )}
     </div>

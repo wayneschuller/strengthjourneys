@@ -411,6 +411,15 @@ export function ActivityHeatmapsCard() {
           {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
           {intervals && (
             <>
+              {/* Consistency grades — hidden during share capture */}
+              {!isSharing && (
+                <div className="mb-4 flex justify-center">
+                  <ConsistencyGradesRow
+                    parsedData={parsedData}
+                    isVisible={!!intervals}
+                  />
+                </div>
+              )}
               {viewMode === "daily" && (
                 <div className={isSharing ? "" : "max-h-[50vh] overflow-y-auto pr-1"}>
                   <div className="flex flex-col gap-6">
@@ -457,16 +466,6 @@ export function ActivityHeatmapsCard() {
                   isSharing={isSharing}
                 />
               )}
-              {/* Consistency grades — hidden during share capture */}
-              {!isSharing && (
-                <div className="mt-4 flex justify-center">
-                  <ConsistencyGradesRow
-                    parsedData={parsedData}
-                    isVisible={!!intervals}
-                  />
-                </div>
-              )}
-
               {/* Footer with app branding - only visible during image capture */}
               {isSharing && (
                 <div className="mt-6 flex items-center justify-center border-t pt-4">

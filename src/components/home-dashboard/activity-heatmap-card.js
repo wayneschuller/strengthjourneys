@@ -165,7 +165,7 @@ function ConsistencyGradesRow({ parsedData, isVisible = false }) {
           percentage={item.percentage}
           label={item.label}
           tooltip={item.tooltip}
-          size={36}
+          size={52}
           delay={index * 0.05}
           isVisible={isVisible}
         />

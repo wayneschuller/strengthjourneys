@@ -141,7 +141,7 @@
     --heatmap-0: #eeeeee;
     --heatmap-1: #a3b18a;
     --heatmap-2: #588157;
-    --heatmap-3: #3a5a40;
+    --heatmap-3: #243d2a;
     --heatmap-4: #17221c;
   }
 
@@ -189,7 +189,7 @@
     --heatmap-0: rgb(15, 19, 26);
     --heatmap-1: #354a34;
     --heatmap-2: #4d683f;
-    --heatmap-3: #6f8d60;
+    --heatmap-3: #8db07e;
     --heatmap-4: #a1bfa5;
   }
 
@@ -807,7 +807,8 @@
 
 .react-calendar-heatmap text {
   font-size: 12px;
-  fill: #aaa;
+  fill: #999;
+  letter-spacing: 0.04em;
 }
 
 .react-calendar-heatmap .react-calendar-heatmap-small-text {

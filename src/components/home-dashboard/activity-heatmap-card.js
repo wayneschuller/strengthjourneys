@@ -65,9 +65,12 @@ const LABEL_ABBREV = {
   Decade: "10Y",
 };
 
-function GradeCircle({ percentage, label, tooltip, size = 28, delay = 0, isVisible }) {
+const SHORT_TERM_LABELS = new Set(["Week", "Month", "3 Month"]);
+
+function GradeCircle({ percentage, label, tooltip, size = 28, delay = 0, isVisible, isShortTerm = true }) {
   const { grade, color } = getGradeAndColor(percentage);
-  const strokeWidth = 3;
+  const strokeWidth = isShortTerm ? 3.5 : 2.5;
+  const targetOpacity = isShortTerm ? 1 : 0.6;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
@@ -80,7 +83,7 @@ function GradeCircle({ percentage, label, tooltip, size = 28, delay = 0, isVisib
           <motion.div
             className="flex flex-col items-center gap-0.5"
             initial={{ opacity: 0, y: -20 }}
-            animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+            animate={isVisible ? { opacity: targetOpacity, y: 0 } : { opacity: 0, y: -20 }}
             transition={{
               type: "spring",
               stiffness: 300,
@@ -167,6 +170,7 @@ function ConsistencyGradesRow({ parsedData, isVisible = false }) {
           size={52}
           delay={index * 0.05}
           isVisible={isVisible}
+          isShortTerm={SHORT_TERM_LABELS.has(item.label)}
         />
       ))}
     </div>
@@ -383,41 +387,44 @@ export function ActivityHeatmapsCard() {
           {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
           {intervals && (
             <>
-              {/* Consistency grades + view selector — hidden during share capture */}
+              {/* Consistency grade rings — centered, hidden during share capture */}
               {!isSharing && (
-                <div className="mb-4 flex flex-col items-center gap-3">
+                <div className="mb-6 flex justify-center">
                   <ConsistencyGradesRow
                     parsedData={parsedData}
                     isVisible={!!intervals}
                   />
-                  {intervals.length > 2 && (
-                    <div className="flex flex-row rounded-md border p-0.5 text-xs">
-                      {[
-                        { key: "daily", label: "Daily" },
-                        { key: "weekly", label: "Weekly" },
-                        ...(intervals.length >= 5
-                          ? [{ key: "monthly", label: "Monthly" }]
-                          : []),
-                      ].map(({ key, label }) => (
-                        <button
-                          key={key}
-                          className={`rounded px-2 py-0.5 font-medium transition-colors ${
-                            viewMode === key
-                              ? "bg-muted text-foreground"
-                              : "text-muted-foreground hover:text-foreground"
-                          }`}
-                          onClick={() => setViewMode(key)}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                </div>
+              )}
+              {/* View selector — right-justified, anchored just above the heatmap grid */}
+              {!isSharing && intervals.length > 2 && (
+                <div className="mb-2 flex justify-end">
+                  <div className="flex flex-row rounded border border-border/40 p-px text-[10px]">
+                    {[
+                      { key: "daily", label: "Daily" },
+                      { key: "weekly", label: "Weekly" },
+                      ...(intervals.length >= 5
+                        ? [{ key: "monthly", label: "Monthly" }]
+                        : []),
+                    ].map(({ key, label }) => (
+                      <button
+                        key={key}
+                        className={`rounded px-1.5 py-px transition-colors ${
+                          viewMode === key
+                            ? "bg-muted text-foreground/90 font-medium"
+                            : "text-muted-foreground/40 hover:text-muted-foreground/70"
+                        }`}
+                        onClick={() => setViewMode(key)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
               {viewMode === "daily" && (
                 <div className={isSharing ? "" : "max-h-[40vh] overflow-y-auto pr-1"}>
-                  <div className="flex flex-col gap-6">
+                  <div className="flex flex-col gap-9">
                     {intervals.map((interval, index) => {
                       return (
                         <div key={`${index}-heatmap`} className="flex w-full items-start">
@@ -886,7 +893,7 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
           {WEEKLY_MONTH_LABELS.map(({ label, week }) => (
             <span
               key={label}
-              className="text-muted-foreground overflow-visible text-[9px] whitespace-nowrap lg:text-[11px] 2xl:text-xs"
+              className="text-muted-foreground/80 overflow-visible text-[9px] tracking-[0.04em] whitespace-nowrap lg:text-[11px] 2xl:text-xs"
               style={{ gridColumn: week }}
             >
               {label}
@@ -1143,7 +1150,7 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
           {MONTH_NAMES.map((name) => (
             <span
               key={name}
-              className="text-muted-foreground text-center text-[9px] lg:text-[11px] 2xl:text-xs"
+              className="text-muted-foreground/80 text-center text-[9px] tracking-[0.04em] lg:text-[11px] 2xl:text-xs"
             >
               {name}
             </span>

@@ -10,7 +10,6 @@ import { SessionAnalysisCard } from "@/components/home-dashboard/last-session-ca
 import { ThisMonthInIronCard } from "@/components/home-dashboard/month-in-iron-card";
 import { ActivityHeatmapsCard } from "@/components/home-dashboard/activity-heatmap-card";
 import { OnBoardingDashboard } from "@/components/instructions-cards";
-import { ConsistencyGradesRow } from "./consistency-grades-row";
 import { motion } from "motion/react";
 
 // Short, subtle quips that incorporate the user's first name.
@@ -131,16 +130,6 @@ export function HomeDashboard() {
             </div>
           )}
         </div>
-        {sheetInfo?.ssid && (
-          <div className="flex justify-center 2xl:pointer-events-none 2xl:absolute 2xl:inset-0 2xl:items-start 2xl:justify-center">
-            <div className="2xl:pointer-events-auto">
-              <ConsistencyGradesRow
-                parsedData={parsedData}
-                isVisible={hasDataLoaded}
-              />
-            </div>
-          </div>
-        )}
         {/* Mobile: status below circles */}
         {sheetInfo?.ssid && hasDataLoaded && (
           <div className="mt-2 flex justify-center 2xl:hidden">

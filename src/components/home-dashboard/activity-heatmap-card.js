@@ -28,6 +28,16 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "@/components/visualizer/visualizer-utils";
+import Link from "next/link";
+import { motion } from "motion/react";
+import { processConsistency } from "@/components/analyzer/consistency-card";
+import { getGradeAndColor } from "@/lib/consistency-grades";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // We don't need this because we put our own styles in our globals.css
 // import "react-calendar-heatmap/dist/styles.css";
@@ -42,6 +52,127 @@ import {
 } from "@/components/ui/card";
 
 const MAX_LIFTS_SHOWN = 6;
+
+// --- Consistency Grades ---
+
+const LABEL_ABBREV = {
+  Week: "W",
+  Month: "M",
+  "3 Month": "3M",
+  "Half Year": "6M",
+  Year: "Y",
+  "24 Month": "2Y",
+  "5 Year": "5Y",
+  Decade: "10Y",
+};
+
+function GradeCircle({ percentage, label, tooltip, size = 28, delay = 0, isVisible }) {
+  const { grade, color } = getGradeAndColor(percentage);
+  const strokeWidth = 3;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (percentage / 100) * circumference;
+  const abbrev = LABEL_ABBREV[label] ?? label;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <motion.div
+            className="flex flex-col items-center gap-0.5"
+            initial={{ opacity: 0, y: -20 }}
+            animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 20,
+              delay: isVisible ? delay : 0,
+            }}
+          >
+            <svg
+              width={size}
+              height={size}
+              viewBox={`0 0 ${size} ${size}`}
+              className="shrink-0"
+            >
+              <circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={strokeWidth}
+                className="text-muted/40"
+              />
+              <circle
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="none"
+                stroke={color}
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={offset}
+                transform={`rotate(-90 ${size / 2} ${size / 2})`}
+              />
+              <text
+                x={size / 2}
+                y={size / 2}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fill={color}
+                fontSize={grade.length > 1 ? size * 0.32 : size * 0.39}
+                fontWeight="600"
+              >
+                {grade}
+              </text>
+            </svg>
+            <span className="text-muted-foreground text-[9px] leading-none">
+              {abbrev}
+            </span>
+          </motion.div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="text-xs">{tooltip}</div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function trimTrailingDots(items) {
+  let lastReal = items.length - 1;
+  while (lastReal >= 0 && getGradeAndColor(items[lastReal].percentage).grade === ".") {
+    lastReal--;
+  }
+  return items.slice(0, lastReal + 1);
+}
+
+function ConsistencyGradesRow({ parsedData, isVisible = false }) {
+  const consistency = useMemo(() => {
+    const raw = processConsistency(parsedData);
+    return raw ? trimTrailingDots(raw) : null;
+  }, [parsedData]);
+
+  if (!consistency || consistency.length === 0) return null;
+
+  return (
+    <Link href="/lift-explorer" className="flex items-start justify-center gap-3">
+      {consistency.map((item, index) => (
+        <GradeCircle
+          key={item.label}
+          percentage={item.percentage}
+          label={item.label}
+          tooltip={item.tooltip}
+          size={36}
+          delay={index * 0.05}
+          isVisible={isVisible}
+        />
+      ))}
+    </Link>
+  );
+}
 
 // Heatmap card titles, staged by training history length.
 // SSR always renders index 0 of stage1; client randomises after intervals load.
@@ -252,7 +383,7 @@ export function ActivityHeatmapsCard() {
               )}
             </div>
             {!isSharing && intervals?.length > 2 && (
-              <div className="flex shrink-0 flex-col rounded-md border p-0.5 text-xs">
+              <div className="flex shrink-0 flex-row rounded-md border p-0.5 text-xs">
                 {[
                   { key: "daily", label: "Daily" },
                   { key: "weekly", label: "Weekly" },
@@ -326,6 +457,16 @@ export function ActivityHeatmapsCard() {
                   isSharing={isSharing}
                 />
               )}
+              {/* Consistency grades — hidden during share capture */}
+              {!isSharing && (
+                <div className="mt-4 flex justify-center">
+                  <ConsistencyGradesRow
+                    parsedData={parsedData}
+                    isVisible={!!intervals}
+                  />
+                </div>
+              )}
+
               {/* Footer with app branding - only visible during image capture */}
               {isSharing && (
                 <div className="mt-6 flex items-center justify-center border-t pt-4">

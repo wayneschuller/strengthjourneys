@@ -158,7 +158,7 @@ function ConsistencyGradesRow({ parsedData, isVisible = false }) {
   if (!consistency || consistency.length === 0) return null;
 
   return (
-    <Link href="/lift-explorer" className="flex items-start justify-center gap-3">
+    <div className="flex items-start justify-center gap-3">
       {consistency.map((item, index) => (
         <GradeCircle
           key={item.label}
@@ -170,7 +170,7 @@ function ConsistencyGradesRow({ parsedData, isVisible = false }) {
           isVisible={isVisible}
         />
       ))}
-    </Link>
+    </div>
   );
 }
 

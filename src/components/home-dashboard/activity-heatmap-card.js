@@ -365,59 +365,55 @@ export function ActivityHeatmapsCard() {
       )}
       <Card ref={shareRef} style={isSharing ? { maxWidth: "800px", width: "100%", backgroundColor: "white", color: "black" } : undefined}>
         <CardHeader>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <CardTitle>
-                {authStatus === "unauthenticated" && "Demo mode: "}
-                {cardTitle}
-              </CardTitle>
-              {intervals && (
-                <CardDescription>
-                  Your strength journey from{" "}
-                  {new Date(intervals[0].startDate).getFullYear()} -{" "}
-                  {new Date(
-                    intervals[intervals.length - 1].endDate,
-                  ).getFullYear()}
-                  .
-                </CardDescription>
-              )}
-            </div>
-            {!isSharing && intervals?.length > 2 && (
-              <div className="flex shrink-0 flex-row rounded-md border p-0.5 text-xs">
-                {[
-                  { key: "daily", label: "Daily" },
-                  { key: "weekly", label: "Weekly" },
-                  ...(intervals?.length >= 5
-                    ? [{ key: "monthly", label: "Monthly" }]
-                    : []),
-                ].map(({ key, label }) => (
-                  <button
-                    key={key}
-                    className={`rounded px-2 py-0.5 font-medium transition-colors ${
-                      viewMode === key
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                    onClick={() => setViewMode(key)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <CardTitle>
+            {authStatus === "unauthenticated" && "Demo mode: "}
+            {cardTitle}
+          </CardTitle>
+          {intervals && (
+            <CardDescription>
+              Your strength journey from{" "}
+              {new Date(intervals[0].startDate).getFullYear()} -{" "}
+              {new Date(
+                intervals[intervals.length - 1].endDate,
+              ).getFullYear()}
+              .
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent>
           {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
           {intervals && (
             <>
-              {/* Consistency grades — hidden during share capture */}
+              {/* Consistency grades + view selector — hidden during share capture */}
               {!isSharing && (
-                <div className="mb-4 flex justify-center">
+                <div className="mb-4 flex flex-col items-center gap-3">
                   <ConsistencyGradesRow
                     parsedData={parsedData}
                     isVisible={!!intervals}
                   />
+                  {intervals.length > 2 && (
+                    <div className="flex flex-row rounded-md border p-0.5 text-xs">
+                      {[
+                        { key: "daily", label: "Daily" },
+                        { key: "weekly", label: "Weekly" },
+                        ...(intervals.length >= 5
+                          ? [{ key: "monthly", label: "Monthly" }]
+                          : []),
+                      ].map(({ key, label }) => (
+                        <button
+                          key={key}
+                          className={`rounded px-2 py-0.5 font-medium transition-colors ${
+                            viewMode === key
+                              ? "bg-muted text-foreground"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          onClick={() => setViewMode(key)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
               {viewMode === "daily" && (

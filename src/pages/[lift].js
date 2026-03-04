@@ -306,6 +306,21 @@ function BarbellInsightsMain({
           />
         </div>
       </div>
+      {liftInsightData.faqItems?.length > 0 && (
+        <section className="mt-10">
+          <h2 className="mb-4 text-xl font-semibold">
+            {liftInsightData.liftType} FAQ
+          </h2>
+          <div className="space-y-4">
+            {liftInsightData.faqItems.map(({ question, answer }) => (
+              <article key={question} className="rounded-lg border p-4">
+                <h3 className="text-base font-semibold">{question}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{answer}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );

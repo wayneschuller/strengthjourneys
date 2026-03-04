@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { gaTrackSignInClick } from "@/lib/analytics";
-import { LOCAL_STORAGE_KEYS, SESSION_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { SESSION_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Button } from "@/components/ui/button";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
@@ -41,10 +41,10 @@ export function OnBoardingDashboard() {
   // Drive picker. Without this, users who clicked "Connect" without having a sheet
   // ready would open the picker, find nothing suitable, and abandon (57% did in GA).
   //
-  // Two ways to unlock:
-  // - Step 1 click → localStorage (persists forever: they’ve seen the template)
-  // - Escape hatch → sessionStorage (resets on tab close: they bypassed today but
-  //   will see the gate again next session, giving us another nudge opportunity)
+  // Both unlock paths use sessionStorage so the gate resets on tab/browser close.
+  // Even if they opened the template today, they might not have set up their sheet —
+  // coming back tomorrow and finding Step 2 already unlocked would just land them
+  // in the picker with nothing to select. The gate is cheap friction that pays off.
   const [templateOpened, setTemplateOpened] = useState(false);
   const { data: session, status: authStatus } = useSession();
   const { selectSheet } = useUserLiftingData();
@@ -60,19 +60,16 @@ export function OnBoardingDashboard() {
     }
   }, [authStatus, shouldLoadPicker]);
 
-  // Restore gate state on mount from either storage:
-  // - localStorage: user clicked Step 1 in a previous session
-  // - sessionStorage: user clicked the escape hatch earlier this session
+  // Restore gate state on mount — sessionStorage survives page reloads within
+  // the same tab (e.g. returning from the template tab) but resets on close.
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const fromTemplate = !!localStorage.getItem(LOCAL_STORAGE_KEYS.ONBOARDING_TEMPLATE_OPENED);
-      const fromEscapeHatch = !!sessionStorage.getItem(SESSION_STORAGE_KEYS.ONBOARDING_ESCAPE_HATCH);
-      setTemplateOpened(fromTemplate || fromEscapeHatch);
+      setTemplateOpened(!!sessionStorage.getItem(SESSION_STORAGE_KEYS.ONBOARDING_ESCAPE_HATCH));
     }
   }, []);
 
   const handleTemplateOpen = () => {
-    localStorage.setItem(LOCAL_STORAGE_KEYS.ONBOARDING_TEMPLATE_OPENED, "1");
+    sessionStorage.setItem(SESSION_STORAGE_KEYS.ONBOARDING_ESCAPE_HATCH, "1");
     setTemplateOpened(true);
   };
 
@@ -143,9 +140,7 @@ export function OnBoardingDashboard() {
               : "Step 2 - Connect your Google Sheet (loading…)"}
           </Button>
 
-          {/* Escape hatch for users who already have a sheet in the correct format.
-              Uses sessionStorage so the gate resets next session — another chance
-              to guide them through Step 1 if they come back without a sheet. */}
+          {/* Escape hatch for users who already have a sheet in the correct format. */}
           {!templateOpened && (
             <button
               className="self-center text-sm text-muted-foreground underline hover:text-foreground"

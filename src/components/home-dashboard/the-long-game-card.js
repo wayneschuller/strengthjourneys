@@ -758,20 +758,22 @@ export function TheLongGameCard() {
         </CardContent>
         {intervals && (
           <CardFooter id="ignoreCopy">
-            <div className="flex w-full items-center justify-between gap-3">
+            <div className="flex w-full flex-col gap-2">
+              <div className="flex justify-end">
+                <ShareCopyButton
+                  label="Copy image"
+                  tooltip="Share heatmaps to clipboard"
+                  onClick={handleShare}
+                  isLoading={isSharing}
+                  isSuccess={isShareSuccess}
+                  disabled={isSharing}
+                  className="!border-zinc-300 !bg-white !text-zinc-900 hover:!bg-zinc-100"
+                />
+              </div>
               <MiniFeedbackWidget
                 contextId="heatmap_card"
                 page="/lift-explorer"
                 analyticsExtra={{ context: "activity_heatmaps_card" }}
-              />
-              <ShareCopyButton
-                label="Copy image"
-                tooltip="Share heatmaps to clipboard"
-                onClick={handleShare}
-                isLoading={isSharing}
-                isSuccess={isShareSuccess}
-                disabled={isSharing}
-                className="!border-zinc-300 !bg-white !text-zinc-900 hover:!bg-zinc-100"
               />
             </div>
           </CardFooter>

@@ -581,6 +581,7 @@ export function TheLongGameCard() {
     <>
       <Card
         ref={shareRef}
+        className="flex h-full flex-col"
         // Keep copy output stable across themes: capture mode is driven by a
         // single CSS contract in globals.css (`[data-capture="light"]`).
         data-capture={isSharing ? "light" : undefined}
@@ -613,7 +614,7 @@ export function TheLongGameCard() {
             </CardDescription>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1">
           {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
           {intervals && (
             <>

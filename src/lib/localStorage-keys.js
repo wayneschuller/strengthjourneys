@@ -115,6 +115,11 @@ export const LOCAL_STORAGE_KEYS = {
 };
 
 export const SESSION_STORAGE_KEYS = {
+  // Set to "1" when user clicks "I already have a sheet" escape hatch on onboarding.
+  // Uses sessionStorage (not localStorage) so the gate resets on tab close — a user
+  // who skips the template today will see the gate again next session, giving us
+  // another chance to guide them through Step 1.
+  ONBOARDING_ESCAPE_HATCH: "sj-onboarding-escape-hatch",
   FEEDBACK_TRIGGER_LABEL_INDEX: "sj-feedback-trigger-label-index",
   FEEDBACK_GIVEN: "sj-feedback-given",
   ARTICLE_FEEDBACK_PREFIX: "article_feedback_",

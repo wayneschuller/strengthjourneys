@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
 import Image from "next/image";
-import { BarChart3, Calendar, Check, Flame, Table2 } from "lucide-react";
+import { BarChart3, Calendar, Check, Flame, FolderOpen, Table2 } from "lucide-react";
 import { motion, useReducedMotion, useAnimationControls } from "motion/react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
@@ -134,13 +134,19 @@ export function OnBoardingDashboard() {
             stays yours.
           </div>
           <motion.div animate={step1Controls} className="self-center" style={{ display: "inline-block" }}>
-            <Button asChild className="w-fit">
+            <Button asChild className="w-fit gap-2">
               <a
                 href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={handleTemplateOpen}
               >
+                <img
+                  src={GOOGLE_SHEETS_ICON_URL}
+                  alt=""
+                  className="h-4 w-4 shrink-0"
+                  aria-hidden
+                />
                 Step 1 - Open Google Sheet Template
               </a>
             </Button>
@@ -158,12 +164,7 @@ export function OnBoardingDashboard() {
               disabled={step2Disabled}
               title={step2Title}
             >
-              <img
-                src={GOOGLE_SHEETS_ICON_URL}
-                alt=""
-                className="h-4 w-4 shrink-0"
-                aria-hidden
-              />
+              <FolderOpen className="h-4 w-4 shrink-0" aria-hidden />
               {openPicker
                 ? "Step 2 - Connect your Google Sheet to Strength Journeys"
                 : "Step 2 - Connect your Google Sheet (loading…)"}

@@ -151,13 +151,23 @@ export function TheLongGameCard() {
         }
       }
 
-      if (sourceTag === "rect" || sourceTag === "path" || sourceTag === "polygon") {
+      if (
+        sourceTag === "rect" ||
+        sourceTag === "path" ||
+        sourceTag === "polygon" ||
+        sourceTag === "circle" ||
+        sourceTag === "ellipse" ||
+        sourceTag === "line"
+      ) {
         const fill = computedStyle.fill;
         if (fill && fill !== "none") targetNode.setAttribute("fill", fill);
         const stroke = computedStyle.stroke;
         if (stroke && stroke !== "none") {
           targetNode.setAttribute("stroke", stroke);
           targetNode.setAttribute("stroke-width", computedStyle.strokeWidth);
+        }
+        if (computedStyle.opacity && computedStyle.opacity !== "1") {
+          targetNode.setAttribute("opacity", computedStyle.opacity);
         }
       }
 
@@ -369,8 +379,10 @@ export function TheLongGameCard() {
     const headerStart = performance.now();
     const headerNode = cardNode.querySelector('[data-share-section="header"]');
     if (headerNode) {
-      const titleNode = headerNode.querySelector("h1,h2,h3,h4,h5,h6");
-      const descriptionNode = headerNode.querySelector("p");
+      const titleNode = headerNode.querySelector('[data-share-title="true"]');
+      const descriptionNode = headerNode.querySelector('[data-share-description="true"]');
+      if (!titleNode) devLog("[heatmap-copy][full] header title node missing");
+      if (!descriptionNode) devLog("[heatmap-copy][full] header description node missing");
       drawTextNodeToContext(ctx, titleNode, cardRect, {
         fontWeight: 700,
         fontSize: "28px",
@@ -473,7 +485,8 @@ export function TheLongGameCard() {
   const handleShare = async () => {
     const startTime = performance.now();
     setIsSharing(true);
-    // Wait one frame so the browser paints the loading overlay before html2canvas blocks the thread
+    // Wait a couple of frames so capture-mode layout/animation state has settled before sampling bounds.
+    await new Promise((r) => requestAnimationFrame(r));
     await new Promise((r) => requestAnimationFrame(r));
 
     try {
@@ -629,17 +642,21 @@ export function TheLongGameCard() {
       >
         <CardHeader data-share-section="header">
           <CardTitle>
-            {authStatus === "unauthenticated" && "Demo mode: "}
-            {cardTitle}
+            <span data-share-title="true">
+              {authStatus === "unauthenticated" && "Demo mode: "}
+              {cardTitle}
+            </span>
           </CardTitle>
           {intervals && (
             <CardDescription>
-              Your strength journey from{" "}
-              {new Date(intervals[0].startDate).getFullYear()} -{" "}
-              {new Date(
-                intervals[intervals.length - 1].endDate,
-              ).getFullYear()}
-              .
+              <span data-share-description="true">
+                Your strength journey from{" "}
+                {new Date(intervals[0].startDate).getFullYear()} -{" "}
+                {new Date(
+                  intervals[intervals.length - 1].endDate,
+                ).getFullYear()}
+                .
+              </span>
             </CardDescription>
           )}
         </CardHeader>

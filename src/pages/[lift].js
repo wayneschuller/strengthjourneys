@@ -61,6 +61,23 @@ import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
+function renderAnswer(answer) {
+  if (typeof answer === "string") return answer;
+  return answer.map((seg, i) =>
+    typeof seg === "string" ? seg : (
+      <Link key={i} href={seg.href}
+        className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">
+        {seg.text}
+      </Link>
+    )
+  );
+}
+
+function flattenAnswer(answer) {
+  if (typeof answer === "string") return answer;
+  return answer.map((seg) => (typeof seg === "string" ? seg : seg.text)).join("");
+}
+
 export async function getStaticPaths() {
   const paths = bigFourLiftInsightData.map((lift) => ({
     params: { lift: lift.slug },
@@ -153,7 +170,7 @@ export default function BigFourBarbellInsights({
                 name: question,
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: answer,
+                  text: flattenAnswer(answer),
                 },
               })),
             },
@@ -315,7 +332,7 @@ function BarbellInsightsMain({
             {liftInsightData.faqItems.map(({ question, answer }) => (
               <article key={question} className="rounded-lg border p-4">
                 <h3 className="text-base font-semibold">{question}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{answer}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{renderAnswer(answer)}</p>
               </article>
             ))}
           </div>

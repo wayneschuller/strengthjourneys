@@ -670,9 +670,10 @@ export function TheLongGameCard() {
               )}
               {viewMode === "daily" && (
                 <div className={isSharing ? "" : "max-h-[40vh] overflow-y-auto pr-1"}>
-                  <div className="flex flex-col gap-9">
+                  <div className="flex flex-col gap-12">
                     {intervals.map((interval, index) => {
                       const year = new Date(interval.startDate).getFullYear();
+                      const isCurrentYear = year === new Date().getFullYear();
                       return (
                         <div
                           key={`${index}-heatmap`}
@@ -683,11 +684,19 @@ export function TheLongGameCard() {
                           className="flex w-full items-start"
                         >
                           <div
-                            className="text-muted-foreground shrink-0 pr-2 pt-1 text-right text-xs lg:text-sm"
+                            className="shrink-0 pr-2 pt-1 text-right text-xs lg:text-sm"
                             style={{ width: WEEKLY_YEAR_W }}
                           >
                             <div className="flex flex-col items-end gap-1">
-                              <span data-year-label="true">{year}</span>
+                              <span
+                                data-year-label="true"
+                                className={isCurrentYear ? "font-semibold text-foreground" : "text-muted-foreground"}
+                              >
+                                {year}
+                              </span>
+                              {isCurrentYear && !isSharing && (
+                                <span className="text-[9px] text-muted-foreground/60 leading-none">now</span>
+                              )}
                               {!isSharing && intervals.length > 1 && (
                                 <LiftResultCopyButton
                                   label={`Copy ${year} heatmap`}

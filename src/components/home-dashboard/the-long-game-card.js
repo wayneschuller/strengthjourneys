@@ -1069,18 +1069,18 @@ const MONTHLY_GAP = 5; // px gap between monthly cells (wider for breathing room
 const WEEKLY_YEAR_W = 48; // px for year label column
 
 const WEEKLY_MONTH_LABELS = [
-  { label: "Jan", week: 1 },
-  { label: "Feb", week: 5 },
-  { label: "Mar", week: 9 },
-  { label: "Apr", week: 14 },
-  { label: "May", week: 18 },
-  { label: "Jun", week: 22 },
-  { label: "Jul", week: 27 },
-  { label: "Aug", week: 31 },
-  { label: "Sep", week: 35 },
-  { label: "Oct", week: 40 },
-  { label: "Nov", week: 44 },
-  { label: "Dec", week: 48 },
+  { label: "J", week: 1 },
+  { label: "F", week: 5 },
+  { label: "M", week: 9 },
+  { label: "A", week: 14 },
+  { label: "M", week: 18 },
+  { label: "J", week: 22 },
+  { label: "J", week: 27 },
+  { label: "A", week: 31 },
+  { label: "S", week: 35 },
+  { label: "O", week: 40 },
+  { label: "N", week: 44 },
+  { label: "D", week: 48 },
 ];
 
 // Returns which calendar week of the year (1–53) a date string falls in.
@@ -1324,18 +1324,18 @@ function WeeklyTooltipContent({ value }) {
 }
 
 const MONTH_NAMES = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  "J",
+  "F",
+  "M",
+  "A",
+  "M",
+  "J",
+  "J",
+  "A",
+  "S",
+  "O",
+  "N",
+  "D",
 ];
 
 // Aggregates parsedData into { [year]: { [month]: { activeWeeks, count, weekBreakdown } } }.

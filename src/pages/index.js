@@ -1,5 +1,6 @@
 /** @format */
 
+import Head from "next/head";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { devLog } from "@/lib/processing-utils";
@@ -207,6 +208,26 @@ const mainBarbellLifts = [
  * Home page and landing page for Strength Journeys. Shows the hero section or user dashboard,
  * the Big Four barbell lift cards, a grid of feature tool cards, testimonials, and a getting-started card.
  */
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: "Strength Journeys",
+      url: "https://www.strengthjourneys.xyz",
+    },
+    {
+      "@type": "Organization",
+      name: "Strength Journeys",
+      url: "https://www.strengthjourneys.xyz",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://www.strengthjourneys.xyz/nav_logo_light.png",
+      },
+    },
+  ],
+};
+
 export default function Home() {
   const title = "Free Barbell Lifting Analysis Tools | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/";
@@ -246,6 +267,11 @@ export default function Home() {
 
   return (
     <>
+      <Head>
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      </Head>
       <NextSeo
         title={title}
         description={description}

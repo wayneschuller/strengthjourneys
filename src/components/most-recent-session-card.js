@@ -1,7 +1,6 @@
 
 import { useState, useMemo } from "react";
 import { useReadLocalStorage } from "usehooks-ts";
-import Link from "next/link";
 import { motion } from "motion/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ArrowUpRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -212,13 +211,6 @@ export function MostRecentSessionCard({
                 )}
                 {titlePrefix}
               </CardTitle>
-              <Link
-                href="/lift-explorer"
-                className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                View full analysis
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
             </div>
           </CardHeader>
           <CardContent>
@@ -392,13 +384,6 @@ export function MostRecentSessionCard({
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <Link
-                href="/lift-explorer"
-                className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                View full analysis
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
             </div>
           </div>
         </CardHeader>

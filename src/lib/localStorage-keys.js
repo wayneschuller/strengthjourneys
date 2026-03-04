@@ -106,12 +106,6 @@ export const LOCAL_STORAGE_KEYS = {
   // Analytics flags
   HOME_DASHBOARD_FIRST_VIEW_TRACKED: "SJ_homeDashboardFirstViewTracked",
 
-  // Onboarding flow
-  // Set to "1" when user clicks the Step 1 template link in OnBoardingDashboard.
-  // Used to gate Step 2 (Drive picker) so users see the sheet format before connecting.
-  // Persists across page reloads so it survives returning from the template tab.
-  ONBOARDING_TEMPLATE_OPENED: "SJ_onboardingTemplateOpened",
-
 };
 
 export const SESSION_STORAGE_KEYS = {

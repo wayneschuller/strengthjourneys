@@ -108,8 +108,8 @@ export function TheMonthInIronCard() {
 
   const verdict = useMemo(() => {
     if (!stats) return null;
-    return getVerdict(stats, strengthLevelPassed);
-  }, [stats, strengthLevelPassed]);
+    return getVerdict(stats, strengthLevelPassed, boundaries);
+  }, [stats, strengthLevelPassed, boundaries]);
 
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
 
@@ -438,16 +438,16 @@ const LEVEL_LABELS = [
 
 const LEVEL_EMOJIS = ["🏃", "🌱", "💪", "🔥", "👑"];
 const TONNAGE_CLOSE_ENOUGH_RATIO = 0.9; // Tonnage/session checks: within 10% of last month still counts as a win.
-const PROJECTION_SWITCH_DAYS_FROM_END = 7; // Use projected tonnage unless this many days remain.
-
-function shouldUseProjection(boundaries) {
-  if (!boundaries?.isCurrentMonthView) return false;
-  return (boundaries.daysRemainingInCurrentMonth ?? 0) > PROJECTION_SWITCH_DAYS_FROM_END;
-}
-
-function computeProjectedTonnage(current, dayOfMonth, daysInMonth) {
-  if (!dayOfMonth || dayOfMonth <= 0) return current;
-  return Math.round((current / dayOfMonth) * daysInMonth);
+// Returns "ahead" | "on-pace" | "behind" | "no-data".
+// expected = last * (dayOfMonth / daysInCurrentMonth); green if current >= expected * 0.9.
+function getLiftPaceStatus(currentTonnage, lastTonnage, dayOfMonth, daysInCurrentMonth) {
+  if (!lastTonnage || !dayOfMonth || !daysInCurrentMonth) return "no-data";
+  const expected = lastTonnage * (dayOfMonth / daysInCurrentMonth);
+  if (expected <= 0) return "no-data";
+  const ratio = currentTonnage / expected;
+  if (ratio >= 1.0) return "ahead";
+  if (ratio >= TONNAGE_CLOSE_ENOUGH_RATIO) return "on-pace";
+  return "behind";
 }
 
 function formatStrengthLevel(score) {
@@ -705,7 +705,7 @@ function getPaceStatus(current, last, progressRatio) {
 
 // ─── Verdict ───────────────────────────────────────────────────────────────
 
-function getVerdict(stats, strengthLevelPassed) {
+function getVerdict(stats, strengthLevelPassed, boundaries) {
   const { sessions, bigFourTonnage, tonnage, bigFourByLift } = stats;
 
   if (
@@ -716,11 +716,18 @@ function getVerdict(stats, strengthLevelPassed) {
     return { label: "Writing History", emoji: "📖", won: false };
   }
 
+  const isCurrentMonth = boundaries?.isCurrentMonthView;
   const primaryMet =
     passesTonnageThreshold(sessions.current, sessions.lastSameDay) &&
     BIG_FOUR_LIFT_TYPES.every((liftType) => {
       const lift = bigFourByLift?.[liftType];
-      return passesTonnageThreshold(lift?.current ?? 0, lift?.last ?? 0);
+      const current = lift?.current ?? 0;
+      const last = lift?.last ?? 0;
+      if (isCurrentMonth && boundaries.dayOfMonth > 0) {
+        const ps = getLiftPaceStatus(current, last, boundaries.dayOfMonth, boundaries.daysInCurrentMonth);
+        return ps === "ahead" || ps === "on-pace";
+      }
+      return passesTonnageThreshold(current, last);
     });
   const strengthOK =
     strengthLevelPassed.skipped || strengthLevelPassed.passed;
@@ -888,16 +895,20 @@ function getMonthlyChecksSummary(stats, strengthLevelStats, boundaries) {
     checksMet += 1;
   }
 
-  const useProjection = shouldUseProjection(boundaries);
+  const isCurrentMonth = boundaries?.isCurrentMonthView;
   for (const liftType of BIG_FOUR_LIFT_TYPES) {
     checksTotal += 1; // tonnage
     const lift = stats.bigFourByLift?.[liftType];
     const current = lift?.current ?? 0;
     const last = lift?.last ?? 0;
-    const compTonnage = useProjection
-      ? computeProjectedTonnage(current, boundaries.dayOfMonth, boundaries.daysInCurrentMonth)
-      : current;
-    if (passesTonnageThreshold(compTonnage, last)) checksMet += 1;
+    let passed;
+    if (isCurrentMonth && boundaries?.dayOfMonth > 0) {
+      const ps = getLiftPaceStatus(current, last, boundaries.dayOfMonth, boundaries.daysInCurrentMonth);
+      passed = ps === "ahead" || ps === "on-pace";
+    } else {
+      passed = passesTonnageThreshold(current, last);
+    }
+    if (passed) checksMet += 1;
   }
 
   if (strengthLevelStats) {
@@ -969,9 +980,8 @@ function getTonnageStatusTooltip({
   tonnageBaseline,
   tonnageNewWin,
   tonnagePassed,
-  projectedTonnage,
-  useProjection,
-  unit,
+  liftPaceStatus,
+  isCurrentMonthView,
 }) {
   const liftLabel = formatLiftTypeLabel(liftType).toLowerCase();
 
@@ -981,19 +991,13 @@ function getTonnageStatusTooltip({
   if (tonnageNewWin) {
     return `First ${liftLabel} tonnage recorded this month — baseline set.`;
   }
-  if (useProjection && projectedTonnage != null) {
-    const projFmt = formatTonnage(projectedTonnage, unit);
-    const lastFmt = formatTonnage(lastTonnage, unit);
-    return tonnagePassed
-      ? `Projected ~${projFmt} vs last month's ${lastFmt} — on track.`
-      : `Projected ~${projFmt} vs last month's ${lastFmt} — behind pace.`;
+  if (isCurrentMonthView && liftPaceStatus !== "no-data") {
+    if (liftPaceStatus === "ahead") return `Ahead of expected ${liftLabel} pace for this point in the month.`;
+    if (liftPaceStatus === "on-pace") return `Within 10% of expected ${liftLabel} pace — on track.`;
+    return `Behind expected ${liftLabel} pace for this point in the month.`;
   }
-  if (currentTonnage > lastTonnage) {
-    return `Passed previous month ${liftLabel} tonnage.`;
-  }
-  if (tonnagePassed) {
-    return `Matched previous month ${liftLabel} tonnage.`;
-  }
+  if (currentTonnage > lastTonnage) return `Passed previous month ${liftLabel} tonnage.`;
+  if (tonnagePassed) return `Matched previous month ${liftLabel} tonnage.`;
   return `Below previous month ${liftLabel} tonnage.`;
 }
 
@@ -1001,11 +1005,8 @@ function getStrengthLastColumnTooltip(boundaries, liftType) {
   return `${boundaries.prevMonthName} best ${formatLiftTypeLabel(liftType)} strength level hit across the full month.`;
 }
 
-function getTonnageLastColumnTooltip(liftType, useProjection) {
-  const label = formatLiftTypeLabel(liftType).toLowerCase();
-  return useProjection
-    ? `Last month's full ${label} tonnage — the projection target.`
-    : `Previous month ${label} tonnage.`;
+function getTonnageLastColumnTooltip(liftType) {
+  return `Previous month ${formatLiftTypeLabel(liftType).toLowerCase()} tonnage.`;
 }
 
 // ─── Status colors ─────────────────────────────────────────────────────────
@@ -1174,7 +1175,7 @@ function BigFourCriteriaTable({
   unit,
   revealedRows = 0,
 }) {
-  const useProjection = shouldUseProjection(boundaries);
+  const isCurrentMonthView = boundaries?.isCurrentMonthView;
   const rows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
     const tonnage = bigFourByLift?.[liftType] ?? {
       current: 0,
@@ -1309,15 +1310,16 @@ function BigFourCriteriaTable({
         const rowHighlighted = revealedRows >= rowHighlightIndex;
         const currentTonnage = tonnage.current ?? 0;
         const lastTonnage = tonnage.last ?? 0;
-        const projectedTonnage = useProjection && boundaries.dayOfMonth > 0
-          ? computeProjectedTonnage(currentTonnage, boundaries.dayOfMonth, boundaries.daysInCurrentMonth)
-          : null;
-        const tonnagePassed = passesTonnageThreshold(
-          projectedTonnage ?? currentTonnage,
-          lastTonnage,
-        );
+        const liftPaceStatus = isCurrentMonthView && boundaries.dayOfMonth > 0
+          ? getLiftPaceStatus(currentTonnage, lastTonnage, boundaries.dayOfMonth, boundaries.daysInCurrentMonth)
+          : "no-data";
         const tonnageBaseline = lastTonnage === 0;
         const tonnageNewWin = tonnageBaseline && currentTonnage > 0;
+        const tonnagePassed = tonnageBaseline
+          ? tonnageNewWin
+          : isCurrentMonthView
+            ? (liftPaceStatus === "ahead" || liftPaceStatus === "on-pace")
+            : passesTonnageThreshold(currentTonnage, lastTonnage);
         const tonnageColor = tonnageBaseline && !tonnageNewWin
           ? "text-muted-foreground"
           : tonnageNewWin || tonnagePassed
@@ -1380,11 +1382,10 @@ function BigFourCriteriaTable({
           tonnageBaseline,
           tonnageNewWin,
           tonnagePassed,
-          projectedTonnage,
-          useProjection,
-          unit,
+          liftPaceStatus,
+          isCurrentMonthView,
         });
-        const tonnageLastTooltip = getTonnageLastColumnTooltip(liftType, useProjection);
+        const tonnageLastTooltip = getTonnageLastColumnTooltip(liftType);
         const liftInsightHref = BIG_FOUR_LIFT_URLS[liftType];
 
         return (
@@ -1482,9 +1483,6 @@ function BigFourCriteriaTable({
                         {formatTonnage(tonnage.last ?? 0, unit)} lifted
                       </span>
                     </div>
-                    {useProjection && tonnage.last > 0 && (
-                      <div className="text-[10px] text-muted-foreground">target</div>
-                    )}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
@@ -1499,24 +1497,21 @@ function BigFourCriteriaTable({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className={`rounded px-1.5 py-1 text-left transition-colors duration-500 ${revealTonnageBg}`}>
-                    {useProjection && projectedTonnage != null ? (
-                      <>
-                        <div className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}>
-                          <span>~{formatTonnage(projectedTonnage, unit)}</span>
-                          {rowHighlighted && (tonnagePassed || tonnageNewWin) && (
-                            <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
-                          )}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground">
-                          {formatTonnage(currentTonnage, unit)} so far
-                        </div>
-                      </>
-                    ) : (
-                      <div className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}>
-                        <span>{formatTonnage(currentTonnage, unit)} lifted</span>
-                        {rowHighlighted && (tonnagePassed || tonnageNewWin) && (
-                          <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
-                        )}
+                    <div className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}>
+                      <span>{formatTonnage(currentTonnage, unit)} lifted</span>
+                      {rowHighlighted && (tonnagePassed || tonnageNewWin) && (
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
+                      )}
+                    </div>
+                    {rowHighlighted && isCurrentMonthView && liftPaceStatus !== "no-data" && (
+                      <div className={`text-[10px] font-medium ${
+                        liftPaceStatus === "ahead" ? "text-emerald-600 dark:text-emerald-400"
+                        : liftPaceStatus === "on-pace" ? "text-amber-600 dark:text-amber-400"
+                        : "text-red-600 dark:text-red-400"
+                      }`}>
+                        {liftPaceStatus === "ahead" ? "▲ Ahead of pace"
+                          : liftPaceStatus === "on-pace" ? "→ On track"
+                          : "▼ Behind pace"}
                       </div>
                     )}
                   </div>

@@ -669,7 +669,7 @@ export function TheLongGameCard() {
                 </div>
               )}
               {viewMode === "daily" && (
-                <div className={isSharing ? "" : "max-h-[40vh] overflow-y-auto pr-1"}>
+                <div className={isSharing ? "" : "max-h-[52vh] overflow-y-auto pr-1"}>
                   <div className="flex flex-col gap-9">
                     {intervals.map((interval, index) => {
                       const year = new Date(interval.startDate).getFullYear();

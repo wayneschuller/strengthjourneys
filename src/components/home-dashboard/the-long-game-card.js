@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import {
   cloneElement,
+  memo,
   useState,
   useEffect,
   useRef,
@@ -21,6 +22,7 @@ import { LoaderCircle } from "lucide-react";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { ShareCopyButton } from "@/components/share-copy-button";
+import { LiftResultCopyButton } from "@/components/lift-result-copy-button";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage } from "usehooks-ts";
@@ -65,8 +67,12 @@ export function TheLongGameCard() {
   const { status: authStatus } = useSession();
   const { theme } = useTheme();
   const shareRef = useRef(null);
+  const yearRowRefs = useRef({});
+  const yearShareTimerRef = useRef(null);
   const [isSharing, setIsSharing] = useState(false);
   const [shareReady, setShareReady] = useState(false);
+  const [sharingYear, setSharingYear] = useState(null);
+  const [sharedYear, setSharedYear] = useState(null);
   // SSR default = first stage-1 title; randomised client-side once intervals load
   const [cardTitle, setCardTitle] = useState(HEATMAP_TITLES_STAGE1[0]);
 
@@ -99,6 +105,369 @@ export function TheLongGameCard() {
     setCardTitle(titles[Math.floor(Math.random() * titles.length)]);
   }, [isLoading, parsedData]);
 
+  useEffect(() => {
+    return () => {
+      if (yearShareTimerRef.current) {
+        clearTimeout(yearShareTimerRef.current);
+      }
+    };
+  }, []);
+
+  const writePngToClipboard = useCallback(async (blobPromise) => {
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blobPromise })]);
+  }, []);
+
+  const copyNodeToClipboard = useCallback(
+    async (node, ignoreElements, captureOptions = {}) => {
+      if (!node) return;
+      const html2canvas = (await import("html2canvas-pro")).default;
+      const blobPromise = html2canvas(node, {
+        ignoreElements,
+        backgroundColor: "#ffffff",
+        scale: 1,
+        ...captureOptions,
+      }).then(
+        (canvas) => new Promise((resolve) => canvas.toBlob(resolve, "image/png")),
+      );
+      await writePngToClipboard(blobPromise);
+    },
+    [writePngToClipboard],
+  );
+
+  const buildStyledSvgImage = useCallback(async (svgElement) => {
+    const svgRect = svgElement.getBoundingClientRect();
+    const cloneWithInlineSvgStyles = (sourceNode, targetNode) => {
+      if (!(sourceNode instanceof Element) || !(targetNode instanceof Element)) return;
+      const sourceTag = sourceNode.tagName.toLowerCase();
+      const computedStyle = window.getComputedStyle(sourceNode);
+
+      if (sourceTag === "svg") {
+        targetNode.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        if (!targetNode.getAttribute("width")) {
+          targetNode.setAttribute("width", `${Math.ceil(svgRect.width)}`);
+        }
+        if (!targetNode.getAttribute("height")) {
+          targetNode.setAttribute("height", `${Math.ceil(svgRect.height)}`);
+        }
+      }
+
+      if (sourceTag === "rect" || sourceTag === "path" || sourceTag === "polygon") {
+        const fill = computedStyle.fill;
+        if (fill && fill !== "none") targetNode.setAttribute("fill", fill);
+        const stroke = computedStyle.stroke;
+        if (stroke && stroke !== "none") {
+          targetNode.setAttribute("stroke", stroke);
+          targetNode.setAttribute("stroke-width", computedStyle.strokeWidth);
+        }
+      }
+
+      if (sourceTag === "text") {
+        targetNode.setAttribute("fill", computedStyle.fill);
+        targetNode.setAttribute("font-size", computedStyle.fontSize);
+        targetNode.setAttribute("font-family", computedStyle.fontFamily);
+        targetNode.setAttribute("letter-spacing", computedStyle.letterSpacing);
+      }
+
+      for (let i = 0; i < sourceNode.children.length; i += 1) {
+        cloneWithInlineSvgStyles(sourceNode.children[i], targetNode.children[i]);
+      }
+    };
+
+    const clonedSvg = svgElement.cloneNode(true);
+    cloneWithInlineSvgStyles(svgElement, clonedSvg);
+
+    const svgBlob = new Blob([new XMLSerializer().serializeToString(clonedSvg)], {
+      type: "image/svg+xml;charset=utf-8",
+    });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = svgUrl;
+    }).finally(() => {
+      URL.revokeObjectURL(svgUrl);
+    });
+
+    return { image, rect: svgRect };
+  }, []);
+
+  const drawYearRowToContext = useCallback(
+    async (ctx, yearNode, year, cardRect) => {
+      const heatmapRoot = yearNode.querySelector(".react-calendar-heatmap");
+      const heatmapSvg =
+        heatmapRoot?.tagName?.toLowerCase() === "svg"
+          ? heatmapRoot
+          : heatmapRoot?.querySelector("svg");
+      if (!heatmapSvg) return false;
+
+      const rowRect = yearNode.getBoundingClientRect();
+      const { image: svgImage, rect: svgRect } = await buildStyledSvgImage(heatmapSvg);
+
+      const rowOffsetX = Math.max(0, rowRect.left - cardRect.left);
+      const rowOffsetY = Math.max(0, rowRect.top - cardRect.top);
+
+      const labelNode = yearNode.querySelector('[data-year-label="true"]');
+      if (labelNode) {
+        const labelRect = labelNode.getBoundingClientRect();
+        const labelStyle = window.getComputedStyle(labelNode);
+        ctx.fillStyle = labelStyle.color;
+        ctx.font = `${labelStyle.fontWeight} ${labelStyle.fontSize} ${labelStyle.fontFamily}`;
+        ctx.textBaseline = "top";
+        ctx.fillText(
+          String(year),
+          Math.max(0, labelRect.left - cardRect.left),
+          Math.max(0, labelRect.top - cardRect.top),
+        );
+      }
+
+      ctx.drawImage(
+        svgImage,
+        rowOffsetX + Math.max(0, svgRect.left - rowRect.left),
+        rowOffsetY + Math.max(0, svgRect.top - rowRect.top),
+        svgRect.width,
+        svgRect.height,
+      );
+
+      return true;
+    },
+    [buildStyledSvgImage],
+  );
+
+  const drawTextNodeToContext = useCallback((ctx, node, cardRect, fallback = {}) => {
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    const style = window.getComputedStyle(node);
+    const text = (node.textContent || "").replace(/\s+/g, " ").trim();
+    if (!text) return;
+
+    ctx.fillStyle = fallback.color || style.color || "#111827";
+    ctx.font = `${style.fontWeight || fallback.fontWeight || 400} ${style.fontSize || fallback.fontSize || "12px"} ${style.fontFamily || fallback.fontFamily || "sans-serif"}`;
+    ctx.textBaseline = "top";
+    ctx.fillText(
+      text,
+      Math.max(0, rect.left - cardRect.left),
+      Math.max(0, rect.top - cardRect.top),
+    );
+  }, []);
+
+  const copyYearRowFastToClipboard = useCallback(
+    async (yearNode, year) => {
+      const fastPathStart = performance.now();
+      const heatmapRoot = yearNode.querySelector(".react-calendar-heatmap");
+      const heatmapSvg =
+        heatmapRoot?.tagName?.toLowerCase() === "svg"
+          ? heatmapRoot
+          : heatmapRoot?.querySelector("svg");
+      if (!heatmapSvg) {
+        devLog(
+          `[heatmap-copy][${year}] fast-path skipped: svg not found (root=${Boolean(heatmapRoot)})`,
+        );
+        return false;
+      }
+
+      const rowRect = yearNode.getBoundingClientRect();
+      const svgRect = heatmapSvg.getBoundingClientRect();
+      if (svgRect.width <= 0 || svgRect.height <= 0) {
+        devLog(`[heatmap-copy][${year}] fast-path skipped: invalid svg bounds`);
+        return false;
+      }
+
+      const { image: svgImage } = await buildStyledSvgImage(heatmapSvg);
+      devLog(
+        `[heatmap-copy][${year}] fast-path inline styles: ${Math.round(performance.now() - fastPathStart)}ms`,
+      );
+      devLog(
+        `[heatmap-copy][${year}] fast-path svg decode: ${Math.round(performance.now() - fastPathStart)}ms`,
+      );
+
+      const canvasWidth = Math.max(1, Math.ceil(rowRect.width));
+      const canvasHeight = Math.max(1, Math.ceil(rowRect.height));
+      const exportScale = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(canvasWidth * exportScale);
+      canvas.height = Math.round(canvasHeight * exportScale);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return false;
+      ctx.scale(exportScale, exportScale);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const labelNode = yearNode.querySelector('[data-year-label="true"]');
+      if (labelNode) {
+        const labelRect = labelNode.getBoundingClientRect();
+        const labelStyle = window.getComputedStyle(labelNode);
+        ctx.fillStyle = labelStyle.color;
+        ctx.font = `${labelStyle.fontWeight} ${labelStyle.fontSize} ${labelStyle.fontFamily}`;
+        ctx.textBaseline = "top";
+        ctx.fillText(
+          String(year),
+          Math.max(0, Math.round(labelRect.left - rowRect.left)),
+          Math.max(0, Math.round(labelRect.top - rowRect.top)),
+        );
+      }
+
+      const svgX = Math.max(0, svgRect.left - rowRect.left);
+      const svgY = Math.max(0, svgRect.top - rowRect.top);
+      ctx.drawImage(
+        svgImage,
+        svgX,
+        svgY,
+        svgRect.width,
+        svgRect.height,
+      );
+
+      const blobPromise = new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      await writePngToClipboard(blobPromise);
+      devLog(
+        `[heatmap-copy][${year}] fast-path total: ${Math.round(performance.now() - fastPathStart)}ms`,
+      );
+      return true;
+    },
+    [buildStyledSvgImage, writePngToClipboard],
+  );
+
+  const copyFullCardFastToClipboard = useCallback(async () => {
+    if (!shareRef.current) {
+      devLog("[heatmap-copy][full] fast-path skipped: missing shareRef");
+      return false;
+    }
+    if (viewMode !== "daily") {
+      devLog(`[heatmap-copy][full] fast-path skipped: viewMode=${viewMode}`);
+      return false;
+    }
+    if (!intervals?.length) {
+      devLog("[heatmap-copy][full] fast-path skipped: no intervals");
+      return false;
+    }
+    const fastStart = performance.now();
+    devLog("[heatmap-copy][full] fast-path start");
+    const cardNode = shareRef.current;
+    const cardRect = cardNode.getBoundingClientRect();
+    if (cardRect.width <= 0 || cardRect.height <= 0) {
+      devLog("[heatmap-copy][full] fast-path skipped: invalid card bounds");
+      return false;
+    }
+
+    // Keep full-card base at 1:1 to avoid subtle text/ring distortion from raster resampling.
+    const captureScale = 1;
+    const exportCanvas = document.createElement("canvas");
+    exportCanvas.width = Math.round(cardRect.width * captureScale);
+    exportCanvas.height = Math.round(cardRect.height * captureScale);
+    const ctx = exportCanvas.getContext("2d");
+    if (!ctx) {
+      devLog("[heatmap-copy][full] fast-path skipped: no canvas context");
+      return false;
+    }
+    ctx.scale(captureScale, captureScale);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, cardRect.width, cardRect.height);
+
+    const headerStart = performance.now();
+    const headerNode = cardNode.querySelector('[data-share-section="header"]');
+    if (headerNode) {
+      const titleNode = headerNode.querySelector("h1,h2,h3,h4,h5,h6");
+      const descriptionNode = headerNode.querySelector("p");
+      drawTextNodeToContext(ctx, titleNode, cardRect, {
+        fontWeight: 700,
+        fontSize: "28px",
+        color: "#111827",
+      });
+      drawTextNodeToContext(ctx, descriptionNode, cardRect, {
+        fontWeight: 400,
+        fontSize: "12px",
+        color: "#6b7280",
+      });
+    }
+    devLog(
+      `[heatmap-copy][full] header text draw: ${Math.round(performance.now() - headerStart)}ms`,
+    );
+
+    const circlesStart = performance.now();
+    const consistencyNode = cardNode.querySelector('[data-share-section="consistency"]');
+    if (consistencyNode) {
+      const circleWraps = consistencyNode.querySelectorAll("svg");
+      for (const svgNode of circleWraps) {
+        const { image: svgImage, rect } = await buildStyledSvgImage(svgNode);
+        ctx.drawImage(
+          svgImage,
+          Math.max(0, rect.left - cardRect.left),
+          Math.max(0, rect.top - cardRect.top),
+          rect.width,
+          rect.height,
+        );
+      }
+
+      const labelNodes = consistencyNode.querySelectorAll("svg + span");
+      for (const labelNode of labelNodes) {
+        drawTextNodeToContext(ctx, labelNode, cardRect, {
+          fontWeight: 400,
+          fontSize: "9px",
+          color: "#6b7280",
+        });
+      }
+    }
+    devLog(
+      `[heatmap-copy][full] consistency draw: ${Math.round(performance.now() - circlesStart)}ms`,
+    );
+
+    for (const interval of intervals) {
+      const year = new Date(interval.startDate).getFullYear();
+      const yearNode = yearRowRefs.current[year];
+      if (!yearNode) continue;
+      const yearStart = performance.now();
+      const rendered = await drawYearRowToContext(ctx, yearNode, year, cardRect);
+      if (!rendered) {
+        devLog(`[heatmap-copy][full] fast-path failed: year ${year} render failed`);
+        return false;
+      }
+      devLog(
+        `[heatmap-copy][full] year ${year} draw: ${Math.round(performance.now() - yearStart)}ms`,
+      );
+    }
+
+    const brandingStart = performance.now();
+    const brandingNode = cardNode.querySelector('[data-share-section="branding"]');
+    if (brandingNode) {
+      const brandRect = brandingNode.getBoundingClientRect();
+      ctx.strokeStyle = "#e5e7eb";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, Math.max(0, brandRect.top - cardRect.top));
+      ctx.lineTo(cardRect.width, Math.max(0, brandRect.top - cardRect.top));
+      ctx.stroke();
+
+      const brandingTextNode = brandingNode.querySelector("p");
+      drawTextNodeToContext(ctx, brandingTextNode, cardRect, {
+        fontWeight: 400,
+        fontSize: "12px",
+        color: "#6b7280",
+      });
+    }
+    devLog(
+      `[heatmap-copy][full] branding draw: ${Math.round(performance.now() - brandingStart)}ms`,
+    );
+
+    const blobPromise = new Promise((resolve) =>
+      exportCanvas.toBlob(resolve, "image/png"),
+    );
+    await writePngToClipboard(blobPromise);
+    devLog(
+      `[heatmap-copy][full] fast-path total: ${Math.round(performance.now() - fastStart)}ms`,
+    );
+    return true;
+  }, [
+    buildStyledSvgImage,
+    drawTextNodeToContext,
+    drawYearRowToContext,
+    intervals,
+    viewMode,
+    writePngToClipboard,
+  ]);
+
   // if (!parsedData || parsedData.length === 0) { return null; }
 
   const handleShare = async () => {
@@ -109,30 +478,27 @@ export function TheLongGameCard() {
 
     try {
       if (shareRef.current) {
-        // Dynamically import html2canvas only when user clicks share
-        const html2canvas = (await import("html2canvas-pro")).default;
-        // Pass a Promise directly to ClipboardItem so navigator.clipboard.write()
-        // is called while the document is still focused. The browser holds the
-        // clipboard operation open while html2canvas renders — safe to switch apps.
-        // Capture learning:
-        // Keep the copied image deterministic by styling the source node via
-        // `data-capture="light"` in CSS, instead of trying to rewrite styles in onclone.
-        const blobPromise = html2canvas(shareRef.current, {
-          ignoreElements: (element) => element.id === "ignoreCopy",
-          backgroundColor: "#ffffff",
-          scale: 1,
-        }).then(
-          (canvas) =>
-            new Promise((resolve) => canvas.toBlob(resolve, "image/png")),
-        );
-
-        await navigator.clipboard.write([
-          new ClipboardItem({ "image/png": blobPromise }),
-        ]);
+        devLog("[heatmap-copy][full] share start");
+        const usedFastPath = await copyFullCardFastToClipboard();
+        if (!usedFastPath) {
+          devLog("[heatmap-copy][full] using html2canvas fallback");
+          const fallbackStart = performance.now();
+          // Keep copied image deterministic via `data-capture="light"` CSS contract.
+          await copyNodeToClipboard(
+            shareRef.current,
+            (element) => element.id === "ignoreCopy",
+          );
+          devLog(
+            `[heatmap-copy][full] fallback total: ${Math.round(performance.now() - fallbackStart)}ms`,
+          );
+        }
         console.log("Heatmap copied to clipboard");
         gaEvent(GA_EVENT_TAGS.HEATMAP_SHARE_CLIPBOARD, { page: "/lift-explorer" });
       }
 
+      devLog(
+        `[heatmap-copy][full] handleShare total: ${Math.round(performance.now() - startTime)}ms`,
+      );
       logTiming("html2canvas", performance.now() - startTime);
       setShareReady(true);
     } catch (err) {
@@ -141,6 +507,61 @@ export function TheLongGameCard() {
       setIsSharing(false);
     }
   };
+
+  const handleShareYear = useCallback(
+    async (year) => {
+      const yearNode = yearRowRefs.current[year];
+      if (!yearNode) return;
+
+      const copyYearStart = performance.now();
+      setSharingYear(year);
+      try {
+        const rowRect = yearNode.getBoundingClientRect();
+        const heatmap = yearNode.querySelector(".react-calendar-heatmap");
+        const heatmapRect = heatmap?.getBoundingClientRect();
+        const captureWidth =
+          heatmapRect && rowRect
+            ? Math.ceil(Math.max(0, heatmapRect.right - rowRect.left))
+            : undefined;
+        const usedFastPath = await copyYearRowFastToClipboard(yearNode, year);
+        if (!usedFastPath) {
+          const fallbackStart = performance.now();
+          await copyNodeToClipboard(
+            yearNode,
+            (element) => element.dataset.shareIgnore === "true",
+            captureWidth
+              ? {
+                  width: captureWidth,
+                  height: Math.ceil(rowRect.height),
+                }
+              : undefined,
+          );
+          devLog(
+            `[heatmap-copy][${year}] fallback html2canvas: ${Math.round(performance.now() - fallbackStart)}ms`,
+          );
+        }
+        devLog(
+          `[heatmap-copy][${year}] total copy: ${Math.round(performance.now() - copyYearStart)}ms`,
+        );
+        setSharedYear(year);
+        if (yearShareTimerRef.current) clearTimeout(yearShareTimerRef.current);
+        yearShareTimerRef.current = setTimeout(() => {
+          setSharedYear(null);
+          yearShareTimerRef.current = null;
+        }, 1600);
+        gaEvent(GA_EVENT_TAGS.HEATMAP_SHARE_CLIPBOARD, {
+          page: "/lift-explorer",
+          scope: "daily_year",
+          year,
+        });
+      } catch (error) {
+        console.error(`Error in copying ${year} heatmap: `, error);
+      } finally {
+        setSharingYear(null);
+      }
+    },
+    [copyNodeToClipboard, copyYearRowFastToClipboard],
+  );
 
   return (
     <>
@@ -206,7 +627,7 @@ export function TheLongGameCard() {
             : undefined
         }
       >
-        <CardHeader>
+        <CardHeader data-share-section="header">
           <CardTitle>
             {authStatus === "unauthenticated" && "Demo mode: "}
             {cardTitle}
@@ -227,12 +648,27 @@ export function TheLongGameCard() {
           {intervals && (
             <>
               {/* Consistency grade rings — always included in capture output */}
-              <div className="mb-6 flex justify-center">
-                <ConsistencyGradesRow
-                  parsedData={parsedData}
-                  isVisible={!!intervals}
-                  isCaptureMode={isSharing}
-                />
+              <div className="mb-6" data-share-section="consistency">
+                {isSharing ? (
+                  <div className="flex w-full items-start">
+                    <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
+                    <div className="min-w-0 flex-1">
+                      <ConsistencyGradesRow
+                        parsedData={parsedData}
+                        isVisible={!!intervals}
+                        isCaptureMode={isSharing}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex justify-center">
+                    <ConsistencyGradesRow
+                      parsedData={parsedData}
+                      isVisible={!!intervals}
+                      isCaptureMode={isSharing}
+                    />
+                  </div>
+                )}
               </div>
               {!isSharing && <hr className="border-border/60 mb-3" />}
               {/* View selector — right-justified, anchored just above the heatmap grid */}
@@ -265,16 +701,38 @@ export function TheLongGameCard() {
                 <div className={isSharing ? "" : "max-h-[40vh] overflow-y-auto pr-1"}>
                   <div className="flex flex-col gap-9">
                     {intervals.map((interval, index) => {
+                      const year = new Date(interval.startDate).getFullYear();
                       return (
-                        <div key={`${index}-heatmap`} className="flex w-full items-start">
+                        <div
+                          key={`${index}-heatmap`}
+                          ref={(node) => {
+                            if (node) yearRowRefs.current[year] = node;
+                            else delete yearRowRefs.current[year];
+                          }}
+                          className="flex w-full items-start"
+                        >
                           <div
                             className="text-muted-foreground shrink-0 pr-2 pt-1 text-right text-xs lg:text-sm"
                             style={{ width: WEEKLY_YEAR_W }}
                           >
-                            {new Date(interval.startDate).getFullYear()}
+                            <div className="flex flex-col items-end gap-1">
+                              <span data-year-label="true">{year}</span>
+                              {!isSharing && intervals.length > 1 && (
+                                <LiftResultCopyButton
+                                  label={`Copy ${year} heatmap`}
+                                  tooltip={`Copy ${year} heatmap`}
+                                  onCopy={() => handleShareYear(year)}
+                                  isLoading={sharingYear === year}
+                                  isSuccess={sharedYear === year}
+                                  disabled={sharingYear === year}
+                                  data-share-ignore="true"
+                                  className="h-6 w-6 text-muted-foreground/50 hover:text-foreground"
+                                />
+                              )}
+                            </div>
                           </div>
                           <div className="min-w-0 flex-1">
-                            <Heatmap
+                            <MemoizedHeatmap
                               parsedData={parsedData}
                               startDate={interval.startDate}
                               endDate={interval.endDate}
@@ -309,7 +767,10 @@ export function TheLongGameCard() {
               )}
               {/* Footer with app branding - only visible during image capture */}
               {isSharing && (
-                <div className="mt-6 flex items-center justify-center border-t pt-4">
+                <div
+                  className="mt-6 flex items-center justify-center border-t pt-4"
+                  data-share-section="branding"
+                >
                   <p className="text-muted-foreground text-sm">
                     Created with{" "}
                     <span className="text-foreground font-semibold">
@@ -395,14 +856,24 @@ function GradeCircle({
         <TooltipTrigger asChild>
           <motion.div
             className="flex flex-col items-center gap-0.5"
-            initial={{ opacity: 0, y: -20 }}
-            animate={isVisible ? { opacity: targetOpacity, y: 0 } : { opacity: 0, y: -20 }}
-            transition={{
-              type: "spring",
-              stiffness: 300,
-              damping: 20,
-              delay: isVisible ? delay : 0,
-            }}
+            initial={isCaptureMode ? { opacity: targetOpacity, y: 0 } : { opacity: 0, y: -20 }}
+            animate={
+              isCaptureMode
+                ? { opacity: targetOpacity, y: 0 }
+                : isVisible
+                  ? { opacity: targetOpacity, y: 0 }
+                  : { opacity: 0, y: -20 }
+            }
+            transition={
+              isCaptureMode
+                ? { duration: 0 }
+                : {
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 20,
+                    delay: isVisible ? delay : 0,
+                  }
+            }
           >
             <svg
               width={size}
@@ -1194,7 +1665,6 @@ function MonthlyTooltipContent({ value }) {
 // Hover triggers a fixed-position tooltip with full session and PR details for that day.
 function Heatmap({ parsedData, startDate, endDate, isSharing }) {
   const { status: authStatus } = useSession();
-  const [heatmapData, setHeatmapData] = useState(null);
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
     x: 0,
@@ -1202,15 +1672,14 @@ function Heatmap({ parsedData, startDate, endDate, isSharing }) {
     showBelow: false,
   });
 
-  useEffect(() => {
-    if (!parsedData) return;
-    const heatmapData = generateHeatmapData(
+  const heatmapData = useMemo(() => {
+    if (!parsedData) return null;
+    return generateHeatmapData(
       parsedData,
       startDate,
       endDate,
       authStatus === "unauthenticated", // This is a clue we have sample data and we will fake the heatmap to impress shallow people
     );
-    setHeatmapData(heatmapData);
   }, [parsedData, startDate, endDate, authStatus]);
 
   const handleMouseOver = useCallback((e, value) => {
@@ -1270,6 +1739,8 @@ function Heatmap({ parsedData, startDate, endDate, isSharing }) {
     </div>
   );
 }
+
+const MemoizedHeatmap = memo(Heatmap);
 
 // Tooltip body for a daily heatmap cell: date, set/lift counts, PR badges (heaviest per lift type),
 // and per-lift set breakdowns. Shows up to MAX_LIFTS_SHOWN lift types before truncating.

@@ -923,15 +923,18 @@ function ConsistencyGradesRow({
 
   if (!consistency || consistency.length === 0) return null;
 
+  const circleSize = consistency.length >= 7 ? 42 : 52;
+  const gapPx = consistency.length >= 7 ? 6 : 12;
+
   return (
-    <div className="flex items-start justify-center gap-3">
+    <div className="flex items-start justify-center" style={{ gap: gapPx }}>
       {consistency.map((item, index) => (
         <GradeCircle
           key={item.label}
           percentage={item.percentage}
           label={item.label}
           tooltip={item.tooltip}
-          size={52}
+          size={circleSize}
           delay={index * 0.05}
           isVisible={isVisible}
           isShortTerm={SHORT_TERM_LABELS.has(item.label)}

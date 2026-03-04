@@ -59,8 +59,11 @@ export const bigFourLiftInsightData = [
       },
       {
         question: "How do I calculate my squat one rep max from reps?",
-        answer:
-          "Use a 1RM formula like Brzycki or Epley on any working set of 1–10 reps. For example, if you squat 225 lbs for 5 reps, the Brzycki formula estimates your 1RM at around 253 lbs. The squat 1RM calculator linked on this page runs all 7 major formulas side by side so you can see the full range. Sets of 3–6 reps tend to give the most accurate estimates.",
+        answer: [
+          "Use a 1RM formula like Brzycki or Epley on any working set of 1–10 reps. For example, if you squat 225 lbs for 5 reps, the Brzycki formula estimates your 1RM at around 253 lbs. The ",
+          { text: "squat 1RM calculator", href: "/calculator/squat-1rm-calculator?weight=225&reps=5&calcIsMetric=false" },
+          " linked on this page runs all 7 major formulas side by side so you can see the full range. Sets of 3–6 reps tend to give the most accurate estimates.",
+        ],
       },
     ],
   },
@@ -100,13 +103,19 @@ export const bigFourLiftInsightData = [
       },
       {
         question: "If I can bench 135 lbs for 12 reps, what is my max?",
-        answer:
-          "Using the Brzycki formula, 135 lbs for 12 reps estimates a 1RM of around 180 lbs. The Epley formula gives a similar result of about 189 lbs. Different formulas give slightly different results, especially at higher rep counts — sets of 3–6 reps tend to produce the most accurate 1RM estimates. Use the bench press 1RM calculator linked from this page to see all 7 formulas side by side.",
+        answer: [
+          "Using the Brzycki formula, 135 lbs for 12 reps estimates a 1RM of around 180 lbs. The Epley formula gives a similar result of about 189 lbs. Different formulas give slightly different results, especially at higher rep counts — sets of 3–6 reps tend to produce the most accurate 1RM estimates. Use the ",
+          { text: "bench press 1RM calculator", href: "/calculator/bench-press-1rm-calculator?weight=135&reps=12&calcIsMetric=false" },
+          " linked from this page to see all 7 formulas side by side.",
+        ],
       },
       {
         question: "If I can bench 135 lbs for 15 reps, what is my max?",
-        answer:
-          "At 135 lbs for 15 reps, the Brzycki formula estimates your 1RM at around 196 lbs, while Epley gives approximately 202 lbs. High rep sets (above 10) introduce more fatigue, which can make 1RM estimates less precise. For a more accurate estimate, try a heavier set in the 3–6 rep range and plug those numbers into the bench press 1RM calculator.",
+        answer: [
+          "At 135 lbs for 15 reps, the Brzycki formula estimates your 1RM at around 196 lbs, while Epley gives approximately 202 lbs. High rep sets (above 10) introduce more fatigue, which can make 1RM estimates less precise. For a more accurate estimate, try a heavier set in the 3–6 rep range and plug those numbers into the ",
+          { text: "bench press 1RM calculator", href: "/calculator/bench-press-1rm-calculator?weight=135&reps=15&calcIsMetric=false" },
+          ".",
+        ],
       },
       {
         question: "How many reps of 225 lbs does it take to bench 315 lbs?",
@@ -174,8 +183,11 @@ export const bigFourLiftInsightData = [
       },
       {
         question: "Is a 500 lb deadlift impressive?",
-        answer:
-          "Absolutely — a 500 lb deadlift is elite-level strength by any measure. At 500 lbs, even a 220 lb lifter is pulling 2.27× bodyweight, which lands firmly in advanced-to-elite territory. A 500 lb pull is rare in the general gym population and represents years of dedicated, focused training. It is a meaningful milestone toward the 1000lb Club total alongside squat and bench press.",
+        answer: [
+          "Absolutely — a 500 lb deadlift is elite-level strength by any measure. At 500 lbs, even a 220 lb lifter is pulling 2.27× bodyweight, which lands firmly in advanced-to-elite territory. A 500 lb pull is rare in the general gym population and represents years of dedicated, focused training. It is a meaningful milestone toward the ",
+          { text: "1000lb Club", href: "/1000lb-club-calculator" },
+          " total alongside squat and bench press.",
+        ],
       },
       {
         question: "What deadlift weight should a beginner aim for?",
@@ -189,8 +201,11 @@ export const bigFourLiftInsightData = [
       },
       {
         question: "How do I calculate my deadlift one rep max from reps?",
-        answer:
-          "Use a 1RM estimation formula on any working set of 1–8 reps. For example, pulling 315 lbs for 5 reps estimates a 1RM of roughly 354 lbs using the Brzycki formula. The deadlift 1RM calculator linked from this page runs all 7 major formulas simultaneously. For the most accurate deadlift estimate, use a set in the 2–5 rep range — higher rep sets are less reliable for 1RM prediction on the deadlift.",
+        answer: [
+          "Use a 1RM estimation formula on any working set of 1–8 reps. For example, pulling 315 lbs for 5 reps estimates a 1RM of roughly 354 lbs using the Brzycki formula. The ",
+          { text: "deadlift 1RM calculator", href: "/calculator/deadlift-1rm-calculator?weight=315&reps=5&calcIsMetric=false" },
+          " linked from this page runs all 7 major formulas simultaneously. For the most accurate deadlift estimate, use a set in the 2–5 rep range — higher rep sets are less reliable for 1RM prediction on the deadlift.",
+        ],
       },
     ],
   },

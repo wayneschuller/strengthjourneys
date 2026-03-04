@@ -110,10 +110,30 @@ const CALCULATOR_FAQ = [
   },
   {
     question: "Can I use this calculator for squat, bench press, and deadlift?",
-    answer:
-      "Yes. This 1RM calculator works for any barbell lift — back squat, bench press, deadlift, strict press, and more. Enter your working weight and rep count and the calculator estimates your max across all 7 formulas.",
+    answer: [
+      "Yes. This 1RM calculator works for any barbell lift — back squat, bench press, deadlift, ",
+      { text: "strict press", href: "/calculator/strict-press-1rm-calculator" },
+      ", and more. Enter your working weight and rep count and the calculator estimates your max across all 7 formulas.",
+    ],
   },
 ];
+
+function renderAnswer(answer) {
+  if (typeof answer === "string") return answer;
+  return answer.map((seg, i) =>
+    typeof seg === "string" ? seg : (
+      <Link key={i} href={seg.href}
+        className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800">
+        {seg.text}
+      </Link>
+    )
+  );
+}
+
+function flattenAnswer(answer) {
+  if (typeof answer === "string") return answer;
+  return answer.map((seg) => (typeof seg === "string" ? seg : seg.text)).join("");
+}
 
 export default function E1RMCalculator({ relatedArticles }) {
   const title = "One Rep Max Calculator | Free 1RM Tool, No Login Required";
@@ -165,7 +185,7 @@ export default function E1RMCalculator({ relatedArticles }) {
           name: question,
           acceptedAnswer: {
             "@type": "Answer",
-            text: answer,
+            text: flattenAnswer(answer),
           },
         })),
       },
@@ -797,7 +817,7 @@ export function E1RMCalculatorMain({
           {CALCULATOR_FAQ.map(({ question, answer }) => (
             <article key={question} className="rounded-lg border p-4">
               <h3 className="text-base font-semibold">{question}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{answer}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{renderAnswer(answer)}</p>
             </article>
           ))}
         </div>

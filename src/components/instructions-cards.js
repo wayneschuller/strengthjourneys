@@ -365,6 +365,26 @@ export function GettingStartedCard() {
   }, [authStatus, shouldLoadPicker]);
 
   const { sheetInfo, selectSheet } = useUserLiftingData();
+  const isConnected = !!sheetInfo?.ssid;
+
+  const step3Controls = useAnimationControls();
+
+  useEffect(() => {
+    if (prefersReducedMotion || isConnected) return;
+    const wobbleAnim = {
+      rotate: [0, -7, 7, -5, 5, -2, 2, 0],
+      transition: { duration: 0.55, ease: "easeInOut" },
+    };
+    let intervalId;
+    const timeoutId = setTimeout(() => {
+      step3Controls.start(wobbleAnim);
+      intervalId = setInterval(() => step3Controls.start(wobbleAnim), 5000);
+    }, 1500 + Math.random() * 2000);
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, [isConnected, prefersReducedMotion, step3Controls]);
 
   const stepAnimation = (index) =>
     prefersReducedMotion
@@ -413,7 +433,7 @@ export function GettingStartedCard() {
         <CardContent className="relative grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
           <motion.div
             {...stepAnimation(0)}
-            className="bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1"
+            className={`bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1 transition-opacity${isConnected ? " opacity-40" : ""}`}
           >
             <div className="mb-3 flex items-center gap-2">
               <div className="bg-primary/10 text-primary rounded-lg p-2">
@@ -455,7 +475,7 @@ export function GettingStartedCard() {
 
           <motion.div
             {...stepAnimation(1)}
-            className="bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1"
+            className={`bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1 transition-opacity${isConnected ? " opacity-40" : ""}`}
           >
             <div className="mb-3 flex items-center gap-2">
               <div className="bg-primary/10 text-primary rounded-lg p-2">
@@ -500,7 +520,7 @@ export function GettingStartedCard() {
 
           <motion.div
             {...stepAnimation(2)}
-            className="bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1"
+            className={`bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1 transition-opacity${isConnected ? " opacity-40" : ""}`}
           >
             <div className="mb-3 flex items-center gap-2">
               <div className="bg-primary/10 text-primary rounded-lg p-2">
@@ -514,7 +534,7 @@ export function GettingStartedCard() {
               browser re-reads your latest Google Sheet data so your insights
               stay current. We never store your raw rows.
             </p>
-            <div className="flex flex-wrap gap-2">
+            <motion.div animate={step3Controls} style={{ display: "inline-block" }}>
               {authStatus !== "authenticated" ? (
                 <Button
                   size="sm"
@@ -541,12 +561,7 @@ export function GettingStartedCard() {
                       : undefined
                   }
                 >
-                  <img
-                    src={GOOGLE_SHEETS_ICON_URL}
-                    alt=""
-                    className="h-4 w-4 shrink-0"
-                    aria-hidden
-                  />
+                  <FolderOpen className="h-4 w-4 shrink-0" aria-hidden />
                   {openPicker ? "Connect your sheet" : "Loading picker..."}
                 </Button>
               ) : (
@@ -555,7 +570,7 @@ export function GettingStartedCard() {
                   Google Sheet connected
                 </div>
               )}
-            </div>
+            </motion.div>
           </motion.div>
 
           <motion.div

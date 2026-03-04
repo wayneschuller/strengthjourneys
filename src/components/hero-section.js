@@ -72,7 +72,7 @@ function GoogleSignInButton() {
           className="w-2/3 hover:ring-2"
           onClick={() => {
             gaTrackSignInClick(router.pathname);
-            signIn("google");
+            signIn("google", { callbackUrl: "/" });
           }}
         >
           <GoogleLogo />

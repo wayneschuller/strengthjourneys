@@ -35,6 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { devLog } from "@/lib/processing-utils";
 import { gaTrackCalcShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
+import { LiftResultCopyButton } from "@/components/lift-result-copy-button";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
 import { cn } from "@/lib/utils";
 
@@ -1249,6 +1250,7 @@ const NEXT_TIER = {
  * @param {string|null} [props.forceLift=null] - When set, features that lift prominently.
  */
 function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, forceLift = null }) {
+  const router = useRouter();
   const { standards, age, sex, bodyWeight, bioDataIsDefault } = useAthleteBio();
   const { toast } = useToast();
   const unit = isMetric ? "kg" : "lb";
@@ -1397,6 +1399,9 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
           <LiftResultCopyButton
             liftType={liftType}
             onCopy={() => handleCopyLift(liftType, rating, emoji, nextTierInfo, diff)}
+            onPressAnalytics={() =>
+              gaTrackCalcShareCopy("lift_bar", { page: router.asPath, liftType })
+            }
           />
         </div>
         {/* Rating at end — desktop only (shown in row 1 on mobile) */}
@@ -1448,30 +1453,5 @@ function BigFourStrengthBars({ reps, weight, e1rmWeight, isMetric, e1rmFormula, 
         <div className="border-t" />
       </div>
     </TooltipProvider>
-  );
-}
-
-function LiftResultCopyButton({ liftType, onCopy }) {
-  const router = useRouter();
-  const { isSuccess, triggerSuccess } = useTransientSuccess();
-
-  const handleClick = () => {
-    const didCopy = onCopy?.();
-    if (didCopy) {
-      triggerSuccess();
-    }
-  };
-
-  return (
-    <ShareCopyButton
-      iconOnly
-      size="icon"
-      label={`Copy ${liftType} result`}
-      tooltip={`Copy e1rm estimate with ${liftType} rating included`}
-      isSuccess={isSuccess}
-      className="h-6 w-6 text-muted-foreground/50 hover:text-foreground"
-      onPressAnalytics={() => gaTrackCalcShareCopy("lift_bar", { page: router.asPath, liftType })}
-      onClick={handleClick}
-    />
   );
 }

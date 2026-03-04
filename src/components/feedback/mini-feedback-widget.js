@@ -141,7 +141,7 @@ export function MiniFeedbackWidget({
       aria-hidden={isHidden}
     >
       <div className="flex items-center gap-2">
-        <span className="min-w-[5.75rem] text-xs text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {vote ? "Thanks!" : promptText}
         </span>
         <ThumbsSentimentControl

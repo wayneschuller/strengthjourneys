@@ -169,7 +169,7 @@ export function Layout({ children }) {
             className="inline-flex items-center gap-2"
             onClick={() => {
               gaTrackSignInClick(router.pathname);
-              signIn("google");
+              signIn("google", { callbackUrl: "/" });
             }}
           >
             <GoogleLogo size={14} />
@@ -391,7 +391,7 @@ function DataAccessBanner({ pathname }) {
               className="flex items-center gap-2"
               onClick={() => {
                 gaTrackSignInClick(pathname);
-                signIn("google");
+                signIn("google", { callbackUrl: "/" });
               }}
             >
               <GoogleLogo size={16} />

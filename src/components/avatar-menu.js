@@ -79,7 +79,7 @@ export function AvatarDropdown() {
         variant="outline"
         onClick={() => {
           gaTrackSignInClick(router.pathname);
-          signIn("google");
+          signIn("google", { callbackUrl: "/" });
         }}
       >
         Google Sign in

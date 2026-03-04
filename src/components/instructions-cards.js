@@ -450,7 +450,7 @@ export function GettingStartedCard() {
                   className="flex items-center gap-2"
                   onClick={() => {
                     gaTrackSignInClick(router.pathname);
-                    signIn("google");
+                    signIn("google", { callbackUrl: "/" });
                   }}
                 >
                   <GoogleLogo size={16} />
@@ -596,7 +596,7 @@ export function GettingStartedCardCompact() {
             <Button
               onClick={() => {
                 gaTrackSignInClick(router.pathname);
-                signIn("google");
+                signIn("google", { callbackUrl: "/" });
               }}
             >
               Sign in with Google
@@ -654,7 +654,7 @@ export const SignInInvite = () => {
       <button
         onClick={() => {
           gaTrackSignInClick(router.pathname);
-          signIn("google");
+          signIn("google", { callbackUrl: "/" });
         }}
         className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
       >
@@ -780,7 +780,7 @@ export function DemoModeSignInCard() {
           className="flex w-full items-center justify-center gap-2"
           onClick={() => {
             gaTrackSignInClick(router.pathname);
-            signIn("google");
+            signIn("google", { callbackUrl: "/" });
           }}
         >
           <GoogleLogo size={18} />

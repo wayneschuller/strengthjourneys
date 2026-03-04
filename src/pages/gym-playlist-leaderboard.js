@@ -487,7 +487,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
                 <button
                   onClick={() => {
                     gaTrackSignInClick(router.pathname);
-                    signIn("google");
+                    signIn("google", { callbackUrl: "/" });
                   }}
                   className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
                 >

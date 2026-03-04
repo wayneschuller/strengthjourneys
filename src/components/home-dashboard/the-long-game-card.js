@@ -18,11 +18,11 @@ import {
   getDisplayWeight,
 } from "@/lib/processing-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { LoaderCircle } from "lucide-react";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics";
 import { MiniFeedbackWidget } from "@/components/feedback";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { LiftResultCopyButton } from "@/components/lift-result-copy-button";
+import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage } from "usehooks-ts";
@@ -70,9 +70,10 @@ export function TheLongGameCard() {
   const yearRowRefs = useRef({});
   const yearShareTimerRef = useRef(null);
   const [isSharing, setIsSharing] = useState(false);
-  const [shareReady, setShareReady] = useState(false);
   const [sharingYear, setSharingYear] = useState(null);
   const [sharedYear, setSharedYear] = useState(null);
+  const { isSuccess: isShareSuccess, triggerSuccess: triggerShareSuccess } =
+    useTransientSuccess();
   // SSR default = first stage-1 title; randomised client-side once intervals load
   const [cardTitle, setCardTitle] = useState(HEATMAP_TITLES_STAGE1[0]);
 
@@ -513,7 +514,7 @@ export function TheLongGameCard() {
         `[heatmap-copy][full] handleShare total: ${Math.round(performance.now() - startTime)}ms`,
       );
       logTiming("html2canvas", performance.now() - startTime);
-      setShareReady(true);
+      triggerShareSuccess();
     } catch (err) {
       console.error("Error in copying heatmap: ", err);
     } finally {
@@ -578,54 +579,6 @@ export function TheLongGameCard() {
 
   return (
     <>
-      {(isSharing || shareReady) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-          <div className="bg-background flex flex-col items-center gap-4 rounded-lg border p-6 shadow-lg">
-            {isSharing ? (
-              <>
-                <LoaderCircle
-                  className="h-8 w-8 animate-spin"
-                  aria-label="Loading"
-                  role="status"
-                />
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold">Generating Image</h3>
-                  <p className="text-muted-foreground mt-2 text-sm">
-                    {getSharingMessage(intervals?.length || 1)}
-                  </p>
-                </div>
-              </>
-            ) : (
-              <div className="text-center">
-                <h3 className="text-lg font-semibold">
-                  Heatmap Copied to Clipboard
-                </h3>
-                <p className="text-muted-foreground mt-2 text-sm">
-                  Paste it anywhere — social media, Discord, messages, or a
-                  Google Doc.
-                </p>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Use{" "}
-                  <kbd className="bg-muted rounded border px-1.5 py-0.5 text-xs font-semibold">
-                    Ctrl+V
-                  </kbd>{" "}
-                  on Windows/Linux or{" "}
-                  <kbd className="bg-muted rounded border px-1.5 py-0.5 text-xs font-semibold">
-                    Cmd+V
-                  </kbd>{" "}
-                  on Mac.
-                </p>
-                <button
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 mt-4 rounded-md px-4 py-2 text-sm font-medium"
-                  onClick={() => setShareReady(false)}
-                >
-                  Got it
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
       <Card
         ref={shareRef}
         // Keep copy output stable across themes: capture mode is driven by a
@@ -816,6 +769,7 @@ export function TheLongGameCard() {
                 tooltip="Share heatmaps to clipboard"
                 onClick={handleShare}
                 isLoading={isSharing}
+                isSuccess={isShareSuccess}
                 disabled={isSharing}
                 className="!border-zinc-300 !bg-white !text-zinc-900 hover:!bg-zinc-100"
               />
@@ -1039,55 +993,6 @@ function getHeatmapTitles(yearsCount) {
   if (yearsCount >= 5) return HEATMAP_TITLES_STAGE3;
   if (yearsCount >= 2) return HEATMAP_TITLES_STAGE2;
   return HEATMAP_TITLES_STAGE1;
-}
-
-// Returns a randomly picked loading message shown during share image generation.
-// Tone escalates with training history length — light banter for newcomers, reverence for veterans.
-function getSharingMessage(years) {
-  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-  if (years <= 1)
-    return pick([
-      "Generating your heatmap, get ready to brag.",
-      "Rendering your heatmap. Newbie gains are the best gains.",
-      "Packaging your gains for maximum flex.",
-      "Every PR journey starts with a single plate.",
-    ]);
-
-  if (years <= 3)
-    return pick([
-      `Rendering ${years} years of heatmap. This won't take long.`,
-      `${years} years of heatmap. You're past the 'just trying it out' phase.`,
-      `${years} years in, and still adding plates. Nice.`,
-      "Dedicated. Your heatmap is about to prove it.",
-      "Generating your heatmap. We see you love a good spreadsheet.",
-    ]);
-
-  if (years <= 5)
-    return pick([
-      `Rendering ${years} years of heatmap. This might take a moment.`,
-      `${years} years of heatmap is no joke. Hang tight.`,
-      "Your heatmap consistency is showing. Give us a sec.",
-      `${years} years under the bar. That's a lot of chalk dust.`,
-      `Building ${years} years of heatmap. Bear with us.`,
-    ]);
-
-  if (years <= 7)
-    return pick([
-      `${years} years of heatmap! This is going to take a minute.`,
-      `Rendering ${years} years of heatmap. You've earned this wait.`,
-      `${years} years! Most gym memberships don't survive ${years} months.`,
-      "Veteran status confirmed. Patience, champion.",
-      `${years} years of heatmap. We know you love your Google Sheets.`,
-    ]);
-
-  return pick([
-    `${years} years of heatmap?! We need a moment for this legend.`,
-    `Rendering ${years} years. At this point it's a historical document.`,
-    `${years} years of heatmap. Your spreadsheet must be a novel by now.`,
-    `${years} years! Your heatmap is older than some lifters at your gym.`,
-    `${years} years under the bar. The barbell knows your name by now.`,
-  ]);
 }
 
 // Scans parsedData in a single pass to find the earliest and latest lift dates,

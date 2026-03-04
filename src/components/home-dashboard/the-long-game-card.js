@@ -681,7 +681,7 @@ export function TheLongGameCard() {
                             if (node) yearRowRefs.current[year] = node;
                             else delete yearRowRefs.current[year];
                           }}
-                          className="flex w-full items-start"
+                          className={`flex w-full items-start ${isCurrentYear ? "-mx-1 rounded-lg bg-muted/20 px-1 py-0.5" : ""}`}
                         >
                           <div
                             className="shrink-0 pr-2 pt-1 text-right text-xs lg:text-sm"
@@ -690,7 +690,7 @@ export function TheLongGameCard() {
                             <div className="flex flex-col items-end gap-1">
                               <span
                                 data-year-label="true"
-                                className={isCurrentYear ? "font-semibold text-foreground" : "text-muted-foreground"}
+                                className={isCurrentYear ? "font-semibold text-foreground text-[13px] lg:text-sm" : "text-muted-foreground"}
                               >
                                 {year}
                               </span>
@@ -1191,7 +1191,7 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   return (
     <div className="relative w-full">
       {/* Month label header — same 53-col grid so columns align with cells */}
-      <div className="mb-1 flex w-full items-end">
+      <div className="flex w-full items-end border-b border-border/15 pb-0.5 mb-1">
         <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
         <div style={cellGridStyle}>
           {WEEKLY_MONTH_LABELS.map(({ label, week }) => (
@@ -1209,13 +1209,13 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       {/* Year rows */}
       <div className="flex w-full flex-col gap-[2px]">
         {years.map((year) => (
-          <div key={year} className="flex w-full items-center">
+          <div key={year} className={`flex w-full items-center ${year === currentYear ? "-mx-1 rounded-md bg-muted/25 px-1 py-0.5" : ""}`}>
             <div
               className="shrink-0 pr-2 text-right text-xs lg:text-sm"
               style={{ width: WEEKLY_YEAR_W }}
             >
               <div className="flex flex-col items-end gap-0.5">
-                <span className={year === currentYear ? "font-semibold text-foreground" : "text-muted-foreground"}>
+                <span className={year === currentYear ? "font-semibold text-foreground text-[13px] lg:text-sm" : "text-muted-foreground"}>
                   {year}
                 </span>
                 {year === currentYear && (
@@ -1266,25 +1266,27 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       </div>
 
       {/* Legend */}
-      <div className="text-muted-foreground mt-3 flex items-center gap-4 text-[10px]">
-        <span>Sessions per week:</span>
-        {[
-          { count: 1, label: "1" },
-          { count: 2, label: "2" },
-          { count: 3, label: "3+" },
-        ].map(({ count, label }) => (
-          <div key={count} className="flex items-center gap-1">
-            <div
-              className="shrink-0 rounded-sm"
-              style={{
-                width: 12,
-                height: 12,
-                backgroundColor: `var(--heatmap-${count === 3 ? 4 : count})`,
-              }}
-            />
-            <span>{label}</span>
-          </div>
-        ))}
+      <div className="text-muted-foreground mt-3 flex flex-col gap-1 text-[10px]">
+        <span className="font-medium">Sessions per week</span>
+        <div className="flex items-center gap-3">
+          {[
+            { count: 1, label: "1" },
+            { count: 2, label: "2" },
+            { count: 3, label: "3+" },
+          ].map(({ count, label }) => (
+            <div key={count} className="flex items-center gap-1.5">
+              <div
+                className="shrink-0 rounded-sm"
+                style={{
+                  width: 14,
+                  height: 14,
+                  backgroundColor: `var(--heatmap-${count === 3 ? 4 : count})`,
+                }}
+              />
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Tooltip */}
@@ -1464,7 +1466,7 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       }
     >
       {/* Month name header */}
-      <div className="mb-1 flex w-full items-end">
+      <div className="flex w-full items-end border-b border-border/15 pb-0.5 mb-1">
         <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
         <div style={cellGridStyle}>
           {MONTH_NAMES.map((name) => (
@@ -1481,13 +1483,13 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       {/* Year rows */}
       <div className="flex w-full flex-col gap-1.5">
         {years.map((year) => (
-          <div key={year} className="flex w-full items-center">
+          <div key={year} className={`flex w-full items-center ${year === currentYear ? "-mx-1 rounded-md bg-muted/25 px-1 py-0.5" : ""}`}>
             <div
               className="shrink-0 pr-2 text-right text-xs lg:text-sm"
               style={{ width: WEEKLY_YEAR_W }}
             >
               <div className="flex flex-col items-end gap-0.5">
-                <span className={year === currentYear ? "font-semibold text-foreground" : "text-muted-foreground"}>
+                <span className={year === currentYear ? "font-semibold text-foreground text-[13px] lg:text-sm" : "text-muted-foreground"}>
                   {year}
                 </span>
                 {year === currentYear && (
@@ -1540,21 +1542,23 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
       </div>
 
       {/* Legend */}
-      <div className="text-muted-foreground mt-3 flex items-center gap-4 text-[10px]">
-        <span>Active weeks per month:</span>
-        {[1, 2, 3, 4].map((n) => (
-          <div key={n} className="flex items-center gap-1">
-            <div
-              className="shrink-0 rounded-[4px]"
-              style={{
-                width: 12,
-                height: 12,
-                backgroundColor: `var(--heatmap-${n})`,
-              }}
-            />
-            <span>{n === 4 ? "4+" : n}</span>
-          </div>
-        ))}
+      <div className="text-muted-foreground mt-3 flex flex-col gap-1 text-[10px]">
+        <span className="font-medium">Active weeks per month</span>
+        <div className="flex items-center gap-3">
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} className="flex items-center gap-1.5">
+              <div
+                className="shrink-0 rounded-[4px]"
+                style={{
+                  width: 14,
+                  height: 14,
+                  backgroundColor: `var(--heatmap-${n})`,
+                }}
+              />
+              <span>{n === 4 ? "4+" : n}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Tooltip */}

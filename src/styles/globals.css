@@ -853,3 +853,29 @@
   fill: var(--heatmap-4);
 }
 
+/*
+ * Share capture contract for TheLongGameCard.
+ *
+ * Learning:
+ * html2canvas snapshots computed styles, so active theme classes can tint copied
+ * images. For stable exports, opt into this explicit capture mode on the source
+ * node (`data-capture="light"`) instead of patching styles in html2canvas onclone.
+ */
+[data-capture="light"] {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(20 14.3% 4.1%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(20 14.3% 4.1%);
+  --muted: hsl(60 4.8% 95.9%);
+  --muted-foreground: hsl(25 5.3% 44.7%);
+  --border: hsl(20 5.9% 90%);
+  --heatmap-0: #eeeeee;
+  --heatmap-1: #a3b18a;
+  --heatmap-2: #588157;
+  --heatmap-3: #243d2a;
+  --heatmap-4: #17221c;
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+  border-color: hsl(20 5.9% 90%) !important;
+  box-shadow: none !important;
+}

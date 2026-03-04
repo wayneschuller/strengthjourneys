@@ -114,8 +114,12 @@ export function TheLongGameCard() {
         // Pass a Promise directly to ClipboardItem so navigator.clipboard.write()
         // is called while the document is still focused. The browser holds the
         // clipboard operation open while html2canvas renders — safe to switch apps.
+        // Capture learning:
+        // Keep the copied image deterministic by styling the source node via
+        // `data-capture="light"` in CSS, instead of trying to rewrite styles in onclone.
         const blobPromise = html2canvas(shareRef.current, {
           ignoreElements: (element) => element.id === "ignoreCopy",
+          backgroundColor: "#ffffff",
           scale: 1,
         }).then(
           (canvas) =>
@@ -188,7 +192,20 @@ export function TheLongGameCard() {
           </div>
         </div>
       )}
-      <Card ref={shareRef} style={isSharing ? { maxWidth: "800px", width: "100%", backgroundColor: "white", color: "black" } : undefined}>
+      <Card
+        ref={shareRef}
+        // Keep copy output stable across themes: capture mode is driven by a
+        // single CSS contract in globals.css (`[data-capture="light"]`).
+        data-capture={isSharing ? "light" : undefined}
+        style={
+          isSharing
+            ? {
+                maxWidth: "800px",
+                width: "100%",
+              }
+            : undefined
+        }
+      >
         <CardHeader>
           <CardTitle>
             {authStatus === "unauthenticated" && "Demo mode: "}
@@ -209,15 +226,14 @@ export function TheLongGameCard() {
           {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
           {intervals && (
             <>
-              {/* Consistency grade rings — centered, hidden during share capture */}
-              {!isSharing && (
-                <div className="mb-6 flex justify-center">
-                  <ConsistencyGradesRow
-                    parsedData={parsedData}
-                    isVisible={!!intervals}
-                  />
-                </div>
-              )}
+              {/* Consistency grade rings — always included in capture output */}
+              <div className="mb-6 flex justify-center">
+                <ConsistencyGradesRow
+                  parsedData={parsedData}
+                  isVisible={!!intervals}
+                  isCaptureMode={isSharing}
+                />
+              </div>
               {!isSharing && <hr className="border-border/60 mb-3" />}
               {/* View selector — right-justified, anchored just above the heatmap grid */}
               {!isSharing && intervals.length > 2 && (
@@ -318,11 +334,12 @@ export function TheLongGameCard() {
                 analyticsExtra={{ context: "activity_heatmaps_card" }}
               />
               <ShareCopyButton
-                label="Copy heatmap"
+                label="Copy image"
                 tooltip="Share heatmaps to clipboard"
                 onClick={handleShare}
                 isLoading={isSharing}
                 disabled={isSharing}
+                className="!border-zinc-300 !bg-white !text-zinc-900 hover:!bg-zinc-100"
               />
             </div>
           </CardFooter>
@@ -354,10 +371,19 @@ const SHORT_TERM_LABELS = new Set(["Week", "Month", "3 Month"]);
 // Animated SVG ring showing a consistency grade letter and percentage fill for one time window.
 // Short-term rings (W/M/3M) render with a thicker stroke and full opacity to emphasise recent form;
 // long-term rings use a thinner stroke and 60% opacity so they recede without disappearing.
-function GradeCircle({ percentage, label, tooltip, size = 28, delay = 0, isVisible, isShortTerm = true }) {
+function GradeCircle({
+  percentage,
+  label,
+  tooltip,
+  size = 28,
+  delay = 0,
+  isVisible,
+  isShortTerm = true,
+  isCaptureMode = false,
+}) {
   const { grade, color } = getGradeAndColor(percentage);
   const strokeWidth = isShortTerm ? 3.5 : 2.5;
-  const targetOpacity = isShortTerm ? 1 : 0.6;
+  const targetOpacity = isCaptureMode ? 1 : isShortTerm ? 1 : 0.6;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
@@ -443,7 +469,11 @@ function trimTrailingDots(items) {
 // Renders a horizontal row of GradeCircle rings for every consistency window the user has enough
 // data to fill. Trims trailing dot-grade periods before rendering, and spring-animates the rings
 // in from above once the card's interval data is ready.
-function ConsistencyGradesRow({ parsedData, isVisible = false }) {
+function ConsistencyGradesRow({
+  parsedData,
+  isVisible = false,
+  isCaptureMode = false,
+}) {
   const consistency = useMemo(() => {
     const raw = processConsistency(parsedData);
     return raw ? trimTrailingDots(raw) : null;
@@ -463,6 +493,7 @@ function ConsistencyGradesRow({ parsedData, isVisible = false }) {
           delay={index * 0.05}
           isVisible={isVisible}
           isShortTerm={SHORT_TERM_LABELS.has(item.label)}
+          isCaptureMode={isCaptureMode}
         />
       ))}
     </div>
@@ -1010,7 +1041,13 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
   };
 
   return (
-    <div className="from-background to-muted/20 relative w-full rounded-xl bg-gradient-to-b px-2 py-2">
+    <div
+      className={
+        isSharing
+          ? "relative w-full rounded-xl bg-white px-2 py-2"
+          : "from-background to-muted/20 relative w-full rounded-xl bg-gradient-to-b px-2 py-2"
+      }
+    >
       {/* Month name header */}
       <div className="mb-1 flex w-full items-end">
         <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />

@@ -670,7 +670,7 @@ export function TheLongGameCard() {
               )}
               {viewMode === "daily" && (
                 <div className={isSharing ? "" : "max-h-[40vh] overflow-y-auto pr-1"}>
-                  <div className="flex flex-col gap-12">
+                  <div className="flex flex-col gap-9">
                     {intervals.map((interval, index) => {
                       const year = new Date(interval.startDate).getFullYear();
                       const isCurrentYear = year === new Date().getFullYear();
@@ -1211,10 +1211,17 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
         {years.map((year) => (
           <div key={year} className="flex w-full items-center">
             <div
-              className="text-muted-foreground shrink-0 pr-2 text-right text-xs lg:text-sm"
+              className="shrink-0 pr-2 text-right text-xs lg:text-sm"
               style={{ width: WEEKLY_YEAR_W }}
             >
-              {year}
+              <div className="flex flex-col items-end gap-0.5">
+                <span className={year === currentYear ? "font-semibold text-foreground" : "text-muted-foreground"}>
+                  {year}
+                </span>
+                {year === currentYear && (
+                  <span className="text-[9px] leading-none text-muted-foreground/60">now</span>
+                )}
+              </div>
             </div>
             <div style={cellGridStyle}>
               {Array.from({ length: 53 }, (_, i) => i + 1).map((weekNum) => {
@@ -1476,10 +1483,17 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
         {years.map((year) => (
           <div key={year} className="flex w-full items-center">
             <div
-              className="text-muted-foreground shrink-0 pr-2 text-right text-xs lg:text-sm"
+              className="shrink-0 pr-2 text-right text-xs lg:text-sm"
               style={{ width: WEEKLY_YEAR_W }}
             >
-              {year}
+              <div className="flex flex-col items-end gap-0.5">
+                <span className={year === currentYear ? "font-semibold text-foreground" : "text-muted-foreground"}>
+                  {year}
+                </span>
+                {year === currentYear && (
+                  <span className="text-[9px] leading-none text-muted-foreground/60">now</span>
+                )}
+              </div>
             </div>
             <div style={cellGridStyle}>
               {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => {

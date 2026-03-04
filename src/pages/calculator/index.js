@@ -86,6 +86,34 @@ export async function getStaticProps() {
  * @param {Object} props
  * @param {Array} props.relatedArticles - CMS articles related to the One Rep Max Calculator topic, fetched via ISR.
  */
+const CALCULATOR_FAQ = [
+  {
+    question: "What is a one rep max (1RM)?",
+    answer:
+      "A one rep max (1RM) is the maximum weight you can lift for a single repetition of an exercise with good form. It's the gold-standard measure of absolute strength in powerlifting and strength training.",
+  },
+  {
+    question: "Which 1RM formula is most accurate?",
+    answer:
+      "No single formula is universally most accurate — accuracy depends on the individual and rep range. Brzycki is considered most reliable for lower rep ranges (1–6 reps). Epley is widely cited in research. This calculator shows all 7 formulas side by side so you can see the full range of estimates.",
+  },
+  {
+    question: "How many reps should I use to estimate my 1RM?",
+    answer:
+      "Sets of 3–10 reps give the most reliable 1RM estimates. Below 3 reps you're already near your max. Above 10 reps, fatigue factors make estimates less accurate. A set of 5 reps is a common sweet spot.",
+  },
+  {
+    question: "What is an E1RM (estimated one rep max)?",
+    answer:
+      "An E1RM is a calculated estimate of your one rep max based on a submaximal set — for example, the weight you lifted for 5 reps. E1RM formulas let you track strength progress without the risk of actual max testing every session.",
+  },
+  {
+    question: "Can I use this calculator for squat, bench press, and deadlift?",
+    answer:
+      "Yes. This 1RM calculator works for any barbell lift — back squat, bench press, deadlift, strict press, and more. Enter your working weight and rep count and the calculator estimates your max across all 7 formulas.",
+  },
+];
+
 export default function E1RMCalculator({ relatedArticles }) {
   const title = "One Rep Max Calculator | Free 1RM Tool, No Login Required";
   const description =
@@ -96,8 +124,60 @@ export default function E1RMCalculator({ relatedArticles }) {
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        name: "One Rep Max Calculator",
+        applicationCategory: "HealthApplication",
+        operatingSystem: "Any",
+        description,
+        url: canonicalURL,
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://www.strengthjourneys.xyz",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "One Rep Max Calculator",
+            item: canonicalURL,
+          },
+        ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: CALCULATOR_FAQ.map(({ question, answer }) => ({
+          "@type": "Question",
+          name: question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: answer,
+          },
+        })),
+      },
+    ],
+  };
+
   return (
     <>
+      <Head>
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      </Head>
       <NextSeo
         title={title}
         description={description}
@@ -108,7 +188,6 @@ export default function E1RMCalculator({ relatedArticles }) {
           description: description,
           type: "website",
           images: [
-            // FIXME: ahrefs suggests you need just singular 'image' tag?
             {
               url: ogImageURL,
               alt: "Strength Journeys One Rep Max Calculator",

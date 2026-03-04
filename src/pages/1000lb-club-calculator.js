@@ -141,7 +141,8 @@ export default function ThousandPoundClubCalculator({ relatedArticles }) {
   // OG Meta Tags
   const canonicalURL =
     "https://www.strengthjourneys.xyz/1000lb-club-calculator";
-  const description = "Free 1000lb Club Calculator. Instant results.";
+  const description =
+    "Free 1000lb Club Calculator — add your back squat, bench press, and deadlift to see if you've hit the 1000lb total. Instant results, works in lbs and kg. No login required.";
   const title =
     "1000lb Club Calculator: Free Tool for Lifters. No login required.";
   const keywords =

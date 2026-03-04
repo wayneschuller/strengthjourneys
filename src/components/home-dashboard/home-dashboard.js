@@ -11,6 +11,8 @@ import { TheMonthInIronCard } from "@/components/home-dashboard/the-month-in-iro
 import { TheLongGameCard } from "@/components/home-dashboard/the-long-game-card";
 import { OnBoardingDashboard } from "@/components/instructions-cards";
 import { motion } from "motion/react";
+import { gaTrackHomeDashboardFirstView } from "@/lib/analytics";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 
 // Short, subtle quips that incorporate the user's first name.
 // {name} is replaced at render time.
@@ -97,6 +99,27 @@ export function HomeDashboard() {
   useEffect(() => {
     if (!sheetInfo?.ssid) setHasDataLoaded(false);
   }, [sheetInfo?.ssid]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (authStatus !== "authenticated") return;
+    if (!sheetInfo?.ssid || !hasDataLoaded || !Array.isArray(parsedData)) return;
+
+    const storageKey = LOCAL_STORAGE_KEYS.HOME_DASHBOARD_FIRST_VIEW_TRACKED;
+    if (window.localStorage.getItem(storageKey) === "1") return;
+
+    const parsedDataCount = parsedData.length;
+    const nonGoalParsedDataCount = parsedData.reduce(
+      (count, entry) => (entry?.isGoal ? count : count + 1),
+      0,
+    );
+
+    gaTrackHomeDashboardFirstView({
+      parsedDataCount,
+      nonGoalParsedDataCount,
+    });
+    window.localStorage.setItem(storageKey, "1");
+  }, [authStatus, sheetInfo?.ssid, hasDataLoaded, parsedData]);
 
   return (
     <div>

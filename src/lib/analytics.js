@@ -57,6 +57,7 @@ export const GA_EVENT_TAGS = Object.freeze({
   CALC_SHARE_CLIPBOARD: "calc_share_clipboard", // ~Apr 2024: E1RM calculator result copied to clipboard.
   HEATMAP_SHARE_CLIPBOARD: "heatmap_share_clipboard", // ~Apr 2024: Analyzer heatmap image copied to clipboard.
   FEEDBACK_SENTIMENT: "SJ_feedback_sentiment", // ~Feb 2026: Feedback thumbs sentiment (explicit SJ-prefixed new tag).
+  HOME_DASHBOARD_FIRST_VIEW: "SJ_home_dashboard_first_view", // ~Mar 2026: First time user sees loaded home dashboard.
 });
 
 const UTM_STORAGE_KEY = "ga_utm";
@@ -204,4 +205,20 @@ export function gaTrackCalcShareCopy(type, params = {}) {
  */
 export function gaTrackFeedbackSentiment(sentiment, page, extra = {}) {
   gaEvent(GA_EVENT_TAGS.FEEDBACK_SENTIMENT, { sentiment, page, ...extra });
+}
+
+/**
+ * Track first time a user sees their loaded home dashboard.
+ * @param {object} params
+ * @param {number} params.parsedDataCount - Total parsedData items.
+ * @param {number} params.nonGoalParsedDataCount - Parsed items excluding goals.
+ */
+export function gaTrackHomeDashboardFirstView({
+  parsedDataCount = 0,
+  nonGoalParsedDataCount = 0,
+} = {}) {
+  gaEvent(GA_EVENT_TAGS.HOME_DASHBOARD_FIRST_VIEW, {
+    parsed_data_count: parsedDataCount,
+    non_goal_parsed_data_count: nonGoalParsedDataCount,
+  });
 }

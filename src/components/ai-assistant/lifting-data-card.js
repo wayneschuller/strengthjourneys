@@ -108,7 +108,7 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
               size="sm"
               className="flex items-center gap-2"
               onClick={() => {
-                gaTrackSignInClick(router.pathname);
+                gaTrackSignInClick(router.pathname, "ai_assistant");
                 signIn("google", { callbackUrl: "/" });
               }}
             >

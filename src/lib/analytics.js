@@ -151,8 +151,19 @@ export function pageView(fullURL) {
 
 // --- Google Analytics track* helpers (send funnel events to GA4; add page when provided) ---
 
-export function gaTrackSignInClick(page) {
-  gaEvent(GA_EVENT_TAGS.FUNNEL_SIGN_IN_CLICK, typeof page === "string" ? { page } : {});
+/**
+ * @param {string} page - Current page pathname.
+ * @param {string} [cta] - Which sign-in CTA was clicked. Used to segment low-intent surfaces
+ *   (e.g. "theme_chooser") from high-intent ones (e.g. "hero") in funnel analysis.
+ *   Known values: "hero", "nav_avatar", "demo_banner", "demo_toast", "theme_chooser",
+ *   "ai_assistant", "getting_started_card", "lift_page_card", "sign_in_invite",
+ *   "year_recap_card", "playlist".
+ */
+export function gaTrackSignInClick(page, cta) {
+  const params = {};
+  if (typeof page === "string") params.page = page;
+  if (typeof cta === "string") params.cta = cta;
+  gaEvent(GA_EVENT_TAGS.FUNNEL_SIGN_IN_CLICK, params);
 }
 
 export function gaTrackSignInSuccess() {

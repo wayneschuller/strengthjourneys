@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { gaTrackSignInClick } from "@/lib/analytics";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { Button } from "@/components/ui/button";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
@@ -36,6 +37,11 @@ import {
 export function OnBoardingDashboard() {
   const [openPicker, setOpenPicker] = useState(null);
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
+  // Gate Step 2 behind Step 1 so users see the sheet format before opening the
+  // Drive picker. Without this, users who clicked "Connect" without having a sheet
+  // ready would open the picker, find nothing suitable, and abandon (57% did in GA).
+  // Persisted in localStorage so returning from the template tab doesn’t reset it.
+  const [templateOpened, setTemplateOpened] = useState(false);
   const { data: session, status: authStatus } = useSession();
   const { selectSheet } = useUserLiftingData();
 
@@ -49,6 +55,25 @@ export function OnBoardingDashboard() {
       setShouldLoadPicker(true);
     }
   }, [authStatus, shouldLoadPicker]);
+
+  // Restore flag from localStorage on mount — survives the new-tab trip to the template.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setTemplateOpened(!!localStorage.getItem(LOCAL_STORAGE_KEYS.ONBOARDING_TEMPLATE_OPENED));
+    }
+  }, []);
+
+  const handleTemplateOpen = () => {
+    localStorage.setItem(LOCAL_STORAGE_KEYS.ONBOARDING_TEMPLATE_OPENED, "1");
+    setTemplateOpened(true);
+  };
+
+  const step2Disabled = !templateOpened || !openPicker;
+  const step2Title = !templateOpened
+    ? "Open the template first (Step 1 above)"
+    : !openPicker
+    ? "Loading Google Picker… (allow Google scripts if blocked)"
+    : undefined;
 
   return (
     <>
@@ -69,7 +94,7 @@ export function OnBoardingDashboard() {
             className="h-6 w-6 shrink-0"
             aria-hidden
           />
-          Successful sign-in! Let{"'"}s connect your lifting data
+          Successful sign-in! Let{"’"}s connect your lifting data
         </h2>
         <div className="flex flex-col gap-4">
           <div className="">
@@ -82,6 +107,7 @@ export function OnBoardingDashboard() {
               href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={handleTemplateOpen}
             >
               Step 1 - Open Google Sheet Template
             </a>
@@ -91,16 +117,12 @@ export function OnBoardingDashboard() {
             name and start entering your own lifts.
           </div>
           <Button
-            className="flex w-fit items-center gap-2 self-center disabled:cursor-wait disabled:opacity-70"
+            className="flex w-fit items-center gap-2 self-center disabled:cursor-not-allowed disabled:opacity-50"
             onClick={() => {
               if (openPicker) handleOpenFilePicker(openPicker);
             }}
-            disabled={!openPicker}
-            title={
-              !openPicker
-                ? "Loading Google Picker… (allow Google scripts if blocked)"
-                : undefined
-            }
+            disabled={step2Disabled}
+            title={step2Title}
           >
             <img
               src={GOOGLE_SHEETS_ICON_URL}
@@ -112,6 +134,19 @@ export function OnBoardingDashboard() {
               ? "Step 2 - Connect your Google Sheet to Strength Journeys"
               : "Step 2 - Connect your Google Sheet (loading…)"}
           </Button>
+
+          {/* Escape hatch for users who already have a sheet in the correct format. */}
+          {!templateOpened && (
+            <button
+              className="self-center text-sm text-muted-foreground underline hover:text-foreground"
+              onClick={() => {
+                localStorage.setItem(LOCAL_STORAGE_KEYS.ONBOARDING_TEMPLATE_OPENED, "1");
+                setTemplateOpened(true);
+              }}
+            >
+              I already have a sheet →
+            </button>
+          )}
 
           <div className="text-sm">
             Strength Journeys does not collect or store your data. Instead we
@@ -449,7 +484,7 @@ export function GettingStartedCard() {
                   size="sm"
                   className="flex items-center gap-2"
                   onClick={() => {
-                    gaTrackSignInClick(router.pathname);
+                    gaTrackSignInClick(router.pathname, "getting_started_card");
                     signIn("google", { callbackUrl: "/" });
                   }}
                 >
@@ -595,7 +630,7 @@ export function GettingStartedCardCompact() {
           {authStatus !== "authenticated" ? (
             <Button
               onClick={() => {
-                gaTrackSignInClick(router.pathname);
+                gaTrackSignInClick(router.pathname, "lift_page_card");
                 signIn("google", { callbackUrl: "/" });
               }}
             >
@@ -653,7 +688,7 @@ export const SignInInvite = () => {
     <div>
       <button
         onClick={() => {
-          gaTrackSignInClick(router.pathname);
+          gaTrackSignInClick(router.pathname, "sign_in_invite");
           signIn("google", { callbackUrl: "/" });
         }}
         className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
@@ -779,7 +814,7 @@ export function DemoModeSignInCard() {
           size="default"
           className="flex w-full items-center justify-center gap-2"
           onClick={() => {
-            gaTrackSignInClick(router.pathname);
+            gaTrackSignInClick(router.pathname, "year_recap_card");
             signIn("google", { callbackUrl: "/" });
           }}
         >

@@ -5,7 +5,7 @@ export const bigFourLiftInsightData = [
     seoTitle: "Back Squat Strength Standards & Progress Tracker",
     pageTitle: "Barbell Back Squat - The King of Lifts",
     pageDescription:
-      "How strong should your back squat be? Check squat strength levels for your age, sex, and bodyweight. Track your squat E1RM, tonnage, and rep PRs over time with free analysis tools.",
+      "How strong should your back squat be? Check squat strength standards for your age, sex, and bodyweight. Track your squat E1RM, tonnage, and rep PRs over time with free analysis tools.",
     pageKeywords:
       "back squat, barbell squat, squat strength standards, squat strength levels, squat progress tracker, E1RM squat, squat PR",
     ogImageURL:
@@ -21,6 +21,48 @@ export const bigFourLiftInsightData = [
     ],
     introductionArticleId: "1b0ff4e2-2580-441e-8084-10ba877819cc",
     resourcesArticleId: "aee23b6e-e9fc-4a5d-b064-c37f8007e1a5",
+    faqItems: [
+      {
+        question: "What is a good squat weight for my bodyweight?",
+        answer:
+          "A common benchmark is squatting your own bodyweight for a single rep as a beginner milestone. An intermediate male lifter (around 185 lb bodyweight) should aim for 225–275 lbs. Advanced lifters typically squat 1.5–2× their bodyweight, meaning 275–370 lbs at 185 lb bodyweight. Elite-level squats exceed 2× bodyweight. Women's standards are proportionally similar relative to bodyweight. Use the strength standards slider above to see exact targets for your age, sex, and bodyweight.",
+      },
+      {
+        question: "Is squatting 225 lbs good?",
+        answer:
+          "Yes — a 225 lb squat is a solid milestone. For a 185 lb male lifter, squatting 225 lbs (roughly 1.2× bodyweight) puts you solidly in the intermediate range. For a lighter lifter or a woman, 225 lbs represents advanced or elite territory. Two plates per side is a meaningful gym milestone that most casual lifters never reach.",
+      },
+      {
+        question: "Is squatting 315 lbs good?",
+        answer:
+          "A 315 lb squat (three plates per side) is a strong advanced milestone. For an average-sized male lifter around 185 lb, squatting 315 lbs represents roughly 1.7× bodyweight — solidly in the advanced category. Most serious recreational lifters who train consistently for a few years can aim for 315. It is considered elite for female lifters.",
+      },
+      {
+        question: "Is a 150 kg (330 lb) squat good?",
+        answer:
+          "A 150 kg squat is an excellent lift. At 330 lbs, this puts most male lifters of average bodyweight in the advanced-to-elite category. For a 185 lb (84 kg) male, 150 kg is roughly 1.75× bodyweight — a strong advanced number. For lighter lifters this is elite territory. Hitting 150 kg consistently with good depth is a real achievement.",
+      },
+      {
+        question: "What squat weight should a beginner aim for?",
+        answer:
+          "A brand-new male lifter with no training history should realistically expect to reach a 135 lb (one plate per side) squat within their first few months of consistent training. A reasonable first-year goal is reaching your own bodyweight for a set of five reps. Women typically target 65–95 lbs in the beginner phase. The most important thing early on is consistent training and good technique — strength follows.",
+      },
+      {
+        question: "What is a good squat-to-bodyweight ratio?",
+        answer:
+          "As a rough guide: squatting 1× your bodyweight is a beginner-to-intermediate milestone, 1.5× is solidly intermediate-to-advanced, and 2× bodyweight or more is advanced-to-elite. A 185 lb lifter squatting 185 lbs (1×), 275 lbs (1.5×), or 370 lbs (2×) illustrates these tiers. Note these are 1RM estimates — working sets at these percentages are more common in training.",
+      },
+      {
+        question: "How often should I test my squat max?",
+        answer:
+          "Most coaches recommend testing your true 1RM no more than every 8–16 weeks, typically at the end of a training cycle. Frequent true max attempts are taxing on the joints and CNS and increase injury risk. Instead, use E1RM estimates from your working sets to track progress between true max tests — this is exactly what the calculator on this page does.",
+      },
+      {
+        question: "How do I calculate my squat one rep max from reps?",
+        answer:
+          "Use a 1RM formula like Brzycki or Epley on any working set of 1–10 reps. For example, if you squat 225 lbs for 5 reps, the Brzycki formula estimates your 1RM at around 253 lbs. The squat 1RM calculator linked on this page runs all 7 major formulas side by side so you can see the full range. Sets of 3–6 reps tend to give the most accurate estimates.",
+      },
+    ],
   },
   {
     liftType: "Bench Press",
@@ -29,7 +71,7 @@ export const bigFourLiftInsightData = [
     seoTitle: "Bench Press Strength Standards & Progress Tracker",
     pageTitle: "Barbell Bench Press - Building Upper Body Dominance",
     pageDescription:
-      "How strong should your bench press be? Check bench press strength levels for your age, sex, and bodyweight. Track your bench E1RM, tonnage, and rep PRs over time with free analysis tools.",
+      "How strong should your bench press be? Check bench press strength standards for your age, sex, and bodyweight. Track your bench E1RM, tonnage, and rep PRs over time with free analysis tools.",
     pageKeywords:
       "bench press, barbell bench press, bench press strength standards, bench press strength levels, bench press progress tracker, E1RM bench, bench PR",
     ogImageURL:
@@ -45,6 +87,48 @@ export const bigFourLiftInsightData = [
     ],
     introductionArticleId: "0533d1c7-687d-45f8-95a6-4165298a10ae",
     resourcesArticleId: "7d31628b-820a-4095-ae31-1e405060f116",
+    faqItems: [
+      {
+        question: "Is benching 225 lbs good?",
+        answer:
+          "Yes — 225 lbs (two plates per side) is a classic gym milestone that most recreational lifters aspire to. For a 185 lb male lifter, benching 225 lbs is roughly 1.2× bodyweight, which puts you in the intermediate range. For a lighter lifter or a woman, 225 lbs is an advanced or elite achievement. It's one of the most commonly cited bench press goals in gyms across the US.",
+      },
+      {
+        question: "What is a good bench press for my bodyweight?",
+        answer:
+          "A general guide for male lifters: beginner is around 0.75× bodyweight (roughly 135 lbs at 185 lb bodyweight), intermediate is 1× bodyweight (185 lbs), advanced is 1.25–1.5× bodyweight (230–275 lbs), and elite is 1.75× or more (325+ lbs). Women's standards are proportionally similar relative to bodyweight. Use the strength standards slider above to see exact benchmarks for your specific age, sex, and bodyweight.",
+      },
+      {
+        question: "If I can bench 135 lbs for 12 reps, what is my max?",
+        answer:
+          "Using the Brzycki formula, 135 lbs for 12 reps estimates a 1RM of around 180 lbs. The Epley formula gives a similar result of about 189 lbs. Different formulas give slightly different results, especially at higher rep counts — sets of 3–6 reps tend to produce the most accurate 1RM estimates. Use the bench press 1RM calculator linked from this page to see all 7 formulas side by side.",
+      },
+      {
+        question: "If I can bench 135 lbs for 15 reps, what is my max?",
+        answer:
+          "At 135 lbs for 15 reps, the Brzycki formula estimates your 1RM at around 196 lbs, while Epley gives approximately 202 lbs. High rep sets (above 10) introduce more fatigue, which can make 1RM estimates less precise. For a more accurate estimate, try a heavier set in the 3–6 rep range and plug those numbers into the bench press 1RM calculator.",
+      },
+      {
+        question: "How many reps of 225 lbs does it take to bench 315 lbs?",
+        answer:
+          "Working backward from a 315 lb 1RM using the Brzycki formula: you would need to perform 225 lbs for approximately 16–17 reps to estimate a 315 lb max. The NFL Combine uses 225 lb reps as a test of upper-body endurance — top performers in the combine typically post 30+ reps. In practical training, if 225 is moving fast and feeling light for 10+ reps, a 275–295 lb max is within reach.",
+      },
+      {
+        question: "What percentage of people can bench press 225 lbs?",
+        answer:
+          "A 225 lb bench press puts you ahead of the majority of gym-goers. Studies and gym surveys suggest only around 20–30% of regular male gym members can bench press 225 lbs for a single rep. Among the general population including non-lifters, the percentage is much smaller. For women, 225 lbs represents an elite-level feat achieved by a very small percentage of dedicated strength athletes.",
+      },
+      {
+        question: "What bench press weight should a beginner aim for?",
+        answer:
+          "New male lifters typically start benching with just the bar (45 lbs) and work up progressively. A realistic beginner goal is 135 lbs (one plate per side) within the first 3–6 months of consistent training. Reaching 185 lbs (bodyweight bench) in the first year of training is an excellent milestone. Women commonly target 65–95 lbs as a first-year goal. Technique and consistency matter far more than rushing the weight.",
+      },
+      {
+        question: "Is benching your bodyweight impressive?",
+        answer:
+          "A bodyweight bench press is a solid intermediate achievement for male lifters — above average but not exceptional among regular gym-goers who train seriously. For women, benching bodyweight is a strong advanced milestone that most lifters never reach. If you can bench your bodyweight for multiple clean reps, you're in genuinely good shape relative to the broader population.",
+      },
+    ],
   },
   {
     liftType: "Deadlift",
@@ -52,7 +136,7 @@ export const bigFourLiftInsightData = [
     seoTitle: "Deadlift Strength Standards & Progress Tracker",
     pageTitle: "Barbell Deadlift - Building Power from the Ground Up",
     pageDescription:
-      "How strong should your deadlift be? Check deadlift strength levels for your age, sex, and bodyweight. Track your deadlift E1RM, tonnage, and rep PRs over time with free analysis tools.",
+      "How strong should your deadlift be? Check deadlift strength standards for your age, sex, and bodyweight. Track your deadlift E1RM, tonnage, and rep PRs over time with free analysis tools.",
     pageKeywords:
       "deadlift, barbell deadlift, deadlift strength standards, deadlift strength levels, deadlift progress tracker, E1RM deadlift, deadlift PR",
     ogImageURL:
@@ -67,6 +151,48 @@ export const bigFourLiftInsightData = [
     ],
     introductionArticleId: "674ab504-f6f8-4331-af4b-fe44920c2f88",
     resourcesArticleId: "10fc56f1-abcd-4b7a-a63a-8e10c4a028f0",
+    faqItems: [
+      {
+        question: "What is a good deadlift for my bodyweight?",
+        answer:
+          "For male lifters, pulling 1.5× bodyweight is a beginner-to-intermediate benchmark, 2× bodyweight is solidly intermediate, and 2.5× bodyweight is advanced. A 185 lb male lifter hitting 275 lbs (1.5×), 370 lbs (2×), or 460 lbs (2.5×) illustrates these tiers. For women, pulling 1× bodyweight is a good beginner milestone, and 1.5× bodyweight is advanced. The deadlift tends to outpace the squat by 20–30% for most lifters.",
+      },
+      {
+        question: "Is a 185 lb deadlift good?",
+        answer:
+          "A 185 lb deadlift is a reasonable starting point for newer lifters. For a 185 lb male, pulling your own bodyweight (1×) is on the lower end of beginner-to-intermediate. If you have been training for a year or more and are still at 185 lbs, there is meaningful room to grow with consistent progressive overload. For a lighter lifter — say 135 lbs bodyweight — a 185 lb pull starts to represent intermediate strength.",
+      },
+      {
+        question: "Is a 1.5× bodyweight deadlift good?",
+        answer:
+          "Yes — pulling 1.5× your bodyweight is a solid beginner milestone that shows genuine progress. A 185 lb lifter pulling 275 lbs, or a 200 lb lifter pulling 300 lbs, has built a real foundation of strength. Many casual gym-goers never hit this mark. With dedicated training, most people can surpass 1.5× bodyweight within their first 1–2 years.",
+      },
+      {
+        question: "Is 110 kg (242 lbs) a good deadlift?",
+        answer:
+          "At 110 kg (approximately 242 lbs), the answer depends on the lifter's bodyweight. For a lighter lifter around 70 kg (154 lbs), pulling 110 kg is 1.57× bodyweight — a solid intermediate pull. For a heavier lifter at 90 kg (198 lbs), it represents 1.22× bodyweight, which is beginner-to-intermediate territory. Use the strength standards on this page to see exactly where 110 kg falls for your specific size.",
+      },
+      {
+        question: "Is a 500 lb deadlift impressive?",
+        answer:
+          "Absolutely — a 500 lb deadlift is elite-level strength by any measure. At 500 lbs, even a 220 lb lifter is pulling 2.27× bodyweight, which lands firmly in advanced-to-elite territory. A 500 lb pull is rare in the general gym population and represents years of dedicated, focused training. It is a meaningful milestone toward the 1000lb Club total alongside squat and bench press.",
+      },
+      {
+        question: "What deadlift weight should a beginner aim for?",
+        answer:
+          "New lifters should start with just the bar (45 lbs) and focus entirely on technique. A realistic first-month goal is 135 lbs with solid form. After 3–6 months of consistent training, targeting 225 lbs (two plates) is achievable for most male beginners. Women commonly reach 95–135 lbs in their first few months. The deadlift responds quickly to training for beginners — consistent practice and progressive overload will produce fast early gains.",
+      },
+      {
+        question: "What is the average deadlift for a man?",
+        answer:
+          "Among men who actively train with barbells, the average deadlift tends to fall in the 225–315 lb range. Among the general male population with no dedicated strength training, the average is significantly lower — many untrained men struggle to lift more than 135–185 lbs with proper form. Trained male lifters who focus on the deadlift typically progress to 315–405 lbs within a few years of consistent work.",
+      },
+      {
+        question: "How do I calculate my deadlift one rep max from reps?",
+        answer:
+          "Use a 1RM estimation formula on any working set of 1–8 reps. For example, pulling 315 lbs for 5 reps estimates a 1RM of roughly 354 lbs using the Brzycki formula. The deadlift 1RM calculator linked from this page runs all 7 major formulas simultaneously. For the most accurate deadlift estimate, use a set in the 2–5 rep range — higher rep sets are less reliable for 1RM prediction on the deadlift.",
+      },
+    ],
   },
   {
     liftType: "Strict Press",
@@ -75,7 +201,7 @@ export const bigFourLiftInsightData = [
     seoTitle: "Overhead Press Strength Standards & Progress Tracker",
     pageTitle: "Barbell Strict Press - For When Your Suitcase Just Won't Fit",
     pageDescription:
-      "How strong should your overhead press be? Check strict press strength levels for your age, sex, and bodyweight. Track your press E1RM, tonnage, and rep PRs over time with free analysis tools.",
+      "How strong should your overhead press be? Check strict press strength standards for your age, sex, and bodyweight. Track your press E1RM, tonnage, and rep PRs over time with free analysis tools.",
     pageKeywords:
       "overhead press, strict press, barbell press, OHP strength standards, overhead press strength levels, press progress tracker, E1RM press, OHP PR",
     ogImageURL:
@@ -91,5 +217,47 @@ export const bigFourLiftInsightData = [
     ],
     introductionArticleId: "4303059c-e6f0-4da9-8709-4e71a664ba9b",
     resourcesArticleId: "7a334076-be2a-46eb-9881-2bad267e88f8",
+    faqItems: [
+      {
+        question: "What is a good overhead press for my bodyweight?",
+        answer:
+          "For male lifters, pressing 0.5× bodyweight is a beginner milestone, 0.65× is intermediate, 0.85× is advanced, and pressing your full bodyweight overhead is elite. A 185 lb male pressing 95 lbs (0.5×), 120 lbs (0.65×), 155 lbs (0.85×), or 185 lbs (1×) illustrates these tiers. For women, pressing 0.35–0.5× bodyweight is a solid intermediate standard. The strict press is the hardest of the Big Four to progress on, so patience is key.",
+      },
+      {
+        question: "Is pressing your bodyweight good?",
+        answer:
+          "Yes — a strict press equal to your bodyweight is an elite achievement for male lifters and exceptional for female lifters. Most dedicated strength athletes who train the press consistently for several years still fall short of this mark. A bodyweight press requires not just raw upper body strength but excellent shoulder health, stability, and technique. It is a genuine long-term goal worth chasing.",
+      },
+      {
+        question: "Is a 135 lb overhead press good?",
+        answer:
+          "A 135 lb strict press (one plate per side) is an advanced milestone for male lifters. For a 185 lb man, pressing 135 lbs represents 0.73× bodyweight — between intermediate and advanced. For many recreational lifters, pressing 135 strictly overhead with no leg drive is a meaningful multi-year goal. Among women, a 135 lb press is elite-level strength.",
+      },
+      {
+        question: "Why is my overhead press so much weaker than my bench press?",
+        answer:
+          "This is completely normal. The strict press is mechanically harder than the bench press — you lose the stability of the bench, the leg drive, and the lat involvement. Most lifters press 55–65% of their bench press in a strict overhead movement. If your bench is 225 lbs, a strict press of 125–145 lbs is a typical and healthy ratio. Large gaps beyond this can indicate shoulder mobility or technique issues worth addressing.",
+      },
+      {
+        question: "What is the difference between a strict press and a push press?",
+        answer:
+          "A strict press (also called an overhead press or OHP) uses no leg drive — the bar is pressed from shoulder height to lockout using only upper body and core. A push press uses a small dip-and-drive with the legs to help initiate the movement, allowing 10–30% more weight to be moved. The strict press is the purer strength test; the push press is more of a power movement. This page tracks the strict press.",
+      },
+      {
+        question: "What overhead press weight should a beginner aim for?",
+        answer:
+          "New lifters should start with just the bar (45 lbs) and dial in the movement pattern before adding weight. A realistic first-year goal for a male beginner is reaching 95 lbs (a 25 lb plate per side) for a clean set of 5 reps. Women commonly target 45–65 lbs as a first milestone. The press progresses more slowly than the squat or deadlift, so adding 2.5 lbs per session early on and 2.5 lbs per week later is a normal and sustainable pace.",
+      },
+      {
+        question: "What is the average overhead press for a man?",
+        answer:
+          "Among men who train with barbells, the average strict press tends to fall in the 95–135 lb range. Untrained men from the general population often struggle to press the bar (45 lbs) overhead with correct form due to limited shoulder mobility. Dedicated lifters who program the press consistently for a few years typically reach 135–165 lbs. The strict press is widely considered the most technically demanding and slowest-progressing of the four main barbell lifts.",
+      },
+      {
+        question: "How does the strict press help my bench press and other lifts?",
+        answer:
+          "The strict press builds the deltoids, upper chest, triceps, and upper back — all of which contribute to bench press strength. It also develops core stability under a vertical load, which carries over to overhead stability in Olympic lifts and improved shoulder health generally. Many coaches program the strict press alongside the bench press rather than instead of it, as the two movements complement each other. A stronger press typically correlates with a healthier and more resilient shoulder girdle.",
+      },
+    ],
   },
 ];

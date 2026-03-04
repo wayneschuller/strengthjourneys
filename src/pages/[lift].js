@@ -1,3 +1,4 @@
+import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -117,8 +118,57 @@ export default function BigFourBarbellInsights({
   introductionArticle,
   resourcesArticle,
 }) {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        name: liftInsightData.seoTitle,
+        description: liftInsightData.pageDescription,
+        url: liftInsightData.canonicalURL,
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://www.strengthjourneys.xyz",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: liftInsightData.seoTitle,
+            item: liftInsightData.canonicalURL,
+          },
+        ],
+      },
+      ...(liftInsightData.faqItems?.length
+        ? [
+            {
+              "@type": "FAQPage",
+              mainEntity: liftInsightData.faqItems.map(({ question, answer }) => ({
+                "@type": "Question",
+                name: question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: answer,
+                },
+              })),
+            },
+          ]
+        : []),
+    ],
+  };
+
   return (
     <>
+      <Head>
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      </Head>
       <NextSeo
         title={liftInsightData.seoTitle}
         description={liftInsightData.pageDescription}

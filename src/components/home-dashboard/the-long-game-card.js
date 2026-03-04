@@ -690,7 +690,7 @@ export function TheLongGameCard() {
                             <div className="flex flex-col items-end gap-1">
                               <span
                                 data-year-label="true"
-                                className={isCurrentYear ? "font-semibold text-foreground text-[13px] lg:text-sm" : "text-muted-foreground"}
+                                className={isCurrentYear ? "font-semibold text-foreground text-[13px] lg:text-sm tabular-nums" : "text-muted-foreground tabular-nums"}
                               >
                                 {year}
                               </span>
@@ -1215,7 +1215,7 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
               style={{ width: WEEKLY_YEAR_W }}
             >
               <div className="flex flex-col items-end gap-0.5">
-                <span className={year === currentYear ? "font-semibold text-foreground text-[13px] lg:text-sm" : "text-muted-foreground"}>
+                <span className={year === currentYear ? "font-semibold text-foreground text-[13px] lg:text-sm tabular-nums" : "text-muted-foreground tabular-nums"}>
                   {year}
                 </span>
                 {year === currentYear && (
@@ -1489,7 +1489,7 @@ function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
               style={{ width: WEEKLY_YEAR_W }}
             >
               <div className="flex flex-col items-end gap-0.5">
-                <span className={year === currentYear ? "font-semibold text-foreground text-[13px] lg:text-sm" : "text-muted-foreground"}>
+                <span className={year === currentYear ? "font-semibold text-foreground text-[13px] lg:text-sm tabular-nums" : "text-muted-foreground tabular-nums"}>
                   {year}
                 </span>
                 {year === currentYear && (

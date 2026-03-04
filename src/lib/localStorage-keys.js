@@ -103,6 +103,9 @@ export const LOCAL_STORAGE_KEYS = {
   // Analyzer
   HEATMAP_VIEW_MODE: "SJ_heatmapViewMode",
 
+  // Analytics flags
+  HOME_DASHBOARD_FIRST_VIEW_TRACKED: "SJ_homeDashboardFirstViewTracked",
+
 };
 
 export const SESSION_STORAGE_KEYS = {

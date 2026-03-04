@@ -549,6 +549,7 @@ function scoreClassicLiftCandidate({
     (noteSignals.hasMeetContext ? 24 : 0) + positiveNoteBonus + battleNoteBonus;
   const { boost: anniversaryBonus, daysAway: anniversaryDaysAway } =
     getAnniversaryBoost(lift.date);
+  const urlBonus = lift?.URL || lift?.url ? 14 : 0;
 
   const total =
     adjustedBase +
@@ -558,7 +559,8 @@ function scoreClassicLiftCandidate({
     recencyOrNostalgiaBonus +
     repSchemeBonus +
     noteBonus +
-    anniversaryBonus;
+    anniversaryBonus +
+    urlBonus;
 
   return {
     total,
@@ -574,6 +576,7 @@ function scoreClassicLiftCandidate({
       repSchemeBonus,
       noteBonus,
       anniversaryBonus,
+      urlBonus,
     },
   };
 }

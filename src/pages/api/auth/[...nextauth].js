@@ -184,6 +184,7 @@ export async function promptDeveloper(event, user, meta = {}) {
     const apiKey = process.env.RESEND_API_KEY;
     const to = process.env.FEEDBACK_EMAIL_TO;
     if (!apiKey || !to || !user?.email) return;
+    if (process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development") return;
 
     const name = user.name || user.email;
     const timeStr =

@@ -49,7 +49,7 @@ import { MiniFeedbackWidget } from "@/components/feedback";
  * sessions, Big Four tonnage, and Big Four strength level consistency.
  * Reads data from UserLiftingDataProvider; takes no props.
  */
-export function ThisMonthInIronCard() {
+export function TheMonthInIronCard() {
   const { parsedData } = useUserLiftingData();
   const bio = useAthleteBio();
   const { isMetric } = bio;
@@ -108,8 +108,8 @@ export function ThisMonthInIronCard() {
 
   const verdict = useMemo(() => {
     if (!stats) return null;
-    return getVerdict(stats, strengthLevelPassed);
-  }, [stats, strengthLevelPassed]);
+    return getVerdict(stats, strengthLevelPassed, boundaries);
+  }, [stats, strengthLevelPassed, boundaries]);
 
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
 
@@ -122,8 +122,8 @@ export function ThisMonthInIronCard() {
 
   const strengthSetupRequired = !!bio?.bioDataIsDefault;
   const checksSummary = useMemo(
-    () => getMonthlyChecksSummary(stats, strengthLevelStats),
-    [stats, strengthLevelStats],
+    () => getMonthlyChecksSummary(stats, strengthLevelStats, boundaries),
+    [stats, strengthLevelStats, boundaries],
   );
   const confettiFiredRef = useRef(false);
   const cardRef = useRef(null);
@@ -438,6 +438,18 @@ const LEVEL_LABELS = [
 
 const LEVEL_EMOJIS = ["🏃", "🌱", "💪", "🔥", "👑"];
 const TONNAGE_CLOSE_ENOUGH_RATIO = 0.9; // Tonnage/session checks: within 10% of last month still counts as a win.
+// Returns "ahead" | "on-pace" | "behind" | "no-data".
+// expected = last * (dayOfMonth / daysInCurrentMonth); green if current >= expected * 0.9.
+function getLiftPaceStatus(currentTonnage, lastTonnage, dayOfMonth, daysInCurrentMonth) {
+  if (!lastTonnage || !dayOfMonth || !daysInCurrentMonth) return "no-data";
+  const expected = lastTonnage * (dayOfMonth / daysInCurrentMonth);
+  if (expected <= 0) return "no-data";
+  const ratio = currentTonnage / expected;
+  if (ratio >= 1.0) return "ahead";
+  if (ratio >= TONNAGE_CLOSE_ENOUGH_RATIO) return "on-pace";
+  return "behind";
+}
+
 function formatStrengthLevel(score) {
   if (score === null || score === undefined) return null;
   const tier = Math.min(4, Math.floor(score));
@@ -693,7 +705,7 @@ function getPaceStatus(current, last, progressRatio) {
 
 // ─── Verdict ───────────────────────────────────────────────────────────────
 
-function getVerdict(stats, strengthLevelPassed) {
+function getVerdict(stats, strengthLevelPassed, boundaries) {
   const { sessions, bigFourTonnage, tonnage, bigFourByLift } = stats;
 
   if (
@@ -704,11 +716,18 @@ function getVerdict(stats, strengthLevelPassed) {
     return { label: "Writing History", emoji: "📖", won: false };
   }
 
+  const isCurrentMonth = boundaries?.isCurrentMonthView;
   const primaryMet =
     passesTonnageThreshold(sessions.current, sessions.lastSameDay) &&
     BIG_FOUR_LIFT_TYPES.every((liftType) => {
       const lift = bigFourByLift?.[liftType];
-      return passesTonnageThreshold(lift?.current ?? 0, lift?.last ?? 0);
+      const current = lift?.current ?? 0;
+      const last = lift?.last ?? 0;
+      if (isCurrentMonth && boundaries.dayOfMonth > 0) {
+        const ps = getLiftPaceStatus(current, last, boundaries.dayOfMonth, boundaries.daysInCurrentMonth);
+        return ps === "ahead" || ps === "on-pace";
+      }
+      return passesTonnageThreshold(current, last);
     });
   const strengthOK =
     strengthLevelPassed.skipped || strengthLevelPassed.passed;
@@ -866,7 +885,7 @@ function formatCurrentSessionsReporting(count, boundaries) {
   return `${count} so far`;
 }
 
-function getMonthlyChecksSummary(stats, strengthLevelStats) {
+function getMonthlyChecksSummary(stats, strengthLevelStats, boundaries) {
   if (!stats) return null;
 
   let checksMet = 0;
@@ -876,10 +895,20 @@ function getMonthlyChecksSummary(stats, strengthLevelStats) {
     checksMet += 1;
   }
 
+  const isCurrentMonth = boundaries?.isCurrentMonthView;
   for (const liftType of BIG_FOUR_LIFT_TYPES) {
     checksTotal += 1; // tonnage
     const lift = stats.bigFourByLift?.[liftType];
-    if (passesTonnageThreshold(lift?.current ?? 0, lift?.last ?? 0)) checksMet += 1;
+    const current = lift?.current ?? 0;
+    const last = lift?.last ?? 0;
+    let passed;
+    if (isCurrentMonth && boundaries?.dayOfMonth > 0) {
+      const ps = getLiftPaceStatus(current, last, boundaries.dayOfMonth, boundaries.daysInCurrentMonth);
+      passed = ps === "ahead" || ps === "on-pace";
+    } else {
+      passed = passesTonnageThreshold(current, last);
+    }
+    if (passed) checksMet += 1;
   }
 
   if (strengthLevelStats) {
@@ -951,21 +980,24 @@ function getTonnageStatusTooltip({
   tonnageBaseline,
   tonnageNewWin,
   tonnagePassed,
+  liftPaceStatus,
+  isCurrentMonthView,
 }) {
   const liftLabel = formatLiftTypeLabel(liftType).toLowerCase();
 
   if (tonnageBaseline && !tonnageNewWin) {
-    return `Matched previous month ${liftLabel} tonnage.`;
+    return `No previous month ${liftLabel} tonnage to compare against.`;
   }
   if (tonnageNewWin) {
-    return `Passed previous month ${liftLabel} tonnage.`;
+    return `First ${liftLabel} tonnage recorded this month — baseline set.`;
   }
-  if (currentTonnage > lastTonnage) {
-    return `Passed previous month ${liftLabel} tonnage.`;
+  if (isCurrentMonthView && liftPaceStatus !== "no-data") {
+    if (liftPaceStatus === "ahead") return `Ahead of expected ${liftLabel} pace for this point in the month.`;
+    if (liftPaceStatus === "on-pace") return `Within 10% of expected ${liftLabel} pace — on track.`;
+    return `Behind expected ${liftLabel} pace for this point in the month.`;
   }
-  if (tonnagePassed) {
-    return `Matched previous month ${liftLabel} tonnage.`;
-  }
+  if (currentTonnage > lastTonnage) return `Passed previous month ${liftLabel} tonnage.`;
+  if (tonnagePassed) return `Matched previous month ${liftLabel} tonnage.`;
   return `Below previous month ${liftLabel} tonnage.`;
 }
 
@@ -1143,6 +1175,7 @@ function BigFourCriteriaTable({
   unit,
   revealedRows = 0,
 }) {
+  const isCurrentMonthView = boundaries?.isCurrentMonthView;
   const rows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
     const tonnage = bigFourByLift?.[liftType] ?? {
       current: 0,
@@ -1277,12 +1310,16 @@ function BigFourCriteriaTable({
         const rowHighlighted = revealedRows >= rowHighlightIndex;
         const currentTonnage = tonnage.current ?? 0;
         const lastTonnage = tonnage.last ?? 0;
-        const tonnagePassed = passesTonnageThreshold(
-          tonnage.current ?? 0,
-          tonnage.last ?? 0,
-        );
+        const liftPaceStatus = isCurrentMonthView && boundaries.dayOfMonth > 0
+          ? getLiftPaceStatus(currentTonnage, lastTonnage, boundaries.dayOfMonth, boundaries.daysInCurrentMonth)
+          : "no-data";
         const tonnageBaseline = lastTonnage === 0;
         const tonnageNewWin = tonnageBaseline && currentTonnage > 0;
+        const tonnagePassed = tonnageBaseline
+          ? tonnageNewWin
+          : isCurrentMonthView
+            ? (liftPaceStatus === "ahead" || liftPaceStatus === "on-pace")
+            : passesTonnageThreshold(currentTonnage, lastTonnage);
         const tonnageColor = tonnageBaseline && !tonnageNewWin
           ? "text-muted-foreground"
           : tonnageNewWin || tonnagePassed
@@ -1345,6 +1382,8 @@ function BigFourCriteriaTable({
           tonnageBaseline,
           tonnageNewWin,
           tonnagePassed,
+          liftPaceStatus,
+          isCurrentMonthView,
         });
         const tonnageLastTooltip = getTonnageLastColumnTooltip(liftType);
         const liftInsightHref = BIG_FOUR_LIFT_URLS[liftType];
@@ -1459,11 +1498,22 @@ function BigFourCriteriaTable({
                 <TooltipTrigger asChild>
                   <div className={`rounded px-1.5 py-1 text-left transition-colors duration-500 ${revealTonnageBg}`}>
                     <div className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}>
-                      <span>{formatTonnage(tonnage.current ?? 0, unit)} lifted</span>
+                      <span>{formatTonnage(currentTonnage, unit)} lifted</span>
                       {rowHighlighted && (tonnagePassed || tonnageNewWin) && (
                         <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
                       )}
                     </div>
+                    {rowHighlighted && isCurrentMonthView && liftPaceStatus !== "no-data" && (
+                      <div className={`text-[10px] font-medium ${
+                        liftPaceStatus === "ahead" ? "text-emerald-600 dark:text-emerald-400"
+                        : liftPaceStatus === "on-pace" ? "text-amber-600 dark:text-amber-400"
+                        : "text-red-600 dark:text-red-400"
+                      }`}>
+                        {liftPaceStatus === "ahead" ? "▲ Ahead of pace"
+                          : liftPaceStatus === "on-pace" ? "→ On track"
+                          : "▼ Behind pace"}
+                      </div>
+                    )}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>

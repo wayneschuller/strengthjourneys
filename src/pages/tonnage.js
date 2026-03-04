@@ -6,7 +6,7 @@ import { useSession, signIn } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { devLog } from "@/lib/processing-utils";
-import { SessionAnalysisCard } from "@/components/home-dashboard/last-session-card";
+import { TheLatestSessionCard } from "@/components/home-dashboard/the-latest-session-card";
 import {
   PageContainer,
   PageHeader,
@@ -115,7 +115,7 @@ function TonnageVisualizerMain({ relatedArticles }) {
           <TonnageChart setHighlightDate={setHighlightDate} />
         </div>
         <div className="w-full lg:w-1/2 xl:w-1/3">
-          <SessionAnalysisCard
+          <TheLatestSessionCard
             highlightDate={highlightDate}
             setHighlightDate={setHighlightDate}
           />

@@ -64,5 +64,3 @@ export function HomeInspirationCards({ isProgressDone = false }) {
     </div>
   );
 }
-
-export { HomeInspirationCards as SectionTopCards };

@@ -66,7 +66,7 @@ import {
 
 import { processVisualizerData, getYearLabels } from "./visualizer-processing";
 
-// Wraps MultiLiftTooltipContent and syncs the hovered date to SessionAnalysisCard via setHighlightDate.
+// Wraps MultiLiftTooltipContent and syncs the hovered date to TheLatestSessionCard via setHighlightDate.
 // recharts v3 doesn't reliably populate activePayload in onMouseMove for numeric/time XAxis,
 // but it always calls Tooltip content when a data point is active.
 function SyncedMultiLiftTooltip({ active, payload, label, selectedLiftTypes, setHighlightDate, debounceMs = 0 }) {
@@ -88,7 +88,7 @@ function SyncedMultiLiftTooltip({ active, payload, label, selectedLiftTypes, set
  *
  * @param {Object} props
  * @param {function(string)} [props.setHighlightDate] - Callback invoked on chart hover with the
- *   hovered ISO date string; used to sync with SessionAnalysisCard.
+ *   hovered ISO date string; used to sync with TheLatestSessionCard.
  */
 export function VisualizerShadcn({ setHighlightDate }) {
   const { parsedData, liftTypes } = useUserLiftingData();
@@ -202,7 +202,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   );
 
   // Scale debounce with dataset size so small datasets feel instant while large datasets
-  // avoid cascading SessionAnalysisCard re-renders during fast mouse scrubbing.
+  // avoid cascading TheLatestSessionCard re-renders during fast mouse scrubbing.
   // Formula: ~10ms at 120 pts, ~25ms at 300 pts, capped at 50ms at 600+ pts.
   const tooltipDebounceMs = Math.min(50, Math.floor(chartData.length / 12));
   devLog(`VisualizerShadcn: ${chartData.length} chart data points, debounceMs=${tooltipDebounceMs}`);

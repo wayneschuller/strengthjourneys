@@ -82,7 +82,7 @@ function getSessionCardTitle(sessionDate, isLastDate) {
  * @param {function(string)} props.setHighlightDate - Callback to update the displayed session date.
  *   Called when user clicks prev/next or when parent (e.g. Visualizer) wants to sync.
  */
-export function SessionAnalysisCard({
+export function TheLatestSessionCard({
   highlightDate = null,
   setHighlightDate,
 }) {
@@ -252,7 +252,7 @@ export function SessionAnalysisCard({
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={1000}>
-      <Card className="flex-1 overflow-hidden">
+      <Card className="flex h-full flex-col overflow-hidden">
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -310,7 +310,7 @@ export function SessionAnalysisCard({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6 pt-0">
+        <CardContent className="flex-1 space-y-6 pt-0">
           {!analyzedSessionLifts && <Skeleton className="h-[50vh] rounded-lg" />}
           {analyzedSessionLifts &&
             (Object.keys(analyzedSessionLifts).length > 0 ? (

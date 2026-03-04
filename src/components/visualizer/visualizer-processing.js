@@ -9,7 +9,7 @@ export function processVisualizerData(
   showAllData = false,
   isMetric = false,
 ) {
-  if (!parsedData) return {};
+  if (!parsedData || parsedData.length === 0) return {};
 
   const startTime = performance.now();
 

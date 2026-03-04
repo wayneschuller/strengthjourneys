@@ -122,8 +122,8 @@ export function TheMonthInIronCard() {
 
   const strengthSetupRequired = !!bio?.bioDataIsDefault;
   const checksSummary = useMemo(
-    () => getMonthlyChecksSummary(stats, strengthLevelStats),
-    [stats, strengthLevelStats],
+    () => getMonthlyChecksSummary(stats, strengthLevelStats, boundaries),
+    [stats, strengthLevelStats, boundaries],
   );
   const confettiFiredRef = useRef(false);
   const cardRef = useRef(null);
@@ -438,6 +438,18 @@ const LEVEL_LABELS = [
 
 const LEVEL_EMOJIS = ["🏃", "🌱", "💪", "🔥", "👑"];
 const TONNAGE_CLOSE_ENOUGH_RATIO = 0.9; // Tonnage/session checks: within 10% of last month still counts as a win.
+const PROJECTION_SWITCH_DAYS_FROM_END = 7; // Use projected tonnage unless this many days remain.
+
+function shouldUseProjection(boundaries) {
+  if (!boundaries?.isCurrentMonthView) return false;
+  return (boundaries.daysRemainingInCurrentMonth ?? 0) > PROJECTION_SWITCH_DAYS_FROM_END;
+}
+
+function computeProjectedTonnage(current, dayOfMonth, daysInMonth) {
+  if (!dayOfMonth || dayOfMonth <= 0) return current;
+  return Math.round((current / dayOfMonth) * daysInMonth);
+}
+
 function formatStrengthLevel(score) {
   if (score === null || score === undefined) return null;
   const tier = Math.min(4, Math.floor(score));
@@ -866,7 +878,7 @@ function formatCurrentSessionsReporting(count, boundaries) {
   return `${count} so far`;
 }
 
-function getMonthlyChecksSummary(stats, strengthLevelStats) {
+function getMonthlyChecksSummary(stats, strengthLevelStats, boundaries) {
   if (!stats) return null;
 
   let checksMet = 0;
@@ -876,10 +888,16 @@ function getMonthlyChecksSummary(stats, strengthLevelStats) {
     checksMet += 1;
   }
 
+  const useProjection = shouldUseProjection(boundaries);
   for (const liftType of BIG_FOUR_LIFT_TYPES) {
     checksTotal += 1; // tonnage
     const lift = stats.bigFourByLift?.[liftType];
-    if (passesTonnageThreshold(lift?.current ?? 0, lift?.last ?? 0)) checksMet += 1;
+    const current = lift?.current ?? 0;
+    const last = lift?.last ?? 0;
+    const compTonnage = useProjection
+      ? computeProjectedTonnage(current, boundaries.dayOfMonth, boundaries.daysInCurrentMonth)
+      : current;
+    if (passesTonnageThreshold(compTonnage, last)) checksMet += 1;
   }
 
   if (strengthLevelStats) {
@@ -951,14 +969,24 @@ function getTonnageStatusTooltip({
   tonnageBaseline,
   tonnageNewWin,
   tonnagePassed,
+  projectedTonnage,
+  useProjection,
+  unit,
 }) {
   const liftLabel = formatLiftTypeLabel(liftType).toLowerCase();
 
   if (tonnageBaseline && !tonnageNewWin) {
-    return `Matched previous month ${liftLabel} tonnage.`;
+    return `No previous month ${liftLabel} tonnage to compare against.`;
   }
   if (tonnageNewWin) {
-    return `Passed previous month ${liftLabel} tonnage.`;
+    return `First ${liftLabel} tonnage recorded this month — baseline set.`;
+  }
+  if (useProjection && projectedTonnage != null) {
+    const projFmt = formatTonnage(projectedTonnage, unit);
+    const lastFmt = formatTonnage(lastTonnage, unit);
+    return tonnagePassed
+      ? `Projected ~${projFmt} vs last month's ${lastFmt} — on track.`
+      : `Projected ~${projFmt} vs last month's ${lastFmt} — behind pace.`;
   }
   if (currentTonnage > lastTonnage) {
     return `Passed previous month ${liftLabel} tonnage.`;
@@ -973,8 +1001,11 @@ function getStrengthLastColumnTooltip(boundaries, liftType) {
   return `${boundaries.prevMonthName} best ${formatLiftTypeLabel(liftType)} strength level hit across the full month.`;
 }
 
-function getTonnageLastColumnTooltip(liftType) {
-  return `Previous month ${formatLiftTypeLabel(liftType).toLowerCase()} tonnage.`;
+function getTonnageLastColumnTooltip(liftType, useProjection) {
+  const label = formatLiftTypeLabel(liftType).toLowerCase();
+  return useProjection
+    ? `Last month's full ${label} tonnage — the projection target.`
+    : `Previous month ${label} tonnage.`;
 }
 
 // ─── Status colors ─────────────────────────────────────────────────────────
@@ -1143,6 +1174,7 @@ function BigFourCriteriaTable({
   unit,
   revealedRows = 0,
 }) {
+  const useProjection = shouldUseProjection(boundaries);
   const rows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
     const tonnage = bigFourByLift?.[liftType] ?? {
       current: 0,
@@ -1277,9 +1309,12 @@ function BigFourCriteriaTable({
         const rowHighlighted = revealedRows >= rowHighlightIndex;
         const currentTonnage = tonnage.current ?? 0;
         const lastTonnage = tonnage.last ?? 0;
+        const projectedTonnage = useProjection && boundaries.dayOfMonth > 0
+          ? computeProjectedTonnage(currentTonnage, boundaries.dayOfMonth, boundaries.daysInCurrentMonth)
+          : null;
         const tonnagePassed = passesTonnageThreshold(
-          tonnage.current ?? 0,
-          tonnage.last ?? 0,
+          projectedTonnage ?? currentTonnage,
+          lastTonnage,
         );
         const tonnageBaseline = lastTonnage === 0;
         const tonnageNewWin = tonnageBaseline && currentTonnage > 0;
@@ -1345,8 +1380,11 @@ function BigFourCriteriaTable({
           tonnageBaseline,
           tonnageNewWin,
           tonnagePassed,
+          projectedTonnage,
+          useProjection,
+          unit,
         });
-        const tonnageLastTooltip = getTonnageLastColumnTooltip(liftType);
+        const tonnageLastTooltip = getTonnageLastColumnTooltip(liftType, useProjection);
         const liftInsightHref = BIG_FOUR_LIFT_URLS[liftType];
 
         return (
@@ -1444,6 +1482,9 @@ function BigFourCriteriaTable({
                         {formatTonnage(tonnage.last ?? 0, unit)} lifted
                       </span>
                     </div>
+                    {useProjection && tonnage.last > 0 && (
+                      <div className="text-[10px] text-muted-foreground">target</div>
+                    )}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>
@@ -1458,12 +1499,26 @@ function BigFourCriteriaTable({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className={`rounded px-1.5 py-1 text-left transition-colors duration-500 ${revealTonnageBg}`}>
-                    <div className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}>
-                      <span>{formatTonnage(tonnage.current ?? 0, unit)} lifted</span>
-                      {rowHighlighted && (tonnagePassed || tonnageNewWin) && (
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
-                      )}
-                    </div>
+                    {useProjection && projectedTonnage != null ? (
+                      <>
+                        <div className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}>
+                          <span>~{formatTonnage(projectedTonnage, unit)}</span>
+                          {rowHighlighted && (tonnagePassed || tonnageNewWin) && (
+                            <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {formatTonnage(currentTonnage, unit)} so far
+                        </div>
+                      </>
+                    ) : (
+                      <div className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}>
+                        <span>{formatTonnage(currentTonnage, unit)} lifted</span>
+                        {rowHighlighted && (tonnagePassed || tonnageNewWin) && (
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4}>

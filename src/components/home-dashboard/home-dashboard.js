@@ -318,6 +318,7 @@ export function HomeDashboard() {
           {onboardingState === "choose_sheet" && (
             <ChooseSheetPanel
               candidates={candidateSheets}
+              openPicker={openPicker}
               isWorking={isProvisionActionLoading}
               onChooseSheet={(ssid) => performProvisioning({ mode: "select_existing", selectedSsid: ssid })}
               onCreateBlank={() => performProvisioning({ mode: "create_blank" })}
@@ -417,6 +418,7 @@ function formatLastEdited(candidate) {
 
 function ChooseSheetPanel({
   candidates,
+  openPicker,
   isWorking,
   onChooseSheet,
   onCreateBlank,
@@ -439,6 +441,26 @@ function ChooseSheetPanel({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+          <p className="text-sm font-semibold text-foreground">
+            Can&apos;t see your sheet?
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Browse Google Drive to grant Strength Journeys access to a sheet you just created.
+          </p>
+          <div className="mt-3">
+            <Button
+              className="w-full sm:w-auto"
+              disabled={!openPicker || isWorking}
+              onClick={() => {
+                if (openPicker) handleOpenFilePicker(openPicker);
+              }}
+            >
+              <FolderOpen className="mr-2 h-4 w-4" />
+              Browse Google Drive
+            </Button>
+          </div>
+        </div>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {candidates.map((candidate, index) => (
             <button

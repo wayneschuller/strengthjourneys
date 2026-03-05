@@ -59,7 +59,10 @@ import {
  * consistency grade rings and a share button that captures the card to clipboard via html2canvas.
  * Reads parsedData from UserLiftingDataProvider; takes no props.
  */
-export function TheLongGameCard() {
+export function TheLongGameCard({
+  dataMaturityStage: stageFromParent = null,
+  sessionCount: sessionCountFromParent = null,
+}) {
   const { parsedData, isLoading } = useUserLiftingData();
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -76,6 +79,22 @@ export function TheLongGameCard() {
     useTransientSuccess();
   // SSR default = first stage-1 title; randomised client-side once intervals load
   const [cardTitle, setCardTitle] = useState(HEATMAP_TITLES_STAGE1[0]);
+  const sessionCount = useMemo(() => {
+    if (typeof sessionCountFromParent === "number") return sessionCountFromParent;
+    if (!Array.isArray(parsedData)) return 0;
+    const dates = new Set();
+    parsedData.forEach((entry) => {
+      if (!entry?.isGoal && entry?.date) dates.add(entry.date);
+    });
+    return dates.size;
+  }, [parsedData, sessionCountFromParent]);
+  const dataMaturityStage = useMemo(() => {
+    if (stageFromParent) return stageFromParent;
+    if (sessionCount === 0) return "no_sessions";
+    if (sessionCount <= 7) return "first_week";
+    if (sessionCount <= 20) return "first_month";
+    return "mature";
+  }, [stageFromParent, sessionCount]);
 
   // initializeWithValue: false → SSR renders "daily" (default), client hydrates from localStorage on mount
   const [viewMode, setViewMode] = useLocalStorage(
@@ -598,24 +617,45 @@ export function TheLongGameCard() {
           <CardTitle>
             <span data-share-title="true">
               {authStatus === "unauthenticated" && "Demo mode: "}
-              {cardTitle}
+              {dataMaturityStage === "no_sessions"
+                ? "The Long Game Starts Here"
+                : cardTitle}
             </span>
           </CardTitle>
-          {intervals && (
+          {dataMaturityStage === "no_sessions" ? (
             <CardDescription>
               <span data-share-description="true">
-                Your strength journey from{" "}
-                {new Date(intervals[0].startDate).getFullYear()} -{" "}
-                {new Date(
-                  intervals[intervals.length - 1].endDate,
-                ).getFullYear()}
-                .
+                Your heatmap will light up as soon as you log your first session.
               </span>
             </CardDescription>
+          ) : (
+            intervals && (
+              <CardDescription>
+                <span data-share-description="true">
+                  {dataMaturityStage !== "mature" && "Your journey has begun. "}
+                  Your strength journey from{" "}
+                  {new Date(intervals[0].startDate).getFullYear()} -{" "}
+                  {new Date(
+                    intervals[intervals.length - 1].endDate,
+                  ).getFullYear()}
+                  .
+                </span>
+              </CardDescription>
+            )
           )}
         </CardHeader>
         <CardContent className="flex-1">
-          {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
+          {!intervals && dataMaturityStage !== "no_sessions" && (
+            <Skeleton className="h-64 w-11/12 flex-1" />
+          )}
+          {!intervals && dataMaturityStage === "no_sessions" && (
+            <div className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed bg-muted/20 px-5 text-center">
+              <p className="text-sm text-muted-foreground">
+                Your first training day is the first pixel in this map.
+                Keep showing up and the pattern builds.
+              </p>
+            </div>
+          )}
           {intervals && (
             <>
               {/* Consistency grade rings — always included in capture output */}

@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   BIG_FOUR_LIFT_TYPES,
+  getDisplayWeight,
 } from "@/lib/processing-utils";
 import {
   getStrengthRatingForE1RM,
@@ -49,11 +50,30 @@ import { MiniFeedbackWidget } from "@/components/feedback";
  * sessions, Big Four tonnage, and Big Four strength level consistency.
  * Reads data from UserLiftingDataProvider; takes no props.
  */
-export function TheMonthInIronCard() {
+export function TheMonthInIronCard({
+  dataMaturityStage: stageFromParent = null,
+  sessionCount: sessionCountFromParent = null,
+}) {
   const { parsedData } = useUserLiftingData();
   const bio = useAthleteBio();
   const { isMetric } = bio;
   const { status: authStatus } = useSession();
+  const sessionCount = useMemo(() => {
+    if (typeof sessionCountFromParent === "number") return sessionCountFromParent;
+    if (!Array.isArray(parsedData)) return 0;
+    const dates = new Set();
+    parsedData.forEach((entry) => {
+      if (!entry?.isGoal && entry?.date) dates.add(entry.date);
+    });
+    return dates.size;
+  }, [parsedData, sessionCountFromParent]);
+  const dataMaturityStage = useMemo(() => {
+    if (stageFromParent) return stageFromParent;
+    if (sessionCount === 0) return "no_sessions";
+    if (sessionCount <= 7) return "first_week";
+    if (sessionCount <= 20) return "first_month";
+    return "mature";
+  }, [stageFromParent, sessionCount]);
 
   const [monthOffset, setMonthOffset] = useState(0);
   const maxMonthOffset = useMemo(
@@ -249,6 +269,17 @@ export function TheMonthInIronCard() {
     setMonthOffset((prev) => Math.max(0, prev - 1));
   };
 
+  if (dataMaturityStage !== "mature") {
+    return (
+      <EarlyMonthMomentumCard
+        authStatus={authStatus}
+        parsedData={parsedData}
+        dataMaturityStage={dataMaturityStage}
+        isMetric={isMetric}
+      />
+    );
+  }
+
   return (
     <Card ref={cardRef} className="flex h-full flex-1 flex-col">
       <CardHeader className="pb-4">
@@ -352,6 +383,95 @@ export function TheMonthInIronCard() {
         </CardFooter>
       )}
     </Card>
+  );
+}
+
+function EarlyMonthMomentumCard({
+  authStatus,
+  parsedData,
+  dataMaturityStage,
+  isMetric,
+}) {
+  const stats = useMemo(() => {
+    const entries = Array.isArray(parsedData)
+      ? parsedData.filter((entry) => !entry?.isGoal)
+      : [];
+    const sessions = new Set(entries.map((entry) => entry.date)).size;
+    const sets = entries.length;
+    const totalTonnageNative = entries.reduce(
+      (sum, entry) => sum + (entry.weight || 0) * (entry.reps || 0),
+      0,
+    );
+    const unitType = entries[0]?.unitType ?? (isMetric ? "kg" : "lb");
+    const totalTonnage = getDisplayWeight(
+      { weight: totalTonnageNative, unitType },
+      isMetric,
+    );
+    const bigFourTouches = new Set(
+      entries
+        .map((entry) => entry.liftType)
+        .filter((liftType) => BIG_FOUR_LIFT_TYPES.includes(liftType)),
+    ).size;
+    return {
+      sessions,
+      sets,
+      bigFourTouches,
+      tonnageValue: Math.round(totalTonnage.value),
+      tonnageUnit: totalTonnage.unitType,
+    };
+  }, [parsedData, isMetric]);
+
+  const title =
+    dataMaturityStage === "no_sessions"
+      ? "The First Month in Iron"
+      : "First Month Momentum";
+  const subtitle =
+    dataMaturityStage === "first_week"
+      ? "Your first week is about showing up and building rhythm."
+      : dataMaturityStage === "first_month"
+        ? "Momentum now becomes measurable progress."
+        : "Log your first session and this card will start scoring your month.";
+
+  return (
+    <Card className="flex h-full flex-1 flex-col">
+      <CardHeader className="pb-3">
+        <CardTitle>
+          {authStatus === "unauthenticated" && "Demo Mode: "}
+          {title}
+        </CardTitle>
+        <CardDescription>{subtitle}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col justify-center gap-4">
+        <div className="grid grid-cols-3 gap-3">
+          <MomentumStat label="Sessions" value={stats.sessions} />
+          <MomentumStat label="Sets Logged" value={stats.sets} />
+          <MomentumStat label="Big Four" value={stats.bigFourTouches} />
+        </div>
+        <p className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+          Total volume so far:{" "}
+          <span className="font-medium text-foreground">
+            {stats.tonnageValue.toLocaleString()} {stats.tonnageUnit}
+          </span>
+          . Keep stacking consistent sessions.
+        </p>
+      </CardContent>
+      <CardFooter className="pt-0">
+        <MiniFeedbackWidget
+          contextId="this_month_in_iron_card"
+          page="/lift-explorer"
+          analyticsExtra={{ context: "this_month_in_iron_card_early" }}
+        />
+      </CardFooter>
+    </Card>
+  );
+}
+
+function MomentumStat({ label, value }) {
+  return (
+    <div className="rounded-lg border bg-background/80 px-2 py-3 text-center">
+      <div className="text-lg font-semibold">{value}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
+    </div>
   );
 }
 

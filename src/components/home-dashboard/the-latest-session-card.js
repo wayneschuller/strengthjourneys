@@ -8,7 +8,6 @@ import {
 } from "react";
 import { format } from "date-fns";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
-import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -85,12 +84,15 @@ function getSessionCardTitle(sessionDate, isLastDate) {
 export function TheLatestSessionCard({
   highlightDate = null,
   setHighlightDate,
+  dataMaturityStage = "mature",
+  sessionCount = 0,
 }) {
   const {
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
     sessionTonnageLookup,
+    sheetInfo,
     isValidating,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
@@ -112,6 +114,10 @@ export function TheLatestSessionCard({
   );
   const [persistCacheTrigger, setPersistCacheTrigger] = useState(0);
   const pendingCacheUpdateRef = useRef(null);
+  const hasLoggedSessions = useMemo(
+    () => Array.isArray(parsedData) && parsedData.some((entry) => !entry?.isGoal),
+    [parsedData],
+  );
 
   useEffect(() => {
     sessionRatingRef.current = null; // Reset the session rating when the highlight date changes
@@ -268,8 +274,18 @@ export function TheLatestSessionCard({
                 )}
               </CardTitle>
               <CardDescription className="mt-1">
-                {analyzedSessionLifts && isLastDate && getReadableDateString(sessionDate, true)}
-                {analyzedSessionLifts && !isDemoMode && sessionRatingRef.current
+                {!hasLoggedSessions &&
+                  (dataMaturityStage === "no_sessions"
+                    ? "Your first session will appear here as soon as you log a set."
+                    : "This card will populate automatically as your sessions roll in.")}
+                {hasLoggedSessions &&
+                  analyzedSessionLifts &&
+                  isLastDate &&
+                  getReadableDateString(sessionDate, true)}
+                {hasLoggedSessions &&
+                analyzedSessionLifts &&
+                !isDemoMode &&
+                sessionRatingRef.current
                   ? `${isLastDate ? " · " : ""}${sessionRatingRef.current}`
                   : ""}
               </CardDescription>
@@ -282,7 +298,7 @@ export function TheLatestSessionCard({
                     size="icon"
                     className="h-8 w-8"
                     onClick={prevDate}
-                    disabled={isValidating || isFirstDate}
+                    disabled={isValidating || isFirstDate || !hasLoggedSessions}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -298,7 +314,7 @@ export function TheLatestSessionCard({
                     size="icon"
                     className="h-8 w-8"
                     onClick={nextDate}
-                    disabled={isValidating || isLastDate}
+                    disabled={isValidating || isLastDate || !hasLoggedSessions}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -311,7 +327,14 @@ export function TheLatestSessionCard({
           </div>
         </CardHeader>
         <CardContent className="flex-1 space-y-6 pt-0">
-          {!analyzedSessionLifts && <Skeleton className="h-[50vh] rounded-lg" />}
+          {!hasLoggedSessions && (
+            <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
+              Start simple: add one training session in your sheet with Date, Lift Type, Reps, and Weight.
+            </p>
+          )}
+          {hasLoggedSessions && !analyzedSessionLifts && (
+            <Skeleton className="h-[50vh] rounded-lg" />
+          )}
           {analyzedSessionLifts &&
             (Object.keys(analyzedSessionLifts).length > 0 ? (
               <div className="space-y-4">
@@ -342,6 +365,13 @@ export function TheLatestSessionCard({
             ))}
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-4 pt-0">
+          {!hasLoggedSessions && sheetInfo?.url && (
+            <Button asChild variant="outline">
+              <a href={sheetInfo.url} target="_blank" rel="noopener noreferrer">
+                Open your sheet
+              </a>
+            </Button>
+          )}
           {analyzedSessionLifts && (
               <SessionTonnage
                 analyzedSessionLifts={analyzedSessionLifts}

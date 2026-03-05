@@ -17,6 +17,8 @@ import {
   Table2,
   MessageSquarePlus,
   Coffee,
+  Eraser,
+  Trash2,
 } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
@@ -48,6 +50,7 @@ export function AvatarDropdown() {
   const { data: session, status: authStatus } = useSession();
   const [openPicker, setOpenPicker] = useState(null);
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
+  const [isResettingKv, setIsResettingKv] = useState(false);
   const { setTheme, theme } = useTheme();
 
   const {
@@ -72,6 +75,31 @@ export function AvatarDropdown() {
       setShouldLoadPicker(true);
     }
   }, [authStatus, sheetInfo?.ssid, shouldLoadPicker]);
+
+  const runKvReset = useCallback(
+    async (mode) => {
+      setIsResettingKv(true);
+      try {
+        const response = await fetch("/api/dev/reset-user-kv", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ mode }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.error || "KV reset failed");
+        }
+        devLog("[dev-kv-reset]", payload);
+      } catch (error) {
+        console.error("[dev-kv-reset] failed:", error);
+      } finally {
+        setIsResettingKv(false);
+      }
+    },
+    [],
+  );
 
   if (authStatus !== "authenticated")
     return (
@@ -211,16 +239,16 @@ export function AvatarDropdown() {
                       <span>Forget Google Sheet</span>
                     </DropdownMenuItem>
                   )}
-                {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development" && (
-                  <DropdownMenuItem
-                    onClick={() =>
-                      window.dispatchEvent(new Event("open-feedback"))
-                    }
-                  >
-                    <MessageSquarePlus className="mr-2 h-4 w-4" />
-                    Send Feedback
-                  </DropdownMenuItem>
-                )}
+                {/* Public actions shown in all environments. Keep these outside
+                    any dev-only gate so production users always see them. */}
+                <DropdownMenuItem
+                  onClick={() =>
+                    window.dispatchEvent(new Event("open-feedback"))
+                  }
+                >
+                  <MessageSquarePlus className="mr-2 h-4 w-4" />
+                  Send Feedback
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
                     window.open("https://buymeacoffee.com/lrhvbjxzqr")
@@ -229,6 +257,35 @@ export function AvatarDropdown() {
                   <Coffee className="mr-2 h-4 w-4" />
                   Buy Me A Coffee
                 </DropdownMenuItem>
+                {/* Non-production tools for QA/reset workflows.
+                    These are available in development-like envs (including
+                    Vercel preview/main) and hidden on stable/production. */}
+                {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+                      Dev Tools
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem
+                      disabled={isResettingKv}
+                      onClick={() => {
+                        runKvReset("onboarding");
+                      }}
+                    >
+                      <Eraser className="mr-2 h-4 w-4" />
+                      Clear KV onboarding state
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={isResettingKv}
+                      onClick={() => {
+                        runKvReset("delete");
+                      }}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete full KV user record
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {

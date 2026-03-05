@@ -150,14 +150,14 @@ export const UserLiftingDataProvider = ({ children }) => {
   );
 
   const selectSheet = useCallback(
-    (ssid) => {
+    (ssid, metadata = {}) => {
       gaTrackSheetLinked();
       setSheetInfo({
         ssid,
-        url: null,
-        filename: null,
-        modifiedTime: null,
-        modifiedByMeTime: null,
+        url: metadata.url ?? null,
+        filename: metadata.filename ?? null,
+        modifiedTime: metadata.modifiedTime ?? null,
+        modifiedByMeTime: metadata.modifiedByMeTime ?? null,
       });
     },
     [setSheetInfo],

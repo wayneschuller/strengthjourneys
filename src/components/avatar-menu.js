@@ -201,10 +201,7 @@ export function AvatarDropdown() {
                   </DropdownMenuItem>
                 )}
 
-                {/* In dev environment offer a 'forget sheet' menu option. Good for testing onboarding. */}
-                {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV ===
-                  "development" &&
-                  sheetInfo?.ssid && (
+                {sheetInfo?.ssid && (
                     <DropdownMenuItem
                       onClick={() => {
                         clearSheet();

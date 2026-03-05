@@ -5,6 +5,7 @@ import { devLog } from "@/lib/processing-utils";
 
 const TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
 const PROVISION_VERSION = 1;
+const MAX_HEADER_CHECKS = 12;
 const REQUIRED_HEADERS = [
   "Date",
   "Lift Type",
@@ -16,7 +17,8 @@ const REQUIRED_HEADERS = [
   "URL",
 ];
 const REQUIRED_HEADER_CORE = ["date", "lift type", "reps", "weight"];
-const isDevEnv = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
+const isDevEnv =
+  process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 
 function normalizeHeader(value) {
   return String(value || "")
@@ -28,6 +30,21 @@ function normalizeHeader(value) {
 function buildSheetName(fullName) {
   const cleaned = typeof fullName === "string" ? fullName.trim() : "";
   return cleaned ? `${cleaned}'s Strength Journey` : "My Strength Journey";
+}
+
+function toClientCandidate(candidate) {
+  return {
+    id: candidate.id,
+    name: candidate.name || "Untitled sheet",
+    webViewLink: candidate.webViewLink || null,
+    modifiedTime: candidate.modifiedTime || null,
+    modifiedByMeTime: candidate.modifiedByMeTime || null,
+  };
+}
+
+function withDebug(payload, debug) {
+  if (!isDevEnv) return payload;
+  return { ...payload, debug };
 }
 
 async function fetchDriveMetadata(ssid, headers) {
@@ -53,17 +70,24 @@ async function listRecentSpreadsheetCandidates(headers) {
     devLog("[provision-sheet] drive scan failed:", response.status);
     return [];
   }
+
   const json = await response.json().catch(() => ({}));
   const files = Array.isArray(json?.files) ? json.files : [];
   const rankByName = (file) =>
     normalizeHeader(file?.name).includes("strength journey") ? 0 : 1;
+
   const ranked = files.sort((a, b) => {
     const byName = rankByName(a) - rankByName(b);
     if (byName !== 0) return byName;
-    const aTime = new Date(a?.modifiedByMeTime || a?.modifiedTime || 0).getTime();
-    const bTime = new Date(b?.modifiedByMeTime || b?.modifiedTime || 0).getTime();
+    const aTime = new Date(
+      a?.modifiedByMeTime || a?.modifiedTime || 0,
+    ).getTime();
+    const bTime = new Date(
+      b?.modifiedByMeTime || b?.modifiedTime || 0,
+    ).getTime();
     return bTime - aTime;
   });
+
   devLog(
     `[provision-sheet] drive scan returned ${ranked.length} candidate sheets in ${Date.now() - t0}ms`,
   );
@@ -77,74 +101,78 @@ async function listRecentSpreadsheetCandidates(headers) {
       modifiedTime: file.modifiedTime || null,
     })),
   );
+
   return ranked;
 }
 
-async function hasRequiredHeaders(ssid, headers) {
+async function readHeaderInfo(ssid, headers) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:Z1?dateTimeRenderOption=FORMATTED_STRING`;
   const response = await fetch(url, { method: "GET", headers });
   if (!response.ok) {
-    devLog(`[provision-sheet] header check failed for ${ssid}:`, response.status);
-    return false;
+    return {
+      valid: false,
+      status: response.status,
+      sampleHeaders: [],
+      headerCount: 0,
+    };
   }
+
   const json = await response.json().catch(() => ({}));
   const row = Array.isArray(json?.values?.[0]) ? json.values[0] : [];
-  if (!row.length) {
-    devLog(`[provision-sheet] header check empty row for ${ssid}`);
-    return false;
-  }
-
   const normalized = row.map(normalizeHeader);
-  const hasCoreHeaders = REQUIRED_HEADER_CORE.every((required) =>
+  const valid = REQUIRED_HEADER_CORE.every((required) =>
     normalized.includes(required),
   );
-  devLog("[provision-sheet] header check:", {
-    ssid,
-    headerCount: row.length,
+
+  return {
+    valid,
+    status: response.status,
     sampleHeaders: row.slice(0, 8),
-    hasCoreHeaders,
-  });
-  return hasCoreHeaders;
+    headerCount: row.length,
+  };
 }
 
-async function findExistingSheetViaDriveScan(headers, debug = null) {
-  const candidates = await listRecentSpreadsheetCandidates(headers);
-  if (debug) {
-    debug.candidates = candidates.map((candidate, index) => ({
-      rank: index + 1,
+async function discoverValidCandidates(headers, debug) {
+  const rankedCandidates = await listRecentSpreadsheetCandidates(headers);
+
+  debug.candidates = rankedCandidates.map((candidate, index) => ({
+    rank: index + 1,
+    ...toClientCandidate(candidate),
+  }));
+
+  if (!rankedCandidates.length) return [];
+
+  const maxChecks = Math.min(rankedCandidates.length, MAX_HEADER_CHECKS);
+  const validCandidates = [];
+
+  for (let i = 0; i < maxChecks; i += 1) {
+    const candidate = rankedCandidates[i];
+    if (!candidate?.id) continue;
+
+    const headerInfo = await readHeaderInfo(candidate.id, headers);
+    const checkResult = {
+      rank: i + 1,
       id: candidate.id,
       name: candidate.name,
-      modifiedByMeTime: candidate.modifiedByMeTime || null,
-      modifiedTime: candidate.modifiedTime || null,
-    }));
-  }
-  if (!candidates.length) return null;
+      valid: headerInfo.valid,
+      status: headerInfo.status,
+      headerCount: headerInfo.headerCount,
+      sampleHeaders: headerInfo.sampleHeaders,
+    };
+    debug.headerChecks.push(checkResult);
 
-  // Limit header validation calls to keep first-load latency reasonable.
-  const maxChecks = Math.min(candidates.length, 8);
-  for (let i = 0; i < maxChecks; i += 1) {
-    const candidate = candidates[i];
-    if (!candidate?.id) continue;
-    const valid = await hasRequiredHeaders(candidate.id, headers);
-    if (debug) {
-      debug.headerChecks.push({
-        rank: i + 1,
-        id: candidate.id,
-        name: candidate.name,
-        valid,
-      });
-    }
-    if (valid) {
-      devLog("[provision-sheet] selected candidate via drive scan:", {
-        rank: i + 1,
-        id: candidate.id,
-        name: candidate.name,
-      });
-      return candidate;
+    devLog("[provision-sheet] header check:", checkResult);
+
+    if (headerInfo.valid) {
+      validCandidates.push(candidate);
     }
   }
-  devLog("[provision-sheet] no valid sheet found via drive scan");
-  return null;
+
+  devLog(
+    `[provision-sheet] valid candidate count after header checks: ${validCandidates.length}`,
+  );
+
+  return validCandidates;
 }
 
 async function copyTemplate(sheetName, headers) {
@@ -219,6 +247,35 @@ async function createBlankSheet(sheetName, headers) {
   };
 }
 
+async function persistLinkedSheet({
+  kvKey,
+  existingRecord,
+  nowIso,
+  metadata,
+  connectionMethod,
+  provisioningMethod,
+}) {
+  const nextRecord = {
+    ...existingRecord,
+    connectedAt: existingRecord.connectedAt || nowIso,
+    activationPromptedAt: existingRecord.activationPromptedAt || nowIso,
+    connectionMethod,
+    provisionedSheetId: metadata.id,
+    provisionedAt: existingRecord.provisionedAt || nowIso,
+    provisionVersion: PROVISION_VERSION,
+    provisioningMethod,
+    lastSeenAt: nowIso,
+  };
+
+  await kv.set(kvKey, nextRecord);
+  return nextRecord;
+}
+
+async function maybePromptActivation({ existingRecord, session, meta }) {
+  if (existingRecord.activationPromptedAt) return;
+  await promptDeveloper("activated", session.user, meta);
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -240,11 +297,15 @@ export default async function handler(req, res) {
     return;
   }
 
+  const mode = req.body?.mode || "discover";
+  const selectedSsid = req.body?.selectedSsid || null;
   const headers = { Authorization: `Bearer ${session.accessToken}` };
   const kvKey = `sj:user:${session.user.email}`;
   const nowIso = new Date().toISOString();
   const sheetName = buildSheetName(session.user.name);
+
   const debug = {
+    mode,
     path: [],
     candidates: [],
     headerChecks: [],
@@ -253,116 +314,303 @@ export default async function handler(req, res) {
 
   try {
     const existingRecord = (await kv.get(kvKey)) || {};
-    debug.path.push("drive_scan:start");
-    const driveMatch = await findExistingSheetViaDriveScan(headers, debug);
-    if (driveMatch?.id) {
-      debug.path.push("drive_scan:hit");
-      const nextRecord = {
-        ...existingRecord,
-        connectedAt: existingRecord.connectedAt || nowIso,
-        connectionMethod: "auto_relink",
-        provisionedSheetId: driveMatch.id,
-        provisionedAt: existingRecord.provisionedAt || nowIso,
-        provisionVersion: PROVISION_VERSION,
-        provisioningMethod: "drive_scan",
-        lastSeenAt: nowIso,
-      };
-      await kv.set(kvKey, nextRecord);
-      debug.selected = {
-        source: "drive_scan",
-        ssid: driveMatch.id,
-        name: driveMatch.name || sheetName,
-      };
-      res.status(200).json({
-        ssid: driveMatch.id,
-        name: driveMatch.name || sheetName,
-        webViewLink: driveMatch.webViewLink || null,
-        modifiedTime: driveMatch.modifiedTime || null,
-        modifiedByMeTime: driveMatch.modifiedByMeTime || null,
-        wasCreated: false,
-        ...(isDevEnv ? { debug } : {}),
-      });
-      return;
-    }
-    debug.path.push("drive_scan:miss");
 
-    const existingSsid = existingRecord?.provisionedSheetId;
-    if (existingSsid) {
-      debug.path.push("kv_hint:start");
-      const metadata = await fetchDriveMetadata(existingSsid, headers);
-      if (metadata?.id) {
-        debug.path.push("kv_hint:hit");
-        await kv.set(kvKey, {
-          ...existingRecord,
-          lastSeenAt: nowIso,
-        });
-        debug.selected = {
-          source: "kv_hint",
-          ssid: metadata.id,
-          name: metadata.name || sheetName,
-        };
-        res.status(200).json({
-          ssid: metadata.id,
-          name: metadata.name || sheetName,
-          webViewLink: metadata.webViewLink || null,
-          modifiedTime: metadata.modifiedTime || null,
-          modifiedByMeTime: metadata.modifiedByMeTime || null,
-          wasCreated: false,
-          ...(isDevEnv ? { debug } : {}),
-        });
+    if (mode === "select_existing") {
+      if (!selectedSsid) {
+        res.status(400).json({ error: "Missing selectedSsid" });
         return;
       }
-      debug.path.push("kv_hint:miss");
+
+      debug.path.push("select_existing:start");
+      const headerInfo = await readHeaderInfo(selectedSsid, headers);
+      debug.headerChecks.push({
+        rank: 1,
+        id: selectedSsid,
+        name: "selected",
+        valid: headerInfo.valid,
+        status: headerInfo.status,
+        headerCount: headerInfo.headerCount,
+        sampleHeaders: headerInfo.sampleHeaders,
+      });
+
+      if (!headerInfo.valid) {
+        res.status(400).json(
+          withDebug(
+            {
+              error:
+                "Selected sheet does not match required columns (Date, Lift Type, Reps, Weight).",
+            },
+            debug,
+          ),
+        );
+        return;
+      }
+
+      const metadata = await fetchDriveMetadata(selectedSsid, headers);
+      if (!metadata?.id) {
+        res.status(400).json(
+          withDebug(
+            { error: "Unable to access selected sheet metadata." },
+            debug,
+          ),
+        );
+        return;
+      }
+
+      await persistLinkedSheet({
+        kvKey,
+        existingRecord,
+        nowIso,
+        metadata,
+        connectionMethod: "onboarding_selection",
+        provisioningMethod: "sheet_chooser",
+      });
+
+      await maybePromptActivation({
+        existingRecord,
+        session,
+        meta: {
+          connectionMethod: "onboarding_selection",
+          provisioningMethod: "sheet_chooser",
+          sheetName: metadata.name || sheetName,
+        },
+      });
+
+      debug.path.push("select_existing:linked");
+      debug.selected = {
+        source: "sheet_chooser",
+        ssid: metadata.id,
+        name: metadata.name || sheetName,
+      };
+
+      res.status(200).json(
+        withDebug(
+          {
+            ssid: metadata.id,
+            name: metadata.name || sheetName,
+            webViewLink: metadata.webViewLink || null,
+            modifiedTime: metadata.modifiedTime || null,
+            modifiedByMeTime: metadata.modifiedByMeTime || null,
+            wasCreated: false,
+          },
+          debug,
+        ),
+      );
+      return;
     }
 
-    let created = null;
-    let provisioningMethod = "template_copy";
-    try {
-      debug.path.push("create:template_copy");
-      created = await copyTemplate(sheetName, headers);
-    } catch {
-      debug.path.push("create:blank_seeded");
-      provisioningMethod = "blank_seeded";
-      created = await createBlankSheet(sheetName, headers);
+    if (mode === "create_sample" || mode === "create_blank") {
+      debug.path.push(`${mode}:start`);
+      const created =
+        mode === "create_sample"
+          ? await copyTemplate(sheetName, headers)
+          : await createBlankSheet(sheetName, headers);
+
+      await persistLinkedSheet({
+        kvKey,
+        existingRecord,
+        nowIso,
+        metadata: created,
+        connectionMethod: "auto_provision",
+        provisioningMethod:
+          mode === "create_sample" ? "template_copy" : "blank_seeded",
+      });
+
+      await maybePromptActivation({
+        existingRecord,
+        session,
+        meta: {
+          connectionMethod: "auto_provision",
+          provisioningMethod:
+            mode === "create_sample" ? "template_copy" : "blank_seeded",
+          sheetName: created.name || sheetName,
+        },
+      });
+
+      debug.path.push(`${mode}:created`);
+      debug.selected = {
+        source: "auto_provision",
+        ssid: created.id,
+        name: created.name || sheetName,
+        provisioningMethod:
+          mode === "create_sample" ? "template_copy" : "blank_seeded",
+      };
+
+      res.status(200).json(
+        withDebug(
+          {
+            ssid: created.id,
+            name: created.name || sheetName,
+            webViewLink: created.webViewLink || null,
+            modifiedTime: created.modifiedTime || null,
+            modifiedByMeTime: created.modifiedByMeTime || null,
+            wasCreated: true,
+          },
+          debug,
+        ),
+      );
+      return;
     }
 
-    const nextRecord = {
-      ...existingRecord,
-      connectedAt: existingRecord.connectedAt || nowIso,
-      activationPromptedAt: existingRecord.activationPromptedAt || nowIso,
+    // Default discovery mode
+    debug.path.push("discover:start");
+    const validCandidates = await discoverValidCandidates(headers, debug);
+
+    if (validCandidates.length > 1) {
+      debug.path.push("discover:multiple_candidates");
+      res.status(200).json(
+        withDebug(
+          {
+            needsSelection: true,
+            candidates: validCandidates.map(toClientCandidate),
+            wasCreated: false,
+          },
+          debug,
+        ),
+      );
+      return;
+    }
+
+    if (validCandidates.length === 1) {
+      const selected = validCandidates[0];
+      debug.path.push("discover:single_candidate");
+      await persistLinkedSheet({
+        kvKey,
+        existingRecord,
+        nowIso,
+        metadata: selected,
+        connectionMethod: "auto_relink",
+        provisioningMethod: "drive_scan",
+      });
+
+      await maybePromptActivation({
+        existingRecord,
+        session,
+        meta: {
+          connectionMethod: "auto_relink",
+          provisioningMethod: "drive_scan",
+          sheetName: selected.name || sheetName,
+        },
+      });
+
+      debug.selected = {
+        source: "drive_scan",
+        ssid: selected.id,
+        name: selected.name || sheetName,
+      };
+
+      res.status(200).json(
+        withDebug(
+          {
+            ssid: selected.id,
+            name: selected.name || sheetName,
+            webViewLink: selected.webViewLink || null,
+            modifiedTime: selected.modifiedTime || null,
+            modifiedByMeTime: selected.modifiedByMeTime || null,
+            wasCreated: false,
+          },
+          debug,
+        ),
+      );
+      return;
+    }
+
+    // No drive matches - fallback to KV hint (if any)
+    const existingSsid = existingRecord?.provisionedSheetId;
+    if (existingSsid) {
+      debug.path.push("discover:kv_hint_start");
+      const kvHeaderInfo = await readHeaderInfo(existingSsid, headers);
+      if (kvHeaderInfo.valid) {
+        const metadata = await fetchDriveMetadata(existingSsid, headers);
+        if (metadata?.id) {
+          debug.path.push("discover:kv_hint_hit");
+          await persistLinkedSheet({
+            kvKey,
+            existingRecord,
+            nowIso,
+            metadata,
+            connectionMethod: "kv_relink",
+            provisioningMethod: "kv_hint",
+          });
+
+          await maybePromptActivation({
+            existingRecord,
+            session,
+            meta: {
+              connectionMethod: "kv_relink",
+              provisioningMethod: "kv_hint",
+              sheetName: metadata.name || sheetName,
+            },
+          });
+
+          debug.selected = {
+            source: "kv_hint",
+            ssid: metadata.id,
+            name: metadata.name || sheetName,
+          };
+
+          res.status(200).json(
+            withDebug(
+              {
+                ssid: metadata.id,
+                name: metadata.name || sheetName,
+                webViewLink: metadata.webViewLink || null,
+                modifiedTime: metadata.modifiedTime || null,
+                modifiedByMeTime: metadata.modifiedByMeTime || null,
+                wasCreated: false,
+              },
+              debug,
+            ),
+          );
+          return;
+        }
+      }
+      debug.path.push("discover:kv_hint_miss");
+    }
+
+    // Final fallback: create a sample-based sheet automatically.
+    debug.path.push("discover:fallback_create_sample");
+    const created = await copyTemplate(sheetName, headers);
+
+    await persistLinkedSheet({
+      kvKey,
+      existingRecord,
+      nowIso,
+      metadata: created,
       connectionMethod: "auto_provision",
-      provisionedSheetId: created.id,
-      provisionedAt: nowIso,
-      provisionVersion: PROVISION_VERSION,
-      provisioningMethod,
-      lastSeenAt: nowIso,
-    };
+      provisioningMethod: "template_copy",
+    });
 
-    await kv.set(kvKey, nextRecord);
+    await maybePromptActivation({
+      existingRecord,
+      session,
+      meta: {
+        connectionMethod: "auto_provision",
+        provisioningMethod: "template_copy",
+        sheetName: created.name || sheetName,
+      },
+    });
+
     debug.selected = {
       source: "auto_provision",
       ssid: created.id,
       name: created.name || sheetName,
-      provisioningMethod,
+      provisioningMethod: "template_copy",
     };
 
-    if (!existingRecord.activationPromptedAt) {
-      await promptDeveloper("activated", session.user, {
-        connectionMethod: "auto_provision",
-        provisioningMethod,
-        sheetName: created.name || sheetName,
-      });
-    }
-
-    res.status(200).json({
-      ssid: created.id,
-      name: created.name || sheetName,
-      webViewLink: created.webViewLink || null,
-      modifiedTime: created.modifiedTime || null,
-      modifiedByMeTime: created.modifiedByMeTime || null,
-      wasCreated: true,
-      ...(isDevEnv ? { debug } : {}),
-    });
+    res.status(200).json(
+      withDebug(
+        {
+          ssid: created.id,
+          name: created.name || sheetName,
+          webViewLink: created.webViewLink || null,
+          modifiedTime: created.modifiedTime || null,
+          modifiedByMeTime: created.modifiedByMeTime || null,
+          wasCreated: true,
+        },
+        debug,
+      ),
+    );
   } catch (error) {
     res.status(500).json({ error: error.message || "Provisioning failed" });
   }

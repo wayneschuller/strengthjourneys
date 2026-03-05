@@ -18,9 +18,17 @@ import {
 } from "@/lib/analytics";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, FolderOpen, LoaderCircle, Sparkles } from "lucide-react";
+import {
+  AlertTriangle,
+  CopyPlus,
+  FolderOpen,
+  LoaderCircle,
+  PlusSquare,
+  Sparkles,
+} from "lucide-react";
 
 // Short, subtle quips that incorporate the user's first name.
 // {name} is replaced at render time.
@@ -101,6 +109,8 @@ export function HomeDashboard() {
   const [provisionError, setProvisionError] = useState(null);
   const [openPicker, setOpenPicker] = useState(null);
   const [showIntroBanner, setShowIntroBanner] = useState(false);
+  const [candidateSheets, setCandidateSheets] = useState([]);
+  const [isProvisionActionLoading, setIsProvisionActionLoading] = useState(false);
   const provisioningStartedRef = useRef(false);
 
   const nonGoalSessionCount = useMemo(() => {
@@ -139,36 +149,53 @@ export function HomeDashboard() {
     setOnboardingState("idle");
     setProvisionError(null);
     setShowIntroBanner(false);
+    setCandidateSheets([]);
+    setIsProvisionActionLoading(false);
   }, [authStatus]);
 
-  useEffect(() => {
-    if (authStatus !== "authenticated") return;
-    if (sheetInfo?.ssid) return;
-    if (provisioningStartedRef.current) return;
-
-    provisioningStartedRef.current = true;
-
-    async function provisionSheet() {
+  const performProvisioning = useCallback(
+    async ({ mode = "discover", selectedSsid = null } = {}) => {
       setProvisionError(null);
-      setOnboardingState("provisioning");
+      setIsProvisionActionLoading(true);
+      if (mode === "discover") setOnboardingState("provisioning");
+
       try {
         const response = await fetch("/api/provision-sheet", {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ mode, selectedSsid }),
         });
         const payload = await response.json().catch(() => ({}));
         if (payload?.debug) {
           devLog("[onboarding] provision-sheet debug:", payload.debug);
         }
         devLog("[onboarding] provision-sheet response:", {
+          mode,
           status: response.status,
           ok: response.ok,
+          needsSelection: Boolean(payload?.needsSelection),
           hasSsid: Boolean(payload?.ssid),
         });
-        if (!response.ok || !payload?.ssid) {
+
+        if (!response.ok) {
           throw new Error(payload?.error || "Automatic setup failed");
         }
 
+        if (payload?.needsSelection) {
+          setCandidateSheets(Array.isArray(payload.candidates) ? payload.candidates : []);
+          setOnboardingState("choose_sheet");
+          provisioningStartedRef.current = false;
+          return;
+        }
+
+        if (!payload?.ssid) {
+          throw new Error("Provisioning returned no sheet id");
+        }
+
         devLog("[onboarding] linking selected/provisioned sheet:", {
+          mode,
           ssid: payload.ssid,
           name: payload.name || null,
           wasCreated: Boolean(payload.wasCreated),
@@ -183,15 +210,24 @@ export function HomeDashboard() {
         setOnboardingState("intro_oriented");
         setShowIntroBanner(true);
       } catch (error) {
-        if (cancelled) return;
         setProvisionError(error?.message || "Automatic setup failed");
         setOnboardingState("fallback_error");
         provisioningStartedRef.current = false;
+      } finally {
+        setIsProvisionActionLoading(false);
       }
-    }
+    },
+    [selectSheet],
+  );
 
-    provisionSheet();
-  }, [authStatus, selectSheet, sheetInfo?.ssid]);
+  useEffect(() => {
+    if (authStatus !== "authenticated") return;
+    if (sheetInfo?.ssid) return;
+    if (provisioningStartedRef.current) return;
+
+    provisioningStartedRef.current = true;
+    performProvisioning({ mode: "discover" });
+  }, [authStatus, performProvisioning, sheetInfo?.ssid]);
 
   useEffect(() => {
     if (!sheetInfo?.ssid) return;
@@ -275,7 +311,18 @@ export function HomeDashboard() {
       {!sheetInfo?.ssid && (
         <>
           {(onboardingState === "provisioning" || onboardingState === "idle") && (
-            <ProvisioningPanel />
+            <ProvisioningPanel
+              isWorking={isProvisionActionLoading}
+            />
+          )}
+          {onboardingState === "choose_sheet" && (
+            <ChooseSheetPanel
+              candidates={candidateSheets}
+              isWorking={isProvisionActionLoading}
+              onChooseSheet={(ssid) => performProvisioning({ mode: "select_existing", selectedSsid: ssid })}
+              onCreateBlank={() => performProvisioning({ mode: "create_blank" })}
+              onCreateSample={() => performProvisioning({ mode: "create_sample" })}
+            />
           )}
           {onboardingState === "fallback_error" && (
             <>
@@ -283,8 +330,9 @@ export function HomeDashboard() {
                 openPicker={openPicker}
                 onRetry={() => {
                   provisioningStartedRef.current = false;
-                  setOnboardingState("idle");
+                  performProvisioning({ mode: "discover" });
                 }}
+                isWorking={isProvisionActionLoading}
                 errorMessage={provisionError}
               />
               <DrivePickerContainer
@@ -341,12 +389,12 @@ export function HomeDashboard() {
   );
 }
 
-function ProvisioningPanel() {
+function ProvisioningPanel({ isWorking = true }) {
   return (
     <Card className="mb-4 border-primary/30 bg-primary/5">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          <LoaderCircle className="h-5 w-5 animate-spin" />
+          <LoaderCircle className={`h-5 w-5 ${isWorking ? "animate-spin" : ""}`} />
           Setting up your personal lifting sheet
         </CardTitle>
         <CardDescription>
@@ -360,7 +408,94 @@ function ProvisioningPanel() {
   );
 }
 
-function FallbackConnectPanel({ openPicker, onRetry, errorMessage }) {
+function formatLastEdited(candidate) {
+  const iso = candidate?.modifiedByMeTime || candidate?.modifiedTime;
+  if (!iso) return "Last edited: unknown";
+  const d = new Date(iso);
+  return `Last edited: ${d.toLocaleString()}`;
+}
+
+function ChooseSheetPanel({
+  candidates,
+  isWorking,
+  onChooseSheet,
+  onCreateBlank,
+  onCreateSample,
+}) {
+  return (
+    <Card className="mb-4 border-primary/20 bg-background/95">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <img
+            src={GOOGLE_SHEETS_ICON_URL}
+            alt=""
+            className="h-5 w-5 shrink-0"
+            aria-hidden
+          />
+          Choose your lifting sheet
+        </CardTitle>
+        <CardDescription>
+          We found multiple sheets with lifting-style columns. Pick one to continue, or create a fresh start.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {candidates.map((candidate, index) => (
+            <button
+              key={candidate.id}
+              type="button"
+              className="group rounded-xl border bg-card px-4 py-3 text-left transition hover:border-primary/50 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isWorking}
+              onClick={() => onChooseSheet(candidate.id)}
+            >
+              <div className="mb-1 flex items-start justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <img
+                    src={GOOGLE_SHEETS_ICON_URL}
+                    alt=""
+                    className="h-4 w-4 shrink-0"
+                    aria-hidden
+                  />
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {candidate.name}
+                  </p>
+                </div>
+                {index === 0 && (
+                  <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    Recommended
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {formatLastEdited(candidate)}
+              </p>
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={onCreateBlank}
+            disabled={isWorking}
+          >
+            <PlusSquare className="mr-2 h-4 w-4" />
+            Create new blank sheet
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onCreateSample}
+            disabled={isWorking}
+          >
+            <CopyPlus className="mr-2 h-4 w-4" />
+            Create new sample sheet
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FallbackConnectPanel({ openPicker, onRetry, errorMessage, isWorking = false }) {
   return (
     <Card className="mb-4 border-destructive/40">
       <CardHeader>
@@ -377,10 +512,10 @@ function FallbackConnectPanel({ openPicker, onRetry, errorMessage }) {
           <p className="text-sm text-muted-foreground">{errorMessage}</p>
         )}
         <div className="flex flex-wrap gap-2">
-          <Button onClick={onRetry}>Retry automatic setup</Button>
+          <Button onClick={onRetry} disabled={isWorking}>Retry automatic setup</Button>
           <Button
             variant="outline"
-            disabled={!openPicker}
+            disabled={!openPicker || isWorking}
             onClick={() => {
               if (openPicker) handleOpenFilePicker(openPicker);
             }}

@@ -17,6 +17,7 @@ import {
   gaTrackSheetAutoprovisioned,
 } from "@/lib/analytics";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { devLog } from "@/lib/processing-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, FolderOpen, LoaderCircle, Sparkles } from "lucide-react";
@@ -131,12 +132,21 @@ export function HomeDashboard() {
   }, [sheetInfo?.ssid]);
 
   useEffect(() => {
+    if (authStatus === "authenticated") return;
+    // HomeDashboard can remain mounted across sign-out/sign-in transitions.
+    // Reset provisioning guard so the next authenticated session can re-run setup.
+    provisioningStartedRef.current = false;
+    setOnboardingState("idle");
+    setProvisionError(null);
+    setShowIntroBanner(false);
+  }, [authStatus]);
+
+  useEffect(() => {
     if (authStatus !== "authenticated") return;
     if (sheetInfo?.ssid) return;
     if (provisioningStartedRef.current) return;
 
     provisioningStartedRef.current = true;
-    let cancelled = false;
 
     async function provisionSheet() {
       setProvisionError(null);
@@ -146,11 +156,23 @@ export function HomeDashboard() {
           method: "POST",
         });
         const payload = await response.json().catch(() => ({}));
+        if (payload?.debug) {
+          devLog("[onboarding] provision-sheet debug:", payload.debug);
+        }
+        devLog("[onboarding] provision-sheet response:", {
+          status: response.status,
+          ok: response.ok,
+          hasSsid: Boolean(payload?.ssid),
+        });
         if (!response.ok || !payload?.ssid) {
           throw new Error(payload?.error || "Automatic setup failed");
         }
-        if (cancelled) return;
 
+        devLog("[onboarding] linking selected/provisioned sheet:", {
+          ssid: payload.ssid,
+          name: payload.name || null,
+          wasCreated: Boolean(payload.wasCreated),
+        });
         selectSheet(payload.ssid, {
           url: payload.webViewLink ?? null,
           filename: payload.name ?? null,
@@ -169,11 +191,12 @@ export function HomeDashboard() {
     }
 
     provisionSheet();
-
-    return () => {
-      cancelled = true;
-    };
   }, [authStatus, selectSheet, sheetInfo?.ssid]);
+
+  useEffect(() => {
+    if (!sheetInfo?.ssid) return;
+    devLog("[onboarding] sheet linked in local state:", sheetInfo);
+  }, [sheetInfo]);
 
   useEffect(() => {
     if (sheetInfo?.ssid && hasDataLoaded && onboardingState === "intro_oriented") {

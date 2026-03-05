@@ -16,6 +16,7 @@ const REQUIRED_HEADERS = [
   "URL",
 ];
 const REQUIRED_HEADER_CORE = ["date", "lift type", "reps", "weight"];
+const isDevEnv = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 
 function normalizeHeader(value) {
   return String(value || "")
@@ -106,8 +107,17 @@ async function hasRequiredHeaders(ssid, headers) {
   return hasCoreHeaders;
 }
 
-async function findExistingSheetViaDriveScan(headers) {
+async function findExistingSheetViaDriveScan(headers, debug = null) {
   const candidates = await listRecentSpreadsheetCandidates(headers);
+  if (debug) {
+    debug.candidates = candidates.map((candidate, index) => ({
+      rank: index + 1,
+      id: candidate.id,
+      name: candidate.name,
+      modifiedByMeTime: candidate.modifiedByMeTime || null,
+      modifiedTime: candidate.modifiedTime || null,
+    }));
+  }
   if (!candidates.length) return null;
 
   // Limit header validation calls to keep first-load latency reasonable.
@@ -116,6 +126,14 @@ async function findExistingSheetViaDriveScan(headers) {
     const candidate = candidates[i];
     if (!candidate?.id) continue;
     const valid = await hasRequiredHeaders(candidate.id, headers);
+    if (debug) {
+      debug.headerChecks.push({
+        rank: i + 1,
+        id: candidate.id,
+        name: candidate.name,
+        valid,
+      });
+    }
     if (valid) {
       devLog("[provision-sheet] selected candidate via drive scan:", {
         rank: i + 1,
@@ -226,11 +244,19 @@ export default async function handler(req, res) {
   const kvKey = `sj:user:${session.user.email}`;
   const nowIso = new Date().toISOString();
   const sheetName = buildSheetName(session.user.name);
+  const debug = {
+    path: [],
+    candidates: [],
+    headerChecks: [],
+    selected: null,
+  };
 
   try {
     const existingRecord = (await kv.get(kvKey)) || {};
-    const driveMatch = await findExistingSheetViaDriveScan(headers);
+    debug.path.push("drive_scan:start");
+    const driveMatch = await findExistingSheetViaDriveScan(headers, debug);
     if (driveMatch?.id) {
+      debug.path.push("drive_scan:hit");
       const nextRecord = {
         ...existingRecord,
         connectedAt: existingRecord.connectedAt || nowIso,
@@ -242,6 +268,11 @@ export default async function handler(req, res) {
         lastSeenAt: nowIso,
       };
       await kv.set(kvKey, nextRecord);
+      debug.selected = {
+        source: "drive_scan",
+        ssid: driveMatch.id,
+        name: driveMatch.name || sheetName,
+      };
       res.status(200).json({
         ssid: driveMatch.id,
         name: driveMatch.name || sheetName,
@@ -249,18 +280,27 @@ export default async function handler(req, res) {
         modifiedTime: driveMatch.modifiedTime || null,
         modifiedByMeTime: driveMatch.modifiedByMeTime || null,
         wasCreated: false,
+        ...(isDevEnv ? { debug } : {}),
       });
       return;
     }
+    debug.path.push("drive_scan:miss");
 
     const existingSsid = existingRecord?.provisionedSheetId;
     if (existingSsid) {
+      debug.path.push("kv_hint:start");
       const metadata = await fetchDriveMetadata(existingSsid, headers);
       if (metadata?.id) {
+        debug.path.push("kv_hint:hit");
         await kv.set(kvKey, {
           ...existingRecord,
           lastSeenAt: nowIso,
         });
+        debug.selected = {
+          source: "kv_hint",
+          ssid: metadata.id,
+          name: metadata.name || sheetName,
+        };
         res.status(200).json({
           ssid: metadata.id,
           name: metadata.name || sheetName,
@@ -268,16 +308,20 @@ export default async function handler(req, res) {
           modifiedTime: metadata.modifiedTime || null,
           modifiedByMeTime: metadata.modifiedByMeTime || null,
           wasCreated: false,
+          ...(isDevEnv ? { debug } : {}),
         });
         return;
       }
+      debug.path.push("kv_hint:miss");
     }
 
     let created = null;
     let provisioningMethod = "template_copy";
     try {
+      debug.path.push("create:template_copy");
       created = await copyTemplate(sheetName, headers);
     } catch {
+      debug.path.push("create:blank_seeded");
       provisioningMethod = "blank_seeded";
       created = await createBlankSheet(sheetName, headers);
     }
@@ -295,6 +339,12 @@ export default async function handler(req, res) {
     };
 
     await kv.set(kvKey, nextRecord);
+    debug.selected = {
+      source: "auto_provision",
+      ssid: created.id,
+      name: created.name || sheetName,
+      provisioningMethod,
+    };
 
     if (!existingRecord.activationPromptedAt) {
       await promptDeveloper("activated", session.user, {
@@ -311,6 +361,7 @@ export default async function handler(req, res) {
       modifiedTime: created.modifiedTime || null,
       modifiedByMeTime: created.modifiedByMeTime || null,
       wasCreated: true,
+      ...(isDevEnv ? { debug } : {}),
     });
   } catch (error) {
     res.status(500).json({ error: error.message || "Provisioning failed" });

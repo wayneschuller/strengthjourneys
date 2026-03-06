@@ -58,11 +58,11 @@ export function HomeInspirationCards({
         animationDelay={200}
       />
     );
-    const sharedCards = [journeyCard, classicLiftCard];
+    const establishedSharedCards = [journeyCard, classicLiftCard];
 
     if (dashboardStage === "first_real_week") {
       return [
-        ...sharedCards,
+        ...establishedSharedCards,
         <FirstWeekGoalCard
           key="first-week-goal"
           allSessionDates={allSessionDates}
@@ -99,8 +99,30 @@ export function HomeInspirationCards({
       ];
     }
 
+    if (dashboardStage === "early_base") {
+      return [
+        journeyCard,
+        <TrainingMomentumCard
+          key="momentum"
+          allSessionDates={allSessionDates}
+          animationDelay={200}
+        />,
+        <LifetimeTonnageCard
+          key="lifetime-tonnage"
+          sessionTonnageLookup={sessionTonnageLookup}
+          isMetric={athleteBio.isMetric}
+          animationDelay={400}
+        />,
+        <ConsistencyStreakCard
+          key="consistency"
+          allSessionDates={allSessionDates}
+          animationDelay={600}
+        />,
+      ];
+    }
+
     return [
-      ...sharedCards,
+      ...establishedSharedCards,
       <TrainingMomentumCard
         key="momentum"
         allSessionDates={allSessionDates}

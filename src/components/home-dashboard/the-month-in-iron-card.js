@@ -427,14 +427,16 @@ function EarlyMonthMomentumCard({
   }, [parsedData, isMetric]);
 
   const title =
-    dashboardStage === "starter_sample"
-      ? "Start Your First Month Strong"
+    dashboardStage === "starter_sample" || dashboardStage === "first_real_week"
+      ? "The First Week in Iron"
       : dataMaturityStage === "no_sessions"
         ? "The First Month in Iron"
         : "First Month Momentum";
   const subtitle =
     dashboardStage === "starter_sample"
-      ? "Use the sample row as a template, then start building your own rhythm."
+      ? "A simple novice template to help you replace the sample and get moving."
+      : dashboardStage === "first_real_week"
+        ? "Keep the week simple, learn the lifts, and add only small jumps."
       : dataMaturityStage === "first_week"
         ? "Your first week is about showing up and building rhythm."
         : dataMaturityStage === "first_month"
@@ -472,11 +474,6 @@ function EarlyMonthMomentumCard({
         <CardDescription>{subtitle}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col justify-center gap-4">
-        <div className="grid grid-cols-3 gap-3">
-          <MomentumStat label="Sessions" value={stats.sessions} />
-          <MomentumStat label="Sets Logged" value={stats.sets} />
-          <MomentumStat label="Big Four" value={stats.bigFourTouches} />
-        </div>
         {dashboardStage === "starter_sample" && sheetUrl && (
           <Button asChild className="w-full sm:w-fit">
             <a href={sheetUrl} target="_blank" rel="noopener noreferrer">
@@ -484,13 +481,6 @@ function EarlyMonthMomentumCard({
             </a>
           </Button>
         )}
-        <p className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-          Total volume so far:{" "}
-          <span className="font-medium text-foreground">
-            {stats.tonnageValue.toLocaleString()} {stats.tonnageUnit}
-          </span>
-          . Keep stacking consistent sessions.
-        </p>
         {showWeekTemplate ? (
           <div className="rounded-lg border bg-background/80 px-3 py-3">
             <p className="text-sm text-muted-foreground">
@@ -529,7 +519,20 @@ function EarlyMonthMomentumCard({
             </div>
           </div>
         ) : (
-          <div className="rounded-lg border bg-background/80 px-3 py-3">
+          <>
+            <div className="grid grid-cols-3 gap-3">
+              <MomentumStat label="Sessions" value={stats.sessions} />
+              <MomentumStat label="Sets Logged" value={stats.sets} />
+              <MomentumStat label="Big Four" value={stats.bigFourTouches} />
+            </div>
+            <p className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+              Total volume so far:{" "}
+              <span className="font-medium text-foreground">
+                {stats.tonnageValue.toLocaleString()} {stats.tonnageUnit}
+              </span>
+              . Keep stacking consistent sessions.
+            </p>
+            <div className="rounded-lg border bg-background/80 px-3 py-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               Coaching Notes
             </p>
@@ -538,7 +541,8 @@ function EarlyMonthMomentumCard({
                 <p key={item}>{item}</p>
               ))}
             </div>
-          </div>
+            </div>
+          </>
         )}
       </CardContent>
       <CardFooter className="pt-0">

@@ -27,19 +27,32 @@ export function detectStarterSheetState({ parsedData, rawRows, sheetInfo } = {})
   const sessionCount = getNonGoalSessionCount(parsedData);
   const firstEntry = nonGoalEntries[0] ?? null;
   const lowerFilename = sheetInfo?.filename?.toLowerCase?.() ?? "";
+  const uniqueDates = new Set(nonGoalEntries.map((entry) => entry?.date).filter(Boolean));
+  const uniqueLiftTypes = new Set(
+    nonGoalEntries.map((entry) => entry?.liftType).filter(Boolean),
+  );
+  const allEntriesMatchSeed =
+    nonGoalEntries.length >= 1 &&
+    nonGoalEntries.every(
+      (entry) =>
+        entry?.liftType === "Back Squat" &&
+        entry?.reps === 5 &&
+        entry?.weight === 20 &&
+        entry?.unitType === "kg",
+    );
 
   // This heuristic is intentionally strict. We only want to call something a
   // starter sample when it still closely resembles the seeded auto-provisioned
   // example, not merely because the user is new.
   const looksLikeSeededSample =
-    nonGoalEntries.length === 1 &&
+    nonGoalEntries.length <= 3 &&
     sessionCount === 1 &&
+    uniqueDates.size === 1 &&
+    uniqueLiftTypes.size === 1 &&
     rawRows != null &&
     rawRows <= 4 &&
     firstEntry?.liftType === "Back Squat" &&
-    firstEntry?.reps === 5 &&
-    firstEntry?.weight === 20 &&
-    firstEntry?.unitType === "kg" &&
+    allEntriesMatchSeed &&
     !lowerFilename.includes("sample") &&
     !lowerFilename.includes("demo");
 

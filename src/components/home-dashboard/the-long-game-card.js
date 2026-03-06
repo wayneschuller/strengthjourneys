@@ -680,7 +680,10 @@ export function TheLongGameCard({
         </CardHeader>
         <CardContent className="flex-1">
           {dashboardStage === "starter_sample" && (
-            <StarterLongGameState />
+            <StarterLongGameState
+              parsedData={parsedData}
+              sessionCount={sessionCount}
+            />
           )}
           {!intervals &&
             dashboardStage !== "starter_sample" &&
@@ -890,42 +893,59 @@ export function TheLongGameCard({
   );
 }
 
-function StarterLongGameState() {
-  const futureTiles = Array.from({ length: 11 }, (_, index) => index);
+function StarterLongGameState({ parsedData, sessionCount = 0 }) {
+  const sessionsThisWeek = useMemo(() => {
+    if (!Array.isArray(parsedData)) return 1;
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - mondayOffset);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const seenDates = new Set();
+    parsedData.forEach((entry) => {
+      if (entry?.isGoal || !entry?.date) return;
+      const entryDate = new Date(`${entry.date}T00:00:00`);
+      if (entryDate >= startOfWeek && entryDate <= today) {
+        seenDates.add(entry.date);
+      }
+    });
+
+    return Math.max(1, seenDates.size || sessionCount || 1);
+  }, [parsedData, sessionCount]);
+  const litDots = Math.min(7, Math.max(1, sessionsThisWeek));
+  const days = ["M", "T", "W", "T", "F", "S", "S"];
 
   return (
     <div className="flex h-full flex-col justify-center gap-5">
       <div className="rounded-xl border bg-muted/10 p-5">
-        <div className="grid grid-cols-4 gap-3 sm:grid-cols-6">
-          <div className="col-span-2 row-span-2 flex min-h-28 flex-col justify-between rounded-2xl border border-primary/30 bg-primary/10 p-4 sm:col-span-2">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
-                Day 1
-              </p>
-              <p className="mt-2 text-lg font-semibold text-foreground">
-                First session logged
-              </p>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              This is the first square in your training map.
-            </p>
-          </div>
-          {futureTiles.map((tile) => (
+        <div className="flex items-center justify-between gap-3">
+          {days.map((label, index) => (
             <div
-              key={tile}
-              className="min-h-16 rounded-2xl border border-dashed border-border/70 bg-muted/20"
-            />
+              key={`${label}-${index}`}
+              className="flex flex-col items-center gap-2"
+            >
+              <div
+                className={`h-5 w-5 rounded-full border ${
+                  index < litDots
+                    ? "border-primary/40 bg-primary"
+                    : "border-border/70 bg-muted/30"
+                }`}
+              />
+              <span className="text-[10px] text-muted-foreground">{label}</span>
+            </div>
           ))}
         </div>
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         <StarterLongGameNote
           title="Week 1"
-          body="A few simple sessions begin the pattern."
+          body="Each day you train lights another dot."
         />
         <StarterLongGameNote
           title="Month 1"
-          body="Consistency turns scattered squares into a shape."
+          body="A few solid weeks turn dots into a real pattern."
         />
         <StarterLongGameNote
           title="Long term"
@@ -933,8 +953,8 @@ function StarterLongGameState() {
         />
       </div>
       <p className="text-sm text-muted-foreground">
-        Right now the story is tiny. That is normal. Keep logging and the map
-        starts to take shape.
+        Right now the story is just one week wide. That is normal. Keep logging
+        and the timeline grows with you.
       </p>
     </div>
   );

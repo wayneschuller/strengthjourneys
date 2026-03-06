@@ -8,6 +8,7 @@ import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { OPEN_SHEET_SETUP_EVENT } from "@/lib/open-sheet-setup";
 import { devLog } from "@/lib/processing-utils";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,6 +22,7 @@ import {
   DialogContent,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { motion } from "motion/react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -111,7 +113,30 @@ function getPreferredUnitTypeFromClient() {
   }
 }
 
+function getSheetUrl(ssid, url) {
+  if (typeof url === "string" && url.trim().length > 0) return url;
+  if (typeof ssid === "string" && ssid.trim().length > 0) {
+    return `https://docs.google.com/spreadsheets/d/${ssid}/edit`;
+  }
+  return null;
+}
+
+function shouldShowCreatedConfirmation(payload) {
+  if (payload?.action !== "create_new_user_sheet") return false;
+  return ["true_new_user", "reprovision_after_missing_sheet"].includes(payload?.reason);
+}
+
 function getSheetDialogCopy({ intent, state, candidateCount, statusMessage, loadingQuip }) {
+  if (state === "created_confirmation") {
+    return {
+      eyebrow: "Lifting log created",
+      title: "Your lifting log is ready.",
+      description:
+        "Strength Journeys created a Google Sheets lifting log that will power your PRs, charts, and trends.",
+      tone: "ready",
+    };
+  }
+
   if (state === "linking_or_creating") {
     return {
       eyebrow: "Linking your sheet",
@@ -169,6 +194,7 @@ export function SheetSetupDialog() {
   const [flowIntent, setFlowIntent] = useState("bootstrap");
   const [recommendedCandidateId, setRecommendedCandidateId] = useState(null);
   const [hadLocalSheetBefore, setHadLocalSheetBefore] = useState(false);
+  const [createdSheetInfo, setCreatedSheetInfo] = useState(null);
   const launchedFromUserRef = useRef(false);
   const provisioningStartedRef = useRef(false);
   const dialogInitialSsidRef = useRef(null);
@@ -190,6 +216,7 @@ export function SheetSetupDialog() {
     setSheetDiscoveryStatusMessage("");
     setFlowIntent("bootstrap");
     setHadLocalSheetBefore(false);
+    setCreatedSheetInfo(null);
   }, []);
 
   const handlePickerReady = useCallback((picker) => {
@@ -321,13 +348,21 @@ export function SheetSetupDialog() {
       }
 
       if (payload?.action === "link_existing" || payload?.action === "create_new_user_sheet") {
-        exitSignedInDemoMode();
-        selectSheet(payload.ssid, {
+        const nextSheetInfo = {
+          ssid: payload.ssid,
           url: payload.webViewLink ?? null,
           filename: payload.name ?? null,
           modifiedTime: payload.modifiedTime ?? null,
           modifiedByMeTime: payload.modifiedByMeTime ?? null,
-        });
+        };
+
+        exitSignedInDemoMode();
+        selectSheet(payload.ssid, nextSheetInfo);
+        if (shouldShowCreatedConfirmation(payload)) {
+          setCreatedSheetInfo(nextSheetInfo);
+          setSheetDiscoveryStatusMessage("");
+          setOnboardingState("created_confirmation");
+        }
         if (payload?.action === "create_new_user_sheet" && router.pathname !== "/") {
           void router.replace("/");
         }
@@ -435,12 +470,16 @@ export function SheetSetupDialog() {
   useEffect(() => {
     if (!open || !sheetInfo?.ssid) return;
     if (sheetInfo.ssid === dialogInitialSsidRef.current) return;
+    if (onboardingState === "created_confirmation") {
+      dialogInitialSsidRef.current = sheetInfo.ssid;
+      return;
+    }
     setOpen(false);
     dialogInitialSsidRef.current = sheetInfo.ssid;
     resetUiState();
     launchedFromUserRef.current = false;
     provisioningStartedRef.current = true;
-  }, [open, resetUiState, sheetInfo?.ssid]);
+  }, [onboardingState, open, resetUiState, sheetInfo?.ssid]);
 
   useEffect(() => {
     if (authStatus !== "authenticated") return;
@@ -573,6 +612,12 @@ export function SheetSetupDialog() {
                   errorMessage={provisionError}
                 />
               )}
+              {onboardingState === "created_confirmation" && (
+                <CreatedSheetPanel
+                  sheetInfo={createdSheetInfo || sheetInfo}
+                  onGoToDashboard={closeDialog}
+                />
+              )}
             </CardContent>
           </Card>
         </DialogContent>
@@ -612,6 +657,111 @@ function FallbackConnectPanel({ intent, openPicker, onRetry, isWorking, errorMes
           <FolderOpen className="h-4 w-4" />
           Set up from Google Drive
         </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CreatedSheetPanel({ sheetInfo, onGoToDashboard }) {
+  const sheetUrl = getSheetUrl(sheetInfo?.ssid, sheetInfo?.url);
+  const sheetLabel = sheetInfo?.filename || "Your Strength Journeys lifting log";
+
+  return (
+    <Card className="mb-4 border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-5xl">
+      <CardHeader className="items-center text-center">
+        <CardTitle className="max-w-3xl text-2xl md:text-3xl">
+          Your lifting log is ready.
+        </CardTitle>
+        <CardDescription className="max-w-2xl text-base leading-relaxed">
+          Strength Journeys created a Google Sheets lifting log that will power
+          your PRs, charts, and trends.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="mx-auto w-full max-w-2xl"
+        >
+          {sheetUrl ? (
+            <a
+              href={sheetUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-3xl border border-primary/20 bg-[#fafafa] p-5 text-left shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+              aria-label={`Open ${sheetLabel} in Google Sheets`}
+            >
+              <div className="flex items-start gap-4">
+                <div className="rounded-2xl border border-border bg-background p-3.5 shadow-sm">
+                  <img
+                    src={GOOGLE_SHEETS_ICON_URL}
+                    alt=""
+                    className="h-14 w-14"
+                    aria-hidden
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xl font-bold text-foreground md:text-2xl">
+                    {sheetLabel}
+                  </p>
+                  <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Created in your Google Drive
+                  </p>
+                </div>
+              </div>
+            </a>
+          ) : (
+            <div className="rounded-3xl border border-primary/20 bg-[#fafafa] p-5 text-left shadow-md">
+              <div className="flex items-start gap-4">
+                <div className="rounded-2xl border border-border bg-background p-3.5 shadow-sm">
+                  <img
+                    src={GOOGLE_SHEETS_ICON_URL}
+                    alt=""
+                    className="h-14 w-14"
+                    aria-hidden
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xl font-bold text-foreground md:text-2xl">
+                    {sheetLabel}
+                  </p>
+                  <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Created in your Google Drive
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </motion.div>
+        <p className="text-center text-sm font-medium italic text-foreground/80">
+          Every set you log becomes part of your strength story.
+        </p>
+        <div className="rounded-2xl border bg-card/60 p-4 text-center text-sm leading-relaxed text-muted-foreground">
+          Add lifts in your sheet - Strength Journeys builds the dashboards.
+        </div>
+        <div className="flex flex-col justify-center gap-3 sm:flex-row">
+          {sheetUrl ? (
+            <Button asChild size="lg" className="gap-2">
+              <a href={sheetUrl} target="_blank" rel="noopener noreferrer">
+                Open My Lifting Log
+              </a>
+            </Button>
+          ) : (
+            <Button size="lg" className="gap-2" disabled>
+              Open My Lifting Log
+            </Button>
+          )}
+          <Button size="lg" variant="outline" className="gap-2" onClick={onGoToDashboard}>
+            Go to Strength Dashboard
+          </Button>
+        </div>
+        <p className="text-center text-sm text-muted-foreground">
+          Your training data stays in your Google Drive. Strength Journeys
+          only analyzes it.
+        </p>
       </CardContent>
     </Card>
   );

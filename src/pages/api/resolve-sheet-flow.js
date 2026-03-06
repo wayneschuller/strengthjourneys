@@ -7,6 +7,7 @@ import {
   discoverValidCandidates,
   getExistingRecord,
   getNameTokens,
+  inspectProvisionedSheet,
   markActivationPrompted,
   maybePromptActivation,
   persistLinkedSheet,
@@ -17,6 +18,7 @@ import {
   respondRecoverReturningUser,
   scoreAndSortCandidates,
 } from "@/lib/sheet-flow";
+import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 
 // Lifecycle policy:
 // - KV is a lifecycle hint, not the sole proof of whether a user is new.
@@ -24,8 +26,9 @@ import {
 //   scan finds plausible lifting sheets, treat them as returning/recoverable.
 // - True new users are only users with no KV record and no recovery evidence.
 // - Automatic provisioning is reserved for true new users only.
-// - Returning users with no recoverable sheet go to recovery UI, not silent
-//   reprovisioning.
+// - Returning users with no recoverable sheet normally go to recovery UI.
+//   Exception: bootstrap can reprovision when the previously provisioned sheet
+//   is explicitly confirmed missing/trashed.
 // - switch_sheet is a separate user-directed flow. Ranking is allowed, but
 //   auto-linking is not. This matters for cases like a coach with access to
 //   multiple client sheets.
@@ -176,6 +179,57 @@ export default async function handler(req, res) {
       }
       devLog("[sheet-flow] founder activation after bootstrap template", { prompted });
       return respondCreateNewUserSheet(res, created, debug);
+    }
+
+    if (intent === "bootstrap" && lifecycle.hasKvRecord && rankedCandidates.length === 0) {
+      const previousProvisionedSheetId = existingRecord?.provisionedSheetId || null;
+      const priorSheetCheck = await inspectProvisionedSheet(
+        previousProvisionedSheetId,
+        base.headers,
+      );
+      debug.priorProvisionedSheet = priorSheetCheck;
+      devLog("[sheet-flow] prior provisioned sheet check", {
+        ssid: previousProvisionedSheetId,
+        state: priorSheetCheck.state,
+        httpStatus: priorSheetCheck.httpStatus,
+      });
+
+      if (["missing", "trashed"].includes(priorSheetCheck.state)) {
+        debug.path.push("resolve:returning_missing_sheet:reprovision");
+        devLog("[sheet-flow] resolve:action reprovision_missing_sheet", {
+          previousProvisionedSheetId,
+          previousSheetState: priorSheetCheck.state,
+          sheetName,
+          preferredUnitType,
+        });
+        const nowIso = new Date().toISOString();
+        const created = await createBootstrapSheet(
+          sheetName,
+          base.headers,
+          nowIso,
+          preferredUnitType,
+        );
+        await persistLinkedSheet({
+          kvKey: base.kvKey,
+          existingRecord,
+          nowIso,
+          metadata: created,
+          connectionMethod: "reprovision_after_missing_sheet",
+          provisioningMethod: "bootstrap_sheet_seeded",
+        });
+        await promptDeveloper("reprovisioned", base.session.user, {
+          connectionMethod: "reprovision_after_missing_sheet",
+          provisioningMethod: "bootstrap_sheet_seeded",
+          sheetName: created.name || sheetName,
+          previousProvisionedSheetId,
+          previousSheetState: priorSheetCheck.state,
+          previousSheetName: priorSheetCheck.metadata?.name || null,
+          previousSheetHttpStatus: priorSheetCheck.httpStatus,
+        });
+        return respondCreateNewUserSheet(res, created, debug, {
+          reason: "reprovision_after_missing_sheet",
+        });
+      }
     }
 
     debug.path.push("resolve:recover_returning_user");

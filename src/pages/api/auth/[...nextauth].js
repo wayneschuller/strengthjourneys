@@ -187,6 +187,33 @@ const PROMPT_MESSAGES = {
       .filter(Boolean)
       .join("\n"),
   }),
+  reprovisioned: (name, email, timeStr, meta) => ({
+    subject: `[SJ] Reprovisioned after missing sheet — ${name}`,
+    text: [
+      `${name} (${email}) was reprovisioned at ${timeStr}.`,
+      meta.connectionMethod
+        ? `Connection method: ${meta.connectionMethod}`
+        : null,
+      meta.provisioningMethod
+        ? `Provisioning method: ${meta.provisioningMethod}`
+        : null,
+      meta.sheetName ? `New sheet: ${meta.sheetName}` : null,
+      meta.previousProvisionedSheetId
+        ? `Previous sheet ID: ${meta.previousProvisionedSheetId}`
+        : null,
+      meta.previousSheetState
+        ? `Previous sheet state: ${meta.previousSheetState}`
+        : null,
+      meta.previousSheetName
+        ? `Previous sheet name: ${meta.previousSheetName}`
+        : null,
+      meta.previousSheetHttpStatus != null
+        ? `Previous sheet check status: ${meta.previousSheetHttpStatus}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  }),
 };
 
 export async function promptDeveloper(event, user, meta = {}) {

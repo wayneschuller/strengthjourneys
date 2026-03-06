@@ -579,11 +579,57 @@ export async function enrichCandidatesByIds({
 
 export async function fetchDriveMetadata(ssid, headers) {
   const response = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${ssid}?fields=id,name,webViewLink,modifiedTime,modifiedByMeTime`,
+    `https://www.googleapis.com/drive/v3/files/${ssid}?fields=id,name,trashed,webViewLink,modifiedTime,modifiedByMeTime`,
     { method: "GET", headers },
   );
   if (!response.ok) return null;
   return response.json();
+}
+
+export async function inspectProvisionedSheet(ssid, headers) {
+  if (!ssid) {
+    return {
+      state: "unknown",
+      httpStatus: null,
+      metadata: null,
+    };
+  }
+
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${ssid}?fields=id,name,trashed,webViewLink,modifiedTime,modifiedByMeTime`,
+    { method: "GET", headers },
+  );
+
+  if (response.ok) {
+    const metadata = await response.json().catch(() => null);
+    return {
+      state: metadata?.trashed ? "trashed" : "accessible",
+      httpStatus: response.status,
+      metadata,
+    };
+  }
+
+  if (response.status === 404) {
+    return {
+      state: "missing",
+      httpStatus: response.status,
+      metadata: null,
+    };
+  }
+
+  if (response.status === 403) {
+    return {
+      state: "forbidden",
+      httpStatus: response.status,
+      metadata: null,
+    };
+  }
+
+  return {
+    state: "unknown",
+    httpStatus: response.status,
+    metadata: null,
+  };
 }
 
 export async function validateAndFetchSelectedSheet(ssid, headers, debug) {
@@ -861,12 +907,17 @@ export function respondLinkExisting(res, metadata, { reason, wasCreated = false,
   );
 }
 
-export function respondCreateNewUserSheet(res, metadata, debug) {
+export function respondCreateNewUserSheet(
+  res,
+  metadata,
+  debug,
+  { reason = "true_new_user" } = {},
+) {
   return res.status(200).json(
     withDebug(
       {
         action: "create_new_user_sheet",
-        reason: "true_new_user",
+        reason,
         ssid: metadata.id,
         name: metadata.name || null,
         webViewLink: metadata.webViewLink || null,

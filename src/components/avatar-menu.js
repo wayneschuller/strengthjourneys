@@ -132,7 +132,6 @@ export function AvatarDropdown() {
   // Forced signOut() seems to reset everything
   if (authStatus === "authenticated" && !session?.user?.image) {
     console.error(`Next-auth being a silly-billy again.`);
-    clearSheet();
     signOut();
     return null;
   }
@@ -269,7 +268,6 @@ export function AvatarDropdown() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
-                    clearSheet();
                     signOut();
                   }}
                 >

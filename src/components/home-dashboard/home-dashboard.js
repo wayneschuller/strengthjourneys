@@ -227,7 +227,7 @@ export function HomeDashboard() {
           setIsProgressDone={setIsProgressDone}
         />
       )}
-      {sheetInfo?.ssid && (
+      {sheetInfo?.ssid && dashboardStage !== "starter_sample" && dashboardStage !== "first_real_week" && (
         <HomeInspirationCards
           isProgressDone={hasDataLoaded}
           dashboardStage={dashboardStage}

@@ -9,7 +9,6 @@ import { HomeInspirationCardsSkeleton } from "@/components/home-dashboard/inspir
 import { JourneyProgressCard } from "@/components/home-dashboard/inspiration-cards/journey-progress-card";
 import { LifetimeTonnageCard } from "@/components/home-dashboard/inspiration-cards/lifetime-tonnage-card";
 import { ProgrammingTipCard } from "@/components/home-dashboard/inspiration-cards/programming-tip-card";
-import { StarterSheetCard } from "@/components/home-dashboard/inspiration-cards/starter-sheet-card";
 import { TrainingMomentumCard } from "@/components/home-dashboard/inspiration-cards/training-momentum-card";
 
 /**
@@ -32,7 +31,6 @@ export function HomeInspirationCards({
     liftTypes,
     topLiftsByTypeAndReps,
     sessionTonnageLookup,
-    sheetInfo,
   } = useUserLiftingData();
   const athleteBio = useAthleteBio();
 
@@ -58,29 +56,6 @@ export function HomeInspirationCards({
         animationDelay={200}
       />,
     ];
-
-    if (dashboardStage === "starter_sample") {
-      return [
-        ...sharedCards,
-        <StarterSheetCard
-          key="starter-sheet"
-          sheetUrl={sheetInfo?.url}
-          animationDelay={400}
-        />,
-        <FirstWeekGoalCard
-          key="first-week-goal"
-          allSessionDates={allSessionDates}
-          sessionCount={sessionCount}
-          animationDelay={600}
-        />,
-        <LifetimeTonnageCard
-          key="lifetime-tonnage"
-          sessionTonnageLookup={sessionTonnageLookup}
-          isMetric={athleteBio.isMetric}
-          animationDelay={800}
-        />,
-      ];
-    }
 
     if (dashboardStage === "first_real_week") {
       return [
@@ -152,7 +127,6 @@ export function HomeInspirationCards({
     topLiftsByTypeAndReps,
     athleteBio,
     dashboardStage,
-    sheetInfo?.url,
     allSessionDates,
     sessionCount,
     sessionTonnageLookup,

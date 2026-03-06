@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { useSession } from "next-auth/react";
 import { useReadLocalStorage } from "usehooks-ts";
@@ -76,7 +75,7 @@ function formatYears(years) {
 }
 
 // Animated horizontal progress bar that fills from 0 to pct on mount using motion.
-function ProgressBar({ pct, color, isMounted, delay = 0.3 }) {
+function ProgressBar({ pct, color, delay = 0.3 }) {
   const isDone = pct >= 1;
   return (
     <div className="h-1.5 overflow-hidden rounded-full bg-muted">
@@ -88,7 +87,7 @@ function ProgressBar({ pct, color, isMounted, delay = 0.3 }) {
           width: "100%",
         }}
         initial={{ scaleX: 0 }}
-        animate={isMounted ? { scaleX: Math.min(1, pct) } : { scaleX: 0 }}
+        animate={{ scaleX: Math.min(1, pct) }}
         transition={{ duration: 1.0, ease: "easeOut", delay }}
       />
     </div>
@@ -96,7 +95,13 @@ function ProgressBar({ pct, color, isMounted, delay = 0.3 }) {
 }
 
 // Shows reps and time progress bars toward the next tier, or a congratulations message at max tier.
-function TierProgressSection({ totalReps, yearsTraining, tier, liftType, liftColor, isMounted }) {
+function TierProgressSection({
+  totalReps,
+  yearsTraining,
+  tier,
+  liftType,
+  liftColor,
+}) {
   const currentIndex = TIERS.findIndex((t) => t.name === tier.name);
   const nextTier = TIERS[currentIndex + 1] ?? null;
 
@@ -142,7 +147,7 @@ function TierProgressSection({ totalReps, yearsTraining, tier, liftType, liftCol
             </span>
           )}
         </div>
-        <ProgressBar pct={repsPct} color={liftColor} isMounted={isMounted} delay={0.3} />
+        <ProgressBar pct={repsPct} color={liftColor} delay={0.3} />
       </div>
 
       {/* Years axis */}
@@ -160,7 +165,7 @@ function TierProgressSection({ totalReps, yearsTraining, tier, liftType, liftCol
               </span>
             )}
           </div>
-          <ProgressBar pct={yearsPct} color={liftColor} isMounted={isMounted} delay={0.5} />
+          <ProgressBar pct={yearsPct} color={liftColor} delay={0.5} />
         </div>
       )}
     </div>
@@ -182,7 +187,11 @@ function TierProgressSection({ totalReps, yearsTraining, tier, liftType, liftCol
  * @param {Object} props
  * @param {string} props.liftType - Display name of the lift (e.g. "Back Squat") to show the journey for.
  */
-export function LiftJourneyCard({ liftType, asCard = true }) {
+export function LiftJourneyCard({
+  liftType,
+  asCard = true,
+  chartDensity = "default",
+}) {
   const { status: authStatus } = useSession();
   const {
     parsedData,
@@ -199,11 +208,6 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
       initializeWithValue: false,
     }) ?? "Brzycki";
-
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // ── Derived data ─────────────────────────────────────────────────────────
   const liftEntry = liftTypes?.find((l) => l.liftType === liftType);
@@ -235,7 +239,18 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
   const tier = computeTier(totalReps, yearsTraining);
 
   // ── Reps chronology ──────────────────────────────────────────────────────
-  const chronology = buildLiftChronology(parsedData, liftType);
+  const chronology = buildLiftChronology(
+    parsedData,
+    liftType,
+    chartDensity === "dense"
+      ? {
+          targetBars: 24,
+          minBars: 18,
+          maxBars: 52,
+          preferHigherResolution: true,
+        }
+      : 10,
+  );
 
   // ── Recent highlights (last 4 weeks) ─────────────────────────────────────
   const oneMonthAgo = new Date();
@@ -378,7 +393,6 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
                 tier={tier}
                 liftType={liftType}
                 liftColor={liftColor}
-                isMounted={isMounted}
               />
             )}
 
@@ -388,6 +402,7 @@ export function LiftJourneyCard({ liftType, asCard = true }) {
               liftType={liftType}
               color={liftColor}
               chronology={chronology}
+              density={chartDensity}
             />
 
             {/* Recent highlights */}

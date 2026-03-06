@@ -3,6 +3,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, Cell } from "recharts";
 
 const BAR_OUTLINE = "var(--muted-foreground)";
@@ -81,15 +82,38 @@ function countBucketsInRange(firstDate, lastDate, cadence) {
   return count;
 }
 
-function chooseCadence(firstDate, lastDate, targetBars = 10) {
+function chooseCadence(firstDate, lastDate, targetBarsOrOptions = 10) {
+  const optionsConfig =
+    typeof targetBarsOrOptions === "number"
+      ? { targetBars: targetBarsOrOptions }
+      : (targetBarsOrOptions ?? {});
+  const {
+    targetBars = 10,
+    minBars,
+    maxBars,
+    preferHigherResolution = false,
+  } = optionsConfig;
   const options = ["week", "month", "quarter", "year"];
   const scored = options.map((cadence) => {
     const count = countBucketsInRange(firstDate, lastDate, cadence);
     const distance = Math.abs(count - targetBars);
-    const lowPenalty = count < 4 ? (4 - count) * 3 : 0;
-    const highPenalty = count > 14 ? (count - 14) * 0.6 : 0;
+    const effectiveMinBars = minBars ?? 4;
+    const effectiveMaxBars = maxBars ?? 14;
+    const lowPenalty = count < effectiveMinBars ? (effectiveMinBars - count) * 3 : 0;
+    const highPenalty =
+      count > effectiveMaxBars ? (count - effectiveMaxBars) * 0.6 : 0;
     return { cadence, count, score: distance + lowPenalty + highPenalty };
   });
+
+  if (preferHigherResolution && minBars != null && maxBars != null) {
+    const withinRange = scored
+      .filter((option) => option.count >= minBars && option.count <= maxBars)
+      .sort((a, b) => b.count - a.count);
+    if (withinRange.length > 0) {
+      return withinRange[0].cadence;
+    }
+  }
+
   scored.sort((a, b) => a.score - b.score);
   return scored[0]?.cadence ?? "month";
 }
@@ -103,7 +127,7 @@ function chooseCadence(firstDate, lastDate, targetBars = 10) {
  * @returns {Object|null} Chronology object with `bars`, `cadence`, `maxReps`, `nonZeroBars`,
  *   `startLabel`, `endLabel` — or null if there is insufficient data.
  */
-export function buildLiftChronology(parsedData, liftType, targetBars = 10) {
+export function buildLiftChronology(parsedData, liftType, targetBarsOrOptions = 10) {
   if (!parsedData?.length || !liftType) return null;
 
   const validEntries = parsedData.filter(
@@ -118,7 +142,7 @@ export function buildLiftChronology(parsedData, liftType, targetBars = 10) {
   const totalWeeks = countBucketsInRange(firstDate, lastDate, "week");
   if (totalWeeks < 10) return null;
 
-  const cadence = chooseCadence(firstDate, lastDate, targetBars);
+  const cadence = chooseCadence(firstDate, lastDate, targetBarsOrOptions);
   const sums = new Map();
 
   parsedData.forEach((entry) => {
@@ -185,7 +209,12 @@ const CADENCE_LABEL = {
   year: "Annual",
 };
 
-export function MiniLiftChronologyChart({ liftType, color, chronology }) {
+export function MiniLiftChronologyChart({
+  liftType,
+  color,
+  chronology,
+  density = "default",
+}) {
   if (!liftType || !chronology?.bars?.length) return null;
 
   const chartConfig = { reps: { label: "Reps", color } };
@@ -196,62 +225,67 @@ export function MiniLiftChronologyChart({ liftType, color, chronology }) {
   return (
     <div>
       <ChartContainer
-      config={chartConfig}
-      className="mt-0 mb-0 !aspect-auto h-[72px] w-full select-none [&_.recharts-surface]:focus:outline-none [&_.recharts-surface]:focus-visible:outline-none"
-      onMouseDownCapture={(e) => e.preventDefault()}
-    >
-      <BarChart
-        data={chronology.bars}
-        margin={{ top: 6, right: 2, left: 2, bottom: 4 }}
+        config={chartConfig}
+        className={cn(
+          "mt-0 mb-0 !aspect-auto w-full select-none [&_.recharts-surface]:focus:outline-none [&_.recharts-surface]:focus-visible:outline-none",
+          density === "dense" ? "h-[84px] xl:h-[96px]" : "h-[72px]",
+        )}
+        onMouseDownCapture={(e) => e.preventDefault()}
       >
-        <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={1} />
-            <stop offset="100%" stopColor={color} stopOpacity={0.4} />
-          </linearGradient>
-        </defs>
-        <XAxis dataKey="label" hide />
-        <ChartTooltip
-          cursor={false}
-          content={
-            <ChartTooltipContent
-              labelFormatter={(_, payload) => {
-                const item = payload?.[0]?.payload;
-                if (!item) return "";
-                return item.label;
-              }}
-              formatter={(value) => (
-                <div className="flex w-full items-center justify-between gap-3">
-                  <span className="text-muted-foreground">Reps</span>
-                  <span className="font-mono font-medium tabular-nums">
-                    {Number(value).toLocaleString()}
-                  </span>
-                </div>
-              )}
-            />
-          }
-        />
-        <Bar
-          dataKey="reps"
-          radius={[2, 2, 0, 0]}
-          fill={`url(#${gradientId})`}
-          stroke={BAR_OUTLINE}
-          strokeWidth={1.25}
+        <BarChart
+          data={chronology.bars}
+          margin={{ top: 6, right: 2, left: 2, bottom: 4 }}
+          barCategoryGap={density === "dense" ? "8%" : "14%"}
         >
-          {chronology.bars.map((bar, index) => (
-            <Cell
-              key={`mini-bar-${index}`}
-              fill={`url(#${gradientId})`}
-              opacity={bar.reps > 0 ? 0.95 : 0.16}
-              stroke={BAR_OUTLINE}
-              strokeWidth={bar.reps > 0 ? 1.5 : 1}
-              strokeOpacity={bar.reps > 0 ? 0.55 : 0.4}
-            />
-          ))}
-        </Bar>
-      </BarChart>
-    </ChartContainer>
-    <p className="text-center text-xs text-muted-foreground">{header}</p>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={1} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.4} />
+            </linearGradient>
+          </defs>
+          <XAxis dataKey="label" hide />
+          <ChartTooltip
+            cursor={false}
+            content={
+              <ChartTooltipContent
+                labelFormatter={(_, payload) => {
+                  const item = payload?.[0]?.payload;
+                  if (!item) return "";
+                  return item.label;
+                }}
+                formatter={(value) => (
+                  <div className="flex w-full items-center justify-between gap-3">
+                    <span className="text-muted-foreground">Reps</span>
+                    <span className="font-mono font-medium tabular-nums">
+                      {Number(value).toLocaleString()}
+                    </span>
+                  </div>
+                )}
+              />
+            }
+          />
+          <Bar
+            dataKey="reps"
+            radius={[2, 2, 0, 0]}
+            fill={`url(#${gradientId})`}
+            stroke={BAR_OUTLINE}
+            strokeWidth={1.25}
+            maxBarSize={density === "dense" ? 18 : 32}
+          >
+            {chronology.bars.map((bar, index) => (
+              <Cell
+                key={`mini-bar-${index}`}
+                fill={`url(#${gradientId})`}
+                opacity={bar.reps > 0 ? 0.95 : 0.16}
+                stroke={BAR_OUTLINE}
+                strokeWidth={bar.reps > 0 ? 1.5 : 1}
+                strokeOpacity={bar.reps > 0 ? 0.55 : 0.4}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ChartContainer>
+      <p className="text-center text-xs text-muted-foreground">{header}</p>
     </div>
   );
 }

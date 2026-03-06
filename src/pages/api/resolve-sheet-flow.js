@@ -185,7 +185,11 @@ export default async function handler(req, res) {
       return respondCreateNewUserSheet(res, created, debug);
     }
 
-    if (intent === "bootstrap" && lifecycle.hasKvRecord && rankedCandidates.length === 0) {
+    if (
+      intent !== "switch_sheet" &&
+      lifecycle.hasKvRecord &&
+      rankedCandidates.length === 0
+    ) {
       const previousProvisionedSheetId = existingRecord?.provisionedSheetId || null;
       const priorSheetCheck = await inspectProvisionedSheet(
         previousProvisionedSheetId,

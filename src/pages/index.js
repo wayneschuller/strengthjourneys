@@ -252,10 +252,11 @@ export default function Home() {
       }),
     [parsedData, rawRows, sheetInfo],
   );
-  const showEnhancedBigFourSection =
-    !hasLinkedSheet ||
-    dashboardStage === "early_base" ||
-    dashboardStage === "established";
+  // Keep the Big Four cards visible for early users, but delay the personalized
+  // stats treatment until they have enough history for those comparisons to land.
+  const showEnhancedBigFourStats =
+    hasLinkedSheet &&
+    (dashboardStage === "early_base" || dashboardStage === "established");
 
   // Only collapse the landing hero once the user has real linked data and can
   // meaningfully land on the dashboard. Signed-in demo mode should still feel
@@ -346,16 +347,18 @@ export default function Home() {
 
         <StrengthUnwrappedDecemberBanner className="mt-8 mb-6" />
 
-        {showEnhancedBigFourSection && (
-          <>
-            <h2 className="mt-8 mb-4 text-xl font-semibold">
-              🏋️ The Big Four Barbell Lifts
-            </h2>
+        <>
+          <h2 className="mt-8 mb-4 text-xl font-semibold">
+            🏋️ The Big Four Barbell Lifts
+          </h2>
 
-            <BigFourLiftCards lifts={mainBarbellLifts} animated={bigFourAnimated} />
-            <Separator className="my-8" />
-          </>
-        )}
+          <BigFourLiftCards
+            lifts={mainBarbellLifts}
+            animated={bigFourAnimated}
+            enhancedStats={showEnhancedBigFourStats}
+          />
+          <Separator className="my-8" />
+        </>
 
         <h2 className="mt-8 text-xl font-semibold">
           🛠️ Strength Insights & Tools

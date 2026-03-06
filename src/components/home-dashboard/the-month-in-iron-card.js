@@ -486,9 +486,9 @@ function EarlyMonthMomentumCard({
           <div className="rounded-lg border bg-background/80 px-3 py-3">
             <p className="text-sm text-muted-foreground">
               Start with an empty barbell and work up to a moderate weight. 3x5
-              means three sets of five reps, with 3-5 minutes of rest between
-              sets. It should feel heavy enough that you still have 2-3 reps in
-              reserve.
+              means three sets of five reps. Normally people rest 3-5 minutes
+              between sets. It should feel heavy enough that you still have 2-3
+              reps in reserve.
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <WeekPlanLiftSession

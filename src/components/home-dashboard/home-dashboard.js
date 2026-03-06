@@ -410,36 +410,36 @@ function ProvisioningPanel({ isWorking = true }) {
   );
 }
 
-function formatLastEdited(candidate) {
-  const iso = candidate?.modifiedByMeTime || candidate?.modifiedTime;
-  if (!iso) return "Last edited: unknown";
-  const d = new Date(iso);
-  return `Last edited: ${d.toLocaleString()}`;
-}
-
-function formatDateLabel(isoDate) {
+function formatYearLabel(isoDate) {
   if (!isoDate) return null;
   const d = new Date(`${isoDate}T00:00:00`);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return String(d.getFullYear());
 }
 
 function formatCandidateMeta(candidate) {
-  const bits = [formatLastEdited(candidate)];
+  const isSampled = Boolean(candidate?.metadataSampled);
+  const bits = [];
+
   if (typeof candidate?.approxRows === "number") {
-    bits.push(`~${candidate.approxRows.toLocaleString()} rows`);
+    bits.push(
+      isSampled
+        ? `${candidate.approxRows.toLocaleString()}+ rows`
+        : `${candidate.approxRows.toLocaleString()} rows`,
+    );
   }
   if (typeof candidate?.approxSessions === "number") {
-    bits.push(`~${candidate.approxSessions.toLocaleString()} sessions`);
+    bits.push(
+      isSampled
+        ? `${candidate.approxSessions.toLocaleString()}+ workouts`
+        : `${candidate.approxSessions.toLocaleString()} workouts`,
+    );
   }
-  const start = formatDateLabel(candidate?.dateRangeStart);
-  const end = formatDateLabel(candidate?.dateRangeEnd);
-  if (start && end) bits.push(`${start} - ${end}`);
-  if (candidate?.metadataSampled) bits.push("sampled");
+  const start = formatYearLabel(candidate?.dateRangeStart);
+  const end = formatYearLabel(candidate?.dateRangeEnd);
+  if (start && end) bits.push(`${start}-${end}`);
+
+  if (bits.length === 0) return "Lifting sheet detected";
   return bits.join(" · ");
 }
 
@@ -461,85 +461,71 @@ function ChooseSheetPanel({
             className="h-5 w-5 shrink-0"
             aria-hidden
           />
-          Select your lifting sheet
+          Connect your lifting log
         </CardTitle>
         <CardDescription>
           Strength Journeys found Google Sheets in your Drive that look like lifting logs. Choose one to connect, or create a new sheet to get started.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
-          <p className="text-sm font-semibold text-foreground">
-            Don&apos;t see the sheet you want?
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Browse Google Drive to grant Strength Journeys access to another sheet.
-          </p>
-          <div className="mt-3">
-            <Button
-              className="w-full sm:w-auto"
-              disabled={!openPicker || isWorking}
-              onClick={() => {
-                if (openPicker) handleOpenFilePicker(openPicker);
-              }}
-            >
-              <FolderOpen className="mr-2 h-4 w-4" />
-              Browse Google Drive
-            </Button>
-          </div>
-        </div>
         <div className="space-y-3">
           {candidates[0] && (
             <>
-              <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Recommended
+              <p className="text-sm font-semibold text-foreground">
+                Your lifting log
               </p>
-              <button
+              <div
                 key={candidates[0].id}
-                type="button"
-                className="group w-full rounded-xl border-2 border-primary/40 bg-primary/5 px-4 py-3 text-left transition hover:border-primary/70 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isWorking}
-                onClick={() => onChooseSheet(candidates[0].id)}
+                className="rounded-2xl border-2 border-primary/45 bg-primary/8 px-5 py-4 shadow-sm"
               >
-                <div className="mb-1 flex items-start justify-between gap-2">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <img
-                      src={GOOGLE_SHEETS_ICON_URL}
-                      alt=""
-                      className="h-4 w-4 shrink-0"
-                      aria-hidden
-                    />
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {candidates[0].name}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="mb-1 flex min-w-0 items-center gap-2">
+                      <img
+                        src={GOOGLE_SHEETS_ICON_URL}
+                        alt=""
+                        className="h-4 w-4 shrink-0"
+                        aria-hidden
+                      />
+                      <p className="truncate text-base font-semibold text-foreground">
+                        {candidates[0].name}
+                      </p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {formatCandidateMeta(candidates[0])}
                     </p>
                   </div>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">
+                  <span className="inline-flex items-center gap-1 self-start rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">
                     <Star className="h-3 w-3 fill-current" />
                     Recommended (most recently updated)
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {formatCandidateMeta(candidates[0])}
-                </p>
-              </button>
+                <div className="mt-4">
+                  <Button
+                    size="lg"
+                    className="w-full sm:w-auto"
+                    disabled={isWorking}
+                    onClick={() => onChooseSheet(candidates[0].id)}
+                  >
+                    Connect this lifting log
+                  </Button>
+                </div>
+              </div>
             </>
           )}
           {candidates.length > 1 && (
             <>
-              <p className="pt-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Other detected lifting sheets
+              <p className="pt-2 text-sm font-semibold text-muted-foreground">
+                Other sheets we detected
               </p>
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+              <div className="space-y-2">
                 {candidates.slice(1).map((candidate) => (
-                  <button
+                  <div
                     key={candidate.id}
-                    type="button"
-                    className="group rounded-xl border bg-card px-4 py-3 text-left transition hover:border-primary/50 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={isWorking}
-                    onClick={() => onChooseSheet(candidate.id)}
+                    className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div className="mb-1 flex items-start justify-between gap-2">
-                      <div className="flex min-w-0 items-center gap-2">
+                    <div className="min-w-0">
+                      <div className="mb-1 flex min-w-0 items-center gap-2">
                         <img
                           src={GOOGLE_SHEETS_ICON_URL}
                           alt=""
@@ -550,33 +536,67 @@ function ChooseSheetPanel({
                           {candidate.name}
                         </p>
                       </div>
+                      <p className="text-sm text-muted-foreground">
+                        {formatCandidateMeta(candidate)}
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {formatCandidateMeta(candidate)}
-                    </p>
-                  </button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={isWorking}
+                      onClick={() => onChooseSheet(candidate.id)}
+                    >
+                      Connect
+                    </Button>
+                  </div>
                 ))}
               </div>
             </>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            onClick={onCreateBlank}
-            disabled={isWorking}
-          >
-            <PlusSquare className="mr-2 h-4 w-4" />
-            Start fresh (create a new lifting sheet)
-          </Button>
-          <Button
-            variant="outline"
-            onClick={onCreateSample}
-            disabled={isWorking}
-          >
-            <CopyPlus className="mr-2 h-4 w-4" />
-            Create demo sheet with example data
-          </Button>
+        <div className="border-t pt-4">
+          <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Or start with a new sheet
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="ghost"
+              onClick={onCreateBlank}
+              disabled={isWorking}
+            >
+              <PlusSquare className="mr-2 h-4 w-4" />
+              Start fresh (create a new lifting sheet)
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={onCreateSample}
+              disabled={isWorking}
+            >
+              <CopyPlus className="mr-2 h-4 w-4" />
+              Create demo sheet with example data
+            </Button>
+          </div>
+        </div>
+        <div className="rounded-xl border border-primary/25 bg-primary/5 p-4">
+          <p className="text-sm font-semibold text-foreground">
+            Don&apos;t see the sheet you want?
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Browse Google Drive to grant Strength Journeys access to another sheet.
+          </p>
+          <div className="mt-3">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              disabled={!openPicker || isWorking}
+              onClick={() => {
+                if (openPicker) handleOpenFilePicker(openPicker);
+              }}
+            >
+              <FolderOpen className="mr-2 h-4 w-4" />
+              Browse Google Drive
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

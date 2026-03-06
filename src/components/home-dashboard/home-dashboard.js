@@ -124,6 +124,17 @@ function sortCandidatesForChooser(candidates) {
   return arr;
 }
 
+function getPreferredUnitTypeFromClient() {
+  if (typeof window === "undefined") return "lb";
+  try {
+    const raw = window.localStorage.getItem(LOCAL_STORAGE_KEYS.CALC_IS_METRIC);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed === true ? "kg" : "lb";
+  } catch {
+    return "lb";
+  }
+}
+
 /**
  * Top-level home dashboard rendered when the user is authenticated and a Google Sheet is linked.
  * Shows a personalised welcome greeting, consistency grade circles, a data-sync status row, a
@@ -401,6 +412,7 @@ export function HomeDashboard() {
           body: JSON.stringify({
             intent: intent || "bootstrap",
             hadLocalSheetBefore: Boolean(hadLocalBefore),
+            preferredUnitType: getPreferredUnitTypeFromClient(),
           }),
         });
         const payload = await response.json().catch(() => ({}));
@@ -447,6 +459,7 @@ export function HomeDashboard() {
             mode,
             selectedSsid,
             hadLocalSheetBefore,
+            preferredUnitType: getPreferredUnitTypeFromClient(),
           }),
         });
         const payload = await response.json().catch(() => ({}));

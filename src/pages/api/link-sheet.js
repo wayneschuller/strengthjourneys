@@ -1,10 +1,9 @@
 import { devLog } from "@/lib/processing-utils";
 import {
-  SAMPLE_TEMPLATE_SSID,
-  BOOTSTRAP_TEMPLATE_SSID,
   buildSheetName,
   classifyLifecycle,
   copyTemplate,
+  createBootstrapSheet,
   createDebug,
   getExistingRecord,
   markActivationPrompted,
@@ -16,6 +15,7 @@ import {
   respondCreateNewUserSheet,
   respondLinkExisting,
   validateAndFetchSelectedSheet,
+  SAMPLE_TEMPLATE_SSID,
 } from "@/lib/sheet-flow";
 
 export default async function handler(req, res) {
@@ -32,6 +32,7 @@ export default async function handler(req, res) {
   const mode = normalizeLinkMode(req.body?.mode);
   const selectedSsid = req.body?.selectedSsid || null;
   const hadLocalSheetBefore = Boolean(req.body?.hadLocalSheetBefore);
+  const preferredUnitType = req.body?.preferredUnitType === "kg" ? "kg" : "lb";
   const debug = createDebug(intent, mode || "link");
   const existingRecord = await getExistingRecord(base.kvKey);
   const sheetName = buildSheetName(base.session.user.name);
@@ -58,6 +59,7 @@ export default async function handler(req, res) {
       mode,
       selectedSsid,
       hadLocalSheetBefore,
+      preferredUnitType,
       lifecycle,
     });
 
@@ -78,11 +80,15 @@ export default async function handler(req, res) {
     }
 
     if (mode === "create_blank") {
-      metadata = await copyTemplate(sheetName, BOOTSTRAP_TEMPLATE_SSID, base.headers);
-      await writeBootstrapDate(metadata.id, base.headers, new Date().toISOString());
+      metadata = await createBootstrapSheet(
+        sheetName,
+        base.headers,
+        new Date().toISOString(),
+        preferredUnitType,
+      );
       connectionMethod =
         intent === "switch_sheet" ? "switch_sheet_selection" : "user_created_blank";
-      provisioningMethod = "bootstrap_template_copy";
+      provisioningMethod = "bootstrap_sheet_seeded";
       reason = "created_blank";
       wasCreated = true;
     }

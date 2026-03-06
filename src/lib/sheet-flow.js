@@ -5,7 +5,6 @@ import { devLog } from "@/lib/processing-utils";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 
 export const SAMPLE_TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
-export const BOOTSTRAP_TEMPLATE_SSID = "12XB41tbXNNpdy4jXicwv7Vgn8YJmAns1rvoZdgXjbsA";
 export const PROVISION_VERSION = 2;
 const MAX_HEADER_CHECKS = 12;
 const MAX_DEEP_ENRICH_CANDIDATES = 6;
@@ -629,7 +628,7 @@ export async function copyTemplate(sheetName, templateSsid, headers) {
   return response.json();
 }
 
-export async function createBlankSheet(sheetName, headers) {
+async function createSpreadsheet(sheetName, headers) {
   const createResponse = await fetch("https://sheets.googleapis.com/v4/spreadsheets", {
     method: "POST",
     headers: {
@@ -645,6 +644,11 @@ export async function createBlankSheet(sheetName, headers) {
   const created = await createResponse.json();
   const ssid = created?.spreadsheetId;
   if (!ssid) throw new Error("Sheet was created but spreadsheetId was missing");
+  return { ssid, sheetId: created?.sheets?.[0]?.properties?.sheetId || 0 };
+}
+
+export async function createBlankSheet(sheetName, headers) {
+  const { ssid } = await createSpreadsheet(sheetName, headers);
 
   const headerResponse = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:H1?valueInputOption=RAW`,
@@ -675,10 +679,31 @@ export async function createBlankSheet(sheetName, headers) {
   };
 }
 
-export async function writeBootstrapDate(ssid, headers, nowIso) {
+export async function createBootstrapSheet(
+  sheetName,
+  headers,
+  nowIso,
+  preferredUnitType = "lb",
+) {
+  const { ssid, sheetId } = await createSpreadsheet(sheetName, headers);
   const todayYmd = nowIso.slice(0, 10);
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A2?valueInputOption=RAW`,
+  const unitType = preferredUnitType === "kg" ? "kg" : "lb";
+  const starterWeight = unitType === "kg" ? "20kg" : "45lb";
+  const starterRows = [
+    ["Date", "Lift Type", "Reps", "Weight", "Notes"],
+    [
+      todayYmd,
+      "Back Squat",
+      "5",
+      starterWeight,
+      "Start each new session by inserting a row at the top.",
+    ],
+    ["", "", "5", starterWeight, "Add one set per row as you lift."],
+    ["", "", "5", starterWeight, "Leave Date blank for the next sets in the same session."],
+  ];
+
+  const valuesResponse = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:E4?valueInputOption=RAW`,
     {
       method: "PUT",
       headers: {
@@ -686,16 +711,99 @@ export async function writeBootstrapDate(ssid, headers, nowIso) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        range: "A2",
+        range: "A1:E4",
         majorDimension: "ROWS",
-        values: [[todayYmd]],
+        values: starterRows,
       }),
     },
   );
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body?.error?.message || "Failed to write bootstrap date");
+  if (!valuesResponse.ok) {
+    const body = await valuesResponse.json().catch(() => ({}));
+    throw new Error(body?.error?.message || "Failed to seed bootstrap sheet");
   }
+
+  const formatResponse = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}:batchUpdate`,
+    {
+      method: "POST",
+      headers: {
+        ...headers,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        requests: [
+          {
+            updateSheetProperties: {
+              properties: {
+                sheetId,
+                gridProperties: {
+                  frozenRowCount: 1,
+                },
+              },
+              fields: "gridProperties.frozenRowCount",
+            },
+          },
+          {
+            repeatCell: {
+              range: {
+                sheetId,
+                startRowIndex: 0,
+                endRowIndex: 1,
+              },
+              cell: {
+                userEnteredFormat: {
+                  textFormat: {
+                    bold: true,
+                  },
+                },
+              },
+              fields: "userEnteredFormat.textFormat.bold",
+            },
+          },
+          {
+            updateDimensionProperties: {
+              range: {
+                sheetId,
+                dimension: "COLUMNS",
+                startIndex: 0,
+                endIndex: 4,
+              },
+              properties: {
+                pixelSize: 140,
+              },
+              fields: "pixelSize",
+            },
+          },
+          {
+            updateDimensionProperties: {
+              range: {
+                sheetId,
+                dimension: "COLUMNS",
+                startIndex: 4,
+                endIndex: 5,
+              },
+              properties: {
+                pixelSize: 420,
+              },
+              fields: "pixelSize",
+            },
+          },
+        ],
+      }),
+    },
+  );
+  if (!formatResponse.ok) {
+    devLog("[sheet-flow] bootstrap formatting failed; continuing with seeded values");
+  }
+
+  const metadata = await fetchDriveMetadata(ssid, headers);
+  return {
+    id: ssid,
+    name: metadata?.name || sheetName,
+    webViewLink: metadata?.webViewLink || null,
+    modifiedTime: metadata?.modifiedTime || null,
+    modifiedByMeTime: metadata?.modifiedByMeTime || null,
+  };
 }
 
 export async function persistLinkedSheet({

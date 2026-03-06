@@ -2,6 +2,7 @@ import { devLog } from "@/lib/processing-utils";
 import {
   buildSheetName,
   classifyLifecycle,
+  createBootstrapSheet,
   createDebug,
   discoverValidCandidates,
   getExistingRecord,
@@ -15,9 +16,6 @@ import {
   respondLinkExisting,
   respondRecoverReturningUser,
   scoreAndSortCandidates,
-  BOOTSTRAP_TEMPLATE_SSID,
-  copyTemplate,
-  writeBootstrapDate,
 } from "@/lib/sheet-flow";
 
 // Lifecycle policy:
@@ -50,6 +48,7 @@ export default async function handler(req, res) {
     ? req.body.intent
     : "bootstrap";
   const hadLocalSheetBefore = Boolean(req.body?.hadLocalSheetBefore);
+  const preferredUnitType = req.body?.preferredUnitType === "kg" ? "kg" : "lb";
   const debug = createDebug(intent, "discover");
   const existingRecord = await getExistingRecord(base.kvKey);
   const sheetName = buildSheetName(base.session.user.name);
@@ -134,26 +133,30 @@ export default async function handler(req, res) {
     if (intent === "bootstrap" && lifecycle.isTrueNewUser) {
       debug.path.push("resolve:true_new_user:create_bootstrap");
       devLog("[sheet-flow] resolve:action create_new_user_sheet", {
-        templateSsid: BOOTSTRAP_TEMPLATE_SSID,
         sheetName,
+        preferredUnitType,
       });
-      const created = await copyTemplate(sheetName, BOOTSTRAP_TEMPLATE_SSID, base.headers);
       const nowIso = new Date().toISOString();
-      await writeBootstrapDate(created.id, base.headers, nowIso);
+      const created = await createBootstrapSheet(
+        sheetName,
+        base.headers,
+        nowIso,
+        preferredUnitType,
+      );
       await persistLinkedSheet({
         kvKey: base.kvKey,
         existingRecord,
         nowIso,
         metadata: created,
         connectionMethod: "auto_provision",
-        provisioningMethod: "bootstrap_template_copy",
+        provisioningMethod: "bootstrap_sheet_seeded",
       });
       const prompted = await maybePromptActivation({
         existingRecord,
         session: base.session,
         meta: {
           connectionMethod: "auto_provision",
-          provisioningMethod: "bootstrap_template_copy",
+          provisioningMethod: "bootstrap_sheet_seeded",
           sheetName: created.name || sheetName,
         },
       });
@@ -165,7 +168,7 @@ export default async function handler(req, res) {
             connectedAt: nowIso,
             connectionMethod: "auto_provision",
             provisionedSheetId: created.id,
-            provisioningMethod: "bootstrap_template_copy",
+            provisioningMethod: "bootstrap_sheet_seeded",
             lastSeenAt: nowIso,
           },
           nowIso,

@@ -33,6 +33,7 @@ import {
 
 const ENRICH_CANDIDATE_LIMIT = 6;
 const SHEET_FLOW_QUERY_KEY = "sheetFlow";
+const FORCE_SHEET_SYNC_TOAST_KEY = "SJ_forceNextSheetSyncToast";
 const SHEET_SETUP_QUIPS = [
   "The bar rewards patience.",
   "A tidy logbook is a power tool.",
@@ -138,6 +139,11 @@ function getSheetUrl(ssid, url) {
 function shouldShowCreatedConfirmation(payload) {
   if (payload?.action !== "create_new_user_sheet") return false;
   return ["true_new_user", "reprovision_after_missing_sheet"].includes(payload?.reason);
+}
+
+function shouldShowSyncToastOnAutoLink(payload) {
+  if (payload?.action !== "link_existing") return false;
+  return ["drive_single", "legacy_drive_relink"].includes(payload?.reason);
 }
 
 function getSheetDialogCopy({ intent, state, candidateCount, statusMessage, loadingQuip }) {
@@ -372,6 +378,9 @@ export function SheetSetupDialog() {
         };
 
         exitSignedInDemoMode();
+        if (shouldShowSyncToastOnAutoLink(payload) && typeof window !== "undefined") {
+          window.sessionStorage.setItem(FORCE_SHEET_SYNC_TOAST_KEY, "true");
+        }
         selectSheet(payload.ssid, nextSheetInfo);
         if (shouldShowCreatedConfirmation(payload)) {
           setCreatedSheetInfo(nextSheetInfo);

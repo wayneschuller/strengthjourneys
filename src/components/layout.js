@@ -27,6 +27,8 @@ import {
   differenceInYears,
 } from "date-fns";
 
+const FORCE_SHEET_SYNC_TOAST_KEY = "SJ_forceNextSheetSyncToast";
+
 /**
  * Root layout wrapper for the app. Renders nav, main content area, footer, and app background.
  * Also owns all toast notifications that were previously in useUserLiftingData.
@@ -84,13 +86,19 @@ export function Layout({ children }) {
     if (!parsedData || !parsedData.length) return;
 
     const isNewData = rawRows !== prevRawRowsRef.current;
+    const shouldForceToastOnHome =
+      typeof window !== "undefined" &&
+      window.sessionStorage.getItem(FORCE_SHEET_SYNC_TOAST_KEY) === "true";
     devLog(
       `New sheet data check — rawRows: ${rawRows}, prev: ${prevRawRowsRef.current}, isNewData: ${isNewData}, dataSyncedAt: ${dataSyncedAt}, pathname: ${router.pathname}`,
     );
     prevRawRowsRef.current = rawRows;
 
-    if (!isNewData) return;
-    if (router.pathname === "/") return;
+    if (!isNewData && !shouldForceToastOnHome) return;
+    if (router.pathname === "/" && !shouldForceToastOnHome) return;
+    if (shouldForceToastOnHome && typeof window !== "undefined") {
+      window.sessionStorage.removeItem(FORCE_SHEET_SYNC_TOAST_KEY);
+    }
 
     // Build relative date copy from the latest entry
     const latestDate = parsedData[parsedData.length - 1].date;

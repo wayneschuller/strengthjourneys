@@ -1196,7 +1196,7 @@ function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
         <div style={cellGridStyle}>
           {WEEKLY_MONTH_LABELS.map(({ label, week }) => (
             <span
-              key={label}
+              key={week}
               className="text-muted-foreground/80 overflow-visible text-[9px] tracking-[0.04em] whitespace-nowrap lg:text-[11px] 2xl:text-xs"
               style={{ gridColumn: week }}
             >

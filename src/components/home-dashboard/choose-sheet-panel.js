@@ -11,7 +11,6 @@ import {
   Link2,
   LoaderCircle,
   PlusSquare,
-  Unplug,
 } from "lucide-react";
 
 function formatYearLabel(isoDate) {
@@ -135,7 +134,6 @@ export function ChooseSheetPanel({
   statusMessage = "",
   onChooseSheet,
   onCreateBlank,
-  onDisconnectCurrentSheet,
   embedded = false,
 }) {
   const isSwitchSheet = intent === "switch_sheet";
@@ -305,18 +303,6 @@ export function ChooseSheetPanel({
                         <PlusSquare className="mr-2 h-4 w-4" />
                         Start fresh
                       </Button>
-                      {isSwitchSheet && currentSsid && onDisconnectCurrentSheet && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-start text-muted-foreground hover:text-foreground"
-                          onClick={onDisconnectCurrentSheet}
-                          disabled={isWorking}
-                        >
-                          <Unplug className="mr-2 h-4 w-4" />
-                          Disconnect current sheet
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </div>

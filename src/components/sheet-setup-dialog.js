@@ -20,9 +20,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   AlertTriangle,
@@ -162,7 +159,6 @@ export function SheetSetupDialog() {
   const [flowIntent, setFlowIntent] = useState("bootstrap");
   const [recommendedCandidateId, setRecommendedCandidateId] = useState(null);
   const [hadLocalSheetBefore, setHadLocalSheetBefore] = useState(false);
-  const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false);
   const launchedFromUserRef = useRef(false);
   const provisioningStartedRef = useRef(false);
   const dialogInitialSsidRef = useRef(null);
@@ -404,30 +400,6 @@ export function SheetSetupDialog() {
     [flowIntent, hadLocalSheetBefore, handleResolvedAction],
   );
 
-  const disconnectCurrentSheet = useCallback(async () => {
-    setProvisionError(null);
-    setIsProvisionActionLoading(true);
-    try {
-      const response = await fetch("/api/clear-sheet-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.error || "Failed to disconnect current sheet");
-      }
-      clearSheet();
-      enterSignedInDemoMode();
-      setHadLocalSheetBefore(false);
-      setOpen(false);
-      resetUiState();
-    } catch (error) {
-      setProvisionError(error?.message || "Failed to disconnect current sheet");
-    } finally {
-      setIsProvisionActionLoading(false);
-    }
-  }, [clearSheet, enterSignedInDemoMode, resetUiState]);
-
   const closeDialog = useCallback(() => {
     setOpen(false);
     dialogInitialSsidRef.current = sheetInfo?.ssid || null;
@@ -602,7 +574,6 @@ export function SheetSetupDialog() {
                   statusMessage={sheetDiscoveryStatusMessage}
                   onChooseSheet={(ssid) => runLinkAction({ mode: "select_existing", selectedSsid: ssid })}
                   onCreateBlank={() => runLinkAction({ mode: "create_blank" })}
-                  onDisconnectCurrentSheet={() => setIsDisconnectDialogOpen(true)}
                 />
               )}
               {onboardingState === "fallback_error" && (
@@ -622,37 +593,6 @@ export function SheetSetupDialog() {
               )}
             </CardContent>
           </Card>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={isDisconnectDialogOpen} onOpenChange={setIsDisconnectDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Disconnect your sheet?</DialogTitle>
-            <DialogDescription>
-              This removes your current spreadsheet from Strength Journeys and stops
-              future reads of your lifting data. You&apos;ll stay signed in and return
-              to demo mode until you reconnect a sheet.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDisconnectDialogOpen(false)}
-              disabled={isProvisionActionLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                setIsDisconnectDialogOpen(false);
-                void disconnectCurrentSheet();
-              }}
-              disabled={isProvisionActionLoading}
-            >
-              {isProvisionActionLoading ? "Disconnecting..." : "Disconnect Sheet"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

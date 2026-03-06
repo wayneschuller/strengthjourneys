@@ -57,6 +57,7 @@ const StrengthJourneys = () => (
 
 import { fetchRelatedArticles, fetchArticleById } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
@@ -239,7 +240,16 @@ function BarbellInsightsMain({
   introductionArticle,
   resourcesArticle,
 }) {
-  const { isLoading } = useUserLiftingData();
+  const { isLoading, parsedData, rawRows, sheetInfo } = useUserLiftingData();
+  const { dashboardStage } = getDashboardStage({
+    parsedData,
+    rawRows,
+    sheetInfo,
+  });
+  const prioritizeVideoGuides =
+    dashboardStage === "starter_sample" ||
+    dashboardStage === "first_real_week" ||
+    dashboardStage === "first_month";
 
   const bigFourIcons = {
     "Back Squat": Crown,
@@ -292,6 +302,14 @@ function BarbellInsightsMain({
             <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
           </div>
         </div>
+        {prioritizeVideoGuides && (
+          <div className="col-span-3">
+            <VideoCard
+              liftType={liftInsightData.liftType}
+              videos={liftInsightData.videos}
+            />
+          </div>
+        )}
         <div className="col-span-3">
           <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} />
         </div>
@@ -307,12 +325,14 @@ function BarbellInsightsMain({
         <div className="col-span-3" id="lift-prs">
           <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
         </div>
-        <div className="col-span-3">
-          <VideoCard
-            liftType={liftInsightData.liftType}
-            videos={liftInsightData.videos}
-          />
-        </div>
+        {!prioritizeVideoGuides && (
+          <div className="col-span-3">
+            <VideoCard
+              liftType={liftInsightData.liftType}
+              videos={liftInsightData.videos}
+            />
+          </div>
+        )}
       </div>
       {liftInsightData.faqItems?.length > 0 && (
         <section className="mt-10">

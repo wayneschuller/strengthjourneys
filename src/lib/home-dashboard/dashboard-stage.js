@@ -68,17 +68,17 @@ export function detectStarterSheetState({ parsedData, rawRows, sheetInfo } = {})
   // starter sample when it still closely resembles the seeded auto-provisioned
   // example, not merely because the user is new.
   //
-  // The current starter sheet seeds a single Back Squat session at 3x5@20kg,
+  // The current starter sheet seeds a single Back Squat session at 4x5@20kg,
   // which arrives in parsedData as multiple non-goal rows on the same date.
   // Match that exact shape so the onboarding dashboard only appears when the
   // sample has not yet been meaningfully personalized.
   const looksLikeSeededSample =
-    nonGoalEntries.length <= 3 &&
+    nonGoalEntries.length <= 4 &&
     sessionCount === 1 &&
     uniqueDates.size === 1 &&
     uniqueLiftTypes.size === 1 &&
     rawRows != null &&
-    rawRows <= 4 &&
+    rawRows <= 5 &&
     firstEntry?.liftType === "Back Squat" &&
     allEntriesMatchSeed &&
     !lowerFilename.includes("sample") &&

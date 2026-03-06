@@ -700,10 +700,11 @@ export async function createBootstrapSheet(
     ],
     ["", "", "5", starterWeight, "Log one set per row as you lift."],
     ["", "", "5", starterWeight, "Leave Date blank on the extra rows for the same session."],
+    ["", "", "5", starterWeight, "Put all your sets here, including warmups."],
   ];
 
   const valuesResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:E4?valueInputOption=RAW`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:E5?valueInputOption=RAW`,
     {
       method: "PUT",
       headers: {
@@ -711,7 +712,7 @@ export async function createBootstrapSheet(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        range: "A1:E4",
+        range: "A1:E5",
         majorDimension: "ROWS",
         values: starterRows,
       }),

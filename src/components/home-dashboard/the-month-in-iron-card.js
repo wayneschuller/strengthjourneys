@@ -554,23 +554,32 @@ function EarlyMonthMomentumCard({
               <WeekPlanSession
                 title="Session 1"
                 items={[
-                  "Squat — 3×5",
-                  "Press — 3×5",
+                  { liftType: "Back Squat", prescription: "3×5" },
+                  { liftType: "Strict Press", prescription: "3×5" },
                 ]}
               />
               <WeekPlanSession
                 title="Session 2"
                 items={[
-                  "Squat — 3×5 (+ small weight increase)",
-                  "Bench Press — 3×5",
+                  {
+                    liftType: "Back Squat",
+                    prescription: "3×5 (+ small weight increase)",
+                  },
+                  { liftType: "Bench Press", prescription: "3×5" },
                 ]}
               />
               <WeekPlanSession
                 title="Session 3"
                 items={[
-                  "Squat — 3×5 (+ small weight increase again)",
-                  "Press — 3×5",
-                  "Deadlift — 1×5 (+ small weight increase)",
+                  {
+                    liftType: "Back Squat",
+                    prescription: "3×5 (+ small weight increase again)",
+                  },
+                  { liftType: "Strict Press", prescription: "3×5" },
+                  {
+                    liftType: "Deadlift",
+                    prescription: "1×5 (+ small weight increase)",
+                  },
                 ]}
               />
             </div>
@@ -642,7 +651,19 @@ function WeekPlanSession({ title, items }) {
       <p className="mb-2 text-sm font-semibold text-foreground">{title}</p>
       <div className="space-y-2 text-sm text-muted-foreground">
         {items.map((item) => (
-          <p key={item}>{item}</p>
+          typeof item === "string" ? (
+            <p key={item}>{item}</p>
+          ) : (
+            <p key={`${title}-${item.liftType}-${item.prescription}`}>
+              <Link
+                href={BIG_FOUR_INSIGHT_HREFS[item.liftType]}
+                className="font-medium text-primary hover:underline"
+              >
+                {item.liftType}
+              </Link>{" "}
+              — {item.prescription}
+            </p>
+          )
         ))}
       </div>
     </div>

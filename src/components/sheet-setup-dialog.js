@@ -98,25 +98,28 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage }) {
       title: "Almost there.",
       description: "Connecting the sheet so your training history appears across the app.",
       commentary: "No extra clicks needed. This should only take a moment.",
-      activeStepLabel: "Link Sheet",
+      activeStepLabel: "Connecting your sheet",
       tone: "working",
     };
   }
 
   if (state === "choose_sheet") {
+    const hasMultipleCandidates = candidateCount > 1;
     return {
       eyebrow: intent === "switch_sheet" ? "Ready to switch" : "Sheets found",
-      title: intent === "switch_sheet" ? "Choose your lifting log." : "Pick your lifting log.",
+      title: hasMultipleCandidates
+        ? (intent === "switch_sheet" ? "Choose your lifting log." : "Pick your lifting log.")
+        : "Your sheet is ready.",
       description:
-        candidateCount > 0
-          ? `We found ${candidateCount} likely ${candidateCount === 1 ? "sheet" : "sheets"}.`
-          : "Your sheet options are ready.",
+        hasMultipleCandidates
+          ? `We found ${candidateCount} likely sheets.`
+          : "We found the sheet that looks like your lifting log.",
       commentary:
         statusMessage ||
-        (intent === "switch_sheet"
-          ? "Best match is highlighted first."
-          : "Choose the best fit or start fresh."),
-      activeStepLabel: "Choose Sheet",
+        (hasMultipleCandidates
+          ? "If the top option is not right, you can choose another one."
+          : "Review it below, or start fresh if you prefer."),
+      activeStepLabel: hasMultipleCandidates ? "Choose your sheet" : "Sheet found",
       tone: "ready",
     };
   }
@@ -126,11 +129,11 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage }) {
     title: intent === "switch_sheet" ? "Finding the right sheet." : "Getting your sheet ready.",
     description:
       intent === "switch_sheet"
-        ? "Checking your accessible Google Sheets and ranking the likely matches."
-        : "Looking for an existing log or creating a fresh one.",
+        ? "Looking through the Google Sheets you can access."
+        : "Looking for your lifting log.",
     commentary:
-      statusMessage || "Working through this in the background. Your options will appear here.",
-    activeStepLabel: "Scan Sheets",
+      statusMessage || "If we find more than one likely sheet, you can choose here.",
+    activeStepLabel: "Looking for your sheet",
     tone: "working",
   };
 }
@@ -600,102 +603,12 @@ export function SheetSetupDialog() {
 }
 
 function ProgressBody({ state }) {
-  const steps = [
-    {
-      title: "Scan Sheets",
-      status:
-        state === "linking_or_creating"
-          ? "done"
-          : state === "discovering"
-            ? "active"
-            : "pending",
-    },
-    {
-      title: "Rank Matches",
-      status:
-        state === "linking_or_creating"
-          ? "done"
-          : state === "discovering"
-            ? "active"
-            : "pending",
-    },
-    {
-      title: "Link Sheet",
-      status:
-        state === "linking_or_creating"
-          ? "active"
-          : "pending",
-    },
-  ];
-
-  const statusBadgeClassNames = {
-    active: "border-primary/20 bg-primary/10 text-primary",
-    done: "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-    pending: "border-border bg-muted/40 text-muted-foreground",
-  };
-
-  const activeStepTitle =
-    steps.find((step) => step.status === "active")?.title || "Working";
-
   return (
     <div className="space-y-4">
-      <div className="grid gap-2 sm:grid-cols-3">
-        {steps.map((step, index) => {
-          const isActive = step.status === "active";
-          const isDone = step.status === "done";
-
-          return (
-            <div
-              key={step.title}
-              className={`rounded-2xl border px-3 py-3 transition-colors ${
-                isActive
-                  ? "border-primary/25 bg-primary/[0.07]"
-                  : isDone
-                    ? "border-emerald-500/20 bg-emerald-500/[0.06]"
-                    : "border-border bg-muted/30"
-              }`}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${
-                      isActive
-                        ? "border-primary/25 bg-primary/10 text-primary"
-                        : isDone
-                          ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                          : "border-border bg-background text-muted-foreground"
-                    }`}
-                  >
-                    {isDone ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
-                  </div>
-                  <p className="text-sm font-semibold text-foreground">{step.title}</p>
-                </div>
-                <div
-                  className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClassNames[step.status]}`}
-                >
-                  {isActive ? (
-                    <>
-                      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                      Live
-                    </>
-                  ) : isDone ? (
-                    <>
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Done
-                    </>
-                  ) : (
-                    "Next"
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
       <p className="text-sm text-muted-foreground">
         {state === "linking_or_creating"
-          ? `Current step: ${activeStepTitle}.`
-          : "This dialog will update in place as soon as your sheet options are ready."}
+          ? "Connecting the sheet now."
+          : "This dialog will update in place if we need you to choose between sheets."}
       </p>
     </div>
   );

@@ -3,7 +3,7 @@ import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LiftSvg } from "@/components/year-recap/lift-svg";
-import { CopyPlus, FolderOpen, Link2, LoaderCircle, PlusSquare } from "lucide-react";
+import { FolderOpen, Link2, LoaderCircle, PlusSquare } from "lucide-react";
 
 function formatYearLabel(isoDate) {
   if (!isoDate) return null;
@@ -115,7 +115,6 @@ export function ChooseSheetPanel({
   statusMessage = "",
   onChooseSheet,
   onCreateBlank,
-  onCreateSample,
 }) {
   const isSwitchSheet = intent === "switch_sheet";
   const primaryCandidate =
@@ -136,8 +135,8 @@ export function ChooseSheetPanel({
         </CardTitle>
         <CardDescription>
           {isSwitchSheet
-            ? "Strength Journeys found sheets you can access. Pick the one you want to connect, or create a fresh sheet if you want a new data source."
-            : "Strength Journeys found Google Sheets in your Drive that look like lifting logs. Choose one to connect, or create a new sheet to get started."}
+            ? "Strength Journeys found sheets you can access. Pick the one you want to connect, or start fresh with a new sheet."
+            : "Strength Journeys found Google Sheets in your Drive that look like lifting logs. Choose one to connect, or start fresh with a new sheet."}
         </CardDescription>
         {statusMessage && (
           <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
@@ -227,13 +226,13 @@ export function ChooseSheetPanel({
                       Don&apos;t see the sheet you want?
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Browse Google Drive to grant Strength Journeys access to another sheet.
+                      Browse Google Drive to grant Strength Journeys access to another sheet, or start fresh with a clean lifting log.
                     </p>
-                    <div className="mt-2 flex justify-center">
+                    <div className="mt-3 flex flex-col gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="w-52"
+                        className="w-full"
                         disabled={!openPicker || isWorking}
                         onClick={() => {
                           if (openPicker) handleOpenFilePicker(openPicker);
@@ -241,6 +240,16 @@ export function ChooseSheetPanel({
                       >
                         <FolderOpen className="mr-2 h-4 w-4" />
                         Browse Google Drive
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={onCreateBlank}
+                        disabled={isWorking}
+                      >
+                        <PlusSquare className="mr-2 h-4 w-4" />
+                        Start fresh
                       </Button>
                     </div>
                   </div>
@@ -298,29 +307,6 @@ export function ChooseSheetPanel({
               </div>
             </>
           )}
-        </div>
-        <div className="border-t pt-4">
-          <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {isSwitchSheet ? "Or create a different sheet" : "Or start with a new sheet"}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="ghost"
-              onClick={onCreateBlank}
-              disabled={isWorking}
-            >
-              <PlusSquare className="mr-2 h-4 w-4" />
-              Start fresh (create a new lifting sheet)
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={onCreateSample}
-              disabled={isWorking}
-            >
-              <CopyPlus className="mr-2 h-4 w-4" />
-              Create demo sheet with example data
-            </Button>
-          </div>
         </div>
       </CardContent>
     </Card>

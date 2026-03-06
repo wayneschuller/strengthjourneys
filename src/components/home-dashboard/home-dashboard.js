@@ -555,24 +555,40 @@ export function HomeDashboard() {
 
   return (
     <div>
-      <div className="relative mb-4 2xl:mb-6 text-xl">
-        {/* 2xl: welcome left + status right in one row, vertically centered with circles */}
-        <div className="2xl:flex 2xl:items-start 2xl:justify-between">
-          <motion.div
-            className="mb-2 text-center 2xl:mb-0 2xl:text-left"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="text-muted-foreground">
-              {quipRef.current.split("{name}")[0]}
-            </span>
-            <span className="font-bold">
-              {session.user.name?.split(" ")[0]}
-            </span>
-          </motion.div>
-          {sheetInfo?.ssid && hasDataLoaded && (
-            <div className="hidden 2xl:block">
+      {sheetInfo?.ssid && (
+        <div className="relative mb-4 2xl:mb-6 text-xl">
+          {/* 2xl: welcome left + status right in one row, vertically centered with circles */}
+          <div className="2xl:flex 2xl:items-start 2xl:justify-between">
+            <motion.div
+              className="mb-2 text-center 2xl:mb-0 2xl:text-left"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6 }}
+            >
+              <span className="text-muted-foreground">
+                {quipRef.current.split("{name}")[0]}
+              </span>
+              <span className="font-bold">
+                {session.user.name?.split(" ")[0]}
+              </span>
+            </motion.div>
+            {hasDataLoaded && (
+              <div className="hidden 2xl:block">
+                <DataSheetStatus
+                  rawRows={rawRows}
+                  parsedData={parsedData}
+                  dataSyncedAt={dataSyncedAt}
+                  isValidating={isValidating}
+                  sheetURL={sheetInfo?.url}
+                  sheetFilename={sheetInfo?.filename}
+                  mutate={mutate}
+                />
+              </div>
+            )}
+          </div>
+          {/* Mobile: status below circles */}
+          {hasDataLoaded && (
+            <div className="mt-2 flex justify-center 2xl:hidden">
               <DataSheetStatus
                 rawRows={rawRows}
                 parsedData={parsedData}
@@ -585,21 +601,7 @@ export function HomeDashboard() {
             </div>
           )}
         </div>
-        {/* Mobile: status below circles */}
-        {sheetInfo?.ssid && hasDataLoaded && (
-          <div className="mt-2 flex justify-center 2xl:hidden">
-            <DataSheetStatus
-              rawRows={rawRows}
-              parsedData={parsedData}
-              dataSyncedAt={dataSyncedAt}
-              isValidating={isValidating}
-              sheetURL={sheetInfo?.url}
-              sheetFilename={sheetInfo?.filename}
-              mutate={mutate}
-            />
-          </div>
-        )}
-      </div>
+      )}
       {(!sheetInfo?.ssid ||
         (flowIntent === "switch_sheet" &&
           ["provisioning", "choose_sheet", "fallback_error"].includes(onboardingState))) && (
@@ -629,7 +631,6 @@ export function HomeDashboard() {
               statusMessage={sheetDiscoveryStatusMessage}
               onChooseSheet={(ssid) => runLinkAction({ mode: "select_existing", selectedSsid: ssid })}
               onCreateBlank={() => runLinkAction({ mode: "create_blank" })}
-              onCreateSample={() => runLinkAction({ mode: "create_sample" })}
             />
           )}
           {onboardingState === "fallback_error" && (

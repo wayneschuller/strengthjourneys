@@ -22,6 +22,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   AlertTriangle,
   FolderOpen,
@@ -186,6 +187,7 @@ export function HomeDashboard() {
       ["discovering", "linking_or_creating", "choose_sheet", "fallback_error"].includes(
         onboardingState,
       ));
+  const canDismissSheetFlow = flowIntent === "switch_sheet" && Boolean(sheetInfo?.ssid);
 
   const nonGoalSessionCount = useMemo(() => {
     if (!Array.isArray(parsedData)) return 0;
@@ -513,6 +515,20 @@ export function HomeDashboard() {
     }
   }, [clearSheet]);
 
+  const handleSheetFlowOpenChange = useCallback(
+    (nextOpen) => {
+      if (nextOpen || !canDismissSheetFlow) return;
+      setProvisionError(null);
+      setFlowIntent("bootstrap");
+      setOnboardingState("linked");
+      setSheetDiscoveryStatusMessage("");
+      setCandidateSheets([]);
+      setRecommendedCandidateId(null);
+      setIsCandidateEnrichmentLoading(false);
+    },
+    [canDismissSheetFlow],
+  );
+
   const handlePickerSelection = useCallback(
     (doc) => {
       if (!doc?.id) return;
@@ -650,15 +666,26 @@ export function HomeDashboard() {
           )}
         </div>
       )}
-      {shouldShowSheetFlowUi && (
-        <>
-          <DrivePickerContainer
-            onReady={handlePickerReady}
-            trigger={authStatus === "authenticated"}
-            oauthToken={session?.accessToken}
-            selectSheet={selectSheet}
-            onPick={handlePickerSelection}
-          />
+      <DrivePickerContainer
+        onReady={handlePickerReady}
+        trigger={authStatus === "authenticated"}
+        oauthToken={session?.accessToken}
+        selectSheet={selectSheet}
+        onPick={handlePickerSelection}
+      />
+      <Dialog open={shouldShowSheetFlowUi} onOpenChange={handleSheetFlowOpenChange}>
+        <DialogContent
+          aria-describedby={undefined}
+          className={`w-[min(96vw,1220px)] max-w-[1220px] border-0 bg-transparent p-0 shadow-none ${
+            canDismissSheetFlow ? "" : "[&>button]:hidden"
+          }`}
+          onEscapeKeyDown={(event) => {
+            if (!canDismissSheetFlow) event.preventDefault();
+          }}
+          onInteractOutside={(event) => {
+            if (!canDismissSheetFlow) event.preventDefault();
+          }}
+        >
           {["discovering", "linking_or_creating", "idle"].includes(onboardingState) && (
             <ProvisioningPanel
               isWorking={isProvisionActionLoading}
@@ -682,24 +709,22 @@ export function HomeDashboard() {
             />
           )}
           {onboardingState === "fallback_error" && (
-            <>
-              <FallbackConnectPanel
-                intent={flowIntent}
-                openPicker={openPicker}
-                onRetry={() => {
-                  provisioningStartedRef.current = false;
-                  resolveSheetFlow({
-                    intent: flowIntent === "switch_sheet" ? "switch_sheet" : "recovery",
-                    hadLocalBefore: true,
-                  });
-                }}
-                isWorking={isProvisionActionLoading}
-                errorMessage={provisionError}
-              />
-            </>
+            <FallbackConnectPanel
+              intent={flowIntent}
+              openPicker={openPicker}
+              onRetry={() => {
+                provisioningStartedRef.current = false;
+                resolveSheetFlow({
+                  intent: flowIntent === "switch_sheet" ? "switch_sheet" : "recovery",
+                  hadLocalBefore: true,
+                });
+              }}
+              isWorking={isProvisionActionLoading}
+              errorMessage={provisionError}
+            />
           )}
-        </>
-      )}
+        </DialogContent>
+      </Dialog>
       {sheetInfo?.ssid && (
         <RowProcessingIndicator
           rowCount={rawRows}

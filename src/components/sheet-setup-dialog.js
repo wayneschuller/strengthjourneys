@@ -208,6 +208,7 @@ export function SheetSetupDialog() {
   const [recommendedCandidateId, setRecommendedCandidateId] = useState(null);
   const [hadLocalSheetBefore, setHadLocalSheetBefore] = useState(false);
   const [createdSheetInfo, setCreatedSheetInfo] = useState(null);
+  const [createdSheetReason, setCreatedSheetReason] = useState(null);
   const launchedFromUserRef = useRef(false);
   const provisioningStartedRef = useRef(false);
   const dialogInitialSsidRef = useRef(null);
@@ -230,6 +231,7 @@ export function SheetSetupDialog() {
     setFlowIntent("bootstrap");
     setHadLocalSheetBefore(false);
     setCreatedSheetInfo(null);
+    setCreatedSheetReason(null);
   }, []);
 
   const handlePickerReady = useCallback((picker) => {
@@ -373,6 +375,7 @@ export function SheetSetupDialog() {
         selectSheet(payload.ssid, nextSheetInfo);
         if (shouldShowCreatedConfirmation(payload)) {
           setCreatedSheetInfo(nextSheetInfo);
+          setCreatedSheetReason(payload?.reason || null);
           setSheetDiscoveryStatusMessage("");
           setOnboardingState("created_confirmation");
         }
@@ -634,6 +637,7 @@ export function SheetSetupDialog() {
               {onboardingState === "created_confirmation" && (
                 <CreatedSheetPanel
                   sheetInfo={createdSheetInfo || sheetInfo}
+                  reason={createdSheetReason}
                   onGoToDashboard={closeDialog}
                 />
               )}
@@ -681,9 +685,10 @@ function FallbackConnectPanel({ intent, openPicker, onRetry, isWorking, errorMes
   );
 }
 
-function CreatedSheetPanel({ sheetInfo, onGoToDashboard }) {
+function CreatedSheetPanel({ sheetInfo, reason, onGoToDashboard }) {
   const sheetUrl = getSheetUrl(sheetInfo?.ssid, sheetInfo?.url);
   const sheetLabel = sheetInfo?.filename || "Your Strength Journeys lifting log";
+  const showRecoveryHint = reason === "reprovision_after_missing_sheet";
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-8 pb-2">
@@ -751,6 +756,21 @@ function CreatedSheetPanel({ sheetInfo, onGoToDashboard }) {
         <div className="rounded-lg border border-border/70 bg-card/20 px-4 py-3 text-center text-sm leading-relaxed text-muted-foreground">
           Log lifts in your sheet. Your dashboards update automatically.
         </div>
+        {showRecoveryHint ? (
+          <div className="rounded-lg border border-border/70 bg-muted/20 px-4 py-3 text-center text-sm leading-relaxed text-muted-foreground">
+            We created a new lifting log for you. If you deleted your old one
+            recently, you may still be able to restore it from{" "}
+            <a
+              href="https://drive.google.com/drive/trash"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-primary"
+            >
+              Google Drive trash
+            </a>
+            .
+          </div>
+        ) : null}
         <div className="flex flex-col justify-center gap-3 sm:flex-row">
           {sheetUrl ? (
             <Button asChild size="lg" className="gap-2 shadow-sm">

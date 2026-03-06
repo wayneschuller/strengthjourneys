@@ -59,6 +59,7 @@ export const GA_EVENT_TAGS = Object.freeze({
   HEATMAP_SHARE_CLIPBOARD: "heatmap_share_clipboard", // ~Apr 2024: Analyzer heatmap image copied to clipboard.
   FEEDBACK_SENTIMENT: "SJ_feedback_sentiment", // ~Feb 2026: Feedback thumbs sentiment (explicit SJ-prefixed new tag).
   HOME_DASHBOARD_FIRST_VIEW: "SJ_home_dashboard_first_view", // ~Mar 2026: First time user sees loaded home dashboard.
+  HOME_DASHBOARD_STAGE_ENTERED: "SJ_home_dashboard_stage_entered", // ~Mar 2026: User entered a staged onboarding/dashboard phase.
 });
 
 const UTM_STORAGE_KEY = "ga_utm";
@@ -228,13 +229,56 @@ export function gaTrackFeedbackSentiment(sentiment, page, extra = {}) {
  * @param {object} params
  * @param {number} params.parsedDataCount - Total parsedData items.
  * @param {number} params.nonGoalParsedDataCount - Parsed items excluding goals.
+ * @param {string} [params.dashboardStage] - Current staged dashboard experience.
+ * @param {string} [params.starterSheetState] - Whether the linked sheet still resembles the starter sample.
+ * @param {number} [params.sessionCount] - Unique non-goal session count.
  */
 export function gaTrackHomeDashboardFirstView({
   parsedDataCount = 0,
   nonGoalParsedDataCount = 0,
+  dashboardStage,
+  starterSheetState,
+  sessionCount,
 } = {}) {
-  gaEvent(GA_EVENT_TAGS.HOME_DASHBOARD_FIRST_VIEW, {
+  const params = {
     parsed_data_count: parsedDataCount,
     non_goal_parsed_data_count: nonGoalParsedDataCount,
-  });
+  };
+  if (typeof dashboardStage === "string") params.dashboard_stage = dashboardStage;
+  if (typeof starterSheetState === "string") {
+    params.starter_sheet_state = starterSheetState;
+  }
+  if (typeof sessionCount === "number") params.session_count = sessionCount;
+  gaEvent(GA_EVENT_TAGS.HOME_DASHBOARD_FIRST_VIEW, params);
+}
+
+/**
+ * Track when a linked sheet enters a dashboard stage for the first time.
+ * @param {object} params
+ * @param {string} params.dashboardStage
+ * @param {string|null} [params.previousDashboardStage]
+ * @param {string} [params.starterSheetState]
+ * @param {number} [params.sessionCount]
+ */
+export function gaTrackHomeDashboardStageEntered({
+  dashboardStage,
+  previousDashboardStage = null,
+  starterSheetState,
+  sessionCount,
+} = {}) {
+  if (typeof dashboardStage !== "string" || dashboardStage.length === 0) return;
+  const params = {
+    dashboard_stage: dashboardStage,
+  };
+  if (
+    typeof previousDashboardStage === "string" &&
+    previousDashboardStage.length > 0
+  ) {
+    params.previous_dashboard_stage = previousDashboardStage;
+  }
+  if (typeof starterSheetState === "string") {
+    params.starter_sheet_state = starterSheetState;
+  }
+  if (typeof sessionCount === "number") params.session_count = sessionCount;
+  gaEvent(GA_EVENT_TAGS.HOME_DASHBOARD_STAGE_ENTERED, params);
 }

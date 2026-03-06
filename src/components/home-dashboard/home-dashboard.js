@@ -10,8 +10,15 @@ import { TheLatestSessionCard } from "@/components/home-dashboard/the-latest-ses
 import { TheMonthInIronCard } from "@/components/home-dashboard/the-month-in-iron-card";
 import { TheLongGameCard } from "@/components/home-dashboard/the-long-game-card";
 import { motion } from "motion/react";
-import { gaTrackHomeDashboardFirstView } from "@/lib/analytics";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import {
+  gaTrackHomeDashboardFirstView,
+  gaTrackHomeDashboardStageEntered,
+} from "@/lib/analytics";
+import {
+  LOCAL_STORAGE_KEYS,
+  getSheetScopedStorageKey,
+} from "@/lib/localStorage-keys";
+import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 
 // Short, subtle quips that incorporate the user's first name.
 // {name} is replaced at render time.
@@ -80,21 +87,16 @@ export function HomeDashboard() {
   const [isProgressDone, setIsProgressDone] = useState(false);
   const [hasDataLoaded, setHasDataLoaded] = useState(false);
   const [highlightDate, setHighlightDate] = useState(null);
-  const nonGoalSessionCount = useMemo(() => {
-    if (!Array.isArray(parsedData)) return 0;
-    const uniqueDates = new Set();
-    parsedData.forEach((entry) => {
-      if (!entry?.isGoal && entry?.date) uniqueDates.add(entry.date);
-    });
-    return uniqueDates.size;
-  }, [parsedData]);
-
-  const dataMaturityStage = useMemo(() => {
-    if (nonGoalSessionCount === 0) return "no_sessions";
-    if (nonGoalSessionCount <= 7) return "first_week";
-    if (nonGoalSessionCount <= 20) return "first_month";
-    return "mature";
-  }, [nonGoalSessionCount]);
+  const { dashboardStage, starterSheetState, sessionCount, dataMaturityStage } =
+    useMemo(
+      () =>
+        getDashboardStage({
+          parsedData,
+          rawRows,
+          sheetInfo,
+        }),
+      [parsedData, rawRows, sheetInfo],
+    );
 
   useEffect(() => {
     if (isProgressDone) setHasDataLoaded(true);
@@ -109,7 +111,10 @@ export function HomeDashboard() {
     if (authStatus !== "authenticated") return;
     if (!sheetInfo?.ssid || !hasDataLoaded || !Array.isArray(parsedData)) return;
 
-    const storageKey = LOCAL_STORAGE_KEYS.HOME_DASHBOARD_FIRST_VIEW_TRACKED;
+    const storageKey = getSheetScopedStorageKey(
+      LOCAL_STORAGE_KEYS.HOME_DASHBOARD_FIRST_VIEW_TRACKED,
+      sheetInfo?.ssid,
+    );
     if (window.localStorage.getItem(storageKey) === "1") return;
 
     const parsedDataCount = parsedData.length;
@@ -121,9 +126,50 @@ export function HomeDashboard() {
     gaTrackHomeDashboardFirstView({
       parsedDataCount,
       nonGoalParsedDataCount,
+      dashboardStage,
+      starterSheetState,
+      sessionCount,
     });
     window.localStorage.setItem(storageKey, "1");
-  }, [authStatus, sheetInfo?.ssid, hasDataLoaded, parsedData]);
+  }, [
+    authStatus,
+    sheetInfo?.ssid,
+    hasDataLoaded,
+    parsedData,
+    dashboardStage,
+    starterSheetState,
+    sessionCount,
+  ]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (authStatus !== "authenticated") return;
+    if (!sheetInfo?.ssid || !hasDataLoaded || !Array.isArray(parsedData)) return;
+    if (typeof dashboardStage !== "string" || dashboardStage.length === 0) return;
+
+    const storageKey = getSheetScopedStorageKey(
+      LOCAL_STORAGE_KEYS.HOME_DASHBOARD_LAST_TRACKED_STAGE,
+      sheetInfo?.ssid,
+    );
+    const previousDashboardStage = window.localStorage.getItem(storageKey);
+    if (previousDashboardStage === dashboardStage) return;
+
+    gaTrackHomeDashboardStageEntered({
+      dashboardStage,
+      previousDashboardStage,
+      starterSheetState,
+      sessionCount,
+    });
+    window.localStorage.setItem(storageKey, dashboardStage);
+  }, [
+    authStatus,
+    sheetInfo?.ssid,
+    hasDataLoaded,
+    parsedData,
+    dashboardStage,
+    starterSheetState,
+    sessionCount,
+  ]);
 
   return (
     <div>
@@ -188,19 +234,19 @@ export function HomeDashboard() {
             {/* Three headline cards intentionally begin with "The" and widen chronology:
                 The Latest Session -> The Month in Iron -> The Long Game.
                 Together they make the app experience feel badass and motivating, like chapters in an ongoing strength story. */}
-            <TheLatestSessionCard
+              <TheLatestSessionCard
               highlightDate={highlightDate}
               setHighlightDate={setHighlightDate}
               dataMaturityStage={dataMaturityStage}
-              sessionCount={nonGoalSessionCount}
+              sessionCount={sessionCount}
             />
             <TheMonthInIronCard
               dataMaturityStage={dataMaturityStage}
-              sessionCount={nonGoalSessionCount}
+              sessionCount={sessionCount}
             />
             <TheLongGameCard
               dataMaturityStage={dataMaturityStage}
-              sessionCount={nonGoalSessionCount}
+              sessionCount={sessionCount}
             />
           </section>
         </>

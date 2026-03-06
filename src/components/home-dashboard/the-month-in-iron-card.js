@@ -487,8 +487,7 @@ function EarlyMonthMomentumCard({
             <p className="text-sm text-muted-foreground">
               Start with an empty barbell and work up to a moderate weight. 3x5
               means three sets of five reps. Normally people rest 3-5 minutes
-              between sets. It should feel heavy enough that you still have 2-3
-              reps in reserve.
+              between sets.
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <WeekPlanLiftSession
@@ -511,6 +510,11 @@ function EarlyMonthMomentumCard({
                 ]}
               />
             </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Each work set should finish with about 2-3 reps still in reserve.
+              As the weeks go on, add small amounts of weight so the lifts keep
+              moving without turning into grinders.
+            </p>
           </div>
         ) : showFirstMonthTemplate ? (
           <div className="rounded-lg border bg-background/80 px-3 py-3">

@@ -4,8 +4,9 @@ import Head from "next/head";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 
 import {
   Calculator,
@@ -237,11 +238,24 @@ export default function Home() {
     "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
   const { status: authStatus } = useSession();
-  const { sheetInfo, isDemoMode } = useUserLiftingData();
+  const { sheetInfo, isDemoMode, parsedData, rawRows } = useUserLiftingData();
   const [showHeroSection, setShowHeroSection] = useState(true); // Ensure static generation of Hero Section
   const [isFadingHero, setIsFadingHero] = useState(false);
   const [bigFourAnimated, setBigFourAnimated] = useState(false);
   const hasLinkedSheet = authStatus === "authenticated" && !!sheetInfo?.ssid && !isDemoMode;
+  const { dashboardStage } = useMemo(
+    () =>
+      getDashboardStage({
+        parsedData,
+        rawRows,
+        sheetInfo,
+      }),
+    [parsedData, rawRows, sheetInfo],
+  );
+  const showEnhancedBigFourSection =
+    !hasLinkedSheet ||
+    dashboardStage === "early_base" ||
+    dashboardStage === "established";
 
   // Only collapse the landing hero once the user has real linked data and can
   // meaningfully land on the dashboard. Signed-in demo mode should still feel
@@ -332,12 +346,16 @@ export default function Home() {
 
         <StrengthUnwrappedDecemberBanner className="mt-8 mb-6" />
 
-        <h2 className="mt-8 mb-4 text-xl font-semibold">
-          🏋️ The Big Four Barbell Lifts
-        </h2>
+        {showEnhancedBigFourSection && (
+          <>
+            <h2 className="mt-8 mb-4 text-xl font-semibold">
+              🏋️ The Big Four Barbell Lifts
+            </h2>
 
-        <BigFourLiftCards lifts={mainBarbellLifts} animated={bigFourAnimated} />
-        <Separator className="my-8" />
+            <BigFourLiftCards lifts={mainBarbellLifts} animated={bigFourAnimated} />
+            <Separator className="my-8" />
+          </>
+        )}
 
         <h2 className="mt-8 text-xl font-semibold">
           🛠️ Strength Insights & Tools

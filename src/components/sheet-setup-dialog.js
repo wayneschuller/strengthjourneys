@@ -120,6 +120,7 @@ export function SheetSetupDialog() {
   const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false);
   const launchedFromUserRef = useRef(false);
   const provisioningStartedRef = useRef(false);
+  const dialogInitialSsidRef = useRef(null);
 
   const resetUiState = useCallback(() => {
     setProvisionError(null);
@@ -279,6 +280,7 @@ export function SheetSetupDialog() {
 
   const resolveSheetFlow = useCallback(
     async ({ intent, hadLocalBefore = false } = {}) => {
+      dialogInitialSsidRef.current = sheetInfo?.ssid || null;
       setOpen(true);
       setProvisionError(null);
       setIsProvisionActionLoading(true);
@@ -316,7 +318,7 @@ export function SheetSetupDialog() {
         setIsProvisionActionLoading(false);
       }
     },
-    [handleResolvedAction],
+    [handleResolvedAction, sheetInfo?.ssid],
   );
 
   const runLinkAction = useCallback(
@@ -377,6 +379,7 @@ export function SheetSetupDialog() {
 
   const closeDialog = useCallback(() => {
     setOpen(false);
+    dialogInitialSsidRef.current = sheetInfo?.ssid || null;
     if (authStatus === "authenticated" && !sheetInfo?.ssid) {
       enterSignedInDemoMode();
     }
@@ -396,7 +399,9 @@ export function SheetSetupDialog() {
 
   useEffect(() => {
     if (!open || !sheetInfo?.ssid) return;
+    if (sheetInfo.ssid === dialogInitialSsidRef.current) return;
     setOpen(false);
+    dialogInitialSsidRef.current = sheetInfo.ssid;
     resetUiState();
     launchedFromUserRef.current = false;
     provisioningStartedRef.current = true;

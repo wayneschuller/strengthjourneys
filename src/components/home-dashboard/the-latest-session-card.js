@@ -356,6 +356,25 @@ export function TheLatestSessionCard({
           {analyzedSessionLifts &&
             (Object.keys(analyzedSessionLifts).length > 0 ? (
               <div className="space-y-4">
+                {Object.entries(analyzedSessionLifts).map(
+                  ([liftType, workouts]) => (
+                    <SessionExerciseBlock
+                      key={liftType}
+                      variant="compact"
+                      liftType={liftType}
+                      workouts={workouts}
+                      authStatus={authStatus}
+                      hasBioData={hasBioData}
+                      standards={standards}
+                      e1rmFormula={e1rmFormula}
+                      sessionDate={sessionDate}
+                      age={age}
+                      bodyWeight={bodyWeight}
+                      sex={sex}
+                      isMetric={isMetric}
+                    />
+                  ),
+                )}
                 {isStarterSampleStage && sheetInfo?.url && (
                   <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
                     <div className="flex flex-col gap-4">
@@ -397,25 +416,6 @@ export function TheLatestSessionCard({
                     </div>
                   </div>
                 )}
-                {Object.entries(analyzedSessionLifts).map(
-                  ([liftType, workouts]) => (
-                    <SessionExerciseBlock
-                      key={liftType}
-                      variant="compact"
-                      liftType={liftType}
-                      workouts={workouts}
-                      authStatus={authStatus}
-                      hasBioData={hasBioData}
-                      standards={standards}
-                      e1rmFormula={e1rmFormula}
-                      sessionDate={sessionDate}
-                      age={age}
-                      bodyWeight={bodyWeight}
-                      sex={sex}
-                      isMetric={isMetric}
-                    />
-                  ),
-                )}
               </div>
             ) : (
               <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
@@ -428,13 +428,6 @@ export function TheLatestSessionCard({
             <Button asChild variant="outline">
               <a href={sheetInfo.url} target="_blank" rel="noopener noreferrer">
                 Open your sheet
-              </a>
-            </Button>
-          )}
-          {hasLoggedSessions && isStarterSampleStage && sheetInfo?.url && (
-            <Button asChild variant="outline">
-              <a href={sheetInfo.url} target="_blank" rel="noopener noreferrer">
-                Edit this sample in Google Sheets
               </a>
             </Button>
           )}

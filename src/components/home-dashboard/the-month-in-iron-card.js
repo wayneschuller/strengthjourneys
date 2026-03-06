@@ -485,13 +485,10 @@ function EarlyMonthMomentumCard({
         {showWeekTemplate ? (
           <div className="rounded-lg border bg-background/80 px-3 py-3">
             <p className="text-sm text-muted-foreground">
-              In the first week, the goal is simply to learn the lifts,
-              establish the routine, and begin progressive loading. Start
-              lighter than you think you need so you can focus on consistent
-              technique and finish each set with a couple of reps in reserve.
-              Rest properly between sets and add small amounts of weight each
-              session so the lifts feel smooth and repeatable rather than
-              grinding.
+              Start with an empty barbell and work up to a moderate weight. 3x5
+              means three sets of five reps, with 3-5 minutes of rest between
+              sets. It should feel heavy enough that you still have 2-3 reps in
+              reserve.
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <WeekPlanLiftSession

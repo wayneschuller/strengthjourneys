@@ -898,27 +898,42 @@ export function TheLongGameCard({
 }
 
 function StarterLongGameState({ parsedData, sessionCount = 0 }) {
-  const sessionsThisWeek = useMemo(() => {
-    if (!Array.isArray(parsedData)) return 1;
-    const today = new Date();
-    const dayOfWeek = today.getDay();
+  const litDayIndexes = useMemo(() => {
+    const nonGoalDates = Array.isArray(parsedData)
+      ? Array.from(
+          new Set(
+            parsedData
+              .filter((entry) => !entry?.isGoal && entry?.date)
+              .map((entry) => entry.date),
+          ),
+        ).sort()
+      : [];
+    const anchorDateStr =
+      nonGoalDates[nonGoalDates.length - 1] || format(new Date(), "yyyy-MM-dd");
+    const anchorDate = new Date(`${anchorDateStr}T00:00:00`);
+    const dayOfWeek = anchorDate.getDay();
     const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - mondayOffset);
+    const startOfWeek = new Date(anchorDate);
+    startOfWeek.setDate(anchorDate.getDate() - mondayOffset);
     startOfWeek.setHours(0, 0, 0, 0);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
 
-    const seenDates = new Set();
-    parsedData.forEach((entry) => {
-      if (entry?.isGoal || !entry?.date) return;
-      const entryDate = new Date(`${entry.date}T00:00:00`);
-      if (entryDate >= startOfWeek && entryDate <= today) {
-        seenDates.add(entry.date);
-      }
+    const dayIndexes = new Set();
+    nonGoalDates.forEach((dateStr) => {
+      const entryDate = new Date(`${dateStr}T00:00:00`);
+      if (entryDate < startOfWeek || entryDate > endOfWeek) return;
+      const mondayBasedIndex = (entryDate.getDay() + 6) % 7;
+      dayIndexes.add(mondayBasedIndex);
     });
 
-    return Math.max(1, seenDates.size || sessionCount || 1);
+    if (dayIndexes.size === 0) {
+      dayIndexes.add(sessionCount > 0 ? (anchorDate.getDay() + 6) % 7 : 0);
+    }
+
+    return dayIndexes;
   }, [parsedData, sessionCount]);
-  const litDots = Math.min(7, Math.max(1, sessionsThisWeek));
   const days = ["M", "T", "W", "T", "F", "S", "S"];
 
   return (
@@ -932,7 +947,7 @@ function StarterLongGameState({ parsedData, sessionCount = 0 }) {
             >
               <div
                 className={`h-5 w-5 rounded-full border ${
-                  index < litDots
+                  litDayIndexes.has(index)
                     ? "border-primary/40 bg-primary"
                     : "border-border/70 bg-muted/30"
                 }`}

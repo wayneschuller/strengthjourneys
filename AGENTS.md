@@ -274,6 +274,7 @@ Agents operating in this repo should:
 - Never introduce TypeScript
 - Never migrate to App Router
 - Keep changes aligned with existing conventions
+- Park future follow-up tasks and todos in `.agents/follow-up-audit-items.md`
 
 If unsure, follow existing patterns in nearby files.
 

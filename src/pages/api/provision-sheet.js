@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { kv } from "@vercel/kv";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { devLog } from "@/lib/processing-utils";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 
 const TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
 const PROVISION_VERSION = 1;
@@ -16,6 +17,7 @@ const REQUIRED_HEADERS = [
   "Label",
   "URL",
 ];
+const BIG_FOUR_LIFTS = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
 const REQUIRED_HEADER_CORE = ["date", "lift type", "reps", "weight"];
 const isDevEnv =
   process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
@@ -26,6 +28,44 @@ function normalizeHeader(value) {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, " ");
+}
+
+function normalizeLiftTypeForPreview(liftTypeRaw) {
+  const key = String(liftTypeRaw || "")
+    .trim()
+    .toLowerCase();
+
+  const map = {
+    "back squat": "Back Squat",
+    squat: "Back Squat",
+    "bench press": "Bench Press",
+    bench: "Bench Press",
+    deadlift: "Deadlift",
+    "strict press": "Strict Press",
+    "overhead press": "Strict Press",
+    "military press": "Strict Press",
+    press: "Strict Press",
+    ohp: "Strict Press",
+  };
+  return map[key] || null;
+}
+
+function parseReps(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  const parsed = parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return parsed;
+}
+
+function parseWeight(value) {
+  const raw = String(value || "")
+    .trim()
+    .replace(/,/g, "");
+  if (!raw) return null;
+  const parsed = parseFloat(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return parsed;
 }
 
 function getNameTokens(fullName) {
@@ -118,6 +158,9 @@ function toClientCandidate(candidate) {
     dateRangeStart: candidate.dateRangeStart || null,
     dateRangeEnd: candidate.dateRangeEnd || null,
     metadataSampled: Boolean(candidate.metadataSampled),
+    bigFourPreview: Array.isArray(candidate.bigFourPreview)
+      ? candidate.bigFourPreview
+      : [],
   };
 }
 
@@ -205,6 +248,7 @@ async function readHeaderInfo(ssid, headers) {
   const dateColumnIndex = normalized.indexOf("date");
   const repsColumnIndex = normalized.indexOf("reps");
   const weightColumnIndex = normalized.indexOf("weight");
+  const liftTypeColumnIndex = normalized.indexOf("lift type");
 
   return {
     valid,
@@ -214,6 +258,7 @@ async function readHeaderInfo(ssid, headers) {
     dateColumnIndex,
     repsColumnIndex,
     weightColumnIndex,
+    liftTypeColumnIndex,
   };
 }
 
@@ -232,6 +277,7 @@ async function enrichCandidateMetadata(
   dateColumnIndex,
   repsColumnIndex,
   weightColumnIndex,
+  liftTypeColumnIndex,
 ) {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${candidate.id}/values/A2:Z${METADATA_SCAN_ROW_CAP + 1}?dateTimeRenderOption=FORMATTED_STRING`;
   const response = await fetch(url, { method: "GET", headers });
@@ -259,7 +305,10 @@ async function enrichCandidateMetadata(
   const safeDateCol = dateColumnIndex >= 0 ? dateColumnIndex : 0;
   const safeRepsCol = repsColumnIndex >= 0 ? repsColumnIndex : -1;
   const safeWeightCol = weightColumnIndex >= 0 ? weightColumnIndex : -1;
+  const safeLiftTypeCol = liftTypeColumnIndex >= 0 ? liftTypeColumnIndex : -1;
   let previousDate = null;
+  let previousLiftType = null;
+  const bestByLift = {};
 
   for (const row of nonEmptyRows) {
     const hasReps =
@@ -272,10 +321,38 @@ async function enrichCandidateMetadata(
     const parsed = parseYmd(row?.[safeDateCol]) || previousDate;
     if (!parsed) continue;
     previousDate = parsed;
+
+    const normalizedLiftType =
+      normalizeLiftTypeForPreview(row?.[safeLiftTypeCol]) || previousLiftType;
+    if (normalizedLiftType) previousLiftType = normalizedLiftType;
     sessions.add(parsed);
     if (!minDate || parsed < minDate) minDate = parsed;
     if (!maxDate || parsed > maxDate) maxDate = parsed;
+
+    if (!normalizedLiftType || !BIG_FOUR_LIFTS.includes(normalizedLiftType)) {
+      continue;
+    }
+
+    const reps = parseReps(row?.[safeRepsCol]);
+    const weight = parseWeight(row?.[safeWeightCol]);
+    if (!reps || !weight) continue;
+
+    const e1rm = estimateE1RM(reps, weight, "Brzycki");
+    const current = bestByLift[normalizedLiftType];
+    if (!current || e1rm > current.e1rm) {
+      bestByLift[normalizedLiftType] = {
+        liftType: normalizedLiftType,
+        e1rm,
+        reps,
+        weight,
+        date: parsed,
+      };
+    }
   }
+
+  const bigFourPreview = BIG_FOUR_LIFTS.map((liftType) => bestByLift[liftType]).filter(
+    Boolean,
+  );
 
   let hasRowsBeyondScanCap = false;
   try {
@@ -302,6 +379,7 @@ async function enrichCandidateMetadata(
     approxSessions: sessions.size || null,
     dateRangeStart: minDate,
     dateRangeEnd: maxDate,
+    bigFourPreview,
     metadataSampled:
       nonEmptyRows.length >= METADATA_SCAN_ROW_CAP || hasRowsBeyondScanCap,
   };
@@ -344,6 +422,7 @@ async function discoverValidCandidates(headers, debug) {
         __dateColumnIndex: headerInfo.dateColumnIndex,
         __repsColumnIndex: headerInfo.repsColumnIndex,
         __weightColumnIndex: headerInfo.weightColumnIndex,
+        __liftTypeColumnIndex: headerInfo.liftTypeColumnIndex,
       });
     }
   }
@@ -361,10 +440,12 @@ async function discoverValidCandidates(headers, debug) {
       candidate.__dateColumnIndex,
       candidate.__repsColumnIndex,
       candidate.__weightColumnIndex,
+      candidate.__liftTypeColumnIndex,
     );
     delete candidateWithMeta.__dateColumnIndex;
     delete candidateWithMeta.__repsColumnIndex;
     delete candidateWithMeta.__weightColumnIndex;
+    delete candidateWithMeta.__liftTypeColumnIndex;
     enriched.push(candidateWithMeta);
   }
 

@@ -28,7 +28,6 @@ import {
   LoaderCircle,
   PlusSquare,
   Sparkles,
-  Star,
 } from "lucide-react";
 
 // Short, subtle quips that incorporate the user's first name.
@@ -443,6 +442,42 @@ function formatCandidateMeta(candidate) {
   return bits.join(" · ");
 }
 
+function formatRecommendedMeta(candidate) {
+  const bits = [];
+  const isSampled = Boolean(candidate?.metadataSampled);
+  const startYear = parseInt(formatYearLabel(candidate?.dateRangeStart) || "", 10);
+  const endYear = parseInt(formatYearLabel(candidate?.dateRangeEnd) || "", 10);
+  if (typeof candidate?.approxSessions === "number") {
+    bits.push(
+      isSampled
+        ? `${candidate.approxSessions.toLocaleString()}+ workouts`
+        : `${candidate.approxSessions.toLocaleString()} workouts`,
+    );
+  }
+  if (Number.isFinite(startYear) && Number.isFinite(endYear) && endYear >= startYear) {
+    if (isSampled) {
+      const spanYears = endYear - startYear + 1;
+      bits.push(`${spanYears}+ years data`);
+    } else {
+      bits.push(`${startYear}-${endYear}`);
+    }
+  }
+  return bits.join(" • ") || "Lifting log detected";
+}
+
+function formatPreviewSet(preview) {
+  if (!preview) return "";
+  const liftLabelMap = {
+    "Back Squat": "Squat",
+    "Bench Press": "Bench",
+    Deadlift: "Deadlift",
+    "Strict Press": "Press",
+  };
+  const lift = liftLabelMap[preview.liftType] || preview.liftType;
+  const weight = Math.round(preview.weight);
+  return `${lift}: ${weight} x ${preview.reps} (~${preview.e1rm} e1rm)`;
+}
+
 function ChooseSheetPanel({
   candidates,
   openPicker,
@@ -476,34 +511,38 @@ function ChooseSheetPanel({
               </p>
               <div
                 key={candidates[0].id}
-                className="rounded-2xl border-2 border-primary/45 bg-primary/8 px-5 py-4 shadow-sm"
+                className="rounded-xl border border-border/50 bg-card/70 px-5 py-6"
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="mb-1 flex min-w-0 items-center gap-2">
-                      <img
-                        src={GOOGLE_SHEETS_ICON_URL}
-                        alt=""
-                        className="h-4 w-4 shrink-0"
-                        aria-hidden
-                      />
-                      <p className="truncate text-base font-semibold text-foreground">
-                        {candidates[0].name}
-                      </p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {formatCandidateMeta(candidates[0])}
+                <div className="max-w-xl space-y-4">
+                  <div className="min-w-0 space-y-1.5">
+                    <p className="truncate text-base font-semibold text-foreground">
+                      {candidates[0].name}
                     </p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatRecommendedMeta(candidates[0])}
+                    </p>
+                    {Array.isArray(candidates[0].bigFourPreview) &&
+                      candidates[0].bigFourPreview.length > 0 && (
+                        <div className="pt-1">
+                          <p className="mb-1 text-xs font-medium text-muted-foreground">
+                            Nice work. Quick strength preview:
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {candidates[0].bigFourPreview.map((preview) => (
+                              <span
+                                key={preview.liftType}
+                                className="rounded-md border bg-background/80 px-2 py-1 text-xs text-foreground/90"
+                              >
+                                {formatPreviewSet(preview)}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                   </div>
-                  <span className="inline-flex items-center gap-1 self-start rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">
-                    <Star className="h-3 w-3 fill-current" />
-                    Recommended (most recently updated)
-                  </span>
-                </div>
-                <div className="mt-4">
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto"
+                    className="w-full sm:w-auto sm:min-w-56"
                     disabled={isWorking}
                     onClick={() => onChooseSheet(candidates[0].id)}
                   >

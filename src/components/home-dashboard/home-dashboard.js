@@ -28,6 +28,7 @@ import {
   LoaderCircle,
   PlusSquare,
   Sparkles,
+  Star,
 } from "lucide-react";
 
 // Short, subtle quips that incorporate the user's first name.
@@ -310,6 +311,12 @@ export function HomeDashboard() {
       </div>
       {!sheetInfo?.ssid && (
         <>
+          <DrivePickerContainer
+            onReady={handlePickerReady}
+            trigger={authStatus === "authenticated"}
+            oauthToken={session?.accessToken}
+            selectSheet={selectSheet}
+          />
           {(onboardingState === "provisioning" || onboardingState === "idle") && (
             <ProvisioningPanel
               isWorking={isProvisionActionLoading}
@@ -335,12 +342,6 @@ export function HomeDashboard() {
                 }}
                 isWorking={isProvisionActionLoading}
                 errorMessage={provisionError}
-              />
-              <DrivePickerContainer
-                onReady={handlePickerReady}
-                trigger={authStatus === "authenticated"}
-                oauthToken={session?.accessToken}
-                selectSheet={selectSheet}
               />
             </>
           )}
@@ -416,6 +417,32 @@ function formatLastEdited(candidate) {
   return `Last edited: ${d.toLocaleString()}`;
 }
 
+function formatDateLabel(isoDate) {
+  if (!isoDate) return null;
+  const d = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatCandidateMeta(candidate) {
+  const bits = [formatLastEdited(candidate)];
+  if (typeof candidate?.approxRows === "number") {
+    bits.push(`~${candidate.approxRows.toLocaleString()} rows`);
+  }
+  if (typeof candidate?.approxSessions === "number") {
+    bits.push(`~${candidate.approxSessions.toLocaleString()} sessions`);
+  }
+  const start = formatDateLabel(candidate?.dateRangeStart);
+  const end = formatDateLabel(candidate?.dateRangeEnd);
+  if (start && end) bits.push(`${start} - ${end}`);
+  if (candidate?.metadataSampled) bits.push("sampled");
+  return bits.join(" · ");
+}
+
 function ChooseSheetPanel({
   candidates,
   openPicker,
@@ -434,19 +461,19 @@ function ChooseSheetPanel({
             className="h-5 w-5 shrink-0"
             aria-hidden
           />
-          Choose your lifting sheet
+          Select your lifting sheet
         </CardTitle>
         <CardDescription>
-          We found multiple sheets with lifting-style columns. Pick one to continue, or create a fresh start.
+          Strength Journeys found Google Sheets in your Drive that look like lifting logs. Choose one to connect, or create a new sheet to get started.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
           <p className="text-sm font-semibold text-foreground">
-            Can&apos;t see your sheet?
+            Don&apos;t see the sheet you want?
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Browse Google Drive to grant Strength Journeys access to a sheet you just created.
+            Browse Google Drive to grant Strength Journeys access to another sheet.
           </p>
           <div className="mt-3">
             <Button
@@ -461,38 +488,77 @@ function ChooseSheetPanel({
             </Button>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {candidates.map((candidate, index) => (
-            <button
-              key={candidate.id}
-              type="button"
-              className="group rounded-xl border bg-card px-4 py-3 text-left transition hover:border-primary/50 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isWorking}
-              onClick={() => onChooseSheet(candidate.id)}
-            >
-              <div className="mb-1 flex items-start justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <img
-                    src={GOOGLE_SHEETS_ICON_URL}
-                    alt=""
-                    className="h-4 w-4 shrink-0"
-                    aria-hidden
-                  />
-                  <p className="truncate text-sm font-semibold text-foreground">
-                    {candidate.name}
-                  </p>
-                </div>
-                {index === 0 && (
-                  <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                    Recommended
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {formatLastEdited(candidate)}
+        <div className="space-y-3">
+          {candidates[0] && (
+            <>
+              <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Recommended
               </p>
-            </button>
-          ))}
+              <button
+                key={candidates[0].id}
+                type="button"
+                className="group w-full rounded-xl border-2 border-primary/40 bg-primary/5 px-4 py-3 text-left transition hover:border-primary/70 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isWorking}
+                onClick={() => onChooseSheet(candidates[0].id)}
+              >
+                <div className="mb-1 flex items-start justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <img
+                      src={GOOGLE_SHEETS_ICON_URL}
+                      alt=""
+                      className="h-4 w-4 shrink-0"
+                      aria-hidden
+                    />
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {candidates[0].name}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">
+                    <Star className="h-3 w-3 fill-current" />
+                    Recommended (most recently updated)
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {formatCandidateMeta(candidates[0])}
+                </p>
+              </button>
+            </>
+          )}
+          {candidates.length > 1 && (
+            <>
+              <p className="pt-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Other detected lifting sheets
+              </p>
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                {candidates.slice(1).map((candidate) => (
+                  <button
+                    key={candidate.id}
+                    type="button"
+                    className="group rounded-xl border bg-card px-4 py-3 text-left transition hover:border-primary/50 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isWorking}
+                    onClick={() => onChooseSheet(candidate.id)}
+                  >
+                    <div className="mb-1 flex items-start justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <img
+                          src={GOOGLE_SHEETS_ICON_URL}
+                          alt=""
+                          className="h-4 w-4 shrink-0"
+                          aria-hidden
+                        />
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {candidate.name}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {formatCandidateMeta(candidate)}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -501,7 +567,7 @@ function ChooseSheetPanel({
             disabled={isWorking}
           >
             <PlusSquare className="mr-2 h-4 w-4" />
-            Create new blank sheet
+            Start fresh (create a new lifting sheet)
           </Button>
           <Button
             variant="outline"
@@ -509,7 +575,7 @@ function ChooseSheetPanel({
             disabled={isWorking}
           >
             <CopyPlus className="mr-2 h-4 w-4" />
-            Create new sample sheet
+            Create demo sheet with example data
           </Button>
         </div>
       </CardContent>

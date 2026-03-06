@@ -59,7 +59,7 @@ import {
  * consistency grade rings and a share button that captures the card to clipboard via html2canvas.
  * Reads parsedData from UserLiftingDataProvider; takes no props.
  */
-export function TheLongGameCard() {
+export function TheLongGameCard({ dashboardStage = "established" }) {
   const { parsedData, isLoading } = useUserLiftingData();
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -83,6 +83,7 @@ export function TheLongGameCard() {
     "daily",
     { initializeWithValue: false },
   );
+  const canShareHeatmaps = dashboardStage === "established";
 
   // FIXME: I think we have the skills to not need this useEffect anymore
   useEffect(() => {
@@ -697,7 +698,7 @@ export function TheLongGameCard() {
                               {isCurrentYear && !isSharing && (
                                 <span className="text-[9px] text-muted-foreground/60 leading-none">now</span>
                               )}
-                              {!isSharing && intervals.length > 1 && (
+                              {!isSharing && canShareHeatmaps && intervals.length > 1 && (
                                 <LiftResultCopyButton
                                   label={`Copy ${year} heatmap`}
                                   tooltip={`Copy ${year} heatmap`}
@@ -769,22 +770,26 @@ export function TheLongGameCard() {
         {intervals && (
           <CardFooter id="ignoreCopy">
             <div className="flex w-full flex-col gap-2">
-              <div className="flex justify-end">
-                <ShareCopyButton
-                  label="Copy image"
-                  tooltip="Share heatmaps to clipboard"
-                  onClick={handleShare}
-                  isLoading={isSharing}
-                  isSuccess={isShareSuccess}
-                  disabled={isSharing}
-                  className="!border-zinc-300 !bg-white !text-zinc-900 hover:!bg-zinc-100"
+              {canShareHeatmaps && (
+                <div className="flex justify-end">
+                  <ShareCopyButton
+                    label="Copy image"
+                    tooltip="Share heatmaps to clipboard"
+                    onClick={handleShare}
+                    isLoading={isSharing}
+                    isSuccess={isShareSuccess}
+                    disabled={isSharing}
+                    className="!border-zinc-300 !bg-white !text-zinc-900 hover:!bg-zinc-100"
+                  />
+                </div>
+              )}
+              {canShareHeatmaps && (
+                <MiniFeedbackWidget
+                  contextId="heatmap_card"
+                  page="/lift-explorer"
+                  analyticsExtra={{ context: "activity_heatmaps_card" }}
                 />
-              </div>
-              <MiniFeedbackWidget
-                contextId="heatmap_card"
-                page="/lift-explorer"
-                analyticsExtra={{ context: "activity_heatmaps_card" }}
-              />
+              )}
             </div>
           </CardFooter>
         )}

@@ -49,7 +49,7 @@ This runs ESLint over `src/`.
 ### Lint a Single File
 
 ```
-npx next lint --file src/path/to/file.js
+npx eslint src/path/to/file.js
 ```
 
 Use this when making focused changes.

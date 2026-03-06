@@ -696,10 +696,10 @@ export async function createBootstrapSheet(
       "Back Squat",
       "5",
       starterWeight,
-      "Start each new session by inserting a row at the top.",
+      "Start each new session by inserting 5-10 new rows at the top.",
     ],
-    ["", "", "5", starterWeight, "Add one set per row as you lift."],
-    ["", "", "5", starterWeight, "Leave Date blank for the next sets in the same session."],
+    ["", "", "5", starterWeight, "Log one set per row as you lift."],
+    ["", "", "5", starterWeight, "Leave Date blank on the extra rows for the same session."],
   ];
 
   const valuesResponse = await fetch(

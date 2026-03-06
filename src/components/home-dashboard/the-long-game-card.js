@@ -122,6 +122,7 @@ export function TheLongGameCard({
   const isFirstWeekIntroState =
     dashboardStage === "starter_sample" || dashboardStage === "first_real_week";
   const isFirstMonthFocusState = dashboardStage === "first_month";
+  const canShareHeatmaps = dashboardStage === "established";
   const showWeeklyToggle =
     (dashboardStage === "early_base" || dashboardStage === "established") &&
     intervals?.length > 2;
@@ -809,7 +810,7 @@ export function TheLongGameCard({
                                   {interval.label}
                                 </span>
                               )}
-                              {!isSharing && intervals.length > 1 && (
+                              {!isSharing && canShareHeatmaps && intervals.length > 1 && (
                                 <LiftResultCopyButton
                                   label={`Copy ${year} heatmap`}
                                   tooltip={`Copy ${year} heatmap`}
@@ -882,17 +883,19 @@ export function TheLongGameCard({
         {intervals && !isFirstWeekIntroState && (
           <CardFooter id="ignoreCopy">
             <div className="flex w-full flex-col gap-2">
-              <div className="flex justify-end">
-                <ShareCopyButton
-                  label="Copy image"
-                  tooltip="Share heatmaps to clipboard"
-                  onClick={handleShare}
-                  isLoading={isSharing}
-                  isSuccess={isShareSuccess}
-                  disabled={isSharing}
-                  className="!border-zinc-300 !bg-white !text-zinc-900 hover:!bg-zinc-100"
-                />
-              </div>
+              {canShareHeatmaps && (
+                <div className="flex justify-end">
+                  <ShareCopyButton
+                    label="Copy image"
+                    tooltip="Share heatmaps to clipboard"
+                    onClick={handleShare}
+                    isLoading={isSharing}
+                    isSuccess={isShareSuccess}
+                    disabled={isSharing}
+                    className="!border-zinc-300 !bg-white !text-zinc-900 hover:!bg-zinc-100"
+                  />
+                </div>
+              )}
               {dashboardStage === "established" && (
                 <MiniFeedbackWidget
                   contextId="heatmap_card"

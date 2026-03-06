@@ -576,15 +576,15 @@ export function SheetSetupDialog() {
 }
 
 function ProgressBody({ state }) {
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        {state === "linking_or_creating"
-          ? "Connecting the sheet now."
-          : "This dialog will update in place if we need you to choose between sheets."}
-      </p>
-    </div>
-  );
+  if (state === "linking_or_creating") {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">Connecting the sheet now.</p>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function FallbackConnectPanel({ intent, openPicker, onRetry, isWorking, errorMessage }) {

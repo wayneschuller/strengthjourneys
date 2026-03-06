@@ -545,10 +545,10 @@ function EarlyMonthMomentumCard({
         ) : showFirstMonthTemplate ? (
           <div className="rounded-lg bg-background/60 px-3 py-3">
             <p className="text-sm text-muted-foreground">
-              In the first month, the goal is simple: train consistently, keep
-              the sessions repeatable, and add small amounts of weight as the
-              lifts settle in. Choose manageable loads, rest properly, and let
-              steady progress do the work.
+              You can continue what you did in the first week, or feel free to
+              start adding more lifts to each session as the movements begin to
+              feel more natural. Keep the sessions simple, use manageable
+              weights, and add small amounts over time.
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <WeekPlanSession
@@ -556,7 +556,6 @@ function EarlyMonthMomentumCard({
                 items={[
                   "Squat — 3×5",
                   "Press — 3×5",
-                  "Deadlift — 1×5",
                 ]}
               />
               <WeekPlanSession
@@ -564,7 +563,6 @@ function EarlyMonthMomentumCard({
                 items={[
                   "Squat — 3×5 (+ small weight increase)",
                   "Bench Press — 3×5",
-                  "Back extension or light core — 2–3 easy sets",
                 ]}
               />
               <WeekPlanSession

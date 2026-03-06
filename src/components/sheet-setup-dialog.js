@@ -31,7 +31,6 @@ import {
 
 const ENRICH_CANDIDATE_LIMIT = 6;
 const SHEET_FLOW_QUERY_KEY = "sheetFlow";
-const BIG_FOUR_LIFTS = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
 const SHEET_SETUP_QUIPS = [
   "The bar rewards patience.",
   "A tidy logbook is a power tool.",
@@ -39,14 +38,18 @@ const SHEET_SETUP_QUIPS = [
   "Calm lifters lift better.",
   "What gets measured gets managed.",
   "Plates gets dates.",
-  "We love {lift}.",
+  "The big four for life: Squat, Deadlift, Bench and Strict Press.",
+  "Add five pounds. Repeat.",
+  "The work accumulates.",
+  "Strength compounds.",
+  "The logbook never lies.",
+  "Track it. Then attack it.",
+  "Strong people are harder to kill.",
+  "Build the story of your strength.",
 ];
 
 function pickRandomSheetSetupQuip() {
-  const quip = SHEET_SETUP_QUIPS[Math.floor(Math.random() * SHEET_SETUP_QUIPS.length)];
-  if (!quip.includes("{lift}")) return quip;
-  const lift = BIG_FOUR_LIFTS[Math.floor(Math.random() * BIG_FOUR_LIFTS.length)];
-  return quip.replace("{lift}", lift);
+  return SHEET_SETUP_QUIPS[Math.floor(Math.random() * SHEET_SETUP_QUIPS.length)];
 }
 
 function toTimestamp(iso) {

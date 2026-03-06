@@ -31,21 +31,22 @@ import {
 
 const ENRICH_CANDIDATE_LIMIT = 6;
 const SHEET_FLOW_QUERY_KEY = "sheetFlow";
+const BIG_FOUR_LIFTS = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
 const SHEET_SETUP_QUIPS = [
   "The bar rewards patience.",
-  "Strong logs make strong lifters.",
-  "Boring works. That is the trick.",
-  "One good set beats ten rushed ones.",
-  "The plates will still be there tomorrow.",
-  "Consistency is the whole magic trick.",
   "A tidy logbook is a power tool.",
   "Small jumps still move the total.",
   "Calm lifters lift better.",
-  "Strong is built between ordinary sessions.",
+  "What gets measured gets managed.",
+  "Plates gets dates.",
+  "We love {lift}.",
 ];
 
 function pickRandomSheetSetupQuip() {
-  return SHEET_SETUP_QUIPS[Math.floor(Math.random() * SHEET_SETUP_QUIPS.length)];
+  const quip = SHEET_SETUP_QUIPS[Math.floor(Math.random() * SHEET_SETUP_QUIPS.length)];
+  if (!quip.includes("{lift}")) return quip;
+  const lift = BIG_FOUR_LIFTS[Math.floor(Math.random() * BIG_FOUR_LIFTS.length)];
+  return quip.replace("{lift}", lift);
 }
 
 function toTimestamp(iso) {

@@ -5,7 +5,6 @@ import { format } from "date-fns";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
-import { useSession } from "next-auth/react";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { e1rmFormulae, estimateE1RM } from "@/lib/estimate-e1rm";
@@ -69,10 +68,9 @@ import { MiniFeedbackWidget } from "@/components/feedback";
  * @param {string} [props.liftType] - Display name of the lift to chart (e.g. "Bench Press").
  */
 export function VisualizerMini({ liftType }) {
-  const { parsedData, topLiftsByTypeAndReps, isLoading } = useUserLiftingData();
+  const { parsedData, topLiftsByTypeAndReps, isDemoMode, isLoading } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
-  const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
 
@@ -261,7 +259,7 @@ export function VisualizerMini({ liftType }) {
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-pretty">
           <CardTitle>
-            {authStatus === "unauthenticated" && "Demo Mode: "}
+            {isDemoMode && "Demo Mode: "}
             {liftType} Estimated One Rep Maxes
           </CardTitle>
           <CardDescription>

@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import {
+  Fragment,
   cloneElement,
   memo,
   useState,
@@ -26,7 +27,10 @@ import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage } from "usehooks-ts";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import {
+  LOCAL_STORAGE_KEYS,
+  getSheetScopedStorageKey,
+} from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "@/components/visualizer/visualizer-utils";
@@ -59,8 +63,12 @@ import {
  * consistency grade rings and a share button that captures the card to clipboard via html2canvas.
  * Reads parsedData from UserLiftingDataProvider; takes no props.
  */
-export function TheLongGameCard({ dashboardStage = "established" }) {
-  const { parsedData, isLoading } = useUserLiftingData();
+export function TheLongGameCard({
+  dashboardStage = "established",
+  dataMaturityStage: stageFromParent = null,
+  sessionCount: sessionCountFromParent = null,
+}) {
+  const { parsedData, isLoading, sheetInfo } = useUserLiftingData();
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [intervals, setIntervals] = useState(null);
@@ -76,14 +84,50 @@ export function TheLongGameCard({ dashboardStage = "established" }) {
     useTransientSuccess();
   // SSR default = first stage-1 title; randomised client-side once intervals load
   const [cardTitle, setCardTitle] = useState(HEATMAP_TITLES_STAGE1[0]);
+  const sessionCount = useMemo(() => {
+    if (typeof sessionCountFromParent === "number") return sessionCountFromParent;
+    if (!Array.isArray(parsedData)) return 0;
+    const dates = new Set();
+    parsedData.forEach((entry) => {
+      if (!entry?.isGoal && entry?.date) dates.add(entry.date);
+    });
+    return dates.size;
+  }, [parsedData, sessionCountFromParent]);
+  const dataMaturityStage = useMemo(() => {
+    if (stageFromParent) return stageFromParent;
+    if (sessionCount === 0) return "no_sessions";
+    if (sessionCount <= 7) return "first_week";
+    if (sessionCount <= 20) return "first_month";
+    return "mature";
+  }, [stageFromParent, sessionCount]);
 
   // initializeWithValue: false → SSR renders "daily" (default), client hydrates from localStorage on mount
+  // Keep the heatmap mode scoped to the linked sheet. A new or switched sheet
+  // should start from its own sane default ("daily"), not inherit an old
+  // lifter's mature-history preference from another dataset.
   const [viewMode, setViewMode] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.HEATMAP_VIEW_MODE,
+    getSheetScopedStorageKey(
+      LOCAL_STORAGE_KEYS.HEATMAP_VIEW_MODE,
+      sheetInfo?.ssid,
+    ),
     "daily",
     { initializeWithValue: false },
   );
+  const effectiveViewMode = useMemo(() => {
+    if (dashboardStage === "starter_sample") return "daily";
+    if (dashboardStage === "first_real_week") return "daily";
+    if (dashboardStage === "first_month") return "daily";
+    return viewMode;
+  }, [dashboardStage, viewMode]);
+  const isFirstWeekIntroState =
+    dashboardStage === "starter_sample" || dashboardStage === "first_real_week";
+  const isFirstMonthFocusState = dashboardStage === "first_month";
   const canShareHeatmaps = dashboardStage === "established";
+  const showWeeklyToggle =
+    (dashboardStage === "early_base" || dashboardStage === "established") &&
+    intervals?.length > 2;
+  const showMonthlyToggle =
+    dashboardStage === "established" && intervals?.length >= 5;
 
   // FIXME: I think we have the skills to not need this useEffect anymore
   useEffect(() => {
@@ -94,8 +138,11 @@ export function TheLongGameCard({ dashboardStage = "established" }) {
     const { startDate, endDate } = findStartEndDates(parsedData);
     setStartDate(startDate);
     setEndDate(endDate);
-
-    const intervals = generateYearRanges(startDate, endDate);
+    const intervals = getHeatmapIntervals({
+      startDate,
+      endDate,
+      dashboardStage,
+    });
 
     // devLog(`Heatmaps: setting intervals:`);
     // devLog(intervals);
@@ -105,7 +152,7 @@ export function TheLongGameCard({ dashboardStage = "established" }) {
     // Randomise card title based on training history length (client-side only)
     const titles = getHeatmapTitles(intervals.length);
     setCardTitle(titles[Math.floor(Math.random() * titles.length)]);
-  }, [isLoading, parsedData]);
+  }, [isLoading, parsedData, dashboardStage]);
 
   useEffect(() => {
     return () => {
@@ -598,66 +645,113 @@ export function TheLongGameCard({ dashboardStage = "established" }) {
         <CardHeader data-share-section="header">
           <CardTitle>
             <span data-share-title="true">
-              {authStatus === "unauthenticated" && "Demo mode: "}
-              {cardTitle}
+              {isFirstWeekIntroState
+                ? "The Long Game Starts Here"
+                : dataMaturityStage === "no_sessions"
+                ? "The Long Game Starts Here"
+                : cardTitle}
             </span>
           </CardTitle>
-          {intervals && (
+          {isFirstWeekIntroState ? (
             <CardDescription>
               <span data-share-description="true">
-                Your strength journey from{" "}
-                {new Date(intervals[0].startDate).getFullYear()} -{" "}
-                {new Date(
-                  intervals[intervals.length - 1].endDate,
-                ).getFullYear()}
-                .
+                Every training day adds another square to your map.
               </span>
             </CardDescription>
+          ) : dataMaturityStage === "no_sessions" ? (
+            <CardDescription>
+              <span data-share-description="true">
+                Your heatmap will light up as soon as you log your first session.
+              </span>
+            </CardDescription>
+          ) : (
+            intervals && (
+              <CardDescription>
+                <span data-share-description="true">
+                  {dataMaturityStage !== "mature" && "Your journey has begun. "}
+                  {dashboardStage === "starter_sample"
+                    ? "A close-up of your first training days."
+                    : dashboardStage === "first_real_week"
+                      ? "A close-up of your first weeks under the bar."
+                      : dashboardStage === "first_month"
+                        ? "A close-up of your first months of training."
+                        : `Your strength journey from ${new Date(intervals[0].startDate).getFullYear()} - ${new Date(
+                            intervals[intervals.length - 1].endDate,
+                          ).getFullYear()}.`}
+                </span>
+              </CardDescription>
+            )
           )}
         </CardHeader>
         <CardContent className="flex-1">
-          {!intervals && <Skeleton className="h-64 w-11/12 flex-1" />}
-          {intervals && (
+          {isFirstWeekIntroState && (
+            <StarterLongGameState
+              parsedData={parsedData}
+              sessionCount={sessionCount}
+            />
+          )}
+          {!intervals &&
+            !isFirstWeekIntroState &&
+            dataMaturityStage !== "no_sessions" && (
+            <Skeleton className="h-64 w-11/12 flex-1" />
+          )}
+          {!intervals &&
+            !isFirstWeekIntroState &&
+            dataMaturityStage === "no_sessions" && (
+            <div className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed bg-muted/20 px-5 text-center">
+              <p className="text-sm text-muted-foreground">
+                Your first training day is the first pixel in this map.
+                Keep showing up and the pattern builds.
+              </p>
+            </div>
+          )}
+          {intervals && !isFirstWeekIntroState && (
             <>
               {/* Consistency grade rings — always included in capture output */}
-              <div className="mb-6" data-share-section="consistency">
-                {isSharing ? (
-                  <div className="flex w-full items-start">
-                    <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
-                    <div className="min-w-0 flex-1">
-                      <ConsistencyGradesRow
-                        parsedData={parsedData}
-                        isVisible={!!intervals}
-                        isCaptureMode={isSharing}
-                      />
-                    </div>
+              {!isFirstMonthFocusState && (
+                <>
+                  <div className="mb-6" data-share-section="consistency">
+                    {isSharing ? (
+                      <div className="flex w-full items-start">
+                        <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
+                        <div className="min-w-0 flex-1">
+                          <ConsistencyGradesRow
+                            parsedData={parsedData}
+                            isVisible={!!intervals}
+                            isCaptureMode={isSharing}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-center">
+                        <ConsistencyGradesRow
+                          parsedData={parsedData}
+                          isVisible={!!intervals}
+                          isCaptureMode={isSharing}
+                        />
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="flex justify-center">
-                    <ConsistencyGradesRow
-                      parsedData={parsedData}
-                      isVisible={!!intervals}
-                      isCaptureMode={isSharing}
-                    />
-                  </div>
-                )}
-              </div>
-              {!isSharing && <hr className="border-border/60 mb-3" />}
+                  {!isSharing && <hr className="border-border/60 mb-3" />}
+                </>
+              )}
               {/* View selector — right-justified, anchored just above the heatmap grid */}
-              {!isSharing && intervals.length > 2 && (
+              {!isSharing &&
+                !isFirstMonthFocusState &&
+                (showWeeklyToggle || showMonthlyToggle) && (
                 <div className="mb-2 flex justify-end">
                   <div className="flex flex-row rounded border border-border/40 p-px text-[10px]">
                     {[
                       { key: "daily", label: "Daily" },
-                      { key: "weekly", label: "Weekly" },
-                      ...(intervals.length >= 5
+                      ...(showWeeklyToggle ? [{ key: "weekly", label: "Weekly" }] : []),
+                      ...(showMonthlyToggle
                         ? [{ key: "monthly", label: "Monthly" }]
                         : []),
                     ].map(({ key, label }) => (
                       <button
                         key={key}
                         className={`rounded px-1.5 py-px transition-colors ${
-                          viewMode === key
+                          effectiveViewMode === key
                             ? "bg-muted text-foreground/90 font-medium"
                             : "text-muted-foreground/40 hover:text-muted-foreground/70"
                         }`}
@@ -669,8 +763,21 @@ export function TheLongGameCard({ dashboardStage = "established" }) {
                   </div>
                 </div>
               )}
-              {viewMode === "daily" && (
-                <div className={isSharing ? "" : "max-h-[52vh] overflow-y-auto pr-1"}>
+              {isFirstMonthFocusState && (
+                <FirstMonthLongGameState parsedData={parsedData} />
+              )}
+              {!isFirstMonthFocusState && effectiveViewMode === "daily" && (
+                <div
+                  className={
+                    isSharing
+                      ? ""
+                      : dashboardStage === "starter_sample" ||
+                          dashboardStage === "first_real_week" ||
+                          dashboardStage === "first_month"
+                        ? ""
+                        : "max-h-[52vh] overflow-y-auto pr-1"
+                  }
+                >
                   <div className="flex flex-col gap-9">
                     {intervals.map((interval, index) => {
                       const year = new Date(interval.startDate).getFullYear();
@@ -695,8 +802,13 @@ export function TheLongGameCard({ dashboardStage = "established" }) {
                               >
                                 {year}
                               </span>
-                              {isCurrentYear && !isSharing && (
+                              {isCurrentYear && !isSharing && !interval?.label && (
                                 <span className="text-[9px] text-muted-foreground/60 leading-none">now</span>
+                              )}
+                              {interval?.label && !isSharing && (
+                                <span className="max-w-[4.5rem] text-right text-[9px] leading-none text-muted-foreground/60">
+                                  {interval.label}
+                                </span>
                               )}
                               {!isSharing && canShareHeatmaps && intervals.length > 1 && (
                                 <LiftResultCopyButton
@@ -718,6 +830,7 @@ export function TheLongGameCard({ dashboardStage = "established" }) {
                               startDate={interval.startDate}
                               endDate={interval.endDate}
                               isSharing={isSharing}
+                              showMonthLabels={!interval?.isFocused}
                             />
                           </div>
                         </div>
@@ -726,7 +839,7 @@ export function TheLongGameCard({ dashboardStage = "established" }) {
                   </div>
                 </div>
               )}
-              {viewMode === "weekly" && (
+              {!isFirstMonthFocusState && effectiveViewMode === "weekly" && (
                 <WeeklyHeatmapMatrix
                   parsedData={parsedData}
                   startYear={new Date(intervals[0].startDate).getFullYear()}
@@ -736,7 +849,7 @@ export function TheLongGameCard({ dashboardStage = "established" }) {
                   isSharing={isSharing}
                 />
               )}
-              {viewMode === "monthly" && (
+              {!isFirstMonthFocusState && effectiveViewMode === "monthly" && (
                 <MonthlyHeatmapMatrix
                   parsedData={parsedData}
                   startYear={new Date(intervals[0].startDate).getFullYear()}
@@ -767,7 +880,7 @@ export function TheLongGameCard({ dashboardStage = "established" }) {
             </>
           )}
         </CardContent>
-        {intervals && (
+        {intervals && !isFirstWeekIntroState && (
           <CardFooter id="ignoreCopy">
             <div className="flex w-full flex-col gap-2">
               {canShareHeatmaps && (
@@ -783,7 +896,7 @@ export function TheLongGameCard({ dashboardStage = "established" }) {
                   />
                 </div>
               )}
-              {canShareHeatmaps && (
+              {dashboardStage === "established" && (
                 <MiniFeedbackWidget
                   contextId="heatmap_card"
                   page="/lift-explorer"
@@ -795,6 +908,191 @@ export function TheLongGameCard({ dashboardStage = "established" }) {
         )}
       </Card>
     </>
+  );
+}
+
+function StarterLongGameState({ parsedData, sessionCount = 0 }) {
+  const litDayIndexes = useMemo(() => {
+    const nonGoalDates = Array.isArray(parsedData)
+      ? Array.from(
+          new Set(
+            parsedData
+              .filter((entry) => !entry?.isGoal && entry?.date)
+              .map((entry) => entry.date),
+          ),
+        ).sort()
+      : [];
+    const anchorDateStr =
+      nonGoalDates[nonGoalDates.length - 1] || format(new Date(), "yyyy-MM-dd");
+    const anchorDate = new Date(`${anchorDateStr}T00:00:00`);
+    const dayOfWeek = anchorDate.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const startOfWeek = new Date(anchorDate);
+    startOfWeek.setDate(anchorDate.getDate() - mondayOffset);
+    startOfWeek.setHours(0, 0, 0, 0);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    const dayIndexes = new Set();
+    nonGoalDates.forEach((dateStr) => {
+      const entryDate = new Date(`${dateStr}T00:00:00`);
+      if (entryDate < startOfWeek || entryDate > endOfWeek) return;
+      const mondayBasedIndex = (entryDate.getDay() + 6) % 7;
+      dayIndexes.add(mondayBasedIndex);
+    });
+
+    if (dayIndexes.size === 0) {
+      dayIndexes.add(sessionCount > 0 ? (anchorDate.getDay() + 6) % 7 : 0);
+    }
+
+    return dayIndexes;
+  }, [parsedData, sessionCount]);
+  const days = ["M", "T", "W", "T", "F", "S", "S"];
+
+  return (
+    <div className="flex h-full flex-col justify-center gap-5">
+      <div className="rounded-xl border bg-muted/10 p-5">
+        <div className="flex items-center justify-between gap-3">
+          {days.map((label, index) => (
+            <div
+              key={`${label}-${index}`}
+              className="flex flex-col items-center gap-2"
+            >
+              <div
+                className={`h-5 w-5 rounded-full border ${
+                  litDayIndexes.has(index)
+                    ? "border-primary/40 bg-primary"
+                    : "border-border/70 bg-muted/30"
+                }`}
+              />
+              <span className="text-[10px] text-muted-foreground">{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        <StarterLongGameNote
+          title="Week 1"
+          body="Each day you train lights another dot."
+        />
+        <StarterLongGameNote
+          title="Month 1"
+          body="A few solid weeks turn dots into a real pattern."
+        />
+        <StarterLongGameNote
+          title="Long term"
+          body="Weekly and monthly views unlock once you have more history."
+        />
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Right now the story is just one week wide. That is normal. Keep logging
+        and the timeline grows with you.
+      </p>
+    </div>
+  );
+}
+
+function StarterLongGameNote({ title, body }) {
+  return (
+    <div className="rounded-lg border bg-background/80 px-3 py-3">
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+    </div>
+  );
+}
+
+function FirstMonthLongGameState({ parsedData }) {
+  const { weekdayLabels, weekRows, activeDays } = useMemo(() => {
+    const weekdayLabels = ["M", "T", "W", "T", "F", "S", "S"];
+    const nonGoalDates = Array.isArray(parsedData)
+      ? Array.from(
+          new Set(
+            parsedData
+              .filter((entry) => !entry?.isGoal && entry?.date)
+              .map((entry) => entry.date),
+          ),
+        ).sort()
+      : [];
+
+    const anchorDateStr =
+      nonGoalDates[0] || format(new Date(), "yyyy-MM-dd");
+    const anchorDate = new Date(`${anchorDateStr}T00:00:00`);
+    const dayOfWeek = anchorDate.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const firstWeekStart = new Date(anchorDate);
+    firstWeekStart.setDate(anchorDate.getDate() - mondayOffset);
+    firstWeekStart.setHours(0, 0, 0, 0);
+
+    const activeDays = new Set();
+    nonGoalDates.forEach((dateStr) => {
+      const entryDate = new Date(`${dateStr}T00:00:00`);
+      const diffDays = Math.floor(
+        (entryDate.getTime() - firstWeekStart.getTime()) / 86400000,
+      );
+      if (diffDays < 0 || diffDays >= 35) return;
+      activeDays.add(diffDays);
+    });
+
+    const weekRows = Array.from({ length: 5 }, (_, weekIndex) => ({
+      label: `W${weekIndex + 1}`,
+      days: Array.from({ length: 7 }, (_, dayIndex) => weekIndex * 7 + dayIndex),
+    }));
+
+    return { weekdayLabels, weekRows, activeDays };
+  }, [parsedData]);
+
+  return (
+    <div className="flex h-full flex-col gap-5">
+      <div className="rounded-xl border bg-muted/10 p-5">
+        <div className="grid justify-center grid-cols-[1.25rem_repeat(7,1.55rem)] gap-x-1.5 gap-y-1.5 sm:grid-cols-[1.5rem_repeat(7,1.75rem)] sm:gap-x-2 sm:gap-y-2">
+          <div />
+          {weekdayLabels.map((label, index) => (
+            <span
+              key={`${label}-${index}`}
+              className="text-center text-[10px] font-medium text-muted-foreground"
+            >
+              {label}
+            </span>
+          ))}
+          {weekRows.map((week) => (
+            <Fragment key={week.label}>
+              <span className="self-center text-[10px] font-medium text-muted-foreground">
+                {week.label}
+              </span>
+              {week.days.map((dayNumber) => (
+                <div
+                  key={`${week.label}-${dayNumber}`}
+                  className={`h-6 w-6 rounded-[0.65rem] border transition-colors sm:h-7 sm:w-7 ${
+                    activeDays.has(dayNumber)
+                      ? "border-primary/18 bg-primary/70"
+                      : "border-border/45 bg-muted/18"
+                  }`}
+                />
+              ))}
+            </Fragment>
+          ))}
+        </div>
+      </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        <StarterLongGameNote
+          title="Week by week"
+          body="The first month should start to look like a repeatable rhythm."
+        />
+        <StarterLongGameNote
+          title="Build the pattern"
+          body="A few training days each week are enough to make the grid come alive."
+        />
+        <StarterLongGameNote
+          title="Long term"
+          body="Richer daily, weekly, and monthly views unlock once you have more history."
+        />
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Early on, this is better read as a simple habit tracker: show up, log the
+        work, and let the pattern build week by week.
+      </p>
+    </div>
   );
 }
 
@@ -1068,6 +1366,85 @@ function generateYearRanges(startDateStr, endDateStr) {
   return yearRanges;
 }
 
+function shiftDateStr(dateStr, dayDelta) {
+  const date = new Date(`${dateStr}T00:00:00`);
+  date.setDate(date.getDate() + dayDelta);
+  return format(date, "yyyy-MM-dd");
+}
+
+function getDaysBetween(startDateStr, endDateStr) {
+  const start = new Date(`${startDateStr}T00:00:00`);
+  const end = new Date(`${endDateStr}T00:00:00`);
+  return Math.max(
+    0,
+    Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)),
+  );
+}
+
+function buildFocusedInterval({ startDate, endDate, minWindowDays, maxWindowDays, label }) {
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const historySpanDays = getDaysBetween(startDate, endDate);
+
+  if (historySpanDays < minWindowDays) {
+    return {
+      startDate: shiftDateStr(todayStr, -(minWindowDays - 1)),
+      endDate: todayStr,
+      isFocused: true,
+      label,
+    };
+  }
+
+  const desiredStart = shiftDateStr(todayStr, -(maxWindowDays - 1));
+  return {
+    startDate: startDate > desiredStart ? startDate : desiredStart,
+    endDate: todayStr,
+    isFocused: true,
+    label,
+  };
+}
+
+function getHeatmapIntervals({ startDate, endDate, dashboardStage }) {
+  if (!startDate || !endDate) return [];
+
+  if (dashboardStage === "starter_sample") {
+    return [
+      buildFocusedInterval({
+        startDate,
+        endDate,
+        minWindowDays: 21,
+        maxWindowDays: 42,
+        label: "first weeks",
+      }),
+    ];
+  }
+
+  if (dashboardStage === "first_real_week") {
+    return [
+      buildFocusedInterval({
+        startDate,
+        endDate,
+        minWindowDays: 28,
+        maxWindowDays: 56,
+        label: "early block",
+      }),
+    ];
+  }
+
+  if (dashboardStage === "first_month") {
+    return [
+      buildFocusedInterval({
+        startDate,
+        endDate,
+        minWindowDays: 42,
+        maxWindowDays: 84,
+        label: "first months",
+      }),
+    ];
+  }
+
+  return generateYearRanges(startDate, endDate);
+}
+
 // Shared matrix layout constants (used by both weekly and monthly views)
 const WEEKLY_GAP = 2; // px gap between cells
 const MONTHLY_GAP = 5; // px gap between monthly cells (wider for breathing room)
@@ -1148,8 +1525,7 @@ function generateWeeklyHeatmapData(parsedData, startYear, endYear, isDemoMode) {
 // Cell color encodes sessions that week: 1 day → level 1, 2 days → level 2, 3+ days → level 4.
 // Colors use --heatmap-N CSS variables so all themes work. Future weeks render invisible.
 function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
-  const { status: authStatus } = useSession();
-  const isDemoMode = authStatus === "unauthenticated";
+  const { isDemoMode } = useUserLiftingData();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
     x: 0,
@@ -1418,8 +1794,7 @@ function generateMonthlyHeatmapData(
 // Cell color encodes active weeks that month: 0 = blank, 1–3 = graduated intensity, 4+ = full.
 // Future months render invisible; past months with zero activity render at low opacity.
 function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
-  const { status: authStatus } = useSession();
-  const isDemoMode = authStatus === "unauthenticated";
+  const { isDemoMode } = useUserLiftingData();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
     x: 0,
@@ -1623,8 +1998,14 @@ function MonthlyTooltipContent({ value }) {
 // Single-year calendar heatmap (Jan–Dec) using react-calendar-heatmap.
 // Cell color reflects session intensity and PR status via getHeatmapLevel.
 // Hover triggers a fixed-position tooltip with full session and PR details for that day.
-function Heatmap({ parsedData, startDate, endDate, isSharing }) {
-  const { status: authStatus } = useSession();
+function Heatmap({
+  parsedData,
+  startDate,
+  endDate,
+  isSharing,
+  showMonthLabels = true,
+}) {
+  const { isDemoMode } = useUserLiftingData();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
     x: 0,
@@ -1633,14 +2014,14 @@ function Heatmap({ parsedData, startDate, endDate, isSharing }) {
   });
 
   const heatmapData = useMemo(() => {
-    if (!parsedData) return null;
+    if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
     return generateHeatmapData(
       parsedData,
       startDate,
       endDate,
-      authStatus === "unauthenticated", // This is a clue we have sample data and we will fake the heatmap to impress shallow people
+      isDemoMode, // This is a clue we have sample data and we will fake the heatmap to impress shallow people
     );
-  }, [parsedData, startDate, endDate, authStatus]);
+  }, [parsedData, startDate, endDate, isDemoMode]);
 
   const handleMouseOver = useCallback((e, value) => {
     if (!value || !value.sessionData) return;
@@ -1670,7 +2051,7 @@ function Heatmap({ parsedData, startDate, endDate, isSharing }) {
         startDate={startDate}
         endDate={endDate}
         values={heatmapData}
-        showMonthLabels={true}
+        showMonthLabels={showMonthLabels}
         classForValue={(value) => {
           if (!value) return `color-heatmap-0`;
           return `color-heatmap-${value.count}`;

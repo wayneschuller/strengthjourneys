@@ -1,17 +1,18 @@
 
-import { useState, useEffect, useContext, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { gaTrackSignInClick } from "@/lib/analytics";
 import { SESSION_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { Button } from "@/components/ui/button";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { devLog } from "@/lib/processing-utils";
 import Image from "next/image";
 import { BarChart3, Calendar, Check, Flame, FolderOpen, Table2 } from "lucide-react";
 import { motion, useReducedMotion, useAnimationControls } from "motion/react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import Link from "next/link";
 
 import SampleImage from "../../public/sample_google_sheet_fuzzy_border.png";
@@ -226,121 +227,6 @@ export function OnBoardingDashboard() {
 }
 
 /**
- * Card shown when a user is authenticated but has not yet connected a Google Sheet.
- * Provides a sample sheet link and a Google Drive picker button to connect their data.
- *
- * @param {Object} props - No props; reads session and sheet context internally.
- */
-// This card is shown if the user goes to the visualizer or analyzer with google auth but no spreadsheet selected
-export function ChooseSheetInstructionsCard() {
-  const [openPicker, setOpenPicker] = useState(null);
-  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
-  const { data: session, status: authStatus } = useSession();
-
-  const handlePickerReady = useCallback((picker) => {
-    setOpenPicker(() => picker);
-  }, []);
-
-  // Load picker when component mounts (user needs it to choose sheet)
-  useEffect(() => {
-    if (session && !shouldLoadPicker) {
-      setShouldLoadPicker(true);
-    }
-  }, [session, shouldLoadPicker]);
-
-  const { selectSheet } = useUserLiftingData();
-
-  if (!session) return null;
-
-  return (
-    <>
-      {shouldLoadPicker && (
-        <DrivePickerContainer
-          onReady={handlePickerReady}
-          trigger={shouldLoadPicker}
-          oauthToken={session?.accessToken}
-          selectSheet={selectSheet}
-        />
-      )}
-      <Card className="md:w-2/3">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <img
-              src={GOOGLE_SHEETS_ICON_URL}
-              alt=""
-              className="h-5 w-5 shrink-0"
-              aria-hidden
-            />
-            Hello {session.user.name}! You are logged in.
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="">
-            Next step is to link your personal Google sheet of your lifting data.
-          </div>
-          <div className="">
-            Our{" "}
-            <a
-              href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
-              target="_blank"
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-            >
-              sample Google Sheet
-            </a>{" "}
-            format is intuitive and easy to update. Make a copy and start entering
-            your lifts. (You can use {`"kg"`} or {`"lb"`})
-          </div>
-          <div className="">
-            <a
-              href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
-              target="_blank"
-            >
-              <Image
-                className="w-5/6 md:w-1/2"
-                src={SampleImage}
-                priority={true}
-                alt="Screenshot of sample google sheet data"
-              />
-            </a>
-          </div>
-          <div className="">
-            Strength Journeys does not collect or store your data. Instead we
-            encourage every lifter to own the data of their personal strength
-            journey.
-          </div>
-          <div className="">
-            Link a Google sheet then every time you use Strength Journeys your web
-            client will read your data and bring insights and inspiration!
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button
-            className="flex w-full items-center justify-center gap-2 disabled:cursor-wait disabled:opacity-70"
-            onClick={() => {
-              if (openPicker) handleOpenFilePicker(openPicker);
-            }}
-            disabled={!openPicker}
-            title={
-              !openPicker
-                ? "Loading Google Picker… (allow Google scripts if blocked)"
-                : undefined
-            }
-          >
-            <img
-              src={GOOGLE_SHEETS_ICON_URL}
-              alt=""
-              className="h-4 w-4 shrink-0"
-              aria-hidden
-            />
-            {openPicker ? "Choose Google Sheet" : "Choose Google Sheet (loading…)"}
-          </Button>
-        </CardFooter>
-      </Card>
-    </>
-  );
-}
-
-/**
  * Full-width card explaining the three-step setup process: log lifts in a Google Sheet,
  * sign in, connect the sheet, then explore the app. Adapts its CTAs to auth state.
  *
@@ -348,269 +234,127 @@ export function ChooseSheetInstructionsCard() {
  */
 export function GettingStartedCard() {
   const router = useRouter();
-  const { data: session, status: authStatus } = useSession();
-  const [openPicker, setOpenPicker] = useState(null);
-  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
-  const prefersReducedMotion = useReducedMotion();
+  const { status: authStatus } = useSession();
 
-  const handlePickerReady = useCallback((picker) => {
-    setOpenPicker(() => picker);
-  }, []);
-
-  // Load picker when user is authenticated and might use it
-  useEffect(() => {
-    if (authStatus === "authenticated" && !shouldLoadPicker) {
-      setShouldLoadPicker(true);
-    }
-  }, [authStatus, shouldLoadPicker]);
-
-  const { sheetInfo, selectSheet } = useUserLiftingData();
+  const { sheetInfo } = useUserLiftingData();
   const isConnected = !!sheetInfo?.ssid;
 
-  const step3Controls = useAnimationControls();
-
-  useEffect(() => {
-    if (prefersReducedMotion || isConnected) return;
-    const wobbleAnim = {
-      rotate: [0, -7, 7, -5, 5, -2, 2, 0],
-      transition: { duration: 0.55, ease: "easeInOut" },
-    };
-    let intervalId;
-    const timeoutId = setTimeout(() => {
-      step3Controls.start(wobbleAnim);
-      intervalId = setInterval(() => step3Controls.start(wobbleAnim), 5000);
-    }, 1500 + Math.random() * 2000);
-    return () => {
-      clearTimeout(timeoutId);
-      clearInterval(intervalId);
-    };
-  }, [isConnected, prefersReducedMotion, step3Controls]);
-
-  const stepAnimation = (index) =>
-    prefersReducedMotion
-      ? {}
-      : {
-          initial: { opacity: 0, y: 14 },
-          whileInView: { opacity: 1, y: 0 },
-          viewport: { once: true, amount: 0.35 },
-          transition: { duration: 0.35, delay: index * 0.08 },
-        };
-
   return (
-    <>
-      {shouldLoadPicker && (
-        <DrivePickerContainer
-          onReady={handlePickerReady}
-          trigger={shouldLoadPicker}
-          oauthToken={session?.accessToken}
-          selectSheet={selectSheet}
-        />
-      )}
-      <Card className="relative overflow-hidden border hover:ring-0">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-70"
-          aria-hidden
-        >
-          <div className="from-primary/10 absolute -top-20 left-8 h-64 w-64 rounded-full bg-gradient-to-br to-transparent blur-3xl" />
-          <div className="from-chart-2/15 absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-gradient-to-tr to-transparent blur-3xl" />
+    <Card className="relative overflow-hidden border hover:ring-0">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-70"
+        aria-hidden
+      >
+        <div className="from-primary/10 absolute -top-20 left-8 h-64 w-64 rounded-full bg-gradient-to-br to-transparent blur-3xl" />
+        <div className="from-chart-2/15 absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-gradient-to-tr to-transparent blur-3xl" />
+      </div>
+      <CardHeader className="relative">
+        <div className="mb-3 inline-flex w-fit items-center gap-2 rounded-full border bg-background/85 px-3 py-1 text-xs font-medium tracking-wide text-muted-foreground uppercase shadow-sm">
+          <img
+            src={GOOGLE_SHEETS_ICON_URL}
+            alt=""
+            className="h-4 w-4 shrink-0"
+            aria-hidden
+          />
+          Google Sheets setup, simplified
         </div>
-        <CardHeader>
-          <CardTitle className="relative flex items-center gap-2 text-2xl tracking-tight">
-            <img
-              src={GOOGLE_SHEETS_ICON_URL}
-              alt=""
-              className="h-6 w-6 shrink-0"
-              aria-hidden
-            />
-            Turn Your Lifting History into Actionable Strength Analysis
-          </CardTitle>
-          <CardDescription className="relative max-w-3xl text-base">
-            Strength Journeys is a free suite of lifting tools, and it really
-            comes alive with your own training data. Follow these steps to
-            connect your sheet and unlock personalized insights.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="relative grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
-          <motion.div
-            {...stepAnimation(0)}
-            className={`bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1 transition-opacity${isConnected ? " opacity-40" : ""}`}
-          >
-            <div className="mb-3 flex items-center gap-2">
-              <div className="bg-primary/10 text-primary rounded-lg p-2">
-                <Flame className="h-4 w-4" />
-              </div>
-              <p className="text-sm font-semibold">Step 1: Copy the Template</p>
-            </div>
-            <p className="text-sm leading-relaxed">
-              Start with the{" "}
-              <a
-                href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+        <CardTitle className="max-w-2xl text-2xl tracking-tight md:text-3xl">
+          Sign in once. We&apos;ll handle the lifting log setup.
+        </CardTitle>
+        <CardDescription className="max-w-2xl text-base leading-relaxed">
+          Strength Journeys helps you set up a lifting log from our spreadsheet
+          design, then turns it into dashboards, PR tracking, e1RM trends, and
+          lift analysis.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="relative grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+        <div className="space-y-5">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              "Built for real lifting history, not generic workout fluff.",
+              "Guided Google Sheets setup built for lifters.",
+              "Read-only sync into charts, PRs, trends, and session recaps.",
+            ].map((copy) => (
+              <div
+                key={copy}
+                className="bg-card/85 ring-border rounded-2xl p-4 text-sm leading-relaxed shadow-sm ring-1"
               >
-                sample Google Sheet
-              </a>{" "}
-              and use <em>File → Make a copy</em>. This gives you your own
-              private log in the exact format Strength Journeys expects.
-            </p>
-            <div className="mt-3">
-              <Button asChild size="sm" className="gap-2">
-                <a
-                  href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    src={GOOGLE_SHEETS_ICON_URL}
-                    alt=""
-                    className="h-4 w-4 shrink-0"
-                    aria-hidden
-                  />
-                  Open Google Sheet Template
-                </a>
+                {copy}
+              </div>
+            ))}
+          </div>
+          <div className="bg-background/75 ring-border flex flex-col items-start gap-3 rounded-2xl p-5 shadow-sm ring-1">
+            {authStatus !== "authenticated" ? (
+              <Button
+                size="lg"
+                className="gap-2 px-6"
+                onClick={() => {
+                  gaTrackSignInClick(router.pathname, "getting_started_card");
+                  signIn("google", { callbackUrl: router.asPath || "/" });
+                }}
+              >
+                <GoogleLogo size={18} />
+                Sign in and we&apos;ll set you up
               </Button>
-            </div>
-          </motion.div>
-
-          <motion.div
-            {...stepAnimation(1)}
-            className={`bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1 transition-opacity${isConnected ? " opacity-40" : ""}`}
-          >
-            <div className="mb-3 flex items-center gap-2">
-              <div className="bg-primary/10 text-primary rounded-lg p-2">
-                <Calendar className="h-4 w-4" />
+            ) : isConnected ? (
+              <div className="text-primary inline-flex items-center gap-2 text-sm font-medium">
+                <Check className="h-4 w-4" />
+                Your lifting log is connected.
               </div>
-              <p className="text-sm font-semibold">Step 2: Log Your Sessions</p>
-            </div>
-            <p className="text-sm leading-relaxed">
-              Put your lifting history in Google Sheets using columns for date,
-              lift type, reps, and weight. One set per row. Use {`"lb"`} or{" "}
-              {`"kg"`}. Start with the big four:{" "}
-              <Link
-                href="/barbell-squat-insights"
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                squat
-              </Link>
-              ,{" "}
-              <Link
-                href="/barbell-bench-press-insights"
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                bench
-              </Link>
-              ,{" "}
-              <Link
-                href="/barbell-deadlift-insights"
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                deadlift
-              </Link>
-              , and{" "}
-              <Link
-                href="/barbell-strict-press-insights"
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                strict press
-              </Link>
-              .
-            </p>
-          </motion.div>
-
-          <motion.div
-            {...stepAnimation(2)}
-            className={`bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1 transition-opacity${isConnected ? " opacity-40" : ""}`}
-          >
-            <div className="mb-3 flex items-center gap-2">
-              <div className="bg-primary/10 text-primary rounded-lg p-2">
-                <Table2 className="h-4 w-4" />
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                Signed in. Strength Journeys is setting up your dashboard above.
               </div>
-              <p className="text-sm font-semibold">Step 3: Sign In + Connect</p>
-            </div>
-            <p className="mb-3 text-sm leading-relaxed">
-              First sign in with Google. Then choose your lifting sheet in the
-              Google Picker. Every time you visit Strength Journeys, your
-              browser re-reads your latest Google Sheet data so your insights
-              stay current. We never store your raw rows.
+            )}
+            <p className="max-w-xl text-sm font-medium text-foreground">
+              One big CTA. Sign in and start lifting.
             </p>
-            <motion.div animate={step3Controls} style={{ display: "inline-block" }}>
-              {authStatus !== "authenticated" ? (
-                <Button
-                  size="sm"
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    gaTrackSignInClick(router.pathname, "getting_started_card");
-                    signIn("google", { callbackUrl: "/" });
-                  }}
-                >
-                  <GoogleLogo size={16} />
-                  Sign in with Google
-                </Button>
-              ) : authStatus === "authenticated" && !sheetInfo?.ssid ? (
-                <Button
-                  size="sm"
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    if (openPicker) handleOpenFilePicker(openPicker);
-                  }}
-                  disabled={!openPicker}
-                  title={
-                    !openPicker
-                      ? "Loading Google Picker… (allow Google scripts if blocked)"
-                      : undefined
-                  }
-                >
-                  <FolderOpen className="h-4 w-4 shrink-0" aria-hidden />
-                  {openPicker ? "Connect your sheet" : "Loading picker..."}
-                </Button>
-              ) : (
-                <div className="text-primary inline-flex items-center gap-1 text-sm font-medium">
-                  <Check className="h-4 w-4" />
-                  Google Sheet connected
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            {...stepAnimation(3)}
-            className="bg-card/90 ring-border rounded-xl p-4 shadow-sm ring-1"
-          >
-            <div className="mb-3 flex items-center gap-2">
-              <div className="bg-primary/10 text-primary rounded-lg p-2">
-                <BarChart3 className="h-4 w-4" />
-              </div>
-              <p className="text-sm font-semibold">Step 4: Train Smarter</p>
-            </div>
-            <p className="text-sm leading-relaxed">
-              Start on the{" "}
+            <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">
+              Your sheet stays yours: Google Sheets, read-only access, no
+              edits, no raw-data storage.{" "}
               <Link
-                href="/"
+                href="/privacy-policy.html"
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
-                Home Dashboard
-              </Link>{" "}
-              for daily inspiration, momentum, consistency grades, and session
-              recaps. Then go to the Big Four lift pages for your best insights:
-              e1RM trends, tonnage, rep-range PRs, and strength standards.
+                Privacy Policy
+              </Link>
             </p>
-          </motion.div>
-        </CardContent>
-        <CardFooter className="relative">
-          <p className="text-muted-foreground text-sm">
-            Your sheet stays yours: read-only access, no edits, no raw-data
-            storage.{" "}
-            <Link
-              href="/privacy-policy.html"
-              className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+          </div>
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.25 }}
+          transition={{ duration: 0.4 }}
+          className="mx-auto w-full max-w-sm overflow-hidden rounded-3xl border bg-card/90 p-3 shadow-sm lg:mx-0 lg:ml-auto"
+        >
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">The spreadsheet we set up for you</p>
+              <p className="text-xs text-muted-foreground">
+                Clean rows. Fast logging. Built to age well.
+              </p>
+            </div>
+            <a
+              href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
-              Privacy Policy
-            </Link>
-          </p>
-        </CardFooter>
-      </Card>
-    </>
+              Preview design
+            </a>
+          </div>
+          <div className="overflow-hidden rounded-2xl border bg-background shadow-inner">
+            <Image
+              src={SampleImage}
+              alt="Preview of the Strength Journeys Google Sheets lifting log design"
+              className="h-auto w-full scale-[1.01]"
+              priority={false}
+            />
+          </div>
+        </motion.div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -622,33 +366,12 @@ export function GettingStartedCard() {
  */
 export function GettingStartedCardCompact() {
   const router = useRouter();
-  const { data: session, status: authStatus } = useSession();
-  const [openPicker, setOpenPicker] = useState(null);
-  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
+  const { status: authStatus } = useSession();
 
-  const handlePickerReady = useCallback((picker) => {
-    setOpenPicker(() => picker);
-  }, []);
-
-  useEffect(() => {
-    if (authStatus === "authenticated" && !shouldLoadPicker) {
-      setShouldLoadPicker(true);
-    }
-  }, [authStatus, shouldLoadPicker]);
-
-  const { sheetInfo, selectSheet } = useUserLiftingData();
+  const { sheetInfo } = useUserLiftingData();
 
   return (
-    <>
-      {shouldLoadPicker && (
-        <DrivePickerContainer
-          onReady={handlePickerReady}
-          trigger={shouldLoadPicker}
-          oauthToken={session?.accessToken}
-          selectSheet={selectSheet}
-        />
-      )}
-      <Card>
+    <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <img
@@ -660,40 +383,41 @@ export function GettingStartedCardCompact() {
             See this with your data: PRs, charts, and insights
           </CardTitle>
           <CardDescription>
-            Log your lifts in a Google Sheet. Connect it once. We never store your data.
+            Sign in once. Strength Journeys will help you set up your lifting
+            log from the template design.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {authStatus !== "authenticated" && (
             <p className="text-sm">
-              Step 1:{" "}
+              Sign in with Google and Strength Journeys will help you set up
+              your lifting log based on our{" "}
               <a
                 href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
               >
-                Get the Google Sheet template
-              </a>{" "}
-              (File → Make a copy). Step 2: Sign in with Google and connect your sheet below.
+                spreadsheet design
+              </a>
+              .
             </p>
           )}
           {authStatus !== "authenticated" ? (
             <Button
               onClick={() => {
                 gaTrackSignInClick(router.pathname, "lift_page_card");
-                signIn("google", { callbackUrl: "/" });
+                signIn("google", { callbackUrl: router.asPath || "/" });
               }}
             >
-              Sign in with Google
+              Sign in and we&apos;ll set you up
             </Button>
           ) : !sheetInfo?.ssid ? (
             <Button
               className="flex items-center gap-2"
               onClick={() => {
-                if (openPicker) handleOpenFilePicker(openPicker);
+                openSheetSetupDialog("bootstrap");
               }}
-              disabled={!openPicker}
             >
               <img
                 src={GOOGLE_SHEETS_ICON_URL}
@@ -701,7 +425,7 @@ export function GettingStartedCardCompact() {
                 className="h-4 w-4 shrink-0"
                 aria-hidden
               />
-              {openPicker ? "Connect your Google Sheet" : "Connect your sheet (loading…)"}
+              Set Up Google Sheet
             </Button>
           ) : (
             <p className="text-sm text-muted-foreground">
@@ -718,7 +442,6 @@ export function GettingStartedCardCompact() {
           )}
         </CardContent>
       </Card>
-    </>
   );
 }
 
@@ -740,7 +463,7 @@ export const SignInInvite = () => {
       <button
         onClick={() => {
           gaTrackSignInClick(router.pathname, "sign_in_invite");
-          signIn("google", { callbackUrl: "/" });
+          signIn("google", { callbackUrl: router.asPath || "/" });
         }}
         className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
       >
@@ -758,34 +481,13 @@ export const SignInInvite = () => {
  * can see their real recap instead of demo data.
  */
 export function ConnectSheetRecapCard() {
-  const { data: session, status: authStatus } = useSession();
-  const { sheetInfo, selectSheet } = useUserLiftingData();
-  const [openPicker, setOpenPicker] = useState(null);
-  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
-
-  const handlePickerReady = useCallback((picker) => {
-    setOpenPicker(() => picker);
-  }, []);
-
-  useEffect(() => {
-    if (authStatus === "authenticated" && !sheetInfo?.ssid && !shouldLoadPicker) {
-      setShouldLoadPicker(true);
-    }
-  }, [authStatus, sheetInfo?.ssid, shouldLoadPicker]);
+  const { status: authStatus } = useSession();
+  const { sheetInfo } = useUserLiftingData();
 
   if (authStatus !== "authenticated" || sheetInfo?.ssid) return null;
 
   return (
-    <>
-      {shouldLoadPicker && (
-        <DrivePickerContainer
-          onReady={handlePickerReady}
-          trigger={shouldLoadPicker}
-          oauthToken={session?.accessToken}
-          selectSheet={selectSheet}
-        />
-      )}
-      <Card className="flex min-w-[14rem] flex-col md:min-w-[18rem]">
+    <Card className="flex min-w-[14rem] flex-col md:min-w-[18rem]">
         <CardHeader className="space-y-2 pb-5 pt-6">
           <CardTitle className="flex items-center gap-2 text-lg">
             <img
@@ -797,8 +499,8 @@ export function ConnectSheetRecapCard() {
             See your year in review
           </CardTitle>
           <CardDescription className="text-sm leading-relaxed">
-            Connect your Google Sheet to load your lifting history and get your
-            personalized recap.
+            Demo mode is on. Set up your Google Sheet and we&apos;ll help you load
+            your lifting history for a personalized recap.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6 pb-8 pt-2">
@@ -806,14 +508,8 @@ export function ConnectSheetRecapCard() {
             size="default"
             className="flex w-full items-center justify-center gap-2"
             onClick={() => {
-              if (openPicker) handleOpenFilePicker(openPicker);
+              openSheetSetupDialog("bootstrap");
             }}
-            disabled={!openPicker}
-            title={
-              !openPicker
-                ? "Loading Google Picker… (allow Google scripts if blocked)"
-                : undefined
-            }
           >
             <img
               src={GOOGLE_SHEETS_ICON_URL}
@@ -821,7 +517,7 @@ export function ConnectSheetRecapCard() {
               className="h-4 w-4 shrink-0"
               aria-hidden
             />
-            {openPicker ? "Connect your Google Sheet" : "Connect your sheet (loading…)"}
+            Set Up Google Sheet
           </Button>
           <p className="text-sm leading-relaxed text-muted-foreground">
             Your recap will show sessions, tonnage, PRs, most-trained lifts, and
@@ -829,7 +525,6 @@ export function ConnectSheetRecapCard() {
           </p>
         </CardContent>
       </Card>
-    </>
   );
 }
 
@@ -866,7 +561,7 @@ export function DemoModeSignInCard() {
           className="flex w-full items-center justify-center gap-2"
           onClick={() => {
             gaTrackSignInClick(router.pathname, "year_recap_card");
-            signIn("google", { callbackUrl: "/" });
+            signIn("google", { callbackUrl: router.asPath || "/" });
           }}
         >
           <GoogleLogo size={18} />

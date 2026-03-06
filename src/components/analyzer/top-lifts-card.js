@@ -1,4 +1,3 @@
-import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,8 +12,7 @@ import { TopLiftsTable } from "@/components/analyzer/lift-frequency-pie-card";
  * @param {function} props.onSelectLift - Called with a liftType string on row click.
  */
 export function TopLiftsCard({ selectedLiftType, onSelectLift }) {
-  const { liftTypes } = useUserLiftingData();
-  const { status: authStatus } = useSession();
+  const { isDemoMode, liftTypes } = useUserLiftingData();
   const { getColor } = useLiftColors();
 
   if (!liftTypes || liftTypes.length < 1) return null;
@@ -38,7 +36,7 @@ export function TopLiftsCard({ selectedLiftType, onSelectLift }) {
     <Card className="flex max-h-[60vh] flex-col">
       <CardHeader>
         <CardTitle>
-          {authStatus === "unauthenticated" && "Demo mode: "}Your Lifts
+          {isDemoMode && "Demo mode: "}Your Lifts
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto">

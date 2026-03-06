@@ -8,7 +8,6 @@ import {
 } from "react";
 import { format } from "date-fns";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
-import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -18,7 +17,11 @@ import {
   getStandardForLiftDate,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import {
+  LOCAL_STORAGE_KEYS,
+  getSheetScopedStorageKey,
+} from "@/lib/localStorage-keys";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { Button } from "@/components/ui/button";
@@ -85,12 +88,17 @@ function getSessionCardTitle(sessionDate, isLastDate) {
 export function TheLatestSessionCard({
   highlightDate = null,
   setHighlightDate,
+  dashboardStage = "established",
+  dataMaturityStage = "mature",
+  sessionCount = 0,
 }) {
   const {
+    isDemoMode,
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
     sessionTonnageLookup,
+    sheetInfo,
     isValidating,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
@@ -104,14 +112,26 @@ export function TheLatestSessionCard({
 
   const sessionRatingRef = useRef(null); // Used to avoid randomised rating changes on rerenders
   const lastUsedAdlibRef = useRef({}); // Tracks last-used indices to avoid repeats when switching sessions
-  const isDemoMode = authStatus === "unauthenticated";
+  // Session ratings are cached by date, so they must also be scoped to the
+  // linked sheet. Different sheets can share the same dates, and a global cache
+  // would let one dataset's adlibs bleed into another.
   const [sessionRatingCache, setSessionRatingCache] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SESSION_RATING_CACHE,
+    getSheetScopedStorageKey(
+      LOCAL_STORAGE_KEYS.SESSION_RATING_CACHE,
+      sheetInfo?.ssid,
+    ),
     {},
     { initializeWithValue: false },
   );
   const [persistCacheTrigger, setPersistCacheTrigger] = useState(0);
   const pendingCacheUpdateRef = useRef(null);
+  const hasLoggedSessions = useMemo(
+    () => Array.isArray(parsedData) && parsedData.some((entry) => !entry?.isGoal),
+    [parsedData],
+  );
+  const isStarterSampleStage = dashboardStage === "starter_sample";
+  const isFirstRealWeekStage = dashboardStage === "first_real_week";
+  const showSessionTonnage = dashboardStage === "established";
 
   useEffect(() => {
     sessionRatingRef.current = null; // Reset the session rating when the highlight date changes
@@ -257,7 +277,7 @@ export function TheLatestSessionCard({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <CardTitle className="flex flex-wrap items-center gap-2">
-                {authStatus === "unauthenticated" && (
+                {isDemoMode && (
                   <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium">
                     Demo Mode
                   </span>
@@ -268,8 +288,24 @@ export function TheLatestSessionCard({
                 )}
               </CardTitle>
               <CardDescription className="mt-1">
-                {analyzedSessionLifts && isLastDate && getReadableDateString(sessionDate, true)}
-                {analyzedSessionLifts && !isDemoMode && sessionRatingRef.current
+                {!hasLoggedSessions &&
+                  (dataMaturityStage === "no_sessions"
+                    ? "Your first session will appear here as soon as you log a set."
+                    : "This card will populate automatically as your sessions roll in.")}
+                {hasLoggedSessions &&
+                  analyzedSessionLifts &&
+                  isStarterSampleStage &&
+                  "Starter sample data. Open your sheet and replace this row with your real training."}
+                {hasLoggedSessions &&
+                  analyzedSessionLifts &&
+                  !isStarterSampleStage &&
+                  isLastDate &&
+                  getReadableDateString(sessionDate, true)}
+                {hasLoggedSessions &&
+                analyzedSessionLifts &&
+                !isDemoMode &&
+                !isStarterSampleStage &&
+                sessionRatingRef.current
                   ? `${isLastDate ? " · " : ""}${sessionRatingRef.current}`
                   : ""}
               </CardDescription>
@@ -282,7 +318,7 @@ export function TheLatestSessionCard({
                     size="icon"
                     className="h-8 w-8"
                     onClick={prevDate}
-                    disabled={isValidating || isFirstDate}
+                    disabled={isValidating || isFirstDate || !hasLoggedSessions}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -298,7 +334,7 @@ export function TheLatestSessionCard({
                     size="icon"
                     className="h-8 w-8"
                     onClick={nextDate}
-                    disabled={isValidating || isLastDate}
+                    disabled={isValidating || isLastDate || !hasLoggedSessions}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -311,7 +347,14 @@ export function TheLatestSessionCard({
           </div>
         </CardHeader>
         <CardContent className="flex-1 space-y-6 pt-0">
-          {!analyzedSessionLifts && <Skeleton className="h-[50vh] rounded-lg" />}
+          {!hasLoggedSessions && (
+            <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
+              Start simple: add one training session in your sheet with Date, Lift Type, Reps, and Weight.
+            </p>
+          )}
+          {hasLoggedSessions && !analyzedSessionLifts && (
+            <Skeleton className="h-[50vh] rounded-lg" />
+          )}
           {analyzedSessionLifts &&
             (Object.keys(analyzedSessionLifts).length > 0 ? (
               <div className="space-y-4">
@@ -334,6 +377,53 @@ export function TheLatestSessionCard({
                     />
                   ),
                 )}
+                {isStarterSampleStage && sheetInfo?.url && (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                    <div className="flex flex-col gap-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">
+                          This session is starter sample data
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Open your Google Sheet, replace this row with your own
+                          first workout, and add future sessions as new rows.
+                          The dashboard will refresh from there.
+                        </p>
+                      </div>
+                      <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
+                        <p className="rounded-md border bg-background/80 px-3 py-2">
+                          1. Open the sheet
+                        </p>
+                        <p className="rounded-md border bg-background/80 px-3 py-2">
+                          2. Edit the sample row
+                        </p>
+                        <p className="rounded-md border bg-background/80 px-3 py-2">
+                          3. Add new sessions as you train
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          Tip: keep your latest session near the top so the log stays easy to update.
+                        </p>
+                        <Button asChild className="shrink-0">
+                          <a
+                            href={sheetInfo.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <img
+                              src={GOOGLE_SHEETS_ICON_URL}
+                              alt=""
+                              className="h-4 w-4 shrink-0"
+                              aria-hidden
+                            />
+                            Open Google Sheet
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
@@ -342,12 +432,46 @@ export function TheLatestSessionCard({
             ))}
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-4 pt-0">
-          {analyzedSessionLifts && (
+          {!hasLoggedSessions && sheetInfo?.url && (
+            <Button asChild variant="outline">
+              <a href={sheetInfo.url} target="_blank" rel="noopener noreferrer">
+                Open your sheet
+              </a>
+            </Button>
+          )}
+          {hasLoggedSessions &&
+            analyzedSessionLifts &&
+            isFirstRealWeekStage &&
+            sheetInfo?.url && (
+              <div className="flex flex-col gap-2 rounded-lg border bg-muted/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Remember: you can open your Google Sheet any time to add lifts
+                  and keep the dashboard moving.
+                </p>
+                <Button asChild variant="outline" className="gap-2 self-start sm:self-auto">
+                  <a
+                    href={sheetInfo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src={GOOGLE_SHEETS_ICON_URL}
+                      alt=""
+                      className="h-4 w-4 shrink-0"
+                      aria-hidden
+                    />
+                    Open Google Sheet
+                  </a>
+                </Button>
+              </div>
+            )}
+          {analyzedSessionLifts && showSessionTonnage && (
               <SessionTonnage
                 analyzedSessionLifts={analyzedSessionLifts}
                 sessionTonnageLookup={sessionTonnageLookup}
                 sessionDate={sessionDate}
                 isMetric={isMetric}
+                isStarterSampleStage={isStarterSampleStage}
               />
           )}
         </CardFooter>
@@ -364,6 +488,7 @@ function SessionTonnage({
   sessionTonnageLookup,
   sessionDate,
   isMetric = false,
+  isStarterSampleStage = false,
 }) {
   const equivalentRef = useRef(null);
 
@@ -498,7 +623,7 @@ function SessionTonnage({
           {Math.round(tonnageDisplay).toLocaleString()}
           {displayUnit}
         </span>
-        {hasRange && overallPctDiff !== null ? (
+        {!isStarterSampleStage && hasRange && overallPctDiff !== null ? (
           <>
             <span className="text-muted-foreground">
               vs {Math.round(avgSessionTonnageDisplay).toLocaleString()}
@@ -549,8 +674,9 @@ function SessionTonnage({
           </p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Not enough history yet to compare your session tonnage over the last
-            year.
+            {isStarterSampleStage
+              ? "Once you replace the starter row with real sessions, this card will start comparing your tonnage over time."
+              : "Not enough history yet to compare your session tonnage over the last year."}
           </p>
         )}
       </div>

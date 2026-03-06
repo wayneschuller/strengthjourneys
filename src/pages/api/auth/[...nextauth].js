@@ -125,7 +125,7 @@ export default NextAuth(authOptions);
 
 // ---------------------------------------------------------------------------
 // Prompts the developer to offer personal support to users at key moments
-// (sign-in, first sheet connection, ongoing activity). Failures are swallowed
+// (sign-in, activation, meaningful return activity). Failures are swallowed
 // and never affect the caller.
 // ---------------------------------------------------------------------------
 
@@ -152,26 +152,63 @@ const PROMPT_MESSAGES = {
     subject: `[SJ] Sign-in — ${name}`,
     text: `${name} (${email}) signed in at ${timeStr}.`,
   }),
-  "sheet-connected": (name, email, timeStr, meta) => ({
-    subject: `[SJ] Sheet connected — ${name}`,
+  activated: (name, email, timeStr, meta) => ({
+    subject: `[SJ] Activated — ${name}`,
     text: [
-      `${name} (${email}) connected their sheet at ${timeStr}.`,
+      `${name} (${email}) activated at ${timeStr}.`,
+      meta.connectionMethod
+        ? `Connection method: ${meta.connectionMethod}`
+        : null,
+      meta.provisioningMethod
+        ? `Provisioning method: ${meta.provisioningMethod}`
+        : null,
+      meta.sheetName ? `Sheet: ${meta.sheetName}` : null,
       meta.rowCount != null ? `Rows: ${meta.rowCount}` : null,
       `\nThey're set up and in the app. Worth a welcome message.`,
     ]
       .filter(Boolean)
       .join("\n"),
   }),
-  active: (name, email, timeStr, meta) => ({
-    subject: `[SJ] Active — ${name}`,
+  returning: (name, email, timeStr, meta) => ({
+    subject: `[SJ] Returning user — ${name}`,
     text: [
-      `${name} (${email}) is using the app. Seen at ${timeStr}.`,
+      `${name} (${email}) returned and is active at ${timeStr}.`,
+      meta.connectionMethod
+        ? `Connection method: ${meta.connectionMethod}`
+        : null,
       meta.rowCount != null ? `Rows: ${meta.rowCount}` : null,
       meta.lastActiveAt
-        ? `Last active: ${friendlyDate(meta.lastActiveAt)} (${daysAgo(meta.lastActiveAt)})`
+        ? `Previous activity: ${friendlyDate(meta.lastActiveAt)} (${daysAgo(meta.lastActiveAt)})`
         : null,
       meta.connectedAt
         ? `Member since: ${friendlyDate(meta.connectedAt)}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  }),
+  reprovisioned: (name, email, timeStr, meta) => ({
+    subject: `[SJ] Reprovisioned after missing sheet — ${name}`,
+    text: [
+      `${name} (${email}) was reprovisioned at ${timeStr}.`,
+      meta.connectionMethod
+        ? `Connection method: ${meta.connectionMethod}`
+        : null,
+      meta.provisioningMethod
+        ? `Provisioning method: ${meta.provisioningMethod}`
+        : null,
+      meta.sheetName ? `New sheet: ${meta.sheetName}` : null,
+      meta.previousProvisionedSheetId
+        ? `Previous sheet ID: ${meta.previousProvisionedSheetId}`
+        : null,
+      meta.previousSheetState
+        ? `Previous sheet state: ${meta.previousSheetState}`
+        : null,
+      meta.previousSheetName
+        ? `Previous sheet name: ${meta.previousSheetName}`
+        : null,
+      meta.previousSheetHttpStatus != null
+        ? `Previous sheet check status: ${meta.previousSheetHttpStatus}`
         : null,
     ]
       .filter(Boolean)

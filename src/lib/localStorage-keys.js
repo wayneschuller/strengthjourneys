@@ -66,6 +66,7 @@ export const LOCAL_STORAGE_KEYS = {
 
   // Google Sheet / data source
   SHEET_INFO: "SJ_sheetInfo",
+  SIGNED_IN_DEMO_MODE: "SJ_signedInDemoMode",
   SSID: "ssid", // deprecated — migrated to SHEET_INFO
   SHEET_URL: "sheetURL", // deprecated — migrated to SHEET_INFO
   SHEET_FILENAME: "sheetFilename", // deprecated — migrated to SHEET_INFO
@@ -105,6 +106,7 @@ export const LOCAL_STORAGE_KEYS = {
 
   // Analytics flags
   HOME_DASHBOARD_FIRST_VIEW_TRACKED: "SJ_homeDashboardFirstViewTracked",
+  HOME_DASHBOARD_LAST_TRACKED_STAGE: "SJ_homeDashboardLastTrackedStage",
 
 };
 
@@ -120,6 +122,23 @@ export const SESSION_STORAGE_KEYS = {
   MINI_FEEDBACK_PREFIX: "mini_feedback_",
   MINI_FEEDBACK_REASON_PREFIX: "mini_feedback_reason_",
   MINI_FEEDBACK_PROMPT_INDEX_PREFIX: "mini_feedback_prompt_index_",
+};
+
+/**
+ * Returns a localStorage key scoped to a specific linked Google Sheet.
+ *
+ * Some dashboard state must follow the active sheet rather than the browser
+ * profile. Otherwise a brand-new or switched sheet can inherit UI state from a
+ * completely different training history, which is especially confusing during
+ * onboarding. When no ssid exists yet we fall back to the base key.
+ *
+ * @param {string} baseKey
+ * @param {string|null|undefined} ssid
+ * @returns {string}
+ */
+export const getSheetScopedStorageKey = (baseKey, ssid) => {
+  if (!ssid) return baseKey;
+  return `${baseKey}:${ssid}`;
 };
 
 /**

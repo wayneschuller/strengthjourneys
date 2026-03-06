@@ -1,8 +1,6 @@
-import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { NextSeo } from "next-seo";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { RelatedArticles } from "@/components/article-cards";
 
 // Here are the analyzer dashboard cards
@@ -91,19 +89,11 @@ export default function LiftExplorer({ relatedArticles }) {
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
  */
 function LiftExplorerMain({ relatedArticles }) {
-  const { data: session, status: authStatus } = useSession();
-  const { isLoading, sheetInfo, liftTypes } = useUserLiftingData();
+  const { liftTypes } = useUserLiftingData();
   const [selectedLiftType, setSelectedLiftType] = useState(null);
 
   // null means "auto" — default to the user's most frequent lift
   const effectiveLiftType = selectedLiftType ?? liftTypes?.[0]?.liftType ?? null;
-
-  if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid)
-    return (
-      <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
-        <ChooseSheetInstructionsCard session={session} />
-      </div>
-    );
 
   return (
     <PageContainer>

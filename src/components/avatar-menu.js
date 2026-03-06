@@ -1,22 +1,29 @@
-
-import * as React from "react";
-import { useContext, useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { gaTrackSignInClick } from "@/lib/analytics";
-import { DrivePickerContainer } from "@/components/drive-picker-container";
-import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { devLog } from "@/lib/processing-utils";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
-  FolderX,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   LogOut,
   Table2,
   MessageSquarePlus,
   Coffee,
+  Eraser,
+  Trash2,
+  Unplug,
 } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
@@ -46,32 +53,66 @@ import {
 export function AvatarDropdown() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
-  const [openPicker, setOpenPicker] = useState(null);
-  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
+  const [isResettingKv, setIsResettingKv] = useState(false);
+  const [isDisconnectingSheet, setIsDisconnectingSheet] = useState(false);
+  const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false);
   const { setTheme, theme } = useTheme();
 
   const {
     sheetInfo,
-    selectSheet,
     clearSheet,
-    parsedData,
-    isLoading,
-    isValidating,
-    isError,
+    enterSignedInDemoMode,
   } = useUserLiftingData();
 
-  // Initialize picker when needed (only loads when user might use it)
-  const handlePickerReady = useCallback((picker) => {
-    setOpenPicker(() => picker);
-  }, []);
+  const runKvReset = useCallback(
+    async (mode) => {
+      setIsResettingKv(true);
+      try {
+        const response = await fetch("/api/dev/reset-user-kv", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ mode }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.error || "KV reset failed");
+        }
+        devLog("[dev-kv-reset]", payload);
+      } catch (error) {
+        console.error("[dev-kv-reset] failed:", error);
+      } finally {
+        setIsResettingKv(false);
+      }
+    },
+    [],
+  );
 
-  // Load picker when user opens dropdown menu (anticipate they might use it)
-  // Or when they need to choose a sheet (ssid is missing)
-  useEffect(() => {
-    if (authStatus === "authenticated" && (!sheetInfo?.ssid || shouldLoadPicker)) {
-      setShouldLoadPicker(true);
+  const disconnectCurrentSheet = useCallback(async () => {
+    setIsDisconnectingSheet(true);
+    try {
+      const response = await fetch("/api/clear-sheet-link", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to disconnect current sheet");
+      }
+      devLog("[sheet-flow] disconnected current sheet from avatar menu", payload);
+      clearSheet();
+      enterSignedInDemoMode();
+      setIsDisconnectDialogOpen(false);
+      router.push("/");
+    } catch (error) {
+      console.error("[sheet-flow] disconnect current sheet failed:", error);
+    } finally {
+      setIsDisconnectingSheet(false);
     }
-  }, [authStatus, sheetInfo?.ssid, shouldLoadPicker]);
+  }, [clearSheet, enterSignedInDemoMode, router]);
 
   if (authStatus !== "authenticated")
     return (
@@ -79,7 +120,7 @@ export function AvatarDropdown() {
         variant="outline"
         onClick={() => {
           gaTrackSignInClick(router.pathname, "nav_avatar");
-          signIn("google", { callbackUrl: "/" });
+          signIn("google", { callbackUrl: router.asPath || "/" });
         }}
       >
         Google Sign in
@@ -91,30 +132,13 @@ export function AvatarDropdown() {
   // Forced signOut() seems to reset everything
   if (authStatus === "authenticated" && !session?.user?.image) {
     console.error(`Next-auth being a silly-billy again.`);
-    clearSheet();
     signOut();
     return null;
   }
 
   return (
     <>
-      {/* Only load picker when needed - this defers ~163 KiB of Google API scripts */}
-      {shouldLoadPicker && (
-        <DrivePickerContainer
-          onReady={handlePickerReady}
-          trigger={shouldLoadPicker}
-          oauthToken={session?.accessToken}
-          selectSheet={selectSheet}
-        />
-      )}
-      <DropdownMenu
-        onOpenChange={(open) => {
-          // Load picker when dropdown opens (user might use it)
-          if (open && !shouldLoadPicker) {
-            setShouldLoadPicker(true);
-          }
-        }}
-      >
+      <DropdownMenu>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -153,14 +177,8 @@ export function AvatarDropdown() {
                 {!sheetInfo?.ssid && (
                   <DropdownMenuItem
                     onClick={() => {
-                      if (openPicker) handleOpenFilePicker(openPicker);
+                      openSheetSetupDialog("bootstrap");
                     }}
-                    disabled={!openPicker}
-                    title={
-                      !openPicker
-                        ? "Loading Google Picker… (allow Google scripts if blocked)"
-                        : undefined
-                    }
                   >
                     <img
                       src={GOOGLE_SHEETS_ICON_URL}
@@ -168,7 +186,7 @@ export function AvatarDropdown() {
                       className="mr-2 h-4 w-4 shrink-0"
                       aria-hidden
                     />
-                    {openPicker ? "Choose Google Sheet" : "Choose Google Sheet (loading…)"}
+                    Set Up Google Sheet
                   </DropdownMenuItem>
                 )}
                 {sheetInfo?.ssid && sheetInfo?.url && (
@@ -182,14 +200,8 @@ export function AvatarDropdown() {
                 {sheetInfo?.ssid && (
                   <DropdownMenuItem
                     onClick={() => {
-                      if (openPicker) handleOpenFilePicker(openPicker);
+                      openSheetSetupDialog("switch_sheet");
                     }}
-                    disabled={!openPicker}
-                    title={
-                      !openPicker
-                        ? "Loading Google Picker… (allow Google scripts if blocked)"
-                        : undefined
-                    }
                   >
                     <img
                       src={GOOGLE_SHEETS_ICON_URL}
@@ -197,30 +209,25 @@ export function AvatarDropdown() {
                       className="mr-2 h-4 w-4 shrink-0"
                       aria-hidden
                     />
-                    {openPicker ? "Choose New Google Sheet" : "Choose New Google Sheet (loading…)"}
+                    Switch Sheets
                   </DropdownMenuItem>
                 )}
-
                 {sheetInfo?.ssid && (
-                    <DropdownMenuItem
-                      onClick={() => {
-                        clearSheet();
-                      }}
-                    >
-                      <FolderX className="mr-2 h-4 w-4" />
-                      <span>Forget Google Sheet</span>
-                    </DropdownMenuItem>
-                  )}
-                {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development" && (
-                  <DropdownMenuItem
-                    onClick={() =>
-                      window.dispatchEvent(new Event("open-feedback"))
-                    }
-                  >
-                    <MessageSquarePlus className="mr-2 h-4 w-4" />
-                    Send Feedback
+                  <DropdownMenuItem onClick={() => setIsDisconnectDialogOpen(true)}>
+                    <Unplug className="mr-2 h-4 w-4" />
+                    Disconnect Sheet
                   </DropdownMenuItem>
                 )}
+                {/* Public actions shown in all environments. Keep these outside
+                    any dev-only gate so production users always see them. */}
+                <DropdownMenuItem
+                  onClick={() =>
+                    window.dispatchEvent(new Event("open-feedback"))
+                  }
+                >
+                  <MessageSquarePlus className="mr-2 h-4 w-4" />
+                  Send Feedback
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() =>
                     window.open("https://buymeacoffee.com/lrhvbjxzqr")
@@ -229,10 +236,38 @@ export function AvatarDropdown() {
                   <Coffee className="mr-2 h-4 w-4" />
                   Buy Me A Coffee
                 </DropdownMenuItem>
+                {/* Non-production tools for QA/reset workflows.
+                    These are available in development-like envs (including
+                    Vercel preview/main) and hidden on stable/production. */}
+                {process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+                      Dev Tools
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem
+                      disabled={isResettingKv}
+                      onClick={() => {
+                        runKvReset("onboarding");
+                      }}
+                    >
+                      <Eraser className="mr-2 h-4 w-4" />
+                      Clear KV onboarding state
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={isResettingKv}
+                      onClick={() => {
+                        runKvReset("delete");
+                      }}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete full KV user record
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
-                    clearSheet();
                     signOut();
                   }}
                 >
@@ -242,6 +277,36 @@ export function AvatarDropdown() {
               </DropdownMenuGroup>
             </DropdownMenuContent>
       </DropdownMenu>
+      <Dialog open={isDisconnectDialogOpen} onOpenChange={setIsDisconnectDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Disconnect your sheet?</DialogTitle>
+            <DialogDescription>
+              This removes your current spreadsheet from Strength Journeys and stops
+              future reads of your lifting data. You&apos;ll stay signed in and return
+              to demo mode until you reconnect a sheet.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDisconnectDialogOpen(false)}
+              disabled={isDisconnectingSheet}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                void disconnectCurrentSheet();
+              }}
+              disabled={isDisconnectingSheet}
+            >
+              {isDisconnectingSheet ? "Disconnecting..." : "Disconnect Sheet"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

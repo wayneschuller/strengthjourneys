@@ -1,7 +1,6 @@
 
 import * as React from "react";
 import { useState, useEffect, useContext } from "react";
-import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { getSelectedLiftsKey } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
@@ -108,8 +107,7 @@ const CheckboxLifts = ({
   setSelectedLiftTypes,
   storagePrefix,
 }) => {
-  const { liftTypes } = useUserLiftingData();
-  const { status: authStatus } = useSession();
+  const { isDemoMode, liftTypes } = useUserLiftingData();
 
   const handleCheckboxChange = (liftType) => {
     // Calculate updatedSelected first
@@ -130,10 +128,7 @@ const CheckboxLifts = ({
       .filter((liftType) => updatedSelected.includes(liftType));
 
     // Update localStorage
-    const localStorageKey = getSelectedLiftsKey(
-      authStatus === "unauthenticated",
-      storagePrefix
-    );
+    const localStorageKey = getSelectedLiftsKey(isDemoMode, storagePrefix);
     localStorage.setItem(localStorageKey, JSON.stringify(updatedSelected));
 
     // Set the state

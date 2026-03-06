@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   BIG_FOUR_LIFT_TYPES,
+  getDisplayWeight,
 } from "@/lib/processing-utils";
 import {
   getStrengthRatingForE1RM,
@@ -42,6 +43,13 @@ import { LiftSvg } from "@/components/year-recap/lift-svg";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { MiniFeedbackWidget } from "@/components/feedback";
 
+const BIG_FOUR_INSIGHT_HREFS = {
+  "Back Squat": "/barbell-squat-insights",
+  "Bench Press": "/barbell-bench-press-insights",
+  Deadlift: "/barbell-deadlift-insights",
+  "Strict Press": "/barbell-strict-press-insights",
+};
+
 // ─── Main component ────────────────────────────────────────────────────────
 
 /**
@@ -49,11 +57,31 @@ import { MiniFeedbackWidget } from "@/components/feedback";
  * sessions, Big Four tonnage, and Big Four strength level consistency.
  * Reads data from UserLiftingDataProvider; takes no props.
  */
-export function TheMonthInIronCard() {
-  const { parsedData } = useUserLiftingData();
+export function TheMonthInIronCard({
+  dashboardStage = "established",
+  dataMaturityStage: stageFromParent = null,
+  sessionCount: sessionCountFromParent = null,
+}) {
+  const { isDemoMode, parsedData, sheetInfo } = useUserLiftingData();
   const bio = useAthleteBio();
   const { isMetric } = bio;
   const { status: authStatus } = useSession();
+  const sessionCount = useMemo(() => {
+    if (typeof sessionCountFromParent === "number") return sessionCountFromParent;
+    if (!Array.isArray(parsedData)) return 0;
+    const dates = new Set();
+    parsedData.forEach((entry) => {
+      if (!entry?.isGoal && entry?.date) dates.add(entry.date);
+    });
+    return dates.size;
+  }, [parsedData, sessionCountFromParent]);
+  const dataMaturityStage = useMemo(() => {
+    if (stageFromParent) return stageFromParent;
+    if (sessionCount === 0) return "no_sessions";
+    if (sessionCount <= 7) return "first_week";
+    if (sessionCount <= 20) return "first_month";
+    return "mature";
+  }, [stageFromParent, sessionCount]);
 
   const [monthOffset, setMonthOffset] = useState(0);
   const maxMonthOffset = useMemo(
@@ -92,12 +120,12 @@ export function TheMonthInIronCard() {
   );
 
   const stats = useMemo(() => {
-    if (!parsedData) return null;
+    if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
     return computeMonthlyBattleStats(parsedData, boundaries);
   }, [parsedData, boundaries]);
 
   const strengthLevelStats = useMemo(() => {
-    if (!parsedData || !bio) return null;
+    if (!Array.isArray(parsedData) || parsedData.length === 0 || !bio) return null;
     return computeStrengthLevelStats(parsedData, boundaries, bio);
   }, [parsedData, bio, boundaries]);
 
@@ -249,13 +277,26 @@ export function TheMonthInIronCard() {
     setMonthOffset((prev) => Math.max(0, prev - 1));
   };
 
+  if (dataMaturityStage !== "mature") {
+    return (
+      <EarlyMonthMomentumCard
+        isDemoMode={isDemoMode}
+        parsedData={parsedData}
+        dashboardStage={dashboardStage}
+        dataMaturityStage={dataMaturityStage}
+        isMetric={isMetric}
+        sheetUrl={sheetInfo?.url}
+      />
+    );
+  }
+
   return (
     <Card ref={cardRef} className="flex h-full flex-1 flex-col">
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <CardTitle>
-              {authStatus === "unauthenticated" && "Demo Mode: "}
+              {isDemoMode && "Demo Mode: "}
               {monthCardTitle}
             </CardTitle>
             <CardDescription>{motivationalPhrase}</CardDescription>
@@ -342,7 +383,7 @@ export function TheMonthInIronCard() {
           </>
         )}
       </CardContent>
-      {stats && (
+      {stats && dashboardStage === "established" && (
         <CardFooter className="pt-0">
           <MiniFeedbackWidget
             contextId="this_month_in_iron_card"
@@ -352,6 +393,315 @@ export function TheMonthInIronCard() {
         </CardFooter>
       )}
     </Card>
+  );
+}
+
+function EarlyMonthMomentumCard({
+  isDemoMode,
+  parsedData,
+  dashboardStage,
+  dataMaturityStage,
+  isMetric,
+  sheetUrl,
+}) {
+  const stats = useMemo(() => {
+    const entries = Array.isArray(parsedData)
+      ? parsedData.filter((entry) => !entry?.isGoal)
+      : [];
+    const sessions = new Set(entries.map((entry) => entry.date)).size;
+    const sets = entries.length;
+    const totalTonnageNative = entries.reduce(
+      (sum, entry) => sum + (entry.weight || 0) * (entry.reps || 0),
+      0,
+    );
+    const unitType = entries[0]?.unitType ?? (isMetric ? "kg" : "lb");
+    const totalTonnage = getDisplayWeight(
+      { weight: totalTonnageNative, unitType },
+      isMetric,
+    );
+    const bigFourTouches = new Set(
+      entries
+        .map((entry) => entry.liftType)
+        .filter((liftType) => BIG_FOUR_LIFT_TYPES.includes(liftType)),
+    ).size;
+    return {
+      sessions,
+      sets,
+      bigFourTouches,
+      tonnageValue: Math.round(totalTonnage.value),
+      tonnageUnit: totalTonnage.unitType,
+    };
+  }, [parsedData, isMetric]);
+
+  const title =
+    dashboardStage === "starter_sample" || dashboardStage === "first_real_week"
+      ? "The First Week in Iron"
+      : dataMaturityStage === "no_sessions"
+        ? "The First Month in Iron"
+        : "First Month Momentum";
+  const subtitle =
+    dashboardStage === "starter_sample"
+      ? "Get into the gym and start the week strong."
+      : dashboardStage === "first_real_week"
+        ? "Keep the week simple, learn the lifts, and add only small jumps."
+      : dataMaturityStage === "first_week"
+        ? "Your first week is about showing up and building rhythm."
+        : dataMaturityStage === "first_month"
+          ? "Momentum now becomes measurable progress."
+          : "Log your first session and this card will start scoring your month.";
+
+  const guidanceItems =
+    dashboardStage === "starter_sample"
+      ? [
+          "Open the sheet and replace the sample row.",
+          "Aim for three simple sessions this week.",
+          "Keep weights easy enough that technique stays clean.",
+        ]
+      : dashboardStage === "first_real_week"
+        ? [
+            "Repeat the same basic lifts before adding variety.",
+            "Log every set so the habit becomes automatic.",
+            "Leave a rep in reserve instead of chasing grinders.",
+          ]
+        : [
+            "Squat and press regularly, deadlift once a week, and recover hard.",
+            "Let consistency lead load. Good weeks compound faster than big swings.",
+            "The goal this month is repeatable training, not dramatic heroics.",
+          ];
+  const showWeekTemplate =
+    dashboardStage === "starter_sample" || dashboardStage === "first_real_week";
+  const showFirstMonthTemplate = dashboardStage === "first_month";
+  const isTemplateMode = showWeekTemplate || showFirstMonthTemplate;
+
+  return (
+    <Card className="flex h-full flex-1 flex-col">
+      <CardHeader className="pb-3">
+        <CardTitle>
+          {isDemoMode && "Demo Mode: "}
+          {title}
+        </CardTitle>
+        <CardDescription>{subtitle}</CardDescription>
+      </CardHeader>
+      <CardContent
+        className={`flex flex-1 flex-col gap-4 ${
+          isTemplateMode ? "justify-start pt-0" : "justify-center"
+        }`}
+      >
+        {showWeekTemplate ? (
+          <div className="rounded-lg bg-background/60 px-3 py-3">
+            <p className="text-sm text-muted-foreground">
+              Start with{" "}
+              <span className="font-medium text-foreground">
+                an empty bar
+              </span>{" "}
+              and work up to{" "}
+              <span className="font-medium text-foreground">
+                a moderate weight
+              </span>
+              .{" "}
+              <span className="font-medium text-foreground">
+                3x5 means three sets of five reps
+              </span>
+              . Rest a few minutes between sets.
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <WeekPlanLiftSession
+                title="Session 1"
+                lifts={[
+                  { liftType: "Back Squat", prescription: "3×5" },
+                ]}
+              />
+              <WeekPlanLiftSession
+                title="Session 2"
+                lifts={[
+                  { liftType: "Bench Press", prescription: "3×5" },
+                ]}
+              />
+              <WeekPlanLiftSession
+                title="Session 3"
+                lifts={[
+                  { liftType: "Deadlift", prescription: "1×5" },
+                  { liftType: "Strict Press", prescription: "3×5" },
+                ]}
+              />
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Each work set should feel{" "}
+              <span className="font-medium text-foreground">
+                solid and challenging
+              </span>
+              , but never like a desperate grind. You will finish knowing you
+              could have done{" "}
+              <span className="font-medium text-foreground">
+                2-3 more reps
+              </span>{" "}
+              if needed. Over the following weeks,{" "}
+              <span className="font-medium text-foreground">
+                add small amounts of weight
+              </span>{" "}
+              so the lifts get heavier while still moving cleanly.
+            </p>
+          </div>
+        ) : showFirstMonthTemplate ? (
+          <div className="rounded-lg bg-background/60 px-3 py-3">
+            <p className="text-sm text-muted-foreground">
+              You can continue what you did in the previous week, or feel free to
+              start adding more lifts to each session as the movements begin to
+              feel more natural. Keep the sessions simple, use manageable
+              weights, and add small amounts over time.
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <WeekPlanSession
+                title="Session 1"
+                items={[
+                  { liftType: "Back Squat", prescription: "3×5" },
+                  { liftType: "Strict Press", prescription: "3×5" },
+                ]}
+              />
+              <WeekPlanSession
+                title="Session 2"
+                items={[
+                  {
+                    liftType: "Back Squat",
+                    prescription: "3×5 (+ small weight increase)",
+                  },
+                  { liftType: "Bench Press", prescription: "3×5" },
+                ]}
+              />
+              <WeekPlanSession
+                title="Session 3"
+                items={[
+                  {
+                    liftType: "Back Squat",
+                    prescription: "3×5 (+ small weight increase again)",
+                  },
+                  { liftType: "Strict Press", prescription: "3×5" },
+                  {
+                    liftType: "Deadlift",
+                    prescription: "1×5 (+ small weight increase)",
+                  },
+                ]}
+              />
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              If you are especially keen, try implementing the{" "}
+              <a
+                href="https://startingstrength.com/get-started/programs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary hover:underline"
+              >
+                Starting Strength Novice Linear Progression
+              </a>
+              .
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-3">
+              <MomentumStat label="Sessions" value={stats.sessions} />
+              <MomentumStat label="Sets Logged" value={stats.sets} />
+              <MomentumStat label="Big Four" value={stats.bigFourTouches} />
+            </div>
+            <p className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+              Total volume so far:{" "}
+              <span className="font-medium text-foreground">
+                {stats.tonnageValue.toLocaleString()} {stats.tonnageUnit}
+              </span>
+              . Keep stacking consistent sessions.
+            </p>
+            <div className="rounded-lg border bg-background/80 px-3 py-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Coaching Notes
+            </p>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              {guidanceItems.map((item) => (
+                <p key={item}>{item}</p>
+              ))}
+            </div>
+            </div>
+          </>
+        )}
+      </CardContent>
+      {dashboardStage === "established" && (
+        <CardFooter className="pt-0">
+          <MiniFeedbackWidget
+            contextId="this_month_in_iron_card"
+            page="/lift-explorer"
+            analyticsExtra={{ context: "this_month_in_iron_card_early" }}
+          />
+        </CardFooter>
+      )}
+    </Card>
+  );
+}
+
+function MomentumStat({ label, value }) {
+  return (
+    <div className="rounded-lg border bg-background/80 px-2 py-3 text-center">
+      <div className="text-lg font-semibold">{value}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+function WeekPlanSession({ title, items }) {
+  return (
+    <div className="rounded-lg border border-border/70 bg-muted/10 px-3 py-3">
+      <p className="mb-2 text-sm font-semibold text-foreground">{title}</p>
+      <div className="space-y-2 text-sm text-muted-foreground">
+        {items.map((item) => (
+          typeof item === "string" ? (
+            <p key={item}>{item}</p>
+          ) : (
+            <p key={`${title}-${item.liftType}-${item.prescription}`}>
+              <Link
+                href={BIG_FOUR_INSIGHT_HREFS[item.liftType]}
+                className="font-medium text-primary hover:underline"
+              >
+                {item.liftType}
+              </Link>{" "}
+              — {item.prescription}
+            </p>
+          )
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WeekPlanLiftSession({ title, lifts }) {
+  return (
+    <div className="rounded-lg border border-border/70 bg-muted/10 px-3 py-3">
+      <p className="mb-3 text-sm font-semibold text-foreground">{title}</p>
+      <div className="space-y-3">
+        {lifts.map(({ liftType, prescription }) => {
+          const href = BIG_FOUR_INSIGHT_HREFS[liftType];
+
+          return (
+            <div key={`${title}-${liftType}`} className="flex items-center gap-3">
+              <Link href={href} className="shrink-0">
+                <LiftSvg
+                  liftType={liftType}
+                  size="sm"
+                  animate={false}
+                  className="h-12 w-12"
+                />
+              </Link>
+              <div className="min-w-0">
+                <Link
+                  href={href}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {liftType}
+                </Link>
+                <p className="text-sm text-muted-foreground">{prescription}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

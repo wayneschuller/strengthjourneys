@@ -153,12 +153,12 @@ function RecapCustomiseSidebar() {
 function StrengthYearInReviewMain() {
   const router = useRouter();
   const { status: authStatus } = useSession();
-  const { parsedData, isLoading, sheetInfo } = useUserLiftingData();
+  const { parsedData, isDemoMode, isLoading, sheetInfo } = useUserLiftingData();
 
   // Signed in but no sheet connected: we still have demo data in parsedData.
   // Treat as "no data" and show connect-sheet instructions instead of demo recap.
   const needsToConnectSheet =
-    authStatus === "authenticated" && !sheetInfo?.ssid;
+    authStatus === "authenticated" && !sheetInfo?.ssid && !isDemoMode;
 
   const yearsWithData = useMemo(() => {
     if (!parsedData || needsToConnectSheet) return [];
@@ -224,7 +224,7 @@ function StrengthYearInReviewMain() {
 
         {!isLoading && yearsWithData.length === 0 && !needsToConnectSheet && (
           <div className="rounded-lg border p-6 text-center text-muted-foreground">
-            <p>No training data yet. Connect your Google Sheet to get started.</p>
+            <p>No training data yet. Set up your Google Sheet to get started.</p>
           </div>
         )}
 
@@ -232,9 +232,9 @@ function StrengthYearInReviewMain() {
           <div className="flex flex-col gap-6 xl:gap-8 xl:grid xl:grid-cols-[13rem_1fr_minmax(18rem,22rem)] xl:items-start">
             <div className="xl:col-start-2 flex flex-col items-center justify-center rounded-lg border p-6 text-center text-muted-foreground xl:min-h-[280px]">
               <p>
-                Connect your Google Sheet using the button above to load your
-                lifting history. Your year in review will appear here once
-                connected.
+                Set up your Google Sheet using the button above to load your
+                lifting history. Your year in review will appear here once the
+                setup is done.
               </p>
             </div>
             <div className="flex flex-col gap-6 pt-2 xl:col-start-3 xl:pt-2">
@@ -256,7 +256,7 @@ function StrengthYearInReviewMain() {
               <div className="order-1 xl:order-2 xl:col-start-2 flex justify-center xl:min-w-0">
                 <YearRecapCarousel
                   year={effectiveYear}
-                  isDemo={authStatus === "unauthenticated"}
+                  isDemo={isDemoMode}
                 />
               </div>
             )}
@@ -275,10 +275,10 @@ function StrengthYearInReviewMain() {
                 {authStatus === "authenticated" && sheetInfo?.ssid && (
                   <RecapCustomiseSidebar />
                 )}
-                {authStatus === "unauthenticated" ? (
-                  <DemoModeSignInCard />
-                ) : needsToConnectSheet ? (
+                {authStatus === "authenticated" && !sheetInfo?.ssid ? (
                   <ConnectSheetRecapCard />
+                ) : isDemoMode ? (
+                  <DemoModeSignInCard />
                 ) : null}
               </div>
             )}

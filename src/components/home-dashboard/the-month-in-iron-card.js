@@ -292,8 +292,8 @@ export function TheMonthInIronCard({
 
   return (
     <Card ref={cardRef} className="flex h-full flex-1 flex-col">
-      <CardHeader className="pb-4">
-        <div className="flex items-start justify-between gap-4">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <CardTitle>
               {isDemoMode && "Demo Mode: "}
@@ -341,7 +341,7 @@ export function TheMonthInIronCard({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col space-y-4">
+      <CardContent className="flex flex-1 flex-col space-y-3">
         {!stats && <Skeleton className="h-[30vh]" />}
 
         {stats && (
@@ -358,7 +358,7 @@ export function TheMonthInIronCard({
 
             <Separator />
             <motion.div
-              className="space-y-1"
+              className="space-y-0.5"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.35 }}
@@ -1549,8 +1549,8 @@ function BigFourCriteriaTable({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-[1fr_100px_1fr] items-center gap-2 border-b border-border/30 px-2 pb-1.5 text-[11px] font-medium uppercase tracking-wide text-primary">
+    <div className="space-y-1.5">
+      <div className="grid grid-cols-[1fr_100px_1fr] items-center gap-2 border-b border-border/30 px-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-primary">
         <div className="text-right">{boundaries.prevMonthName}</div>
         <div className="text-center" aria-hidden="true"></div>
         <div className="text-left">{boundaries.currentMonthName}</div>
@@ -1586,7 +1586,7 @@ function BigFourCriteriaTable({
 
         return (
           <motion.div
-            className={`grid grid-cols-[1fr_100px_1fr] items-center gap-2 rounded-md border border-border/25 px-2 py-1.5 transition-colors duration-500 ${revealRowBg}`}
+            className={`grid grid-cols-[1fr_100px_1fr] items-center gap-2 rounded-md border border-border/25 px-2 py-1 transition-colors duration-500 ${revealRowBg}`}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.04, ease: [0.22, 1, 0.36, 1] }}
@@ -1741,7 +1741,7 @@ function BigFourCriteriaTable({
         return (
           <motion.div
             key={liftType}
-            className="grid grid-cols-[1fr_100px_1fr] grid-rows-2 items-center gap-x-2 gap-y-1 rounded-md border border-border/25 px-2 py-2"
+            className="grid grid-cols-[1fr_100px_1fr] grid-rows-2 items-center gap-x-2 gap-y-0.5 rounded-md border border-border/25 px-2 py-1.5"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             whileHover="hover"
@@ -1751,7 +1751,7 @@ function BigFourCriteriaTable({
               ease: [0.22, 1, 0.36, 1],
             }}
           >
-            <div className={`rounded px-1.5 py-1 text-right transition-colors duration-500 ${revealStrengthBg}`}>
+            <div className={`rounded px-1.5 py-0.5 text-right transition-colors duration-500 ${revealStrengthBg}`}>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -1796,7 +1796,7 @@ function BigFourCriteriaTable({
               </motion.div>
             </Link>
 
-            <div className={`rounded px-1.5 py-1 text-left transition-colors duration-500 ${revealStrengthBg}`}>
+            <div className={`rounded px-1.5 py-0.5 text-left transition-colors duration-500 ${revealStrengthBg}`}>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -1827,7 +1827,7 @@ function BigFourCriteriaTable({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className={`rounded px-1.5 py-1 text-right transition-colors duration-500 ${revealTonnageBg}`}>
+                  <div className={`rounded px-1.5 py-0.5 text-right transition-colors duration-500 ${revealTonnageBg}`}>
                     <div className={`text-xs transition-colors duration-500 ${revealTonnageColor}`}>
                       <span className={rowHighlighted ? "text-muted-foreground" : "text-foreground"}>
                         {formatTonnage(tonnage.last ?? 0, unit)} lifted
@@ -1846,7 +1846,7 @@ function BigFourCriteriaTable({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className={`rounded px-1.5 py-1 text-left transition-colors duration-500 ${revealTonnageBg}`}>
+                  <div className={`rounded px-1.5 py-0.5 text-left transition-colors duration-500 ${revealTonnageBg}`}>
                     <div className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}>
                       <span>{formatTonnage(currentTonnage, unit)} lifted</span>
                       {rowHighlighted && (tonnagePassed || tonnageNewWin) && (
@@ -1877,7 +1877,7 @@ function BigFourCriteriaTable({
         );
       })}
 
-      <div className="space-y-1 pt-1">
+      <div className="space-y-1 pt-0.5">
         <AthleteBioInlineSettings
           forceStackedControls
           defaultBioPrompt="Enter your details to unlock this feature."

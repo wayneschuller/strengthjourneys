@@ -112,12 +112,12 @@ export function TheMonthInIronCard({
   );
 
   const stats = useMemo(() => {
-    if (!parsedData) return null;
+    if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
     return computeMonthlyBattleStats(parsedData, boundaries);
   }, [parsedData, boundaries]);
 
   const strengthLevelStats = useMemo(() => {
-    if (!parsedData || !bio) return null;
+    if (!Array.isArray(parsedData) || parsedData.length === 0 || !bio) return null;
     return computeStrengthLevelStats(parsedData, boundaries, bio);
   }, [parsedData, bio, boundaries]);
 

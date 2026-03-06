@@ -1666,7 +1666,7 @@ function Heatmap({ parsedData, startDate, endDate, isSharing }) {
   });
 
   const heatmapData = useMemo(() => {
-    if (!parsedData) return null;
+    if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
     return generateHeatmapData(
       parsedData,
       startDate,

@@ -28,7 +28,8 @@ export function HeroSection() {
             Welcome to Strength Journeys
           </p>
           <h1 className="mb-4 mt-2 text-balance text-center text-3xl font-extrabold leading-tight tracking-tight md:mb-8 lg:text-left lg:text-4xl xl:text-5xl">
-            Sign in, and Strength Journeys sets up your lifting log for you.
+            Free barbell lifting analysis tools that turn your Google Sheet
+            into powerful, visual insights.
           </h1>
           <PageDescription />
           <HeroPrimaryCta />
@@ -41,29 +42,7 @@ export function HeroSection() {
 
 // Internal helper: paragraph describing the app's core value proposition with links.
 const PageDescription = () => (
-  <p className="mb-10 mt-2 text-center text-xl tracking-tight md:text-left md:text-2xl lg:w-4/5">
-    We&apos;ll find an existing lifting sheet in your Google Drive or provision a
-    fresh one from our{" "}
-    <a
-      className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-      target="_blank"
-      rel="noopener noreferrer"
-      href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
-    >
-      spreadsheet design
-    </a>
-    , then turn your training into PR tracking, E1RM trends, and strength
-    insights.{" "}
-    <a
-      className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-      target="_blank"
-      rel="noopener noreferrer"
-      href="https://github.com/wayneschuller/strengthjourneys"
-    >
-      Free and open source
-    </a>
-    .
-  </p>
+  <></>
 );
 
 // Internal helper: prominent hero CTA for unauthenticated visitors and
@@ -90,8 +69,8 @@ function HeroPrimaryCta() {
             className="h-5 w-5 shrink-0"
             aria-hidden
           />
-          <div className="hidden md:block">Set Up Google Sheet</div>
-          <div className="md:hidden">Set up your sheet</div>
+          <div className="hidden md:block">Set Up Your Free Lifting Log</div>
+          <div className="md:hidden">Set up your log</div>
         </Button>
       ) : (
         <Button
@@ -102,12 +81,14 @@ function HeroPrimaryCta() {
           }}
         >
           <GoogleLogo />
-          <div className="hidden md:block">Sign in and we&apos;ll set you up</div>
-          <div className="md:hidden">Sign in to get started</div>
+          <div className="hidden md:block">
+            Start Your Strength Journey — Free Google Sign-in
+          </div>
+          <div className="md:hidden">Free Google Sign-in</div>
         </Button>
       )}
       <p className="mt-2 text-xs italic text-slate-500">
-        We never copy or store your raw data.
+        We never copy or store your data.
       </p>
     </div>
   );

@@ -262,9 +262,9 @@ export function GettingStartedCard() {
           Sign in once. We&apos;ll handle the lifting log setup.
         </CardTitle>
         <CardDescription className="max-w-2xl text-base leading-relaxed">
-          Strength Journeys detects the sheet you already use or provisions a
-          fresh one from our spreadsheet design, then turns it into dashboards,
-          PR tracking, e1RM trends, and lift analysis.
+          Strength Journeys helps you set up a lifting log from our spreadsheet
+          design, then turns it into dashboards, PR tracking, e1RM trends, and
+          lift analysis.
         </CardDescription>
       </CardHeader>
       <CardContent className="relative grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
@@ -272,7 +272,7 @@ export function GettingStartedCard() {
           <div className="grid gap-3 sm:grid-cols-3">
             {[
               "Built for real lifting history, not generic workout fluff.",
-              "Automatic setup whether you already log lifts or need a fresh start.",
+              "Guided Google Sheets setup built for lifters.",
               "Read-only sync into charts, PRs, trends, and session recaps.",
             ].map((copy) => (
               <div
@@ -383,15 +383,15 @@ export function GettingStartedCardCompact() {
             See this with your data: PRs, charts, and insights
           </CardTitle>
           <CardDescription>
-            Sign in once. Strength Journeys will find your lifting log or create one from the template design for you.
+            Sign in once. Strength Journeys will help you set up your lifting
+            log from the template design.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {authStatus !== "authenticated" && (
             <p className="text-sm">
-              Sign in with Google and Strength Journeys will either connect the
-              lifting sheet you already use or provision a fresh one based on
-              our{" "}
+              Sign in with Google and Strength Journeys will help you set up
+              your lifting log based on our{" "}
               <a
                 href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
                 target="_blank"

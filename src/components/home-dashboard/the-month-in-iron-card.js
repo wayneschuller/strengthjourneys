@@ -40,9 +40,15 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LiftSvg } from "@/components/year-recap/lift-svg";
-import { getBigFourPrSectionHref } from "@/lib/classic-lift-memory";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { MiniFeedbackWidget } from "@/components/feedback";
+
+const BIG_FOUR_INSIGHT_HREFS = {
+  "Back Squat": "/barbell-squat-insights",
+  "Bench Press": "/barbell-bench-press-insights",
+  Deadlift: "/barbell-deadlift-insights",
+  "Strict Press": "/barbell-strict-press-insights",
+};
 
 // ─── Main component ────────────────────────────────────────────────────────
 
@@ -618,7 +624,7 @@ function WeekPlanLiftSession({ title, lifts, note }) {
       <p className="mb-3 text-sm font-semibold text-foreground">{title}</p>
       <div className="space-y-3">
         {lifts.map(({ liftType, prescription }) => {
-          const href = getBigFourPrSectionHref(liftType);
+          const href = BIG_FOUR_INSIGHT_HREFS[liftType];
 
           return (
             <div key={`${title}-${liftType}`} className="flex items-center gap-3">

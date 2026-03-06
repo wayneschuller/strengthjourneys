@@ -434,7 +434,7 @@ function EarlyMonthMomentumCard({
         : "First Month Momentum";
   const subtitle =
     dashboardStage === "starter_sample"
-      ? "A simple novice template to help you replace the sample and get moving."
+      ? "Get into the gym and start the week strong."
       : dashboardStage === "first_real_week"
         ? "Keep the week simple, learn the lifts, and add only small jumps."
       : dataMaturityStage === "first_week"
@@ -463,6 +463,7 @@ function EarlyMonthMomentumCard({
           ];
   const showWeekTemplate =
     dashboardStage === "starter_sample" || dashboardStage === "first_real_week";
+  const showFirstMonthTemplate = dashboardStage === "first_month";
 
   return (
     <Card className="flex h-full flex-1 flex-col">
@@ -477,12 +478,51 @@ function EarlyMonthMomentumCard({
         {showWeekTemplate ? (
           <div className="rounded-lg border bg-background/80 px-3 py-3">
             <p className="text-sm text-muted-foreground">
-              In the first week, the goal is simple: learn the movements, build
-              consistency, and begin adding weight gradually. Choose loads that
-              feel manageable so you can focus on solid technique and finish
-              each set knowing you had another rep or two in reserve. Rest
-              properly, keep the sessions simple, and make only small increases
-              each workout.
+              In the first week, the goal is simply to learn the lifts,
+              establish the routine, and begin progressive loading. Start
+              lighter than you think you need so you can focus on consistent
+              technique and finish each set with a couple of reps in reserve.
+              Rest properly between sets and add small amounts of weight each
+              session so the lifts feel smooth and repeatable rather than
+              grinding.
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <WeekPlanSession
+                title="Session 1"
+                items={[
+                  "Squat — 3×5",
+                  "Practice consistent depth and balance over mid-foot",
+                  "Leave 1–2 reps in reserve on each set",
+                ]}
+              />
+              <WeekPlanSession
+                title="Session 2"
+                items={[
+                  "Bench Press — 3×5",
+                  "Set your shoulders and keep a stable bar path",
+                  "Add a small amount of weight from warm-ups to work sets",
+                ]}
+              />
+              <WeekPlanSession
+                title="Session 3"
+                items={[
+                  "Deadlift — 1×5",
+                  "Strict Press — 3×5",
+                  "Focus on strong setup and controlled bar path on both lifts",
+                ]}
+              />
+            </div>
+          </div>
+        ) : showFirstMonthTemplate ? (
+          <div className="rounded-lg border bg-background/80 px-3 py-3">
+            <p className="text-sm text-muted-foreground">
+              In the first month, the aim is simply to learn the movements,
+              build consistency, and start adding weight gradually. Choose
+              weights that feel manageable so you can focus on solid technique
+              and finish each set knowing you could have done another rep or
+              two. Rest properly between sets, keep the sessions simple, and
+              add only small increases each workout so you build steady
+              momentum.
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <WeekPlanSession

@@ -7,6 +7,7 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 const TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
 const PROVISION_VERSION = 1;
 const MAX_HEADER_CHECKS = 12;
+const MAX_DEEP_ENRICH_CANDIDATES = 3;
 const REQUIRED_HEADERS = [
   "Date",
   "Lift Type",
@@ -58,14 +59,46 @@ function parseReps(value) {
   return parsed;
 }
 
-function parseWeight(value) {
-  const raw = String(value || "")
-    .trim()
-    .replace(/,/g, "");
+function parseWeightAndUnit(value) {
+  const raw = String(value || "").trim();
   if (!raw) return null;
-  const parsed = parseFloat(raw);
+
+  const compact = raw.toLowerCase();
+  const hasKg = compact.endsWith("kg");
+  const hasLb = compact.endsWith("lb");
+  const numericPartRaw = compact.replace(/(kg|lb)$/i, "").trim();
+  let numericPart = numericPartRaw;
+
+  // Handle both "112,5kg" and "1,125kg" style inputs.
+  const hasComma = numericPart.includes(",");
+  const hasDot = numericPart.includes(".");
+  if (hasComma && hasDot) {
+    // If dot appears before comma, treat as EU style (1.125,5 -> 1125.5).
+    if (numericPart.indexOf(".") < numericPart.indexOf(",")) {
+      numericPart = numericPart.replace(/\./g, "").replace(",", ".");
+    } else {
+      // Default mixed style: commas are thousands separators.
+      numericPart = numericPart.replace(/,/g, "");
+    }
+  } else if (hasComma) {
+    const parts = numericPart.split(",");
+    const last = parts[parts.length - 1];
+    // Single comma with 1-2 trailing digits is likely decimal comma.
+    if (parts.length === 2 && /^\d{1,2}$/.test(last)) {
+      numericPart = `${parts[0]}.${last}`;
+    } else {
+      // Otherwise treat commas as thousands separators.
+      numericPart = numericPart.replace(/,/g, "");
+    }
+  }
+
+  const parsed = parseFloat(numericPart);
   if (!Number.isFinite(parsed) || parsed <= 0) return null;
-  return parsed;
+
+  return {
+    weight: parsed,
+    unitType: hasKg ? "kg" : hasLb ? "lb" : null,
+  };
 }
 
 function getNameTokens(fullName) {
@@ -334,17 +367,18 @@ async function enrichCandidateMetadata(
     }
 
     const reps = parseReps(row?.[safeRepsCol]);
-    const weight = parseWeight(row?.[safeWeightCol]);
-    if (!reps || !weight) continue;
+    const weightInfo = parseWeightAndUnit(row?.[safeWeightCol]);
+    if (!reps || !weightInfo?.weight) continue;
 
-    const e1rm = estimateE1RM(reps, weight, "Brzycki");
+    const e1rm = estimateE1RM(reps, weightInfo.weight, "Brzycki");
     const current = bestByLift[normalizedLiftType];
     if (!current || e1rm > current.e1rm) {
       bestByLift[normalizedLiftType] = {
         liftType: normalizedLiftType,
         e1rm,
         reps,
-        weight,
+        weight: weightInfo.weight,
+        unitType: weightInfo.unitType,
         date: parsed,
       };
     }
@@ -383,6 +417,48 @@ async function enrichCandidateMetadata(
     metadataSampled:
       nonEmptyRows.length >= METADATA_SCAN_ROW_CAP || hasRowsBeyondScanCap,
   };
+}
+
+function scoreAndSortCandidates(candidates, userNameTokens, debug) {
+  const scored = candidates.map((candidate) => {
+    const result = scoreCandidate(candidate, userNameTokens);
+    return {
+      ...candidate,
+      __score: result.score,
+      __scoreFactors: result.factors,
+      __ageDays: result.ageDays,
+      __rowsForScore: result.rows,
+    };
+  });
+
+  scored.sort((a, b) => {
+    if (a.__score !== b.__score) return b.__score - a.__score;
+    const aTime = toTimestamp(a.modifiedByMeTime || a.modifiedTime);
+    const bTime = toTimestamp(b.modifiedByMeTime || b.modifiedTime);
+    return bTime - aTime;
+  });
+
+  if (debug) {
+    debug.scores = scored.map((candidate, index) => ({
+      rank: index + 1,
+      id: candidate.id,
+      name: candidate.name,
+      score: candidate.__score,
+      ageDays: candidate.__ageDays,
+      rows: candidate.__rowsForScore,
+      factors: candidate.__scoreFactors,
+    }));
+    devLog("[provision-sheet] candidate score breakdown:", debug.scores);
+  }
+
+  return scored.map((candidate) => {
+    const copy = { ...candidate };
+    delete copy.__score;
+    delete copy.__scoreFactors;
+    delete copy.__ageDays;
+    delete copy.__rowsForScore;
+    return copy;
+  });
 }
 
 async function discoverValidCandidates(headers, debug) {
@@ -430,22 +506,58 @@ async function discoverValidCandidates(headers, debug) {
   devLog(
     `[provision-sheet] valid candidate count after header checks: ${validCandidates.length}`,
   );
+  return validCandidates.map((candidate) => {
+    const copy = { ...candidate };
+    delete copy.__dateColumnIndex;
+    delete copy.__repsColumnIndex;
+    delete copy.__weightColumnIndex;
+    delete copy.__liftTypeColumnIndex;
+    return copy;
+  });
+}
+
+async function enrichCandidatesByIds({
+  candidates,
+  candidateIds,
+  headers,
+  debug,
+}) {
+  const candidateMap = new Map();
+  (Array.isArray(candidates) ? candidates : []).forEach((candidate) => {
+    if (candidate?.id) candidateMap.set(candidate.id, candidate);
+  });
+
+  const selectedIds = (Array.isArray(candidateIds) ? candidateIds : [])
+    .filter((id) => typeof id === "string" && id.trim().length > 0)
+    .filter((id, index, arr) => arr.indexOf(id) === index)
+    .slice(0, MAX_DEEP_ENRICH_CANDIDATES);
 
   const enriched = [];
-  for (let i = 0; i < validCandidates.length; i += 1) {
-    const candidate = validCandidates[i];
+  for (const candidateId of selectedIds) {
+    const candidate = candidateMap.get(candidateId);
+    if (!candidate) continue;
+
+    const headerInfo = await readHeaderInfo(candidate.id, headers);
+    const checkResult = {
+      id: candidate.id,
+      name: candidate.name || "unknown",
+      valid: headerInfo.valid,
+      status: headerInfo.status,
+      headerCount: headerInfo.headerCount,
+      sampleHeaders: headerInfo.sampleHeaders,
+    };
+    debug?.headerChecks.push(checkResult);
+
+    if (!headerInfo.valid) continue;
+
     const candidateWithMeta = await enrichCandidateMetadata(
       candidate,
       headers,
-      candidate.__dateColumnIndex,
-      candidate.__repsColumnIndex,
-      candidate.__weightColumnIndex,
-      candidate.__liftTypeColumnIndex,
+      headerInfo.dateColumnIndex,
+      headerInfo.repsColumnIndex,
+      headerInfo.weightColumnIndex,
+      headerInfo.liftTypeColumnIndex,
     );
-    delete candidateWithMeta.__dateColumnIndex;
-    delete candidateWithMeta.__repsColumnIndex;
-    delete candidateWithMeta.__weightColumnIndex;
-    delete candidateWithMeta.__liftTypeColumnIndex;
     enriched.push(candidateWithMeta);
   }
 
@@ -574,8 +686,14 @@ export default async function handler(req, res) {
     return;
   }
 
-  const mode = req.body?.mode || "discover";
+  const mode = req.body?.mode || "discover_fast";
   const selectedSsid = req.body?.selectedSsid || null;
+  const candidateIds = Array.isArray(req.body?.candidateIds)
+    ? req.body.candidateIds
+    : [];
+  const providedCandidates = Array.isArray(req.body?.candidates)
+    ? req.body.candidates
+    : [];
   const headers = { Authorization: `Bearer ${session.accessToken}` };
   const kvKey = `sj:user:${session.user.email}`;
   const nowIso = new Date().toISOString();
@@ -592,6 +710,27 @@ export default async function handler(req, res) {
   try {
     const existingRecord = (await kv.get(kvKey)) || {};
     const userNameTokens = getNameTokens(session.user.name);
+
+    if (mode === "enrich_candidates") {
+      debug.path.push("enrich_candidates:start");
+      const enriched = await enrichCandidatesByIds({
+        candidates: providedCandidates,
+        candidateIds,
+        headers,
+        debug,
+      });
+
+      debug.path.push("enrich_candidates:done");
+      res.status(200).json(
+        withDebug(
+          {
+            enrichedCandidates: enriched.map(toClientCandidate),
+          },
+          debug,
+        ),
+      );
+      return;
+    }
 
     if (mode === "select_existing") {
       if (!selectedSsid) {
@@ -730,48 +869,21 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Default discovery mode
+    // Discovery mode (fast path): drive scan + header checks only.
+    if (mode !== "discover" && mode !== "discover_fast") {
+      res.status(400).json({ error: "Invalid provisioning mode." });
+      return;
+    }
+
     debug.path.push("discover:start");
     const validCandidates = await discoverValidCandidates(headers, debug);
 
     if (validCandidates.length > 1) {
-      const scored = validCandidates.map((candidate) => {
-        const result = scoreCandidate(candidate, userNameTokens);
-        return {
-          ...candidate,
-          __score: result.score,
-          __scoreFactors: result.factors,
-          __ageDays: result.ageDays,
-          __rowsForScore: result.rows,
-        };
-      });
-
-      scored.sort((a, b) => {
-        if (a.__score !== b.__score) return b.__score - a.__score;
-        const aTime = toTimestamp(a.modifiedByMeTime || a.modifiedTime);
-        const bTime = toTimestamp(b.modifiedByMeTime || b.modifiedTime);
-        return bTime - aTime;
-      });
-
-      debug.scores = scored.map((candidate, index) => ({
-        rank: index + 1,
-        id: candidate.id,
-        name: candidate.name,
-        score: candidate.__score,
-        ageDays: candidate.__ageDays,
-        rows: candidate.__rowsForScore,
-        factors: candidate.__scoreFactors,
-      }));
-      devLog("[provision-sheet] candidate score breakdown:", debug.scores);
-
-      const ranked = scored.map((candidate) => {
-        const copy = { ...candidate };
-        delete copy.__score;
-        delete copy.__scoreFactors;
-        delete copy.__ageDays;
-        delete copy.__rowsForScore;
-        return copy;
-      });
+      const ranked = scoreAndSortCandidates(validCandidates, userNameTokens, debug);
+      const enrichCandidateIds = ranked
+        .slice(0, MAX_DEEP_ENRICH_CANDIDATES)
+        .map((candidate) => candidate.id)
+        .filter(Boolean);
 
       debug.path.push("discover:multiple_candidates");
       res.status(200).json(
@@ -779,6 +891,8 @@ export default async function handler(req, res) {
           {
             needsSelection: true,
             candidates: ranked.map(toClientCandidate),
+            enrichCandidateIds,
+            recommendedId: ranked[0]?.id || null,
             wasCreated: false,
           },
           debug,

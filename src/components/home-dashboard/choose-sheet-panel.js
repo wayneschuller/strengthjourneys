@@ -3,7 +3,7 @@ import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LiftSvg } from "@/components/year-recap/lift-svg";
-import { CopyPlus, FolderOpen, Link2, PlusSquare } from "lucide-react";
+import { CopyPlus, FolderOpen, Link2, LoaderCircle, PlusSquare } from "lucide-react";
 
 function formatYearLabel(isoDate) {
   if (!isoDate) return null;
@@ -12,7 +12,7 @@ function formatYearLabel(isoDate) {
   return String(d.getFullYear());
 }
 
-function formatCandidateMeta(candidate) {
+function formatCandidateMeta(candidate, isEnriching = false) {
   const isSampled = Boolean(candidate?.metadataSampled);
   const bits = [];
 
@@ -34,11 +34,13 @@ function formatCandidateMeta(candidate) {
   const end = formatYearLabel(candidate?.dateRangeEnd);
   if (start && end) bits.push(`${start}-${end}`);
 
-  if (bits.length === 0) return "Lifting sheet detected";
+  if (bits.length === 0) {
+    return isEnriching ? "Analyzing workouts and date range..." : "Lifting sheet detected";
+  }
   return bits.join(" · ");
 }
 
-function formatRecommendedMeta(candidate) {
+function formatRecommendedMeta(candidate, isEnriching = false) {
   const bits = [];
   const isSampled = Boolean(candidate?.metadataSampled);
   const startYear = parseInt(formatYearLabel(candidate?.dateRangeStart) || "", 10);
@@ -58,7 +60,10 @@ function formatRecommendedMeta(candidate) {
       bits.push(`${startYear}-${endYear}`);
     }
   }
-  return bits.join(" • ") || "Lifting log detected";
+  if (bits.length === 0) {
+    return isEnriching ? "Analyzing workouts and date range..." : "Lifting log detected";
+  }
+  return bits.join(" • ");
 }
 
 function formatPreviewDate(isoDate) {
@@ -103,6 +108,8 @@ export function ChooseSheetPanel({
   candidates,
   openPicker,
   isWorking,
+  isEnriching = false,
+  statusMessage = "",
   onChooseSheet,
   onCreateBlank,
   onCreateSample,
@@ -122,6 +129,12 @@ export function ChooseSheetPanel({
         <CardDescription>
           Strength Journeys found Google Sheets in your Drive that look like lifting logs. Choose one to connect, or create a new sheet to get started.
         </CardDescription>
+        {statusMessage && (
+          <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+            {isEnriching && <LoaderCircle className="h-4 w-4 animate-spin" />}
+            <span>{statusMessage}</span>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-5 xl:px-10 2xl:px-16">
         <div className="space-y-3">
@@ -141,7 +154,7 @@ export function ChooseSheetPanel({
                         {candidates[0].name}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {formatRecommendedMeta(candidates[0])}
+                        {formatRecommendedMeta(candidates[0], isEnriching)}
                       </p>
                       {Array.isArray(candidates[0].bigFourPreview) &&
                         candidates[0].bigFourPreview.length > 0 && (
@@ -240,7 +253,7 @@ export function ChooseSheetPanel({
                         </p>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {formatCandidateMeta(candidate)}
+                        {formatCandidateMeta(candidate, isEnriching)}
                       </p>
                     </div>
                     <Button

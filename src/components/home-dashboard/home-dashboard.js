@@ -109,6 +109,8 @@ export function HomeDashboard() {
   const [showIntroBanner, setShowIntroBanner] = useState(false);
   const [candidateSheets, setCandidateSheets] = useState([]);
   const [isProvisionActionLoading, setIsProvisionActionLoading] = useState(false);
+  const [isCandidateEnrichmentLoading, setIsCandidateEnrichmentLoading] = useState(false);
+  const [sheetDiscoveryStatusMessage, setSheetDiscoveryStatusMessage] = useState("");
   const provisioningStartedRef = useRef(false);
 
   const nonGoalSessionCount = useMemo(() => {
@@ -149,13 +151,87 @@ export function HomeDashboard() {
     setShowIntroBanner(false);
     setCandidateSheets([]);
     setIsProvisionActionLoading(false);
+    setIsCandidateEnrichmentLoading(false);
+    setSheetDiscoveryStatusMessage("");
   }, [authStatus]);
 
+  const mergeCandidateUpdates = useCallback((updates = []) => {
+    const updatesById = new Map(
+      updates
+        .filter((candidate) => candidate?.id)
+        .map((candidate) => [candidate.id, candidate]),
+    );
+
+    setCandidateSheets((prev) =>
+      prev.map((candidate) => {
+        const update = updatesById.get(candidate.id);
+        if (!update) return candidate;
+        return {
+          ...candidate,
+          ...update,
+        };
+      }),
+    );
+  }, []);
+
+  const enrichCandidateSheets = useCallback(
+    async ({ candidates, candidateIds }) => {
+      const enrichIds = (Array.isArray(candidateIds) ? candidateIds : [])
+        .filter((id) => typeof id === "string" && id.trim().length > 0)
+        .slice(0, 3);
+
+      if (!enrichIds.length || !Array.isArray(candidates) || !candidates.length) return;
+
+      setIsCandidateEnrichmentLoading(true);
+      setSheetDiscoveryStatusMessage("Analyzing your most likely lifting log.");
+
+      try {
+        const response = await fetch("/api/provision-sheet", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            mode: "enrich_candidates",
+            candidateIds: enrichIds,
+            candidates,
+          }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (payload?.debug) {
+          devLog("[onboarding] candidate enrichment debug:", payload.debug);
+        }
+        if (!response.ok) {
+          throw new Error(payload?.error || "Failed to enrich candidate sheets");
+        }
+
+        const enrichedCandidates = Array.isArray(payload?.enrichedCandidates)
+          ? payload.enrichedCandidates
+          : [];
+        if (enrichedCandidates.length > 0) {
+          setSheetDiscoveryStatusMessage("Preparing your preview.");
+          mergeCandidateUpdates(enrichedCandidates);
+        }
+
+        setSheetDiscoveryStatusMessage("Choose the lifting log you want to connect.");
+      } catch (error) {
+        devLog("[onboarding] candidate enrichment failed:", error?.message || error);
+        setSheetDiscoveryStatusMessage("Choose the lifting log you want to connect.");
+      } finally {
+        setIsCandidateEnrichmentLoading(false);
+      }
+    },
+    [mergeCandidateUpdates],
+  );
+
   const performProvisioning = useCallback(
-    async ({ mode = "discover", selectedSsid = null } = {}) => {
+    async ({ mode = "discover_fast", selectedSsid = null } = {}) => {
       setProvisionError(null);
       setIsProvisionActionLoading(true);
-      if (mode === "discover") setOnboardingState("provisioning");
+      if (mode === "discover" || mode === "discover_fast") {
+        setOnboardingState("provisioning");
+        setSheetDiscoveryStatusMessage("Scanning Google Drive for existing lifting logs.");
+      }
 
       try {
         const response = await fetch("/api/provision-sheet", {
@@ -182,9 +258,23 @@ export function HomeDashboard() {
         }
 
         if (payload?.needsSelection) {
-          setCandidateSheets(Array.isArray(payload.candidates) ? payload.candidates : []);
+          const discoveredCandidates = Array.isArray(payload.candidates)
+            ? payload.candidates
+            : [];
+          const enrichCandidateIds = Array.isArray(payload.enrichCandidateIds)
+            ? payload.enrichCandidateIds
+            : discoveredCandidates.slice(0, 3).map((candidate) => candidate.id);
+
+          setCandidateSheets(discoveredCandidates);
+          setSheetDiscoveryStatusMessage(
+            `Found ${discoveredCandidates.length} potential lifting logs.`,
+          );
           setOnboardingState("choose_sheet");
           provisioningStartedRef.current = false;
+          void enrichCandidateSheets({
+            candidates: discoveredCandidates,
+            candidateIds: enrichCandidateIds,
+          });
           return;
         }
 
@@ -210,12 +300,14 @@ export function HomeDashboard() {
       } catch (error) {
         setProvisionError(error?.message || "Automatic setup failed");
         setOnboardingState("fallback_error");
+        setSheetDiscoveryStatusMessage("");
+        setIsCandidateEnrichmentLoading(false);
         provisioningStartedRef.current = false;
       } finally {
         setIsProvisionActionLoading(false);
       }
     },
-    [selectSheet],
+    [enrichCandidateSheets, selectSheet],
   );
 
   useEffect(() => {
@@ -224,7 +316,7 @@ export function HomeDashboard() {
     if (provisioningStartedRef.current) return;
 
     provisioningStartedRef.current = true;
-    performProvisioning({ mode: "discover" });
+    performProvisioning({ mode: "discover_fast" });
   }, [authStatus, performProvisioning, sheetInfo?.ssid]);
 
   useEffect(() => {
@@ -324,6 +416,8 @@ export function HomeDashboard() {
               candidates={candidateSheets}
               openPicker={openPicker}
               isWorking={isProvisionActionLoading}
+              isEnriching={isCandidateEnrichmentLoading}
+              statusMessage={sheetDiscoveryStatusMessage}
               onChooseSheet={(ssid) => performProvisioning({ mode: "select_existing", selectedSsid: ssid })}
               onCreateBlank={() => performProvisioning({ mode: "create_blank" })}
               onCreateSample={() => performProvisioning({ mode: "create_sample" })}
@@ -335,7 +429,7 @@ export function HomeDashboard() {
                 openPicker={openPicker}
                 onRetry={() => {
                   provisioningStartedRef.current = false;
-                  performProvisioning({ mode: "discover" });
+                  performProvisioning({ mode: "discover_fast" });
                 }}
                 isWorking={isProvisionActionLoading}
                 errorMessage={provisionError}
@@ -394,14 +488,14 @@ function ProvisioningPanel({ isWorking = true }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <LoaderCircle className={`h-5 w-5 ${isWorking ? "animate-spin" : ""}`} />
-          Setting up your personal lifting sheet
+          Scanning your Google Drive
         </CardTitle>
         <CardDescription>
-          Strength Journeys is creating your own Google Sheet and linking it automatically.
+          Looking for existing lifting logs so you can connect the right sheet quickly.
         </CardDescription>
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground">
-        This usually takes a few seconds. You will land straight in your dashboard.
+        This usually takes a few seconds.
       </CardContent>
     </Card>
   );

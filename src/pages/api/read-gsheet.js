@@ -6,6 +6,8 @@ import { kv } from "@vercel/kv";
 import { devLog } from "@/lib/processing-utils";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const RETURN_WINDOW_MS = 7 * ONE_DAY_MS;
+const RETURN_GAP_MS = 12 * 60 * 60 * 1000;
 
 export default async function handler(req, res) {
   // Start session fetch immediately
@@ -40,7 +42,7 @@ export default async function handler(req, res) {
   try {
     const t0 = Date.now();
     const sheetsUrl = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
-    const driveUrl = `https://www.googleapis.com/drive/v3/files/${ssid}?fields=name,webViewLink,modifiedTime,modifiedByMeTime`;
+    const driveUrl = `https://www.googleapis.com/drive/v3/files/${ssid}?fields=name,trashed,webViewLink,modifiedTime,modifiedByMeTime`;
 
     let sheetsMs = null;
     let driveMs = null;
@@ -89,6 +91,10 @@ export default async function handler(req, res) {
 
     if (driveRes.ok) {
       const driveData = await driveRes.json();
+      if (driveData?.trashed) {
+        res.status(404).json({ error: "This Google Sheet is in the trash." });
+        return;
+      }
       Object.assign(data, {
         name: driveData.name,
         webViewLink: driveData.webViewLink,
@@ -103,29 +109,65 @@ export default async function handler(req, res) {
     // Runs after the response is sent so the user never waits for this.
     try {
       const kvKey = `sj:user:${session.user.email}`;
-      const record = await kv.get(kvKey);
+      const record = (await kv.get(kvKey)) || {};
       const now = new Date();
+      const nowIso = now.toISOString();
       const meta = { rowCount: data.values?.length ?? 0 };
 
-      if (!record) {
-        // First time this user has connected their sheet
-        await promptDeveloper("sheet-connected", session.user, meta);
-        await kv.set(kvKey, {
-          connectedAt: now.toISOString(),
-          developerNotifiedAt: now.toISOString(),
-        });
-      } else if (now - new Date(record.developerNotifiedAt) >= ONE_DAY_MS) {
-        // User is active — prompt the developer to check in if it feels right
-        await promptDeveloper("active", session.user, {
-          ...meta,
-          lastActiveAt: record.developerNotifiedAt,
-          connectedAt: record.connectedAt,
-        });
-        await kv.set(kvKey, {
-          ...record,
-          developerNotifiedAt: now.toISOString(),
+      const nextRecord = {
+        ...record,
+        connectedAt: record.connectedAt || nowIso,
+        connectionMethod: record.connectionMethod || "manual_picker",
+        lastSeenAt: nowIso,
+      };
+
+      // Missing KV on a successful sheet read usually means a pre-KV legacy user
+      // returning via existing local browser state. Quietly backfill instead of
+      // sending a false "newly activated" email.
+      if (!record.activationPromptedAt) {
+        nextRecord.connectionMethod =
+          record.connectionMethod || "legacy_local_relink";
+        nextRecord.provisionedSheetId = record.provisionedSheetId || ssid;
+        nextRecord.activationPromptedAt = nowIso;
+        devLog("[sheet-flow] legacy KV backfill after successful local relink", {
+          email: session.user.email,
+          ssid,
         });
       }
+
+      // Return email (once) if user came back after a meaningful gap and still within
+      // a short post-activation window where feedback is most useful.
+      const lastSeenMs = record.lastSeenAt
+        ? new Date(record.lastSeenAt).getTime()
+        : null;
+      const connectedMs = nextRecord.connectedAt
+        ? new Date(nextRecord.connectedAt).getTime()
+        : null;
+      const withinReturnWindow =
+        typeof connectedMs === "number" &&
+        Number.isFinite(connectedMs) &&
+        now.getTime() - connectedMs <= RETURN_WINDOW_MS;
+      const meaningfulGap =
+        typeof lastSeenMs === "number" &&
+        Number.isFinite(lastSeenMs) &&
+        now.getTime() - lastSeenMs >= RETURN_GAP_MS;
+
+      if (
+        nextRecord.activationPromptedAt &&
+        !record.returnPromptedAt &&
+        withinReturnWindow &&
+        meaningfulGap
+      ) {
+        await promptDeveloper("returning", session.user, {
+          ...meta,
+          connectionMethod: nextRecord.connectionMethod,
+          lastActiveAt: record.lastSeenAt,
+          connectedAt: nextRecord.connectedAt,
+        });
+        nextRecord.returnPromptedAt = nowIso;
+      }
+
+      await kv.set(kvKey, nextRecord);
     } catch (err) {
       console.error("[personal-support] sheet activity check failed:", err);
     }

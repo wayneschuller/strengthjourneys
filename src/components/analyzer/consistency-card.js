@@ -34,7 +34,7 @@ const A_GRADES = ["A+", "A", "A-"];
  * @param {Object} props
  */
 export function ConsistencyCard() {
-  const { parsedData } = useUserLiftingData();
+  const { isDemoMode, parsedData } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const gridRef = useRef(null);
   const hasFiredConfettiRef = useRef(false);
@@ -105,7 +105,7 @@ export function ConsistencyCard() {
     <Card>
       <CardHeader>
         <CardTitle>
-          {authStatus === "unauthenticated" && "Demo mode: "} Consistency
+          {isDemoMode && "Demo mode: "} Consistency
           Analysis{" "}
         </CardTitle>
         <CardDescription>

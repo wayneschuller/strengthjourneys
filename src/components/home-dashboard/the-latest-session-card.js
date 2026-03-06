@@ -8,8 +8,6 @@ import {
 } from "react";
 import { format } from "date-fns";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
-import Link from "next/link";
-import { devLog } from "@/lib/processing-utils";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
@@ -18,7 +16,11 @@ import {
   getStandardForLiftDate,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import {
+  LOCAL_STORAGE_KEYS,
+  getSheetScopedStorageKey,
+} from "@/lib/localStorage-keys";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { Button } from "@/components/ui/button";
@@ -45,18 +47,9 @@ import {
   getCelebrationEmoji,
   getReadableDateString,
   getAnalyzedSessionLifts,
-  getAverageSessionTonnageFromPrecomputed,
-  getSessionTonnagePercentileRangeFromPrecomputed,
-  getDisplayWeight,
+  getAverageLiftSessionTonnageFromPrecomputed,
 } from "@/lib/processing-utils";
-import {
-  LoaderCircle,
-  ChevronLeft,
-  ChevronRight,
-  ArrowUpRight,
-  ArrowDownRight,
-} from "lucide-react";
-import { LiftTypeIndicator } from "@/components/lift-type-indicator";
+import { LoaderCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { SessionExerciseBlock } from "@/components/analyzer/session-exercise-block";
 
 // "The Latest Session" when on the most recent date.
@@ -85,12 +78,17 @@ function getSessionCardTitle(sessionDate, isLastDate) {
 export function TheLatestSessionCard({
   highlightDate = null,
   setHighlightDate,
+  dashboardStage = "established",
+  dataMaturityStage = "mature",
+  sessionCount = 0,
 }) {
   const {
+    isDemoMode,
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
     sessionTonnageLookup,
+    sheetInfo,
     isValidating,
   } = useUserLiftingData();
   const { status: authStatus } = useSession();
@@ -104,14 +102,26 @@ export function TheLatestSessionCard({
 
   const sessionRatingRef = useRef(null); // Used to avoid randomised rating changes on rerenders
   const lastUsedAdlibRef = useRef({}); // Tracks last-used indices to avoid repeats when switching sessions
-  const isDemoMode = authStatus === "unauthenticated";
+  // Session ratings are cached by date, so they must also be scoped to the
+  // linked sheet. Different sheets can share the same dates, and a global cache
+  // would let one dataset's adlibs bleed into another.
   const [sessionRatingCache, setSessionRatingCache] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SESSION_RATING_CACHE,
+    getSheetScopedStorageKey(
+      LOCAL_STORAGE_KEYS.SESSION_RATING_CACHE,
+      sheetInfo?.ssid,
+    ),
     {},
     { initializeWithValue: false },
   );
   const [persistCacheTrigger, setPersistCacheTrigger] = useState(0);
   const pendingCacheUpdateRef = useRef(null);
+  const hasLoggedSessions = useMemo(
+    () => Array.isArray(parsedData) && parsedData.some((entry) => !entry?.isGoal),
+    [parsedData],
+  );
+  const isStarterSampleStage = dashboardStage === "starter_sample";
+  const isFirstRealWeekStage = dashboardStage === "first_real_week";
+  const showPerLiftTonnage = dashboardStage === "established";
 
   useEffect(() => {
     sessionRatingRef.current = null; // Reset the session rating when the highlight date changes
@@ -152,6 +162,46 @@ export function TheLatestSessionCard({
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
   ]);
+
+  const perLiftTonnageStats = useMemo(() => {
+    if (!analyzedSessionLifts || !sessionDate || !sessionTonnageLookup) return null;
+
+    return Object.fromEntries(
+      Object.entries(analyzedSessionLifts).map(([liftType, workouts]) => {
+        const nativeUnitType = workouts?.[0]?.unitType ?? "lb";
+        const currentLiftTonnage =
+          sessionTonnageLookup.sessionTonnageByDateAndLift?.[sessionDate]?.[
+            liftType
+          ]?.[nativeUnitType] ??
+          workouts.reduce(
+            (sum, workout) => sum + (workout.weight ?? 0) * (workout.reps ?? 0),
+            0,
+          );
+        const { average: avgLiftTonnage, sessionCount } =
+          getAverageLiftSessionTonnageFromPrecomputed(
+            sessionTonnageLookup.sessionTonnageByDateAndLift,
+            sessionTonnageLookup.allSessionDates,
+            sessionDate,
+            liftType,
+            nativeUnitType,
+          );
+
+        return [
+          liftType,
+          {
+            currentLiftTonnage,
+            avgLiftTonnage,
+            sessionCount,
+            pctDiff:
+              avgLiftTonnage > 0
+                ? ((currentLiftTonnage - avgLiftTonnage) / avgLiftTonnage) * 100
+                : null,
+            unitType: nativeUnitType,
+          },
+        ];
+      }),
+    );
+  }, [analyzedSessionLifts, sessionDate, sessionTonnageLookup]);
 
   // devLog(analyzedSessionLifts);
 
@@ -257,7 +307,7 @@ export function TheLatestSessionCard({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <CardTitle className="flex flex-wrap items-center gap-2">
-                {authStatus === "unauthenticated" && (
+                {isDemoMode && (
                   <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium">
                     Demo Mode
                   </span>
@@ -268,8 +318,24 @@ export function TheLatestSessionCard({
                 )}
               </CardTitle>
               <CardDescription className="mt-1">
-                {analyzedSessionLifts && isLastDate && getReadableDateString(sessionDate, true)}
-                {analyzedSessionLifts && !isDemoMode && sessionRatingRef.current
+                {!hasLoggedSessions &&
+                  (dataMaturityStage === "no_sessions"
+                    ? "Your first session will appear here as soon as you log a set."
+                    : "This card will populate automatically as your sessions roll in.")}
+                {hasLoggedSessions &&
+                  analyzedSessionLifts &&
+                  isStarterSampleStage &&
+                  "Starter sample data. Open your sheet and replace this row with your real training."}
+                {hasLoggedSessions &&
+                  analyzedSessionLifts &&
+                  !isStarterSampleStage &&
+                  isLastDate &&
+                  getReadableDateString(sessionDate, true)}
+                {hasLoggedSessions &&
+                analyzedSessionLifts &&
+                !isDemoMode &&
+                !isStarterSampleStage &&
+                sessionRatingRef.current
                   ? `${isLastDate ? " · " : ""}${sessionRatingRef.current}`
                   : ""}
               </CardDescription>
@@ -282,7 +348,7 @@ export function TheLatestSessionCard({
                     size="icon"
                     className="h-8 w-8"
                     onClick={prevDate}
-                    disabled={isValidating || isFirstDate}
+                    disabled={isValidating || isFirstDate || !hasLoggedSessions}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -298,7 +364,7 @@ export function TheLatestSessionCard({
                     size="icon"
                     className="h-8 w-8"
                     onClick={nextDate}
-                    disabled={isValidating || isLastDate}
+                    disabled={isValidating || isLastDate || !hasLoggedSessions}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -311,7 +377,14 @@ export function TheLatestSessionCard({
           </div>
         </CardHeader>
         <CardContent className="flex-1 space-y-6 pt-0">
-          {!analyzedSessionLifts && <Skeleton className="h-[50vh] rounded-lg" />}
+          {!hasLoggedSessions && (
+            <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
+              Start simple: add one training session in your sheet with Date, Lift Type, Reps, and Weight.
+            </p>
+          )}
+          {hasLoggedSessions && !analyzedSessionLifts && (
+            <Skeleton className="h-[50vh] rounded-lg" />
+          )}
           {analyzedSessionLifts &&
             (Object.keys(analyzedSessionLifts).length > 0 ? (
               <div className="space-y-4">
@@ -322,6 +395,8 @@ export function TheLatestSessionCard({
                       variant="compact"
                       liftType={liftType}
                       workouts={workouts}
+                      perLiftTonnageStats={perLiftTonnageStats}
+                      showPerLiftTonnage={showPerLiftTonnage}
                       authStatus={authStatus}
                       hasBioData={hasBioData}
                       standards={standards}
@@ -334,6 +409,53 @@ export function TheLatestSessionCard({
                     />
                   ),
                 )}
+                {isStarterSampleStage && sheetInfo?.url && (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                    <div className="flex flex-col gap-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">
+                          This session is starter sample data
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Open your Google Sheet, replace this row with your own
+                          first workout, and add future sessions as new rows.
+                          The dashboard will refresh from there.
+                        </p>
+                      </div>
+                      <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
+                        <p className="rounded-md border bg-background/80 px-3 py-2">
+                          1. Open the sheet
+                        </p>
+                        <p className="rounded-md border bg-background/80 px-3 py-2">
+                          2. Edit the sample row
+                        </p>
+                        <p className="rounded-md border bg-background/80 px-3 py-2">
+                          3. Add new sessions as you train
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          Tip: keep your latest session near the top so the log stays easy to update.
+                        </p>
+                        <Button asChild className="shrink-0">
+                          <a
+                            href={sheetInfo.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <img
+                              src={GOOGLE_SHEETS_ICON_URL}
+                              alt=""
+                              className="h-4 w-4 shrink-0"
+                              aria-hidden
+                            />
+                            Open Google Sheet
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="rounded-lg border border-dashed bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
@@ -342,14 +464,39 @@ export function TheLatestSessionCard({
             ))}
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-4 pt-0">
-          {analyzedSessionLifts && (
-              <SessionTonnage
-                analyzedSessionLifts={analyzedSessionLifts}
-                sessionTonnageLookup={sessionTonnageLookup}
-                sessionDate={sessionDate}
-                isMetric={isMetric}
-              />
+          {!hasLoggedSessions && sheetInfo?.url && (
+            <Button asChild variant="outline">
+              <a href={sheetInfo.url} target="_blank" rel="noopener noreferrer">
+                Open your sheet
+              </a>
+            </Button>
           )}
+          {hasLoggedSessions &&
+            analyzedSessionLifts &&
+            isFirstRealWeekStage &&
+            sheetInfo?.url && (
+              <div className="flex flex-col gap-2 rounded-lg border bg-muted/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Remember: you can open your Google Sheet any time to add lifts
+                  and keep the dashboard moving.
+                </p>
+                <Button asChild variant="outline" className="gap-2 self-start sm:self-auto">
+                  <a
+                    href={sheetInfo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src={GOOGLE_SHEETS_ICON_URL}
+                      alt=""
+                      className="h-4 w-4 shrink-0"
+                      aria-hidden
+                    />
+                    Open Google Sheet
+                  </a>
+                </Button>
+              </div>
+            )}
         </CardFooter>
       </Card>
     </TooltipProvider>
@@ -357,273 +504,6 @@ export function TheLatestSessionCard({
 }
 
 // --- Supporting components and functions ---
-
-// Displays total session tonnage with a comparison bar vs. the rolling 12-month average.
-function SessionTonnage({
-  analyzedSessionLifts,
-  sessionTonnageLookup,
-  sessionDate,
-  isMetric = false,
-}) {
-  const equivalentRef = useRef(null);
-
-  if (!analyzedSessionLifts) return null;
-
-  const flatLifts = Object.values(analyzedSessionLifts).flat();
-
-  const tonnage = flatLifts.reduce(
-    (acc, lift) => acc + (lift.weight ?? 0) * (lift.reps ?? 0),
-    0,
-  );
-
-  const firstLift = flatLifts?.[0];
-  const nativeUnitType = firstLift?.unitType ?? "lb";
-  const displayUnit = isMetric ? "kg" : "lb";
-  const tonnageDisplay = getDisplayWeight({ weight: tonnage, unitType: nativeUnitType }, isMetric).value;
-
-  // Rolling 365-day session-level baseline (from precomputed lookup, in native unit)
-  const { average: avgSessionTonnage, sessionCount: sessionCountLastYear } =
-    sessionTonnageLookup
-      ? getAverageSessionTonnageFromPrecomputed(
-          sessionTonnageLookup.sessionTonnageByDate,
-          sessionTonnageLookup.allSessionDates,
-          sessionDate,
-          nativeUnitType,
-        )
-      : { average: 0, sessionCount: 0 };
-
-  const { low: rangeMin, high: rangeMax } = sessionTonnageLookup
-    ? getSessionTonnagePercentileRangeFromPrecomputed(
-        sessionTonnageLookup.sessionTonnageByDate,
-        sessionTonnageLookup.allSessionDates,
-        sessionDate,
-        nativeUnitType,
-      )
-    : { low: 0, high: 0 };
-
-  // Convert comparison values to display unit
-  const avgSessionTonnageDisplay = avgSessionTonnage
-    ? getDisplayWeight({ weight: avgSessionTonnage, unitType: nativeUnitType }, isMetric).value
-    : 0;
-  const rangeMinDisplay = rangeMin
-    ? getDisplayWeight({ weight: rangeMin, unitType: nativeUnitType }, isMetric).value
-    : 0;
-  const rangeMaxDisplay = rangeMax
-    ? getDisplayWeight({ weight: rangeMax, unitType: nativeUnitType }, isMetric).value
-    : 0;
-
-  const overallPctDiff =
-    avgSessionTonnageDisplay > 0
-      ? ((tonnageDisplay - avgSessionTonnageDisplay) / avgSessionTonnageDisplay) * 100
-      : null;
-
-  // real-world equivalents (per unit type)
-  const equivalents = {
-    kg: [
-      { name: "blue whale", weight: 150000, emoji: "🐋" },
-      { name: "elephant", weight: 6000, emoji: "🐘" },
-      { name: "car", weight: 1500, emoji: "🚗" },
-      { name: "cow", weight: 700, emoji: "🐄" },
-      { name: "grand piano", weight: 300, emoji: "🎹" },
-      { name: "vending machine", weight: 250, emoji: "🥤" },
-      { name: "Eddie Hall", weight: 180, emoji: "🦍" },
-      { name: "Labrador Retriever", weight: 30, emoji: "🐕" },
-      { name: "rotisserie chicken", weight: 1.5, emoji: "🍗" },
-    ],
-    lb: [
-      { name: "blue whale", weight: 330000, emoji: "🐋" },
-      { name: "elephant", weight: 13200, emoji: "🐘" },
-      { name: "car", weight: 3300, emoji: "🚗" },
-      { name: "cow", weight: 1540, emoji: "🐄" },
-      { name: "grand piano", weight: 660, emoji: "🎹" },
-      { name: "vending machine", weight: 550, emoji: "🥤" },
-      { name: "Eddie Hall", weight: 400, emoji: "🦍" },
-      { name: "Labrador Retriever", weight: 66, emoji: "🐕" },
-      { name: "rotisserie chicken", weight: 3.3, emoji: "🍗" },
-    ],
-  };
-
-  const unitEquivalents = equivalents[displayUnit] ?? equivalents["lb"];
-  const equivalentKey = `${sessionDate}-${displayUnit}`;
-
-  if (!equivalentRef.current || equivalentRef.current.key !== equivalentKey) {
-    // Filter to only equivalents that would give >= 0.1 when divided
-    const validEquivalents = unitEquivalents.filter(
-      (eq) => tonnageDisplay / eq.weight >= 0.1,
-    );
-
-    // If no valid equivalents (tonnage is very small), use the smallest one
-    const candidates =
-      validEquivalents.length > 0 ? validEquivalents : unitEquivalents;
-
-    const randomIndex = Math.floor(Math.random() * candidates.length);
-    const chosenEquivalent = candidates[randomIndex];
-    const chosenCount = tonnageDisplay / chosenEquivalent.weight;
-
-    equivalentRef.current = {
-      key: equivalentKey,
-      equivalent: chosenEquivalent,
-      equivalentCount: chosenCount,
-    };
-  }
-
-  const { equivalent, equivalentCount } = equivalentRef.current;
-
-  // Format with commas; show one decimal place if < 100, no decimals if >= 100
-  const countValue = parseFloat(equivalentCount);
-  const formattedCount = countValue.toLocaleString("en-US", {
-    minimumFractionDigits: countValue >= 100 ? 0 : 1,
-    maximumFractionDigits: countValue >= 100 ? 0 : 1,
-  });
-
-  const hasRange = sessionCountLastYear > 1 && rangeMaxDisplay > 0;
-  const scaleMax = hasRange
-    ? Math.max(tonnageDisplay, rangeMaxDisplay) * 1.3 || 1
-    : Math.max(tonnageDisplay * 1.3, 1);
-  const currentPct = Math.min(100, (tonnageDisplay / scaleMax) * 100);
-  const rawRangeWidth =
-    hasRange && rangeMaxDisplay > 0 ? (rangeMaxDisplay - rangeMinDisplay) / scaleMax : 0;
-  const rangeLeftPct = hasRange ? (rangeMinDisplay / scaleMax) * 100 : 0;
-  const rangeWidthPct = hasRange
-    ? (rawRangeWidth > 0 ? rawRangeWidth * 100 : 3)
-    : 0;
-
-  return (
-    <div className="rounded-lg border bg-muted/30 px-4 py-3">
-      <div className="flex flex-wrap items-baseline gap-2">
-        <span className="font-semibold text-foreground">
-          Session Tonnage:
-        </span>
-        <span className="tabular-nums font-bold">
-          {Math.round(tonnageDisplay).toLocaleString()}
-          {displayUnit}
-        </span>
-        {hasRange && overallPctDiff !== null ? (
-          <>
-            <span className="text-muted-foreground">
-              vs {Math.round(avgSessionTonnageDisplay).toLocaleString()}
-              {displayUnit} avg over last 12 months
-            </span>
-            <Badge
-              variant="outline"
-              className={
-                overallPctDiff > 0
-                  ? "gap-0.5 border-emerald-500/60 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                  : "gap-0.5 border-red-500/60 bg-red-500/10 text-red-600 dark:text-red-400"
-              }
-            >
-              {overallPctDiff > 0 ? (
-                <>
-                  <ArrowUpRight className="h-3 w-3" />
-                  {Math.abs(overallPctDiff).toFixed(1)}%
-                </>
-              ) : (
-                <>
-                  <ArrowDownRight className="h-3 w-3" />
-                  {Math.abs(overallPctDiff).toFixed(1)}%
-                </>
-              )}
-            </Badge>
-          </>
-        ) : (
-          <span className="text-lg text-foreground">
-            — About {formattedCount} {equivalent.name}
-            {parseFloat(equivalentCount) != 1 ? "s" : ""} lifted {equivalent.emoji}
-          </span>
-        )}
-      </div>
-      <div className="mt-3 space-y-1">
-        <TonnageRangeSlider
-          currentPct={currentPct}
-          rangeLeftPct={rangeLeftPct}
-          rangeWidthPct={rangeWidthPct}
-          showRange={hasRange}
-          rangeMin={rangeMinDisplay}
-          rangeMax={rangeMaxDisplay}
-          unitType={displayUnit}
-        />
-        {hasRange ? (
-          <p className="text-lg text-foreground">
-            About {formattedCount} {equivalent.name}
-            {parseFloat(equivalentCount) != 1 ? "s" : ""} lifted {equivalent.emoji}
-          </p>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Not enough history yet to compare your session tonnage over the last
-            year.
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Visual track bar showing today's tonnage as a solid bar against a dashed 25th–90th percentile band.
-function TonnageRangeSlider({
-  currentPct,
-  rangeLeftPct,
-  rangeWidthPct,
-  showRange,
-  rangeMin,
-  rangeMax,
-  unitType,
-}) {
-  const [isHovered, setIsHovered] = useState(false);
-  const formatVal = (n) => Math.round(n).toLocaleString() + unitType;
-
-  return (
-    <div className="space-y-1">
-      <div
-        className="group relative h-6 w-full cursor-default"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {/* Track background */}
-        <div className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-muted" />
-        {/* Dashed range (min–max over last 12 months) — taller band like Fitbit */}
-        {showRange && (
-          <div
-            className="absolute inset-x-0 top-1/2 h-5 -translate-y-1/2"
-          >
-            <div
-              className="absolute top-0 h-full rounded-md border-2 border-dashed border-muted-foreground/40 bg-muted-foreground/5"
-              style={{
-                left: `${rangeLeftPct}%`,
-                width: `${rangeWidthPct}%`,
-              }}
-            />
-          </div>
-        )}
-        {/* Solid bar (today's tonnage) */}
-        <div className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full">
-          <div
-            className="h-full rounded-full bg-violet-500 dark:bg-violet-600"
-            style={{ width: `${currentPct}%` }}
-          />
-        </div>
-        {/* Hover overlay: range numbers + label appear on hover */}
-        {isHovered && showRange && (
-          <div className="absolute inset-0 pointer-events-none animate-in fade-in duration-150">
-            <span
-              className="absolute top-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-medium tabular-nums text-foreground bg-background/70 dark:bg-background/70"
-              style={{
-                left: `${rangeLeftPct + rangeWidthPct / 2}%`,
-                transform: "translate(-50%, -50%)",
-              }}
-            >
-              {formatVal(rangeMin)} – {formatVal(rangeMax)}
-            </span>
-          </div>
-        )}
-      </div>
-      {isHovered && showRange && (
-        <p className="text-[10px] text-muted-foreground animate-in fade-in duration-150">
-          Dashed range: typical session tonnage (25th–90th percentile, last 12 months)
-        </p>
-      )}
-    </div>
-  );
-}
 
 function pickWithoutRepeat(arr, lastUsedRef, key) {
   if (!arr?.length) return "";

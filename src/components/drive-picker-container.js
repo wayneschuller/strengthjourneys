@@ -27,6 +27,7 @@ export function DrivePickerContainer({
   trigger = false,
   oauthToken,
   selectSheet,
+  onPick,
 }) {
   const [showPicker, setShowPicker] = useState(false);
   const hasCalledReady = useRef(false);
@@ -50,11 +51,12 @@ export function DrivePickerContainer({
         gaTrackSheetSelected();
         gaEvent(GA_EVENT_TAGS.GDRIVE_PICKER_OPENED);
         const doc = data.docs[0];
-        selectSheet?.(doc.id);
+        if (onPick) onPick(doc);
+        else selectSheet?.(doc.id);
       }
       setShowPicker(false);
     },
-    [selectSheet],
+    [onPick, selectSheet],
   );
 
   const handleCanceled = useCallback(() => {

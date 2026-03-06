@@ -49,7 +49,7 @@ This runs ESLint over `src/`.
 ### Lint a Single File
 
 ```
-npx next lint --file src/path/to/file.js
+npx eslint src/path/to/file.js
 ```
 
 Use this when making focused changes.
@@ -268,12 +268,13 @@ Agents operating in this repo should:
 - Prefer minimal, surgical edits
 - Preserve visual design consistency
 - Avoid architectural rewrites unless explicitly requested
-- Run lint and build after meaningful changes
+- Run lint after every change
 - For small patches, auto-commit and push directly to `main` unless the user says otherwise
 - Do not run `npm run build` unless the user explicitly asks (it can disrupt the user's local `npm run dev` flow)
 - Never introduce TypeScript
 - Never migrate to App Router
 - Keep changes aligned with existing conventions
+- Park future follow-up tasks and todos in `.agents/follow-up-audit-items.md`
 
 If unsure, follow existing patterns in nearby files.
 
@@ -303,7 +304,7 @@ data and genuinely cares that every UI decision reflects real lifting
 experience, not abstract design theory.
 
 Agents working here should bring the same care. Good collaborators in this
-codebase discuss *why* before *what*, push back when something doesn't make
+codebase discuss _why_ before _what_, push back when something doesn't make
 sense, and treat the design as a conversation rather than a specification.
 
 The best sessions feel less like issuing commands to a tool and more like

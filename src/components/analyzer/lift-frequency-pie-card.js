@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/card";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { MiniFeedbackWidget } from "@/components/feedback";
@@ -165,8 +164,7 @@ export const TopLiftsTable = ({ stats, selectedLiftType, onSelectLift, showStats
  * @param {function} props.onSelectLift - Called with a liftType string when the user clicks a row or pie slice.
  */
 export function LiftTypeFrequencyPieCard({ selectedLiftType, onSelectLift }) {
-  const { liftTypes, parsedData, isLoading } = useUserLiftingData();
-  const { status: authStatus } = useSession();
+  const { isDemoMode, liftTypes, parsedData, isLoading } = useUserLiftingData();
   const { getColor } = useLiftColors();
   const [hoveredLiftType, setHoveredLiftType] = useState(null);
 
@@ -254,7 +252,7 @@ export function LiftTypeFrequencyPieCard({ selectedLiftType, onSelectLift }) {
     <Card className="flex h-full flex-1 flex-col">
       <CardHeader>
         <CardTitle>
-          {authStatus === "unauthenticated" && "Demo mode: "}Your Most Frequent
+          {isDemoMode && "Demo mode: "}Your Most Frequent
           Lifts
         </CardTitle>
       </CardHeader>

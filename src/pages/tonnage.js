@@ -4,7 +4,6 @@ import { useEffect, useState, useContext } from "react";
 import { NextSeo } from "next-seo";
 import { useSession, signIn } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { devLog } from "@/lib/processing-utils";
 import { TheLatestSessionCard } from "@/components/home-dashboard/the-latest-session-card";
 import {
@@ -91,16 +90,8 @@ export default function TonnageVisualizer({ relatedArticles }) {
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
  */
 function TonnageVisualizerMain({ relatedArticles }) {
-  const { data: session, status: authStatus } = useSession();
-  const { isLoading, sheetInfo } = useUserLiftingData();
+  const { isLoading } = useUserLiftingData();
   const [highlightDate, setHighlightDate] = useState(null);
-
-  if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid)
-    return (
-      <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
-        <ChooseSheetInstructionsCard session={session} />
-      </div>
-    );
 
   return (
     <PageContainer>

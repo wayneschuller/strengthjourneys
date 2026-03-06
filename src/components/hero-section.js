@@ -3,6 +3,9 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useSession, signIn } from "next-auth/react";
 import { gaTrackSignInClick } from "@/lib/analytics";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { SloganCarousel } from "./slogan-carousel";
 import { Button } from "./ui/button";
 import { motion, AnimatePresence } from "motion/react";
@@ -25,10 +28,11 @@ export function HeroSection() {
             Welcome to Strength Journeys
           </p>
           <h1 className="mb-4 mt-2 text-balance text-center text-3xl font-extrabold leading-tight tracking-tight md:mb-8 lg:text-left lg:text-4xl xl:text-5xl">
-            Free barbell lifting analysis tools that turn your Google Sheet into
-            powerful, visual insights.
+            Free barbell lifting analysis tools that turn your Google Sheet
+            into powerful, visual insights.
           </h1>
-          <GoogleSignInButton />
+          <PageDescription />
+          <HeroPrimaryCta />
         </div>
         <SpreadsheetShowcase />
       </div>
@@ -38,36 +42,37 @@ export function HeroSection() {
 
 // Internal helper: paragraph describing the app's core value proposition with links.
 const PageDescription = () => (
-  <p className="mb-10 mt-2 text-center text-xl tracking-tight md:text-left md:text-2xl lg:w-4/5">
-    Track PRs, visualize E1RM progress, and analyze your strength — all from a
-    simple{" "}
-    <a
-      className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-      target="_blank"
-      href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
-    >
-      Google Sheet
-    </a>
-    .{" "}
-    <a
-      className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-      target="_blank"
-      href="https://github.com/wayneschuller/strengthjourneys"
-    >
-      Free and open source
-    </a>
-    .
-  </p>
+  <></>
 );
 
-// Internal helper: prominent Google sign-in button shown only to unauthenticated visitors.
-function GoogleSignInButton() {
+// Internal helper: prominent hero CTA for unauthenticated visitors and
+// authenticated demo-mode users who still need to set up a sheet.
+function HeroPrimaryCta() {
   const router = useRouter();
-  const { data: session, status: authStatus } = useSession();
+  const { status: authStatus } = useSession();
+  const { sheetInfo } = useUserLiftingData();
 
-  if (authStatus !== "authenticated")
-    return (
-      <div className="flex flex-col items-center gap-2 md:items-start">
+  if (authStatus === "authenticated" && sheetInfo?.ssid) return null;
+
+  return (
+    <div className="flex flex-col items-center gap-2 md:items-start">
+      {authStatus === "authenticated" ? (
+        <Button
+          className="w-2/3 hover:ring-2"
+          onClick={() => {
+            openSheetSetupDialog("bootstrap");
+          }}
+        >
+          <img
+            src={GOOGLE_SHEETS_ICON_URL}
+            alt=""
+            className="h-5 w-5 shrink-0"
+            aria-hidden
+          />
+          <div className="hidden md:block">Set Up Your Free Lifting Log</div>
+          <div className="md:hidden">Set up your log</div>
+        </Button>
+      ) : (
         <Button
           className="w-2/3 hover:ring-2"
           onClick={() => {
@@ -76,14 +81,17 @@ function GoogleSignInButton() {
           }}
         >
           <GoogleLogo />
-          <div className="hidden md:block">Start Your Strength Journey —</div>
-          Free Google Sign-in
+          <div className="hidden md:block">
+            Start Your Strength Journey — Free Google Sign-in
+          </div>
+          <div className="md:hidden">Free Google Sign-in</div>
         </Button>
-        <p className="mt-2 text-xs italic text-slate-500">
-          We never copy or store your data.
-        </p>
-      </div>
-    );
+      )}
+      <p className="mt-2 text-xs italic text-slate-500">
+        We never copy or store your data.
+      </p>
+    </div>
+  );
 }
 
 const SLIDE_DURATION = 4000; // ms per slide

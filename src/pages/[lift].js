@@ -9,7 +9,6 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { devLog, getDisplayWeight } from "@/lib/processing-utils";
-import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { StandardsSlider } from "@/components/standards-slider";
 import { NextSeo } from "next-seo";
 import { PortableText } from "@portabletext/react";
@@ -58,6 +57,7 @@ const StrengthJourneys = () => (
 
 import { fetchRelatedArticles, fetchArticleById } from "@/lib/sanity-io.js";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
+import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 
@@ -240,8 +240,16 @@ function BarbellInsightsMain({
   introductionArticle,
   resourcesArticle,
 }) {
-  const { data: session, status: authStatus } = useSession();
-  const { isLoading, sheetInfo } = useUserLiftingData();
+  const { isLoading, parsedData, rawRows, sheetInfo } = useUserLiftingData();
+  const { dashboardStage } = getDashboardStage({
+    parsedData,
+    rawRows,
+    sheetInfo,
+  });
+  const prioritizeVideoGuides =
+    dashboardStage === "starter_sample" ||
+    dashboardStage === "first_real_week" ||
+    dashboardStage === "first_month";
 
   const bigFourIcons = {
     "Back Squat": Crown,
@@ -256,13 +264,6 @@ function BarbellInsightsMain({
     Deadlift: "/deadlift.svg",
     "Strict Press": "/strict_press.svg",
   };
-
-  if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid)
-    return (
-      <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
-        <ChooseSheetInstructionsCard session={session} />
-      </div>
-    );
 
   return (
     <PageContainer>
@@ -301,6 +302,14 @@ function BarbellInsightsMain({
             <StrengthPotentialBarChart liftType={liftInsightData.liftType} />
           </div>
         </div>
+        {prioritizeVideoGuides && (
+          <div className="col-span-3">
+            <VideoCard
+              liftType={liftInsightData.liftType}
+              videos={liftInsightData.videos}
+            />
+          </div>
+        )}
         <div className="col-span-3">
           <MostRecentSessionCard key={liftInsightData.liftType} liftType={liftInsightData.liftType} />
         </div>
@@ -316,12 +325,14 @@ function BarbellInsightsMain({
         <div className="col-span-3" id="lift-prs">
           <MyLiftTypePRsCard liftType={liftInsightData.liftType} />
         </div>
-        <div className="col-span-3">
-          <VideoCard
-            liftType={liftInsightData.liftType}
-            videos={liftInsightData.videos}
-          />
-        </div>
+        {!prioritizeVideoGuides && (
+          <div className="col-span-3">
+            <VideoCard
+              liftType={liftInsightData.liftType}
+              videos={liftInsightData.videos}
+            />
+          </div>
+        )}
       </div>
       {liftInsightData.faqItems?.length > 0 && (
         <section className="mt-10">

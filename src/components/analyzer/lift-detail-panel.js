@@ -12,8 +12,12 @@ export function LiftDetailPanel({ liftType }) {
   if (!liftType) return null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <LiftJourneyCard liftType={liftType} asCard={false} />
+    <div className="mx-auto flex w-full max-w-[1120px] flex-col gap-6 2xl:max-w-[1180px]">
+      <LiftJourneyCard
+        liftType={liftType}
+        asCard={false}
+        chartDensity="dense"
+      />
       <LiftTypeRepPRsDisplay liftType={liftType} />
     </div>
   );

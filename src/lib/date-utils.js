@@ -41,6 +41,74 @@ export function normalizeYmd(dateStr) {
   return `${year}-${month}-${day}`;
 }
 
+function getLocaleRegion(localeHint) {
+  if (!localeHint || typeof localeHint !== "string") return null;
+  const normalized = localeHint.trim().replace(/_/g, "-");
+  const parts = normalized.split("-");
+  if (parts.length < 2) return null;
+  return parts[1]?.toUpperCase?.() || null;
+}
+
+function localePrefersMonthFirst(localeHint) {
+  const region = getLocaleRegion(localeHint);
+  return ["US"].includes(region);
+}
+
+export function normalizeDateInput(dateStr, localeHint) {
+  const normalizedYmd = normalizeYmd(dateStr);
+  if (normalizedYmd) return normalizedYmd;
+  if (!dateStr) return null;
+
+  const trimmed = String(dateStr).trim();
+  const match = trimmed.match(/^(\d{1,4})[/. -](\d{1,2})[/. -](\d{1,4})$/);
+  if (!match) return null;
+
+  const [, firstRaw, secondRaw, thirdRaw] = match;
+  let year;
+  let month;
+  let day;
+
+  if (firstRaw.length === 4) {
+    year = Number.parseInt(firstRaw, 10);
+    month = Number.parseInt(secondRaw, 10);
+    day = Number.parseInt(thirdRaw, 10);
+  } else if (thirdRaw.length === 4) {
+    year = Number.parseInt(thirdRaw, 10);
+    const first = Number.parseInt(firstRaw, 10);
+    const second = Number.parseInt(secondRaw, 10);
+
+    if (first > 12) {
+      day = first;
+      month = second;
+    } else if (second > 12) {
+      month = first;
+      day = second;
+    } else if (localePrefersMonthFirst(localeHint)) {
+      month = first;
+      day = second;
+    } else {
+      day = first;
+      month = second;
+    }
+  } else {
+    return null;
+  }
+
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day) ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > daysInMonth(year, month)
+  ) {
+    return null;
+  }
+
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 export function getWeekKeyFromDateStr(dateStr) {
   const d = parseYmdUtc(dateStr);
   const dow = d.getUTCDay();

@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import {
@@ -17,9 +16,8 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession, signIn } from "next-auth/react";
 import { gaTrackSignInClick } from "@/lib/analytics";
 import { GoogleLogo } from "@/components/hero-section";
-import { DrivePickerContainer } from "@/components/drive-picker-container";
-import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 
 /**
  * Card that manages which lifting data categories are shared with the AI assistant.
@@ -30,29 +28,14 @@ import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
  */
 export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
   const router = useRouter();
-  const { parsedData, isLoading, isDemoMode, sheetInfo, selectSheet } =
-    useUserLiftingData();
-  const { data: session, status: authStatus } = useSession();
-
-  const [openPicker, setOpenPicker] = useState(null);
-  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
+  const { parsedData, isLoading, isDemoMode, sheetInfo } = useUserLiftingData();
+  const { status: authStatus } = useSession();
 
   const isUnauthenticated = authStatus === "unauthenticated";
   const isAuthenticated = authStatus === "authenticated";
   const hasSheet = isAuthenticated && !!sheetInfo?.ssid;
   const hasPersonalData =
     hasSheet && !isDemoMode && parsedData && parsedData.length > 0;
-
-  // Load the picker when authenticated but no sheet connected
-  useEffect(() => {
-    if (isAuthenticated && !sheetInfo?.ssid) {
-      setShouldLoadPicker(true);
-    }
-  }, [isAuthenticated, sheetInfo?.ssid]);
-
-  const handlePickerReady = useCallback((picker) => {
-    setOpenPicker(() => picker);
-  }, []);
 
   const handleSelectAll = () => {
     const allChecked = !selectedOptions.all;
@@ -75,21 +58,12 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
 
   return (
     <Card>
-      {/* Invisible picker container - loads Google Picker API */}
-      {shouldLoadPicker && (
-        <DrivePickerContainer
-          onReady={handlePickerReady}
-          trigger={shouldLoadPicker}
-          oauthToken={session?.accessToken}
-          selectSheet={selectSheet}
-        />
-      )}
       <CardHeader>
         <CardTitle>Talk To Your Lifting Data</CardTitle>
         <CardDescription>
           {isUnauthenticated && "Sign in to share your lifting data with the AI"}
           {isAuthenticated && !hasSheet &&
-            "Connect your Google Sheet to get started"}
+            "Set up your Google Sheet to get started"}
           {hasSheet && !hasPersonalData && isLoading && "Loading your data..."}
           {hasSheet && !hasPersonalData && !isLoading &&
             "No lifting data found in the connected sheet"}
@@ -122,17 +96,14 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
         {isAuthenticated && !hasSheet && (
           <div className="flex flex-col items-start gap-3">
             <p className="text-muted-foreground w-64 text-pretty text-sm">
-              Connect your Google Sheet to share your personal lifting data with
+              Set up your Google Sheet to share your personal lifting data with
               the AI.
             </p>
             <Button
               size="sm"
               className="flex items-center gap-2"
-              disabled={!openPicker}
               onClick={() => {
-                if (openPicker) {
-                  handleOpenFilePicker(openPicker);
-                }
+                openSheetSetupDialog("bootstrap");
               }}
             >
               <img
@@ -141,9 +112,7 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
                 className="h-4 w-4 shrink-0"
                 aria-hidden
               />
-              {openPicker
-                ? "Connect Google Sheet"
-                : "Loading sheet picker..."}
+              Set Up Google Sheet
             </Button>
           </div>
         )}

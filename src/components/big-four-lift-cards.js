@@ -50,8 +50,15 @@ import { Badge } from "@/components/ui/badge";
  * @param {boolean} [props.animated=true] - When true, stats and badges stagger in with a short
  *   delay per card after auth and data load. Set to false to skip the animation (e.g. when
  *   embedded elsewhere).
+ * @param {boolean} [props.enhancedStats=true] - When false, always render the plain descriptive
+ *   version even if the user has linked data. Used to delay the richer personalized treatment
+ *   until the dashboard has enough history for it to feel earned.
  */
-export function BigFourLiftCards({ lifts, animated = true }) {
+export function BigFourLiftCards({
+  lifts,
+  animated = true,
+  enhancedStats = true,
+}) {
   const {
     sheetInfo,
     parsedData,
@@ -204,6 +211,7 @@ export function BigFourLiftCards({ lifts, animated = true }) {
           (stats.totalSets > 0 || stats.totalReps > 0 || stats.bestLift);
         // Only show personal stats when user has connected a sheet (avoid demo data on cards).
         const isStatsMode =
+          enhancedStats &&
           authStatus === "authenticated" &&
           !!sheetInfo?.ssid &&
           hasAnyData;

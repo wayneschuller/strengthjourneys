@@ -54,7 +54,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import { useSession } from "next-auth/react";
 // import { brightenHexColor, saturateHexColor } from "@/lib/get-lift-color";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -80,10 +79,9 @@ const repTabs = [
  * @param {string} [props.liftType] - Display name of the lift to chart (e.g. "Bench Press").
  */
 export function VisualizerReps({ data, liftType }) {
-  const { parsedData, isLoading } = useUserLiftingData();
+  const { parsedData, isDemoMode, isLoading } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
-  const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
   const liftColor = getColor(liftType);
   const { isMetric } = useAthleteBio();
@@ -110,7 +108,7 @@ export function VisualizerReps({ data, liftType }) {
 
   // Compute daily bests for each rep range
   const chartDataByReps = useMemo(() => {
-    if (!parsedData) {
+    if (!Array.isArray(parsedData) || parsedData.length === 0) {
       // Return empty arrays for each rep if data is not loaded
       const empty = {};
       repTabs.forEach((t) => {
@@ -140,7 +138,10 @@ export function VisualizerReps({ data, liftType }) {
 
   // Build chart data: one object per date, with weight for each rep range.
   // null when parsedData not yet loaded (matches the mini pattern for gating ChartContainer).
-  const chartData = !parsedData ? null : allDates.map((date) => {
+  const chartData =
+    !Array.isArray(parsedData) || parsedData.length === 0
+      ? null
+      : allDates.map((date) => {
     const entry = { date };
     repTabs.forEach((t) => {
       const found = chartDataByReps[t.reps].find((d) => d.date === date);
@@ -216,7 +217,7 @@ export function VisualizerReps({ data, liftType }) {
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <CardTitle className="flex items-center gap-2">
-          {authStatus === "unauthenticated" && "Demo Mode: "}
+          {isDemoMode && "Demo Mode: "}
           {liftType} Singles, Triples and Fives
           <Badge
             variant="outline"

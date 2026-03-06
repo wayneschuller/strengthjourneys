@@ -483,10 +483,21 @@ function EarlyMonthMomentumCard({
       </CardHeader>
       <CardContent className="flex flex-1 flex-col justify-center gap-4">
         {showWeekTemplate ? (
-          <div className="rounded-lg border bg-background/80 px-3 py-3">
+          <div className="rounded-lg bg-background/60 px-3 py-3">
             <p className="text-sm text-muted-foreground">
-              Start with an empty bar and work up to a moderate weight. 3x5
-              means three sets of five reps. Rest a few minutes between sets.
+              Start with{" "}
+              <span className="font-medium text-foreground">
+                an empty bar
+              </span>{" "}
+              and work up to{" "}
+              <span className="font-medium text-foreground">
+                a moderate weight
+              </span>
+              .{" "}
+              <span className="font-medium text-foreground">
+                3x5 means three sets of five reps
+              </span>
+              . Rest a few minutes between sets.
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <WeekPlanLiftSession
@@ -510,14 +521,24 @@ function EarlyMonthMomentumCard({
               />
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              Each work set should feel solid and challenging, but never like a
-              desperate grind. You will finish knowing you could have done 2-3
-              more reps if needed. Over the following weeks, add small amounts
-              of weight so the lifts get heavier while still moving cleanly.
+              Each work set should feel{" "}
+              <span className="font-medium text-foreground">
+                solid and challenging
+              </span>
+              , but never like a desperate grind. You will finish knowing you
+              could have done{" "}
+              <span className="font-medium text-foreground">
+                2-3 more reps
+              </span>{" "}
+              if needed. Over the following weeks,{" "}
+              <span className="font-medium text-foreground">
+                add small amounts of weight
+              </span>{" "}
+              so the lifts get heavier while still moving cleanly.
             </p>
           </div>
         ) : showFirstMonthTemplate ? (
-          <div className="rounded-lg border bg-background/80 px-3 py-3">
+          <div className="rounded-lg bg-background/60 px-3 py-3">
             <p className="text-sm text-muted-foreground">
               In the first month, the aim is simply to learn the movements,
               build consistency, and start adding weight gradually. Choose

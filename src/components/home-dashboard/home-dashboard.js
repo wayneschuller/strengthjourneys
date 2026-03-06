@@ -227,16 +227,23 @@ export function HomeDashboard() {
           setIsProgressDone={setIsProgressDone}
         />
       )}
-      {sheetInfo?.ssid && <HomeInspirationCards isProgressDone={hasDataLoaded} />}
+      {sheetInfo?.ssid && (
+        <HomeInspirationCards
+          isProgressDone={hasDataLoaded}
+          dashboardStage={dashboardStage}
+          sessionCount={sessionCount}
+        />
+      )}
       {sheetInfo?.ssid && hasDataLoaded && (
         <>
           <section className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
             {/* Three headline cards intentionally begin with "The" and widen chronology:
                 The Latest Session -> The Month in Iron -> The Long Game.
                 Together they make the app experience feel badass and motivating, like chapters in an ongoing strength story. */}
-              <TheLatestSessionCard
+            <TheLatestSessionCard
               highlightDate={highlightDate}
               setHighlightDate={setHighlightDate}
+              dashboardStage={dashboardStage}
               dataMaturityStage={dataMaturityStage}
               sessionCount={sessionCount}
             />

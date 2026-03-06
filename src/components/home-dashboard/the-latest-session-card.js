@@ -87,6 +87,7 @@ function getSessionCardTitle(sessionDate, isLastDate) {
 export function TheLatestSessionCard({
   highlightDate = null,
   setHighlightDate,
+  dashboardStage = "established",
   dataMaturityStage = "mature",
   sessionCount = 0,
 }) {
@@ -127,6 +128,7 @@ export function TheLatestSessionCard({
     () => Array.isArray(parsedData) && parsedData.some((entry) => !entry?.isGoal),
     [parsedData],
   );
+  const isStarterSampleStage = dashboardStage === "starter_sample";
 
   useEffect(() => {
     sessionRatingRef.current = null; // Reset the session rating when the highlight date changes
@@ -289,11 +291,17 @@ export function TheLatestSessionCard({
                     : "This card will populate automatically as your sessions roll in.")}
                 {hasLoggedSessions &&
                   analyzedSessionLifts &&
+                  isStarterSampleStage &&
+                  "Starter sample data. Open your sheet and replace this row with your real training."}
+                {hasLoggedSessions &&
+                  analyzedSessionLifts &&
+                  !isStarterSampleStage &&
                   isLastDate &&
                   getReadableDateString(sessionDate, true)}
                 {hasLoggedSessions &&
                 analyzedSessionLifts &&
                 !isDemoMode &&
+                !isStarterSampleStage &&
                 sessionRatingRef.current
                   ? `${isLastDate ? " · " : ""}${sessionRatingRef.current}`
                   : ""}
@@ -347,6 +355,30 @@ export function TheLatestSessionCard({
           {analyzedSessionLifts &&
             (Object.keys(analyzedSessionLifts).length > 0 ? (
               <div className="space-y-4">
+                {isStarterSampleStage && sheetInfo?.url && (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">
+                          This session is starter sample data
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Replace it in Google Sheets with your own first
+                          workout. The dashboard will refresh from there.
+                        </p>
+                      </div>
+                      <Button asChild className="shrink-0">
+                        <a
+                          href={sheetInfo.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Open Google Sheet
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {Object.entries(analyzedSessionLifts).map(
                   ([liftType, workouts]) => (
                     <SessionExerciseBlock
@@ -381,12 +413,20 @@ export function TheLatestSessionCard({
               </a>
             </Button>
           )}
+          {hasLoggedSessions && isStarterSampleStage && sheetInfo?.url && (
+            <Button asChild variant="outline">
+              <a href={sheetInfo.url} target="_blank" rel="noopener noreferrer">
+                Edit this sample in Google Sheets
+              </a>
+            </Button>
+          )}
           {analyzedSessionLifts && (
               <SessionTonnage
                 analyzedSessionLifts={analyzedSessionLifts}
                 sessionTonnageLookup={sessionTonnageLookup}
                 sessionDate={sessionDate}
                 isMetric={isMetric}
+                isStarterSampleStage={isStarterSampleStage}
               />
           )}
         </CardFooter>
@@ -403,6 +443,7 @@ function SessionTonnage({
   sessionTonnageLookup,
   sessionDate,
   isMetric = false,
+  isStarterSampleStage = false,
 }) {
   const equivalentRef = useRef(null);
 
@@ -537,7 +578,7 @@ function SessionTonnage({
           {Math.round(tonnageDisplay).toLocaleString()}
           {displayUnit}
         </span>
-        {hasRange && overallPctDiff !== null ? (
+        {!isStarterSampleStage && hasRange && overallPctDiff !== null ? (
           <>
             <span className="text-muted-foreground">
               vs {Math.round(avgSessionTonnageDisplay).toLocaleString()}
@@ -588,8 +629,9 @@ function SessionTonnage({
           </p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Not enough history yet to compare your session tonnage over the last
-            year.
+            {isStarterSampleStage
+              ? "Once you replace the starter row with real sessions, this card will start comparing your tonnage over time."
+              : "Not enough history yet to compare your session tonnage over the last year."}
           </p>
         )}
       </div>

@@ -443,8 +443,12 @@ export function TheLatestSessionCard({
             analyzedSessionLifts &&
             isFirstRealWeekStage &&
             sheetInfo?.url && (
-              <div className="flex justify-end">
-                <Button asChild variant="outline" className="gap-2">
+              <div className="flex flex-col gap-2 rounded-lg border bg-muted/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Remember: you can open your Google Sheet any time to add lifts
+                  and keep the dashboard moving.
+                </p>
+                <Button asChild variant="outline" className="gap-2 self-start sm:self-auto">
                   <a
                     href={sheetInfo.url}
                     target="_blank"

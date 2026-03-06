@@ -131,8 +131,7 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage, load
     return {
       eyebrow: "Lifting log created",
       title: "Your lifting log is ready.",
-      description:
-        "Strength Journeys created a Google Sheets lifting log that will power your PRs, charts, and trends.",
+      description: null,
       tone: "ready",
     };
   }
@@ -577,9 +576,11 @@ export function SheetSetupDialog() {
               <CardTitle className="max-w-3xl text-2xl md:text-3xl">
                 {dialogCopy.title}
               </CardTitle>
-              <CardDescription className="max-w-3xl text-base leading-relaxed">
-                {dialogCopy.description}
-              </CardDescription>
+              {dialogCopy.description ? (
+                <CardDescription className="max-w-3xl text-base leading-relaxed">
+                  {dialogCopy.description}
+                </CardDescription>
+              ) : null}
             </CardHeader>
             <CardContent className="space-y-5 xl:px-10 2xl:px-16">
               {onboardingState === "choose_sheet" && (
@@ -667,17 +668,7 @@ function CreatedSheetPanel({ sheetInfo, onGoToDashboard }) {
   const sheetLabel = sheetInfo?.filename || "Your Strength Journeys lifting log";
 
   return (
-    <Card className="mb-4 border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-5xl">
-      <CardHeader className="items-center text-center">
-        <CardTitle className="max-w-3xl text-2xl md:text-3xl">
-          Your lifting log is ready.
-        </CardTitle>
-        <CardDescription className="max-w-2xl text-base leading-relaxed">
-          Strength Journeys created a Google Sheets lifting log that will power
-          your PRs, charts, and trends.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-8 pb-2">
         <motion.div
           initial={{ opacity: 0, scale: 0.97, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -689,20 +680,20 @@ function CreatedSheetPanel({ sheetInfo, onGoToDashboard }) {
               href={sheetUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="block rounded-3xl border border-primary/20 bg-[#fafafa] p-5 text-left shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+              className="block rounded-lg border border-border/70 bg-[#fafafa] p-5 text-left transition-colors hover:border-primary/35 hover:bg-primary/[0.03]"
               aria-label={`Open ${sheetLabel} in Google Sheets`}
             >
               <div className="flex items-start gap-4">
-                <div className="rounded-2xl border border-border bg-background p-3.5 shadow-sm">
+                <div className="rounded-md border border-border bg-background p-4">
                   <img
                     src={GOOGLE_SHEETS_ICON_URL}
                     alt=""
-                    className="h-14 w-14"
+                    className="h-16 w-16"
                     aria-hidden
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xl font-bold text-foreground md:text-2xl">
+                  <p className="truncate text-xl font-extrabold text-foreground md:text-2xl">
                     {sheetLabel}
                   </p>
                   <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
@@ -713,18 +704,18 @@ function CreatedSheetPanel({ sheetInfo, onGoToDashboard }) {
               </div>
             </a>
           ) : (
-            <div className="rounded-3xl border border-primary/20 bg-[#fafafa] p-5 text-left shadow-md">
+            <div className="rounded-lg border border-border/70 bg-[#fafafa] p-5 text-left">
               <div className="flex items-start gap-4">
-                <div className="rounded-2xl border border-border bg-background p-3.5 shadow-sm">
+                <div className="rounded-md border border-border bg-background p-4">
                   <img
                     src={GOOGLE_SHEETS_ICON_URL}
                     alt=""
-                    className="h-14 w-14"
+                    className="h-16 w-16"
                     aria-hidden
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xl font-bold text-foreground md:text-2xl">
+                  <p className="truncate text-xl font-extrabold text-foreground md:text-2xl">
                     {sheetLabel}
                   </p>
                   <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
@@ -739,18 +730,18 @@ function CreatedSheetPanel({ sheetInfo, onGoToDashboard }) {
         <p className="text-center text-sm font-medium italic text-foreground/80">
           Every set you log becomes part of your strength story.
         </p>
-        <div className="rounded-2xl border bg-card/60 p-4 text-center text-sm leading-relaxed text-muted-foreground">
-          Add lifts in your sheet - Strength Journeys builds the dashboards.
+        <div className="rounded-lg border border-border/70 bg-card/20 px-4 py-3 text-center text-sm leading-relaxed text-muted-foreground">
+          Log lifts in your sheet. Your dashboards update automatically.
         </div>
         <div className="flex flex-col justify-center gap-3 sm:flex-row">
           {sheetUrl ? (
-            <Button asChild size="lg" className="gap-2">
+            <Button asChild size="lg" className="gap-2 shadow-sm">
               <a href={sheetUrl} target="_blank" rel="noopener noreferrer">
                 Open My Lifting Log
               </a>
             </Button>
           ) : (
-            <Button size="lg" className="gap-2" disabled>
+            <Button size="lg" className="gap-2 shadow-sm" disabled>
               Open My Lifting Log
             </Button>
           )}
@@ -758,11 +749,6 @@ function CreatedSheetPanel({ sheetInfo, onGoToDashboard }) {
             Go to Strength Dashboard
           </Button>
         </div>
-        <p className="text-center text-sm text-muted-foreground">
-          Your training data stays in your Google Drive. Strength Journeys
-          only analyzes it.
-        </p>
-      </CardContent>
-    </Card>
+    </div>
   );
 }

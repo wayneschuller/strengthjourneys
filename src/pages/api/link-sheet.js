@@ -1,10 +1,10 @@
 import { devLog } from "@/lib/processing-utils";
 import {
   SAMPLE_TEMPLATE_SSID,
+  BOOTSTRAP_TEMPLATE_SSID,
   buildSheetName,
   classifyLifecycle,
   copyTemplate,
-  createBlankSheet,
   createDebug,
   getExistingRecord,
   markActivationPrompted,
@@ -78,10 +78,11 @@ export default async function handler(req, res) {
     }
 
     if (mode === "create_blank") {
-      metadata = await createBlankSheet(sheetName, base.headers);
+      metadata = await copyTemplate(sheetName, BOOTSTRAP_TEMPLATE_SSID, base.headers);
+      await writeBootstrapDate(metadata.id, base.headers, new Date().toISOString());
       connectionMethod =
         intent === "switch_sheet" ? "switch_sheet_selection" : "user_created_blank";
-      provisioningMethod = "blank_seeded";
+      provisioningMethod = "bootstrap_template_copy";
       reason = "created_blank";
       wasCreated = true;
     }

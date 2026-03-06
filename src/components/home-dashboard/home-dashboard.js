@@ -385,7 +385,7 @@ export function HomeDashboard() {
       setIsProvisionActionLoading(true);
       setFlowIntent(intent || "bootstrap");
       setHadLocalSheetBefore(Boolean(hadLocalBefore));
-      setOnboardingState("provisioning");
+      setOnboardingState("discovering");
       setSheetDiscoveryStatusMessage(
         intent === "switch_sheet"
           ? "Finding accessible lifting logs."
@@ -435,7 +435,7 @@ export function HomeDashboard() {
     async ({ mode, selectedSsid = null, intent = flowIntent } = {}) => {
       setProvisionError(null);
       setIsProvisionActionLoading(true);
-      setOnboardingState("provisioning");
+      setOnboardingState("linking_or_creating");
       try {
         const response = await fetch("/api/link-sheet", {
           method: "POST",
@@ -613,10 +613,11 @@ export function HomeDashboard() {
             selectSheet={selectSheet}
             onPick={handlePickerSelection}
           />
-          {(onboardingState === "provisioning" || onboardingState === "idle") && (
+          {["discovering", "linking_or_creating", "idle"].includes(onboardingState) && (
             <ProvisioningPanel
               isWorking={isProvisionActionLoading}
               intent={flowIntent}
+              state={onboardingState}
             />
           )}
           {onboardingState === "choose_sheet" && (
@@ -696,22 +697,37 @@ export function HomeDashboard() {
   );
 }
 
-function ProvisioningPanel({ isWorking = true, intent = "bootstrap" }) {
+function ProvisioningPanel({
+  isWorking = true,
+  intent = "bootstrap",
+  state = "discovering",
+}) {
+  const isSwitchSheet = intent === "switch_sheet";
+  const isCreating = state === "linking_or_creating";
+
   return (
     <Card className="mb-4 border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
       <CardHeader className="xl:px-10 2xl:px-16">
         <CardTitle className="flex items-center gap-2 text-lg">
           <LoaderCircle className={`h-5 w-5 ${isWorking ? "animate-spin" : ""}`} />
-          {intent === "switch_sheet" ? "Finding your accessible lifting logs" : "Scanning your Google Drive"}
+          {isCreating
+            ? "Forging your lifting log"
+            : isSwitchSheet
+              ? "Finding your accessible lifting logs"
+              : "Scanning your Google Drive"}
         </CardTitle>
         <CardDescription>
-          {intent === "switch_sheet"
-            ? "Gathering the sheets you can access so you can deliberately switch data sources."
-            : "Looking for existing lifting logs so you can connect the right sheet quickly."}
+          {isCreating
+            ? "Racking plates, sharpening pencils, and setting up your sheet."
+            : isSwitchSheet
+              ? "Gathering the sheets you can access so you can deliberately switch data sources."
+              : "Looking for existing lifting logs so you can connect the right sheet quickly."}
         </CardDescription>
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground xl:px-10 2xl:px-16">
-        This usually takes a few seconds.
+        {isCreating
+          ? "This usually takes a moment. No deadlifts were harmed in the process."
+          : "This usually takes a few seconds."}
       </CardContent>
     </Card>
   );

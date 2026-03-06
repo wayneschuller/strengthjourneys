@@ -1042,7 +1042,7 @@ function FirstMonthLongGameState({ parsedData }) {
   return (
     <div className="flex h-full flex-col gap-5">
       <div className="rounded-xl border bg-muted/10 p-5">
-        <div className="grid grid-cols-[2.25rem_repeat(7,minmax(0,1fr))] gap-x-2 gap-y-3">
+        <div className="grid justify-center grid-cols-[1.5rem_repeat(7,2rem)] gap-x-2 gap-y-2 sm:grid-cols-[1.75rem_repeat(7,2.25rem)] sm:gap-y-3">
           <div />
           {weekdayLabels.map((label, index) => (
             <span
@@ -1060,7 +1060,7 @@ function FirstMonthLongGameState({ parsedData }) {
               {week.days.map((dayNumber) => (
                 <div
                   key={`${week.label}-${dayNumber}`}
-                  className={`aspect-square rounded-[0.9rem] border transition-colors ${
+                  className={`h-8 w-8 rounded-[0.75rem] border transition-colors sm:h-9 sm:w-9 ${
                     activeDays.has(dayNumber)
                       ? "border-primary/30 bg-primary/95 shadow-sm"
                       : "border-border/60 bg-muted/25"

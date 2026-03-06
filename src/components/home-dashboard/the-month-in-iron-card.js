@@ -474,13 +474,6 @@ function EarlyMonthMomentumCard({
         <CardDescription>{subtitle}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col justify-center gap-4">
-        {dashboardStage === "starter_sample" && sheetUrl && (
-          <Button asChild className="w-full sm:w-fit">
-            <a href={sheetUrl} target="_blank" rel="noopener noreferrer">
-              Open Google Sheet
-            </a>
-          </Button>
-        )}
         {showWeekTemplate ? (
           <div className="rounded-lg border bg-background/80 px-3 py-3">
             <p className="text-sm text-muted-foreground">

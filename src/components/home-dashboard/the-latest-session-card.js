@@ -129,6 +129,7 @@ export function TheLatestSessionCard({
     [parsedData],
   );
   const isStarterSampleStage = dashboardStage === "starter_sample";
+  const showSessionTonnage = dashboardStage === "established";
 
   useEffect(() => {
     sessionRatingRef.current = null; // Reset the session rating when the highlight date changes
@@ -437,7 +438,7 @@ export function TheLatestSessionCard({
               </a>
             </Button>
           )}
-          {analyzedSessionLifts && (
+          {analyzedSessionLifts && showSessionTonnage && (
               <SessionTonnage
                 analyzedSessionLifts={analyzedSessionLifts}
                 sessionTonnageLookup={sessionTonnageLookup}

@@ -21,6 +21,7 @@ import { devLog } from "@/lib/processing-utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LiftSvg } from "@/components/year-recap/lift-svg";
 import {
   AlertTriangle,
   CopyPlus,
@@ -465,17 +466,42 @@ function formatRecommendedMeta(candidate) {
   return bits.join(" • ") || "Lifting log detected";
 }
 
-function formatPreviewSet(preview) {
-  if (!preview) return "";
+function formatPreviewDate(isoDate) {
+  if (!isoDate) return "";
+  const d = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function getPreviewLiftLabel(liftType) {
   const liftLabelMap = {
     "Back Squat": "Squat",
     "Bench Press": "Bench",
     Deadlift: "Deadlift",
     "Strict Press": "Press",
   };
-  const lift = liftLabelMap[preview.liftType] || preview.liftType;
-  const weight = Math.round(preview.weight);
-  return `${lift}: ${weight} x ${preview.reps} (~${preview.e1rm} e1rm)`;
+  return liftLabelMap[liftType] || liftType;
+}
+
+function formatPreviewWeight(preview) {
+  if (!preview || typeof preview.weight !== "number") return "";
+  const roundedWeight =
+    Math.abs(preview.weight - Math.round(preview.weight)) < 0.05
+      ? String(Math.round(preview.weight))
+      : preview.weight.toFixed(1);
+  return `${roundedWeight}${preview.unitType || ""}`;
+}
+
+function formatPreviewSetDetail(preview) {
+  if (!preview) return "";
+  const weight = formatPreviewWeight(preview);
+  const date = formatPreviewDate(preview.date);
+  if (!weight) return "";
+  return `${preview.reps}@${weight}${date ? ` (${date})` : ""}`;
 }
 
 function ChooseSheetPanel({
@@ -487,8 +513,8 @@ function ChooseSheetPanel({
   onCreateSample,
 }) {
   return (
-    <Card className="mb-4 border-primary/20 bg-background/95">
-      <CardHeader>
+    <Card className="mb-4 border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
+      <CardHeader className="xl:px-10 2xl:px-16">
         <CardTitle className="flex items-center gap-2 text-lg">
           <img
             src={GOOGLE_SHEETS_ICON_URL}
@@ -502,52 +528,94 @@ function ChooseSheetPanel({
           Strength Journeys found Google Sheets in your Drive that look like lifting logs. Choose one to connect, or create a new sheet to get started.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-5 xl:px-10 2xl:px-16">
         <div className="space-y-3">
           {candidates[0] && (
             <>
               <p className="text-sm font-semibold text-foreground">
                 Your lifting log
               </p>
-              <div
-                key={candidates[0].id}
-                className="rounded-xl border border-border/50 bg-card/70 px-5 py-6"
-              >
-                <div className="max-w-xl space-y-4">
-                  <div className="min-w-0 space-y-1.5">
-                    <p className="truncate text-base font-semibold text-foreground">
-                      {candidates[0].name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatRecommendedMeta(candidates[0])}
-                    </p>
-                    {Array.isArray(candidates[0].bigFourPreview) &&
-                      candidates[0].bigFourPreview.length > 0 && (
-                        <div className="pt-1">
-                          <p className="mb-1 text-xs font-medium text-muted-foreground">
-                            Nice work. Quick strength preview:
-                          </p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {candidates[0].bigFourPreview.map((preview) => (
-                              <span
-                                key={preview.liftType}
-                                className="rounded-md border bg-background/80 px-2 py-1 text-xs text-foreground/90"
-                              >
-                                {formatPreviewSet(preview)}
-                              </span>
-                            ))}
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <div
+                  key={candidates[0].id}
+                  className="rounded-xl border border-black/10 bg-card/40 px-6 py-6"
+                >
+                  <div className="max-w-2xl space-y-5">
+                    <div className="min-w-0 space-y-2">
+                      <p className="truncate text-base font-semibold text-foreground">
+                        {candidates[0].name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatRecommendedMeta(candidates[0])}
+                      </p>
+                      {Array.isArray(candidates[0].bigFourPreview) &&
+                        candidates[0].bigFourPreview.length > 0 && (
+                          <div className="space-y-2 pt-1">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              Best lifts detected
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {candidates[0].bigFourPreview.map((preview) => (
+                                <div
+                                  key={preview.liftType}
+                                  className="flex min-w-[120px] items-center gap-2 rounded-md border border-black/10 bg-background/90 px-2.5 py-2"
+                                >
+                                  <LiftSvg
+                                    liftType={preview.liftType}
+                                    size="sm"
+                                    animate={false}
+                                    className="h-8 w-8"
+                                  />
+                                  <div className="min-w-0">
+                                    <p className="text-[11px] font-medium leading-tight text-muted-foreground">
+                                      {getPreviewLiftLabel(preview.liftType)}
+                                    </p>
+                                    <p className="text-base font-semibold leading-tight text-foreground">
+                                      {formatPreviewWeight(preview)}
+                                    </p>
+                                    <p className="truncate text-[10px] leading-tight text-muted-foreground">
+                                      {formatPreviewSetDetail(preview)}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                    </div>
+                    <Button
+                      size="lg"
+                      className="w-full sm:w-auto sm:min-w-56"
+                      disabled={isWorking}
+                      onClick={() => onChooseSheet(candidates[0].id)}
+                    >
+                      Connect this lifting log
+                    </Button>
                   </div>
-                  <Button
-                    size="lg"
-                    className="w-full sm:w-auto sm:min-w-56"
-                    disabled={isWorking}
-                    onClick={() => onChooseSheet(candidates[0].id)}
-                  >
-                    Connect this lifting log
-                  </Button>
+                </div>
+                <div className="flex items-start justify-center lg:pt-1">
+                  <div className="w-full max-w-sm rounded-lg border border-primary/20 bg-primary/5 p-3">
+                    <p className="text-sm font-semibold text-foreground">
+                      Don&apos;t see the sheet you want?
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Browse Google Drive to grant Strength Journeys access to another sheet.
+                    </p>
+                    <div className="mt-2 flex justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-52"
+                        disabled={!openPicker || isWorking}
+                        onClick={() => {
+                          if (openPicker) handleOpenFilePicker(openPicker);
+                        }}
+                      >
+                        <FolderOpen className="mr-2 h-4 w-4" />
+                        Browse Google Drive
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </>
@@ -557,7 +625,7 @@ function ChooseSheetPanel({
               <p className="pt-2 text-sm font-semibold text-muted-foreground">
                 Other sheets we detected
               </p>
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 2xl:grid-cols-3">
                 {candidates.slice(1).map((candidate) => (
                   <div
                     key={candidate.id}
@@ -613,27 +681,6 @@ function ChooseSheetPanel({
             >
               <CopyPlus className="mr-2 h-4 w-4" />
               Create demo sheet with example data
-            </Button>
-          </div>
-        </div>
-        <div className="rounded-xl border border-primary/25 bg-primary/5 p-4">
-          <p className="text-sm font-semibold text-foreground">
-            Don&apos;t see the sheet you want?
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Browse Google Drive to grant Strength Journeys access to another sheet.
-          </p>
-          <div className="mt-3">
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto"
-              disabled={!openPicker || isWorking}
-              onClick={() => {
-                if (openPicker) handleOpenFilePicker(openPicker);
-              }}
-            >
-              <FolderOpen className="mr-2 h-4 w-4" />
-              Browse Google Drive
             </Button>
           </div>
         </div>

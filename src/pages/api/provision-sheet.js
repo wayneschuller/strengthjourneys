@@ -277,13 +277,33 @@ async function enrichCandidateMetadata(
     if (!maxDate || parsed > maxDate) maxDate = parsed;
   }
 
+  let hasRowsBeyondScanCap = false;
+  try {
+    const probeStart = METADATA_SCAN_ROW_CAP + 2;
+    const probeEnd = probeStart + 25;
+    const probeUrl = `https://sheets.googleapis.com/v4/spreadsheets/${candidate.id}/values/A${probeStart}:Z${probeEnd}?dateTimeRenderOption=FORMATTED_STRING`;
+    const probeResponse = await fetch(probeUrl, { method: "GET", headers });
+    if (probeResponse.ok) {
+      const probeJson = await probeResponse.json().catch(() => ({}));
+      const probeRows = Array.isArray(probeJson?.values) ? probeJson.values : [];
+      hasRowsBeyondScanCap = probeRows.some((row) =>
+        Array.isArray(row)
+          ? row.some((cell) => String(cell || "").trim() !== "")
+          : false,
+      );
+    }
+  } catch {
+    // Metadata probe is best-effort only.
+  }
+
   return {
     ...candidate,
     approxRows,
     approxSessions: sessions.size || null,
     dateRangeStart: minDate,
     dateRangeEnd: maxDate,
-    metadataSampled: nonEmptyRows.length >= METADATA_SCAN_ROW_CAP,
+    metadataSampled:
+      nonEmptyRows.length >= METADATA_SCAN_ROW_CAP || hasRowsBeyondScanCap,
   };
 }
 

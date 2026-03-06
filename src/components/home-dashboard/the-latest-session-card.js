@@ -357,25 +357,42 @@ export function TheLatestSessionCard({
               <div className="space-y-4">
                 {isStarterSampleStage && sheetInfo?.url && (
                   <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-4">
                       <div className="space-y-1">
                         <p className="text-sm font-semibold text-foreground">
                           This session is starter sample data
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Replace it in Google Sheets with your own first
-                          workout. The dashboard will refresh from there.
+                          Open your Google Sheet, replace this row with your own
+                          first workout, and add future sessions as new rows.
+                          The dashboard will refresh from there.
                         </p>
                       </div>
-                      <Button asChild className="shrink-0">
-                        <a
-                          href={sheetInfo.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Open Google Sheet
-                        </a>
-                      </Button>
+                      <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
+                        <p className="rounded-md border bg-background/80 px-3 py-2">
+                          1. Open the sheet
+                        </p>
+                        <p className="rounded-md border bg-background/80 px-3 py-2">
+                          2. Edit the sample row
+                        </p>
+                        <p className="rounded-md border bg-background/80 px-3 py-2">
+                          3. Add new sessions as you train
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          Tip: keep your latest session near the top so the log stays easy to update.
+                        </p>
+                        <Button asChild className="shrink-0">
+                          <a
+                            href={sheetInfo.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Open Google Sheet
+                          </a>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}

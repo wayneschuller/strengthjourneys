@@ -459,6 +459,8 @@ function EarlyMonthMomentumCard({
             "Let consistency lead load. Good weeks compound faster than big swings.",
             "The goal this month is repeatable training, not dramatic heroics.",
           ];
+  const showWeekTemplate =
+    dashboardStage === "starter_sample" || dashboardStage === "first_real_week";
 
   return (
     <Card className="flex h-full flex-1 flex-col">
@@ -489,16 +491,55 @@ function EarlyMonthMomentumCard({
           </span>
           . Keep stacking consistent sessions.
         </p>
-        <div className="rounded-lg border bg-background/80 px-3 py-3">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Coaching Notes
-          </p>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            {guidanceItems.map((item) => (
-              <p key={item}>{item}</p>
-            ))}
+        {showWeekTemplate ? (
+          <div className="rounded-lg border bg-background/80 px-3 py-3">
+            <p className="text-sm text-muted-foreground">
+              In the first week, the goal is simple: learn the movements, build
+              consistency, and begin adding weight gradually. Choose loads that
+              feel manageable so you can focus on solid technique and finish
+              each set knowing you had another rep or two in reserve. Rest
+              properly, keep the sessions simple, and make only small increases
+              each workout.
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <WeekPlanSession
+                title="Session 1"
+                items={[
+                  "Squat — 3×5 (comfortable weight, focus on depth and balance)",
+                  "Press — 3×5 (tight body, straight bar path)",
+                  "Deadlift — 1×5 (learn the setup and push the floor away)",
+                ]}
+              />
+              <WeekPlanSession
+                title="Session 2"
+                items={[
+                  "Squat — 3×5 (+ small weight increase)",
+                  "Bench Press — 3×5 (consistent setup and control)",
+                  "Back extension or light core — 2–3 easy sets",
+                ]}
+              />
+              <WeekPlanSession
+                title="Session 3"
+                items={[
+                  "Squat — 3×5 (+ small weight increase again)",
+                  "Press — 3×5 (slightly heavier than Session 1)",
+                  "Deadlift — 1×5 (+ small weight increase)",
+                ]}
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-lg border bg-background/80 px-3 py-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Coaching Notes
+            </p>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              {guidanceItems.map((item) => (
+                <p key={item}>{item}</p>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="pt-0">
         <MiniFeedbackWidget
@@ -516,6 +557,19 @@ function MomentumStat({ label, value }) {
     <div className="rounded-lg border bg-background/80 px-2 py-3 text-center">
       <div className="text-lg font-semibold">{value}</div>
       <div className="text-xs text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+function WeekPlanSession({ title, items }) {
+  return (
+    <div className="rounded-lg border border-border/70 bg-muted/10 px-3 py-3">
+      <p className="mb-2 text-sm font-semibold text-foreground">{title}</p>
+      <div className="space-y-2 text-sm text-muted-foreground">
+        {items.map((item) => (
+          <p key={item}>{item}</p>
+        ))}
+      </div>
     </div>
   );
 }

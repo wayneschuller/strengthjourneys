@@ -640,12 +640,20 @@ export function TheLongGameCard({
         <CardHeader data-share-section="header">
           <CardTitle>
             <span data-share-title="true">
-              {dataMaturityStage === "no_sessions"
+              {dashboardStage === "starter_sample"
+                ? "The Long Game Starts Here"
+                : dataMaturityStage === "no_sessions"
                 ? "The Long Game Starts Here"
                 : cardTitle}
             </span>
           </CardTitle>
-          {dataMaturityStage === "no_sessions" ? (
+          {dashboardStage === "starter_sample" ? (
+            <CardDescription>
+              <span data-share-description="true">
+                Every training day adds another square to your map.
+              </span>
+            </CardDescription>
+          ) : dataMaturityStage === "no_sessions" ? (
             <CardDescription>
               <span data-share-description="true">
                 Your heatmap will light up as soon as you log your first session.
@@ -671,10 +679,17 @@ export function TheLongGameCard({
           )}
         </CardHeader>
         <CardContent className="flex-1">
-          {!intervals && dataMaturityStage !== "no_sessions" && (
+          {dashboardStage === "starter_sample" && (
+            <StarterLongGameState />
+          )}
+          {!intervals &&
+            dashboardStage !== "starter_sample" &&
+            dataMaturityStage !== "no_sessions" && (
             <Skeleton className="h-64 w-11/12 flex-1" />
           )}
-          {!intervals && dataMaturityStage === "no_sessions" && (
+          {!intervals &&
+            dashboardStage !== "starter_sample" &&
+            dataMaturityStage === "no_sessions" && (
             <div className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed bg-muted/20 px-5 text-center">
               <p className="text-sm text-muted-foreground">
                 Your first training day is the first pixel in this map.
@@ -682,7 +697,7 @@ export function TheLongGameCard({
               </p>
             </div>
           )}
-          {intervals && (
+          {intervals && dashboardStage !== "starter_sample" && (
             <>
               {/* Consistency grade rings — always included in capture output */}
               <div className="mb-6" data-share-section="consistency">
@@ -848,7 +863,7 @@ export function TheLongGameCard({
             </>
           )}
         </CardContent>
-        {intervals && (
+        {intervals && dashboardStage !== "starter_sample" && (
           <CardFooter id="ignoreCopy">
             <div className="flex w-full flex-col gap-2">
               <div className="flex justify-end">
@@ -872,6 +887,65 @@ export function TheLongGameCard({
         )}
       </Card>
     </>
+  );
+}
+
+function StarterLongGameState() {
+  const futureTiles = Array.from({ length: 11 }, (_, index) => index);
+
+  return (
+    <div className="flex h-full flex-col justify-center gap-5">
+      <div className="rounded-xl border bg-muted/10 p-5">
+        <div className="grid grid-cols-4 gap-3 sm:grid-cols-6">
+          <div className="col-span-2 row-span-2 flex min-h-28 flex-col justify-between rounded-2xl border border-primary/30 bg-primary/10 p-4 sm:col-span-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+                Day 1
+              </p>
+              <p className="mt-2 text-lg font-semibold text-foreground">
+                First session logged
+              </p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This is the first square in your training map.
+            </p>
+          </div>
+          {futureTiles.map((tile) => (
+            <div
+              key={tile}
+              className="min-h-16 rounded-2xl border border-dashed border-border/70 bg-muted/20"
+            />
+          ))}
+        </div>
+      </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        <StarterLongGameNote
+          title="Week 1"
+          body="A few simple sessions begin the pattern."
+        />
+        <StarterLongGameNote
+          title="Month 1"
+          body="Consistency turns scattered squares into a shape."
+        />
+        <StarterLongGameNote
+          title="Long term"
+          body="Weekly and monthly views unlock once you have more history."
+        />
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Right now the story is tiny. That is normal. Keep logging and the map
+        starts to take shape.
+      </p>
+    </div>
+  );
+}
+
+function StarterLongGameNote({ title, body }) {
+  return (
+    <div className="rounded-lg border bg-background/80 px-3 py-3">
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+    </div>
   );
 }
 

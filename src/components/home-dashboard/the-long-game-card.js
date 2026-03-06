@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import {
+  Fragment,
   cloneElement,
   memo,
   useState,
@@ -120,6 +121,7 @@ export function TheLongGameCard({
   }, [dashboardStage, viewMode]);
   const isFirstWeekIntroState =
     dashboardStage === "starter_sample" || dashboardStage === "first_real_week";
+  const isFirstMonthFocusState = dashboardStage === "first_month";
   const showWeeklyToggle =
     (dashboardStage === "early_base" || dashboardStage === "established") &&
     intervals?.length > 2;
@@ -705,31 +707,37 @@ export function TheLongGameCard({
           {intervals && !isFirstWeekIntroState && (
             <>
               {/* Consistency grade rings — always included in capture output */}
-              <div className="mb-6" data-share-section="consistency">
-                {isSharing ? (
-                  <div className="flex w-full items-start">
-                    <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
-                    <div className="min-w-0 flex-1">
-                      <ConsistencyGradesRow
-                        parsedData={parsedData}
-                        isVisible={!!intervals}
-                        isCaptureMode={isSharing}
-                      />
-                    </div>
+              {!isFirstMonthFocusState && (
+                <>
+                  <div className="mb-6" data-share-section="consistency">
+                    {isSharing ? (
+                      <div className="flex w-full items-start">
+                        <div className="shrink-0" style={{ width: WEEKLY_YEAR_W }} />
+                        <div className="min-w-0 flex-1">
+                          <ConsistencyGradesRow
+                            parsedData={parsedData}
+                            isVisible={!!intervals}
+                            isCaptureMode={isSharing}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-center">
+                        <ConsistencyGradesRow
+                          parsedData={parsedData}
+                          isVisible={!!intervals}
+                          isCaptureMode={isSharing}
+                        />
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="flex justify-center">
-                    <ConsistencyGradesRow
-                      parsedData={parsedData}
-                      isVisible={!!intervals}
-                      isCaptureMode={isSharing}
-                    />
-                  </div>
-                )}
-              </div>
-              {!isSharing && <hr className="border-border/60 mb-3" />}
+                  {!isSharing && <hr className="border-border/60 mb-3" />}
+                </>
+              )}
               {/* View selector — right-justified, anchored just above the heatmap grid */}
-              {!isSharing && (showWeeklyToggle || showMonthlyToggle) && (
+              {!isSharing &&
+                !isFirstMonthFocusState &&
+                (showWeeklyToggle || showMonthlyToggle) && (
                 <div className="mb-2 flex justify-end">
                   <div className="flex flex-row rounded border border-border/40 p-px text-[10px]">
                     {[
@@ -754,7 +762,10 @@ export function TheLongGameCard({
                   </div>
                 </div>
               )}
-              {effectiveViewMode === "daily" && (
+              {isFirstMonthFocusState && (
+                <FirstMonthLongGameState parsedData={parsedData} />
+              )}
+              {!isFirstMonthFocusState && effectiveViewMode === "daily" && (
                 <div
                   className={
                     isSharing
@@ -827,7 +838,7 @@ export function TheLongGameCard({
                   </div>
                 </div>
               )}
-              {effectiveViewMode === "weekly" && (
+              {!isFirstMonthFocusState && effectiveViewMode === "weekly" && (
                 <WeeklyHeatmapMatrix
                   parsedData={parsedData}
                   startYear={new Date(intervals[0].startDate).getFullYear()}
@@ -837,7 +848,7 @@ export function TheLongGameCard({
                   isSharing={isSharing}
                 />
               )}
-              {effectiveViewMode === "monthly" && (
+              {!isFirstMonthFocusState && effectiveViewMode === "monthly" && (
                 <MonthlyHeatmapMatrix
                   parsedData={parsedData}
                   startYear={new Date(intervals[0].startDate).getFullYear()}
@@ -984,6 +995,100 @@ function StarterLongGameNote({ title, body }) {
     <div className="rounded-lg border bg-background/80 px-3 py-3">
       <p className="text-sm font-semibold text-foreground">{title}</p>
       <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+    </div>
+  );
+}
+
+function FirstMonthLongGameState({ parsedData }) {
+  const { weekdayLabels, weekRows, activeDays } = useMemo(() => {
+    const weekdayLabels = ["M", "T", "W", "T", "F", "S", "S"];
+    const nonGoalDates = Array.isArray(parsedData)
+      ? Array.from(
+          new Set(
+            parsedData
+              .filter((entry) => !entry?.isGoal && entry?.date)
+              .map((entry) => entry.date),
+          ),
+        ).sort()
+      : [];
+
+    const anchorDateStr =
+      nonGoalDates[0] || format(new Date(), "yyyy-MM-dd");
+    const anchorDate = new Date(`${anchorDateStr}T00:00:00`);
+    const dayOfWeek = anchorDate.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const firstWeekStart = new Date(anchorDate);
+    firstWeekStart.setDate(anchorDate.getDate() - mondayOffset);
+    firstWeekStart.setHours(0, 0, 0, 0);
+
+    const activeDays = new Set();
+    nonGoalDates.forEach((dateStr) => {
+      const entryDate = new Date(`${dateStr}T00:00:00`);
+      const diffDays = Math.floor(
+        (entryDate.getTime() - firstWeekStart.getTime()) / 86400000,
+      );
+      if (diffDays < 0 || diffDays >= 35) return;
+      activeDays.add(diffDays);
+    });
+
+    const weekRows = Array.from({ length: 5 }, (_, weekIndex) => ({
+      label: `W${weekIndex + 1}`,
+      days: Array.from({ length: 7 }, (_, dayIndex) => weekIndex * 7 + dayIndex),
+    }));
+
+    return { weekdayLabels, weekRows, activeDays };
+  }, [parsedData]);
+
+  return (
+    <div className="flex h-full flex-col gap-5">
+      <div className="rounded-xl border bg-muted/10 p-5">
+        <div className="grid grid-cols-[2.25rem_repeat(7,minmax(0,1fr))] gap-x-2 gap-y-3">
+          <div />
+          {weekdayLabels.map((label, index) => (
+            <span
+              key={`${label}-${index}`}
+              className="text-center text-[10px] font-medium text-muted-foreground"
+            >
+              {label}
+            </span>
+          ))}
+          {weekRows.map((week) => (
+            <Fragment key={week.label}>
+              <span className="self-center text-[10px] font-medium text-muted-foreground">
+                {week.label}
+              </span>
+              {week.days.map((dayNumber) => (
+                <div
+                  key={`${week.label}-${dayNumber}`}
+                  className={`aspect-square rounded-[0.9rem] border transition-colors ${
+                    activeDays.has(dayNumber)
+                      ? "border-primary/30 bg-primary/95 shadow-sm"
+                      : "border-border/60 bg-muted/25"
+                  }`}
+                />
+              ))}
+            </Fragment>
+          ))}
+        </div>
+      </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        <StarterLongGameNote
+          title="Week by week"
+          body="The first month should start to look like a repeatable rhythm."
+        />
+        <StarterLongGameNote
+          title="Build the pattern"
+          body="A few training days each week are enough to make the grid come alive."
+        />
+        <StarterLongGameNote
+          title="Long term"
+          body="Richer daily, weekly, and monthly views unlock once you have more history."
+        />
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Early on, this is better read as a simple habit tracker: show up, log the
+        work, and let the pattern build week by week.
+      </p>
     </div>
   );
 }

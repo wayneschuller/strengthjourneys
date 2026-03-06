@@ -181,7 +181,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   );
 
   // devLog("Rendering <VisualizerShadcn />...");
-  if (!parsedData) return;
+  if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
   // devLog(chartData);
 
   const yearLabels = getYearLabels(chartData);

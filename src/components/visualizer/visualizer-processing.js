@@ -9,7 +9,9 @@ export function processVisualizerData(
   showAllData = false,
   isMetric = false,
 ) {
-  if (!parsedData || parsedData.length === 0) return {};
+  if (!Array.isArray(parsedData) || parsedData.length === 0) {
+    return { dataset: [], weightMax: 0, weightMin: 0 };
+  }
 
   const startTime = performance.now();
 

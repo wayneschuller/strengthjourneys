@@ -108,7 +108,7 @@ export function VisualizerReps({ data, liftType }) {
 
   // Compute daily bests for each rep range
   const chartDataByReps = useMemo(() => {
-    if (!parsedData) {
+    if (!Array.isArray(parsedData) || parsedData.length === 0) {
       // Return empty arrays for each rep if data is not loaded
       const empty = {};
       repTabs.forEach((t) => {
@@ -138,7 +138,10 @@ export function VisualizerReps({ data, liftType }) {
 
   // Build chart data: one object per date, with weight for each rep range.
   // null when parsedData not yet loaded (matches the mini pattern for gating ChartContainer).
-  const chartData = !parsedData ? null : allDates.map((date) => {
+  const chartData =
+    !Array.isArray(parsedData) || parsedData.length === 0
+      ? null
+      : allDates.map((date) => {
     const entry = { date };
     repTabs.forEach((t) => {
       const found = chartDataByReps[t.reps].find((d) => d.date === date);

@@ -10,7 +10,7 @@
  *
  * Stage taxonomy:
  * - `starter_sample`: the linked sheet still looks like the seeded auto-provisioned sample
- * - `first_real_week`: the sample has been replaced, but the user is still in their first ~7 sessions
+ * - `first_real_week`: the sample has been replaced, and the real log is still within its first 7-day window
  * - `first_month`: early real data, enough to coach but not enough to compare meaningfully
  * - `early_base`: real training base exists; some mature visualizations can unlock
  * - `established`: enough history for the full dashboard experience
@@ -33,6 +33,24 @@ export function getNonGoalSessionCount(parsedData) {
     if (entry?.date) uniqueDates.add(entry.date);
   });
   return uniqueDates.size;
+}
+
+function getTrainingSpanDays(parsedData) {
+  const uniqueDates = Array.from(
+    new Set(
+      getNonGoalEntries(parsedData)
+        .map((entry) => entry?.date)
+        .filter(Boolean),
+    ),
+  ).sort();
+
+  if (uniqueDates.length <= 1) return 0;
+
+  const firstDate = new Date(`${uniqueDates[0]}T00:00:00`);
+  const lastDate = new Date(`${uniqueDates[uniqueDates.length - 1]}T00:00:00`);
+  const diffMs = lastDate.getTime() - firstDate.getTime();
+
+  return Math.max(0, Math.floor(diffMs / 86400000));
 }
 
 /**
@@ -108,6 +126,7 @@ export function detectStarterSheetState({ parsedData, rawRows, sheetInfo } = {})
  */
 export function getDashboardStage({ parsedData, rawRows, sheetInfo } = {}) {
   const sessionCount = getNonGoalSessionCount(parsedData);
+  const trainingSpanDays = getTrainingSpanDays(parsedData);
   const starterSheetState = detectStarterSheetState({
     parsedData,
     rawRows,
@@ -127,12 +146,15 @@ export function getDashboardStage({ parsedData, rawRows, sheetInfo } = {}) {
     };
   }
 
-  if (sessionCount <= 7) {
+  // Treat "first real week" as the first 7-day window after the first real
+  // session: day 0 through day 6. Once the log reaches day 7, users have
+  // entered week two even if they only have a handful of sessions.
+  if (sessionCount > 0 && trainingSpanDays < 7) {
     return {
       dashboardStage: "first_real_week",
       starterSheetState,
       sessionCount,
-      dataMaturityStage: sessionCount === 0 ? "no_sessions" : "first_week",
+      dataMaturityStage: "first_week",
     };
   }
 

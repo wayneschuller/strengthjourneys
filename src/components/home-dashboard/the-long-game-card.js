@@ -616,7 +616,6 @@ export function TheLongGameCard({
         <CardHeader data-share-section="header">
           <CardTitle>
             <span data-share-title="true">
-              {isDemoMode && "Demo mode: "}
               {dataMaturityStage === "no_sessions"
                 ? "The Long Game Starts Here"
                 : cardTitle}

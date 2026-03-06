@@ -40,13 +40,15 @@ export function HomeInspirationCards({
   );
 
   const cards = useMemo(() => {
-    const sharedCards = [
+    const journeyCard = (
       <JourneyProgressCard
         key="journey"
         parsedData={parsedData}
         liftTypes={liftTypes}
         animationDelay={0}
-      />,
+      />
+    );
+    const classicLiftCard = (
       <ClassicLiftHighlightCard
         key="classic"
         parsedData={parsedData}
@@ -54,8 +56,9 @@ export function HomeInspirationCards({
         topLiftsByTypeAndReps={topLiftsByTypeAndReps}
         athleteBio={athleteBio}
         animationDelay={200}
-      />,
-    ];
+      />
+    );
+    const sharedCards = [journeyCard, classicLiftCard];
 
     if (dashboardStage === "first_real_week") {
       return [
@@ -82,22 +85,16 @@ export function HomeInspirationCards({
 
     if (dashboardStage === "first_month") {
       return [
-        ...sharedCards,
-        <LifetimeTonnageCard
-          key="lifetime-tonnage"
-          sessionTonnageLookup={sessionTonnageLookup}
-          isMetric={athleteBio.isMetric}
-          animationDelay={400}
-        />,
+        journeyCard,
         <ConsistencyStreakCard
           key="consistency"
           allSessionDates={allSessionDates}
-          animationDelay={600}
+          animationDelay={200}
         />,
         <ProgrammingTipCard
           key="programming-tip"
           dashboardStage={dashboardStage}
-          animationDelay={800}
+          animationDelay={400}
         />,
       ];
     }

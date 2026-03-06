@@ -3,6 +3,9 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useSession, signIn } from "next-auth/react";
 import { gaTrackSignInClick } from "@/lib/analytics";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { SloganCarousel } from "./slogan-carousel";
 import { Button } from "./ui/button";
 import { motion, AnimatePresence } from "motion/react";
@@ -28,7 +31,7 @@ export function HeroSection() {
             Sign in, and Strength Journeys sets up your lifting log for you.
           </h1>
           <PageDescription />
-          <GoogleSignInButton />
+          <HeroPrimaryCta />
         </div>
         <SpreadsheetShowcase />
       </div>
@@ -63,14 +66,34 @@ const PageDescription = () => (
   </p>
 );
 
-// Internal helper: prominent Google sign-in button shown only to unauthenticated visitors.
-function GoogleSignInButton() {
+// Internal helper: prominent hero CTA for unauthenticated visitors and
+// authenticated demo-mode users who still need to set up a sheet.
+function HeroPrimaryCta() {
   const router = useRouter();
-  const { data: session, status: authStatus } = useSession();
+  const { status: authStatus } = useSession();
+  const { sheetInfo } = useUserLiftingData();
 
-  if (authStatus !== "authenticated")
-    return (
-      <div className="flex flex-col items-center gap-2 md:items-start">
+  if (authStatus === "authenticated" && sheetInfo?.ssid) return null;
+
+  return (
+    <div className="flex flex-col items-center gap-2 md:items-start">
+      {authStatus === "authenticated" ? (
+        <Button
+          className="w-2/3 hover:ring-2"
+          onClick={() => {
+            openSheetSetupDialog("bootstrap");
+          }}
+        >
+          <img
+            src={GOOGLE_SHEETS_ICON_URL}
+            alt=""
+            className="h-5 w-5 shrink-0"
+            aria-hidden
+          />
+          <div className="hidden md:block">Set Up Google Sheet</div>
+          <div className="md:hidden">Set up your sheet</div>
+        </Button>
+      ) : (
         <Button
           className="w-2/3 hover:ring-2"
           onClick={() => {
@@ -82,11 +105,12 @@ function GoogleSignInButton() {
           <div className="hidden md:block">Sign in and we&apos;ll set you up</div>
           <div className="md:hidden">Sign in to get started</div>
         </Button>
-        <p className="mt-2 text-xs italic text-slate-500">
-          We never copy or store your raw data.
-        </p>
-      </div>
-    );
+      )}
+      <p className="mt-2 text-xs italic text-slate-500">
+        We never copy or store your raw data.
+      </p>
+    </div>
+  );
 }
 
 const SLIDE_DURATION = 4000; // ms per slide

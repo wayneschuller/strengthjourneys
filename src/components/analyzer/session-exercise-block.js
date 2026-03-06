@@ -51,6 +51,7 @@ import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
  * @param {boolean} [props.isMetric] - Whether to use kg for strength standards.
  * @param {boolean} [props.hideSvg=false] - When true, hides the lift type SVG/diagram in compact variant.
  * @param {string} [props.label] - Optional label (e.g. date string) shown before the pills.
+ * @param {boolean} [props.showPerLiftTonnage=true] - Whether to render the per-lift tonnage summary row.
  */
 export function SessionExerciseBlock({
   variant = "full",
@@ -68,6 +69,7 @@ export function SessionExerciseBlock({
   isMetric,
   hideSvg = false,
   label,
+  showPerLiftTonnage = true,
 }) {
   const formula = e1rmFormula || "Brzycki";
   let bestE1rm = 0;
@@ -514,6 +516,14 @@ export function SessionExerciseBlock({
             </span>
           )}
           {compactPills}
+          {showPerLiftTonnage && perLiftTonnageStats?.[liftType] && (
+            <LiftTonnageRow
+              liftType={liftType}
+              stats={perLiftTonnageStats[liftType]}
+              isMetric={isMetric}
+              compact
+            />
+          )}
         </div>
       </div>
     );
@@ -526,7 +536,7 @@ export function SessionExerciseBlock({
           <LiftTypeIndicator liftType={liftType} className="text-lg" />
         </div>
         {basePills}
-        {perLiftTonnageStats?.[liftType] && (
+        {showPerLiftTonnage && perLiftTonnageStats?.[liftType] && (
           <LiftTonnageRow
             liftType={liftType}
             stats={perLiftTonnageStats[liftType]}
@@ -539,7 +549,7 @@ export function SessionExerciseBlock({
 }
 
 // One-line tonnage comparison row: current session tonnage vs. 12-month average with a ±% badge.
-function LiftTonnageRow({ liftType, stats, isMetric = false }) {
+function LiftTonnageRow({ liftType, stats, isMetric = false, compact = false }) {
   const {
     currentLiftTonnage,
     avgLiftTonnage,
@@ -548,19 +558,31 @@ function LiftTonnageRow({ liftType, stats, isMetric = false }) {
     unitType,
   } = stats;
   const displayUnit = isMetric ? "kg" : "lb";
-  const currentDisplay = getDisplayWeight({ weight: currentLiftTonnage, unitType }, isMetric).value;
-  const avgDisplay = getDisplayWeight({ weight: avgLiftTonnage, unitType }, isMetric).value;
+  const currentDisplay = getDisplayWeight(
+    { weight: currentLiftTonnage, unitType },
+    isMetric,
+  ).value;
+  const avgDisplay = getDisplayWeight(
+    { weight: avgLiftTonnage, unitType },
+    isMetric,
+  ).value;
+  const hasComparison =
+    !!currentLiftTonnage && !!sessionCount && sessionCount > 1 && pctDiff !== null;
+  const textClass = compact ? "text-xs" : pctDiff > 0 ? "text-sm" : "text-xs";
 
-  if (
-    !currentLiftTonnage ||
-    !sessionCount ||
-    sessionCount <= 1 ||
-    pctDiff === null
-  ) {
+  if (!currentLiftTonnage) {
     return (
       <p className="text-muted-foreground text-xs">
-        Not enough history yet to compare {liftType.toLowerCase()} tonnage over
-        the last year.
+        No {liftType.toLowerCase()} tonnage logged for this session.
+      </p>
+    );
+  }
+
+  if (!hasComparison) {
+    return compact ? null : (
+      <p className="text-muted-foreground text-xs">
+        Tonnage: {Math.round(currentDisplay).toLocaleString()}
+        {displayUnit}
       </p>
     );
   }
@@ -568,13 +590,11 @@ function LiftTonnageRow({ liftType, stats, isMetric = false }) {
   const isUp = pctDiff > 0;
 
   return (
-    <div
-      className={`flex flex-wrap items-center gap-2 ${isUp ? "text-sm" : "text-xs"}`}
-    >
+    <div className={`flex flex-wrap items-center gap-2 ${textClass}`}>
       <span className="text-muted-foreground">
-        Tonnage: {Math.round(currentDisplay).toLocaleString()}
+        {liftType}: {Math.round(currentDisplay).toLocaleString()}
         {displayUnit} vs {Math.round(avgDisplay).toLocaleString()}
-        {displayUnit} avg
+        {displayUnit} 12-mo avg
       </span>
       <Badge
         variant="outline"
@@ -586,7 +606,7 @@ function LiftTonnageRow({ liftType, stats, isMetric = false }) {
       >
         {isUp ? (
           <>
-            <ArrowUpRight className="h-4 w-4" />
+            <ArrowUpRight className={compact ? "h-3 w-3" : "h-4 w-4"} />
             {Math.abs(pctDiff).toFixed(1)}%
           </>
         ) : (

@@ -83,7 +83,7 @@ export function LiftingDataCard({ selectedOptions, setSelectedOptions }) {
               className="flex items-center gap-2"
               onClick={() => {
                 gaTrackSignInClick(router.pathname, "ai_assistant");
-                signIn("google", { callbackUrl: router.asPath || "/" });
+                signIn("google", { callbackUrl: "/" });
               }}
             >
               <GoogleLogo size={16} />

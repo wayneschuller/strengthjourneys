@@ -77,7 +77,7 @@ function HeroPrimaryCta() {
           className="w-2/3 hover:ring-2"
           onClick={() => {
             gaTrackSignInClick(router.pathname, "hero");
-            signIn("google", { callbackUrl: router.asPath || "/" });
+            signIn("google", { callbackUrl: "/" });
           }}
         >
           <GoogleLogo />

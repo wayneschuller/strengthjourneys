@@ -52,7 +52,7 @@ export const periodTargets = [
 export function TimeRangeSelect({ timeRange, setTimeRange }) {
   const { parsedData } = useUserLiftingData();
 
-  if (!parsedData) return null;
+  if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
 
   // This is the first date in "YYYY-MM-DD" format
   // FIXME: Should we find the first date for selected lifts only?
@@ -125,7 +125,7 @@ export const calculateThresholdDate = (timeRange, setTimeRange) => {
 
 // Used in the chart card description
 export const getTimeRangeDescription = (timeRange, parsedData) => {
-  if (!parsedData) return null;
+  if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
 
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth(); // 0-based index, January is 0

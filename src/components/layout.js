@@ -384,8 +384,8 @@ function DataAccessBanner({ pathname }) {
             {showSignInCta
               ? "You are viewing demo data. Sign in with Google to unlock your personal lifting history."
               : isDemoMode
-                ? "You are signed in and viewing demo mode. Connect your Google Sheet to load your own lifting history."
-                : "You are signed in. Connect your Google Sheet to load your own lifting history."}
+                ? "Demo mode is on. Set up your Google Sheet and Strength Journeys will help you get it ready so your own lifting history appears here."
+                : "Set up your Google Sheet and Strength Journeys will help you get it ready so your own lifting history appears here."}
           </p>
           {showSignInCta ? (
             <Button
@@ -417,8 +417,8 @@ function DataAccessBanner({ pathname }) {
                 aria-hidden
               />
               {openPicker
-                ? "Connect Google Sheet"
-                : "Loading Google Sheet picker..."}
+                ? "Set Up My Google Sheet"
+                : "Loading Google Sheet setup..."}
             </Button>
           )}
         </div>

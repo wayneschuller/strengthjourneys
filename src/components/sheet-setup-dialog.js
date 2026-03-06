@@ -269,9 +269,12 @@ export function SheetSetupDialog() {
           modifiedTime: payload.modifiedTime ?? null,
           modifiedByMeTime: payload.modifiedByMeTime ?? null,
         });
+        if (payload?.action === "create_new_user_sheet" && router.pathname !== "/") {
+          void router.replace("/");
+        }
       }
     },
-    [enrichCandidateSheets, exitSignedInDemoMode, selectSheet],
+    [enrichCandidateSheets, exitSignedInDemoMode, router, selectSheet],
   );
 
   const resolveSheetFlow = useCallback(

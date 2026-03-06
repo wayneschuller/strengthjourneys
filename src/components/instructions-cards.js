@@ -290,7 +290,7 @@ export function GettingStartedCard() {
                 className="gap-2 px-6"
                 onClick={() => {
                   gaTrackSignInClick(router.pathname, "getting_started_card");
-                  signIn("google", { callbackUrl: "/" });
+                  signIn("google", { callbackUrl: router.asPath || "/" });
                 }}
               >
                 <GoogleLogo size={18} />
@@ -407,7 +407,7 @@ export function GettingStartedCardCompact() {
             <Button
               onClick={() => {
                 gaTrackSignInClick(router.pathname, "lift_page_card");
-                signIn("google", { callbackUrl: "/" });
+                signIn("google", { callbackUrl: router.asPath || "/" });
               }}
             >
               Sign in and we&apos;ll set you up
@@ -463,7 +463,7 @@ export const SignInInvite = () => {
       <button
         onClick={() => {
           gaTrackSignInClick(router.pathname, "sign_in_invite");
-          signIn("google", { callbackUrl: "/" });
+          signIn("google", { callbackUrl: router.asPath || "/" });
         }}
         className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
       >
@@ -561,7 +561,7 @@ export function DemoModeSignInCard() {
           className="flex w-full items-center justify-center gap-2"
           onClick={() => {
             gaTrackSignInClick(router.pathname, "year_recap_card");
-            signIn("google", { callbackUrl: "/" });
+            signIn("google", { callbackUrl: router.asPath || "/" });
           }}
         >
           <GoogleLogo size={18} />

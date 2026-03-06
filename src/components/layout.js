@@ -169,7 +169,7 @@ export function Layout({ children }) {
             className="inline-flex items-center gap-2"
             onClick={() => {
               gaTrackSignInClick(router.pathname, "demo_toast");
-              signIn("google", { callbackUrl: "/" });
+              signIn("google", { callbackUrl: router.asPath || "/" });
             }}
           >
             <GoogleLogo size={14} />
@@ -180,7 +180,7 @@ export function Layout({ children }) {
     }, getRandomDemoModeNudgeDelayMs());
 
     return () => clearTimeout(timeoutId);
-  }, [authStatus, isDemoMode, router.pathname, toast]);
+  }, [authStatus, isDemoMode, router.asPath, router.pathname, toast]);
 
   return (
     <div className="bg-background relative min-h-screen w-full">
@@ -374,7 +374,7 @@ function DataAccessBanner({ pathname }) {
               className="flex items-center gap-2"
               onClick={() => {
                 gaTrackSignInClick(pathname, "demo_banner");
-                signIn("google", { callbackUrl: "/" });
+                signIn("google", { callbackUrl: pathname || "/" });
               }}
             >
               <GoogleLogo size={16} />

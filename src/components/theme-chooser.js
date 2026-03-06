@@ -134,7 +134,7 @@ export function ThemeChooser() {
             <DropdownMenuItem
               onSelect={() => {
                 gaTrackSignInClick(router.pathname, "theme_chooser");
-                signIn("google", { callbackUrl: "/" });
+                signIn("google", { callbackUrl: router.asPath || "/" });
               }}
               className="cursor-pointer"
             >

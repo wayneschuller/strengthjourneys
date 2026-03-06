@@ -130,6 +130,7 @@ export function TheLatestSessionCard({
     [parsedData],
   );
   const isStarterSampleStage = dashboardStage === "starter_sample";
+  const isFirstRealWeekStage = dashboardStage === "first_real_week";
   const showSessionTonnage = dashboardStage === "established";
 
   useEffect(() => {
@@ -438,6 +439,28 @@ export function TheLatestSessionCard({
               </a>
             </Button>
           )}
+          {hasLoggedSessions &&
+            analyzedSessionLifts &&
+            isFirstRealWeekStage &&
+            sheetInfo?.url && (
+              <div className="flex justify-end">
+                <Button asChild variant="outline" className="gap-2">
+                  <a
+                    href={sheetInfo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src={GOOGLE_SHEETS_ICON_URL}
+                      alt=""
+                      className="h-4 w-4 shrink-0"
+                      aria-hidden
+                    />
+                    Open Google Sheet
+                  </a>
+                </Button>
+              </div>
+            )}
           {analyzedSessionLifts && showSessionTonnage && (
               <SessionTonnage
                 analyzedSessionLifts={analyzedSessionLifts}

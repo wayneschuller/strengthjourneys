@@ -25,9 +25,9 @@ export function HeroSection() {
             Welcome to Strength Journeys
           </p>
           <h1 className="mb-4 mt-2 text-balance text-center text-3xl font-extrabold leading-tight tracking-tight md:mb-8 lg:text-left lg:text-4xl xl:text-5xl">
-            Free barbell lifting analysis tools that turn your Google Sheet into
-            powerful, visual insights.
+            Sign in, and Strength Journeys sets up your lifting log for you.
           </h1>
+          <PageDescription />
           <GoogleSignInButton />
         </div>
         <SpreadsheetShowcase />
@@ -39,19 +39,22 @@ export function HeroSection() {
 // Internal helper: paragraph describing the app's core value proposition with links.
 const PageDescription = () => (
   <p className="mb-10 mt-2 text-center text-xl tracking-tight md:text-left md:text-2xl lg:w-4/5">
-    Track PRs, visualize E1RM progress, and analyze your strength — all from a
-    simple{" "}
+    We&apos;ll find an existing lifting sheet in your Google Drive or provision a
+    fresh one from our{" "}
     <a
       className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
       target="_blank"
+      rel="noopener noreferrer"
       href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
     >
-      Google Sheet
+      spreadsheet design
     </a>
-    .{" "}
+    , then turn your training into PR tracking, E1RM trends, and strength
+    insights.{" "}
     <a
       className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
       target="_blank"
+      rel="noopener noreferrer"
       href="https://github.com/wayneschuller/strengthjourneys"
     >
       Free and open source
@@ -76,11 +79,11 @@ function GoogleSignInButton() {
           }}
         >
           <GoogleLogo />
-          <div className="hidden md:block">Start Your Strength Journey —</div>
-          Free Google Sign-in
+          <div className="hidden md:block">Sign in and we&apos;ll set you up</div>
+          <div className="md:hidden">Sign in to get started</div>
         </Button>
         <p className="mt-2 text-xs italic text-slate-500">
-          We never copy or store your data.
+          We never copy or store your raw data.
         </p>
       </div>
     );

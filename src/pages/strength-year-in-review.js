@@ -275,10 +275,10 @@ function StrengthYearInReviewMain() {
                 {authStatus === "authenticated" && sheetInfo?.ssid && (
                   <RecapCustomiseSidebar />
                 )}
-                {isDemoMode ? (
-                  <DemoModeSignInCard />
-                ) : needsToConnectSheet ? (
+                {authStatus === "authenticated" && !sheetInfo?.ssid ? (
                   <ConnectSheetRecapCard />
+                ) : isDemoMode ? (
+                  <DemoModeSignInCard />
                 ) : null}
               </div>
             )}

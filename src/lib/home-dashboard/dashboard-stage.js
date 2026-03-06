@@ -7,6 +7,13 @@
  * - dashboardStage: which home-dashboard experience should be shown
  *
  * Keep this logic centralized so analytics and UI stay in sync.
+ *
+ * Stage taxonomy:
+ * - `starter_sample`: the linked sheet still looks like the seeded auto-provisioned sample
+ * - `first_real_week`: the sample has been replaced, but the user is still in their first ~7 sessions
+ * - `first_month`: early real data, enough to coach but not enough to compare meaningfully
+ * - `early_base`: real training base exists; some mature visualizations can unlock
+ * - `established`: enough history for the full dashboard experience
  */
 
 function getNonGoalEntries(parsedData) {
@@ -44,6 +51,11 @@ export function detectStarterSheetState({ parsedData, rawRows, sheetInfo } = {})
   // This heuristic is intentionally strict. We only want to call something a
   // starter sample when it still closely resembles the seeded auto-provisioned
   // example, not merely because the user is new.
+  //
+  // The current starter sheet seeds a single Back Squat session at 3x5@20kg,
+  // which arrives in parsedData as multiple non-goal rows on the same date.
+  // Match that exact shape so the onboarding dashboard only appears when the
+  // sample has not yet been meaningfully personalized.
   const looksLikeSeededSample =
     nonGoalEntries.length <= 3 &&
     sessionCount === 1 &&
@@ -66,6 +78,10 @@ export function getDashboardStage({ parsedData, rawRows, sheetInfo } = {}) {
     rawRows,
     sheetInfo,
   });
+
+  // `dataMaturityStage` is the legacy coarse-grained signal already consumed by
+  // several dashboard cards. `dashboardStage` is the newer orchestration layer
+  // that drives onboarding behavior, copy, and analytics.
 
   if (starterSheetState === "starter_sample") {
     return {

@@ -1,6 +1,3 @@
-// A home dashboard for the top level of the site, shown only when user is logged in.
-// This will also help with onboarding.
-
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -65,13 +62,24 @@ const WELCOME_QUIPS = [
   "Built with patience, {name}",
 ];
 /**
- * Top-level home dashboard rendered when the user is authenticated and a Google Sheet is linked.
- * Shows a personalised welcome greeting, consistency grade circles, a data-sync status row, a
- * row-processing animation, top stat cards, and the most recent session card. Falls back to
- * OnBoardingDashboard when no sheet is connected.
- * Reads session and lifting data from context; takes no props.
+ * Top-level authenticated home dashboard for a linked Google Sheet.
  *
- * @param {Object} props
+ * This component is the orchestration layer for the staged home experience. It:
+ * - reads the linked sheet + parsed lifting data from context
+ * - derives the current `dashboardStage` via `getDashboardStage()`
+ * - sends first-view and stage-entry analytics per linked sheet
+ * - decides when to show onboarding-first layouts versus the mature dashboard
+ * - passes the stage signal down to the three main home cards
+ *
+ * The stage model lets the home page behave differently for:
+ * - untouched auto-provisioned starter sheets
+ * - genuine first-week users
+ * - first-month users
+ * - lifters with established history
+ *
+ * There are no props; everything comes from auth + lifting-data context.
+ *
+ * @returns {JSX.Element}
  */
 export function HomeDashboard() {
   const { data: session, status: authStatus } = useSession();
@@ -87,6 +95,8 @@ export function HomeDashboard() {
   const [isProgressDone, setIsProgressDone] = useState(false);
   const [hasDataLoaded, setHasDataLoaded] = useState(false);
   const [highlightDate, setHighlightDate] = useState(null);
+  // `dashboardStage` drives onboarding vs mature behavior. Keep all stage
+  // branching anchored here so child cards receive one consistent signal.
   const { dashboardStage, starterSheetState, sessionCount, dataMaturityStage } =
     useMemo(
       () =>
@@ -111,6 +121,8 @@ export function HomeDashboard() {
     if (authStatus !== "authenticated") return;
     if (!sheetInfo?.ssid || !hasDataLoaded || !Array.isArray(parsedData)) return;
 
+    // Track first loaded dashboard view once per linked sheet so switching data
+    // sources does not suppress onboarding analytics for a new sheet.
     const storageKey = getSheetScopedStorageKey(
       LOCAL_STORAGE_KEYS.HOME_DASHBOARD_FIRST_VIEW_TRACKED,
       sheetInfo?.ssid,
@@ -147,6 +159,8 @@ export function HomeDashboard() {
     if (!sheetInfo?.ssid || !hasDataLoaded || !Array.isArray(parsedData)) return;
     if (typeof dashboardStage !== "string" || dashboardStage.length === 0) return;
 
+    // Track stage entry once per sheet so we can see users progressing from
+    // starter sample -> first real week -> first month -> established.
     const storageKey = getSheetScopedStorageKey(
       LOCAL_STORAGE_KEYS.HOME_DASHBOARD_LAST_TRACKED_STAGE,
       sheetInfo?.ssid,
@@ -227,6 +241,8 @@ export function HomeDashboard() {
           setIsProgressDone={setIsProgressDone}
         />
       )}
+      {/* The first week is intentionally quieter: skip the inspiration row until
+          the user has enough real data for those cards to feel earned. */}
       {sheetInfo?.ssid && dashboardStage !== "starter_sample" && dashboardStage !== "first_real_week" && (
         <HomeInspirationCards
           isProgressDone={hasDataLoaded}

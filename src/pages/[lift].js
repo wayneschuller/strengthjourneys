@@ -9,7 +9,6 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { devLog, getDisplayWeight } from "@/lib/processing-utils";
-import { ChooseSheetInstructionsCard } from "@/components/instructions-cards";
 import { StandardsSlider } from "@/components/standards-slider";
 import { NextSeo } from "next-seo";
 import { PortableText } from "@portabletext/react";
@@ -240,8 +239,7 @@ function BarbellInsightsMain({
   introductionArticle,
   resourcesArticle,
 }) {
-  const { data: session, status: authStatus } = useSession();
-  const { isLoading, isDemoMode, sheetInfo } = useUserLiftingData();
+  const { isLoading } = useUserLiftingData();
 
   const bigFourIcons = {
     "Back Squat": Crown,
@@ -256,13 +254,6 @@ function BarbellInsightsMain({
     Deadlift: "/deadlift.svg",
     "Strict Press": "/strict_press.svg",
   };
-
-  if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid && !isDemoMode)
-    return (
-      <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
-        <ChooseSheetInstructionsCard session={session} />
-      </div>
-    );
 
   return (
     <PageContainer>

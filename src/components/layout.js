@@ -1,23 +1,23 @@
 /** @format */
 
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSession, signIn } from "next-auth/react";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
 import { AppBackground } from "@/components/app-background";
 import { FeedbackWidget } from "@/components/feedback";
-import { DrivePickerContainer } from "@/components/drive-picker-container";
 import { GoogleLogo } from "@/components/hero-section";
+import { SheetSetupDialog } from "@/components/sheet-setup-dialog";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { gaTrackSignInClick } from "@/lib/analytics";
 import { devLog } from "@/lib/processing-utils";
-import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import {
   isToday,
   parseISO,
@@ -189,6 +189,7 @@ export function Layout({ children }) {
       <div className="relative z-10">
         <NavBar />
         <DataAccessBanner pathname={router.pathname} />
+        <SheetSetupDialog />
         <main className="mx-0 md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
           {children}
         </main>
@@ -346,38 +347,18 @@ const DEMO_MODE_NUDGE_MESSAGES = [
 
 // Internal banner shown on data pages when the user is unauthenticated or has no sheet connected.
 function DataAccessBanner({ pathname }) {
-  const { data: session, status: authStatus } = useSession();
-  const { sheetInfo, selectSheet, isDemoMode } = useUserLiftingData();
-  const [openPicker, setOpenPicker] = useState(null);
-  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
+  const { status: authStatus } = useSession();
+  const { sheetInfo, isDemoMode } = useUserLiftingData();
 
   const isDataPage = DATA_ACCESS_BANNER_PATHS.includes(pathname);
   const showSignInCta = isDataPage && authStatus === "unauthenticated";
-  const showConnectSheetCta =
+  const showSetupSheetCta =
     isDataPage && authStatus === "authenticated" && !sheetInfo?.ssid;
 
-  useEffect(() => {
-    if (showConnectSheetCta) {
-      setShouldLoadPicker(true);
-    }
-  }, [showConnectSheetCta]);
-
-  const handlePickerReady = useCallback((picker) => {
-    setOpenPicker(() => picker);
-  }, []);
-
-  if (!showSignInCta && !showConnectSheetCta) return null;
+  if (!showSignInCta && !showSetupSheetCta) return null;
 
   return (
     <>
-      {showConnectSheetCta && shouldLoadPicker && (
-        <DrivePickerContainer
-          onReady={handlePickerReady}
-          trigger={shouldLoadPicker}
-          oauthToken={session?.accessToken}
-          selectSheet={selectSheet}
-        />
-      )}
       <section className="mb-3 border-y bg-amber-100/60">
         <div className="mx-0 flex flex-col items-center justify-center gap-3 px-4 py-3 text-center md:mx-[3vw] lg:mx-[4vw] xl:mx-[5vw]">
           <p className="text-sm leading-tight text-amber-950">
@@ -403,11 +384,8 @@ function DataAccessBanner({ pathname }) {
             <Button
               size="sm"
               className="flex items-center gap-2"
-              disabled={!openPicker}
               onClick={() => {
-                if (openPicker) {
-                  handleOpenFilePicker(openPicker);
-                }
+                openSheetSetupDialog("bootstrap");
               }}
             >
               <img
@@ -416,9 +394,7 @@ function DataAccessBanner({ pathname }) {
                 className="h-4 w-4 shrink-0"
                 aria-hidden
               />
-              {openPicker
-                ? "Set Up My Google Sheet"
-                : "Loading Google Sheet setup..."}
+              Set Up Google Sheet
             </Button>
           )}
         </div>

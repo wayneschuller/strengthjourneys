@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { gaTrackSignInClick } from "@/lib/analytics";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
+import { openSheetSetupDialog } from "@/lib/open-sheet-setup";
 import { devLog } from "@/lib/processing-utils";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -177,10 +178,7 @@ export function AvatarDropdown() {
                 {!sheetInfo?.ssid && (
                   <DropdownMenuItem
                     onClick={() => {
-                      router.push({
-                        pathname: "/",
-                        query: { sheetFlow: "switch" },
-                      });
+                      openSheetSetupDialog("bootstrap");
                     }}
                   >
                     <img
@@ -203,10 +201,7 @@ export function AvatarDropdown() {
                 {sheetInfo?.ssid && (
                   <DropdownMenuItem
                     onClick={() => {
-                      router.push({
-                        pathname: "/",
-                        query: { sheetFlow: "switch" },
-                      });
+                      openSheetSetupDialog("switch_sheet");
                     }}
                   >
                     <img

@@ -21,6 +21,12 @@ function getNonGoalEntries(parsedData) {
   return parsedData.filter((entry) => !entry?.isGoal);
 }
 
+/**
+ * Count unique non-goal training sessions in parsedData.
+ *
+ * @param {Array|null|undefined} parsedData
+ * @returns {number}
+ */
 export function getNonGoalSessionCount(parsedData) {
   const uniqueDates = new Set();
   getNonGoalEntries(parsedData).forEach((entry) => {
@@ -29,6 +35,16 @@ export function getNonGoalSessionCount(parsedData) {
   return uniqueDates.size;
 }
 
+/**
+ * Detect whether the currently linked sheet still looks like the seeded
+ * auto-provisioned starter sample.
+ *
+ * @param {object} params
+ * @param {Array|null|undefined} params.parsedData
+ * @param {number|null|undefined} params.rawRows
+ * @param {{filename?: string}|null|undefined} params.sheetInfo
+ * @returns {"starter_sample"|"active_sheet"}
+ */
 export function detectStarterSheetState({ parsedData, rawRows, sheetInfo } = {}) {
   const nonGoalEntries = getNonGoalEntries(parsedData);
   const sessionCount = getNonGoalSessionCount(parsedData);
@@ -71,6 +87,25 @@ export function detectStarterSheetState({ parsedData, rawRows, sheetInfo } = {})
   return looksLikeSeededSample ? "starter_sample" : "active_sheet";
 }
 
+/**
+ * Derive the current home-dashboard stage from the linked sheet and parsed
+ * lifting data.
+ *
+ * This is the main entrypoint for home-dashboard staging. It returns both the
+ * newer `dashboardStage` orchestration signal and the older
+ * `dataMaturityStage` compatibility signal used by existing card components.
+ *
+ * @param {object} params
+ * @param {Array|null|undefined} params.parsedData
+ * @param {number|null|undefined} params.rawRows
+ * @param {{filename?: string}|null|undefined} params.sheetInfo
+ * @returns {{
+ *   dashboardStage: "starter_sample"|"first_real_week"|"first_month"|"early_base"|"established",
+ *   starterSheetState: "starter_sample"|"active_sheet",
+ *   sessionCount: number,
+ *   dataMaturityStage: "no_sessions"|"first_week"|"first_month"|"mature",
+ * }}
+ */
 export function getDashboardStage({ parsedData, rawRows, sheetInfo } = {}) {
   const sessionCount = getNonGoalSessionCount(parsedData);
   const starterSheetState = detectStarterSheetState({

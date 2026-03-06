@@ -545,28 +545,25 @@ function EarlyMonthMomentumCard({
         ) : showFirstMonthTemplate ? (
           <div className="rounded-lg bg-background/60 px-3 py-3">
             <p className="text-sm text-muted-foreground">
-              In the first month, the aim is simply to learn the movements,
-              build consistency, and start adding weight gradually. Choose
-              weights that feel manageable so you can focus on solid technique
-              and finish each set knowing you could have done another rep or
-              two. Rest properly between sets, keep the sessions simple, and
-              add only small increases each workout so you build steady
-              momentum.
+              In the first month, the goal is simple: train consistently, keep
+              the sessions repeatable, and add small amounts of weight as the
+              lifts settle in. Choose manageable loads, rest properly, and let
+              steady progress do the work.
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <WeekPlanSession
                 title="Session 1"
                 items={[
-                  "Squat — 3×5 (comfortable weight, focus on depth and balance)",
-                  "Press — 3×5 (tight body, straight bar path)",
-                  "Deadlift — 1×5 (learn the setup and push the floor away)",
+                  "Squat — 3×5",
+                  "Press — 3×5",
+                  "Deadlift — 1×5",
                 ]}
               />
               <WeekPlanSession
                 title="Session 2"
                 items={[
                   "Squat — 3×5 (+ small weight increase)",
-                  "Bench Press — 3×5 (consistent setup and control)",
+                  "Bench Press — 3×5",
                   "Back extension or light core — 2–3 easy sets",
                 ]}
               />
@@ -574,11 +571,23 @@ function EarlyMonthMomentumCard({
                 title="Session 3"
                 items={[
                   "Squat — 3×5 (+ small weight increase again)",
-                  "Press — 3×5 (slightly heavier than Session 1)",
+                  "Press — 3×5",
                   "Deadlift — 1×5 (+ small weight increase)",
                 ]}
               />
             </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              If you are especially keen, try implementing the{" "}
+              <a
+                href="https://startingstrength.com/get-started/programs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary hover:underline"
+              >
+                Starting Strength Novice Linear Progression
+              </a>
+              .
+            </p>
           </div>
         ) : (
           <>

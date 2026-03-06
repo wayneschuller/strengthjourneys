@@ -26,7 +26,10 @@ import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage } from "usehooks-ts";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import {
+  LOCAL_STORAGE_KEYS,
+  getSheetScopedStorageKey,
+} from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import { SessionRow } from "@/components/visualizer/visualizer-utils";
@@ -63,7 +66,7 @@ export function TheLongGameCard({
   dataMaturityStage: stageFromParent = null,
   sessionCount: sessionCountFromParent = null,
 }) {
-  const { parsedData, isLoading } = useUserLiftingData();
+  const { parsedData, isLoading, sheetInfo } = useUserLiftingData();
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [intervals, setIntervals] = useState(null);
@@ -97,8 +100,14 @@ export function TheLongGameCard({
   }, [stageFromParent, sessionCount]);
 
   // initializeWithValue: false → SSR renders "daily" (default), client hydrates from localStorage on mount
+  // Keep the heatmap mode scoped to the linked sheet. A new or switched sheet
+  // should start from its own sane default ("daily"), not inherit an old
+  // lifter's mature-history preference from another dataset.
   const [viewMode, setViewMode] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.HEATMAP_VIEW_MODE,
+    getSheetScopedStorageKey(
+      LOCAL_STORAGE_KEYS.HEATMAP_VIEW_MODE,
+      sheetInfo?.ssid,
+    ),
     "daily",
     { initializeWithValue: false },
   );

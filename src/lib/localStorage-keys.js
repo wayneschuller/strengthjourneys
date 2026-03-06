@@ -124,6 +124,23 @@ export const SESSION_STORAGE_KEYS = {
 };
 
 /**
+ * Returns a localStorage key scoped to a specific linked Google Sheet.
+ *
+ * Some dashboard state must follow the active sheet rather than the browser
+ * profile. Otherwise a brand-new or switched sheet can inherit UI state from a
+ * completely different training history, which is especially confusing during
+ * onboarding. When no ssid exists yet we fall back to the base key.
+ *
+ * @param {string} baseKey
+ * @param {string|null|undefined} ssid
+ * @returns {string}
+ */
+export const getSheetScopedStorageKey = (baseKey, ssid) => {
+  if (!ssid) return baseKey;
+  return `${baseKey}:${ssid}`;
+};
+
+/**
  * Returns the appropriate selected lifts key based on auth status and optional prefix.
  * Use a prefix when the lift selector is scoped to a specific component (e.g. "visualizer").
  * @param {boolean} isDemoMode - Whether user is in demo mode (unauthenticated)

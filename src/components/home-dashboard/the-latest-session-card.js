@@ -17,7 +17,10 @@ import {
   getStandardForLiftDate,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
-import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import {
+  LOCAL_STORAGE_KEYS,
+  getSheetScopedStorageKey,
+} from "@/lib/localStorage-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { Button } from "@/components/ui/button";
@@ -107,8 +110,14 @@ export function TheLatestSessionCard({
 
   const sessionRatingRef = useRef(null); // Used to avoid randomised rating changes on rerenders
   const lastUsedAdlibRef = useRef({}); // Tracks last-used indices to avoid repeats when switching sessions
+  // Session ratings are cached by date, so they must also be scoped to the
+  // linked sheet. Different sheets can share the same dates, and a global cache
+  // would let one dataset's adlibs bleed into another.
   const [sessionRatingCache, setSessionRatingCache] = useLocalStorage(
-    LOCAL_STORAGE_KEYS.SESSION_RATING_CACHE,
+    getSheetScopedStorageKey(
+      LOCAL_STORAGE_KEYS.SESSION_RATING_CACHE,
+      sheetInfo?.ssid,
+    ),
     {},
     { initializeWithValue: false },
   );

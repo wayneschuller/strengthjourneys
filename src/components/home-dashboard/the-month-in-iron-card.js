@@ -545,7 +545,7 @@ function EarlyMonthMomentumCard({
         ) : showFirstMonthTemplate ? (
           <div className="rounded-lg bg-background/60 px-3 py-3">
             <p className="text-sm text-muted-foreground">
-              You can continue what you did in the first week, or feel free to
+              You can continue what you did in the previous week, or feel free to
               start adding more lifts to each session as the movements begin to
               feel more natural. Keep the sessions simple, use manageable
               weights, and add small amounts over time.

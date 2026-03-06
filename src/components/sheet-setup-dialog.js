@@ -31,6 +31,22 @@ import {
 
 const ENRICH_CANDIDATE_LIMIT = 6;
 const SHEET_FLOW_QUERY_KEY = "sheetFlow";
+const SHEET_SETUP_QUIPS = [
+  "The bar rewards patience.",
+  "Strong logs make strong lifters.",
+  "Boring works. That is the trick.",
+  "One good set beats ten rushed ones.",
+  "The plates will still be there tomorrow.",
+  "Consistency is the whole magic trick.",
+  "A tidy logbook is a power tool.",
+  "Small jumps still move the total.",
+  "Calm lifters lift better.",
+  "Strong is built between ordinary sessions.",
+];
+
+function pickRandomSheetSetupQuip() {
+  return SHEET_SETUP_QUIPS[Math.floor(Math.random() * SHEET_SETUP_QUIPS.length)];
+}
 
 function toTimestamp(iso) {
   const t = new Date(iso || 0).getTime();
@@ -91,13 +107,12 @@ function getPreferredUnitTypeFromClient() {
   }
 }
 
-function getSheetDialogCopy({ intent, state, candidateCount, statusMessage }) {
+function getSheetDialogCopy({ intent, state, candidateCount, statusMessage, loadingQuip }) {
   if (state === "linking_or_creating") {
     return {
       eyebrow: "Linking your sheet",
       title: "Almost there.",
-      description: "Connecting the sheet so your training history appears across the app.",
-      commentary: "No extra clicks needed. This should only take a moment.",
+      description: loadingQuip,
       tone: "working",
     };
   }
@@ -113,11 +128,6 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage }) {
         hasMultipleCandidates
           ? `We found ${candidateCount} likely sheets.`
           : "We found the sheet that looks like your lifting log.",
-      commentary:
-        statusMessage ||
-        (hasMultipleCandidates
-          ? "If the top option is not right, you can choose another one."
-          : "Review it below, or start fresh if you prefer."),
       tone: "ready",
     };
   }
@@ -125,12 +135,7 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage }) {
   return {
     eyebrow: "Setting up your lifting log",
     title: intent === "switch_sheet" ? "Finding the right sheet." : "Getting your sheet ready.",
-    description:
-      intent === "switch_sheet"
-        ? "Looking through the Google Sheets you can access."
-        : "Looking for your lifting log.",
-    commentary:
-      statusMessage || "If we find more than one likely sheet, you can choose here.",
+    description: loadingQuip || statusMessage,
     tone: "working",
   };
 }
@@ -156,6 +161,7 @@ export function SheetSetupDialog() {
   const [isProvisionActionLoading, setIsProvisionActionLoading] = useState(false);
   const [isCandidateEnrichmentLoading, setIsCandidateEnrichmentLoading] = useState(false);
   const [sheetDiscoveryStatusMessage, setSheetDiscoveryStatusMessage] = useState("");
+  const [loadingQuip, setLoadingQuip] = useState(() => pickRandomSheetSetupQuip());
   const [flowIntent, setFlowIntent] = useState("bootstrap");
   const [recommendedCandidateId, setRecommendedCandidateId] = useState(null);
   const [hadLocalSheetBefore, setHadLocalSheetBefore] = useState(false);
@@ -167,6 +173,7 @@ export function SheetSetupDialog() {
     state: onboardingState,
     candidateCount: candidateSheets.length,
     statusMessage: sheetDiscoveryStatusMessage,
+    loadingQuip,
   });
 
   const resetUiState = useCallback(() => {
@@ -328,6 +335,7 @@ export function SheetSetupDialog() {
   const resolveSheetFlow = useCallback(
     async ({ intent, hadLocalBefore = false } = {}) => {
       dialogInitialSsidRef.current = sheetInfo?.ssid || null;
+      setLoadingQuip(pickRandomSheetSetupQuip());
       setOpen(true);
       setProvisionError(null);
       setIsProvisionActionLoading(true);
@@ -526,17 +534,11 @@ export function SheetSetupDialog() {
               <CardTitle className="max-w-3xl text-2xl md:text-3xl">
                 {dialogCopy.title}
               </CardTitle>
-              <CardDescription className="max-w-3xl space-y-2 text-base leading-relaxed">
-                <p>{dialogCopy.description}</p>
-                <p className="text-sm">
-                  {dialogCopy.commentary}
-                </p>
+              <CardDescription className="max-w-3xl text-base leading-relaxed">
+                {dialogCopy.description}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5 xl:px-10 2xl:px-16">
-              {["discovering", "linking_or_creating", "idle"].includes(onboardingState) && (
-                <ProgressBody state={onboardingState} />
-              )}
               {onboardingState === "choose_sheet" && (
                 <ChooseSheetPanel
                   embedded
@@ -573,18 +575,6 @@ export function SheetSetupDialog() {
       </Dialog>
     </>
   );
-}
-
-function ProgressBody({ state }) {
-  if (state === "linking_or_creating") {
-    return (
-      <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">Connecting the sheet now.</p>
-      </div>
-    );
-  }
-
-  return null;
 }
 
 function FallbackConnectPanel({ intent, openPicker, onRetry, isWorking, errorMessage }) {

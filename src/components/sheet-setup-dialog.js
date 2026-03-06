@@ -98,7 +98,6 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage }) {
       title: "Almost there.",
       description: "Connecting the sheet so your training history appears across the app.",
       commentary: "No extra clicks needed. This should only take a moment.",
-      activeStepLabel: "Connecting your sheet",
       tone: "working",
     };
   }
@@ -119,7 +118,6 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage }) {
         (hasMultipleCandidates
           ? "If the top option is not right, you can choose another one."
           : "Review it below, or start fresh if you prefer."),
-      activeStepLabel: hasMultipleCandidates ? "Choose your sheet" : "Sheet found",
       tone: "ready",
     };
   }
@@ -133,7 +131,6 @@ function getSheetDialogCopy({ intent, state, candidateCount, statusMessage }) {
         : "Looking for your lifting log.",
     commentary:
       statusMessage || "If we find more than one likely sheet, you can choose here.",
-    activeStepLabel: "Looking for your sheet",
     tone: "working",
   };
 }
@@ -529,38 +526,14 @@ export function SheetSetupDialog() {
               <CardTitle className="max-w-3xl text-2xl md:text-3xl">
                 {dialogCopy.title}
               </CardTitle>
-              <CardDescription className="max-w-3xl text-base leading-relaxed">
-                {dialogCopy.description}
+              <CardDescription className="max-w-3xl space-y-2 text-base leading-relaxed">
+                <p>{dialogCopy.description}</p>
+                <p className="text-sm">
+                  {dialogCopy.commentary}
+                </p>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5 xl:px-10 2xl:px-16">
-              <div className="flex flex-col gap-3 rounded-2xl border bg-card/60 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Live update</p>
-                  <p className="text-lg font-semibold text-foreground">{dialogCopy.activeStepLabel}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{dialogCopy.commentary}</p>
-                </div>
-                <div
-                  className={`inline-flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-sm font-semibold ${
-                    dialogCopy.tone === "ready"
-                      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                      : "border-primary/20 bg-primary/10 text-primary"
-                  }`}
-                >
-                  {dialogCopy.tone === "ready" ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4" />
-                      Ready
-                    </>
-                  ) : (
-                    <>
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
-                      Working
-                    </>
-                  )}
-                </div>
-              </div>
-
               {["discovering", "linking_or_creating", "idle"].includes(onboardingState) && (
                 <ProgressBody state={onboardingState} />
               )}

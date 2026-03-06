@@ -136,6 +136,7 @@ export function ChooseSheetPanel({
   onChooseSheet,
   onCreateBlank,
   onDisconnectCurrentSheet,
+  embedded = false,
 }) {
   const isSwitchSheet = intent === "switch_sheet";
   const primaryCandidate =
@@ -146,31 +147,33 @@ export function ChooseSheetPanel({
     primaryCandidate?.modifiedByMeTime || primaryCandidate?.modifiedTime,
   );
 
-  return (
-    <Card className="mb-4 border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
-      <CardHeader className="xl:px-10 2xl:px-16">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <img
-            src={GOOGLE_SHEETS_ICON_URL}
-            alt=""
-            className="h-5 w-5 shrink-0"
-            aria-hidden
-          />
-          {isSwitchSheet ? "Choose a lifting log" : "Connect your lifting log"}
-        </CardTitle>
-        <CardDescription>
-          {isSwitchSheet
-            ? "Strength Journeys found sheets you can access. Pick the one you want to connect, or start fresh with a new sheet."
-            : "Strength Journeys found Google Sheets in your Drive that look like lifting logs. Choose one to connect, or start fresh with a new sheet."}
-        </CardDescription>
-        {statusMessage && (
-          <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-            {isEnriching && <LoaderCircle className="h-4 w-4 animate-spin" />}
-            <span>{statusMessage}</span>
-          </div>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-5 xl:px-10 2xl:px-16">
+  const content = (
+    <>
+      {!embedded && (
+        <CardHeader className="xl:px-10 2xl:px-16">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <img
+              src={GOOGLE_SHEETS_ICON_URL}
+              alt=""
+              className="h-5 w-5 shrink-0"
+              aria-hidden
+            />
+            {isSwitchSheet ? "Choose a lifting log" : "Connect your lifting log"}
+          </CardTitle>
+          <CardDescription>
+            {isSwitchSheet
+              ? "Strength Journeys found sheets you can access. Pick the one you want to connect, or start fresh with a new sheet."
+              : "Strength Journeys found Google Sheets in your Drive that look like lifting logs. Choose one to connect, or start fresh with a new sheet."}
+          </CardDescription>
+          {statusMessage && (
+            <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+              {isEnriching && <LoaderCircle className="h-4 w-4 animate-spin" />}
+              <span>{statusMessage}</span>
+            </div>
+          )}
+        </CardHeader>
+      )}
+      <CardContent className={embedded ? "space-y-5 px-0 pb-0 pt-0" : "space-y-5 xl:px-10 2xl:px-16"}>
         <div className="space-y-3">
           {primaryCandidate && (
             <>
@@ -392,6 +395,14 @@ export function ChooseSheetPanel({
           )}
         </div>
       </CardContent>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <Card className="mb-4 border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
+      {content}
     </Card>
   );
 }

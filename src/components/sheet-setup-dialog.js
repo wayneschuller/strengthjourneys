@@ -94,6 +94,50 @@ function getPreferredUnitTypeFromClient() {
   }
 }
 
+function getSheetDialogCopy({ intent, state, candidateCount, statusMessage }) {
+  if (state === "linking_or_creating") {
+    return {
+      eyebrow: "Linking your sheet",
+      title: "Almost there.",
+      description: "Connecting the sheet so your training history appears across the app.",
+      commentary: "No extra clicks needed. This should only take a moment.",
+      activeStepLabel: "Link Sheet",
+      tone: "working",
+    };
+  }
+
+  if (state === "choose_sheet") {
+    return {
+      eyebrow: intent === "switch_sheet" ? "Ready to switch" : "Sheets found",
+      title: intent === "switch_sheet" ? "Choose your lifting log." : "Pick your lifting log.",
+      description:
+        candidateCount > 0
+          ? `We found ${candidateCount} likely ${candidateCount === 1 ? "sheet" : "sheets"}.`
+          : "Your sheet options are ready.",
+      commentary:
+        statusMessage ||
+        (intent === "switch_sheet"
+          ? "Best match is highlighted first."
+          : "Choose the best fit or start fresh."),
+      activeStepLabel: "Choose Sheet",
+      tone: "ready",
+    };
+  }
+
+  return {
+    eyebrow: "Setting up your lifting log",
+    title: intent === "switch_sheet" ? "Finding the right sheet." : "Getting your sheet ready.",
+    description:
+      intent === "switch_sheet"
+        ? "Checking your accessible Google Sheets and ranking the likely matches."
+        : "Looking for an existing log or creating a fresh one.",
+    commentary:
+      statusMessage || "Working through this in the background. Your options will appear here.",
+    activeStepLabel: "Scan Sheets",
+    tone: "working",
+  };
+}
+
 export function SheetSetupDialog() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
@@ -122,6 +166,12 @@ export function SheetSetupDialog() {
   const launchedFromUserRef = useRef(false);
   const provisioningStartedRef = useRef(false);
   const dialogInitialSsidRef = useRef(null);
+  const dialogCopy = getSheetDialogCopy({
+    intent: flowIntent,
+    state: onboardingState,
+    candidateCount: candidateSheets.length,
+    statusMessage: sheetDiscoveryStatusMessage,
+  });
 
   const resetUiState = useCallback(() => {
     setProvisionError(null);
@@ -491,43 +541,87 @@ export function SheetSetupDialog() {
           aria-describedby={undefined}
           className="w-[min(96vw,1220px)] max-w-[1220px] border-0 bg-transparent p-0 shadow-none"
         >
-          {["discovering", "linking_or_creating", "idle"].includes(onboardingState) && (
-            <ProvisioningPanel
-              isWorking={isProvisionActionLoading}
-              intent={flowIntent}
-              state={onboardingState}
-            />
-          )}
-          {onboardingState === "choose_sheet" && (
-            <ChooseSheetPanel
-              intent={flowIntent}
-              candidates={candidateSheets}
-              currentSsid={sheetInfo?.ssid || null}
-              recommendedId={recommendedCandidateId}
-              openPicker={openPicker}
-              isWorking={isProvisionActionLoading}
-              isEnriching={isCandidateEnrichmentLoading}
-              statusMessage={sheetDiscoveryStatusMessage}
-              onChooseSheet={(ssid) => runLinkAction({ mode: "select_existing", selectedSsid: ssid })}
-              onCreateBlank={() => runLinkAction({ mode: "create_blank" })}
-              onDisconnectCurrentSheet={() => setIsDisconnectDialogOpen(true)}
-            />
-          )}
-          {onboardingState === "fallback_error" && (
-            <FallbackConnectPanel
-              intent={flowIntent}
-              openPicker={openPicker}
-              onRetry={() => {
-                provisioningStartedRef.current = false;
-                resolveSheetFlow({
-                  intent: flowIntent === "switch_sheet" ? "switch_sheet" : "recovery",
-                  hadLocalBefore: true,
-                });
-              }}
-              isWorking={isProvisionActionLoading}
-              errorMessage={provisionError}
-            />
-          )}
+          <Card className="border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
+            <CardHeader className="space-y-3 xl:px-10 2xl:px-16">
+              <div className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+                {dialogCopy.tone === "ready" ? (
+                  <CheckCircle2 className="h-4 w-4" />
+                ) : (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                )}
+                {dialogCopy.eyebrow}
+              </div>
+              <CardTitle className="max-w-3xl text-2xl md:text-3xl">
+                {dialogCopy.title}
+              </CardTitle>
+              <CardDescription className="max-w-3xl text-base leading-relaxed">
+                {dialogCopy.description}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5 xl:px-10 2xl:px-16">
+              <div className="flex flex-col gap-3 rounded-2xl border bg-card/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Live update</p>
+                  <p className="text-lg font-semibold text-foreground">{dialogCopy.activeStepLabel}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{dialogCopy.commentary}</p>
+                </div>
+                <div
+                  className={`inline-flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-sm font-semibold ${
+                    dialogCopy.tone === "ready"
+                      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                      : "border-primary/20 bg-primary/10 text-primary"
+                  }`}
+                >
+                  {dialogCopy.tone === "ready" ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4" />
+                      Ready
+                    </>
+                  ) : (
+                    <>
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                      Working
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {["discovering", "linking_or_creating", "idle"].includes(onboardingState) && (
+                <ProgressBody state={onboardingState} />
+              )}
+              {onboardingState === "choose_sheet" && (
+                <ChooseSheetPanel
+                  embedded
+                  intent={flowIntent}
+                  candidates={candidateSheets}
+                  currentSsid={sheetInfo?.ssid || null}
+                  recommendedId={recommendedCandidateId}
+                  openPicker={openPicker}
+                  isWorking={isProvisionActionLoading}
+                  isEnriching={isCandidateEnrichmentLoading}
+                  statusMessage={sheetDiscoveryStatusMessage}
+                  onChooseSheet={(ssid) => runLinkAction({ mode: "select_existing", selectedSsid: ssid })}
+                  onCreateBlank={() => runLinkAction({ mode: "create_blank" })}
+                  onDisconnectCurrentSheet={() => setIsDisconnectDialogOpen(true)}
+                />
+              )}
+              {onboardingState === "fallback_error" && (
+                <FallbackConnectPanel
+                  intent={flowIntent}
+                  openPicker={openPicker}
+                  onRetry={() => {
+                    provisioningStartedRef.current = false;
+                    resolveSheetFlow({
+                      intent: flowIntent === "switch_sheet" ? "switch_sheet" : "recovery",
+                      hadLocalBefore: true,
+                    });
+                  }}
+                  isWorking={isProvisionActionLoading}
+                  errorMessage={provisionError}
+                />
+              )}
+            </CardContent>
+          </Card>
         </DialogContent>
       </Dialog>
       <Dialog open={isDisconnectDialogOpen} onOpenChange={setIsDisconnectDialogOpen}>
@@ -565,7 +659,7 @@ export function SheetSetupDialog() {
   );
 }
 
-function ProvisioningPanel({ intent, state, isWorking }) {
+function ProgressBody({ state }) {
   const steps = [
     {
       title: "Scan Sheets",
@@ -590,9 +684,7 @@ function ProvisioningPanel({ intent, state, isWorking }) {
       status:
         state === "linking_or_creating"
           ? "active"
-          : isWorking
-            ? "pending"
-            : "pending",
+          : "pending",
     },
   ];
 
@@ -606,98 +698,66 @@ function ProvisioningPanel({ intent, state, isWorking }) {
     steps.find((step) => step.status === "active")?.title || "Working";
 
   return (
-    <Card className="mb-4 border-primary/15 bg-background/95 xl:mx-auto xl:w-full xl:max-w-5xl">
-      <CardHeader className="space-y-3 xl:px-10">
-        <div className="inline-flex items-center gap-2 text-sm font-medium text-primary">
-          {state === "discovering" ? (
-            <LoaderCircle className="h-4 w-4 animate-spin" />
-          ) : (
-            <Sparkles className="h-4 w-4" />
-          )}
-          {state === "linking_or_creating" ? "Finalizing Your Setup" : "Setting Up Your Lifting Log"}
-        </div>
-        <CardTitle className="max-w-3xl text-2xl md:text-3xl">
-          {state === "linking_or_creating"
-            ? "Linking your sheet."
-            : intent === "switch_sheet"
-              ? "Finding the right sheet."
-              : "Getting your sheet ready."}
-        </CardTitle>
-        <CardDescription className="max-w-2xl text-base leading-relaxed">
-          {state === "linking_or_creating"
-            ? "Connecting your data source now."
-            : intent === "switch_sheet"
-              ? "Checking your accessible Google Sheets and ranking the likely matches."
-              : "Looking for an existing log or creating a fresh one."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4 xl:px-10">
-        <div className="flex flex-col gap-3 rounded-2xl border bg-card/60 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Current step</p>
-            <p className="text-lg font-semibold text-foreground">{activeStepTitle}</p>
-          </div>
-          <div className="inline-flex items-center gap-2 self-start rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-sm font-semibold text-primary">
-            <LoaderCircle className="h-4 w-4 animate-spin" />
-            {state === "linking_or_creating" ? "Linking" : "Working"}
-          </div>
-        </div>
+    <div className="space-y-4">
+      <div className="grid gap-2 sm:grid-cols-3">
+        {steps.map((step, index) => {
+          const isActive = step.status === "active";
+          const isDone = step.status === "done";
 
-        <div className="grid gap-2 sm:grid-cols-3">
-          {steps.map((step, index) => {
-            const isActive = step.status === "active";
-            const isDone = step.status === "done";
-
-            return (
-              <div
-                key={step.title}
-                className={`rounded-2xl border px-3 py-3 transition-colors ${
-                  isActive
-                    ? "border-primary/25 bg-primary/[0.07]"
-                    : isDone
-                      ? "border-emerald-500/20 bg-emerald-500/[0.06]"
-                      : "border-border bg-muted/30"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${
-                        isActive
-                          ? "border-primary/25 bg-primary/10 text-primary"
-                          : isDone
-                            ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                            : "border-border bg-background text-muted-foreground"
-                      }`}
-                    >
-                      {isDone ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
-                    </div>
-                    <p className="text-sm font-semibold text-foreground">{step.title}</p>
-                  </div>
+          return (
+            <div
+              key={step.title}
+              className={`rounded-2xl border px-3 py-3 transition-colors ${
+                isActive
+                  ? "border-primary/25 bg-primary/[0.07]"
+                  : isDone
+                    ? "border-emerald-500/20 bg-emerald-500/[0.06]"
+                    : "border-border bg-muted/30"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
                   <div
-                    className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClassNames[step.status]}`}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${
+                      isActive
+                        ? "border-primary/25 bg-primary/10 text-primary"
+                        : isDone
+                          ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                          : "border-border bg-background text-muted-foreground"
+                    }`}
                   >
-                    {isActive ? (
-                      <>
-                        <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                        Live
-                      </>
-                    ) : isDone ? (
-                      <>
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Done
-                      </>
-                    ) : (
-                      "Next"
-                    )}
+                    {isDone ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
                   </div>
+                  <p className="text-sm font-semibold text-foreground">{step.title}</p>
+                </div>
+                <div
+                  className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClassNames[step.status]}`}
+                >
+                  {isActive ? (
+                    <>
+                      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                      Live
+                    </>
+                  ) : isDone ? (
+                    <>
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Done
+                    </>
+                  ) : (
+                    "Next"
+                  )}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-sm text-muted-foreground">
+        {state === "linking_or_creating"
+          ? `Current step: ${activeStepTitle}.`
+          : "This dialog will update in place as soon as your sheet options are ready."}
+      </p>
+    </div>
   );
 }
 

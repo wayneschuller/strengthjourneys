@@ -63,6 +63,7 @@ import {
  * Reads parsedData from UserLiftingDataProvider; takes no props.
  */
 export function TheLongGameCard({
+  dashboardStage = "established",
   dataMaturityStage: stageFromParent = null,
   sessionCount: sessionCountFromParent = null,
 }) {
@@ -111,6 +112,17 @@ export function TheLongGameCard({
     "daily",
     { initializeWithValue: false },
   );
+  const effectiveViewMode = useMemo(() => {
+    if (dashboardStage === "starter_sample") return "daily";
+    if (dashboardStage === "first_real_week") return "daily";
+    if (dashboardStage === "first_month") return "daily";
+    return viewMode;
+  }, [dashboardStage, viewMode]);
+  const showWeeklyToggle =
+    (dashboardStage === "early_base" || dashboardStage === "established") &&
+    intervals?.length > 2;
+  const showMonthlyToggle =
+    dashboardStage === "established" && intervals?.length >= 5;
 
   // FIXME: I think we have the skills to not need this useEffect anymore
   useEffect(() => {
@@ -121,8 +133,11 @@ export function TheLongGameCard({
     const { startDate, endDate } = findStartEndDates(parsedData);
     setStartDate(startDate);
     setEndDate(endDate);
-
-    const intervals = generateYearRanges(startDate, endDate);
+    const intervals = getHeatmapIntervals({
+      startDate,
+      endDate,
+      dashboardStage,
+    });
 
     // devLog(`Heatmaps: setting intervals:`);
     // devLog(intervals);
@@ -132,7 +147,7 @@ export function TheLongGameCard({
     // Randomise card title based on training history length (client-side only)
     const titles = getHeatmapTitles(intervals.length);
     setCardTitle(titles[Math.floor(Math.random() * titles.length)]);
-  }, [isLoading, parsedData]);
+  }, [isLoading, parsedData, dashboardStage]);
 
   useEffect(() => {
     return () => {
@@ -641,12 +656,15 @@ export function TheLongGameCard({
               <CardDescription>
                 <span data-share-description="true">
                   {dataMaturityStage !== "mature" && "Your journey has begun. "}
-                  Your strength journey from{" "}
-                  {new Date(intervals[0].startDate).getFullYear()} -{" "}
-                  {new Date(
-                    intervals[intervals.length - 1].endDate,
-                  ).getFullYear()}
-                  .
+                  {dashboardStage === "starter_sample"
+                    ? "A close-up of your first training days."
+                    : dashboardStage === "first_real_week"
+                      ? "A close-up of your first weeks under the bar."
+                      : dashboardStage === "first_month"
+                        ? "A close-up of your first months of training."
+                        : `Your strength journey from ${new Date(intervals[0].startDate).getFullYear()} - ${new Date(
+                            intervals[intervals.length - 1].endDate,
+                          ).getFullYear()}.`}
                 </span>
               </CardDescription>
             )
@@ -691,20 +709,20 @@ export function TheLongGameCard({
               </div>
               {!isSharing && <hr className="border-border/60 mb-3" />}
               {/* View selector — right-justified, anchored just above the heatmap grid */}
-              {!isSharing && intervals.length > 2 && (
+              {!isSharing && (showWeeklyToggle || showMonthlyToggle) && (
                 <div className="mb-2 flex justify-end">
                   <div className="flex flex-row rounded border border-border/40 p-px text-[10px]">
                     {[
                       { key: "daily", label: "Daily" },
-                      { key: "weekly", label: "Weekly" },
-                      ...(intervals.length >= 5
+                      ...(showWeeklyToggle ? [{ key: "weekly", label: "Weekly" }] : []),
+                      ...(showMonthlyToggle
                         ? [{ key: "monthly", label: "Monthly" }]
                         : []),
                     ].map(({ key, label }) => (
                       <button
                         key={key}
                         className={`rounded px-1.5 py-px transition-colors ${
-                          viewMode === key
+                          effectiveViewMode === key
                             ? "bg-muted text-foreground/90 font-medium"
                             : "text-muted-foreground/40 hover:text-muted-foreground/70"
                         }`}
@@ -716,8 +734,18 @@ export function TheLongGameCard({
                   </div>
                 </div>
               )}
-              {viewMode === "daily" && (
-                <div className={isSharing ? "" : "max-h-[52vh] overflow-y-auto pr-1"}>
+              {effectiveViewMode === "daily" && (
+                <div
+                  className={
+                    isSharing
+                      ? ""
+                      : dashboardStage === "starter_sample" ||
+                          dashboardStage === "first_real_week" ||
+                          dashboardStage === "first_month"
+                        ? ""
+                        : "max-h-[52vh] overflow-y-auto pr-1"
+                  }
+                >
                   <div className="flex flex-col gap-9">
                     {intervals.map((interval, index) => {
                       const year = new Date(interval.startDate).getFullYear();
@@ -742,8 +770,13 @@ export function TheLongGameCard({
                               >
                                 {year}
                               </span>
-                              {isCurrentYear && !isSharing && (
+                              {isCurrentYear && !isSharing && !interval?.label && (
                                 <span className="text-[9px] text-muted-foreground/60 leading-none">now</span>
+                              )}
+                              {interval?.label && !isSharing && (
+                                <span className="max-w-[4.5rem] text-right text-[9px] leading-none text-muted-foreground/60">
+                                  {interval.label}
+                                </span>
                               )}
                               {!isSharing && intervals.length > 1 && (
                                 <LiftResultCopyButton
@@ -765,6 +798,7 @@ export function TheLongGameCard({
                               startDate={interval.startDate}
                               endDate={interval.endDate}
                               isSharing={isSharing}
+                              showMonthLabels={!interval?.isFocused}
                             />
                           </div>
                         </div>
@@ -773,7 +807,7 @@ export function TheLongGameCard({
                   </div>
                 </div>
               )}
-              {viewMode === "weekly" && (
+              {effectiveViewMode === "weekly" && (
                 <WeeklyHeatmapMatrix
                   parsedData={parsedData}
                   startYear={new Date(intervals[0].startDate).getFullYear()}
@@ -783,7 +817,7 @@ export function TheLongGameCard({
                   isSharing={isSharing}
                 />
               )}
-              {viewMode === "monthly" && (
+              {effectiveViewMode === "monthly" && (
                 <MonthlyHeatmapMatrix
                   parsedData={parsedData}
                   startYear={new Date(intervals[0].startDate).getFullYear()}
@@ -1109,6 +1143,85 @@ function generateYearRanges(startDateStr, endDateStr) {
   }
 
   return yearRanges;
+}
+
+function shiftDateStr(dateStr, dayDelta) {
+  const date = new Date(`${dateStr}T00:00:00`);
+  date.setDate(date.getDate() + dayDelta);
+  return format(date, "yyyy-MM-dd");
+}
+
+function getDaysBetween(startDateStr, endDateStr) {
+  const start = new Date(`${startDateStr}T00:00:00`);
+  const end = new Date(`${endDateStr}T00:00:00`);
+  return Math.max(
+    0,
+    Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)),
+  );
+}
+
+function buildFocusedInterval({ startDate, endDate, minWindowDays, maxWindowDays, label }) {
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const historySpanDays = getDaysBetween(startDate, endDate);
+
+  if (historySpanDays < minWindowDays) {
+    return {
+      startDate: shiftDateStr(todayStr, -(minWindowDays - 1)),
+      endDate: todayStr,
+      isFocused: true,
+      label,
+    };
+  }
+
+  const desiredStart = shiftDateStr(todayStr, -(maxWindowDays - 1));
+  return {
+    startDate: startDate > desiredStart ? startDate : desiredStart,
+    endDate: todayStr,
+    isFocused: true,
+    label,
+  };
+}
+
+function getHeatmapIntervals({ startDate, endDate, dashboardStage }) {
+  if (!startDate || !endDate) return [];
+
+  if (dashboardStage === "starter_sample") {
+    return [
+      buildFocusedInterval({
+        startDate,
+        endDate,
+        minWindowDays: 21,
+        maxWindowDays: 42,
+        label: "first weeks",
+      }),
+    ];
+  }
+
+  if (dashboardStage === "first_real_week") {
+    return [
+      buildFocusedInterval({
+        startDate,
+        endDate,
+        minWindowDays: 28,
+        maxWindowDays: 56,
+        label: "early block",
+      }),
+    ];
+  }
+
+  if (dashboardStage === "first_month") {
+    return [
+      buildFocusedInterval({
+        startDate,
+        endDate,
+        minWindowDays: 42,
+        maxWindowDays: 84,
+        label: "first months",
+      }),
+    ];
+  }
+
+  return generateYearRanges(startDate, endDate);
 }
 
 // Shared matrix layout constants (used by both weekly and monthly views)
@@ -1664,7 +1777,13 @@ function MonthlyTooltipContent({ value }) {
 // Single-year calendar heatmap (Jan–Dec) using react-calendar-heatmap.
 // Cell color reflects session intensity and PR status via getHeatmapLevel.
 // Hover triggers a fixed-position tooltip with full session and PR details for that day.
-function Heatmap({ parsedData, startDate, endDate, isSharing }) {
+function Heatmap({
+  parsedData,
+  startDate,
+  endDate,
+  isSharing,
+  showMonthLabels = true,
+}) {
   const { isDemoMode } = useUserLiftingData();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
@@ -1711,7 +1830,7 @@ function Heatmap({ parsedData, startDate, endDate, isSharing }) {
         startDate={startDate}
         endDate={endDate}
         values={heatmapData}
-        showMonthLabels={true}
+        showMonthLabels={showMonthLabels}
         classForValue={(value) => {
           if (!value) return `color-heatmap-0`;
           return `color-heatmap-${value.count}`;

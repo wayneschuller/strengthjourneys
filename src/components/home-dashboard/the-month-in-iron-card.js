@@ -51,10 +51,11 @@ import { MiniFeedbackWidget } from "@/components/feedback";
  * Reads data from UserLiftingDataProvider; takes no props.
  */
 export function TheMonthInIronCard({
+  dashboardStage = "established",
   dataMaturityStage: stageFromParent = null,
   sessionCount: sessionCountFromParent = null,
 }) {
-  const { isDemoMode, parsedData } = useUserLiftingData();
+  const { isDemoMode, parsedData, sheetInfo } = useUserLiftingData();
   const bio = useAthleteBio();
   const { isMetric } = bio;
   const { status: authStatus } = useSession();
@@ -274,8 +275,10 @@ export function TheMonthInIronCard({
       <EarlyMonthMomentumCard
         isDemoMode={isDemoMode}
         parsedData={parsedData}
+        dashboardStage={dashboardStage}
         dataMaturityStage={dataMaturityStage}
         isMetric={isMetric}
+        sheetUrl={sheetInfo?.url}
       />
     );
   }
@@ -389,8 +392,10 @@ export function TheMonthInIronCard({
 function EarlyMonthMomentumCard({
   isDemoMode,
   parsedData,
+  dashboardStage,
   dataMaturityStage,
   isMetric,
+  sheetUrl,
 }) {
   const stats = useMemo(() => {
     const entries = Array.isArray(parsedData)
@@ -422,15 +427,38 @@ function EarlyMonthMomentumCard({
   }, [parsedData, isMetric]);
 
   const title =
-    dataMaturityStage === "no_sessions"
-      ? "The First Month in Iron"
-      : "First Month Momentum";
+    dashboardStage === "starter_sample"
+      ? "Start Your First Month Strong"
+      : dataMaturityStage === "no_sessions"
+        ? "The First Month in Iron"
+        : "First Month Momentum";
   const subtitle =
-    dataMaturityStage === "first_week"
-      ? "Your first week is about showing up and building rhythm."
-      : dataMaturityStage === "first_month"
-        ? "Momentum now becomes measurable progress."
-        : "Log your first session and this card will start scoring your month.";
+    dashboardStage === "starter_sample"
+      ? "Use the sample row as a template, then start building your own rhythm."
+      : dataMaturityStage === "first_week"
+        ? "Your first week is about showing up and building rhythm."
+        : dataMaturityStage === "first_month"
+          ? "Momentum now becomes measurable progress."
+          : "Log your first session and this card will start scoring your month.";
+
+  const guidanceItems =
+    dashboardStage === "starter_sample"
+      ? [
+          "Open the sheet and replace the sample row.",
+          "Aim for three simple sessions this week.",
+          "Keep weights easy enough that technique stays clean.",
+        ]
+      : dashboardStage === "first_real_week"
+        ? [
+            "Repeat the same basic lifts before adding variety.",
+            "Log every set so the habit becomes automatic.",
+            "Leave a rep in reserve instead of chasing grinders.",
+          ]
+        : [
+            "Squat and press regularly, deadlift once a week, and recover hard.",
+            "Let consistency lead load. Good weeks compound faster than big swings.",
+            "The goal this month is repeatable training, not dramatic heroics.",
+          ];
 
   return (
     <Card className="flex h-full flex-1 flex-col">
@@ -447,6 +475,13 @@ function EarlyMonthMomentumCard({
           <MomentumStat label="Sets Logged" value={stats.sets} />
           <MomentumStat label="Big Four" value={stats.bigFourTouches} />
         </div>
+        {dashboardStage === "starter_sample" && sheetUrl && (
+          <Button asChild className="w-full sm:w-fit">
+            <a href={sheetUrl} target="_blank" rel="noopener noreferrer">
+              Open Google Sheet
+            </a>
+          </Button>
+        )}
         <p className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
           Total volume so far:{" "}
           <span className="font-medium text-foreground">
@@ -454,6 +489,16 @@ function EarlyMonthMomentumCard({
           </span>
           . Keep stacking consistent sessions.
         </p>
+        <div className="rounded-lg border bg-background/80 px-3 py-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            Coaching Notes
+          </p>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            {guidanceItems.map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </div>
+        </div>
       </CardContent>
       <CardFooter className="pt-0">
         <MiniFeedbackWidget

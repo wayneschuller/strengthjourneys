@@ -248,10 +248,12 @@ export function HomeDashboard() {
               sessionCount={sessionCount}
             />
             <TheMonthInIronCard
+              dashboardStage={dashboardStage}
               dataMaturityStage={dataMaturityStage}
               sessionCount={sessionCount}
             />
             <TheLongGameCard
+              dashboardStage={dashboardStage}
               dataMaturityStage={dataMaturityStage}
               sessionCount={sessionCount}
             />

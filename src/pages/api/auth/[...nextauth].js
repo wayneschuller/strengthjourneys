@@ -75,7 +75,8 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async signIn() {
+    async signIn({ user }) {
+      await promptDeveloper("sign-in", user);
       return true;
     },
     async jwt({ token, user, account }) {
@@ -124,7 +125,7 @@ export default NextAuth(authOptions);
 
 // ---------------------------------------------------------------------------
 // Prompts the developer to offer personal support to users at key moments
-// (activation + meaningful return activity). Failures are swallowed
+// (sign-in, activation, meaningful return activity). Failures are swallowed
 // and never affect the caller.
 // ---------------------------------------------------------------------------
 
@@ -147,6 +148,10 @@ function daysAgo(isoString) {
 }
 
 const PROMPT_MESSAGES = {
+  "sign-in": (name, email, timeStr) => ({
+    subject: `[SJ] Sign-in — ${name}`,
+    text: `${name} (${email}) signed in at ${timeStr}.`,
+  }),
   activated: (name, email, timeStr, meta) => ({
     subject: `[SJ] Activated — ${name}`,
     text: [

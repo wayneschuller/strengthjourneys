@@ -117,13 +117,18 @@ export default async function handler(req, res) {
         lastSeenAt: nowIso,
       };
 
-      // Activation email (once per user) if it wasn't already sent by auto-provision flow.
+      // Missing KV on a successful sheet read usually means a pre-KV legacy user
+      // returning via existing local browser state. Quietly backfill instead of
+      // sending a false "newly activated" email.
       if (!record.activationPromptedAt) {
-        await promptDeveloper("activated", session.user, {
-          ...meta,
-          connectionMethod: nextRecord.connectionMethod,
-        });
+        nextRecord.connectionMethod =
+          record.connectionMethod || "legacy_local_relink";
+        nextRecord.provisionedSheetId = record.provisionedSheetId || ssid;
         nextRecord.activationPromptedAt = nowIso;
+        devLog("[sheet-flow] legacy KV backfill after successful local relink", {
+          email: session.user.email,
+          ssid,
+        });
       }
 
       // Return email (once) if user came back after a meaningful gap and still within

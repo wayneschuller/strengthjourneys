@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { HomeInspirationCards } from "./home-inspiration-cards";
 import { ChooseSheetPanel } from "./choose-sheet-panel";
@@ -73,10 +74,19 @@ const WELCOME_QUIPS = [
   "Built with patience, {name}",
 ];
 const ENRICH_CANDIDATE_LIMIT = 6;
+const SHEET_FLOW_QUERY_KEY = "sheetFlow";
 
 function toTimestamp(iso) {
   const t = new Date(iso || 0).getTime();
   return Number.isFinite(t) ? t : 0;
+}
+
+function getDateSpanYears(candidate) {
+  const start = toTimestamp(candidate?.dateRangeStart);
+  const end = toTimestamp(candidate?.dateRangeEnd);
+  if (!start || !end || end < start) return 0;
+  const yearMs = 365 * 24 * 60 * 60 * 1000;
+  return Math.max(0, (end - start) / yearMs);
 }
 
 function scoreCandidateForChooser(candidate) {
@@ -85,14 +95,20 @@ function scoreCandidateForChooser(candidate) {
     typeof candidate?.approxSessions === "number" ? candidate.approxSessions : 0;
   const modifiedAt = toTimestamp(candidate?.modifiedByMeTime || candidate?.modifiedTime);
   const title = String(candidate?.name || "").toLowerCase();
+  const spanYears = getDateSpanYears(candidate);
+  const ageDays = modifiedAt > 0 ? (Date.now() - modifiedAt) / (24 * 60 * 60 * 1000) : 99999;
 
   let score = 0;
-  score += Math.min(120, rows / 25);
-  score += Math.min(120, sessions * 1.4);
-  if (title.includes("strength journey")) score += 12;
-  if (title.includes("sample") || title.includes("demo")) score -= 40;
+  score += Math.min(240, rows / 20);
+  score += Math.min(280, sessions * 3);
+  score += Math.min(120, spanYears * 16);
+  if (ageDays <= 3) score += 40;
+  else if (ageDays <= 14) score += 24;
+  else if (ageDays <= 90) score += 10;
+  if (title.includes("strength journey")) score += 8;
+  if (title.includes("sample") || title.includes("demo")) score -= 60;
   if (title.includes("copy of")) score -= 20;
-  score += modifiedAt > 0 ? Math.min(40, (modifiedAt / 1000_000_000_000) % 40) : 0;
+  if (title.includes("bespoke")) score += 6;
 
   return score;
 }
@@ -118,6 +134,7 @@ function sortCandidatesForChooser(candidates) {
  * @param {Object} props
  */
 export function HomeDashboard() {
+  const router = useRouter();
   const { data: session, status: authStatus } = useSession();
 
   const quipRef = useRef(null);
@@ -129,11 +146,13 @@ export function HomeDashboard() {
   const {
     sheetInfo,
     selectSheet,
+    clearSheet,
     parsedData,
     rawRows,
     dataSyncedAt,
     isValidating,
     mutate,
+    apiError,
   } = useUserLiftingData();
   const [isProgressDone, setIsProgressDone] = useState(false);
   const [hasDataLoaded, setHasDataLoaded] = useState(false);
@@ -146,6 +165,9 @@ export function HomeDashboard() {
   const [isProvisionActionLoading, setIsProvisionActionLoading] = useState(false);
   const [isCandidateEnrichmentLoading, setIsCandidateEnrichmentLoading] = useState(false);
   const [sheetDiscoveryStatusMessage, setSheetDiscoveryStatusMessage] = useState("");
+  const [flowIntent, setFlowIntent] = useState("bootstrap");
+  const [recommendedCandidateId, setRecommendedCandidateId] = useState(null);
+  const [hadLocalSheetBefore, setHadLocalSheetBefore] = useState(false);
   const provisioningStartedRef = useRef(false);
 
   const nonGoalSessionCount = useMemo(() => {
@@ -185,9 +207,12 @@ export function HomeDashboard() {
     setProvisionError(null);
     setShowIntroBanner(false);
     setCandidateSheets([]);
+    setRecommendedCandidateId(null);
     setIsProvisionActionLoading(false);
     setIsCandidateEnrichmentLoading(false);
     setSheetDiscoveryStatusMessage("");
+    setFlowIntent("bootstrap");
+    setHadLocalSheetBefore(false);
   }, [authStatus]);
 
   const mergeCandidateUpdates = useCallback((updates = []) => {
@@ -206,7 +231,13 @@ export function HomeDashboard() {
           ...update,
         };
       });
-      return sortCandidatesForChooser(merged);
+      const sorted = sortCandidatesForChooser(merged);
+      setRecommendedCandidateId(sorted[0]?.id || null);
+      devLog("[sheet-flow] chooser recommendation updated after enrichment", {
+        recommendedId: sorted[0]?.id || null,
+        recommendedName: sorted[0]?.name || null,
+      });
+      return sorted;
     });
   }, []);
 
@@ -228,16 +259,16 @@ export function HomeDashboard() {
             : enrichIds[0];
         const secondaryIds = enrichIds.filter((id) => id !== primaryId);
 
-        const primaryResponse = await fetch("/api/provision-sheet", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            mode: "enrich_candidates",
-            candidateIds: primaryId ? [primaryId] : [],
-            candidates,
-          }),
+        const primaryResponse = await fetch("/api/enrich-sheet-candidates", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              intent: flowIntent,
+              candidateIds: primaryId ? [primaryId] : [],
+              candidates,
+            }),
         });
         const primaryPayload = await primaryResponse.json().catch(() => ({}));
         if (primaryPayload?.debug) {
@@ -255,14 +286,14 @@ export function HomeDashboard() {
         }
 
         if (secondaryIds.length > 0) {
-          setSheetDiscoveryStatusMessage("Preparing your preview.");
-          const secondaryResponse = await fetch("/api/provision-sheet", {
+          setSheetDiscoveryStatusMessage("Checking the rest of your likely lifting logs.");
+          const secondaryResponse = await fetch("/api/enrich-sheet-candidates", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              mode: "enrich_candidates",
+              intent: flowIntent,
               candidateIds: secondaryIds,
               candidates,
             }),
@@ -289,78 +320,51 @@ export function HomeDashboard() {
         setIsCandidateEnrichmentLoading(false);
       }
     },
-    [mergeCandidateUpdates],
+    [flowIntent, mergeCandidateUpdates],
   );
 
-  const performProvisioning = useCallback(
-    async ({ mode = "discover_fast", selectedSsid = null } = {}) => {
-      setProvisionError(null);
-      setIsProvisionActionLoading(true);
-      if (mode === "discover" || mode === "discover_fast") {
-        setOnboardingState("provisioning");
-        setSheetDiscoveryStatusMessage("Scanning Google Drive for existing lifting logs.");
+  const handleResolvedAction = useCallback(
+    (payload, intent) => {
+      devLog("[sheet-flow] handle resolved action", {
+        intent,
+        action: payload?.action,
+        reason: payload?.reason || null,
+      });
+      if (payload?.action === "choose_sheet") {
+        const discoveredCandidates = Array.isArray(payload.candidates)
+          ? sortCandidatesForChooser(payload.candidates)
+          : [];
+        const enrichCandidateIds = Array.isArray(payload.enrichCandidateIds)
+          ? payload.enrichCandidateIds
+          : discoveredCandidates
+            .slice(0, ENRICH_CANDIDATE_LIMIT)
+            .map((candidate) => candidate.id);
+        setCandidateSheets(discoveredCandidates);
+        setRecommendedCandidateId(discoveredCandidates[0]?.id || payload?.recommendedId || null);
+        setFlowIntent(payload?.intent || intent);
+        setSheetDiscoveryStatusMessage(
+          discoveredCandidates.length > 0
+            ? `Found ${discoveredCandidates.length} potential lifting logs.`
+            : intent === "switch_sheet"
+              ? "No accessible lifting logs detected yet."
+              : "No previous lifting logs detected yet.",
+        );
+        setOnboardingState("choose_sheet");
+        void enrichCandidateSheets({
+          candidates: discoveredCandidates,
+          candidateIds: enrichCandidateIds,
+          primaryCandidateId: payload?.recommendedId || null,
+        });
+        return;
       }
 
-      try {
-        const response = await fetch("/api/provision-sheet", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ mode, selectedSsid }),
-        });
-        const payload = await response.json().catch(() => ({}));
-        if (payload?.debug) {
-          devLog("[onboarding] provision-sheet debug:", payload.debug);
-        }
-        devLog("[onboarding] provision-sheet response:", {
-          mode,
-          status: response.status,
-          ok: response.ok,
-          needsSelection: Boolean(payload?.needsSelection),
-          hasSsid: Boolean(payload?.ssid),
-        });
+      if (payload?.action === "recover_returning_user") {
+        setOnboardingState("fallback_error");
+        setSheetDiscoveryStatusMessage("");
+        return;
+      }
 
-        if (!response.ok) {
-          throw new Error(payload?.error || "Automatic setup failed");
-        }
-
-        if (payload?.needsSelection) {
-          const discoveredCandidates = Array.isArray(payload.candidates)
-            ? payload.candidates
-            : [];
-          const sortedDiscoveredCandidates = sortCandidatesForChooser(discoveredCandidates);
-          const enrichCandidateIds = Array.isArray(payload.enrichCandidateIds)
-            ? payload.enrichCandidateIds
-            : sortedDiscoveredCandidates
-              .slice(0, ENRICH_CANDIDATE_LIMIT)
-              .map((candidate) => candidate.id);
-          const recommendedIdFromPayload = payload?.recommendedId || null;
-
-          setCandidateSheets(sortedDiscoveredCandidates);
-          setSheetDiscoveryStatusMessage(
-            `Found ${sortedDiscoveredCandidates.length} potential lifting logs.`,
-          );
-          setOnboardingState("choose_sheet");
-          provisioningStartedRef.current = false;
-          void enrichCandidateSheets({
-            candidates: sortedDiscoveredCandidates,
-            candidateIds: enrichCandidateIds,
-            primaryCandidateId: recommendedIdFromPayload,
-          });
-          return;
-        }
-
-        if (!payload?.ssid) {
-          throw new Error("Provisioning returned no sheet id");
-        }
-
-        devLog("[onboarding] linking selected/provisioned sheet:", {
-          mode,
-          ssid: payload.ssid,
-          name: payload.name || null,
-          wasCreated: Boolean(payload.wasCreated),
-        });
+      if (payload?.action === "link_existing" || payload?.action === "create_new_user_sheet") {
         selectSheet(payload.ssid, {
           url: payload.webViewLink ?? null,
           filename: payload.name ?? null,
@@ -368,8 +372,52 @@ export function HomeDashboard() {
           modifiedByMeTime: payload.modifiedByMeTime ?? null,
         });
         if (payload.wasCreated) gaTrackSheetAutoprovisioned();
-        setOnboardingState("intro_oriented");
-        setShowIntroBanner(true);
+        setOnboardingState(payload?.action === "create_new_user_sheet" ? "intro_oriented" : "linked");
+        setShowIntroBanner(payload?.action === "create_new_user_sheet");
+      }
+    },
+    [enrichCandidateSheets, selectSheet],
+  );
+
+  const resolveSheetFlow = useCallback(
+    async ({ intent, hadLocalBefore = false } = {}) => {
+      setProvisionError(null);
+      setIsProvisionActionLoading(true);
+      setFlowIntent(intent || "bootstrap");
+      setHadLocalSheetBefore(Boolean(hadLocalBefore));
+      setOnboardingState("provisioning");
+      setSheetDiscoveryStatusMessage(
+        intent === "switch_sheet"
+          ? "Finding accessible lifting logs."
+          : "Scanning Google Drive for existing lifting logs.",
+      );
+
+      try {
+        const response = await fetch("/api/resolve-sheet-flow", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            intent: intent || "bootstrap",
+            hadLocalSheetBefore: Boolean(hadLocalBefore),
+          }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (payload?.debug) {
+          devLog("[sheet-flow] resolve debug:", payload.debug);
+        }
+        devLog("[sheet-flow] resolve response:", {
+          intent,
+          status: response.status,
+          ok: response.ok,
+          action: payload?.action || null,
+        });
+
+        if (!response.ok) {
+          throw new Error(payload?.error || "Automatic setup failed");
+        }
+        handleResolvedAction(payload, intent || "bootstrap");
       } catch (error) {
         setProvisionError(error?.message || "Automatic setup failed");
         setOnboardingState("fallback_error");
@@ -380,7 +428,58 @@ export function HomeDashboard() {
         setIsProvisionActionLoading(false);
       }
     },
-    [enrichCandidateSheets, selectSheet],
+    [handleResolvedAction],
+  );
+
+  const runLinkAction = useCallback(
+    async ({ mode, selectedSsid = null, intent = flowIntent } = {}) => {
+      setProvisionError(null);
+      setIsProvisionActionLoading(true);
+      setOnboardingState("provisioning");
+      try {
+        const response = await fetch("/api/link-sheet", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            intent,
+            mode,
+            selectedSsid,
+            hadLocalSheetBefore,
+          }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (payload?.debug) devLog("[sheet-flow] link debug:", payload.debug);
+        if (!response.ok) {
+          throw new Error(payload?.error || "Sheet linking failed");
+        }
+        handleResolvedAction(payload, intent);
+      } catch (error) {
+        setProvisionError(error?.message || "Sheet linking failed");
+        setOnboardingState(intent === "switch_sheet" ? "choose_sheet" : "fallback_error");
+      } finally {
+        setIsProvisionActionLoading(false);
+      }
+    },
+    [flowIntent, hadLocalSheetBefore, handleResolvedAction],
+  );
+
+  const handlePickerSelection = useCallback(
+    (doc) => {
+      if (!doc?.id) return;
+      devLog("[sheet-flow] picker selected sheet", {
+        flowIntent,
+        ssid: doc.id,
+        name: doc.name || null,
+      });
+      runLinkAction({
+        mode: "select_existing",
+        selectedSsid: doc.id,
+        intent: flowIntent,
+      });
+    },
+    [flowIntent, runLinkAction],
   );
 
   useEffect(() => {
@@ -389,8 +488,38 @@ export function HomeDashboard() {
     if (provisioningStartedRef.current) return;
 
     provisioningStartedRef.current = true;
-    performProvisioning({ mode: "discover_fast" });
-  }, [authStatus, performProvisioning, sheetInfo?.ssid]);
+    resolveSheetFlow({ intent: "bootstrap", hadLocalBefore: false });
+  }, [authStatus, resolveSheetFlow, sheetInfo?.ssid]);
+
+  useEffect(() => {
+    if (authStatus !== "authenticated") return;
+    if (router.query?.[SHEET_FLOW_QUERY_KEY] !== "switch") return;
+    provisioningStartedRef.current = true;
+    setShowIntroBanner(false);
+    void resolveSheetFlow({ intent: "switch_sheet", hadLocalBefore: Boolean(sheetInfo?.ssid) });
+    const nextQuery = { ...router.query };
+    delete nextQuery[SHEET_FLOW_QUERY_KEY];
+    router.replace({ pathname: router.pathname, query: nextQuery }, undefined, {
+      shallow: true,
+    });
+  }, [authStatus, resolveSheetFlow, router, router.pathname, router.query, sheetInfo?.ssid]);
+
+  useEffect(() => {
+    if (authStatus !== "authenticated") return;
+    if (!sheetInfo?.ssid) return;
+    if (!apiError?.status) return;
+    if (![400, 403, 404].includes(apiError.status)) return;
+
+    devLog("[sheet-flow] current local sheet failed, entering recovery", {
+      ssid: sheetInfo.ssid,
+      status: apiError.status,
+      message: apiError.message,
+    });
+    setHadLocalSheetBefore(true);
+    clearSheet();
+    provisioningStartedRef.current = true;
+    void resolveSheetFlow({ intent: "recovery", hadLocalBefore: true });
+  }, [apiError, authStatus, clearSheet, resolveSheetFlow, sheetInfo]);
 
   useEffect(() => {
     if (!sheetInfo?.ssid) return;
@@ -471,38 +600,49 @@ export function HomeDashboard() {
           </div>
         )}
       </div>
-      {!sheetInfo?.ssid && (
+      {(!sheetInfo?.ssid ||
+        (flowIntent === "switch_sheet" &&
+          ["provisioning", "choose_sheet", "fallback_error"].includes(onboardingState))) && (
         <>
           <DrivePickerContainer
             onReady={handlePickerReady}
             trigger={authStatus === "authenticated"}
             oauthToken={session?.accessToken}
             selectSheet={selectSheet}
+            onPick={handlePickerSelection}
           />
           {(onboardingState === "provisioning" || onboardingState === "idle") && (
             <ProvisioningPanel
               isWorking={isProvisionActionLoading}
+              intent={flowIntent}
             />
           )}
           {onboardingState === "choose_sheet" && (
             <ChooseSheetPanel
+              intent={flowIntent}
               candidates={candidateSheets}
+              currentSsid={sheetInfo?.ssid || null}
+              recommendedId={recommendedCandidateId}
               openPicker={openPicker}
               isWorking={isProvisionActionLoading}
               isEnriching={isCandidateEnrichmentLoading}
               statusMessage={sheetDiscoveryStatusMessage}
-              onChooseSheet={(ssid) => performProvisioning({ mode: "select_existing", selectedSsid: ssid })}
-              onCreateBlank={() => performProvisioning({ mode: "create_blank" })}
-              onCreateSample={() => performProvisioning({ mode: "create_sample" })}
+              onChooseSheet={(ssid) => runLinkAction({ mode: "select_existing", selectedSsid: ssid })}
+              onCreateBlank={() => runLinkAction({ mode: "create_blank" })}
+              onCreateSample={() => runLinkAction({ mode: "create_sample" })}
             />
           )}
           {onboardingState === "fallback_error" && (
             <>
               <FallbackConnectPanel
+                intent={flowIntent}
                 openPicker={openPicker}
                 onRetry={() => {
                   provisioningStartedRef.current = false;
-                  performProvisioning({ mode: "discover_fast" });
+                  resolveSheetFlow({
+                    intent: flowIntent === "switch_sheet" ? "switch_sheet" : "recovery",
+                    hadLocalBefore: true,
+                  });
                 }}
                 isWorking={isProvisionActionLoading}
                 errorMessage={provisionError}
@@ -555,16 +695,18 @@ export function HomeDashboard() {
   );
 }
 
-function ProvisioningPanel({ isWorking = true }) {
+function ProvisioningPanel({ isWorking = true, intent = "bootstrap" }) {
   return (
     <Card className="mb-4 border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
       <CardHeader className="xl:px-10 2xl:px-16">
         <CardTitle className="flex items-center gap-2 text-lg">
           <LoaderCircle className={`h-5 w-5 ${isWorking ? "animate-spin" : ""}`} />
-          Scanning your Google Drive
+          {intent === "switch_sheet" ? "Finding your accessible lifting logs" : "Scanning your Google Drive"}
         </CardTitle>
         <CardDescription>
-          Looking for existing lifting logs so you can connect the right sheet quickly.
+          {intent === "switch_sheet"
+            ? "Gathering the sheets you can access so you can deliberately switch data sources."
+            : "Looking for existing lifting logs so you can connect the right sheet quickly."}
         </CardDescription>
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground xl:px-10 2xl:px-16">
@@ -574,16 +716,24 @@ function ProvisioningPanel({ isWorking = true }) {
   );
 }
 
-function FallbackConnectPanel({ openPicker, onRetry, errorMessage, isWorking = false }) {
+function FallbackConnectPanel({
+  openPicker,
+  onRetry,
+  errorMessage,
+  isWorking = false,
+  intent = "recovery",
+}) {
   return (
     <Card className="mb-4 border-destructive/40">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <AlertTriangle className="h-5 w-5 text-destructive" />
-          Automatic setup needs help
+          {intent === "switch_sheet" ? "No lifting logs detected yet" : "Automatic setup needs help"}
         </CardTitle>
         <CardDescription>
-          You can retry automatic setup or connect an existing sheet from Google Drive.
+          {intent === "switch_sheet"
+            ? "Browse Google Drive or create a new sheet if you want to switch data sources."
+            : "You can retry automatic setup or connect an existing sheet from Google Drive."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">

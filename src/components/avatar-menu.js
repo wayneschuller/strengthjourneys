@@ -1,12 +1,8 @@
-
-import * as React from "react";
-import { useContext, useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { gaTrackSignInClick } from "@/lib/analytics";
-import { DrivePickerContainer } from "@/components/drive-picker-container";
-import { handleOpenFilePicker } from "@/lib/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { devLog } from "@/lib/processing-utils";
 import { useTheme } from "next-themes";
@@ -48,33 +44,13 @@ import {
 export function AvatarDropdown() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
-  const [openPicker, setOpenPicker] = useState(null);
-  const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
   const [isResettingKv, setIsResettingKv] = useState(false);
   const { setTheme, theme } = useTheme();
 
   const {
     sheetInfo,
-    selectSheet,
     clearSheet,
-    parsedData,
-    isLoading,
-    isValidating,
-    isError,
   } = useUserLiftingData();
-
-  // Initialize picker when needed (only loads when user might use it)
-  const handlePickerReady = useCallback((picker) => {
-    setOpenPicker(() => picker);
-  }, []);
-
-  // Load picker when user opens dropdown menu (anticipate they might use it)
-  // Or when they need to choose a sheet (ssid is missing)
-  useEffect(() => {
-    if (authStatus === "authenticated" && (!sheetInfo?.ssid || shouldLoadPicker)) {
-      setShouldLoadPicker(true);
-    }
-  }, [authStatus, sheetInfo?.ssid, shouldLoadPicker]);
 
   const runKvReset = useCallback(
     async (mode) => {
@@ -126,23 +102,7 @@ export function AvatarDropdown() {
 
   return (
     <>
-      {/* Only load picker when needed - this defers ~163 KiB of Google API scripts */}
-      {shouldLoadPicker && (
-        <DrivePickerContainer
-          onReady={handlePickerReady}
-          trigger={shouldLoadPicker}
-          oauthToken={session?.accessToken}
-          selectSheet={selectSheet}
-        />
-      )}
-      <DropdownMenu
-        onOpenChange={(open) => {
-          // Load picker when dropdown opens (user might use it)
-          if (open && !shouldLoadPicker) {
-            setShouldLoadPicker(true);
-          }
-        }}
-      >
+      <DropdownMenu>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -181,14 +141,8 @@ export function AvatarDropdown() {
                 {!sheetInfo?.ssid && (
                   <DropdownMenuItem
                     onClick={() => {
-                      if (openPicker) handleOpenFilePicker(openPicker);
+                      router.push("/");
                     }}
-                    disabled={!openPicker}
-                    title={
-                      !openPicker
-                        ? "Loading Google Picker… (allow Google scripts if blocked)"
-                        : undefined
-                    }
                   >
                     <img
                       src={GOOGLE_SHEETS_ICON_URL}
@@ -196,7 +150,7 @@ export function AvatarDropdown() {
                       className="mr-2 h-4 w-4 shrink-0"
                       aria-hidden
                     />
-                    {openPicker ? "Choose Google Sheet" : "Choose Google Sheet (loading…)"}
+                    Resolve Google Sheet Setup
                   </DropdownMenuItem>
                 )}
                 {sheetInfo?.ssid && sheetInfo?.url && (
@@ -210,14 +164,11 @@ export function AvatarDropdown() {
                 {sheetInfo?.ssid && (
                   <DropdownMenuItem
                     onClick={() => {
-                      if (openPicker) handleOpenFilePicker(openPicker);
+                      router.push({
+                        pathname: "/",
+                        query: { sheetFlow: "switch" },
+                      });
                     }}
-                    disabled={!openPicker}
-                    title={
-                      !openPicker
-                        ? "Loading Google Picker… (allow Google scripts if blocked)"
-                        : undefined
-                    }
                   >
                     <img
                       src={GOOGLE_SHEETS_ICON_URL}
@@ -225,7 +176,7 @@ export function AvatarDropdown() {
                       className="mr-2 h-4 w-4 shrink-0"
                       aria-hidden
                     />
-                    {openPicker ? "Choose New Google Sheet" : "Choose New Google Sheet (loading…)"}
+                    Choose New Google Sheet
                   </DropdownMenuItem>
                 )}
 

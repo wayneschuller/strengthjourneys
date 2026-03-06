@@ -105,7 +105,10 @@ function formatPreviewSetDetail(preview) {
 }
 
 export function ChooseSheetPanel({
+  intent = "recovery",
   candidates,
+  currentSsid = null,
+  recommendedId = null,
   openPicker,
   isWorking,
   isEnriching = false,
@@ -114,6 +117,11 @@ export function ChooseSheetPanel({
   onCreateBlank,
   onCreateSample,
 }) {
+  const isSwitchSheet = intent === "switch_sheet";
+  const primaryCandidate =
+    candidates.find((candidate) => candidate.id === recommendedId) || candidates[0] || null;
+  const otherCandidates = candidates.filter((candidate) => candidate.id !== primaryCandidate?.id);
+
   return (
     <Card className="mb-4 border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
       <CardHeader className="xl:px-10 2xl:px-16">
@@ -124,10 +132,12 @@ export function ChooseSheetPanel({
             className="h-5 w-5 shrink-0"
             aria-hidden
           />
-          Connect your lifting log
+          {isSwitchSheet ? "Choose a lifting log" : "Connect your lifting log"}
         </CardTitle>
         <CardDescription>
-          Strength Journeys found Google Sheets in your Drive that look like lifting logs. Choose one to connect, or create a new sheet to get started.
+          {isSwitchSheet
+            ? "Strength Journeys found sheets you can access. Pick the one you want to connect, or create a fresh sheet if you want a new data source."
+            : "Strength Journeys found Google Sheets in your Drive that look like lifting logs. Choose one to connect, or create a new sheet to get started."}
         </CardDescription>
         {statusMessage && (
           <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
@@ -138,32 +148,37 @@ export function ChooseSheetPanel({
       </CardHeader>
       <CardContent className="space-y-5 xl:px-10 2xl:px-16">
         <div className="space-y-3">
-          {candidates[0] && (
+          {primaryCandidate && (
             <>
               <p className="text-sm font-semibold text-foreground">
-                Your lifting log
+                {isSwitchSheet ? "Recommended sheet" : "Your lifting log"}
               </p>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                 <div
-                  key={candidates[0].id}
+                  key={primaryCandidate.id}
                   className="rounded-xl border border-black/10 bg-card/40 px-6 py-6"
                 >
                   <div className="max-w-2xl space-y-5">
                     <div className="min-w-0 space-y-2">
                       <p className="truncate text-base font-semibold text-foreground">
-                        {candidates[0].name}
+                        {primaryCandidate.name}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {formatRecommendedMeta(candidates[0], isEnriching)}
+                        {formatRecommendedMeta(primaryCandidate, isEnriching)}
                       </p>
-                      {Array.isArray(candidates[0].bigFourPreview) &&
-                        candidates[0].bigFourPreview.length > 0 && (
+                      {currentSsid === primaryCandidate.id && (
+                        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                          Currently connected
+                        </p>
+                      )}
+                      {Array.isArray(primaryCandidate.bigFourPreview) &&
+                        primaryCandidate.bigFourPreview.length > 0 && (
                           <div className="space-y-2 pt-1">
                             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                               Best lifts detected
                             </p>
                             <div className="flex flex-wrap gap-2">
-                              {candidates[0].bigFourPreview.map((preview) => (
+                              {primaryCandidate.bigFourPreview.map((preview) => (
                                 <div
                                   key={preview.liftType}
                                   className="flex min-w-[120px] items-center gap-2 rounded-md border border-black/10 bg-background/90 px-2.5 py-2"
@@ -194,11 +209,15 @@ export function ChooseSheetPanel({
                     <Button
                       size="lg"
                       className="w-full sm:w-auto sm:min-w-56"
-                      disabled={isWorking}
-                      onClick={() => onChooseSheet(candidates[0].id)}
+                      disabled={isWorking || currentSsid === primaryCandidate.id}
+                      onClick={() => onChooseSheet(primaryCandidate.id)}
                     >
                       <Link2 className="mr-2 h-4 w-4" />
-                      Connect this lifting log
+                      {currentSsid === primaryCandidate.id
+                        ? "Already connected"
+                        : isSwitchSheet
+                          ? "Switch to this sheet"
+                          : "Connect this lifting log"}
                     </Button>
                   </div>
                 </div>
@@ -229,13 +248,13 @@ export function ChooseSheetPanel({
               </div>
             </>
           )}
-          {candidates.length > 1 && (
+          {otherCandidates.length > 0 && (
             <>
               <p className="pt-2 text-sm font-semibold text-muted-foreground">
-                Other sheets we detected
+                {isSwitchSheet ? "Other accessible sheets" : "Other sheets we detected"}
               </p>
               <div className="grid grid-cols-1 gap-2 md:grid-cols-2 2xl:grid-cols-3">
-                {candidates.slice(1).map((candidate) => (
+                {otherCandidates.map((candidate) => (
                   <div
                     key={candidate.id}
                     className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
@@ -255,15 +274,24 @@ export function ChooseSheetPanel({
                       <p className="text-sm text-muted-foreground">
                         {formatCandidateMeta(candidate, isEnriching)}
                       </p>
+                      {currentSsid === candidate.id && (
+                        <p className="pt-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                          Currently connected
+                        </p>
+                      )}
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={isWorking}
+                      disabled={isWorking || currentSsid === candidate.id}
                       onClick={() => onChooseSheet(candidate.id)}
                     >
                       <Link2 className="mr-2 h-4 w-4" />
-                      Connect
+                      {currentSsid === candidate.id
+                        ? "Connected"
+                        : isSwitchSheet
+                          ? "Switch"
+                          : "Connect"}
                     </Button>
                   </div>
                 ))}
@@ -273,7 +301,7 @@ export function ChooseSheetPanel({
         </div>
         <div className="border-t pt-4">
           <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Or start with a new sheet
+            {isSwitchSheet ? "Or create a different sheet" : "Or start with a new sheet"}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button

@@ -8,7 +8,6 @@ import { devLog } from "@/lib/processing-utils";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
-  FolderX,
   LogOut,
   Table2,
   MessageSquarePlus,
@@ -150,7 +149,7 @@ export function AvatarDropdown() {
                       className="mr-2 h-4 w-4 shrink-0"
                       aria-hidden
                     />
-                    Resolve Google Sheet Setup
+                    Set Up Google Sheet
                   </DropdownMenuItem>
                 )}
                 {sheetInfo?.ssid && sheetInfo?.url && (
@@ -176,20 +175,9 @@ export function AvatarDropdown() {
                       className="mr-2 h-4 w-4 shrink-0"
                       aria-hidden
                     />
-                    Choose New Google Sheet
+                    Switch Sheets
                   </DropdownMenuItem>
                 )}
-
-                {sheetInfo?.ssid && (
-                    <DropdownMenuItem
-                      onClick={() => {
-                        clearSheet();
-                      }}
-                    >
-                      <FolderX className="mr-2 h-4 w-4" />
-                      <span>Forget Google Sheet</span>
-                    </DropdownMenuItem>
-                  )}
                 {/* Public actions shown in all environments. Keep these outside
                     any dev-only gate so production users always see them. */}
                 <DropdownMenuItem

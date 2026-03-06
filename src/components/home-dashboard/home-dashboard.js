@@ -180,6 +180,12 @@ export function HomeDashboard() {
   const [recommendedCandidateId, setRecommendedCandidateId] = useState(null);
   const [hadLocalSheetBefore, setHadLocalSheetBefore] = useState(false);
   const provisioningStartedRef = useRef(false);
+  const shouldShowSheetFlowUi =
+    !sheetInfo?.ssid ||
+    (flowIntent === "switch_sheet" &&
+      ["discovering", "linking_or_creating", "choose_sheet", "fallback_error"].includes(
+        onboardingState,
+      ));
 
   const nonGoalSessionCount = useMemo(() => {
     if (!Array.isArray(parsedData)) return 0;
@@ -478,6 +484,35 @@ export function HomeDashboard() {
     [flowIntent, hadLocalSheetBefore, handleResolvedAction],
   );
 
+  const disconnectCurrentSheet = useCallback(async () => {
+    setProvisionError(null);
+    setIsProvisionActionLoading(true);
+    try {
+      const response = await fetch("/api/clear-sheet-link", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to disconnect current sheet");
+      }
+      devLog("[sheet-flow] disconnected current sheet", payload);
+      clearSheet();
+      setHadLocalSheetBefore(false);
+      setFlowIntent("switch_sheet");
+      setOnboardingState("choose_sheet");
+      setSheetDiscoveryStatusMessage(
+        "Current sheet disconnected. Choose another one or start fresh.",
+      );
+    } catch (error) {
+      setProvisionError(error?.message || "Failed to disconnect current sheet");
+    } finally {
+      setIsProvisionActionLoading(false);
+    }
+  }, [clearSheet]);
+
   const handlePickerSelection = useCallback(
     (doc) => {
       if (!doc?.id) return;
@@ -615,9 +650,7 @@ export function HomeDashboard() {
           )}
         </div>
       )}
-      {(!sheetInfo?.ssid ||
-        (flowIntent === "switch_sheet" &&
-          ["provisioning", "choose_sheet", "fallback_error"].includes(onboardingState))) && (
+      {shouldShowSheetFlowUi && (
         <>
           <DrivePickerContainer
             onReady={handlePickerReady}
@@ -645,6 +678,7 @@ export function HomeDashboard() {
               statusMessage={sheetDiscoveryStatusMessage}
               onChooseSheet={(ssid) => runLinkAction({ mode: "select_existing", selectedSsid: ssid })}
               onCreateBlank={() => runLinkAction({ mode: "create_blank" })}
+              onDisconnectCurrentSheet={disconnectCurrentSheet}
             />
           )}
           {onboardingState === "fallback_error" && (

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { useSession, signIn, sgnOut } from "next-auth/react";
 import { useLocalStorage } from "usehooks-ts";
 import { usePathname } from "next/navigation";
@@ -64,6 +64,76 @@ import { getLogoForTheme } from "@/lib/theme-logos";
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 
 const BIO_SETTINGS_PAGES = ["/calculator", "/strength-level-calculator"];
+const CANNY_APP_ID = "65ae4d4c921071bb0aae99c3";
+
+let cannyLoadPromise = null;
+
+function ensureCannyChangelog() {
+  if (typeof window === "undefined") {
+    return Promise.resolve(false);
+  }
+
+  if (window.__cannyInitialized) {
+    return Promise.resolve(true);
+  }
+
+  if (cannyLoadPromise) {
+    return cannyLoadPromise;
+  }
+
+  cannyLoadPromise = new Promise((resolve, reject) => {
+    const initCannyChangelog = () => {
+      if (window.__cannyInitialized) {
+        resolve(true);
+        return;
+      }
+
+      window.Canny("initChangelog", {
+        appID: CANNY_APP_ID,
+        position: "bottom",
+        align: "left",
+        theme: "dark",
+        omitNonEssentialCookies: true,
+      });
+      window.__cannyInitialized = true;
+      resolve(true);
+    };
+
+    const existingScript = document.getElementById("canny-jssdk");
+    if (existingScript) {
+      if (typeof window.Canny === "function") {
+        initCannyChangelog();
+        return;
+      }
+
+      existingScript.addEventListener("load", initCannyChangelog, {
+        once: true,
+      });
+      existingScript.addEventListener(
+        "error",
+        () => {
+          cannyLoadPromise = null;
+          reject(new Error("Failed to load Canny SDK"));
+        },
+        { once: true },
+      );
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = "canny-jssdk";
+    script.src = "https://canny.io/sdk.js";
+    script.async = true;
+    script.onload = initCannyChangelog;
+    script.onerror = () => {
+      cannyLoadPromise = null;
+      reject(new Error("Failed to load Canny SDK"));
+    };
+    document.body.appendChild(script);
+  });
+
+  return cannyLoadPromise;
+}
 
 /**
  * Top-level navigation bar. Composes the desktop logo/nav links, mobile nav,
@@ -74,36 +144,6 @@ const BIO_SETTINGS_PAGES = ["/calculator", "/strength-level-calculator"];
 export function NavBar() {
   const { status: authStatus } = useSession();
   const pathname = usePathname();
-
-  useEffect(() => {
-    // Only run on client
-    if (typeof window === "undefined") return;
-
-    // Guard against double-init (React Strict Mode runs effects twice in dev)
-    if (window.__cannyInitialized) return;
-
-    function initCannyChangelog() {
-      window.__cannyInitialized = true;
-      window.Canny("initChangelog", {
-        appID: "65ae4d4c921071bb0aae99c3",
-        position: "bottom",
-        align: "left",
-        theme: "dark",
-      });
-    }
-
-    if (!window.Canny) {
-      // If SDK is not present, inject it, then init after load
-      const script = document.createElement("script");
-      script.src = "https://canny.io/sdk.js";
-      script.async = true;
-      script.onload = initCannyChangelog;
-      document.body.appendChild(script);
-    } else {
-      // If SDK already there, just init
-      initCannyChangelog();
-    }
-  }, []);
 
   return (
     <div className="bg-background/50 mx-2 my-3 flex items-center rounded-lg px-3 md:mx-10 md:px-6 xl:mx-24">
@@ -217,17 +257,54 @@ export function DesktopNav() {
         >
           Articles
         </Link>
-        <button
-          data-canny-changelog
-          className={cn(
-            "text-muted-foreground hover:text-foreground/80",
-            "hidden 2xl:block", // Only show articles on 2XL
-          )}
-        >
-          What&apos;s New
-        </button>
+        <WhatsNewButton />
       </nav>
     </div>
+  );
+}
+
+function WhatsNewButton() {
+  const buttonRef = useRef(null);
+  const [isReady, setIsReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadCanny = useCallback(async () => {
+    if (isReady || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      await ensureCannyChangelog();
+      setIsReady(true);
+    } catch (error) {
+      console.error("[canny] changelog load failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isReady, isLoading]);
+
+  const handleClick = useCallback(async () => {
+    if (isReady) return;
+
+    await loadCanny();
+    buttonRef.current?.click();
+  }, [isReady, loadCanny]);
+
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      data-canny-changelog
+      onMouseEnter={loadCanny}
+      onFocus={loadCanny}
+      onClick={handleClick}
+      className={cn(
+        "text-muted-foreground hover:text-foreground/80",
+        "hidden 2xl:block", // Only show articles on 2XL
+      )}
+      aria-busy={isLoading}
+    >
+      What&apos;s New
+    </button>
   );
 }
 

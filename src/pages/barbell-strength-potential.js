@@ -110,7 +110,7 @@ export default function StrengthPotential({ relatedArticles }) {
  */
 function StrengthPotentialMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
-  const { liftTypes, isLoading, sheetInfo } = useUserLiftingData();
+  const { liftTypes, isLoading, isDemoMode, sheetInfo } = useUserLiftingData();
   const [e1rmFormula, setE1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
     initializeWithValue: false,
   });
@@ -135,7 +135,7 @@ function StrengthPotentialMain({ relatedArticles }) {
 
   const displayOtherLift = selectedOtherLift || otherLiftTypes[0] || null;
 
-  if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid)
+  if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid && !isDemoMode)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
         <ChooseSheetInstructionsCard session={session} />

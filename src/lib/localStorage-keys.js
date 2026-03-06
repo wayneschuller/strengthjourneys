@@ -66,6 +66,7 @@ export const LOCAL_STORAGE_KEYS = {
 
   // Google Sheet / data source
   SHEET_INFO: "SJ_sheetInfo",
+  SIGNED_IN_DEMO_MODE: "SJ_signedInDemoMode",
   SSID: "ssid", // deprecated — migrated to SHEET_INFO
   SHEET_URL: "sheetURL", // deprecated — migrated to SHEET_INFO
   SHEET_FILENAME: "sheetFilename", // deprecated — migrated to SHEET_INFO

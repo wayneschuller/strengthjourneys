@@ -347,7 +347,7 @@ const DEMO_MODE_NUDGE_MESSAGES = [
 // Internal banner shown on data pages when the user is unauthenticated or has no sheet connected.
 function DataAccessBanner({ pathname }) {
   const { data: session, status: authStatus } = useSession();
-  const { sheetInfo, selectSheet } = useUserLiftingData();
+  const { sheetInfo, selectSheet, isDemoMode } = useUserLiftingData();
   const [openPicker, setOpenPicker] = useState(null);
   const [shouldLoadPicker, setShouldLoadPicker] = useState(false);
 
@@ -383,7 +383,9 @@ function DataAccessBanner({ pathname }) {
           <p className="text-sm leading-tight text-amber-950">
             {showSignInCta
               ? "You are viewing demo data. Sign in with Google to unlock your personal lifting history."
-              : "You are signed in. Connect your Google Sheet to load your own lifting history."}
+              : isDemoMode
+                ? "You are signed in and viewing demo mode. Connect your Google Sheet to load your own lifting history."
+                : "You are signed in. Connect your Google Sheet to load your own lifting history."}
           </p>
           {showSignInCta ? (
             <Button

@@ -88,6 +88,7 @@ export function TheLatestSessionCard({
   sessionCount = 0,
 }) {
   const {
+    isDemoMode,
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
@@ -106,7 +107,6 @@ export function TheLatestSessionCard({
 
   const sessionRatingRef = useRef(null); // Used to avoid randomised rating changes on rerenders
   const lastUsedAdlibRef = useRef({}); // Tracks last-used indices to avoid repeats when switching sessions
-  const isDemoMode = authStatus === "unauthenticated";
   const [sessionRatingCache, setSessionRatingCache] = useLocalStorage(
     LOCAL_STORAGE_KEYS.SESSION_RATING_CACHE,
     {},
@@ -263,7 +263,7 @@ export function TheLatestSessionCard({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <CardTitle className="flex flex-wrap items-center gap-2">
-                {authStatus === "unauthenticated" && (
+                {isDemoMode && (
                   <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium">
                     Demo Mode
                   </span>

@@ -92,13 +92,13 @@ export default function LiftExplorer({ relatedArticles }) {
  */
 function LiftExplorerMain({ relatedArticles }) {
   const { data: session, status: authStatus } = useSession();
-  const { isLoading, sheetInfo, liftTypes } = useUserLiftingData();
+  const { isLoading, isDemoMode, sheetInfo, liftTypes } = useUserLiftingData();
   const [selectedLiftType, setSelectedLiftType] = useState(null);
 
   // null means "auto" — default to the user's most frequent lift
   const effectiveLiftType = selectedLiftType ?? liftTypes?.[0]?.liftType ?? null;
 
-  if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid)
+  if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid && !isDemoMode)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
         <ChooseSheetInstructionsCard session={session} />

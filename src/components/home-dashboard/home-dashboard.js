@@ -22,7 +22,14 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertTriangle,
   FolderOpen,
@@ -159,6 +166,8 @@ export function HomeDashboard() {
     sheetInfo,
     selectSheet,
     clearSheet,
+    isDemoMode,
+    enterSignedInDemoMode,
     parsedData,
     rawRows,
     dataSyncedAt,
@@ -180,9 +189,10 @@ export function HomeDashboard() {
   const [flowIntent, setFlowIntent] = useState("bootstrap");
   const [recommendedCandidateId, setRecommendedCandidateId] = useState(null);
   const [hadLocalSheetBefore, setHadLocalSheetBefore] = useState(false);
+  const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false);
   const provisioningStartedRef = useRef(false);
   const shouldShowSheetFlowUi =
-    !sheetInfo?.ssid ||
+    (!sheetInfo?.ssid && !isDemoMode) ||
     (flowIntent === "switch_sheet" &&
       ["discovering", "linking_or_creating", "choose_sheet", "fallback_error"].includes(
         onboardingState,
@@ -502,18 +512,19 @@ export function HomeDashboard() {
       }
       devLog("[sheet-flow] disconnected current sheet", payload);
       clearSheet();
+      enterSignedInDemoMode();
       setHadLocalSheetBefore(false);
-      setFlowIntent("switch_sheet");
-      setOnboardingState("choose_sheet");
-      setSheetDiscoveryStatusMessage(
-        "Current sheet disconnected. Choose another one or start fresh.",
-      );
+      setFlowIntent("bootstrap");
+      setOnboardingState("linked");
+      setSheetDiscoveryStatusMessage("");
+      setCandidateSheets([]);
+      setRecommendedCandidateId(null);
     } catch (error) {
       setProvisionError(error?.message || "Failed to disconnect current sheet");
     } finally {
       setIsProvisionActionLoading(false);
     }
-  }, [clearSheet]);
+  }, [clearSheet, enterSignedInDemoMode]);
 
   const handleSheetFlowOpenChange = useCallback(
     (nextOpen) => {
@@ -549,11 +560,12 @@ export function HomeDashboard() {
   useEffect(() => {
     if (authStatus !== "authenticated") return;
     if (sheetInfo?.ssid) return;
+    if (isDemoMode) return;
     if (provisioningStartedRef.current) return;
 
     provisioningStartedRef.current = true;
     resolveSheetFlow({ intent: "bootstrap", hadLocalBefore: false });
-  }, [authStatus, resolveSheetFlow, sheetInfo?.ssid]);
+  }, [authStatus, isDemoMode, resolveSheetFlow, sheetInfo?.ssid]);
 
   useEffect(() => {
     if (authStatus !== "authenticated") return;
@@ -705,7 +717,7 @@ export function HomeDashboard() {
               statusMessage={sheetDiscoveryStatusMessage}
               onChooseSheet={(ssid) => runLinkAction({ mode: "select_existing", selectedSsid: ssid })}
               onCreateBlank={() => runLinkAction({ mode: "create_blank" })}
-              onDisconnectCurrentSheet={disconnectCurrentSheet}
+              onDisconnectCurrentSheet={() => setIsDisconnectDialogOpen(true)}
             />
           )}
           {onboardingState === "fallback_error" && (
@@ -723,6 +735,37 @@ export function HomeDashboard() {
               errorMessage={provisionError}
             />
           )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isDisconnectDialogOpen} onOpenChange={setIsDisconnectDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Disconnect your sheet?</DialogTitle>
+            <DialogDescription>
+              This removes your current spreadsheet from Strength Journeys and stops
+              future reads of your lifting data. You&apos;ll stay signed in and return
+              to demo mode until you reconnect a sheet.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDisconnectDialogOpen(false)}
+              disabled={isProvisionActionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setIsDisconnectDialogOpen(false);
+                void disconnectCurrentSheet();
+              }}
+              disabled={isProvisionActionLoading}
+            >
+              {isProvisionActionLoading ? "Disconnecting..." : "Disconnect Sheet"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       {sheetInfo?.ssid && (

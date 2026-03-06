@@ -153,12 +153,12 @@ function RecapCustomiseSidebar() {
 function StrengthYearInReviewMain() {
   const router = useRouter();
   const { status: authStatus } = useSession();
-  const { parsedData, isLoading, sheetInfo } = useUserLiftingData();
+  const { parsedData, isDemoMode, isLoading, sheetInfo } = useUserLiftingData();
 
   // Signed in but no sheet connected: we still have demo data in parsedData.
   // Treat as "no data" and show connect-sheet instructions instead of demo recap.
   const needsToConnectSheet =
-    authStatus === "authenticated" && !sheetInfo?.ssid;
+    authStatus === "authenticated" && !sheetInfo?.ssid && !isDemoMode;
 
   const yearsWithData = useMemo(() => {
     if (!parsedData || needsToConnectSheet) return [];
@@ -256,7 +256,7 @@ function StrengthYearInReviewMain() {
               <div className="order-1 xl:order-2 xl:col-start-2 flex justify-center xl:min-w-0">
                 <YearRecapCarousel
                   year={effectiveYear}
-                  isDemo={authStatus === "unauthenticated"}
+                  isDemo={isDemoMode}
                 />
               </div>
             )}
@@ -275,7 +275,7 @@ function StrengthYearInReviewMain() {
                 {authStatus === "authenticated" && sheetInfo?.ssid && (
                   <RecapCustomiseSidebar />
                 )}
-                {authStatus === "unauthenticated" ? (
+                {isDemoMode ? (
                   <DemoModeSignInCard />
                 ) : needsToConnectSheet ? (
                   <ConnectSheetRecapCard />

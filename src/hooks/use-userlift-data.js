@@ -126,7 +126,7 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
  * @context fetchFailed {boolean} - True after retries are exhausted (used by Layout for error toast).
  * @context apiError {{status, statusText, message}|null} - Structured error from the last failed fetch.
  * @context parseError {string|null} - Error message if sheet data failed to parse (sheet is auto-cleared).
- * @context isDemoMode {boolean} - True when unauthenticated; demo data is active.
+ * @context isDemoMode {boolean} - True when demo data is active, either signed out or explicitly disconnected while signed in.
  * @context rawRows {number|null} - Row count from the last successful sheet fetch.
  * @context hasCachedSheetData {boolean} - True if SWR holds valid sheet values (even if stale).
  * @context dataSyncedAt {number|null} - Timestamp (Date.now()) of the last successful data load.
@@ -140,7 +140,6 @@ export const UserLiftingDataProvider = ({ children }) => {
   const [fetchFailed, setFetchFailed] = useState(false);
 
   const { data: session, status: authStatus } = useSession();
-  const isDemoMode = authStatus === "unauthenticated";
 
   // Single consolidated sheet state
   const [sheetInfo, setSheetInfo] = useLocalStorage(
@@ -148,10 +147,19 @@ export const UserLiftingDataProvider = ({ children }) => {
     null,
     { initializeWithValue: false },
   );
+  const [signedInDemoMode, setSignedInDemoMode] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.SIGNED_IN_DEMO_MODE,
+    false,
+    { initializeWithValue: false },
+  );
+  const isDemoMode =
+    authStatus === "unauthenticated" ||
+    (authStatus === "authenticated" && !sheetInfo?.ssid && signedInDemoMode);
 
   const selectSheet = useCallback(
     (ssid, metadata = {}) => {
       gaTrackSheetLinked();
+      setSignedInDemoMode(false);
       setSheetInfo({
         ssid,
         url: metadata.url ?? null,
@@ -160,15 +168,23 @@ export const UserLiftingDataProvider = ({ children }) => {
         modifiedByMeTime: metadata.modifiedByMeTime ?? null,
       });
     },
-    [setSheetInfo],
+    [setSheetInfo, setSignedInDemoMode],
   );
 
   const clearSheet = useCallback(() => setSheetInfo(null), [setSheetInfo]);
+  const enterSignedInDemoMode = useCallback(() => setSignedInDemoMode(true), [setSignedInDemoMode]);
+  const exitSignedInDemoMode = useCallback(() => setSignedInDemoMode(false), [setSignedInDemoMode]);
 
   const shouldFetch =
     authStatus === "authenticated" &&
     !!session?.accessToken &&
     !!sheetInfo?.ssid;
+
+  useEffect(() => {
+    if (authStatus === "unauthenticated" && signedInDemoMode) {
+      setSignedInDemoMode(false);
+    }
+  }, [authStatus, signedInDemoMode, setSignedInDemoMode]);
 
   // -----------------------------------------------------------------------------------------------
   // Call gsheets API via our backend api route using useSWR
@@ -291,7 +307,7 @@ export const UserLiftingDataProvider = ({ children }) => {
       return;
     }
 
-    const result = getParsedDataWithFallback({ authStatus, data });
+    const result = getParsedDataWithFallback({ authStatus, data, isDemoMode });
 
     if (result.parseError) {
       clearSheet();
@@ -299,7 +315,7 @@ export const UserLiftingDataProvider = ({ children }) => {
 
     setParsedData(result.parsedData);
     setParseError(result.parseError);
-  }, [data, isLoading, isError, error, authStatus, clearSheet]);
+  }, [data, isLoading, isError, error, authStatus, clearSheet, isDemoMode]);
 
   // -----------------------------------------------------------------------------------------------
   // Effect B: Sync API metadata into sheetInfo when fresh data arrives
@@ -399,6 +415,8 @@ export const UserLiftingDataProvider = ({ children }) => {
         sheetInfo,
         selectSheet,
         clearSheet,
+        enterSignedInDemoMode,
+        exitSignedInDemoMode,
       }}
     >
       {children}
@@ -409,11 +427,11 @@ export const UserLiftingDataProvider = ({ children }) => {
 /**
  * Parses raw gsheet values into parsedData. Fires analytics on success/failure.
  * On parse error: returns parseError string (caller handles clearing sheet).
- * Uses demo data only when unauthenticated.
- * When authenticated without usable sheet data, returns empty data so UI can nudge sheet connection.
+ * Uses demo data when unauthenticated or when the user explicitly disconnected their sheet while staying signed in.
+ * When authenticated without usable sheet data and without explicit demo fallback, returns empty data so UI can nudge sheet connection.
  * Returns { parsedData, isDemoMode, parseError }.
  */
-function getParsedDataWithFallback({ authStatus, data }) {
+function getParsedDataWithFallback({ authStatus, data, isDemoMode }) {
   let parsedData = null; // A local version for this scope only
   let parseError = null;
 
@@ -437,8 +455,7 @@ function getParsedDataWithFallback({ authStatus, data }) {
     }
   }
 
-  const shouldUseDemoData = authStatus === "unauthenticated";
-  const isDemoMode = shouldUseDemoData;
+  const shouldUseDemoData = isDemoMode;
 
   if (shouldUseDemoData) {
     parsedData = transposeDatesToToday(sampleParsedData, true); // Transpose demo dates to recent, add jitter

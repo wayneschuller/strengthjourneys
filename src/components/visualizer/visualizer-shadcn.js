@@ -91,7 +91,7 @@ function SyncedMultiLiftTooltip({ active, payload, label, selectedLiftTypes, set
  *   hovered ISO date string; used to sync with TheLatestSessionCard.
  */
 export function VisualizerShadcn({ setHighlightDate }) {
-  const { parsedData, liftTypes } = useUserLiftingData();
+  const { isDemoMode, parsedData, liftTypes } = useUserLiftingData();
   const { status: authStatus } = useSession();
   const { getColor } = useLiftColors();
   const { isMetric } = useAthleteBio();
@@ -102,10 +102,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
   useEffect(() => {
     if (authStatus === "loading" || !liftTypes?.length) return;
 
-    const localStorageKey = getSelectedLiftsKey(
-      authStatus === "unauthenticated",
-      VISUALIZER_STORAGE_PREFIX
-    );
+    const localStorageKey = getSelectedLiftsKey(isDemoMode, VISUALIZER_STORAGE_PREFIX);
     let stored = null;
     try {
       const raw = typeof window !== "undefined" && localStorage.getItem(localStorageKey);
@@ -127,7 +124,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
     }
 
     setSelectedLiftTypes(resolved);
-  }, [authStatus, liftTypes]);
+  }, [authStatus, isDemoMode, liftTypes]);
 
   // Get reactive colors for all selected lift types
   const liftColors = {};
@@ -220,7 +217,7 @@ export function VisualizerShadcn({ setHighlightDate }) {
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-pretty">
           <CardTitle>
-            {authStatus === "unauthenticated" && "Demo Mode: "}
+            {isDemoMode && "Demo Mode: "}
             {selectedLiftTypes.length === 1 && selectedLiftTypes[0]} Estimated
             One Rep Maxes
           </CardTitle>

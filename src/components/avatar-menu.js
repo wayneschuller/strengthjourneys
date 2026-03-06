@@ -8,12 +8,21 @@ import { devLog } from "@/lib/processing-utils";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   LogOut,
   Table2,
   MessageSquarePlus,
   Coffee,
   Eraser,
   Trash2,
+  Unplug,
 } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 
@@ -44,11 +53,14 @@ export function AvatarDropdown() {
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [isResettingKv, setIsResettingKv] = useState(false);
+  const [isDisconnectingSheet, setIsDisconnectingSheet] = useState(false);
+  const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false);
   const { setTheme, theme } = useTheme();
 
   const {
     sheetInfo,
     clearSheet,
+    enterSignedInDemoMode,
   } = useUserLiftingData();
 
   const runKvReset = useCallback(
@@ -75,6 +87,31 @@ export function AvatarDropdown() {
     },
     [],
   );
+
+  const disconnectCurrentSheet = useCallback(async () => {
+    setIsDisconnectingSheet(true);
+    try {
+      const response = await fetch("/api/clear-sheet-link", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to disconnect current sheet");
+      }
+      devLog("[sheet-flow] disconnected current sheet from avatar menu", payload);
+      clearSheet();
+      enterSignedInDemoMode();
+      setIsDisconnectDialogOpen(false);
+      router.push("/");
+    } catch (error) {
+      console.error("[sheet-flow] disconnect current sheet failed:", error);
+    } finally {
+      setIsDisconnectingSheet(false);
+    }
+  }, [clearSheet, enterSignedInDemoMode, router]);
 
   if (authStatus !== "authenticated")
     return (
@@ -140,7 +177,10 @@ export function AvatarDropdown() {
                 {!sheetInfo?.ssid && (
                   <DropdownMenuItem
                     onClick={() => {
-                      router.push("/");
+                      router.push({
+                        pathname: "/",
+                        query: { sheetFlow: "switch" },
+                      });
                     }}
                   >
                     <img
@@ -176,6 +216,12 @@ export function AvatarDropdown() {
                       aria-hidden
                     />
                     Switch Sheets
+                  </DropdownMenuItem>
+                )}
+                {sheetInfo?.ssid && (
+                  <DropdownMenuItem onClick={() => setIsDisconnectDialogOpen(true)}>
+                    <Unplug className="mr-2 h-4 w-4" />
+                    Disconnect Sheet
                   </DropdownMenuItem>
                 )}
                 {/* Public actions shown in all environments. Keep these outside
@@ -238,6 +284,36 @@ export function AvatarDropdown() {
               </DropdownMenuGroup>
             </DropdownMenuContent>
       </DropdownMenu>
+      <Dialog open={isDisconnectDialogOpen} onOpenChange={setIsDisconnectDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Disconnect your sheet?</DialogTitle>
+            <DialogDescription>
+              This removes your current spreadsheet from Strength Journeys and stops
+              future reads of your lifting data. You&apos;ll stay signed in and return
+              to demo mode until you reconnect a sheet.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDisconnectDialogOpen(false)}
+              disabled={isDisconnectingSheet}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                void disconnectCurrentSheet();
+              }}
+              disabled={isDisconnectingSheet}
+            >
+              {isDisconnectingSheet ? "Disconnecting..." : "Disconnect Sheet"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

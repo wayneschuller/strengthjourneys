@@ -241,7 +241,7 @@ function BarbellInsightsMain({
   resourcesArticle,
 }) {
   const { data: session, status: authStatus } = useSession();
-  const { isLoading, sheetInfo } = useUserLiftingData();
+  const { isLoading, isDemoMode, sheetInfo } = useUserLiftingData();
 
   const bigFourIcons = {
     "Back Squat": Crown,
@@ -257,7 +257,7 @@ function BarbellInsightsMain({
     "Strict Press": "/strict_press.svg",
   };
 
-  if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid)
+  if (!isLoading && authStatus === "authenticated" && !sheetInfo?.ssid && !isDemoMode)
     return (
       <div className="mt-5 flex flex-1 flex-row justify-center align-middle md:mt-10">
         <ChooseSheetInstructionsCard session={session} />

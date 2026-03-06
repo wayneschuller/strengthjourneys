@@ -54,7 +54,7 @@ export function TheMonthInIronCard({
   dataMaturityStage: stageFromParent = null,
   sessionCount: sessionCountFromParent = null,
 }) {
-  const { parsedData } = useUserLiftingData();
+  const { isDemoMode, parsedData } = useUserLiftingData();
   const bio = useAthleteBio();
   const { isMetric } = bio;
   const { status: authStatus } = useSession();
@@ -272,7 +272,7 @@ export function TheMonthInIronCard({
   if (dataMaturityStage !== "mature") {
     return (
       <EarlyMonthMomentumCard
-        authStatus={authStatus}
+        isDemoMode={isDemoMode}
         parsedData={parsedData}
         dataMaturityStage={dataMaturityStage}
         isMetric={isMetric}
@@ -286,7 +286,7 @@ export function TheMonthInIronCard({
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <CardTitle>
-              {authStatus === "unauthenticated" && "Demo Mode: "}
+              {isDemoMode && "Demo Mode: "}
               {monthCardTitle}
             </CardTitle>
             <CardDescription>{motivationalPhrase}</CardDescription>
@@ -387,7 +387,7 @@ export function TheMonthInIronCard({
 }
 
 function EarlyMonthMomentumCard({
-  authStatus,
+  isDemoMode,
   parsedData,
   dataMaturityStage,
   isMetric,
@@ -436,7 +436,7 @@ function EarlyMonthMomentumCard({
     <Card className="flex h-full flex-1 flex-col">
       <CardHeader className="pb-3">
         <CardTitle>
-          {authStatus === "unauthenticated" && "Demo Mode: "}
+          {isDemoMode && "Demo Mode: "}
           {title}
         </CardTitle>
         <CardDescription>{subtitle}</CardDescription>

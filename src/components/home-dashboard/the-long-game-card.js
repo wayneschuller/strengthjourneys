@@ -616,7 +616,7 @@ export function TheLongGameCard({
         <CardHeader data-share-section="header">
           <CardTitle>
             <span data-share-title="true">
-              {authStatus === "unauthenticated" && "Demo mode: "}
+              {isDemoMode && "Demo mode: "}
               {dataMaturityStage === "no_sessions"
                 ? "The Long Game Starts Here"
                 : cardTitle}
@@ -1183,8 +1183,7 @@ function generateWeeklyHeatmapData(parsedData, startYear, endYear, isDemoMode) {
 // Cell color encodes sessions that week: 1 day → level 1, 2 days → level 2, 3+ days → level 4.
 // Colors use --heatmap-N CSS variables so all themes work. Future weeks render invisible.
 function WeeklyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
-  const { status: authStatus } = useSession();
-  const isDemoMode = authStatus === "unauthenticated";
+  const { isDemoMode } = useUserLiftingData();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
     x: 0,
@@ -1453,8 +1452,7 @@ function generateMonthlyHeatmapData(
 // Cell color encodes active weeks that month: 0 = blank, 1–3 = graduated intensity, 4+ = full.
 // Future months render invisible; past months with zero activity render at low opacity.
 function MonthlyHeatmapMatrix({ parsedData, startYear, endYear, isSharing }) {
-  const { status: authStatus } = useSession();
-  const isDemoMode = authStatus === "unauthenticated";
+  const { isDemoMode } = useUserLiftingData();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
     x: 0,
@@ -1659,7 +1657,7 @@ function MonthlyTooltipContent({ value }) {
 // Cell color reflects session intensity and PR status via getHeatmapLevel.
 // Hover triggers a fixed-position tooltip with full session and PR details for that day.
 function Heatmap({ parsedData, startDate, endDate, isSharing }) {
-  const { status: authStatus } = useSession();
+  const { isDemoMode } = useUserLiftingData();
   const [hoveredValue, setHoveredValue] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({
     x: 0,
@@ -1673,9 +1671,9 @@ function Heatmap({ parsedData, startDate, endDate, isSharing }) {
       parsedData,
       startDate,
       endDate,
-      authStatus === "unauthenticated", // This is a clue we have sample data and we will fake the heatmap to impress shallow people
+      isDemoMode, // This is a clue we have sample data and we will fake the heatmap to impress shallow people
     );
-  }, [parsedData, startDate, endDate, authStatus]);
+  }, [parsedData, startDate, endDate, isDemoMode]);
 
   const handleMouseOver = useCallback((e, value) => {
     if (!value || !value.sessionData) return;

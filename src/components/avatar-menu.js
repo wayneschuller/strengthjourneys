@@ -106,13 +106,12 @@ export function AvatarDropdown() {
       clearSheet();
       enterSignedInDemoMode();
       setIsDisconnectDialogOpen(false);
-      router.push("/");
     } catch (error) {
       console.error("[sheet-flow] disconnect current sheet failed:", error);
     } finally {
       setIsDisconnectingSheet(false);
     }
-  }, [clearSheet, enterSignedInDemoMode, router]);
+  }, [clearSheet, enterSignedInDemoMode]);
 
   if (authStatus !== "authenticated")
     return (
@@ -120,7 +119,7 @@ export function AvatarDropdown() {
         variant="outline"
         onClick={() => {
           gaTrackSignInClick(router.pathname, "nav_avatar");
-          signIn("google", { callbackUrl: router.asPath || "/" });
+          signIn("google", { callbackUrl: "/" });
         }}
       >
         Google Sign in

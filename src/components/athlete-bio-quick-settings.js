@@ -181,11 +181,13 @@ export function AthleteBioQuickSettings() {
  * @param {string} [props.liftNote] - Optional extra context appended to the summary line (e.g. "lifting 239lb in each lift type").
  * @param {boolean} [props.forceStackedControls] - Render controls below the summary and allow wrapping within the parent width.
  * @param {string} [props.defaultBioPrompt] - Custom summary text shown when bio data is still default/unset.
+ * @param {Function} [props.onUnitChange] - Optional override for unit changes. Receives the next isMetric boolean.
  */
 export function AthleteBioInlineSettings({
   liftNote,
   forceStackedControls = false,
   defaultBioPrompt,
+  onUnitChange,
 }) {
   const {
     age,
@@ -207,13 +209,14 @@ export function AthleteBioInlineSettings({
   // post-localStorage value regardless of child-before-parent effect ordering.
   const [isOpen, setIsOpen] = useState(false);
   const bioDataIsDefaultRef = useRef(bioDataIsDefault);
-  bioDataIsDefaultRef.current = bioDataIsDefault; // always up to date
+  useEffect(() => {
+    bioDataIsDefaultRef.current = bioDataIsDefault;
+  }, [bioDataIsDefault]);
   useEffect(() => {
     const id = setTimeout(() => {
       if (bioDataIsDefaultRef.current) setIsOpen(true);
     }, 0);
     return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // mount-only — setTimeout defers decision until localStorage has been read
   const unit = isMetric ? "kg" : "lb";
 
@@ -239,6 +242,7 @@ export function AthleteBioInlineSettings({
     const v = parseInt(e.target.value || "0", 10);
     if (!isNaN(v)) setBodyWeight(v);
   };
+  const handleUnitSwitch = onUnitChange ?? toggleIsMetric;
 
   return (
     <div className={cn("flex flex-col items-center gap-1", forceStackedControls && "w-full")}>
@@ -323,7 +327,7 @@ export function AthleteBioInlineSettings({
                   onChange={bwOnChange}
                   className="h-7 w-20 px-2 text-xs"
                 />
-                <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+                <UnitChooser isMetric={isMetric} onSwitchChange={handleUnitSwitch} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -379,7 +383,7 @@ export function AthleteBioInlineSettings({
                 onChange={bwOnChange}
                 className="h-7 w-20 px-2 text-xs"
               />
-              <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+	              <UnitChooser isMetric={isMetric} onSwitchChange={handleUnitSwitch} />
             </div>
           </motion.div>
         )}

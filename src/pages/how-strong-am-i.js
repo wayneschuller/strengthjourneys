@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { NextSeo } from "next-seo";
 import { Copy, CircleDashed } from "lucide-react";
 
@@ -72,6 +72,23 @@ function normalizeLiftWeight(weight, isMetric) {
   const max = isMetric ? 300 : 660;
   const step = isMetric ? 2.5 : 5;
   return clamp(roundToStep(weight, step), min, max);
+}
+
+function convertLiftWeights(liftWeights, fromMetric, toMetric) {
+  return {
+    squat: normalizeLiftWeight(
+      convertWeight(liftWeights.squat, fromMetric, toMetric),
+      toMetric,
+    ),
+    bench: normalizeLiftWeight(
+      convertWeight(liftWeights.bench, fromMetric, toMetric),
+      toMetric,
+    ),
+    deadlift: normalizeLiftWeight(
+      convertWeight(liftWeights.deadlift, fromMetric, toMetric),
+      toMetric,
+    ),
+  };
 }
 
 function ordinal(n) {
@@ -187,56 +204,37 @@ function LiftBreakdown({ results, activeUniverse, liftWeights, isMetric }) {
 // ─── Inner client component ───────────────────────────────────────────────────
 
 function HowStrongAmIPageInner() {
-  const { age, sex, bodyWeight, isMetric } = useAthleteBio();
+  const { age, sex, bodyWeight, isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
 
-  const [liftWeights, setLiftWeights] = useState({
-    squat:    isMetric ? 100 : 225,
-    bench:    isMetric ? 70  : 155,
-    deadlift: isMetric ? 120 : 265,
-  });
-  const previousIsMetricRef = useRef(isMetric);
+  const [liftWeightsKg, setLiftWeightsKg] = useState(() => ({
+    squat: toKg(225, false),
+    bench: toKg(155, false),
+    deadlift: toKg(265, false),
+  }));
 
   const [selectedUniverse, setSelectedUniverse] = useState("Barbell Lifters");
   const [hoveredUniverse, setHoveredUniverse] = useState(null);
 
-  useEffect(() => {
-    if (previousIsMetricRef.current === isMetric) return;
-
-    setLiftWeights((prev) => ({
-      squat: normalizeLiftWeight(
-        convertWeight(prev.squat, previousIsMetricRef.current, isMetric),
-        isMetric,
-      ),
-      bench: normalizeLiftWeight(
-        convertWeight(prev.bench, previousIsMetricRef.current, isMetric),
-        isMetric,
-      ),
-      deadlift: normalizeLiftWeight(
-        convertWeight(prev.deadlift, previousIsMetricRef.current, isMetric),
-        isMetric,
-      ),
-    }));
-
-    previousIsMetricRef.current = isMetric;
-  }, [isMetric]);
+  const liftWeights = useMemo(
+    () => convertLiftWeights(liftWeightsKg, true, isMetric),
+    [liftWeightsKg, isMetric],
+  );
 
   const handleLiftChange = (key, value) =>
-    setLiftWeights((prev) => ({ ...prev, [key]: value }));
+    setLiftWeightsKg((prev) => ({ ...prev, [key]: toKg(value, isMetric) }));
+
+  const handleUnitSwitch = (nextIsMetric) => {
+    toggleIsMetric(nextIsMetric);
+  };
 
   const activeUniverse = hoveredUniverse ?? selectedUniverse;
 
   const bodyWeightKg = toKg(bodyWeight, isMetric);
 
-  const liftKgs = useMemo(() => ({
-    squat:    toKg(liftWeights.squat,    isMetric),
-    bench:    toKg(liftWeights.bench,    isMetric),
-    deadlift: toKg(liftWeights.deadlift, isMetric),
-  }), [liftWeights, isMetric]);
-
   const results = useMemo(
-    () => computeStrengthResults({ age, sex, bodyWeightKg }, liftKgs),
-    [age, sex, bodyWeightKg, liftKgs],
+    () => computeStrengthResults({ age, sex, bodyWeightKg }, liftWeightsKg),
+    [age, sex, bodyWeightKg, liftWeightsKg],
   );
 
   // Chart rings show average percentile across all three lifts
@@ -278,6 +276,7 @@ function HowStrongAmIPageInner() {
           <div className="flex justify-center">
             <AthleteBioInlineSettings
               defaultBioPrompt="Enter your details for personalised percentiles."
+              onUnitChange={handleUnitSwitch}
             />
           </div>
 

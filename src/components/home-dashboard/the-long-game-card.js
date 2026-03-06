@@ -118,6 +118,8 @@ export function TheLongGameCard({
     if (dashboardStage === "first_month") return "daily";
     return viewMode;
   }, [dashboardStage, viewMode]);
+  const isFirstWeekIntroState =
+    dashboardStage === "starter_sample" || dashboardStage === "first_real_week";
   const showWeeklyToggle =
     (dashboardStage === "early_base" || dashboardStage === "established") &&
     intervals?.length > 2;
@@ -640,14 +642,14 @@ export function TheLongGameCard({
         <CardHeader data-share-section="header">
           <CardTitle>
             <span data-share-title="true">
-              {dashboardStage === "starter_sample"
+              {isFirstWeekIntroState
                 ? "The Long Game Starts Here"
                 : dataMaturityStage === "no_sessions"
                 ? "The Long Game Starts Here"
                 : cardTitle}
             </span>
           </CardTitle>
-          {dashboardStage === "starter_sample" ? (
+          {isFirstWeekIntroState ? (
             <CardDescription>
               <span data-share-description="true">
                 Every training day adds another square to your map.
@@ -679,19 +681,19 @@ export function TheLongGameCard({
           )}
         </CardHeader>
         <CardContent className="flex-1">
-          {dashboardStage === "starter_sample" && (
+          {isFirstWeekIntroState && (
             <StarterLongGameState
               parsedData={parsedData}
               sessionCount={sessionCount}
             />
           )}
           {!intervals &&
-            dashboardStage !== "starter_sample" &&
+            !isFirstWeekIntroState &&
             dataMaturityStage !== "no_sessions" && (
             <Skeleton className="h-64 w-11/12 flex-1" />
           )}
           {!intervals &&
-            dashboardStage !== "starter_sample" &&
+            !isFirstWeekIntroState &&
             dataMaturityStage === "no_sessions" && (
             <div className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed bg-muted/20 px-5 text-center">
               <p className="text-sm text-muted-foreground">
@@ -700,7 +702,7 @@ export function TheLongGameCard({
               </p>
             </div>
           )}
-          {intervals && dashboardStage !== "starter_sample" && (
+          {intervals && !isFirstWeekIntroState && (
             <>
               {/* Consistency grade rings — always included in capture output */}
               <div className="mb-6" data-share-section="consistency">
@@ -866,7 +868,7 @@ export function TheLongGameCard({
             </>
           )}
         </CardContent>
-        {intervals && dashboardStage !== "starter_sample" && (
+        {intervals && !isFirstWeekIntroState && (
           <CardFooter id="ignoreCopy">
             <div className="flex w-full flex-col gap-2">
               <div className="flex justify-end">

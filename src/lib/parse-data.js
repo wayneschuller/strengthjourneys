@@ -1,6 +1,6 @@
 import { recordTiming } from "@/lib/processing-utils";
 import { parse } from "date-fns";
-import { normalizeYmd as normalizeDateString } from "@/lib/date-utils";
+import { normalizeDateInput } from "@/lib/date-utils";
 import { parseTurnKeyData } from "@/lib/parse-turnkey-importer";
 
 /**
@@ -71,6 +71,10 @@ function parseBespokeData(data) {
   const columnNames = data[0];
   let previousDate = null;
   let previousLiftType = null;
+  const localeHint =
+    typeof navigator !== "undefined" && typeof navigator.language === "string"
+      ? navigator.language
+      : undefined;
 
   const normalizedColumnNames = columnNames.map(normalizeColumnName);
 
@@ -127,7 +131,7 @@ function parseBespokeData(data) {
     // --- DATE HANDLING LOGIC ---
     // If the date cell is filled, try to normalize it
     if (row[dateCol]) {
-      const normalizedDate = normalizeDateString(row[dateCol]);
+      const normalizedDate = normalizeDateInput(row[dateCol], localeHint);
       if (normalizedDate) {
         // Valid date: use it and update previousDate
         obj.date = normalizedDate;

@@ -113,6 +113,20 @@ function getPreferredUnitTypeFromClient() {
   }
 }
 
+function getClientLocale() {
+  if (typeof window === "undefined") return "en-US";
+  const locale = window.navigator?.language;
+  return typeof locale === "string" && locale.trim().length > 0 ? locale : "en-US";
+}
+
+function getStarterDateTextForClientLocale() {
+  return new Intl.DateTimeFormat(getClientLocale(), {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).format(new Date());
+}
+
 function getSheetUrl(ssid, url) {
   if (typeof url === "string" && url.trim().length > 0) return url;
   if (typeof ssid === "string" && ssid.trim().length > 0) {
@@ -394,6 +408,8 @@ export function SheetSetupDialog() {
             intent: intent || "bootstrap",
             hadLocalSheetBefore: Boolean(hadLocalBefore),
             preferredUnitType: getPreferredUnitTypeFromClient(),
+            locale: getClientLocale(),
+            starterDateText: getStarterDateTextForClientLocale(),
           }),
         });
         const payload = await response.json().catch(() => ({}));
@@ -429,6 +445,8 @@ export function SheetSetupDialog() {
             selectedSsid,
             hadLocalSheetBefore,
             preferredUnitType: getPreferredUnitTypeFromClient(),
+            locale: getClientLocale(),
+            starterDateText: getStarterDateTextForClientLocale(),
           }),
         });
         const payload = await response.json().catch(() => ({}));

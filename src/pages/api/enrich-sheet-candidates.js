@@ -35,6 +35,7 @@ export default async function handler(req, res) {
       candidates,
       candidateIds,
       headers: base.headers,
+      locale: base.locale,
       debug,
     });
     devLog("[sheet-flow] enrich:done", {

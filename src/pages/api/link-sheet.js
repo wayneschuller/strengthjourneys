@@ -84,7 +84,11 @@ export default async function handler(req, res) {
         sheetName,
         base.headers,
         new Date().toISOString(),
-        preferredUnitType,
+        {
+          preferredUnitType,
+          locale: base.locale,
+          starterDateText: req.body?.starterDateText || null,
+        },
       );
       connectionMethod =
         intent === "switch_sheet" ? "switch_sheet_selection" : "user_created_blank";

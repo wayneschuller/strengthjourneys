@@ -42,7 +42,7 @@ export default async function handler(req, res) {
   try {
     const t0 = Date.now();
     const sheetsUrl = `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?dateTimeRenderOption=FORMATTED_STRING`;
-    const driveUrl = `https://www.googleapis.com/drive/v3/files/${ssid}?fields=name,webViewLink,modifiedTime,modifiedByMeTime`;
+    const driveUrl = `https://www.googleapis.com/drive/v3/files/${ssid}?fields=name,trashed,webViewLink,modifiedTime,modifiedByMeTime`;
 
     let sheetsMs = null;
     let driveMs = null;
@@ -91,6 +91,10 @@ export default async function handler(req, res) {
 
     if (driveRes.ok) {
       const driveData = await driveRes.json();
+      if (driveData?.trashed) {
+        res.status(404).json({ error: "This Google Sheet is in the trash." });
+        return;
+      }
       Object.assign(data, {
         name: driveData.name,
         webViewLink: driveData.webViewLink,

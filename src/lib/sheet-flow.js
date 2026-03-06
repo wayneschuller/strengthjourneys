@@ -1,6 +1,7 @@
 import { kv } from "@vercel/kv";
 import { getServerSession } from "next-auth/next";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { normalizeDateInput } from "@/lib/date-utils";
 import { devLog } from "@/lib/processing-utils";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 
@@ -71,6 +72,29 @@ export function createDebug(intent, mode) {
 export function withDebug(payload, debug) {
   if (!isDevEnv) return payload;
   return { ...payload, debug };
+}
+
+function getRequestLocale(req) {
+  const bodyLocale = req?.body?.locale;
+  if (typeof bodyLocale === "string" && bodyLocale.trim()) {
+    return bodyLocale.trim();
+  }
+
+  const acceptLanguage = req?.headers?.["accept-language"];
+  if (typeof acceptLanguage === "string" && acceptLanguage.trim()) {
+    return acceptLanguage.split(",")[0].trim();
+  }
+
+  return "en-US";
+}
+
+function formatStarterDateForLocale(nowIso, localeHint) {
+  const date = nowIso ? new Date(nowIso) : new Date();
+  return new Intl.DateTimeFormat(localeHint || "en-US", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).format(date);
 }
 
 function toTimestamp(iso) {
@@ -196,6 +220,7 @@ export async function requireSheetFlowContext(req, res) {
     session,
     headers: { Authorization: `Bearer ${session.accessToken}` },
     kvKey: `sj:user:${session.user.email}`,
+    locale: getRequestLocale(req),
   };
 }
 
@@ -268,12 +293,8 @@ export async function readHeaderInfo(ssid, headers) {
   };
 }
 
-function parseYmd(value) {
-  if (!value) return null;
-  const str = String(value).trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return null;
-  const d = new Date(`${str}T00:00:00Z`);
-  return Number.isNaN(d.getTime()) ? null : str;
+function parseYmd(value, localeHint) {
+  return normalizeDateInput(value, localeHint);
 }
 
 function normalizeLiftTypeForPreview(liftTypeRaw) {
@@ -329,6 +350,7 @@ function parseWeightAndUnit(value) {
 export async function enrichCandidateMetadata(
   candidate,
   headers,
+  locale,
   dateColumnIndex,
   repsColumnIndex,
   weightColumnIndex,
@@ -374,7 +396,7 @@ export async function enrichCandidateMetadata(
     if (!hasReps || !hasWeight) continue;
     approxRows += 1;
 
-    const parsedDate = parseYmd(row?.[dateColumnIndex]) || previousDate;
+    const parsedDate = parseYmd(row?.[dateColumnIndex], locale) || previousDate;
     if (!parsedDate) continue;
     previousDate = parsedDate;
 
@@ -532,6 +554,7 @@ export async function enrichCandidatesByIds({
   candidates,
   candidateIds,
   headers,
+  locale,
   debug,
 }) {
   const candidateMap = new Map();
@@ -567,6 +590,7 @@ export async function enrichCandidatesByIds({
       await enrichCandidateMetadata(
         candidate,
         headers,
+        locale,
         headerHint.dateColumnIndex,
         headerHint.repsColumnIndex,
         headerHint.weightColumnIndex,
@@ -729,16 +753,20 @@ export async function createBootstrapSheet(
   sheetName,
   headers,
   nowIso,
-  preferredUnitType = "lb",
+  {
+    preferredUnitType = "lb",
+    locale = "en-US",
+    starterDateText = null,
+  } = {},
 ) {
   const { ssid, sheetId } = await createSpreadsheet(sheetName, headers);
-  const todayYmd = nowIso.slice(0, 10);
   const unitType = preferredUnitType === "kg" ? "kg" : "lb";
   const starterWeight = unitType === "kg" ? "20kg" : "45lb";
+  const starterDate = starterDateText || formatStarterDateForLocale(nowIso, locale);
   const starterRows = [
     ["Date", "Lift Type", "Reps", "Weight", "Notes"],
     [
-      todayYmd,
+      starterDate,
       "Back Squat",
       "5",
       starterWeight,
@@ -746,7 +774,7 @@ export async function createBootstrapSheet(
     ],
     ["", "", "5", starterWeight, "Log one set per row as you lift."],
     ["", "", "5", starterWeight, "Leave Date blank on the extra rows for the same session."],
-    ["", "", "5", starterWeight, "Put all your sets here, including warmups."],
+    ["", "", "", "", "Put all your sets here, including warmups."],
   ];
 
   const valuesResponse = await fetch(

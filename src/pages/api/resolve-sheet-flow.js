@@ -144,7 +144,11 @@ export default async function handler(req, res) {
         sheetName,
         base.headers,
         nowIso,
-        preferredUnitType,
+        {
+          preferredUnitType,
+          locale: base.locale,
+          starterDateText: req.body?.starterDateText || null,
+        },
       );
       await persistLinkedSheet({
         kvKey: base.kvKey,
@@ -207,7 +211,11 @@ export default async function handler(req, res) {
           sheetName,
           base.headers,
           nowIso,
-          preferredUnitType,
+          {
+            preferredUnitType,
+            locale: base.locale,
+            starterDateText: req.body?.starterDateText || null,
+          },
         );
         await persistLinkedSheet({
           kvKey: base.kvKey,

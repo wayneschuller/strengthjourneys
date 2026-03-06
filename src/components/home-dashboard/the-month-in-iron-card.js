@@ -471,6 +471,7 @@ function EarlyMonthMomentumCard({
   const showWeekTemplate =
     dashboardStage === "starter_sample" || dashboardStage === "first_real_week";
   const showFirstMonthTemplate = dashboardStage === "first_month";
+  const isTemplateMode = showWeekTemplate || showFirstMonthTemplate;
 
   return (
     <Card className="flex h-full flex-1 flex-col">
@@ -481,7 +482,11 @@ function EarlyMonthMomentumCard({
         </CardTitle>
         <CardDescription>{subtitle}</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col justify-center gap-4">
+      <CardContent
+        className={`flex flex-1 flex-col gap-4 ${
+          isTemplateMode ? "justify-start pt-0" : "justify-center"
+        }`}
+      >
         {showWeekTemplate ? (
           <div className="rounded-lg bg-background/60 px-3 py-3">
             <p className="text-sm text-muted-foreground">

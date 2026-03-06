@@ -499,14 +499,12 @@ function EarlyMonthMomentumCard({
                 lifts={[
                   { liftType: "Back Squat", prescription: "3×5" },
                 ]}
-                note="Leave 1-2 reps in reserve on each set."
               />
               <WeekPlanLiftSession
                 title="Session 2"
                 lifts={[
                   { liftType: "Bench Press", prescription: "3×5" },
                 ]}
-                note="Add a small amount of weight from warm-ups to work sets."
               />
               <WeekPlanLiftSession
                 title="Session 3"
@@ -514,7 +512,6 @@ function EarlyMonthMomentumCard({
                   { liftType: "Deadlift", prescription: "1×5" },
                   { liftType: "Strict Press", prescription: "3×5" },
                 ]}
-                note="Focus on strong setup and controlled bar path on both lifts."
               />
             </div>
           </div>
@@ -618,7 +615,7 @@ function WeekPlanSession({ title, items }) {
   );
 }
 
-function WeekPlanLiftSession({ title, lifts, note }) {
+function WeekPlanLiftSession({ title, lifts }) {
   return (
     <div className="rounded-lg border border-border/70 bg-muted/10 px-3 py-3">
       <p className="mb-3 text-sm font-semibold text-foreground">{title}</p>
@@ -649,7 +646,6 @@ function WeekPlanLiftSession({ title, lifts, note }) {
           );
         })}
       </div>
-      <p className="mt-3 text-sm text-muted-foreground">{note}</p>
     </div>
   );
 }

@@ -21,6 +21,7 @@ import {
   LOCAL_STORAGE_KEYS,
   getSheetScopedStorageKey,
 } from "@/lib/localStorage-keys";
+import { GOOGLE_SHEETS_ICON_URL } from "@/lib/google-sheets-icon";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { Button } from "@/components/ui/button";
@@ -409,6 +410,12 @@ export function TheLatestSessionCard({
                             target="_blank"
                             rel="noopener noreferrer"
                           >
+                            <img
+                              src={GOOGLE_SHEETS_ICON_URL}
+                              alt=""
+                              className="h-4 w-4 shrink-0"
+                              aria-hidden
+                            />
                             Open Google Sheet
                           </a>
                         </Button>

@@ -40,6 +40,7 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LiftSvg } from "@/components/year-recap/lift-svg";
+import { getBigFourPrSectionHref } from "@/lib/classic-lift-memory";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { MiniFeedbackWidget } from "@/components/feedback";
 
@@ -487,29 +488,27 @@ function EarlyMonthMomentumCard({
               grinding.
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <WeekPlanSession
+              <WeekPlanLiftSession
                 title="Session 1"
-                items={[
-                  "Squat — 3×5",
-                  "Practice consistent depth and balance over mid-foot",
-                  "Leave 1–2 reps in reserve on each set",
+                lifts={[
+                  { liftType: "Back Squat", prescription: "3×5" },
                 ]}
+                note="Leave 1-2 reps in reserve on each set."
               />
-              <WeekPlanSession
+              <WeekPlanLiftSession
                 title="Session 2"
-                items={[
-                  "Bench Press — 3×5",
-                  "Set your shoulders and keep a stable bar path",
-                  "Add a small amount of weight from warm-ups to work sets",
+                lifts={[
+                  { liftType: "Bench Press", prescription: "3×5" },
                 ]}
+                note="Add a small amount of weight from warm-ups to work sets."
               />
-              <WeekPlanSession
+              <WeekPlanLiftSession
                 title="Session 3"
-                items={[
-                  "Deadlift — 1×5",
-                  "Strict Press — 3×5",
-                  "Focus on strong setup and controlled bar path on both lifts",
+                lifts={[
+                  { liftType: "Deadlift", prescription: "1×5" },
+                  { liftType: "Strict Press", prescription: "3×5" },
                 ]}
+                note="Focus on strong setup and controlled bar path on both lifts."
               />
             </div>
           </div>
@@ -609,6 +608,42 @@ function WeekPlanSession({ title, items }) {
           <p key={item}>{item}</p>
         ))}
       </div>
+    </div>
+  );
+}
+
+function WeekPlanLiftSession({ title, lifts, note }) {
+  return (
+    <div className="rounded-lg border border-border/70 bg-muted/10 px-3 py-3">
+      <p className="mb-3 text-sm font-semibold text-foreground">{title}</p>
+      <div className="space-y-3">
+        {lifts.map(({ liftType, prescription }) => {
+          const href = getBigFourPrSectionHref(liftType);
+
+          return (
+            <div key={`${title}-${liftType}`} className="flex items-center gap-3">
+              <Link href={href} className="shrink-0">
+                <LiftSvg
+                  liftType={liftType}
+                  size="sm"
+                  animate={false}
+                  className="h-12 w-12"
+                />
+              </Link>
+              <div className="min-w-0">
+                <Link
+                  href={href}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {liftType}
+                </Link>
+                <p className="text-sm text-muted-foreground">{prescription}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-3 text-sm text-muted-foreground">{note}</p>
     </div>
   );
 }

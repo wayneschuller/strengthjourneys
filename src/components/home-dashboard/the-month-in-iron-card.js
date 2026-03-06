@@ -376,7 +376,7 @@ export function TheMonthInIronCard({
           </>
         )}
       </CardContent>
-      {stats && (
+      {stats && dashboardStage === "established" && (
         <CardFooter className="pt-0">
           <MiniFeedbackWidget
             contextId="this_month_in_iron_card"
@@ -538,13 +538,15 @@ function EarlyMonthMomentumCard({
           </>
         )}
       </CardContent>
-      <CardFooter className="pt-0">
-        <MiniFeedbackWidget
-          contextId="this_month_in_iron_card"
-          page="/lift-explorer"
-          analyticsExtra={{ context: "this_month_in_iron_card_early" }}
-        />
-      </CardFooter>
+      {dashboardStage === "established" && (
+        <CardFooter className="pt-0">
+          <MiniFeedbackWidget
+            contextId="this_month_in_iron_card"
+            page="/lift-explorer"
+            analyticsExtra={{ context: "this_month_in_iron_card_early" }}
+          />
+        </CardFooter>
+      )}
     </Card>
   );
 }

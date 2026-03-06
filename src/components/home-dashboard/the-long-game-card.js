@@ -880,11 +880,13 @@ export function TheLongGameCard({
                   className="!border-zinc-300 !bg-white !text-zinc-900 hover:!bg-zinc-100"
                 />
               </div>
-              <MiniFeedbackWidget
-                contextId="heatmap_card"
-                page="/lift-explorer"
-                analyticsExtra={{ context: "activity_heatmaps_card" }}
-              />
+              {dashboardStage === "established" && (
+                <MiniFeedbackWidget
+                  contextId="heatmap_card"
+                  page="/lift-explorer"
+                  analyticsExtra={{ context: "activity_heatmaps_card" }}
+                />
+              )}
             </div>
           </CardFooter>
         )}

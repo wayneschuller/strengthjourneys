@@ -72,6 +72,41 @@ const WELCOME_QUIPS = [
   "Proof is in the logbook, {name}",
   "Built with patience, {name}",
 ];
+const ENRICH_CANDIDATE_LIMIT = 6;
+
+function toTimestamp(iso) {
+  const t = new Date(iso || 0).getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
+function scoreCandidateForChooser(candidate) {
+  const rows = typeof candidate?.approxRows === "number" ? candidate.approxRows : 0;
+  const sessions =
+    typeof candidate?.approxSessions === "number" ? candidate.approxSessions : 0;
+  const modifiedAt = toTimestamp(candidate?.modifiedByMeTime || candidate?.modifiedTime);
+  const title = String(candidate?.name || "").toLowerCase();
+
+  let score = 0;
+  score += Math.min(120, rows / 25);
+  score += Math.min(120, sessions * 1.4);
+  if (title.includes("strength journey")) score += 12;
+  if (title.includes("sample") || title.includes("demo")) score -= 40;
+  if (title.includes("copy of")) score -= 20;
+  score += modifiedAt > 0 ? Math.min(40, (modifiedAt / 1000_000_000_000) % 40) : 0;
+
+  return score;
+}
+
+function sortCandidatesForChooser(candidates) {
+  const arr = Array.isArray(candidates) ? [...candidates] : [];
+  arr.sort((a, b) => {
+    const scoreDiff = scoreCandidateForChooser(b) - scoreCandidateForChooser(a);
+    if (scoreDiff !== 0) return scoreDiff;
+    return toTimestamp(b?.modifiedByMeTime || b?.modifiedTime) -
+      toTimestamp(a?.modifiedByMeTime || a?.modifiedTime);
+  });
+  return arr;
+}
 
 /**
  * Top-level home dashboard rendered when the user is authenticated and a Google Sheet is linked.
@@ -162,23 +197,24 @@ export function HomeDashboard() {
         .map((candidate) => [candidate.id, candidate]),
     );
 
-    setCandidateSheets((prev) =>
-      prev.map((candidate) => {
+    setCandidateSheets((prev) => {
+      const merged = prev.map((candidate) => {
         const update = updatesById.get(candidate.id);
         if (!update) return candidate;
         return {
           ...candidate,
           ...update,
         };
-      }),
-    );
+      });
+      return sortCandidatesForChooser(merged);
+    });
   }, []);
 
   const enrichCandidateSheets = useCallback(
-    async ({ candidates, candidateIds }) => {
+    async ({ candidates, candidateIds, primaryCandidateId = null }) => {
       const enrichIds = (Array.isArray(candidateIds) ? candidateIds : [])
         .filter((id) => typeof id === "string" && id.trim().length > 0)
-        .slice(0, 3);
+        .slice(0, ENRICH_CANDIDATE_LIMIT);
 
       if (!enrichIds.length || !Array.isArray(candidates) || !candidates.length) return;
 
@@ -186,31 +222,63 @@ export function HomeDashboard() {
       setSheetDiscoveryStatusMessage("Analyzing your most likely lifting log.");
 
       try {
-        const response = await fetch("/api/provision-sheet", {
+        const primaryId =
+          primaryCandidateId && enrichIds.includes(primaryCandidateId)
+            ? primaryCandidateId
+            : enrichIds[0];
+        const secondaryIds = enrichIds.filter((id) => id !== primaryId);
+
+        const primaryResponse = await fetch("/api/provision-sheet", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             mode: "enrich_candidates",
-            candidateIds: enrichIds,
+            candidateIds: primaryId ? [primaryId] : [],
             candidates,
           }),
         });
-        const payload = await response.json().catch(() => ({}));
-        if (payload?.debug) {
-          devLog("[onboarding] candidate enrichment debug:", payload.debug);
+        const primaryPayload = await primaryResponse.json().catch(() => ({}));
+        if (primaryPayload?.debug) {
+          devLog("[onboarding] candidate enrichment (primary) debug:", primaryPayload.debug);
         }
-        if (!response.ok) {
-          throw new Error(payload?.error || "Failed to enrich candidate sheets");
+        if (!primaryResponse.ok) {
+          throw new Error(primaryPayload?.error || "Failed to enrich primary candidate");
         }
 
-        const enrichedCandidates = Array.isArray(payload?.enrichedCandidates)
-          ? payload.enrichedCandidates
+        const primaryEnrichedCandidates = Array.isArray(primaryPayload?.enrichedCandidates)
+          ? primaryPayload.enrichedCandidates
           : [];
-        if (enrichedCandidates.length > 0) {
+        if (primaryEnrichedCandidates.length > 0) {
+          mergeCandidateUpdates(primaryEnrichedCandidates);
+        }
+
+        if (secondaryIds.length > 0) {
           setSheetDiscoveryStatusMessage("Preparing your preview.");
-          mergeCandidateUpdates(enrichedCandidates);
+          const secondaryResponse = await fetch("/api/provision-sheet", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              mode: "enrich_candidates",
+              candidateIds: secondaryIds,
+              candidates,
+            }),
+          });
+          const secondaryPayload = await secondaryResponse.json().catch(() => ({}));
+          if (secondaryPayload?.debug) {
+            devLog("[onboarding] candidate enrichment (secondary) debug:", secondaryPayload.debug);
+          }
+          if (secondaryResponse.ok) {
+            const secondaryEnrichedCandidates = Array.isArray(secondaryPayload?.enrichedCandidates)
+              ? secondaryPayload.enrichedCandidates
+              : [];
+            if (secondaryEnrichedCandidates.length > 0) {
+              mergeCandidateUpdates(secondaryEnrichedCandidates);
+            }
+          }
         }
 
         setSheetDiscoveryStatusMessage("Choose the lifting log you want to connect.");
@@ -261,19 +329,24 @@ export function HomeDashboard() {
           const discoveredCandidates = Array.isArray(payload.candidates)
             ? payload.candidates
             : [];
+          const sortedDiscoveredCandidates = sortCandidatesForChooser(discoveredCandidates);
           const enrichCandidateIds = Array.isArray(payload.enrichCandidateIds)
             ? payload.enrichCandidateIds
-            : discoveredCandidates.slice(0, 3).map((candidate) => candidate.id);
+            : sortedDiscoveredCandidates
+              .slice(0, ENRICH_CANDIDATE_LIMIT)
+              .map((candidate) => candidate.id);
+          const recommendedIdFromPayload = payload?.recommendedId || null;
 
-          setCandidateSheets(discoveredCandidates);
+          setCandidateSheets(sortedDiscoveredCandidates);
           setSheetDiscoveryStatusMessage(
-            `Found ${discoveredCandidates.length} potential lifting logs.`,
+            `Found ${sortedDiscoveredCandidates.length} potential lifting logs.`,
           );
           setOnboardingState("choose_sheet");
           provisioningStartedRef.current = false;
           void enrichCandidateSheets({
-            candidates: discoveredCandidates,
+            candidates: sortedDiscoveredCandidates,
             candidateIds: enrichCandidateIds,
+            primaryCandidateId: recommendedIdFromPayload,
           });
           return;
         }
@@ -484,8 +557,8 @@ export function HomeDashboard() {
 
 function ProvisioningPanel({ isWorking = true }) {
   return (
-    <Card className="mb-4 border-primary/30 bg-primary/5">
-      <CardHeader>
+    <Card className="mb-4 border-primary/20 bg-background/95 xl:mx-auto xl:w-full xl:max-w-6xl 2xl:max-w-[1280px]">
+      <CardHeader className="xl:px-10 2xl:px-16">
         <CardTitle className="flex items-center gap-2 text-lg">
           <LoaderCircle className={`h-5 w-5 ${isWorking ? "animate-spin" : ""}`} />
           Scanning your Google Drive
@@ -494,7 +567,7 @@ function ProvisioningPanel({ isWorking = true }) {
           Looking for existing lifting logs so you can connect the right sheet quickly.
         </CardDescription>
       </CardHeader>
-      <CardContent className="text-sm text-muted-foreground">
+      <CardContent className="text-sm text-muted-foreground xl:px-10 2xl:px-16">
         This usually takes a few seconds.
       </CardContent>
     </Card>

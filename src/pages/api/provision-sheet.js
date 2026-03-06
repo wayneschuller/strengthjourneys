@@ -7,7 +7,7 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 const TEMPLATE_SSID = "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
 const PROVISION_VERSION = 1;
 const MAX_HEADER_CHECKS = 12;
-const MAX_DEEP_ENRICH_CANDIDATES = 3;
+const MAX_DEEP_ENRICH_CANDIDATES = 6;
 const REQUIRED_HEADERS = [
   "Date",
   "Lift Type",
@@ -194,6 +194,14 @@ function toClientCandidate(candidate) {
     bigFourPreview: Array.isArray(candidate.bigFourPreview)
       ? candidate.bigFourPreview
       : [],
+    headerHint:
+      candidate?.headerHint &&
+      Number.isInteger(candidate.headerHint.dateColumnIndex) &&
+      Number.isInteger(candidate.headerHint.repsColumnIndex) &&
+      Number.isInteger(candidate.headerHint.weightColumnIndex) &&
+      Number.isInteger(candidate.headerHint.liftTypeColumnIndex)
+        ? candidate.headerHint
+        : null,
   };
 }
 
@@ -461,6 +469,25 @@ function scoreAndSortCandidates(candidates, userNameTokens, debug) {
   });
 }
 
+function pickEnrichCandidateIds(candidates, limit = MAX_DEEP_ENRICH_CANDIDATES) {
+  const seenNames = new Set();
+  const selected = [];
+
+  for (const candidate of Array.isArray(candidates) ? candidates : []) {
+    const id = candidate?.id;
+    if (!id) continue;
+    const normalizedName = normalizeHeader(candidate?.name || "");
+    const nameKey = normalizedName || id;
+    if (seenNames.has(nameKey)) continue;
+
+    seenNames.add(nameKey);
+    selected.push(id);
+    if (selected.length >= limit) break;
+  }
+
+  return selected;
+}
+
 async function discoverValidCandidates(headers, debug) {
   const rankedCandidates = await listRecentSpreadsheetCandidates(headers);
 
@@ -495,10 +522,12 @@ async function discoverValidCandidates(headers, debug) {
     if (headerInfo.valid) {
       validCandidates.push({
         ...candidate,
-        __dateColumnIndex: headerInfo.dateColumnIndex,
-        __repsColumnIndex: headerInfo.repsColumnIndex,
-        __weightColumnIndex: headerInfo.weightColumnIndex,
-        __liftTypeColumnIndex: headerInfo.liftTypeColumnIndex,
+        headerHint: {
+          dateColumnIndex: headerInfo.dateColumnIndex,
+          repsColumnIndex: headerInfo.repsColumnIndex,
+          weightColumnIndex: headerInfo.weightColumnIndex,
+          liftTypeColumnIndex: headerInfo.liftTypeColumnIndex,
+        },
       });
     }
   }
@@ -508,10 +537,6 @@ async function discoverValidCandidates(headers, debug) {
   );
   return validCandidates.map((candidate) => {
     const copy = { ...candidate };
-    delete copy.__dateColumnIndex;
-    delete copy.__repsColumnIndex;
-    delete copy.__weightColumnIndex;
-    delete copy.__liftTypeColumnIndex;
     return copy;
   });
 }
@@ -537,26 +562,43 @@ async function enrichCandidatesByIds({
     const candidate = candidateMap.get(candidateId);
     if (!candidate) continue;
 
-    const headerInfo = await readHeaderInfo(candidate.id, headers);
-    const checkResult = {
-      id: candidate.id,
-      name: candidate.name || "unknown",
-      valid: headerInfo.valid,
-      status: headerInfo.status,
-      headerCount: headerInfo.headerCount,
-      sampleHeaders: headerInfo.sampleHeaders,
-    };
-    debug?.headerChecks.push(checkResult);
+    const hinted = candidate?.headerHint;
+    const hasHeaderHint =
+      hinted &&
+      Number.isInteger(hinted.dateColumnIndex) &&
+      Number.isInteger(hinted.repsColumnIndex) &&
+      Number.isInteger(hinted.weightColumnIndex) &&
+      Number.isInteger(hinted.liftTypeColumnIndex);
 
-    if (!headerInfo.valid) continue;
+    let headerInfo = null;
+    if (!hasHeaderHint) {
+      headerInfo = await readHeaderInfo(candidate.id, headers);
+      const checkResult = {
+        id: candidate.id,
+        name: candidate.name || "unknown",
+        valid: headerInfo.valid,
+        status: headerInfo.status,
+        headerCount: headerInfo.headerCount,
+        sampleHeaders: headerInfo.sampleHeaders,
+      };
+      debug?.headerChecks.push(checkResult);
+      if (!headerInfo.valid) continue;
+    } else {
+      debug?.headerChecks.push({
+        id: candidate.id,
+        name: candidate.name || "unknown",
+        valid: true,
+        status: "hint",
+      });
+    }
 
     const candidateWithMeta = await enrichCandidateMetadata(
       candidate,
       headers,
-      headerInfo.dateColumnIndex,
-      headerInfo.repsColumnIndex,
-      headerInfo.weightColumnIndex,
-      headerInfo.liftTypeColumnIndex,
+      hasHeaderHint ? hinted.dateColumnIndex : headerInfo.dateColumnIndex,
+      hasHeaderHint ? hinted.repsColumnIndex : headerInfo.repsColumnIndex,
+      hasHeaderHint ? hinted.weightColumnIndex : headerInfo.weightColumnIndex,
+      hasHeaderHint ? hinted.liftTypeColumnIndex : headerInfo.liftTypeColumnIndex,
     );
     enriched.push(candidateWithMeta);
   }
@@ -880,12 +922,13 @@ export default async function handler(req, res) {
 
     if (validCandidates.length > 1) {
       const ranked = scoreAndSortCandidates(validCandidates, userNameTokens, debug);
-      const enrichCandidateIds = ranked
-        .slice(0, MAX_DEEP_ENRICH_CANDIDATES)
-        .map((candidate) => candidate.id)
-        .filter(Boolean);
+      const enrichCandidateIds = pickEnrichCandidateIds(
+        ranked,
+        MAX_DEEP_ENRICH_CANDIDATES,
+      );
 
       debug.path.push("discover:multiple_candidates");
+      debug.enrichCandidateIds = enrichCandidateIds;
       res.status(200).json(
         withDebug(
           {

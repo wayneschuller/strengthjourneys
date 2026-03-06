@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { NextSeo } from "next-seo";
 import { Copy, CircleDashed } from "lucide-react";
 
@@ -52,6 +52,26 @@ const CANONICAL = "https://www.strengthjourneys.xyz/how-strong-am-i";
 
 function toKg(weight, isMetric) {
   return isMetric ? weight : weight / 2.2046;
+}
+
+function convertWeight(weight, fromMetric, toMetric) {
+  if (fromMetric === toMetric) return weight;
+  return toMetric ? weight / 2.2046 : weight * 2.2046;
+}
+
+function roundToStep(value, step) {
+  return Math.round(value / step) * step;
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function normalizeLiftWeight(weight, isMetric) {
+  const min = isMetric ? 20 : 44;
+  const max = isMetric ? 300 : 660;
+  const step = isMetric ? 2.5 : 5;
+  return clamp(roundToStep(weight, step), min, max);
 }
 
 function ordinal(n) {
@@ -175,11 +195,36 @@ function HowStrongAmIPageInner() {
     bench:    isMetric ? 70  : 155,
     deadlift: isMetric ? 120 : 265,
   });
+  const previousIsMetricRef = useRef(isMetric);
 
-  const [activeUniverse, setActiveUniverse] = useState("Barbell Lifters");
+  const [selectedUniverse, setSelectedUniverse] = useState("Barbell Lifters");
+  const [hoveredUniverse, setHoveredUniverse] = useState(null);
+
+  useEffect(() => {
+    if (previousIsMetricRef.current === isMetric) return;
+
+    setLiftWeights((prev) => ({
+      squat: normalizeLiftWeight(
+        convertWeight(prev.squat, previousIsMetricRef.current, isMetric),
+        isMetric,
+      ),
+      bench: normalizeLiftWeight(
+        convertWeight(prev.bench, previousIsMetricRef.current, isMetric),
+        isMetric,
+      ),
+      deadlift: normalizeLiftWeight(
+        convertWeight(prev.deadlift, previousIsMetricRef.current, isMetric),
+        isMetric,
+      ),
+    }));
+
+    previousIsMetricRef.current = isMetric;
+  }, [isMetric]);
 
   const handleLiftChange = (key, value) =>
     setLiftWeights((prev) => ({ ...prev, [key]: value }));
+
+  const activeUniverse = hoveredUniverse ?? selectedUniverse;
 
   const bodyWeightKg = toKg(bodyWeight, isMetric);
 
@@ -260,7 +305,8 @@ function HowStrongAmIPageInner() {
               <StrengthCirclesChart
                 percentiles={chartPercentiles}
                 activeUniverse={activeUniverse}
-                onUniverseChange={setActiveUniverse}
+                onUniverseChange={setSelectedUniverse}
+                onUniverseHoverChange={setHoveredUniverse}
               />
               <Button variant="outline" size="sm" onClick={handleShare} className="gap-2">
                 <Copy className="h-3.5 w-3.5" />

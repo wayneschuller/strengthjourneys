@@ -2,16 +2,21 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 
 // POST /api/log-session
-// Inserts a new session's rows at the top of the sheet (below the header row).
+// Inserts one or more rows into the sheet at a specified position.
 //
 // Body: {
 //   ssid: string,
-//   date: "YYYY-MM-DD",
-//   lifts: [{ liftType: string, sets: [{ reps: number, weight: string, notes?: string, url?: string }] }]
+//   rows: string[][],              // exact cell values to write [A, B, C, D, E, F]
+//   insertAfterRowIndex?: number,  // 1-based row to insert after. Defaults to 1 (after header).
 // }
 //
+// Row column mapping: A=Date, B=LiftType, C=Reps, D=Weight, E=Notes, F=URL
+// The client is responsible for constructing each row correctly:
+//   - New session (no prior rows for this date): include date in A, lift type in B
+//   - Adding a set to existing lift: leave A and B blank (inherited by the parser)
+//   - Adding a new lift to existing session: leave A blank, set B to lift type
+//
 // Returns: { insertedRows: number, firstRowIndex: number }
-// firstRowIndex is the 1-based sheet row of the first inserted row (always 2).
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -24,34 +29,21 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, date, lifts } = req.body;
+  const { ssid, rows, insertAfterRowIndex } = req.body;
 
-  if (!ssid || !date || !Array.isArray(lifts) || lifts.length === 0) {
-    return res.status(400).json({ error: "Missing required fields: ssid, date, lifts" });
+  if (!ssid || !Array.isArray(rows) || rows.length === 0) {
+    return res.status(400).json({ error: "Missing required fields: ssid, rows" });
   }
 
-  // Flatten lifts into sheet rows.
-  // Convention: date only on first row; lift type on first set of each lift.
-  const rows = [];
-  lifts.forEach((lift, liftIndex) => {
-    if (!lift.sets?.length) return;
-    lift.sets.forEach((set, setIndex) => {
-      const isFirstRow = liftIndex === 0 && setIndex === 0;
-      const isFirstSetOfLift = setIndex === 0;
-      rows.push([
-        isFirstRow ? date : "",
-        isFirstSetOfLift ? (lift.liftType ?? "") : "",
-        set.reps != null ? String(set.reps) : "",
-        set.weight != null ? String(set.weight) : "",
-        set.notes ?? "",
-        set.url ?? "",
-      ]);
-    });
-  });
-
-  if (rows.length === 0) {
-    return res.status(400).json({ error: "No valid sets to insert" });
-  }
+  // insertAfterRowIndex is 1-based. Default: 1 (insert after the header row).
+  // 0-based startIndex for Sheets API = insertAfterRowIndex (see comment below).
+  //
+  // Conversion: "insert after 1-based row N" → "0-based startIndex = N"
+  //   Header = row 1 (1-based) = index 0 (0-based)
+  //   Insert after row 1 → startIndex 1 → new row becomes row 2 ✓
+  //   Insert after row 7 → startIndex 7 → new row becomes row 8 ✓
+  const insertAfter = typeof insertAfterRowIndex === "number" ? insertAfterRowIndex : 1;
+  const startIndex0 = insertAfter; // 0-based start index for insertDimension
 
   const headers = {
     Authorization: `Bearer ${session.accessToken}`,
@@ -59,7 +51,7 @@ export default async function handler(req, res) {
   };
 
   try {
-    // Step 1: insert N empty rows below the header (row 1) via batchUpdate
+    // Step 1: insert N empty rows at the target position
     const insertRes = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}:batchUpdate`,
       {
@@ -72,8 +64,8 @@ export default async function handler(req, res) {
                 range: {
                   sheetId: 0,
                   dimension: "ROWS",
-                  startIndex: 1, // 0-based: insert after row 1 (the header)
-                  endIndex: 1 + rows.length,
+                  startIndex: startIndex0,
+                  endIndex: startIndex0 + rows.length,
                 },
                 inheritFromBefore: false,
               },
@@ -90,9 +82,11 @@ export default async function handler(req, res) {
       return res.status(insertRes.status).json({ error: msg });
     }
 
-    // Step 2: fill the inserted rows with data
-    const endRow = 1 + rows.length; // row 2 to row (1 + rows.length), 1-based inclusive
-    const range = `A2:F${endRow}`;
+    // Step 2: write data into the newly inserted rows.
+    // After insertion, the new rows start at 1-based row (insertAfter + 1).
+    const firstNewRow = insertAfter + 1;
+    const lastNewRow = insertAfter + rows.length;
+    const range = `A${firstNewRow}:F${lastNewRow}`;
 
     const writeRes = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${range}?valueInputOption=USER_ENTERED`,
@@ -116,7 +110,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       insertedRows: rows.length,
-      firstRowIndex: 2, // always row 2 (below header) since we prepend
+      firstRowIndex: firstNewRow,
     });
   } catch (err) {
     console.error("[log-session] unexpected error:", err);

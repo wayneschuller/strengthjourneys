@@ -80,8 +80,8 @@ export default async function handler(req, res) {
             endColumnIndex: 6,
           },
           top: {
-            style: "SOLID_MEDIUM",
-            color: { red: 0.4, green: 0.4, blue: 0.4 },
+            style: "SOLID",
+            color: { red: 0, green: 0, blue: 0 },
           },
         },
       });

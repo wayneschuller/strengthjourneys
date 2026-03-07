@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth/next";
 //   ssid: string,
 //   rows: string[][],              // exact cell values to write [A, B, C, D, E, F]
 //   insertAfterRowIndex?: number,  // 1-based row to insert after. Defaults to 1 (after header).
+//   newSession?: boolean,          // when true, draws a top border above the first row
 // }
 //
 // Row column mapping: A=Date, B=LiftType, C=Reps, D=Weight, E=Notes, F=URL
@@ -29,7 +30,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, rows, insertAfterRowIndex } = req.body;
+  const { ssid, rows, insertAfterRowIndex, newSession } = req.body;
 
   if (!ssid || !Array.isArray(rows) || rows.length === 0) {
     return res.status(400).json({ error: "Missing required fields: ssid, rows" });
@@ -51,27 +52,47 @@ export default async function handler(req, res) {
   };
 
   try {
-    // Step 1: insert N empty rows at the target position
+    // Step 1: insert N empty rows at the target position.
+    // If this is the first row of a new session, also draw a top border to
+    // visually separate sessions in the sheet.
+    const batchRequests = [
+      {
+        insertDimension: {
+          range: {
+            sheetId: 0,
+            dimension: "ROWS",
+            startIndex: startIndex0,
+            endIndex: startIndex0 + rows.length,
+          },
+          inheritFromBefore: false,
+        },
+      },
+    ];
+
+    if (newSession) {
+      batchRequests.push({
+        updateBorders: {
+          range: {
+            sheetId: 0,
+            startRowIndex: startIndex0,
+            endRowIndex: startIndex0 + 1,
+            startColumnIndex: 0,
+            endColumnIndex: 6,
+          },
+          top: {
+            style: "SOLID_MEDIUM",
+            color: { red: 0.4, green: 0.4, blue: 0.4 },
+          },
+        },
+      });
+    }
+
     const insertRes = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}:batchUpdate`,
       {
         method: "POST",
         headers,
-        body: JSON.stringify({
-          requests: [
-            {
-              insertDimension: {
-                range: {
-                  sheetId: 0,
-                  dimension: "ROWS",
-                  startIndex: startIndex0,
-                  endIndex: startIndex0 + rows.length,
-                },
-                inheritFromBefore: false,
-              },
-            },
-          ],
-        }),
+        body: JSON.stringify({ requests: batchRequests }),
       },
     );
 

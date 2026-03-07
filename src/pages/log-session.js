@@ -256,7 +256,12 @@ export default function LogSessionPage() {
         const res = await fetch("/api/log-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ssid: sheetInfo.ssid, rows: [row], insertAfterRowIndex }),
+          body: JSON.stringify({
+            ssid: sheetInfo.ssid,
+            rows: [row],
+            insertAfterRowIndex,
+            newSession: !hasExistingSession,
+          }),
         });
         if (!res.ok) throw new Error((await res.json()).error || "Failed");
         await mutate();

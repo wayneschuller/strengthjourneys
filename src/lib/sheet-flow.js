@@ -763,21 +763,22 @@ export async function createBootstrapSheet(
   const starterWeight = unitType === "kg" ? "20kg" : "45lb";
   const starterDate = formatStarterDateYmd(nowIso);
   const starterRows = [
-    ["Date", "Lift Type", "Reps", "Weight", "Notes"],
+    ["Date", "Lift Type", "Reps", "Weight", "Notes", "URL"],
     [
       starterDate,
       "Back Squat",
       "5",
       starterWeight,
       "Start each new session by inserting 5-10 new rows at the top.",
+      "",
     ],
-    ["", "", "5", starterWeight, "Log one set per row as you lift."],
-    ["", "", "5", starterWeight, "Leave Date blank on the extra rows for the same session."],
-    ["", "", "", "", "Put all your sets here, including warmups."],
+    ["", "", "5", starterWeight, "Log one set per row as you lift.", ""],
+    ["", "", "5", starterWeight, "Leave Date blank on the extra rows for the same session.", ""],
+    ["", "", "", "", "Put all your sets here, including warmups.", ""],
   ];
 
   const valuesResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:E5?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:F5?valueInputOption=USER_ENTERED`,
     {
       method: "PUT",
       headers: {
@@ -785,7 +786,7 @@ export async function createBootstrapSheet(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        range: "A1:E5",
+        range: "A1:F5",
         majorDimension: "ROWS",
         values: starterRows,
       }),
@@ -862,6 +863,13 @@ export async function createBootstrapSheet(
               fields: "pixelSize",
             },
           },
+          {
+            updateDimensionProperties: {
+              range: { sheetId, dimension: "COLUMNS", startIndex: 5, endIndex: 6 },
+              properties: { pixelSize: 300 },
+              fields: "pixelSize",
+            },
+          },
           // Header cell notes — one per column
           {
             repeatCell: {
@@ -894,7 +902,14 @@ export async function createBootstrapSheet(
           {
             repeatCell: {
               range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 4, endColumnIndex: 5 },
-              cell: { note: "Optional free text. Add anything useful — coaching cues, RPE, how the session felt. Not parsed by Strength Journeys but great for your own records." },
+              cell: { note: "Optional free text. Add anything useful — coaching cues, RPE, how the session felt. Great for your own records." },
+              fields: "note",
+            },
+          },
+          {
+            repeatCell: {
+              range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 5, endColumnIndex: 6 },
+              cell: { note: "Optional link to a video of this set — e.g. a YouTube or Google Photos URL. Strength Journeys will make these available so you can review your lifts alongside your data." },
               fields: "note",
             },
           },

@@ -381,6 +381,15 @@ export default function LogSessionPage() {
   );
 }
 
+// --- Big Four lifts with SVG icons ---
+
+const BIG_FOUR = [
+  { name: "Back Squat", icon: "/back_squat.svg" },
+  { name: "Bench Press", icon: "/bench_press.svg" },
+  { name: "Deadlift", icon: "/deadlift.svg" },
+  { name: "Strict Press", icon: "/strict_press.svg" },
+];
+
 // --- Sync indicator ---
 
 function SyncIndicator({ state }) {
@@ -412,11 +421,15 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
     : { platesPerSide: [] };
 
   const lastSet = sets[sets.length - 1];
+  const bigFourEntry = BIG_FOUR.find((b) => b.name === liftType);
 
   return (
     <div className="space-y-1">
       {/* Header */}
-      <div className="flex items-baseline justify-between pb-1">
+      <div className="flex items-center gap-2 pb-1">
+        {bigFourEntry && (
+          <Image src={bigFourEntry.icon} alt="" width={20} height={20} className="shrink-0 opacity-60" />
+        )}
         <h2 className="text-base font-semibold uppercase tracking-wide text-foreground/80">
           {liftType}
         </h2>
@@ -579,7 +592,7 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
 
   const unitType = lastSets[0]?.unitType ?? (isMetric ? "kg" : "lb");
   const summary = lastSets
-    .map((s) => `${s.reps}×${s.weight}${unitType}`)
+    .map((s) => `${s.reps}@${s.weight}${unitType}`)
     .join("  ·  ");
 
   return (
@@ -588,15 +601,6 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
     </p>
   );
 }
-
-// --- Big Four lifts with SVG icons ---
-
-const BIG_FOUR = [
-  { name: "Back Squat", icon: "/back_squat.svg" },
-  { name: "Bench Press", icon: "/bench_press.svg" },
-  { name: "Deadlift", icon: "/deadlift.svg" },
-  { name: "Strict Press", icon: "/strict_press.svg" },
-];
 
 // --- Add lift button ---
 

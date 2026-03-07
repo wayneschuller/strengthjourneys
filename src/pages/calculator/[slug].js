@@ -7,6 +7,9 @@ import { E1RMCalculatorMain } from "./index";
 
 const PAGE_CONFIG = {
   // ── FORMULA PAGES ──────────────────────────────────────────────────────────
+  // Titles/descriptions in this block were tuned against live GSC query data
+  // to improve CTR on formula pages that already rank well. Keep exact-match
+  // phrasing changes intentional unless fresher GSC data suggests otherwise.
   "epley-formula-1rm-calculator": {
     type: "formula",
     formulaName: "Epley",

@@ -6,7 +6,7 @@ import { PageContainer } from "@/components/page-header";
 const TOOLS = [
   { href: "/calculator", label: "One Rep Max Calculator" },
   { href: "/1000lb-club-calculator", label: "1000lb Club Calculator" },
-  { href: "/big-four-strength-standards-calculator", label: "Strength Standards" },
+  { href: "/big-four-strength-standards-calculator", label: "Big Four Strength Standards" },
   { href: "/how-strong-am-i", label: "How Strong Am I?" },
   { href: "/warm-up-sets-calculator", label: "Warm Up Sets Calculator" },
   { href: "/ai-lifting-assistant", label: "AI Lifting Assistant" },
@@ -14,11 +14,11 @@ const TOOLS = [
 
 const RESOURCES = [
   { href: "/articles", label: "Strength Articles" },
-  { href: "/analyzer", label: "PR Analyzer" },
+  { href: "/lift-explorer", label: "Lift Explorer" },
   { href: "/visualizer", label: "Strength Visualizer" },
-  { href: "/tonnage", label: "Tonnage Tracker" },
+  { href: "/tonnage", label: "Tonnage Metrics" },
+  { href: "/timer", label: "Gym Timer" },
   { href: "/gym-playlist-leaderboard", label: "Gym Playlists" },
-  { href: "/changelog", label: "Changelog" },
 ];
 
 const LEGAL = [

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { Copy, CircleDashed } from "lucide-react";
 
@@ -7,6 +8,7 @@ import {
   PageHeader,
   PageHeaderHeading,
   PageHeaderDescription,
+  PageHeaderRight,
 } from "@/components/page-header";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
 import { StrengthCirclesChart } from "@/components/strength-circles/strength-circles-chart";
@@ -268,6 +270,24 @@ function HowStrongAmIPageInner() {
           Strength Percentile Calculator — see how you rank across four groups,
           from the general population to competitive powerlifters.
         </PageHeaderDescription>
+        <PageHeaderRight>
+          <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
+            <Link
+              href="/big-four-strength-standards-calculator"
+              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
+            >
+              <h3 className="text-base font-semibold">Big Four Strength Standards</h3>
+              <p className="text-sm">Check beginner-to-elite benchmarks per lift.</p>
+            </Link>
+            <Link
+              href="/calculator"
+              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
+            >
+              <h3 className="text-base font-semibold">E1RM Calculator</h3>
+              <p className="text-sm">Estimate your one rep max from any set.</p>
+            </Link>
+          </div>
+        </PageHeaderRight>
       </PageHeader>
 
       <Card className="mt-4">

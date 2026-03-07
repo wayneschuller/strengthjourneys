@@ -2,7 +2,7 @@ import { kv } from "@vercel/kv";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { parseStoredPlaylist } from "@/components/playlist-leaderboard/playlist-utils";
-import { getRequestClientIp, isValidPlaylistId } from "@/lib/playlist-security";
+import { getRequestClientIp, isValidPlaylistId, isLeaderboardAdminEmail } from "@/lib/playlist-security";
 
 const VOTE_THROTTLE_SECONDS = 10 * 60;
 
@@ -34,17 +34,21 @@ export default async function handler(req, res) {
       return res.status(404).json({ message: "Playlist not found" });
     }
 
-    const voteSubject =
-      session?.user?.email?.trim().toLowerCase() || getRequestClientIp(req);
-    const voteLock = await kv.set(`playlist-vote:${voteSubject}:${id}`, Date.now(), {
-      ex: VOTE_THROTTLE_SECONDS,
-      nx: true,
-    });
+    const isAdmin = isLeaderboardAdminEmail(session?.user?.email);
 
-    if (voteLock === null) {
-      return res.status(429).json({
-        message: "Vote already recorded recently. Please try again later.",
+    if (!isAdmin) {
+      const voteSubject =
+        session?.user?.email?.trim().toLowerCase() || getRequestClientIp(req);
+      const voteLock = await kv.set(`playlist-vote:${voteSubject}:${id}`, Date.now(), {
+        ex: VOTE_THROTTLE_SECONDS,
+        nx: true,
       });
+
+      if (voteLock === null) {
+        return res.status(429).json({
+          message: "Vote already recorded recently. Please try again later.",
+        });
+      }
     }
 
     // Update the votes count in Redis

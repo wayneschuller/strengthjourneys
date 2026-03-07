@@ -198,6 +198,10 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
 
     try {
       const result = await sendVote(id, voteType, action);
+      if (result?.throttled) {
+        toast({ description: "You already voted for this recently." });
+        return;
+      }
       devLog(result);
 
       // Update playlists based on the new vote state
@@ -579,6 +583,10 @@ export async function sendVote(id, voteType, action) {
       },
       body: JSON.stringify({ id, voteType }),
     });
+
+    if (response.status === 429) {
+      return { throttled: true };
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);

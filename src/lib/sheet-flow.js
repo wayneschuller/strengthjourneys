@@ -862,6 +862,42 @@ export async function createBootstrapSheet(
               fields: "pixelSize",
             },
           },
+          // Header cell notes — one per column
+          {
+            repeatCell: {
+              range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: 1 },
+              cell: { note: "Enter the date in YYYY-MM-DD format (e.g. 2026-03-07). Only fill in the date on the first set of each session — leave it blank for additional sets on the same day." },
+              fields: "note",
+            },
+          },
+          {
+            repeatCell: {
+              range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 1, endColumnIndex: 2 },
+              cell: { note: "The name of the exercise (e.g. Back Squat, Deadlift, Bench Press, Strict Press). Use the same spelling every time so Strength Journeys can track your progress correctly." },
+              fields: "note",
+            },
+          },
+          {
+            repeatCell: {
+              range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 2, endColumnIndex: 3 },
+              cell: { note: "The number of repetitions performed in this set (e.g. 5). Enter whole numbers only." },
+              fields: "note",
+            },
+          },
+          {
+            repeatCell: {
+              range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 3, endColumnIndex: 4 },
+              cell: { note: "The weight lifted, including the unit — kg or lb (e.g. 100kg or 225lb). Always include the unit so Strength Journeys knows which system you use." },
+              fields: "note",
+            },
+          },
+          {
+            repeatCell: {
+              range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 4, endColumnIndex: 5 },
+              cell: { note: "Optional free text. Add anything useful — coaching cues, RPE, how the session felt. Not parsed by Strength Journeys but great for your own records." },
+              fields: "note",
+            },
+          },
           // Column A data rows: date format + bold
           {
             repeatCell: {

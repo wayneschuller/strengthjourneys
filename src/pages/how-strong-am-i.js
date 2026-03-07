@@ -324,7 +324,7 @@ function HowStrongAmIPageInner() {
             </div>
           </div>
 
-          <section className="mt-10 max-w-2xl mx-auto">
+          <section className="mx-auto mt-10 max-w-2xl lg:max-w-4xl">
             <ExplainerSection />
             <FAQSection />
           </section>

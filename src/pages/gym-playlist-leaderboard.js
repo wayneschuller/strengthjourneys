@@ -28,8 +28,6 @@ import {
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
 
-const translator = shortUUID();
-
 const ITEMS_PER_PAGE = 5;
 
 // ---------------------------------------------------------------------------------------------------

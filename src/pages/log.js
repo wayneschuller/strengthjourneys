@@ -30,6 +30,22 @@ const BIG_FOUR = [
   { name: "Strict Press", icon: "/strict_press.svg" },
 ];
 
+// --- Randomised notes placeholders ---
+
+const NOTES_PROMPTS = [
+  "How did it feel?",
+  "Form cues to remember...",
+  "What was playing?",
+  "RPE?",
+  "Bar path?",
+  "Easy, medium, or hard?",
+  "Any coaching notes?",
+  "What would you change next time?",
+  "Felt strong? Tired? Heavy?",
+  "Grip, stance, breath?",
+  "What's the vibe today?",
+];
+
 export default function LogSessionPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
@@ -387,22 +403,32 @@ export default function LogSessionPage() {
 
       {/* Empty state */}
       {!isLoading && !hasSession && (
-        <div className="mt-8 flex flex-col items-center gap-6 text-center">
-          <div className="space-y-1">
+        <div className="mt-8 flex flex-col items-center gap-8">
+          <div className="space-y-1 text-center">
             <h2 className="text-xl font-semibold">
               {isToday ? "Start today's session" : "Start a session for this date"}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Add your first lift to get started.
+              Pick a lift to begin.
             </p>
           </div>
-          {/* Big Four icons as visual prompt */}
-          <div className="flex items-center gap-4">
+
+          {/* Big Four — tap to add directly */}
+          <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
             {BIG_FOUR.map(({ name, icon }) => (
-              <Image key={name} src={icon} alt={name} width={56} height={56} />
+              <button
+                key={name}
+                title={`Start with ${name}`}
+                onClick={() => addLift(name)}
+                className="flex flex-col items-center gap-3 rounded-xl border border-border/60 px-3 py-5 transition-colors hover:border-primary hover:bg-muted/40 active:scale-95"
+              >
+                <Image src={icon} alt={name} width={80} height={80} />
+                <span className="text-sm font-medium leading-tight">{name}</span>
+              </button>
             ))}
           </div>
-          <AddLiftButton parsedData={parsedData} onAddLift={addLift} />
+
+          <AddLiftButton parsedData={parsedData} onAddLift={addLift} label="Add other lift type" />
         </div>
       )}
 
@@ -569,12 +595,21 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
 function SetRow({ set, onUpdate }) {
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
   const [draftReps, setDraftReps] = useState(String(set.reps ?? ""));
   const [draftWeight, setDraftWeight] = useState(String(set.weight ?? ""));
+  const [draftNotes, setDraftNotes] = useState(set.notes ?? "");
+
+  // Pick a playful placeholder once per row mount
+  const notesPlaceholder = useMemo(
+    () => NOTES_PROMPTS[Math.floor(Math.random() * NOTES_PROMPTS.length)],
+    [],
+  );
 
   // Keep drafts in sync if parsedData refreshes from SWR
   useEffect(() => { setDraftReps(String(set.reps ?? "")); }, [set.reps]);
   useEffect(() => { setDraftWeight(String(set.weight ?? "")); }, [set.weight]);
+  useEffect(() => { setDraftNotes(set.notes ?? ""); }, [set.notes]);
 
   function commitReps() {
     setEditingReps(false);
@@ -589,6 +624,14 @@ function SetRow({ set, onUpdate }) {
     const num = parseFloat(draftWeight);
     if (!isNaN(num) && num !== set.weight) {
       onUpdate({ reps: set.reps, weight: `${num}${set.unitType ?? ""}`, notes: set.notes ?? "", url: set.URL ?? "" });
+    }
+  }
+
+  function commitNotes() {
+    setEditingNotes(false);
+    const trimmed = draftNotes.trim();
+    if (trimmed !== (set.notes ?? "").trim()) {
+      onUpdate({ reps: set.reps, weight: `${set.weight}${set.unitType ?? ""}`, notes: trimmed, url: set.URL ?? "" });
     }
   }
 
@@ -614,66 +657,88 @@ function SetRow({ set, onUpdate }) {
   }
 
   return (
-    <div className="flex items-center px-4 py-3">
-      {/* Reps + Weight cluster */}
-      <div className="flex flex-1 items-baseline gap-3">
-        {/* Reps — tap to edit */}
-        <div className="flex items-baseline gap-1">
-          {editingReps ? (
-            <input
-              type="number"
-              className="w-16 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-              value={draftReps}
-              onChange={(e) => setDraftReps(e.target.value)}
-              onBlur={commitReps}
-              onKeyDown={(e) => e.key === "Enter" && commitReps()}
-              autoFocus
-            />
-          ) : (
-            <button
-              className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
-              onClick={() => setEditingReps(true)}
-            >
-              {set.reps}
-            </button>
-          )}
-          <span className="text-sm text-muted-foreground">reps</span>
+    <div className="flex flex-col px-4 py-2">
+      {/* Reps + Weight + PR badge */}
+      <div className="flex items-center">
+        <div className="flex flex-1 items-baseline gap-3">
+          {/* Reps — tap to edit */}
+          <div className="flex items-baseline gap-1">
+            {editingReps ? (
+              <input
+                type="number"
+                className="w-16 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+                value={draftReps}
+                onChange={(e) => setDraftReps(e.target.value)}
+                onBlur={commitReps}
+                onKeyDown={(e) => e.key === "Enter" && commitReps()}
+                autoFocus
+              />
+            ) : (
+              <button
+                className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
+                onClick={() => setEditingReps(true)}
+              >
+                {set.reps}
+              </button>
+            )}
+            <span className="text-sm text-muted-foreground">reps</span>
+          </div>
+
+          {/* Weight — tap to edit */}
+          <div className="flex items-baseline gap-1">
+            {editingWeight ? (
+              <input
+                type="number"
+                step="any"
+                className="w-20 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+                value={draftWeight}
+                onChange={(e) => setDraftWeight(e.target.value)}
+                onBlur={commitWeight}
+                onKeyDown={(e) => e.key === "Enter" && commitWeight()}
+                autoFocus
+              />
+            ) : (
+              <button
+                className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
+                onClick={() => setEditingWeight(true)}
+              >
+                {set.weight}
+              </button>
+            )}
+            <span className="text-sm text-muted-foreground">{set.unitType}</span>
+          </div>
         </div>
 
-        {/* Weight — tap to edit */}
-        <div className="flex items-baseline gap-1">
-          {editingWeight ? (
-            <input
-              type="number"
-              step="any"
-              className="w-20 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-              value={draftWeight}
-              onChange={(e) => setDraftWeight(e.target.value)}
-              onBlur={commitWeight}
-              onKeyDown={(e) => e.key === "Enter" && commitWeight()}
-              autoFocus
-            />
-          ) : (
-            <button
-              className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
-              onClick={() => setEditingWeight(true)}
-            >
-              {set.weight}
-            </button>
+        {/* PR badge — far right */}
+        <div className="w-8 shrink-0 text-right">
+          {set.isHistoricalPR && (
+            <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">
+              PR
+            </Badge>
           )}
-          <span className="text-sm text-muted-foreground">{set.unitType}</span>
         </div>
       </div>
 
-      {/* PR badge — far right, fixed slot so rows align */}
-      <div className="w-8 shrink-0 text-right">
-        {set.isHistoricalPR && (
-          <Badge
-            variant="outline"
-            className="border-amber-400 text-xs text-amber-600"
+      {/* Notes — subtle tap-to-edit field */}
+      <div className="pb-1">
+        {editingNotes ? (
+          <input
+            type="text"
+            className="w-full border-b border-input bg-transparent py-0.5 text-xs text-muted-foreground focus:border-primary focus:outline-none"
+            value={draftNotes}
+            onChange={(e) => setDraftNotes(e.target.value)}
+            onBlur={commitNotes}
+            onKeyDown={(e) => e.key === "Enter" && commitNotes()}
+            placeholder={notesPlaceholder}
+            autoFocus
+          />
+        ) : (
+          <button
+            className="w-full text-left text-xs italic text-muted-foreground/50 hover:text-muted-foreground"
+            onClick={() => setEditingNotes(true)}
           >
-            PR
-          </Badge>
+            {set.notes || notesPlaceholder}
+          </button>
         )}
       </div>
     </div>
@@ -710,7 +775,7 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
 // --- Add lift button ---
 // Simplified: just calls onAddLift(liftType), all API logic lives in the parent.
 
-function AddLiftButton({ parsedData, onAddLift }) {
+function AddLiftButton({ parsedData, onAddLift, label = "Add Lift" }) {
   const [showInput, setShowInput] = useState(false);
   const [liftType, setLiftType] = useState("");
   const inputRef = useRef(null);
@@ -753,7 +818,7 @@ function AddLiftButton({ parsedData, onAddLift }) {
         onClick={() => setShowInput(true)}
       >
         <Plus className="h-4 w-4" />
-        Add Lift
+        {label}
       </Button>
     );
   }

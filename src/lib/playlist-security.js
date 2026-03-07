@@ -1,3 +1,5 @@
+import { kv } from "@vercel/kv";
+
 const LEADERBOARD_ADMIN_ENV = "STRENGTH_JOURNEYS_LEADERBOARD_ADMINS";
 
 export function getLeaderboardAdminEmails() {
@@ -24,6 +26,33 @@ export function getRequestClientIp(req) {
   }
 
   return req.socket.remoteAddress || "unknown";
+}
+
+/**
+ * Returns a vote weight (1–11) based on the user's app tenure from KV.
+ *   Anonymous              → 1
+ *   Signed in, no sheet    → 3
+ *   Sheet linked < 30 days → 5
+ *   Sheet linked 30-180d   → 8
+ *   Sheet linked 180d+     → 11
+ */
+export async function getVoteWeight(email) {
+  if (!email) return 1;
+
+  try {
+    const record = await kv.get(`sj:user:${email.trim().toLowerCase()}`);
+    if (!record?.connectedAt) return 3;
+
+    const daysSinceConnected =
+      (Date.now() - new Date(record.connectedAt).getTime()) /
+      (1000 * 60 * 60 * 24);
+
+    if (daysSinceConnected < 30) return 5;
+    if (daysSinceConnected < 180) return 8;
+    return 11;
+  } catch {
+    return 3; // fail safe: treat as signed-in but no sheet
+  }
 }
 
 export function isValidPlaylistId(id) {

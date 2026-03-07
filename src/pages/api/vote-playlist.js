@@ -2,7 +2,7 @@ import { kv } from "@vercel/kv";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { parseStoredPlaylist } from "@/components/playlist-leaderboard/playlist-utils";
-import { getRequestClientIp, isValidPlaylistId, isLeaderboardAdminEmail } from "@/lib/playlist-security";
+import { getRequestClientIp, isValidPlaylistId, isLeaderboardAdminEmail, getVoteWeight } from "@/lib/playlist-security";
 
 const VOTE_THROTTLE_SECONDS = 10 * 60;
 
@@ -51,8 +51,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // Authenticated users get triple vote weight
-    const voteWeight = session?.user?.email ? 3 : 1;
+    const voteWeight = await getVoteWeight(session?.user?.email);
     const newVotes = await kv.hincrby(`playlists:${id}`, field, voteWeight);
 
     res.status(200).json({ id, [field]: newVotes });

@@ -52,10 +52,16 @@ export default function LogSessionPage() {
   const pendingSetsRef = useRef({});
   const savedTimerRef = useRef(null);
 
-  // Keep ref in sync so callbacks can read current pendingSets without stale closure
-  useEffect(() => {
-    pendingSetsRef.current = pendingSets;
-  }, [pendingSets]);
+  // Wrapper that keeps pendingSetsRef synchronously in sync.
+  // Using the setState callback form means the updater runs synchronously inside
+  // React's reconciler, so the ref is always current before the next render.
+  const setPendingSetsSync = useCallback((updater) => {
+    setPendingSets((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      pendingSetsRef.current = next;
+      return next;
+    });
+  }, []);
 
   // Sync date from URL param after hydration
   useEffect(() => {
@@ -68,14 +74,14 @@ export default function LogSessionPage() {
     (date) => {
       setSessionDate(date);
       setShowDeleteConfirm(false);
-      setPendingSets({});
+      setPendingSetsSync({});
       router.replace(
         { pathname: "/log", query: date !== todayIso ? { date } : {} },
         undefined,
         { shallow: true },
       );
     },
-    [router, todayIso],
+    [router, todayIso, setPendingSetsSync],
   );
 
   // All unique session dates from parsedData (ascending)
@@ -113,7 +119,7 @@ export default function LogSessionPage() {
       Object.values(sessionLifts)
         .flatMap((sets) => sets.map((s) => s.rowIndex).filter(Boolean)),
     );
-    setPendingSets((prev) => {
+    setPendingSetsSync((prev) => {
       let changed = false;
       const next = {};
       for (const [lt, sets] of Object.entries(prev)) {
@@ -126,7 +132,7 @@ export default function LogSessionPage() {
       }
       return changed ? next : prev;
     });
-  }, [sessionLifts]);
+  }, [sessionLifts, setPendingSetsSync]);
 
   // Merge real data with optimistic pending sets.
   // Deduplication: skip confirmed-pending rows whose rowIndex is already in sessionLifts.
@@ -178,8 +184,8 @@ export default function LogSessionPage() {
   }
 
   // Promote the first still-pending row for a liftType to confirmed with a real rowIndex.
-  function promoteFirstPending(liftType, rowIndex) {
-    setPendingSets((prev) => {
+  const promoteFirstPending = useCallback((liftType, rowIndex) => {
+    setPendingSetsSync((prev) => {
       if (!prev[liftType]) return prev;
       let promoted = false;
       const next = prev[liftType].map((s) => {
@@ -191,7 +197,7 @@ export default function LogSessionPage() {
       });
       return { ...prev, [liftType]: next };
     });
-  }
+  }, [setPendingSetsSync]);
 
   // --- API calls ---
 
@@ -229,8 +235,19 @@ export default function LogSessionPage() {
       const reps = prevSet?.reps ?? 5;
       const weight = prevSet?.weight ?? (isMetric ? 20 : 45);
 
+      // Compute insertion position BEFORE adding to pending, so we can include
+      // confirmed-pending rows (promoted on previous successful adds) in the calculation.
+      const confirmedPendingRows = (pendingSetsRef.current[liftType] ?? [])
+        .filter((s) => !s._pending && s.rowIndex)
+        .map((s) => s.rowIndex);
+      const parsedRows = parsedData
+        .filter((e) => e.date === sessionDate && e.liftType === liftType && !e.isGoal && e.rowIndex)
+        .map((e) => e.rowIndex);
+      const allKnownRows = [...parsedRows, ...confirmedPendingRows];
+      const insertAfterRowIndex = allKnownRows.length ? Math.max(...allKnownRows) : null;
+
       // Show optimistic row immediately (in-flight)
-      setPendingSets((prev) => ({
+      setPendingSetsSync((prev) => ({
         ...prev,
         [liftType]: [
           ...(prev[liftType] ?? []),
@@ -238,11 +255,6 @@ export default function LogSessionPage() {
         ],
       }));
       markSaving();
-
-      const liftRows = parsedData
-        .filter((e) => e.date === sessionDate && e.liftType === liftType && !e.isGoal && e.rowIndex)
-        .map((e) => e.rowIndex);
-      const insertAfterRowIndex = liftRows.length ? Math.max(...liftRows) : null;
 
       try {
         const res = await fetch("/api/log-session", {
@@ -265,7 +277,7 @@ export default function LogSessionPage() {
       } catch (err) {
         console.error("[log-session] addSet failed:", err);
         // Remove the failed pending row
-        setPendingSets((prev) => {
+        setPendingSetsSync((prev) => {
           const next = { ...prev };
           if (next[liftType]) next[liftType] = next[liftType].filter((s) => !s._pending);
           if (!next[liftType]?.length) delete next[liftType];
@@ -274,7 +286,7 @@ export default function LogSessionPage() {
         markError();
       }
     },
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, mutate],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, mutate, setPendingSetsSync, promoteFirstPending],
   );
 
   // Add a brand-new lift type to the session.
@@ -287,8 +299,29 @@ export default function LogSessionPage() {
       const weight = isMetric ? 20 : 45;
       const reps = 5;
 
+      // Read pending state BEFORE updating it, so hasPendingForDate accurately
+      // reflects whether any prior lift has already been added to this session.
+      const currentPending = pendingSetsRef.current;
+      const hasPendingForDate = Object.values(currentPending).some((sets) =>
+        sets.some((s) => s.date === sessionDate),
+      );
+
+      const sessionRows = parsedData
+        .filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex)
+        .map((e) => e.rowIndex);
+
+      // Also include confirmed-pending row indices for correct insertion position
+      const confirmedPendingSessionRows = Object.values(currentPending)
+        .flat()
+        .filter((s) => s.date === sessionDate && !s._pending && s.rowIndex)
+        .map((s) => s.rowIndex);
+      const allSessionRows = [...sessionRows, ...confirmedPendingSessionRows];
+
+      const hasExistingSession = allSessionRows.length > 0 || hasPendingForDate;
+      const insertAfterRowIndex = hasExistingSession ? Math.max(...allSessionRows) : null;
+
       // Show optimistic lift block immediately (in-flight)
-      setPendingSets((prev) => ({
+      setPendingSetsSync((prev) => ({
         ...prev,
         [liftType]: [
           ...(prev[liftType] ?? []),
@@ -296,19 +329,6 @@ export default function LogSessionPage() {
         ],
       }));
       markSaving();
-
-      const sessionRows = parsedData
-        .filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex)
-        .map((e) => e.rowIndex);
-
-      // Check both confirmed parsedData rows AND any already-confirmed pending rows
-      // to avoid drawing the border on subsequent lifts added in the same session.
-      const currentPending = pendingSetsRef.current;
-      const hasPendingForDate = Object.values(currentPending).some((sets) =>
-        sets.some((s) => s.date === sessionDate),
-      );
-      const hasExistingSession = sessionRows.length > 0 || hasPendingForDate;
-      const insertAfterRowIndex = hasExistingSession ? Math.max(...sessionRows) : null;
 
       const row = [
         hasExistingSession ? "" : sessionDate,
@@ -338,7 +358,7 @@ export default function LogSessionPage() {
         markSaved();
       } catch (err) {
         console.error("[add-lift] failed:", err);
-        setPendingSets((prev) => {
+        setPendingSetsSync((prev) => {
           const next = { ...prev };
           if (next[liftType]) next[liftType] = next[liftType].filter((s) => !s._pending);
           if (!next[liftType]?.length) delete next[liftType];
@@ -347,7 +367,7 @@ export default function LogSessionPage() {
         markError();
       }
     },
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, mutate],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, mutate, setPendingSetsSync, promoteFirstPending],
   );
 
   const deleteSession = useCallback(async () => {
@@ -708,11 +728,13 @@ function SetRow({ set, onUpdate }) {
   // Pending rows: identical layout, tiny spinner replaces the PR slot
   if (set._pending) {
     return (
-      <div className="flex items-center gap-2 px-4 py-3">
-        <span className="text-xl font-semibold tabular-nums">{set.reps}</span>
-        <span className="text-sm text-muted-foreground">@</span>
-        <span className="text-xl font-semibold tabular-nums">{set.weight}</span>
-        <span className="text-sm text-muted-foreground">{set.unitType}</span>
+      <div className="flex items-center gap-4 px-4 py-3">
+        <span className="text-xl font-semibold tabular-nums">
+          {set.reps}
+          <span className="mx-0.5 text-sm font-normal text-muted-foreground">@</span>
+          {set.weight}
+          <span className="ml-0.5 text-sm font-normal text-muted-foreground">{set.unitType}</span>
+        </span>
         <div className="flex flex-1 justify-end">
           <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
         </div>
@@ -721,50 +743,49 @@ function SetRow({ set, onUpdate }) {
   }
 
   return (
-    <div className="flex items-center gap-2 px-4 py-3">
-      {/* Reps — tap to edit */}
-      {editingReps ? (
-        <input
-          type="number"
-          className="w-14 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-          value={draftReps}
-          onChange={(e) => setDraftReps(e.target.value)}
-          onBlur={commitReps}
-          onKeyDown={(e) => e.key === "Enter" && commitReps()}
-          autoFocus
-        />
-      ) : (
-        <button
-          className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
-          onClick={() => setEditingReps(true)}
-        >
-          {displayReps}
-        </button>
-      )}
-
-      <span className="text-sm text-muted-foreground">@</span>
-
-      {/* Weight — tap to edit */}
-      {editingWeight ? (
-        <input
-          type="number"
-          step="any"
-          className="w-20 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-          value={draftWeight}
-          onChange={(e) => setDraftWeight(e.target.value)}
-          onBlur={commitWeight}
-          onKeyDown={(e) => e.key === "Enter" && commitWeight()}
-          autoFocus
-        />
-      ) : (
-        <button
-          className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
-          onClick={() => setEditingWeight(true)}
-        >
-          {displayWeight}
-        </button>
-      )}
-      <span className="text-sm text-muted-foreground">{set.unitType}</span>
+    <div className="flex items-center gap-4 px-4 py-3">
+      {/* Reps @ Weight unit — grouped tightly as a visual unit */}
+      <div className="flex items-baseline">
+        {editingReps ? (
+          <input
+            type="number"
+            className="w-14 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+            value={draftReps}
+            onChange={(e) => setDraftReps(e.target.value)}
+            onBlur={commitReps}
+            onKeyDown={(e) => e.key === "Enter" && commitReps()}
+            autoFocus
+          />
+        ) : (
+          <button
+            className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
+            onClick={() => setEditingReps(true)}
+          >
+            {displayReps}
+          </button>
+        )}
+        <span className="mx-0.5 text-sm text-muted-foreground">@</span>
+        {editingWeight ? (
+          <input
+            type="number"
+            step="any"
+            className="w-20 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+            value={draftWeight}
+            onChange={(e) => setDraftWeight(e.target.value)}
+            onBlur={commitWeight}
+            onKeyDown={(e) => e.key === "Enter" && commitWeight()}
+            autoFocus
+          />
+        ) : (
+          <button
+            className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
+            onClick={() => setEditingWeight(true)}
+          >
+            {displayWeight}
+          </button>
+        )}
+        <span className="ml-0.5 text-sm text-muted-foreground">{set.unitType}</span>
+      </div>
 
       {/* Notes — flex-1, tap to edit */}
       <div className="min-w-0 flex-1">

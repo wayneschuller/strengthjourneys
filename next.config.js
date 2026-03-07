@@ -18,22 +18,26 @@ const nextConfig = {
   // We could delete these in a few months once Google indexing has caught up
   async redirects() {
     return [
+      // 2026-03-08: Legacy analyzer route now maps to the home dashboard/landing page.
       {
         source: "/analyzer",
         destination: "/",
         permanent: true,
       },
+      // 2026-03-08: Strength Level Calculator was rebranded to Big Four Strength Standards Calculator.
       {
         source: "/strength-level-calculator",
         destination: "/big-four-strength-standards-calculator",
         permanent: true,
       },
+      // 2024-09-01: Preserve traffic from the old manually-authored article slug after Sanity migration.
       {
         source: "/articles/own-your-lifting-data",
         destination:
           "/articles/the-power-of-owning-your-lifting-data-with-google-sheets",
         permanent: true,
       },
+      // 2024-09-01: Preserve traffic from the old manually-authored article slug after Sanity migration.
       {
         source: "/articles/henry-rollins-the-iron-and-the-soul",
         destination: "/articles/the-iron-and-the-soul-author-henry-rollins",

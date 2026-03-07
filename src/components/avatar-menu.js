@@ -145,7 +145,8 @@ export function AvatarDropdown() {
             fill="#EA4335"
           />
         </svg>
-        Sign in with Google
+        <span className="sm:hidden">Sign in</span>
+        <span className="hidden sm:inline">Sign in with Google</span>
       </Button>
     );
 

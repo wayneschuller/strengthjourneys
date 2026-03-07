@@ -63,7 +63,7 @@ import { getLogoForTheme } from "@/lib/theme-logos";
 
 import { AthleteBioQuickSettings } from "@/components/athlete-bio-quick-settings";
 
-const BIO_SETTINGS_PAGES = ["/calculator", "/strength-level-calculator"];
+const BIO_SETTINGS_PAGES = ["/calculator", "/big-four-strength-standards-calculator"];
 const CANNY_APP_ID = "65ae4d4c921071bb0aae99c3";
 
 let cannyLoadPromise = null;
@@ -594,8 +594,8 @@ function CalculatorsMenu() {
       icon: <Flame className="h-5 w-5" />,
     },
     {
-      title: "Strength Level Calculator",
-      href: "/strength-level-calculator",
+      title: "Big Four Strength Standards",
+      href: "/big-four-strength-standards-calculator",
       icon: <BarChart className="h-5 w-5" />,
     },
     {
@@ -652,7 +652,7 @@ function CalculatorsMenu() {
               "hover:text-foreground/80 bg-transparent transition-colors",
               pathname.startsWith("/calculator") ||
                 pathname.startsWith("/warm-up-sets-calculator") ||
-                pathname.startsWith("/strength-level-calculator") ||
+                pathname.startsWith("/big-four-strength-standards-calculator") ||
                 pathname.startsWith("/timer")
                 ? "text-foreground"
                 : "text-foreground/60",

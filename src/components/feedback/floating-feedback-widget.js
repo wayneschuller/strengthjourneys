@@ -264,7 +264,7 @@ export function FeedbackWidget() {
     "/visualizer": "the Visualizer",
     "/tonnage": "Tonnage Tracking",
     "/calculator": "the 1RM Calculator",
-    "/strength-level-calculator": "the Strength Level Calculator",
+    "/big-four-strength-standards-calculator": "the Big Four Strength Standards Calculator",
     "/1000lb-club-calculator": "the 1000lb Club Calculator",
     "/warm-up-sets-calculator": "the Warm-up Calculator",
     "/strength-year-in-review": "your Year in Review",

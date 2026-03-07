@@ -66,10 +66,10 @@ export const featurePages = [
     IconComponent: Anvil,
   },
   {
-    href: "/strength-level-calculator",
-    title: "Strength Level Calculator",
+    href: "/big-four-strength-standards-calculator",
+    title: "Big Four Strength Standards",
     description:
-      "How strong are you? Assess your relative strength by age, gender and lift type.",
+      "See beginner, intermediate, advanced, and elite standards for squat, bench, deadlift, and strict press.",
     IconComponent: BicepsFlexed,
   },
   {

@@ -93,7 +93,7 @@ export function getStandardForLiftDate(
 /**
  * From topLiftsByTypeAndReps format (array of rep-range arrays, best lift at [0]),
  * returns best e1RM, best raw weight, and strength rating. Used by StandardsSlider
- * and strength-level-calculator.
+ * and big-four-strength-standards-calculator.
  * When bioForDateRating is provided, uses age at the best lift's date for accurate rating.
  */
 export function getTopLiftStats(

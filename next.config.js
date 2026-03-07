@@ -19,6 +19,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: "/strength-level-calculator",
+        destination: "/big-four-strength-standards-calculator",
+        permanent: true,
+      },
+      {
         source: "/articles/own-your-lifting-data",
         destination:
           "/articles/the-power-of-owning-your-lifting-data-with-google-sheets",

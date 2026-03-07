@@ -60,7 +60,7 @@ export default function Timer({ relatedArticles }) {
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys Strength Level Calculator",
+              alt: "Strength Journeys Lifting Set Timer",
             },
           ],
           site_name: "Strength Journeys",

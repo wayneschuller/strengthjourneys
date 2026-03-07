@@ -36,6 +36,7 @@ import {
   Calculator,
   BicepsFlexed,
   Bot,
+  CircleDashed,
 } from "lucide-react";
 
 import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
@@ -84,10 +85,17 @@ const FAQ_ITEMS = [
 
 const WHATS_NEXT_FEATURES = [
   {
-    href: "/strength-level-calculator",
-    title: "Strength Level Calculator",
+    href: "/how-strong-am-i",
+    title: "How Strong Am I?",
     description:
-      "How do you compare? Get beginner to elite ratings per lift by age and bodyweight.",
+      "See your percentile rank across lifters, gym-goers, and powerlifting culture.",
+    IconComponent: CircleDashed,
+  },
+  {
+    href: "/big-four-strength-standards-calculator",
+    title: "Big Four Strength Standards",
+    description:
+      "Check beginner-to-elite benchmarks for squat, bench, deadlift, and strict press.",
     IconComponent: BicepsFlexed,
   },
   {
@@ -380,26 +388,26 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           1000lb Club Calculator
         </PageHeaderHeading>
         <PageHeaderDescription>
-          How strong am I? Am I in the 1000lb Club? Use our 1000lb Club
-          calculator to test if you have joined the hallowed order of strength.
+          Add your squat, bench press, and deadlift to see whether your total
+          reaches the 1000lb Club milestone.
         </PageHeaderDescription>
         <PageHeaderRight>
           <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">
             <Link
-              href="/strength-level-calculator"
+              href="/how-strong-am-i"
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
               <h3 className="text-base font-semibold">
-                Strength Level Calculator
+                How Strong Am I?
               </h3>
-              <p className="text-sm">How strong am I?</p>
+              <p className="text-sm">See your percentile rank across lifter groups.</p>
             </Link>
             <Link
-              href="/calculator"
+              href="/big-four-strength-standards-calculator"
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
-              <h3 className="text-base font-semibold">E1RM Calculator</h3>
-              <p className="text-sm">Set targets. Estimate 1RM from any set.</p>
+              <h3 className="text-base font-semibold">Big Four Strength Standards</h3>
+              <p className="text-sm">Check beginner-to-elite benchmarks per lift.</p>
             </Link>
           </div>
         </PageHeaderRight>
@@ -543,12 +551,12 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
         </CardContent>
         <CardFooter className="flex flex-col gap-2 text-sm">
           <p>
-            To see your strength level ratings per lift, see our{" "}
+            To see your beginner-to-elite standards per lift, see our{" "}
             <Link
-              href="/strength-level-calculator"
+              href="/big-four-strength-standards-calculator"
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
-              Strength Level Calculator
+              Big Four Strength Standards Calculator
             </Link>
             . Explore:{" "}
             <Link
@@ -619,10 +627,10 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
             Use the sliders to estimate your current total, then compare your
             progress with our{" "}
             <Link
-              href="/strength-level-calculator"
+              href="/big-four-strength-standards-calculator"
               className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
             >
-              Strength Level Calculator
+              Big Four Strength Standards Calculator
             </Link>{" "}
             and project training loads with the{" "}
             <Link

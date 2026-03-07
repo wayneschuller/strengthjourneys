@@ -53,18 +53,38 @@ import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strengt
 // The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [
   {
+    href: "/calculator",
+    title: "One Rep Max Calculator",
+    description: "The greatest e1rm multi-formula one rep max calculations.",
+    IconComponent: Calculator,
+  },
+  {
+    href: "/how-strong-am-i",
+    title: "How Strong Am I?",
+    description:
+      "See your percentile rank across four groups, from the general population to powerlifting culture.",
+    IconComponent: CircleDashed,
+  },
+  {
+    href: "/1000lb-club-calculator",
+    title: "1000lb Club Calculator",
+    description:
+      "Are you in the 1000lb club? Track your progress to this milestone.",
+    IconComponent: Anvil,
+  },
+  {
+    href: "/big-four-strength-standards-calculator",
+    title: "Big Four Strength Standards",
+    description:
+      "Check beginner, intermediate, advanced, and elite benchmarks for each Big Four lift.",
+    IconComponent: BicepsFlexed,
+  },
+  {
     href: "/lift-explorer",
     title: "Lift Explorer",
     description:
       "Explore your lifting history lift by lift. PRs across every rep range, your journey, and training frequency.",
     IconComponent: Layers,
-  },
-  {
-    href: "/visualizer",
-    title: "Strength Visualizer",
-    description:
-      "Your E1RMs across every rep range over time. See your strength journey.",
-    IconComponent: LineChart,
   },
   {
     href: "/barbell-strength-potential",
@@ -74,6 +94,20 @@ export const featurePages = [
     IconComponent: ChartColumnDecreasing,
   },
   {
+    href: "/warm-up-sets-calculator",
+    title: "Warm Ups Calculator",
+    description:
+      "Generate warmup sets for your barbell workouts using progressive warmup methodology.",
+    IconComponent: Flame,
+  },
+  {
+    href: "/articles",
+    title: "Strength Articles Library",
+    description:
+      "A collection of our articles, common questions, plus curated lifting content.",
+    IconComponent: LibraryBig,
+  },
+  {
     href: "/ai-lifting-assistant",
     title: "AI Lifting Assistant",
     description:
@@ -81,49 +115,18 @@ export const featurePages = [
     IconComponent: Bot,
   },
   {
-    href: "/calculator",
-    title: "One Rep Max Calculator",
-    description: "The greatest e1rm multi-formula one rep max calculations.",
-    IconComponent: Calculator,
+    href: "/visualizer",
+    title: "Strength Visualizer",
+    description:
+      "Chart lifts beyond the Big Four with full-range E1RM history over time.",
+    IconComponent: LineChart,
   },
   {
-    href: "/warm-up-sets-calculator",
-    title: "Warm Ups Calculator",
+    href: "/strength-year-in-review",
+    title: "Strength Unwrapped - Yearly Recap",
     description:
-      "Generate warmup sets for your barbell workouts using progressive warmup methodology.",
-    IconComponent: Flame,
-  },
-  ...(process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development"
-    ? [
-        {
-          href: "/how-strong-am-i",
-          title: "How Strong Am I?",
-          description:
-            "See your strength percentile across four groups — from the general population to competitive powerlifters.",
-          IconComponent: CircleDashed,
-        },
-      ]
-    : []),
-  {
-    href: "/strength-level-calculator",
-    title: "Strength Level Calculator",
-    description:
-      "How strong are you? Assess your relative strength by age, gender and lift type.",
-    IconComponent: BicepsFlexed,
-  },
-  {
-    href: "/how-strong-is-a-gorilla",
-    title: "How Strong Is a Gorilla?",
-    description:
-      "Compare your bench press to a silverback. Find out how badly you'd lose.",
-    IconComponent: GorillaIcon,
-  },
-  {
-    href: "/1000lb-club-calculator",
-    title: "1000lb Club Calculator",
-    description:
-      "Are you in the 1000lb club? Track your progress to this milestone.",
-    IconComponent: Anvil,
+      "Your year of strength training in a Spotify Wrapped-style recap. Sessions, tonnage, PRs, and more.",
+    IconComponent: Sparkles,
   },
   {
     href: "/tonnage",
@@ -139,24 +142,17 @@ export const featurePages = [
     IconComponent: Timer,
   },
   {
+    href: "/how-strong-is-a-gorilla",
+    title: "How Strong Is a Gorilla?",
+    description:
+      "Compare your bench press to a silverback. Find out how badly you'd lose.",
+    IconComponent: GorillaIcon,
+  },
+  {
     href: "/gym-playlist-leaderboard",
     title: "Gym Music Leaderboard",
     description: "Discover and share new motivational music playlists.",
     IconComponent: Music,
-  },
-  {
-    href: "/articles",
-    title: "Strength Articles Library",
-    description:
-      "A collection of our articles, common questions, plus curated lifting content.",
-    IconComponent: LibraryBig,
-  },
-  {
-    href: "/strength-year-in-review",
-    title: "Strength Unwrapped - Yearly Recap",
-    description:
-      "Your year of strength training in a Spotify Wrapped-style recap. Sessions, tonnage, PRs, and more.",
-    IconComponent: Sparkles,
   },
 ];
 

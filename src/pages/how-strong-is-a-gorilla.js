@@ -227,11 +227,11 @@ function GorillaStrengthMain({ relatedArticles }) {
         <PageHeaderRight>
           <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">
             <Link
-              href="/strength-level-calculator"
+              href="/big-four-strength-standards-calculator"
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
-              <h3 className="text-base font-semibold">Strength Level Calculator</h3>
-              <p className="text-sm">How strong am I?</p>
+              <h3 className="text-base font-semibold">Big Four Strength Standards</h3>
+              <p className="text-sm">Check squat, bench, deadlift, and press benchmarks.</p>
             </Link>
             <Link
               href="/calculator"

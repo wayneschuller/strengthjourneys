@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { devLog } from "@/lib/processing-utils";
 import { NextSeo } from "next-seo";
@@ -12,8 +11,6 @@ import {
   PageHeaderDescription,
   PageHeaderRight,
 } from "@/components/page-header";
-
-
 import { BicepsFlexed } from "lucide-react";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLiftColors } from "@/hooks/use-lift-colors";
@@ -45,20 +42,20 @@ export async function getStaticProps() {
 }
 
 /**
- * Strength Level Calculator page. Renders SEO metadata and delegates rendering to StrengthLevelCalculatorMain.
+ * Big Four Strength Standards Calculator page. Renders SEO metadata and delegates rendering to BigFourStrengthStandardsCalculatorMain.
  * @param {Object} props
  * @param {Array} props.relatedArticles - CMS articles related to the Strength Calculator topic, fetched via ISR.
  */
-export default function StrengthLevelCalculator({ relatedArticles }) {
+export default function BigFourStrengthStandardsCalculator({ relatedArticles }) {
   // OG Meta Tags
   const canonicalURL =
-    "https://www.strengthjourneys.xyz/strength-level-calculator";
+    "https://www.strengthjourneys.xyz/big-four-strength-standards-calculator";
   const description =
-    "Free strength level calculator — see how your squat, bench press, deadlift, and strict press stack up by age, sex, and bodyweight. Kilgore strength standards from beginner to elite. No login required.";
+    "Free Big Four strength standards calculator — see beginner, intermediate, advanced, and elite benchmarks for back squat, bench press, deadlift, and strict press by age, sex, and bodyweight. No login required.";
   const title =
-    "Strength Level Calculator — How Strong Am I? Free Tool for Lifters";
+    "Big Four Strength Standards Calculator | Beginner to Elite Benchmarks";
   const keywords =
-    "Strength level calculator, strength test, strength standards, powerlifting benchmarks, weightlifting performance, how strong am I, one-rep max (1RM), squat rating, bench press rating, deadlift rating, overhead press rating, strength comparison, bodyweight ratio, age-adjusted strength, gender-specific strength levels, beginner to elite lifter, strength training progress, fitness assessment tool, weightlifting goals, strength sports";
+    "big four strength standards calculator, squat standards, bench press standards, deadlift standards, strict press standards, beginner intermediate advanced elite, strength benchmarks, strength standards by age sex and bodyweight, barbell lift standards";
   const ogImageURL =
     "https://www.strengthjourneys.xyz/strength_journeys_strength_levels_calculator_og.png";
 
@@ -76,7 +73,7 @@ export default function StrengthLevelCalculator({ relatedArticles }) {
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys Strength Level Calculator",
+              alt: "Strength Journeys Big Four Strength Standards Calculator",
             },
           ],
           site_name: "Strength Journeys",
@@ -94,18 +91,18 @@ export default function StrengthLevelCalculator({ relatedArticles }) {
         ]}
       />
       {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
-      <StrengthLevelCalculatorMain relatedArticles={relatedArticles} />
+      <BigFourStrengthStandardsCalculatorMain relatedArticles={relatedArticles} />
     </>
   );
 }
 
 /**
- * Inner client component for the Strength Level Calculator page. Provides age, bodyweight, and sex
+ * Inner client component for the Big Four Strength Standards Calculator page. Provides age, bodyweight, and sex
  * sliders and displays Lon Kilgore strength standards for every lift type as interactive slider bars.
  * @param {Object} props
  * @param {Array} props.relatedArticles - CMS articles to display in the related articles section.
  */
-function StrengthLevelCalculatorMain({ relatedArticles }) {
+function BigFourStrengthStandardsCalculatorMain({ relatedArticles }) {
   const { standards, isMetric } = useAthleteBio();
   const { getColor } = useLiftColors();
 
@@ -115,29 +112,28 @@ function StrengthLevelCalculatorMain({ relatedArticles }) {
     <PageContainer>
       <PageHeader>
         <PageHeaderHeading icon={BicepsFlexed}>
-          Strength Level Calculator
+          Big Four Strength Standards Calculator
         </PageHeaderHeading>
         <PageHeaderDescription>
-          How strong am I? Estimate your strength level based on age, gender,
-          and bodyweight. <SignInInvite />
+          See beginner, intermediate, advanced, and elite benchmarks for back
+          squat, bench press, deadlift, and strict press based on age, sex, and
+          bodyweight. <SignInInvite />
         </PageHeaderDescription>
         <PageHeaderRight>
           <div className="hidden gap-2 text-muted-foreground md:flex md:flex-col xl:flex-row">
+            <Link
+              href="/how-strong-am-i"
+              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
+            >
+              <h3 className="text-base font-semibold">How Strong Am I?</h3>
+              <p className="text-sm">See your percentile rank across lifter groups.</p>
+            </Link>
             <Link
               href="/calculator"
               className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
             >
               <h3 className="text-base font-semibold">E1RM Calculator</h3>
               <p className="text-sm">Estimate your one rep max.</p>
-            </Link>
-            <Link
-              href="/1000lb-club-calculator"
-              className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
-            >
-              <h3 className="text-base font-semibold">
-                1000-lb Club Calculator
-              </h3>
-              <p className="text-sm">Can you hit the 1000-lb club?</p>
             </Link>
           </div>
         </PageHeaderRight>

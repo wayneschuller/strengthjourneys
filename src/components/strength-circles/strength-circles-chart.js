@@ -60,7 +60,7 @@ function percentileToOffset(percentile, radius) {
 
 // ─── Single ring ──────────────────────────────────────────────────────────────
 
-function Ring({ config, percentile, isActive, onClick }) {
+function Ring({ config, percentile, isActive, onClick, onHoverChange }) {
   const { radius, strokeWidth, color } = config;
   const circumference = 2 * Math.PI * radius;
   const offset = percentileToOffset(percentile, radius);
@@ -68,6 +68,8 @@ function Ring({ config, percentile, isActive, onClick }) {
   return (
     <g
       onClick={onClick}
+      onMouseEnter={() => onHoverChange(config.universe)}
+      onMouseLeave={() => onHoverChange(null)}
       style={{ cursor: "pointer" }}
       role="button"
       aria-label={`${config.universe}: ${percentile ?? 0}th percentile`}
@@ -165,7 +167,12 @@ function CenterLabel({ activeUniverse, percentiles }) {
 
 // ─── Legend ───────────────────────────────────────────────────────────────────
 
-function Legend({ percentiles, activeUniverse, onUniverseChange }) {
+function Legend({
+  percentiles,
+  activeUniverse,
+  onUniverseChange,
+  onUniverseHoverChange,
+}) {
   return (
     <div className="mt-1 flex flex-col gap-0.5">
       {RING_CONFIG.map((config) => {
@@ -176,6 +183,8 @@ function Legend({ percentiles, activeUniverse, onUniverseChange }) {
           <button
             key={config.universe}
             onClick={() => onUniverseChange(config.universe)}
+            onMouseEnter={() => onUniverseHoverChange(config.universe)}
+            onMouseLeave={() => onUniverseHoverChange(null)}
             className={`flex items-center justify-between rounded-md px-3 py-1.5 text-sm transition-all ${
               isActive
                 ? "bg-muted font-semibold"
@@ -207,6 +216,7 @@ export function StrengthCirclesChart({
   percentiles,
   activeUniverse,
   onUniverseChange,
+  onUniverseHoverChange = () => {},
 }) {
   return (
     <div className="flex flex-col">
@@ -225,6 +235,7 @@ export function StrengthCirclesChart({
               percentile={percentiles?.[config.universe] ?? 0}
               isActive={config.universe === activeUniverse}
               onClick={() => onUniverseChange(config.universe)}
+              onHoverChange={onUniverseHoverChange}
             />
           ))}
         </svg>
@@ -237,6 +248,7 @@ export function StrengthCirclesChart({
         percentiles={percentiles}
         activeUniverse={activeUniverse}
         onUniverseChange={onUniverseChange}
+        onUniverseHoverChange={onUniverseHoverChange}
       />
 
       {/* Trust line */}

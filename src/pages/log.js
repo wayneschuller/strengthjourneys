@@ -30,22 +30,6 @@ const BIG_FOUR = [
   { name: "Strict Press", icon: "/strict_press.svg" },
 ];
 
-// --- Randomised notes placeholders ---
-
-const NOTES_PROMPTS = [
-  "How did it feel?",
-  "Form cues to remember...",
-  "What was playing?",
-  "RPE?",
-  "Bar path?",
-  "Easy, medium, or hard?",
-  "Any coaching notes?",
-  "What would you change next time?",
-  "Felt strong? Tired? Heavy?",
-  "Grip, stance, breath?",
-  "What's the vibe today?",
-];
-
 export default function LogSessionPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
@@ -62,9 +46,16 @@ export default function LogSessionPage() {
   const [syncState, setSyncState] = useState("idle"); // idle | saving | saved | error
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // Optimistic pending sets: { [liftType]: [pendingSetObj, ...] }
-  // Rows appear instantly in the UI while the sheet API call is in-flight.
+  // _pending: true  → in-flight (show spinner)
+  // _pending: false → confirmed (rowIndex known, waiting for parsedData to catch up)
   const [pendingSets, setPendingSets] = useState({});
+  const pendingSetsRef = useRef({});
   const savedTimerRef = useRef(null);
+
+  // Keep ref in sync so callbacks can read current pendingSets without stale closure
+  useEffect(() => {
+    pendingSetsRef.current = pendingSets;
+  }, [pendingSets]);
 
   // Sync date from URL param after hydration
   useEffect(() => {
@@ -115,11 +106,43 @@ export default function LogSessionPage() {
     return grouped;
   }, [parsedData, sessionDate]);
 
-  // Merge real data with optimistic pending sets for rendering
+  // When parsedData catches up, remove confirmed (non-pending) rows from pendingSets
+  // to avoid doubling once the real data arrives.
+  useEffect(() => {
+    const realRowIndices = new Set(
+      Object.values(sessionLifts)
+        .flatMap((sets) => sets.map((s) => s.rowIndex).filter(Boolean)),
+    );
+    setPendingSets((prev) => {
+      let changed = false;
+      const next = {};
+      for (const [lt, sets] of Object.entries(prev)) {
+        // Keep rows that are still in-flight OR whose rowIndex isn't in real data yet
+        const remaining = sets.filter(
+          (s) => s._pending || !realRowIndices.has(s.rowIndex),
+        );
+        if (remaining.length !== sets.length) changed = true;
+        if (remaining.length) next[lt] = remaining;
+      }
+      return changed ? next : prev;
+    });
+  }, [sessionLifts]);
+
+  // Merge real data with optimistic pending sets.
+  // Deduplication: skip confirmed-pending rows whose rowIndex is already in sessionLifts.
   const sessionLiftsWithPending = useMemo(() => {
+    const realRowIndices = new Set(
+      Object.values(sessionLifts)
+        .flatMap((sets) => sets.map((s) => s.rowIndex).filter(Boolean)),
+    );
     const merged = { ...sessionLifts };
     for (const [lt, sets] of Object.entries(pendingSets)) {
-      merged[lt] = [...(merged[lt] ?? []), ...sets];
+      const unique = sets.filter(
+        (s) => s._pending || !realRowIndices.has(s.rowIndex),
+      );
+      if (unique.length) {
+        merged[lt] = [...(merged[lt] ?? []), ...unique];
+      }
     }
     return merged;
   }, [sessionLifts, pendingSets]);
@@ -154,16 +177,26 @@ export default function LogSessionPage() {
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 3000);
   }
 
-  function clearPending(liftType) {
+  // Promote the first still-pending row for a liftType to confirmed with a real rowIndex.
+  function promoteFirstPending(liftType, rowIndex) {
     setPendingSets((prev) => {
-      const next = { ...prev };
-      delete next[liftType];
-      return next;
+      if (!prev[liftType]) return prev;
+      let promoted = false;
+      const next = prev[liftType].map((s) => {
+        if (!promoted && s._pending) {
+          promoted = true;
+          return { ...s, _pending: false, rowIndex };
+        }
+        return s;
+      });
+      return { ...prev, [liftType]: next };
     });
   }
 
   // --- API calls ---
 
+  // updateSet: fire-and-forget — no await mutate(), SWR will sync on next focus.
+  // The SetRow component manages its own optimistic display via pendingReps/pendingWeight.
   const updateSet = useCallback(
     async (rowIndex, fields) => {
       if (!sheetInfo?.ssid) return;
@@ -175,8 +208,9 @@ export default function LogSessionPage() {
           body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex, ...fields }),
         });
         if (!res.ok) throw new Error((await res.json()).error || "Update failed");
-        await mutate();
         markSaved();
+        // Fire SWR revalidation in background — no await to avoid flicker
+        mutate();
       } catch (err) {
         console.error("[log-session] updateSet failed:", err);
         markError();
@@ -186,7 +220,7 @@ export default function LogSessionPage() {
   );
 
   // Add a new set to an existing lift block.
-  // Optimistic: row appears immediately, API fires in background.
+  // Optimistic: row appears immediately with spinner, promoted to confirmed on success.
   const addSet = useCallback(
     async (liftType, prevSet) => {
       if (!sheetInfo?.ssid || !parsedData) return;
@@ -195,7 +229,7 @@ export default function LogSessionPage() {
       const reps = prevSet?.reps ?? 5;
       const weight = prevSet?.weight ?? (isMetric ? 20 : 45);
 
-      // Show optimistic row immediately
+      // Show optimistic row immediately (in-flight)
       setPendingSets((prev) => ({
         ...prev,
         [liftType]: [
@@ -220,13 +254,23 @@ export default function LogSessionPage() {
             insertAfterRowIndex,
           }),
         });
-        if (!res.ok) throw new Error((await res.json()).error || "Add set failed");
-        await mutate();
-        clearPending(liftType);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Add set failed");
+        const { firstRowIndex } = data;
+        // Promote pending → confirmed with real rowIndex
+        promoteFirstPending(liftType, firstRowIndex);
+        // Background sync — SWR will clean up confirmed rows via the cleanup effect
+        mutate();
         markSaved();
       } catch (err) {
         console.error("[log-session] addSet failed:", err);
-        clearPending(liftType);
+        // Remove the failed pending row
+        setPendingSets((prev) => {
+          const next = { ...prev };
+          if (next[liftType]) next[liftType] = next[liftType].filter((s) => !s._pending);
+          if (!next[liftType]?.length) delete next[liftType];
+          return next;
+        });
         markError();
       }
     },
@@ -234,7 +278,7 @@ export default function LogSessionPage() {
   );
 
   // Add a brand-new lift type to the session.
-  // Optimistic: the lift block appears immediately.
+  // Border is only drawn for the very first row of a brand-new session date.
   const addLift = useCallback(
     async (liftType) => {
       if (!sheetInfo?.ssid || !parsedData) return;
@@ -243,7 +287,7 @@ export default function LogSessionPage() {
       const weight = isMetric ? 20 : 45;
       const reps = 5;
 
-      // Show optimistic lift block immediately
+      // Show optimistic lift block immediately (in-flight)
       setPendingSets((prev) => ({
         ...prev,
         [liftType]: [
@@ -256,7 +300,14 @@ export default function LogSessionPage() {
       const sessionRows = parsedData
         .filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex)
         .map((e) => e.rowIndex);
-      const hasExistingSession = sessionRows.length > 0;
+
+      // Check both confirmed parsedData rows AND any already-confirmed pending rows
+      // to avoid drawing the border on subsequent lifts added in the same session.
+      const currentPending = pendingSetsRef.current;
+      const hasPendingForDate = Object.values(currentPending).some((sets) =>
+        sets.some((s) => s.date === sessionDate),
+      );
+      const hasExistingSession = sessionRows.length > 0 || hasPendingForDate;
       const insertAfterRowIndex = hasExistingSession ? Math.max(...sessionRows) : null;
 
       const row = [
@@ -279,13 +330,20 @@ export default function LogSessionPage() {
             newSession: !hasExistingSession,
           }),
         });
-        if (!res.ok) throw new Error((await res.json()).error || "Failed");
-        await mutate();
-        clearPending(liftType);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed");
+        const { firstRowIndex } = data;
+        promoteFirstPending(liftType, firstRowIndex);
+        mutate();
         markSaved();
       } catch (err) {
         console.error("[add-lift] failed:", err);
-        clearPending(liftType);
+        setPendingSets((prev) => {
+          const next = { ...prev };
+          if (next[liftType]) next[liftType] = next[liftType].filter((s) => !s._pending);
+          if (!next[liftType]?.length) delete next[liftType];
+          return next;
+        });
         markError();
       }
     },
@@ -564,7 +622,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
           />
         ))}
 
-        {/* Add set — disabled while any pending set is in-flight for this lift */}
+        {/* Add set */}
         <button
           className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
           onClick={() => onAddSet(lastRealSet)}
@@ -591,6 +649,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
 }
 
 // --- Set row (click-to-edit) ---
+// Layout: [reps] @ [weight][unit]  [notes flex-1]  [PR]
 
 function SetRow({ set, onUpdate }) {
   const [editingReps, setEditingReps] = useState(false);
@@ -600,21 +659,31 @@ function SetRow({ set, onUpdate }) {
   const [draftWeight, setDraftWeight] = useState(String(set.weight ?? ""));
   const [draftNotes, setDraftNotes] = useState(set.notes ?? "");
 
-  // Pick a playful placeholder once per row mount
-  const notesPlaceholder = useMemo(
-    () => NOTES_PROMPTS[Math.floor(Math.random() * NOTES_PROMPTS.length)],
-    [],
-  );
+  // Optimistic display: holds committed value until parsedData catches up
+  const [pendingReps, setPendingReps] = useState(null);
+  const [pendingWeight, setPendingWeight] = useState(null);
 
-  // Keep drafts in sync if parsedData refreshes from SWR
+  // Keep drafts in sync if SWR refreshes parsedData
   useEffect(() => { setDraftReps(String(set.reps ?? "")); }, [set.reps]);
   useEffect(() => { setDraftWeight(String(set.weight ?? "")); }, [set.weight]);
   useEffect(() => { setDraftNotes(set.notes ?? ""); }, [set.notes]);
+
+  // Clear pending once parsedData reflects the committed value
+  useEffect(() => {
+    if (pendingReps !== null && set.reps === pendingReps) setPendingReps(null);
+  }, [set.reps, pendingReps]);
+  useEffect(() => {
+    if (pendingWeight !== null && set.weight === pendingWeight) setPendingWeight(null);
+  }, [set.weight, pendingWeight]);
+
+  const displayReps = pendingReps !== null ? pendingReps : set.reps;
+  const displayWeight = pendingWeight !== null ? pendingWeight : set.weight;
 
   function commitReps() {
     setEditingReps(false);
     const parsed = parseInt(draftReps, 10);
     if (!isNaN(parsed) && parsed !== set.reps) {
+      setPendingReps(parsed);
       onUpdate({ reps: parsed, weight: `${set.weight}${set.unitType ?? ""}`, notes: set.notes ?? "", url: set.URL ?? "" });
     }
   }
@@ -623,6 +692,7 @@ function SetRow({ set, onUpdate }) {
     setEditingWeight(false);
     const num = parseFloat(draftWeight);
     if (!isNaN(num) && num !== set.weight) {
+      setPendingWeight(num);
       onUpdate({ reps: set.reps, weight: `${num}${set.unitType ?? ""}`, notes: set.notes ?? "", url: set.URL ?? "" });
     }
   }
@@ -635,21 +705,15 @@ function SetRow({ set, onUpdate }) {
     }
   }
 
-  // Pending rows: look identical to real rows, tiny spinner in the badge slot
+  // Pending rows: identical layout, tiny spinner replaces the PR slot
   if (set._pending) {
     return (
-      <div className="flex items-center px-4 py-3">
-        <div className="flex flex-1 items-baseline gap-3">
-          <div className="flex items-baseline gap-1">
-            <span className="px-1 text-xl font-semibold tabular-nums">{set.reps}</span>
-            <span className="text-sm text-muted-foreground">reps</span>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <span className="px-1 text-xl font-semibold tabular-nums">{set.weight}</span>
-            <span className="text-sm text-muted-foreground">{set.unitType}</span>
-          </div>
-        </div>
-        <div className="w-8 shrink-0 flex items-center justify-end">
+      <div className="flex items-center gap-2 px-4 py-3">
+        <span className="text-xl font-semibold tabular-nums">{set.reps}</span>
+        <span className="text-sm text-muted-foreground">@</span>
+        <span className="text-xl font-semibold tabular-nums">{set.weight}</span>
+        <span className="text-sm text-muted-foreground">{set.unitType}</span>
+        <div className="flex flex-1 justify-end">
           <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
         </div>
       </div>
@@ -657,70 +721,53 @@ function SetRow({ set, onUpdate }) {
   }
 
   return (
-    <div className="flex flex-col px-4 py-2">
-      {/* Reps + Weight + PR badge */}
-      <div className="flex items-center">
-        <div className="flex flex-1 items-baseline gap-3">
-          {/* Reps — tap to edit */}
-          <div className="flex items-baseline gap-1">
-            {editingReps ? (
-              <input
-                type="number"
-                className="w-16 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-                value={draftReps}
-                onChange={(e) => setDraftReps(e.target.value)}
-                onBlur={commitReps}
-                onKeyDown={(e) => e.key === "Enter" && commitReps()}
-                autoFocus
-              />
-            ) : (
-              <button
-                className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
-                onClick={() => setEditingReps(true)}
-              >
-                {set.reps}
-              </button>
-            )}
-            <span className="text-sm text-muted-foreground">reps</span>
-          </div>
+    <div className="flex items-center gap-2 px-4 py-3">
+      {/* Reps — tap to edit */}
+      {editingReps ? (
+        <input
+          type="number"
+          className="w-14 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+          value={draftReps}
+          onChange={(e) => setDraftReps(e.target.value)}
+          onBlur={commitReps}
+          onKeyDown={(e) => e.key === "Enter" && commitReps()}
+          autoFocus
+        />
+      ) : (
+        <button
+          className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
+          onClick={() => setEditingReps(true)}
+        >
+          {displayReps}
+        </button>
+      )}
 
-          {/* Weight — tap to edit */}
-          <div className="flex items-baseline gap-1">
-            {editingWeight ? (
-              <input
-                type="number"
-                step="any"
-                className="w-20 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-                value={draftWeight}
-                onChange={(e) => setDraftWeight(e.target.value)}
-                onBlur={commitWeight}
-                onKeyDown={(e) => e.key === "Enter" && commitWeight()}
-                autoFocus
-              />
-            ) : (
-              <button
-                className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
-                onClick={() => setEditingWeight(true)}
-              >
-                {set.weight}
-              </button>
-            )}
-            <span className="text-sm text-muted-foreground">{set.unitType}</span>
-          </div>
-        </div>
+      <span className="text-sm text-muted-foreground">@</span>
 
-        {/* PR badge — far right */}
-        <div className="w-8 shrink-0 text-right">
-          {set.isHistoricalPR && (
-            <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">
-              PR
-            </Badge>
-          )}
-        </div>
-      </div>
+      {/* Weight — tap to edit */}
+      {editingWeight ? (
+        <input
+          type="number"
+          step="any"
+          className="w-20 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+          value={draftWeight}
+          onChange={(e) => setDraftWeight(e.target.value)}
+          onBlur={commitWeight}
+          onKeyDown={(e) => e.key === "Enter" && commitWeight()}
+          autoFocus
+        />
+      ) : (
+        <button
+          className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
+          onClick={() => setEditingWeight(true)}
+        >
+          {displayWeight}
+        </button>
+      )}
+      <span className="text-sm text-muted-foreground">{set.unitType}</span>
 
-      {/* Notes — subtle tap-to-edit field */}
-      <div className="pb-1">
+      {/* Notes — flex-1, tap to edit */}
+      <div className="min-w-0 flex-1">
         {editingNotes ? (
           <input
             type="text"
@@ -729,16 +776,25 @@ function SetRow({ set, onUpdate }) {
             onChange={(e) => setDraftNotes(e.target.value)}
             onBlur={commitNotes}
             onKeyDown={(e) => e.key === "Enter" && commitNotes()}
-            placeholder={notesPlaceholder}
+            placeholder="notes..."
             autoFocus
           />
         ) : (
           <button
-            className="w-full text-left text-xs italic text-muted-foreground/50 hover:text-muted-foreground"
+            className="w-full truncate text-left text-xs italic text-muted-foreground/40 hover:text-muted-foreground"
             onClick={() => setEditingNotes(true)}
           >
-            {set.notes || notesPlaceholder}
+            {set.notes || "notes..."}
           </button>
+        )}
+      </div>
+
+      {/* PR badge — far right */}
+      <div className="shrink-0">
+        {set.isHistoricalPR && (
+          <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">
+            PR
+          </Badge>
         )}
       </div>
     </div>

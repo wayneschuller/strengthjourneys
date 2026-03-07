@@ -58,6 +58,17 @@ export const featurePages = [
     description: "The greatest e1rm multi-formula one rep max calculations.",
     IconComponent: Calculator,
   },
+  ...(process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development"
+    ? [
+        {
+          href: "/how-strong-am-i",
+          title: "How Strong Am I?",
+          description:
+            "See your percentile rank across four groups, from the general population to powerlifting culture.",
+          IconComponent: CircleDashed,
+        },
+      ]
+    : []),
   {
     href: "/1000lb-club-calculator",
     title: "1000lb Club Calculator",
@@ -69,7 +80,7 @@ export const featurePages = [
     href: "/big-four-strength-standards-calculator",
     title: "Big Four Strength Standards",
     description:
-      "See beginner, intermediate, advanced, and elite standards for squat, bench, deadlift, and strict press.",
+      "Check beginner, intermediate, advanced, and elite benchmarks for each Big Four lift.",
     IconComponent: BicepsFlexed,
   },
   {
@@ -93,17 +104,6 @@ export const featurePages = [
       "Generate warmup sets for your barbell workouts using progressive warmup methodology.",
     IconComponent: Flame,
   },
-  ...(process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development"
-    ? [
-        {
-          href: "/how-strong-am-i",
-          title: "How Strong Am I?",
-          description:
-            "See your strength percentile across four groups — from the general population to competitive powerlifters.",
-          IconComponent: CircleDashed,
-        },
-      ]
-    : []),
   {
     href: "/articles",
     title: "Strength Articles Library",

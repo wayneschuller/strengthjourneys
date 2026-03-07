@@ -88,14 +88,14 @@ const WHATS_NEXT_FEATURES = [
     href: "/how-strong-am-i",
     title: "How Strong Am I?",
     description:
-      "See your strength percentile across lifters, gym-goers, and powerlifting culture.",
+      "See your percentile rank across lifters, gym-goers, and powerlifting culture.",
     IconComponent: CircleDashed,
   },
   {
     href: "/big-four-strength-standards-calculator",
     title: "Big Four Strength Standards",
     description:
-      "See beginner to elite benchmarks for squat, bench, deadlift, and strict press.",
+      "Check beginner-to-elite benchmarks for squat, bench, deadlift, and strict press.",
     IconComponent: BicepsFlexed,
   },
   {
@@ -388,8 +388,8 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
           1000lb Club Calculator
         </PageHeaderHeading>
         <PageHeaderDescription>
-          How strong am I? Am I in the 1000lb Club? Use our 1000lb Club
-          calculator to test if you have joined the hallowed order of strength.
+          Add your squat, bench press, and deadlift to see whether your total
+          reaches the 1000lb Club milestone.
         </PageHeaderDescription>
         <PageHeaderRight>
           <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">
@@ -400,14 +400,14 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
               <h3 className="text-base font-semibold">
                 How Strong Am I?
               </h3>
-              <p className="text-sm">See your percentile across lifter groups.</p>
+              <p className="text-sm">See your percentile rank across lifter groups.</p>
             </Link>
             <Link
               href="/big-four-strength-standards-calculator"
               className="hover:bg-muted block rounded-lg border p-4 shadow-sm transition-shadow hover:shadow-md"
             >
               <h3 className="text-base font-semibold">Big Four Strength Standards</h3>
-              <p className="text-sm">Check beginner to elite benchmarks per lift.</p>
+              <p className="text-sm">Check beginner-to-elite benchmarks per lift.</p>
             </Link>
           </div>
         </PageHeaderRight>

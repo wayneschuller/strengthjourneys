@@ -82,21 +82,9 @@ export function Footer() {
   return (
     <footer className="mt-16 border-t">
       <PageContainer className="py-10">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           <FooterSection title="Tools">
             {TOOLS.map(({ href, label }) => (
-              <FooterLink key={href} href={href} label={label} />
-            ))}
-          </FooterSection>
-
-          <FooterSection title="Lift Calculators">
-            {LIFT_CALCULATORS.map(({ href, label }) => (
-              <FooterLink key={href} href={href} label={label} />
-            ))}
-          </FooterSection>
-
-          <FooterSection title="1RM Formula Calculators">
-            {FORMULA_CALCULATORS.map(({ href, label }) => (
               <FooterLink key={href} href={href} label={label} />
             ))}
           </FooterSection>
@@ -138,7 +126,22 @@ export function Footer() {
           </FooterSection>
         </div>
 
-        <div className="mt-10 border-t pt-6 text-center text-xs text-muted-foreground">
+        <div className="mt-8 border-t pt-6">
+          <p className="mb-3 text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">More Calculators</p>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {[...LIFT_CALCULATORS, ...FORMULA_CALCULATORS].map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="text-xs text-muted-foreground/70 transition-colors hover:text-foreground"
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-8 border-t pt-6 text-center text-xs text-muted-foreground">
           © {new Date().getFullYear()} Strength Journeys · Free and open source · Your data stays
           yours
         </div>

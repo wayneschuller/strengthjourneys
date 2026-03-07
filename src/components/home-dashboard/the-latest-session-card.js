@@ -50,7 +50,7 @@ import {
   getAnalyzedSessionLifts,
   getAverageLiftSessionTonnageFromPrecomputed,
 } from "@/lib/processing-utils";
-import { LoaderCircle, ChevronLeft, ChevronRight, Dumbbell, Pencil } from "lucide-react";
+import { LoaderCircle, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { SessionExerciseBlock } from "@/components/analyzer/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 
@@ -464,23 +464,13 @@ export function TheLatestSessionCard({
             ))}
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-4 pt-0">
-          {authStatus === "authenticated" && (
-            <div className="flex gap-2">
-              <Button asChild className="flex-1 gap-2">
-                <Link href="/log-session">
-                  <Dumbbell className="h-4 w-4" />
-                  Log Session
-                </Link>
-              </Button>
-              {hasLoggedSessions && sessionDate && (
-                <Button asChild variant="outline" className="gap-2">
-                  <Link href={`/log-session?date=${sessionDate}`}>
-                    <Pencil className="h-4 w-4" />
-                    Edit
-                  </Link>
-                </Button>
-              )}
-            </div>
+          {authStatus === "authenticated" && hasLoggedSessions && sessionDate && (
+            <Button asChild variant="outline" className="gap-2">
+              <Link href={`/log?date=${sessionDate}`}>
+                <Pencil className="h-4 w-4" />
+                Edit session
+              </Link>
+            </Button>
           )}
         </CardFooter>
       </Card>

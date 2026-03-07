@@ -63,7 +63,7 @@ export default function LogSessionPage() {
       setShowDeleteConfirm(false);
       setPendingSets({});
       router.replace(
-        { pathname: "/log-session", query: date !== todayIso ? { date } : {} },
+        { pathname: "/log", query: date !== todayIso ? { date } : {} },
         undefined,
         { shallow: true },
       );
@@ -388,9 +388,6 @@ export default function LogSessionPage() {
       {/* Empty state */}
       {!isLoading && !hasSession && (
         <div className="mt-8 flex flex-col items-center gap-6 text-center">
-          <div className="rounded-full bg-muted p-6">
-            <Dumbbell className="h-10 w-10 text-muted-foreground" />
-          </div>
           <div className="space-y-1">
             <h2 className="text-xl font-semibold">
               {isToday ? "Start today's session" : "Start a session for this date"}
@@ -398,6 +395,12 @@ export default function LogSessionPage() {
             <p className="text-sm text-muted-foreground">
               Add your first lift to get started.
             </p>
+          </div>
+          {/* Big Four icons as visual prompt */}
+          <div className="flex items-center gap-4">
+            {BIG_FOUR.map(({ name, icon }) => (
+              <Image key={name} src={icon} alt={name} width={56} height={56} />
+            ))}
           </div>
           <AddLiftButton parsedData={parsedData} onAddLift={addLift} />
         </div>
@@ -795,5 +798,5 @@ function AddLiftButton({ parsedData, onAddLift }) {
   );
 }
 
-LogSessionPage.pageTitle = "Log Session";
+LogSessionPage.pageTitle = "Log";
 LogSessionPage.pageDescription = "Log your lifting session and track your progress.";

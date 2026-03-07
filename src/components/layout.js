@@ -95,7 +95,7 @@ export function Layout({ children }) {
     prevRawRowsRef.current = rawRows;
 
     if (!isNewData && !shouldForceToastOnHome) return;
-    if (router.pathname === "/" && !shouldForceToastOnHome) return;
+    if ((router.pathname === "/" || router.pathname === "/log-session") && !shouldForceToastOnHome) return;
     if (shouldForceToastOnHome && typeof window !== "undefined") {
       window.sessionStorage.removeItem(FORCE_SHEET_SYNC_TOAST_KEY);
     }

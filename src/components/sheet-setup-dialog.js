@@ -30,6 +30,7 @@ import {
   LoaderCircle,
   Sparkles,
 } from "lucide-react";
+import { PlateDiagram } from "@/components/warmups/plate-diagram";
 
 const ENRICH_CANDIDATE_LIMIT = 6;
 const SHEET_FLOW_QUERY_KEY = "sheetFlow";
@@ -613,6 +614,9 @@ export function SheetSetupDialog() {
               ) : null}
             </CardHeader>
             <CardContent className="space-y-5 xl:px-10 2xl:px-16">
+              {(onboardingState === "discovering" || onboardingState === "linking_or_creating") && (
+                <PlateLoadingAnimation isActive={true} />
+              )}
               {onboardingState === "choose_sheet" && (
                 <ChooseSheetPanel
                   embedded
@@ -655,6 +659,48 @@ export function SheetSetupDialog() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+/**
+ * Barbell loading animation shown during onboarding API calls.
+ * Adds one blue plate per side at each interval to suggest "loading up"
+ * while the user waits for sheet discovery or creation.
+ * @param {boolean} props.isActive - Whether to run the animation.
+ * @param {number} [props.stepDurationMs=1800] - Ms between each plate addition.
+ */
+function PlateLoadingAnimation({ isActive, stepDurationMs = 1800 }) {
+  const [plateCount, setPlateCount] = useState(0);
+  const MAX_PLATES = 5;
+
+  useEffect(() => {
+    if (!isActive) {
+      setPlateCount(0);
+      return;
+    }
+    const timer = setInterval(() => {
+      setPlateCount((prev) => (prev < MAX_PLATES ? prev + 1 : prev));
+    }, stepDurationMs);
+    return () => clearInterval(timer);
+  }, [isActive, stepDurationMs]);
+
+  const isMetric = getPreferredUnitTypeFromClient() === "kg";
+  const barWeight = isMetric ? 20 : 45;
+  const bluePlate = isMetric
+    ? { weight: 20, color: "#2563EB", name: "20kg" }
+    : { weight: 45, color: "#2563EB", name: "45lb" };
+  const platesPerSide = plateCount > 0 ? [{ ...bluePlate, count: plateCount }] : [];
+
+  return (
+    <div className="mx-auto w-fit py-6 opacity-70">
+      <PlateDiagram
+        platesPerSide={platesPerSide}
+        barWeight={barWeight}
+        isMetric={isMetric}
+        hideLabels={true}
+        useScrollTrigger={false}
+      />
+    </div>
   );
 }
 

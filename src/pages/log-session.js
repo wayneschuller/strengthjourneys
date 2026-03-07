@@ -498,7 +498,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
       {/* Desktop: large icon in left gutter (4× = 64px) */}
       {bigFourEntry && (
         <div className="absolute left-0 top-0 hidden md:block">
-          <Image src={bigFourEntry.icon} alt="" width={64} height={64} className="opacity-40" />
+          <Image src={bigFourEntry.icon} alt="" width={64} height={64} />
         </div>
       )}
 
@@ -506,7 +506,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
       <div className="flex items-center gap-2 pb-1">
         {/* Mobile: inline icon (3× = 48px) */}
         {bigFourEntry && (
-          <Image src={bigFourEntry.icon} alt="" width={48} height={48} className="opacity-60 md:hidden" />
+          <Image src={bigFourEntry.icon} alt="" width={48} height={48} className="md:hidden" />
         )}
         <h2 className="text-base font-semibold uppercase tracking-wide text-foreground/80">
           {liftType}
@@ -586,10 +586,10 @@ function SetRow({ set, onUpdate }) {
     }
   }
 
-  // Pending rows: dimmed, not editable, with a tiny spinner
+  // Pending rows: look identical to real rows, tiny spinner in the badge slot
   if (set._pending) {
     return (
-      <div className="flex items-center px-4 py-3 opacity-40">
+      <div className="flex items-center px-4 py-3">
         <div className="flex flex-1 items-baseline gap-3">
           <div className="flex items-baseline gap-1">
             <span className="px-1 text-xl font-semibold tabular-nums">{set.reps}</span>
@@ -601,7 +601,7 @@ function SetRow({ set, onUpdate }) {
           </div>
         </div>
         <div className="w-8 shrink-0 flex items-center justify-end">
-          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
         </div>
       </div>
     );
@@ -772,7 +772,7 @@ function AddLiftButton({ parsedData, onAddLift }) {
             onClick={() => submit(name)}
           >
             {icon && (
-              <Image src={icon} alt="" width={16} height={16} className="shrink-0 opacity-70" />
+              <Image src={icon} alt="" width={16} height={16} className="shrink-0" />
             )}
             {name}
           </button>

@@ -1,9 +1,9 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { getReadableDateString, findLiftPositionInTopLifts } from "@/lib/processing-utils";
+import { getReadableDateString } from "@/lib/processing-utils";
 import { calculatePlateBreakdown } from "@/lib/warmups.js";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
 import { Button } from "@/components/ui/button";
@@ -16,21 +16,25 @@ import {
   Plus,
   Trash2,
   Dumbbell,
+  Check,
+  Loader2,
+  X,
 } from "lucide-react";
+
+// --- Sync indicator states ---
+// idle | saving | saved | error
 
 export default function LogSessionPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
-  const {
-    parsedData,
-    topLiftsByTypeAndReps,
-    isLoading,
-    sheetInfo,
-  } = useUserLiftingData();
+  const { parsedData, sheetInfo, mutate, isLoading } = useUserLiftingData();
   const { isMetric } = useAthleteBio();
 
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [sessionDate, setSessionDate] = useState(todayIso);
+  const [syncState, setSyncState] = useState("idle"); // idle | saving | saved | error
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const savedTimerRef = useRef(null);
 
   // Sync date from URL param after hydration
   useEffect(() => {
@@ -39,15 +43,18 @@ export default function LogSessionPage() {
     }
   }, [router.query.date]);
 
-  // Update URL when date changes
-  function navigateToDate(date) {
-    setSessionDate(date);
-    router.replace(
-      { pathname: "/log-session", query: date !== todayIso ? { date } : {} },
-      undefined,
-      { shallow: true },
-    );
-  }
+  const navigateToDate = useCallback(
+    (date) => {
+      setSessionDate(date);
+      setShowDeleteConfirm(false);
+      router.replace(
+        { pathname: "/log-session", query: date !== todayIso ? { date } : {} },
+        undefined,
+        { shallow: true },
+      );
+    },
+    [router, todayIso],
+  );
 
   // All unique session dates from parsedData (ascending)
   const sessionDates = useMemo(() => {
@@ -63,7 +70,7 @@ export default function LogSessionPage() {
     return dates;
   }, [parsedData]);
 
-  // Current session's entries grouped by lift type
+  // Current session entries grouped by lift type
   const sessionLifts = useMemo(() => {
     if (!parsedData) return {};
     const entries = parsedData.filter(
@@ -78,12 +85,142 @@ export default function LogSessionPage() {
   }, [parsedData, sessionDate]);
 
   const hasSession = Object.keys(sessionLifts).length > 0;
-
   const currentDateIndex = sessionDates.indexOf(sessionDate);
   const canGoPrev = currentDateIndex > 0;
-  // Can go "next" toward present, plus can always go to today if not already there
   const canGoNext = currentDateIndex >= 0 && currentDateIndex < sessionDates.length - 1;
   const isToday = sessionDate === todayIso;
+
+  // --- Sync helpers ---
+
+  function markSaving() {
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    setSyncState("saving");
+  }
+
+  function markSaved() {
+    setSyncState("saved");
+    savedTimerRef.current = setTimeout(() => setSyncState("idle"), 2000);
+  }
+
+  function markError() {
+    setSyncState("error");
+    savedTimerRef.current = setTimeout(() => setSyncState("idle"), 3000);
+  }
+
+  // --- API calls ---
+
+  const updateSet = useCallback(
+    async (rowIndex, fields) => {
+      if (!sheetInfo?.ssid) return;
+      markSaving();
+      try {
+        const res = await fetch("/api/log-set", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex, ...fields }),
+        });
+        if (!res.ok) throw new Error((await res.json()).error || "Update failed");
+        await mutate();
+        markSaved();
+      } catch (err) {
+        console.error("[log-session] updateSet failed:", err);
+        markError();
+      }
+    },
+    [sheetInfo?.ssid, mutate],
+  );
+
+  const addSet = useCallback(
+    async (liftType, prevSet) => {
+      if (!sheetInfo?.ssid) return;
+      markSaving();
+      try {
+        const res = await fetch("/api/log-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ssid: sheetInfo.ssid,
+            date: sessionDate,
+            lifts: [
+              {
+                liftType,
+                sets: [
+                  {
+                    reps: prevSet?.reps ?? 5,
+                    weight: prevSet?.weight
+                      ? `${prevSet.weight}${prevSet.unitType ?? ""}`
+                      : "",
+                    notes: "",
+                    url: "",
+                  },
+                ],
+              },
+            ],
+          }),
+        });
+        if (!res.ok) throw new Error((await res.json()).error || "Add set failed");
+        await mutate();
+        markSaved();
+      } catch (err) {
+        console.error("[log-session] addSet failed:", err);
+        markError();
+      }
+    },
+    [sheetInfo?.ssid, sessionDate, mutate],
+  );
+
+  const deleteSession = useCallback(async () => {
+    if (!sheetInfo?.ssid || !parsedData) return;
+
+    // Compute the row range: everything from the first row of this session
+    // to the row just before the next adjacent session starts.
+    const sessionRows = parsedData
+      .filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex)
+      .map((e) => e.rowIndex);
+
+    if (!sessionRows.length) return;
+
+    const minRow = Math.min(...sessionRows);
+    const maxRow = Math.max(...sessionRows);
+
+    // Find rows from other dates adjacent to this session
+    const otherRows = parsedData
+      .filter((e) => e.date !== sessionDate && !e.isGoal && e.rowIndex)
+      .map((e) => e.rowIndex);
+
+    const rowsAfter = otherRows.filter((r) => r > maxRow);
+    const nearestAfter = rowsAfter.length ? Math.min(...rowsAfter) : null;
+    const endRow = nearestAfter ? nearestAfter - 1 : maxRow;
+
+    markSaving();
+    try {
+      const res = await fetch("/api/delete-session", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ssid: sheetInfo.ssid,
+          startRowIndex: minRow,
+          endRowIndex: endRow,
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Delete failed");
+      await mutate();
+      markSaved();
+      setShowDeleteConfirm(false);
+      // Navigate to the previous/next available date
+      const remainingDates = sessionDates.filter((d) => d !== sessionDate);
+      if (remainingDates.length) {
+        navigateToDate(remainingDates[remainingDates.length - 1]);
+      } else {
+        navigateToDate(todayIso);
+      }
+    } catch (err) {
+      console.error("[log-session] deleteSession failed:", err);
+      markError();
+    }
+  }, [sheetInfo?.ssid, parsedData, sessionDate, sessionDates, todayIso, mutate, navigateToDate]);
+
+  // --- Render ---
 
   if (authStatus === "unauthenticated") {
     return (
@@ -102,7 +239,7 @@ export default function LogSessionPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-3 pb-24 sm:px-4">
-      {/* Header */}
+      {/* Sticky header */}
       <div className="sticky top-0 z-10 flex items-center gap-2 bg-background/95 py-3 backdrop-blur-sm">
         <Button
           variant="ghost"
@@ -123,6 +260,8 @@ export default function LogSessionPage() {
           )}
         </div>
 
+        <SyncIndicator state={syncState} />
+
         <Button
           variant="ghost"
           size="icon"
@@ -134,14 +273,10 @@ export default function LogSessionPage() {
         </Button>
       </div>
 
-      {/* Jump to today if browsing past */}
+      {/* Jump to today */}
       {!isToday && (
         <div className="mb-4 flex justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigateToDate(todayIso)}
-          >
+          <Button variant="outline" size="sm" onClick={() => navigateToDate(todayIso)}>
             Back to today
           </Button>
         </div>
@@ -163,16 +298,20 @@ export default function LogSessionPage() {
                 : "Nothing was logged on this day."}
             </p>
           </div>
-          <Button size="lg" className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Lift
-          </Button>
+          <AddLiftButton
+            parsedData={parsedData}
+            sessionDate={sessionDate}
+            sheetInfo={sheetInfo}
+            onSaving={markSaving}
+            onSaved={() => { markSaved(); mutate(); }}
+            onError={markError}
+          />
         </div>
       )}
 
       {/* Lift blocks */}
       {hasSession && (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {Object.entries(sessionLifts).map(([liftType, sets]) => (
             <LiftBlock
               key={liftType}
@@ -180,27 +319,55 @@ export default function LogSessionPage() {
               sets={sets}
               parsedData={parsedData}
               sessionDate={sessionDate}
-              topLiftsByTypeAndReps={topLiftsByTypeAndReps}
               isMetric={isMetric}
+              onUpdateSet={updateSet}
+              onAddSet={(prevSet) => addSet(liftType, prevSet)}
             />
           ))}
 
-          {/* Add lift */}
-          <Button variant="outline" className="w-full gap-2">
-            <Plus className="h-4 w-4" />
-            Add Lift
-          </Button>
+          <AddLiftButton
+            parsedData={parsedData}
+            sessionDate={sessionDate}
+            sheetInfo={sheetInfo}
+            onSaving={markSaving}
+            onSaved={() => { markSaved(); mutate(); }}
+            onError={markError}
+          />
 
-          {/* Delete session — destructive, at the bottom */}
-          <div className="flex justify-center pt-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-2 text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete this session
-            </Button>
+          {/* Delete session */}
+          <div className="flex justify-center pt-2">
+            {!showDeleteConfirm ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 text-muted-foreground hover:text-destructive"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete this session
+              </Button>
+            ) : (
+              <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+                <p className="text-sm text-muted-foreground">
+                  Delete all rows for {sessionDate}?
+                </p>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={deleteSession}
+                  disabled={syncState === "saving"}
+                >
+                  Delete
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowDeleteConfirm(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -208,31 +375,48 @@ export default function LogSessionPage() {
   );
 }
 
+// --- Sync indicator ---
+
+function SyncIndicator({ state }) {
+  if (state === "idle") return <div className="w-8" />;
+  return (
+    <div className="flex w-8 items-center justify-center">
+      {state === "saving" && (
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      )}
+      {state === "saved" && (
+        <Check className="h-4 w-4 text-green-500" />
+      )}
+      {state === "error" && (
+        <X className="h-4 w-4 text-destructive" />
+      )}
+    </div>
+  );
+}
+
 // --- Lift block ---
 
-function LiftBlock({ liftType, sets, parsedData, sessionDate, topLiftsByTypeAndReps, isMetric }) {
+function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdateSet, onAddSet }) {
   const unitType = sets[0]?.unitType ?? (isMetric ? "kg" : "lb");
   const barWeight = unitType === "kg" ? 20 : 45;
 
-  // Heaviest working weight in this block for plate diagram
   const heaviestWeight = Math.max(...sets.map((s) => s.weight ?? 0));
   const { platesPerSide } = heaviestWeight > barWeight
     ? calculatePlateBreakdown(heaviestWeight, barWeight, unitType === "kg")
     : { platesPerSide: [] };
 
+  const lastSet = sets[sets.length - 1];
+
   return (
     <div className="space-y-1">
-      {/* Lift type header */}
-      <div className="flex items-center justify-between pb-1">
+      {/* Header */}
+      <div className="flex items-baseline justify-between pb-1">
         <h2 className="text-base font-semibold uppercase tracking-wide text-foreground/80">
           {liftType}
         </h2>
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground">
-          ···
-        </Button>
       </div>
 
-      {/* Suggestions row */}
+      {/* Last session suggestion */}
       <LiftSuggestions
         liftType={liftType}
         sessionDate={sessionDate}
@@ -243,17 +427,25 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, topLiftsByTypeAndR
       {/* Set rows */}
       <div className="divide-y divide-border/50 rounded-lg border">
         {sets.map((set, idx) => (
-          <SetRow key={set.rowIndex ?? idx} set={set} index={idx} />
+          <SetRow
+            key={set.rowIndex ?? idx}
+            set={set}
+            index={idx}
+            onUpdate={(fields) => onUpdateSet(set.rowIndex, fields)}
+          />
         ))}
 
-        {/* Add set button inline */}
-        <button className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">
+        {/* Add set */}
+        <button
+          className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+          onClick={() => onAddSet(lastSet)}
+        >
           <Plus className="h-4 w-4" />
           Add set
         </button>
       </div>
 
-      {/* Plate diagram — shows for heaviest weight */}
+      {/* Plate diagram */}
       {platesPerSide.length > 0 && (
         <div className="flex justify-end opacity-60">
           <PlateDiagram
@@ -269,33 +461,95 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, topLiftsByTypeAndR
   );
 }
 
-// --- Set row ---
+// --- Set row (click-to-edit) ---
 
-function SetRow({ set, index }) {
-  const hasPR = set.isHistoricalPR;
+function SetRow({ set, index, onUpdate }) {
+  const [editingReps, setEditingReps] = useState(false);
+  const [editingWeight, setEditingWeight] = useState(false);
+  const [draftReps, setDraftReps] = useState(String(set.reps ?? ""));
+  const [draftWeight, setDraftWeight] = useState(String(set.weight ?? ""));
+
+  // Keep drafts in sync if parsedData refreshes from SWR
+  useEffect(() => { setDraftReps(String(set.reps ?? "")); }, [set.reps]);
+  useEffect(() => { setDraftWeight(String(set.weight ?? "")); }, [set.weight]);
+
+  function commitReps() {
+    setEditingReps(false);
+    const parsed = parseInt(draftReps, 10);
+    if (!isNaN(parsed) && parsed !== set.reps) {
+      onUpdate({ reps: parsed, weight: `${set.weight}${set.unitType ?? ""}`, notes: set.notes ?? "", url: set.URL ?? "" });
+    }
+  }
+
+  function commitWeight() {
+    setEditingWeight(false);
+    const num = parseFloat(draftWeight);
+    if (!isNaN(num) && num !== set.weight) {
+      const weightWithUnit = `${num}${set.unitType ?? ""}`;
+      onUpdate({ reps: set.reps, weight: weightWithUnit, notes: set.notes ?? "", url: set.URL ?? "" });
+    }
+  }
 
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       {/* Set number */}
-      <span className="w-4 text-right text-sm text-muted-foreground">
+      <span className="w-4 shrink-0 text-right text-sm text-muted-foreground">
         {index + 1}
       </span>
 
-      {/* Reps */}
+      {/* Reps — tap to edit */}
       <div className="flex flex-1 items-baseline gap-1">
-        <span className="text-xl font-semibold tabular-nums">{set.reps}</span>
+        {editingReps ? (
+          <input
+            type="number"
+            className="w-16 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+            value={draftReps}
+            onChange={(e) => setDraftReps(e.target.value)}
+            onBlur={commitReps}
+            onKeyDown={(e) => e.key === "Enter" && commitReps()}
+            autoFocus
+          />
+        ) : (
+          <button
+            className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
+            onClick={() => setEditingReps(true)}
+          >
+            {set.reps}
+          </button>
+        )}
         <span className="text-sm text-muted-foreground">reps</span>
       </div>
 
-      {/* Weight */}
+      {/* Weight — tap to edit */}
       <div className="flex items-baseline gap-1">
-        <span className="text-xl font-semibold tabular-nums">{set.weight}</span>
+        {editingWeight ? (
+          <input
+            type="number"
+            step="any"
+            className="w-20 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+            value={draftWeight}
+            onChange={(e) => setDraftWeight(e.target.value)}
+            onBlur={commitWeight}
+            onKeyDown={(e) => e.key === "Enter" && commitWeight()}
+            autoFocus
+          />
+        ) : (
+          <button
+            className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
+            onClick={() => setEditingWeight(true)}
+          >
+            {set.weight}
+          </button>
+        )}
         <span className="text-sm text-muted-foreground">{set.unitType}</span>
       </div>
 
       {/* PR badge */}
-      {hasPR && (
-        <Badge variant="outline" className="shrink-0 text-xs text-amber-600 border-amber-400">
+      {set.isHistoricalPR && (
+        <Badge
+          variant="outline"
+          className="shrink-0 border-amber-400 text-xs text-amber-600"
+        >
           PR
         </Badge>
       )}
@@ -303,7 +557,7 @@ function SetRow({ set, index }) {
   );
 }
 
-// --- Italic suggestions below lift header ---
+// --- Italic suggestions under lift header ---
 
 function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
   const lastSets = useMemo(() => {
@@ -318,21 +572,117 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
 
   if (!lastSets) return null;
 
-  const lastDate = lastSets[0].date;
   const unitType = lastSets[0]?.unitType ?? (isMetric ? "kg" : "lb");
   const summary = lastSets
     .map((s) => `${s.reps}×${s.weight}${unitType}`)
     .join("  ·  ");
 
   return (
-    <div className="space-y-0.5 pb-1">
-      <p className="text-xs italic text-muted-foreground">
-        Last {getReadableDateString(lastDate)}: {summary}
-      </p>
+    <p className="pb-1 text-xs italic text-muted-foreground">
+      Last {getReadableDateString(lastSets[0].date)}: {summary}
+    </p>
+  );
+}
+
+// --- Add lift button ---
+
+function AddLiftButton({ parsedData, sessionDate, sheetInfo, onSaving, onSaved, onError }) {
+  const [showInput, setShowInput] = useState(false);
+  const [liftType, setLiftType] = useState("");
+  const inputRef = useRef(null);
+  const { isMetric } = useAthleteBio();
+
+  // Recent lift types for quick-add suggestions (top 6 by frequency)
+  const suggestions = useMemo(() => {
+    if (!parsedData) return [];
+    const freq = {};
+    for (const e of parsedData) {
+      if (!e.isGoal) freq[e.liftType] = (freq[e.liftType] ?? 0) + 1;
+    }
+    return Object.entries(freq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([lt]) => lt);
+  }, [parsedData]);
+
+  useEffect(() => {
+    if (showInput) inputRef.current?.focus();
+  }, [showInput]);
+
+  async function submit(lt) {
+    const clean = (lt ?? liftType).trim();
+    if (!clean || !sheetInfo?.ssid) return;
+    setShowInput(false);
+    setLiftType("");
+    onSaving();
+    try {
+      const defaultWeight = isMetric ? "20kg" : "45lb";
+      const res = await fetch("/api/log-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ssid: sheetInfo.ssid,
+          date: sessionDate,
+          lifts: [{ liftType: clean, sets: [{ reps: 5, weight: defaultWeight, notes: "", url: "" }] }],
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Failed");
+      onSaved();
+    } catch (err) {
+      console.error("[add-lift] failed:", err);
+      onError();
+    }
+  }
+
+  if (!showInput) {
+    return (
+      <Button
+        variant="outline"
+        className="w-full gap-2"
+        onClick={() => setShowInput(true)}
+      >
+        <Plus className="h-4 w-4" />
+        Add Lift
+      </Button>
+    );
+  }
+
+  return (
+    <div className="space-y-3 rounded-lg border p-4">
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Lift type (e.g. Back Squat)"
+        className="w-full rounded border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+        value={liftType}
+        onChange={(e) => setLiftType(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && submit()}
+      />
+      {/* Quick-add suggestions */}
+      {suggestions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {suggestions.map((lt) => (
+            <button
+              key={lt}
+              className="rounded-full border px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+              onClick={() => submit(lt)}
+            >
+              {lt}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="flex gap-2">
+        <Button size="sm" onClick={() => submit()} disabled={!liftType.trim()}>
+          Add
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => { setShowInput(false); setLiftType(""); }}>
+          Cancel
+        </Button>
+      </div>
     </div>
   );
 }
 
-// Page metadata
 LogSessionPage.pageTitle = "Log Session";
 LogSessionPage.pageDescription = "Log your lifting session and track your progress.";

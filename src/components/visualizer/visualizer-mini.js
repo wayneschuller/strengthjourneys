@@ -59,6 +59,7 @@ import {
 
 import { getYearLabels, processVisualizerData } from "./visualizer-processing";
 import { MiniFeedbackWidget } from "@/components/feedback";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 /**
  * E1RM over time chart for a single lift. Shows estimated 1RM progression with optional formula
@@ -258,8 +259,8 @@ export function VisualizerMini({ liftType }) {
     <Card className="">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-pretty">
-          <CardTitle>
-            {isDemoMode && "Demo Mode: "}
+          <CardTitle className="flex flex-wrap items-center gap-2">
+            {isDemoMode && <DemoModeBadge />}
             {liftType} Estimated One Rep Maxes
           </CardTitle>
           <CardDescription>

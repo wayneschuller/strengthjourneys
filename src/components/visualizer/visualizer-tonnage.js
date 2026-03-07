@@ -47,6 +47,7 @@ import {
 
 import { getYearLabels } from "./visualizer-processing";
 import { MiniFeedbackWidget } from "@/components/feedback";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 /**
  * Chart showing session tonnage (weight × reps) over time. Supports per-session or per-week
@@ -59,7 +60,7 @@ import { MiniFeedbackWidget } from "@/components/feedback";
  *   shows total tonnage across all lifts.
  */
 export function TonnageChart({ setHighlightDate, liftType }) {
-  const { parsedData, isLoading } = useUserLiftingData();
+  const { parsedData, isLoading, isDemoMode } = useUserLiftingData();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
   const { getColor } = useLiftColors();
@@ -149,7 +150,8 @@ export function TonnageChart({ setHighlightDate, liftType }) {
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-pretty">
-          <CardTitle>
+          <CardTitle className="flex flex-wrap items-center gap-2">
+            {isDemoMode && <DemoModeBadge />}
             {liftType ? `${liftType} Tonnage` : "Total Tonnage"}
           </CardTitle>
           <CardDescription>

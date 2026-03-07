@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { MiniFeedbackWidget } from "@/components/feedback";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
@@ -251,8 +252,9 @@ export function LiftTypeFrequencyPieCard({ selectedLiftType, onSelectLift }) {
   return (
     <Card className="flex h-full flex-1 flex-col">
       <CardHeader>
-        <CardTitle>
-          {isDemoMode && "Demo mode: "}Your Most Frequent
+        <CardTitle className="flex flex-wrap items-center gap-2">
+          {isDemoMode && <DemoModeBadge />}
+          Your Most Frequent
           Lifts
         </CardTitle>
       </CardHeader>

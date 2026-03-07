@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 import { TitleCard } from "./cards/title-card";
 import { SessionsCard } from "./cards/sessions-card";
 import { TonnageCard } from "./cards/tonnage-card";
@@ -174,7 +175,7 @@ export function YearRecapCarousel({ year, isDemo }) {
             {selectedIndex + 1} of {cards.length}
           </span>
           {isDemo ? (
-            <span className="text-sm text-muted-foreground">Demo mode</span>
+            <DemoModeBadge size="sm" />
           ) : (
             <ShareCopyButton
               label="Copy this card"

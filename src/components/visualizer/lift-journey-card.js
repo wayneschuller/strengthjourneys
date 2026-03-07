@@ -1,6 +1,5 @@
 
 import { motion } from "motion/react";
-import { useSession } from "next-auth/react";
 import { useReadLocalStorage } from "usehooks-ts";
 
 import {
@@ -21,6 +20,7 @@ import {
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tier system
@@ -192,7 +192,6 @@ export function LiftJourneyCard({
   asCard = true,
   chartDensity = "default",
 }) {
-  const { status: authStatus } = useSession();
   const {
     parsedData,
     liftTypes,
@@ -200,6 +199,7 @@ export function LiftJourneyCard({
     topTonnageByType,
     topTonnageByTypeLast12Months,
     isLoading,
+    isDemoMode,
   } = useUserLiftingData();
   const { isMetric } = useAthleteBio();
   const { getColor } = useLiftColors();
@@ -303,18 +303,18 @@ export function LiftJourneyCard({
       <CardHeader className="px-4 pb-3 sm:px-6">
         {/* Title + tier badge */}
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <h2
-            className="text-2xl font-semibold leading-none tracking-tight"
-            style={{
-              textDecoration: "underline",
-              textDecorationColor: liftColor,
-            }}
-          >
-            {authStatus !== "authenticated" && (
-              <span className="mr-2 font-bold">Demo Mode:</span>
-            )}
-            My {liftType} Journey
-          </h2>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {isDemoMode && <DemoModeBadge />}
+            <h2
+              className="text-2xl font-semibold leading-none tracking-tight"
+              style={{
+                textDecoration: "underline",
+                textDecorationColor: liftColor,
+              }}
+            >
+              My {liftType} Journey
+            </h2>
+          </div>
 
           {!isLoading && totalReps > 0 && (
             <span
@@ -329,7 +329,7 @@ export function LiftJourneyCard({
           )}
         </div>
 
-        {authStatus !== "authenticated" && (
+        {isDemoMode && (
           <p className="mt-2 text-sm italic text-muted-foreground">
             This is sample data. Sign in with Google and connect your sheet to
             see your own numbers.

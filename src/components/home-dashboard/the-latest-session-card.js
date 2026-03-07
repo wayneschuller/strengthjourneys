@@ -51,6 +51,7 @@ import {
 } from "@/lib/processing-utils";
 import { LoaderCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { SessionExerciseBlock } from "@/components/analyzer/session-exercise-block";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 // "The Latest Session" when on the most recent date.
 // "The Feb 6 Session" for an earlier date in the current year.
@@ -308,9 +309,7 @@ export function TheLatestSessionCard({
             <div className="min-w-0 flex-1">
               <CardTitle className="flex flex-wrap items-center gap-2">
                 {isDemoMode && (
-                  <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium">
-                    Demo Mode
-                  </span>
+                  <DemoModeBadge size="sm" />
                 )}
                 {getSessionCardTitle(sessionDate, isLastDate)}
                 {isValidating && (

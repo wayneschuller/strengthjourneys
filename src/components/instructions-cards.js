@@ -259,43 +259,56 @@ export function GettingStartedCard() {
           Google Sheets setup, simplified
         </div>
         <CardTitle className="max-w-2xl text-2xl tracking-tight md:text-3xl">
-          Sign in once. We&apos;ll handle the lifting log setup.
+          Track the lifts that got you here. See what&apos;s next.
         </CardTitle>
         <CardDescription className="max-w-2xl text-base leading-relaxed">
-          Strength Journeys helps you set up a lifting log from our spreadsheet
-          design, then turns it into dashboards, PR tracking, e1RM trends, and
-          lift analysis.
+          Sign in once and Strength Journeys sets up your lifting log — then
+          turns every session into PR history, e1RM trends, tonnage charts, and
+          a full training dashboard.
         </CardDescription>
       </CardHeader>
       <CardContent className="relative grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <div className="space-y-5">
           <div className="grid gap-3 sm:grid-cols-3">
             {[
-              "Built for real lifting history, not generic workout fluff.",
-              "Guided Google Sheets setup built for lifters.",
-              "Read-only sync into charts, PRs, trends, and session recaps.",
-            ].map((copy) => (
+              { icon: "🏋️", text: "Built for serious lifting history — not generic workout logging." },
+              { icon: "📊", text: "Every set becomes a data point: PRs, trends, and session recaps." },
+              { icon: "🔒", text: "Your Google Sheet stays yours. Read-only. Nothing stored on our servers." },
+            ].map(({ icon, text }) => (
               <div
-                key={copy}
+                key={text}
                 className="bg-card/85 ring-border rounded-2xl p-4 text-sm leading-relaxed shadow-sm ring-1"
               >
-                {copy}
+                <span className="mb-2 block text-lg">{icon}</span>
+                {text}
               </div>
             ))}
           </div>
-          <div className="bg-background/75 ring-border flex flex-col items-start gap-3 rounded-2xl p-5 shadow-sm ring-1">
+          <div className="bg-background/75 ring-border flex flex-col items-start gap-4 rounded-2xl p-5 shadow-sm ring-1">
             {authStatus !== "authenticated" ? (
-              <Button
-                size="lg"
-                className="gap-2 px-6"
-                onClick={() => {
-                  gaTrackSignInClick(router.pathname, "getting_started_card");
-                  signIn("google", { callbackUrl: "/" });
-                }}
-              >
-                <GoogleLogo size={18} />
-                Sign in and we&apos;ll set you up
-              </Button>
+              <>
+                <Button
+                  size="lg"
+                  className="gap-2 px-6"
+                  onClick={() => {
+                    gaTrackSignInClick(router.pathname, "getting_started_card");
+                    signIn("google", { callbackUrl: "/" });
+                  }}
+                >
+                  <GoogleLogo size={18} />
+                  Start tracking your lifts
+                </Button>
+                <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">
+                  Free forever. No app to install. Your data lives in your own Google Sheet —{" "}
+                  <Link
+                    href="/privacy-policy.html"
+                    className="underline hover:text-foreground"
+                  >
+                    read-only, never stored
+                  </Link>
+                  .
+                </p>
+              </>
             ) : isConnected ? (
               <div className="text-primary inline-flex items-center gap-2 text-sm font-medium">
                 <Check className="h-4 w-4" />
@@ -306,19 +319,6 @@ export function GettingStartedCard() {
                 Signed in. Strength Journeys is setting up your dashboard above.
               </div>
             )}
-            <p className="max-w-xl text-sm font-medium text-foreground">
-              One big CTA. Sign in and start lifting.
-            </p>
-            <p className="text-muted-foreground max-w-xl text-sm leading-relaxed">
-              Your sheet stays yours: Google Sheets, read-only access, no
-              edits, no raw-data storage.{" "}
-              <Link
-                href="/privacy-policy.html"
-                className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-              >
-                Privacy Policy
-              </Link>
-            </p>
           </div>
         </div>
         <motion.div

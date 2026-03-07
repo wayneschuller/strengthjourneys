@@ -293,7 +293,7 @@ const OEMBED_ENDPOINTS = {
     `https://soundcloud.com/oembed?url=${encodeURIComponent(url)}&format=json`,
 };
 
-export async function fetchPlaylistThumbnail(url) {
+export async function fetchPlaylistOembedData(url) {
   try {
     const hostname = new URL(url).hostname.replace(/^www\./, "");
     const match = Object.keys(OEMBED_ENDPOINTS).find((domain) =>
@@ -306,7 +306,10 @@ export async function fetchPlaylistThumbnail(url) {
     if (!res.ok) return null;
 
     const data = await res.json();
-    return data.thumbnail_url || null;
+    return {
+      thumbnailUrl: data.thumbnail_url || null,
+      title: data.title || null,
+    };
   } catch {
     return null;
   }

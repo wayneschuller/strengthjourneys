@@ -5,7 +5,7 @@ import shortUUID from "short-uuid";
 import {
   parseStoredPlaylist,
   validateAndProcessPlaylist,
-  fetchPlaylistThumbnail,
+  fetchPlaylistOembedData,
 } from "@/components/playlist-leaderboard/playlist-utils";
 import {
   getRequestClientIp,
@@ -55,12 +55,12 @@ export default async function handler(req, res) {
           return res.status(400).json({ errors });
         }
 
-        const thumbnailUrl = await fetchPlaylistThumbnail(validatedPlaylist.url);
+        const oembedData = await fetchPlaylistOembedData(validatedPlaylist.url);
         const playlistRecord = {
           ...validatedPlaylist,
           id: translator.generate(),
           timestamp: Date.now(),
-          ...(thumbnailUrl && { thumbnailUrl }),
+          ...(oembedData?.thumbnailUrl && { thumbnailUrl: oembedData.thumbnailUrl }),
         };
 
         // Check for profanity in title and description
@@ -211,10 +211,11 @@ export default async function handler(req, res) {
           return res.status(404).json({ error: "Playlist not found" });
         }
 
-        const thumbnailUrl = await fetchPlaylistThumbnail(existingPlaylist.url);
+        const oembedData = await fetchPlaylistOembedData(existingPlaylist.url);
         const refreshedPlaylist = {
           ...existingPlaylist,
-          ...(thumbnailUrl ? { thumbnailUrl } : {}),
+          ...(oembedData?.thumbnailUrl && { thumbnailUrl: oembedData.thumbnailUrl }),
+          ...(oembedData?.title && { title: oembedData.title }),
         };
 
         await kv.hset("playlists", {

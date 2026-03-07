@@ -275,8 +275,8 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
       toast({
         title: isEditMode ? "Playlist Updated" : "Playlist Added",
         description: isEditMode
-          ? "Your playlist changes are now live on the leaderboard."
-          : "Thanks for the submission. Your playlist is now live in the leaderboard. If you have 10 seconds, tap Give fast feedback to help improve this page.",
+          ? "Your changes are now live."
+          : "Thanks for the submission! Go vote for your favorites.",
       });
     } catch (error) {
       console.error(

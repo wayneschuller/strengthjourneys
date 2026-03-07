@@ -12,6 +12,23 @@ const TOOLS = [
   { href: "/ai-lifting-assistant", label: "AI Lifting Assistant" },
 ];
 
+const LIFT_CALCULATORS = [
+  { href: "/calculator/squat-1rm-calculator", label: "Squat 1RM Calculator" },
+  { href: "/calculator/bench-press-1rm-calculator", label: "Bench Press 1RM Calculator" },
+  { href: "/calculator/deadlift-1rm-calculator", label: "Deadlift 1RM Calculator" },
+  { href: "/calculator/strict-press-1rm-calculator", label: "Strict Press 1RM Calculator" },
+];
+
+const FORMULA_CALCULATORS = [
+  { href: "/calculator/epley-formula-1rm-calculator", label: "Epley Formula 1RM Calculator" },
+  { href: "/calculator/brzycki-formula-1rm-calculator", label: "Brzycki Formula 1RM Calculator" },
+  { href: "/calculator/mayhew-1rm-formula-calculator", label: "Mayhew Formula 1RM Calculator" },
+  { href: "/calculator/wathan-1rm-formula-calculator", label: "Wathan Formula 1RM Calculator" },
+  { href: "/calculator/mcglothin-formula-1rm-calculator", label: "McGlothin Formula 1RM Calculator" },
+  { href: "/calculator/lombardi-formula-1rm-calculator", label: "Lombardi Formula 1RM Calculator" },
+  { href: "/calculator/oconner-formula-1rm-calculator", label: "O'Conner Formula 1RM Calculator" },
+];
+
 const RESOURCES = [
   { href: "/articles", label: "Strength Articles" },
   { href: "/lift-explorer", label: "Lift Explorer" },
@@ -65,9 +82,21 @@ export function Footer() {
   return (
     <footer className="mt-16 border-t">
       <PageContainer className="py-10">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6">
           <FooterSection title="Tools">
             {TOOLS.map(({ href, label }) => (
+              <FooterLink key={href} href={href} label={label} />
+            ))}
+          </FooterSection>
+
+          <FooterSection title="Lift Calculators">
+            {LIFT_CALCULATORS.map(({ href, label }) => (
+              <FooterLink key={href} href={href} label={label} />
+            ))}
+          </FooterSection>
+
+          <FooterSection title="1RM Formula Calculators">
+            {FORMULA_CALCULATORS.map(({ href, label }) => (
               <FooterLink key={href} href={href} label={label} />
             ))}
           </FooterSection>

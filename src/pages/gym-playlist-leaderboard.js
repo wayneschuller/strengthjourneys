@@ -35,18 +35,11 @@ const ITEMS_PER_PAGE = 5;
 // Doesn't run on dev but on Vercel it will access the kv store directly to pre-cache page at build
 // ---------------------------------------------------------------------------------------------------
 export async function getStaticProps() {
-  const vercelProPlan = false; // We can dream
-
-  const isLocalDev = !process.env.VERCEL;
-
   const relatedArticles = await fetchRelatedArticles("Gym Music");
   devLog(`gym-playlist-leaderboard relatedArticles:`, relatedArticles);
 
-  // Dev mode use dummy data to protect my tiny Vercel quota of KV reads
-  if (!vercelProPlan && isLocalDev) {
-    console.log(
-      "Local (non-Vercel) mode detected: Using dummy data instead of KV store",
-    );
+  if (process.env.NEXT_PUBLIC_USE_DEMO_PLAYLISTS === "true") {
+    console.log("NEXT_PUBLIC_USE_DEMO_PLAYLISTS=true: using demo playlist data");
     return {
       props: { initialPlaylists: dummyPlaylists, relatedArticles },
     };

@@ -23,6 +23,7 @@ import {
   CONSISTENCY_GRADE_THRESHOLDS,
   getGradeAndColor,
 } from "@/lib/consistency-grades";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 const A_GRADES = ["A+", "A", "A-"];
 
@@ -104,9 +105,9 @@ export function ConsistencyCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          {isDemoMode && "Demo mode: "} Consistency
-          Analysis{" "}
+        <CardTitle className="flex flex-wrap items-center gap-2">
+          {isDemoMode && <DemoModeBadge />}
+          Consistency Analysis
         </CardTitle>
         <CardDescription>
           Benchmark is three sessions per week, with some rest weeks per year.

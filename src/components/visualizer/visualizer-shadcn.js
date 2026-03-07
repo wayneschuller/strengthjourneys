@@ -16,6 +16,7 @@ import {
 } from "@/lib/processing-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 import { subMonths } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -216,8 +217,8 @@ export function VisualizerShadcn({ setHighlightDate }) {
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-pretty">
-          <CardTitle>
-            {isDemoMode && "Demo Mode: "}
+          <CardTitle className="flex flex-wrap items-center gap-2">
+            {isDemoMode && <DemoModeBadge />}
             {selectedLiftTypes.length === 1 && selectedLiftTypes[0]} Estimated
             One Rep Maxes
           </CardTitle>

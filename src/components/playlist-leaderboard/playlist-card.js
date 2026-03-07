@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -43,6 +42,7 @@ export function PlaylistCard({
   isAdmin,
   onDelete,
   onEdit,
+  onRefresh,
   onSave,
   isSaved,
   className, // We put this at the top level div last, so the parent can override defaults
@@ -51,9 +51,11 @@ export function PlaylistCard({
   const userVote = votes[playlist.id]?.vote;
   const platform = getPlaylistPlatform(playlist.url);
   const [hasLogoError, setHasLogoError] = useState(false);
+  const [hasThumbnailError, setHasThumbnailError] = useState(false);
 
   useEffect(() => {
     setHasLogoError(false);
+    setHasThumbnailError(false);
   }, [playlist.url]);
 
   // Internal up/down vote button with active-state highlighting and disabled state during cooldown.
@@ -86,6 +88,9 @@ export function PlaylistCard({
     );
   };
 
+  const showThumbnail =
+    playlist.thumbnailUrl && !hasThumbnailError;
+
   return (
     <Card
       className={cn("flex flex-col gap-2 bg-muted/60 md:flex-row", className)}
@@ -94,7 +99,24 @@ export function PlaylistCard({
         <CardHeader className="">
           <CardTitle className="">
             <div className="flex flex-row items-center gap-2 font-semibold">
-              {platform.logoUrl && !hasLogoError ? (
+              {showThumbnail ? (
+                <a
+                  href={playlist.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0"
+                >
+                  <Image
+                    src={playlist.thumbnailUrl}
+                    alt={`${playlist.title} thumbnail`}
+                    width={112}
+                    height={112}
+                    unoptimized
+                    className="h-28 w-28 rounded-md object-cover"
+                    onError={() => setHasThumbnailError(true)}
+                  />
+                </a>
+              ) : platform.logoUrl && !hasLogoError ? (
                 <Image
                   src={platform.logoUrl}
                   alt={`${platform.name} logo`}
@@ -107,31 +129,32 @@ export function PlaylistCard({
               ) : (
                 <Music className="h-5 w-5 text-primary" />
               )}
-              <a
-                href={playlist.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="line-clamp-2 text-balance text-lg hover:underline"
-              >
-                {playlist.title}
-              </a>
-              <Badge variant="secondary" className="ml-1 hidden sm:inline-flex">
-                {platform.name}
-              </Badge>
+              <div className="flex flex-col gap-1">
+                <a
+                  href={playlist.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="line-clamp-2 text-balance text-lg hover:underline"
+                >
+                  {playlist.title}
+                </a>
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Badge variant="secondary" className="hidden sm:inline-flex">
+                    {platform.name}
+                  </Badge>
+                  <a
+                    href={playlist.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    <span className="sr-only">Open playlist</span>
+                  </a>
+                </div>
+              </div>
             </div>
           </CardTitle>
-          <CardDescription className="flex flex-row items-center gap-1">
-            <a
-              href={playlist.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="line-clamp-1 break-all text-sm text-muted-foreground hover:underline"
-            >
-              {playlist.url}
-            </a>
-            <ExternalLink className="ml-1 h-3 w-3 flex-shrink-0" />
-          </CardDescription>
-          <div></div>
         </CardHeader>
         <CardContent>
           <div className="line-clamp-4">{playlist.description}</div>
@@ -154,6 +177,7 @@ export function PlaylistCard({
                 playlist={playlist}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onRefresh={onRefresh}
               />
             )}
           </div>

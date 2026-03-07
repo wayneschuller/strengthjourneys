@@ -33,6 +33,7 @@ import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { LiftStrengthLevel } from "@/components/analyzer/session-exercise-block";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getDisplayWeight } from "@/lib/processing-utils";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 /** Helper: strength rating from reps/weight. Uses age-at-lift when bio+liftDate provided for accurate historical ratings. */
 const getStrengthRating = (
@@ -348,7 +349,7 @@ const RepRangeDetailView = ({
  * @param {string} props.liftType - Display name of the lift (e.g. "Bench Press").
  */
 export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
-  const { topLiftsByTypeAndReps } = useUserLiftingData();
+  const { topLiftsByTypeAndReps, isDemoMode } = useUserLiftingData();
   const { getColor } = useLiftColors();
   const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
   const [activeTab, setActiveTab] = useState("overview");
@@ -409,7 +410,10 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
     <div ref={containerRef} className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-xl sm:text-2xl font-semibold">{liftType} PRs</h2>
+          <h2 className="flex flex-wrap items-center gap-2 text-xl font-semibold sm:text-2xl">
+            {isDemoMode && <DemoModeBadge size="sm" />}
+            {liftType} PRs
+          </h2>
         </div>
 
         {/* Narrow container: only show key rep ranges to reduce crowding */}
@@ -518,4 +522,3 @@ export const LiftTypeRepPRsDisplay = ({ liftType, compact = false }) => {
     </div>
   );
 };
-

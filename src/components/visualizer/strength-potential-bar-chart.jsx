@@ -21,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 /**
  * Stacked bar chart comparing the user's best achieved lift against their estimated potential max
@@ -30,7 +31,7 @@ import {
  * @param {string} [props.liftType] - Display name of the lift to chart; defaults to "Bench Press".
  */
 export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
-  const { parsedData, topLiftsByTypeAndReps, isValidating, isLoading } =
+  const { parsedData, topLiftsByTypeAndReps, isValidating, isLoading, isDemoMode } =
     useUserLiftingData();
   const { isMetric } = useAthleteBio();
   const { getColor } = useLiftColors();
@@ -113,7 +114,10 @@ export function StrengthPotentialBarChart({ liftType = "Bench Press" }) {
   return (
     <Card className="shadow-lg md:mx-2">
       <CardHeader>
-        <CardTitle>{liftType} Strength Potential By Rep Range</CardTitle>
+        <CardTitle className="flex flex-wrap items-center gap-2">
+          {isDemoMode && <DemoModeBadge size="sm" />}
+          {liftType} Strength Potential By Rep Range
+        </CardTitle>
         <CardDescription>
           {bestLift
             ? `Your best set: ${bestLift.reps}@${getDisplayWeight(bestLift, isMetric).value}${getDisplayWeight(bestLift, isMetric).unit} (${formatDate(bestLift.date)})`

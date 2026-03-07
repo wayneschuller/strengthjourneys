@@ -14,6 +14,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Button } from "@/components/ui/button";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 import {
   Card,
   CardContent,
@@ -295,8 +296,8 @@ export function TheMonthInIronCard({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <CardTitle>
-              {isDemoMode && "Demo Mode: "}
+            <CardTitle className="flex flex-wrap items-center gap-2">
+              {isDemoMode && <DemoModeBadge />}
               {monthCardTitle}
             </CardTitle>
             <CardDescription>{motivationalPhrase}</CardDescription>
@@ -476,8 +477,8 @@ function EarlyMonthMomentumCard({
   return (
     <Card className="flex h-full flex-1 flex-col">
       <CardHeader className="pb-3">
-        <CardTitle>
-          {isDemoMode && "Demo Mode: "}
+        <CardTitle className="flex flex-wrap items-center gap-2">
+          {isDemoMode && <DemoModeBadge />}
           {title}
         </CardTitle>
         <CardDescription>{subtitle}</CardDescription>

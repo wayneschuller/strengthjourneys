@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { Resend } from "resend";
+import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
 import { devLog } from "@/lib/processing-utils";
 
 const scopes = [
@@ -113,6 +114,9 @@ export const authOptions = {
     async session({ session, token }) {
       // devLog(token);
       session.user = token.user;
+      session.user.isLeaderboardAdmin = isLeaderboardAdminEmail(
+        session.user?.email,
+      );
       session.accessToken = token.accessToken;
       session.error = token.error;
 

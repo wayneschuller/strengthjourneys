@@ -2,6 +2,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TopLiftsTable } from "@/components/analyzer/lift-frequency-pie-card";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 /**
  * Card containing only the top-lifts table (top 20 by set count).
@@ -35,8 +36,9 @@ export function TopLiftsCard({ selectedLiftType, onSelectLift }) {
   return (
     <Card className="flex max-h-[60vh] flex-col">
       <CardHeader>
-        <CardTitle>
-          {isDemoMode && "Demo mode: "}Your Lifts
+        <CardTitle className="flex flex-wrap items-center gap-2">
+          {isDemoMode && <DemoModeBadge />}
+          Your Lifts
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto">

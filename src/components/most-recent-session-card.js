@@ -24,6 +24,7 @@ import {
 } from "@/lib/processing-utils";
 import { SessionExerciseBlock } from "@/components/analyzer/session-exercise-block";
 import { getLiftSvgPath } from "@/components/year-recap/lift-svg";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 const RECENT_SESSIONS_COUNT = 3;
 
@@ -64,6 +65,7 @@ export function MostRecentSessionCard({
     parsedData,
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
+    isDemoMode,
   } = useUserLiftingData();
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
@@ -205,10 +207,8 @@ export function MostRecentSessionCard({
         <Card className="mt-4 rounded-xl border">
           <CardHeader className="pb-1.5">
             <div className="flex items-start justify-between gap-4">
-              <CardTitle className="text-lg">
-                {authStatus !== "authenticated" && (
-                  <span className="mr-2 font-bold">Demo Mode:</span>
-                )}
+              <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
+                {isDemoMode && <DemoModeBadge size="sm" />}
                 {titlePrefix}
               </CardTitle>
             </div>
@@ -295,10 +295,8 @@ export function MostRecentSessionCard({
     return (
       <Card className="mt-4 rounded-xl border">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">
-            {authStatus !== "authenticated" && (
-              <span className="mr-2 font-bold">Demo Mode:</span>
-            )}
+          <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
+            {isDemoMode && <DemoModeBadge size="sm" />}
             {titlePrefix}
           </CardTitle>
         </CardHeader>
@@ -318,10 +316,8 @@ export function MostRecentSessionCard({
     return (
       <Card className="mt-4 rounded-xl border">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">
-            {authStatus !== "authenticated" && (
-              <span className="mr-2 font-bold">Demo Mode:</span>
-            )}
+          <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
+            {isDemoMode && <DemoModeBadge size="sm" />}
             {titlePrefix}
           </CardTitle>
         </CardHeader>
@@ -343,9 +339,7 @@ export function MostRecentSessionCard({
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
             <div className="min-w-0 flex-1">
               <CardTitle className="flex flex-wrap items-center gap-2 text-lg leading-tight">
-                {authStatus !== "authenticated" && (
-                  <span className="mr-2 font-bold">Demo Mode:</span>
-                )}
+                {isDemoMode && <DemoModeBadge size="sm" />}
                 {titlePrefix} — {getReadableDateString(sessionDate, true)}
               </CardTitle>
             </div>

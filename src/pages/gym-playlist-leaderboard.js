@@ -4,7 +4,6 @@ import { useRouter } from "next/router";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
-import shortUUID from "short-uuid";
 import { useLocalStorage } from "usehooks-ts";
 import { useSession, signIn } from "next-auth/react";
 import { gaTrackSignInClick } from "@/lib/analytics";
@@ -12,7 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { fetchPlaylists } from "@/components/playlist-leaderboard/playlist-utils";
+import {
+  fetchPlaylists,
+  PLAYLIST_CATEGORIES,
+} from "@/components/playlist-leaderboard/playlist-utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
 import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/playlist-create-edit";
@@ -26,8 +28,6 @@ import {
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
 
-const translator = shortUUID();
-
 const ITEMS_PER_PAGE = 5;
 
 // ---------------------------------------------------------------------------------------------------
@@ -35,18 +35,11 @@ const ITEMS_PER_PAGE = 5;
 // Doesn't run on dev but on Vercel it will access the kv store directly to pre-cache page at build
 // ---------------------------------------------------------------------------------------------------
 export async function getStaticProps() {
-  const vercelProPlan = false; // We can dream
-
-  const isLocalDev = !process.env.VERCEL;
-
   const relatedArticles = await fetchRelatedArticles("Gym Music");
   devLog(`gym-playlist-leaderboard relatedArticles:`, relatedArticles);
 
-  // Dev mode use dummy data to protect my tiny Vercel quota of KV reads
-  if (!vercelProPlan && isLocalDev) {
-    console.log(
-      "Local (non-Vercel) mode detected: Using dummy data instead of KV store",
-    );
+  if (process.env.NEXT_PUBLIC_USE_DEMO_PLAYLISTS === "true") {
+    console.log("NEXT_PUBLIC_USE_DEMO_PLAYLISTS=true: using demo playlist data");
     return {
       props: { initialPlaylists: dummyPlaylists, relatedArticles },
     };
@@ -111,16 +104,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
 
   const { toast } = useToast();
   const [parent] = useAutoAnimate();
-  const adminEmails = (
-    process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_LEADERBOARD_ADMINS || ""
-  )
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-
-  const isAdmin = adminEmails.includes(
-    session?.user?.email?.trim().toLowerCase(),
-  );
+  const isAdmin = Boolean(session?.user?.isLeaderboardAdmin);
 
   // On mount - delete all the localstorage votes older than 10 minutes so the user can vote again
   // FIXME: implement the 10 minute timeout on the server using IP throttling
@@ -157,28 +141,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     setCurrentPage(1);
   }, [currentTab, selectedCategories]);
 
-  const categories = [
-    // Genres
-    "rock",
-    "pop",
-    "hip-hop",
-    "electronic",
-    "r&b",
-    "metal",
-    "house",
-    // Descriptive/Mood
-    "upbeat",
-    "intense",
-    "chill",
-    "motivational",
-    // Workout-specific
-    "cardio",
-    "strength",
-    "warm-up",
-    "retro",
-    "podcast",
-    "weird",
-  ];
+  const categories = PLAYLIST_CATEGORIES;
 
   const openAddDialog = () => {
     setIsEditMode(false);
@@ -228,6 +191,10 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
 
     try {
       const result = await sendVote(id, voteType, action);
+      if (result?.throttled) {
+        toast({ description: "You already voted for this recently." });
+        return;
+      }
       devLog(result);
 
       // Update playlists based on the new vote state
@@ -265,8 +232,6 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     devLog(`handlePlaylistAction dialog activity:`);
     devLog(playlistData);
 
-    let playlistToAdd;
-
     try {
       let response;
       if (isEditMode) {
@@ -278,19 +243,12 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
           body: JSON.stringify(playlistData),
         });
       } else {
-        playlistToAdd = {
-          ...playlistData,
-          id: shortUUID.generate(),
-          upVotes: 0,
-          downVotes: 0,
-          timestamp: Date.now(),
-        };
         response = await fetch("/api/playlists", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(playlistToAdd),
+          body: JSON.stringify(playlistData),
         });
       }
 
@@ -299,23 +257,26 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
         throw new Error(errorData.error || "An unknown error occurred");
       }
 
+      const responseData = await response.json();
+      const persistedPlaylist = responseData.playlist;
+
       setPlaylists((prevPlaylists) => {
         if (isEditMode) {
           return prevPlaylists.map((playlist) =>
             playlist.id === currentPlaylist.id
-              ? { ...playlist, ...playlistData }
+              ? { ...playlist, ...persistedPlaylist }
               : playlist,
           );
         } else {
-          return [...prevPlaylists, playlistToAdd];
+          return [...prevPlaylists, persistedPlaylist];
         }
       });
 
       toast({
         title: isEditMode ? "Playlist Updated" : "Playlist Added",
         description: isEditMode
-          ? "Your playlist changes are now live on the leaderboard."
-          : "Thanks for the submission. Your playlist is now live in the leaderboard. If you have 10 seconds, tap Give fast feedback to help improve this page.",
+          ? "✅ Your changes are now live."
+          : "🎵 Thanks for the submission! Go vote for your favorites.",
       });
     } catch (error) {
       console.error(
@@ -331,6 +292,12 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
       });
     }
     setIsDialogOpen(false);
+  };
+
+  const refreshPlaylistMetadata = (updatedPlaylist) => {
+    setPlaylists((prev) =>
+      prev.map((p) => (p.id === updatedPlaylist.id ? { ...p, ...updatedPlaylist } : p)),
+    );
   };
 
   const deletePlaylist = async (id) => {
@@ -479,26 +446,14 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
         </PageHeader>
         <section className="mx-0 md:mx-[10vw]">
           <h2 className="mb-6 text-sm text-muted-foreground">
-            {/* FIXME: consider checking for ssid and loaded data and prompt them here for more vote power */}
             {authStatus !== "authenticated" ? (
               <div>
-                Vote for your favorites, with extra weighting for athletes who
-                are{" "}
-                <button
-                  onClick={() => {
-                    gaTrackSignInClick(router.pathname, "playlist");
-                    signIn("google", { callbackUrl: "/" });
-                  }}
-                  className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-                >
-                  signed in via Google.
-                </button>
+                Vote for your favorites. Sign in via Google for extra vote
+                weighting.
               </div>
             ) : (
               <div>
-                As a signed in athlete, your votes will get extra weighting
-                proportional to the quantity of gym sessions in your Google
-                Sheet data.
+                Your votes count extra — thanks for being a signed-in athlete.
               </div>
             )}
           </h2>
@@ -578,6 +533,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
                     isAdmin={isAdmin}
                     onDelete={deletePlaylist}
                     onEdit={openEditDialog}
+                    onRefresh={refreshPlaylistMetadata}
                     onSave={toggleSavePlaylist}
                     isSaved={savedPlaylists.includes(playlist.id)}
                     className=""
@@ -603,20 +559,26 @@ export async function sendVote(id, voteType, action) {
     throw new Error('Invalid voteType. Must be "upvote" or "downvote".');
   }
 
-  if (action !== "increment" && action !== "decrement") {
-    throw new Error('Invalid action. Must be "increment" or "decrement".');
+  if (action !== "increment") {
+    throw new Error('Invalid action. Must be "increment".');
   }
 
   try {
-    const response = await fetch(
-      `/api/vote-playlist?id=${id}&voteType=${voteType}&action=${action}`,
-      {
-        method: "POST",
+    const response = await fetch("/api/vote-playlist", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ id, voteType }),
+    });
+
+    if (response.status === 429) {
+      return { throttled: true };
+    }
 
     if (!response.ok) {
-      throw new Error("Failed to send vote");
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || "Failed to send vote");
     }
 
     const result = await response.json();

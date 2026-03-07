@@ -64,6 +64,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { VisualizerRepsTooltip } from "./visualizer-utils";
 import { Badge } from "@/components/ui/badge";
 import { MiniFeedbackWidget } from "@/components/feedback";
+import { DemoModeBadge } from "@/components/demo-mode-badge";
 
 const repTabs = [
   { label: "Singles", reps: 1 },
@@ -216,8 +217,8 @@ export function VisualizerReps({ data, liftType }) {
   return (
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <CardTitle className="flex items-center gap-2">
-          {isDemoMode && "Demo Mode: "}
+        <CardTitle className="flex flex-wrap items-center gap-2">
+          {isDemoMode && <DemoModeBadge size="sm" />}
           {liftType} Singles, Triples and Fives
           <Badge
             variant="outline"

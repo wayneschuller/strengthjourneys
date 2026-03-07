@@ -20,6 +20,7 @@ import { parseTurnKeyData } from "@/lib/parse-turnkey-importer";
  * @property {string} [label]       Optional label or tag for this lift
  * @property {string} [URL]         Optional video or reference URL
  * @property {boolean} [isHistoricalPR] Marked true when this entry is a historical PR for its liftType + reps
+ * @property {number} [rowIndex] 1-based row number in the source Google Sheet (header = row 1, first data row = row 2)
  */
 
 /**
@@ -182,6 +183,9 @@ function parseBespokeData(data) {
     if (row[isGoalCol]) obj.isGoal = row[isGoalCol] === "TRUE";
     if (row[labelCol]) obj.label = row[labelCol];
     if (row[urlCol]) obj.URL = row[urlCol];
+
+    // Store the 1-based sheet row number so the editor can write back to the exact row
+    obj.rowIndex = i + 1;
 
     objectsArray.push(obj);
   }

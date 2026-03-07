@@ -6,6 +6,7 @@ import {
   useContext,
   useMemo,
 } from "react";
+import Link from "next/link";
 import { format } from "date-fns";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import { useSession } from "next-auth/react";
@@ -49,7 +50,7 @@ import {
   getAnalyzedSessionLifts,
   getAverageLiftSessionTonnageFromPrecomputed,
 } from "@/lib/processing-utils";
-import { LoaderCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { LoaderCircle, ChevronLeft, ChevronRight, Dumbbell, Pencil } from "lucide-react";
 import { SessionExerciseBlock } from "@/components/analyzer/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 
@@ -463,39 +464,24 @@ export function TheLatestSessionCard({
             ))}
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-4 pt-0">
-          {!hasLoggedSessions && sheetInfo?.url && (
-            <Button asChild variant="outline">
-              <a href={sheetInfo.url} target="_blank" rel="noopener noreferrer">
-                Open your sheet
-              </a>
-            </Button>
-          )}
-          {hasLoggedSessions &&
-            analyzedSessionLifts &&
-            isFirstRealWeekStage &&
-            sheetInfo?.url && (
-              <div className="flex flex-col gap-2 rounded-lg border bg-muted/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Remember: you can open your Google Sheet any time to add lifts
-                  and keep the dashboard moving.
-                </p>
-                <Button asChild variant="outline" className="gap-2 self-start sm:self-auto">
-                  <a
-                    href={sheetInfo.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src={GOOGLE_SHEETS_ICON_URL}
-                      alt=""
-                      className="h-4 w-4 shrink-0"
-                      aria-hidden
-                    />
-                    Open Google Sheet
-                  </a>
+          {authStatus === "authenticated" && (
+            <div className="flex gap-2">
+              <Button asChild className="flex-1 gap-2">
+                <Link href="/log-session">
+                  <Dumbbell className="h-4 w-4" />
+                  Log Session
+                </Link>
+              </Button>
+              {hasLoggedSessions && sessionDate && (
+                <Button asChild variant="outline" className="gap-2">
+                  <Link href={`/log-session?date=${sessionDate}`}>
+                    <Pencil className="h-4 w-4" />
+                    Edit
+                  </Link>
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
+          )}
         </CardFooter>
       </Card>
     </TooltipProvider>

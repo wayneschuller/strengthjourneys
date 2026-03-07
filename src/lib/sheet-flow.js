@@ -778,7 +778,7 @@ export async function createBootstrapSheet(
   ];
 
   const valuesResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:E5?valueInputOption=RAW`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:E5?valueInputOption=USER_ENTERED`,
     {
       method: "PUT",
       headers: {
@@ -814,12 +814,17 @@ export async function createBootstrapSheet(
               fields: "gridProperties.frozenRowCount",
             },
           },
-          // Bold header row
+          // Bold + gray background on header row
           {
             repeatCell: {
               range: { sheetId, startRowIndex: 0, endRowIndex: 1 },
-              cell: { userEnteredFormat: { textFormat: { bold: true } } },
-              fields: "userEnteredFormat.textFormat.bold",
+              cell: {
+                userEnteredFormat: {
+                  backgroundColor: { red: 0.83, green: 0.83, blue: 0.83 },
+                  textFormat: { bold: true },
+                },
+              },
+              fields: "userEnteredFormat.backgroundColor,userEnteredFormat.textFormat.bold",
             },
           },
           // Column widths
@@ -877,28 +882,6 @@ export async function createBootstrapSheet(
               range: { sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 2, endColumnIndex: 3 },
               cell: { userEnteredFormat: { horizontalAlignment: "RIGHT" } },
               fields: "userEnteredFormat.horizontalAlignment",
-            },
-          },
-          // Column B (Lift Type) dropdown — 7 core lifts, non-strict so custom entries still work
-          {
-            setDataValidation: {
-              range: { sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 1, endColumnIndex: 2 },
-              rule: {
-                condition: {
-                  type: "ONE_OF_LIST",
-                  values: [
-                    { userEnteredValue: "Back Squat" },
-                    { userEnteredValue: "Deadlift" },
-                    { userEnteredValue: "Bench Press" },
-                    { userEnteredValue: "Strict Press" },
-                    { userEnteredValue: "Power Snatch" },
-                    { userEnteredValue: "Power Clean" },
-                    { userEnteredValue: "Front Squat" },
-                  ],
-                },
-                showCustomUi: true,
-                strict: false,
-              },
             },
           },
         ],

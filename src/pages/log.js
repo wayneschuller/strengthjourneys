@@ -498,7 +498,6 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
     : { platesPerSide: [] };
 
   const lastRealSet = realSets[realSets.length - 1];
-  const hasPending = sets.some((s) => s._pending);
   const bigFourEntry = BIG_FOUR.find((b) => b.name === liftType);
 
   return (
@@ -541,9 +540,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
 
         {/* Add set — disabled while any pending set is in-flight for this lift */}
         <button
-          className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+          className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
           onClick={() => onAddSet(lastRealSet)}
-          disabled={hasPending}
         >
           <Plus className="h-4 w-4" />
           Add set

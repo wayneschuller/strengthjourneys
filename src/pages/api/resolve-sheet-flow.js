@@ -202,7 +202,10 @@ export default async function handler(req, res) {
         httpStatus: priorSheetCheck.httpStatus,
       });
 
-      if (["missing", "trashed"].includes(priorSheetCheck.state)) {
+      if (
+        ["missing", "trashed"].includes(priorSheetCheck.state) ||
+        (priorSheetCheck.state === "unknown" && !previousProvisionedSheetId)
+      ) {
         debug.path.push("resolve:returning_missing_sheet:reprovision");
         devLog("[sheet-flow] resolve:action reprovision_missing_sheet", {
           previousProvisionedSheetId,

@@ -669,7 +669,7 @@ export function SheetSetupDialog() {
  * @param {boolean} props.isActive - Whether to run the animation.
  * @param {number} [props.stepDurationMs=1800] - Ms between each plate addition.
  */
-function PlateLoadingAnimation({ isActive, stepDurationMs = 600 }) {
+function PlateLoadingAnimation({ isActive, stepDurationMs = 200 }) {
   const [plateCount, setPlateCount] = useState(0);
   const MAX_PLATES = 5;
 

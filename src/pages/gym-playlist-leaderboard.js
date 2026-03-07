@@ -4,7 +4,6 @@ import { useRouter } from "next/router";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
-import shortUUID from "short-uuid";
 import { useLocalStorage } from "usehooks-ts";
 import { useSession, signIn } from "next-auth/react";
 import { gaTrackSignInClick } from "@/lib/analytics";
@@ -12,7 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { fetchPlaylists } from "@/components/playlist-leaderboard/playlist-utils";
+import {
+  fetchPlaylists,
+  PLAYLIST_CATEGORIES,
+} from "@/components/playlist-leaderboard/playlist-utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
 import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/playlist-create-edit";
@@ -111,16 +113,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
 
   const { toast } = useToast();
   const [parent] = useAutoAnimate();
-  const adminEmails = (
-    process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_LEADERBOARD_ADMINS || ""
-  )
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-
-  const isAdmin = adminEmails.includes(
-    session?.user?.email?.trim().toLowerCase(),
-  );
+  const isAdmin = Boolean(session?.user?.isLeaderboardAdmin);
 
   // On mount - delete all the localstorage votes older than 10 minutes so the user can vote again
   // FIXME: implement the 10 minute timeout on the server using IP throttling
@@ -157,28 +150,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     setCurrentPage(1);
   }, [currentTab, selectedCategories]);
 
-  const categories = [
-    // Genres
-    "rock",
-    "pop",
-    "hip-hop",
-    "electronic",
-    "r&b",
-    "metal",
-    "house",
-    // Descriptive/Mood
-    "upbeat",
-    "intense",
-    "chill",
-    "motivational",
-    // Workout-specific
-    "cardio",
-    "strength",
-    "warm-up",
-    "retro",
-    "podcast",
-    "weird",
-  ];
+  const categories = PLAYLIST_CATEGORIES;
 
   const openAddDialog = () => {
     setIsEditMode(false);
@@ -265,8 +237,6 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     devLog(`handlePlaylistAction dialog activity:`);
     devLog(playlistData);
 
-    let playlistToAdd;
-
     try {
       let response;
       if (isEditMode) {
@@ -278,19 +248,12 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
           body: JSON.stringify(playlistData),
         });
       } else {
-        playlistToAdd = {
-          ...playlistData,
-          id: shortUUID.generate(),
-          upVotes: 0,
-          downVotes: 0,
-          timestamp: Date.now(),
-        };
         response = await fetch("/api/playlists", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(playlistToAdd),
+          body: JSON.stringify(playlistData),
         });
       }
 
@@ -299,15 +262,18 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
         throw new Error(errorData.error || "An unknown error occurred");
       }
 
+      const responseData = await response.json();
+      const persistedPlaylist = responseData.playlist;
+
       setPlaylists((prevPlaylists) => {
         if (isEditMode) {
           return prevPlaylists.map((playlist) =>
             playlist.id === currentPlaylist.id
-              ? { ...playlist, ...playlistData }
+              ? { ...playlist, ...persistedPlaylist }
               : playlist,
           );
         } else {
-          return [...prevPlaylists, playlistToAdd];
+          return [...prevPlaylists, persistedPlaylist];
         }
       });
 
@@ -603,20 +569,22 @@ export async function sendVote(id, voteType, action) {
     throw new Error('Invalid voteType. Must be "upvote" or "downvote".');
   }
 
-  if (action !== "increment" && action !== "decrement") {
-    throw new Error('Invalid action. Must be "increment" or "decrement".');
+  if (action !== "increment") {
+    throw new Error('Invalid action. Must be "increment".');
   }
 
   try {
-    const response = await fetch(
-      `/api/vote-playlist?id=${id}&voteType=${voteType}&action=${action}`,
-      {
-        method: "POST",
+    const response = await fetch("/api/vote-playlist", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ id, voteType }),
+    });
 
     if (!response.ok) {
-      throw new Error("Failed to send vote");
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || "Failed to send vote");
     }
 
     const result = await response.json();

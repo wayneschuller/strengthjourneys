@@ -8,15 +8,7 @@ import {
   DialogHeader,
   DialogDescription,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-
-// New imports for URL validation and sanitization
-import validator from "validator";
-import { sanitizeUrl } from "@braintree/sanitize-url";
-import normalizeUrl from "normalize-url";
-import DOMPurify from "dompurify";
-import { WHITELISTED_SITES } from "./playlist-utils";
 import { validateAndProcessPlaylist } from "./playlist-utils";
 
 /**
@@ -49,9 +41,6 @@ export function PlaylistCreateEditDialog({
       description: formData.get("description"),
       url: formData.get("url"),
       categories: formData.getAll("categories"),
-      id: currentPlaylist.id,
-      upVotes: currentPlaylist.upVotes || 0,
-      downVotes: currentPlaylist.downVotes || 0,
     };
 
     // Validate and process the playlist data (including whitelisting)
@@ -62,15 +51,6 @@ export function PlaylistCreateEditDialog({
       setErrors(errors);
       return;
     }
-    // Handle timestamp logic
-    if (!isEditMode) {
-      // Adding a new playlist
-      validatedPlaylist.timestamp = Date.now();
-    } else {
-      // Editing an existing playlist
-      validatedPlaylist.timestamp = currentPlaylist.timestamp || Date.now();
-    }
-
     onSubmit(validatedPlaylist);
     setErrors([]);
   };
@@ -154,13 +134,3 @@ export function PlaylistCreateEditDialog({
     </Dialog>
   );
 }
-
-// Function to check if a URL is from a whitelisted site
-const isWhitelistedUrl = (url) => {
-  try {
-    const hostname = new URL(url).hostname;
-    return WHITELISTED_SITES.some((site) => hostname.endsWith(site));
-  } catch {
-    return false;
-  }
-};

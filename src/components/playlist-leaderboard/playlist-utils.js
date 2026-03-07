@@ -21,14 +21,15 @@ export async function fetchPlaylists(id = null) {
       if (!playlist) {
         throw new Error("Playlist not found");
       }
-      return JSON.parse(playlist);
+      return parseStoredPlaylist(playlist);
     } else {
       // Fetch all playlists
-      const playlists = await kv.hgetall("playlists");
+      const playlists = (await kv.hgetall("playlists")) || {};
 
       // Map through all the playlists and add in the upvotes/downvotes
       const playlistsWithVotes = await Promise.all(
-        Object.entries(playlists).map(async ([id, playlist]) => {
+        Object.entries(playlists).map(async ([id, storedPlaylist]) => {
+          const playlist = parseStoredPlaylist(storedPlaylist);
           const votes = await kv.hmget(
             `playlists:${id}`,
             "upVotes",
@@ -73,6 +74,26 @@ export const WHITELISTED_SITES = [
   "last.fm", // Music discovery and streaming
   "iheartradio.com", // Streaming radio and custom playlists
   "boomplay.com", // African music streaming service
+];
+
+export const PLAYLIST_CATEGORIES = [
+  "rock",
+  "pop",
+  "hip-hop",
+  "electronic",
+  "r&b",
+  "metal",
+  "house",
+  "upbeat",
+  "intense",
+  "chill",
+  "motivational",
+  "cardio",
+  "strength",
+  "warm-up",
+  "retro",
+  "podcast",
+  "weird",
 ];
 
 // Shared functions for playlist validation and sanitization
@@ -163,9 +184,11 @@ export function getPlaylistPlatform(url) {
 }
 
 export function sanitizeText(text, isServer = false) {
+  const value = typeof text === "string" ? text.trim() : "";
+
   if (isServer) {
     // Simple server-side sanitization
-    return text.replace(/[<>&'"]/g, (char) => {
+    return value.replace(/[<>&'"]/g, (char) => {
       switch (char) {
         case "<":
           return "&lt;";
@@ -183,29 +206,67 @@ export function sanitizeText(text, isServer = false) {
     });
   } else {
     // Client-side sanitization using DOMPurify
-    return DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
+    return DOMPurify.sanitize(value, { ALLOWED_TAGS: [] });
   }
 }
 
 export function validateAndProcessPlaylist(playlistData, isServer = false) {
   const errors = [];
 
-  if (!playlistData.title || !playlistData.description || !playlistData.url) {
+  const rawTitle =
+    typeof playlistData?.title === "string" ? playlistData.title : "";
+  const rawDescription =
+    typeof playlistData?.description === "string" ? playlistData.description : "";
+  const rawUrl = typeof playlistData?.url === "string" ? playlistData.url : "";
+
+  if (!rawTitle || !rawDescription || !rawUrl) {
     errors.push("Missing required fields");
   }
 
-  if (!validateUrl(playlistData.url)) {
+  if (rawTitle.length > 120) {
+    errors.push("Title must be 120 characters or fewer");
+  }
+
+  if (rawDescription.length > 500) {
+    errors.push("Description must be 500 characters or fewer");
+  }
+
+  if (!validateUrl(rawUrl)) {
     errors.push("Invalid URL");
   }
 
-  const normalizedUrl = sanitizeAndNormalizeUrl(playlistData.url);
+  const normalizedUrl = sanitizeAndNormalizeUrl(rawUrl);
 
   if (!isWhitelistedUrl(normalizedUrl)) {
     errors.push("URL is not from an approved music streaming platform");
   }
 
-  const sanitizedTitle = sanitizeText(playlistData.title, isServer);
-  const sanitizedDescription = sanitizeText(playlistData.description, isServer);
+  const categoryValues = Array.isArray(playlistData?.categories)
+    ? playlistData.categories
+    : [];
+  const normalizedCategories = [...new Set(categoryValues)]
+    .filter((category) => typeof category === "string")
+    .map((category) => category.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (normalizedCategories.length === 0) {
+    errors.push("Select at least one category");
+  }
+
+  if (normalizedCategories.length > 5) {
+    errors.push("Select no more than 5 categories");
+  }
+
+  if (
+    normalizedCategories.some(
+      (category) => !PLAYLIST_CATEGORIES.includes(category),
+    )
+  ) {
+    errors.push("One or more categories are invalid");
+  }
+
+  const sanitizedTitle = sanitizeText(rawTitle, isServer);
+  const sanitizedDescription = sanitizeText(rawDescription, isServer);
 
   if (errors.length > 0) {
     return { errors };
@@ -213,10 +274,18 @@ export function validateAndProcessPlaylist(playlistData, isServer = false) {
 
   return {
     validatedPlaylist: {
-      ...playlistData,
       title: sanitizedTitle,
       description: sanitizedDescription,
       url: normalizedUrl,
+      categories: normalizedCategories,
     },
   };
+}
+
+export function parseStoredPlaylist(playlist) {
+  if (!playlist) return null;
+  if (typeof playlist === "string") {
+    return JSON.parse(playlist);
+  }
+  return playlist;
 }

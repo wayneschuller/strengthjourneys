@@ -1,15 +1,20 @@
 import { kv } from "@vercel/kv";
-import { devLog } from "@/lib/processing-utils";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
+import shortUUID from "short-uuid";
 import {
-  fetchPlaylists,
+  parseStoredPlaylist,
   validateAndProcessPlaylist,
 } from "@/components/playlist-leaderboard/playlist-utils";
+import {
+  getRequestClientIp,
+  isLeaderboardAdminEmail,
+} from "@/lib/playlist-security";
 import { RegExpMatcher, englishDataset } from "obscenity";
 
 // Initialize obscenity matcher
 const matcher = new RegExpMatcher({ ...englishDataset.build() });
+const translator = shortUUID();
 
 // Helper function to check for profanity
 function containsProfanity(text) {
@@ -19,43 +24,19 @@ function containsProfanity(text) {
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
   const { method } = req;
-
-  const adminEmails = (
-    process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_LEADERBOARD_ADMINS || ""
-  )
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-
-  const sessionEmail = session?.user?.email?.trim().toLowerCase();
-  const isAdmin = sessionEmail ? adminEmails.includes(sessionEmail) : false;
+  const isAdmin = isLeaderboardAdminEmail(session?.user?.email);
 
   switch (method) {
     case "GET":
-      // GET logic for fetching all playlists or a specific playlist - any user can do
-      // Used to be used with useSWR in clients, but we moved to static props to save usage
       return res.status(400).json({ error: "Not available to the hoi polloi" });
-
-      try {
-        const result = await fetchPlaylists();
-        // devLog(result);
-        res.status(200).json(result);
-      } catch (error) {
-        console.error("Error fetching playlist(s):", error);
-        res.status(500).json({ error: "Error fetching playlist(s)" });
-      }
-      break;
 
     case "POST":
       // POST logic for creating a new playlist - any user can do
       const newPlaylist = req.body;
-
-      // Add IP-based throttling for POST method
-      const clientIp =
-        req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+      const clientIp = getRequestClientIp(req);
 
       // IP throttle the hoi polloi
-      if (!isAdmin && (await isThrottled(clientIp))) {
+      if (!isAdmin && (await isThrottled(`playlist-create:${clientIp}`))) {
         return res
           .status(429)
           .json({ error: "Too many requests. Please try again later." });
@@ -72,33 +53,48 @@ export default async function handler(req, res) {
           return res.status(400).json({ errors });
         }
 
+        const playlistRecord = {
+          ...validatedPlaylist,
+          id: translator.generate(),
+          timestamp: Date.now(),
+        };
+
         // Check for profanity in title and description
         if (
-          containsProfanity(validatedPlaylist.title) ||
-          containsProfanity(validatedPlaylist.description)
+          containsProfanity(playlistRecord.title) ||
+          containsProfanity(playlistRecord.description)
         ) {
           // Silently reject the submission without adding to the database
           console.log(
-            `Profanity detected in new playlist submission. ID: ${validatedPlaylist.id} (IP: ${clientIp})`,
+            `Profanity detected in new playlist submission. ID: ${playlistRecord.id} (IP: ${clientIp})`,
           );
 
           // Return a success response to the client
           return res.status(201).json({
             message: "Playlist added successfully",
-            playlist: validatedPlaylist,
+            playlist: playlistRecord,
           });
         }
 
-        // Add timestamp
-        validatedPlaylist.timestamp = Date.now();
-
         // Normal case - good playlist gets added to the KV store.
         await kv.hset("playlists", {
-          [validatedPlaylist.id]: JSON.stringify(validatedPlaylist),
+          [playlistRecord.id]: JSON.stringify({
+            ...playlistRecord,
+            upVotes: 0,
+            downVotes: 0,
+          }),
+        });
+        await kv.hset(`playlists:${playlistRecord.id}`, {
+          upVotes: 0,
+          downVotes: 0,
         });
         res.status(201).json({
           message: "Playlist added successfully",
-          playlist: validatedPlaylist,
+          playlist: {
+            ...playlistRecord,
+            upVotes: 0,
+            downVotes: 0,
+          },
         });
       } catch (error) {
         console.error("Error adding new playlist:", error);
@@ -115,19 +111,38 @@ export default async function handler(req, res) {
           .json({ error: "Not authenticated - only admins can edit" });
 
       try {
-        const updatedPlaylist = req.body;
-
-        if (!updatedPlaylist || !updatedPlaylist.id) {
+        const rawId =
+          typeof req.query.id === "string" ? req.query.id : req.body?.id;
+        if (!isValidPlaylistId(rawId)) {
           return res
             .status(400)
             .json({ error: "Invalid playlist data or missing ID" });
         }
 
         // Check if the playlist exists
-        const existingPlaylist = await kv.hget("playlists", updatedPlaylist.id);
+        const existingPlaylist = parseStoredPlaylist(
+          await kv.hget("playlists", rawId),
+        );
         if (!existingPlaylist) {
           return res.status(404).json({ error: "Playlist not found" });
         }
+
+        const { errors, validatedPlaylist } = validateAndProcessPlaylist(
+          req.body,
+          true,
+        );
+        if (errors) {
+          return res.status(400).json({ errors });
+        }
+
+        const updatedPlaylist = {
+          ...existingPlaylist,
+          ...validatedPlaylist,
+          id: existingPlaylist.id,
+          timestamp: existingPlaylist.timestamp || Date.now(),
+          upVotes: Number(existingPlaylist.upVotes) || 0,
+          downVotes: Number(existingPlaylist.downVotes) || 0,
+        };
 
         // Overwrite the playlist with the entire new object
         await kv.hset("playlists", {
@@ -156,7 +171,7 @@ export default async function handler(req, res) {
       try {
         const rawId = req.query.id;
         const id = Array.isArray(rawId) ? rawId[0] : rawId;
-        if (!id || typeof id !== "string") {
+        if (!isValidPlaylistId(id)) {
           return res.status(400).json({ error: "Missing or invalid playlist ID" });
         }
 
@@ -165,6 +180,7 @@ export default async function handler(req, res) {
           return res.status(404).json({ error: "Playlist not found" });
         }
         await kv.hdel("playlists", id);
+        await kv.del(`playlists:${id}`);
         res.status(200).json({ message: "Playlist deleted successfully" });
       } catch (error) {
         console.error("Error deleting playlist:", error);
@@ -180,16 +196,14 @@ export default async function handler(req, res) {
 
 const THROTTLE_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
 
-async function isThrottled(ip) {
-  const lastRequestTime = await kv.get(`throttle:${ip}`);
-  const currentTime = Date.now();
-
-  if (lastRequestTime && currentTime - lastRequestTime < THROTTLE_TIME) {
-    return true;
-  }
-
-  await kv.set(`throttle:${ip}`, currentTime, {
+async function isThrottled(subject) {
+  const result = await kv.set(`throttle:${subject}`, Date.now(), {
     ex: Math.floor(THROTTLE_TIME / 1000),
+    nx: true,
   });
-  return false;
+  return result === null;
+}
+
+function isValidPlaylistId(id) {
+  return typeof id === "string" && /^[A-Za-z0-9_-]{8,64}$/.test(id);
 }

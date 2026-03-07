@@ -1,14 +1,10 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { isLeaderboardAdminEmail } from "@/lib/playlist-security";
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
-
-  const adminEmails = process.env
-    .NEXT_PUBLIC_STRENGTH_JOURNEYS_LEADERBOARD_ADMINS
-    ? process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_LEADERBOARD_ADMINS.split(",")
-    : [];
-  const isAdmin = adminEmails.includes(session?.user?.email);
+  const isAdmin = isLeaderboardAdminEmail(session?.user?.email);
 
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });

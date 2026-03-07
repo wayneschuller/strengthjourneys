@@ -25,9 +25,6 @@ export function PlaylistAdminTools({ playlist, onEdit, onDelete, className }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          token: process.env.NEXT_PUBLIC_REVALIDATION_TOKEN,
-        }),
       });
 
       if (response.ok) {

@@ -125,6 +125,10 @@ All analysis is client-side. No user data is stored server-side.
 - Double quotes preferred
 - Keep JSX readable and vertically spaced
 - Do not introduce unnecessary comments
+- Exception: for SEO changes informed by Search Console reviews, add one short
+  provenance comment near the tuned config or metadata block with the review
+  date in `YYYY-MM-DD` format so future agents can distinguish evidence-led
+  copy changes from generic template wording
 
 ### Components
 
@@ -239,6 +243,8 @@ Checklist for adding a new theme (always add a dark variant too):
 
 - Use `getStaticProps` for ISR pages
 - Use `NextSeo` for metadata
+- When tuning titles/meta descriptions from GSC evidence, prefer concise
+  inline provenance comments such as `GSC review 2026-03-07` over long notes
 - Do NOT migrate to App Router patterns
 - Do NOT introduce `"use client"` directives
 - Do NOT use `generateMetadata`

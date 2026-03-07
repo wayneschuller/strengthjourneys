@@ -285,7 +285,12 @@ export function validateAndProcessPlaylist(playlistData, isServer = false) {
 export function parseStoredPlaylist(playlist) {
   if (!playlist) return null;
   if (typeof playlist === "string") {
-    return JSON.parse(playlist);
+    try {
+      return JSON.parse(playlist);
+    } catch {
+      console.error("Failed to parse stored playlist JSON");
+      return null;
+    }
   }
   return playlist;
 }

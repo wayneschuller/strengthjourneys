@@ -9,6 +9,7 @@ import {
 import {
   getRequestClientIp,
   isLeaderboardAdminEmail,
+  isValidPlaylistId,
 } from "@/lib/playlist-security";
 import { RegExpMatcher, englishDataset } from "obscenity";
 
@@ -111,8 +112,7 @@ export default async function handler(req, res) {
           .json({ error: "Not authenticated - only admins can edit" });
 
       try {
-        const rawId =
-          typeof req.query.id === "string" ? req.query.id : req.body?.id;
+        const rawId = typeof req.query.id === "string" ? req.query.id : null;
         if (!isValidPlaylistId(rawId)) {
           return res
             .status(400)
@@ -204,6 +204,3 @@ async function isThrottled(subject) {
   return result === null;
 }
 
-function isValidPlaylistId(id) {
-  return typeof id === "string" && /^[A-Za-z0-9_-]{8,64}$/.test(id);
-}

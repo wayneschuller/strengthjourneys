@@ -2,7 +2,7 @@ import { kv } from "@vercel/kv";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { parseStoredPlaylist } from "@/components/playlist-leaderboard/playlist-utils";
-import { getRequestClientIp } from "@/lib/playlist-security";
+import { getRequestClientIp, isValidPlaylistId } from "@/lib/playlist-security";
 
 const VOTE_THROTTLE_SECONDS = 10 * 60;
 
@@ -58,6 +58,3 @@ export default async function handler(req, res) {
   }
 }
 
-function isValidPlaylistId(id) {
-  return typeof id === "string" && /^[A-Za-z0-9_-]{8,64}$/.test(id);
-}

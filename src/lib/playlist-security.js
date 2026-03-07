@@ -25,3 +25,7 @@ export function getRequestClientIp(req) {
 
   return req.socket.remoteAddress || "unknown";
 }
+
+export function isValidPlaylistId(id) {
+  return typeof id === "string" && /^[A-Za-z0-9_-]{8,64}$/.test(id);
+}

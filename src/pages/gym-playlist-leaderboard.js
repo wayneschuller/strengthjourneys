@@ -446,26 +446,14 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
         </PageHeader>
         <section className="mx-0 md:mx-[10vw]">
           <h2 className="mb-6 text-sm text-muted-foreground">
-            {/* FIXME: consider checking for ssid and loaded data and prompt them here for more vote power */}
             {authStatus !== "authenticated" ? (
               <div>
-                Vote for your favorites, with extra weighting for athletes who
-                are{" "}
-                <button
-                  onClick={() => {
-                    gaTrackSignInClick(router.pathname, "playlist");
-                    signIn("google", { callbackUrl: "/" });
-                  }}
-                  className="text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
-                >
-                  signed in via Google.
-                </button>
+                Vote for your favorites. Sign in via Google for extra vote
+                weighting.
               </div>
             ) : (
               <div>
-                As a signed in athlete, your votes will get extra weighting
-                proportional to the quantity of gym sessions in your Google
-                Sheet data.
+                Your votes count extra — thanks for being a signed-in athlete.
               </div>
             )}
           </h2>

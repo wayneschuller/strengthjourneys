@@ -29,3 +29,33 @@ export function getRequestClientIp(req) {
 export function isValidPlaylistId(id) {
   return typeof id === "string" && /^[A-Za-z0-9_-]{8,64}$/.test(id);
 }
+
+/**
+ * Checks text against OpenAI's moderation endpoint.
+ * Returns true if the content is flagged, false if clean.
+ * Fails open (returns false) if the API call fails, so a flaky network
+ * doesn't silently block legitimate submissions.
+ */
+export async function isContentFlaggedByAI(text) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return false;
+
+  try {
+    const res = await fetch("https://api.openai.com/v1/moderations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({ input: text }),
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!res.ok) return false;
+
+    const data = await res.json();
+    return data.results?.[0]?.flagged === true;
+  } catch {
+    return false;
+  }
+}

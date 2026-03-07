@@ -11,6 +11,7 @@ import {
   getRequestClientIp,
   isLeaderboardAdminEmail,
   isValidPlaylistId,
+  isContentFlaggedByAI,
 } from "@/lib/playlist-security";
 import { RegExpMatcher, englishDataset } from "obscenity";
 
@@ -64,17 +65,23 @@ export default async function handler(req, res) {
           ...(oembedData?.thumbnailUrl && { thumbnailUrl: oembedData.thumbnailUrl }),
         };
 
-        // Check for profanity in title and description
-        if (
-          containsProfanity(playlistRecord.title) ||
-          containsProfanity(playlistRecord.description)
-        ) {
+        // Check for profanity/AI-flagged content in title and description
+        const combinedText = `${playlistRecord.title} ${playlistRecord.description}`;
+        const [hasProfanity, isFlagged] = await Promise.all([
+          Promise.resolve(
+            containsProfanity(playlistRecord.title) ||
+              containsProfanity(playlistRecord.description),
+          ),
+          isContentFlaggedByAI(combinedText),
+        ]);
+
+        if (hasProfanity || isFlagged) {
           // Silently reject the submission without adding to the database
           console.log(
-            `Profanity detected in new playlist submission. ID: ${playlistRecord.id} (IP: ${clientIp})`,
+            `Content rejected for new playlist submission. ID: ${playlistRecord.id} (IP: ${clientIp}) profanity=${hasProfanity} ai=${isFlagged}`,
           );
 
-          // Return a success response to the client
+          // Return a success response to the client to avoid tipping off bad actors
           return res.status(201).json({
             message: "Playlist added successfully",
             playlist: playlistRecord,

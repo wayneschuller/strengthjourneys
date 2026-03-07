@@ -45,6 +45,8 @@ import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { gaTrackShareCopy } from "@/lib/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { useTransientSuccess } from "@/hooks/use-transient-success";
+import { calculatePlateBreakdown } from "@/lib/warmups";
+import { PlateDiagram } from "@/components/warmups/plate-diagram";
 
 const BIG_FOUR_URLS = {
   "Back Squat": "/barbell-squat-insights",
@@ -436,58 +438,73 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                   value: deadlift,
                   set: setDeadlift,
                 },
-              ].map(({ key, liftType, value, set }) => (
-                <div key={key} className="flex items-center gap-4">
-                  <Link
-                    href={BIG_FOUR_URLS[liftType]}
-                    className="flex-shrink-0"
-                    aria-hidden
-                  >
-                    <motion.img
-                      src={LIFT_GRAPHICS[liftType]}
-                      alt={`${liftType} exercise illustration`}
-                      className="h-20 w-20 origin-bottom object-contain sm:h-24 sm:w-24 xl:h-32 xl:w-32"
-                      animate={
-                        prefersReducedMotion
-                          ? undefined
-                          : activeLiftKey === key
-                            ? {
-                                scale: 1.1,
-                                y: -5,
-                                rotate: liftRotationByKey[key] || 0,
-                              }
-                            : { scale: 1, y: 0, rotate: 0 }
-                      }
-                      transition={{
-                        type: "spring",
-                        stiffness: 360,
-                        damping: 16,
-                        mass: 0.6,
-                      }}
-                    />
-                  </Link>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-lg font-semibold">
-                      <Link
-                        href={BIG_FOUR_URLS[liftType]}
-                        className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
-                      >
-                        {liftType}
-                      </Link>
-                      : {value} lbs ({toKgF(value)} kg)
+              ].map(({ key, liftType, value, set }) => {
+                const plateBreakdown = calculatePlateBreakdown(value, 45, false, "red");
+                return (
+                  <div key={key} className="flex items-start gap-4">
+                    <Link
+                      href={BIG_FOUR_URLS[liftType]}
+                      className="flex-shrink-0 pt-1"
+                      aria-hidden
+                    >
+                      <motion.img
+                        src={LIFT_GRAPHICS[liftType]}
+                        alt={`${liftType} exercise illustration`}
+                        className="h-20 w-20 origin-bottom object-contain sm:h-24 sm:w-24 xl:h-32 xl:w-32"
+                        animate={
+                          prefersReducedMotion
+                            ? undefined
+                            : activeLiftKey === key
+                              ? {
+                                  scale: 1.1,
+                                  y: -5,
+                                  rotate: liftRotationByKey[key] || 0,
+                                }
+                              : { scale: 1, y: 0, rotate: 0 }
+                        }
+                        transition={{
+                          type: "spring",
+                          stiffness: 360,
+                          damping: 16,
+                          mass: 0.6,
+                        }}
+                      />
+                    </Link>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-lg font-semibold">
+                        <Link
+                          href={BIG_FOUR_URLS[liftType]}
+                          className="underline decoration-dotted underline-offset-2 hover:text-blue-600"
+                        >
+                          {liftType}
+                        </Link>
+                        : {value} lbs ({toKgF(value)} kg)
+                      </div>
+                      <div className="mt-2 flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                        <Slider
+                          value={[value]}
+                          min={0}
+                          max={700}
+                          step={5}
+                          onValueChange={handleLiftValueChange(key, set)}
+                          onValueCommit={handleLiftValueCommit}
+                          className="md:flex-1"
+                        />
+                        <div className="opacity-60 md:w-52 md:shrink-0">
+                          <PlateDiagram
+                            platesPerSide={plateBreakdown.platesPerSide}
+                            barWeight={45}
+                            isMetric={false}
+                            hideLabels={true}
+                            animationKey={`${key}-${value}`}
+                            useScrollTrigger={false}
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <Slider
-                      value={[value]}
-                      min={0}
-                      max={700}
-                      step={5}
-                      onValueChange={handleLiftValueChange(key, set)}
-                      onValueCommit={handleLiftValueCommit}
-                      className="mt-2"
-                    />
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               <motion.div
                 className="mt-4 text-3xl font-bold tabular-nums"

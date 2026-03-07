@@ -42,6 +42,7 @@ export function PlaylistCard({
   isAdmin,
   onDelete,
   onEdit,
+  onRefresh,
   onSave,
   isSaved,
   className, // We put this at the top level div last, so the parent can override defaults
@@ -176,6 +177,7 @@ export function PlaylistCard({
                 playlist={playlist}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onRefresh={onRefresh}
               />
             )}
           </div>

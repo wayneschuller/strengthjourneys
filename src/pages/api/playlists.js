@@ -191,8 +191,48 @@ export default async function handler(req, res) {
       }
       break;
 
+    case "PATCH":
+      // PATCH logic for refreshing playlist metadata (thumbnail, etc.) - admin only
+      if (!isAdmin)
+        return res
+          .status(401)
+          .json({ error: "Not authenticated - only admins can refresh" });
+
+      try {
+        const rawId = typeof req.query.id === "string" ? req.query.id : null;
+        if (!isValidPlaylistId(rawId)) {
+          return res.status(400).json({ error: "Missing or invalid playlist ID" });
+        }
+
+        const existingPlaylist = parseStoredPlaylist(
+          await kv.hget("playlists", rawId),
+        );
+        if (!existingPlaylist) {
+          return res.status(404).json({ error: "Playlist not found" });
+        }
+
+        const thumbnailUrl = await fetchPlaylistThumbnail(existingPlaylist.url);
+        const refreshedPlaylist = {
+          ...existingPlaylist,
+          ...(thumbnailUrl ? { thumbnailUrl } : {}),
+        };
+
+        await kv.hset("playlists", {
+          [rawId]: JSON.stringify(refreshedPlaylist),
+        });
+
+        res.status(200).json({
+          message: "Playlist metadata refreshed",
+          playlist: refreshedPlaylist,
+        });
+      } catch (error) {
+        console.error("Error refreshing playlist metadata:", error);
+        res.status(500).json({ error: "Error refreshing playlist metadata" });
+      }
+      break;
+
     default:
-      res.setHeader("Allow", ["GET", "POST", "PUT", "DELETE"]);
+      res.setHeader("Allow", ["GET", "POST", "PUT", "PATCH", "DELETE"]);
       res.status(405).end(`Method ${method} Not Allowed`);
   }
 }

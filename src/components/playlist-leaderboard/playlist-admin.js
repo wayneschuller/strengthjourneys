@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Edit, Trash, FolderSync } from "lucide-react";
+import { Edit, Trash, FolderSync, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -13,8 +13,9 @@ import { cn } from "@/lib/utils";
  * @param {Function} props.onDelete - Callback invoked with the playlist ID when the Delete button is clicked.
  * @param {string} [props.className] - Additional CSS classes applied to the wrapper element.
  */
-export function PlaylistAdminTools({ playlist, onEdit, onDelete, className }) {
+export function PlaylistAdminTools({ playlist, onEdit, onDelete, onRefresh, className }) {
   const [isRevalidating, setIsRevalidating] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRevalidate = async () => {
     setIsRevalidating(true);
@@ -40,6 +41,26 @@ export function PlaylistAdminTools({ playlist, onEdit, onDelete, className }) {
     }
   };
 
+  const handleRefreshMetadata = async () => {
+    setIsRefreshing(true);
+    try {
+      const response = await fetch(`/api/playlists?id=${playlist.id}`, {
+        method: "PATCH",
+      });
+      if (response.ok) {
+        const data = await response.json();
+        onRefresh?.(data.playlist);
+      } else {
+        alert("Metadata refresh failed");
+      }
+    } catch (error) {
+      console.error("Error refreshing metadata:", error);
+      alert("Metadata refresh failed");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <div className={cn("mt-4", className)}>
       <Separator />
@@ -54,6 +75,16 @@ export function PlaylistAdminTools({ playlist, onEdit, onDelete, className }) {
         >
           <FolderSync className="mr-1 h-4 w-4" />
           {isRevalidating ? "Revalidating..." : "Revalidate Static Props"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefreshMetadata}
+          disabled={isRefreshing}
+          className="flex items-center"
+        >
+          <RefreshCw className={cn("mr-1 h-4 w-4", isRefreshing && "animate-spin")} />
+          {isRefreshing ? "Refreshing..." : "Refresh Metadata"}
         </Button>
         <Button
           variant="outline"

@@ -301,6 +301,12 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
     setIsDialogOpen(false);
   };
 
+  const refreshPlaylistMetadata = (updatedPlaylist) => {
+    setPlaylists((prev) =>
+      prev.map((p) => (p.id === updatedPlaylist.id ? { ...p, ...updatedPlaylist } : p)),
+    );
+  };
+
   const deletePlaylist = async (id) => {
     try {
       const response = await fetch(`/api/playlists?id=${id}`, {
@@ -546,6 +552,7 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
                     isAdmin={isAdmin}
                     onDelete={deletePlaylist}
                     onEdit={openEditDialog}
+                    onRefresh={refreshPlaylistMetadata}
                     onSave={toggleSavePlaylist}
                     isSaved={savedPlaylists.includes(playlist.id)}
                     className=""

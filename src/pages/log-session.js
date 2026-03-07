@@ -132,30 +132,30 @@ export default function LogSessionPage() {
 
   const addSet = useCallback(
     async (liftType, prevSet) => {
-      if (!sheetInfo?.ssid) return;
+      if (!sheetInfo?.ssid || !parsedData) return;
       markSaving();
+
+      // Insert after the last known row for this lift type in this session.
+      // Blank date and blank lift type — parser inherits both from the row above.
+      const liftRows = parsedData
+        .filter((e) => e.date === sessionDate && e.liftType === liftType && !e.isGoal && e.rowIndex)
+        .map((e) => e.rowIndex);
+      const insertAfterRowIndex = liftRows.length ? Math.max(...liftRows) : null;
+
+      const weightStr = prevSet?.weight
+        ? `${prevSet.weight}${prevSet.unitType ?? ""}`
+        : isMetric ? "20kg" : "45lb";
+
+      const row = ["", "", String(prevSet?.reps ?? 5), weightStr, "", ""];
+
       try {
         const res = await fetch("/api/log-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ssid: sheetInfo.ssid,
-            date: sessionDate,
-            lifts: [
-              {
-                liftType,
-                sets: [
-                  {
-                    reps: prevSet?.reps ?? 5,
-                    weight: prevSet?.weight
-                      ? `${prevSet.weight}${prevSet.unitType ?? ""}`
-                      : "",
-                    notes: "",
-                    url: "",
-                  },
-                ],
-              },
-            ],
+            rows: [row],
+            insertAfterRowIndex,
           }),
         });
         if (!res.ok) throw new Error((await res.json()).error || "Add set failed");
@@ -166,7 +166,7 @@ export default function LogSessionPage() {
         markError();
       }
     },
-    [sheetInfo?.ssid, sessionDate, mutate],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, mutate],
   );
 
   const deleteSession = useCallback(async () => {
@@ -615,15 +615,35 @@ function AddLiftButton({ parsedData, sessionDate, sheetInfo, onSaving, onSaved, 
     setShowInput(false);
     setLiftType("");
     onSaving();
+
+    // Find where to insert and whether to include the date.
+    // - No existing rows for this date → new session: include date, insert after header (row 1)
+    // - Existing rows → add lift to session: no date, insert after last session row
+    const sessionRows = parsedData
+      ?.filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex)
+      .map((e) => e.rowIndex) ?? [];
+    const hasExistingSession = sessionRows.length > 0;
+    const insertAfterRowIndex = hasExistingSession ? Math.max(...sessionRows) : null;
+
+    const defaultWeight = isMetric ? "20kg" : "45lb";
+    // Date only on the very first row of a brand-new session
+    const row = [
+      hasExistingSession ? "" : sessionDate,
+      clean,
+      "5",
+      defaultWeight,
+      "",
+      "",
+    ];
+
     try {
-      const defaultWeight = isMetric ? "20kg" : "45lb";
       const res = await fetch("/api/log-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ssid: sheetInfo.ssid,
-          date: sessionDate,
-          lifts: [{ liftType: clean, sets: [{ reps: 5, weight: defaultWeight, notes: "", url: "" }] }],
+          rows: [row],
+          insertAfterRowIndex,
         }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Failed");

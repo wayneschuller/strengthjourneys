@@ -362,15 +362,19 @@ function ExplainerSection() {
 const FAQ_ITEMS = [
   {
     q: "What does 'stronger than X%' mean?",
-    a: "It means your 1-rep max is higher than that percentage of people in the selected group, adjusted for your bodyweight and age.",
+    a: "It means your 1-rep max is higher than that percentage of people in the selected group after adjusting for your sex, age, and bodyweight. The universe changes the comparison pool, not the fact that the result is personalised to you.",
   },
   {
     q: "Which group should I care about?",
-    a: "Most people find the Barbell Lifters ring most meaningful — it compares you to people who specifically train with a barbell, the fairest peer group for strength athletes.",
+    a: "Most people find the Barbell Lifters ring most meaningful. It compares you to a barbell-trained population, while still adjusting for your sex, age, and bodyweight, so it is usually the fairest peer group for strength athletes.",
   },
   {
     q: "How do you estimate percentiles?",
-    a: "We use the Kilgore strength standards as anchor points (physicallyActive → elite, calibrated by age, sex, and bodyweight) and interpolate where your lift sits within each group's distribution.",
+    a: "We use the Kilgore strength standards as anchor points, calibrated by age, sex, and bodyweight, then map your lift into each universe's estimated distribution. So the universes change how tough the comparison is, while your personal profile still shapes the result.",
+  },
+  {
+    q: "Am I being compared to everyone, or only people like me?",
+    a: "Only partially to everyone. General Population, Gym-Goers, Barbell Lifters, and Powerlifting Culture describe the broader group, but your percentile is still adjusted for your sex, age, and bodyweight. So you are not being ranked against all men and women combined with no adjustment.",
   },
   {
     q: "Should I enter my true 1RM or an estimate?",
@@ -378,7 +382,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Does age matter?",
-    a: "Yes. The Kilgore standards account for age, so a 55-year-old and a 25-year-old at the same relative strength level will get similar percentiles.",
+    a: "Yes. Age is part of the model, alongside sex and bodyweight, so a 55-year-old and a 25-year-old at the same relative strength level can land on similar percentiles within the same universe.",
   },
 ];
 

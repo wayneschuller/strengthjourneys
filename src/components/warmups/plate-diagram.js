@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
  * @param {string} [props.animationKey] - Key that changes when sliders change, retriggers plate animation
  * @param {boolean} [props.useScrollTrigger] - If true, animate when card scrolls into view (mobile); if false, animate immediately (desktop)
  */
-export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, className, hideLabels = false, animationDelay = 0, animationKey, useScrollTrigger = false }) {
+export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, className, hideLabels = false, animationDelay = 0, animationKey, useScrollTrigger = false, slideFromLeft = false }) {
   const unit = isMetric ? "kg" : "lb";
 
   if (platesPerSide.length === 0) {
@@ -67,7 +67,7 @@ export function PlateDiagram({ platesPerSide = [], barWeight, isMetric, classNam
               return (
                 <motion.div
                   key={`${plate.weight}-${idx}`}
-                  initial={{ x: 24, opacity: 0 }}
+                  initial={{ x: slideFromLeft ? -24 : 24, opacity: 0 }}
                   {...(useScrollTrigger
                     ? {
                         whileInView: { x: 0, opacity: 1 },

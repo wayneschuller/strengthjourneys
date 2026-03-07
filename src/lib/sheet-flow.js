@@ -807,60 +807,98 @@ export async function createBootstrapSheet(
       },
       body: JSON.stringify({
         requests: [
+          // Freeze header row
           {
             updateSheetProperties: {
-              properties: {
-                sheetId,
-                gridProperties: {
-                  frozenRowCount: 1,
-                },
-              },
+              properties: { sheetId, gridProperties: { frozenRowCount: 1 } },
               fields: "gridProperties.frozenRowCount",
             },
           },
+          // Bold header row
           {
             repeatCell: {
-              range: {
-                sheetId,
-                startRowIndex: 0,
-                endRowIndex: 1,
-              },
-              cell: {
-                userEnteredFormat: {
-                  textFormat: {
-                    bold: true,
-                  },
-                },
-              },
+              range: { sheetId, startRowIndex: 0, endRowIndex: 1 },
+              cell: { userEnteredFormat: { textFormat: { bold: true } } },
               fields: "userEnteredFormat.textFormat.bold",
             },
           },
+          // Column widths
           {
             updateDimensionProperties: {
-              range: {
-                sheetId,
-                dimension: "COLUMNS",
-                startIndex: 0,
-                endIndex: 4,
-              },
-              properties: {
-                pixelSize: 140,
-              },
+              range: { sheetId, dimension: "COLUMNS", startIndex: 0, endIndex: 1 },
+              properties: { pixelSize: 110 },
               fields: "pixelSize",
             },
           },
           {
             updateDimensionProperties: {
-              range: {
-                sheetId,
-                dimension: "COLUMNS",
-                startIndex: 4,
-                endIndex: 5,
-              },
-              properties: {
-                pixelSize: 420,
-              },
+              range: { sheetId, dimension: "COLUMNS", startIndex: 1, endIndex: 2 },
+              properties: { pixelSize: 170 },
               fields: "pixelSize",
+            },
+          },
+          {
+            updateDimensionProperties: {
+              range: { sheetId, dimension: "COLUMNS", startIndex: 2, endIndex: 3 },
+              properties: { pixelSize: 75 },
+              fields: "pixelSize",
+            },
+          },
+          {
+            updateDimensionProperties: {
+              range: { sheetId, dimension: "COLUMNS", startIndex: 3, endIndex: 4 },
+              properties: { pixelSize: 90 },
+              fields: "pixelSize",
+            },
+          },
+          {
+            updateDimensionProperties: {
+              range: { sheetId, dimension: "COLUMNS", startIndex: 4, endIndex: 5 },
+              properties: { pixelSize: 380 },
+              fields: "pixelSize",
+            },
+          },
+          // Column A data rows: date format + bold
+          {
+            repeatCell: {
+              range: { sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 1 },
+              cell: {
+                userEnteredFormat: {
+                  numberFormat: { type: "DATE", pattern: "yyyy-mm-dd" },
+                  textFormat: { bold: true },
+                },
+              },
+              fields: "userEnteredFormat.numberFormat,userEnteredFormat.textFormat.bold",
+            },
+          },
+          // Column C (Reps) data rows: right-align
+          {
+            repeatCell: {
+              range: { sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 2, endColumnIndex: 3 },
+              cell: { userEnteredFormat: { horizontalAlignment: "RIGHT" } },
+              fields: "userEnteredFormat.horizontalAlignment",
+            },
+          },
+          // Column B (Lift Type) dropdown — 7 core lifts, non-strict so custom entries still work
+          {
+            setDataValidation: {
+              range: { sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 1, endColumnIndex: 2 },
+              rule: {
+                condition: {
+                  type: "ONE_OF_LIST",
+                  values: [
+                    { userEnteredValue: "Back Squat" },
+                    { userEnteredValue: "Deadlift" },
+                    { userEnteredValue: "Bench Press" },
+                    { userEnteredValue: "Strict Press" },
+                    { userEnteredValue: "Power Snatch" },
+                    { userEnteredValue: "Power Clean" },
+                    { userEnteredValue: "Front Squat" },
+                  ],
+                },
+                showCustomUi: true,
+                strict: false,
+              },
             },
           },
         ],

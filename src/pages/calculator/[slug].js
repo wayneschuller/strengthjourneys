@@ -12,9 +12,9 @@ const PAGE_CONFIG = {
     formulaName: "Epley",
     equation: "w × (1 + r/30)",
     blurb: "Developed by Boyd Epley in 1985, one of the most widely cited 1RM equations in strength research.",
-    title: "Epley Formula 1RM Calculator | One Rep Max with Epley Equation",
+    title: "Epley Formula 1RM Calculator | Epley 1RM Calculation",
     description:
-      "Calculate your one rep max using the Epley formula (w × (1 + r/30)). Compare against 6 other proven equations. Get rep projections, training percentages, and Big Four strength ratings. Free, no login.",
+      "Use the Epley formula to calculate your one rep max from reps and weight. Compare Epley vs 6 other 1RM equations, rep max tables, and percentage loads.",
     keywords:
       "epley formula 1rm, epley formula 1rm calculation, epley formula one rep max, epley 1rm calculator",
   },
@@ -24,9 +24,9 @@ const PAGE_CONFIG = {
     equation: "w ÷ (1.0278 − 0.0278r)",
     blurb:
       "The Brzycki formula is considered especially accurate for lower rep ranges (1–10) and is widely used in powerlifting.",
-    title: "Brzycki Formula 1RM Calculator | One Rep Max with Brzycki Equation",
+    title: "Brzycki Formula 1RM Calculator | Brzycki 1RM Calculation",
     description:
-      "Calculate your one rep max using the Brzycki formula (w ÷ (1.0278 − 0.0278r)). Compare against 6 other proven equations. Rep projections, percentage guides, strength ratings. Free, no login.",
+      "Use the Brzycki formula to calculate your one rep max from reps and weight. Compare Brzycki vs 6 other 1RM equations, rep max tables, and percentage loads.",
     keywords:
       "brzycki formula 1rm, brzycki formula 1rm calculation, brzycki formula 1rm calculator, brzycki one rep max",
   },
@@ -35,9 +35,9 @@ const PAGE_CONFIG = {
     formulaName: "Mayhew",
     equation: "100w ÷ (52.2 + 41.9 × e^(−0.055r))",
     blurb: "The Mayhew formula uses an exponential curve, often cited as accurate for higher rep ranges.",
-    title: "Mayhew Formula 1RM Calculator | One Rep Max Calculator",
+    title: "Mayhew 1RM Formula Calculator | One Rep Max Tool",
     description:
-      "Calculate your one rep max using the Mayhew 1RM formula. Compare all 7 proven equations side by side with rep projections and strength ratings. Free, no login.",
+      "Use the Mayhew formula to estimate one rep max from a working set. Compare results against Epley, Brzycki, and 4 more 1RM equations.",
     keywords: "mayhew 1rm formula, mayhew formula calculator, mayhew one rep max",
   },
   "wathan-1rm-formula-calculator": {
@@ -46,9 +46,9 @@ const PAGE_CONFIG = {
     equation: "100w ÷ (48.8 + 53.8 × e^(−0.075r))",
     blurb:
       "The Wathan formula is an exponential model published in the National Strength and Conditioning Association journal.",
-    title: "Wathan Formula 1RM Calculator | One Rep Max Calculator",
+    title: "Wathan Formula 1RM Calculator | Wathan 1RM Formula",
     description:
-      "Calculate your one rep max using the Wathan 1RM formula. Compare all 7 proven equations side by side. Free, no login required.",
+      "Use the Wathan 1RM formula to estimate your one rep max from reps and weight. Compare all 7 proven equations with rep max tables and percentage loads.",
     keywords: "wathan 1rm formula, wathan formula calculator, wathan one rep max",
   },
   "mcglothin-formula-1rm-calculator": {
@@ -57,9 +57,9 @@ const PAGE_CONFIG = {
     equation: "100w ÷ (101.3 − 2.671r)",
     blurb:
       "The McGlothin formula is a linear model offering consistent estimates across a wide range of rep counts.",
-    title: "McGlothin Formula 1RM Calculator | One Rep Max Calculator",
+    title: "McGlothin Formula 1RM Calculator | McGlothin 1RM Formula",
     description:
-      "Calculate your one rep max using the McGlothin formula. Compare all 7 proven 1RM equations. Free, no login required.",
+      "Use the McGlothin formula to estimate your one rep max from reps and weight. Compare all 7 proven 1RM equations with rep max tables and percentages.",
     keywords: "mcglothin formula 1rm, mcglothin one rep max calculator, 1rm formula calculator",
   },
   "lombardi-formula-1rm-calculator": {
@@ -68,9 +68,9 @@ const PAGE_CONFIG = {
     equation: "w × r^0.1",
     blurb:
       "The Lombardi formula uses a power model — simple and fast to compute, suitable as a quick estimate.",
-    title: "Lombardi Formula 1RM Calculator | One Rep Max Calculator",
+    title: "Lombardi Formula 1RM Calculator | Lombardi 1RM Formula",
     description:
-      "Calculate your one rep max using the Lombardi formula. Compare all 7 proven 1RM equations. Free, no login required.",
+      "Use the Lombardi formula to estimate your one rep max from reps and weight. Compare all 7 proven 1RM equations with rep max tables and percentages.",
     keywords: "lombardi formula 1rm, lombardi one rep max calculator, 1rm formula calculator",
   },
   "oconner-formula-1rm-calculator": {
@@ -79,9 +79,9 @@ const PAGE_CONFIG = {
     equation: "w × (1 + r/40)",
     blurb:
       "The O'Conner formula is a simplified linear model that tends to give slightly more conservative 1RM estimates than Epley.",
-    title: "O'Conner Formula 1RM Calculator | One Rep Max Calculator",
+    title: "O'Conner Formula 1RM Calculator | OConner 1RM Formula",
     description:
-      "Calculate your one rep max using the O'Conner formula. Compare all 7 proven 1RM equations. Free, no login required.",
+      "Use the O'Conner formula to estimate your one rep max from reps and weight. Compare all 7 proven 1RM equations with rep max tables and percentages.",
     keywords: "oconner formula 1rm, o'conner one rep max calculator, 1rm formula calculator",
   },
 

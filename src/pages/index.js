@@ -54,8 +54,8 @@ import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strengt
 // The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [
   {
-    href: "/log-session",
-    title: "Log Session",
+    href: "/log",
+    title: "Log",
     description: "Log your lifting session and track your progress in real time.",
     IconComponent: Dumbbell,
     authRequired: true, // Only shown to authenticated users in nav and feature cards

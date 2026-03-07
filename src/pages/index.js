@@ -28,6 +28,7 @@ import {
   Flame,
   Sparkles,
   CircleDashed,
+  Dumbbell,
 } from "lucide-react";
 
 import { motion } from "motion/react";
@@ -52,6 +53,13 @@ import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strengt
 
 // The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [
+  {
+    href: "/log-session",
+    title: "Log Session",
+    description: "Log your lifting session and track your progress in real time.",
+    IconComponent: Dumbbell,
+    authRequired: true, // Only shown to authenticated users in nav and feature cards
+  },
   {
     href: "/calculator",
     title: "One Rep Max Calculator",
@@ -360,9 +368,11 @@ export default function Home() {
           🛠️ Strength Insights & Tools
         </h2>
         <div className="3xl:grid-cols-4 mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {featurePages.map((card, index) => (
-            <FeatureCard key={index} index={index} {...card} />
-          ))}
+          {featurePages
+            .filter((card) => !card.authRequired || authStatus === "authenticated")
+            .map((card, index) => (
+              <FeatureCard key={index} index={index} {...card} />
+            ))}
         </div>
 
         <Testimonials />

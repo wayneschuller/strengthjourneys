@@ -55,6 +55,7 @@ import {
   Flame,
   Sparkles,
   CircleDashed,
+  Dumbbell,
 } from "lucide-react";
 import { bigFourLiftInsightData } from "@/lib/big-four-insight-data";
 import { GorillaIcon } from "@/components/gorilla-icon";
@@ -152,6 +153,14 @@ export function NavBar() {
         <MobileNav />
       </div>
       <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2">
+        {authStatus === "authenticated" && (
+          <Button asChild size="sm" className="hidden gap-1.5 md:flex">
+            <Link href="/log-session">
+              <Dumbbell className="h-4 w-4" />
+              Log Session
+            </Link>
+          </Button>
+        )}
         <MiniTimer />
         {/* We used to show an icon to open the user google sheet */}
         {/* <UserSheetIcon /> */}

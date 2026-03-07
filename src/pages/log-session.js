@@ -8,7 +8,6 @@ import { calculatePlateBreakdown } from "@/lib/warmups.js";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -22,8 +21,14 @@ import {
   X,
 } from "lucide-react";
 
-// --- Sync indicator states ---
-// idle | saving | saved | error
+// --- Big Four lifts with SVG icons ---
+
+const BIG_FOUR = [
+  { name: "Back Squat", icon: "/back_squat.svg" },
+  { name: "Bench Press", icon: "/bench_press.svg" },
+  { name: "Deadlift", icon: "/deadlift.svg" },
+  { name: "Strict Press", icon: "/strict_press.svg" },
+];
 
 export default function LogSessionPage() {
   const { status: authStatus } = useSession();
@@ -31,10 +36,18 @@ export default function LogSessionPage() {
   const { parsedData, sheetInfo, mutate, isLoading } = useUserLiftingData();
   const { isMetric } = useAthleteBio();
 
-  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  // Use local time — new Date().toISOString() is UTC, which causes off-by-one in AU/Asia/Pacific
+  const todayIso = useMemo(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  }, []);
+
   const [sessionDate, setSessionDate] = useState(todayIso);
   const [syncState, setSyncState] = useState("idle"); // idle | saving | saved | error
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // Optimistic pending sets: { [liftType]: [pendingSetObj, ...] }
+  // Rows appear instantly in the UI while the sheet API call is in-flight.
+  const [pendingSets, setPendingSets] = useState({});
   const savedTimerRef = useRef(null);
 
   // Sync date from URL param after hydration
@@ -48,6 +61,7 @@ export default function LogSessionPage() {
     (date) => {
       setSessionDate(date);
       setShowDeleteConfirm(false);
+      setPendingSets({});
       router.replace(
         { pathname: "/log-session", query: date !== todayIso ? { date } : {} },
         undefined,
@@ -71,7 +85,7 @@ export default function LogSessionPage() {
     return dates;
   }, [parsedData]);
 
-  // Current session entries grouped by lift type
+  // Current session entries grouped by lift type (real confirmed data)
   const sessionLifts = useMemo(() => {
     if (!parsedData) return {};
     const entries = parsedData.filter(
@@ -85,7 +99,16 @@ export default function LogSessionPage() {
     return grouped;
   }, [parsedData, sessionDate]);
 
-  const hasSession = Object.keys(sessionLifts).length > 0;
+  // Merge real data with optimistic pending sets for rendering
+  const sessionLiftsWithPending = useMemo(() => {
+    const merged = { ...sessionLifts };
+    for (const [lt, sets] of Object.entries(pendingSets)) {
+      merged[lt] = [...(merged[lt] ?? []), ...sets];
+    }
+    return merged;
+  }, [sessionLifts, pendingSets]);
+
+  const hasSession = Object.keys(sessionLiftsWithPending).length > 0;
   const isToday = sessionDate === todayIso;
 
   const prevSessionDate = useMemo(() => {
@@ -115,6 +138,14 @@ export default function LogSessionPage() {
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 3000);
   }
 
+  function clearPending(liftType) {
+    setPendingSets((prev) => {
+      const next = { ...prev };
+      delete next[liftType];
+      return next;
+    });
+  }
+
   // --- API calls ---
 
   const updateSet = useCallback(
@@ -138,23 +169,30 @@ export default function LogSessionPage() {
     [sheetInfo?.ssid, mutate],
   );
 
+  // Add a new set to an existing lift block.
+  // Optimistic: row appears immediately, API fires in background.
   const addSet = useCallback(
     async (liftType, prevSet) => {
       if (!sheetInfo?.ssid || !parsedData) return;
+
+      const unitType = prevSet?.unitType ?? (isMetric ? "kg" : "lb");
+      const reps = prevSet?.reps ?? 5;
+      const weight = prevSet?.weight ?? (isMetric ? 20 : 45);
+
+      // Show optimistic row immediately
+      setPendingSets((prev) => ({
+        ...prev,
+        [liftType]: [
+          ...(prev[liftType] ?? []),
+          { date: sessionDate, liftType, reps, weight, unitType, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true },
+        ],
+      }));
       markSaving();
 
-      // Insert after the last known row for this lift type in this session.
-      // Blank date and blank lift type — parser inherits both from the row above.
       const liftRows = parsedData
         .filter((e) => e.date === sessionDate && e.liftType === liftType && !e.isGoal && e.rowIndex)
         .map((e) => e.rowIndex);
       const insertAfterRowIndex = liftRows.length ? Math.max(...liftRows) : null;
-
-      const weightStr = prevSet?.weight
-        ? `${prevSet.weight}${prevSet.unitType ?? ""}`
-        : isMetric ? "20kg" : "45lb";
-
-      const row = ["", "", String(prevSet?.reps ?? 5), weightStr, "", ""];
 
       try {
         const res = await fetch("/api/log-session", {
@@ -162,15 +200,71 @@ export default function LogSessionPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ssid: sheetInfo.ssid,
-            rows: [row],
+            rows: [["", "", String(reps), `${weight}${unitType}`, "", ""]],
             insertAfterRowIndex,
           }),
         });
         if (!res.ok) throw new Error((await res.json()).error || "Add set failed");
         await mutate();
+        clearPending(liftType);
         markSaved();
       } catch (err) {
         console.error("[log-session] addSet failed:", err);
+        clearPending(liftType);
+        markError();
+      }
+    },
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, mutate],
+  );
+
+  // Add a brand-new lift type to the session.
+  // Optimistic: the lift block appears immediately.
+  const addLift = useCallback(
+    async (liftType) => {
+      if (!sheetInfo?.ssid || !parsedData) return;
+
+      const unitType = isMetric ? "kg" : "lb";
+      const weight = isMetric ? 20 : 45;
+      const reps = 5;
+
+      // Show optimistic lift block immediately
+      setPendingSets((prev) => ({
+        ...prev,
+        [liftType]: [
+          ...(prev[liftType] ?? []),
+          { date: sessionDate, liftType, reps, weight, unitType, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true },
+        ],
+      }));
+      markSaving();
+
+      const sessionRows = parsedData
+        .filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex)
+        .map((e) => e.rowIndex);
+      const hasExistingSession = sessionRows.length > 0;
+      const insertAfterRowIndex = hasExistingSession ? Math.max(...sessionRows) : null;
+
+      const row = [
+        hasExistingSession ? "" : sessionDate,
+        liftType,
+        String(reps),
+        `${weight}${unitType}`,
+        "",
+        "",
+      ];
+
+      try {
+        const res = await fetch("/api/log-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ssid: sheetInfo.ssid, rows: [row], insertAfterRowIndex }),
+        });
+        if (!res.ok) throw new Error((await res.json()).error || "Failed");
+        await mutate();
+        clearPending(liftType);
+        markSaved();
+      } catch (err) {
+        console.error("[add-lift] failed:", err);
+        clearPending(liftType);
         markError();
       }
     },
@@ -180,8 +274,6 @@ export default function LogSessionPage() {
   const deleteSession = useCallback(async () => {
     if (!sheetInfo?.ssid || !parsedData) return;
 
-    // Compute the row range: everything from the first row of this session
-    // to the row just before the next adjacent session starts.
     const sessionRows = parsedData
       .filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex)
       .map((e) => e.rowIndex);
@@ -191,7 +283,6 @@ export default function LogSessionPage() {
     const minRow = Math.min(...sessionRows);
     const maxRow = Math.max(...sessionRows);
 
-    // Find rows from other dates adjacent to this session
     const otherRows = parsedData
       .filter((e) => e.date !== sessionDate && !e.isGoal && e.rowIndex)
       .map((e) => e.rowIndex);
@@ -215,7 +306,6 @@ export default function LogSessionPage() {
       await mutate();
       markSaved();
       setShowDeleteConfirm(false);
-      // Navigate to the previous/next available date
       const remainingDates = sessionDates.filter((d) => d !== sessionDate);
       if (remainingDates.length) {
         navigateToDate(remainingDates[remainingDates.length - 1]);
@@ -263,9 +353,9 @@ export default function LogSessionPage() {
           <h1 className="text-lg font-semibold leading-tight">
             {isToday ? "Today" : getReadableDateString(sessionDate, true)}
           </h1>
-          {!isToday && (
-            <p className="text-xs text-muted-foreground">{sessionDate}</p>
-          )}
+          <p className="text-xs text-muted-foreground">
+            {getReadableDateString(sessionDate, true)}
+          </p>
         </div>
 
         <SyncIndicator state={syncState} />
@@ -304,21 +394,14 @@ export default function LogSessionPage() {
               Add your first lift to get started.
             </p>
           </div>
-          <AddLiftButton
-            parsedData={parsedData}
-            sessionDate={sessionDate}
-            sheetInfo={sheetInfo}
-            onSaving={markSaving}
-            onSaved={() => { markSaved(); mutate(); }}
-            onError={markError}
-          />
+          <AddLiftButton parsedData={parsedData} onAddLift={addLift} />
         </div>
       )}
 
       {/* Lift blocks */}
       {hasSession && (
         <div className="space-y-8">
-          {Object.entries(sessionLifts).map(([liftType, sets]) => (
+          {Object.entries(sessionLiftsWithPending).map(([liftType, sets]) => (
             <LiftBlock
               key={liftType}
               liftType={liftType}
@@ -331,14 +414,7 @@ export default function LogSessionPage() {
             />
           ))}
 
-          <AddLiftButton
-            parsedData={parsedData}
-            sessionDate={sessionDate}
-            sheetInfo={sheetInfo}
-            onSaving={markSaving}
-            onSaved={() => { markSaved(); mutate(); }}
-            onError={markError}
-          />
+          <AddLiftButton parsedData={parsedData} onAddLift={addLift} />
 
           {/* Delete session */}
           <div className="flex justify-center pt-2">
@@ -381,15 +457,6 @@ export default function LogSessionPage() {
   );
 }
 
-// --- Big Four lifts with SVG icons ---
-
-const BIG_FOUR = [
-  { name: "Back Squat", icon: "/back_squat.svg" },
-  { name: "Bench Press", icon: "/bench_press.svg" },
-  { name: "Deadlift", icon: "/deadlift.svg" },
-  { name: "Strict Press", icon: "/strict_press.svg" },
-];
-
 // --- Sync indicator ---
 
 function SyncIndicator({ state }) {
@@ -412,23 +479,34 @@ function SyncIndicator({ state }) {
 // --- Lift block ---
 
 function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdateSet, onAddSet }) {
+  // Only use confirmed (non-pending) sets for plate diagram and last-set reference
+  const realSets = sets.filter((s) => !s._pending);
   const unitType = sets[0]?.unitType ?? (isMetric ? "kg" : "lb");
   const barWeight = unitType === "kg" ? 20 : 45;
 
-  const heaviestWeight = Math.max(...sets.map((s) => s.weight ?? 0));
+  const heaviestWeight = realSets.length ? Math.max(...realSets.map((s) => s.weight ?? 0)) : 0;
   const { platesPerSide } = heaviestWeight > barWeight
     ? calculatePlateBreakdown(heaviestWeight, barWeight, unitType === "kg")
     : { platesPerSide: [] };
 
-  const lastSet = sets[sets.length - 1];
+  const lastRealSet = realSets[realSets.length - 1];
+  const hasPending = sets.some((s) => s._pending);
   const bigFourEntry = BIG_FOUR.find((b) => b.name === liftType);
 
   return (
-    <div className="space-y-1">
+    <div className="relative space-y-1 md:pl-20">
+      {/* Desktop: large icon in left gutter (4× = 64px) */}
+      {bigFourEntry && (
+        <div className="absolute left-0 top-0 hidden md:block">
+          <Image src={bigFourEntry.icon} alt="" width={64} height={64} className="opacity-40" />
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-2 pb-1">
+        {/* Mobile: inline icon (3× = 48px) */}
         {bigFourEntry && (
-          <Image src={bigFourEntry.icon} alt="" width={20} height={20} className="shrink-0 opacity-60" />
+          <Image src={bigFourEntry.icon} alt="" width={48} height={48} className="opacity-60 md:hidden" />
         )}
         <h2 className="text-base font-semibold uppercase tracking-wide text-foreground/80">
           {liftType}
@@ -443,20 +521,21 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
         isMetric={isMetric}
       />
 
-      {/* Set rows */}
-      <div className="divide-y divide-border/50 rounded-lg border">
+      {/* Set rows — clean horizontal line above first row, dividers between */}
+      <div className="mt-1 divide-y divide-border/50 border-t border-border/60">
         {sets.map((set, idx) => (
           <SetRow
-            key={set.rowIndex ?? idx}
+            key={set.rowIndex ?? `pending-${idx}`}
             set={set}
-            onUpdate={(fields) => onUpdateSet(set.rowIndex, fields)}
+            onUpdate={set._pending ? null : (fields) => onUpdateSet(set.rowIndex, fields)}
           />
         ))}
 
-        {/* Add set */}
+        {/* Add set — disabled while any pending set is in-flight for this lift */}
         <button
-          className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-          onClick={() => onAddSet(lastSet)}
+          className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+          onClick={() => onAddSet(lastRealSet)}
+          disabled={hasPending}
         >
           <Plus className="h-4 w-4" />
           Add set
@@ -503,9 +582,29 @@ function SetRow({ set, onUpdate }) {
     setEditingWeight(false);
     const num = parseFloat(draftWeight);
     if (!isNaN(num) && num !== set.weight) {
-      const weightWithUnit = `${num}${set.unitType ?? ""}`;
-      onUpdate({ reps: set.reps, weight: weightWithUnit, notes: set.notes ?? "", url: set.URL ?? "" });
+      onUpdate({ reps: set.reps, weight: `${num}${set.unitType ?? ""}`, notes: set.notes ?? "", url: set.URL ?? "" });
     }
+  }
+
+  // Pending rows: dimmed, not editable, with a tiny spinner
+  if (set._pending) {
+    return (
+      <div className="flex items-center px-4 py-3 opacity-40">
+        <div className="flex flex-1 items-baseline gap-3">
+          <div className="flex items-baseline gap-1">
+            <span className="px-1 text-xl font-semibold tabular-nums">{set.reps}</span>
+            <span className="text-sm text-muted-foreground">reps</span>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span className="px-1 text-xl font-semibold tabular-nums">{set.weight}</span>
+            <span className="text-sm text-muted-foreground">{set.unitType}</span>
+          </div>
+        </div>
+        <div className="w-8 shrink-0 flex items-center justify-end">
+          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -603,15 +702,14 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
 }
 
 // --- Add lift button ---
+// Simplified: just calls onAddLift(liftType), all API logic lives in the parent.
 
-function AddLiftButton({ parsedData, sessionDate, sheetInfo, onSaving, onSaved, onError }) {
+function AddLiftButton({ parsedData, onAddLift }) {
   const [showInput, setShowInput] = useState(false);
   const [liftType, setLiftType] = useState("");
   const inputRef = useRef(null);
-  const { isMetric } = useAthleteBio();
 
-  // Build chip list: Big Four always first, then frequent lifts the user does (excluding Big Four),
-  // cap total at 8.
+  // Build chip list: Big Four always first, then frequent lifts (excluding Big Four), cap at 8.
   const chips = useMemo(() => {
     const bigFourNames = new Set(BIG_FOUR.map((b) => b.name));
     const freq = {};
@@ -624,7 +722,7 @@ function AddLiftButton({ parsedData, sessionDate, sheetInfo, onSaving, onSaved, 
     }
     const frequentExtras = Object.entries(freq)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 4) // up to 4 extras to stay under 8 total
+      .slice(0, 4)
       .map(([lt]) => ({ name: lt, icon: null }));
     return [...BIG_FOUR, ...frequentExtras];
   }, [parsedData]);
@@ -633,49 +731,12 @@ function AddLiftButton({ parsedData, sessionDate, sheetInfo, onSaving, onSaved, 
     if (showInput) inputRef.current?.focus();
   }, [showInput]);
 
-  async function submit(lt) {
+  function submit(lt) {
     const clean = (lt ?? liftType).trim();
-    if (!clean || !sheetInfo?.ssid) return;
+    if (!clean) return;
     setShowInput(false);
     setLiftType("");
-    onSaving();
-
-    // Find where to insert and whether to include the date.
-    // - No existing rows for this date → new session: include date, insert after header (row 1)
-    // - Existing rows → add lift to session: no date, insert after last session row
-    const sessionRows = parsedData
-      ?.filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex)
-      .map((e) => e.rowIndex) ?? [];
-    const hasExistingSession = sessionRows.length > 0;
-    const insertAfterRowIndex = hasExistingSession ? Math.max(...sessionRows) : null;
-
-    const defaultWeight = isMetric ? "20kg" : "45lb";
-    // Date only on the very first row of a brand-new session
-    const row = [
-      hasExistingSession ? "" : sessionDate,
-      clean,
-      "5",
-      defaultWeight,
-      "",
-      "",
-    ];
-
-    try {
-      const res = await fetch("/api/log-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ssid: sheetInfo.ssid,
-          rows: [row],
-          insertAfterRowIndex,
-        }),
-      });
-      if (!res.ok) throw new Error((await res.json()).error || "Failed");
-      onSaved();
-    } catch (err) {
-      console.error("[add-lift] failed:", err);
-      onError();
-    }
+    onAddLift(clean);
   }
 
   if (!showInput) {

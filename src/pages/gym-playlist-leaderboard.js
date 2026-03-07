@@ -275,8 +275,8 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
       toast({
         title: isEditMode ? "Playlist Updated" : "Playlist Added",
         description: isEditMode
-          ? "Your changes are now live."
-          : "Thanks for the submission! Go vote for your favorites.",
+          ? "✅ Your changes are now live."
+          : "🎵 Thanks for the submission! Go vote for your favorites.",
       });
     } catch (error) {
       console.error(

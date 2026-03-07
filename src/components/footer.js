@@ -1,75 +1,113 @@
 /** @format */
 
-import { featurePages } from "@/pages";
+import Link from "next/link";
 import { PageContainer } from "@/components/page-header";
 
+const TOOLS = [
+  { href: "/calculator", label: "One Rep Max Calculator" },
+  { href: "/1000lb-club-calculator", label: "1000lb Club Calculator" },
+  { href: "/big-four-strength-standards-calculator", label: "Strength Standards" },
+  { href: "/how-strong-am-i", label: "How Strong Am I?" },
+  { href: "/warm-up-sets-calculator", label: "Warm Up Sets Calculator" },
+  { href: "/ai-lifting-assistant", label: "AI Lifting Assistant" },
+];
+
+const RESOURCES = [
+  { href: "/articles", label: "Strength Articles" },
+  { href: "/analyzer", label: "PR Analyzer" },
+  { href: "/visualizer", label: "Strength Visualizer" },
+  { href: "/tonnage", label: "Tonnage Tracker" },
+  { href: "/gym-playlist-leaderboard", label: "Gym Playlists" },
+  { href: "/changelog", label: "Changelog" },
+];
+
+const LEGAL = [
+  { href: "/privacy-policy.html", label: "Privacy Policy" },
+  { href: "/terms-of-service.html", label: "Terms of Service" },
+];
+
+function FooterLink({ href, label, external }) {
+  if (external) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {label}
+      </a>
+    );
+  }
+  return (
+    <Link
+      href={href}
+      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+    >
+      {label}
+    </Link>
+  );
+}
+
+function FooterSection({ title, children }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      {children}
+    </div>
+  );
+}
+
 /**
- * Site-wide footer with links to the author's Twitter, the GitHub repository,
- * the Buy Me a Coffee page, the feature-request feedback form, and the changelog.
- *
- * @param {Object} props - No props.
+ * Site-wide footer with tool links, resources, legal pages, and author info.
  */
 export function Footer() {
-  // return null;
-
   return (
-    <footer className="py-6 md:px-8 md:py-0">
-      <PageContainer className="flex flex-col items-center gap-2 text-muted-foreground md:h-24 md:flex-row md:gap-4">
-        <p className="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
-          Built by{" "}
-          <a
-            href="https://x.com/wayneschuller"
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium underline underline-offset-4"
-          >
-            Wayne Schuller<span className="sr-only"> (opens in new tab)</span>
-          </a>
-          .
-        </p>
-        <p className="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
-          The source code is available on{" "}
-          <a
-            href="https://github.com/wayneschuller/strengthjourneys"
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium underline underline-offset-4"
-          >
-            GitHub<span className="sr-only"> (opens in new tab)</span>
-          </a>
-          .
-        </p>
-        <p className="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
-          Buy me a{" "}
-          <a
-            href="https://buymeacoffee.com/lrhvbjxzqr"
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium underline underline-offset-4"
-          >
-            coffee<span className="sr-only"> (opens in new tab)</span>
-          </a>
-          .
-        </p>
-        <p className="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
-          <a
-            data-canny-link
-            className="font-medium underline underline-offset-4"
-            href="https://strengthjourneys.canny.io/feature-requests"
-          >
-            Give feedback
-          </a>
-        </p>
-        <p className="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
-          <a
-            href="https://strengthjourneys.canny.io/changelog"
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium underline underline-offset-4"
-          >
-            Full Changelog<span className="sr-only"> (opens in new tab)</span>
-          </a>
-        </p>
+    <footer className="mt-16 border-t">
+      <PageContainer className="py-10">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+          <FooterSection title="Tools">
+            {TOOLS.map(({ href, label }) => (
+              <FooterLink key={href} href={href} label={label} />
+            ))}
+          </FooterSection>
+
+          <FooterSection title="Resources">
+            {RESOURCES.map(({ href, label }) => (
+              <FooterLink key={href} href={href} label={label} />
+            ))}
+          </FooterSection>
+
+          <FooterSection title="Project">
+            <FooterLink
+              href="https://github.com/wayneschuller/strengthjourneys"
+              label="GitHub (open source)"
+              external
+            />
+            <FooterLink
+              href="https://strengthjourneys.canny.io/feature-requests"
+              label="Feature requests"
+              external
+            />
+            <FooterLink
+              href="https://buymeacoffee.com/lrhvbjxzqr"
+              label="Buy me a coffee"
+              external
+            />
+            <FooterLink href="https://x.com/wayneschuller" label="@wayneschuller" external />
+          </FooterSection>
+
+          <FooterSection title="Legal">
+            {LEGAL.map(({ href, label }) => (
+              <FooterLink key={href} href={href} label={label} />
+            ))}
+          </FooterSection>
+        </div>
+
+        <div className="mt-10 border-t pt-6 text-center text-xs text-muted-foreground">
+          © {new Date().getFullYear()} Strength Journeys · Free and open source · Your data stays
+          yours
+        </div>
       </PageContainer>
     </footer>
   );

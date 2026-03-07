@@ -239,6 +239,8 @@ export function GettingStartedCard() {
   const { sheetInfo } = useUserLiftingData();
   const isConnected = !!sheetInfo?.ssid;
 
+  if (authStatus === "authenticated" && isConnected) return null;
+
   return (
     <Card className="relative overflow-hidden border hover:ring-0">
       <div

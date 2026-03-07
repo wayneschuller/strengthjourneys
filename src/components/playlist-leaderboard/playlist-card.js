@@ -104,7 +104,7 @@ export function PlaylistCard({
                   href={playlist.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="shrink-0"
+                  className="shrink-0 self-center"
                 >
                   <Image
                     src={playlist.thumbnailUrl}
@@ -129,7 +129,7 @@ export function PlaylistCard({
               ) : (
                 <Music className="h-5 w-5 text-primary" />
               )}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col justify-center gap-1">
                 <a
                   href={playlist.url}
                   target="_blank"
@@ -186,22 +186,23 @@ export function PlaylistCard({
       <div className="flex flex-row items-center justify-center gap-1 py-2 md:flex-col md:justify-start md:pr-4 md:pt-6">
         <Button
           variant="ghost"
-          size="lg"
+          size="sm"
           onClick={() => onSave(playlist.id)}
-          title={isSaved ? "Unsave playlist" : "Save playlist"}
+          title={isSaved ? "Unsave playlist" : "Save for later"}
+          className="flex items-center gap-1 text-xs text-muted-foreground"
         >
-          {isSaved ? (
-            <Heart className="fill-yellow-400" />
-          ) : (
-            <Heart className="" />
-          )}
+          <Heart className={cn("h-4 w-4", isSaved && "fill-yellow-400 text-yellow-400")} />
+          <span className="hidden md:inline">{isSaved ? "Saved" : "Save"}</span>
         </Button>
-        <div className="mr-2 md:hidden">Good vibes? Vote for it!</div>
         <VoteButton
           isUpvote={true}
           onClick={() => handleVote(playlist.id, true)}
         />
-        <span className="cursor-default font-bold">
+        <span className={cn(
+          "cursor-default text-sm font-bold",
+          playlist.upVotes - playlist.downVotes > 0 && "text-green-500",
+          playlist.upVotes - playlist.downVotes === 0 && "text-muted-foreground",
+        )}>
           {playlist.upVotes - playlist.downVotes}
         </span>
         <VoteButton

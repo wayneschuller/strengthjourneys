@@ -18,7 +18,7 @@ import {
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
 import { PlaylistCreateEditDialog } from "@/components/playlist-leaderboard/playlist-create-edit";
-import { TrendingUp, Clock, Flame, Bookmark, Heart, Music } from "lucide-react";
+import { TrendingUp, Clock, Heart, Music, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   PageContainer,
   PageHeader,
@@ -28,7 +28,7 @@ import {
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { RelatedArticles } from "@/components/article-cards";
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 10;
 
 // ---------------------------------------------------------------------------------------------------
 // ISR - Incremental Static Regeneration on Next.js
@@ -522,24 +522,32 @@ export default function GymPlaylistLeaderboard({ initialPlaylists, relatedArticl
               </TabsTrigger>
             </TabsList>
             <TabsContent value={currentTab} className="space-y-4">
-              <div ref={parent} className="flex flex-col gap-5">
-                {/* <div ref={parent} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2" > */}
-                {paginatedPlaylists.map((playlist) => (
-                  <PlaylistCard
-                    key={playlist.id}
-                    playlist={playlist}
-                    votes={clientVotes}
-                    handleVote={handleVote}
-                    isAdmin={isAdmin}
-                    onDelete={deletePlaylist}
-                    onEdit={openEditDialog}
-                    onRefresh={refreshPlaylistMetadata}
-                    onSave={toggleSavePlaylist}
-                    isSaved={savedPlaylists.includes(playlist.id)}
-                    className=""
-                  />
-                ))}
-              </div>
+              {paginatedPlaylists.length === 0 && currentTab === "saved" ? (
+                <div className="flex flex-col items-center gap-3 py-16 text-center text-muted-foreground">
+                  <Heart className="h-10 w-10 opacity-30" />
+                  <p className="text-base font-medium">No saved playlists yet</p>
+                  <p className="text-sm">
+                    Tap the ♥ on any playlist to save it here for quick access.
+                  </p>
+                </div>
+              ) : (
+                <div ref={parent} className="flex flex-col gap-5">
+                  {paginatedPlaylists.map((playlist) => (
+                    <PlaylistCard
+                      key={playlist.id}
+                      playlist={playlist}
+                      votes={clientVotes}
+                      handleVote={handleVote}
+                      isAdmin={isAdmin}
+                      onDelete={deletePlaylist}
+                      onEdit={openEditDialog}
+                      onRefresh={refreshPlaylistMetadata}
+                      onSave={toggleSavePlaylist}
+                      isSaved={savedPlaylists.includes(playlist.id)}
+                    />
+                  ))}
+                </div>
+              )}
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -713,22 +721,38 @@ const dummyPlaylists = [
   },
 ];
 
-// Simple previous/next pagination control used below the playlist list.
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  if (totalPages <= 1) return null;
+
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+
   return (
-    <div className="mt-4 flex items-center justify-center space-x-2">
+    <div className="mt-4 flex items-center justify-center gap-1">
       <Button
+        variant="outline"
+        size="icon"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
-        Previous
+        <ChevronLeft className="h-4 w-4" />
       </Button>
-      <span>{`Page ${currentPage} of ${totalPages}`}</span>
+      {pages.map((page) => (
+        <Button
+          key={page}
+          variant={page === currentPage ? "default" : "outline"}
+          size="icon"
+          onClick={() => onPageChange(page)}
+        >
+          {page}
+        </Button>
+      ))}
       <Button
+        variant="outline"
+        size="icon"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >
-        Next
+        <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
   );

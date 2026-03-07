@@ -58,17 +58,13 @@ export const featurePages = [
     description: "The greatest e1rm multi-formula one rep max calculations.",
     IconComponent: Calculator,
   },
-  ...(process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development"
-    ? [
-        {
-          href: "/how-strong-am-i",
-          title: "How Strong Am I?",
-          description:
-            "See your percentile rank across four groups, from the general population to powerlifting culture.",
-          IconComponent: CircleDashed,
-        },
-      ]
-    : []),
+  {
+    href: "/how-strong-am-i",
+    title: "How Strong Am I?",
+    description:
+      "See your percentile rank across four groups, from the general population to powerlifting culture.",
+    IconComponent: CircleDashed,
+  },
   {
     href: "/1000lb-club-calculator",
     title: "1000lb Club Calculator",

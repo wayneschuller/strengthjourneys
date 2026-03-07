@@ -19,6 +19,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: "/analyzer",
+        destination: "/",
+        permanent: true,
+      },
+      {
         source: "/strength-level-calculator",
         destination: "/big-four-strength-standards-calculator",
         permanent: true,

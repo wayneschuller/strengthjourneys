@@ -282,6 +282,36 @@ export function validateAndProcessPlaylist(playlistData, isServer = false) {
   };
 }
 
+const OEMBED_ENDPOINTS = {
+  "spotify.com": (url) =>
+    `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`,
+  "youtube.com": (url) =>
+    `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`,
+  "youtu.be": (url) =>
+    `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`,
+  "soundcloud.com": (url) =>
+    `https://soundcloud.com/oembed?url=${encodeURIComponent(url)}&format=json`,
+};
+
+export async function fetchPlaylistThumbnail(url) {
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./, "");
+    const match = Object.keys(OEMBED_ENDPOINTS).find((domain) =>
+      hostname.endsWith(domain),
+    );
+    if (!match) return null;
+
+    const oembedUrl = OEMBED_ENDPOINTS[match](url);
+    const res = await fetch(oembedUrl, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    return data.thumbnail_url || null;
+  } catch {
+    return null;
+  }
+}
+
 export function parseStoredPlaylist(playlist) {
   if (!playlist) return null;
   if (typeof playlist === "string") {

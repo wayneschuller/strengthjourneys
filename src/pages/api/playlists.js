@@ -5,6 +5,7 @@ import shortUUID from "short-uuid";
 import {
   parseStoredPlaylist,
   validateAndProcessPlaylist,
+  fetchPlaylistThumbnail,
 } from "@/components/playlist-leaderboard/playlist-utils";
 import {
   getRequestClientIp,
@@ -54,10 +55,12 @@ export default async function handler(req, res) {
           return res.status(400).json({ errors });
         }
 
+        const thumbnailUrl = await fetchPlaylistThumbnail(validatedPlaylist.url);
         const playlistRecord = {
           ...validatedPlaylist,
           id: translator.generate(),
           timestamp: Date.now(),
+          ...(thumbnailUrl && { thumbnailUrl }),
         };
 
         // Check for profanity in title and description

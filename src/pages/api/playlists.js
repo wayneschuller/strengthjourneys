@@ -60,6 +60,7 @@ export default async function handler(req, res) {
           ...validatedPlaylist,
           id: translator.generate(),
           timestamp: Date.now(),
+          ...(oembedData?.title && { title: oembedData.title }),
           ...(oembedData?.thumbnailUrl && { thumbnailUrl: oembedData.thumbnailUrl }),
         };
 

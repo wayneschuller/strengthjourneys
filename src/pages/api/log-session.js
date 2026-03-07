@@ -64,7 +64,7 @@ export default async function handler(req, res) {
             startIndex: startIndex0,
             endIndex: startIndex0 + rows.length,
           },
-          inheritFromBefore: false,
+          inheritFromBefore: true,
         },
       },
     ];

@@ -699,7 +699,6 @@ function PlateLoadingAnimation({ isActive, stepDurationMs = 300 }) {
         isMetric={isMetric}
         hideLabels={true}
         useScrollTrigger={false}
-        slideFromLeft={true}
       />
     </div>
   );

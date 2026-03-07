@@ -88,13 +88,12 @@ function getRequestLocale(req) {
   return "en-US";
 }
 
-function formatStarterDateForLocale(nowIso, localeHint) {
+function formatStarterDateYmd(nowIso) {
   const date = nowIso ? new Date(nowIso) : new Date();
-  return new Intl.DateTimeFormat(localeHint || "en-US", {
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-  }).format(date);
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function toTimestamp(iso) {
@@ -762,7 +761,7 @@ export async function createBootstrapSheet(
   const { ssid, sheetId } = await createSpreadsheet(sheetName, headers);
   const unitType = preferredUnitType === "kg" ? "kg" : "lb";
   const starterWeight = unitType === "kg" ? "20kg" : "45lb";
-  const starterDate = starterDateText || formatStarterDateForLocale(nowIso, locale);
+  const starterDate = formatStarterDateYmd(nowIso);
   const starterRows = [
     ["Date", "Lift Type", "Reps", "Weight", "Notes"],
     [

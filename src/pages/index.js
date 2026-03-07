@@ -53,6 +53,26 @@ import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strengt
 // The feature pages are the main tools, with one card each on the landing page
 export const featurePages = [
   {
+    href: "/calculator",
+    title: "One Rep Max Calculator",
+    description: "The greatest e1rm multi-formula one rep max calculations.",
+    IconComponent: Calculator,
+  },
+  {
+    href: "/1000lb-club-calculator",
+    title: "1000lb Club Calculator",
+    description:
+      "Are you in the 1000lb club? Track your progress to this milestone.",
+    IconComponent: Anvil,
+  },
+  {
+    href: "/strength-level-calculator",
+    title: "Strength Level Calculator",
+    description:
+      "How strong are you? Assess your relative strength by age, gender and lift type.",
+    IconComponent: BicepsFlexed,
+  },
+  {
     href: "/lift-explorer",
     title: "Lift Explorer",
     description:
@@ -60,31 +80,11 @@ export const featurePages = [
     IconComponent: Layers,
   },
   {
-    href: "/visualizer",
-    title: "Strength Visualizer",
-    description:
-      "Your E1RMs across every rep range over time. See your strength journey.",
-    IconComponent: LineChart,
-  },
-  {
     href: "/barbell-strength-potential",
     title: "Barbell Strength Potential",
     description:
       "Top lifts by rep range with bar charts that reveal untapped strength potential.",
     IconComponent: ChartColumnDecreasing,
-  },
-  {
-    href: "/ai-lifting-assistant",
-    title: "AI Lifting Assistant",
-    description:
-      "A strength expert chatbot. Talk to your lifting data. A coach who loves you.",
-    IconComponent: Bot,
-  },
-  {
-    href: "/calculator",
-    title: "One Rep Max Calculator",
-    description: "The greatest e1rm multi-formula one rep max calculations.",
-    IconComponent: Calculator,
   },
   {
     href: "/warm-up-sets-calculator",
@@ -105,25 +105,32 @@ export const featurePages = [
       ]
     : []),
   {
-    href: "/strength-level-calculator",
-    title: "Strength Level Calculator",
+    href: "/articles",
+    title: "Strength Articles Library",
     description:
-      "How strong are you? Assess your relative strength by age, gender and lift type.",
-    IconComponent: BicepsFlexed,
+      "A collection of our articles, common questions, plus curated lifting content.",
+    IconComponent: LibraryBig,
   },
   {
-    href: "/how-strong-is-a-gorilla",
-    title: "How Strong Is a Gorilla?",
+    href: "/ai-lifting-assistant",
+    title: "AI Lifting Assistant",
     description:
-      "Compare your bench press to a silverback. Find out how badly you'd lose.",
-    IconComponent: GorillaIcon,
+      "A strength expert chatbot. Talk to your lifting data. A coach who loves you.",
+    IconComponent: Bot,
   },
   {
-    href: "/1000lb-club-calculator",
-    title: "1000lb Club Calculator",
+    href: "/visualizer",
+    title: "Strength Visualizer",
     description:
-      "Are you in the 1000lb club? Track your progress to this milestone.",
-    IconComponent: Anvil,
+      "Chart lifts beyond the Big Four with full-range E1RM history over time.",
+    IconComponent: LineChart,
+  },
+  {
+    href: "/strength-year-in-review",
+    title: "Strength Unwrapped - Yearly Recap",
+    description:
+      "Your year of strength training in a Spotify Wrapped-style recap. Sessions, tonnage, PRs, and more.",
+    IconComponent: Sparkles,
   },
   {
     href: "/tonnage",
@@ -139,24 +146,17 @@ export const featurePages = [
     IconComponent: Timer,
   },
   {
+    href: "/how-strong-is-a-gorilla",
+    title: "How Strong Is a Gorilla?",
+    description:
+      "Compare your bench press to a silverback. Find out how badly you'd lose.",
+    IconComponent: GorillaIcon,
+  },
+  {
     href: "/gym-playlist-leaderboard",
     title: "Gym Music Leaderboard",
     description: "Discover and share new motivational music playlists.",
     IconComponent: Music,
-  },
-  {
-    href: "/articles",
-    title: "Strength Articles Library",
-    description:
-      "A collection of our articles, common questions, plus curated lifting content.",
-    IconComponent: LibraryBig,
-  },
-  {
-    href: "/strength-year-in-review",
-    title: "Strength Unwrapped - Yearly Recap",
-    description:
-      "Your year of strength training in a Spotify Wrapped-style recap. Sessions, tonnage, PRs, and more.",
-    IconComponent: Sparkles,
   },
 ];
 

@@ -9,6 +9,7 @@ import { PlateDiagram } from "@/components/warmups/plate-diagram";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -85,10 +86,17 @@ export default function LogSessionPage() {
   }, [parsedData, sessionDate]);
 
   const hasSession = Object.keys(sessionLifts).length > 0;
-  const currentDateIndex = sessionDates.indexOf(sessionDate);
-  const canGoPrev = currentDateIndex > 0;
-  const canGoNext = currentDateIndex >= 0 && currentDateIndex < sessionDates.length - 1;
   const isToday = sessionDate === todayIso;
+
+  const prevSessionDate = useMemo(() => {
+    const earlier = sessionDates.filter((d) => d < sessionDate);
+    return earlier.length ? earlier[earlier.length - 1] : null;
+  }, [sessionDates, sessionDate]);
+
+  const nextSessionDate = useMemo(() => {
+    const later = sessionDates.filter((d) => d > sessionDate);
+    return later.length ? later[0] : null;
+  }, [sessionDates, sessionDate]);
 
   // --- Sync helpers ---
 
@@ -245,8 +253,8 @@ export default function LogSessionPage() {
           variant="ghost"
           size="icon"
           className="shrink-0"
-          disabled={!canGoPrev}
-          onClick={() => navigateToDate(sessionDates[currentDateIndex - 1])}
+          disabled={!prevSessionDate}
+          onClick={() => navigateToDate(prevSessionDate)}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -266,8 +274,8 @@ export default function LogSessionPage() {
           variant="ghost"
           size="icon"
           className="shrink-0"
-          disabled={!canGoNext}
-          onClick={() => navigateToDate(sessionDates[currentDateIndex + 1])}
+          disabled={!nextSessionDate}
+          onClick={() => navigateToDate(nextSessionDate)}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -290,12 +298,10 @@ export default function LogSessionPage() {
           </div>
           <div className="space-y-1">
             <h2 className="text-xl font-semibold">
-              {isToday ? "Start today's session" : "No session on this date"}
+              {isToday ? "Start today's session" : "Start a session for this date"}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {isToday
-                ? "Add your first lift to get started."
-                : "Nothing was logged on this day."}
+              Add your first lift to get started.
             </p>
           </div>
           <AddLiftButton
@@ -430,7 +436,6 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
           <SetRow
             key={set.rowIndex ?? idx}
             set={set}
-            index={idx}
             onUpdate={(fields) => onUpdateSet(set.rowIndex, fields)}
           />
         ))}
@@ -463,7 +468,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
 
 // --- Set row (click-to-edit) ---
 
-function SetRow({ set, index, onUpdate }) {
+function SetRow({ set, onUpdate }) {
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [draftReps, setDraftReps] = useState(String(set.reps ?? ""));
@@ -491,68 +496,68 @@ function SetRow({ set, index, onUpdate }) {
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      {/* Set number */}
-      <span className="w-4 shrink-0 text-right text-sm text-muted-foreground">
-        {index + 1}
-      </span>
+    <div className="flex items-center px-4 py-3">
+      {/* Reps + Weight cluster */}
+      <div className="flex flex-1 items-baseline gap-3">
+        {/* Reps — tap to edit */}
+        <div className="flex items-baseline gap-1">
+          {editingReps ? (
+            <input
+              type="number"
+              className="w-16 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+              value={draftReps}
+              onChange={(e) => setDraftReps(e.target.value)}
+              onBlur={commitReps}
+              onKeyDown={(e) => e.key === "Enter" && commitReps()}
+              autoFocus
+            />
+          ) : (
+            <button
+              className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
+              onClick={() => setEditingReps(true)}
+            >
+              {set.reps}
+            </button>
+          )}
+          <span className="text-sm text-muted-foreground">reps</span>
+        </div>
 
-      {/* Reps — tap to edit */}
-      <div className="flex flex-1 items-baseline gap-1">
-        {editingReps ? (
-          <input
-            type="number"
-            className="w-16 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-            value={draftReps}
-            onChange={(e) => setDraftReps(e.target.value)}
-            onBlur={commitReps}
-            onKeyDown={(e) => e.key === "Enter" && commitReps()}
-            autoFocus
-          />
-        ) : (
-          <button
-            className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
-            onClick={() => setEditingReps(true)}
-          >
-            {set.reps}
-          </button>
-        )}
-        <span className="text-sm text-muted-foreground">reps</span>
+        {/* Weight — tap to edit */}
+        <div className="flex items-baseline gap-1">
+          {editingWeight ? (
+            <input
+              type="number"
+              step="any"
+              className="w-20 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+              value={draftWeight}
+              onChange={(e) => setDraftWeight(e.target.value)}
+              onBlur={commitWeight}
+              onKeyDown={(e) => e.key === "Enter" && commitWeight()}
+              autoFocus
+            />
+          ) : (
+            <button
+              className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
+              onClick={() => setEditingWeight(true)}
+            >
+              {set.weight}
+            </button>
+          )}
+          <span className="text-sm text-muted-foreground">{set.unitType}</span>
+        </div>
       </div>
 
-      {/* Weight — tap to edit */}
-      <div className="flex items-baseline gap-1">
-        {editingWeight ? (
-          <input
-            type="number"
-            step="any"
-            className="w-20 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-            value={draftWeight}
-            onChange={(e) => setDraftWeight(e.target.value)}
-            onBlur={commitWeight}
-            onKeyDown={(e) => e.key === "Enter" && commitWeight()}
-            autoFocus
-          />
-        ) : (
-          <button
-            className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
-            onClick={() => setEditingWeight(true)}
+      {/* PR badge — far right, fixed slot so rows align */}
+      <div className="w-8 shrink-0 text-right">
+        {set.isHistoricalPR && (
+          <Badge
+            variant="outline"
+            className="border-amber-400 text-xs text-amber-600"
           >
-            {set.weight}
-          </button>
+            PR
+          </Badge>
         )}
-        <span className="text-sm text-muted-foreground">{set.unitType}</span>
       </div>
-
-      {/* PR badge */}
-      {set.isHistoricalPR && (
-        <Badge
-          variant="outline"
-          className="shrink-0 border-amber-400 text-xs text-amber-600"
-        >
-          PR
-        </Badge>
-      )}
     </div>
   );
 }
@@ -584,6 +589,15 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
   );
 }
 
+// --- Big Four lifts with SVG icons ---
+
+const BIG_FOUR = [
+  { name: "Back Squat", icon: "/back_squat.svg" },
+  { name: "Bench Press", icon: "/bench_press.svg" },
+  { name: "Deadlift", icon: "/deadlift.svg" },
+  { name: "Strict Press", icon: "/strict_press.svg" },
+];
+
 // --- Add lift button ---
 
 function AddLiftButton({ parsedData, sessionDate, sheetInfo, onSaving, onSaved, onError }) {
@@ -592,17 +606,23 @@ function AddLiftButton({ parsedData, sessionDate, sheetInfo, onSaving, onSaved, 
   const inputRef = useRef(null);
   const { isMetric } = useAthleteBio();
 
-  // Recent lift types for quick-add suggestions (top 6 by frequency)
-  const suggestions = useMemo(() => {
-    if (!parsedData) return [];
+  // Build chip list: Big Four always first, then frequent lifts the user does (excluding Big Four),
+  // cap total at 8.
+  const chips = useMemo(() => {
+    const bigFourNames = new Set(BIG_FOUR.map((b) => b.name));
     const freq = {};
-    for (const e of parsedData) {
-      if (!e.isGoal) freq[e.liftType] = (freq[e.liftType] ?? 0) + 1;
+    if (parsedData) {
+      for (const e of parsedData) {
+        if (!e.isGoal && !bigFourNames.has(e.liftType)) {
+          freq[e.liftType] = (freq[e.liftType] ?? 0) + 1;
+        }
+      }
     }
-    return Object.entries(freq)
+    const frequentExtras = Object.entries(freq)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([lt]) => lt);
+      .slice(0, 4) // up to 4 extras to stay under 8 total
+      .map(([lt]) => ({ name: lt, icon: null }));
+    return [...BIG_FOUR, ...frequentExtras];
   }, [parsedData]);
 
   useEffect(() => {
@@ -678,20 +698,21 @@ function AddLiftButton({ parsedData, sessionDate, sheetInfo, onSaving, onSaved, 
         onChange={(e) => setLiftType(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
       />
-      {/* Quick-add suggestions */}
-      {suggestions.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {suggestions.map((lt) => (
-            <button
-              key={lt}
-              className="rounded-full border px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
-              onClick={() => submit(lt)}
-            >
-              {lt}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Quick-add chips: Big Four (with icons) + frequent lifts */}
+      <div className="flex flex-wrap gap-1.5">
+        {chips.map(({ name, icon }) => (
+          <button
+            key={name}
+            className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+            onClick={() => submit(name)}
+          >
+            {icon && (
+              <Image src={icon} alt="" width={16} height={16} className="shrink-0 opacity-70" />
+            )}
+            {name}
+          </button>
+        ))}
+      </div>
       <div className="flex gap-2">
         <Button size="sm" onClick={() => submit()} disabled={!liftType.trim()}>
           Add

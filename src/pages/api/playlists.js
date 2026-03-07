@@ -222,6 +222,12 @@ export default async function handler(req, res) {
           [rawId]: JSON.stringify(refreshedPlaylist),
         });
 
+        try {
+          await res.revalidate("/gym-playlist-leaderboard");
+        } catch (revalError) {
+          console.error("Revalidation after metadata refresh failed:", revalError);
+        }
+
         res.status(200).json({
           message: "Playlist metadata refreshed",
           playlist: refreshedPlaylist,

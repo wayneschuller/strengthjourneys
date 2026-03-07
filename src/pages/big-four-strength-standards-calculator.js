@@ -126,7 +126,7 @@ function BigFourStrengthStandardsCalculatorMain({ relatedArticles }) {
               className="block rounded-lg border p-4 shadow-sm transition-shadow hover:bg-muted hover:shadow-md"
             >
               <h3 className="text-base font-semibold">How Strong Am I?</h3>
-              <p className="text-sm">See your percentile across lifter groups.</p>
+              <p className="text-sm">See your percentile rank across lifter groups.</p>
             </Link>
             <Link
               href="/calculator"

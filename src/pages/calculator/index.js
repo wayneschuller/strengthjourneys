@@ -118,6 +118,44 @@ const CALCULATOR_FAQ = [
   },
 ];
 
+const FORMULA_GUIDE_LINKS = [
+  {
+    href: "/calculator/epley-formula-1rm-calculator",
+    title: "Epley Formula 1RM Calculator",
+    description: "Popular all-purpose estimate for moderate rep sets.",
+  },
+  {
+    href: "/calculator/brzycki-formula-1rm-calculator",
+    title: "Brzycki Formula 1RM Calculator",
+    description: "Often preferred for lower rep ranges and heavier sets.",
+  },
+  {
+    href: "/calculator/mayhew-1rm-formula-calculator",
+    title: "Mayhew 1RM Formula Calculator",
+    description: "Useful when you want an option that is less linear at higher reps.",
+  },
+  {
+    href: "/calculator/wathan-1rm-formula-calculator",
+    title: "Wathan Formula 1RM Calculator",
+    description: "Another research-backed option for comparing estimates.",
+  },
+  {
+    href: "/calculator/mcglothin-formula-1rm-calculator",
+    title: "McGlothin Formula 1RM Calculator",
+    description: "A steady linear estimate across a broader range of reps.",
+  },
+  {
+    href: "/calculator/lombardi-formula-1rm-calculator",
+    title: "Lombardi Formula 1RM Calculator",
+    description: "Simple power-model estimate for fast comparisons.",
+  },
+  {
+    href: "/calculator/oconner-formula-1rm-calculator",
+    title: "O'Conner Formula 1RM Calculator",
+    description: "A conservative option that tends to estimate slightly lower than Epley.",
+  },
+];
+
 function renderAnswer(answer) {
   if (typeof answer === "string") return answer;
   return answer.map((seg, i) =>
@@ -133,6 +171,45 @@ function renderAnswer(answer) {
 function flattenAnswer(answer) {
   if (typeof answer === "string") return answer;
   return answer.map((seg) => (typeof seg === "string" ? seg : seg.text)).join("");
+}
+
+function FormulaSupportPanel({ formulaSupport }) {
+  if (!formulaSupport) return null;
+
+  return (
+    <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)]">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">{formulaSupport.heading}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <p>{formulaSupport.summary}</p>
+          <ul className="space-y-2">
+            <li><strong className="text-foreground">Best for:</strong> {formulaSupport.bestFor}</li>
+            <li><strong className="text-foreground">Rep range:</strong> {formulaSupport.repRange}</li>
+            <li><strong className="text-foreground">Worked example:</strong> {formulaSupport.example}</li>
+          </ul>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Compare 1RM Methods</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          {formulaSupport.links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="block rounded-md border px-3 py-2 transition-colors hover:bg-muted"
+            >
+              <div className="font-medium text-foreground">{link.label}</div>
+              <div className="text-muted-foreground">{link.description}</div>
+            </Link>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 export default function E1RMCalculator({ relatedArticles }) {
@@ -270,6 +347,7 @@ export function E1RMCalculatorMain({
   pageTitle = "One Rep Max Calculator",
   pageDescription = "Enter reps and weight to estimate your one-rep max across 7 proven formulas. See rep-max projections, percentage training guides, and personalized Big Four strength levels by age, sex, and bodyweight.",
   formulaBlurb = null,
+  formulaSupport = null,
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -599,6 +677,7 @@ export function E1RMCalculatorMain({
           </PageHeaderRight>
         )}
       </PageHeader>
+      <FormulaSupportPanel formulaSupport={formulaSupport} />
       <Card>
         <CardContent>
           {/* Two main sliders */}
@@ -822,6 +901,25 @@ export function E1RMCalculatorMain({
           ))}
         </div>
       </section>
+      {!forceFormula && !forceLift && (
+        <section className="mt-10">
+          <h2 className="mb-4 text-xl font-semibold">Compare Every 1RM Formula</h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {FORMULA_GUIDE_LINKS.map((formulaLink) => (
+              <Link
+                key={formulaLink.href}
+                href={formulaLink.href}
+                className="block rounded-lg border p-4 transition-colors hover:bg-muted"
+              >
+                <h3 className="font-semibold">{formulaLink.title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {formulaLink.description}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );

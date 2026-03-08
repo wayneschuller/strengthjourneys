@@ -1,3 +1,22 @@
+// POST /api/sheet/enrich
+//
+// Enriches a set of Google Drive sheet candidates with full metadata so the
+// sheet-picker UI can display meaningful detail (row count, lift types, last
+// modified, etc.) for each option before the user selects one.
+//
+// Called by the sheet-setup dialog after resolve.js returns a "choose" response
+// with a list of candidate sheet IDs. The UI may call this in two passes:
+//   1. Fast pass — enriches top candidates immediately shown in the list.
+//   2. Lazy pass — enriches remaining candidates as the user scrolls.
+//
+// Body: {
+//   intent: "bootstrap" | "recovery" | "switch_sheet",
+//   candidateIds: string[],    // Drive file IDs to fetch full metadata for
+//   candidates: Candidate[],   // already-known candidate objects (from resolve)
+// }
+//
+// Returns: { enrichedCandidates: ClientCandidate[] }
+
 import { devLog } from "@/lib/processing-utils";
 import {
   createDebug,

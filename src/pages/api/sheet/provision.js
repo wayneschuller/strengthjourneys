@@ -1,3 +1,33 @@
+// POST /api/sheet/provision
+//
+// Heavy-duty sheet provisioning: scans the user's Google Drive for existing
+// lifting sheets, scores and ranks candidates, and either auto-links the best
+// match or creates a new sheet from the Strength Journeys template.
+//
+// This is an older provisioning path. New users now go through resolve.js →
+// link.js instead. provision.js is still used for legacy flows and can be
+// called directly with an explicit mode.
+//
+// Modes (req.body.mode):
+//   discover_fast       — quick Drive scan, returns ranked candidates to the UI
+//   discover_deep       — full Drive scan with header-level validation
+//   enrich_candidates   — fetch rich metadata for specific candidate IDs
+//   select_existing     — link a specific sheet chosen by the user
+//   create_new          — copy the sample template to create a new sheet
+//
+// Body: {
+//   mode: string,
+//   selectedSsid?: string,      // required for select_existing
+//   candidateIds?: string[],    // required for enrich_candidates
+//   candidates?: Candidate[],   // pre-fetched candidates for enrichment
+// }
+//
+// Returns: varies by mode — either a candidate list for the picker UI or a
+//          fully linked sheet record { ssid, url, filename, ... }.
+//
+// Post-response side effect: updates the KV record and may fire a founder
+// activation notification when a new user successfully links their first sheet.
+
 import { getServerSession } from "next-auth/next";
 import { kv } from "@vercel/kv";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";

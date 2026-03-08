@@ -20,6 +20,35 @@ import {
 } from "@/lib/sheet-flow";
 import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 
+// POST /api/sheet/resolve
+//
+// Entry point for the sheet connection flow. Classifies the user's lifecycle
+// state, then decides what happens next — auto-link a known sheet, prompt the
+// user to choose from candidates, or kick off new-sheet creation.
+//
+// Called by the sheet-setup dialog on open. The response tells the client which
+// UI state to show (picker, creation, recovery) and optionally provides a ranked
+// list of candidate sheets or a directly linked sheet.
+//
+// Intents (req.body.intent):
+//   bootstrap    — first-time setup or returning user without a linked sheet.
+//                  May auto-link if exactly one high-confidence candidate exists.
+//   recovery     — user explicitly clicked "recover previous sheet". Shows picker
+//                  with ranked candidates, never auto-links.
+//   switch_sheet — user wants to connect a different sheet. Always shows picker.
+//
+// Body: {
+//   intent: "bootstrap" | "recovery" | "switch_sheet",
+// }
+//
+// Returns one of:
+//   { action: "linked",   sheet: SheetMeta }            auto-linked, ready to use
+//   { action: "choose",   candidates: Candidate[] }     show picker
+//   { action: "create" }                                no candidates, create new
+//   { action: "recover" }                               returning user, no sheet found
+//
+// ─── Lifecycle policy ───────────────────────────────────────────────────────
+//
 // Lifecycle policy:
 // - KV is a lifecycle hint, not the sole proof of whether a user is new.
 // - Some legacy users predate KV. If localStorage previously existed or Drive

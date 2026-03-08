@@ -1,3 +1,27 @@
+// POST /api/sheet/link
+//
+// Finalises linking a Google Sheet to the user's account. Called after the user
+// has made a selection in the sheet-setup dialog (either picked an existing sheet
+// or chosen to create a new one). Persists the linked sheet to KV and returns
+// the sheet metadata to the client, which stores it in localStorage as sheetInfo.
+//
+// Three link modes:
+//   select_existing  — user picked a sheet from the candidate list. Validates
+//                      that the sheet is accessible and has the required headers.
+//   create_blank     — create a new empty sheet with the correct header row.
+//   create_sample    — copy the Strength Journeys sample template sheet.
+//
+// Body: {
+//   intent: "bootstrap" | "recovery" | "switch_sheet",
+//   mode: "select_existing" | "create_blank" | "create_sample",
+//   selectedSsid?: string,      // required when mode = select_existing
+//   hadLocalSheetBefore?: bool, // hint for lifecycle classification
+//   preferredUnitType?: "kg" | "lb",
+// }
+//
+// Returns: { ssid, url, filename, modifiedTime, modifiedByMeTime }
+//          (same shape as sheetInfo in localStorage)
+
 import { devLog } from "@/lib/processing-utils";
 import {
   buildSheetName,

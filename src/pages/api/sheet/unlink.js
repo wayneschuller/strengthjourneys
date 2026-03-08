@@ -1,3 +1,23 @@
+// POST /api/sheet/unlink
+//
+// Disconnects the user's currently linked Google Sheet by clearing the
+// sheet-identity fields from their KV record (sj:user:<email>). Does NOT
+// delete or modify the actual Google Sheet — it only removes the app's memory
+// of which sheet belongs to this user.
+//
+// After this call the client should clear sheetInfo from localStorage so the
+// app returns to the sheet-setup flow on next load.
+//
+// Fields cleared from KV:
+//   provisionedSheetId, provisionedAt, provisionVersion,
+//   provisioningMethod, connectionMethod
+//
+// If the KV record becomes empty after clearing, it is deleted entirely.
+//
+// Body: { } (empty — user identity comes from the session)
+//
+// Returns: { ok: true, message: string }
+
 import { kv } from "@vercel/kv";
 import { devLog } from "@/lib/processing-utils";
 import { requireSheetFlowContext } from "@/lib/sheet-flow";

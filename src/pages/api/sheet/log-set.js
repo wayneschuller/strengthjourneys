@@ -4,22 +4,45 @@ import { getServerSession } from "next-auth/next";
 // Sheet encoding: see the "sparse rows and anchor rows" block comment at the
 // top of sheet/log-session.js for the full data model (anchor rows, inheritance, etc.).
 
-// PATCH /api/sheet/log-set  (also handles DELETE — see handleDelete below)
-// Updates reps and/or weight (and optionally notes/url) for a single set row,
-// identified by its 1-based rowIndex in the sheet.
+// PATCH /api/sheet/log-set
+// Updates one set row in place — reps, weight, notes, and/or URL.
+// Only writes columns C–F. Columns A (Date) and B (Lift Type) are anchor values
+// that control sparse-encoding inheritance and are never touched here.
 //
 // Body: {
 //   ssid: string,
-//   rowIndex: number,       // 1-based sheet row number
+//   rowIndex: number,   // 1-based sheet row number (from LiftEntry.rowIndex)
 //   reps?: number,
-//   weight?: string,        // e.g. "102.5kg"
+//   weight?: string,    // e.g. "102.5kg" — must include unit suffix
 //   notes?: string,
 //   url?: string,
 // }
 //
-// Only updates columns C–F (Reps, Weight, Notes, URL).
-// Date (col A) and Lift Type (col B) are never modified by this route —
-// they are anchor values managed by insert-sheet.js (insert) and handleDelete (delete).
+// Returns: { updated: true, rowIndex }
+//
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// DELETE /api/sheet/log-set
+// Deletes a single set row. Handles anchor-row promotion so that date/liftType
+// inheritance stays intact after deletion.
+//
+// If the deleted row is an anchor (carries date or liftType in cols A/B that
+// downstream rows inherit), the client identifies the next row that will become
+// the new anchor and sends its values in `promoteTo`. The API writes those values
+// BEFORE deleting, because deleteDimension shifts all row indices below the
+// deletion point up by one.
+//
+// Body: {
+//   ssid: string,
+//   rowIndex: number,       // 1-based row to delete
+//   promoteTo?: {
+//     rowIndex: number,     // 1-based row that becomes the new anchor
+//     date?: string,        // write if the deleted row was a session anchor
+//     liftType?: string,    // write if the deleted row was a lift anchor
+//   }
+// }
+//
+// Returns: { deleted: true, rowIndex }
 
 export default async function handler(req, res) {
   if (req.method === "DELETE") return handleDelete(req, res);

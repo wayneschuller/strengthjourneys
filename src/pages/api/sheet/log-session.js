@@ -1,3 +1,22 @@
+// POST /api/sheet/log-session
+//
+// Inserts one or more rows into the user's Google Sheet at a specified position.
+// Used for both adding a brand-new lift to a session (lift anchor row) and
+// starting a brand-new session for a date (session anchor row).
+//
+// The sheet uses sparse encoding — Date and Lift Type are only written on
+// "anchor" rows; subsequent rows for the same lift leave those cells blank
+// and inherit via the parser. See the anchor row documentation below.
+//
+// Body: {
+//   ssid: string,
+//   rows: string[][],              // exact cell values [A, B, C, D, E, F]
+//   insertAfterRowIndex?: number,  // 1-based. Defaults to 1 (after header).
+//   newSession?: boolean,          // draws a bold top border on the first row
+// }
+//
+// Returns: { insertedRows: number, firstRowIndex: number }
+
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 

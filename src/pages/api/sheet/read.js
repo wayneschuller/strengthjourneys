@@ -1,4 +1,24 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
+// GET /api/sheet/read?ssid=<spreadsheetId>
+//
+// Reads all data from the user's Google Sheet and returns it to the client for
+// parsing. This is the primary data-fetch route — SWR in use-userlift-data.js
+// calls it on mount, focus, and reconnect.
+//
+// Two Google APIs are called in parallel:
+//   • Sheets API (values A:Z) — returns raw row/column data
+//   • Drive API (file metadata) — returns filename, webViewLink, modifiedTime,
+//     and trashed status. If trashed, responds 404 so the UI can prompt re-link.
+//
+// Query:
+//   ssid: string  — Google Spreadsheet ID (from localStorage sheetInfo)
+//
+// Returns: Google Sheets values payload + { name, webViewLink, modifiedTime,
+//          modifiedByMeTime } merged in from Drive. The client passes this to
+//          parse-data.js to produce the ParsedData array.
+//
+// Post-response side effect: updates a KV record (sj:user:<email>) to track
+// last-seen time and trigger a one-time "returning user" founder notification
+// within 7 days of first connection and after a 12-hour gap.
 
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";

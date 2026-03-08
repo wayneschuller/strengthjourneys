@@ -225,6 +225,54 @@ export default function LogSessionPage() {
     [sheetInfo?.ssid, mutate],
   );
 
+  // deleteSet: removes a single set row from the sheet.
+  // Handles anchor-row promotion so date/liftType inheritance stays intact.
+  const deleteSet = useCallback(
+    async (set) => {
+      if (!sheetInfo?.ssid || !parsedData || !set.rowIndex) return;
+
+      // All confirmed rows for this session, sorted ascending by sheet position.
+      const sessionSets = parsedData
+        .filter((e) => e.date === set.date && !e.isGoal && e.rowIndex)
+        .sort((a, b) => a.rowIndex - b.rowIndex);
+
+      const isFirstOfSession = sessionSets[0]?.rowIndex === set.rowIndex;
+
+      // Sets for this lift type within the session, sorted ascending.
+      const liftSets = sessionSets.filter((e) => e.liftType === set.liftType);
+      const isFirstOfLift = liftSets[0]?.rowIndex === set.rowIndex;
+
+      // Build promoteTo payload when the deleted row is an anchor.
+      // The row immediately below (rowIndex + 1 before deletion) becomes the new anchor.
+      let promoteTo = null;
+      if (isFirstOfSession && sessionSets.length > 1) {
+        // First row of session: next session row needs date + liftType.
+        const next = sessionSets[1];
+        promoteTo = { rowIndex: next.rowIndex, date: set.date, liftType: set.liftType };
+      } else if (isFirstOfLift && liftSets.length > 1) {
+        // First row of lift type (not first of session): next lift row needs liftType.
+        const next = liftSets[1];
+        promoteTo = { rowIndex: next.rowIndex, liftType: set.liftType };
+      }
+
+      markSaving();
+      try {
+        const res = await fetch("/api/log-set", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex: set.rowIndex, promoteTo }),
+        });
+        if (!res.ok) throw new Error((await res.json()).error || "Delete failed");
+        await mutate();
+        markSaved();
+      } catch (err) {
+        console.error("[log-set] deleteSet failed:", err);
+        markError();
+      }
+    },
+    [sheetInfo?.ssid, parsedData, mutate],
+  );
+
   // Add a new set to an existing lift block.
   // Optimistic: row appears immediately with spinner, promoted to confirmed on success.
   const addSet = useCallback(
@@ -530,6 +578,7 @@ export default function LogSessionPage() {
               sessionDate={sessionDate}
               isMetric={isMetric}
               onUpdateSet={updateSet}
+              onDeleteSet={deleteSet}
               onAddSet={(prevSet) => addSet(liftType, prevSet)}
             />
           ))}
@@ -598,7 +647,7 @@ function SyncIndicator({ state }) {
 
 // --- Lift block ---
 
-function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdateSet, onAddSet }) {
+function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdateSet, onDeleteSet, onAddSet }) {
   // Only use confirmed (non-pending) sets for plate diagram and last-set reference
   const realSets = sets.filter((s) => !s._pending);
   const unitType = sets[0]?.unitType ?? (isMetric ? "kg" : "lb");
@@ -647,6 +696,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
             key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
             set={set}
             onUpdate={set._pending ? null : (fields) => onUpdateSet(set.rowIndex, fields)}
+            onDelete={set._pending || !set.rowIndex ? null : () => onDeleteSet(set)}
           />
         ))}
 
@@ -679,7 +729,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
 // --- Set row (click-to-edit) ---
 // Layout: [reps] @ [weight][unit]  [notes flex-1]  [PR]
 
-function SetRow({ set, onUpdate }) {
+function SetRow({ set, onUpdate, onDelete }) {
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -752,7 +802,7 @@ function SetRow({ set, onUpdate }) {
   }
 
   return (
-    <div className="flex items-center gap-4 px-4 py-3">
+    <div className="group flex items-center gap-4 px-4 py-3">
       {/* Reps @ Weight unit — tight visual unit.
           Fixed-width containers (w-12 reps, w-20 weight) prevent layout shift when
           toggling between display (button) and edit (input) modes.
@@ -828,12 +878,23 @@ function SetRow({ set, onUpdate }) {
         )}
       </div>
 
-      {/* PR badge — far right */}
-      <div className="shrink-0">
+      {/* Right slot: PR badge + trash icon.
+          Trash: always visible on mobile (touch has no hover), hover-only on desktop.
+          The group class on the row container drives the md:group-hover reveal. */}
+      <div className="flex shrink-0 items-center gap-1">
         {set.isHistoricalPR && (
           <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">
             PR
           </Badge>
+        )}
+        {onDelete && (
+          <button
+            className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
+            onClick={onDelete}
+            aria-label="Delete set"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
         )}
       </div>
     </div>

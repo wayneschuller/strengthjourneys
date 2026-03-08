@@ -335,16 +335,17 @@ export default function LogSessionPage() {
           body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex, ...fields }),
         });
         if (!res.ok) throw new Error((await res.json()).error || "Update failed");
+        // Do NOT call mutate() here — the SetRow component manages its own
+        // optimistic display via pendingReps/pendingWeight. SWR's
+        // revalidateOnFocus will sync when the user leaves the page.
         markSaved();
-        // Fire SWR revalidation in background — no await to avoid flicker
-        mutate();
       } catch (err) {
         console.error("[sheet/log-set] updateSet failed:", err);
         markError();
       }
       logSheetTimings("updateSet", [{ name: "PATCH /api/sheet/log-set", ms: performance.now() - t0 }], performance.now() - t0, addLogEntry);
     },
-    [sheetInfo?.ssid, mutate, addLogEntry],
+    [sheetInfo?.ssid, addLogEntry],
   );
 
   // deleteSet: removes a single set row from the sheet.
@@ -406,16 +407,10 @@ export default function LogSessionPage() {
           });
         }
 
-        const tMutate = performance.now();
-        await mutate();
-        timings.push({ name: "SWR mutate()", ms: performance.now() - tMutate });
-
-        // Clear deleted index — parsedData no longer contains the row
-        setDeletedRowIndices((prev) => {
-          const next = new Set(prev);
-          next.delete(set.rowIndex);
-          return next;
-        });
+        // Do NOT call mutate() here — same reasoning as addSet: firing a
+        // revalidation mid-session causes parsedData churn and flicker.
+        // The deletedRowIndices filter keeps the row hidden in the UI.
+        // SWR's revalidateOnFocus will sync when the user leaves the page.
         markSaved();
       } catch (err) {
         console.error("[sheet/log-set] deleteSet failed:", err);
@@ -429,7 +424,7 @@ export default function LogSessionPage() {
       }
       logSheetTimings("deleteSet", timings, performance.now() - t0, addLogEntry);
     },
-    [sheetInfo?.ssid, parsedData, mutate, toast, addLogEntry],
+    [sheetInfo?.ssid, parsedData, toast, addLogEntry],
   );
 
   // Add a new set to an existing lift block.

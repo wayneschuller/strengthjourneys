@@ -1033,7 +1033,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
       // Warmup phase: suggest next warmup set
       const nextSet = progression[nextWarmupIdx];
       result.push({
-        label: `${nextSet.reps} × ${nextSet.weight}${unitType}`,
+        label: `${nextSet.reps}@${nextSet.weight}${unitType}`,
         sublabel: nextSet.isTopSet ? "top set" : "warmup",
         reps: nextSet.reps,
         weight: nextSet.weight,
@@ -1045,7 +1045,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
       if (!nextSet.isTopSet) {
         const topProgSet = progression[progression.length - 1];
         result.push({
-          label: `${topProgSet.reps} × ${topProgSet.weight}${unitType}`,
+          label: `${topProgSet.reps}@${topProgSet.weight}${unitType}`,
           sublabel: "top set",
           reps: topProgSet.reps,
           weight: topProgSet.weight,
@@ -1056,7 +1056,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
     } else {
       // Working phase: suggest repeat and increment
       result.push({
-        label: `${lastLoggedReps} × ${lastLogged}${unitType}`,
+        label: `${lastLoggedReps}@${lastLogged}${unitType}`,
         sublabel: "repeat",
         reps: lastLoggedReps,
         weight: lastLogged,
@@ -1064,7 +1064,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
         variant: "secondary",
       });
       result.push({
-        label: `${lastLoggedReps} × ${lastLogged + minIncrement}${unitType}`,
+        label: `${lastLoggedReps}@${lastLogged + minIncrement}${unitType}`,
         sublabel: `+${minIncrement}`,
         reps: lastLoggedReps,
         weight: lastLogged + minIncrement,

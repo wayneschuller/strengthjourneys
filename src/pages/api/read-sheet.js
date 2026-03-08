@@ -69,7 +69,7 @@ export default async function handler(req, res) {
 
     if (driveMs !== null && sheetsMs !== null && driveMs > sheetsMs) {
       devLog(
-        `read-gsheet ANOMALY: Drive slower than Sheets (sheets=${sheetsMs}ms, drive=${driveMs}ms, total=${totalMs}ms) - Drive metadata must not be the bottleneck; investigate Drive slowness.`,
+        `read-sheet ANOMALY: Drive slower than Sheets (sheets=${sheetsMs}ms, drive=${driveMs}ms, total=${totalMs}ms) - Drive metadata must not be the bottleneck; investigate Drive slowness.`,
       );
     }
 
@@ -82,7 +82,7 @@ export default async function handler(req, res) {
         sheetsRes.statusText ||
         "Unknown error from Google Sheets API";
       console.error(
-        `[read-gsheet] Google Sheets API ${sheetsRes.status}: ${googleMessage}`,
+        `[read-sheet] Google Sheets API ${sheetsRes.status}: ${googleMessage}`,
         { ssid },
       );
       res.status(sheetsRes.status).json({ error: googleMessage });

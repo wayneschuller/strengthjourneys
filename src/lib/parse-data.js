@@ -63,7 +63,7 @@ export function parseData(data) {
 // leave those cells blank and inherit from the previous row via `previousDate`
 // and `previousLiftType`. See the full data model (examples, anchor types,
 // insertion order, deletion/promotion rules) in the block comment at the top of
-// src/pages/api/log-session.js.
+// src/pages/api/insert-sheet.js.
 //
 // Returns a `ParsedData` array that is always sorted by date ascending.
 // See @/lib/sample-parsed-data.js for example data using this structure.

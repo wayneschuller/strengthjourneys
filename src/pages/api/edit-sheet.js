@@ -2,9 +2,9 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 
 // Sheet encoding: see the "sparse rows and anchor rows" block comment at the
-// top of log-session.js for the full data model (anchor rows, inheritance, etc.).
+// top of insert-sheet.js for the full data model (anchor rows, inheritance, etc.).
 
-// PATCH /api/log-set
+// PATCH /api/edit-sheet
 // Updates reps and/or weight (and optionally notes/url) for a single set row,
 // identified by its 1-based rowIndex in the sheet.
 //
@@ -19,7 +19,7 @@ import { getServerSession } from "next-auth/next";
 //
 // Only updates columns C–F (Reps, Weight, Notes, URL).
 // Date (col A) and Lift Type (col B) are never modified by this route —
-// they are anchor values managed by log-session.js (insert) and handleDelete (delete).
+// they are anchor values managed by insert-sheet.js (insert) and handleDelete (delete).
 
 export default async function handler(req, res) {
   if (req.method === "DELETE") return handleDelete(req, res);
@@ -75,18 +75,18 @@ export default async function handler(req, res) {
     if (!writeRes.ok) {
       const body = await writeRes.json().catch(() => ({}));
       const msg = body?.error?.message || "Failed to update set";
-      console.error("[log-set] values.update failed:", msg, { rowIndex, range });
+      console.error("[edit-sheet] values.update failed:", msg, { rowIndex, range });
       return res.status(writeRes.status).json({ error: msg });
     }
 
     return res.status(200).json({ updated: true, rowIndex });
   } catch (err) {
-    console.error("[log-set] unexpected error:", err);
+    console.error("[edit-sheet] unexpected error:", err);
     return res.status(500).json({ error: err.message || "Internal server error" });
   }
 }
 
-// DELETE /api/log-set
+// DELETE /api/edit-sheet
 // Deletes a single set row from the sheet.
 //
 // Body: {
@@ -140,7 +140,7 @@ async function handleDelete(req, res) {
       if (!promoteRes.ok) {
         const body = await promoteRes.json().catch(() => ({}));
         const msg = body?.error?.message || "Failed to promote anchor data";
-        console.error("[log-set DELETE] promote failed:", msg);
+        console.error("[edit-sheet DELETE] promote failed:", msg);
         return res.status(promoteRes.status).json({ error: msg });
       }
     }
@@ -171,13 +171,13 @@ async function handleDelete(req, res) {
     if (!deleteRes.ok) {
       const body = await deleteRes.json().catch(() => ({}));
       const msg = body?.error?.message || "Failed to delete row";
-      console.error("[log-set DELETE] deleteDimension failed:", msg);
+      console.error("[edit-sheet DELETE] deleteDimension failed:", msg);
       return res.status(deleteRes.status).json({ error: msg });
     }
 
     return res.status(200).json({ deleted: true, rowIndex });
   } catch (err) {
-    console.error("[log-set DELETE] unexpected error:", err);
+    console.error("[edit-sheet DELETE] unexpected error:", err);
     return res.status(500).json({ error: err.message || "Internal server error" });
   }
 }

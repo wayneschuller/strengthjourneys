@@ -1,6 +1,27 @@
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 
+// ─── Design principle: the sheet is a first-class artefact ──────────────────
+//
+// The user's Google Sheet is not just a data store — it is a living training
+// log that the user opens, shares, and reads directly. Every API write must
+// keep the sheet looking clean, aesthetic, and human-readable:
+//
+//   • Sparse encoding    — Date and Lift Type are only written on anchor rows;
+//                          subsequent rows are intentionally blank so the sheet
+//                          reads like a structured log, not a repetitive table.
+//   • Session borders    — A bold top border is drawn above each new session's
+//                          first row (the session anchor) to visually separate
+//                          sessions at a glance.
+//   • No stray styling   — Inserted rows must not inherit header backgrounds,
+//                          borders, or other formatting from adjacent rows.
+//                          See the insertDimension formatting notes below.
+//
+// When adding new write operations, always open the sheet afterwards and verify
+// it still looks tidy. Formatting bugs are user-visible and matter.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ─── Sheet encoding: sparse rows and anchor rows ────────────────────────────
 //
 // The Google Sheet uses a SPARSE ENCODING to stay human-readable. Date (col A)
@@ -38,16 +59,16 @@ import { getServerSession } from "next-auth/next";
 //   dates always have lower row indices. Sets are inserted after the last known
 //   row of their lift type within the session.
 //
-// DELETION (see DELETE /api/log-set):
+// DELETION (see DELETE /api/edit-sheet):
 //   Deleting an anchor row would break inheritance for the rows below it.
 //   Before deletion, the anchor values (date and/or liftType) must be
 //   "promoted" — written explicitly into the row that will become the new anchor.
 //   The client (log.js deleteSet) determines whether promotion is needed and
-//   which row to promote to; the API (log-set.js handleDelete) applies it.
+//   which row to promote to; the API (edit-sheet.js handleDelete) applies it.
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
-// POST /api/log-session
+// POST /api/insert-sheet
 // Inserts one or more rows into the sheet at a specified position.
 //
 // Body: {
@@ -185,7 +206,7 @@ export default async function handler(req, res) {
     if (!insertRes.ok) {
       const body = await insertRes.json().catch(() => ({}));
       const msg = body?.error?.message || "Failed to insert rows";
-      console.error("[log-session] insertDimension failed:", msg);
+      console.error("[insert-sheet] insertDimension failed:", msg);
       return res.status(insertRes.status).json({ error: msg });
     }
 
@@ -211,7 +232,7 @@ export default async function handler(req, res) {
     if (!writeRes.ok) {
       const body = await writeRes.json().catch(() => ({}));
       const msg = body?.error?.message || "Failed to write row values";
-      console.error("[log-session] values.update failed:", msg);
+      console.error("[insert-sheet] values.update failed:", msg);
       return res.status(writeRes.status).json({ error: msg });
     }
 
@@ -220,7 +241,7 @@ export default async function handler(req, res) {
       firstRowIndex: firstNewRow,
     });
   } catch (err) {
-    console.error("[log-session] unexpected error:", err);
+    console.error("[insert-sheet] unexpected error:", err);
     return res.status(500).json({ error: err.message || "Internal server error" });
   }
 }

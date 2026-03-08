@@ -207,7 +207,7 @@ export const UserLiftingDataProvider = ({ children }) => {
   const MAX_RETRIES = 3;
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
-    shouldFetch ? `/api/read-gsheet?ssid=${sheetInfo.ssid}` : null,
+    shouldFetch ? `/api/read-sheet?ssid=${sheetInfo.ssid}` : null,
     fetcher,
     {
       // Be explicit about mobile resume behavior. Chrome on Android may keep

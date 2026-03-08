@@ -65,6 +65,7 @@ export default function LogSessionPage() {
   const [pendingSets, setPendingSets] = useState({});
   const pendingSetsRef = useRef({});
   const [deletedRowIndices, setDeletedRowIndices] = useState(new Set());
+  const savingRef = useRef(false);
   const savedTimerRef = useRef(null);
 
   // Wrapper that keeps pendingSetsRef synchronously in sync.
@@ -225,15 +226,18 @@ export default function LogSessionPage() {
 
   function markSaving() {
     if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    savingRef.current = true;
     setSyncState("saving");
   }
 
   function markSaved() {
+    savingRef.current = false;
     setSyncState("saved");
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 2000);
   }
 
   function markError() {
+    savingRef.current = false;
     setSyncState("error");
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 3000);
   }
@@ -284,7 +288,7 @@ export default function LogSessionPage() {
   // Handles anchor-row promotion so date/liftType inheritance stays intact.
   const deleteSet = useCallback(
     async (set) => {
-      if (!sheetInfo?.ssid || !parsedData || !set.rowIndex) return;
+      if (!sheetInfo?.ssid || !parsedData || !set.rowIndex || savingRef.current) return;
 
       // All confirmed rows for this session, sorted ascending by sheet position.
       const sessionSets = parsedData
@@ -346,7 +350,7 @@ export default function LogSessionPage() {
   // Optimistic: row appears immediately with spinner, promoted to confirmed on success.
   const addSet = useCallback(
     async (liftType, prevSet) => {
-      if (!sheetInfo?.ssid || !parsedData) return;
+      if (!sheetInfo?.ssid || !parsedData || savingRef.current) return;
 
       const unitType = prevSet?.unitType ?? (isMetric ? "kg" : "lb");
       const reps = prevSet?.reps ?? 5;
@@ -416,7 +420,7 @@ export default function LogSessionPage() {
   // Border is only drawn for the very first row of a brand-new session date.
   const addLift = useCallback(
     async (liftType) => {
-      if (!sheetInfo?.ssid || !parsedData) return;
+      if (!sheetInfo?.ssid || !parsedData || savingRef.current) return;
 
       const unitType = isMetric ? "kg" : "lb";
       const weight = isMetric ? 20 : 45;
@@ -662,14 +666,13 @@ export default function LogSessionPage() {
               parsedData={parsedData}
               sessionDate={sessionDate}
               isMetric={isMetric}
-              saving={syncState === "saving"}
               onUpdateSet={updateSet}
               onDeleteSet={deleteSet}
               onAddSet={(prevSet) => addSet(liftType, prevSet)}
             />
           ))}
 
-          <AddLiftButton parsedData={parsedData} onAddLift={addLift} disabled={syncState === "saving"} />
+          <AddLiftButton parsedData={parsedData} onAddLift={addLift} />
 
           {/* Delete session */}
           <div className="flex justify-center pt-2">
@@ -733,7 +736,7 @@ function SyncIndicator({ state }) {
 
 // --- Lift block ---
 
-function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, saving, onUpdateSet, onDeleteSet, onAddSet }) {
+function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdateSet, onDeleteSet, onAddSet }) {
   const { status: authStatus } = useSession();
   const { age, bodyWeight, sex, standards } = useAthleteBio();
   const e1rmFormula =
@@ -800,7 +803,6 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, saving, 
             key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
             set={set}
             isMetric={isMetric}
-            saving={saving}
             onUpdate={set._pending ? null : (fields) => onUpdateSet(set.rowIndex, fields)}
             onDelete={set._pending || !set.rowIndex ? null : () => onDeleteSet(set)}
             strengthBadge={idx === bestE1rmIndex ? (
@@ -824,9 +826,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, saving, 
 
         {/* Add set */}
         <button
-          className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+          className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
           onClick={() => onAddSet(lastRealSet)}
-          disabled={saving}
         >
           <Plus className="h-4 w-4" />
           Add set
@@ -861,7 +862,7 @@ function UnitLabel({ unitType, mismatch }) {
 // --- Set row (click-to-edit) ---
 // Layout: [reps] @ [weight][unit]  [notes flex-1]  [PR]
 
-function SetRow({ set, isMetric, saving, onUpdate, onDelete, strengthBadge }) {
+function SetRow({ set, isMetric, onUpdate, onDelete, strengthBadge }) {
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -1024,9 +1025,8 @@ function SetRow({ set, isMetric, saving, onUpdate, onDelete, strengthBadge }) {
         )}
         {onDelete && (
           <button
-            className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive disabled:pointer-events-none disabled:opacity-20 md:opacity-0 md:group-hover:opacity-100"
+            className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
             onClick={onDelete}
-            disabled={saving}
             aria-label="Delete set"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -1069,7 +1069,7 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
 // --- Add lift button ---
 // Simplified: just calls onAddLift(liftType), all API logic lives in the parent.
 
-function AddLiftButton({ parsedData, onAddLift, label = "Add Lift", disabled }) {
+function AddLiftButton({ parsedData, onAddLift, label = "Add Lift" }) {
   const [showInput, setShowInput] = useState(false);
   const [liftType, setLiftType] = useState("");
   const inputRef = useRef(null);
@@ -1112,7 +1112,6 @@ function AddLiftButton({ parsedData, onAddLift, label = "Add Lift", disabled }) 
         variant="outline"
         className="w-full gap-2"
         onClick={() => setShowInput(true)}
-        disabled={disabled}
       >
         <Plus className="h-4 w-4" />
         {label}

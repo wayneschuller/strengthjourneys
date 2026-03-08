@@ -208,7 +208,7 @@ export default function LogSessionPage() {
       if (!sheetInfo?.ssid) return;
       markSaving();
       try {
-        const res = await fetch("/api/edit-sheet", {
+        const res = await fetch("/api/log-set-sheet", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex, ...fields }),
@@ -218,7 +218,7 @@ export default function LogSessionPage() {
         // Fire SWR revalidation in background — no await to avoid flicker
         mutate();
       } catch (err) {
-        console.error("[log-session] updateSet failed:", err);
+        console.error("[log-set-sheet] updateSet failed:", err);
         markError();
       }
     },
@@ -257,7 +257,7 @@ export default function LogSessionPage() {
 
       markSaving();
       try {
-        const res = await fetch("/api/edit-sheet", {
+        const res = await fetch("/api/log-set-sheet", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex: set.rowIndex, promoteTo }),
@@ -266,7 +266,7 @@ export default function LogSessionPage() {
         await mutate();
         markSaved();
       } catch (err) {
-        console.error("[log-set] deleteSet failed:", err);
+        console.error("[log-set-sheet] deleteSet failed:", err);
         markError();
       }
     },
@@ -309,7 +309,7 @@ export default function LogSessionPage() {
       markSaving();
 
       try {
-        const res = await fetch("/api/insert-sheet", {
+        const res = await fetch("/api/log-session-sheet", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -329,7 +329,7 @@ export default function LogSessionPage() {
         promoteFirstPending(liftType, firstRowIndex);
         markSaved();
       } catch (err) {
-        console.error("[log-session] addSet failed:", err);
+        console.error("[log-session-sheet] addSet failed:", err);
         // Remove the failed pending row
         setPendingSetsSync((prev) => {
           const next = { ...prev };
@@ -340,7 +340,7 @@ export default function LogSessionPage() {
         markError();
       }
     },
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, mutate, setPendingSetsSync, promoteFirstPending],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending],
   );
 
   // Add a brand-new lift type to the session.
@@ -396,7 +396,7 @@ export default function LogSessionPage() {
       ];
 
       try {
-        const res = await fetch("/api/insert-sheet", {
+        const res = await fetch("/api/log-session-sheet", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -413,7 +413,7 @@ export default function LogSessionPage() {
         promoteFirstPending(liftType, firstRowIndex);
         markSaved();
       } catch (err) {
-        console.error("[add-lift] failed:", err);
+        console.error("[log-session-sheet] addLift failed:", err);
         setPendingSetsSync((prev) => {
           const next = { ...prev };
           if (next[liftType]) next[liftType] = next[liftType].filter((s) => !s._pending);
@@ -423,7 +423,7 @@ export default function LogSessionPage() {
         markError();
       }
     },
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, mutate, setPendingSetsSync, promoteFirstPending],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending],
   );
 
   const deleteSession = useCallback(async () => {
@@ -468,7 +468,7 @@ export default function LogSessionPage() {
         navigateToDate(todayIso);
       }
     } catch (err) {
-      console.error("[log-session] deleteSession failed:", err);
+      console.error("[delete-sheet] deleteSession failed:", err);
       markError();
     }
   }, [sheetInfo?.ssid, parsedData, sessionDate, sessionDates, todayIso, mutate, navigateToDate]);

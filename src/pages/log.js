@@ -3,6 +3,9 @@ import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { useReadLocalStorage } from "usehooks-ts";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { LiftStrengthLevel } from "@/components/analyzer/session-exercise-block";
 import { getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -45,7 +48,13 @@ export default function LogSessionPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
   const { parsedData, sheetInfo, mutate, isLoading } = useUserLiftingData();
-  const { isMetric, toggleIsMetric } = useAthleteBio();
+  const { age, bodyWeight, sex, standards, isMetric, toggleIsMetric } = useAthleteBio();
+  const e1rmFormula =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
+      initializeWithValue: false,
+    }) ?? "Brzycki";
+  const hasBioData =
+    age && bodyWeight && standards && Object.keys(standards).length > 0;
   const { toast } = useToast();
 
   // Use local time — new Date().toISOString() is UTC, which causes off-by-one in AU/Asia/Pacific
@@ -643,6 +652,13 @@ export default function LogSessionPage() {
               parsedData={parsedData}
               sessionDate={sessionDate}
               isMetric={isMetric}
+              authStatus={authStatus}
+              hasBioData={hasBioData}
+              standards={standards}
+              e1rmFormula={e1rmFormula}
+              age={age}
+              bodyWeight={bodyWeight}
+              sex={sex}
               onUpdateSet={updateSet}
               onDeleteSet={deleteSet}
               onAddSet={(prevSet) => addSet(liftType, prevSet)}
@@ -713,7 +729,7 @@ function SyncIndicator({ state }) {
 
 // --- Lift block ---
 
-function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdateSet, onDeleteSet, onAddSet }) {
+function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, authStatus, hasBioData, standards, e1rmFormula, age, bodyWeight, sex, onUpdateSet, onDeleteSet, onAddSet }) {
   // Only use confirmed (non-pending) sets for plate diagram and last-set reference
   const realSets = sets.filter((s) => !s._pending);
   const unitType = sets[0]?.unitType ?? (isMetric ? "kg" : "lb");
@@ -745,6 +761,20 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
         <h2 className="text-base font-semibold uppercase tracking-wide text-foreground">
           {liftType}
         </h2>
+        {authStatus === "authenticated" && hasBioData && (
+          <LiftStrengthLevel
+            liftType={liftType}
+            workouts={sets}
+            standards={standards}
+            e1rmFormula={e1rmFormula}
+            sessionDate={sessionDate}
+            age={age}
+            bodyWeight={bodyWeight}
+            sex={sex}
+            isMetric={isMetric}
+            asBadge
+          />
+        )}
       </div>
 
       {/* Last session suggestion */}

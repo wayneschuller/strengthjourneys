@@ -18,8 +18,9 @@ import { getServerSession } from "next-auth/next";
 // Date (col A) and Lift Type (col B) are never modified by this route.
 
 export default async function handler(req, res) {
+  if (req.method === "DELETE") return handleDelete(req, res);
   if (req.method !== "PATCH") {
-    res.setHeader("Allow", "PATCH");
+    res.setHeader("Allow", "PATCH, DELETE");
     return res.status(405).json({ error: "Method not allowed" });
   }
 
@@ -77,6 +78,102 @@ export default async function handler(req, res) {
     return res.status(200).json({ updated: true, rowIndex });
   } catch (err) {
     console.error("[log-set] unexpected error:", err);
+    return res.status(500).json({ error: err.message || "Internal server error" });
+  }
+}
+
+// DELETE /api/log-set
+// Deletes a single set row from the sheet.
+//
+// Body: {
+//   ssid: string,
+//   rowIndex: number,          // 1-based row to delete
+//   promoteTo?: {              // if the deleted row is an anchor row (has date/liftType
+//     rowIndex: number,        // in cols A/B that downstream rows inherit), write those
+//     date?: string,           // values to this row BEFORE deleting, so the next row
+//     liftType?: string,       // correctly becomes the new anchor.
+//   }
+// }
+//
+// Anchor row examples:
+//   - Deleting first row of a session: promotes date + liftType to row below.
+//   - Deleting first row of a lift type (not first of session): promotes liftType only.
+//   - Deleting any other set: no promotion needed.
+//
+// The promotion write happens BEFORE the deleteDimension so we use the original
+// row indices (deletion shifts all rows below it up by 1).
+async function handleDelete(req, res) {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session?.accessToken) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const { ssid, rowIndex, promoteTo } = req.body;
+
+  if (!ssid || !rowIndex || typeof rowIndex !== "number") {
+    return res.status(400).json({ error: "Missing required fields: ssid, rowIndex" });
+  }
+
+  const headers = {
+    Authorization: `Bearer ${session.accessToken}`,
+    "Content-Type": "application/json",
+  };
+
+  try {
+    // Step 1: Promote date/liftType to the next anchor row if needed.
+    // This must happen before deletion since deletion shifts all row indices below.
+    if (promoteTo?.rowIndex) {
+      const promoteRange = `A${promoteTo.rowIndex}:B${promoteTo.rowIndex}`;
+      const promoteValues = [[promoteTo.date ?? "", promoteTo.liftType ?? ""]];
+      const promoteRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${promoteRange}?valueInputOption=USER_ENTERED`,
+        {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({ range: promoteRange, majorDimension: "ROWS", values: promoteValues }),
+        },
+      );
+      if (!promoteRes.ok) {
+        const body = await promoteRes.json().catch(() => ({}));
+        const msg = body?.error?.message || "Failed to promote anchor data";
+        console.error("[log-set DELETE] promote failed:", msg);
+        return res.status(promoteRes.status).json({ error: msg });
+      }
+    }
+
+    // Step 2: Delete the row. 1-based rowIndex → 0-based startIndex.
+    const deleteRes = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${ssid}:batchUpdate`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          requests: [
+            {
+              deleteDimension: {
+                range: {
+                  sheetId: 0,
+                  dimension: "ROWS",
+                  startIndex: rowIndex - 1,
+                  endIndex: rowIndex,
+                },
+              },
+            },
+          ],
+        }),
+      },
+    );
+
+    if (!deleteRes.ok) {
+      const body = await deleteRes.json().catch(() => ({}));
+      const msg = body?.error?.message || "Failed to delete row";
+      console.error("[log-set DELETE] deleteDimension failed:", msg);
+      return res.status(deleteRes.status).json({ error: msg });
+    }
+
+    return res.status(200).json({ deleted: true, rowIndex });
+  } catch (err) {
+    console.error("[log-set DELETE] unexpected error:", err);
     return res.status(500).json({ error: err.message || "Internal server error" });
   }
 }

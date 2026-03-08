@@ -45,7 +45,8 @@ const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 
 // Color-coded timing log for sheet API calls.
 // Single-step calls print one line; multi-step calls print a grouped breakdown + total.
-function logSheetTimings(label, timings, totalMs) {
+// Also pushes an entry to the optional addLogEntry callback for the UI activity panel.
+function logSheetTimings(label, timings, totalMs, addLogEntry) {
   if (!isDev) return;
   const total = Math.round(totalMs);
   const color = total < 500 ? "#22c55e" : total < 1500 ? "#f59e0b" : "#ef4444";
@@ -57,35 +58,42 @@ function logSheetTimings(label, timings, totalMs) {
       "color:inherit",
       `color:${color};font-weight:bold`,
     );
-    return;
-  }
-
-  const nameWidth = Math.max(...timings.map((t) => t.name.length));
-  console.groupCollapsed(
-    `%c📡 ${label}%c  %c${total}ms`,
-    "font-weight:bold",
-    "color:inherit",
-    `color:${color};font-weight:bold`,
-  );
-  timings.forEach((t) => {
-    const ms = Math.round(t.ms);
-    const c = ms < 500 ? "#22c55e" : ms < 1500 ? "#f59e0b" : "#ef4444";
-    console.log(
-      `  %c${t.name.padEnd(nameWidth)}%c  %c${String(ms).padStart(5)}ms`,
+  } else {
+    const nameWidth = Math.max(...timings.map((t) => t.name.length));
+    console.groupCollapsed(
+      `%c📡 ${label}%c  %c${total}ms`,
       "font-weight:bold",
       "color:inherit",
-      `color:${c};font-weight:bold`,
+      `color:${color};font-weight:bold`,
     );
-  });
-  const divider = "─".repeat(nameWidth + 10);
-  console.log(`  ${divider}`);
-  console.log(
-    `  %c${"Total".padEnd(nameWidth)}%c  %c${String(total).padStart(5)}ms`,
-    "font-weight:bold",
-    "color:inherit",
-    `color:${color};font-weight:bold`,
-  );
-  console.groupEnd();
+    timings.forEach((t) => {
+      const ms = Math.round(t.ms);
+      const c = ms < 500 ? "#22c55e" : ms < 1500 ? "#f59e0b" : "#ef4444";
+      console.log(
+        `  %c${t.name.padEnd(nameWidth)}%c  %c${String(ms).padStart(5)}ms`,
+        "font-weight:bold",
+        "color:inherit",
+        `color:${c};font-weight:bold`,
+      );
+    });
+    const divider = "─".repeat(nameWidth + 10);
+    console.log(`  ${divider}`);
+    console.log(
+      `  %c${"Total".padEnd(nameWidth)}%c  %c${String(total).padStart(5)}ms`,
+      "font-weight:bold",
+      "color:inherit",
+      `color:${color};font-weight:bold`,
+    );
+    console.groupEnd();
+  }
+
+  // Push to UI activity panel
+  if (addLogEntry) {
+    const detail = timings.length > 1
+      ? timings.map((t) => `${t.name} ${Math.round(t.ms)}ms`).join(" → ")
+      : "";
+    addLogEntry({ type: "timing", label, total, detail, color });
+  }
 }
 
 export default function LogSessionPage() {
@@ -94,6 +102,14 @@ export default function LogSessionPage() {
   const { parsedData, sheetInfo, mutate, isLoading } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
+
+  // Activity log for the debug panel (dev only)
+  const [activityLog, setActivityLog] = useState([]);
+  const addLogEntry = useCallback((entry) => {
+    const ts = new Date();
+    const time = `${String(ts.getHours()).padStart(2, "0")}:${String(ts.getMinutes()).padStart(2, "0")}:${String(ts.getSeconds()).padStart(2, "0")}.${String(ts.getMilliseconds()).padStart(3, "0")}`;
+    setActivityLog((prev) => [...prev.slice(-200), { ...entry, time }]);
+  }, []);
 
   // Use local time — new Date().toISOString() is UTC, which causes off-by-one in AU/Asia/Pacific
   const todayIso = useMemo(() => {
@@ -326,9 +342,9 @@ export default function LogSessionPage() {
         console.error("[sheet/log-set] updateSet failed:", err);
         markError();
       }
-      logSheetTimings("updateSet", [{ name: "PATCH /api/sheet/log-set", ms: performance.now() - t0 }], performance.now() - t0);
+      logSheetTimings("updateSet", [{ name: "PATCH /api/sheet/log-set", ms: performance.now() - t0 }], performance.now() - t0, addLogEntry);
     },
-    [sheetInfo?.ssid, mutate],
+    [sheetInfo?.ssid, mutate, addLogEntry],
   );
 
   // deleteSet: removes a single set row from the sheet.
@@ -362,6 +378,7 @@ export default function LogSessionPage() {
       }
 
       // Optimistically hide the row immediately
+      addLogEntry({ type: "action", label: "deleteSet", detail: `row ${set.rowIndex} · ${set.liftType} · ${set.reps}×${set.weight}` });
       setDeletedRowIndices((prev) => new Set([...prev, set.rowIndex]));
       markSaving();
       const timings = [];
@@ -380,6 +397,7 @@ export default function LogSessionPage() {
         // Surface index drift warning as a toast
         if (data.warning) {
           devLog(`⚠️ ${data.warning}`);
+          addLogEntry({ type: "warning", label: "INDEX DRIFT", detail: data.warning });
           toast({
             title: "Index drift detected",
             description: data.warning,
@@ -409,9 +427,9 @@ export default function LogSessionPage() {
         });
         markError();
       }
-      logSheetTimings("deleteSet", timings, performance.now() - t0);
+      logSheetTimings("deleteSet", timings, performance.now() - t0, addLogEntry);
     },
-    [sheetInfo?.ssid, parsedData, mutate, toast],
+    [sheetInfo?.ssid, parsedData, mutate, toast, addLogEntry],
   );
 
   // Add a new set to an existing lift block.
@@ -440,6 +458,7 @@ export default function LogSessionPage() {
       const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       // Show optimistic row immediately (in-flight)
+      addLogEntry({ type: "action", label: "addSet", detail: `${liftType} · ${reps}×${weight}${unitType} · after row ${insertAfterRowIndex}` });
       setPendingSetsSync((prev) => ({
         ...prev,
         [liftType]: [
@@ -484,9 +503,9 @@ export default function LogSessionPage() {
         });
         markError();
       }
-      logSheetTimings("addSet", timings, performance.now() - t0);
+      logSheetTimings("addSet", timings, performance.now() - t0, addLogEntry);
     },
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry],
   );
 
   // Add a brand-new lift type to the session.
@@ -523,6 +542,7 @@ export default function LogSessionPage() {
       const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       // Show optimistic lift block immediately (in-flight)
+      addLogEntry({ type: "action", label: "addLift", detail: `${liftType} · ${reps}×${weight}${unitType} · after row ${insertAfterRowIndex} · ${hasExistingSession ? "existing session" : "new session"}` });
       setPendingSetsSync((prev) => ({
         ...prev,
         [liftType]: [
@@ -572,9 +592,9 @@ export default function LogSessionPage() {
         });
         markError();
       }
-      logSheetTimings("addLift", timings, performance.now() - t0);
+      logSheetTimings("addLift", timings, performance.now() - t0, addLogEntry);
     },
-    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending],
+    [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending, addLogEntry],
   );
 
   const deleteSession = useCallback(async () => {
@@ -657,7 +677,8 @@ export default function LogSessionPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-3 pb-24 sm:px-4">
+    <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-3 pb-24 sm:px-4 lg:grid-cols-[1fr_340px]">
+    <div>
       {/* Sticky header */}
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 py-3 backdrop-blur-sm">
         <Button
@@ -789,6 +810,64 @@ export default function LogSessionPage() {
           </div>
         </div>
       )}
+    </div>
+    <ActivityPanel entries={activityLog} />
+    </div>
+  );
+}
+
+// --- Activity log panel (dev only) ---
+
+function ActivityPanel({ entries }) {
+  const bottomRef = useRef(null);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [entries.length]);
+
+  return (
+    <div className="sticky top-0 hidden h-[calc(100vh-2rem)] flex-col lg:flex">
+      <div className="flex items-center justify-between border-b px-3 py-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Activity Log</span>
+        <span className="text-xs tabular-nums text-muted-foreground">{entries.length}</span>
+      </div>
+      <div className="flex-1 overflow-y-auto font-mono text-xs">
+        {entries.length === 0 && (
+          <p className="px-3 py-8 text-center text-muted-foreground/50">
+            Sheet API calls will appear here...
+          </p>
+        )}
+        {entries.map((entry, i) => (
+          <div
+            key={i}
+            className={`border-b border-border/20 px-3 py-1.5 ${
+              entry.type === "warning" ? "bg-destructive/10" : ""
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 text-muted-foreground/50">{entry.time}</span>
+              <span className={`font-semibold ${
+                entry.type === "warning" ? "text-destructive"
+                : entry.type === "action" ? "text-blue-500 dark:text-blue-400"
+                : "text-foreground"
+              }`}>
+                {entry.label}
+              </span>
+              {entry.total != null && (
+                <span
+                  className="ml-auto shrink-0 font-bold tabular-nums"
+                  style={{ color: entry.color }}
+                >
+                  {entry.total}ms
+                </span>
+              )}
+            </div>
+            {entry.detail && (
+              <p className="mt-0.5 break-all text-muted-foreground">{entry.detail}</p>
+            )}
+          </div>
+        ))}
+        <div ref={bottomRef} />
+      </div>
     </div>
   );
 }

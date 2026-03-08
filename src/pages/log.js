@@ -725,16 +725,17 @@ function SetRow({ set, onUpdate }) {
     }
   }
 
-  // Pending rows: identical layout, tiny spinner replaces the PR slot
+  // Pending rows: identical layout to the editable row, tiny spinner replaces PR slot.
+  // Keep the reps@weight markup in sync with the editable version below.
   if (set._pending) {
     return (
       <div className="flex items-center gap-4 px-4 py-3">
-        <span className="text-xl font-semibold tabular-nums">
-          {set.reps}
-          <span className="mx-0.5 text-sm font-normal text-muted-foreground">@</span>
-          {set.weight}
-          <span className="ml-0.5 text-sm font-normal text-muted-foreground">{set.unitType}</span>
-        </span>
+        <div className="flex items-center">
+          <span className="w-12 text-right text-xl font-semibold tabular-nums">{set.reps}</span>
+          <span className="mx-0.5 text-base text-muted-foreground">@</span>
+          <span className="w-20 text-left text-xl font-semibold tabular-nums">{set.weight}</span>
+          <span className="ml-0.5 text-sm text-muted-foreground">{set.unitType}</span>
+        </div>
         <div className="flex flex-1 justify-end">
           <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
         </div>
@@ -744,46 +745,55 @@ function SetRow({ set, onUpdate }) {
 
   return (
     <div className="flex items-center gap-4 px-4 py-3">
-      {/* Reps @ Weight unit — grouped tightly as a visual unit */}
-      <div className="flex items-baseline">
-        {editingReps ? (
-          <input
-            type="number"
-            className="w-14 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-            value={draftReps}
-            onChange={(e) => setDraftReps(e.target.value)}
-            onBlur={commitReps}
-            onKeyDown={(e) => e.key === "Enter" && commitReps()}
-            autoFocus
-          />
-        ) : (
-          <button
-            className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
-            onClick={() => setEditingReps(true)}
-          >
-            {displayReps}
-          </button>
-        )}
-        <span className="mx-0.5 text-sm text-muted-foreground">@</span>
-        {editingWeight ? (
-          <input
-            type="number"
-            step="any"
-            className="w-20 rounded border border-primary px-2 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-            value={draftWeight}
-            onChange={(e) => setDraftWeight(e.target.value)}
-            onBlur={commitWeight}
-            onKeyDown={(e) => e.key === "Enter" && commitWeight()}
-            autoFocus
-          />
-        ) : (
-          <button
-            className="rounded px-1 text-xl font-semibold tabular-nums hover:bg-muted/60"
-            onClick={() => setEditingWeight(true)}
-          >
-            {displayWeight}
-          </button>
-        )}
+      {/* Reps @ Weight unit — tight visual unit.
+          Fixed-width containers (w-12 reps, w-20 weight) prevent layout shift when
+          toggling between display (button) and edit (input) modes.
+          Reps right-aligned, weight left-aligned so the digit sits flush against @.
+          Buttons use px-0 to avoid pushing numbers away from @.
+          Keep in sync with the _pending branch above. */}
+      <div className="flex items-center">
+        <div className="w-12">
+          {editingReps ? (
+            <input
+              type="number"
+              className="w-full rounded border border-primary px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
+              value={draftReps}
+              onChange={(e) => setDraftReps(e.target.value)}
+              onBlur={commitReps}
+              onKeyDown={(e) => e.key === "Enter" && commitReps()}
+              autoFocus
+            />
+          ) : (
+            <button
+              className="w-full rounded py-0.5 text-right text-xl font-semibold tabular-nums hover:bg-muted/60"
+              onClick={() => setEditingReps(true)}
+            >
+              {displayReps}
+            </button>
+          )}
+        </div>
+        <span className="mx-0.5 text-base text-muted-foreground">@</span>
+        <div className="w-20">
+          {editingWeight ? (
+            <input
+              type="number"
+              step="any"
+              className="w-full rounded border border-primary px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+              value={draftWeight}
+              onChange={(e) => setDraftWeight(e.target.value)}
+              onBlur={commitWeight}
+              onKeyDown={(e) => e.key === "Enter" && commitWeight()}
+              autoFocus
+            />
+          ) : (
+            <button
+              className="w-full rounded py-0.5 text-left text-xl font-semibold tabular-nums hover:bg-muted/60"
+              onClick={() => setEditingWeight(true)}
+            >
+              {displayWeight}
+            </button>
+          )}
+        </div>
         <span className="ml-0.5 text-sm text-muted-foreground">{set.unitType}</span>
       </div>
 

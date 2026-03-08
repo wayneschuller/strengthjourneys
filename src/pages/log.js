@@ -39,6 +39,8 @@ const BIG_FOUR = [
   { name: "Strict Press", icon: "/strict_press.svg" },
 ];
 
+const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
+
 export default function LogSessionPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
@@ -522,6 +524,21 @@ export default function LogSessionPage() {
   }, [sheetInfo?.ssid, parsedData, sessionDate, sessionDates, todayIso, mutate, navigateToDate]);
 
   // --- Render ---
+
+  if (!isDev) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
+        <Dumbbell className="h-12 w-12 text-muted-foreground" />
+        <h1 className="text-2xl font-bold">Coming Soon</h1>
+        <p className="text-muted-foreground">
+          This feature is under development.
+        </p>
+        <Button asChild>
+          <Link href="/">Back to Home</Link>
+        </Button>
+      </div>
+    );
+  }
 
   if (authStatus === "unauthenticated") {
     return (

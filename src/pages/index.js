@@ -59,6 +59,7 @@ export const featurePages = [
     description: "Log your lifting session and track your progress in real time.",
     IconComponent: Dumbbell,
     authRequired: true, // Only shown to authenticated users in nav and feature cards
+    devOnly: true, // Gated to development env until feature is stable
   },
   {
     href: "/calculator",
@@ -370,6 +371,7 @@ export default function Home() {
         <div className="3xl:grid-cols-4 mt-4 mb-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {featurePages
             .filter((card) => !card.authRequired || authStatus === "authenticated")
+            .filter((card) => !card.devOnly || process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development")
             .map((card, index) => (
               <FeatureCard key={index} index={index} {...card} />
             ))}

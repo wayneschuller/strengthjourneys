@@ -153,7 +153,7 @@ export function NavBar() {
         <MobileNav />
       </div>
       <div className="ml-2 flex flex-1 flex-row items-center justify-end gap-2">
-        {authStatus === "authenticated" && (
+        {authStatus === "authenticated" && process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development" && (
           <Button asChild size="sm" className="hidden gap-1.5 md:flex">
             <Link href="/log">
               <Dumbbell className="h-4 w-4" />

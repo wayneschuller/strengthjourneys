@@ -208,7 +208,7 @@ export default function LogSessionPage() {
       if (!sheetInfo?.ssid) return;
       markSaving();
       try {
-        const res = await fetch("/api/log-set", {
+        const res = await fetch("/api/edit-sheet", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex, ...fields }),
@@ -257,7 +257,7 @@ export default function LogSessionPage() {
 
       markSaving();
       try {
-        const res = await fetch("/api/log-set", {
+        const res = await fetch("/api/edit-sheet", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex: set.rowIndex, promoteTo }),
@@ -309,7 +309,7 @@ export default function LogSessionPage() {
       markSaving();
 
       try {
-        const res = await fetch("/api/log-session", {
+        const res = await fetch("/api/insert-sheet", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -396,7 +396,7 @@ export default function LogSessionPage() {
       ];
 
       try {
-        const res = await fetch("/api/log-session", {
+        const res = await fetch("/api/insert-sheet", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -448,7 +448,7 @@ export default function LogSessionPage() {
 
     markSaving();
     try {
-      const res = await fetch("/api/delete-session", {
+      const res = await fetch("/api/delete-sheet", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

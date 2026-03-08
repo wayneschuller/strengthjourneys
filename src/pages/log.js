@@ -959,8 +959,10 @@ function AddLiftButton({ parsedData, onAddLift, label = "Add Lift" }) {
   }, [showInput]);
 
   function submit(lt) {
-    const clean = (lt ?? liftType).trim();
-    if (!clean) return;
+    const raw = (lt ?? liftType).trim();
+    if (!raw) return;
+    // Title Case: "barbell row" → "Barbell Row"
+    const clean = raw.replace(/\S+/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
     setShowInput(false);
     setLiftType("");
     onAddLift(clean);

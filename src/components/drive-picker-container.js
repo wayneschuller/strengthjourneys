@@ -28,13 +28,16 @@ export function DrivePickerContainer({
   oauthToken,
   selectSheet,
   onPick,
+  onPickerOpen,
+  onPickerClose,
 }) {
   const [showPicker, setShowPicker] = useState(false);
   const hasCalledReady = useRef(false);
 
   const openPicker = useCallback(() => {
     setShowPicker(true);
-  }, []);
+    onPickerOpen?.();
+  }, [onPickerOpen]);
 
   useEffect(() => {
     if (trigger && oauthToken && openPicker && onReady && !hasCalledReady.current) {
@@ -55,14 +58,16 @@ export function DrivePickerContainer({
         else selectSheet?.(doc.id);
       }
       setShowPicker(false);
+      onPickerClose?.();
     },
-    [onPick, selectSheet],
+    [onPick, onPickerClose, selectSheet],
   );
 
   const handleCanceled = useCallback(() => {
     gaTrackSheetPickerCancelled();
     setShowPicker(false);
-  }, []);
+    onPickerClose?.();
+  }, [onPickerClose]);
 
   if (!trigger) return null;
 

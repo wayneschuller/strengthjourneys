@@ -388,13 +388,19 @@ export function SheetSetupDialog() {
           setCreatedSheetReason(payload?.reason || null);
           setSheetDiscoveryStatusMessage("");
           setOnboardingState("created_confirmation");
+        } else {
+          // If there's no confirmation to show, close the dialog now.
+          // The auto-close effect won't fire when the ssid hasn't changed
+          // (e.g. user re-picked the same sheet).
+          setOpen(false);
+          resetUiState();
         }
         if (payload?.action === "create_new_user_sheet" && router.pathname !== "/") {
           void router.replace("/");
         }
       }
     },
-    [enrichCandidateSheets, exitSignedInDemoMode, router, selectSheet],
+    [enrichCandidateSheets, exitSignedInDemoMode, resetUiState, router, selectSheet],
   );
 
   const resolveSheetFlow = useCallback(
@@ -574,6 +580,8 @@ export function SheetSetupDialog() {
         trigger={authStatus === "authenticated"}
         oauthToken={session?.accessToken}
         selectSheet={selectSheet}
+        onPickerOpen={() => setOpen(false)}
+        onPickerClose={() => setOpen(true)}
         onPick={(doc) => {
           if (!doc?.id) return;
           runLinkAction({

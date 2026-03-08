@@ -879,3 +879,11 @@
   border-color: hsl(20 5.9% 90%) !important;
   box-shadow: none !important;
 }
+
+/* Center Google Drive picker vertically — Google sets an inline `top` that
+   positions the dialog too high, causing it to clip on smaller viewports. */
+.picker-dialog {
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}

@@ -26,7 +26,7 @@ export default async function handler(req, res) {
   await getExistingRecord(base.kvKey);
 
   try {
-    devLog("[sheet-flow] enrich:start", {
+    devLog("[sheet/enrich] enrich:start", {
       intent,
       candidateCount: candidates.length,
       enrichCount: candidateIds.length,
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
       locale: base.locale,
       debug,
     });
-    devLog("[sheet-flow] enrich:done", {
+    devLog("[sheet/enrich] enrich:done", {
       intent,
       enrichedCount: enriched.length,
     });
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
       ),
     );
   } catch (error) {
-    console.error("[sheet-flow] enrich failed:", error);
+    console.error("[sheet/enrich] enrich failed:", error);
     res.status(500).json({ error: error.message || "Candidate enrichment failed" });
   }
 }

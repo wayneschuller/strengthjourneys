@@ -282,7 +282,7 @@ export function SheetSetupDialog() {
             : enrichIds[0];
         const secondaryIds = enrichIds.filter((id) => id !== primaryId);
 
-        const primaryResponse = await fetch("/api/enrich-sheet-candidates", {
+        const primaryResponse = await fetch("/api/sheet/enrich", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -304,7 +304,7 @@ export function SheetSetupDialog() {
 
         if (secondaryIds.length > 0) {
           setSheetDiscoveryStatusMessage("Checking the rest of your likely lifting logs.");
-          const secondaryResponse = await fetch("/api/enrich-sheet-candidates", {
+          const secondaryResponse = await fetch("/api/sheet/enrich", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -420,7 +420,7 @@ export function SheetSetupDialog() {
       );
 
       try {
-        const response = await fetch("/api/resolve-sheet-flow", {
+        const response = await fetch("/api/sheet/resolve", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -455,7 +455,7 @@ export function SheetSetupDialog() {
       setIsProvisionActionLoading(true);
       setOnboardingState("linking_or_creating");
       try {
-        const response = await fetch("/api/link-sheet", {
+        const response = await fetch("/api/sheet/link", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

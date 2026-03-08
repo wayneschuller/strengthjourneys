@@ -92,7 +92,7 @@ export function AvatarDropdown() {
   const disconnectCurrentSheet = useCallback(async () => {
     setIsDisconnectingSheet(true);
     try {
-      const response = await fetch("/api/clear-sheet-link", {
+      const response = await fetch("/api/sheet/unlink", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

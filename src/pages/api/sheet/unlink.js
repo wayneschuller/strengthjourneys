@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
     if (Object.keys(nextRecord).length === 0) {
       await kv.del(base.kvKey);
-      devLog("[sheet-flow] cleared current sheet link and removed empty KV record", {
+      devLog("[sheet/unlink] cleared current sheet link and removed empty KV record", {
         email: base.session.user.email,
       });
       res.status(200).json({
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     }
 
     await kv.set(base.kvKey, nextRecord);
-    devLog("[sheet-flow] cleared current sheet link from KV", {
+    devLog("[sheet/unlink] cleared current sheet link from KV", {
       email: base.session.user.email,
     });
     res.status(200).json({
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
       message: "Current sheet disconnected.",
     });
   } catch (error) {
-    console.error("[sheet-flow] clear current sheet link failed:", error);
+    console.error("[sheet/unlink] clear current sheet link failed:", error);
     res.status(500).json({ error: error.message || "Failed to disconnect current sheet" });
   }
 }

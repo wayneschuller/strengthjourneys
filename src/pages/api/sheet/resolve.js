@@ -58,7 +58,7 @@ export default async function handler(req, res) {
 
   try {
     debug.path.push("resolve:start");
-    devLog("[sheet-flow] resolve:start", {
+    devLog("[sheet/resolve] resolve:start", {
       intent,
       hadLocalSheetBefore,
       hasKvRecord: Boolean(Object.keys(existingRecord || {}).length),
@@ -76,11 +76,11 @@ export default async function handler(req, res) {
       validCandidates: rankedCandidates,
     });
     debug.lifecycle = lifecycle;
-    devLog("[sheet-flow] lifecycle classification", lifecycle);
+    devLog("[sheet/resolve] lifecycle classification", lifecycle);
 
     if (intent === "switch_sheet") {
       debug.path.push("resolve:choose_sheet:switch");
-      devLog("[sheet-flow] resolve:action choose_sheet", {
+      devLog("[sheet/resolve] resolve:action choose_sheet", {
         intent,
         candidateCount: rankedCandidates.length,
       });
@@ -99,7 +99,7 @@ export default async function handler(req, res) {
           ? "drive_single"
           : "legacy_drive_relink";
       debug.path.push(`resolve:single_candidate:${reason}`);
-      devLog("[sheet-flow] resolve:action link_existing", {
+      devLog("[sheet/resolve] resolve:action link_existing", {
         intent,
         reason,
         ssid: candidate.id,
@@ -121,7 +121,7 @@ export default async function handler(req, res) {
 
     if (rankedCandidates.length > 1) {
       debug.path.push("resolve:choose_sheet:multiple");
-      devLog("[sheet-flow] resolve:action choose_sheet", {
+      devLog("[sheet/resolve] resolve:action choose_sheet", {
         intent,
         candidateCount: rankedCandidates.length,
       });
@@ -135,7 +135,7 @@ export default async function handler(req, res) {
 
     if (intent === "bootstrap" && lifecycle.isTrueNewUser) {
       debug.path.push("resolve:true_new_user:create_bootstrap");
-      devLog("[sheet-flow] resolve:action create_new_user_sheet", {
+      devLog("[sheet/resolve] resolve:action create_new_user_sheet", {
         sheetName,
         preferredUnitType,
       });
@@ -181,7 +181,7 @@ export default async function handler(req, res) {
           nowIso,
         });
       }
-      devLog("[sheet-flow] founder activation after bootstrap template", { prompted });
+      devLog("[sheet/resolve] founder activation after bootstrap template", { prompted });
       return respondCreateNewUserSheet(res, created, debug);
     }
 
@@ -196,7 +196,7 @@ export default async function handler(req, res) {
         base.headers,
       );
       debug.priorProvisionedSheet = priorSheetCheck;
-      devLog("[sheet-flow] prior provisioned sheet check", {
+      devLog("[sheet/resolve] prior provisioned sheet check", {
         ssid: previousProvisionedSheetId,
         state: priorSheetCheck.state,
         httpStatus: priorSheetCheck.httpStatus,
@@ -207,7 +207,7 @@ export default async function handler(req, res) {
         (priorSheetCheck.state === "unknown" && !previousProvisionedSheetId)
       ) {
         debug.path.push("resolve:returning_missing_sheet:reprovision");
-        devLog("[sheet-flow] resolve:action reprovision_missing_sheet", {
+        devLog("[sheet/resolve] resolve:action reprovision_missing_sheet", {
           previousProvisionedSheetId,
           previousSheetState: priorSheetCheck.state,
           sheetName,
@@ -248,13 +248,13 @@ export default async function handler(req, res) {
     }
 
     debug.path.push("resolve:recover_returning_user");
-    devLog("[sheet-flow] resolve:action recover_returning_user", {
+    devLog("[sheet/resolve] resolve:action recover_returning_user", {
       intent,
       hadLocalSheetBefore,
     });
     return respondRecoverReturningUser(res, debug);
   } catch (error) {
-    console.error("[sheet-flow] resolve failed:", error);
+    console.error("[sheet/resolve] resolve failed:", error);
     res.status(500).json({ error: error.message || "Sheet flow resolution failed" });
   }
 }

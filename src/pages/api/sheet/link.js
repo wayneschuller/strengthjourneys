@@ -54,7 +54,7 @@ export default async function handler(req, res) {
     let reason = "user_selection";
     let wasCreated = false;
 
-    devLog("[sheet-flow] link:start", {
+    devLog("[sheet/link] link:start", {
       intent,
       mode,
       selectedSsid,
@@ -125,7 +125,7 @@ export default async function handler(req, res) {
       connectionMethod,
       provisioningMethod,
     };
-    devLog("[sheet-flow] link:persisted", debug.selected);
+    devLog("[sheet/link] link:persisted", debug.selected);
 
     const shouldNotifyActivation =
       intent === "bootstrap" &&
@@ -155,7 +155,7 @@ export default async function handler(req, res) {
           nowIso,
         });
       }
-      devLog("[sheet-flow] founder activation after link", {
+      devLog("[sheet/link] founder activation after link", {
         prompted,
         connectionMethod,
         provisioningMethod,
@@ -172,7 +172,7 @@ export default async function handler(req, res) {
       debug,
     });
   } catch (error) {
-    console.error("[sheet-flow] link failed:", error);
+    console.error("[sheet/link] link failed:", error);
     res.status(500).json({ error: error.message || "Sheet linking failed" });
   }
 }

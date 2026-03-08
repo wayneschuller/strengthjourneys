@@ -842,9 +842,10 @@ const API_DESCRIPTIONS = {
 };
 
 function ActivityPanel({ entries }) {
-  const bottomRef = useRef(null);
+  const scrollRef = useRef(null);
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [entries.length]);
 
   return (
@@ -853,7 +854,7 @@ function ActivityPanel({ entries }) {
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Activity Log</span>
         <span className="text-xs tabular-nums text-muted-foreground">{entries.length}</span>
       </div>
-      <div className="flex-1 overflow-y-auto text-xs">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto text-xs">
         {entries.length === 0 && (
           <div className="px-3 py-8 text-center text-muted-foreground/50">
             <p>Sheet API calls will appear here as you add, edit, and delete sets.</p>
@@ -909,7 +910,6 @@ function ActivityPanel({ entries }) {
             </div>
           );
         })}
-        <div ref={bottomRef} />
       </div>
     </div>
   );

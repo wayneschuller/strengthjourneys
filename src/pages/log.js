@@ -19,9 +19,16 @@ import {
   Trash2,
   Dumbbell,
   Check,
+  Info,
   Loader2,
   X,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 
 // --- Big Four lifts with SVG icons ---
 
@@ -558,14 +565,6 @@ export default function LogSessionPage() {
 
         <SyncIndicator state={syncState} />
 
-        <button
-          className="shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
-          onClick={() => toggleIsMetric()}
-          title={`Switch to ${isMetric ? "lb" : "kg"}`}
-        >
-          {isMetric ? "kg" : "lb"}
-        </button>
-
         <Button
           variant="ghost"
           size="icon"
@@ -738,6 +737,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
           <SetRow
             key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
             set={set}
+            isMetric={isMetric}
             onUpdate={set._pending ? null : (fields) => onUpdateSet(set.rowIndex, fields)}
             onDelete={set._pending || !set.rowIndex ? null : () => onDeleteSet(set)}
           />
@@ -769,16 +769,39 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
   );
 }
 
+function UnitLabel({ unitType, mismatch }) {
+  if (!mismatch) {
+    return <span className="text-sm font-medium text-muted-foreground">{unitType}</span>;
+  }
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex items-center gap-0.5 text-sm font-medium text-muted-foreground">
+            {unitType}
+            <Info className="h-3 w-3" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-52 text-center">
+          Showing {unitType} — the original unit in your spreadsheet
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 // --- Set row (click-to-edit) ---
 // Layout: [reps] @ [weight][unit]  [notes flex-1]  [PR]
 
-function SetRow({ set, onUpdate, onDelete }) {
+function SetRow({ set, isMetric, onUpdate, onDelete }) {
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   const [draftReps, setDraftReps] = useState(String(set.reps ?? ""));
   const [draftWeight, setDraftWeight] = useState(String(set.weight ?? ""));
   const [draftNotes, setDraftNotes] = useState(set.notes ?? "");
+  const prefUnit = isMetric ? "kg" : "lb";
+  const unitMismatch = set.unitType && set.unitType !== prefUnit;
 
   // Optimistic display: holds committed value until parsedData catches up
   const [pendingReps, setPendingReps] = useState(null);
@@ -835,7 +858,7 @@ function SetRow({ set, onUpdate, onDelete }) {
           <span className="w-12 text-right text-xl font-semibold tabular-nums">{set.reps}</span>
           <span className="mx-0.5 text-base text-muted-foreground">@</span>
           <span className="w-14 text-left text-xl font-semibold tabular-nums">{set.weight}</span>
-          <span className="text-sm font-medium text-muted-foreground">{set.unitType}</span>
+          <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
         </div>
         <div className="flex flex-1 justify-end">
           <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
@@ -895,7 +918,7 @@ function SetRow({ set, onUpdate, onDelete }) {
             </button>
           )}
         </div>
-        <span className="text-sm font-medium text-muted-foreground">{set.unitType}</span>
+        <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
       </div>
 
       {/* Notes — flex-1, tap to edit */}

@@ -7,7 +7,7 @@ import { useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { LiftStrengthLevel } from "@/components/analyzer/session-exercise-block";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
+import { getReadableDateString, getDisplayWeight, devLog } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,51 @@ const BIG_FOUR = [
 ];
 
 const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
+
+// Color-coded timing log for sheet API calls.
+// Single-step calls print one line; multi-step calls print a grouped breakdown + total.
+function logSheetTimings(label, timings, totalMs) {
+  if (!isDev) return;
+  const total = Math.round(totalMs);
+  const color = total < 500 ? "#22c55e" : total < 1500 ? "#f59e0b" : "#ef4444";
+
+  if (timings.length <= 1) {
+    console.log(
+      `%c📡 ${label}%c  %c${total}ms`,
+      "font-weight:bold",
+      "color:inherit",
+      `color:${color};font-weight:bold`,
+    );
+    return;
+  }
+
+  const nameWidth = Math.max(...timings.map((t) => t.name.length));
+  console.groupCollapsed(
+    `%c📡 ${label}%c  %c${total}ms`,
+    "font-weight:bold",
+    "color:inherit",
+    `color:${color};font-weight:bold`,
+  );
+  timings.forEach((t) => {
+    const ms = Math.round(t.ms);
+    const c = ms < 500 ? "#22c55e" : ms < 1500 ? "#f59e0b" : "#ef4444";
+    console.log(
+      `  %c${t.name.padEnd(nameWidth)}%c  %c${String(ms).padStart(5)}ms`,
+      "font-weight:bold",
+      "color:inherit",
+      `color:${c};font-weight:bold`,
+    );
+  });
+  const divider = "─".repeat(nameWidth + 10);
+  console.log(`  ${divider}`);
+  console.log(
+    `  %c${"Total".padEnd(nameWidth)}%c  %c${String(total).padStart(5)}ms`,
+    "font-weight:bold",
+    "color:inherit",
+    `color:${color};font-weight:bold`,
+  );
+  console.groupEnd();
+}
 
 export default function LogSessionPage() {
   const { status: authStatus } = useSession();
@@ -266,6 +311,7 @@ export default function LogSessionPage() {
     async (rowIndex, fields) => {
       if (!sheetInfo?.ssid) return;
       markSaving();
+      const t0 = performance.now();
       try {
         const res = await fetch("/api/sheet/log-set", {
           method: "PATCH",
@@ -280,6 +326,7 @@ export default function LogSessionPage() {
         console.error("[sheet/log-set] updateSet failed:", err);
         markError();
       }
+      logSheetTimings("updateSet", [{ name: "PATCH /api/sheet/log-set", ms: performance.now() - t0 }], performance.now() - t0);
     },
     [sheetInfo?.ssid, mutate],
   );
@@ -317,14 +364,34 @@ export default function LogSessionPage() {
       // Optimistically hide the row immediately
       setDeletedRowIndices((prev) => new Set([...prev, set.rowIndex]));
       markSaving();
+      const timings = [];
+      const t0 = performance.now();
       try {
+        const tApi = performance.now();
         const res = await fetch("/api/sheet/log-set", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex: set.rowIndex, promoteTo }),
+          body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex: set.rowIndex, expectedDate: set.date, promoteTo }),
         });
-        if (!res.ok) throw new Error((await res.json()).error || "Delete failed");
+        timings.push({ name: "DELETE /api/sheet/log-set", ms: performance.now() - tApi });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Delete failed");
+
+        // Surface index drift warning as a toast
+        if (data.warning) {
+          devLog(`⚠️ ${data.warning}`);
+          toast({
+            title: "Index drift detected",
+            description: data.warning,
+            variant: "destructive",
+            duration: 8000,
+          });
+        }
+
+        const tMutate = performance.now();
         await mutate();
+        timings.push({ name: "SWR mutate()", ms: performance.now() - tMutate });
+
         // Clear deleted index — parsedData no longer contains the row
         setDeletedRowIndices((prev) => {
           const next = new Set(prev);
@@ -342,8 +409,9 @@ export default function LogSessionPage() {
         });
         markError();
       }
+      logSheetTimings("deleteSet", timings, performance.now() - t0);
     },
-    [sheetInfo?.ssid, parsedData, mutate],
+    [sheetInfo?.ssid, parsedData, mutate, toast],
   );
 
   // Add a new set to an existing lift block.
@@ -380,8 +448,11 @@ export default function LogSessionPage() {
         ],
       }));
       markSaving();
+      const timings = [];
+      const t0 = performance.now();
 
       try {
+        const tApi = performance.now();
         const res = await fetch("/api/sheet/log-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -391,6 +462,7 @@ export default function LogSessionPage() {
             insertAfterRowIndex,
           }),
         });
+        timings.push({ name: "POST /api/sheet/log-session", ms: performance.now() - tApi });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Add set failed");
         const { firstRowIndex } = data;
@@ -412,6 +484,7 @@ export default function LogSessionPage() {
         });
         markError();
       }
+      logSheetTimings("addSet", timings, performance.now() - t0);
     },
     [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending],
   );
@@ -458,6 +531,8 @@ export default function LogSessionPage() {
         ],
       }));
       markSaving();
+      const timings = [];
+      const t0 = performance.now();
 
       const row = [
         hasExistingSession ? "" : sessionDate,
@@ -469,6 +544,7 @@ export default function LogSessionPage() {
       ];
 
       try {
+        const tApi = performance.now();
         const res = await fetch("/api/sheet/log-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -479,6 +555,7 @@ export default function LogSessionPage() {
             newSession: !hasExistingSession,
           }),
         });
+        timings.push({ name: "POST /api/sheet/log-session", ms: performance.now() - tApi });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed");
         const { firstRowIndex } = data;
@@ -495,6 +572,7 @@ export default function LogSessionPage() {
         });
         markError();
       }
+      logSheetTimings("addLift", timings, performance.now() - t0);
     },
     [sheetInfo?.ssid, parsedData, sessionDate, isMetric, setPendingSetsSync, promoteFirstPending],
   );

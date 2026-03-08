@@ -115,6 +115,8 @@ export default async function handler(req, res) {
 // Body: {
 //   ssid: string,
 //   rowIndex: number,          // 1-based row to delete
+//   expectedDate?: string,     // YYYY-MM-DD — if provided, pre-read verifies the row
+//                               // belongs to this session before deleting
 //   promoteTo?: {              // if the deleted row is an anchor row (has date/liftType
 //     rowIndex: number,        // in cols A/B that downstream rows inherit), write those
 //     date?: string,           // values to this row BEFORE deleting, so the next row
@@ -135,7 +137,7 @@ async function handleDelete(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, rowIndex, promoteTo } = req.body;
+  const { ssid, rowIndex, expectedDate, promoteTo } = req.body;
 
   if (!ssid || !rowIndex || typeof rowIndex !== "number") {
     return res.status(400).json({ error: "Missing required fields: ssid, rowIndex" });
@@ -146,7 +148,31 @@ async function handleDelete(req, res) {
     "Content-Type": "application/json",
   };
 
+  let indexDriftWarning = null;
+
   try {
+    // Step 0: Pre-read the target row to detect index drift.
+    // If the row's date doesn't match what the client expects, we still proceed
+    // (observability only) but return a warning so the client can surface it.
+    if (expectedDate) {
+      const readRange = `A${rowIndex}:B${rowIndex}`;
+      const readRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${readRange}`,
+        { headers },
+      );
+      if (readRes.ok) {
+        const readData = await readRes.json();
+        const cellDate = readData.values?.[0]?.[0] ?? "";
+        const cellLift = readData.values?.[0]?.[1] ?? "";
+        // Non-anchor rows have empty date cells (inherited from above), which is fine.
+        // Only flag when the cell has a DIFFERENT date — that means index drift.
+        if (cellDate && cellDate !== expectedDate) {
+          indexDriftWarning = `Index drift: row ${rowIndex} has date "${cellDate}" but client expected "${expectedDate}" (liftType in cell: "${cellLift}")`;
+          console.warn("[sheet/log-set DELETE]", indexDriftWarning);
+        }
+      }
+    }
+
     // Step 1: Promote date/liftType to the next anchor row if needed.
     // This must happen before deletion since deletion shifts all row indices below.
     if (promoteTo?.rowIndex) {
@@ -198,7 +224,7 @@ async function handleDelete(req, res) {
       return res.status(deleteRes.status).json({ error: msg });
     }
 
-    return res.status(200).json({ deleted: true, rowIndex });
+    return res.status(200).json({ deleted: true, rowIndex, ...(indexDriftWarning && { warning: indexDriftWarning }) });
   } catch (err) {
     console.error("[sheet/log-set DELETE] unexpected error:", err);
     return res.status(500).json({ error: err.message || "Internal server error" });

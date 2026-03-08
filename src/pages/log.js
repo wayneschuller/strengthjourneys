@@ -126,6 +126,13 @@ export default function LogSessionPage() {
   const [pendingSets, setPendingSets] = useState({});
   const pendingSetsRef = useRef({});
   const [deletedRowIndices, setDeletedRowIndices] = useState(new Set());
+
+  // Mutation guard: prevents concurrent sheet API calls that could race on
+  // stale row indices. Every mutation path (addSet, addLift, deleteSet,
+  // updateSet) checks savingRef.current and bails silently if true.
+  // This is a ref (not state) so the guard works without triggering re-renders
+  // — buttons stay visually enabled, clicks are just silently dropped.
+  // Set to true in markSaving(), cleared in markSaved()/markError().
   const savingRef = useRef(false);
   const savedTimerRef = useRef(null);
 

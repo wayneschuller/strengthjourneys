@@ -246,12 +246,16 @@ export default function LogSessionPage() {
       const allKnownRows = [...parsedRows, ...confirmedPendingRows];
       const insertAfterRowIndex = allKnownRows.length ? Math.max(...allKnownRows) : null;
 
+      // Stable temp key so the SetRow component keeps the same React key through
+      // the in-flight → confirmed transition (avoiding a remount/flash).
+      const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
       // Show optimistic row immediately (in-flight)
       setPendingSetsSync((prev) => ({
         ...prev,
         [liftType]: [
           ...(prev[liftType] ?? []),
-          { date: sessionDate, liftType, reps, weight, unitType, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true },
+          { date: sessionDate, liftType, reps, weight, unitType, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true, _tempId: tempId },
         ],
       }));
       markSaving();
@@ -269,10 +273,12 @@ export default function LogSessionPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Add set failed");
         const { firstRowIndex } = data;
-        // Promote pending → confirmed with real rowIndex
+        // Promote pending → confirmed with real rowIndex.
+        // Do NOT call mutate() here — firing a revalidation mid-session causes parsedData
+        // to update while confirmed-pending rows are still present, which creates a brief
+        // intermediate state where the row appears to disappear and reappear.
+        // SWR's natural revalidateOnFocus will sync when the user leaves the page.
         promoteFirstPending(liftType, firstRowIndex);
-        // Background sync — SWR will clean up confirmed rows via the cleanup effect
-        mutate();
         markSaved();
       } catch (err) {
         console.error("[log-session] addSet failed:", err);
@@ -320,12 +326,14 @@ export default function LogSessionPage() {
       const hasExistingSession = allSessionRows.length > 0 || hasPendingForDate;
       const insertAfterRowIndex = hasExistingSession ? Math.max(...allSessionRows) : null;
 
+      const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
       // Show optimistic lift block immediately (in-flight)
       setPendingSetsSync((prev) => ({
         ...prev,
         [liftType]: [
           ...(prev[liftType] ?? []),
-          { date: sessionDate, liftType, reps, weight, unitType, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true },
+          { date: sessionDate, liftType, reps, weight, unitType, rowIndex: null, isGoal: false, isHistoricalPR: false, _pending: true, _tempId: tempId },
         ],
       }));
       markSaving();
@@ -353,8 +361,8 @@ export default function LogSessionPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed");
         const { firstRowIndex } = data;
+        // See addSet for why we don't call mutate() here.
         promoteFirstPending(liftType, firstRowIndex);
-        mutate();
         markSaved();
       } catch (err) {
         console.error("[add-lift] failed:", err);
@@ -636,7 +644,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
       <div className="mt-1 divide-y divide-border/50 border-t border-border/60">
         {sets.map((set, idx) => (
           <SetRow
-            key={set.rowIndex ?? `pending-${idx}`}
+            key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
             set={set}
             onUpdate={set._pending ? null : (fields) => onUpdateSet(set.rowIndex, fields)}
           />

@@ -677,7 +677,7 @@ export default function LogSessionPage() {
   }
 
   return (
-    <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-3 sm:px-4 lg:grid-cols-[1fr_340px]">
+    <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-3 sm:px-4 lg:grid-cols-[minmax(0,2xl)_1fr]">
     <div className="pb-24">
       {/* Sticky header */}
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 py-3 backdrop-blur-sm">
@@ -848,7 +848,7 @@ function ActivityPanel({ entries }) {
   }, [entries.length]);
 
   return (
-    <div className="sticky top-0 hidden h-[calc(100vh-2rem)] flex-col rounded-lg border bg-card lg:flex">
+    <div className="sticky top-0 hidden max-h-screen flex-col overflow-hidden rounded-lg border bg-card lg:flex">
       <div className="flex items-center justify-between border-b px-3 py-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Activity Log</span>
         <span className="text-xs tabular-nums text-muted-foreground">{entries.length}</span>

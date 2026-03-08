@@ -163,8 +163,11 @@ export default function LogSessionPage() {
 
   const nextSessionDate = useMemo(() => {
     const later = sessionDates.filter((d) => d > sessionDate);
-    return later.length ? later[0] : null;
-  }, [sessionDates, sessionDate]);
+    if (later.length) return later[0];
+    // No future session, but if we're viewing a past date, allow navigating to today
+    if (sessionDate < todayIso) return todayIso;
+    return null;
+  }, [sessionDates, sessionDate, todayIso]);
 
   // --- Sync helpers ---
 
@@ -508,9 +511,18 @@ export default function LogSessionPage() {
           <h1 className="text-lg font-semibold leading-tight">
             {isToday ? "Today" : getReadableDateString(sessionDate, true)}
           </h1>
-          <p className="text-xs text-muted-foreground">
-            {getReadableDateString(sessionDate, true)}
-          </p>
+          {isToday ? (
+            <p className="text-xs text-muted-foreground">
+              {getReadableDateString(sessionDate, true)}
+            </p>
+          ) : (
+            <button
+              className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              onClick={() => navigateToDate(todayIso)}
+            >
+              Back to today
+            </button>
+          )}
         </div>
 
         <SyncIndicator state={syncState} />
@@ -526,17 +538,6 @@ export default function LogSessionPage() {
         </Button>
       </div>
 
-      {/* Jump to today — subtle link under the date */}
-      {!isToday && (
-        <div className="-mt-1 mb-2 flex justify-center">
-          <button
-            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-            onClick={() => navigateToDate(todayIso)}
-          >
-            Back to today
-          </button>
-        </div>
-      )}
 
       {/* Empty state */}
       {!isLoading && !hasSession && (

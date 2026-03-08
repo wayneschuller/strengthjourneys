@@ -993,9 +993,12 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
       if (value > topValue) topSet = s;
     }
 
-    const { value: topWeight } = getDisplayWeight(topSet, isMetric);
+    const { value: lastTopWeight } = getDisplayWeight(topSet, isMetric);
     const topReps = topSet.reps;
-    if (!topWeight || topWeight <= 0) return null;
+    if (!lastTopWeight || lastTopWeight <= 0) return null;
+
+    // Assume progressive overload: target is last session's top + one increment
+    const topWeight = lastTopWeight + minIncrement;
 
     // Generate the full warmup progression using shared algorithm
     const progression = generateSessionSets(

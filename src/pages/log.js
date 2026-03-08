@@ -677,7 +677,7 @@ export default function LogSessionPage() {
   }
 
   return (
-    <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-3 sm:px-4 lg:grid-cols-[minmax(0,2xl)_1fr]">
+    <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-3 sm:px-4 lg:grid-cols-[minmax(0,42rem)_1fr]">
     <div className="pb-24">
       {/* Sticky header */}
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 py-3 backdrop-blur-sm">

@@ -493,7 +493,7 @@ export default function LogSessionPage() {
   return (
     <div className="mx-auto max-w-2xl px-3 pb-24 sm:px-4">
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 flex items-center gap-2 bg-background/95 py-3 backdrop-blur-sm">
+      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 py-3 backdrop-blur-sm">
         <Button
           variant="ghost"
           size="icon"
@@ -537,7 +537,7 @@ export default function LogSessionPage() {
 
       {/* Empty state */}
       {!isLoading && !hasSession && (
-        <div className="mt-8 flex flex-col items-center gap-8">
+        <div className="mt-6 flex flex-col items-center gap-6">
           <div className="space-y-1 text-center">
             <h2 className="text-xl font-semibold">
               {isToday ? "Start today's session" : "Start a session for this date"}
@@ -554,7 +554,7 @@ export default function LogSessionPage() {
                 key={name}
                 title={`Start with ${name}`}
                 onClick={() => addLift(name)}
-                className="flex flex-col items-center gap-3 rounded-xl border border-border/60 px-3 py-5 transition-colors hover:border-primary hover:bg-muted/40 active:scale-95"
+                className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-3 py-5 shadow-sm transition-colors hover:border-primary hover:bg-muted/40 active:scale-95"
               >
                 <Image src={icon} alt={name} width={80} height={80} />
                 <span className="text-sm font-medium leading-tight">{name}</span>
@@ -568,7 +568,7 @@ export default function LogSessionPage() {
 
       {/* Lift blocks */}
       {hasSession && (
-        <div className="space-y-8">
+        <div className="space-y-5">
           {Object.entries(sessionLiftsWithPending).map(([liftType, sets]) => (
             <LiftBlock
               key={liftType}
@@ -662,10 +662,10 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
   const bigFourEntry = BIG_FOUR.find((b) => b.name === liftType);
 
   return (
-    <div className="relative space-y-1 md:pl-20">
+    <div className="relative space-y-1 rounded-xl border bg-card p-4 shadow-sm md:pl-20">
       {/* Desktop: large icon in left gutter (4× = 64px) */}
       {bigFourEntry && (
-        <div className="absolute left-0 top-0 hidden md:block">
+        <div className="absolute left-4 top-4 hidden md:block">
           <Image src={bigFourEntry.icon} alt="" width={64} height={64} />
         </div>
       )}
@@ -676,7 +676,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
         {bigFourEntry && (
           <Image src={bigFourEntry.icon} alt="" width={48} height={48} className="md:hidden" />
         )}
-        <h2 className="text-base font-semibold uppercase tracking-wide text-foreground/80">
+        <h2 className="text-base font-semibold uppercase tracking-wide text-foreground">
           {liftType}
         </h2>
       </div>
@@ -690,7 +690,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
       />
 
       {/* Set rows — clean horizontal line above first row, dividers between */}
-      <div className="mt-1 divide-y divide-border/50 border-t border-border/60">
+      <div className="mt-1 divide-y divide-border/40 border-t border-border/40">
         {sets.map((set, idx) => (
           <SetRow
             key={set._tempId ?? set.rowIndex ?? `pending-${idx}`}
@@ -702,7 +702,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
 
         {/* Add set */}
         <button
-          className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+          className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
           onClick={() => onAddSet(lastRealSet)}
         >
           <Plus className="h-4 w-4" />
@@ -712,7 +712,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
 
       {/* Plate diagram */}
       {platesPerSide.length > 0 && (
-        <div className="flex justify-end opacity-60">
+        <div className="flex justify-end opacity-75">
           <PlateDiagram
             platesPerSide={platesPerSide}
             barWeight={barWeight}
@@ -792,7 +792,7 @@ function SetRow({ set, onUpdate, onDelete }) {
           <span className="w-12 text-right text-xl font-semibold tabular-nums">{set.reps}</span>
           <span className="mx-0.5 text-base text-muted-foreground">@</span>
           <span className="w-20 text-left text-xl font-semibold tabular-nums">{set.weight}</span>
-          <span className="ml-0.5 text-sm text-muted-foreground">{set.unitType}</span>
+          <span className="ml-0.5 text-sm font-medium text-muted-foreground">{set.unitType}</span>
         </div>
         <div className="flex flex-1 justify-end">
           <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
@@ -870,7 +870,7 @@ function SetRow({ set, onUpdate, onDelete }) {
           />
         ) : (
           <button
-            className="w-full truncate text-left text-xs italic text-muted-foreground/40 hover:text-muted-foreground"
+            className="w-full truncate text-left text-xs italic text-muted-foreground/50 hover:text-muted-foreground"
             onClick={() => setEditingNotes(true)}
           >
             {set.notes || "notes..."}
@@ -922,7 +922,7 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
     .join("  ·  ");
 
   return (
-    <p className="pb-1 text-xs italic text-muted-foreground">
+    <p className="pb-1 text-xs italic text-muted-foreground/70">
       Last {getReadableDateString(lastSets[0].date)}: {summary}
     </p>
   );

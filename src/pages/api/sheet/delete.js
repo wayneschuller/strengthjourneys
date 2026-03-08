@@ -1,7 +1,7 @@
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 
-// DELETE /api/delete-sheet
+// DELETE /api/sheet/delete
 // Deletes all rows belonging to a session — everything from the session's first
 // row through to (but not including) the next session's first row. This matches
 // the "date umbrella" convention: blank rows, comment rows, and any other content
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
     if (!deleteRes.ok) {
       const body = await deleteRes.json().catch(() => ({}));
       const msg = body?.error?.message || "Failed to delete session rows";
-      console.error("[delete-sheet] deleteRange failed:", msg, {
+      console.error("[sheet/delete] deleteRange failed:", msg, {
         startRowIndex,
         endRowIndex,
       });
@@ -85,7 +85,7 @@ export default async function handler(req, res) {
       rowsDeleted: endRowIndex - startRowIndex + 1,
     });
   } catch (err) {
-    console.error("[delete-sheet] unexpected error:", err);
+    console.error("[sheet/delete] unexpected error:", err);
     return res.status(500).json({ error: err.message || "Internal server error" });
   }
 }

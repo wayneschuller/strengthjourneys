@@ -208,7 +208,7 @@ export default function LogSessionPage() {
       if (!sheetInfo?.ssid) return;
       markSaving();
       try {
-        const res = await fetch("/api/log-set-sheet", {
+        const res = await fetch("/api/sheet/log-set", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex, ...fields }),
@@ -218,7 +218,7 @@ export default function LogSessionPage() {
         // Fire SWR revalidation in background — no await to avoid flicker
         mutate();
       } catch (err) {
-        console.error("[log-set-sheet] updateSet failed:", err);
+        console.error("[sheet/log-set] updateSet failed:", err);
         markError();
       }
     },
@@ -257,7 +257,7 @@ export default function LogSessionPage() {
 
       markSaving();
       try {
-        const res = await fetch("/api/log-set-sheet", {
+        const res = await fetch("/api/sheet/log-set", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex: set.rowIndex, promoteTo }),
@@ -266,7 +266,7 @@ export default function LogSessionPage() {
         await mutate();
         markSaved();
       } catch (err) {
-        console.error("[log-set-sheet] deleteSet failed:", err);
+        console.error("[sheet/log-set] deleteSet failed:", err);
         markError();
       }
     },
@@ -309,7 +309,7 @@ export default function LogSessionPage() {
       markSaving();
 
       try {
-        const res = await fetch("/api/log-session-sheet", {
+        const res = await fetch("/api/sheet/log-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -329,7 +329,7 @@ export default function LogSessionPage() {
         promoteFirstPending(liftType, firstRowIndex);
         markSaved();
       } catch (err) {
-        console.error("[log-session-sheet] addSet failed:", err);
+        console.error("[sheet/log-session] addSet failed:", err);
         // Remove the failed pending row
         setPendingSetsSync((prev) => {
           const next = { ...prev };
@@ -396,7 +396,7 @@ export default function LogSessionPage() {
       ];
 
       try {
-        const res = await fetch("/api/log-session-sheet", {
+        const res = await fetch("/api/sheet/log-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -413,7 +413,7 @@ export default function LogSessionPage() {
         promoteFirstPending(liftType, firstRowIndex);
         markSaved();
       } catch (err) {
-        console.error("[log-session-sheet] addLift failed:", err);
+        console.error("[sheet/log-session] addLift failed:", err);
         setPendingSetsSync((prev) => {
           const next = { ...prev };
           if (next[liftType]) next[liftType] = next[liftType].filter((s) => !s._pending);
@@ -448,7 +448,7 @@ export default function LogSessionPage() {
 
     markSaving();
     try {
-      const res = await fetch("/api/delete-sheet", {
+      const res = await fetch("/api/sheet/delete", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -468,7 +468,7 @@ export default function LogSessionPage() {
         navigateToDate(todayIso);
       }
     } catch (err) {
-      console.error("[delete-sheet] deleteSession failed:", err);
+      console.error("[sheet/delete] deleteSession failed:", err);
       markError();
     }
   }, [sheetInfo?.ssid, parsedData, sessionDate, sessionDates, todayIso, mutate, navigateToDate]);

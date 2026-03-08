@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, startRowIndex, endRowIndex } = req.body;
+  const { ssid, startRowIndex, endRowIndex, expectedDate } = req.body;
 
   if (
     !ssid ||
@@ -46,7 +46,35 @@ export default async function handler(req, res) {
     "Content-Type": "application/json",
   };
 
+  let indexDriftWarning = null;
+
   try {
+    // Pre-read: verify the first row of the range belongs to the expected session.
+    // This is the most dangerous mutation (deletes many rows at once), so we block
+    // on drift rather than just warning.
+    if (expectedDate) {
+      const readRange = `A${startRowIndex}:B${startRowIndex}`;
+      const readRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${readRange}`,
+        { headers },
+      );
+      if (readRes.ok) {
+        const readData = await readRes.json();
+        const cellDate = readData.values?.[0]?.[0] ?? "";
+        const cellLift = readData.values?.[0]?.[1] ?? "";
+        // The anchor row should have the session date. If it has a DIFFERENT date,
+        // that means row indices have drifted — abort to protect data.
+        if (cellDate && cellDate !== expectedDate) {
+          indexDriftWarning = `Index drift: row ${startRowIndex} has date "${cellDate}" but client expected "${expectedDate}" (liftType: "${cellLift}")`;
+          console.error("[sheet/delete] BLOCKING:", indexDriftWarning);
+          return res.status(409).json({
+            error: "Index drift detected — session rows have shifted. Please refresh and retry.",
+            warning: indexDriftWarning,
+          });
+        }
+      }
+    }
+
     // Sheets API deleteRange uses 0-based startRowIndex (inclusive) and endRowIndex (exclusive)
     const deleteRes = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}:batchUpdate`,

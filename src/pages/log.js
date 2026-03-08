@@ -605,7 +605,7 @@ export default function LogSessionPage() {
   );
 
   const deleteSession = useCallback(async () => {
-    if (!sheetInfo?.ssid || !parsedData) return;
+    if (!sheetInfo?.ssid || !parsedData || savingRef.current) return;
 
     const sessionRows = parsedData
       .filter((e) => e.date === sessionDate && !e.isGoal && e.rowIndex)
@@ -624,8 +624,13 @@ export default function LogSessionPage() {
     const nearestAfter = rowsAfter.length ? Math.min(...rowsAfter) : null;
     const endRow = nearestAfter ? nearestAfter - 1 : maxRow;
 
+    addLogEntry({ type: "action", label: "deleteSession", detail: `${sessionDate} · rows ${minRow}–${endRow} (${endRow - minRow + 1} rows)` });
     markSaving();
+    const timings = [];
+    const t0 = performance.now();
+
     try {
+      const tApi = performance.now();
       const res = await fetch("/api/sheet/delete", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -633,9 +638,15 @@ export default function LogSessionPage() {
           ssid: sheetInfo.ssid,
           startRowIndex: minRow,
           endRowIndex: endRow,
+          expectedDate: sessionDate,
         }),
       });
-      if (!res.ok) throw new Error((await res.json()).error || "Delete failed");
+      timings.push({ name: "DELETE /api/sheet/delete", ms: performance.now() - tApi });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.warning) addLogEntry({ type: "warning", label: "deleteSession", detail: data.warning });
+        throw new Error(data.error || "Delete failed");
+      }
       await mutate();
       markSaved();
       setShowDeleteConfirm(false);
@@ -649,7 +660,8 @@ export default function LogSessionPage() {
       console.error("[sheet/delete] deleteSession failed:", err);
       markError();
     }
-  }, [sheetInfo?.ssid, parsedData, sessionDate, sessionDates, todayIso, mutate, navigateToDate]);
+    logSheetTimings("deleteSession", timings, performance.now() - t0, addLogEntry);
+  }, [sheetInfo?.ssid, parsedData, sessionDate, sessionDates, todayIso, mutate, navigateToDate, addLogEntry]);
 
   // --- Render ---
 

@@ -207,6 +207,13 @@ export default function LogSessionPage() {
     });
   }, [parsedData, isMetric, toast, toggleIsMetric]);
 
+  // Revalidate SWR data when the user leaves the log page so the dashboard
+  // picks up any sets/lifts added during the session. Individual writes
+  // deliberately skip mutate() to avoid mid-session flicker (see addSet).
+  useEffect(() => {
+    return () => mutate();
+  }, [mutate]);
+
   // --- Sync helpers ---
 
   function markSaving() {

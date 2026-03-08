@@ -49,13 +49,7 @@ export default function LogSessionPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
   const { parsedData, sheetInfo, mutate, isLoading } = useUserLiftingData();
-  const { age, bodyWeight, sex, standards, isMetric, toggleIsMetric } = useAthleteBio();
-  const e1rmFormula =
-    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
-      initializeWithValue: false,
-    }) ?? "Brzycki";
-  const hasBioData =
-    age && bodyWeight && standards && Object.keys(standards).length > 0;
+  const { isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
 
   // Use local time — new Date().toISOString() is UTC, which causes off-by-one in AU/Asia/Pacific
@@ -653,13 +647,6 @@ export default function LogSessionPage() {
               parsedData={parsedData}
               sessionDate={sessionDate}
               isMetric={isMetric}
-              authStatus={authStatus}
-              hasBioData={hasBioData}
-              standards={standards}
-              e1rmFormula={e1rmFormula}
-              age={age}
-              bodyWeight={bodyWeight}
-              sex={sex}
               onUpdateSet={updateSet}
               onDeleteSet={deleteSet}
               onAddSet={(prevSet) => addSet(liftType, prevSet)}
@@ -730,7 +717,16 @@ function SyncIndicator({ state }) {
 
 // --- Lift block ---
 
-function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, authStatus, hasBioData, standards, e1rmFormula, age, bodyWeight, sex, onUpdateSet, onDeleteSet, onAddSet }) {
+function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdateSet, onDeleteSet, onAddSet }) {
+  const { status: authStatus } = useSession();
+  const { age, bodyWeight, sex, standards } = useAthleteBio();
+  const e1rmFormula =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
+      initializeWithValue: false,
+    }) ?? "Brzycki";
+  const hasBioData =
+    age && bodyWeight && standards && Object.keys(standards).length > 0;
+
   // Only use confirmed (non-pending) sets for plate diagram and last-set reference
   const realSets = sets.filter((s) => !s._pending);
   const unitType = sets[0]?.unitType ?? (isMetric ? "kg" : "lb");
@@ -754,7 +750,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, authStat
       const reps = s.reps ?? 0;
       const weight = s.weight ?? 0;
       if (reps > 0 && weight > 0) {
-        const e1rm = estimateE1RM(reps, weight, e1rmFormula || "Brzycki");
+        const e1rm = estimateE1RM(reps, weight, e1rmFormula);
         if (e1rm > bestVal) { bestVal = e1rm; bestIdx = i; }
       }
     });

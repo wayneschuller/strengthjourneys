@@ -1,6 +1,52 @@
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 
+// ─── Sheet encoding: sparse rows and anchor rows ────────────────────────────
+//
+// The Google Sheet uses a SPARSE ENCODING to stay human-readable. Date (col A)
+// and Lift Type (col B) are only written on "anchor rows" — the parser
+// (parse-data.js) carries each value forward to subsequent blank cells.
+//
+// Sheet layout (newest session at top, header = row 1):
+//
+//   Row │ A (Date)    │ B (Lift Type)  │ C (Reps) │ D (Weight) │ …
+//   ────┼─────────────┼────────────────┼──────────┼────────────┼───
+//    2  │ 2026-03-08  │ Bench Press    │ 5        │ 20kg       │   ← session anchor
+//    3  │             │                │ 3        │ 25kg       │   ← inherits date + liftType
+//    4  │             │ Deadlift       │ 5        │ 100kg      │   ← lift anchor (new liftType)
+//    5  │             │                │ 3        │ 120kg      │   ← inherits liftType
+//    6  │ 2026-03-01  │ Bench Press    │ 5        │ 20kg       │   ← session anchor (prev session)
+//
+// ANCHOR ROW TYPES:
+//   • Session anchor — first row of a date. Carries BOTH date (col A) and the
+//     first lift type (col B). Visually separated from the session above it by
+//     a bold top border drawn via updateBorders (see formatting notes below).
+//   • Lift anchor    — first row of a lift type within a session (not the first
+//     row of the session itself). Carries liftType (col B) only; date is blank
+//     and inherited from the session anchor above.
+//   • Plain set row  — any set after the first for a given lift type. Both A
+//     and B are blank; date and liftType are inherited from above.
+//
+// INHERITANCE RULES (enforced by the parser, not the sheet):
+//   • If col A is blank, the row inherits the previous row's date.
+//   • If col B is blank, the row inherits the previous row's liftType.
+//   • An invalid date in col A resets inheritance: all subsequent blank-date
+//     rows are skipped until a valid date is encountered again.
+//
+// INSERTION ORDER:
+//   New sessions are inserted at the TOP (after the header row), so more recent
+//   dates always have lower row indices. Sets are inserted after the last known
+//   row of their lift type within the session.
+//
+// DELETION (see DELETE /api/log-set):
+//   Deleting an anchor row would break inheritance for the rows below it.
+//   Before deletion, the anchor values (date and/or liftType) must be
+//   "promoted" — written explicitly into the row that will become the new anchor.
+//   The client (log.js deleteSet) determines whether promotion is needed and
+//   which row to promote to; the API (log-set.js handleDelete) applies it.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
 // POST /api/log-session
 // Inserts one or more rows into the sheet at a specified position.
 //
@@ -13,9 +59,9 @@ import { getServerSession } from "next-auth/next";
 //
 // Row column mapping: A=Date, B=LiftType, C=Reps, D=Weight, E=Notes, F=URL
 // The client is responsible for constructing each row correctly:
-//   - New session (no prior rows for this date): include date in A, lift type in B
-//   - Adding a set to existing lift: leave A and B blank (inherited by the parser)
-//   - Adding a new lift to existing session: leave A blank, set B to lift type
+//   - New session (session anchor): include date in A, lift type in B
+//   - Adding a set to existing lift (plain set row): leave A and B blank
+//   - Adding a new lift to existing session (lift anchor): leave A blank, set B to lift type
 //
 // Returns: { insertedRows: number, firstRowIndex: number }
 

@@ -526,12 +526,15 @@ export default function LogSessionPage() {
         </Button>
       </div>
 
-      {/* Jump to today */}
+      {/* Jump to today — subtle link under the date */}
       {!isToday && (
-        <div className="mb-4 flex justify-center">
-          <Button variant="outline" size="sm" onClick={() => navigateToDate(todayIso)}>
+        <div className="-mt-1 mb-2 flex justify-center">
+          <button
+            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            onClick={() => navigateToDate(todayIso)}
+          >
             Back to today
-          </Button>
+          </button>
         </div>
       )}
 
@@ -548,15 +551,15 @@ export default function LogSessionPage() {
           </div>
 
           {/* Big Four — tap to add directly */}
-          <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-4">
             {BIG_FOUR.map(({ name, icon }) => (
               <button
                 key={name}
                 title={`Start with ${name}`}
                 onClick={() => addLift(name)}
-                className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-3 py-5 shadow-sm transition-colors hover:border-primary hover:bg-muted/40 active:scale-95"
+                className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card px-4 py-6 shadow-sm transition-colors hover:border-primary hover:bg-muted/40 active:scale-95 md:gap-5 md:py-8"
               >
-                <Image src={icon} alt={name} width={80} height={80} />
+                <Image src={icon} alt={name} width={80} height={80} className="h-20 w-20 md:h-28 md:w-28" />
                 <span className="text-sm font-medium leading-tight">{name}</span>
               </button>
             ))}
@@ -662,11 +665,11 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
   const bigFourEntry = BIG_FOUR.find((b) => b.name === liftType);
 
   return (
-    <div className="relative space-y-1 rounded-xl border bg-card p-4 shadow-sm md:pl-20">
-      {/* Desktop: large icon in left gutter (4× = 64px) */}
+    <div className="relative space-y-1 rounded-xl border bg-card p-4 shadow-sm md:pl-24">
+      {/* Desktop: large icon in left gutter */}
       {bigFourEntry && (
-        <div className="absolute left-4 top-4 hidden md:block">
-          <Image src={bigFourEntry.icon} alt="" width={64} height={64} />
+        <div className="absolute left-4 top-1/2 hidden -translate-y-1/2 md:block">
+          <Image src={bigFourEntry.icon} alt="" width={80} height={80} className="opacity-80" />
         </div>
       )}
 

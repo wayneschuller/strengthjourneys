@@ -1,3 +1,4 @@
+import Head from "next/head";
 import { NextSeo } from "next-seo";
 import { fetchRelatedArticles } from "@/lib/sanity-io.js";
 import { E1RMCalculatorMain } from "./index";
@@ -20,6 +21,32 @@ const PAGE_CONFIG = {
       "Use the Epley formula to calculate your one rep max from reps and weight. Compare Epley vs 6 other 1RM equations, rep max tables, and percentage loads.",
     keywords:
       "epley formula 1rm, epley formula 1rm calculation, epley formula one rep max, epley 1rm calculator",
+    formulaSupport: {
+      heading: "Use the Epley Formula 1RM Calculator",
+      summary:
+        "This page is tuned for lifters who want a fast Epley formula 1RM calculation from a normal working set, then compare that result against the other major equations.",
+      bestFor:
+        "moderate rep sets when you want a widely cited estimate that most lifters already recognize",
+      repRange: "usually strongest from about 3-10 reps before fatigue distorts the estimate",
+      example: "225 lb x 5 reps estimates about 262 lb with the Epley equation.",
+      links: [
+        {
+          href: "/calculator",
+          label: "Compare All 7 Formulas",
+          description: "Run the same set through every 1RM equation side by side.",
+        },
+        {
+          href: "/calculator/brzycki-formula-1rm-calculator",
+          label: "Compare Against Brzycki",
+          description: "Useful if you want a stricter lower-rep comparison.",
+        },
+        {
+          href: "/calculator/mayhew-1rm-formula-calculator",
+          label: "Compare Against Mayhew",
+          description: "See how a less linear formula behaves on higher reps.",
+        },
+      ],
+    },
   },
   "brzycki-formula-1rm-calculator": {
     type: "formula",
@@ -32,6 +59,32 @@ const PAGE_CONFIG = {
       "Use the Brzycki formula to calculate your one rep max from reps and weight. Compare Brzycki vs 6 other 1RM equations, rep max tables, and percentage loads.",
     keywords:
       "brzycki formula 1rm, brzycki formula 1rm calculation, brzycki formula 1rm calculator, brzycki one rep max",
+    formulaSupport: {
+      heading: "Use the Brzycki Formula 1RM Calculator",
+      summary:
+        "This page is built for Brzycki formula queries where the lifter wants the exact equation, a cleaner lower-rep estimate, and a direct comparison with the rest of the calculator stack.",
+      bestFor:
+        "heavier sets in the lower rep ranges when you want a more conservative one rep max estimate",
+      repRange: "usually strongest from about 1-10 reps, especially on the lower end",
+      example: "225 lb x 5 reps estimates about 253 lb with the Brzycki equation.",
+      links: [
+        {
+          href: "/calculator",
+          label: "Compare All 7 Formulas",
+          description: "See where Brzycki sits relative to the full range of estimates.",
+        },
+        {
+          href: "/calculator/epley-formula-1rm-calculator",
+          label: "Compare Against Epley",
+          description: "Useful if you want the most common side-by-side comparison.",
+        },
+        {
+          href: "/calculator/mayhew-1rm-formula-calculator",
+          label: "Compare Against Mayhew",
+          description: "Check how Brzycki differs when reps start climbing.",
+        },
+      ],
+    },
   },
   "mayhew-1rm-formula-calculator": {
     type: "formula",
@@ -42,6 +95,32 @@ const PAGE_CONFIG = {
     description:
       "Use the Mayhew formula to estimate one rep max from a working set. Compare results against Epley, Brzycki, and 4 more 1RM equations.",
     keywords: "mayhew 1rm formula, mayhew formula calculator, mayhew one rep max",
+    formulaSupport: {
+      heading: "Use the Mayhew Formula 1RM Calculator",
+      summary:
+        "This page is for lifters who specifically want a Mayhew 1RM formula calculation and need to compare an exponential estimate against the more familiar Epley and Brzycki models.",
+      bestFor:
+        "higher-rep work where you want to see how an exponential equation changes the top-end estimate",
+      repRange: "especially useful once your working sets move beyond the classic 3-5 rep zone",
+      example: "225 lb x 8 reps estimates about 284 lb with the Mayhew equation.",
+      links: [
+        {
+          href: "/calculator",
+          label: "Compare All 7 Formulas",
+          description: "See how Mayhew moves versus every other 1RM method.",
+        },
+        {
+          href: "/calculator/epley-formula-1rm-calculator",
+          label: "Compare Against Epley",
+          description: "Useful when you want a simpler linear benchmark beside Mayhew.",
+        },
+        {
+          href: "/calculator/brzycki-formula-1rm-calculator",
+          label: "Compare Against Brzycki",
+          description: "Helpful if you want to contrast higher-rep and lower-rep bias.",
+        },
+      ],
+    },
   },
   "wathan-1rm-formula-calculator": {
     type: "formula",
@@ -154,9 +233,59 @@ export async function getStaticProps({ params }) {
 export default function FormulaOrLiftCalculatorPage({ relatedArticles, pageConfig, slug }) {
   const canonicalURL = `https://www.strengthjourneys.xyz/calculator/${slug}`;
   const isFormula = pageConfig.type === "formula";
+  const structuredData = isFormula
+    ? {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            name: `${pageConfig.formulaName} Formula 1RM Calculator`,
+            applicationCategory: "HealthApplication",
+            operatingSystem: "Any",
+            description: pageConfig.description,
+            url: canonicalURL,
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "USD",
+            },
+          },
+          {
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: "https://www.strengthjourneys.xyz",
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "One Rep Max Calculator",
+                item: "https://www.strengthjourneys.xyz/calculator",
+              },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: `${pageConfig.formulaName} Formula 1RM Calculator`,
+                item: canonicalURL,
+              },
+            ],
+          },
+        ],
+      }
+    : null;
 
   return (
     <>
+      {structuredData && (
+        <Head>
+          <script type="application/ld+json">
+            {JSON.stringify(structuredData)}
+          </script>
+        </Head>
+      )}
       <NextSeo
         title={pageConfig.title}
         description={pageConfig.description}
@@ -194,6 +323,7 @@ export default function FormulaOrLiftCalculatorPage({ relatedArticles, pageConfi
         formulaBlurb={
           isFormula ? { equation: pageConfig.equation, text: pageConfig.blurb } : null
         }
+        formulaSupport={isFormula ? pageConfig.formulaSupport : null}
       />
     </>
   );

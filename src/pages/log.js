@@ -3,7 +3,9 @@ import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { getReadableDateString } from "@/lib/processing-utils";
+import { getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { calculatePlateBreakdown } from "@/lib/warmups.js";
 import { PlateDiagram } from "@/components/warmups/plate-diagram";
 import { Button } from "@/components/ui/button";
@@ -34,7 +36,8 @@ export default function LogSessionPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
   const { parsedData, sheetInfo, mutate, isLoading } = useUserLiftingData();
-  const { isMetric } = useAthleteBio();
+  const { isMetric, toggleIsMetric } = useAthleteBio();
+  const { toast } = useToast();
 
   // Use local time — new Date().toISOString() is UTC, which causes off-by-one in AU/Asia/Pacific
   const todayIso = useMemo(() => {
@@ -168,6 +171,34 @@ export default function LogSessionPage() {
     if (sessionDate < todayIso) return todayIso;
     return null;
   }, [sessionDates, sessionDate, todayIso]);
+
+  // --- Unit mismatch nudge ---
+  // If 100% of the user's sheet data is in one unit but their SJ preference is
+  // the opposite, show a one-time toast so they can switch back easily.
+  const unitNudgeShown = useRef(false);
+  useEffect(() => {
+    if (!parsedData?.length || unitNudgeShown.current) return;
+    const realEntries = parsedData.filter((e) => !e.isGoal && e.unitType);
+    if (!realEntries.length) return;
+    const kgCount = realEntries.filter((e) => e.unitType === "kg").length;
+    const allKg = kgCount === realEntries.length;
+    const allLb = kgCount === 0;
+    const sheetUnit = allKg ? "kg" : allLb ? "lb" : null;
+    if (!sheetUnit) return; // mixed units — no nudge
+    const prefUnit = isMetric ? "kg" : "lb";
+    if (sheetUnit === prefUnit) return; // no mismatch
+    unitNudgeShown.current = true;
+    toast({
+      title: `Your spreadsheet is 100% ${sheetUnit}`,
+      description: `New sets will be logged in ${prefUnit}. Switch to ${sheetUnit}?`,
+      duration: 10000,
+      action: (
+        <ToastAction altText={`Switch to ${sheetUnit}`} onClick={() => toggleIsMetric()}>
+          Use {sheetUnit}
+        </ToastAction>
+      ),
+    });
+  }, [parsedData, isMetric, toast, toggleIsMetric]);
 
   // --- Sync helpers ---
 
@@ -526,6 +557,14 @@ export default function LogSessionPage() {
         </div>
 
         <SyncIndicator state={syncState} />
+
+        <button
+          className="shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+          onClick={() => toggleIsMetric()}
+          title={`Switch to ${isMetric ? "lb" : "kg"}`}
+        >
+          {isMetric ? "kg" : "lb"}
+        </button>
 
         <Button
           variant="ghost"
@@ -920,9 +959,11 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
 
   if (!lastSets) return null;
 
-  const unitType = lastSets[0]?.unitType ?? (isMetric ? "kg" : "lb");
   const summary = lastSets
-    .map((s) => `${s.reps}@${s.weight}${unitType}`)
+    .map((s) => {
+      const { value, unit } = getDisplayWeight(s, isMetric);
+      return `${s.reps}@${value}${unit}`;
+    })
     .join("  ·  ");
 
   return (

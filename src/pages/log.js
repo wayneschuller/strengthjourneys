@@ -1069,7 +1069,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
         });
       }
     } else {
-      // Working phase: suggest repeat and increment
+      // Working phase: suggest repeat, increment, and drop set
       result.push({
         label: `${lastLoggedReps}@${lastLogged}${unitType}`,
         sublabel: "repeat",
@@ -1086,6 +1086,18 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
         unitType,
         variant: "outline",
       });
+      // Drop set: ~80% of current weight, rounded to nearest increment
+      const dropWeight = Math.round((lastLogged * 0.8) / minIncrement) * minIncrement;
+      if (dropWeight >= barWeight && dropWeight < lastLogged) {
+        result.push({
+          label: `${lastLoggedReps}@${dropWeight}${unitType}`,
+          sublabel: "drop set",
+          reps: lastLoggedReps,
+          weight: dropWeight,
+          unitType,
+          variant: "outline",
+        });
+      }
     }
 
     return result;
@@ -1112,7 +1124,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
     <div className="relative space-y-1 rounded-xl border bg-card p-4 shadow-sm md:pl-24">
       {/* Desktop: large icon in left gutter */}
       {bigFourEntry && (
-        <div className="absolute left-4 top-1/2 hidden -translate-y-1/2 md:block">
+        <div className="absolute left-4 top-4 hidden md:block">
           <Image src={bigFourEntry.icon} alt="" width={80} height={80} className="opacity-80" />
         </div>
       )}

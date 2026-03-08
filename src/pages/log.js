@@ -8,6 +8,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { LiftStrengthLevel } from "@/components/analyzer/session-exercise-block";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getReadableDateString, getDisplayWeight, devLog } from "@/lib/processing-utils";
+import { generateSessionSets } from "@/lib/warmups";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -957,6 +958,124 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
   const lastRealSet = realSets[realSets.length - 1];
   const bigFourEntry = BIG_FOUR.find((b) => b.name === liftType);
 
+  // Read warmup settings from localStorage (shared with warmup calculator page)
+  const storedBarType =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, {
+      initializeWithValue: false,
+    }) ?? "standard";
+  const storedPlatePreference =
+    useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_PLATE_PREFERENCE, {
+      initializeWithValue: false,
+    }) ?? "blue";
+
+  // Smart set suggestions: generate warmup progression from last session's top set
+  const suggestions = useMemo(() => {
+    if (!parsedData) return null;
+
+    const unitType = isMetric ? "kg" : "lb";
+    const barWeight = storedBarType === "womens" ? (isMetric ? 15 : 35) : (isMetric ? 20 : 45);
+    const minIncrement = isMetric ? 2.5 : 5;
+
+    // Find last session's sets for this lift (same logic as LiftSuggestions)
+    const prior = parsedData.filter(
+      (e) => e.liftType === liftType && e.date < sessionDate && !e.isGoal,
+    );
+    if (!prior.length) return null;
+    const lastDate = prior[prior.length - 1].date;
+    const lastSets = prior.filter((e) => e.date === lastDate);
+
+    // Find the top set from last session (heaviest weight)
+    let topSet = lastSets[0];
+    for (const s of lastSets) {
+      // Convert to user's current unit for comparison
+      const { value } = getDisplayWeight(s, isMetric);
+      const { value: topValue } = getDisplayWeight(topSet, isMetric);
+      if (value > topValue) topSet = s;
+    }
+
+    const { value: topWeight } = getDisplayWeight(topSet, isMetric);
+    const topReps = topSet.reps;
+    if (!topWeight || topWeight <= 0) return null;
+
+    // Generate the full warmup progression using shared algorithm
+    const progression = generateSessionSets(
+      topWeight,
+      topReps,
+      barWeight,
+      isMetric,
+      storedPlatePreference,
+    );
+
+    // Determine where the lifter is based on already-logged sets
+    const loggedWeights = sets.filter((s) => !s._pending && s.weight > 0)
+      .map((s) => {
+        const { value } = getDisplayWeight(s, isMetric);
+        return value;
+      });
+
+    // Find the next warmup set they haven't done yet
+    // Match by finding the first progression set whose weight exceeds all logged weights
+    let nextWarmupIdx = 0;
+    if (loggedWeights.length > 0) {
+      const maxLogged = Math.max(...loggedWeights);
+      // Find first progression set with weight > maxLogged
+      nextWarmupIdx = progression.findIndex((s) => s.weight > maxLogged);
+      if (nextWarmupIdx === -1) nextWarmupIdx = progression.length; // past the top
+    }
+
+    const atOrPastTop = nextWarmupIdx >= progression.length;
+    const lastLogged = loggedWeights.length > 0 ? Math.max(...loggedWeights) : 0;
+    const lastLoggedReps = sets.filter((s) => !s._pending && s.weight > 0).slice(-1)[0]?.reps ?? topReps;
+
+    const result = [];
+
+    if (!atOrPastTop) {
+      // Warmup phase: suggest next warmup set
+      const nextSet = progression[nextWarmupIdx];
+      result.push({
+        label: `${nextSet.reps} × ${nextSet.weight}${unitType}`,
+        sublabel: nextSet.isTopSet ? "top set" : "warmup",
+        reps: nextSet.reps,
+        weight: nextSet.weight,
+        unitType,
+        variant: nextSet.isTopSet ? "primary" : "secondary",
+      });
+
+      // Also offer skipping ahead to the top set if not already the next suggestion
+      if (!nextSet.isTopSet) {
+        const topProgSet = progression[progression.length - 1];
+        result.push({
+          label: `${topProgSet.reps} × ${topProgSet.weight}${unitType}`,
+          sublabel: "top set",
+          reps: topProgSet.reps,
+          weight: topProgSet.weight,
+          unitType,
+          variant: "outline",
+        });
+      }
+    } else {
+      // Working phase: suggest repeat and increment
+      result.push({
+        label: `${lastLoggedReps} × ${lastLogged}${unitType}`,
+        sublabel: "repeat",
+        reps: lastLoggedReps,
+        weight: lastLogged,
+        unitType,
+        variant: "secondary",
+      });
+      result.push({
+        label: `${lastLoggedReps} × ${lastLogged + minIncrement}${unitType}`,
+        sublabel: `+${minIncrement}`,
+        reps: lastLoggedReps,
+        weight: lastLogged + minIncrement,
+        unitType,
+        variant: "outline",
+      });
+    }
+
+    return result;
+  }, [parsedData, liftType, sessionDate, isMetric, sets, storedBarType, storedPlatePreference]);
+
   // Find the set index with the heaviest e1RM for the strength badge
   const canShowStrength = authStatus === "authenticated" && hasBioData;
   const bestE1rmIndex = useMemo(() => {
@@ -1030,14 +1149,13 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, onUpdate
           />
         ))}
 
-        {/* Add set */}
-        <button
-          className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
-          onClick={() => onAddSet(lastRealSet)}
-        >
-          <Plus className="h-4 w-4" />
-          Add set
-        </button>
+        {/* Smart add-set suggestions */}
+        <SmartAddButtons
+          suggestions={suggestions}
+          lastRealSet={lastRealSet}
+          isMetric={isMetric}
+          onAddSet={onAddSet}
+        />
       </div>
 
     </div>
@@ -1269,6 +1387,53 @@ function LiftSuggestions({ liftType, sessionDate, parsedData, isMetric }) {
     <p className="pb-1 text-xs italic text-muted-foreground/70">
       Last {getReadableDateString(lastSets[0].date)}: {summary}
     </p>
+  );
+}
+
+// --- Smart add-set buttons ---
+// Shows contextual suggestions based on where the lifter is in their session:
+// - Warmup phase: next warmup weight from generateSessionSets() + skip-to-top-set
+// - Working phase: repeat last set + increment (+2.5kg/+5lb)
+// - No prior data: plain "Add set" fallback
+
+function SmartAddButtons({ suggestions, lastRealSet, isMetric, onAddSet }) {
+  if (!suggestions || suggestions.length === 0) {
+    // Fallback: no prior session data — plain add button
+    return (
+      <button
+        className="flex w-full items-center gap-3 px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+        onClick={() => onAddSet(lastRealSet)}
+      >
+        <Plus className="h-4 w-4" />
+        Add set
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-stretch gap-0 divide-x divide-border/40">
+      {suggestions.map((s, i) => (
+        <button
+          key={i}
+          className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-3 text-sm transition-colors hover:bg-accent/50 ${
+            s.variant === "primary"
+              ? "bg-accent/20 font-semibold text-foreground"
+              : s.variant === "secondary"
+                ? "font-medium text-foreground"
+                : "text-muted-foreground"
+          }`}
+          onClick={() => onAddSet({ reps: s.reps, weight: s.weight, unitType: s.unitType })}
+        >
+          <span className="flex items-center gap-1.5">
+            <Plus className="h-3.5 w-3.5" />
+            {s.label}
+          </span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+            {s.sublabel}
+          </span>
+        </button>
+      ))}
+    </div>
   );
 }
 

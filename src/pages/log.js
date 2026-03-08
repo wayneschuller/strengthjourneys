@@ -677,8 +677,8 @@ export default function LogSessionPage() {
   }
 
   return (
-    <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-3 pb-24 sm:px-4 lg:grid-cols-[1fr_340px]">
-    <div>
+    <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-3 sm:px-4 lg:grid-cols-[1fr_340px]">
+    <div className="pb-24">
       {/* Sticky header */}
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 py-3 backdrop-blur-sm">
         <Button
@@ -818,6 +818,29 @@ export default function LogSessionPage() {
 
 // --- Activity log panel (dev only) ---
 
+const API_DESCRIPTIONS = {
+  addSet: {
+    action: "Add set to existing lift block",
+    api: "POST /api/sheet/log-session",
+    sheets: "sheets.spreadsheets.batchUpdate (insertDimension + updateCells)",
+  },
+  addLift: {
+    action: "Add new lift type to session",
+    api: "POST /api/sheet/log-session",
+    sheets: "sheets.spreadsheets.batchUpdate (insertDimension + updateCells + optional border)",
+  },
+  deleteSet: {
+    action: "Delete a set row",
+    api: "DELETE /api/sheet/log-set",
+    sheets: "sheets.values.get (pre-read) → optional values.update (promote anchor) → batchUpdate (deleteDimension)",
+  },
+  updateSet: {
+    action: "Edit reps, weight, or notes",
+    api: "PATCH /api/sheet/log-set",
+    sheets: "sheets.values.update (cols C–F)",
+  },
+};
+
 function ActivityPanel({ entries }) {
   const bottomRef = useRef(null);
   useEffect(() => {
@@ -825,47 +848,67 @@ function ActivityPanel({ entries }) {
   }, [entries.length]);
 
   return (
-    <div className="sticky top-0 hidden h-[calc(100vh-2rem)] flex-col lg:flex">
+    <div className="sticky top-0 hidden h-[calc(100vh-2rem)] flex-col rounded-lg border bg-card lg:flex">
       <div className="flex items-center justify-between border-b px-3 py-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Activity Log</span>
         <span className="text-xs tabular-nums text-muted-foreground">{entries.length}</span>
       </div>
-      <div className="flex-1 overflow-y-auto font-mono text-xs">
+      <div className="flex-1 overflow-y-auto text-xs">
         {entries.length === 0 && (
-          <p className="px-3 py-8 text-center text-muted-foreground/50">
-            Sheet API calls will appear here...
-          </p>
+          <div className="px-3 py-8 text-center text-muted-foreground/50">
+            <p>Sheet API calls will appear here as you add, edit, and delete sets.</p>
+            <p className="mt-2 text-muted-foreground/30">Each entry shows the UI action, the SJ API endpoint, and the Google Sheets calls it makes.</p>
+          </div>
         )}
-        {entries.map((entry, i) => (
-          <div
-            key={i}
-            className={`border-b border-border/20 px-3 py-1.5 ${
-              entry.type === "warning" ? "bg-destructive/10" : ""
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <span className="shrink-0 text-muted-foreground/50">{entry.time}</span>
-              <span className={`font-semibold ${
-                entry.type === "warning" ? "text-destructive"
-                : entry.type === "action" ? "text-blue-500 dark:text-blue-400"
-                : "text-foreground"
-              }`}>
-                {entry.label}
-              </span>
-              {entry.total != null && (
+        {entries.map((entry, i) => {
+          const desc = API_DESCRIPTIONS[entry.label];
+          if (entry.type === "warning") {
+            return (
+              <div key={i} className="border-b border-border/20 bg-destructive/10 px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="shrink-0 font-mono text-muted-foreground/50">{entry.time}</span>
+                  <span className="font-semibold text-destructive">{entry.label}</span>
+                </div>
+                <p className="mt-1 break-all text-destructive/80">{entry.detail}</p>
+              </div>
+            );
+          }
+          if (entry.type === "action") {
+            return (
+              <div key={i} className="border-b border-border/20 px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="shrink-0 font-mono text-muted-foreground/50">{entry.time}</span>
+                  <span className="font-semibold text-blue-500 dark:text-blue-400">{desc?.action ?? entry.label}</span>
+                </div>
+                <p className="mt-0.5 break-all text-muted-foreground">{entry.detail}</p>
+                {desc && (
+                  <div className="mt-1 space-y-0.5 rounded bg-muted/50 px-2 py-1 text-muted-foreground">
+                    <p><span className="text-foreground/70">SJ API:</span> {desc.api}</p>
+                    <p><span className="text-foreground/70">Sheets:</span> {desc.sheets}</p>
+                  </div>
+                )}
+              </div>
+            );
+          }
+          // timing entry
+          return (
+            <div key={i} className="border-b border-border/20 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <span className="shrink-0 font-mono text-muted-foreground/50">{entry.time}</span>
+                <span className="font-semibold text-foreground">{desc?.action ?? entry.label}</span>
                 <span
-                  className="ml-auto shrink-0 font-bold tabular-nums"
+                  className="ml-auto shrink-0 font-mono font-bold tabular-nums"
                   style={{ color: entry.color }}
                 >
                   {entry.total}ms
                 </span>
+              </div>
+              {entry.detail && (
+                <p className="mt-0.5 font-mono text-muted-foreground">{entry.detail}</p>
               )}
             </div>
-            {entry.detail && (
-              <p className="mt-0.5 break-all text-muted-foreground">{entry.detail}</p>
-            )}
-          </div>
-        ))}
+          );
+        })}
         <div ref={bottomRef} />
       </div>
     </div>

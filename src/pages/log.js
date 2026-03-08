@@ -846,7 +846,7 @@ function ActivityPanel({ entries }) {
   return (
     <div className="sticky top-0 hidden max-h-[50vh] flex-col rounded-lg border bg-card lg:flex">
       <div className="flex items-center justify-between border-b px-3 py-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Activity Log</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Google Sheets API Monitor</span>
         <span className="text-xs tabular-nums text-muted-foreground">{entries.length}</span>
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto text-xs">

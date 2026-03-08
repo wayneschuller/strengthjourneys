@@ -6,6 +6,7 @@ import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { LiftStrengthLevel } from "@/components/analyzer/session-exercise-block";
+import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -743,6 +744,23 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, authStat
   const lastRealSet = realSets[realSets.length - 1];
   const bigFourEntry = BIG_FOUR.find((b) => b.name === liftType);
 
+  // Find the set index with the heaviest e1RM for the strength badge
+  const canShowStrength = authStatus === "authenticated" && hasBioData;
+  const bestE1rmIndex = useMemo(() => {
+    if (!canShowStrength) return -1;
+    let bestIdx = -1;
+    let bestVal = 0;
+    sets.forEach((s, i) => {
+      const reps = s.reps ?? 0;
+      const weight = s.weight ?? 0;
+      if (reps > 0 && weight > 0) {
+        const e1rm = estimateE1RM(reps, weight, e1rmFormula || "Brzycki");
+        if (e1rm > bestVal) { bestVal = e1rm; bestIdx = i; }
+      }
+    });
+    return bestIdx;
+  }, [sets, canShowStrength, e1rmFormula]);
+
   return (
     <div className="relative space-y-1 rounded-xl border bg-card p-4 shadow-sm md:pl-24">
       {/* Desktop: large icon in left gutter */}
@@ -761,20 +779,6 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, authStat
         <h2 className="text-base font-semibold uppercase tracking-wide text-foreground">
           {liftType}
         </h2>
-        {authStatus === "authenticated" && hasBioData && (
-          <LiftStrengthLevel
-            liftType={liftType}
-            workouts={sets}
-            standards={standards}
-            e1rmFormula={e1rmFormula}
-            sessionDate={sessionDate}
-            age={age}
-            bodyWeight={bodyWeight}
-            sex={sex}
-            isMetric={isMetric}
-            asBadge
-          />
-        )}
       </div>
 
       {/* Last session suggestion */}
@@ -794,6 +798,22 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, authStat
             isMetric={isMetric}
             onUpdate={set._pending ? null : (fields) => onUpdateSet(set.rowIndex, fields)}
             onDelete={set._pending || !set.rowIndex ? null : () => onDeleteSet(set)}
+            strengthBadge={idx === bestE1rmIndex ? (
+              <LiftStrengthLevel
+                liftType={liftType}
+                workouts={sets}
+                standards={standards}
+                e1rmFormula={e1rmFormula}
+                sessionDate={sessionDate}
+                age={age}
+                bodyWeight={bodyWeight}
+                sex={sex}
+                isMetric={isMetric}
+                bestSetReps={set.reps}
+                bestSetWeight={set.weight}
+                asBadge
+              />
+            ) : null}
           />
         ))}
 
@@ -847,7 +867,7 @@ function UnitLabel({ unitType, mismatch }) {
 // --- Set row (click-to-edit) ---
 // Layout: [reps] @ [weight][unit]  [notes flex-1]  [PR]
 
-function SetRow({ set, isMetric, onUpdate, onDelete }) {
+function SetRow({ set, isMetric, onUpdate, onDelete, strengthBadge }) {
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -1002,6 +1022,7 @@ function SetRow({ set, isMetric, onUpdate, onDelete }) {
           Trash: always visible on mobile (touch has no hover), hover-only on desktop.
           The group class on the row container drives the md:group-hover reveal. */}
       <div className="flex shrink-0 items-center gap-1">
+        {strengthBadge}
         {set.isHistoricalPR && (
           <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">
             PR

@@ -68,7 +68,7 @@ import { getServerSession } from "next-auth/next";
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
-// POST /api/insert-sheet
+// POST /api/log-session-sheet
 // Inserts one or more rows into the sheet at a specified position.
 //
 // Body: {
@@ -206,7 +206,7 @@ export default async function handler(req, res) {
     if (!insertRes.ok) {
       const body = await insertRes.json().catch(() => ({}));
       const msg = body?.error?.message || "Failed to insert rows";
-      console.error("[insert-sheet] insertDimension failed:", msg);
+      console.error("[log-session-sheet] insertDimension failed:", msg);
       return res.status(insertRes.status).json({ error: msg });
     }
 
@@ -232,7 +232,7 @@ export default async function handler(req, res) {
     if (!writeRes.ok) {
       const body = await writeRes.json().catch(() => ({}));
       const msg = body?.error?.message || "Failed to write row values";
-      console.error("[insert-sheet] values.update failed:", msg);
+      console.error("[log-session-sheet] values.update failed:", msg);
       return res.status(writeRes.status).json({ error: msg });
     }
 
@@ -241,7 +241,7 @@ export default async function handler(req, res) {
       firstRowIndex: firstNewRow,
     });
   } catch (err) {
-    console.error("[insert-sheet] unexpected error:", err);
+    console.error("[log-session-sheet] unexpected error:", err);
     return res.status(500).json({ error: err.message || "Internal server error" });
   }
 }

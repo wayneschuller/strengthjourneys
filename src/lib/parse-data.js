@@ -55,10 +55,16 @@ export function parseData(data) {
 // https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0
 //
 // We try to be agnostic about column positions by normalizing header names.
-// If date or lift type cells are blank, we infer them from the previous row.
-// This only assumes that each session's sets are kept together in contiguous
-// rows (all sets for a given session grouped together), regardless of whether
-// new sessions are inserted at the top or appended at the bottom of the sheet.
+//
+// SPARSE ENCODING / ANCHOR ROWS:
+// The sheet uses a sparse encoding where Date (col A) and Lift Type (col B) are
+// only written on "anchor rows" — the first row of a session or the first row of
+// a new lift type within a session. All subsequent rows for the same date/lift
+// leave those cells blank and inherit from the previous row via `previousDate`
+// and `previousLiftType`. See the full data model (examples, anchor types,
+// insertion order, deletion/promotion rules) in the block comment at the top of
+// src/pages/api/log-session.js.
+//
 // Returns a `ParsedData` array that is always sorted by date ascending.
 // See @/lib/sample-parsed-data.js for example data using this structure.
 /**

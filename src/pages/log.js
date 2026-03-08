@@ -130,6 +130,10 @@ export default function LogSessionPage() {
   // Mutation guard: prevents concurrent sheet API calls that could race on
   // stale row indices. Every mutation path (addSet, addLift, deleteSet,
   // updateSet) checks savingRef.current and bails silently if true.
+  // The UI is fully optimistic — rows appear/disappear instantly and API calls
+  // are sub-800ms, so the guard window is imperceptible during normal use.
+  // It only blocks spammy rapid clicks that would fire multiple calls with
+  // the same stale parsedData snapshot (which can drift row indices).
   // This is a ref (not state) so the guard works without triggering re-renders
   // — buttons stay visually enabled, clicks are just silently dropped.
   // Set to true in markSaving(), cleared in markSaved()/markError().

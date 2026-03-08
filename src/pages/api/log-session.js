@@ -55,6 +55,28 @@ export default async function handler(req, res) {
     // Step 1: insert N empty rows at the target position.
     // If this is the first row of a new session, also draw a top border to
     // visually separate sessions in the sheet.
+    // ─── Google Sheets formatting quirks ────────────────────────────────────────
+    //
+    // insertDimension.inheritFromBefore controls which neighbour's formatting the
+    // new rows copy:
+    //
+    //   true  → copy from the row ABOVE the insertion point
+    //           Problem: inserting right after the header row copies the header's
+    //           grey background, bold font, etc. onto the new data rows.
+    //
+    //   false → copy from the row BELOW the insertion point
+    //           Problem: if the row below starts a previous session it has a
+    //           top border (our session separator). The new rows inherit that
+    //           border, making them look like session separators themselves.
+    //
+    // Solution: use inheritFromBefore:false (row below is always a clean data row
+    // or an empty sheet row — never the styled header), then ALWAYS explicitly
+    // clear the top border on every inserted row to neutralise the border-from-below
+    // risk. Finally, if this is a new session, stamp the separator border back onto
+    // the very first inserted row only.
+    //
+    // ────────────────────────────────────────────────────────────────────────────
+
     const batchRequests = [
       {
         insertDimension: {
@@ -64,12 +86,30 @@ export default async function handler(req, res) {
             startIndex: startIndex0,
             endIndex: startIndex0 + rows.length,
           },
-          inheritFromBefore: true,
+          // false = inherit from row below (clean data rows, not the header).
+          // See note above for why this is preferred over true.
+          inheritFromBefore: false,
+        },
+      },
+      // Always clear the top border on ALL inserted rows.
+      // Guards against the case where the row below has a session-separator
+      // top border that would be inherited (see note above).
+      {
+        updateBorders: {
+          range: {
+            sheetId: 0,
+            startRowIndex: startIndex0,
+            endRowIndex: startIndex0 + rows.length,
+            startColumnIndex: 0,
+            endColumnIndex: 6,
+          },
+          top: { style: "NONE" },
         },
       },
     ];
 
     if (newSession) {
+      // Stamp the session-separator border onto the first inserted row only.
       batchRequests.push({
         updateBorders: {
           range: {

@@ -795,8 +795,8 @@ function SetRow({ set, onUpdate, onDelete }) {
         <div className="flex items-center">
           <span className="w-12 text-right text-xl font-semibold tabular-nums">{set.reps}</span>
           <span className="mx-0.5 text-base text-muted-foreground">@</span>
-          <span className="w-20 text-left text-xl font-semibold tabular-nums">{set.weight}</span>
-          <span className="ml-0.5 text-sm font-medium text-muted-foreground">{set.unitType}</span>
+          <span className="w-14 text-left text-xl font-semibold tabular-nums">{set.weight}</span>
+          <span className="text-sm font-medium text-muted-foreground">{set.unitType}</span>
         </div>
         <div className="flex flex-1 justify-end">
           <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
@@ -835,7 +835,7 @@ function SetRow({ set, onUpdate, onDelete }) {
           )}
         </div>
         <span className="mx-0.5 text-base text-muted-foreground">@</span>
-        <div className="w-20">
+        <div className="w-14">
           {editingWeight ? (
             <input
               type="number"
@@ -856,7 +856,7 @@ function SetRow({ set, onUpdate, onDelete }) {
             </button>
           )}
         </div>
-        <span className="ml-0.5 text-sm text-muted-foreground">{set.unitType}</span>
+        <span className="text-sm font-medium text-muted-foreground">{set.unitType}</span>
       </div>
 
       {/* Notes — flex-1, tap to edit */}

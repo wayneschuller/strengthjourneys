@@ -9,7 +9,6 @@ export const LIFT_SVG_MAP = {
   // Fallbacks for similar lifts
   "Front Squat": "/back_squat.svg",
   Squat: "/back_squat.svg",
-  "Romanian Deadlift": "/deadlift.svg",
   "Overhead Press": "/strict_press.svg",
   Press: "/strict_press.svg",
 };

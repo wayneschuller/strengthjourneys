@@ -66,6 +66,7 @@ export default function LogSessionPage() {
   // _pending: false → confirmed (rowIndex known, waiting for parsedData to catch up)
   const [pendingSets, setPendingSets] = useState({});
   const pendingSetsRef = useRef({});
+  const [deletedRowIndices, setDeletedRowIndices] = useState(new Set());
   const savedTimerRef = useRef(null);
 
   // Wrapper that keeps pendingSetsRef synchronously in sync.
@@ -91,6 +92,7 @@ export default function LogSessionPage() {
       setSessionDate(date);
       setShowDeleteConfirm(false);
       setPendingSetsSync({});
+      setDeletedRowIndices(new Set());
       router.replace(
         { pathname: "/log", query: date !== todayIso ? { date } : {} },
         undefined,
@@ -115,10 +117,11 @@ export default function LogSessionPage() {
   }, [parsedData]);
 
   // Current session entries grouped by lift type (real confirmed data)
+  // Excludes optimistically deleted rows so they vanish from the UI immediately.
   const sessionLifts = useMemo(() => {
     if (!parsedData) return {};
     const entries = parsedData.filter(
-      (e) => e.date === sessionDate && !e.isGoal,
+      (e) => e.date === sessionDate && !e.isGoal && !deletedRowIndices.has(e.rowIndex),
     );
     const grouped = {};
     for (const entry of entries) {
@@ -126,7 +129,7 @@ export default function LogSessionPage() {
       grouped[entry.liftType].push(entry);
     }
     return grouped;
-  }, [parsedData, sessionDate]);
+  }, [parsedData, sessionDate, deletedRowIndices]);
 
   // When parsedData catches up, remove confirmed (non-pending) rows from pendingSets
   // to avoid doubling once the real data arrives.
@@ -309,6 +312,8 @@ export default function LogSessionPage() {
         promoteTo = { rowIndex: next.rowIndex, liftType: set.liftType };
       }
 
+      // Optimistically hide the row immediately
+      setDeletedRowIndices((prev) => new Set([...prev, set.rowIndex]));
       markSaving();
       try {
         const res = await fetch("/api/sheet/log-set", {
@@ -318,9 +323,21 @@ export default function LogSessionPage() {
         });
         if (!res.ok) throw new Error((await res.json()).error || "Delete failed");
         await mutate();
+        // Clear deleted index — parsedData no longer contains the row
+        setDeletedRowIndices((prev) => {
+          const next = new Set(prev);
+          next.delete(set.rowIndex);
+          return next;
+        });
         markSaved();
       } catch (err) {
         console.error("[sheet/log-set] deleteSet failed:", err);
+        // Restore the row on failure
+        setDeletedRowIndices((prev) => {
+          const next = new Set(prev);
+          next.delete(set.rowIndex);
+          return next;
+        });
         markError();
       }
     },

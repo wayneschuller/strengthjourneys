@@ -10,8 +10,6 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getReadableDateString, getDisplayWeight } from "@/lib/processing-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
-import { calculatePlateBreakdown } from "@/lib/warmups.js";
-import { PlateDiagram } from "@/components/warmups/plate-diagram";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
@@ -745,16 +743,8 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, saving, 
   const hasBioData =
     age && bodyWeight && standards && Object.keys(standards).length > 0;
 
-  // Only use confirmed (non-pending) sets for plate diagram and last-set reference
+  // Only use confirmed (non-pending) sets for last-set reference
   const realSets = sets.filter((s) => !s._pending);
-  const unitType = sets[0]?.unitType ?? (isMetric ? "kg" : "lb");
-  const barWeight = unitType === "kg" ? 20 : 45;
-
-  const heaviestWeight = realSets.length ? Math.max(...realSets.map((s) => s.weight ?? 0)) : 0;
-  const { platesPerSide } = heaviestWeight > barWeight
-    ? calculatePlateBreakdown(heaviestWeight, barWeight, unitType === "kg")
-    : { platesPerSide: [] };
-
   const lastRealSet = realSets[realSets.length - 1];
   const bigFourEntry = BIG_FOUR.find((b) => b.name === liftType);
 
@@ -843,18 +833,6 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, saving, 
         </button>
       </div>
 
-      {/* Plate diagram */}
-      {platesPerSide.length > 0 && (
-        <div className="flex justify-end opacity-75">
-          <PlateDiagram
-            platesPerSide={platesPerSide}
-            barWeight={barWeight}
-            isMetric={unitType === "kg"}
-            hideLabels={true}
-            useScrollTrigger={false}
-          />
-        </div>
-      )}
     </div>
   );
 }

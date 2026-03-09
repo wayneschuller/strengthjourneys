@@ -29,9 +29,9 @@ export function ThumbsSentimentControl({
 
   function handlePositiveClick() {
     controls.start({
-      scale: [1, 1.4, 1],
-      rotate: [0, -15, 15, 0],
-      transition: { type: "spring", stiffness: 400, damping: 10, duration: 0.5 },
+      scale: [1, 1.4, 0.9, 1.15, 1],
+      rotate: [0, -12, 8, -4, 0],
+      transition: { duration: 0.5, ease: "easeInOut" },
     });
     onVote("positive");
   }

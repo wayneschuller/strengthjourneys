@@ -2122,8 +2122,7 @@ function PastSessionSmartAddButtons({ suggestions, onAddSet, showHint }) {
           <Plus className="h-3.5 w-3.5" />
           Add more to this session
         </span>
-        <span className="flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
-          Suggestions
+        <span className="flex items-center gap-1 text-[10px] text-muted-foreground/70">
           <motion.span
             animate={{ rotate: isExpanded ? 90 : 0 }}
             transition={transition}

@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { useReadLocalStorage } from "usehooks-ts";
+import { useIsClient, useReadLocalStorage } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { LiftStrengthLevel } from "@/components/analyzer/session-exercise-block";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -120,9 +121,26 @@ function getSheetUpdatePayload(fields) {
 export default function LogSessionPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
-  const { parsedData, sheetInfo, mutate, isLoading, topLiftsByTypeAndReps, topLiftsByTypeAndRepsLast12Months } = useUserLiftingData();
+  const isClient = useIsClient();
+  const {
+    parsedData,
+    sheetInfo,
+    mutate,
+    isLoading,
+    topLiftsByTypeAndReps,
+    topLiftsByTypeAndRepsLast12Months,
+  } = useUserLiftingData();
   const { isMetric, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
+  const persistedSheetInfo = useMemo(() => {
+    if (!isClient) return null;
+    try {
+      const raw = localStorage.getItem(LOCAL_STORAGE_KEYS.SHEET_INFO);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }, [isClient]);
 
   // Activity log for the debug panel (dev only)
   const [activityLog, setActivityLog] = useState([]);
@@ -266,6 +284,11 @@ export default function LogSessionPage() {
 
   const hasSession = Object.keys(sessionLiftsWithPending).length > 0;
   const isToday = sessionDate === todayIso;
+  const effectiveSsid = sheetInfo?.ssid ?? persistedSheetInfo?.ssid ?? null;
+  const showSessionBootstrap =
+    !isClient ||
+    authStatus === "loading" ||
+    (authStatus === "authenticated" && !!effectiveSsid && (isLoading || parsedData === null));
 
   const prevSessionDate = useMemo(() => {
     const earlier = sessionDates.filter((d) => d < sessionDate);
@@ -849,7 +872,9 @@ export default function LogSessionPage() {
 
 
       {/* Empty state */}
-      {!isLoading && !hasSession && (
+      {showSessionBootstrap && <LogSessionSkeleton />}
+
+      {!showSessionBootstrap && !isLoading && !hasSession && (
         <div className="mt-6 flex flex-col items-center gap-6">
           <div className="space-y-1 text-center">
             <h2 className="text-xl font-semibold">
@@ -880,7 +905,7 @@ export default function LogSessionPage() {
       )}
 
       {/* Lift blocks */}
-      {hasSession && (
+      {!showSessionBootstrap && hasSession && (
         <div className="space-y-5">
           {Object.entries(sessionLiftsWithPending).map(([liftType, sets]) => (
             <LiftBlock
@@ -944,6 +969,35 @@ export default function LogSessionPage() {
 }
 
 // --- Activity log panel (dev only) ---
+
+function LogSessionSkeleton() {
+  return (
+    <div className="mt-6 space-y-5">
+      {[0, 1].map((index) => (
+        <div key={index} className="overflow-hidden rounded-xl border border-border/50 bg-card/70 shadow-sm">
+          <div className="space-y-3 border-b border-border/40 px-4 py-4">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-3 w-28" />
+          </div>
+          <div className="space-y-4 px-4 py-4">
+            {[0, 1, 2].map((row) => (
+              <div key={row} className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <Skeleton className="h-8 w-12" />
+                  <Skeleton className="h-4 w-3" />
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-4 w-6" />
+                </div>
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 w-4 shrink-0 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const API_DESCRIPTIONS = {
   addSet: {

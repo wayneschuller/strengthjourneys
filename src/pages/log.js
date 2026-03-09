@@ -305,6 +305,7 @@ function getFirstTimeCoachingCopy({
   minIncrement,
   unitType,
   hasReachedTarget = false,
+  workSetCount = 0,
 }) {
   const earlyStage = isEarlyDashboardStage(dashboardStage);
 
@@ -333,6 +334,24 @@ function getFirstTimeCoachingCopy({
           title: null,
           body: "Great, that's your top work set.",
           effortCue: "Deadlift usually wants just one heavy set of 5. Stop here, or go a little heavier if that felt too easy.",
+        };
+      }
+
+      if (workSetCount >= 3) {
+        return {
+          eyebrow: null,
+          title: null,
+          body: "That is enough work for this lift today.",
+          effortCue: "You can stop here and move on to the next lift.",
+        };
+      }
+
+      if (workSetCount === 2) {
+        return {
+          eyebrow: null,
+          title: null,
+          body: "Nice, now just do 1 more set of 5 at this weight.",
+          effortCue: "Keep it tidy and call the lift there for today.",
         };
       }
 
@@ -1650,6 +1669,12 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
             return getDisplayWeight(set, isMetric).value >= firstTimeTargetWeight;
           })
         : false;
+      const firstTimeWorkSetCount = firstTimeTargetWeight
+        ? realSets.filter((set) => {
+            if ((set.reps ?? 0) < 5 || (set.weight ?? 0) <= 0) return false;
+            return getDisplayWeight(set, isMetric).value >= firstTimeTargetWeight;
+          }).length
+        : 0;
 
       return {
         mode: "first_lift_session_in_progress",
@@ -1688,6 +1713,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
           minIncrement,
           unitType,
           hasReachedTarget: hasReachedFirstTimeTarget,
+          workSetCount: firstTimeWorkSetCount,
         }),
         techniqueAssist,
       };

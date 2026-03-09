@@ -38,10 +38,10 @@ import {
 // --- Big Four lifts with SVG icons ---
 
 const BIG_FOUR = [
-  { name: "Back Squat", icon: "/back_squat.svg" },
-  { name: "Bench Press", icon: "/bench_press.svg" },
-  { name: "Deadlift", icon: "/deadlift.svg" },
-  { name: "Strict Press", icon: "/strict_press.svg" },
+  { name: "Back Squat", icon: "/back_squat.svg", slug: "squat-1rm-calculator" },
+  { name: "Bench Press", icon: "/bench_press.svg", slug: "bench-press-1rm-calculator" },
+  { name: "Deadlift", icon: "/deadlift.svg", slug: "deadlift-1rm-calculator" },
+  { name: "Strict Press", icon: "/strict_press.svg", slug: "strict-press-1rm-calculator" },
 ];
 
 const isDev = process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
@@ -914,7 +914,7 @@ export default function LogSessionPage() {
     <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-3 sm:px-4 lg:grid-cols-[minmax(0,42rem)_1fr]">
     <div className="pb-24">
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 py-3 backdrop-blur-sm">
+      <div className="sticky top-0 z-[5] flex items-center gap-2 border-b border-border/40 bg-background/95 py-3 backdrop-blur-sm">
         <Button
           variant="ghost"
           size="icon"
@@ -1495,7 +1495,9 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       {/* Desktop: large icon in left gutter */}
       {bigFourEntry && (
         <div className="absolute left-4 top-4 hidden md:block">
-          <Image src={bigFourEntry.icon} alt="" width={80} height={80} className="opacity-80" />
+          <Link href={`/calculator/${bigFourEntry.slug}`}>
+            <Image src={bigFourEntry.icon} alt="" width={80} height={80} className="opacity-80 transition-opacity hover:opacity-100" />
+          </Link>
         </div>
       )}
 
@@ -1503,11 +1505,19 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
       <div className="flex items-center gap-2 pb-1">
         {/* Mobile: inline icon (3× = 48px) */}
         {bigFourEntry && (
-          <Image src={bigFourEntry.icon} alt="" width={48} height={48} className="md:hidden" />
+          <Link href={`/calculator/${bigFourEntry.slug}`}>
+            <Image src={bigFourEntry.icon} alt="" width={48} height={48} className="md:hidden" />
+          </Link>
         )}
-        <h2 className="text-base font-semibold uppercase tracking-wide text-foreground">
-          {liftType}
-        </h2>
+        {bigFourEntry ? (
+          <Link href={`/calculator/${bigFourEntry.slug}`} className="text-base font-semibold text-foreground hover:underline">
+            {liftType}
+          </Link>
+        ) : (
+          <h2 className="text-base font-semibold text-foreground">
+            {liftType}
+          </h2>
+        )}
       </div>
 
       {/* Last session suggestion */}

@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
-import { MessageCircleHeart } from "lucide-react";
+import { MessageCircleHeart, PartyPopper } from "lucide-react";
 import { motion, useAnimationControls } from "motion/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -325,8 +325,18 @@ export function FeedbackWidget() {
       page: router.pathname,
       isLoggedIn: Boolean(session),
     });
-    setLayer(2);
-    startCountdown();
+
+    if (value === "positive") {
+      // Brief green celebration before advancing
+      setLayer("celebrate");
+      setTimeout(() => {
+        setLayer(2);
+        startCountdown();
+      }, 1500);
+    } else {
+      setLayer(2);
+      startCountdown();
+    }
   }
 
   async function handleSubmit() {
@@ -428,11 +438,13 @@ export function FeedbackWidget() {
           <DialogHeader>
             <DialogTitle>
               {layer === 1 && `${titlePrefix} ${pageName}?`}
+              {layer === "celebrate" && "You're awesome!"}
               {layer >= 2 && layer <= 3 && "Thanks! Anything you'd like to tell us?"}
               {layer === 4 && "Feedback sent"}
             </DialogTitle>
             <DialogDescription>
               {layer === 1 && subtitle}
+              {layer === "celebrate" && "Thanks for the positive vibes!"}
               {layer === 2 && countdown !== null && `Closing in ${countdown}s — start typing to keep open.`}
               {layer === 3 && "Optional — skip anytime."}
               {layer === 4 && (successCountdown !== null
@@ -453,6 +465,28 @@ export function FeedbackWidget() {
               positiveAriaLabel="Thumbs up"
               negativeAriaLabel="Thumbs down"
             />
+          )}
+
+          {/* Celebrate layer: green success moment after thumbs up */}
+          {layer === "celebrate" && (
+            <div className="flex flex-col items-center gap-3 py-6">
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/15"
+              >
+                <PartyPopper className="h-8 w-8 text-green-500" />
+              </motion.div>
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
+                className="text-sm font-medium text-green-600 dark:text-green-400"
+              >
+                Your feedback means a lot!
+              </motion.p>
+            </div>
           )}
 
           {/* Layer 2: Comment */}

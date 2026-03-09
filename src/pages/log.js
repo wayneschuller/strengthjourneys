@@ -2120,7 +2120,7 @@ function PastSessionSmartAddButtons({ suggestions, onAddSet, showHint }) {
       >
         <span className="flex items-center gap-2">
           <Plus className="h-3.5 w-3.5" />
-          Add more to this session
+          Add another set for this lift
         </span>
         <span className="flex items-center gap-1 text-[10px] text-muted-foreground/70">
           <motion.span
@@ -2156,7 +2156,7 @@ function PastSessionSmartAddButtons({ suggestions, onAddSet, showHint }) {
 // --- Add lift button ---
 // Simplified: just calls onAddLift(liftType), all API logic lives in the parent.
 
-function AddLiftButton({ parsedData, onAddLift, label = "Add Lift" }) {
+function AddLiftButton({ parsedData, onAddLift, label = "Add another lift type" }) {
   const [showInput, setShowInput] = useState(false);
   const [liftType, setLiftType] = useState("");
   const inputRef = useRef(null);

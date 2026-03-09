@@ -1609,8 +1609,7 @@ function getRankingMeta({ liftType, reps, weight, isMetric, topLiftsByTypeAndRep
     message: `${getCelebrationEmoji(yearlyRank)} 12-month #${yearlyRank + 1} ${reps}RM`,
   } : null;
 
-  const suppressYearly = lifetime && yearly && yearly.rank >= lifetime.rank;
-  const best = lifetime ?? (suppressYearly ? null : yearly);
+  const best = lifetime ?? yearly;
 
   return { best, lifetime, yearly };
 }

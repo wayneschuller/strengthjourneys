@@ -98,6 +98,25 @@ function logSheetTimings(label, timings, totalMs, addLogEntry) {
   }
 }
 
+function getEditableSetFields(set) {
+  return {
+    reps: set.reps,
+    weight: set.weight,
+    unitType: set.unitType ?? "",
+    notes: set.notes ?? "",
+    url: set.URL ?? "",
+  };
+}
+
+function getSheetUpdatePayload(fields) {
+  return {
+    reps: fields.reps,
+    weight: `${fields.weight}${fields.unitType ?? ""}`,
+    notes: fields.notes ?? "",
+    url: fields.url ?? "",
+  };
+}
+
 export default function LogSessionPage() {
   const { status: authStatus } = useSession();
   const router = useRouter();
@@ -130,8 +149,8 @@ export default function LogSessionPage() {
   const [deletedRowIndices, setDeletedRowIndices] = useState(new Set());
 
   // Mutation guard: prevents concurrent sheet API calls that could race on
-  // stale row indices. Every mutation path (addSet, addLift, deleteSet,
-  // updateSet) checks savingRef.current and bails silently if true.
+  // stale row indices. Structural mutations (addSet, addLift, deleteSet)
+  // check savingRef.current and bail silently if true.
   // The UI is fully optimistic — rows appear/disappear instantly and API calls
   // are sub-800ms, so the guard window is imperceptible during normal use.
   // It only blocks spammy rapid clicks that would fire multiple calls with
@@ -316,6 +335,48 @@ export default function LogSessionPage() {
     savedTimerRef.current = setTimeout(() => setSyncState("idle"), 3000);
   }
 
+  const updatePendingSet = useCallback((tempId, fields, queuedSync) => {
+    let updatedSet = null;
+    setPendingSetsSync((prev) => {
+      let changed = false;
+      const next = {};
+      for (const [lt, sets] of Object.entries(prev)) {
+        next[lt] = sets.map((s) => {
+          if (s._tempId !== tempId) return s;
+          changed = true;
+          updatedSet = {
+            ...s,
+            reps: fields.reps,
+            weight: fields.weight,
+            unitType: fields.unitType ?? s.unitType,
+            notes: fields.notes ?? "",
+            URL: fields.url ?? "",
+            _queuedSync: queuedSync,
+          };
+          return updatedSet;
+        });
+      }
+      return changed ? next : prev;
+    });
+    return updatedSet;
+  }, [setPendingSetsSync]);
+
+  const clearPendingQueuedSync = useCallback((tempId) => {
+    if (!tempId) return;
+    setPendingSetsSync((prev) => {
+      let changed = false;
+      const next = {};
+      for (const [lt, sets] of Object.entries(prev)) {
+        next[lt] = sets.map((s) => {
+          if (s._tempId !== tempId || !s._queuedSync) return s;
+          changed = true;
+          return { ...s, _queuedSync: false };
+        });
+      }
+      return changed ? next : prev;
+    });
+  }, [setPendingSetsSync]);
+
   // Promote the first still-pending row for a liftType to confirmed with a real rowIndex.
   const promoteFirstPending = useCallback((liftType, rowIndex) => {
     setPendingSetsSync((prev) => {
@@ -332,12 +393,8 @@ export default function LogSessionPage() {
     });
   }, [setPendingSetsSync]);
 
-  // --- API calls ---
-
-  // updateSet: fire-and-forget — no await mutate(), SWR will sync on next focus.
-  // The SetRow component manages its own optimistic display via pendingReps/pendingWeight.
-  const updateSet = useCallback(
-    async (rowIndex, fields) => {
+  const persistSetUpdate = useCallback(
+    async (rowIndex, fields, tempId = null) => {
       if (!sheetInfo?.ssid) return;
       markSaving();
       const t0 = performance.now();
@@ -345,12 +402,14 @@ export default function LogSessionPage() {
         const res = await fetch("/api/sheet/log-set", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ssid: sheetInfo.ssid, rowIndex, ...fields }),
+          body: JSON.stringify({
+            ssid: sheetInfo.ssid,
+            rowIndex,
+            ...getSheetUpdatePayload(fields),
+          }),
         });
         if (!res.ok) throw new Error((await res.json()).error || "Update failed");
-        // Do NOT call mutate() here — the SetRow component manages its own
-        // optimistic display via pendingReps/pendingWeight. SWR's
-        // revalidateOnFocus will sync when the user leaves the page.
+        clearPendingQueuedSync(tempId);
         markSaved();
       } catch (err) {
         console.error("[sheet/log-set] updateSet failed:", err);
@@ -358,7 +417,45 @@ export default function LogSessionPage() {
       }
       logSheetTimings("updateSet", [{ name: "PATCH /api/sheet/log-set", ms: performance.now() - t0 }], performance.now() - t0, addLogEntry);
     },
-    [sheetInfo?.ssid, addLogEntry],
+    [sheetInfo?.ssid, clearPendingQueuedSync, addLogEntry],
+  );
+
+  useEffect(() => {
+    if (savingRef.current) return;
+    const queuedSet = Object.values(pendingSetsRef.current)
+      .flat()
+      .find((s) => !s._pending && s.rowIndex && s._queuedSync);
+    if (!queuedSet) return;
+    void persistSetUpdate(queuedSet.rowIndex, getEditableSetFields(queuedSet), queuedSet._tempId);
+  }, [pendingSets, persistSetUpdate]);
+
+  // --- API calls ---
+
+  // updateSet: fire-and-forget — no await mutate(), SWR will sync on next focus.
+  // Pending optimistic rows can be edited before the insert call returns; those
+  // edits are queued on the temp row and flushed once it gets a real rowIndex.
+  const updateSet = useCallback(
+    async (setRef, fields) => {
+      if (!sheetInfo?.ssid) return;
+
+      const pendingSet = setRef.tempId
+        ? Object.values(pendingSetsRef.current)
+          .flat()
+          .find((s) => s._tempId === setRef.tempId)
+        : null;
+      const rowIndex = pendingSet?.rowIndex ?? setRef.rowIndex;
+
+      if (pendingSet) {
+        updatePendingSet(setRef.tempId, fields, !rowIndex);
+      }
+
+      if (!rowIndex) {
+        return;
+      }
+
+      void persistSetUpdate(rowIndex, fields, setRef.tempId ?? null);
+    },
+    [sheetInfo?.ssid, updatePendingSet, persistSetUpdate],
   );
 
   // deleteSet: removes a single set row from the sheet.
@@ -497,13 +594,13 @@ export default function LogSessionPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Add set failed");
         const { firstRowIndex } = data;
+        markSaved();
         // Promote pending → confirmed with real rowIndex.
         // Do NOT call mutate() here — firing a revalidation mid-session causes parsedData
         // to update while confirmed-pending rows are still present, which creates a brief
         // intermediate state where the row appears to disappear and reappear.
         // SWR's natural revalidateOnFocus will sync when the user leaves the page.
         promoteFirstPending(liftType, firstRowIndex);
-        markSaved();
       } catch (err) {
         console.error("[sheet/log-session] addSet failed:", err);
         // Remove the failed pending row
@@ -595,9 +692,9 @@ export default function LogSessionPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed");
         const { firstRowIndex } = data;
+        markSaved();
         // See addSet for why we don't call mutate() here.
         promoteFirstPending(liftType, firstRowIndex);
-        markSaved();
       } catch (err) {
         console.error("[sheet/log-session] addLift failed:", err);
         setPendingSetsSync((prev) => {
@@ -1274,7 +1371,7 @@ function LiftBlock({ liftType, sets, parsedData, sessionDate, isMetric, topLifts
             isMetric={isMetric}
             weightColWidth={weightColWidth}
             prType={prStatus[idx]}
-            onUpdate={set._pending ? null : (fields) => onUpdateSet(set.rowIndex, fields)}
+            onUpdate={(fields) => onUpdateSet({ rowIndex: set.rowIndex, tempId: set._tempId ?? null }, fields)}
             onDelete={set._pending || !set.rowIndex ? null : () => onDeleteSet(set)}
             strengthBadge={idx === bestE1rmIndex ? (
               <LiftStrengthLevel
@@ -1346,18 +1443,33 @@ function SetRow({ set, isMetric, weightColWidth = "w-14", prType, onUpdate, onDe
   // Optimistic display: holds committed value until parsedData catches up
   const [pendingReps, setPendingReps] = useState(null);
   const [pendingWeight, setPendingWeight] = useState(null);
+  const latestFieldsRef = useRef(getEditableSetFields(set));
 
   // Debounced update: coalesce rapid changes (spinner arrows, keyboard arrows)
-  // into a single API call. The timer ref holds the latest pending fields so
-  // only the final value is sent after 800ms of inactivity.
+  // into a single API call. Each commit merges into latestFieldsRef so a quick
+  // reps-then-weight edit still sends the final combined snapshot.
   const updateTimerRef = useRef(null);
-  const debouncedUpdate = useCallback(
-    (fields) => {
+  const scheduleUpdate = useCallback(
+    (partialFields) => {
+      const nextFields = { ...latestFieldsRef.current, ...partialFields };
+      latestFieldsRef.current = nextFields;
       if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
       updateTimerRef.current = setTimeout(() => {
         updateTimerRef.current = null;
-        onUpdate(fields);
+        onUpdate(nextFields);
       }, 800);
+    },
+    [onUpdate],
+  );
+  const flushUpdate = useCallback(
+    (partialFields) => {
+      const nextFields = { ...latestFieldsRef.current, ...partialFields };
+      latestFieldsRef.current = nextFields;
+      if (updateTimerRef.current) {
+        clearTimeout(updateTimerRef.current);
+        updateTimerRef.current = null;
+      }
+      onUpdate(nextFields);
     },
     [onUpdate],
   );
@@ -1381,6 +1493,15 @@ function SetRow({ set, isMetric, weightColWidth = "w-14", prType, onUpdate, onDe
   useEffect(() => {
     if (pendingWeight !== null && set.weight === pendingWeight) setPendingWeight(null);
   }, [set.weight, pendingWeight]);
+  useEffect(() => {
+    latestFieldsRef.current = {
+      reps: pendingReps ?? set.reps,
+      weight: pendingWeight ?? set.weight,
+      unitType: set.unitType ?? "",
+      notes: set.notes ?? "",
+      url: set.URL ?? "",
+    };
+  }, [set.reps, set.weight, set.unitType, set.notes, set.URL, pendingReps, pendingWeight]);
 
   const displayReps = pendingReps !== null ? pendingReps : set.reps;
   const displayWeight = pendingWeight !== null ? pendingWeight : set.weight;
@@ -1388,45 +1509,27 @@ function SetRow({ set, isMetric, weightColWidth = "w-14", prType, onUpdate, onDe
   function commitReps() {
     setEditingReps(false);
     const parsed = parseInt(draftReps, 10);
-    if (!isNaN(parsed) && parsed !== set.reps) {
+    if (!isNaN(parsed) && parsed !== latestFieldsRef.current.reps) {
       setPendingReps(parsed);
-      debouncedUpdate({ reps: parsed, weight: `${set.weight}${set.unitType ?? ""}`, notes: set.notes ?? "", url: set.URL ?? "" });
+      scheduleUpdate({ reps: parsed });
     }
   }
 
   function commitWeight() {
     setEditingWeight(false);
     const num = parseFloat(draftWeight);
-    if (!isNaN(num) && num !== set.weight) {
+    if (!isNaN(num) && num !== latestFieldsRef.current.weight) {
       setPendingWeight(num);
-      debouncedUpdate({ reps: set.reps, weight: `${num}${set.unitType ?? ""}`, notes: set.notes ?? "", url: set.URL ?? "" });
+      scheduleUpdate({ weight: num });
     }
   }
 
   function commitNotes() {
     setEditingNotes(false);
     const trimmed = draftNotes.trim();
-    if (trimmed !== (set.notes ?? "").trim()) {
-      onUpdate({ reps: set.reps, weight: `${set.weight}${set.unitType ?? ""}`, notes: trimmed, url: set.URL ?? "" });
+    if (trimmed !== (latestFieldsRef.current.notes ?? "").trim()) {
+      flushUpdate({ notes: trimmed });
     }
-  }
-
-  // Pending rows: identical layout to the editable row, tiny spinner replaces PR slot.
-  // Keep the reps@weight markup in sync with the editable version below.
-  if (set._pending) {
-    return (
-      <div className="flex items-center gap-4 px-4 py-3">
-        <div className="flex items-center">
-          <span className="w-12 text-right text-xl font-semibold tabular-nums">{set.reps}</span>
-          <span className="mx-0.5 text-base text-muted-foreground">@</span>
-          <span className={`${weightColWidth} text-left text-xl font-semibold tabular-nums`}>{set.weight}</span>
-          <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
-        </div>
-        <div className="flex flex-1 justify-end">
-          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -1435,8 +1538,7 @@ function SetRow({ set, isMetric, weightColWidth = "w-14", prType, onUpdate, onDe
           Fixed-width containers prevent layout shift when toggling between
           display (button) and edit (input) modes. weightColWidth is computed
           by LiftBlock based on the widest weight value across all sets.
-          Reps right-aligned, weight left-aligned so the digit sits flush against @.
-          Keep in sync with the _pending branch above. */}
+          Reps right-aligned, weight left-aligned so the digit sits flush against @. */}
       <div className="flex items-center">
         <div className="w-12">
           {editingReps ? (
@@ -1510,25 +1612,31 @@ function SetRow({ set, isMetric, weightColWidth = "w-14", prType, onUpdate, onDe
           Trash: always visible on mobile (touch has no hover), hover-only on desktop.
           The group class on the row container drives the md:group-hover reveal. */}
       <div className="flex shrink-0 items-center gap-1">
-        {strengthBadge}
-        {prType === "lifetime" && (
-          <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">
-            PR
-          </Badge>
-        )}
-        {prType === "yearly" && (
-          <Badge variant="outline" className="border-blue-400 text-xs text-blue-500">
-            Year PR
-          </Badge>
-        )}
-        {onDelete && (
-          <button
-            className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
-            onClick={onDelete}
-            aria-label="Delete set"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+        {set._pending ? (
+          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
+        ) : (
+          <>
+            {strengthBadge}
+            {prType === "lifetime" && (
+              <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">
+                PR
+              </Badge>
+            )}
+            {prType === "yearly" && (
+              <Badge variant="outline" className="border-blue-400 text-xs text-blue-500">
+                Year PR
+              </Badge>
+            )}
+            {onDelete && (
+              <button
+                className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
+                onClick={onDelete}
+                aria-label="Delete set"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

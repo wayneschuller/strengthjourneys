@@ -102,6 +102,40 @@ export default async function handler(req, res) {
       return res.status(writeRes.status).json({ error: msg });
     }
 
+    // Force column E (Notes) to plain text so Sheets doesn't reinterpret
+    // timestamps like "14:35" as time values and right-justify them.
+    if (notes != null && notes.length > 0) {
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${ssid}:batchUpdate`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            requests: [
+              {
+                repeatCell: {
+                  range: {
+                    sheetId: 0,
+                    startRowIndex: rowIndex - 1,
+                    endRowIndex: rowIndex,
+                    startColumnIndex: 4, // column E
+                    endColumnIndex: 5,
+                  },
+                  cell: {
+                    userEnteredFormat: {
+                      numberFormat: { type: "TEXT" },
+                      horizontalAlignment: "LEFT",
+                    },
+                  },
+                  fields: "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
+                },
+              },
+            ],
+          }),
+        },
+      );
+    }
+
     return res.status(200).json({ updated: true, rowIndex });
   } catch (err) {
     console.error("[sheet/log-set] unexpected error:", err);

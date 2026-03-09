@@ -194,6 +194,27 @@ export default async function handler(req, res) {
       },
     ];
 
+    // Force column E (Notes) to plain text so Sheets doesn't reinterpret
+    // timestamps like "14:35" as time values and right-justify them.
+    batchRequests.push({
+      repeatCell: {
+        range: {
+          sheetId: 0,
+          startRowIndex: startIndex0,
+          endRowIndex: startIndex0 + rows.length,
+          startColumnIndex: 4, // column E
+          endColumnIndex: 5,
+        },
+        cell: {
+          userEnteredFormat: {
+            numberFormat: { type: "TEXT" },
+            horizontalAlignment: "LEFT",
+          },
+        },
+        fields: "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
+      },
+    });
+
     if (newSession) {
       // Stamp the session-separator border onto the first inserted row only.
       batchRequests.push({

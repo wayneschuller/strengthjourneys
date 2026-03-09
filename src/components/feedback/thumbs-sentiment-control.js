@@ -1,8 +1,6 @@
 import { ThumbsUp, ThumbsDown } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, useAnimationControls } from "motion/react";
 import { Button } from "@/components/ui/button";
-
-const MotionButton = motion.create(Button);
 
 /**
  * Reusable thumbs sentiment control.
@@ -27,23 +25,30 @@ export function ThumbsSentimentControl({
   positiveAriaLabel = "Thumbs up",
   negativeAriaLabel = "Thumbs down",
 }) {
+  const controls = useAnimationControls();
+
+  function handlePositiveClick() {
+    controls.start({
+      scale: [1, 1.4, 1],
+      rotate: [0, -15, 15, 0],
+      transition: { type: "spring", stiffness: 400, damping: 10, duration: 0.5 },
+    });
+    onVote("positive");
+  }
+
   return (
     <div className={wrapperClassName}>
-      <MotionButton
+      <Button
         variant={value === "positive" ? "default" : "outline"}
         size={size}
-        className={`${buttonClassName} ${value === "positive" ? "border-green-500 bg-green-500/90 text-white hover:bg-green-500" : ""}`}
-        onClick={() => onVote("positive")}
+        className={`${buttonClassName} ${value === "positive" ? "!border-green-500 !bg-green-500 !text-white hover:!bg-green-600" : ""}`}
+        onClick={handlePositiveClick}
         aria-label={positiveAriaLabel}
-        animate={
-          value === "positive"
-            ? { scale: [1, 1.3, 1] }
-            : { scale: 1 }
-        }
-        transition={{ type: "spring", stiffness: 500, damping: 12 }}
       >
-        <ThumbsUp className={iconClassName} />
-      </MotionButton>
+        <motion.span animate={controls} className="inline-flex">
+          <ThumbsUp className={iconClassName} />
+        </motion.span>
+      </Button>
       <Button
         variant={value === "negative" ? "default" : "outline"}
         size={size}

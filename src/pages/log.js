@@ -1765,115 +1765,148 @@ function SetRow({ set, isMetric, prMeta, onUpdate, onDelete, strengthBadge }) {
     }
   }
 
+  const hasBadges = !set._pending && (strengthBadge || prMeta?.status === "lifetime" || prMeta?.status === "yearly");
+
   return (
-    <div className="group flex items-center gap-4 py-3">
-      {/* Reps @ Weight unit — tight visual unit.
-          Reps right-aligned in w-7 (enough for 1–2 digits), weight auto-width. */}
-      <div className="flex items-center">
-        <div className="w-7">
-          {editingReps ? (
+    <div className="group py-3">
+      {/* Main row: reps@weight + notes + (desktop: badges/trash) */}
+      <div className="flex items-center gap-4">
+        {/* Reps @ Weight unit — tight visual unit.
+            Reps right-aligned in w-7 (enough for 1–2 digits), weight auto-width. */}
+        <div className="flex items-center">
+          <div className="w-7">
+            {editingReps ? (
+              <input
+                type="number"
+                className="w-10 rounded border border-primary px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
+                value={draftReps}
+                onChange={(e) => setDraftReps(e.target.value)}
+                onBlur={commitReps}
+                onKeyDown={(e) => e.key === "Enter" && commitReps()}
+                autoFocus
+              />
+            ) : (
+              <button
+                className="w-full rounded py-0.5 text-right text-xl font-semibold tabular-nums hover:bg-muted/60"
+                onClick={() => setEditingReps(true)}
+              >
+                {displayReps}
+              </button>
+            )}
+          </div>
+          <span className="mx-0.5 text-base text-muted-foreground">@</span>
+          {editingWeight ? (
             <input
               type="number"
-              className="w-10 rounded border border-primary px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
-              value={draftReps}
-              onChange={(e) => setDraftReps(e.target.value)}
-              onBlur={commitReps}
-              onKeyDown={(e) => e.key === "Enter" && commitReps()}
+              step="any"
+              className="w-20 rounded border border-primary px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+              value={draftWeight}
+              onChange={(e) => setDraftWeight(e.target.value)}
+              onBlur={commitWeight}
+              onKeyDown={(e) => e.key === "Enter" && commitWeight()}
               autoFocus
             />
           ) : (
             <button
-              className="w-full rounded py-0.5 text-right text-xl font-semibold tabular-nums hover:bg-muted/60"
-              onClick={() => setEditingReps(true)}
+              className="rounded py-0.5 text-left text-xl font-semibold tabular-nums hover:bg-muted/60"
+              onClick={() => setEditingWeight(true)}
             >
-              {displayReps}
+              {displayWeight}
             </button>
           )}
+          <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
         </div>
-        <span className="mx-0.5 text-base text-muted-foreground">@</span>
-        {editingWeight ? (
-          <input
-            type="number"
-            step="any"
-            className="w-20 rounded border border-primary px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
-            value={draftWeight}
-            onChange={(e) => setDraftWeight(e.target.value)}
-            onBlur={commitWeight}
-            onKeyDown={(e) => e.key === "Enter" && commitWeight()}
-            autoFocus
-          />
-        ) : (
-          <button
-            className="rounded py-0.5 text-left text-xl font-semibold tabular-nums hover:bg-muted/60"
-            onClick={() => setEditingWeight(true)}
-          >
-            {displayWeight}
-          </button>
-        )}
-        <UnitLabel unitType={set.unitType} mismatch={unitMismatch} />
-      </div>
 
-      {/* Notes — flex-1, tap to edit */}
-      <div className="min-w-0 flex-1">
-        {editingNotes ? (
-          <input
-            type="text"
-            className="w-full border-b border-input bg-transparent py-0.5 text-xs text-muted-foreground focus:border-primary focus:outline-none"
-            value={draftNotes}
-            onChange={(e) => setDraftNotes(e.target.value)}
-            onBlur={commitNotes}
-            onKeyDown={(e) => e.key === "Enter" && commitNotes()}
-            placeholder="notes..."
-            autoFocus
-          />
-        ) : (
-          <div className="space-y-1">
-            <button
-              className="w-full truncate text-left text-xs italic text-muted-foreground/50 hover:text-muted-foreground"
-              onClick={() => setEditingNotes(true)}
-            >
-              {set.notes || "notes..."}
-            </button>
-            {rankingSummary && (
-              <p className={`truncate text-[10px] uppercase tracking-wide ${prToneClass}`}>
-                {rankingSummary}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Right slot: PR badge + trash icon.
-          Trash: always visible on mobile (touch has no hover), hover-only on desktop.
-          The group class on the row container drives the md:group-hover reveal. */}
-      <div className="flex shrink-0 items-center gap-1">
-        {set._pending ? (
-          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
-        ) : (
-          <>
-            {strengthBadge}
-            {prMeta?.status === "lifetime" && (
-              <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">
-                PR
-              </Badge>
-            )}
-            {prMeta?.status === "yearly" && (
-              <Badge variant="outline" className="border-blue-400 text-xs text-blue-500">
-                Year PR
-              </Badge>
-            )}
-            {onDelete && (
+        {/* Notes — flex-1, tap to edit */}
+        <div className="min-w-0 flex-1">
+          {editingNotes ? (
+            <input
+              type="text"
+              className="w-full border-b border-input bg-transparent py-0.5 text-xs text-muted-foreground focus:border-primary focus:outline-none"
+              value={draftNotes}
+              onChange={(e) => setDraftNotes(e.target.value)}
+              onBlur={commitNotes}
+              onKeyDown={(e) => e.key === "Enter" && commitNotes()}
+              placeholder="notes..."
+              autoFocus
+            />
+          ) : (
+            <div className="space-y-1">
               <button
-                className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
-                onClick={onDelete}
-                aria-label="Delete set"
+                className="w-full truncate text-left text-xs italic text-muted-foreground/50 hover:text-muted-foreground"
+                onClick={() => setEditingNotes(true)}
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                {set.notes || "notes..."}
               </button>
-            )}
-          </>
-        )}
+              {rankingSummary && (
+                <p className={`hidden truncate text-[10px] uppercase tracking-wide md:block ${prToneClass}`}>
+                  {rankingSummary}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop: badges + trash inline */}
+        <div className="hidden shrink-0 items-center gap-1 md:flex">
+          {set._pending ? (
+            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
+          ) : (
+            <>
+              {strengthBadge}
+              {prMeta?.status === "lifetime" && (
+                <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">PR</Badge>
+              )}
+              {prMeta?.status === "yearly" && (
+                <Badge variant="outline" className="border-blue-400 text-xs text-blue-500">Year PR</Badge>
+              )}
+              {onDelete && (
+                <button
+                  className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
+                  onClick={onDelete}
+                  aria-label="Delete set"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Mobile: badges + ranking + trash on second row */}
+      {(hasBadges || rankingSummary || onDelete || set._pending) && (
+        <div className="mt-1 flex items-center gap-2 pl-7 md:hidden">
+          {set._pending ? (
+            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
+          ) : (
+            <>
+              {strengthBadge}
+              {prMeta?.status === "lifetime" && (
+                <Badge variant="outline" className="border-amber-400 text-xs text-amber-600">PR</Badge>
+              )}
+              {prMeta?.status === "yearly" && (
+                <Badge variant="outline" className="border-blue-400 text-xs text-blue-500">Year PR</Badge>
+              )}
+              {rankingSummary && (
+                <span className={`truncate text-[10px] uppercase tracking-wide ${prToneClass}`}>
+                  {rankingSummary}
+                </span>
+              )}
+              <div className="flex-1" />
+              {onDelete && (
+                <button
+                  className="rounded p-1 text-muted-foreground/30 transition-colors hover:text-destructive"
+                  onClick={onDelete}
+                  aria-label="Delete set"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

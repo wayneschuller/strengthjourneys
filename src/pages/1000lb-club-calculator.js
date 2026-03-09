@@ -494,7 +494,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                       step={5}
                       onValueChange={handleLiftValueChange(key, set)}
                       onValueCommit={handleLiftValueCommit}
-                      className="mt-2"
+                      className={`mt-2 ${prefersReducedMotion ? "" : `thumb-spring thumb-spring-${index}`}`}
                     />
                   </div>
                 </motion.div>

@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { ThumbsSentimentControl } from "@/components/feedback/thumbs-sentiment-control";
 import { Button } from "@/components/ui/button";
 import {
   trackFeedbackSentiment,
 } from "@/components/feedback/feedback-tracking";
 
-const CELEBRATE_DURATION_MS = 800;
+const CELEBRATE_DURATION_MS = 1200;
 
 const DEFAULT_SHORT_PROMPTS = [
   "Helpful?",
@@ -146,6 +146,9 @@ export function MiniFeedbackWidget({
     prompt || safePromptOptions[promptIndex] || DEFAULT_SHORT_PROMPTS[0];
   const reasonOptions = getReasonOptions(vote);
 
+  // Which label to show left of the thumbs buttons
+  const labelText = isCelebrating ? "Thanks!" : vote ? "Thanks!" : promptText;
+
   return (
     <div
       className={`flex max-h-32 flex-col items-start gap-1.5 overflow-hidden transition-all duration-500 ${
@@ -154,29 +157,15 @@ export function MiniFeedbackWidget({
       aria-hidden={isHidden}
     >
       <div className="flex items-center gap-2">
-        <AnimatePresence mode="wait">
-          {isCelebrating ? (
-            <motion.span
-              key="celebrate"
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ type: "spring", stiffness: 500, damping: 15 }}
-              className="text-xs font-medium text-green-500"
-            >
-              Thanks! 🎉
-            </motion.span>
-          ) : (
-            <motion.span
-              key="prompt"
-              initial={vote ? { opacity: 0 } : false}
-              animate={{ opacity: 1 }}
-              className="text-xs text-muted-foreground"
-            >
-              {vote ? "Thanks!" : promptText}
-            </motion.span>
-          )}
-        </AnimatePresence>
+        <span
+          className={`text-xs transition-colors duration-300 ${
+            isCelebrating
+              ? "font-medium text-green-500"
+              : "text-muted-foreground"
+          }`}
+        >
+          {labelText}
+        </span>
         <ThumbsSentimentControl
           value={vote}
           onVote={handleVote}

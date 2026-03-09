@@ -107,7 +107,7 @@ const FAQ_ITEMS = [
   {
     question: "What is the 200/300/400/500 strength club?",
     answer:
-      "It's a set of classic barbell milestones: a 200 lb strict press, 300 lb bench press, 400 lb back squat, and 500 lb deadlift. Together they total 1400 lbs. Achieving all four marks you as a seriously strong lifter.",
+      "It's a set of classic barbell milestones: a 200 lb strict press, 300 lb bench press, 400 lb back squat, and 500 lb deadlift. Achieving all four marks you as a seriously strong lifter.",
   },
   {
     question: "How long does it take to reach these milestones?",
@@ -196,11 +196,11 @@ export default function StrengthClubCalculator({ relatedArticles }) {
   const canonicalURL =
     "https://www.strengthjourneys.xyz/strength-club-calculator";
   const description =
-    "Free 200/300/400/500 Strength Club Calculator — track your progress toward the classic barbell milestones: 200 press, 300 bench, 400 squat, 500 deadlift. The 2/3/4/5 plate club, aka the 1400 club.";
+    "Free 200/300/400/500 Strength Club Calculator — track your progress toward the classic barbell milestones: 200 press, 300 bench, 400 squat, 500 deadlift. The 2/3/4/5 plate club.";
   const title =
     "200/300/400/500 Strength Club Calculator: Track Your Barbell Milestones";
   const keywords =
-    "200 300 400 500 strength club, 2 3 4 5 plate club, 1400 club, barbell milestones, strength standards, 200 lb press, 300 lb bench, 400 lb squat, 500 lb deadlift, powerlifting goals, strength calculator";
+    "200 300 400 500 strength club, 2 3 4 5 plate club, barbell milestones, strength standards, 200 lb press, 300 lb bench, 400 lb squat, 500 lb deadlift, powerlifting goals, strength calculator";
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
@@ -474,9 +474,8 @@ function StrengthClubMain({ relatedArticles }) {
           <PageHeaderDescription>
             The classic barbell milestones — a 200 lb press, 300 lb bench,
             400 lb squat, and 500 lb deadlift. Also known as the{" "}
-            <strong>2/3/4/5 plate club</strong> or the{" "}
-            <strong>1400 club</strong>. Track your progress toward each
-            target below.
+            <strong>2/3/4/5 plate club</strong>. Track your progress toward
+            each target below.
           </PageHeaderDescription>
           <PageHeaderRight>
             <div className="text-muted-foreground hidden gap-2 md:flex md:flex-col xl:flex-row">
